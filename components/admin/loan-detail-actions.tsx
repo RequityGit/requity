@@ -1,0 +1,929 @@
+"use client";
+
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { createClient } from "@/lib/supabase/client";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { DataTable, Column } from "@/components/shared/data-table";
+import { StatusBadge } from "@/components/shared/status-badge";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { FileUpload } from "@/components/shared/file-upload";
+import {
+  LOAN_TYPES,
+  LOAN_STAGES,
+  LOAN_STAGE_LABELS,
+  DOCUMENT_TYPES,
+} from "@/lib/constants";
+import { formatCurrency, formatDate } from "@/lib/format";
+import { useToast } from "@/components/ui/use-toast";
+import {
+  Pencil,
+  CheckCircle2,
+  XCircle,
+  DollarSign,
+  Upload,
+} from "lucide-react";
+import type { DrawRequest, LoanPayment, Document } from "@/lib/supabase/types";
+
+interface LoanInfo {
+  id: string;
+  loan_number: string | null;
+  borrower_id: string;
+  borrower_name: string;
+  loan_type: string | null;
+  property_address: string | null;
+  property_city: string | null;
+  property_state: string | null;
+  property_zip: string | null;
+  loan_amount: number;
+  interest_rate: number | null;
+  term_months: number | null;
+  origination_date: string | null;
+  maturity_date: string | null;
+  stage: string;
+  ltv: number | null;
+  appraised_value: number | null;
+  notes: string | null;
+}
+
+interface LoanDetailActionsProps {
+  loan: LoanInfo;
+  drawRequests: DrawRequest[];
+  payments: LoanPayment[];
+  documents: Document[];
+}
+
+export function LoanDetailActions({
+  loan,
+  drawRequests,
+  payments,
+  documents,
+}: LoanDetailActionsProps) {
+  const router = useRouter();
+
+  return (
+    <div className="space-y-4">
+      {/* Action buttons */}
+      <div className="flex flex-wrap gap-3">
+        <EditLoanDialog loan={loan} />
+        <RecordPaymentDialog loanId={loan.id} borrowerId={loan.borrower_id} />
+        <UploadDocumentDialog loanId={loan.id} uploaderId={loan.borrower_id} />
+      </div>
+
+      {/* Tabbed data */}
+      <Tabs defaultValue="draw-requests">
+        <TabsList>
+          <TabsTrigger value="draw-requests">
+            Draw Requests ({drawRequests.length})
+          </TabsTrigger>
+          <TabsTrigger value="payments">
+            Payments ({payments.length})
+          </TabsTrigger>
+          <TabsTrigger value="documents">
+            Documents ({documents.length})
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="draw-requests" className="mt-4">
+          <DrawRequestsTab
+            drawRequests={drawRequests}
+            loanId={loan.id}
+          />
+        </TabsContent>
+
+        <TabsContent value="payments" className="mt-4">
+          <PaymentsTable payments={payments} />
+        </TabsContent>
+
+        <TabsContent value="documents" className="mt-4">
+          <DocumentsTable documents={documents} />
+        </TabsContent>
+      </Tabs>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Edit Loan Dialog
+// ---------------------------------------------------------------------------
+
+function EditLoanDialog({ loan }: { loan: LoanInfo }) {
+  const [open, setOpen] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const router = useRouter();
+  const { toast } = useToast();
+
+  const [form, setForm] = useState({
+    loan_type: loan.loan_type ?? "",
+    property_address: loan.property_address ?? "",
+    property_city: loan.property_city || "",
+    property_state: loan.property_state || "",
+    property_zip: loan.property_zip || "",
+    loan_amount: loan.loan_amount.toString(),
+    interest_rate: loan.interest_rate?.toString() ?? "",
+    term_months: loan.term_months?.toString() ?? "",
+    stage: loan.stage,
+    ltv: loan.ltv?.toString() || "",
+    appraised_value: loan.appraised_value?.toString() || "",
+    origination_date: loan.origination_date || "",
+    maturity_date: loan.maturity_date || "",
+    notes: loan.notes || "",
+  });
+
+  function updateField(field: string, value: string) {
+    setForm((prev) => ({ ...prev, [field]: value }));
+  }
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    setLoading(true);
+    try {
+      const supabase = createClient();
+      const { error } = await supabase
+        .from("loans")
+        .update({
+          loan_type: form.loan_type,
+          property_address: form.property_address,
+          property_city: form.property_city || null,
+          property_state: form.property_state || null,
+          property_zip: form.property_zip || null,
+          loan_amount: parseFloat(form.loan_amount),
+          interest_rate: parseFloat(form.interest_rate),
+          term_months: parseInt(form.term_months),
+          stage: form.stage,
+          stage_updated_at: new Date().toISOString(),
+          ltv: form.ltv ? parseFloat(form.ltv) : null,
+          appraised_value: form.appraised_value
+            ? parseFloat(form.appraised_value)
+            : null,
+          origination_date: form.origination_date || null,
+          maturity_date: form.maturity_date || null,
+          notes: form.notes || null,
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", loan.id);
+
+      if (error) throw error;
+
+      toast({ title: "Loan updated successfully" });
+      setOpen(false);
+      router.refresh();
+    } catch (err: any) {
+      toast({
+        title: "Error updating loan",
+        description: err.message,
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button variant="outline" className="gap-2">
+          <Pencil className="h-4 w-4" />
+          Edit Loan
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>Edit Loan {loan.loan_number}</DialogTitle>
+        </DialogHeader>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label>Loan Type</Label>
+              <Select
+                value={form.loan_type}
+                onValueChange={(v) => updateField("loan_type", v)}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {LOAN_TYPES.map((t) => (
+                    <SelectItem key={t.value} value={t.value}>
+                      {t.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>Stage</Label>
+              <Select
+                value={form.stage}
+                onValueChange={(v) => updateField("stage", v)}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {LOAN_STAGES.map((s) => (
+                    <SelectItem key={s} value={s}>
+                      {LOAN_STAGE_LABELS[s]}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label>Property Address</Label>
+            <Input
+              value={form.property_address}
+              onChange={(e) => updateField("property_address", e.target.value)}
+              required
+            />
+          </div>
+
+          <div className="grid grid-cols-3 gap-4">
+            <div className="space-y-2">
+              <Label>City</Label>
+              <Input
+                value={form.property_city}
+                onChange={(e) => updateField("property_city", e.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>State</Label>
+              <Input
+                value={form.property_state}
+                onChange={(e) => updateField("property_state", e.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>ZIP</Label>
+              <Input
+                value={form.property_zip}
+                onChange={(e) => updateField("property_zip", e.target.value)}
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-3 gap-4">
+            <div className="space-y-2">
+              <Label>Loan Amount ($)</Label>
+              <Input
+                type="number"
+                step="0.01"
+                value={form.loan_amount}
+                onChange={(e) => updateField("loan_amount", e.target.value)}
+                required
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Interest Rate (%)</Label>
+              <Input
+                type="number"
+                step="0.01"
+                value={form.interest_rate}
+                onChange={(e) => updateField("interest_rate", e.target.value)}
+                required
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Term (months)</Label>
+              <Input
+                type="number"
+                value={form.term_months}
+                onChange={(e) => updateField("term_months", e.target.value)}
+                required
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-3 gap-4">
+            <div className="space-y-2">
+              <Label>LTV (%)</Label>
+              <Input
+                type="number"
+                step="0.01"
+                value={form.ltv}
+                onChange={(e) => updateField("ltv", e.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Appraised Value ($)</Label>
+              <Input
+                type="number"
+                step="0.01"
+                value={form.appraised_value}
+                onChange={(e) =>
+                  updateField("appraised_value", e.target.value)
+                }
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Origination Date</Label>
+              <Input
+                type="date"
+                value={form.origination_date}
+                onChange={(e) =>
+                  updateField("origination_date", e.target.value)
+                }
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Maturity Date</Label>
+              <Input
+                type="date"
+                value={form.maturity_date}
+                onChange={(e) => updateField("maturity_date", e.target.value)}
+              />
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label>Notes</Label>
+            <Textarea
+              value={form.notes}
+              onChange={(e) => updateField("notes", e.target.value)}
+              rows={3}
+            />
+          </div>
+
+          <DialogFooter>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setOpen(false)}
+            >
+              Cancel
+            </Button>
+            <Button type="submit" disabled={loading}>
+              {loading ? "Saving..." : "Save Changes"}
+            </Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Draw Requests Tab (with approve/deny)
+// ---------------------------------------------------------------------------
+
+function DrawRequestsTab({
+  drawRequests,
+  loanId,
+}: {
+  drawRequests: DrawRequest[];
+  loanId: string;
+}) {
+  const router = useRouter();
+  const { toast } = useToast();
+  const [processing, setProcessing] = useState<string | null>(null);
+
+  async function handleReview(
+    drawId: string,
+    action: "approved" | "denied",
+    amountApproved?: number
+  ) {
+    setProcessing(drawId);
+    try {
+      const supabase = createClient();
+
+      const { error } = await supabase
+        .from("draw_requests")
+        .update({
+          status: action,
+          amount_approved: action === "approved" ? amountApproved : null,
+          reviewed_at: new Date().toISOString(),
+        })
+        .eq("id", drawId);
+
+      if (error) throw error;
+
+      toast({
+        title: `Draw request ${action}`,
+      });
+      router.refresh();
+    } catch (err: any) {
+      toast({
+        title: "Error reviewing draw request",
+        description: err.message,
+        variant: "destructive",
+      });
+    } finally {
+      setProcessing(null);
+    }
+  }
+
+  const columns: Column<DrawRequest>[] = [
+    {
+      key: "draw_number",
+      header: "Draw #",
+      cell: (row) => row.draw_number,
+    },
+    {
+      key: "amount_requested",
+      header: "Requested",
+      cell: (row) => formatCurrency(row.amount_requested),
+    },
+    {
+      key: "amount_approved",
+      header: "Approved",
+      cell: (row) => formatCurrency(row.amount_approved),
+    },
+    {
+      key: "description",
+      header: "Description",
+      cell: (row) => row.description || "—",
+    },
+    {
+      key: "submitted_at",
+      header: "Submitted",
+      cell: (row) => formatDate(row.submitted_at),
+    },
+    {
+      key: "status",
+      header: "Status",
+      cell: (row) => <StatusBadge status={row.status} />,
+    },
+    {
+      key: "actions",
+      header: "Actions",
+      cell: (row) => {
+        if (row.status !== "submitted" && row.status !== "under_review")
+          return null;
+        return (
+          <div className="flex gap-1">
+            <Button
+              size="sm"
+              variant="outline"
+              className="h-7 gap-1 text-green-700 hover:text-green-800"
+              disabled={processing === row.id}
+              onClick={(e) => {
+                e.stopPropagation();
+                handleReview(row.id, "approved", row.amount_requested);
+              }}
+            >
+              <CheckCircle2 className="h-3 w-3" />
+              Approve
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              className="h-7 gap-1 text-red-700 hover:text-red-800"
+              disabled={processing === row.id}
+              onClick={(e) => {
+                e.stopPropagation();
+                handleReview(row.id, "denied");
+              }}
+            >
+              <XCircle className="h-3 w-3" />
+              Deny
+            </Button>
+          </div>
+        );
+      },
+    },
+  ];
+
+  return (
+    <DataTable<DrawRequest>
+      columns={columns}
+      data={drawRequests}
+      emptyMessage="No draw requests for this loan."
+    />
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Record Payment Dialog
+// ---------------------------------------------------------------------------
+
+function RecordPaymentDialog({
+  loanId,
+  borrowerId,
+}: {
+  loanId: string;
+  borrowerId: string;
+}) {
+  const [open, setOpen] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const router = useRouter();
+  const { toast } = useToast();
+
+  const [amountDue, setAmountDue] = useState("");
+  const [amountPaid, setAmountPaid] = useState("");
+  const [principalAmount, setPrincipalAmount] = useState("");
+  const [interestAmount, setInterestAmount] = useState("");
+  const [dueDate, setDueDate] = useState("");
+  const [paidDate, setPaidDate] = useState("");
+  const [notes, setNotes] = useState("");
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!amountDue || !dueDate) return;
+
+    setLoading(true);
+    try {
+      const supabase = createClient();
+
+      // Get next payment number
+      const { data: existing } = await supabase
+        .from("loan_payments")
+        .select("payment_number")
+        .eq("loan_id", loanId)
+        .order("payment_number", { ascending: false })
+        .limit(1);
+
+      const nextPaymentNumber = (existing?.[0]?.payment_number ?? 0) + 1;
+
+      const { error } = await supabase.from("loan_payments").insert({
+        loan_id: loanId,
+        borrower_id: borrowerId,
+        payment_number: nextPaymentNumber,
+        amount_due: parseFloat(amountDue),
+        amount_paid: amountPaid ? parseFloat(amountPaid) : null,
+        principal_amount: principalAmount
+          ? parseFloat(principalAmount)
+          : null,
+        interest_amount: interestAmount ? parseFloat(interestAmount) : null,
+        due_date: dueDate,
+        paid_date: paidDate || null,
+        status: paidDate ? "paid" : "pending",
+        notes: notes || null,
+      });
+
+      if (error) throw error;
+
+      toast({ title: "Payment recorded successfully" });
+      setOpen(false);
+      resetForm();
+      router.refresh();
+    } catch (err: any) {
+      toast({
+        title: "Error recording payment",
+        description: err.message,
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  function resetForm() {
+    setAmountDue("");
+    setAmountPaid("");
+    setPrincipalAmount("");
+    setInterestAmount("");
+    setDueDate("");
+    setPaidDate("");
+    setNotes("");
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button variant="outline" className="gap-2">
+          <DollarSign className="h-4 w-4" />
+          Record Payment
+        </Button>
+      </DialogTrigger>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Record Payment</DialogTitle>
+        </DialogHeader>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label>Amount Due ($)</Label>
+              <Input
+                type="number"
+                step="0.01"
+                min="0"
+                value={amountDue}
+                onChange={(e) => setAmountDue(e.target.value)}
+                required
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Amount Paid ($)</Label>
+              <Input
+                type="number"
+                step="0.01"
+                min="0"
+                value={amountPaid}
+                onChange={(e) => setAmountPaid(e.target.value)}
+              />
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label>Principal ($)</Label>
+              <Input
+                type="number"
+                step="0.01"
+                min="0"
+                value={principalAmount}
+                onChange={(e) => setPrincipalAmount(e.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Interest ($)</Label>
+              <Input
+                type="number"
+                step="0.01"
+                min="0"
+                value={interestAmount}
+                onChange={(e) => setInterestAmount(e.target.value)}
+              />
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label>Due Date</Label>
+              <Input
+                type="date"
+                value={dueDate}
+                onChange={(e) => setDueDate(e.target.value)}
+                required
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Paid Date</Label>
+              <Input
+                type="date"
+                value={paidDate}
+                onChange={(e) => setPaidDate(e.target.value)}
+              />
+            </div>
+          </div>
+          <div className="space-y-2">
+            <Label>Notes (optional)</Label>
+            <Textarea
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+              rows={2}
+            />
+          </div>
+          <DialogFooter>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setOpen(false)}
+            >
+              Cancel
+            </Button>
+            <Button type="submit" disabled={loading}>
+              {loading ? "Saving..." : "Record Payment"}
+            </Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Upload Document Dialog
+// ---------------------------------------------------------------------------
+
+function UploadDocumentDialog({
+  loanId,
+  uploaderId,
+}: {
+  loanId: string;
+  uploaderId: string;
+}) {
+  const [open, setOpen] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [documentType, setDocumentType] = useState("");
+  const [displayName, setDisplayName] = useState("");
+  const [file, setFile] = useState<File | null>(null);
+  const router = useRouter();
+  const { toast } = useToast();
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!documentType || !file) return;
+
+    setLoading(true);
+    try {
+      const supabase = createClient();
+      const filePath = `loans/${loanId}/${Date.now()}_${file.name}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from("documents")
+        .upload(filePath, file);
+
+      if (uploadError) throw uploadError;
+
+      const { error: dbError } = await supabase.from("documents").insert({
+        owner_id: uploaderId,
+        uploaded_by: uploaderId,
+        loan_id: loanId,
+        document_type: documentType,
+        file_name: file.name,
+        file_path: filePath,
+        file_size: file.size,
+        mime_type: file.type,
+        description: displayName || null,
+        status: "pending",
+      });
+
+      if (dbError) throw dbError;
+
+      toast({ title: "Document uploaded successfully" });
+      setOpen(false);
+      setDocumentType("");
+      setDisplayName("");
+      setFile(null);
+      router.refresh();
+    } catch (err: any) {
+      toast({
+        title: "Error uploading document",
+        description: err.message,
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button variant="outline" className="gap-2">
+          <Upload className="h-4 w-4" />
+          Upload Document
+        </Button>
+      </DialogTrigger>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Upload Document</DialogTitle>
+        </DialogHeader>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="space-y-2">
+            <Label>Document Type</Label>
+            <Select value={documentType} onValueChange={setDocumentType}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select type" />
+              </SelectTrigger>
+              <SelectContent>
+                {DOCUMENT_TYPES.map((dt) => (
+                  <SelectItem key={dt.value} value={dt.value}>
+                    {dt.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-2">
+            <Label>Display Name (optional)</Label>
+            <Input
+              value={displayName}
+              onChange={(e) => setDisplayName(e.target.value)}
+              placeholder="e.g. Appraisal Report"
+            />
+          </div>
+          <div className="space-y-2">
+            <Label>File</Label>
+            <FileUpload
+              onFileSelect={setFile}
+              accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.png"
+            />
+          </div>
+          <DialogFooter>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setOpen(false)}
+            >
+              Cancel
+            </Button>
+            <Button type="submit" disabled={loading || !file}>
+              {loading ? "Uploading..." : "Upload"}
+            </Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Simple Payments Table
+// ---------------------------------------------------------------------------
+
+function PaymentsTable({ payments }: { payments: LoanPayment[] }) {
+  const columns: Column<LoanPayment>[] = [
+    {
+      key: "payment_number",
+      header: "Payment #",
+      cell: (row) => row.payment_number,
+    },
+    {
+      key: "amount_due",
+      header: "Due",
+      cell: (row) => formatCurrency(row.amount_due),
+    },
+    {
+      key: "amount_paid",
+      header: "Paid",
+      cell: (row) => formatCurrency(row.amount_paid),
+    },
+    {
+      key: "principal_amount",
+      header: "Principal",
+      cell: (row) => formatCurrency(row.principal_amount),
+    },
+    {
+      key: "interest_amount",
+      header: "Interest",
+      cell: (row) => formatCurrency(row.interest_amount),
+    },
+    {
+      key: "due_date",
+      header: "Due Date",
+      cell: (row) => formatDate(row.due_date),
+    },
+    {
+      key: "paid_date",
+      header: "Paid Date",
+      cell: (row) => formatDate(row.paid_date),
+    },
+    {
+      key: "status",
+      header: "Status",
+      cell: (row) => <StatusBadge status={row.status} />,
+    },
+  ];
+
+  return (
+    <DataTable<LoanPayment>
+      columns={columns}
+      data={payments}
+      emptyMessage="No payments for this loan."
+    />
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Simple Documents Table
+// ---------------------------------------------------------------------------
+
+function DocumentsTable({ documents }: { documents: Document[] }) {
+  const columns: Column<Document>[] = [
+    {
+      key: "file_name",
+      header: "File Name",
+      cell: (row) => (
+        <span className="font-medium">{row.description || row.file_name}</span>
+      ),
+    },
+    {
+      key: "document_type",
+      header: "Type",
+      cell: (row) => (
+        <span className="capitalize">
+          {row.document_type.replace(/_/g, " ")}
+        </span>
+      ),
+    },
+    {
+      key: "created_at",
+      header: "Uploaded",
+      cell: (row) => formatDate(row.created_at),
+    },
+    {
+      key: "status",
+      header: "Status",
+      cell: (row) => <StatusBadge status={row.status ?? "pending"} />,
+    },
+  ];
+
+  return (
+    <DataTable<Document>
+      columns={columns}
+      data={documents}
+      emptyMessage="No documents for this loan."
+    />
+  );
+}
