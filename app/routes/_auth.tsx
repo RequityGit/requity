@@ -1,7 +1,7 @@
 import { Outlet } from "@remix-run/react";
 
 export function loader() {
-  const supabaseUrl = process.env.SUPABASE_DATABASE_URL;
+  const supabaseUrl = process.env.SUPABASE_URL;
   const supabaseAnonKey = process.env.SUPABASE_ANON_KEY;
 
   if (!supabaseUrl || !supabaseAnonKey) {

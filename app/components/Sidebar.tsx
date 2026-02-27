@@ -20,8 +20,10 @@ export default function Sidebar({ isOpen, setIsOpen, navItems }: Props) {
     <>
       {isOpen && (
         <div
+          role="presentation"
           className="fixed inset-0 z-10 bg-black/30 md:hidden"
           onClick={() => setIsOpen(false)}
+          onKeyDown={(e) => { if (e.key === "Escape") setIsOpen(false); }}
         />
       )}
       <aside
@@ -34,10 +36,10 @@ export default function Sidebar({ isOpen, setIsOpen, navItems }: Props) {
             <div className="flex flex-col">
               <span className="text-lg tracking-tight">
                 <span className="font-bold text-white">Requity</span>{" "}
-                <span className="font-light text-white/80">Lending</span>
+                <span className="font-light text-white/80">Group</span>
               </span>
               <span className="text-[9px] text-white/50 tracking-widest uppercase -mt-0.5">
-                A Requity Group Company
+                Investor Portal
               </span>
             </div>
             <button
