@@ -1,47 +1,38 @@
-import type { MetaFunction } from "@remix-run/node";
+import type { MetaFunction, LoaderFunctionArgs } from "@remix-run/node";
 import { redirect } from "@remix-run/node";
-
-import Guide from "~/components/Guide";
-import Logo from "~/components/Logo";
+import { getSession } from "~/session.server";
 import { getSupabaseClient } from "~/utils/getSupabaseClient";
 
-export async function loader() {
-  let isSupabaseAvailable = true;
+export const meta: MetaFunction = () => [
+  { title: "Requity Lending Portal" },
+  { name: "description", content: "Requity Lending Borrower Portal" },
+];
 
-  try {
-    getSupabaseClient();
-  } catch (error) {
-    isSupabaseAvailable = false;
+export async function loader({ request }: LoaderFunctionArgs) {
+  const session = await getSession(request.headers.get("Cookie"));
+  const token = session.get("__session");
+
+  if (token) {
+    try {
+      const supabase = getSupabaseClient(token);
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("role")
+          .eq("id", user.id)
+          .single();
+        if (profile?.role === "admin") return redirect("/admin");
+        return redirect("/dashboard");
+      }
+    } catch {
+      // Fall through to login
+    }
   }
 
-  if (isSupabaseAvailable) {
-    return redirect("/login");
-  }
-
-  return Response.json({});
+  return redirect("/login");
 }
 
-export const meta: MetaFunction = () => {
-  return [
-    { title: "New Remix App" },
-    { name: "description", content: "Welcome to Remix!" },
-  ];
-};
-
 export default function Index() {
-  return (
-    <>
-      <nav className="flex justify-center w-full px-4 pt-8">
-        <Logo />
-      </nav>
-      <main className="grow">
-        <Guide />
-      </main>
-      <footer className="w-full px-4 pb-8 mx-auto max-w-7xl">
-        <p className="text-sm text-center">
-          &copy; {new Date().getFullYear()} Netlify. All rights reserved.
-        </p>
-      </footer>
-    </>
-  );
+  return null;
 }

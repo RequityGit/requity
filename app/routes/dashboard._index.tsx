@@ -1,163 +1,77 @@
-import type { ActionFunctionArgs, MetaFunction } from "@remix-run/node";
-import { Link, useFetcher, useLoaderData } from "@remix-run/react";
+import type { LoaderFunctionArgs, MetaFunction } from "@remix-run/node";
+import { Link, useLoaderData } from "@remix-run/react";
 
-import Button from "~/components/Button";
-import { GlobalErrorBoundary } from "~/components/GlobalErrorBoundary";
-import DeleteIcon from "~/components/icons/Delete";
-import EditIcon from "~/components/icons/Edit";
-import ViewIcon from "~/components/icons/View";
-import { formatDate } from "~/utils/formatDate";
-import { getInitials } from "~/utils/getInitials";
+import StatusBadge from "~/components/StatusBadge";
+import { requireAuth } from "~/utils/auth.server";
 import { getSupabaseClient } from "~/utils/getSupabaseClient";
+import { formatCurrency } from "~/utils/format";
+import type { Loan } from "~/types/database";
 
-type Member = {
-  id: number;
-  created_at: string;
-  name: string;
-  email: string;
-  location: string;
-  avatar_url?: string;
-};
+export const meta: MetaFunction = () => [
+  { title: "My Loans | Requity Lending Portal" },
+];
 
-export const meta: MetaFunction = () => {
-  return [
-    {
-      title: "Member List | Remix Dashboard",
-    },
-  ];
-};
+export async function loader({ request }: LoaderFunctionArgs) {
+  const { token } = await requireAuth(request);
+  const supabase = getSupabaseClient(token);
 
-export async function action({ request }: ActionFunctionArgs) {
-  const formData = await request.formData();
-  const memberId = formData.get("memberId");
-
-  const supabase = getSupabaseClient();
-  const { error } = await supabase.from("members").delete().eq("id", memberId);
-
-  if (error) {
-    throw new Response(error.message, { status: 500 });
-  }
-
-  return Response.json({ message: "Member deleted successfully" });
-}
-
-export async function loader() {
-  const supabase = getSupabaseClient();
-  const { data: members, error } = await supabase
-    .from("members")
+  const { data: loans, error } = await supabase
+    .from("loans")
     .select("*")
-    .order("created_at", { ascending: true });
+    .order("created_at", { ascending: false });
 
   if (error) {
     throw new Response(error.message, { status: 500 });
   }
 
-  return Response.json({ members });
+  return Response.json({ loans: loans || [] });
 }
 
-export default function MemberList() {
-  const { members } = useLoaderData<{ members: Member[] }>();
-  const deleteMemberFetcher = useFetcher();
+export default function BorrowerDashboard() {
+  const { loans } = useLoaderData<{ loans: Loan[] }>();
 
   return (
-    <>
-      <div className="flex justify-between gap-2 mb-8">
-        <h1 className="text-2xl font-semibold text-slate-900 lg:text-3xl">
-          Member List
-        </h1>
-        <Button to="/dashboard/new">Add Member</Button>
-      </div>
-      <div className="pb-10 overflow-x-auto overflow-y-visible bg-white shadow-md rounded-xl md:pb-12">
-        <table className="w-full text-sm bg-white">
-          <thead className="bg-slate-50">
-            <tr>
-              <th className="p-6 font-medium text-left text-slate-900">
-                {members.length} {members.length === 1 ? "member" : "members"}
-              </th>
-              <th className="p-6 font-medium text-left text-slate-900">
-                Location
-              </th>
-              <th className="p-6 font-medium text-left text-slate-900">
-                Created
-              </th>
-              <th className="p-6 font-medium text-left text-slate-900"></th>
-            </tr>
-          </thead>
-          <tbody>
-            {members.map((member) => {
-              return (
-                <tr
-                  key={member.id}
-                  className="transition border-b border-slate-200 hover:border-cyan-300"
-                >
-                  <td className="p-6">
-                    <div className="flex items-center gap-4">
-                      {member.avatar_url ? (
-                        <img
-                          className="object-cover w-12 h-12 rounded-full"
-                          src={member.avatar_url}
-                          alt={`${member.name} avatar`}
-                        />
-                      ) : (
-                        <div className="flex items-center justify-center w-12 h-12 font-medium tracking-wide text-white rounded-full bg-cyan-500">
-                          {getInitials(member.name)}
-                        </div>
-                      )}
-                      <div className="space-y-0.5 overflow-hidden">
-                        <p className="font-semibold">{member.name}</p>
-                        <p className="truncate">{member.email}</p>
-                      </div>
-                    </div>
-                  </td>
-                  <td className="p-6">{member.location}</td>
-                  <td className="p-6 whitespace-nowrap">
-                    {formatDate(member.created_at)}
-                  </td>
-                  <td className="p-6">
-                    <div className="flex justify-end gap-2">
-                      <Link
-                        to={`/dashboard/${member.id}`}
-                        className="flex items-center justify-center w-8 h-8 transition rounded-md cursor-pointer text-slate-300 hover:text-cyan-600 hover:bg-cyan-50"
-                        aria-label="View details"
-                      >
-                        <ViewIcon />
-                      </Link>
-                      <Link
-                        to={`/dashboard/${member.id}/edit`}
-                        className="flex items-center justify-center w-8 h-8 transition rounded-md cursor-pointer text-slate-300 hover:text-cyan-600 hover:bg-cyan-50"
-                        aria-label="Edit"
-                      >
-                        <EditIcon />
-                      </Link>
-                      <deleteMemberFetcher.Form
-                        method="POST"
-                        action="/dashboard?index"
-                      >
-                        <input
-                          type="hidden"
-                          name="memberId"
-                          value={member.id}
-                        />
-                        <button
-                          type="submit"
-                          className="flex items-center justify-center w-8 h-8 transition rounded-md cursor-pointer text-slate-300 hover:text-cyan-600 hover:bg-cyan-50"
-                          aria-label="Delete"
-                        >
-                          <DeleteIcon />
-                        </button>
-                      </deleteMemberFetcher.Form>
-                    </div>
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
-      </div>
-    </>
-  );
-}
+    <div>
+      <h1 className="text-2xl font-bold text-navy mb-6">My Loans</h1>
 
-export function ErrorBoundary() {
-  return <GlobalErrorBoundary />;
+      {loans.length === 0 ? (
+        <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-12 text-center">
+          <svg className="w-12 h-12 mx-auto text-muted/40 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+          </svg>
+          <p className="text-muted">No active loans yet.</p>
+          <p className="text-sm text-muted/70 mt-1">Your loans will appear here once they&apos;re created by the Requity team.</p>
+        </div>
+      ) : (
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {loans.map((loan) => (
+            <Link
+              key={loan.id}
+              to={`/dashboard/loan/${loan.id}`}
+              className="bg-white rounded-xl shadow-sm border border-slate-200 p-5 hover:shadow-md hover:border-accent/30 transition group"
+            >
+              <div className="flex items-start justify-between mb-3">
+                <StatusBadge status={loan.status} />
+                <span className="text-xs text-muted">{loan.loan_type}</span>
+              </div>
+              <h3 className="font-semibold text-navy group-hover:text-accent transition text-sm mb-1">
+                {loan.property_address || loan.loan_name}
+              </h3>
+              <p className="text-lg font-bold text-navy">
+                {formatCurrency(loan.loan_amount)}
+              </p>
+              <div className="mt-3 pt-3 border-t border-slate-100 flex items-center justify-between">
+                <span className="text-xs text-muted">
+                  Processor: {loan.processor_name || "TBD"}
+                </span>
+                <svg className="w-4 h-4 text-muted group-hover:text-accent transition" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                </svg>
+              </div>
+            </Link>
+          ))}
+        </div>
+      )}
+    </div>
+  );
 }

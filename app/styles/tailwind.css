@@ -1,6 +1,20 @@
 @import "tailwindcss";
 @plugin '@tailwindcss/typography';
 
+@theme {
+  --color-navy: #0B1B3D;
+  --color-navy-light: #1E3A5F;
+  --color-accent: #2563EB;
+  --color-accent-light: #3B82F6;
+  --color-success: #10B981;
+  --color-warning: #F59E0B;
+  --color-error: #EF4444;
+  --color-surface: #FFFFFF;
+  --color-bg: #F8FAFC;
+  --color-text: #0F172A;
+  --color-muted: #64748B;
+}
+
 @layer components {
   .prose img {
     @apply border rounded-md border-slate-200;

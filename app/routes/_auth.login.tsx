@@ -4,21 +4,14 @@ import type {
   MetaFunction,
 } from "@remix-run/node";
 import { redirect } from "@remix-run/node";
-import { Form, Link, useActionData, useNavigation } from "@remix-run/react";
+import { Form, useActionData, useNavigation } from "@remix-run/react";
 
 import { commitSession, getSession } from "~/session.server";
-
-import Button from "~/components/Button";
-import TextField from "~/components/TextField";
 import { getSupabaseClient } from "~/utils/getSupabaseClient";
 
-export const meta: MetaFunction = () => {
-  return [
-    {
-      title: "Login | Remix Dashboard",
-    },
-  ];
-};
+export const meta: MetaFunction = () => [
+  { title: "Log In | Requity Lending Portal" },
+];
 
 export async function action({ request }: ActionFunctionArgs) {
   const formData = await request.formData();
@@ -27,7 +20,7 @@ export async function action({ request }: ActionFunctionArgs) {
 
   if (typeof email !== "string" || typeof password !== "string") {
     return Response.json(
-      { error: "Email and password must be provided." },
+      { error: "Email and password are required." },
       { status: 400 }
     );
   }
@@ -42,10 +35,19 @@ export async function action({ request }: ActionFunctionArgs) {
     return Response.json({ error: error.message }, { status: 400 });
   }
 
+  // Get user profile to determine redirect
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("role")
+    .eq("id", data.user.id)
+    .single();
+
   const session = await getSession(request.headers.get("Cookie"));
   session.set("__session", data.session.access_token);
 
-  return redirect("/dashboard", {
+  const redirectTo = profile?.role === "admin" ? "/admin" : "/dashboard";
+
+  return redirect(redirectTo, {
     headers: {
       "Set-Cookie": await commitSession(session),
     },
@@ -66,70 +68,72 @@ export async function loader({ request }: LoaderFunctionArgs) {
 export default function LogIn() {
   const actionData = useActionData<{ error?: string }>();
   const navigation = useNavigation();
-
   const isSubmitting = navigation.state === "submitting";
 
   return (
-    <div className="w-full max-w-2xl px-8 py-10 space-y-8 bg-white shadow-md rounded-xl lg:space-y-10 lg:px-10 lg:py-12 ">
-      <div className="space-y-3">
-        <h1 className="text-2xl font-semibold text-slate-900 sm:text-3xl lg:text-4xl">
-          Log In to Remix Dashboard
+    <div className="w-full max-w-md px-8 py-10 bg-white shadow-lg rounded-2xl">
+      <div className="mb-8 text-center">
+        <h1 className="text-2xl text-navy tracking-tight">
+          <span className="font-bold">Requity</span>{" "}
+          <span className="font-light">Lending</span>
         </h1>
-        <div className="flex gap-3 p-3 rounded-md bg-cyan-50">
-          <div className="flex items-center justify-center w-5 h-5 font-serif italic text-white rounded-full bg-cyan-500">
-            i
-          </div>
-          <div className="text-xs">
-            <p>
-              Email: <span className="font-medium">demo@example.com</span>
-            </p>
-            <p>
-              Password: <span className="font-medium">demo123</span>
-            </p>
-          </div>
-        </div>
+        <p className="text-[10px] text-muted tracking-widest uppercase mt-0.5">
+          A Requity Group Company
+        </p>
+        <p className="mt-4 text-sm text-muted">
+          Sign in to your borrower portal
+        </p>
       </div>
+
       <Form method="POST">
         {actionData?.error && (
-          <p className="p-3 mb-4 text-sm rounded-md bg-rose-50 text-rose-700">
+          <div className="p-3 mb-4 text-sm rounded-lg bg-red-50 text-error border border-red-100">
             {actionData.error}
-          </p>
+          </div>
         )}
         <fieldset
-          className="w-full space-y-4 lg:space-y-6 disabled:opacity-70"
+          className="space-y-5 disabled:opacity-70"
           disabled={isSubmitting}
         >
-          <TextField
-            id="email"
-            name="email"
-            label="Email address"
-            required
-            type="email"
-            placeholder="Email address"
-          />
-          <TextField
-            id="password"
-            name="password"
-            label="Password"
-            required
-            type="password"
-            placeholder="password"
-          />
-          <Link
-            to="/reset-password"
-            className="block text-sm tracking-wide underline text-cyan-600"
+          <div>
+            <label
+              htmlFor="email"
+              className="block mb-1.5 text-sm font-medium text-navy"
+            >
+              Email
+            </label>
+            <input
+              id="email"
+              name="email"
+              type="email"
+              required
+              placeholder="you@example.com"
+              className="block w-full rounded-lg border border-slate-200 px-4 py-3 text-sm text-text transition placeholder:text-muted/50 focus:border-accent focus:ring-2 focus:ring-accent/20 focus:outline-none"
+            />
+          </div>
+          <div>
+            <label
+              htmlFor="password"
+              className="block mb-1.5 text-sm font-medium text-navy"
+            >
+              Password
+            </label>
+            <input
+              id="password"
+              name="password"
+              type="password"
+              required
+              placeholder="Enter your password"
+              className="block w-full rounded-lg border border-slate-200 px-4 py-3 text-sm text-text transition placeholder:text-muted/50 focus:border-accent focus:ring-2 focus:ring-accent/20 focus:outline-none"
+            />
+          </div>
+          <button
+            type="submit"
+            disabled={isSubmitting}
+            className="w-full py-3 px-4 bg-navy text-white text-sm font-medium rounded-lg hover:bg-navy-light transition disabled:opacity-50 cursor-pointer"
           >
-            Forgot password?
-          </Link>
-          <Button type="submit" className="w-full" loading={isSubmitting}>
-            Login
-          </Button>
-          <p className="text-sm text-center">
-            New on Remix Dashboard?{" "}
-            <Link className="underline text-cyan-600" to="/signup">
-              Create an account
-            </Link>
-          </p>
+            {isSubmitting ? "Signing in..." : "Sign In"}
+          </button>
         </fieldset>
       </Form>
     </div>
