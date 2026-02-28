@@ -14,7 +14,6 @@ import {
   CreditCard,
   Home,
   ClipboardList,
-  Settings,
   ChevronLeft,
   ChevronRight,
   Landmark,
@@ -40,7 +39,6 @@ const investorNav: NavItem[] = [
     icon: PiggyBank,
   },
   { label: "Documents", href: "/investor/documents", icon: FileText },
-  { label: "Account", href: "/investor/account", icon: Settings },
 ];
 
 const borrowerNav: NavItem[] = [
@@ -48,7 +46,6 @@ const borrowerNav: NavItem[] = [
   { label: "Draw Requests", href: "/borrower/draws", icon: Hammer },
   { label: "Payments", href: "/borrower/payments", icon: CreditCard },
   { label: "Documents", href: "/borrower/documents", icon: FileText },
-  { label: "Account", href: "/borrower/account", icon: Settings },
 ];
 
 const adminNav: NavItem[] = [
@@ -68,7 +65,6 @@ const adminNav: NavItem[] = [
     href: "/admin/distributions",
     icon: Receipt,
   },
-  { label: "Account", href: "/admin/account", icon: Settings },
 ];
 
 function getNavItems(role: string): NavItem[] {
