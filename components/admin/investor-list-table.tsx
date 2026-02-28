@@ -14,7 +14,7 @@ interface InvestorRow {
   last_name: string;
   email: string;
   phone: string;
-  accreditation_status: string;
+  accreditation_status: string | null;
   totalCommitted: number;
   totalFunded: number;
   fundCount: number;
@@ -77,7 +77,7 @@ export function InvestorListTable({ data }: InvestorListTableProps) {
     {
       key: "accreditation_status",
       header: "Accreditation",
-      cell: (row) => <StatusBadge status={row.accreditation_status} />,
+      cell: (row) => <StatusBadge status={row.accreditation_status ?? "pending"} />,
     },
   ];
 

@@ -64,6 +64,7 @@ export async function addInvestorAction(input: AddInvestorInput) {
       zip: input.zip || null,
       country: input.country || "US",
       notes: input.notes || null,
+      accreditation_status: "pending",
     };
 
     const { data, error } = await admin

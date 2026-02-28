@@ -248,7 +248,7 @@ export default async function AdminInvestorDetailPage({ params }: PageProps) {
               <Shield className="h-4 w-4 text-muted-foreground" />
               <div>
                 <p className="text-xs text-muted-foreground">Accreditation</p>
-                <StatusBadge status={investor.accreditation_status} />
+                <StatusBadge status={investor.accreditation_status ?? "pending"} />
               </div>
             </div>
           </div>
