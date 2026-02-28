@@ -188,8 +188,8 @@ export function CreateLoanDialog({
       // 2. Log the loan creation in activity log
       await supabase.from("loan_activity_log").insert({
         loan_id: newLoan.id,
-        performed_by: currentUserId,
-        action: "loan_created",
+        user_id: currentUserId,
+        activity_type: "loan_created",
         description: `Loan created for ${form.property_address || "new property"}`,
       });
 
