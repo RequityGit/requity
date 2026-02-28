@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -27,6 +27,20 @@ import { PlusCircle, Loader2 } from "lucide-react";
 
 const STATUSES = ["Planning", "Active", "On Hold", "Completed", "Cancelled"];
 const PRIORITIES = ["Critical", "High", "Medium", "Low"];
+const CATEGORIES = [
+  "Engineering",
+  "Marketing",
+  "Finance",
+  "Operations",
+  "Compliance",
+  "Legal",
+  "Sales",
+  "HR",
+  "Underwriting",
+  "Servicing",
+  "Capital Markets",
+  "IT",
+];
 
 const INITIAL_FORM = {
   project_name: "",
@@ -42,8 +56,27 @@ export function AddProjectDialog() {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [form, setForm] = useState(INITIAL_FORM);
+  const [teamMembers, setTeamMembers] = useState<{ id: string; full_name: string }[]>([]);
   const router = useRouter();
   const { toast } = useToast();
+
+  useEffect(() => {
+    async function fetchTeamMembers() {
+      const supabase = createClient();
+      const { data } = await supabase
+        .from("profiles")
+        .select("id, full_name")
+        .eq("role", "admin")
+        .order("full_name");
+      setTeamMembers(
+        (data ?? []).map((t: { id: string; full_name: string | null }) => ({
+          id: t.id,
+          full_name: t.full_name ?? "Unknown",
+        }))
+      );
+    }
+    fetchTeamMembers();
+  }, []);
 
   function resetForm() {
     setForm(INITIAL_FORM);
@@ -169,22 +202,46 @@ export function AddProjectDialog() {
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="owner">Owner</Label>
-              <Input
-                id="owner"
-                placeholder="Project owner"
-                value={form.owner}
-                onChange={(e) => setForm({ ...form, owner: e.target.value })}
-              />
+              <Select
+                value={form.owner || "none"}
+                onValueChange={(v) =>
+                  setForm({ ...form, owner: v === "none" ? "" : v })
+                }
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select owner" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">No owner</SelectItem>
+                  {teamMembers.map((m) => (
+                    <SelectItem key={m.id} value={m.full_name}>
+                      {m.full_name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
 
             <div className="space-y-2">
               <Label htmlFor="category">Category</Label>
-              <Input
-                id="category"
-                placeholder="e.g. Engineering"
-                value={form.category}
-                onChange={(e) => setForm({ ...form, category: e.target.value })}
-              />
+              <Select
+                value={form.category || "none"}
+                onValueChange={(v) =>
+                  setForm({ ...form, category: v === "none" ? "" : v })
+                }
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select category" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">No category</SelectItem>
+                  {CATEGORIES.map((c) => (
+                    <SelectItem key={c} value={c}>
+                      {c}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
           </div>
 
