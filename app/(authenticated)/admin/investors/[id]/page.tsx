@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { redirect, notFound } from "next/navigation";
 import { PageHeader } from "@/components/shared/page-header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -24,7 +25,10 @@ export default async function AdminInvestorDetailPage({ params }: PageProps) {
 
   const { id } = await params;
 
-  const { data: investor } = await supabase
+  // Use admin client to ensure we can always read the investor profile,
+  // bypassing any RLS timing issues for newly created investors.
+  const adminSupabase = createAdminClient();
+  const { data: investor } = await adminSupabase
     .from("profiles")
     .select("*")
     .eq("id", id)
