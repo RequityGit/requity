@@ -1,42 +1,27 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { updateSession } from "@/lib/supabase/middleware";
 
-// Role-based route prefixes
-const ROLE_ROUTES: Record<string, string> = {
-  admin: "/admin",
-  borrower: "/borrower",
-  investor: "/investor",
-};
-
-// Default dashboards for each role
-const ROLE_DASHBOARDS: Record<string, string> = {
-  admin: "/admin/dashboard",
-  borrower: "/borrower/dashboard",
-  investor: "/investor/dashboard",
-};
-
-// Routes that don't require authentication
 const PUBLIC_ROUTES = ["/login", "/auth/callback", "/auth/confirm"];
+
+const ROLE_ROUTE_ACCESS: Record<string, string[]> = {
+  "/admin": ["super_admin", "admin"],
+  "/borrower": ["borrower"],
+  "/investor": ["investor"],
+};
 
 export async function middleware(request: NextRequest) {
   const { supabase, user, supabaseResponse } = await updateSession(request);
   const { pathname } = request.nextUrl;
 
-  // If Supabase is not configured, let requests through
   if (!supabase) {
     return supabaseResponse;
   }
 
-  // -----------------------------------------------------------------------
-  // Check if the current route is public
-  // -----------------------------------------------------------------------
   const isPublicRoute = PUBLIC_ROUTES.some((route) =>
     pathname.startsWith(route)
   );
 
-  // -----------------------------------------------------------------------
-  // Unauthenticated user trying to access a protected route → /login
-  // -----------------------------------------------------------------------
+  // Unauthenticated → login
   if (!user && !isPublicRoute) {
     const url = request.nextUrl.clone();
     url.pathname = "/login";
@@ -44,50 +29,35 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
-  // -----------------------------------------------------------------------
-  // Authenticated user on a public route (e.g. /login) → redirect to dashboard
-  // -----------------------------------------------------------------------
+  // Authenticated on public route → portal hub
   if (user && isPublicRoute) {
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("role")
-      .eq("id", user.id)
-      .single();
-
-    if (profile?.role) {
-      const dashboardPath =
-        ROLE_DASHBOARDS[profile.role] || "/borrower/dashboard";
-      const url = request.nextUrl.clone();
-      url.pathname = dashboardPath;
-      return NextResponse.redirect(url);
-    }
+    const url = request.nextUrl.clone();
+    url.pathname = "/";
+    return NextResponse.redirect(url);
   }
 
-  // -----------------------------------------------------------------------
-  // Authenticated user accessing a role-restricted route they don't own
-  // -----------------------------------------------------------------------
+  // Authenticated on role-restricted route — check user_roles
   if (user) {
-    const isRoleRoute = Object.values(ROLE_ROUTES).some((prefix) =>
+    const matchedPrefix = Object.keys(ROLE_ROUTE_ACCESS).find((prefix) =>
       pathname.startsWith(prefix)
     );
 
-    if (isRoleRoute) {
-      const { data: profile } = await supabase
-        .from("profiles")
+    if (matchedPrefix) {
+      const allowedRoles = ROLE_ROUTE_ACCESS[matchedPrefix];
+
+      const { data: userRoles } = await (supabase as any)
+        .from("user_roles")
         .select("role")
-        .eq("id", user.id)
-        .single();
+        .eq("user_id", user.id)
+        .eq("is_active", true);
 
-      if (profile?.role) {
-        const allowedPrefix = ROLE_ROUTES[profile.role];
+      const roles = (userRoles || []).map((r: { role: string }) => r.role);
+      const hasAccess = roles.some((role: string) => allowedRoles.includes(role));
 
-        // User is trying to access a route outside their role
-        if (allowedPrefix && !pathname.startsWith(allowedPrefix)) {
-          const url = request.nextUrl.clone();
-          url.pathname =
-            ROLE_DASHBOARDS[profile.role] || "/borrower/dashboard";
-          return NextResponse.redirect(url);
-        }
+      if (!hasAccess) {
+        const url = request.nextUrl.clone();
+        url.pathname = "/";
+        return NextResponse.redirect(url);
       }
     }
   }
@@ -97,13 +67,6 @@ export async function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
-    /*
-     * Match all request paths except for:
-     * - _next/static (static files)
-     * - _next/image (image optimization files)
-     * - favicon.ico (favicon file)
-     * - public folder assets (images, svgs, etc.)
-     */
     "/((?!_next/static|_next/image|favicon\\.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
   ],
 };

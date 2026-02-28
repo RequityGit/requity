@@ -248,10 +248,10 @@ export function ConditionTemplateEditor({
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h3 className="text-lg font-semibold text-[#1a2b4a]">
+          <h3 className="text-lg font-semibold text-surface-white">
             Condition Templates
           </h3>
-          <p className="text-sm text-muted-foreground">
+          <p className="text-sm text-surface-muted">
             Templates auto-populate conditions when a new loan is created. The
             default template for each loan type is used automatically.
           </p>
@@ -264,7 +264,7 @@ export function ConditionTemplateEditor({
 
       {Object.entries(groupedTemplates).map(([loanType, typeTemplates]) => (
         <div key={loanType}>
-          <h4 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-3">
+          <h4 className="text-sm font-semibold text-surface-muted uppercase tracking-wide mb-3">
             {loanType}
           </h4>
           <div className="space-y-3">
@@ -288,9 +288,9 @@ export function ConditionTemplateEditor({
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
                         {isExpanded ? (
-                          <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                          <ChevronDown className="h-4 w-4 text-surface-muted" />
                         ) : (
-                          <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                          <ChevronRight className="h-4 w-4 text-surface-muted" />
                         )}
                         <CardTitle className="text-sm">
                           {template.name}
@@ -304,7 +304,7 @@ export function ConditionTemplateEditor({
                         <Badge variant="secondary" className="text-[10px]">
                           {template.items.length} conditions
                         </Badge>
-                        <span className="text-xs text-muted-foreground">
+                        <span className="text-xs text-surface-muted">
                           ({ptaCount} PTA, {ptfCount} PTF)
                         </span>
                       </div>
@@ -340,7 +340,7 @@ export function ConditionTemplateEditor({
                         <Button
                           size="sm"
                           variant="ghost"
-                          className="h-7 text-xs text-red-600 hover:text-red-700 gap-1"
+                          className="h-7 text-xs text-status-danger hover:text-red-700 gap-1"
                           onClick={() => handleDeleteTemplate(template.id)}
                           title="Delete"
                         >
@@ -349,7 +349,7 @@ export function ConditionTemplateEditor({
                       </div>
                     </div>
                     {template.description && (
-                      <p className="text-xs text-muted-foreground ml-6">
+                      <p className="text-xs text-surface-muted ml-6">
                         {template.description}
                       </p>
                     )}
@@ -405,7 +405,7 @@ export function ConditionTemplateEditor({
 
       {templates.length === 0 && (
         <Card>
-          <CardContent className="py-8 text-center text-muted-foreground">
+          <CardContent className="py-8 text-center text-surface-muted">
             No condition templates yet. Create one to get started.
           </CardContent>
         </Card>
@@ -432,8 +432,8 @@ function TemplateItemRow({
       ?.label ?? item.responsible_party;
 
   return (
-    <div className="flex items-center gap-2 py-1.5 px-2 rounded hover:bg-slate-50 group">
-      <GripVertical className="h-3.5 w-3.5 text-muted-foreground/30" />
+    <div className="flex items-center gap-2 py-1.5 px-2 rounded hover:bg-navy-light group">
+      <GripVertical className="h-3.5 w-3.5 text-surface-muted/30" />
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2">
           <span className="text-sm font-medium">{item.name}</span>
@@ -449,7 +449,7 @@ function TemplateItemRow({
             </Badge>
           )}
         </div>
-        <div className="flex items-center gap-3 text-[11px] text-muted-foreground">
+        <div className="flex items-center gap-3 text-[11px] text-surface-muted">
           <span>{partyLabel}</span>
           {item.due_date_offset_days && (
             <span>Due: +{item.due_date_offset_days} days</span>

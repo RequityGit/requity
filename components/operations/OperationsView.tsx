@@ -261,7 +261,7 @@ export function OperationsView({ projects, tasks }: OperationsViewProps) {
                 variant="ghost"
                 size="sm"
                 onClick={clearFilters}
-                className="gap-1 text-muted-foreground"
+                className="gap-1 text-surface-muted"
               >
                 <X className="h-3 w-3" />
                 Clear filters
@@ -271,7 +271,7 @@ export function OperationsView({ projects, tasks }: OperationsViewProps) {
 
           {/* Project Cards */}
           {filteredProjects.length === 0 ? (
-            <div className="rounded-md border bg-white p-8 text-center text-muted-foreground">
+            <div className="rounded-md border bg-navy-mid p-8 text-center text-surface-muted">
               No projects found.
             </div>
           ) : (
@@ -322,7 +322,7 @@ export function OperationsView({ projects, tasks }: OperationsViewProps) {
                   variant="ghost"
                   size="sm"
                   onClick={clearFilters}
-                  className="gap-1 text-muted-foreground"
+                  className="gap-1 text-surface-muted"
                 >
                   <X className="h-3 w-3" />
                   Clear filters
@@ -330,14 +330,14 @@ export function OperationsView({ projects, tasks }: OperationsViewProps) {
               )}
             </div>
 
-            <div className="flex items-center rounded-md border bg-white p-0.5">
+            <div className="flex items-center rounded-md border bg-navy-mid p-0.5">
               <button
                 type="button"
                 onClick={() => setTaskView("list")}
                 className={`flex items-center gap-1.5 rounded px-3 py-1.5 text-sm font-medium transition-colors ${
                   taskView === "list"
-                    ? "bg-slate-100 text-foreground"
-                    : "text-muted-foreground hover:text-foreground"
+                    ? "bg-navy-mid text-foreground"
+                    : "text-surface-muted hover:text-foreground"
                 }`}
               >
                 <TableIcon className="h-4 w-4" />
@@ -348,8 +348,8 @@ export function OperationsView({ projects, tasks }: OperationsViewProps) {
                 onClick={() => setTaskView("board")}
                 className={`flex items-center gap-1.5 rounded px-3 py-1.5 text-sm font-medium transition-colors ${
                   taskView === "board"
-                    ? "bg-slate-100 text-foreground"
-                    : "text-muted-foreground hover:text-foreground"
+                    ? "bg-navy-mid text-foreground"
+                    : "text-surface-muted hover:text-foreground"
                 }`}
               >
                 <LayoutGrid className="h-4 w-4" />

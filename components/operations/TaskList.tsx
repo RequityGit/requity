@@ -25,8 +25,8 @@ interface TaskListProps {
 export function TaskList({ tasks, projectNames, onToggleTask }: TaskListProps) {
   if (tasks.length === 0) {
     return (
-      <div className="rounded-md border bg-white">
-        <div className="h-24 flex items-center justify-center text-muted-foreground">
+      <div className="rounded-md border bg-navy-mid">
+        <div className="h-24 flex items-center justify-center text-surface-muted">
           No tasks found.
         </div>
       </div>
@@ -34,7 +34,7 @@ export function TaskList({ tasks, projectNames, onToggleTask }: TaskListProps) {
   }
 
   return (
-    <div className="rounded-md border bg-white">
+    <div className="rounded-md border bg-navy-mid">
       <Table>
         <TableHeader>
           <TableRow>
@@ -61,15 +61,15 @@ export function TaskList({ tasks, projectNames, onToggleTask }: TaskListProps) {
                     className="h-4 w-4 rounded border-slate-300 text-teal-600 focus:ring-teal-500"
                   />
                 </TableCell>
-                <TableCell className="font-medium text-[#1a2b4a]">
+                <TableCell className="font-medium text-surface-white">
                   {task.title}
                 </TableCell>
-                <TableCell className="text-muted-foreground">
+                <TableCell className="text-surface-muted">
                   {task.project_id
                     ? projectNames[task.project_id] ?? "—"
                     : "—"}
                 </TableCell>
-                <TableCell className="text-muted-foreground">
+                <TableCell className="text-surface-muted">
                   {task.assigned_to_name ?? "—"}
                 </TableCell>
                 <TableCell>
@@ -82,7 +82,7 @@ export function TaskList({ tasks, projectNames, onToggleTask }: TaskListProps) {
                   {task.is_recurring ? (
                     <RecurringBadge pattern={task.recurrence_pattern} />
                   ) : (
-                    <span className="text-muted-foreground text-sm">—</span>
+                    <span className="text-surface-muted text-sm">—</span>
                   )}
                 </TableCell>
                 <TableCell>

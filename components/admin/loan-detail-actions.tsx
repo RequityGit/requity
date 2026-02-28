@@ -996,7 +996,7 @@ function ActivityLogTab({
   if (activityLog.length === 0) {
     return (
       <Card>
-        <CardContent className="py-8 text-center text-muted-foreground">
+        <CardContent className="py-8 text-center text-surface-muted">
           No activity recorded yet.
         </CardContent>
       </Card>
@@ -1026,7 +1026,7 @@ function ActivityLogTab({
               <div key={entry.id} className="flex gap-3">
                 {/* Timeline line + dot */}
                 <div className="flex flex-col items-center">
-                  <div className="w-2 h-2 rounded-full bg-[#1a2b4a] mt-2 flex-shrink-0" />
+                  <div className="w-2 h-2 rounded-full bg-navy mt-2 flex-shrink-0" />
                   {!isLast && (
                     <div className="w-px flex-1 bg-slate-200 my-1" />
                   )}
@@ -1035,23 +1035,23 @@ function ActivityLogTab({
                 {/* Content */}
                 <div className={`pb-4 flex-1 min-w-0 ${isLast ? "" : ""}`}>
                   <div className="flex items-center gap-2 flex-wrap">
-                    <span className="text-xs font-medium text-[#1a2b4a]">
+                    <span className="text-xs font-medium text-surface-white">
                       {typeLabel}
                     </span>
-                    <span className="text-[11px] text-muted-foreground">
+                    <span className="text-[11px] text-surface-muted">
                       by {userName}
                     </span>
-                    <span className="text-[11px] text-muted-foreground ml-auto">
+                    <span className="text-[11px] text-surface-muted ml-auto">
                       {timeStr}
                     </span>
                   </div>
                   {entry.description && (
-                    <p className="text-sm text-muted-foreground mt-0.5">
+                    <p className="text-sm text-surface-muted mt-0.5">
                       {entry.description}
                     </p>
                   )}
                   {entry.old_value && entry.new_value && (
-                    <p className="text-xs text-muted-foreground mt-0.5">
+                    <p className="text-xs text-surface-muted mt-0.5">
                       <span className="line-through">{entry.old_value.replace(/_/g, " ")}</span>
                       {" → "}
                       <span className="font-medium">{entry.new_value.replace(/_/g, " ")}</span>

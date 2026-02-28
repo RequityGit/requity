@@ -200,39 +200,39 @@ export default async function AdminInvestorDetailPage({ params }: PageProps) {
         <CardContent className="pt-6">
           <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
             <div className="flex items-center gap-2">
-              <Mail className="h-4 w-4 text-muted-foreground" />
+              <Mail className="h-4 w-4 text-surface-muted" />
               <div>
-                <p className="text-xs text-muted-foreground">Email</p>
+                <p className="text-xs text-surface-muted">Email</p>
                 <p className="text-sm font-medium">{investor.email}</p>
               </div>
             </div>
             <div className="flex items-center gap-2">
-              <Phone className="h-4 w-4 text-muted-foreground" />
+              <Phone className="h-4 w-4 text-surface-muted" />
               <div>
-                <p className="text-xs text-muted-foreground">Phone</p>
+                <p className="text-xs text-surface-muted">Phone</p>
                 <p className="text-sm font-medium">{investor.phone || "—"}</p>
               </div>
             </div>
             <div className="flex items-center gap-2">
-              <Building2 className="h-4 w-4 text-muted-foreground" />
+              <Building2 className="h-4 w-4 text-surface-muted" />
               <div>
-                <p className="text-xs text-muted-foreground">Company</p>
+                <p className="text-xs text-surface-muted">Company</p>
                 <p className="text-sm font-medium">
                   {investor.company_name || "—"}
                 </p>
               </div>
             </div>
             <div className="flex items-center gap-2">
-              <Calendar className="h-4 w-4 text-muted-foreground" />
+              <Calendar className="h-4 w-4 text-surface-muted" />
               <div>
-                <p className="text-xs text-muted-foreground">Joined</p>
+                <p className="text-xs text-surface-muted">Joined</p>
                 <p className="text-sm font-medium">
                   {formatDate(investor.created_at)}
                 </p>
               </div>
             </div>
             <div>
-              <p className="text-xs text-muted-foreground mb-1">Portal Status</p>
+              <p className="text-xs text-surface-muted mb-1">Portal Status</p>
               <ActivationBadge status={investor.activation_status ?? "activated"} />
             </div>
           </div>

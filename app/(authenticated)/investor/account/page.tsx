@@ -220,8 +220,8 @@ export default function InvestorAccountPage() {
       <Card>
         <CardHeader className="pb-4">
           <div className="flex items-center gap-2">
-            <User className="h-5 w-5 text-[#1a2b4a]" />
-            <CardTitle className="text-lg font-semibold text-[#1a2b4a]">
+            <User className="h-5 w-5 text-surface-white" />
+            <CardTitle className="text-lg font-semibold text-surface-white">
               Personal Information
             </CardTitle>
           </div>
@@ -299,8 +299,8 @@ export default function InvestorAccountPage() {
           )}
 
           {hasSensitiveChanges && otpVerified && (
-            <div className="mt-4 flex items-start gap-3 rounded-md border border-green-200 bg-green-50 p-3">
-              <ShieldCheck className="h-5 w-5 text-green-600 mt-0.5 flex-shrink-0" />
+            <div className="mt-4 flex items-start gap-3 rounded-md border border-green-200 bg-status-success/10 p-3">
+              <ShieldCheck className="h-5 w-5 text-status-success mt-0.5 flex-shrink-0" />
               <div>
                 <p className="text-sm font-medium text-green-800">
                   Identity verified
@@ -333,15 +333,15 @@ export default function InvestorAccountPage() {
       <Card>
         <CardHeader className="pb-4">
           <div className="flex items-center gap-2">
-            <Building2 className="h-5 w-5 text-[#1a2b4a]" />
-            <CardTitle className="text-lg font-semibold text-[#1a2b4a]">
+            <Building2 className="h-5 w-5 text-surface-white" />
+            <CardTitle className="text-lg font-semibold text-surface-white">
               Investment Commitments
             </CardTitle>
           </div>
         </CardHeader>
         <CardContent>
           {commitments.length === 0 ? (
-            <p className="text-sm text-muted-foreground py-8 text-center">
+            <p className="text-sm text-surface-muted py-8 text-center">
               No investment commitments on record.
             </p>
           ) : (
@@ -359,10 +359,10 @@ export default function InvestorAccountPage() {
                 return (
                   <div
                     key={commitment.id}
-                    className="rounded-lg border p-4 bg-slate-50/50"
+                    className="rounded-lg border p-4 bg-navy/50"
                   >
                     <div className="flex items-center justify-between mb-3">
-                      <h4 className="font-medium text-[#1a2b4a]">
+                      <h4 className="font-medium text-surface-white">
                         {commitment.fund_name}
                       </h4>
                       <StatusBadge status={commitment.status} />
@@ -370,25 +370,25 @@ export default function InvestorAccountPage() {
 
                     <div className="grid gap-4 sm:grid-cols-4 text-sm">
                       <div>
-                        <p className="text-muted-foreground">Committed</p>
+                        <p className="text-surface-muted">Committed</p>
                         <p className="font-medium">
                           {formatCurrency(commitment.commitment_amount)}
                         </p>
                       </div>
                       <div>
-                        <p className="text-muted-foreground">Funded</p>
+                        <p className="text-surface-muted">Funded</p>
                         <p className="font-medium">
                           {formatCurrency(commitment.funded_amount)}
                         </p>
                       </div>
                       <div>
-                        <p className="text-muted-foreground">Unfunded</p>
+                        <p className="text-surface-muted">Unfunded</p>
                         <p className="font-medium">
                           {formatCurrency(commitment.unfunded_amount)}
                         </p>
                       </div>
                       <div>
-                        <p className="text-muted-foreground">Commitment Date</p>
+                        <p className="text-surface-muted">Commitment Date</p>
                         <p className="font-medium">
                           {formatDate(commitment.commitment_date)}
                         </p>
@@ -396,13 +396,13 @@ export default function InvestorAccountPage() {
                     </div>
 
                     <div className="mt-3">
-                      <div className="flex items-center justify-between text-xs text-muted-foreground mb-1">
+                      <div className="flex items-center justify-between text-xs text-surface-muted mb-1">
                         <span>Funding Progress</span>
                         <span>{pctFunded}%</span>
                       </div>
-                      <div className="w-full bg-white rounded-full h-2 border">
+                      <div className="w-full bg-navy-mid rounded-full h-2 border">
                         <div
-                          className="bg-[#1a2b4a] h-2 rounded-full transition-all"
+                          className="bg-navy h-2 rounded-full transition-all"
                           style={{ width: `${Math.min(pctFunded, 100)}%` }}
                         />
                       </div>

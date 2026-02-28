@@ -36,7 +36,7 @@ export function Topbar({ userName, role, email }: TopbarProps) {
   }
 
   return (
-    <header className="sticky top-0 z-30 h-16 border-b bg-white flex items-center justify-between px-6">
+    <header className="sticky top-0 z-30 h-16 border-b bg-navy-mid flex items-center justify-between px-6">
       <div />
       <div className="flex items-center gap-4">
         <Badge variant="outline" className={roleBadgeColors[role]}>
@@ -45,8 +45,8 @@ export function Topbar({ userName, role, email }: TopbarProps) {
 
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <button className="flex items-center gap-2 hover:bg-slate-100 rounded-md px-3 py-2 transition-colors">
-              <div className="h-8 w-8 rounded-full bg-[#1a2b4a] flex items-center justify-center text-white text-sm font-medium">
+            <button className="flex items-center gap-2 hover:bg-navy-light rounded-md px-3 py-2 transition-colors">
+              <div className="h-8 w-8 rounded-full bg-navy flex items-center justify-center text-white text-sm font-medium">
                 {userName
                   ? userName
                       .split(" ")
@@ -65,7 +65,7 @@ export function Topbar({ userName, role, email }: TopbarProps) {
             <DropdownMenuLabel>
               <div className="flex flex-col space-y-1">
                 <p className="text-sm font-medium">{userName || "User"}</p>
-                <p className="text-xs text-muted-foreground">{email}</p>
+                <p className="text-xs text-surface-muted">{email}</p>
               </div>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
@@ -79,7 +79,7 @@ export function Topbar({ userName, role, email }: TopbarProps) {
             <DropdownMenuSeparator />
             <DropdownMenuItem
               onClick={handleLogout}
-              className="cursor-pointer text-red-600"
+              className="cursor-pointer text-status-danger"
             >
               <LogOut className="mr-2 h-4 w-4" />
               Sign Out

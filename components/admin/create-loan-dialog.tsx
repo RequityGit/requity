@@ -299,7 +299,7 @@ export function CreateLoanDialog({
                 </div>
               ) : (
                 <div className="relative">
-                  <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                  <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-surface-muted" />
                   <Input
                     value={borrowerSearch}
                     onChange={(e) => {
@@ -316,7 +316,7 @@ export function CreateLoanDialog({
                 <div className="absolute z-50 mt-1 w-full rounded-md border bg-popover shadow-md">
                   <div className="max-h-[200px] overflow-y-auto p-1">
                     {filteredBorrowers.length === 0 ? (
-                      <div className="py-4 text-center text-sm text-muted-foreground">
+                      <div className="py-4 text-center text-sm text-surface-muted">
                         No borrowers found
                       </div>
                     ) : (
@@ -336,7 +336,7 @@ export function CreateLoanDialog({
                           )}
                           <div className={form.borrower_id === b.id ? "" : "pl-6"}>
                             <div className="font-medium">{b.full_name}</div>
-                            <div className="text-xs text-muted-foreground">
+                            <div className="text-xs text-surface-muted">
                               {b.email}
                               {b.company_name ? ` · ${b.company_name}` : ""}
                             </div>
@@ -400,7 +400,7 @@ export function CreateLoanDialog({
 
           {/* Property Information */}
           <div>
-            <h4 className="text-sm font-semibold text-[#1a2b4a] mb-3">
+            <h4 className="text-sm font-semibold text-surface-white mb-3">
               Property Information
             </h4>
             <div className="space-y-4">
@@ -452,7 +452,7 @@ export function CreateLoanDialog({
 
           {/* Financial Terms */}
           <div>
-            <h4 className="text-sm font-semibold text-[#1a2b4a] mb-3">
+            <h4 className="text-sm font-semibold text-surface-white mb-3">
               Financial Terms
             </h4>
             <div className="grid grid-cols-3 gap-4">
@@ -547,7 +547,7 @@ export function CreateLoanDialog({
 
           {/* Team Assignment */}
           <div>
-            <h4 className="text-sm font-semibold text-[#1a2b4a] mb-3">
+            <h4 className="text-sm font-semibold text-surface-white mb-3">
               Team Assignment
             </h4>
             <div className="grid grid-cols-2 gap-4">

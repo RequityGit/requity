@@ -191,12 +191,12 @@ export function LoanListView({
             {row.priority === "on_hold" && (
               <Pause className="h-3 w-3 text-amber-500 flex-shrink-0" />
             )}
-            <p className="font-medium text-[#1a2b4a]">
+            <p className="font-medium text-surface-white">
               {row.property_address ?? "—"}
             </p>
           </div>
           {(row.property_city || row.property_state) && (
-            <p className="text-xs text-muted-foreground">
+            <p className="text-xs text-surface-muted">
               {[row.property_city, row.property_state]
                 .filter(Boolean)
                 .join(", ")}
@@ -250,13 +250,13 @@ export function LoanListView({
       cell: (row) => (
         <div className="text-xs">
           {row.originator_name && (
-            <p className="text-muted-foreground">{row.originator_name}</p>
+            <p className="text-surface-muted">{row.originator_name}</p>
           )}
           {row.processor_name && (
-            <p className="text-muted-foreground">{row.processor_name}</p>
+            <p className="text-surface-muted">{row.processor_name}</p>
           )}
           {!row.originator_name && !row.processor_name && (
-            <span className="text-muted-foreground">—</span>
+            <span className="text-surface-muted">—</span>
           )}
         </div>
       ),
@@ -270,7 +270,7 @@ export function LoanListView({
             {row.next_action}
           </span>
         ) : (
-          <span className="text-xs text-muted-foreground">—</span>
+          <span className="text-xs text-surface-muted">—</span>
         ),
     },
   ];
@@ -289,14 +289,14 @@ export function LoanListView({
     <div className="space-y-4">
       {/* Pipeline summary bar */}
       <div className="flex items-center gap-4 text-sm">
-        <span className="text-muted-foreground">
-          <span className="font-semibold text-[#1a2b4a]">
+        <span className="text-surface-muted">
+          <span className="font-semibold text-surface-white">
             {pipelineStats.total}
           </span>{" "}
           loans
         </span>
-        <span className="text-muted-foreground">
-          <span className="font-semibold text-[#1a2b4a]">
+        <span className="text-surface-muted">
+          <span className="font-semibold text-surface-white">
             {formatCurrency(pipelineStats.totalVolume)}
           </span>{" "}
           pipeline volume
@@ -312,7 +312,7 @@ export function LoanListView({
       {/* Filters */}
       <div className="flex flex-wrap gap-3 items-center">
         <div className="relative flex-1 min-w-[200px] max-w-sm">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-surface-muted" />
           <Input
             placeholder="Search by address, borrower, or loan #..."
             value={search}
@@ -379,7 +379,7 @@ export function LoanListView({
             variant="ghost"
             size="sm"
             onClick={clearFilters}
-            className="gap-1 text-muted-foreground"
+            className="gap-1 text-surface-muted"
           >
             <X className="h-3 w-3" />
             Clear

@@ -29,7 +29,7 @@ const CommandInput = React.forwardRef<
     <input
       ref={ref}
       className={cn(
-        "flex h-11 w-full rounded-md bg-transparent py-3 text-sm outline-none placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50",
+        "flex h-11 w-full rounded-md bg-transparent py-3 text-sm outline-none placeholder:text-surface-muted disabled:cursor-not-allowed disabled:opacity-50",
         className
       )}
       {...props}
@@ -75,7 +75,7 @@ const CommandGroup = React.forwardRef<
     {...props}
   >
     {heading && (
-      <div className="px-2 py-1.5 text-xs font-medium text-muted-foreground">
+      <div className="px-2 py-1.5 text-xs font-medium text-surface-muted">
         {heading}
       </div>
     )}
@@ -120,7 +120,7 @@ const CommandShortcut = ({
   return (
     <span
       className={cn(
-        "ml-auto text-xs tracking-widest text-muted-foreground",
+        "ml-auto text-xs tracking-widest text-surface-muted",
         className
       )}
       {...props}

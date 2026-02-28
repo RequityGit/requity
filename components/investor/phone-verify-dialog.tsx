@@ -94,7 +94,7 @@ export function PhoneVerifyDialog({
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <ShieldCheck className="h-5 w-5 text-[#1a2b4a]" />
+            <ShieldCheck className="h-5 w-5 text-surface-white" />
             Verify Your Identity
           </DialogTitle>
           <DialogDescription>
@@ -112,8 +112,8 @@ export function PhoneVerifyDialog({
 
         {step === "send" ? (
           <div className="space-y-4">
-            <div className="rounded-md border p-4 bg-slate-50">
-              <p className="text-sm text-muted-foreground">
+            <div className="rounded-md border p-4 bg-navy">
+              <p className="text-sm text-surface-muted">
                 A verification code will be sent to:
               </p>
               <p className="text-sm font-medium mt-1">{formattedPhone}</p>
@@ -155,7 +155,7 @@ export function PhoneVerifyDialog({
                   setOtp("");
                   setError(null);
                 }}
-                className="text-sm text-muted-foreground hover:text-[#1a2b4a] underline underline-offset-4 transition-colors"
+                className="text-sm text-surface-muted hover:text-surface-white underline underline-offset-4 transition-colors"
               >
                 Resend code
               </button>

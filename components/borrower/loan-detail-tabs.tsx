@@ -67,7 +67,7 @@ export function LoanDetailTabs({ payments, documents }: LoanDetailTabsProps) {
       header: "Name",
       cell: (row) => (
         <div className="flex items-center gap-2">
-          <FileText className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+          <FileText className="h-4 w-4 text-surface-muted flex-shrink-0" />
           <span className="truncate max-w-[200px]">{row.file_name}</span>
         </div>
       ),

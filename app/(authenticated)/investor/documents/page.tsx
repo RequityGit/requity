@@ -26,7 +26,7 @@ const DOCUMENT_GROUPS: Record<
   },
   statements: {
     label: "Statements",
-    icon: <FileText className="h-5 w-5 text-blue-600" />,
+    icon: <FileText className="h-5 w-5 text-gold" />,
     types: [
       "statement",
       "account_statement",
@@ -36,7 +36,7 @@ const DOCUMENT_GROUPS: Record<
   },
   reports: {
     label: "Reports",
-    icon: <FileBarChart className="h-5 w-5 text-green-600" />,
+    icon: <FileBarChart className="h-5 w-5 text-status-success" />,
     types: [
       "report",
       "quarterly_report",
@@ -52,7 +52,7 @@ const DOCUMENT_GROUPS: Record<
   },
   other: {
     label: "Other Documents",
-    icon: <File className="h-5 w-5 text-slate-600" />,
+    icon: <File className="h-5 w-5 text-surface-gray" />,
     types: [],
   },
 };
@@ -213,7 +213,7 @@ export default async function DocumentsPage({
       />
 
       {/* Summary */}
-      <div className="flex items-center gap-4 text-sm text-muted-foreground">
+      <div className="flex items-center gap-4 text-sm text-surface-muted">
         <span>
           {rows.length} document{rows.length !== 1 ? "s" : ""}
         </span>
@@ -221,7 +221,7 @@ export default async function DocumentsPage({
           <Badge
             key={groupKey}
             variant="outline"
-            className="bg-slate-50 font-normal"
+            className="bg-navy font-normal"
           >
             {DOCUMENT_GROUPS[groupKey]?.label ?? groupKey}: {docs.length}
           </Badge>
@@ -241,9 +241,9 @@ export default async function DocumentsPage({
       {/* Grouped Document Lists */}
       {rows.length === 0 ? (
         <Card>
-          <CardContent className="py-12 text-center text-muted-foreground">
-            <FileText className="h-12 w-12 mx-auto mb-3 text-slate-300" />
-            <p className="text-lg font-medium text-[#1a2b4a]">
+          <CardContent className="py-12 text-center text-surface-muted">
+            <FileText className="h-12 w-12 mx-auto mb-3 text-surface-muted" />
+            <p className="text-lg font-medium text-surface-white">
               No documents found
             </p>
             <p className="text-sm mt-1">
@@ -263,7 +263,7 @@ export default async function DocumentsPage({
                 <CardHeader className="pb-3">
                   <div className="flex items-center gap-2">
                     {group.icon}
-                    <CardTitle className="text-base font-semibold text-[#1a2b4a]">
+                    <CardTitle className="text-base font-semibold text-surface-white">
                       {group.label}
                     </CardTitle>
                     <Badge variant="outline" className="ml-auto font-normal">
@@ -280,26 +280,26 @@ export default async function DocumentsPage({
                       >
                         <div className="flex-1 min-w-0 mr-4">
                           <div className="flex items-center gap-2">
-                            <p className="text-sm font-medium text-[#1a2b4a] truncate">
+                            <p className="text-sm font-medium text-surface-white truncate">
                               {doc.file_name}
                             </p>
                           </div>
                           <div className="flex items-center gap-3 mt-1">
                             {doc.fund_name && (
-                              <span className="text-xs text-muted-foreground">
+                              <span className="text-xs text-surface-muted">
                                 {doc.fund_name}
                               </span>
                             )}
-                            <span className="text-xs text-muted-foreground">
+                            <span className="text-xs text-surface-muted">
                               {formatDate(doc.created_at)}
                             </span>
                             {doc.file_size && (
-                              <span className="text-xs text-muted-foreground">
+                              <span className="text-xs text-surface-muted">
                                 {formatFileSize(doc.file_size)}
                               </span>
                             )}
                             {doc.description && (
-                              <span className="text-xs text-muted-foreground truncate max-w-[200px]">
+                              <span className="text-xs text-surface-muted truncate max-w-[200px]">
                                 {doc.description}
                               </span>
                             )}

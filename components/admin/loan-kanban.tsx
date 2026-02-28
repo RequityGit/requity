@@ -177,11 +177,11 @@ export function LoanKanban({ data, currentUserId }: LoanKanbanProps) {
               onDragOver={handleDragOver}
               onDrop={(e) => handleDrop(e, stage)}
             >
-              <div className="bg-slate-100 rounded-lg p-3">
+              <div className="bg-navy-mid rounded-lg p-3">
                 {/* Column header */}
                 <div className="mb-3">
                   <div className="flex items-center justify-between">
-                    <h3 className="text-sm font-semibold text-[#1a2b4a]">
+                    <h3 className="text-sm font-semibold text-surface-white">
                       {LOAN_STAGE_LABELS[stage]}
                     </h3>
                     <Badge variant="secondary" className="text-xs">
@@ -189,7 +189,7 @@ export function LoanKanban({ data, currentUserId }: LoanKanbanProps) {
                     </Badge>
                   </div>
                   {stageLoans.length > 0 && (
-                    <p className="text-[10px] text-muted-foreground mt-0.5">
+                    <p className="text-[10px] text-surface-muted mt-0.5">
                       {formatCurrency(totalVolume)}
                     </p>
                   )}
@@ -222,7 +222,7 @@ export function LoanKanban({ data, currentUserId }: LoanKanbanProps) {
                       >
                         <CardContent className="p-3">
                           <div className="flex items-start gap-1">
-                            <GripVertical className="h-4 w-4 text-muted-foreground mt-0.5 flex-shrink-0" />
+                            <GripVertical className="h-4 w-4 text-surface-muted mt-0.5 flex-shrink-0" />
                             <div
                               className="flex-1 min-w-0 cursor-pointer"
                               onClick={() =>
@@ -232,23 +232,23 @@ export function LoanKanban({ data, currentUserId }: LoanKanbanProps) {
                               {/* Property address */}
                               <div className="flex items-center gap-1">
                                 {getPriorityIcon(loan.priority)}
-                                <p className="text-sm font-medium text-[#1a2b4a] truncate">
+                                <p className="text-sm font-medium text-surface-white truncate">
                                   {loan.property_address ?? "No address"}
                                 </p>
                               </div>
 
                               {/* Borrower name */}
-                              <p className="text-xs text-muted-foreground truncate">
+                              <p className="text-xs text-surface-muted truncate">
                                 {loan.borrower_name}
                               </p>
 
                               {/* Loan amount and type */}
                               <div className="flex items-center justify-between mt-1.5">
-                                <span className="text-xs font-semibold text-[#1a2b4a]">
+                                <span className="text-xs font-semibold text-surface-white">
                                   {formatCurrency(loan.loan_amount)}
                                 </span>
                                 {loan.loan_type && (
-                                  <span className="text-[10px] text-muted-foreground truncate ml-1">
+                                  <span className="text-[10px] text-surface-muted truncate ml-1">
                                     {formatLoanType(loan.loan_type)}
                                   </span>
                                 )}
@@ -263,7 +263,7 @@ export function LoanKanban({ data, currentUserId }: LoanKanbanProps) {
                                   {days}d
                                 </span>
                                 {loan.total_conditions > 0 && (
-                                  <span className="inline-flex items-center gap-0.5 text-[10px] text-muted-foreground">
+                                  <span className="inline-flex items-center gap-0.5 text-[10px] text-surface-muted">
                                     <FileText className="h-2.5 w-2.5" />
                                     {loan.document_count}/{loan.total_conditions}
                                   </span>
@@ -273,8 +273,8 @@ export function LoanKanban({ data, currentUserId }: LoanKanbanProps) {
                               {/* Assigned team member */}
                               {(loan.processor_name || loan.originator_name) && (
                                 <div className="flex items-center gap-1 mt-1.5">
-                                  <User className="h-2.5 w-2.5 text-muted-foreground" />
-                                  <span className="text-[10px] text-muted-foreground truncate">
+                                  <User className="h-2.5 w-2.5 text-surface-muted" />
+                                  <span className="text-[10px] text-surface-muted truncate">
                                     {loan.processor_name || loan.originator_name}
                                   </span>
                                 </div>

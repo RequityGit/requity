@@ -138,12 +138,12 @@ export default function AdminAccountPage() {
       <Card className="max-w-2xl">
         <CardHeader>
           <div className="flex items-center gap-3">
-            <div className="h-10 w-10 rounded-full bg-[#1a2b4a] flex items-center justify-center">
+            <div className="h-10 w-10 rounded-full bg-navy flex items-center justify-center">
               <User className="h-5 w-5 text-white" />
             </div>
             <div>
               <CardTitle className="text-base">Profile Information</CardTitle>
-              <p className="text-xs text-muted-foreground mt-0.5">
+              <p className="text-xs text-surface-muted mt-0.5">
                 Update your personal details below
               </p>
             </div>
@@ -212,7 +212,7 @@ export default function AdminAccountPage() {
               </Button>
 
               {profile && (
-                <p className="text-xs text-muted-foreground">
+                <p className="text-xs text-surface-muted">
                   Role: <span className="capitalize font-medium">{profile.role}</span>
                 </p>
               )}

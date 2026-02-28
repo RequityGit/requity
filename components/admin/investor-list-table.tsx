@@ -43,7 +43,7 @@ export function InvestorListTable({ data }: InvestorListTableProps) {
       key: "full_name",
       header: "Name",
       cell: (row) => (
-        <span className="font-medium text-[#1a2b4a]">{row.full_name}</span>
+        <span className="font-medium text-surface-white">{row.full_name}</span>
       ),
     },
     {
@@ -81,7 +81,7 @@ export function InvestorListTable({ data }: InvestorListTableProps) {
   return (
     <div className="space-y-4">
       <div className="relative max-w-sm">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-surface-muted" />
         <Input
           placeholder="Search investors..."
           value={search}

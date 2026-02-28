@@ -71,13 +71,13 @@ export function DocumentsTable({ documents, loans }: DocumentsTableProps) {
       header: "Name",
       cell: (row) => (
         <div className="flex items-center gap-2">
-          <FileText className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+          <FileText className="h-4 w-4 text-surface-muted flex-shrink-0" />
           <div className="min-w-0">
             <p className="font-medium text-sm truncate max-w-[250px]">
               {row.file_name}
             </p>
             {row.description && (
-              <p className="text-xs text-muted-foreground truncate max-w-[250px]">
+              <p className="text-xs text-surface-muted truncate max-w-[250px]">
                 {row.description}
               </p>
             )}
@@ -102,7 +102,7 @@ export function DocumentsTable({ documents, loans }: DocumentsTableProps) {
         row.loans ? (
           <span className="text-sm">{row.loans.property_address}</span>
         ) : (
-          <span className="text-sm text-muted-foreground">{"\u2014"}</span>
+          <span className="text-sm text-surface-muted">{"\u2014"}</span>
         ),
     },
     {
@@ -129,7 +129,7 @@ export function DocumentsTable({ documents, loans }: DocumentsTableProps) {
       {/* Filters */}
       <div className="flex flex-wrap gap-4 items-end">
         <div className="space-y-1.5 min-w-[200px]">
-          <Label className="text-xs text-muted-foreground">Filter by Loan</Label>
+          <Label className="text-xs text-surface-muted">Filter by Loan</Label>
           <Select value={loanFilter} onValueChange={setLoanFilter}>
             <SelectTrigger className="h-9">
               <SelectValue placeholder="All loans" />
@@ -146,7 +146,7 @@ export function DocumentsTable({ documents, loans }: DocumentsTableProps) {
         </div>
 
         <div className="space-y-1.5 min-w-[200px]">
-          <Label className="text-xs text-muted-foreground">
+          <Label className="text-xs text-surface-muted">
             Filter by Type
           </Label>
           <Select value={typeFilter} onValueChange={setTypeFilter}>

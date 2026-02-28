@@ -111,7 +111,7 @@ export function PaymentsTable({ payments, loans }: PaymentsTableProps) {
       {/* Filters */}
       <div className="flex flex-wrap gap-4 items-end">
         <div className="space-y-1.5 min-w-[200px]">
-          <Label className="text-xs text-muted-foreground">Filter by Loan</Label>
+          <Label className="text-xs text-surface-muted">Filter by Loan</Label>
           <Select value={loanFilter} onValueChange={setLoanFilter}>
             <SelectTrigger className="h-9">
               <SelectValue placeholder="All loans" />
@@ -128,7 +128,7 @@ export function PaymentsTable({ payments, loans }: PaymentsTableProps) {
         </div>
 
         <div className="space-y-1.5">
-          <Label className="text-xs text-muted-foreground">From Date</Label>
+          <Label className="text-xs text-surface-muted">From Date</Label>
           <Input
             type="date"
             value={dateFrom}
@@ -138,7 +138,7 @@ export function PaymentsTable({ payments, loans }: PaymentsTableProps) {
         </div>
 
         <div className="space-y-1.5">
-          <Label className="text-xs text-muted-foreground">To Date</Label>
+          <Label className="text-xs text-surface-muted">To Date</Label>
           <Input
             type="date"
             value={dateTo}

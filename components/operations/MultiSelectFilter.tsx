@@ -52,21 +52,21 @@ export function MultiSelectFilter({
         onClick={() => setOpen(!open)}
         className={cn(
           "flex items-center gap-2 rounded-md border px-3 py-2 text-sm font-medium transition-colors",
-          "bg-white hover:bg-slate-50 text-foreground",
-          selected.length > 0 && "border-blue-300 bg-blue-50"
+          "bg-navy-mid hover:bg-navy-light text-foreground",
+          selected.length > 0 && "border-blue-300 bg-gold/10"
         )}
       >
         {displayLabel}
         <ChevronDown
           className={cn(
-            "h-4 w-4 text-muted-foreground transition-transform",
+            "h-4 w-4 text-surface-muted transition-transform",
             open && "rotate-180"
           )}
         />
       </button>
 
       {open && (
-        <div className="absolute top-full left-0 z-50 mt-1 w-52 rounded-md border bg-white shadow-lg">
+        <div className="absolute top-full left-0 z-50 mt-1 w-52 rounded-md border bg-navy-mid shadow-lg">
           <div className="max-h-60 overflow-y-auto p-1">
             {options.map((option) => {
               const isSelected = selected.includes(option);
@@ -77,8 +77,8 @@ export function MultiSelectFilter({
                   onClick={() => toggle(option)}
                   className={cn(
                     "flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-sm transition-colors",
-                    "hover:bg-slate-100",
-                    isSelected && "bg-slate-50"
+                    "hover:bg-navy-light",
+                    isSelected && "bg-navy"
                   )}
                 >
                   <div

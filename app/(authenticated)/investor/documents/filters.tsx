@@ -73,7 +73,7 @@ export function DocumentFilters({
           handleFilterChange("fund", val === "all" ? undefined : val)
         }
       >
-        <SelectTrigger className="w-[200px] bg-white">
+        <SelectTrigger className="w-[200px] bg-navy-mid">
           <SelectValue placeholder="All Investments" />
         </SelectTrigger>
         <SelectContent>
@@ -92,7 +92,7 @@ export function DocumentFilters({
           handleFilterChange("year", val === "all" ? undefined : val)
         }
       >
-        <SelectTrigger className="w-[140px] bg-white">
+        <SelectTrigger className="w-[140px] bg-navy-mid">
           <SelectValue placeholder="All Years" />
         </SelectTrigger>
         <SelectContent>
@@ -111,7 +111,7 @@ export function DocumentFilters({
           handleFilterChange("type", val === "all" ? undefined : val)
         }
       >
-        <SelectTrigger className="w-[200px] bg-white">
+        <SelectTrigger className="w-[200px] bg-navy-mid">
           <SelectValue placeholder="All Document Types" />
         </SelectTrigger>
         <SelectContent>
@@ -129,7 +129,7 @@ export function DocumentFilters({
           variant="ghost"
           size="sm"
           onClick={clearFilters}
-          className="text-muted-foreground"
+          className="text-surface-muted"
         >
           <X className="h-4 w-4 mr-1" />
           Clear filters

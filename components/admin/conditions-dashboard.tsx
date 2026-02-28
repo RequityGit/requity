@@ -261,8 +261,8 @@ export function ConditionsDashboard({
                   onClick={() => setViewMode(mode.key)}
                   className={`px-3 py-1.5 text-xs font-medium transition-colors ${
                     viewMode === mode.key
-                      ? "bg-[#1a2b4a] text-white"
-                      : "bg-white text-muted-foreground hover:bg-slate-50"
+                      ? "bg-navy text-white"
+                      : "bg-navy-mid text-surface-muted hover:bg-navy-light"
                   }`}
                 >
                   {mode.label}
@@ -272,7 +272,7 @@ export function ConditionsDashboard({
 
             {/* Search */}
             <div className="relative flex-1 min-w-[200px]">
-              <Search className="h-4 w-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+              <Search className="h-4 w-4 absolute left-3 top-1/2 -translate-y-1/2 text-surface-muted" />
               <Input
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
@@ -365,15 +365,15 @@ export function ConditionsDashboard({
                   <div className="flex items-center gap-3">
                     <div>
                       <div className="flex items-center gap-2">
-                        <span className="text-sm font-semibold text-[#1a2b4a]">
+                        <span className="text-sm font-semibold text-surface-white">
                           {loan?.loan_number ?? "—"}
                         </span>
                         <StatusBadge status={loan?.stage ?? "lead"} />
-                        <span className="text-xs text-muted-foreground">
+                        <span className="text-xs text-surface-muted">
                           {loanConditions.length} conditions
                         </span>
                       </div>
-                      <p className="text-xs text-muted-foreground">
+                      <p className="text-xs text-surface-muted">
                         {loan?.property_address ?? "No address"} —{" "}
                         {borrowerName} —{" "}
                         {formatCurrency(loan?.loan_amount ?? 0)}
@@ -408,19 +408,19 @@ export function ConditionsDashboard({
                         key={condition.id}
                         className={`flex items-center gap-3 py-2 px-3 rounded-lg border ${
                           isComplete
-                            ? "bg-green-50/50 border-green-100"
+                            ? "bg-status-success/10/50 border-green-100"
                             : isOverdue
                               ? "bg-red-50/50 border-red-100"
-                              : "bg-white"
+                              : "bg-navy-mid"
                         }`}
                       >
                         <div className="flex-shrink-0">
                           {isComplete ? (
-                            <CheckCircle2 className="h-4 w-4 text-green-600" />
+                            <CheckCircle2 className="h-4 w-4 text-status-success" />
                           ) : isOverdue ? (
                             <AlertTriangle className="h-4 w-4 text-red-500" />
                           ) : (
-                            <Clock className="h-4 w-4 text-muted-foreground" />
+                            <Clock className="h-4 w-4 text-surface-muted" />
                           )}
                         </div>
                         <div className="flex-1 min-w-0">
@@ -441,7 +441,7 @@ export function ConditionsDashboard({
                             )}
                             <StatusBadge status={condition.status} />
                           </div>
-                          <div className="flex items-center gap-3 text-[11px] text-muted-foreground mt-0.5">
+                          <div className="flex items-center gap-3 text-[11px] text-surface-muted mt-0.5">
                             <span>
                               {RESPONSIBLE_PARTIES.find(
                                 (p) =>
@@ -452,7 +452,7 @@ export function ConditionsDashboard({
                               <span
                                 className={
                                   isOverdue
-                                    ? "text-red-600 font-medium"
+                                    ? "text-status-danger font-medium"
                                     : ""
                                 }
                               >
@@ -522,7 +522,7 @@ export function ConditionsDashboard({
 
       {filteredConditions.length === 0 && (
         <Card>
-          <CardContent className="py-8 text-center text-muted-foreground">
+          <CardContent className="py-8 text-center text-surface-muted">
             {hasFilters
               ? "No conditions match the current filters."
               : "No conditions found across active loans."}
@@ -543,9 +543,9 @@ function StatCard({
   color?: string;
 }) {
   return (
-    <div className="bg-white rounded-lg border px-3 py-2">
-      <p className="text-xs text-muted-foreground">{label}</p>
-      <p className={`text-lg font-semibold ${color || "text-[#1a2b4a]"}`}>
+    <div className="bg-navy-mid rounded-lg border px-3 py-2">
+      <p className="text-xs text-surface-muted">{label}</p>
+      <p className={`text-lg font-semibold ${color || "text-surface-white"}`}>
         {value}
       </p>
     </div>

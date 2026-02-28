@@ -30,7 +30,7 @@ export function FundListTable({ data }: FundListTableProps) {
       key: "name",
       header: "Investment Name",
       cell: (row) => (
-        <span className="font-medium text-[#1a2b4a]">{row.name}</span>
+        <span className="font-medium text-surface-white">{row.name}</span>
       ),
     },
     {
