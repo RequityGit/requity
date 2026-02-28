@@ -157,7 +157,6 @@ export function CreateLoanDialog({
         .from("loans")
         .insert({
           borrower_id: form.borrower_id,
-          loan_type: form.loan_type || null,
           property_address: form.property_address || null,
           property_city: form.property_city || null,
           property_state: form.property_state || null,
@@ -170,6 +169,7 @@ export function CreateLoanDialog({
           notes: form.notes || null,
           stage: "lead",
           stage_updated_at: now,
+          ...(form.loan_type ? { loan_type: form.loan_type } : {}),
           ...(form.purchase_price ? { purchase_price: parseFloat(form.purchase_price) } : {}),
           ...(form.arv ? { arv: parseFloat(form.arv) } : {}),
           ...(form.points ? { points: parseFloat(form.points) } : {}),

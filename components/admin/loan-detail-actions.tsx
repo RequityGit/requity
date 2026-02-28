@@ -205,7 +205,7 @@ function EditLoanDialog({ loan }: { loan: LoanInfo }) {
       const { error } = await supabase
         .from("loans")
         .update({
-          loan_type: form.loan_type,
+          ...(form.loan_type ? { loan_type: form.loan_type } : {}),
           property_address: form.property_address,
           property_city: form.property_city || null,
           property_state: form.property_state || null,
