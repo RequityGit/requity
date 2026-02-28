@@ -46,6 +46,60 @@ export async function addInvestorAction(input: AddInvestorInput) {
       auth: { autoRefreshToken: false, persistSession: false },
     });
 
+    // Check if an investor profile with this email already exists
+    const { data: existingProfiles } = await adminClient
+      .from("profiles")
+      .select("id, email, role, full_name")
+      .eq("email", input.email);
+
+    if (existingProfiles && existingProfiles.length > 0) {
+      const existingInvestor = existingProfiles.find(
+        (p: { id: string; role: string }) => p.role === "investor"
+      );
+      if (existingInvestor) {
+        // An investor with this email already exists — update their profile
+        // instead of trying to create a duplicate auth user
+        const profileUpdate: Record<string, unknown> = {
+          full_name: input.full_name,
+          phone: input.phone || null,
+          activation_status: "pending",
+        };
+        if (input.company_name) {
+          profileUpdate.company_name = input.company_name;
+        }
+
+        const { error: updateError } = await adminClient
+          .from("profiles")
+          .update(profileUpdate)
+          .eq("id", existingInvestor.id);
+
+        if (updateError) {
+          // If company_name column doesn't exist, retry without it
+          if (
+            updateError.message.includes("company_name") &&
+            input.company_name
+          ) {
+            delete profileUpdate.company_name;
+            const { error: retryError } = await adminClient
+              .from("profiles")
+              .update(profileUpdate)
+              .eq("id", existingInvestor.id);
+            if (retryError) {
+              return { error: retryError.message };
+            }
+          } else {
+            return { error: updateError.message };
+          }
+        }
+
+        return { success: true, investorId: existingInvestor.id };
+      }
+      // User exists with a different role — cannot create duplicate auth user
+      return {
+        error: `A user with email ${input.email} already exists with a different role.`,
+      };
+    }
+
     const { data: newUser, error: createError } =
       await adminClient.auth.admin.createUser({
         email: input.email,
@@ -54,6 +108,61 @@ export async function addInvestorAction(input: AddInvestorInput) {
       });
 
     if (createError) {
+      // If the auth user already exists but no profile was found (orphaned auth
+      // user), look them up and try to fix the profile instead
+      if (
+        createError.message.includes("already been registered") ||
+        createError.message.includes("already exists")
+      ) {
+        const { data: listData } =
+          await adminClient.auth.admin.listUsers();
+        const existingAuthUser = listData?.users?.find(
+          (u: { id: string; email?: string }) => u.email === input.email
+        );
+        if (existingAuthUser) {
+          const profileUpdate: Record<string, unknown> = {
+            full_name: input.full_name,
+            phone: input.phone || null,
+            role: "investor",
+            activation_status: "pending",
+          };
+          if (input.company_name) {
+            profileUpdate.company_name = input.company_name;
+          }
+
+          const { error: upsertError } = await adminClient
+            .from("profiles")
+            .upsert({
+              id: existingAuthUser.id,
+              email: input.email,
+              ...profileUpdate,
+            });
+
+          if (upsertError) {
+            // If company_name column doesn't exist, retry without it
+            if (
+              upsertError.message.includes("company_name") &&
+              input.company_name
+            ) {
+              delete profileUpdate.company_name;
+              const { error: retryError } = await adminClient
+                .from("profiles")
+                .upsert({
+                  id: existingAuthUser.id,
+                  email: input.email,
+                  ...profileUpdate,
+                });
+              if (retryError) {
+                return { error: retryError.message };
+              }
+            } else {
+              return { error: upsertError.message };
+            }
+          }
+
+          return { success: true, investorId: existingAuthUser.id };
+        }
+      }
       return { error: createError.message };
     }
 
@@ -62,18 +171,41 @@ export async function addInvestorAction(input: AddInvestorInput) {
     }
 
     // Update the auto-created profile with additional details + pending status
+    const profileUpdate: Record<string, unknown> = {
+      full_name: input.full_name,
+      phone: input.phone || null,
+      activation_status: "pending",
+    };
+    if (input.company_name) {
+      profileUpdate.company_name = input.company_name;
+    }
+
     const { error: updateError } = await adminClient
       .from("profiles")
-      .update({
-        full_name: input.full_name,
-        company_name: input.company_name || null,
-        phone: input.phone || null,
-        activation_status: "pending",
-      })
+      .update(profileUpdate)
       .eq("id", newUser.user.id);
 
     if (updateError) {
-      return { error: updateError.message };
+      // If company_name column doesn't exist, retry without it
+      if (
+        updateError.message.includes("company_name") &&
+        input.company_name
+      ) {
+        delete profileUpdate.company_name;
+        const { error: retryError } = await adminClient
+          .from("profiles")
+          .update(profileUpdate)
+          .eq("id", newUser.user.id);
+        if (retryError) {
+          // Clean up: delete the auth user since we can't set up the profile
+          await adminClient.auth.admin.deleteUser(newUser.user.id);
+          return { error: retryError.message };
+        }
+      } else {
+        // Clean up: delete the auth user since we can't set up the profile
+        await adminClient.auth.admin.deleteUser(newUser.user.id);
+        return { error: updateError.message };
+      }
     }
 
     return { success: true, investorId: newUser.user.id };
