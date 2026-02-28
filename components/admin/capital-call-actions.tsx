@@ -28,7 +28,7 @@ export function CapitalCallActions({ capitalCallId, status }: CapitalCallActions
     if (error) {
       toast({ title: "Error", description: error.message, variant: "destructive" });
     } else {
-      toast({ title: "Success", description: "Capital call marked as paid." });
+      toast({ title: "Success", description: "Contribution marked as paid." });
       router.refresh();
     }
   }

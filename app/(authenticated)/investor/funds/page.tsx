@@ -50,8 +50,8 @@ export default async function InvestorFundsPage() {
   return (
     <div className="space-y-6">
       <PageHeader
-        title="My Funds"
-        description="View details on the funds you are invested in."
+        title="My Investments"
+        description="View details on the investments you are invested in."
       />
 
       {commitments.length === 0 ? (
@@ -59,7 +59,7 @@ export default async function InvestorFundsPage() {
           <CardContent className="py-12 text-center text-muted-foreground">
             <Landmark className="h-12 w-12 mx-auto mb-3 text-slate-300" />
             <p className="text-lg font-medium text-[#1a2b4a]">
-              No fund commitments found
+              No investment commitments found
             </p>
             <p className="text-sm mt-1">
               Contact your administrator for more information.
@@ -97,7 +97,7 @@ export default async function InvestorFundsPage() {
                             {fund.name}
                           </h3>
                           <p className="text-xs text-muted-foreground capitalize">
-                            {fund.fund_type?.replace(/_/g, " ") ?? "Fund"}
+                            {fund.fund_type?.replace(/_/g, " ") ?? "Investment"}
                             {fund.vintage_year
                               ? ` - Vintage ${fund.vintage_year}`
                               : ""}

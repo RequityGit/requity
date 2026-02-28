@@ -46,7 +46,7 @@ const DOCUMENT_GROUPS: Record<
     ],
   },
   capital_call_notices: {
-    label: "Capital Call Notices",
+    label: "Contribution Notices",
     icon: <BanknoteIcon className="h-5 w-5 text-amber-600" />,
     types: ["capital_call_notice", "capital_call", "call_notice"],
   },
@@ -209,7 +209,7 @@ export default async function DocumentsPage({
     <div className="space-y-6">
       <PageHeader
         title="Documents"
-        description="Access your fund documents, tax forms, statements, and reports."
+        description="Access your investment documents, tax forms, statements, and reports."
       />
 
       {/* Summary */}

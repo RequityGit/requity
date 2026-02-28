@@ -100,7 +100,7 @@ export default function InvestorAccountPage() {
           setCommitments(
             commitmentData.map((c: any) => ({
               id: c.id,
-              fund_name: c.funds?.name ?? "Unknown Fund",
+              fund_name: c.funds?.name ?? "Unknown Investment",
               commitment_amount: c.commitment_amount,
               funded_amount: c.funded_amount,
               unfunded_amount: c.unfunded_amount,
@@ -335,14 +335,14 @@ export default function InvestorAccountPage() {
           <div className="flex items-center gap-2">
             <Building2 className="h-5 w-5 text-[#1a2b4a]" />
             <CardTitle className="text-lg font-semibold text-[#1a2b4a]">
-              Fund Commitments
+              Investment Commitments
             </CardTitle>
           </div>
         </CardHeader>
         <CardContent>
           {commitments.length === 0 ? (
             <p className="text-sm text-muted-foreground py-8 text-center">
-              No fund commitments on record.
+              No investment commitments on record.
             </p>
           ) : (
             <div className="space-y-4">

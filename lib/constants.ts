@@ -79,7 +79,7 @@ export const PRIORITY_COLORS: Record<LoanPriority, string> = {
 export const DOCUMENT_TYPES = [
   { value: "k1", label: "K-1" },
   { value: "distribution_statement", label: "Distribution Statement" },
-  { value: "capital_call_notice", label: "Capital Call Notice" },
+  { value: "capital_call_notice", label: "Contribution Notice" },
   { value: "investor_report", label: "Investor Report" },
   { value: "loan_agreement", label: "Loan Agreement" },
   { value: "closing_docs", label: "Closing Documents" },
@@ -110,9 +110,9 @@ export const LOAN_TYPES = [
 // ---------------------------------------------------------------------------
 
 export const FUND_TYPES = [
-  { value: "debt", label: "Debt Fund" },
-  { value: "equity", label: "Equity Fund" },
-  { value: "hybrid", label: "Hybrid Fund" },
+  { value: "debt", label: "Debt Investment" },
+  { value: "equity", label: "Equity Investment" },
+  { value: "hybrid", label: "Hybrid Investment" },
 ] as const;
 
 // ---------------------------------------------------------------------------

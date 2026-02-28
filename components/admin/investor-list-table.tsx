@@ -66,7 +66,7 @@ export function InvestorListTable({ data }: InvestorListTableProps) {
     },
     {
       key: "fundCount",
-      header: "Funds",
+      header: "Investments",
       cell: (row) => row.fundCount,
     },
   ];

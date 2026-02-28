@@ -44,7 +44,7 @@ export function CapitalCallListTable({ data }: CapitalCallListTableProps) {
 
       if (error) throw error;
 
-      toast({ title: "Capital call marked as paid" });
+      toast({ title: "Contribution marked as paid" });
       router.refresh();
     } catch (err: any) {
       toast({
@@ -60,7 +60,7 @@ export function CapitalCallListTable({ data }: CapitalCallListTableProps) {
   const columns: Column<CapitalCallRow>[] = [
     {
       key: "fund_name",
-      header: "Fund",
+      header: "Investment",
       cell: (row) => (
         <span className="font-medium text-[#1a2b4a]">{row.fund_name}</span>
       ),
@@ -118,7 +118,7 @@ export function CapitalCallListTable({ data }: CapitalCallListTableProps) {
     <DataTable<CapitalCallRow>
       columns={columns}
       data={data}
-      emptyMessage="No capital calls found."
+      emptyMessage="No contributions found."
     />
   );
 }

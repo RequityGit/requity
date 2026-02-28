@@ -89,7 +89,7 @@ export default async function AdminDashboardPage() {
         <KpiCard
           title="Total AUM"
           value={formatCurrency(totalAUM)}
-          description="Across all funds"
+          description="Across all investments"
           icon={<Landmark className="h-5 w-5" />}
         />
         <KpiCard
@@ -99,9 +99,9 @@ export default async function AdminDashboardPage() {
           icon={<DollarSign className="h-5 w-5" />}
         />
         <KpiCard
-          title="Pending Capital Calls"
+          title="Pending Contributions"
           value={formatCurrency(pendingCapitalCalls)}
-          description={`${capitalCallsResult.data?.length ?? 0} calls pending`}
+          description={`${capitalCallsResult.data?.length ?? 0} contributions pending`}
           icon={<ArrowDownCircle className="h-5 w-5" />}
         />
         <KpiCard
@@ -152,7 +152,7 @@ export default async function AdminDashboardPage() {
             <Link href="/admin/capital-calls">
               <Button variant="outline" className="gap-2">
                 <ArrowDownCircle className="h-4 w-4" />
-                Capital Call
+                Contribution
               </Button>
             </Link>
             <Link href="/admin/distributions">

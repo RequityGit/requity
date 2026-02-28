@@ -178,10 +178,10 @@ export function DocumentUploadForm({
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label>Fund (optional)</Label>
+              <Label>Investment (optional)</Label>
               <Select value={fundId} onValueChange={setFundId}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Select fund" />
+                  <SelectValue placeholder="Select investment" />
                 </SelectTrigger>
                 <SelectContent>
                   {funds.map((f) => (

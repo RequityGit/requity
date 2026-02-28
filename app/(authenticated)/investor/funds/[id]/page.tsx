@@ -207,12 +207,12 @@ export default async function InvestorFundDetailPage({ params }: PageProps) {
         className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-[#1a2b4a] transition-colors"
       >
         <ArrowLeft className="h-4 w-4" />
-        Back to Funds
+        Back to Investments
       </Link>
 
       <PageHeader
         title={fund.name}
-        description={`${(fund.fund_type ?? "fund").replace(/_/g, " ")} - Vintage ${fund.vintage_year || "N/A"}`}
+        description={`${(fund.fund_type ?? "investment").replace(/_/g, " ")} - Vintage ${fund.vintage_year || "N/A"}`}
       />
 
       {/* KPI Cards */}
@@ -232,7 +232,7 @@ export default async function InvestorFundDetailPage({ params }: PageProps) {
         <KpiCard
           title="Total Called"
           value={formatCurrency(totalCalled)}
-          description={`${capitalCalls.length} capital call${capitalCalls.length !== 1 ? "s" : ""}`}
+          description={`${capitalCalls.length} contribution${capitalCalls.length !== 1 ? "s" : ""}`}
           icon={<PiggyBank className="h-5 w-5" />}
         />
         <KpiCard
@@ -247,19 +247,19 @@ export default async function InvestorFundDetailPage({ params }: PageProps) {
       <Card>
         <CardHeader>
           <CardTitle className="text-lg font-semibold text-[#1a2b4a]">
-            Fund Details
+            Investment Details
           </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-y-4 gap-x-6">
-            <DetailField label="Fund Type" value={(fund.fund_type ?? "N/A").replace(/_/g, " ")} />
+            <DetailField label="Investment Type" value={(fund.fund_type ?? "N/A").replace(/_/g, " ")} />
             <DetailField label="Vintage Year" value={fund.vintage_year?.toString() ?? "N/A"} />
             <DetailField label="Target Size" value={formatCurrency(fund.target_size)} />
             <DetailField label="Current AUM" value={formatCurrency(fund.current_aum)} />
             <DetailField label="IRR Target" value={formatPercent(fund.irr_target)} />
             <DetailField label="Preferred Return" value={formatPercent(fund.preferred_return)} />
             <DetailField label="Management Fee" value={formatPercent(fund.management_fee)} />
-            <DetailField label="Fund Status" value={fund.status.replace(/_/g, " ")} />
+            <DetailField label="Investment Status" value={fund.status.replace(/_/g, " ")} />
           </div>
           {fund.description && (
             <>
@@ -298,7 +298,7 @@ export default async function InvestorFundDetailPage({ params }: PageProps) {
       <Tabs defaultValue="capital-calls">
         <TabsList>
           <TabsTrigger value="capital-calls">
-            Capital Calls ({capitalCalls.length})
+            Contributions ({capitalCalls.length})
           </TabsTrigger>
           <TabsTrigger value="distributions">
             Distributions ({distributions.length})
@@ -314,7 +314,7 @@ export default async function InvestorFundDetailPage({ params }: PageProps) {
               <DataTable
                 columns={capitalCallColumns}
                 data={capitalCalls}
-                emptyMessage="No capital calls for this fund."
+                emptyMessage="No contributions for this investment."
               />
             </CardContent>
           </Card>
@@ -326,7 +326,7 @@ export default async function InvestorFundDetailPage({ params }: PageProps) {
               <DataTable
                 columns={distributionColumns}
                 data={distributions}
-                emptyMessage="No distributions for this fund."
+                emptyMessage="No distributions for this investment."
               />
             </CardContent>
           </Card>
@@ -338,7 +338,7 @@ export default async function InvestorFundDetailPage({ params }: PageProps) {
               <DataTable
                 columns={documentColumns}
                 data={documents}
-                emptyMessage="No documents for this fund."
+                emptyMessage="No documents for this investment."
               />
             </CardContent>
           </Card>

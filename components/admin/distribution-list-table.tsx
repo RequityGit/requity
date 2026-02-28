@@ -23,7 +23,7 @@ export function DistributionListTable({ data }: DistributionListTableProps) {
   const columns: Column<DistributionRow>[] = [
     {
       key: "fund_name",
-      header: "Fund",
+      header: "Investment",
       cell: (row) => (
         <span className="font-medium text-[#1a2b4a]">{row.fund_name}</span>
       ),

@@ -28,7 +28,7 @@ export function FundListTable({ data }: FundListTableProps) {
   const columns: Column<FundRow>[] = [
     {
       key: "name",
-      header: "Fund Name",
+      header: "Investment Name",
       cell: (row) => (
         <span className="font-medium text-[#1a2b4a]">{row.name}</span>
       ),
@@ -71,7 +71,7 @@ export function FundListTable({ data }: FundListTableProps) {
     <DataTable<FundRow>
       columns={columns}
       data={data}
-      emptyMessage="No funds found."
+      emptyMessage="No investments found."
       onRowClick={(row) => router.push(`/admin/funds/${row.id}`)}
     />
   );

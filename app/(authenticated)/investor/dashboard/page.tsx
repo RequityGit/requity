@@ -166,7 +166,7 @@ export default async function InvestorDashboardPage() {
       id: d.id,
       type: "distribution",
       title: "Distribution Received",
-      description: `${formatCurrency(d.amount)} from ${d.funds?.name ?? "Unknown Fund"} - ${d.distribution_type?.replace(/_/g, " ")}`,
+      description: `${formatCurrency(d.amount)} from ${d.funds?.name ?? "Unknown Investment"} - ${d.distribution_type?.replace(/_/g, " ")}`,
       date: d.distribution_date,
       status: d.status,
     });
@@ -176,8 +176,8 @@ export default async function InvestorDashboardPage() {
     activityItems.push({
       id: cc.id,
       type: "capital_call",
-      title: "Capital Call",
-      description: `${formatCurrency(cc.call_amount)} for ${cc.funds?.name ?? "Unknown Fund"} - Due ${formatDate(cc.due_date)}`,
+      title: "Contribution",
+      description: `${formatCurrency(cc.call_amount)} for ${cc.funds?.name ?? "Unknown Investment"} - Due ${formatDate(cc.due_date)}`,
       date: cc.due_date,
       status: cc.status,
     });
@@ -214,7 +214,7 @@ export default async function InvestorDashboardPage() {
         <KpiCard
           title="Total Committed"
           value={formatCurrency(totalCommitted)}
-          description={`Across ${commitments.length} fund${commitments.length !== 1 ? "s" : ""}`}
+          description={`Across ${commitments.length} investment${commitments.length !== 1 ? "s" : ""}`}
           icon={<DollarSign className="h-5 w-5" />}
         />
         <KpiCard
@@ -293,13 +293,13 @@ export default async function InvestorDashboardPage() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-4">
             <CardTitle className="text-lg font-semibold text-[#1a2b4a]">
-              Fund Commitments
+              Investment Commitments
             </CardTitle>
           </CardHeader>
           <CardContent>
             {commitments.length === 0 ? (
               <p className="text-sm text-muted-foreground py-8 text-center">
-                No fund commitments found.
+                No investment commitments found.
               </p>
             ) : (
               <div className="space-y-4">
@@ -320,7 +320,7 @@ export default async function InvestorDashboardPage() {
                     >
                       <div className="flex items-center justify-between mb-2">
                         <p className="text-sm font-medium text-[#1a2b4a]">
-                          {commitment.funds?.name ?? "Unknown Fund"}
+                          {commitment.funds?.name ?? "Unknown Investment"}
                         </p>
                         <StatusBadge status={commitment.status} />
                       </div>
@@ -357,10 +357,10 @@ export default async function InvestorDashboardPage() {
                 </div>
                 <div>
                   <p className="text-sm font-medium text-[#1a2b4a]">
-                    Capital Calls
+                    Contributions
                   </p>
                   <p className="text-xs text-muted-foreground">
-                    View all capital call notices
+                    View all contribution notices
                   </p>
                 </div>
               </div>
