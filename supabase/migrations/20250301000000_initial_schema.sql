@@ -19,6 +19,8 @@ create table public.profiles (
   company_name text,
   phone text,
   role text not null check (role in ('investor', 'borrower', 'admin')),
+  activation_status text default 'activated'
+    check (activation_status in ('pending', 'link_sent', 'activated')),
   created_at timestamptz default now(),
   updated_at timestamptz default now()
 );
