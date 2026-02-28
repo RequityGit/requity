@@ -87,9 +87,12 @@ export function LoanKanban({ data, currentUserId }: LoanKanbanProps) {
       .eq("id", loanId);
 
     if (error) {
+      const isSchemaError = error.message?.includes("schema cache") || error.message?.includes("Could not find the");
       toast({
         title: "Error moving loan",
-        description: error.message,
+        description: isSchemaError
+          ? "Database schema needs to be refreshed. Please contact your administrator to reload the Supabase schema cache."
+          : error.message,
         variant: "destructive",
       });
       setMovingLoanId(null);

@@ -201,26 +201,27 @@ function EditLoanDialog({ loan }: { loan: LoanInfo }) {
     setLoading(true);
     try {
       const supabase = createClient();
+      // All optional fields use conditional spread so that empty/null values
+      // are not sent to PostgREST. This prevents "schema cache" errors when a
+      // column exists in the migration but PostgREST hasn't refreshed yet.
       const { error } = await supabase
         .from("loans")
         .update({
-          ...(form.loan_type ? { loan_type: form.loan_type } : {}),
-          property_address: form.property_address,
-          property_city: form.property_city || null,
-          property_state: form.property_state || null,
-          property_zip: form.property_zip || null,
           loan_amount: parseFloat(form.loan_amount),
-          interest_rate: parseFloat(form.interest_rate),
-          term_months: parseInt(form.term_months),
           stage: form.stage,
           stage_updated_at: new Date().toISOString(),
-          appraised_value: form.appraised_value
-            ? parseFloat(form.appraised_value)
-            : null,
-          origination_date: form.origination_date || null,
-          maturity_date: form.maturity_date || null,
-          notes: form.notes || null,
           updated_at: new Date().toISOString(),
+          ...(form.loan_type ? { loan_type: form.loan_type } : {}),
+          ...(form.property_address ? { property_address: form.property_address } : {}),
+          ...(form.property_city ? { property_city: form.property_city } : { property_city: null }),
+          ...(form.property_state ? { property_state: form.property_state } : { property_state: null }),
+          ...(form.property_zip ? { property_zip: form.property_zip } : { property_zip: null }),
+          ...(form.interest_rate ? { interest_rate: parseFloat(form.interest_rate) } : {}),
+          ...(form.term_months ? { term_months: parseInt(form.term_months) } : {}),
+          ...(form.appraised_value ? { appraised_value: parseFloat(form.appraised_value) } : {}),
+          ...(form.origination_date ? { origination_date: form.origination_date } : {}),
+          ...(form.maturity_date ? { maturity_date: form.maturity_date } : {}),
+          ...(form.notes ? { notes: form.notes } : {}),
         })
         .eq("id", loan.id);
 
@@ -230,9 +231,12 @@ function EditLoanDialog({ loan }: { loan: LoanInfo }) {
       setOpen(false);
       router.refresh();
     } catch (err: any) {
+      const isSchemaError = err.message?.includes("schema cache") || err.message?.includes("Could not find the");
       toast({
         title: "Error updating loan",
-        description: err.message,
+        description: isSchemaError
+          ? "Database schema needs to be refreshed. Please contact your administrator to reload the Supabase schema cache."
+          : err.message,
         variant: "destructive",
       });
     } finally {

@@ -150,25 +150,26 @@ export function CreateLoanDialog({
       const now = new Date().toISOString();
 
       // 1. Create the loan
-      // Pipeline fields (arv, purchase_price, points, etc.) are only included
-      // when they have values, to avoid errors if the pipeline migration
-      // (20250302000000_loan_pipeline.sql) hasn't been applied yet.
+      // All optional fields use conditional spread so that empty/null values
+      // are not sent to PostgREST. This prevents "schema cache" errors when a
+      // column exists in the migration but PostgREST hasn't refreshed yet.
+      const originatorName = teamMembers.find((t) => t.id === form.originator_id)?.full_name;
       const { data: newLoan, error: loanError } = await supabase
         .from("loans")
         .insert({
           borrower_id: form.borrower_id,
-          property_address: form.property_address || null,
-          property_city: form.property_city || null,
-          property_state: form.property_state || null,
-          property_zip: form.property_zip || null,
           loan_amount: parseFloat(form.loan_amount),
-          appraised_value: form.appraised_value ? parseFloat(form.appraised_value) : null,
-          interest_rate: form.interest_rate ? parseFloat(form.interest_rate) : null,
-          term_months: form.term_months ? parseInt(form.term_months) : null,
-          originator: teamMembers.find((t) => t.id === form.originator_id)?.full_name || null,
-          notes: form.notes || null,
           stage: "lead",
           stage_updated_at: now,
+          ...(form.property_address ? { property_address: form.property_address } : {}),
+          ...(form.property_city ? { property_city: form.property_city } : {}),
+          ...(form.property_state ? { property_state: form.property_state } : {}),
+          ...(form.property_zip ? { property_zip: form.property_zip } : {}),
+          ...(form.appraised_value ? { appraised_value: parseFloat(form.appraised_value) } : {}),
+          ...(form.interest_rate ? { interest_rate: parseFloat(form.interest_rate) } : {}),
+          ...(form.term_months ? { term_months: parseInt(form.term_months) } : {}),
+          ...(originatorName ? { originator: originatorName } : {}),
+          ...(form.notes ? { notes: form.notes } : {}),
           ...(form.loan_type ? { loan_type: form.loan_type } : {}),
           ...(form.purchase_price ? { purchase_price: parseFloat(form.purchase_price) } : {}),
           ...(form.arv ? { arv: parseFloat(form.arv) } : {}),
@@ -202,9 +203,12 @@ export function CreateLoanDialog({
       resetForm();
       router.push(`/admin/loans/${newLoan.id}`);
     } catch (err: any) {
+      const isSchemaError = err.message?.includes("schema cache") || err.message?.includes("Could not find the");
       toast({
         title: "Error creating loan",
-        description: err.message,
+        description: isSchemaError
+          ? "Database schema needs to be refreshed. Please contact your administrator to reload the Supabase schema cache."
+          : err.message,
         variant: "destructive",
       });
     } finally {
