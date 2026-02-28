@@ -20,6 +20,7 @@ import {
   FolderOpen,
   Receipt,
   Hammer,
+  Settings2,
 } from "lucide-react";
 import { useState } from "react";
 
@@ -56,6 +57,7 @@ const adminNav: NavItem[] = [
   { label: "Conditions", href: "/admin/conditions", icon: ClipboardList },
   { label: "Investments", href: "/admin/funds", icon: Landmark },
   { label: "Documents", href: "/admin/documents", icon: FolderOpen },
+  { label: "Operations", href: "/admin/operations", icon: Settings2 },
   {
     label: "Contributions",
     href: "/admin/capital-calls",
