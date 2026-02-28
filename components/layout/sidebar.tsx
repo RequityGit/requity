@@ -22,6 +22,7 @@ import {
   Hammer,
   Settings2,
   Contact,
+  Calculator,
 } from "lucide-react";
 import { useState } from "react";
 
@@ -57,6 +58,7 @@ const adminNav: NavItem[] = [
   { label: "Borrowers", href: "/admin/borrowers", icon: Building2 },
   { label: "Loans", href: "/admin/loans", icon: Home },
   { label: "Conditions", href: "/admin/conditions", icon: ClipboardList },
+  { label: "Pricing", href: "/admin/pricing", icon: Calculator },
   { label: "Investments", href: "/admin/funds", icon: Landmark },
   { label: "Documents", href: "/admin/documents", icon: FolderOpen },
   { label: "Operations", href: "/admin/operations", icon: Settings2 },

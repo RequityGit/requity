@@ -43,9 +43,11 @@ import {
   Upload,
   ClipboardList,
   Activity,
+  Calculator,
 } from "lucide-react";
-import type { DrawRequest, LoanPayment, Document, LoanCondition } from "@/lib/supabase/types";
+import type { DrawRequest, LoanPayment, Document, LoanCondition, PricingProgram, LeverageAdjuster } from "@/lib/supabase/types";
 import { LoanConditionsTab } from "@/components/admin/loan-conditions-tab";
+import { LoanPricingTab } from "@/components/admin/loan-pricing-tab";
 
 interface LoanInfo {
   id: string;
@@ -81,6 +83,36 @@ interface ActivityLogEntry {
   user?: { full_name: string | null } | null;
 }
 
+interface LoanForPricing {
+  id: string;
+  purchase_price: number | null;
+  rehab_budget: number | null;
+  after_repair_value: number | null;
+  arv: number | null;
+  credit_score: number | null;
+  experience_deals_24mo: number | null;
+  legal_status: string | null;
+  property_type: string | null;
+  flood_zone: boolean | null;
+  is_in_flood_zone: boolean | null;
+  rural_status: string | null;
+  holding_period_months: number | null;
+  loan_term_months: number | null;
+  requested_loan_amount: number | null;
+  loan_amount: number | null;
+  heated_sqft: number | null;
+  mobilization_draw: number | null;
+  annual_property_tax: number | null;
+  annual_insurance: number | null;
+  monthly_utilities: number | null;
+  monthly_hoa: number | null;
+  title_closing_escrow: number | null;
+  lender_fees_flat: number | null;
+  sales_disposition_pct: number | null;
+  num_partners: number | null;
+  program_id: string | null;
+}
+
 interface LoanDetailActionsProps {
   loan: LoanInfo;
   drawRequests: DrawRequest[];
@@ -90,6 +122,9 @@ interface LoanDetailActionsProps {
   activityLog: ActivityLogEntry[];
   currentUserId: string;
   loanId: string;
+  programs?: PricingProgram[];
+  adjusters?: LeverageAdjuster[];
+  loanForPricing?: LoanForPricing;
 }
 
 export function LoanDetailActions({
@@ -101,8 +136,12 @@ export function LoanDetailActions({
   activityLog,
   currentUserId,
   loanId,
+  programs,
+  adjusters,
+  loanForPricing,
 }: LoanDetailActionsProps) {
   const router = useRouter();
+  const hasPricing = programs && programs.length > 0 && adjusters && loanForPricing;
 
   return (
     <div className="space-y-4">
@@ -133,6 +172,12 @@ export function LoanDetailActions({
             <Activity className="h-3.5 w-3.5" />
             Activity
           </TabsTrigger>
+          {hasPricing && (
+            <TabsTrigger value="pricing" className="gap-1">
+              <Calculator className="h-3.5 w-3.5" />
+              Pricing
+            </TabsTrigger>
+          )}
         </TabsList>
 
         <TabsContent value="conditions" className="mt-4">
@@ -161,6 +206,16 @@ export function LoanDetailActions({
         <TabsContent value="activity" className="mt-4">
           <ActivityLogTab activityLog={activityLog} />
         </TabsContent>
+
+        {hasPricing && (
+          <TabsContent value="pricing" className="mt-4">
+            <LoanPricingTab
+              loan={loanForPricing}
+              programs={programs}
+              adjusters={adjusters}
+            />
+          </TabsContent>
+        )}
       </Tabs>
     </div>
   );

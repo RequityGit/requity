@@ -14,6 +14,7 @@ import {
 import { LOAN_STAGE_LABELS, LOAN_DB_TYPES } from "@/lib/constants";
 import { LoanDetailActions } from "@/components/admin/loan-detail-actions";
 import { Flame, Pause } from "lucide-react";
+import type { PricingProgram, LeverageAdjuster } from "@/lib/supabase/types";
 
 interface PageProps {
   params: { id: string };
@@ -38,7 +39,7 @@ export default async function AdminLoanDetailPage({ params }: PageProps) {
   if (!loan) notFound();
 
   // Fetch all related data in parallel — keep conditions/activity separate so they don't break if tables don't exist
-  const [drawRequestsResult, paymentsResult, documentsResult] =
+  const [drawRequestsResult, paymentsResult, documentsResult, programsResult, adjustersResult] =
     await Promise.all([
       supabase
         .from("draw_requests")
@@ -55,6 +56,16 @@ export default async function AdminLoanDetailPage({ params }: PageProps) {
         .select("*")
         .eq("loan_id", id)
         .order("created_at", { ascending: false }),
+      supabase
+        .from("pricing_programs")
+        .select("*")
+        .eq("is_current", true)
+        .order("program_id"),
+      supabase
+        .from("leverage_adjusters")
+        .select("*")
+        .eq("is_active", true)
+        .order("sort_order"),
     ]);
 
   // Conditions and activity log — may not exist if migrations haven't been applied
@@ -94,6 +105,8 @@ export default async function AdminLoanDetailPage({ params }: PageProps) {
   const documents = documentsResult.data ?? [];
   const conditions = conditionsResult.data ?? [];
   const activityLog = activityResult.data ?? [];
+  const programs = (programsResult.data ?? []) as PricingProgram[];
+  const adjusters = (adjustersResult.data ?? []) as LeverageAdjuster[];
 
   const borrowerRaw = (loan as any).borrower;
   const borrowerName = borrowerRaw
@@ -278,6 +291,37 @@ export default async function AdminLoanDetailPage({ params }: PageProps) {
         activityLog={activityLog}
         currentUserId={user.id}
         loanId={loan.id}
+        programs={programs}
+        adjusters={adjusters}
+        loanForPricing={{
+          id: loan.id,
+          purchase_price: loan.purchase_price,
+          rehab_budget: loan.rehab_budget,
+          after_repair_value: loan.after_repair_value,
+          arv: loan.arv,
+          credit_score: loan.credit_score,
+          experience_deals_24mo: loan.experience_deals_24mo,
+          legal_status: loan.legal_status,
+          property_type: loan.property_type,
+          flood_zone: loan.flood_zone,
+          is_in_flood_zone: loan.is_in_flood_zone,
+          rural_status: loan.rural_status,
+          holding_period_months: loan.holding_period_months,
+          loan_term_months: loan.loan_term_months,
+          requested_loan_amount: loan.requested_loan_amount,
+          loan_amount: loan.loan_amount,
+          heated_sqft: loan.heated_sqft,
+          mobilization_draw: loan.mobilization_draw,
+          annual_property_tax: loan.annual_property_tax,
+          annual_insurance: loan.annual_insurance,
+          monthly_utilities: loan.monthly_utilities,
+          monthly_hoa: loan.monthly_hoa,
+          title_closing_escrow: loan.title_closing_escrow,
+          lender_fees_flat: loan.lender_fees_flat,
+          sales_disposition_pct: loan.sales_disposition_pct,
+          num_partners: loan.num_partners,
+          program_id: loan.program_id,
+        }}
       />
     </div>
   );
