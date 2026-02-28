@@ -10,7 +10,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { LogOut, User } from "lucide-react";
+import { LogOut, ShieldCheck, User } from "lucide-react";
 import { RoleSwitcher } from "./role-switcher";
 
 interface TopbarProps {
@@ -69,6 +69,15 @@ export function Topbar({ userName, role, email, allowedRoles }: TopbarProps) {
               <User className="mr-2 h-4 w-4" />
               Account Settings
             </DropdownMenuItem>
+            {role === "admin" && (
+              <DropdownMenuItem
+                onClick={() => router.push("/admin/users")}
+                className="cursor-pointer"
+              >
+                <ShieldCheck className="mr-2 h-4 w-4" />
+                User Management
+              </DropdownMenuItem>
+            )}
             <DropdownMenuSeparator />
             <DropdownMenuItem
               onClick={handleLogout}
