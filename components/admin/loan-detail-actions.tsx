@@ -28,7 +28,7 @@ import {
 } from "@/components/ui/select";
 import { FileUpload } from "@/components/shared/file-upload";
 import {
-  LOAN_TYPES,
+  LOAN_DB_TYPES,
   LOAN_STAGES,
   LOAN_STAGE_LABELS,
   DOCUMENT_TYPES,
@@ -268,7 +268,7 @@ function EditLoanDialog({ loan }: { loan: LoanInfo }) {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {LOAN_TYPES.map((t) => (
+                  {LOAN_DB_TYPES.map((t) => (
                     <SelectItem key={t.value} value={t.value}>
                       {t.label}
                     </SelectItem>

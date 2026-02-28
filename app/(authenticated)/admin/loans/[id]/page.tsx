@@ -11,7 +11,7 @@ import {
   formatDate,
   formatPercent,
 } from "@/lib/format";
-import { LOAN_STAGE_LABELS, LOAN_TYPES } from "@/lib/constants";
+import { LOAN_STAGE_LABELS, LOAN_DB_TYPES } from "@/lib/constants";
 import { LoanDetailActions } from "@/components/admin/loan-detail-actions";
 import { Flame, Pause } from "lucide-react";
 
@@ -104,7 +104,7 @@ export default async function AdminLoanDetailPage({ params }: PageProps) {
   const underwriterName = (loan.underwriter_id && teamProfiles[loan.underwriter_id]) ?? "—";
   const closerName = (loan.closer_id && teamProfiles[loan.closer_id]) ?? "—";
 
-  const loanTypeLabel = LOAN_TYPES.find((t) => t.value === loan.type)?.label ?? (loan.type ?? "—").replace(/_/g, " ");
+  const loanTypeLabel = LOAN_DB_TYPES.find((t) => t.value === loan.type)?.label ?? (loan.type ?? "—").replace(/_/g, " ");
 
   // Condition summary for the header
   const condTotal = conditions.length;
