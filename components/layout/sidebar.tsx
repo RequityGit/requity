@@ -22,6 +22,7 @@ import {
   Hammer,
   Settings2,
   Contact,
+  ShieldCheck,
 } from "lucide-react";
 import { useState } from "react";
 
@@ -70,6 +71,7 @@ const adminNav: NavItem[] = [
     href: "/admin/distributions",
     icon: Receipt,
   },
+  { label: "User Management", href: "/admin/users", icon: ShieldCheck },
 ];
 
 function getNavItems(role: string): NavItem[] {
