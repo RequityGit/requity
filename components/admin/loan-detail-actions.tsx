@@ -186,7 +186,6 @@ function EditLoanDialog({ loan }: { loan: LoanInfo }) {
     interest_rate: loan.interest_rate?.toString() ?? "",
     term_months: loan.term_months?.toString() ?? "",
     stage: loan.stage,
-    ltv: loan.ltv?.toString() || "",
     appraised_value: loan.appraised_value?.toString() || "",
     origination_date: loan.origination_date || "",
     maturity_date: loan.maturity_date || "",
@@ -215,7 +214,6 @@ function EditLoanDialog({ loan }: { loan: LoanInfo }) {
           term_months: parseInt(form.term_months),
           stage: form.stage,
           stage_updated_at: new Date().toISOString(),
-          ltv: form.ltv ? parseFloat(form.ltv) : null,
           appraised_value: form.appraised_value
             ? parseFloat(form.appraised_value)
             : null,
@@ -360,15 +358,6 @@ function EditLoanDialog({ loan }: { loan: LoanInfo }) {
           </div>
 
           <div className="grid grid-cols-3 gap-4">
-            <div className="space-y-2">
-              <Label>LTV (%)</Label>
-              <Input
-                type="number"
-                step="0.01"
-                value={form.ltv}
-                onChange={(e) => updateField("ltv", e.target.value)}
-              />
-            </div>
             <div className="space-y-2">
               <Label>Appraised Value ($)</Label>
               <Input

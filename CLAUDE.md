@@ -108,6 +108,49 @@ All tables have RLS enabled. General pattern:
 - **Borrowers** can insert their own draw requests
 - **Storage**: Two buckets (`investor-documents`, `loan-documents`) with folder-based RLS
 
+## Database Schema — Key Column Names
+
+All column names below are the **actual database columns**. Always use these exact names in queries, inserts, and updates. The source of truth is `lib/supabase/types.ts`.
+
+### loans (key columns)
+
+| Column               | Type                   | Notes                              |
+|----------------------|------------------------|------------------------------------|
+| id                   | uuid (PK)              | Auto-generated                     |
+| borrower_id          | uuid (FK → profiles)   | Required                           |
+| loan_number          | text                   | Auto-generated — never set on insert |
+| loan_type            | text                   | bridge_residential, bridge_commercial, fix_and_flip, ground_up, stabilized, dscr, other |
+| property_address     | text                   |                                    |
+| loan_amount          | numeric                | Required                           |
+| appraised_value      | numeric                |                                    |
+| ltv                  | numeric                | **Generated column** — never set directly (auto-computes from loan_amount / appraised_value) |
+| interest_rate        | numeric                |                                    |
+| term_months          | int                    |                                    |
+| stage                | text                   | lead, application, processing, underwriting, approved, clear_to_close, funded, servicing, payoff, default, reo, paid_off |
+| originator_id        | uuid (FK → profiles)   |                                    |
+| processor_id         | uuid (FK → profiles)   |                                    |
+| priority             | text                   | hot, normal, on_hold               |
+| deleted_at           | timestamptz            | Soft delete — filter with `.is("deleted_at", null)` |
+
+### Common Misnomers to Avoid
+
+| WRONG name        | CORRECT column   |
+|-------------------|------------------|
+| `type`            | `loan_type`      |
+| `loan_term_months`| `term_months`    |
+| `rate`            | `interest_rate`  |
+| `address`         | `property_address` |
+| `status`          | `stage`          |
+
+### Rules for Database Code
+
+1. **Always use typed Supabase client.** The clients in `lib/supabase/` are already parameterized with `Database` from the types file.
+2. **Never guess column names.** If unsure, check `lib/supabase/types.ts`.
+3. **`ltv` is a generated column** — never set it directly.
+4. **`loan_number` is auto-generated** — never set it on insert.
+5. **`updated_at` has a trigger** — but it's fine to explicitly set it when you need a specific timestamp.
+6. **Soft deletes** — filter with `.is("deleted_at", null)` on loan queries.
+
 ## Important Notes
 
 - The `@/` path alias is used everywhere — always use it for imports
