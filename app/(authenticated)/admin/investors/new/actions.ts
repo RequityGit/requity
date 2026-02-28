@@ -153,22 +153,25 @@ export async function addInvestorAction(input: AddInvestorInput) {
       return { error: "Failed to create user" };
     }
 
-    // Update the auto-created profile with additional details + pending status
-    const profileUpdate: Record<string, unknown> = {
+    // Upsert the profile to ensure it exists with the correct role, even if
+    // the handle_new_user trigger hasn't fired or set the wrong role.
+    const profileData: Record<string, unknown> = {
+      id: newUser.user.id,
+      email: input.email,
+      role: "investor",
       full_name: input.full_name,
       activation_status: "pending",
     };
     if (input.company_name) {
-      profileUpdate.company_name = input.company_name;
+      profileData.company_name = input.company_name;
     }
     if (input.phone) {
-      profileUpdate.phone = input.phone;
+      profileData.phone = input.phone;
     }
 
-    const result = await resilientProfileUpdate(
+    const result = await resilientProfileUpsert(
       adminClient,
-      newUser.user.id,
-      profileUpdate
+      profileData
     );
     if (result.error) {
       // Clean up: delete the auth user since we can't set up the profile

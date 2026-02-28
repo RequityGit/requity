@@ -32,7 +32,6 @@ export default async function AdminInvestorDetailPage({ params }: PageProps) {
     .from("profiles")
     .select("*")
     .eq("id", id)
-    .eq("role", "investor")
     .single();
 
   if (!investor) notFound();
