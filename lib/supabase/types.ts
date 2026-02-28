@@ -278,6 +278,23 @@ export type Database = {
           notes: string | null;
           created_at: string;
           updated_at: string;
+          processor_id: string | null;
+          underwriter_id: string | null;
+          closer_id: string | null;
+          originator_id: string | null;
+          priority: string;
+          next_action: string | null;
+          expected_close_date: string | null;
+          purchase_price: number | null;
+          arv: number | null;
+          points: number | null;
+          origination_fee: number | null;
+          extension_options: string | null;
+          prepayment_terms: string | null;
+          application_date: string | null;
+          approval_date: string | null;
+          actual_close_date: string | null;
+          deleted_at: string | null;
         };
         Insert: {
           id?: string;
@@ -300,6 +317,23 @@ export type Database = {
           notes?: string | null;
           created_at?: string;
           updated_at?: string;
+          processor_id?: string | null;
+          underwriter_id?: string | null;
+          closer_id?: string | null;
+          originator_id?: string | null;
+          priority?: string;
+          next_action?: string | null;
+          expected_close_date?: string | null;
+          purchase_price?: number | null;
+          arv?: number | null;
+          points?: number | null;
+          origination_fee?: number | null;
+          extension_options?: string | null;
+          prepayment_terms?: string | null;
+          application_date?: string | null;
+          approval_date?: string | null;
+          actual_close_date?: string | null;
+          deleted_at?: string | null;
         };
         Update: {
           id?: string;
@@ -322,11 +356,110 @@ export type Database = {
           notes?: string | null;
           created_at?: string;
           updated_at?: string;
+          processor_id?: string | null;
+          underwriter_id?: string | null;
+          closer_id?: string | null;
+          originator_id?: string | null;
+          priority?: string;
+          next_action?: string | null;
+          expected_close_date?: string | null;
+          purchase_price?: number | null;
+          arv?: number | null;
+          points?: number | null;
+          origination_fee?: number | null;
+          extension_options?: string | null;
+          prepayment_terms?: string | null;
+          application_date?: string | null;
+          approval_date?: string | null;
+          actual_close_date?: string | null;
+          deleted_at?: string | null;
         };
         Relationships: [
           {
             foreignKeyName: "loans_borrower_id_fkey";
             columns: ["borrower_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "loans_processor_id_fkey";
+            columns: ["processor_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "loans_underwriter_id_fkey";
+            columns: ["underwriter_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "loans_closer_id_fkey";
+            columns: ["closer_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "loans_originator_id_fkey";
+            columns: ["originator_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      loan_activity_log: {
+        Row: {
+          id: string;
+          loan_id: string;
+          user_id: string | null;
+          activity_type: string;
+          description: string;
+          old_value: string | null;
+          new_value: string | null;
+          field_name: string | null;
+          metadata: Record<string, unknown>;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          loan_id: string;
+          user_id?: string | null;
+          activity_type: string;
+          description: string;
+          old_value?: string | null;
+          new_value?: string | null;
+          field_name?: string | null;
+          metadata?: Record<string, unknown>;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          loan_id?: string;
+          user_id?: string | null;
+          activity_type?: string;
+          description?: string;
+          old_value?: string | null;
+          new_value?: string | null;
+          field_name?: string | null;
+          metadata?: Record<string, unknown>;
+          created_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "loan_activity_log_loan_id_fkey";
+            columns: ["loan_id"];
+            isOneToOne: false;
+            referencedRelation: "loans";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "loan_activity_log_user_id_fkey";
+            columns: ["user_id"];
             isOneToOne: false;
             referencedRelation: "profiles";
             referencedColumns: ["id"];
@@ -595,3 +728,7 @@ export type LoanPaymentUpdate = Database["public"]["Tables"]["loan_payments"]["U
 export type Document = Database["public"]["Tables"]["documents"]["Row"];
 export type DocumentInsert = Database["public"]["Tables"]["documents"]["Insert"];
 export type DocumentUpdate = Database["public"]["Tables"]["documents"]["Update"];
+
+export type LoanActivityLog = Database["public"]["Tables"]["loan_activity_log"]["Row"];
+export type LoanActivityLogInsert = Database["public"]["Tables"]["loan_activity_log"]["Insert"];
+export type LoanActivityLogUpdate = Database["public"]["Tables"]["loan_activity_log"]["Update"];
