@@ -30,7 +30,7 @@ create policy "Borrowers read external condition comments"
     and loan_id in (
       select l.id from loans l
       join borrowers b on b.id = l.borrower_id
-      where b.id = any(my_borrower_ids())
+      where b.id in (select * from my_borrower_ids())
     )
   );
 
@@ -43,7 +43,7 @@ create policy "Borrowers add external condition comments"
     and loan_id in (
       select l.id from loans l
       join borrowers b on b.id = l.borrower_id
-      where b.id = any(my_borrower_ids())
+      where b.id in (select * from my_borrower_ids())
     )
   );
 
