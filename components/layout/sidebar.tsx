@@ -21,6 +21,7 @@ import {
   Receipt,
   Hammer,
   Settings2,
+  Contact,
 } from "lucide-react";
 import { useState } from "react";
 
@@ -51,6 +52,7 @@ const borrowerNav: NavItem[] = [
 
 const adminNav: NavItem[] = [
   { label: "Dashboard", href: "/admin/dashboard", icon: LayoutDashboard },
+  { label: "CRM", href: "/admin/crm", icon: Contact },
   { label: "Investors", href: "/admin/investors", icon: Users },
   { label: "Borrowers", href: "/admin/borrowers", icon: Building2 },
   { label: "Loans", href: "/admin/loans", icon: Home },

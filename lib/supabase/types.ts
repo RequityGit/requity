@@ -1033,6 +1033,151 @@ export type Database = {
           },
         ];
       };
+      crm_contacts: {
+        Row: {
+          id: string;
+          first_name: string;
+          last_name: string;
+          email: string | null;
+          phone: string | null;
+          company_name: string | null;
+          contact_type: "lead" | "prospect" | "borrower" | "investor" | "broker" | "vendor" | "other";
+          source: "referral" | "website" | "cold_call" | "social_media" | "conference" | "existing_relationship" | "other" | null;
+          status: "active" | "nurturing" | "qualified" | "converted" | "inactive" | "do_not_contact";
+          assigned_to: string | null;
+          borrower_id: string | null;
+          notes: string | null;
+          address_line1: string | null;
+          city: string | null;
+          state: string | null;
+          zip: string | null;
+          tags: string[] | null;
+          last_contacted_at: string | null;
+          next_follow_up_date: string | null;
+          created_by: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          first_name: string;
+          last_name: string;
+          email?: string | null;
+          phone?: string | null;
+          company_name?: string | null;
+          contact_type?: "lead" | "prospect" | "borrower" | "investor" | "broker" | "vendor" | "other";
+          source?: "referral" | "website" | "cold_call" | "social_media" | "conference" | "existing_relationship" | "other" | null;
+          status?: "active" | "nurturing" | "qualified" | "converted" | "inactive" | "do_not_contact";
+          assigned_to?: string | null;
+          borrower_id?: string | null;
+          notes?: string | null;
+          address_line1?: string | null;
+          city?: string | null;
+          state?: string | null;
+          zip?: string | null;
+          tags?: string[] | null;
+          last_contacted_at?: string | null;
+          next_follow_up_date?: string | null;
+          created_by?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          first_name?: string;
+          last_name?: string;
+          email?: string | null;
+          phone?: string | null;
+          company_name?: string | null;
+          contact_type?: "lead" | "prospect" | "borrower" | "investor" | "broker" | "vendor" | "other";
+          source?: "referral" | "website" | "cold_call" | "social_media" | "conference" | "existing_relationship" | "other" | null;
+          status?: "active" | "nurturing" | "qualified" | "converted" | "inactive" | "do_not_contact";
+          assigned_to?: string | null;
+          borrower_id?: string | null;
+          notes?: string | null;
+          address_line1?: string | null;
+          city?: string | null;
+          state?: string | null;
+          zip?: string | null;
+          tags?: string[] | null;
+          last_contacted_at?: string | null;
+          next_follow_up_date?: string | null;
+          created_by?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "crm_contacts_assigned_to_fkey";
+            columns: ["assigned_to"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "crm_contacts_borrower_id_fkey";
+            columns: ["borrower_id"];
+            isOneToOne: false;
+            referencedRelation: "borrowers";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "crm_contacts_created_by_fkey";
+            columns: ["created_by"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      crm_activities: {
+        Row: {
+          id: string;
+          contact_id: string;
+          activity_type: "call" | "email" | "meeting" | "note" | "text_message" | "follow_up" | "deal_update";
+          subject: string | null;
+          description: string | null;
+          outcome: string | null;
+          created_by: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          contact_id: string;
+          activity_type: "call" | "email" | "meeting" | "note" | "text_message" | "follow_up" | "deal_update";
+          subject?: string | null;
+          description?: string | null;
+          outcome?: string | null;
+          created_by?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          contact_id?: string;
+          activity_type?: "call" | "email" | "meeting" | "note" | "text_message" | "follow_up" | "deal_update";
+          subject?: string | null;
+          description?: string | null;
+          outcome?: string | null;
+          created_by?: string | null;
+          created_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "crm_activities_contact_id_fkey";
+            columns: ["contact_id"];
+            isOneToOne: false;
+            referencedRelation: "crm_contacts";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "crm_activities_created_by_fkey";
+            columns: ["created_by"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
     };
     Views: {
       [_ in never]: never;
@@ -1113,3 +1258,11 @@ export type LoanConditionUpdate = Database["public"]["Tables"]["loan_conditions"
 export type LoanConditionDocument = Database["public"]["Tables"]["loan_condition_documents"]["Row"];
 export type LoanConditionDocumentInsert = Database["public"]["Tables"]["loan_condition_documents"]["Insert"];
 export type LoanConditionDocumentUpdate = Database["public"]["Tables"]["loan_condition_documents"]["Update"];
+
+export type CrmContact = Database["public"]["Tables"]["crm_contacts"]["Row"];
+export type CrmContactInsert = Database["public"]["Tables"]["crm_contacts"]["Insert"];
+export type CrmContactUpdate = Database["public"]["Tables"]["crm_contacts"]["Update"];
+
+export type CrmActivity = Database["public"]["Tables"]["crm_activities"]["Row"];
+export type CrmActivityInsert = Database["public"]["Tables"]["crm_activities"]["Insert"];
+export type CrmActivityUpdate = Database["public"]["Tables"]["crm_activities"]["Update"];

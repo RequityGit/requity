@@ -237,6 +237,49 @@ export const RESPONSIBLE_PARTIES = [
 ] as const;
 
 // ---------------------------------------------------------------------------
+// CRM Contact Types
+// ---------------------------------------------------------------------------
+
+export const CRM_CONTACT_TYPES = [
+  { value: "lead", label: "Lead" },
+  { value: "prospect", label: "Prospect" },
+  { value: "borrower", label: "Borrower" },
+  { value: "investor", label: "Investor" },
+  { value: "broker", label: "Broker" },
+  { value: "vendor", label: "Vendor" },
+  { value: "other", label: "Other" },
+] as const;
+
+export const CRM_CONTACT_SOURCES = [
+  { value: "referral", label: "Referral" },
+  { value: "website", label: "Website" },
+  { value: "cold_call", label: "Cold Call" },
+  { value: "social_media", label: "Social Media" },
+  { value: "conference", label: "Conference" },
+  { value: "existing_relationship", label: "Existing Relationship" },
+  { value: "other", label: "Other" },
+] as const;
+
+export const CRM_CONTACT_STATUSES = [
+  { value: "active", label: "Active" },
+  { value: "nurturing", label: "Nurturing" },
+  { value: "qualified", label: "Qualified" },
+  { value: "converted", label: "Converted" },
+  { value: "inactive", label: "Inactive" },
+  { value: "do_not_contact", label: "Do Not Contact" },
+] as const;
+
+export const CRM_ACTIVITY_TYPES = [
+  { value: "call", label: "Call" },
+  { value: "email", label: "Email" },
+  { value: "meeting", label: "Meeting" },
+  { value: "note", label: "Note" },
+  { value: "text_message", label: "Text Message" },
+  { value: "follow_up", label: "Follow-Up" },
+  { value: "deal_update", label: "Deal Update" },
+] as const;
+
+// ---------------------------------------------------------------------------
 // Activity Log Types
 // ---------------------------------------------------------------------------
 
@@ -297,6 +340,17 @@ export const STATUS_COLORS: Record<string, string> = {
   requested: "bg-blue-100 text-blue-800",
   received: "bg-indigo-100 text-indigo-800",
   waived: "bg-slate-100 text-slate-600",
+
+  // CRM statuses
+  nurturing: "bg-purple-100 text-purple-800",
+  qualified: "bg-teal-100 text-teal-800",
+  converted: "bg-emerald-100 text-emerald-800",
+  do_not_contact: "bg-red-100 text-red-800",
+
+  // CRM contact types
+  prospect: "bg-indigo-100 text-indigo-800",
+  broker: "bg-orange-100 text-orange-800",
+  vendor: "bg-cyan-100 text-cyan-800",
 };
 
 // Days-in-stage color thresholds
