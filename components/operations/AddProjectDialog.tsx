@@ -88,7 +88,7 @@ export function AddProjectDialog({ teamMembers }: AddProjectDialogProps) {
         return;
       }
 
-      const { error } = await (supabase.from as Function)("ops_projects").insert({
+      const { error } = await supabase.from("ops_projects").insert({
         project_name: form.project_name.trim(),
         category: form.category.trim() || null,
         owner: form.owner.trim() || null,

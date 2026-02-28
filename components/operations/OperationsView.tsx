@@ -227,18 +227,16 @@ export function OperationsView({ projects, tasks, teamMembers }: OperationsViewP
 
   // Toggle task complete/incomplete
   async function handleToggleTask(taskId: string, complete: boolean) {
-    const update: Record<string, unknown> = {
+    await supabase.from("ops_tasks").update({
       status: complete ? "Complete" : "To Do",
       completed_at: complete ? new Date().toISOString() : null,
-    };
-
-    await (supabase.from as Function)("ops_tasks").update(update).eq("id", taskId);
+    }).eq("id", taskId);
 
     // If completing a recurring task, generate the next occurrence via RPC
     if (complete) {
       const task = tasks.find((t) => t.id === taskId);
       if (task?.is_recurring && task?.is_active_recurrence) {
-        const { data, error: rpcError } = await (supabase.rpc as Function)(
+        const { data, error: rpcError } = await supabase.rpc(
           "generate_next_recurring_task",
           { task_id: taskId }
         );
@@ -251,7 +249,7 @@ export function OperationsView({ projects, tasks, teamMembers }: OperationsViewP
         } else if (data?.success) {
           toast({
             title: "Task completed",
-            description: `Next occurrence scheduled for ${new Date(data.next_due_date).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}`,
+            description: `Next occurrence scheduled for ${new Date(data.next_due_date as string).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}`,
           });
         } else if (data?.skipped) {
           toast({
@@ -271,13 +269,13 @@ export function OperationsView({ projects, tasks, teamMembers }: OperationsViewP
   async function handleStopRecurrence(taskId: string) {
     const task = tasks.find((t) => t.id === taskId);
 
-    await (supabase.from as Function)("ops_tasks")
+    await supabase.from("ops_tasks")
       .update({ is_active_recurrence: false })
       .eq("id", taskId);
 
     // Also stop recurrence on all future pending tasks in the same series
     if (task?.recurring_series_id) {
-      await (supabase.from as Function)("ops_tasks")
+      await supabase.from("ops_tasks")
         .update({ is_active_recurrence: false })
         .eq("recurring_series_id", task.recurring_series_id)
         .neq("status", "Complete");

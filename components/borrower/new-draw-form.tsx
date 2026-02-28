@@ -59,7 +59,8 @@ export function NewDrawForm() {
         .from("loans")
         .select("*")
         .eq("borrower_id", user.id)
-        .eq("stage", "active")
+        .in("stage", ["funded", "servicing"])
+        .is("deleted_at", null)
         .order("property_address", { ascending: true });
 
       setLoans(data ?? []);

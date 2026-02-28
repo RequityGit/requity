@@ -87,7 +87,7 @@ export function AddTaskDialog({ projects, teamMembers }: AddTaskDialogProps) {
         return;
       }
 
-      const insertData: Record<string, unknown> = {
+      const { error } = await supabase.from("ops_tasks").insert({
         title: form.title.trim(),
         description: form.description.trim() || null,
         status: form.status,
@@ -99,11 +99,7 @@ export function AddTaskDialog({ projects, teamMembers }: AddTaskDialogProps) {
         is_recurring: form.is_recurring,
         recurrence_pattern: form.is_recurring ? form.recurrence_pattern || null : null,
         created_by: user.id,
-      };
-
-      const { error } = await (supabase.from as Function)("ops_tasks").insert(
-        insertData
-      );
+      });
 
       if (error) {
         toast({

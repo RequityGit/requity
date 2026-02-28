@@ -1178,12 +1178,164 @@ export type Database = {
           },
         ];
       };
+      ops_projects: {
+        Row: {
+          id: string;
+          project_name: string;
+          category: string | null;
+          owner: string | null;
+          status: string | null;
+          priority: string | null;
+          description: string | null;
+          latest_update: string | null;
+          due_date: string | null;
+          assigned_to: string | null;
+          created_by: string | null;
+          started_at: string | null;
+          completed_at: string | null;
+          updated_at: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          project_name: string;
+          category?: string | null;
+          owner?: string | null;
+          status?: string | null;
+          priority?: string | null;
+          description?: string | null;
+          latest_update?: string | null;
+          due_date?: string | null;
+          assigned_to?: string | null;
+          created_by?: string | null;
+          started_at?: string | null;
+          completed_at?: string | null;
+          updated_at?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          project_name?: string;
+          category?: string | null;
+          owner?: string | null;
+          status?: string | null;
+          priority?: string | null;
+          description?: string | null;
+          latest_update?: string | null;
+          due_date?: string | null;
+          assigned_to?: string | null;
+          created_by?: string | null;
+          started_at?: string | null;
+          completed_at?: string | null;
+          updated_at?: string | null;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
+      ops_tasks: {
+        Row: {
+          id: string;
+          title: string;
+          description: string | null;
+          status: string;
+          priority: string;
+          assigned_to: string | null;
+          assigned_to_name: string | null;
+          project_id: string | null;
+          due_date: string | null;
+          completed_at: string | null;
+          category: string | null;
+          linked_entity_type: string | null;
+          linked_entity_id: string | null;
+          linked_entity_label: string | null;
+          is_recurring: boolean;
+          recurrence_pattern: string | null;
+          recurring_series_id: string | null;
+          source_task_id: string | null;
+          recurrence_end_date: string | null;
+          is_active_recurrence: boolean;
+          created_by: string | null;
+          updated_at: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          title: string;
+          description?: string | null;
+          status?: string;
+          priority?: string;
+          assigned_to?: string | null;
+          assigned_to_name?: string | null;
+          project_id?: string | null;
+          due_date?: string | null;
+          completed_at?: string | null;
+          category?: string | null;
+          linked_entity_type?: string | null;
+          linked_entity_id?: string | null;
+          linked_entity_label?: string | null;
+          is_recurring?: boolean;
+          recurrence_pattern?: string | null;
+          recurring_series_id?: string | null;
+          source_task_id?: string | null;
+          recurrence_end_date?: string | null;
+          is_active_recurrence?: boolean;
+          created_by?: string | null;
+          updated_at?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          title?: string;
+          description?: string | null;
+          status?: string;
+          priority?: string;
+          assigned_to?: string | null;
+          assigned_to_name?: string | null;
+          project_id?: string | null;
+          due_date?: string | null;
+          completed_at?: string | null;
+          category?: string | null;
+          linked_entity_type?: string | null;
+          linked_entity_id?: string | null;
+          linked_entity_label?: string | null;
+          is_recurring?: boolean;
+          recurrence_pattern?: string | null;
+          recurring_series_id?: string | null;
+          source_task_id?: string | null;
+          recurrence_end_date?: string | null;
+          is_active_recurrence?: boolean;
+          created_by?: string | null;
+          updated_at?: string | null;
+          created_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "ops_tasks_project_id_fkey";
+            columns: ["project_id"];
+            isOneToOne: false;
+            referencedRelation: "ops_projects";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "ops_tasks_source_task_id_fkey";
+            columns: ["source_task_id"];
+            isOneToOne: false;
+            referencedRelation: "ops_tasks";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
     };
     Views: {
       [_ in never]: never;
     };
     Functions: {
-      [_ in never]: never;
+      generate_next_recurring_task: {
+        Args: {
+          task_id: string;
+        };
+        Returns: Record<string, unknown>;
+      };
     };
     Enums: {
       user_role: "admin" | "borrower" | "investor";
@@ -1266,3 +1418,11 @@ export type CrmContactUpdate = Database["public"]["Tables"]["crm_contacts"]["Upd
 export type CrmActivity = Database["public"]["Tables"]["crm_activities"]["Row"];
 export type CrmActivityInsert = Database["public"]["Tables"]["crm_activities"]["Insert"];
 export type CrmActivityUpdate = Database["public"]["Tables"]["crm_activities"]["Update"];
+
+export type OpsProject = Database["public"]["Tables"]["ops_projects"]["Row"];
+export type OpsProjectInsert = Database["public"]["Tables"]["ops_projects"]["Insert"];
+export type OpsProjectUpdate = Database["public"]["Tables"]["ops_projects"]["Update"];
+
+export type OpsTask = Database["public"]["Tables"]["ops_tasks"]["Row"];
+export type OpsTaskInsert = Database["public"]["Tables"]["ops_tasks"]["Insert"];
+export type OpsTaskUpdate = Database["public"]["Tables"]["ops_tasks"]["Update"];

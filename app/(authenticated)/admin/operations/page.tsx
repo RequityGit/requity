@@ -1,7 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { OperationsView } from "@/components/operations/OperationsView";
-import type { OpsProject, OpsTask } from "@/components/operations/ProjectCard";
 
 export const dynamic = "force-dynamic";
 
@@ -15,11 +14,11 @@ export default async function OperationsPage() {
 
   const [projectsRes, tasksRes, membersRes] = await Promise.all([
     supabase
-      .from("ops_projects" as never)
+      .from("ops_projects")
       .select("*")
       .order("created_at", { ascending: false }),
     supabase
-      .from("ops_tasks" as never)
+      .from("ops_tasks")
       .select("*")
       .order("created_at", { ascending: false }),
     supabase
@@ -29,8 +28,8 @@ export default async function OperationsPage() {
       .order("full_name"),
   ]);
 
-  const projects = (projectsRes.data ?? []) as unknown as OpsProject[];
-  const tasks = (tasksRes.data ?? []) as unknown as OpsTask[];
+  const projects = projectsRes.data ?? [];
+  const tasks = tasksRes.data ?? [];
   const teamMembers = (membersRes.data ?? []).map(
     (t: { id: string; full_name: string | null; email: string }) => ({
       id: t.id,
