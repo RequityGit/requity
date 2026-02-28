@@ -1767,6 +1767,82 @@ export type Database = {
           underwriter: string | null
           underwriter_id: string | null
           updated_at: string
+          // RTL Underwriting columns
+          program_id: string | null
+          program_version: number | null
+          borrower_name: string | null
+          entity_name: string | null
+          credit_score: number | null
+          experience_deals_24mo: number | null
+          legal_status: string | null
+          guarantors: string | null
+          year_built: number | null
+          bedrooms: number | null
+          bathrooms: number | null
+          heated_sqft: number | null
+          lot_size_sqft: number | null
+          num_floors: number | null
+          has_garage: boolean | null
+          construction_type: string | null
+          flood_zone: boolean | null
+          rural_status: string | null
+          zoning: string | null
+          total_project_cost: number | null
+          client_stated_arv: number | null
+          avm_value: number | null
+          purchase_price_per_sqft: number | null
+          arv_per_sqft: number | null
+          rehab_per_sqft: number | null
+          holding_period_months: number | null
+          anticipated_closing_date: string | null
+          interest_type: string | null
+          origination_points: number | null
+          lender_fees_flat: number | null
+          max_ltv: number | null
+          max_ltc: number | null
+          max_ltp: number | null
+          max_loan_arv_constraint: number | null
+          max_loan_ltc_constraint: number | null
+          max_loan_ltp_constraint: number | null
+          binding_constraint: number | null
+          requested_loan_amount: number | null
+          allocated_to_purchase: number | null
+          allocated_to_rehab: number | null
+          mobilization_draw: number | null
+          lender_cash_at_closing: number | null
+          remaining_rehab_draws: number | null
+          requested_exceeds_max: boolean | null
+          annual_property_tax: number | null
+          annual_insurance: number | null
+          monthly_utilities: number | null
+          monthly_hoa: number | null
+          monthly_interest_payment: number | null
+          total_monthly_holding_cost: number | null
+          total_holding_costs: number | null
+          title_closing_escrow: number | null
+          prepaid_interest_est: number | null
+          total_closing_costs: number | null
+          total_borrower_cash_to_close: number | null
+          cash_to_close_pct_of_pp: number | null
+          sales_disposition_pct: number | null
+          gross_sale_proceeds: number | null
+          sales_costs: number | null
+          net_sale_proceeds: number | null
+          net_profit: number | null
+          borrower_roi: number | null
+          annualized_roi: number | null
+          num_partners: number | null
+          cash_per_partner: number | null
+          profit_per_partner: number | null
+          ltv_arv: number | null
+          ltc: number | null
+          ltp: number | null
+          day1_ltv: number | null
+          loan_per_sqft: number | null
+          borrower_equity_at_closing: number | null
+          arv_minus_loan_cushion: number | null
+          break_even_sale_price: number | null
+          assigned_to: string | null
         }
         Insert: {
           ach_autopull_active?: boolean | null
@@ -1870,6 +1946,82 @@ export type Database = {
           underwriter?: string | null
           underwriter_id?: string | null
           updated_at?: string
+          // RTL Underwriting columns
+          program_id?: string | null
+          program_version?: number | null
+          borrower_name?: string | null
+          entity_name?: string | null
+          credit_score?: number | null
+          experience_deals_24mo?: number | null
+          legal_status?: string | null
+          guarantors?: string | null
+          year_built?: number | null
+          bedrooms?: number | null
+          bathrooms?: number | null
+          heated_sqft?: number | null
+          lot_size_sqft?: number | null
+          num_floors?: number | null
+          has_garage?: boolean | null
+          construction_type?: string | null
+          flood_zone?: boolean | null
+          rural_status?: string | null
+          zoning?: string | null
+          total_project_cost?: number | null
+          client_stated_arv?: number | null
+          avm_value?: number | null
+          purchase_price_per_sqft?: number | null
+          arv_per_sqft?: number | null
+          rehab_per_sqft?: number | null
+          holding_period_months?: number | null
+          anticipated_closing_date?: string | null
+          interest_type?: string | null
+          origination_points?: number | null
+          lender_fees_flat?: number | null
+          max_ltv?: number | null
+          max_ltc?: number | null
+          max_ltp?: number | null
+          max_loan_arv_constraint?: number | null
+          max_loan_ltc_constraint?: number | null
+          max_loan_ltp_constraint?: number | null
+          binding_constraint?: number | null
+          requested_loan_amount?: number | null
+          allocated_to_purchase?: number | null
+          allocated_to_rehab?: number | null
+          mobilization_draw?: number | null
+          lender_cash_at_closing?: number | null
+          remaining_rehab_draws?: number | null
+          requested_exceeds_max?: boolean | null
+          annual_property_tax?: number | null
+          annual_insurance?: number | null
+          monthly_utilities?: number | null
+          monthly_hoa?: number | null
+          monthly_interest_payment?: number | null
+          total_monthly_holding_cost?: number | null
+          total_holding_costs?: number | null
+          title_closing_escrow?: number | null
+          prepaid_interest_est?: number | null
+          total_closing_costs?: number | null
+          total_borrower_cash_to_close?: number | null
+          cash_to_close_pct_of_pp?: number | null
+          sales_disposition_pct?: number | null
+          gross_sale_proceeds?: number | null
+          sales_costs?: number | null
+          net_sale_proceeds?: number | null
+          net_profit?: number | null
+          borrower_roi?: number | null
+          annualized_roi?: number | null
+          num_partners?: number | null
+          cash_per_partner?: number | null
+          profit_per_partner?: number | null
+          ltv_arv?: number | null
+          ltc?: number | null
+          ltp?: number | null
+          day1_ltv?: number | null
+          loan_per_sqft?: number | null
+          borrower_equity_at_closing?: number | null
+          arv_minus_loan_cushion?: number | null
+          break_even_sale_price?: number | null
+          assigned_to?: string | null
         }
         Update: {
           ach_autopull_active?: boolean | null
@@ -1973,6 +2125,82 @@ export type Database = {
           underwriter?: string | null
           underwriter_id?: string | null
           updated_at?: string
+          // RTL Underwriting columns
+          program_id?: string | null
+          program_version?: number | null
+          borrower_name?: string | null
+          entity_name?: string | null
+          credit_score?: number | null
+          experience_deals_24mo?: number | null
+          legal_status?: string | null
+          guarantors?: string | null
+          year_built?: number | null
+          bedrooms?: number | null
+          bathrooms?: number | null
+          heated_sqft?: number | null
+          lot_size_sqft?: number | null
+          num_floors?: number | null
+          has_garage?: boolean | null
+          construction_type?: string | null
+          flood_zone?: boolean | null
+          rural_status?: string | null
+          zoning?: string | null
+          total_project_cost?: number | null
+          client_stated_arv?: number | null
+          avm_value?: number | null
+          purchase_price_per_sqft?: number | null
+          arv_per_sqft?: number | null
+          rehab_per_sqft?: number | null
+          holding_period_months?: number | null
+          anticipated_closing_date?: string | null
+          interest_type?: string | null
+          origination_points?: number | null
+          lender_fees_flat?: number | null
+          max_ltv?: number | null
+          max_ltc?: number | null
+          max_ltp?: number | null
+          max_loan_arv_constraint?: number | null
+          max_loan_ltc_constraint?: number | null
+          max_loan_ltp_constraint?: number | null
+          binding_constraint?: number | null
+          requested_loan_amount?: number | null
+          allocated_to_purchase?: number | null
+          allocated_to_rehab?: number | null
+          mobilization_draw?: number | null
+          lender_cash_at_closing?: number | null
+          remaining_rehab_draws?: number | null
+          requested_exceeds_max?: boolean | null
+          annual_property_tax?: number | null
+          annual_insurance?: number | null
+          monthly_utilities?: number | null
+          monthly_hoa?: number | null
+          monthly_interest_payment?: number | null
+          total_monthly_holding_cost?: number | null
+          total_holding_costs?: number | null
+          title_closing_escrow?: number | null
+          prepaid_interest_est?: number | null
+          total_closing_costs?: number | null
+          total_borrower_cash_to_close?: number | null
+          cash_to_close_pct_of_pp?: number | null
+          sales_disposition_pct?: number | null
+          gross_sale_proceeds?: number | null
+          sales_costs?: number | null
+          net_sale_proceeds?: number | null
+          net_profit?: number | null
+          borrower_roi?: number | null
+          annualized_roi?: number | null
+          num_partners?: number | null
+          cash_per_partner?: number | null
+          profit_per_partner?: number | null
+          ltv_arv?: number | null
+          ltc?: number | null
+          ltp?: number | null
+          day1_ltv?: number | null
+          loan_per_sqft?: number | null
+          borrower_equity_at_closing?: number | null
+          arv_minus_loan_cushion?: number | null
+          break_even_sale_price?: number | null
+          assigned_to?: string | null
         }
         Relationships: [
           {
@@ -2494,6 +2722,402 @@ export type Database = {
           },
         ]
       }
+      pricing_programs: {
+        Row: {
+          id: string
+          program_id: string
+          loan_type: string
+          program_name: string
+          arv_label: string | null
+          interest_rate: number
+          rate_type: string
+          origination_points: number
+          min_origination_fee: number
+          points_note: string | null
+          max_ltv: number
+          ltv_note: string | null
+          max_ltc: number
+          ltc_note: string | null
+          max_ltp: number
+          loan_term_months: number
+          exit_points: number
+          term_note: string | null
+          legal_doc_fee: number
+          bpo_appraisal_cost: number
+          bpo_appraisal_note: string | null
+          min_credit_score: number
+          min_deals_24mo: number
+          citizenship: string
+          version: number
+          is_current: boolean
+          effective_date: string
+          created_at: string
+          created_by: string | null
+        }
+        Insert: {
+          id?: string
+          program_id: string
+          loan_type: string
+          program_name: string
+          arv_label?: string | null
+          interest_rate: number
+          rate_type?: string
+          origination_points: number
+          min_origination_fee?: number
+          points_note?: string | null
+          max_ltv: number
+          ltv_note?: string | null
+          max_ltc: number
+          ltc_note?: string | null
+          max_ltp: number
+          loan_term_months?: number
+          exit_points?: number
+          term_note?: string | null
+          legal_doc_fee?: number
+          bpo_appraisal_cost?: number
+          bpo_appraisal_note?: string | null
+          min_credit_score?: number
+          min_deals_24mo?: number
+          citizenship?: string
+          version?: number
+          is_current?: boolean
+          effective_date?: string
+          created_at?: string
+          created_by?: string | null
+        }
+        Update: {
+          id?: string
+          program_id?: string
+          loan_type?: string
+          program_name?: string
+          arv_label?: string | null
+          interest_rate?: number
+          rate_type?: string
+          origination_points?: number
+          min_origination_fee?: number
+          points_note?: string | null
+          max_ltv?: number
+          ltv_note?: string | null
+          max_ltc?: number
+          ltc_note?: string | null
+          max_ltp?: number
+          loan_term_months?: number
+          exit_points?: number
+          term_note?: string | null
+          legal_doc_fee?: number
+          bpo_appraisal_cost?: number
+          bpo_appraisal_note?: string | null
+          min_credit_score?: number
+          min_deals_24mo?: number
+          citizenship?: string
+          version?: number
+          is_current?: boolean
+          effective_date?: string
+          created_at?: string
+          created_by?: string | null
+        }
+        Relationships: []
+      }
+      pricing_program_versions: {
+        Row: {
+          id: string
+          program_id: string
+          version: number
+          change_description: string | null
+          changed_by: string | null
+          changed_at: string
+          snapshot: Json
+        }
+        Insert: {
+          id?: string
+          program_id: string
+          version: number
+          change_description?: string | null
+          changed_by?: string | null
+          changed_at?: string
+          snapshot?: Json
+        }
+        Update: {
+          id?: string
+          program_id?: string
+          version?: number
+          change_description?: string | null
+          changed_by?: string | null
+          changed_at?: string
+          snapshot?: Json
+        }
+        Relationships: []
+      }
+      leverage_adjusters: {
+        Row: {
+          id: string
+          program_id: string
+          risk_factor: string
+          display_name: string
+          condition_description: string | null
+          ltc_adjustment: number
+          ltv_adjustment: number
+          note: string | null
+          is_active: boolean
+          sort_order: number
+        }
+        Insert: {
+          id?: string
+          program_id?: string
+          risk_factor: string
+          display_name: string
+          condition_description?: string | null
+          ltc_adjustment?: number
+          ltv_adjustment?: number
+          note?: string | null
+          is_active?: boolean
+          sort_order?: number
+        }
+        Update: {
+          id?: string
+          program_id?: string
+          risk_factor?: string
+          display_name?: string
+          condition_description?: string | null
+          ltc_adjustment?: number
+          ltv_adjustment?: number
+          note?: string | null
+          is_active?: boolean
+          sort_order?: number
+        }
+        Relationships: []
+      }
+      deal_leverage_adjustments: {
+        Row: {
+          id: string
+          loan_id: string
+          adjuster_id: string
+          applies: boolean
+          ltc_adjustment: number
+          ltv_adjustment: number
+          applied_at: string | null
+        }
+        Insert: {
+          id?: string
+          loan_id: string
+          adjuster_id: string
+          applies?: boolean
+          ltc_adjustment?: number
+          ltv_adjustment?: number
+          applied_at?: string | null
+        }
+        Update: {
+          id?: string
+          loan_id?: string
+          adjuster_id?: string
+          applies?: boolean
+          ltc_adjustment?: number
+          ltv_adjustment?: number
+          applied_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "deal_leverage_adjustments_loan_id_fkey"
+            columns: ["loan_id"]
+            isOneToOne: false
+            referencedRelation: "loans"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "deal_leverage_adjustments_adjuster_id_fkey"
+            columns: ["adjuster_id"]
+            isOneToOne: false
+            referencedRelation: "leverage_adjusters"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      loan_comps: {
+        Row: {
+          id: string
+          loan_id: string
+          comp_type: string
+          address: string | null
+          layout: string | null
+          num_floors: number | null
+          has_garage: boolean | null
+          construction: string | null
+          sale_price: number | null
+          sale_date: string | null
+          sqft: number | null
+          price_per_sqft: number | null
+          year_built: number | null
+          lot_size: string | null
+          ffiec_tract_income: string | null
+          distance_from_subject: number | null
+          notes: string | null
+          sort_order: number
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          loan_id: string
+          comp_type: string
+          address?: string | null
+          layout?: string | null
+          num_floors?: number | null
+          has_garage?: boolean | null
+          construction?: string | null
+          sale_price?: number | null
+          sale_date?: string | null
+          sqft?: number | null
+          price_per_sqft?: number | null
+          year_built?: number | null
+          lot_size?: string | null
+          ffiec_tract_income?: string | null
+          distance_from_subject?: number | null
+          notes?: string | null
+          sort_order?: number
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          loan_id?: string
+          comp_type?: string
+          address?: string | null
+          layout?: string | null
+          num_floors?: number | null
+          has_garage?: boolean | null
+          construction?: string | null
+          sale_price?: number | null
+          sale_date?: string | null
+          sqft?: number | null
+          price_per_sqft?: number | null
+          year_built?: number | null
+          lot_size?: string | null
+          ffiec_tract_income?: string | null
+          distance_from_subject?: number | null
+          notes?: string | null
+          sort_order?: number
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "loan_comps_loan_id_fkey"
+            columns: ["loan_id"]
+            isOneToOne: false
+            referencedRelation: "loans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      loan_draws: {
+        Row: {
+          id: string
+          loan_id: string
+          draw_number: number
+          description: string | null
+          budgeted_amount: number | null
+          requested_amount: number | null
+          approved_amount: number | null
+          cumulative_drawn: number | null
+          pct_complete: number | null
+          status: string
+          inspection_notes: string | null
+          requested_at: string | null
+          approved_at: string | null
+          funded_at: string | null
+          approved_by: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          loan_id: string
+          draw_number: number
+          description?: string | null
+          budgeted_amount?: number | null
+          requested_amount?: number | null
+          approved_amount?: number | null
+          cumulative_drawn?: number | null
+          pct_complete?: number | null
+          status?: string
+          inspection_notes?: string | null
+          requested_at?: string | null
+          approved_at?: string | null
+          funded_at?: string | null
+          approved_by?: string | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          loan_id?: string
+          draw_number?: number
+          description?: string | null
+          budgeted_amount?: number | null
+          requested_amount?: number | null
+          approved_amount?: number | null
+          cumulative_drawn?: number | null
+          pct_complete?: number | null
+          status?: string
+          inspection_notes?: string | null
+          requested_at?: string | null
+          approved_at?: string | null
+          funded_at?: string | null
+          approved_by?: string | null
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "loan_draws_loan_id_fkey"
+            columns: ["loan_id"]
+            isOneToOne: false
+            referencedRelation: "loans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      loan_eligibility_checks: {
+        Row: {
+          id: string
+          loan_id: string
+          program_id: string
+          credit_score_check: string | null
+          experience_check: string | null
+          citizenship_check: string | null
+          appraisal_check: string | null
+          overall_result: string | null
+          checked_at: string
+          notes: string | null
+        }
+        Insert: {
+          id?: string
+          loan_id: string
+          program_id: string
+          credit_score_check?: string | null
+          experience_check?: string | null
+          citizenship_check?: string | null
+          appraisal_check?: string | null
+          overall_result?: string | null
+          checked_at?: string
+          notes?: string | null
+        }
+        Update: {
+          id?: string
+          loan_id?: string
+          program_id?: string
+          credit_score_check?: string | null
+          experience_check?: string | null
+          citizenship_check?: string | null
+          appraisal_check?: string | null
+          overall_result?: string | null
+          checked_at?: string
+          notes?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "loan_eligibility_checks_loan_id_fkey"
+            columns: ["loan_id"]
+            isOneToOne: false
+            referencedRelation: "loans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       borrowers_portal: {
@@ -2918,6 +3542,26 @@ export type Database = {
         }
         Returns: boolean
       }
+      create_pricing_version: {
+        Args: {
+          p_program_id: string
+          p_changes: Json
+          p_changed_by: string
+        }
+        Returns: Json
+      }
+      run_eligibility_check: {
+        Args: {
+          p_loan_id: string
+        }
+        Returns: Json
+      }
+      calculate_deal_metrics: {
+        Args: {
+          p_loan_id: string
+        }
+        Returns: Json
+      }
     }
     Enums: {
       app_role: "super_admin" | "admin" | "investor" | "borrower"
@@ -3275,3 +3919,16 @@ export type CrmContact = Database["public"]["Tables"]["crm_contacts"]["Row"];
 export type CrmActivity = Database["public"]["Tables"]["crm_activities"]["Row"];
 export type OpsProject = Database["public"]["Tables"]["ops_projects"]["Row"];
 export type OpsTask = Database["public"]["Tables"]["ops_tasks"]["Row"];
+
+// RTL Underwriting Engine types
+export type PricingProgram = Database["public"]["Tables"]["pricing_programs"]["Row"];
+export type PricingProgramInsert = Database["public"]["Tables"]["pricing_programs"]["Insert"];
+export type PricingProgramVersion = Database["public"]["Tables"]["pricing_program_versions"]["Row"];
+export type LeverageAdjuster = Database["public"]["Tables"]["leverage_adjusters"]["Row"];
+export type DealLeverageAdjustment = Database["public"]["Tables"]["deal_leverage_adjustments"]["Row"];
+export type DealLeverageAdjustmentInsert = Database["public"]["Tables"]["deal_leverage_adjustments"]["Insert"];
+export type LoanComp = Database["public"]["Tables"]["loan_comps"]["Row"];
+export type LoanCompInsert = Database["public"]["Tables"]["loan_comps"]["Insert"];
+export type LoanDraw = Database["public"]["Tables"]["loan_draws"]["Row"];
+export type LoanDrawInsert = Database["public"]["Tables"]["loan_draws"]["Insert"];
+export type LoanEligibilityCheck = Database["public"]["Tables"]["loan_eligibility_checks"]["Row"];
