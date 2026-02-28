@@ -148,6 +148,36 @@ export async function fetchUsersAction(): Promise<
 }
 
 // ---------------------------------------------------------------------------
+// Helper: upsert a profile row, retrying without full_name if the column
+// doesn't exist yet in the database (schema cache miss).
+// ---------------------------------------------------------------------------
+
+async function upsertProfileRow(
+  admin: ReturnType<typeof createAdminClient>,
+  data: {
+    id: string;
+    email: string;
+    full_name: string;
+    role: "admin" | "borrower" | "investor";
+    allowed_roles: ("admin" | "borrower" | "investor")[];
+    activation_status: "pending" | "link_sent" | "activated";
+  }
+): Promise<string | null> {
+  const { error } = await admin.from("profiles").upsert(data);
+  if (error) {
+    if (error.message.includes("full_name")) {
+      // The full_name column hasn't been added to the DB yet — retry without it.
+      const { full_name: _omitted, ...rest } = data;
+      void _omitted;
+      const { error: retryError } = await admin.from("profiles").upsert(rest as never);
+      return retryError?.message ?? null;
+    }
+    return error.message;
+  }
+  return null;
+}
+
+// ---------------------------------------------------------------------------
 // Invite a new user
 // ---------------------------------------------------------------------------
 
@@ -193,18 +223,16 @@ export async function inviteUserAction(input: InviteUserInput): Promise<
         );
         if (existingAuthUser) {
           // Create the profile for the orphaned user
-          const { error: upsertError } = await admin
-            .from("profiles")
-            .upsert({
-              id: existingAuthUser.id,
-              email: input.email,
-              full_name: input.full_name,
-              role: input.role,
-              allowed_roles: [input.role],
-              activation_status: "link_sent",
-            });
+          const upsertError = await upsertProfileRow(admin, {
+            id: existingAuthUser.id,
+            email: input.email,
+            full_name: input.full_name,
+            role: input.role,
+            allowed_roles: [input.role],
+            activation_status: "link_sent",
+          });
 
-          if (upsertError) return { error: upsertError.message };
+          if (upsertError) return { error: upsertError };
 
           // Grant role via database function
           await grantRoleForUser(
@@ -226,16 +254,14 @@ export async function inviteUserAction(input: InviteUserInput): Promise<
     }
 
     // Update profile created by trigger (or create if trigger didn't fire)
-    const { error: upsertError } = await admin
-      .from("profiles")
-      .upsert({
-        id: newUser.user.id,
-        email: input.email,
-        full_name: input.full_name,
-        role: input.role,
-        allowed_roles: [input.role],
-        activation_status: "link_sent",
-      });
+    const upsertError = await upsertProfileRow(admin, {
+      id: newUser.user.id,
+      email: input.email,
+      full_name: input.full_name,
+      role: input.role,
+      allowed_roles: [input.role],
+      activation_status: "link_sent",
+    });
 
     if (upsertError) {
       console.error("Profile upsert error:", upsertError);
@@ -474,11 +500,23 @@ export async function fetchInvestorsAction(): Promise<
     if (auth.error) return { error: auth.error };
 
     const admin = createAdminClient();
-    const { data, error } = await admin
+    let { data, error } = await admin
       .from("profiles")
       .select("id, full_name, email")
       .eq("role", "investor")
       .order("full_name");
+
+    if (error?.message?.includes("full_name")) {
+      // full_name column not yet in DB — fall back to selecting without it
+      const result = await admin
+        .from("profiles")
+        .select("id, email")
+        .eq("role", "investor")
+        .order("email");
+      if (result.error) return { error: result.error.message };
+      data = (result.data ?? []).map((p) => ({ ...p, full_name: null }));
+      error = null;
+    }
 
     if (error) return { error: error.message };
 
