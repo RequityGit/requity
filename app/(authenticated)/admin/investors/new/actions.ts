@@ -86,6 +86,13 @@ export async function addInvestorAction(input: AddInvestorInput) {
           .eq("id", existingInvestor.id);
 
         // Retry removing columns that don't exist in the schema
+        if (updateError && updateError.message.includes("phone")) {
+          delete profileUpdate.phone;
+          ({ error: updateError } = await adminClient
+            .from("profiles")
+            .update(profileUpdate)
+            .eq("id", existingInvestor.id));
+        }
         if (updateError && updateError.message.includes("company_name")) {
           delete profileUpdate.company_name;
           ({ error: updateError } = await adminClient
@@ -151,6 +158,16 @@ export async function addInvestorAction(input: AddInvestorInput) {
             });
 
           // Retry removing columns that don't exist in the schema
+          if (upsertError && upsertError.message.includes("phone")) {
+            delete profileUpdate.phone;
+            ({ error: upsertError } = await adminClient
+              .from("profiles")
+              .upsert({
+                id: existingAuthUser.id,
+                email: input.email,
+                ...profileUpdate,
+              }));
+          }
           if (upsertError && upsertError.message.includes("company_name")) {
             delete profileUpdate.company_name;
             ({ error: upsertError } = await adminClient
@@ -201,6 +218,13 @@ export async function addInvestorAction(input: AddInvestorInput) {
       .eq("id", newUser.user.id);
 
     // Retry removing columns that don't exist in the schema
+    if (updateError && updateError.message.includes("phone")) {
+      delete profileUpdate.phone;
+      ({ error: updateError } = await adminClient
+        .from("profiles")
+        .update(profileUpdate)
+        .eq("id", newUser.user.id));
+    }
     if (updateError && updateError.message.includes("company_name")) {
       delete profileUpdate.company_name;
       ({ error: updateError } = await adminClient
