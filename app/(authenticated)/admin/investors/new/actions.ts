@@ -2,7 +2,6 @@
 
 import { createClient as createServerClient } from "@/lib/supabase/server";
 import { createClient } from "@supabase/supabase-js";
-import crypto from "crypto";
 
 interface AddInvestorInput {
   email: string;
@@ -33,86 +32,36 @@ export async function addInvestorAction(input: AddInvestorInput) {
   }
 
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
   const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
-  if (!supabaseUrl || !supabaseAnonKey) {
-    return { error: "Missing Supabase configuration" };
+  if (!supabaseUrl || !supabaseServiceRoleKey) {
+    return {
+      error:
+        "SUPABASE_SERVICE_ROLE_KEY is required to add investors. Add it to your environment variables. You can find it in Supabase Dashboard → Settings → API → service_role key.",
+    };
   }
 
-  // If service role key is available, use admin API (preferred — no emails sent)
-  if (supabaseServiceRoleKey) {
-    const adminClient = createClient(supabaseUrl, supabaseServiceRoleKey, {
-      auth: { autoRefreshToken: false, persistSession: false },
-    });
-
-    const { data: newUser, error: createError } =
-      await adminClient.auth.admin.createUser({
-        email: input.email,
-        email_confirm: true,
-        user_metadata: { role: "investor", full_name: input.full_name },
-      });
-
-    if (createError) {
-      return { error: createError.message };
-    }
-
-    if (!newUser.user) {
-      return { error: "Failed to create user" };
-    }
-
-    // Update the auto-created profile with additional details + pending status
-    const { error: updateError } = await adminClient
-      .from("profiles")
-      .update({
-        full_name: input.full_name,
-        company_name: input.company_name || null,
-        phone: input.phone || null,
-        activation_status: "pending",
-      })
-      .eq("id", newUser.user.id);
-
-    if (updateError) {
-      return { error: updateError.message };
-    }
-
-    return { success: true, investorId: newUser.user.id };
-  }
-
-  // Fallback: use signUp with anon key (no service role key needed)
-  const anonClient = createClient(supabaseUrl, supabaseAnonKey, {
+  const adminClient = createClient(supabaseUrl, supabaseServiceRoleKey, {
     auth: { autoRefreshToken: false, persistSession: false },
   });
 
-  const tempPassword = crypto.randomBytes(24).toString("base64url");
-
-  const { data: signUpData, error: signUpError } =
-    await anonClient.auth.signUp({
+  const { data: newUser, error: createError } =
+    await adminClient.auth.admin.createUser({
       email: input.email,
-      password: tempPassword,
-      options: {
-        data: { role: "investor", full_name: input.full_name },
-      },
+      email_confirm: true,
+      user_metadata: { role: "investor", full_name: input.full_name },
     });
 
-  if (signUpError) {
-    if (signUpError.message.includes("security purposes")) {
-      return {
-        error:
-          "Supabase rate limit reached. Please wait a minute and try again, or configure SUPABASE_SERVICE_ROLE_KEY to avoid this limit.",
-      };
-    }
-    return { error: signUpError.message };
+  if (createError) {
+    return { error: createError.message };
   }
 
-  if (!signUpData.user) {
-    return { error: "Failed to create investor account" };
+  if (!newUser.user) {
+    return { error: "Failed to create user" };
   }
-
-  const newUserId = signUpData.user.id;
 
   // Update the auto-created profile with additional details + pending status
-  const { error: updateError } = await supabase
+  const { error: updateError } = await adminClient
     .from("profiles")
     .update({
       full_name: input.full_name,
@@ -120,13 +69,13 @@ export async function addInvestorAction(input: AddInvestorInput) {
       phone: input.phone || null,
       activation_status: "pending",
     })
-    .eq("id", newUserId);
+    .eq("id", newUser.user.id);
 
   if (updateError) {
     return { error: updateError.message };
   }
 
-  return { success: true, investorId: newUserId };
+  return { success: true, investorId: newUser.user.id };
 }
 
 export async function sendActivationLinkAction(investorId: string) {
