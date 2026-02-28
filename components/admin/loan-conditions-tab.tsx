@@ -28,6 +28,7 @@ import {
 import {
   CONDITION_STATUSES,
   CONDITION_CATEGORIES,
+  CONDITION_STAGES,
   RESPONSIBLE_PARTIES,
 } from "@/lib/constants";
 import { formatDate } from "@/lib/format";
@@ -55,43 +56,39 @@ export function LoanConditionsTab({
   currentUserId,
 }: LoanConditionsTabProps) {
   const [conditions, setConditions] = useState(initialConditions);
-  const [expandedPta, setExpandedPta] = useState(true);
-  const [expandedPtf, setExpandedPtf] = useState(true);
+  const [expandedStages, setExpandedStages] = useState<Record<string, boolean>>({
+    processing: true,
+    closed_onboarding: true,
+    note_sell_process: true,
+    post_loan_payoff: true,
+  });
   const router = useRouter();
   const { toast } = useToast();
 
-  const ptaConditions = conditions
-    .filter((c) => c.category === "pta")
-    .sort((a, b) => a.sort_order - b.sort_order);
-  const ptfConditions = conditions
-    .filter((c) => c.category === "ptf")
-    .sort((a, b) => a.sort_order - b.sort_order);
+  // Group by required_stage
+  const groupedConditions = CONDITION_STAGES.map((stage) => ({
+    ...stage,
+    conditions: conditions
+      .filter((c) => c.required_stage === stage.value)
+      .sort((a, b) => a.sort_order - b.sort_order),
+  })).filter((g) => g.conditions.length > 0);
 
   // Summary stats
   const totalCount = conditions.length;
   const approvedCount = conditions.filter(
     (c) => c.status === "approved" || c.status === "waived"
   ).length;
-  const receivedCount = conditions.filter(
-    (c) => c.status === "received" || c.status === "under_review"
+  const submittedCount = conditions.filter(
+    (c) => c.status === "submitted" || c.status === "under_review"
   ).length;
   const outstandingCount = conditions.filter(
-    (c) => !["approved", "waived"].includes(c.status)
+    (c) => !["approved", "waived", "not_applicable"].includes(c.status)
   ).length;
   const overdueCount = conditions.filter(
     (c) =>
       c.due_date &&
       new Date(c.due_date) < new Date() &&
-      !["approved", "waived"].includes(c.status)
-  ).length;
-
-  const ptaTotal = ptaConditions.length;
-  const ptaComplete = ptaConditions.filter(
-    (c) => c.status === "approved" || c.status === "waived"
-  ).length;
-  const ptfTotal = ptfConditions.length;
-  const ptfComplete = ptfConditions.filter(
-    (c) => c.status === "approved" || c.status === "waived"
+      !["approved", "waived", "not_applicable"].includes(c.status)
   ).length;
 
   async function updateConditionStatus(
@@ -102,22 +99,20 @@ export function LoanConditionsTab({
     const supabase = createClient();
     const now = new Date().toISOString();
 
-    const updateData: any = {
+    const updateData: Record<string, unknown> = {
       status: newStatus,
       updated_at: now,
     };
 
-    if (newStatus === "requested") {
-      updateData.requested_date = now.split("T")[0];
-    } else if (newStatus === "received") {
-      updateData.received_date = now.split("T")[0];
-    } else if (newStatus === "approved") {
-      updateData.approved_date = now.split("T")[0];
-      updateData.approved_by = currentUserId;
-    } else if (newStatus === "waived") {
-      updateData.waived_by = currentUserId;
-    } else if (newStatus === "rejected") {
-      updateData.rejection_reason = rejectionReason || null;
+    if (newStatus === "submitted") {
+      updateData.submitted_at = now;
+    } else if (newStatus === "approved" || newStatus === "rejected") {
+      updateData.reviewed_at = now;
+      updateData.reviewed_by = currentUserId;
+    }
+
+    if (newStatus === "rejected" && rejectionReason) {
+      updateData.notes = rejectionReason;
     }
 
     const { error } = await supabase
@@ -140,7 +135,7 @@ export function LoanConditionsTab({
       loan_id: loanId,
       user_id: currentUserId,
       activity_type: "condition_status_change",
-      description: `${condition?.name}: status changed to ${newStatus}`,
+      description: `${condition?.condition_name}: status changed to ${newStatus}`,
       old_value: condition?.status,
       new_value: newStatus,
       field_name: "condition_status",
@@ -148,10 +143,14 @@ export function LoanConditionsTab({
 
     setConditions((prev) =>
       prev.map((c) =>
-        c.id === conditionId ? { ...c, ...updateData } : c
+        c.id === conditionId ? { ...c, ...updateData } as LoanCondition : c
       )
     );
     toast({ title: `Condition updated to ${newStatus.replace(/_/g, " ")}` });
+  }
+
+  function toggleStage(stage: string) {
+    setExpandedStages((prev) => ({ ...prev, [stage]: !prev[stage] }));
   }
 
   return (
@@ -165,8 +164,8 @@ export function LoanConditionsTab({
           color="text-green-700"
         />
         <SummaryCard
-          label="Received"
-          value={receivedCount}
+          label="Submitted"
+          value={submittedCount}
           color="text-indigo-700"
         />
         <SummaryCard
@@ -183,8 +182,19 @@ export function LoanConditionsTab({
 
       {/* Progress bars */}
       <div className="grid grid-cols-2 gap-4">
-        <ProgressCard label="PTA" completed={ptaComplete} total={ptaTotal} />
-        <ProgressCard label="PTF" completed={ptfComplete} total={ptfTotal} />
+        {groupedConditions.slice(0, 2).map((group) => {
+          const completed = group.conditions.filter(
+            (c) => c.status === "approved" || c.status === "waived"
+          ).length;
+          return (
+            <ProgressCard
+              key={group.value}
+              label={group.label}
+              completed={completed}
+              total={group.conditions.length}
+            />
+          );
+        })}
       </div>
 
       {/* Add Condition Button */}
@@ -192,27 +202,19 @@ export function LoanConditionsTab({
         <AddConditionDialog loanId={loanId} onAdded={() => router.refresh()} />
       </div>
 
-      {/* PTA Section */}
-      <ConditionSection
-        title="Prior to Approval (PTA)"
-        conditions={ptaConditions}
-        expanded={expandedPta}
-        onToggle={() => setExpandedPta(!expandedPta)}
-        onStatusChange={updateConditionStatus}
-        currentUserId={currentUserId}
-        loanId={loanId}
-      />
-
-      {/* PTF Section */}
-      <ConditionSection
-        title="Prior to Funding (PTF)"
-        conditions={ptfConditions}
-        expanded={expandedPtf}
-        onToggle={() => setExpandedPtf(!expandedPtf)}
-        onStatusChange={updateConditionStatus}
-        currentUserId={currentUserId}
-        loanId={loanId}
-      />
+      {/* Condition Sections by Stage */}
+      {groupedConditions.map((group) => (
+        <ConditionSection
+          key={group.value}
+          title={group.label}
+          conditions={group.conditions}
+          expanded={expandedStages[group.value] ?? true}
+          onToggle={() => toggleStage(group.value)}
+          onStatusChange={updateConditionStatus}
+          currentUserId={currentUserId}
+          loanId={loanId}
+        />
+      ))}
 
       {conditions.length === 0 && (
         <Card>
@@ -220,8 +222,7 @@ export function LoanConditionsTab({
             <FileText className="h-8 w-8 mx-auto mb-2 opacity-50" />
             <p>No conditions have been added to this loan yet.</p>
             <p className="text-sm mt-1">
-              Conditions are auto-populated when a loan type is selected, or you
-              can add them manually.
+              Use the &quot;Add Condition&quot; button to add conditions manually.
             </p>
           </CardContent>
         </Card>
@@ -285,7 +286,7 @@ function ProgressCard({
 }
 
 // ---------------------------------------------------------------------------
-// Condition Section (PTA or PTF)
+// Condition Section (grouped by required_stage)
 // ---------------------------------------------------------------------------
 function ConditionSection({
   title,
@@ -351,8 +352,6 @@ function ConditionSection({
 function ConditionRow({
   condition,
   onStatusChange,
-  currentUserId,
-  loanId,
 }: {
   condition: LoanCondition;
   onStatusChange: (id: string, status: string, reason?: string) => void;
@@ -365,40 +364,43 @@ function ConditionRow({
   const isOverdue =
     condition.due_date &&
     new Date(condition.due_date) < new Date() &&
-    !["approved", "waived"].includes(condition.status);
+    !["approved", "waived", "not_applicable"].includes(condition.status);
   const isComplete =
     condition.status === "approved" || condition.status === "waived";
 
   const partyLabel =
     RESPONSIBLE_PARTIES.find((p) => p.value === condition.responsible_party)
-      ?.label ?? condition.responsible_party;
+      ?.label ?? condition.responsible_party ?? "—";
+
+  const categoryLabel =
+    CONDITION_CATEGORIES.find((c) => c.value === condition.category)?.label ??
+    condition.category;
 
   // Quick action buttons based on current status
   function getQuickActions() {
     switch (condition.status) {
-      case "not_requested":
+      case "pending":
         return (
           <Button
             size="sm"
             variant="outline"
             className="h-7 text-xs"
-            onClick={() => onStatusChange(condition.id, "requested")}
+            onClick={() => onStatusChange(condition.id, "submitted")}
           >
-            Request
+            Mark Submitted
           </Button>
         );
-      case "requested":
+      case "submitted":
         return (
           <Button
             size="sm"
             variant="outline"
             className="h-7 text-xs"
-            onClick={() => onStatusChange(condition.id, "received")}
+            onClick={() => onStatusChange(condition.id, "under_review")}
           >
-            Mark Received
+            Start Review
           </Button>
         );
-      case "received":
       case "under_review":
         return (
           <div className="flex gap-1">
@@ -452,18 +454,24 @@ function ConditionRow({
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
             <span className="text-sm font-medium text-[#1a2b4a]">
-              {condition.name}
+              {condition.condition_name}
             </span>
-            {condition.is_critical_path && (
+            {condition.critical_path_item && (
               <Badge className="bg-red-100 text-red-700 border-red-200 text-[10px] px-1.5 py-0">
                 Critical
               </Badge>
             )}
+            <Badge
+              variant="outline"
+              className="text-[10px] px-1.5 py-0"
+            >
+              {categoryLabel}
+            </Badge>
             <StatusBadge status={condition.status} />
           </div>
-          {condition.description && (
+          {condition.internal_description && (
             <p className="text-xs text-muted-foreground mt-0.5">
-              {condition.description}
+              {condition.internal_description}
             </p>
           )}
           <div className="flex items-center gap-3 mt-1 text-[11px] text-muted-foreground">
@@ -473,23 +481,18 @@ function ConditionRow({
                 Due: {formatDate(condition.due_date)}
               </span>
             )}
-            {condition.received_date && (
-              <span>Received: {formatDate(condition.received_date)}</span>
+            {condition.submitted_at && (
+              <span>Submitted: {formatDate(condition.submitted_at)}</span>
             )}
-            {condition.approved_date && (
+            {condition.reviewed_at && (
               <span className="text-green-700">
-                Approved: {formatDate(condition.approved_date)}
+                Reviewed: {formatDate(condition.reviewed_at)}
               </span>
             )}
           </div>
-          {condition.rejection_reason && (
+          {condition.notes && condition.status === "rejected" && (
             <p className="text-xs text-red-600 mt-1">
-              Rejection reason: {condition.rejection_reason}
-            </p>
-          )}
-          {condition.internal_note && (
-            <p className="text-xs text-muted-foreground mt-1 italic">
-              Note: {condition.internal_note}
+              Rejection reason: {condition.notes}
             </p>
           )}
         </div>
@@ -529,7 +532,7 @@ function ConditionRow({
           </DialogHeader>
           <div className="space-y-3">
             <p className="text-sm text-muted-foreground">
-              Rejecting: <strong>{condition.name}</strong>
+              Rejecting: <strong>{condition.condition_name}</strong>
             </p>
             <div className="space-y-2">
               <Label>Reason for rejection</Label>
@@ -583,38 +586,40 @@ function AddConditionDialog({
   const { toast } = useToast();
 
   const [form, setForm] = useState({
-    name: "",
-    description: "",
+    condition_name: "",
+    internal_description: "",
     borrower_description: "",
-    category: "pta",
+    category: "borrower_documents",
+    required_stage: "processing",
     responsible_party: "borrower",
-    is_critical_path: false,
+    critical_path_item: false,
     due_date: "",
-    internal_note: "",
+    notes: "",
   });
 
-  function updateField(field: string, value: any) {
+  function updateField(field: string, value: unknown) {
     setForm((prev) => ({ ...prev, [field]: value }));
   }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!form.name) return;
+    if (!form.condition_name) return;
 
     setLoading(true);
     try {
       const supabase = createClient();
       const { error } = await supabase.from("loan_conditions").insert({
         loan_id: loanId,
-        name: form.name,
-        description: form.description || null,
+        condition_name: form.condition_name,
+        internal_description: form.internal_description || null,
         borrower_description: form.borrower_description || null,
         category: form.category,
+        required_stage: form.required_stage,
         responsible_party: form.responsible_party,
-        is_critical_path: form.is_critical_path,
+        critical_path_item: form.critical_path_item,
         due_date: form.due_date || null,
-        internal_note: form.internal_note || null,
-        status: "not_requested",
+        notes: form.notes || null,
+        status: "pending",
       });
 
       if (error) throw error;
@@ -622,20 +627,22 @@ function AddConditionDialog({
       toast({ title: "Condition added" });
       setOpen(false);
       setForm({
-        name: "",
-        description: "",
+        condition_name: "",
+        internal_description: "",
         borrower_description: "",
-        category: "pta",
+        category: "borrower_documents",
+        required_stage: "processing",
         responsible_party: "borrower",
-        is_critical_path: false,
+        critical_path_item: false,
         due_date: "",
-        internal_note: "",
+        notes: "",
       });
       onAdded();
-    } catch (err: any) {
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Unknown error";
       toast({
         title: "Error adding condition",
-        description: err.message,
+        description: message,
         variant: "destructive",
       });
     } finally {
@@ -661,8 +668,8 @@ function AddConditionDialog({
               Condition Name <span className="text-red-500">*</span>
             </Label>
             <Input
-              value={form.name}
-              onChange={(e) => updateField("name", e.target.value)}
+              value={form.condition_name}
+              onChange={(e) => updateField("condition_name", e.target.value)}
               placeholder="e.g. Bank Statements (2 months)"
               required
             />
@@ -687,6 +694,26 @@ function AddConditionDialog({
               </Select>
             </div>
             <div className="space-y-2">
+              <Label>Required Stage</Label>
+              <Select
+                value={form.required_stage}
+                onValueChange={(v) => updateField("required_stage", v)}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {CONDITION_STAGES.map((s) => (
+                    <SelectItem key={s.value} value={s.value}>
+                      {s.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
               <Label>Responsible Party</Label>
               <Select
                 value={form.responsible_party}
@@ -704,8 +731,6 @@ function AddConditionDialog({
                 </SelectContent>
               </Select>
             </div>
-          </div>
-          <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label>Due Date</Label>
               <Input
@@ -714,25 +739,25 @@ function AddConditionDialog({
                 onChange={(e) => updateField("due_date", e.target.value)}
               />
             </div>
-            <div className="flex items-end pb-2">
-              <label className="flex items-center gap-2 text-sm cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={form.is_critical_path}
-                  onChange={(e) =>
-                    updateField("is_critical_path", e.target.checked)
-                  }
-                  className="rounded border-gray-300"
-                />
-                Critical path item
-              </label>
-            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <label className="flex items-center gap-2 text-sm cursor-pointer">
+              <input
+                type="checkbox"
+                checked={form.critical_path_item}
+                onChange={(e) =>
+                  updateField("critical_path_item", e.target.checked)
+                }
+                className="rounded border-gray-300"
+              />
+              Critical path item
+            </label>
           </div>
           <div className="space-y-2">
             <Label>Internal Description</Label>
             <Textarea
-              value={form.description}
-              onChange={(e) => updateField("description", e.target.value)}
+              value={form.internal_description}
+              onChange={(e) => updateField("internal_description", e.target.value)}
               rows={2}
               placeholder="Visible to team only"
             />
@@ -756,7 +781,7 @@ function AddConditionDialog({
             >
               Cancel
             </Button>
-            <Button type="submit" disabled={loading || !form.name}>
+            <Button type="submit" disabled={loading || !form.condition_name}>
               {loading ? "Adding..." : "Add Condition"}
             </Button>
           </DialogFooter>

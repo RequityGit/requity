@@ -30,23 +30,25 @@ import {
   Clock,
   Search,
   ExternalLink,
-  Filter,
   X,
 } from "lucide-react";
 
 interface ConditionWithLoan {
   id: string;
   loan_id: string;
-  name: string;
-  description: string | null;
+  condition_name: string;
+  internal_description: string | null;
+  borrower_description: string | null;
   category: string;
+  required_stage: string;
   status: string;
-  responsible_party: string;
-  is_critical_path: boolean;
+  responsible_party: string | null;
+  critical_path_item: boolean;
   due_date: string | null;
-  received_date: string | null;
-  approved_date: string | null;
-  rejection_reason: string | null;
+  submitted_at: string | null;
+  reviewed_at: string | null;
+  reviewed_by: string | null;
+  notes: string | null;
   sort_order: number;
   loan?: {
     id: string;
@@ -88,17 +90,17 @@ export function ConditionsDashboard({
       (c: ConditionWithLoan) => c.status === "approved" || c.status === "waived"
     ).length;
     const outstanding = conditions.filter(
-      (c: ConditionWithLoan) => !["approved", "waived"].includes(c.status)
+      (c: ConditionWithLoan) => !["approved", "waived", "not_applicable"].includes(c.status)
     ).length;
     const overdue = conditions.filter(
       (c: ConditionWithLoan) =>
         c.due_date &&
         new Date(c.due_date) < today &&
-        !["approved", "waived"].includes(c.status)
+        !["approved", "waived", "not_applicable"].includes(c.status)
     ).length;
     const criticalOutstanding = conditions.filter(
       (c: ConditionWithLoan) =>
-        c.is_critical_path && !["approved", "waived"].includes(c.status)
+        c.critical_path_item && !["approved", "waived", "not_applicable"].includes(c.status)
     ).length;
     const uniqueLoans = new Set(conditions.map((c: ConditionWithLoan) => c.loan_id)).size;
 
@@ -112,14 +114,14 @@ export function ConditionsDashboard({
     // View mode filter
     if (viewMode === "outstanding") {
       result = result.filter(
-        (c: ConditionWithLoan) => !["approved", "waived"].includes(c.status)
+        (c: ConditionWithLoan) => !["approved", "waived", "not_applicable"].includes(c.status)
       );
     } else if (viewMode === "overdue") {
       result = result.filter(
         (c: ConditionWithLoan) =>
           c.due_date &&
           new Date(c.due_date) < today &&
-          !["approved", "waived"].includes(c.status)
+          !["approved", "waived", "not_applicable"].includes(c.status)
       );
     }
 
@@ -143,7 +145,7 @@ export function ConditionsDashboard({
       const q = search.toLowerCase();
       result = result.filter(
         (c: ConditionWithLoan) =>
-          c.name.toLowerCase().includes(q) ||
+          c.condition_name.toLowerCase().includes(q) ||
           (c.loan as any)?.property_address?.toLowerCase().includes(q) ||
           (c.loan as any)?.loan_number?.toLowerCase().includes(q) ||
           (c.loan as any)?.borrower?.full_name?.toLowerCase().includes(q)
@@ -167,12 +169,12 @@ export function ConditionsDashboard({
     const supabase = createClient();
     const now = new Date().toISOString();
 
-    const updateData: any = { status: newStatus, updated_at: now };
-    if (newStatus === "requested") updateData.requested_date = now.split("T")[0];
-    else if (newStatus === "received") updateData.received_date = now.split("T")[0];
-    else if (newStatus === "approved") {
-      updateData.approved_date = now.split("T")[0];
-      updateData.approved_by = currentUserId;
+    const updateData: Record<string, unknown> = { status: newStatus, updated_at: now };
+    if (newStatus === "submitted") {
+      updateData.submitted_at = now;
+    } else if (newStatus === "approved" || newStatus === "rejected") {
+      updateData.reviewed_at = now;
+      updateData.reviewed_by = currentUserId;
     }
 
     const { error } = await supabase
@@ -195,7 +197,7 @@ export function ConditionsDashboard({
       loan_id: condition.loan_id,
       user_id: currentUserId,
       activity_type: "condition_status_change",
-      description: `${condition.name}: status changed to ${newStatus}`,
+      description: `${condition.condition_name}: status changed to ${newStatus}`,
       old_value: condition.status,
       new_value: newStatus,
       field_name: "condition_status",
@@ -203,7 +205,7 @@ export function ConditionsDashboard({
 
     setConditions((prev: ConditionWithLoan[]) =>
       prev.map((c: ConditionWithLoan) =>
-        c.id === conditionId ? { ...c, ...updateData } : c
+        c.id === conditionId ? { ...c, ...updateData } as ConditionWithLoan : c
       )
     );
     toast({ title: `Condition updated to ${newStatus.replace(/_/g, " ")}` });
@@ -286,7 +288,7 @@ export function ConditionsDashboard({
               value={filterCategory}
               onValueChange={setFilterCategory}
             >
-              <SelectTrigger className="w-[120px] h-8 text-xs">
+              <SelectTrigger className="w-[160px] h-8 text-xs">
                 <SelectValue placeholder="Category" />
               </SelectTrigger>
               <SelectContent>
@@ -398,10 +400,15 @@ export function ConditionsDashboard({
                     const isOverdue =
                       condition.due_date &&
                       new Date(condition.due_date) < today &&
-                      !["approved", "waived"].includes(condition.status);
+                      !["approved", "waived", "not_applicable"].includes(condition.status);
                     const isComplete =
                       condition.status === "approved" ||
                       condition.status === "waived";
+
+                    const categoryLabel =
+                      CONDITION_CATEGORIES.find(
+                        (c) => c.value === condition.category
+                      )?.label ?? condition.category;
 
                     return (
                       <div
@@ -426,15 +433,15 @@ export function ConditionsDashboard({
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2 flex-wrap">
                             <span className="text-sm font-medium">
-                              {condition.name}
+                              {condition.condition_name}
                             </span>
                             <Badge
                               variant="outline"
-                              className="text-[10px] px-1.5 py-0 uppercase"
+                              className="text-[10px] px-1.5 py-0"
                             >
-                              {condition.category}
+                              {categoryLabel}
                             </Badge>
-                            {condition.is_critical_path && (
+                            {condition.critical_path_item && (
                               <Badge className="bg-red-100 text-red-700 border-red-200 text-[10px] px-1.5 py-0">
                                 Critical
                               </Badge>
@@ -446,7 +453,7 @@ export function ConditionsDashboard({
                               {RESPONSIBLE_PARTIES.find(
                                 (p) =>
                                   p.value === condition.responsible_party
-                              )?.label ?? condition.responsible_party}
+                              )?.label ?? condition.responsible_party ?? "—"}
                             </span>
                             {condition.due_date && (
                               <span
@@ -462,7 +469,7 @@ export function ConditionsDashboard({
                           </div>
                         </div>
                         <div className="flex items-center gap-1 flex-shrink-0">
-                          {condition.status === "not_requested" && (
+                          {condition.status === "pending" && (
                             <Button
                               size="sm"
                               variant="outline"
@@ -470,14 +477,14 @@ export function ConditionsDashboard({
                               onClick={() =>
                                 quickStatusChange(
                                   condition.id,
-                                  "requested"
+                                  "submitted"
                                 )
                               }
                             >
-                              Request
+                              Mark Submitted
                             </Button>
                           )}
-                          {condition.status === "requested" && (
+                          {condition.status === "submitted" && (
                             <Button
                               size="sm"
                               variant="outline"
@@ -485,15 +492,14 @@ export function ConditionsDashboard({
                               onClick={() =>
                                 quickStatusChange(
                                   condition.id,
-                                  "received"
+                                  "under_review"
                                 )
                               }
                             >
-                              Received
+                              Start Review
                             </Button>
                           )}
-                          {(condition.status === "received" ||
-                            condition.status === "under_review") && (
+                          {(condition.status === "under_review") && (
                             <Button
                               size="sm"
                               variant="outline"
