@@ -44,7 +44,7 @@ import {
   ClipboardList,
   Activity,
 } from "lucide-react";
-import type { DrawRequest, LoanPayment, Document, LoanCondition } from "@/lib/supabase/types";
+import type { DrawRequest, LoanPayment, Document, LoanCondition, LoanUpdate } from "@/lib/supabase/types";
 import { LoanConditionsTab } from "@/components/admin/loan-conditions-tab";
 
 interface LoanInfo {
@@ -202,28 +202,30 @@ function EditLoanDialog({ loan }: { loan: LoanInfo }) {
     setLoading(true);
     try {
       const supabase = createClient();
+      // Build a typed payload so TypeScript catches any column-name mismatches.
+      // Note: `ltv` is a generated column and must NOT be set directly.
+      const updateData: LoanUpdate = {
+        loan_type: form.loan_type,
+        property_address: form.property_address,
+        property_city: form.property_city || null,
+        property_state: form.property_state || null,
+        property_zip: form.property_zip || null,
+        loan_amount: parseFloat(form.loan_amount),
+        interest_rate: parseFloat(form.interest_rate),
+        term_months: parseInt(form.term_months),
+        stage: form.stage,
+        stage_updated_at: new Date().toISOString(),
+        appraised_value: form.appraised_value
+          ? parseFloat(form.appraised_value)
+          : null,
+        origination_date: form.origination_date || null,
+        maturity_date: form.maturity_date || null,
+        notes: form.notes || null,
+        updated_at: new Date().toISOString(),
+      };
       const { error } = await supabase
         .from("loans")
-        .update({
-          loan_type: form.loan_type,
-          property_address: form.property_address,
-          property_city: form.property_city || null,
-          property_state: form.property_state || null,
-          property_zip: form.property_zip || null,
-          loan_amount: parseFloat(form.loan_amount),
-          interest_rate: parseFloat(form.interest_rate),
-          term_months: parseInt(form.term_months),
-          stage: form.stage,
-          stage_updated_at: new Date().toISOString(),
-          ltv: form.ltv ? parseFloat(form.ltv) : null,
-          appraised_value: form.appraised_value
-            ? parseFloat(form.appraised_value)
-            : null,
-          origination_date: form.origination_date || null,
-          maturity_date: form.maturity_date || null,
-          notes: form.notes || null,
-          updated_at: new Date().toISOString(),
-        })
+        .update(updateData)
         .eq("id", loan.id);
 
       if (error) throw error;

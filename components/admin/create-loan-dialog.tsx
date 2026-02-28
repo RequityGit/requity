@@ -25,6 +25,7 @@ import {
 import { LOAN_TYPES, LOAN_PRIORITIES } from "@/lib/constants";
 import { useToast } from "@/components/ui/use-toast";
 import { PlusCircle, Search, Check, X, UserPlus } from "lucide-react";
+import type { LoanInsert } from "@/lib/supabase/types";
 
 interface TeamMember {
   id: string;
@@ -150,35 +151,35 @@ export function CreateLoanDialog({
       const now = new Date().toISOString();
 
       // 1. Create the loan
-      // Pipeline fields (arv, purchase_price, points, etc.) are only included
-      // when they have values, to avoid errors if the pipeline migration
-      // (20250302000000_loan_pipeline.sql) hasn't been applied yet.
+      // Build a typed payload so TypeScript catches any column-name mismatches.
+      const loanData: LoanInsert = {
+        borrower_id: form.borrower_id,
+        loan_type: form.loan_type || null,
+        property_address: form.property_address || null,
+        property_city: form.property_city || null,
+        property_state: form.property_state || null,
+        property_zip: form.property_zip || null,
+        loan_amount: parseFloat(form.loan_amount),
+        appraised_value: form.appraised_value ? parseFloat(form.appraised_value) : null,
+        interest_rate: form.interest_rate ? parseFloat(form.interest_rate) : null,
+        term_months: form.term_months ? parseInt(form.term_months) : null,
+        originator: teamMembers.find((t) => t.id === form.originator_id)?.full_name || null,
+        notes: form.notes || null,
+        stage: "lead",
+        stage_updated_at: now,
+        purchase_price: form.purchase_price ? parseFloat(form.purchase_price) : null,
+        arv: form.arv ? parseFloat(form.arv) : null,
+        points: form.points ? parseFloat(form.points) : null,
+        origination_fee: form.origination_fee ? parseFloat(form.origination_fee) : null,
+        originator_id: form.originator_id || null,
+        processor_id: form.processor_id || null,
+        priority: form.priority || "normal",
+        expected_close_date: form.expected_close_date || null,
+      };
+
       const { data: newLoan, error: loanError } = await supabase
         .from("loans")
-        .insert({
-          borrower_id: form.borrower_id,
-          loan_type: form.loan_type || null,
-          property_address: form.property_address || null,
-          property_city: form.property_city || null,
-          property_state: form.property_state || null,
-          property_zip: form.property_zip || null,
-          loan_amount: parseFloat(form.loan_amount),
-          appraised_value: form.appraised_value ? parseFloat(form.appraised_value) : null,
-          interest_rate: form.interest_rate ? parseFloat(form.interest_rate) : null,
-          term_months: form.term_months ? parseInt(form.term_months) : null,
-          originator: teamMembers.find((t) => t.id === form.originator_id)?.full_name || null,
-          notes: form.notes || null,
-          stage: "lead",
-          stage_updated_at: now,
-          ...(form.purchase_price ? { purchase_price: parseFloat(form.purchase_price) } : {}),
-          ...(form.arv ? { arv: parseFloat(form.arv) } : {}),
-          ...(form.points ? { points: parseFloat(form.points) } : {}),
-          ...(form.origination_fee ? { origination_fee: parseFloat(form.origination_fee) } : {}),
-          ...(form.originator_id ? { originator_id: form.originator_id } : {}),
-          ...(form.processor_id ? { processor_id: form.processor_id } : {}),
-          ...(form.priority !== "normal" ? { priority: form.priority } : {}),
-          ...(form.expected_close_date ? { expected_close_date: form.expected_close_date } : {}),
-        })
+        .insert(loanData)
         .select()
         .single();
 
