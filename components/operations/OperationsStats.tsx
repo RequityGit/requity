@@ -39,7 +39,7 @@ export function OperationsStats({
         icon={<CalendarClock className="h-5 w-5" />}
       />
       <KpiCard
-        title="Recurring Tasks"
+        title="Active Recurring"
         value={recurringTasks}
         icon={<RefreshCw className="h-5 w-5" />}
       />

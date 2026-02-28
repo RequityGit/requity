@@ -1,8 +1,14 @@
 "use client";
 
 import { useState } from "react";
-import { ChevronDown, ChevronRight } from "lucide-react";
+import { ChevronDown, ChevronRight, MoreHorizontal, Pause } from "lucide-react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+} from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
 import {
   PriorityBadge,
@@ -29,6 +35,10 @@ export interface OpsTask {
   linked_entity_label: string | null;
   is_recurring: boolean;
   recurrence_pattern: string | null;
+  recurring_series_id: string | null;
+  source_task_id: string | null;
+  recurrence_end_date: string | null;
+  is_active_recurrence: boolean;
   created_by: string | null;
   updated_at: string | null;
   created_at: string;
@@ -56,6 +66,7 @@ interface ProjectCardProps {
   project: OpsProject;
   tasks: OpsTask[];
   onToggleTask: (taskId: string, completed: boolean) => void;
+  onStopRecurrence: (taskId: string) => void;
 }
 
 const priorityOrder: Record<string, number> = {
@@ -65,7 +76,7 @@ const priorityOrder: Record<string, number> = {
   Low: 3,
 };
 
-export function ProjectCard({ project, tasks, onToggleTask }: ProjectCardProps) {
+export function ProjectCard({ project, tasks, onToggleTask, onStopRecurrence }: ProjectCardProps) {
   const [expanded, setExpanded] = useState(false);
 
   const completedCount = tasks.filter((t) => t.status === "Complete").length;
@@ -166,7 +177,24 @@ export function ProjectCard({ project, tasks, onToggleTask }: ProjectCardProps) 
                     <div className="flex items-center gap-1.5">
                       <PriorityBadge priority={task.priority} />
                       {task.is_recurring && (
-                        <RecurringBadge pattern={task.recurrence_pattern} />
+                        <div className="flex items-center gap-0.5">
+                          <RecurringBadge pattern={task.recurrence_pattern} isActive={task.is_active_recurrence} />
+                          {task.is_active_recurrence && (
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <button className="p-0.5 rounded hover:bg-slate-200 text-muted-foreground">
+                                  <MoreHorizontal className="h-3 w-3" />
+                                </button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end">
+                                <DropdownMenuItem onClick={() => onStopRecurrence(task.id)}>
+                                  <Pause className="h-3.5 w-3.5 mr-2" />
+                                  Stop recurrence
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          )}
+                        </div>
                       )}
                       <DueDateLabel dueDate={task.due_date} />
                     </div>

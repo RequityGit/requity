@@ -9,20 +9,28 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+} from "@/components/ui/dropdown-menu";
+import {
   PriorityBadge,
   StatusBadge,
   RecurringBadge,
   DueDateLabel,
 } from "./badges";
+import { MoreHorizontal, Pause } from "lucide-react";
 import type { OpsTask } from "./ProjectCard";
 
 interface TaskListProps {
   tasks: OpsTask[];
   projectNames: Record<string, string>;
   onToggleTask: (taskId: string, completed: boolean) => void;
+  onStopRecurrence: (taskId: string) => void;
 }
 
-export function TaskList({ tasks, projectNames, onToggleTask }: TaskListProps) {
+export function TaskList({ tasks, projectNames, onToggleTask, onStopRecurrence }: TaskListProps) {
   if (tasks.length === 0) {
     return (
       <div className="rounded-md border bg-white">
@@ -80,7 +88,27 @@ export function TaskList({ tasks, projectNames, onToggleTask }: TaskListProps) {
                 </TableCell>
                 <TableCell>
                   {task.is_recurring ? (
-                    <RecurringBadge pattern={task.recurrence_pattern} />
+                    <div className="flex items-center gap-1">
+                      <RecurringBadge
+                        pattern={task.recurrence_pattern}
+                        isActive={task.is_active_recurrence}
+                      />
+                      {task.is_active_recurrence && (
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <button className="p-0.5 rounded hover:bg-slate-100 text-muted-foreground">
+                              <MoreHorizontal className="h-3.5 w-3.5" />
+                            </button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem onClick={() => onStopRecurrence(task.id)}>
+                              <Pause className="h-3.5 w-3.5 mr-2" />
+                              Stop recurrence
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      )}
+                    </div>
                   ) : (
                     <span className="text-muted-foreground text-sm">—</span>
                   )}

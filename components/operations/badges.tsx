@@ -74,15 +74,22 @@ const patternLabels: Record<string, string> = {
 
 export function RecurringBadge({
   pattern,
+  isActive = true,
 }: {
   pattern: string | null;
+  isActive?: boolean;
 }) {
   if (!pattern) return null;
   const label = patternLabels[pattern] ?? pattern;
   return (
     <Badge
       variant="outline"
-      className="text-xs bg-purple-100 text-purple-800 border-purple-200"
+      className={cn(
+        "text-xs",
+        isActive
+          ? "bg-purple-100 text-purple-800 border-purple-200"
+          : "bg-slate-100 text-slate-500 border-slate-200 line-through"
+      )}
     >
       ↻ {label}
     </Badge>

@@ -11,8 +11,10 @@ import {
   LayoutGrid,
   TableIcon,
   X,
+  History,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
+import { useToast } from "@/components/ui/use-toast";
 import { OperationsStats } from "./OperationsStats";
 import { MultiSelectFilter } from "./MultiSelectFilter";
 import { ProjectCard, type OpsProject, type OpsTask } from "./ProjectCard";
@@ -38,6 +40,7 @@ function getUniqueValues(items: (string | null)[]): string[] {
 export function OperationsView({ projects, tasks }: OperationsViewProps) {
   const router = useRouter();
   const supabase = createClient();
+  const { toast } = useToast();
 
   // Filter state
   const [statusFilter, setStatusFilter] = useState<string[]>([]);
@@ -47,6 +50,9 @@ export function OperationsView({ projects, tasks }: OperationsViewProps) {
 
   // Task view mode
   const [taskView, setTaskView] = useState<"list" | "board">("list");
+
+  // Toggle to show/hide completed recurring task instances
+  const [showCompletedRecurring, setShowCompletedRecurring] = useState(false);
 
   // Compute filter options
   const projectStatuses = useMemo(
@@ -127,6 +133,14 @@ export function OperationsView({ projects, tasks }: OperationsViewProps) {
   // Filtered tasks
   const filteredTasks = useMemo(() => {
     let result = [...tasks];
+    // Hide completed recurring series instances by default
+    if (!showCompletedRecurring) {
+      result = result.filter((t) => {
+        if (t.status !== "Complete") return true;
+        if (!t.is_recurring || !t.recurring_series_id) return true;
+        return false;
+      });
+    }
     if (statusFilter.length > 0) {
       result = result.filter((t) => statusFilter.includes(t.status));
     }
@@ -144,7 +158,7 @@ export function OperationsView({ projects, tasks }: OperationsViewProps) {
       );
     }
     return result;
-  }, [tasks, statusFilter, ownerFilter, priorityFilter, categoryFilter]);
+  }, [tasks, statusFilter, ownerFilter, priorityFilter, categoryFilter, showCompletedRecurring]);
 
   // Project name lookup for tasks
   const projectNames = useMemo(() => {
@@ -160,12 +174,16 @@ export function OperationsView({ projects, tasks }: OperationsViewProps) {
     const map: Record<string, OpsTask[]> = {};
     tasks.forEach((t) => {
       if (t.project_id) {
+        // Hide completed recurring instances in project view
+        if (!showCompletedRecurring && t.status === "Complete" && t.is_recurring && t.recurring_series_id) {
+          return;
+        }
         if (!map[t.project_id]) map[t.project_id] = [];
         map[t.project_id].push(t);
       }
     });
     return map;
-  }, [tasks]);
+  }, [tasks, showCompletedRecurring]);
 
   // Stats
   const stats = useMemo(() => {
@@ -189,7 +207,12 @@ export function OperationsView({ projects, tasks }: OperationsViewProps) {
       return due >= now && due <= endOfWeek;
     }).length;
 
-    const recurringTasks = tasks.filter((t) => t.is_recurring).length;
+    // Count unique active recurring series (not all historical instances)
+    const recurringTasks = new Set(
+      tasks
+        .filter((t) => t.is_recurring && t.is_active_recurrence && t.status !== "Complete")
+        .map((t) => t.recurring_series_id ?? t.id)
+    ).size;
 
     return { activeProjects, criticalTasks, dueThisWeek, recurringTasks };
   }, [projects, tasks]);
@@ -202,6 +225,57 @@ export function OperationsView({ projects, tasks }: OperationsViewProps) {
     };
 
     await (supabase.from as Function)("ops_tasks").update(update).eq("id", taskId);
+
+    // If completing a recurring task, generate the next occurrence via RPC
+    if (complete) {
+      const task = tasks.find((t) => t.id === taskId);
+      if (task?.is_recurring && task?.is_active_recurrence) {
+        const { data, error: rpcError } = await (supabase.rpc as Function)(
+          "generate_next_recurring_task",
+          { task_id: taskId }
+        );
+
+        if (rpcError) {
+          toast({
+            title: "Task completed",
+            description: "Could not generate next occurrence.",
+          });
+        } else if (data?.success) {
+          toast({
+            title: "Task completed",
+            description: `Next occurrence scheduled for ${new Date(data.next_due_date).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}`,
+          });
+        } else if (data?.skipped) {
+          toast({
+            title: "Task completed",
+            description: data.reason === "Past recurrence end date"
+              ? "Recurring series has ended."
+              : "Next task already exists.",
+          });
+        }
+      }
+    }
+
+    router.refresh();
+  }
+
+  // Stop a recurring series from generating future tasks
+  async function handleStopRecurrence(taskId: string) {
+    const task = tasks.find((t) => t.id === taskId);
+
+    await (supabase.from as Function)("ops_tasks")
+      .update({ is_active_recurrence: false })
+      .eq("id", taskId);
+
+    // Also stop recurrence on all future pending tasks in the same series
+    if (task?.recurring_series_id) {
+      await (supabase.from as Function)("ops_tasks")
+        .update({ is_active_recurrence: false })
+        .eq("recurring_series_id", task.recurring_series_id)
+        .neq("status", "Complete");
+    }
+
+    toast({ title: "Recurrence stopped", description: "No further tasks will be generated." });
     router.refresh();
   }
 
@@ -282,6 +356,7 @@ export function OperationsView({ projects, tasks }: OperationsViewProps) {
                   project={project}
                   tasks={tasksByProject[project.id] ?? []}
                   onToggleTask={handleToggleTask}
+                  onStopRecurrence={handleStopRecurrence}
                 />
               ))}
             </div>
@@ -330,31 +405,46 @@ export function OperationsView({ projects, tasks }: OperationsViewProps) {
               )}
             </div>
 
-            <div className="flex items-center rounded-md border bg-white p-0.5">
+            <div className="flex items-center gap-3">
               <button
                 type="button"
-                onClick={() => setTaskView("list")}
-                className={`flex items-center gap-1.5 rounded px-3 py-1.5 text-sm font-medium transition-colors ${
-                  taskView === "list"
-                    ? "bg-slate-100 text-foreground"
+                onClick={() => setShowCompletedRecurring(!showCompletedRecurring)}
+                className={`flex items-center gap-1.5 text-sm font-medium transition-colors ${
+                  showCompletedRecurring
+                    ? "text-purple-700"
                     : "text-muted-foreground hover:text-foreground"
                 }`}
               >
-                <TableIcon className="h-4 w-4" />
-                List
+                <History className="h-3.5 w-3.5" />
+                {showCompletedRecurring ? "Hide" : "Show"} history
               </button>
-              <button
-                type="button"
-                onClick={() => setTaskView("board")}
-                className={`flex items-center gap-1.5 rounded px-3 py-1.5 text-sm font-medium transition-colors ${
-                  taskView === "board"
-                    ? "bg-slate-100 text-foreground"
-                    : "text-muted-foreground hover:text-foreground"
-                }`}
-              >
-                <LayoutGrid className="h-4 w-4" />
-                Board
-              </button>
+
+              <div className="flex items-center rounded-md border bg-white p-0.5">
+                <button
+                  type="button"
+                  onClick={() => setTaskView("list")}
+                  className={`flex items-center gap-1.5 rounded px-3 py-1.5 text-sm font-medium transition-colors ${
+                    taskView === "list"
+                      ? "bg-slate-100 text-foreground"
+                      : "text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  <TableIcon className="h-4 w-4" />
+                  List
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setTaskView("board")}
+                  className={`flex items-center gap-1.5 rounded px-3 py-1.5 text-sm font-medium transition-colors ${
+                    taskView === "board"
+                      ? "bg-slate-100 text-foreground"
+                      : "text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  <LayoutGrid className="h-4 w-4" />
+                  Board
+                </button>
+              </div>
             </div>
           </div>
 
@@ -364,6 +454,7 @@ export function OperationsView({ projects, tasks }: OperationsViewProps) {
               tasks={filteredTasks}
               projectNames={projectNames}
               onToggleTask={handleToggleTask}
+              onStopRecurrence={handleStopRecurrence}
             />
           ) : (
             <TaskBoard
