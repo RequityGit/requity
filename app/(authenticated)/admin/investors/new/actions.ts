@@ -82,6 +82,8 @@ export async function addInvestorAction(input: AddInvestorInput) {
   }
 
   // Fallback: use signUp with anon key (no service role key needed)
+  // Note: signUp already sends a confirmation email, so we don't call
+  // resetPasswordForEmail separately (that triggers Supabase rate limits).
   const anonClient = createClient(supabaseUrl, supabaseAnonKey, {
     auth: { autoRefreshToken: false, persistSession: false },
   });
@@ -98,6 +100,13 @@ export async function addInvestorAction(input: AddInvestorInput) {
     });
 
   if (signUpError) {
+    // Supabase rate-limits signUp — surface a friendlier message
+    if (signUpError.message.includes("security purposes")) {
+      return {
+        error:
+          "Supabase rate limit reached. Please wait a minute and try again, or configure SUPABASE_SERVICE_ROLE_KEY to avoid this limit.",
+      };
+    }
     return { error: signUpError.message };
   }
 
@@ -120,9 +129,6 @@ export async function addInvestorAction(input: AddInvestorInput) {
   if (updateError) {
     return { error: updateError.message };
   }
-
-  // Send password reset email so investor can set their own password
-  await anonClient.auth.resetPasswordForEmail(input.email);
 
   return { success: true, investorId: newUserId };
 }
