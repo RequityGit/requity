@@ -32,6 +32,7 @@ interface NavItem {
 
 const investorNav: NavItem[] = [
   { label: "Dashboard", href: "/investor/dashboard", icon: LayoutDashboard },
+  { label: "My Funds", href: "/investor/funds", icon: Landmark },
   { label: "Capital Calls", href: "/investor/capital-calls", icon: DollarSign },
   {
     label: "Distributions",

@@ -12,7 +12,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { StatusBadge } from "@/components/shared/status-badge";
 import { formatCurrency, formatDate } from "@/lib/format";
 import { useToast } from "@/components/ui/use-toast";
-import { Save, Loader2, User, Building2 } from "lucide-react";
+import { PhoneVerifyDialog } from "@/components/investor/phone-verify-dialog";
+import { Save, Loader2, User, Building2, ShieldCheck } from "lucide-react";
 
 type ProfileData = {
   id: string;
@@ -47,6 +48,14 @@ export default function InvestorAccountPage() {
   const [phone, setPhone] = useState("");
   const [company, setCompany] = useState("");
 
+  // OTP verification state
+  const [showOtpDialog, setShowOtpDialog] = useState(false);
+  const [otpVerified, setOtpVerified] = useState(false);
+
+  // Track original values to detect sensitive changes
+  const [originalEmail, setOriginalEmail] = useState("");
+  const [originalPhone, setOriginalPhone] = useState("");
+
   useEffect(() => {
     async function loadData() {
       try {
@@ -76,6 +85,8 @@ export default function InvestorAccountPage() {
           setEmail(pd.email ?? "");
           setPhone(pd.phone ?? "");
           setCompany(pd.company_name ?? "");
+          setOriginalEmail(pd.email ?? "");
+          setOriginalPhone(pd.phone ?? "");
         }
 
         // Load commitments
@@ -108,8 +119,28 @@ export default function InvestorAccountPage() {
     loadData();
   }, [supabase]);
 
+  const hasSensitiveChanges =
+    email !== originalEmail || phone !== originalPhone;
+
+  const requiresOtp = hasSensitiveChanges && !otpVerified;
+
   const handleSave = async () => {
     if (!profile) return;
+
+    // If sensitive changes and OTP not verified, require verification first
+    if (requiresOtp) {
+      if (!originalPhone) {
+        toast({
+          title: "Phone number required",
+          description:
+            "A phone number on file is required for identity verification. Contact your administrator.",
+          variant: "destructive",
+        });
+        return;
+      }
+      setShowOtpDialog(true);
+      return;
+    }
 
     setSaving(true);
     try {
@@ -133,6 +164,11 @@ export default function InvestorAccountPage() {
         return;
       }
 
+      // Update original values after successful save
+      setOriginalEmail(email);
+      setOriginalPhone(phone);
+      setOtpVerified(false);
+
       toast({
         title: "Profile updated",
         description: "Your profile information has been saved successfully.",
@@ -147,6 +183,14 @@ export default function InvestorAccountPage() {
     } finally {
       setSaving(false);
     }
+  };
+
+  const handleOtpVerified = () => {
+    setOtpVerified(true);
+    toast({
+      title: "Identity verified",
+      description: "You can now save your profile changes.",
+    });
   };
 
   if (loading) {
@@ -194,7 +238,14 @@ export default function InvestorAccountPage() {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="email">Email Address</Label>
+              <Label htmlFor="email">
+                Email Address
+                {email !== originalEmail && (
+                  <span className="ml-2 text-xs text-amber-600 font-normal">
+                    (requires verification)
+                  </span>
+                )}
+              </Label>
               <Input
                 id="email"
                 type="email"
@@ -204,7 +255,14 @@ export default function InvestorAccountPage() {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="phone">Phone Number</Label>
+              <Label htmlFor="phone">
+                Phone Number
+                {phone !== originalPhone && (
+                  <span className="ml-2 text-xs text-amber-600 font-normal">
+                    (requires verification)
+                  </span>
+                )}
+              </Label>
               <Input
                 id="phone"
                 type="tel"
@@ -224,14 +282,46 @@ export default function InvestorAccountPage() {
             </div>
           </div>
 
+          {/* Sensitive change notice */}
+          {hasSensitiveChanges && !otpVerified && (
+            <div className="mt-4 flex items-start gap-3 rounded-md border border-amber-200 bg-amber-50 p-3">
+              <ShieldCheck className="h-5 w-5 text-amber-600 mt-0.5 flex-shrink-0" />
+              <div>
+                <p className="text-sm font-medium text-amber-800">
+                  Identity verification required
+                </p>
+                <p className="text-xs text-amber-700 mt-0.5">
+                  Changing your email or phone number requires SMS verification
+                  for security.
+                </p>
+              </div>
+            </div>
+          )}
+
+          {hasSensitiveChanges && otpVerified && (
+            <div className="mt-4 flex items-start gap-3 rounded-md border border-green-200 bg-green-50 p-3">
+              <ShieldCheck className="h-5 w-5 text-green-600 mt-0.5 flex-shrink-0" />
+              <div>
+                <p className="text-sm font-medium text-green-800">
+                  Identity verified
+                </p>
+                <p className="text-xs text-green-700 mt-0.5">
+                  You can now save your changes.
+                </p>
+              </div>
+            </div>
+          )}
+
           <div className="mt-6 flex justify-end">
             <Button onClick={handleSave} disabled={saving}>
               {saving ? (
                 <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              ) : requiresOtp ? (
+                <ShieldCheck className="h-4 w-4 mr-2" />
               ) : (
                 <Save className="h-4 w-4 mr-2" />
               )}
-              Save Changes
+              {requiresOtp ? "Verify & Save" : "Save Changes"}
             </Button>
           </div>
         </CardContent>
@@ -324,6 +414,14 @@ export default function InvestorAccountPage() {
           )}
         </CardContent>
       </Card>
+
+      {/* OTP Verification Dialog */}
+      <PhoneVerifyDialog
+        open={showOtpDialog}
+        onOpenChange={setShowOtpDialog}
+        phone={originalPhone}
+        onVerified={handleOtpVerified}
+      />
     </div>
   );
 }
