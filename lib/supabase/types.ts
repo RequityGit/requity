@@ -450,11 +450,15 @@ export type Database = {
           application_date: string | null;
           approval_date: string | null;
           actual_close_date: string | null;
+          type: Database["public"]["Enums"]["loan_type_enum"];
+          purpose: Database["public"]["Enums"]["loan_purpose"];
           deleted_at: string | null;
         };
         Insert: {
           id?: string;
           borrower_id: string;
+          type: Database["public"]["Enums"]["loan_type_enum"];
+          purpose: Database["public"]["Enums"]["loan_purpose"];
           profile_id?: string | null;
           loan_number?: string | null;
           loan_type?: string | null;
@@ -495,6 +499,8 @@ export type Database = {
         Update: {
           id?: string;
           borrower_id?: string;
+          type?: Database["public"]["Enums"]["loan_type_enum"];
+          purpose?: Database["public"]["Enums"]["loan_purpose"];
           profile_id?: string | null;
           loan_number?: string | null;
           loan_type?: string | null;
@@ -1348,6 +1354,8 @@ export type Database = {
       };
     };
     Enums: {
+      loan_purpose: "purchase" | "refinance" | "cash_out_refinance";
+      loan_type_enum: "commercial" | "dscr" | "guc" | "rtl" | "transactional";
       user_role: "admin" | "borrower" | "investor";
     };
     CompositeTypes: {
