@@ -225,29 +225,48 @@ export const DISTRIBUTION_TYPES = [
 // ---------------------------------------------------------------------------
 
 export const CONDITION_STATUSES = [
-  { value: "not_requested", label: "Not Requested" },
-  { value: "requested", label: "Requested" },
-  { value: "received", label: "Received" },
+  { value: "pending", label: "Pending" },
+  { value: "submitted", label: "Submitted" },
   { value: "under_review", label: "Under Review" },
   { value: "approved", label: "Approved" },
   { value: "waived", label: "Waived" },
+  { value: "not_applicable", label: "Not Applicable" },
   { value: "rejected", label: "Rejected" },
 ] as const;
 
 export type ConditionStatus =
-  | "not_requested"
-  | "requested"
-  | "received"
+  | "pending"
+  | "submitted"
   | "under_review"
   | "approved"
   | "waived"
+  | "not_applicable"
   | "rejected";
 
 export const CONDITION_CATEGORIES = [
-  { value: "pta", label: "Prior to Approval (PTA)" },
-  { value: "ptf", label: "Prior to Funding (PTF)" },
+  { value: "borrower_documents", label: "Borrower Documents" },
+  { value: "non_us_citizen", label: "Non-US Citizen" },
+  { value: "entity_documents", label: "Entity Documents" },
+  { value: "deal_level_items", label: "Deal Level Items" },
+  { value: "appraisal_request", label: "Appraisal Request" },
+  { value: "title_fraud_protection", label: "Title / Fraud Protection" },
+  { value: "lender_package", label: "Lender Package" },
+  { value: "insurance_request", label: "Insurance Request" },
+  { value: "title_request", label: "Title Request" },
+  { value: "fundraising", label: "Fundraising" },
+  { value: "closing_prep", label: "Closing Prep" },
+  { value: "post_closing_items", label: "Post-Closing Items" },
+  { value: "note_sell_process", label: "Note Sell Process" },
+  { value: "post_loan_payoff", label: "Post Loan Payoff" },
   { value: "prior_to_approval", label: "Prior to Approval" },
   { value: "prior_to_funding", label: "Prior to Funding" },
+] as const;
+
+export const CONDITION_STAGES = [
+  { value: "processing", label: "Processing" },
+  { value: "closed_onboarding", label: "Closed / Onboarding" },
+  { value: "note_sell_process", label: "Note Sell Process" },
+  { value: "post_loan_payoff", label: "Post Loan Payoff" },
 ] as const;
 
 export const RESPONSIBLE_PARTIES = [
@@ -359,10 +378,8 @@ export const STATUS_COLORS: Record<string, string> = {
   normal: "bg-slate-100 text-slate-700",
   on_hold: "bg-amber-100 text-amber-800",
 
-  // Condition statuses
-  not_requested: "bg-gray-100 text-gray-600",
-  requested: "bg-blue-100 text-blue-800",
-  received: "bg-indigo-100 text-indigo-800",
+  // Condition statuses (pending & submitted already defined above)
+  not_applicable: "bg-slate-100 text-slate-500",
   waived: "bg-slate-100 text-slate-600",
 
   // CRM statuses

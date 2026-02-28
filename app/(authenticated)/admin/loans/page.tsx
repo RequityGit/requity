@@ -80,7 +80,7 @@ export default async function AdminLoansPage() {
   const conditionReceived: Record<string, number> = {};
   (conditionsResult.data ?? []).forEach((c: { loan_id: string; status: string }) => {
     conditionTotals[c.loan_id] = (conditionTotals[c.loan_id] ?? 0) + 1;
-    if (["received", "under_review", "approved", "waived"].includes(c.status)) {
+    if (["submitted", "under_review", "approved", "waived"].includes(c.status)) {
       conditionReceived[c.loan_id] = (conditionReceived[c.loan_id] ?? 0) + 1;
     }
   });

@@ -13,12 +13,12 @@ export default async function AdminSettingsPage() {
 
   if (!user) redirect("/login");
 
-  // Fetch templates with their items
+  // Fetch condition templates (flat table)
   const { data: templates } = await supabase
-    .from("condition_templates")
-    .select("*, items:condition_template_items(*)")
-    .order("loan_type")
-    .order("name");
+    .from("loan_condition_templates")
+    .select("*")
+    .order("category")
+    .order("sort_order");
 
   return (
     <div className="space-y-6">
@@ -27,13 +27,7 @@ export default async function AdminSettingsPage() {
         description="Manage condition templates and loan configuration"
       />
       <ConditionTemplateEditor
-        templates={(templates ?? []).map((t: any) => ({
-          ...t,
-          items: (t.items ?? []).sort(
-            (a: any, b: any) => (a.sort_order ?? 0) - (b.sort_order ?? 0)
-          ),
-        }))}
-        currentUserId={user.id}
+        templates={templates ?? []}
       />
     </div>
   );

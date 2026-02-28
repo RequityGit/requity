@@ -28,6 +28,7 @@ import {
 import {
   CONDITION_STATUSES,
   CONDITION_CATEGORIES,
+  CONDITION_STAGES,
   RESPONSIBLE_PARTIES,
 } from "@/lib/constants";
 import { formatDate } from "@/lib/format";
@@ -61,10 +62,10 @@ export function LoanConditionsTab({
   const { toast } = useToast();
 
   const ptaConditions = conditions
-    .filter((c) => c.category === "pta" || c.category === "prior_to_approval")
+    .filter((c) => c.category === "prior_to_approval" || c.required_stage === "processing")
     .sort((a, b) => a.sort_order - b.sort_order);
   const ptfConditions = conditions
-    .filter((c) => c.category === "ptf" || c.category === "prior_to_funding")
+    .filter((c) => c.category === "prior_to_funding" || c.required_stage === "closed_onboarding")
     .sort((a, b) => a.sort_order - b.sort_order);
 
   // Summary stats
@@ -73,7 +74,7 @@ export function LoanConditionsTab({
     (c) => c.status === "approved" || c.status === "waived"
   ).length;
   const receivedCount = conditions.filter(
-    (c) => c.status === "received" || c.status === "under_review"
+    (c) => c.status === "submitted" || c.status === "under_review"
   ).length;
   const outstandingCount = conditions.filter(
     (c) => !["approved", "waived"].includes(c.status)
@@ -97,7 +98,7 @@ export function LoanConditionsTab({
   async function updateConditionStatus(
     conditionId: string,
     newStatus: string,
-    rejectionReason?: string
+    _rejectionReason?: string
   ) {
     const supabase = createClient();
     const now = new Date().toISOString();
@@ -107,17 +108,11 @@ export function LoanConditionsTab({
       updated_at: now,
     };
 
-    if (newStatus === "requested") {
-      updateData.requested_date = now.split("T")[0];
-    } else if (newStatus === "received") {
-      updateData.received_date = now.split("T")[0];
-    } else if (newStatus === "approved") {
-      updateData.approved_date = now.split("T")[0];
-      updateData.approved_by = currentUserId;
-    } else if (newStatus === "waived") {
-      updateData.waived_by = currentUserId;
-    } else if (newStatus === "rejected") {
-      updateData.rejection_reason = rejectionReason || null;
+    if (newStatus === "submitted") {
+      updateData.submitted_at = now;
+    } else if (newStatus === "approved" || newStatus === "rejected") {
+      updateData.reviewed_at = now;
+      updateData.reviewed_by = currentUserId;
     }
 
     const { error } = await supabase
@@ -140,7 +135,7 @@ export function LoanConditionsTab({
       loan_id: loanId,
       user_id: currentUserId,
       activity_type: "condition_status_change",
-      description: `${condition?.name}: status changed to ${newStatus}`,
+      description: `${condition?.condition_name}: status changed to ${newStatus}`,
       old_value: condition?.status,
       new_value: newStatus,
       field_name: "condition_status",
@@ -165,7 +160,7 @@ export function LoanConditionsTab({
           color="text-green-700"
         />
         <SummaryCard
-          label="Received"
+          label="Submitted"
           value={receivedCount}
           color="text-indigo-700"
         />
@@ -376,29 +371,28 @@ function ConditionRow({
   // Quick action buttons based on current status
   function getQuickActions() {
     switch (condition.status) {
-      case "not_requested":
+      case "pending":
         return (
           <Button
             size="sm"
             variant="outline"
             className="h-7 text-xs"
-            onClick={() => onStatusChange(condition.id, "requested")}
+            onClick={() => onStatusChange(condition.id, "submitted")}
           >
-            Request
+            Submit
           </Button>
         );
-      case "requested":
+      case "submitted":
         return (
           <Button
             size="sm"
             variant="outline"
             className="h-7 text-xs"
-            onClick={() => onStatusChange(condition.id, "received")}
+            onClick={() => onStatusChange(condition.id, "under_review")}
           >
-            Mark Received
+            Review
           </Button>
         );
-      case "received":
       case "under_review":
         return (
           <div className="flex gap-1">
@@ -452,7 +446,7 @@ function ConditionRow({
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
             <span className="text-sm font-medium text-[#1a2b4a]">
-              {condition.name}
+              {condition.condition_name}
             </span>
             {condition.critical_path_item && (
               <Badge className="bg-red-100 text-red-700 border-red-200 text-[10px] px-1.5 py-0">
@@ -473,23 +467,18 @@ function ConditionRow({
                 Due: {formatDate(condition.due_date)}
               </span>
             )}
-            {condition.received_date && (
-              <span>Received: {formatDate(condition.received_date)}</span>
+            {condition.submitted_at && (
+              <span>Submitted: {formatDate(condition.submitted_at)}</span>
             )}
-            {condition.approved_date && (
+            {condition.reviewed_at && (
               <span className="text-green-700">
-                Approved: {formatDate(condition.approved_date)}
+                Reviewed: {formatDate(condition.reviewed_at)}
               </span>
             )}
           </div>
-          {condition.rejection_reason && (
-            <p className="text-xs text-red-600 mt-1">
-              Rejection reason: {condition.rejection_reason}
-            </p>
-          )}
-          {condition.internal_note && (
+          {condition.notes && (
             <p className="text-xs text-muted-foreground mt-1 italic">
-              Note: {condition.internal_note}
+              Note: {condition.notes}
             </p>
           )}
         </div>
@@ -529,7 +518,7 @@ function ConditionRow({
           </DialogHeader>
           <div className="space-y-3">
             <p className="text-sm text-muted-foreground">
-              Rejecting: <strong>{condition.name}</strong>
+              Rejecting: <strong>{condition.condition_name}</strong>
             </p>
             <div className="space-y-2">
               <Label>Reason for rejection</Label>
@@ -583,14 +572,15 @@ function AddConditionDialog({
   const { toast } = useToast();
 
   const [form, setForm] = useState({
-    name: "",
+    condition_name: "",
     internal_description: "",
     borrower_description: "",
-    category: "pta",
+    category: "borrower_documents",
+    required_stage: "processing",
     responsible_party: "borrower",
     critical_path_item: false,
     due_date: "",
-    internal_note: "",
+    notes: "",
   });
 
   function updateField(field: string, value: any) {
@@ -599,22 +589,23 @@ function AddConditionDialog({
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!form.name) return;
+    if (!form.condition_name) return;
 
     setLoading(true);
     try {
       const supabase = createClient();
       const { error } = await supabase.from("loan_conditions").insert({
         loan_id: loanId,
-        name: form.name,
+        condition_name: form.condition_name,
         internal_description: form.internal_description || null,
         borrower_description: form.borrower_description || null,
         category: form.category,
+        required_stage: form.required_stage,
         responsible_party: form.responsible_party,
         critical_path_item: form.critical_path_item,
         due_date: form.due_date || null,
-        internal_note: form.internal_note || null,
-        status: "not_requested",
+        notes: form.notes || null,
+        status: "pending",
       });
 
       if (error) throw error;
@@ -622,14 +613,15 @@ function AddConditionDialog({
       toast({ title: "Condition added" });
       setOpen(false);
       setForm({
-        name: "",
+        condition_name: "",
         internal_description: "",
         borrower_description: "",
-        category: "pta",
+        category: "borrower_documents",
+        required_stage: "processing",
         responsible_party: "borrower",
         critical_path_item: false,
         due_date: "",
-        internal_note: "",
+        notes: "",
       });
       onAdded();
     } catch (err: any) {
@@ -661,8 +653,8 @@ function AddConditionDialog({
               Condition Name <span className="text-red-500">*</span>
             </Label>
             <Input
-              value={form.name}
-              onChange={(e) => updateField("name", e.target.value)}
+              value={form.condition_name}
+              onChange={(e) => updateField("condition_name", e.target.value)}
               placeholder="e.g. Bank Statements (2 months)"
               required
             />
@@ -756,7 +748,7 @@ function AddConditionDialog({
             >
               Cancel
             </Button>
-            <Button type="submit" disabled={loading || !form.name}>
+            <Button type="submit" disabled={loading || !form.condition_name}>
               {loading ? "Adding..." : "Add Condition"}
             </Button>
           </DialogFooter>

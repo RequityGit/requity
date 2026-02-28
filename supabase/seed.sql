@@ -196,83 +196,32 @@ INSERT INTO public.documents (id, owner_id, uploaded_by, document_type, file_nam
 ON CONFLICT (id) DO NOTHING;
 
 -- ============================================
--- CONDITION TEMPLATES
+-- LOAN CONDITION TEMPLATES (flat table matching live DB)
 -- ============================================
-INSERT INTO public.condition_templates (id, name, loan_type, internal_description, is_default, created_by) VALUES
-  ('ct000000-0000-0000-0000-000000000001', 'Residential Bridge - Standard', 'bridge_residential', 'Standard conditions for residential bridge loans', true, '00000000-0000-0000-0000-000000000001'),
-  ('ct000000-0000-0000-0000-000000000002', 'Commercial Bridge - Standard', 'bridge_commercial', 'Standard conditions for commercial bridge loans', true, '00000000-0000-0000-0000-000000000001'),
-  ('ct000000-0000-0000-0000-000000000003', 'Fix & Flip - Standard', 'fix_and_flip', 'Standard conditions for fix and flip loans', true, '00000000-0000-0000-0000-000000000001'),
-  ('ct000000-0000-0000-0000-000000000004', 'Ground-Up Construction', 'ground_up', 'Standard conditions for ground-up construction loans', true, '00000000-0000-0000-0000-000000000001'),
-  ('ct000000-0000-0000-0000-000000000005', 'DSCR Rental', 'dscr', 'Standard conditions for DSCR rental loans', true, '00000000-0000-0000-0000-000000000001'),
-  ('ct000000-0000-0000-0000-000000000006', 'Stabilized', 'stabilized', 'Standard conditions for stabilized rental loans', true, '00000000-0000-0000-0000-000000000001')
-ON CONFLICT (id) DO NOTHING;
-
--- ============================================
--- CONDITION TEMPLATE ITEMS — Residential Bridge
--- ============================================
-INSERT INTO public.condition_template_items (id, template_id, name, internal_description, borrower_description, category, responsible_party, due_date_offset_days, critical_path_item, sort_order) VALUES
-  -- PTA Conditions
-  ('cti00000-0000-0000-0001-000000000001', 'ct000000-0000-0000-0000-000000000001', 'Signed Loan Application', 'Complete and signed loan application form', 'Please complete and sign the loan application', 'pta', 'borrower', 3, true, 1),
-  ('cti00000-0000-0000-0001-000000000002', 'ct000000-0000-0000-0000-000000000001', 'Credit Authorization', 'Signed credit check authorization', 'Please sign the credit authorization form so we can run your credit', 'pta', 'borrower', 3, true, 2),
-  ('cti00000-0000-0000-0001-000000000003', 'ct000000-0000-0000-0000-000000000001', 'Entity Documents', 'Articles of Org, Operating Agreement, EIN Letter', 'Please provide your entity formation documents (Articles of Organization, Operating Agreement, and EIN letter)', 'pta', 'borrower', 5, true, 3),
-  ('cti00000-0000-0000-0001-000000000004', 'ct000000-0000-0000-0000-000000000001', 'Personal Financial Statement', 'Current personal financial statement for all guarantors', 'Please provide a current personal financial statement', 'pta', 'borrower', 5, false, 4),
-  ('cti00000-0000-0000-0001-000000000005', 'ct000000-0000-0000-0000-000000000001', 'Bank Statements (2 months)', 'Last 2 months of bank statements for all accounts', 'Please provide your last 2 months of bank statements', 'pta', 'borrower', 5, true, 5),
-  ('cti00000-0000-0000-0001-000000000006', 'ct000000-0000-0000-0000-000000000001', 'Purchase Contract', 'Fully executed purchase agreement', 'Please provide the signed purchase contract', 'pta', 'borrower', 5, true, 6),
-  ('cti00000-0000-0000-0001-000000000007', 'ct000000-0000-0000-0000-000000000001', 'Proof of Funds for Down Payment', 'Documentation showing available funds for down payment and reserves', 'Please provide proof of funds for your down payment', 'pta', 'borrower', 5, true, 7),
-  ('cti00000-0000-0000-0001-000000000008', 'ct000000-0000-0000-0000-000000000001', 'Insurance Quote', 'Property insurance quote or binder', 'Please provide an insurance quote for the property', 'pta', 'insurance_agent', 7, false, 8),
-  ('cti00000-0000-0000-0001-000000000009', 'ct000000-0000-0000-0000-000000000001', 'Background & Credit Check', 'Internal background and credit check completed', 'No action needed — we will handle this internally', 'pta', 'internal', 5, true, 9),
-  ('cti00000-0000-0000-0001-000000000010', 'ct000000-0000-0000-0000-000000000001', 'Rehab Budget / Scope of Work', 'Detailed rehab budget and scope of work', 'Please provide your detailed rehab budget and scope of work', 'pta', 'borrower', 7, false, 10),
-  -- PTF Conditions
-  ('cti00000-0000-0000-0001-000000000011', 'ct000000-0000-0000-0000-000000000001', 'Final Title Commitment', 'Clean title commitment with no unacceptable exceptions', 'No action needed — your title company will provide this', 'ptf', 'title_company', 10, true, 11),
-  ('cti00000-0000-0000-0001-000000000012', 'ct000000-0000-0000-0000-000000000001', 'Executed Loan Documents', 'All loan documents signed by borrower', 'You will need to sign all loan documents at closing', 'ptf', 'borrower', 10, true, 12),
-  ('cti00000-0000-0000-0001-000000000013', 'ct000000-0000-0000-0000-000000000001', 'Proof of Insurance (Bound Policy)', 'Evidence of hazard insurance with proper endorsements', 'Please ensure your insurance agent binds the policy before closing', 'ptf', 'insurance_agent', 10, true, 13),
-  ('cti00000-0000-0000-0001-000000000014', 'ct000000-0000-0000-0000-000000000001', 'Wire Instructions', 'Verified wire transfer instructions', 'Please provide your wire transfer instructions', 'ptf', 'borrower', 10, false, 14),
-  ('cti00000-0000-0000-0001-000000000015', 'ct000000-0000-0000-0000-000000000001', 'Appraisal or BPO', 'Final appraisal or Broker Price Opinion', 'No action needed — we will order the appraisal', 'ptf', 'internal', 14, true, 15),
-  ('cti00000-0000-0000-0001-000000000016', 'ct000000-0000-0000-0000-000000000001', 'Flood Certification', 'Flood zone determination certificate', 'No action needed — we will order the flood cert', 'ptf', 'internal', 7, false, 16)
-ON CONFLICT (id) DO NOTHING;
-
--- ============================================
--- CONDITION TEMPLATE ITEMS — Commercial Bridge
--- ============================================
-INSERT INTO public.condition_template_items (id, template_id, name, internal_description, borrower_description, category, responsible_party, due_date_offset_days, critical_path_item, sort_order) VALUES
-  -- PTA
-  ('cti00000-0000-0000-0002-000000000001', 'ct000000-0000-0000-0000-000000000002', 'Signed Loan Application', 'Complete and signed loan application form', 'Please complete and sign the loan application', 'pta', 'borrower', 3, true, 1),
-  ('cti00000-0000-0000-0002-000000000002', 'ct000000-0000-0000-0000-000000000002', 'Credit Authorization', 'Signed credit check authorization', 'Please sign the credit authorization form', 'pta', 'borrower', 3, true, 2),
-  ('cti00000-0000-0000-0002-000000000003', 'ct000000-0000-0000-0000-000000000002', 'Entity Documents', 'Articles of Org, Operating Agreement, EIN Letter for all entities', 'Please provide all entity formation documents', 'pta', 'borrower', 5, true, 3),
-  ('cti00000-0000-0000-0002-000000000004', 'ct000000-0000-0000-0000-000000000002', 'Personal Financial Statement', 'Current PFS for all guarantors', 'Please provide a current personal financial statement', 'pta', 'borrower', 5, false, 4),
-  ('cti00000-0000-0000-0002-000000000005', 'ct000000-0000-0000-0000-000000000002', 'Bank Statements (2 months)', 'Last 2 months of bank statements', 'Please provide your last 2 months of bank statements', 'pta', 'borrower', 5, true, 5),
-  ('cti00000-0000-0000-0002-000000000006', 'ct000000-0000-0000-0000-000000000002', 'Purchase Contract / LOI', 'Executed purchase agreement or Letter of Intent', 'Please provide the signed purchase contract or LOI', 'pta', 'borrower', 5, true, 6),
-  ('cti00000-0000-0000-0002-000000000007', 'ct000000-0000-0000-0000-000000000002', 'Rent Roll', 'Current rent roll and lease abstracts', 'Please provide the current rent roll with all lease details', 'pta', 'borrower', 5, false, 7),
-  ('cti00000-0000-0000-0002-000000000008', 'ct000000-0000-0000-0000-000000000002', 'Operating Statements (2 years)', 'Trailing 24 months of operating statements / P&L', 'Please provide the last 2 years of property operating statements', 'pta', 'borrower', 7, false, 8),
-  ('cti00000-0000-0000-0002-000000000009', 'ct000000-0000-0000-0000-000000000002', 'Environmental Report (Phase I)', 'Phase I Environmental Site Assessment', 'No action needed — we will order the Phase I ESA', 'pta', 'internal', 21, true, 9),
-  ('cti00000-0000-0000-0002-000000000010', 'ct000000-0000-0000-0000-000000000002', 'Background & Credit Check', 'Internal background and credit check', 'No action needed — handled internally', 'pta', 'internal', 5, true, 10),
-  -- PTF
-  ('cti00000-0000-0000-0002-000000000011', 'ct000000-0000-0000-0000-000000000002', 'Final Title Commitment', 'Clean title commitment', 'Your title company will provide this', 'ptf', 'title_company', 10, true, 11),
-  ('cti00000-0000-0000-0002-000000000012', 'ct000000-0000-0000-0000-000000000002', 'Executed Loan Documents', 'All loan documents signed', 'You will sign all loan documents at closing', 'ptf', 'borrower', 10, true, 12),
-  ('cti00000-0000-0000-0002-000000000013', 'ct000000-0000-0000-0000-000000000002', 'Proof of Insurance (Bound Policy)', 'Commercial property insurance with required endorsements', 'Please ensure your insurance agent binds the commercial policy', 'ptf', 'insurance_agent', 10, true, 13),
-  ('cti00000-0000-0000-0002-000000000014', 'ct000000-0000-0000-0000-000000000002', 'Survey', 'ALTA/NSPS land title survey', 'No action needed — we will order the survey', 'ptf', 'internal', 14, false, 14),
-  ('cti00000-0000-0000-0002-000000000015', 'ct000000-0000-0000-0000-000000000002', 'Appraisal', 'Full commercial appraisal', 'No action needed — we will order the appraisal', 'ptf', 'internal', 21, true, 15),
-  ('cti00000-0000-0000-0002-000000000016', 'ct000000-0000-0000-0000-000000000002', 'Wire Instructions', 'Verified wire instructions', 'Please provide wire transfer instructions', 'ptf', 'borrower', 10, false, 16),
-  ('cti00000-0000-0000-0002-000000000017', 'ct000000-0000-0000-0000-000000000002', 'Flood Certification', 'Flood zone determination', 'No action needed', 'ptf', 'internal', 7, false, 17),
-  ('cti00000-0000-0000-0002-000000000018', 'ct000000-0000-0000-0000-000000000002', 'Estoppel Certificates', 'Tenant estoppel certificates (if applicable)', 'Please obtain estoppel certificates from current tenants', 'ptf', 'borrower', 14, false, 18)
-ON CONFLICT (id) DO NOTHING;
-
--- ============================================
--- CONDITION TEMPLATE ITEMS — Fix & Flip
--- ============================================
-INSERT INTO public.condition_template_items (id, template_id, name, internal_description, borrower_description, category, responsible_party, due_date_offset_days, critical_path_item, sort_order) VALUES
-  ('cti00000-0000-0000-0003-000000000001', 'ct000000-0000-0000-0000-000000000003', 'Signed Loan Application', 'Complete and signed application', 'Please complete and sign the loan application', 'pta', 'borrower', 3, true, 1),
-  ('cti00000-0000-0000-0003-000000000002', 'ct000000-0000-0000-0000-000000000003', 'Credit Authorization', 'Signed credit authorization', 'Please sign the credit authorization form', 'pta', 'borrower', 3, true, 2),
-  ('cti00000-0000-0000-0003-000000000003', 'ct000000-0000-0000-0000-000000000003', 'Entity Documents', 'Articles of Org, Operating Agreement, EIN Letter', 'Please provide entity formation documents', 'pta', 'borrower', 5, true, 3),
-  ('cti00000-0000-0000-0003-000000000004', 'ct000000-0000-0000-0000-000000000003', 'Bank Statements (2 months)', 'Last 2 months of bank statements', 'Please provide 2 months of bank statements', 'pta', 'borrower', 5, true, 4),
-  ('cti00000-0000-0000-0003-000000000005', 'ct000000-0000-0000-0000-000000000003', 'Purchase Contract', 'Executed purchase agreement', 'Please provide the signed purchase contract', 'pta', 'borrower', 5, true, 5),
-  ('cti00000-0000-0000-0003-000000000006', 'ct000000-0000-0000-0000-000000000003', 'Proof of Funds', 'Proof of down payment and rehab reserve funds', 'Please show proof of funds for down payment and rehab costs', 'pta', 'borrower', 5, true, 6),
-  ('cti00000-0000-0000-0003-000000000007', 'ct000000-0000-0000-0000-000000000003', 'Rehab Budget & Scope of Work', 'Detailed line-item rehab budget with contractor bids', 'Please provide a detailed rehab budget with scope of work and contractor bids', 'pta', 'borrower', 7, true, 7),
-  ('cti00000-0000-0000-0003-000000000008', 'ct000000-0000-0000-0000-000000000003', 'Contractor Info & License', 'General contractor license and insurance', 'Please provide your GC license and insurance certificate', 'pta', 'borrower', 7, false, 8),
-  ('cti00000-0000-0000-0003-000000000009', 'ct000000-0000-0000-0000-000000000003', 'Background & Credit Check', 'Internal check', 'No action needed', 'pta', 'internal', 5, true, 9),
-  ('cti00000-0000-0000-0003-000000000010', 'ct000000-0000-0000-0000-000000000003', 'Final Title Commitment', 'Clean title commitment', 'Title company will provide this', 'ptf', 'title_company', 10, true, 10),
-  ('cti00000-0000-0000-0003-000000000011', 'ct000000-0000-0000-0000-000000000003', 'Executed Loan Documents', 'All loan docs signed', 'Sign all loan documents at closing', 'ptf', 'borrower', 10, true, 11),
-  ('cti00000-0000-0000-0003-000000000012', 'ct000000-0000-0000-0000-000000000003', 'Proof of Insurance', 'Builders risk or hazard insurance bound', 'Ensure your insurance agent binds builders risk coverage', 'ptf', 'insurance_agent', 10, true, 12),
-  ('cti00000-0000-0000-0003-000000000013', 'ct000000-0000-0000-0000-000000000003', 'BPO or Appraisal', 'As-is and ARV valuation', 'No action needed — we will order the valuation', 'ptf', 'internal', 14, true, 13),
-  ('cti00000-0000-0000-0003-000000000014', 'ct000000-0000-0000-0000-000000000003', 'Wire Instructions', 'Verified wire instructions', 'Please provide wire instructions', 'ptf', 'borrower', 10, false, 14)
+INSERT INTO public.loan_condition_templates (id, condition_name, category, required_stage, internal_description, borrower_description, responsible_party, critical_path_item, applies_to_rtl, applies_to_commercial, applies_to_dscr, applies_to_guc, applies_to_transactional, is_active, sort_order) VALUES
+  -- Borrower Documents
+  ('lct00000-0000-0000-0000-000000000001', 'Signed Loan Application', 'borrower_documents', 'processing', 'Complete and signed loan application form', 'Please complete and sign the loan application', 'borrower', true, true, true, true, true, true, true, 1),
+  ('lct00000-0000-0000-0000-000000000002', 'Credit Authorization', 'borrower_documents', 'processing', 'Signed credit check authorization', 'Please sign the credit authorization form', 'borrower', true, true, true, true, true, true, true, 2),
+  ('lct00000-0000-0000-0000-000000000003', 'Personal Financial Statement', 'borrower_documents', 'processing', 'Current personal financial statement for all guarantors', 'Please provide a current personal financial statement', 'borrower', false, true, true, true, true, false, true, 3),
+  ('lct00000-0000-0000-0000-000000000004', 'Bank Statements (2 months)', 'borrower_documents', 'processing', 'Last 2 months of bank statements for all accounts', 'Please provide your last 2 months of bank statements', 'borrower', true, true, true, true, true, false, true, 4),
+  ('lct00000-0000-0000-0000-000000000005', 'Proof of Funds for Down Payment', 'borrower_documents', 'processing', 'Documentation showing available funds for down payment and reserves', 'Please provide proof of funds for your down payment', 'borrower', true, true, true, true, true, false, true, 5),
+  -- Entity Documents
+  ('lct00000-0000-0000-0000-000000000006', 'Entity Documents (Articles, OA, EIN)', 'entity_documents', 'processing', 'Articles of Org, Operating Agreement, EIN Letter', 'Please provide your entity formation documents', 'borrower', true, true, true, true, true, true, true, 6),
+  -- Deal Level Items
+  ('lct00000-0000-0000-0000-000000000007', 'Purchase Contract', 'deal_level_items', 'processing', 'Fully executed purchase agreement', 'Please provide the signed purchase contract', 'borrower', true, true, true, true, true, true, true, 7),
+  ('lct00000-0000-0000-0000-000000000008', 'Rehab Budget / Scope of Work', 'deal_level_items', 'processing', 'Detailed rehab budget and scope of work', 'Please provide your detailed rehab budget and scope of work', 'borrower', true, true, false, false, true, false, true, 8),
+  ('lct00000-0000-0000-0000-000000000009', 'Rent Roll', 'deal_level_items', 'processing', 'Current rent roll and lease abstracts', 'Please provide the current rent roll', 'borrower', false, false, true, true, false, false, true, 9),
+  ('lct00000-0000-0000-0000-000000000010', 'Operating Statements (2 years)', 'deal_level_items', 'processing', 'Trailing 24 months of operating statements / P&L', 'Please provide the last 2 years of operating statements', 'borrower', false, false, true, true, false, false, true, 10),
+  -- Appraisal Request
+  ('lct00000-0000-0000-0000-000000000011', 'Appraisal or BPO', 'appraisal_request', 'processing', 'Final appraisal or Broker Price Opinion', 'No action needed — we will order the appraisal', 'internal', true, true, true, true, true, false, true, 11),
+  -- Title / Fraud Protection
+  ('lct00000-0000-0000-0000-000000000012', 'Final Title Commitment', 'title_fraud_protection', 'closed_onboarding', 'Clean title commitment with no unacceptable exceptions', 'No action needed — your title company will provide this', 'title_company', true, true, true, true, true, true, true, 12),
+  ('lct00000-0000-0000-0000-000000000013', 'Flood Certification', 'title_fraud_protection', 'closed_onboarding', 'Flood zone determination certificate', 'No action needed — we will order the flood cert', 'internal', false, true, true, true, true, false, true, 13),
+  ('lct00000-0000-0000-0000-000000000014', 'Background & Credit Check', 'title_fraud_protection', 'processing', 'Internal background and credit check completed', 'No action needed — we will handle this internally', 'internal', true, true, true, true, true, true, true, 14),
+  -- Insurance Request
+  ('lct00000-0000-0000-0000-000000000015', 'Insurance Quote', 'insurance_request', 'processing', 'Property insurance quote or binder', 'Please provide an insurance quote for the property', 'insurance_agent', false, true, true, true, true, false, true, 15),
+  ('lct00000-0000-0000-0000-000000000016', 'Proof of Insurance (Bound Policy)', 'insurance_request', 'closed_onboarding', 'Evidence of hazard insurance with proper endorsements', 'Please ensure your insurance agent binds the policy before closing', 'insurance_agent', true, true, true, true, true, false, true, 16),
+  -- Lender Package
+  ('lct00000-0000-0000-0000-000000000017', 'Executed Loan Documents', 'lender_package', 'closed_onboarding', 'All loan documents signed by borrower', 'You will need to sign all loan documents at closing', 'borrower', true, true, true, true, true, true, true, 17),
+  ('lct00000-0000-0000-0000-000000000018', 'Wire Instructions', 'lender_package', 'closed_onboarding', 'Verified wire transfer instructions', 'Please provide your wire transfer instructions', 'borrower', false, true, true, true, true, true, true, 18)
 ON CONFLICT (id) DO NOTHING;

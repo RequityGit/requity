@@ -1,116 +1,107 @@
 -- =============================================================================
 -- Loan Conditions & Template System Migration
 -- =============================================================================
--- Creates the condition_templates, condition_template_items, and
--- loan_conditions tables for the loan processing condition tracking system.
+-- Creates the loan_condition_templates and loan_conditions tables
+-- for the loan processing condition tracking system.
 -- =============================================================================
 
 -- ---------------------------------------------------------------------------
--- 1. CONDITION TEMPLATES (loan-type-based templates)
+-- Custom ENUM types
 -- ---------------------------------------------------------------------------
-CREATE TABLE IF NOT EXISTS public.condition_templates (
+DO $$ BEGIN
+  CREATE TYPE condition_status AS ENUM (
+    'pending', 'submitted', 'under_review', 'approved', 'waived', 'not_applicable', 'rejected'
+  );
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
+
+DO $$ BEGIN
+  CREATE TYPE condition_category AS ENUM (
+    'borrower_documents', 'non_us_citizen', 'entity_documents', 'deal_level_items',
+    'appraisal_request', 'title_fraud_protection', 'lender_package', 'insurance_request',
+    'title_request', 'fundraising', 'closing_prep', 'post_closing_items',
+    'note_sell_process', 'post_loan_payoff', 'prior_to_approval', 'prior_to_funding'
+  );
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
+
+DO $$ BEGIN
+  CREATE TYPE condition_stage AS ENUM (
+    'processing', 'closed_onboarding', 'note_sell_process', 'post_loan_payoff'
+  );
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
+
+-- ---------------------------------------------------------------------------
+-- 1. LOAN CONDITION TEMPLATES (flat table — one row per condition template)
+-- ---------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS public.loan_condition_templates (
   id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
-  name text NOT NULL,
-  loan_type text,
+  condition_name text NOT NULL,
+  is_active boolean DEFAULT true,
+  applies_to_commercial boolean DEFAULT false,
+  applies_to_dscr boolean DEFAULT false,
+  applies_to_guc boolean DEFAULT false,
+  applies_to_rtl boolean DEFAULT false,
+  applies_to_transactional boolean DEFAULT false,
+  required_stage text NOT NULL DEFAULT 'processing',
+  category text NOT NULL DEFAULT 'borrower_documents',
   internal_description text,
+  sort_order int DEFAULT 0,
   borrower_description text,
-  responsible_party text DEFAULT 'borrower' CHECK (responsible_party IN (
-    'borrower', 'broker', 'title_company', 'insurance_agent', 'internal', 'attorney', 'other'
-  )),
+  responsible_party text DEFAULT 'borrower',
   critical_path_item boolean DEFAULT false,
-  is_default boolean DEFAULT false,
-  created_by uuid REFERENCES public.profiles(id),
   created_at timestamptz DEFAULT now(),
   updated_at timestamptz DEFAULT now()
 );
 
-CREATE TRIGGER set_condition_templates_updated_at
-  BEFORE UPDATE ON public.condition_templates
+CREATE TRIGGER set_loan_condition_templates_updated_at
+  BEFORE UPDATE ON public.loan_condition_templates
   FOR EACH ROW EXECUTE PROCEDURE public.set_updated_at();
 
-ALTER TABLE public.condition_templates ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.loan_condition_templates ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY "Admins can select condition_templates"
-  ON public.condition_templates FOR SELECT
+CREATE POLICY "Admins can select loan_condition_templates"
+  ON public.loan_condition_templates FOR SELECT
   USING (EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role = 'admin'));
-CREATE POLICY "Admins can insert condition_templates"
-  ON public.condition_templates FOR INSERT
+CREATE POLICY "Admins can insert loan_condition_templates"
+  ON public.loan_condition_templates FOR INSERT
   WITH CHECK (EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role = 'admin'));
-CREATE POLICY "Admins can update condition_templates"
-  ON public.condition_templates FOR UPDATE
+CREATE POLICY "Admins can update loan_condition_templates"
+  ON public.loan_condition_templates FOR UPDATE
   USING (EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role = 'admin'));
-CREATE POLICY "Admins can delete condition_templates"
-  ON public.condition_templates FOR DELETE
-  USING (EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role = 'admin'));
-
--- ---------------------------------------------------------------------------
--- 2. CONDITION TEMPLATE ITEMS (items within a template)
--- ---------------------------------------------------------------------------
-CREATE TABLE IF NOT EXISTS public.condition_template_items (
-  id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
-  template_id uuid REFERENCES public.condition_templates(id) ON DELETE CASCADE NOT NULL,
-  name text NOT NULL,
-  internal_description text,
-  borrower_description text,
-  category text NOT NULL CHECK (category IN ('pta', 'ptf', 'prior_to_approval', 'prior_to_funding')),
-  responsible_party text DEFAULT 'borrower' CHECK (responsible_party IN (
-    'borrower', 'broker', 'title_company', 'insurance_agent', 'internal', 'attorney', 'other'
-  )),
-  due_date_offset_days int DEFAULT 5,
-  critical_path_item boolean DEFAULT false,
-  sort_order int DEFAULT 0,
-  created_at timestamptz DEFAULT now()
-);
-
-CREATE INDEX IF NOT EXISTS idx_condition_template_items_template_id
-  ON public.condition_template_items(template_id);
-
-ALTER TABLE public.condition_template_items ENABLE ROW LEVEL SECURITY;
-
-CREATE POLICY "Admins can select condition_template_items"
-  ON public.condition_template_items FOR SELECT
-  USING (EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role = 'admin'));
-CREATE POLICY "Admins can insert condition_template_items"
-  ON public.condition_template_items FOR INSERT
-  WITH CHECK (EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role = 'admin'));
-CREATE POLICY "Admins can update condition_template_items"
-  ON public.condition_template_items FOR UPDATE
-  USING (EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role = 'admin'));
-CREATE POLICY "Admins can delete condition_template_items"
-  ON public.condition_template_items FOR DELETE
+CREATE POLICY "Admins can delete loan_condition_templates"
+  ON public.loan_condition_templates FOR DELETE
   USING (EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role = 'admin'));
 
 -- ---------------------------------------------------------------------------
--- 3. LOAN CONDITIONS (per-loan conditions, instantiated from templates or added manually)
+-- 2. LOAN CONDITIONS (per-loan conditions, instantiated from templates or added manually)
 -- ---------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS public.loan_conditions (
   id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
   loan_id uuid REFERENCES public.loans(id) ON DELETE CASCADE NOT NULL,
-  template_item_id uuid REFERENCES public.condition_template_items(id),
-  name text NOT NULL,
+  template_id uuid REFERENCES public.loan_condition_templates(id),
+  condition_name text NOT NULL,
+  category text NOT NULL DEFAULT 'borrower_documents',
+  required_stage text NOT NULL DEFAULT 'processing',
+  status text DEFAULT 'pending',
   internal_description text,
   borrower_description text,
-  category text NOT NULL CHECK (category IN ('pta', 'ptf', 'prior_to_approval', 'prior_to_funding')),
-  status text DEFAULT 'not_requested' CHECK (status IN (
-    'not_requested', 'requested', 'received', 'under_review', 'approved', 'waived', 'rejected'
-  )),
-  responsible_party text DEFAULT 'borrower' CHECK (responsible_party IN (
-    'borrower', 'broker', 'title_company', 'insurance_agent', 'internal', 'attorney', 'other'
-  )),
+  responsible_party text DEFAULT 'borrower',
   critical_path_item boolean DEFAULT false,
+  is_required boolean DEFAULT true,
   sort_order int DEFAULT 0,
-  -- Dates
-  requested_date date,
-  due_date date,
-  received_date date,
-  approved_date date,
-  -- Approval info
-  approved_by uuid REFERENCES public.profiles(id),
-  waived_by uuid REFERENCES public.profiles(id),
-  rejection_reason text,
   -- Notes
-  internal_note text,
-  borrower_note text,
+  notes text,
+  -- Documents
+  document_url text,
+  document_urls text[],
+  -- Dates
+  due_date date,
+  submitted_at timestamptz,
+  reviewed_at timestamptz,
+  reviewed_by uuid REFERENCES public.profiles(id),
+  assigned_to uuid REFERENCES public.profiles(id),
   -- Metadata
   created_at timestamptz DEFAULT now(),
   updated_at timestamptz DEFAULT now()
@@ -149,33 +140,4 @@ CREATE POLICY "Borrowers can view own loan conditions"
     SELECT 1 FROM public.loans
     WHERE loans.id = loan_conditions.loan_id
     AND loans.borrower_id = auth.uid()
-  ));
-
--- ---------------------------------------------------------------------------
--- 4. LOAN CONDITION DOCUMENTS (files attached to conditions)
--- ---------------------------------------------------------------------------
-CREATE TABLE IF NOT EXISTS public.loan_condition_documents (
-  id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
-  condition_id uuid REFERENCES public.loan_conditions(id) ON DELETE CASCADE NOT NULL,
-  document_id uuid REFERENCES public.documents(id) ON DELETE CASCADE NOT NULL,
-  created_at timestamptz DEFAULT now()
-);
-
-CREATE INDEX IF NOT EXISTS idx_loan_condition_documents_condition_id
-  ON public.loan_condition_documents(condition_id);
-
-ALTER TABLE public.loan_condition_documents ENABLE ROW LEVEL SECURITY;
-
-CREATE POLICY "Admins can manage loan_condition_documents"
-  ON public.loan_condition_documents FOR ALL
-  USING (EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role = 'admin'))
-  WITH CHECK (EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role = 'admin'));
-
-CREATE POLICY "Borrowers can view own loan_condition_documents"
-  ON public.loan_condition_documents FOR SELECT
-  USING (EXISTS (
-    SELECT 1 FROM public.loan_conditions lc
-    JOIN public.loans l ON l.id = lc.loan_id
-    WHERE lc.id = loan_condition_documents.condition_id
-    AND l.borrower_id = auth.uid()
   ));

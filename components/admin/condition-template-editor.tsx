@@ -9,7 +9,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
 import {
   Dialog,
   DialogContent,
@@ -26,87 +25,68 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import {
-  LOAN_TYPES,
   CONDITION_CATEGORIES,
+  CONDITION_STAGES,
   RESPONSIBLE_PARTIES,
+  LOAN_DB_TYPES,
 } from "@/lib/constants";
 import { useToast } from "@/components/ui/use-toast";
 import {
   PlusCircle,
-  Pencil,
   Trash2,
-  ChevronDown,
-  ChevronRight,
-  GripVertical,
-  Star,
+  Search,
   Copy,
+  X,
+  Filter,
 } from "lucide-react";
-
-interface TemplateItem {
-  id: string;
-  template_id: string;
-  name: string;
-  internal_description: string | null;
-  borrower_description: string | null;
-  category: string;
-  responsible_party: string;
-  due_date_offset_days: number | null;
-  critical_path_item: boolean;
-  sort_order: number;
-}
-
-interface Template {
-  id: string;
-  name: string;
-  loan_type: string;
-  internal_description: string | null;
-  borrower_description: string | null;
-  responsible_party: string;
-  critical_path_item: boolean;
-  is_default: boolean;
-  created_by: string | null;
-  items: TemplateItem[];
-}
+import type { LoanConditionTemplate } from "@/lib/supabase/types";
 
 interface ConditionTemplateEditorProps {
-  templates: Template[];
-  currentUserId: string;
+  templates: LoanConditionTemplate[];
 }
 
 export function ConditionTemplateEditor({
   templates: initialTemplates,
-  currentUserId,
 }: ConditionTemplateEditorProps) {
   const [templates, setTemplates] = useState(initialTemplates);
-  const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [search, setSearch] = useState("");
+  const [filterCategory, setFilterCategory] = useState("all");
   const router = useRouter();
   const { toast } = useToast();
 
-  // Group templates by loan type
-  const groupedTemplates = templates.reduce<Record<string, Template[]>>(
-    (acc: Record<string, Template[]>, t: Template) => {
-      const loanTypeLabel =
-        LOAN_TYPES.find((lt) => lt.value === t.loan_type)?.label ??
-        t.loan_type.replace(/_/g, " ");
-      if (!acc[loanTypeLabel]) acc[loanTypeLabel] = [];
-      acc[loanTypeLabel].push(t);
+  // Filter
+  const filtered = templates.filter((t) => {
+    if (filterCategory !== "all" && t.category !== filterCategory) return false;
+    if (search.trim()) {
+      const q = search.toLowerCase();
+      if (
+        !t.condition_name.toLowerCase().includes(q) &&
+        !(t.internal_description ?? "").toLowerCase().includes(q)
+      )
+        return false;
+    }
+    return true;
+  });
+
+  // Group by category
+  const grouped = filtered.reduce<Record<string, LoanConditionTemplate[]>>(
+    (acc, t) => {
+      const label =
+        CONDITION_CATEGORIES.find((c) => c.value === t.category)?.label ??
+        t.category.replace(/_/g, " ");
+      if (!acc[label]) acc[label] = [];
+      acc[label].push(t);
       return acc;
     },
     {}
   );
 
-  async function handleDeleteTemplate(templateId: string) {
+  async function handleDelete(id: string) {
     const supabase = createClient();
-
-    // Delete items first, then template
-    await supabase
-      .from("condition_template_items")
-      .delete()
-      .eq("template_id", templateId);
     const { error } = await supabase
-      .from("condition_templates")
+      .from("loan_condition_templates")
       .delete()
-      .eq("id", templateId);
+      .eq("id", id);
 
     if (error) {
       toast({
@@ -117,138 +97,77 @@ export function ConditionTemplateEditor({
       return;
     }
 
-    setTemplates((prev: Template[]) => prev.filter((t: Template) => t.id !== templateId));
+    setTemplates((prev) => prev.filter((t) => t.id !== id));
     toast({ title: "Template deleted" });
   }
 
-  async function handleToggleDefault(templateId: string, loanType: string) {
+  async function handleDuplicate(template: LoanConditionTemplate) {
     const supabase = createClient();
-
-    // Remove default from all templates of same loan type
-    await supabase
-      .from("condition_templates")
-      .update({ is_default: false })
-      .eq("loan_type", loanType);
-
-    // Set this one as default
-    const { error } = await supabase
-      .from("condition_templates")
-      .update({ is_default: true })
-      .eq("id", templateId);
-
-    if (error) {
-      toast({
-        title: "Error updating default",
-        description: error.message,
-        variant: "destructive",
-      });
-      return;
-    }
-
-    setTemplates((prev: Template[]) =>
-      prev.map((t: Template) => ({
-        ...t,
-        is_default:
-          t.loan_type === loanType ? t.id === templateId : t.is_default,
-      }))
-    );
-    toast({ title: "Default template updated" });
-  }
-
-  async function handleDuplicateTemplate(template: Template) {
-    const supabase = createClient();
-
-    const { data: newTemplate, error: templateError } = await supabase
-      .from("condition_templates")
+    const { data, error } = await supabase
+      .from("loan_condition_templates")
       .insert({
-        name: `${template.name} (Copy)`,
-        loan_type: template.loan_type,
+        condition_name: `${template.condition_name} (Copy)`,
+        category: template.category,
+        required_stage: template.required_stage,
         internal_description: template.internal_description,
         borrower_description: template.borrower_description,
         responsible_party: template.responsible_party,
         critical_path_item: template.critical_path_item,
-        is_default: false,
-        created_by: currentUserId,
+        applies_to_commercial: template.applies_to_commercial,
+        applies_to_dscr: template.applies_to_dscr,
+        applies_to_guc: template.applies_to_guc,
+        applies_to_rtl: template.applies_to_rtl,
+        applies_to_transactional: template.applies_to_transactional,
+        sort_order: template.sort_order,
+        is_active: template.is_active,
       })
       .select()
       .single();
 
-    if (templateError || !newTemplate) {
+    if (error || !data) {
       toast({
         title: "Error duplicating template",
-        description: templateError?.message,
+        description: error?.message,
         variant: "destructive",
       });
       return;
     }
 
-    // Copy items
-    if (template.items.length > 0) {
-      const newItems = template.items.map((item) => ({
-        template_id: newTemplate.id,
-        name: item.name,
-        internal_description: item.internal_description,
-        borrower_description: item.borrower_description,
-        category: item.category,
-        responsible_party: item.responsible_party,
-        due_date_offset_days: item.due_date_offset_days ?? undefined,
-        critical_path_item: item.critical_path_item,
-        sort_order: item.sort_order,
-      }));
-
-      const { data: insertedItems } = await supabase
-        .from("condition_template_items")
-        .insert(newItems)
-        .select();
-
-      setTemplates((prev: Template[]) => [
-        ...prev,
-        { ...newTemplate, loan_type: newTemplate.loan_type ?? "", items: insertedItems ?? [] } as Template,
-      ]);
-    } else {
-      setTemplates((prev: Template[]) => [...prev, { ...newTemplate, loan_type: newTemplate.loan_type ?? "", items: [] } as Template]);
-    }
-
+    setTemplates((prev) => [...prev, data]);
     toast({ title: "Template duplicated" });
   }
 
-  async function handleDeleteItem(templateId: string, itemId: string) {
+  async function handleToggleActive(id: string, currentActive: boolean) {
     const supabase = createClient();
     const { error } = await supabase
-      .from("condition_template_items")
-      .delete()
-      .eq("id", itemId);
+      .from("loan_condition_templates")
+      .update({ is_active: !currentActive })
+      .eq("id", id);
 
     if (error) {
       toast({
-        title: "Error deleting item",
+        title: "Error updating template",
         description: error.message,
         variant: "destructive",
       });
       return;
     }
 
-    setTemplates((prev: Template[]) =>
-      prev.map((t: Template) =>
-        t.id === templateId
-          ? { ...t, items: t.items.filter((i: TemplateItem) => i.id !== itemId) }
-          : t
+    setTemplates((prev) =>
+      prev.map((t) =>
+        t.id === id ? { ...t, is_active: !currentActive } : t
       )
     );
-    toast({ title: "Condition removed from template" });
+    toast({
+      title: `Template ${!currentActive ? "activated" : "deactivated"}`,
+    });
   }
 
-  function handleItemAdded(templateId: string, newItem: TemplateItem) {
-    setTemplates((prev: Template[]) =>
-      prev.map((t: Template) =>
-        t.id === templateId ? { ...t, items: [...t.items, newItem] } : t
-      )
-    );
+  function handleCreated(newTemplate: LoanConditionTemplate) {
+    setTemplates((prev) => [...prev, newTemplate]);
   }
 
-  function handleTemplateCreated(newTemplate: Template) {
-    setTemplates((prev: Template[]) => [...prev, newTemplate]);
-  }
+  const hasFilters = filterCategory !== "all" || search.trim() !== "";
 
   return (
     <div className="space-y-6">
@@ -258,161 +177,93 @@ export function ConditionTemplateEditor({
             Condition Templates
           </h3>
           <p className="text-sm text-muted-foreground">
-            Templates auto-populate conditions when a new loan is created. The
-            default template for each loan type is used automatically.
+            Templates define the conditions that get applied to loans. Each
+            template row is a single condition that can be toggled per loan type.
           </p>
         </div>
-        <CreateTemplateDialog
-          currentUserId={currentUserId}
-          onCreated={handleTemplateCreated}
-        />
+        <AddTemplateDialog onCreated={handleCreated} />
       </div>
 
-      {Object.entries(groupedTemplates).map(([loanType, typeTemplates]) => (
-        <div key={loanType}>
-          <h4 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-3">
-            {loanType}
-          </h4>
-          <div className="space-y-3">
-            {typeTemplates.map((template: Template) => {
-              const isExpanded = expandedId === template.id;
-              const ptaCount = template.items.filter(
-                (i: TemplateItem) => i.category === "pta" || i.category === "prior_to_approval"
-              ).length;
-              const ptfCount = template.items.filter(
-                (i: TemplateItem) => i.category === "ptf" || i.category === "prior_to_funding"
-              ).length;
+      {/* Filters */}
+      <Card>
+        <CardContent className="py-3">
+          <div className="flex flex-wrap items-center gap-3">
+            <div className="relative flex-1 min-w-[200px]">
+              <Search className="h-4 w-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Search templates..."
+                className="pl-9 h-8"
+              />
+            </div>
+            <Select
+              value={filterCategory}
+              onValueChange={setFilterCategory}
+            >
+              <SelectTrigger className="w-[180px] h-8 text-xs">
+                <SelectValue placeholder="Category" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Categories</SelectItem>
+                {CONDITION_CATEGORIES.map((c) => (
+                  <SelectItem key={c.value} value={c.value}>
+                    {c.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {hasFilters && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-8 text-xs gap-1"
+                onClick={() => {
+                  setSearch("");
+                  setFilterCategory("all");
+                }}
+              >
+                <X className="h-3 w-3" />
+                Clear
+              </Button>
+            )}
+            <span className="text-xs text-muted-foreground">
+              {filtered.length} of {templates.length} templates
+            </span>
+          </div>
+        </CardContent>
+      </Card>
 
-              return (
-                <Card key={template.id}>
-                  <CardHeader
-                    className="py-3 px-4 cursor-pointer"
-                    onClick={() =>
-                      setExpandedId(isExpanded ? null : template.id)
-                    }
-                  >
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        {isExpanded ? (
-                          <ChevronDown className="h-4 w-4 text-muted-foreground" />
-                        ) : (
-                          <ChevronRight className="h-4 w-4 text-muted-foreground" />
-                        )}
-                        <CardTitle className="text-sm">
-                          {template.name}
-                        </CardTitle>
-                        {template.is_default && (
-                          <Badge className="bg-teal-100 text-teal-800 border-teal-200 text-[10px] gap-1">
-                            <Star className="h-2.5 w-2.5" />
-                            Default
-                          </Badge>
-                        )}
-                        <Badge variant="secondary" className="text-[10px]">
-                          {template.items.length} conditions
-                        </Badge>
-                        <span className="text-xs text-muted-foreground">
-                          ({ptaCount} PTA, {ptfCount} PTF)
-                        </span>
-                      </div>
-                      <div
-                        className="flex items-center gap-1"
-                        onClick={(e: React.MouseEvent) => e.stopPropagation()}
-                      >
-                        {!template.is_default && (
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            className="h-7 text-xs gap-1"
-                            onClick={() =>
-                              handleToggleDefault(
-                                template.id,
-                                template.loan_type
-                              )
-                            }
-                            title="Set as default"
-                          >
-                            <Star className="h-3 w-3" />
-                          </Button>
-                        )}
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          className="h-7 text-xs gap-1"
-                          onClick={() => handleDuplicateTemplate(template)}
-                          title="Duplicate"
-                        >
-                          <Copy className="h-3 w-3" />
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          className="h-7 text-xs text-red-600 hover:text-red-700 gap-1"
-                          onClick={() => handleDeleteTemplate(template.id)}
-                          title="Delete"
-                        >
-                          <Trash2 className="h-3 w-3" />
-                        </Button>
-                      </div>
-                    </div>
-                    {template.internal_description && (
-                      <p className="text-xs text-muted-foreground ml-6">
-                        {template.internal_description}
-                      </p>
-                    )}
-                  </CardHeader>
-                  {isExpanded && (
-                    <CardContent className="pt-0 px-4 pb-4">
-                      <div className="space-y-1">
-                        {/* PTA Items */}
-                        {template.items
-                          .filter((i: TemplateItem) => i.category === "pta" || i.category === "prior_to_approval")
-                          .map((item: TemplateItem) => (
-                            <TemplateItemRow
-                              key={item.id}
-                              item={item}
-                              onDelete={() =>
-                                handleDeleteItem(template.id, item.id)
-                              }
-                            />
-                          ))}
-                        {ptaCount > 0 && ptfCount > 0 && (
-                          <Separator className="my-2" />
-                        )}
-                        {/* PTF Items */}
-                        {template.items
-                          .filter((i: TemplateItem) => i.category === "ptf" || i.category === "prior_to_funding")
-                          .map((item: TemplateItem) => (
-                            <TemplateItemRow
-                              key={item.id}
-                              item={item}
-                              onDelete={() =>
-                                handleDeleteItem(template.id, item.id)
-                              }
-                            />
-                          ))}
-                      </div>
-                      <div className="mt-3">
-                        <AddTemplateItemDialog
-                          templateId={template.id}
-                          nextSortOrder={template.items.length + 1}
-                          onAdded={(item) =>
-                            handleItemAdded(template.id, item)
-                          }
-                        />
-                      </div>
-                    </CardContent>
-                  )}
-                </Card>
-              );
-            })}
+      {/* Grouped list */}
+      {Object.entries(grouped).map(([category, items]) => (
+        <div key={category}>
+          <h4 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-3">
+            {category}
+          </h4>
+          <div className="space-y-2">
+            {items
+              .sort((a, b) => a.sort_order - b.sort_order)
+              .map((template) => (
+                <TemplateRow
+                  key={template.id}
+                  template={template}
+                  onDelete={() => handleDelete(template.id)}
+                  onDuplicate={() => handleDuplicate(template)}
+                  onToggleActive={() =>
+                    handleToggleActive(template.id, template.is_active)
+                  }
+                />
+              ))}
           </div>
         </div>
       ))}
 
-      {templates.length === 0 && (
+      {filtered.length === 0 && (
         <Card>
           <CardContent className="py-8 text-center text-muted-foreground">
-            No condition templates yet. Create one to get started.
+            {hasFilters
+              ? "No templates match the current filters."
+              : "No condition templates yet. Create one to get started."}
           </CardContent>
         </Card>
       )}
@@ -421,118 +272,187 @@ export function ConditionTemplateEditor({
 }
 
 // ---------------------------------------------------------------------------
-// Template Item Row
+// Template Row
 // ---------------------------------------------------------------------------
-function TemplateItemRow({
-  item,
+function TemplateRow({
+  template,
   onDelete,
+  onDuplicate,
+  onToggleActive,
 }: {
-  item: TemplateItem;
+  template: LoanConditionTemplate;
   onDelete: () => void;
+  onDuplicate: () => void;
+  onToggleActive: () => void;
 }) {
   const categoryLabel =
-    CONDITION_CATEGORIES.find((c) => c.value === item.category)?.label ??
-    item.category;
-  const partyLabel =
-    RESPONSIBLE_PARTIES.find((p) => p.value === item.responsible_party)
-      ?.label ?? item.responsible_party;
+    CONDITION_CATEGORIES.find((c) => c.value === template.category)?.label ??
+    template.category;
+  const partyLabel = template.responsible_party
+    ? (RESPONSIBLE_PARTIES.find((p) => p.value === template.responsible_party)
+        ?.label ?? template.responsible_party)
+    : "—";
+  const stageLabel =
+    CONDITION_STAGES.find((s) => s.value === template.required_stage)?.label ??
+    template.required_stage;
+
+  // Build loan type badges
+  const loanTypes: string[] = [];
+  if (template.applies_to_commercial) loanTypes.push("Commercial");
+  if (template.applies_to_dscr) loanTypes.push("DSCR");
+  if (template.applies_to_guc) loanTypes.push("GUC");
+  if (template.applies_to_rtl) loanTypes.push("RTL");
+  if (template.applies_to_transactional) loanTypes.push("Transactional");
 
   return (
-    <div className="flex items-center gap-2 py-1.5 px-2 rounded hover:bg-slate-50 group">
-      <GripVertical className="h-3.5 w-3.5 text-muted-foreground/30" />
+    <div
+      className={`flex items-start gap-3 p-3 rounded-lg border ${
+        template.is_active ? "bg-white" : "bg-slate-50/80 opacity-60"
+      }`}
+    >
       <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-2">
-          <span className="text-sm font-medium">{item.name}</span>
+        <div className="flex items-center gap-2 flex-wrap">
+          <span className="text-sm font-medium text-[#1a2b4a]">
+            {template.condition_name}
+          </span>
           <Badge
             variant="outline"
             className="text-[10px] px-1.5 py-0 uppercase"
           >
             {categoryLabel}
           </Badge>
-          {item.critical_path_item && (
+          {template.critical_path_item && (
             <Badge className="bg-red-100 text-red-700 border-red-200 text-[10px] px-1.5 py-0">
               Critical
             </Badge>
           )}
+          {!template.is_active && (
+            <Badge variant="secondary" className="text-[10px] px-1.5 py-0">
+              Inactive
+            </Badge>
+          )}
         </div>
-        <div className="flex items-center gap-3 text-[11px] text-muted-foreground">
-          <span>{partyLabel}</span>
-          {item.due_date_offset_days && (
-            <span>Due: +{item.due_date_offset_days} days</span>
+        {template.internal_description && (
+          <p className="text-xs text-muted-foreground mt-0.5">
+            {template.internal_description}
+          </p>
+        )}
+        <div className="flex items-center gap-3 mt-1 text-[11px] text-muted-foreground flex-wrap">
+          <span>Party: {partyLabel}</span>
+          <span>Stage: {stageLabel}</span>
+          {loanTypes.length > 0 && (
+            <span>Types: {loanTypes.join(", ")}</span>
           )}
         </div>
       </div>
-      <Button
-        size="sm"
-        variant="ghost"
-        className="h-6 w-6 p-0 opacity-0 group-hover:opacity-100 text-red-500 hover:text-red-700"
-        onClick={onDelete}
-      >
-        <Trash2 className="h-3 w-3" />
-      </Button>
+      <div className="flex items-center gap-1 flex-shrink-0">
+        <Button
+          size="sm"
+          variant="ghost"
+          className="h-7 text-xs"
+          onClick={onToggleActive}
+        >
+          {template.is_active ? "Deactivate" : "Activate"}
+        </Button>
+        <Button
+          size="sm"
+          variant="ghost"
+          className="h-7 text-xs gap-1"
+          onClick={onDuplicate}
+          title="Duplicate"
+        >
+          <Copy className="h-3 w-3" />
+        </Button>
+        <Button
+          size="sm"
+          variant="ghost"
+          className="h-7 text-xs text-red-600 hover:text-red-700 gap-1"
+          onClick={onDelete}
+          title="Delete"
+        >
+          <Trash2 className="h-3 w-3" />
+        </Button>
+      </div>
     </div>
   );
 }
 
 // ---------------------------------------------------------------------------
-// Create Template Dialog
+// Add Template Dialog
 // ---------------------------------------------------------------------------
-function CreateTemplateDialog({
-  currentUserId,
+function AddTemplateDialog({
   onCreated,
 }: {
-  currentUserId: string;
-  onCreated: (template: Template) => void;
+  onCreated: (template: LoanConditionTemplate) => void;
 }) {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
 
   const [form, setForm] = useState({
-    name: "",
-    loan_type: "",
+    condition_name: "",
+    category: "borrower_documents",
+    required_stage: "processing",
     internal_description: "",
-    is_default: false,
+    borrower_description: "",
+    responsible_party: "borrower",
+    critical_path_item: false,
+    applies_to_commercial: false,
+    applies_to_dscr: false,
+    applies_to_guc: false,
+    applies_to_rtl: false,
+    applies_to_transactional: false,
   });
 
   function updateField(field: string, value: string | boolean) {
-    setForm((prev: typeof form) => ({ ...prev, [field]: value }));
+    setForm((prev) => ({ ...prev, [field]: value }));
   }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!form.name || !form.loan_type) return;
+    if (!form.condition_name) return;
 
     setLoading(true);
     try {
       const supabase = createClient();
-
-      // If setting as default, unset others of same type
-      if (form.is_default) {
-        await supabase
-          .from("condition_templates")
-          .update({ is_default: false })
-          .eq("loan_type", form.loan_type);
-      }
-
       const { data, error } = await supabase
-        .from("condition_templates")
+        .from("loan_condition_templates")
         .insert({
-          name: form.name,
-          loan_type: form.loan_type,
+          condition_name: form.condition_name,
+          category: form.category,
+          required_stage: form.required_stage,
           internal_description: form.internal_description || null,
-          is_default: form.is_default,
-          created_by: currentUserId,
+          borrower_description: form.borrower_description || null,
+          responsible_party: form.responsible_party || null,
+          critical_path_item: form.critical_path_item,
+          applies_to_commercial: form.applies_to_commercial,
+          applies_to_dscr: form.applies_to_dscr,
+          applies_to_guc: form.applies_to_guc,
+          applies_to_rtl: form.applies_to_rtl,
+          applies_to_transactional: form.applies_to_transactional,
         })
         .select()
         .single();
 
       if (error) throw error;
 
-      onCreated({ ...data, loan_type: data.loan_type ?? "", items: [] } as Template);
+      onCreated(data);
       toast({ title: "Template created" });
       setOpen(false);
-      setForm({ name: "", loan_type: "", internal_description: "", is_default: false });
+      setForm({
+        condition_name: "",
+        category: "borrower_documents",
+        required_stage: "processing",
+        internal_description: "",
+        borrower_description: "",
+        responsible_party: "borrower",
+        critical_path_item: false,
+        applies_to_commercial: false,
+        applies_to_dscr: false,
+        applies_to_guc: false,
+        applies_to_rtl: false,
+        applies_to_transactional: false,
+      });
     } catch (err: any) {
       toast({
         title: "Error creating template",
@@ -552,172 +472,9 @@ function CreateTemplateDialog({
           New Template
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-w-md">
-        <DialogHeader>
-          <DialogTitle>Create Condition Template</DialogTitle>
-        </DialogHeader>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="space-y-2">
-            <Label>
-              Template Name <span className="text-red-500">*</span>
-            </Label>
-            <Input
-              value={form.name}
-              onChange={(e) => updateField("name", e.target.value)}
-              placeholder="e.g. Residential Bridge - Standard"
-              required
-            />
-          </div>
-          <div className="space-y-2">
-            <Label>
-              Loan Type <span className="text-red-500">*</span>
-            </Label>
-            <Select
-              value={form.loan_type}
-              onValueChange={(v) => updateField("loan_type", v)}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Select loan type..." />
-              </SelectTrigger>
-              <SelectContent>
-                {LOAN_TYPES.map((t) => (
-                  <SelectItem key={t.value} value={t.value}>
-                    {t.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="space-y-2">
-            <Label>Internal Description</Label>
-            <Textarea
-              value={form.internal_description}
-              onChange={(e) => updateField("internal_description", e.target.value)}
-              rows={2}
-              placeholder="Optional internal description..."
-            />
-          </div>
-          <label className="flex items-center gap-2 text-sm cursor-pointer">
-            <input
-              type="checkbox"
-              checked={form.is_default}
-              onChange={(e) => updateField("is_default", e.target.checked)}
-              className="rounded border-gray-300"
-            />
-            Set as default for this loan type
-          </label>
-          <DialogFooter>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => setOpen(false)}
-            >
-              Cancel
-            </Button>
-            <Button
-              type="submit"
-              disabled={loading || !form.name || !form.loan_type}
-            >
-              {loading ? "Creating..." : "Create Template"}
-            </Button>
-          </DialogFooter>
-        </form>
-      </DialogContent>
-    </Dialog>
-  );
-}
-
-// ---------------------------------------------------------------------------
-// Add Template Item Dialog
-// ---------------------------------------------------------------------------
-function AddTemplateItemDialog({
-  templateId,
-  nextSortOrder,
-  onAdded,
-}: {
-  templateId: string;
-  nextSortOrder: number;
-  onAdded: (item: TemplateItem) => void;
-}) {
-  const [open, setOpen] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const { toast } = useToast();
-
-  const [form, setForm] = useState({
-    name: "",
-    internal_description: "",
-    borrower_description: "",
-    category: "pta",
-    responsible_party: "borrower",
-    due_date_offset_days: "5",
-    critical_path_item: false,
-  });
-
-  function updateField(field: string, value: string | boolean) {
-    setForm((prev: typeof form) => ({ ...prev, [field]: value }));
-  }
-
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    if (!form.name) return;
-
-    setLoading(true);
-    try {
-      const supabase = createClient();
-      const { data, error } = await supabase
-        .from("condition_template_items")
-        .insert({
-          template_id: templateId,
-          name: form.name,
-          internal_description: form.internal_description || null,
-          borrower_description: form.borrower_description || null,
-          category: form.category,
-          responsible_party: form.responsible_party,
-          due_date_offset_days: form.due_date_offset_days
-            ? parseInt(form.due_date_offset_days)
-            : undefined,
-          critical_path_item: form.critical_path_item,
-          sort_order: nextSortOrder,
-        })
-        .select()
-        .single();
-
-      if (error) throw error;
-
-      onAdded(data);
-      toast({ title: "Condition added to template" });
-      setOpen(false);
-      setForm({
-        name: "",
-        internal_description: "",
-        borrower_description: "",
-        category: "pta",
-        responsible_party: "borrower",
-        due_date_offset_days: "5",
-        critical_path_item: false,
-      });
-    } catch (err: any) {
-      toast({
-        title: "Error adding condition",
-        description: err.message,
-        variant: "destructive",
-      });
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button variant="outline" size="sm" className="gap-2">
-          <PlusCircle className="h-3.5 w-3.5" />
-          Add Condition to Template
-        </Button>
-      </DialogTrigger>
       <DialogContent className="max-w-lg">
         <DialogHeader>
-          <DialogTitle>Add Condition to Template</DialogTitle>
+          <DialogTitle>Add Condition Template</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
@@ -725,8 +482,8 @@ function AddTemplateItemDialog({
               Condition Name <span className="text-red-500">*</span>
             </Label>
             <Input
-              value={form.name}
-              onChange={(e) => updateField("name", e.target.value)}
+              value={form.condition_name}
+              onChange={(e) => updateField("condition_name", e.target.value)}
               placeholder="e.g. Bank Statements (2 months)"
               required
             />
@@ -751,6 +508,26 @@ function AddTemplateItemDialog({
               </Select>
             </div>
             <div className="space-y-2">
+              <Label>Required Stage</Label>
+              <Select
+                value={form.required_stage}
+                onValueChange={(v) => updateField("required_stage", v)}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {CONDITION_STAGES.map((s) => (
+                    <SelectItem key={s.value} value={s.value}>
+                      {s.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
               <Label>Responsible Party</Label>
               <Select
                 value={form.responsible_party}
@@ -768,20 +545,6 @@ function AddTemplateItemDialog({
                 </SelectContent>
               </Select>
             </div>
-          </div>
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label>Due Date Offset (days)</Label>
-              <Input
-                type="number"
-                min="1"
-                value={form.due_date_offset_days}
-                onChange={(e) =>
-                  updateField("due_date_offset_days", e.target.value)
-                }
-                placeholder="5"
-              />
-            </div>
             <div className="flex items-end pb-2">
               <label className="flex items-center gap-2 text-sm cursor-pointer">
                 <input
@@ -797,10 +560,37 @@ function AddTemplateItemDialog({
             </div>
           </div>
           <div className="space-y-2">
+            <Label>Applies To Loan Types</Label>
+            <div className="flex flex-wrap gap-3">
+              {[
+                { field: "applies_to_rtl", label: "RTL" },
+                { field: "applies_to_dscr", label: "DSCR" },
+                { field: "applies_to_guc", label: "GUC" },
+                { field: "applies_to_commercial", label: "Commercial" },
+                { field: "applies_to_transactional", label: "Transactional" },
+              ].map((lt) => (
+                <label
+                  key={lt.field}
+                  className="flex items-center gap-1.5 text-sm cursor-pointer"
+                >
+                  <input
+                    type="checkbox"
+                    checked={form[lt.field as keyof typeof form] as boolean}
+                    onChange={(e) => updateField(lt.field, e.target.checked)}
+                    className="rounded border-gray-300"
+                  />
+                  {lt.label}
+                </label>
+              ))}
+            </div>
+          </div>
+          <div className="space-y-2">
             <Label>Internal Description</Label>
             <Textarea
               value={form.internal_description}
-              onChange={(e) => updateField("internal_description", e.target.value)}
+              onChange={(e) =>
+                updateField("internal_description", e.target.value)
+              }
               rows={2}
               placeholder="Visible to team only"
             />
@@ -824,8 +614,11 @@ function AddTemplateItemDialog({
             >
               Cancel
             </Button>
-            <Button type="submit" disabled={loading || !form.name}>
-              {loading ? "Adding..." : "Add Condition"}
+            <Button
+              type="submit"
+              disabled={loading || !form.condition_name}
+            >
+              {loading ? "Creating..." : "Add Template"}
             </Button>
           </DialogFooter>
         </form>
