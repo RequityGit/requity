@@ -52,57 +52,13 @@ interface AddBorrowerInput {
 }
 
 export async function addBorrowerAction(input: AddBorrowerInput) {
-  const auth = await requireAdmin();
-  if ("error" in auth) return { error: auth.error };
+  try {
+    const auth = await requireAdmin();
+    if ("error" in auth) return { error: auth.error };
 
-  const admin = createAdminClient();
+    const admin = createAdminClient();
 
-  const borrowerData: BorrowerInsert = {
-    first_name: input.first_name,
-    last_name: input.last_name,
-    email: input.email || null,
-    phone: input.phone || null,
-    date_of_birth: input.date_of_birth || null,
-    ssn_last_four: input.ssn_last_four || null,
-    is_us_citizen: input.is_us_citizen ?? true,
-    address_line1: input.address_line1 || null,
-    address_line2: input.address_line2 || null,
-    city: input.city || null,
-    state: input.state || null,
-    zip: input.zip || null,
-    country: input.country || "US",
-    credit_score: input.credit_score ?? null,
-    credit_report_date: input.credit_report_date || null,
-    experience_count: input.experience_count ?? 0,
-    notes: input.notes || null,
-  };
-
-  const { data, error } = await admin
-    .from("borrowers")
-    .insert(borrowerData)
-    .select("id")
-    .single();
-
-  if (error) {
-    return { error: error.message };
-  }
-
-  return { success: true, borrowerId: data.id };
-}
-
-interface UpdateBorrowerInput extends AddBorrowerInput {
-  id: string;
-}
-
-export async function updateBorrowerAction(input: UpdateBorrowerInput) {
-  const auth = await requireAdmin();
-  if ("error" in auth) return { error: auth.error };
-
-  const admin = createAdminClient();
-
-  const { error } = await admin
-    .from("borrowers")
-    .update({
+    const borrowerData: BorrowerInsert = {
       first_name: input.first_name,
       last_name: input.last_name,
       email: input.email || null,
@@ -120,14 +76,72 @@ export async function updateBorrowerAction(input: UpdateBorrowerInput) {
       credit_report_date: input.credit_report_date || null,
       experience_count: input.experience_count ?? 0,
       notes: input.notes || null,
-    })
-    .eq("id", input.id);
+    };
 
-  if (error) {
-    return { error: error.message };
+    const { data, error } = await admin
+      .from("borrowers")
+      .insert(borrowerData)
+      .select("id")
+      .single();
+
+    if (error) {
+      return { error: error.message };
+    }
+
+    if (!data) {
+      return { error: "Failed to create borrower — no data returned" };
+    }
+
+    return { success: true, borrowerId: data.id };
+  } catch (err: any) {
+    console.error("addBorrowerAction error:", err);
+    return { error: err?.message || "An unexpected error occurred" };
   }
+}
 
-  return { success: true };
+interface UpdateBorrowerInput extends AddBorrowerInput {
+  id: string;
+}
+
+export async function updateBorrowerAction(input: UpdateBorrowerInput) {
+  try {
+    const auth = await requireAdmin();
+    if ("error" in auth) return { error: auth.error };
+
+    const admin = createAdminClient();
+
+    const { error } = await admin
+      .from("borrowers")
+      .update({
+        first_name: input.first_name,
+        last_name: input.last_name,
+        email: input.email || null,
+        phone: input.phone || null,
+        date_of_birth: input.date_of_birth || null,
+        ssn_last_four: input.ssn_last_four || null,
+        is_us_citizen: input.is_us_citizen ?? true,
+        address_line1: input.address_line1 || null,
+        address_line2: input.address_line2 || null,
+        city: input.city || null,
+        state: input.state || null,
+        zip: input.zip || null,
+        country: input.country || "US",
+        credit_score: input.credit_score ?? null,
+        credit_report_date: input.credit_report_date || null,
+        experience_count: input.experience_count ?? 0,
+        notes: input.notes || null,
+      })
+      .eq("id", input.id);
+
+    if (error) {
+      return { error: error.message };
+    }
+
+    return { success: true };
+  } catch (err: any) {
+    console.error("updateBorrowerAction error:", err);
+    return { error: err?.message || "An unexpected error occurred" };
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -151,39 +165,44 @@ interface AddEntityInput {
 }
 
 export async function addEntityAction(input: AddEntityInput) {
-  const auth = await requireAdmin();
-  if ("error" in auth) return { error: auth.error };
+  try {
+    const auth = await requireAdmin();
+    if ("error" in auth) return { error: auth.error };
 
-  const admin = createAdminClient();
+    const admin = createAdminClient();
 
-  const { data, error } = await admin
-    .from("borrower_entities")
-    .insert({
-      borrower_id: input.borrower_id,
-      entity_name: input.entity_name,
-      entity_type: input.entity_type,
-      ein: input.ein || null,
-      state_of_formation: input.state_of_formation || null,
-      address_line1: input.address_line1 || null,
-      address_line2: input.address_line2 || null,
-      city: input.city || null,
-      state: input.state || null,
-      zip: input.zip || null,
-      is_foreign_filed: input.is_foreign_filed ?? false,
-      foreign_filed_states:
-        input.is_foreign_filed && input.foreign_filed_states?.length
-          ? input.foreign_filed_states
-          : null,
-      notes: input.notes || null,
-    })
-    .select("id")
-    .single();
+    const { data, error } = await admin
+      .from("borrower_entities")
+      .insert({
+        borrower_id: input.borrower_id,
+        entity_name: input.entity_name,
+        entity_type: input.entity_type,
+        ein: input.ein || null,
+        state_of_formation: input.state_of_formation || null,
+        address_line1: input.address_line1 || null,
+        address_line2: input.address_line2 || null,
+        city: input.city || null,
+        state: input.state || null,
+        zip: input.zip || null,
+        is_foreign_filed: input.is_foreign_filed ?? false,
+        foreign_filed_states:
+          input.is_foreign_filed && input.foreign_filed_states?.length
+            ? input.foreign_filed_states
+            : null,
+        notes: input.notes || null,
+      })
+      .select("id")
+      .single();
 
-  if (error) {
-    return { error: error.message };
+    if (error) {
+      return { error: error.message };
+    }
+
+    return { success: true, entityId: data.id };
+  } catch (err: any) {
+    console.error("addEntityAction error:", err);
+    return { error: err?.message || "An unexpected error occurred" };
   }
-
-  return { success: true, entityId: data.id };
 }
 
 interface UpdateEntityInput extends AddEntityInput {
@@ -191,53 +210,63 @@ interface UpdateEntityInput extends AddEntityInput {
 }
 
 export async function updateEntityAction(input: UpdateEntityInput) {
-  const auth = await requireAdmin();
-  if ("error" in auth) return { error: auth.error };
+  try {
+    const auth = await requireAdmin();
+    if ("error" in auth) return { error: auth.error };
 
-  const admin = createAdminClient();
+    const admin = createAdminClient();
 
-  const { error } = await admin
-    .from("borrower_entities")
-    .update({
-      entity_name: input.entity_name,
-      entity_type: input.entity_type,
-      ein: input.ein || null,
-      state_of_formation: input.state_of_formation || null,
-      address_line1: input.address_line1 || null,
-      address_line2: input.address_line2 || null,
-      city: input.city || null,
-      state: input.state || null,
-      zip: input.zip || null,
-      is_foreign_filed: input.is_foreign_filed ?? false,
-      foreign_filed_states:
-        input.is_foreign_filed && input.foreign_filed_states?.length
-          ? input.foreign_filed_states
-          : null,
-      notes: input.notes || null,
-    })
-    .eq("id", input.id);
+    const { error } = await admin
+      .from("borrower_entities")
+      .update({
+        entity_name: input.entity_name,
+        entity_type: input.entity_type,
+        ein: input.ein || null,
+        state_of_formation: input.state_of_formation || null,
+        address_line1: input.address_line1 || null,
+        address_line2: input.address_line2 || null,
+        city: input.city || null,
+        state: input.state || null,
+        zip: input.zip || null,
+        is_foreign_filed: input.is_foreign_filed ?? false,
+        foreign_filed_states:
+          input.is_foreign_filed && input.foreign_filed_states?.length
+            ? input.foreign_filed_states
+            : null,
+        notes: input.notes || null,
+      })
+      .eq("id", input.id);
 
-  if (error) {
-    return { error: error.message };
+    if (error) {
+      return { error: error.message };
+    }
+
+    return { success: true };
+  } catch (err: any) {
+    console.error("updateEntityAction error:", err);
+    return { error: err?.message || "An unexpected error occurred" };
   }
-
-  return { success: true };
 }
 
 export async function deleteEntityAction(entityId: string) {
-  const auth = await requireAdmin();
-  if ("error" in auth) return { error: auth.error };
+  try {
+    const auth = await requireAdmin();
+    if ("error" in auth) return { error: auth.error };
 
-  const admin = createAdminClient();
+    const admin = createAdminClient();
 
-  const { error } = await admin
-    .from("borrower_entities")
-    .delete()
-    .eq("id", entityId);
+    const { error } = await admin
+      .from("borrower_entities")
+      .delete()
+      .eq("id", entityId);
 
-  if (error) {
-    return { error: error.message };
+    if (error) {
+      return { error: error.message };
+    }
+
+    return { success: true };
+  } catch (err: any) {
+    console.error("deleteEntityAction error:", err);
+    return { error: err?.message || "An unexpected error occurred" };
   }
-
-  return { success: true };
 }
