@@ -37,17 +37,17 @@ import {
 interface ConditionWithLoan {
   id: string;
   loan_id: string;
-  name: string;
-  description: string | null;
+  condition_name: string;
+  internal_description: string | null;
   category: string;
   status: string;
   responsible_party: string;
-  is_critical_path: boolean;
+  critical_path_item: boolean | null;
   due_date: string | null;
   received_date: string | null;
   approved_date: string | null;
   rejection_reason: string | null;
-  sort_order: number;
+  sort_order: number | null;
   loan?: {
     id: string;
     loan_number: string | null;
@@ -98,7 +98,7 @@ export function ConditionsDashboard({
     ).length;
     const criticalOutstanding = conditions.filter(
       (c: ConditionWithLoan) =>
-        c.is_critical_path && !["approved", "waived"].includes(c.status)
+        c.critical_path_item && !["approved", "waived"].includes(c.status)
     ).length;
     const uniqueLoans = new Set(conditions.map((c: ConditionWithLoan) => c.loan_id)).size;
 
@@ -143,7 +143,7 @@ export function ConditionsDashboard({
       const q = search.toLowerCase();
       result = result.filter(
         (c: ConditionWithLoan) =>
-          c.name.toLowerCase().includes(q) ||
+          c.condition_name.toLowerCase().includes(q) ||
           (c.loan as any)?.property_address?.toLowerCase().includes(q) ||
           (c.loan as any)?.loan_number?.toLowerCase().includes(q) ||
           (c.loan as any)?.borrower?.full_name?.toLowerCase().includes(q)
@@ -168,11 +168,12 @@ export function ConditionsDashboard({
     const now = new Date().toISOString();
 
     const updateData: any = { status: newStatus, updated_at: now };
-    if (newStatus === "requested") updateData.requested_date = now.split("T")[0];
-    else if (newStatus === "received") updateData.received_date = now.split("T")[0];
+    if (newStatus === "requested") updateData.submitted_at = now;
+    else if (newStatus === "received") updateData.received_date = now;
     else if (newStatus === "approved") {
-      updateData.approved_date = now.split("T")[0];
-      updateData.approved_by = currentUserId;
+      updateData.approved_date = now;
+      updateData.reviewed_by = currentUserId;
+      updateData.reviewed_at = now;
     }
 
     const { error } = await supabase
@@ -193,12 +194,9 @@ export function ConditionsDashboard({
     if (!condition) return;
     await supabase.from("loan_activity_log").insert({
       loan_id: condition.loan_id,
-      user_id: currentUserId,
-      activity_type: "condition_status_change",
-      description: `${condition.name}: status changed to ${newStatus}`,
-      old_value: condition.status,
-      new_value: newStatus,
-      field_name: "condition_status",
+      performed_by: currentUserId,
+      action: "condition_status_change",
+      description: `${condition.condition_name}: status changed to ${newStatus}`,
     });
 
     setConditions((prev: ConditionWithLoan[]) =>
@@ -426,7 +424,7 @@ export function ConditionsDashboard({
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2 flex-wrap">
                             <span className="text-sm font-medium">
-                              {condition.name}
+                              {condition.condition_name}
                             </span>
                             <Badge
                               variant="outline"
@@ -434,7 +432,7 @@ export function ConditionsDashboard({
                             >
                               {condition.category}
                             </Badge>
-                            {condition.is_critical_path && (
+                            {condition.critical_path_item && (
                               <Badge className="bg-red-100 text-red-700 border-red-200 text-[10px] px-1.5 py-0">
                                 Critical
                               </Badge>

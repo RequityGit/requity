@@ -22,7 +22,7 @@ export default async function AdminConditionsPage() {
     "approved",
     "clear_to_close",
     "funded",
-  ];
+  ] as const;
 
   const { data: activeLoans } = await supabase
     .from("loans")

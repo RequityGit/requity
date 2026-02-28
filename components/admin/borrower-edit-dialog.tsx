@@ -83,7 +83,7 @@ export function BorrowerEditDialog({ borrower }: BorrowerEditDialogProps) {
         phone: phone.trim() || undefined,
         date_of_birth: dateOfBirth || undefined,
         ssn_last_four: ssnLastFour.trim() || undefined,
-        is_us_citizen: isUsCitizen,
+        is_us_citizen: isUsCitizen ?? undefined,
         address_line1: addressLine1.trim() || undefined,
         address_line2: addressLine2.trim() || undefined,
         city: city.trim() || undefined,

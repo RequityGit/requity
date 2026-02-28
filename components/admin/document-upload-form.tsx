@@ -30,14 +30,14 @@ interface DocumentUploadFormProps {
   profiles: Array<{
     id: string;
     full_name: string | null;
-    email: string;
-    role: string;
+    email: string | null;
+    role: string | null;
   }>;
   funds: Array<{ id: string; name: string }>;
   loans: Array<{
     id: string;
     property_address: string | null;
-    borrower_id: string;
+    borrower_id: string | null;
   }>;
 }
 

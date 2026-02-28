@@ -99,8 +99,7 @@ export function CrmActivityLog({
         activity_type: form.activity_type as any,
         subject: form.subject || null,
         description: form.description || null,
-        outcome: form.outcome || null,
-        created_by: currentUserId,
+        performed_by: currentUserId,
       };
 
       const { error } = await supabase.from("crm_activities").insert(insertData);

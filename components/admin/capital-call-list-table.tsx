@@ -14,7 +14,7 @@ interface CapitalCallRow {
   id: string;
   fund_name: string;
   investor_name: string;
-  call_amount: number;
+  call_amount: number | null;
   due_date: string;
   paid_date: string | null;
   status: string;

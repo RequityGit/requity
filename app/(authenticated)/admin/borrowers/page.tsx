@@ -45,10 +45,12 @@ export default async function AdminBorrowersPage() {
   // Aggregate loan counts
   const loanCountByBorrower = new Map<string, number>();
   loans?.forEach((l) => {
-    loanCountByBorrower.set(
-      l.borrower_id,
-      (loanCountByBorrower.get(l.borrower_id) || 0) + 1
-    );
+    if (l.borrower_id) {
+      loanCountByBorrower.set(
+        l.borrower_id,
+        (loanCountByBorrower.get(l.borrower_id) || 0) + 1
+      );
+    }
   });
 
   const borrowerRows = (borrowers ?? []).map((b) => ({
@@ -59,7 +61,7 @@ export default async function AdminBorrowersPage() {
     phone: b.phone || "—",
     state: b.state || "—",
     credit_score: b.credit_score,
-    experience_count: b.experience_count,
+    experience_count: b.experience_count ?? 0,
     entity_count: entityCountByBorrower.get(b.id) || 0,
     loan_count: loanCountByBorrower.get(b.id) || 0,
     created_at: b.created_at,

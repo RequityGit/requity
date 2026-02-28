@@ -100,6 +100,8 @@ function RecordCapitalCallDialog({
         investor_id: investorId,
         commitment_id: commitmentId,
         call_amount: parseFloat(amount),
+        total_amount: parseFloat(amount),
+        call_number: 1,
         due_date: dueDate,
         status: "pending",
       });
@@ -232,6 +234,8 @@ function RecordDistributionDialog({
         commitment_id: commitmentId,
         distribution_type: distributionType,
         amount: parseFloat(amount),
+        total_amount: parseFloat(amount),
+        distribution_number: 1,
         distribution_date: distributionDate,
         description: description || null,
         status: "pending",

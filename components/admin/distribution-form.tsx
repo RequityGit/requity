@@ -123,20 +123,25 @@ export function DistributionForm({ funds }: DistributionFormProps) {
       return;
     }
 
-    const dists = investors
-      .filter(
-        (inv) => amounts[inv.id] && parseFloat(amounts[inv.id]) > 0
-      )
-      .map((inv) => ({
-        fund_id: fundId,
-        investor_id: inv.investor_id,
-        commitment_id: inv.id,
-        distribution_type: distributionType,
-        amount: parseFloat(amounts[inv.id]),
-        distribution_date: distributionDate,
-        description: description || null,
-        status: "pending" as const,
-      }));
+    const filteredInvestors = investors.filter(
+      (inv) => amounts[inv.id] && parseFloat(amounts[inv.id]) > 0
+    );
+    const totalAmount = filteredInvestors.reduce(
+      (sum, inv) => sum + parseFloat(amounts[inv.id]),
+      0
+    );
+    const dists = filteredInvestors.map((inv, idx) => ({
+      fund_id: fundId,
+      investor_id: inv.investor_id,
+      commitment_id: inv.id,
+      distribution_type: distributionType,
+      amount: parseFloat(amounts[inv.id]),
+      total_amount: totalAmount,
+      distribution_number: idx + 1,
+      distribution_date: distributionDate,
+      description: description || null,
+      status: "pending" as const,
+    }));
 
     if (dists.length === 0) {
       toast({

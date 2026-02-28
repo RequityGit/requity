@@ -61,11 +61,11 @@ export function LoanConditionsTab({
   const { toast } = useToast();
 
   const ptaConditions = conditions
-    .filter((c) => c.category === "pta")
-    .sort((a, b) => a.sort_order - b.sort_order);
+    .filter((c) => c.category === "prior_to_approval")
+    .sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0));
   const ptfConditions = conditions
-    .filter((c) => c.category === "ptf")
-    .sort((a, b) => a.sort_order - b.sort_order);
+    .filter((c) => c.category === "prior_to_funding")
+    .sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0));
 
   // Summary stats
   const totalCount = conditions.length;
@@ -108,16 +108,20 @@ export function LoanConditionsTab({
     };
 
     if (newStatus === "requested") {
-      updateData.requested_date = now.split("T")[0];
+      updateData.submitted_at = now;
     } else if (newStatus === "received") {
-      updateData.received_date = now.split("T")[0];
+      updateData.received_date = now;
     } else if (newStatus === "approved") {
-      updateData.approved_date = now.split("T")[0];
-      updateData.approved_by = currentUserId;
+      updateData.approved_date = now;
+      updateData.reviewed_by = currentUserId;
+      updateData.reviewed_at = now;
     } else if (newStatus === "waived") {
-      updateData.waived_by = currentUserId;
+      updateData.reviewed_by = currentUserId;
+      updateData.reviewed_at = now;
     } else if (newStatus === "rejected") {
       updateData.rejection_reason = rejectionReason || null;
+      updateData.reviewed_by = currentUserId;
+      updateData.reviewed_at = now;
     }
 
     const { error } = await supabase
@@ -138,12 +142,9 @@ export function LoanConditionsTab({
     const condition = conditions.find((c) => c.id === conditionId);
     await supabase.from("loan_activity_log").insert({
       loan_id: loanId,
-      user_id: currentUserId,
-      activity_type: "condition_status_change",
-      description: `${condition?.name}: status changed to ${newStatus}`,
-      old_value: condition?.status,
-      new_value: newStatus,
-      field_name: "condition_status",
+      performed_by: currentUserId,
+      action: "condition_status_change",
+      description: `${condition?.condition_name}: status changed to ${newStatus}`,
     });
 
     setConditions((prev) =>
@@ -452,18 +453,18 @@ function ConditionRow({
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
             <span className="text-sm font-medium text-[#1a2b4a]">
-              {condition.name}
+              {condition.condition_name}
             </span>
-            {condition.is_critical_path && (
+            {condition.critical_path_item && (
               <Badge className="bg-red-100 text-red-700 border-red-200 text-[10px] px-1.5 py-0">
                 Critical
               </Badge>
             )}
             <StatusBadge status={condition.status} />
           </div>
-          {condition.description && (
+          {condition.internal_description && (
             <p className="text-xs text-muted-foreground mt-0.5">
-              {condition.description}
+              {condition.internal_description}
             </p>
           )}
           <div className="flex items-center gap-3 mt-1 text-[11px] text-muted-foreground">
@@ -487,9 +488,9 @@ function ConditionRow({
               Rejection reason: {condition.rejection_reason}
             </p>
           )}
-          {condition.internal_note && (
+          {condition.notes && (
             <p className="text-xs text-muted-foreground mt-1 italic">
-              Note: {condition.internal_note}
+              Note: {condition.notes}
             </p>
           )}
         </div>
@@ -529,7 +530,7 @@ function ConditionRow({
           </DialogHeader>
           <div className="space-y-3">
             <p className="text-sm text-muted-foreground">
-              Rejecting: <strong>{condition.name}</strong>
+              Rejecting: <strong>{condition.condition_name}</strong>
             </p>
             <div className="space-y-2">
               <Label>Reason for rejection</Label>
@@ -583,14 +584,14 @@ function AddConditionDialog({
   const { toast } = useToast();
 
   const [form, setForm] = useState({
-    name: "",
-    description: "",
+    condition_name: "",
+    internal_description: "",
     borrower_description: "",
-    category: "pta",
+    category: "prior_to_approval",
     responsible_party: "borrower",
-    is_critical_path: false,
+    critical_path_item: false,
     due_date: "",
-    internal_note: "",
+    notes: "",
   });
 
   function updateField(field: string, value: any) {
@@ -599,21 +600,21 @@ function AddConditionDialog({
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!form.name) return;
+    if (!form.condition_name) return;
 
     setLoading(true);
     try {
       const supabase = createClient();
       const { error } = await supabase.from("loan_conditions").insert({
         loan_id: loanId,
-        name: form.name,
-        description: form.description || null,
+        condition_name: form.condition_name,
+        internal_description: form.internal_description || null,
         borrower_description: form.borrower_description || null,
-        category: form.category,
+        category: form.category as any,
         responsible_party: form.responsible_party,
-        is_critical_path: form.is_critical_path,
+        critical_path_item: form.critical_path_item,
         due_date: form.due_date || null,
-        internal_note: form.internal_note || null,
+        notes: form.notes || null,
         status: "not_requested",
       });
 
@@ -622,14 +623,14 @@ function AddConditionDialog({
       toast({ title: "Condition added" });
       setOpen(false);
       setForm({
-        name: "",
-        description: "",
+        condition_name: "",
+        internal_description: "",
         borrower_description: "",
-        category: "pta",
+        category: "prior_to_approval",
         responsible_party: "borrower",
-        is_critical_path: false,
+        critical_path_item: false,
         due_date: "",
-        internal_note: "",
+        notes: "",
       });
       onAdded();
     } catch (err: any) {
@@ -661,8 +662,8 @@ function AddConditionDialog({
               Condition Name <span className="text-red-500">*</span>
             </Label>
             <Input
-              value={form.name}
-              onChange={(e) => updateField("name", e.target.value)}
+              value={form.condition_name}
+              onChange={(e) => updateField("condition_name", e.target.value)}
               placeholder="e.g. Bank Statements (2 months)"
               required
             />
@@ -718,9 +719,9 @@ function AddConditionDialog({
               <label className="flex items-center gap-2 text-sm cursor-pointer">
                 <input
                   type="checkbox"
-                  checked={form.is_critical_path}
+                  checked={form.critical_path_item}
                   onChange={(e) =>
-                    updateField("is_critical_path", e.target.checked)
+                    updateField("critical_path_item", e.target.checked)
                   }
                   className="rounded border-gray-300"
                 />
@@ -731,8 +732,8 @@ function AddConditionDialog({
           <div className="space-y-2">
             <Label>Internal Description</Label>
             <Textarea
-              value={form.description}
-              onChange={(e) => updateField("description", e.target.value)}
+              value={form.internal_description}
+              onChange={(e) => updateField("internal_description", e.target.value)}
               rows={2}
               placeholder="Visible to team only"
             />
@@ -756,7 +757,7 @@ function AddConditionDialog({
             >
               Cancel
             </Button>
-            <Button type="submit" disabled={loading || !form.name}>
+            <Button type="submit" disabled={loading || !form.condition_name}>
               {loading ? "Adding..." : "Add Condition"}
             </Button>
           </DialogFooter>

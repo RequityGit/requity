@@ -90,8 +90,8 @@ export function AddProjectDialog({ teamMembers }: AddProjectDialogProps) {
 
       const { error } = await supabase.from("ops_projects").insert({
         project_name: form.project_name.trim(),
-        category: form.category.trim() || null,
-        owner: form.owner.trim() || null,
+        category: form.category.trim() || "general",
+        owner: form.owner.trim() || "unassigned",
         status: form.status,
         priority: form.priority,
         description: form.description.trim() || null,

@@ -50,14 +50,14 @@ import { LoanConditionsTab } from "@/components/admin/loan-conditions-tab";
 interface LoanInfo {
   id: string;
   loan_number: string | null;
-  borrower_id: string;
+  borrower_id: string | null;
   borrower_name: string;
   loan_type: string | null;
   property_address: string | null;
   property_city: string | null;
   property_state: string | null;
   property_zip: string | null;
-  loan_amount: number;
+  loan_amount: number | null;
   interest_rate: number | null;
   term_months: number | null;
   origination_date: string | null;
@@ -109,8 +109,8 @@ export function LoanDetailActions({
       {/* Action buttons */}
       <div className="flex flex-wrap gap-3">
         <EditLoanDialog loan={loan} />
-        <RecordPaymentDialog loanId={loan.id} borrowerId={loan.borrower_id} />
-        <UploadDocumentDialog loanId={loan.id} uploaderId={loan.borrower_id} />
+        <RecordPaymentDialog loanId={loan.id} borrowerId={loan.borrower_id ?? ""} />
+        <UploadDocumentDialog loanId={loan.id} uploaderId={loan.borrower_id ?? ""} />
       </div>
 
       {/* Tabbed data */}
@@ -182,7 +182,7 @@ function EditLoanDialog({ loan }: { loan: LoanInfo }) {
     property_city: loan.property_city || "",
     property_state: loan.property_state || "",
     property_zip: loan.property_zip || "",
-    loan_amount: loan.loan_amount.toString(),
+    loan_amount: (loan.loan_amount ?? 0).toString(),
     interest_rate: loan.interest_rate?.toString() ?? "",
     term_months: loan.term_months?.toString() ?? "",
     stage: loan.stage,
@@ -208,16 +208,16 @@ function EditLoanDialog({ loan }: { loan: LoanInfo }) {
         .from("loans")
         .update({
           loan_amount: parseFloat(form.loan_amount),
-          stage: form.stage,
+          stage: form.stage as any,
           stage_updated_at: new Date().toISOString(),
           updated_at: new Date().toISOString(),
-          ...(form.loan_type ? { loan_type: form.loan_type } : {}),
+          ...(form.loan_type ? { type: form.loan_type as any } : {}),
           ...(form.property_address ? { property_address: form.property_address } : {}),
           ...(form.property_city ? { property_city: form.property_city } : { property_city: null }),
           ...(form.property_state ? { property_state: form.property_state } : { property_state: null }),
           ...(form.property_zip ? { property_zip: form.property_zip } : { property_zip: null }),
           ...(form.interest_rate ? { interest_rate: parseFloat(form.interest_rate) } : {}),
-          ...(form.term_months ? { term_months: parseInt(form.term_months) } : {}),
+          ...(form.term_months ? { loan_term_months: parseInt(form.term_months) } : {}),
           ...(form.appraised_value ? { appraised_value: parseFloat(form.appraised_value) } : {}),
           ...(form.origination_date ? { origination_date: form.origination_date } : {}),
           ...(form.maturity_date ? { maturity_date: form.maturity_date } : {}),
@@ -566,45 +566,29 @@ function RecordPaymentDialog({
   const router = useRouter();
   const { toast } = useToast();
 
-  const [amountDue, setAmountDue] = useState("");
-  const [amountPaid, setAmountPaid] = useState("");
+  const [amount, setAmount] = useState("");
   const [principalAmount, setPrincipalAmount] = useState("");
   const [interestAmount, setInterestAmount] = useState("");
-  const [dueDate, setDueDate] = useState("");
-  const [paidDate, setPaidDate] = useState("");
+  const [paymentDate, setPaymentDate] = useState("");
   const [notes, setNotes] = useState("");
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!amountDue || !dueDate) return;
+    if (!amount || !paymentDate) return;
 
     setLoading(true);
     try {
       const supabase = createClient();
 
-      // Get next payment number
-      const { data: existing } = await supabase
-        .from("loan_payments")
-        .select("payment_number")
-        .eq("loan_id", loanId)
-        .order("payment_number", { ascending: false })
-        .limit(1);
-
-      const nextPaymentNumber = (existing?.[0]?.payment_number ?? 0) + 1;
-
       const { error } = await supabase.from("loan_payments").insert({
         loan_id: loanId,
-        borrower_id: borrowerId,
-        payment_number: nextPaymentNumber,
-        amount_due: parseFloat(amountDue),
-        amount_paid: amountPaid ? parseFloat(amountPaid) : null,
+        amount: parseFloat(amount),
         principal_amount: principalAmount
           ? parseFloat(principalAmount)
           : null,
         interest_amount: interestAmount ? parseFloat(interestAmount) : null,
-        due_date: dueDate,
-        paid_date: paidDate || null,
-        status: paidDate ? "paid" : "pending",
+        payment_date: paymentDate,
+        status: "paid",
         notes: notes || null,
       });
 
@@ -626,12 +610,10 @@ function RecordPaymentDialog({
   }
 
   function resetForm() {
-    setAmountDue("");
-    setAmountPaid("");
+    setAmount("");
     setPrincipalAmount("");
     setInterestAmount("");
-    setDueDate("");
-    setPaidDate("");
+    setPaymentDate("");
     setNotes("");
   }
 
@@ -650,24 +632,23 @@ function RecordPaymentDialog({
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label>Amount Due ($)</Label>
+              <Label>Amount ($)</Label>
               <Input
                 type="number"
                 step="0.01"
                 min="0"
-                value={amountDue}
-                onChange={(e) => setAmountDue(e.target.value)}
+                value={amount}
+                onChange={(e) => setAmount(e.target.value)}
                 required
               />
             </div>
             <div className="space-y-2">
-              <Label>Amount Paid ($)</Label>
+              <Label>Payment Date</Label>
               <Input
-                type="number"
-                step="0.01"
-                min="0"
-                value={amountPaid}
-                onChange={(e) => setAmountPaid(e.target.value)}
+                type="date"
+                value={paymentDate}
+                onChange={(e) => setPaymentDate(e.target.value)}
+                required
               />
             </div>
           </div>
@@ -690,25 +671,6 @@ function RecordPaymentDialog({
                 min="0"
                 value={interestAmount}
                 onChange={(e) => setInterestAmount(e.target.value)}
-              />
-            </div>
-          </div>
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label>Due Date</Label>
-              <Input
-                type="date"
-                value={dueDate}
-                onChange={(e) => setDueDate(e.target.value)}
-                required
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>Paid Date</Label>
-              <Input
-                type="date"
-                value={paidDate}
-                onChange={(e) => setPaidDate(e.target.value)}
               />
             </div>
           </div>
@@ -872,19 +834,14 @@ function UploadDocumentDialog({
 function PaymentsTable({ payments }: { payments: LoanPayment[] }) {
   const columns: Column<LoanPayment>[] = [
     {
-      key: "payment_number",
-      header: "Payment #",
-      cell: (row) => row.payment_number,
+      key: "payment_date",
+      header: "Date",
+      cell: (row) => formatDate(row.payment_date),
     },
     {
-      key: "amount_due",
-      header: "Due",
-      cell: (row) => formatCurrency(row.amount_due),
-    },
-    {
-      key: "amount_paid",
-      header: "Paid",
-      cell: (row) => formatCurrency(row.amount_paid),
+      key: "amount",
+      header: "Amount",
+      cell: (row) => formatCurrency(row.amount),
     },
     {
       key: "principal_amount",
@@ -895,16 +852,6 @@ function PaymentsTable({ payments }: { payments: LoanPayment[] }) {
       key: "interest_amount",
       header: "Interest",
       cell: (row) => formatCurrency(row.interest_amount),
-    },
-    {
-      key: "due_date",
-      header: "Due Date",
-      cell: (row) => formatDate(row.due_date),
-    },
-    {
-      key: "paid_date",
-      header: "Paid Date",
-      cell: (row) => formatDate(row.paid_date),
     },
     {
       key: "status",
@@ -940,7 +887,7 @@ function DocumentsTable({ documents }: { documents: Document[] }) {
       header: "Type",
       cell: (row) => (
         <span className="capitalize">
-          {row.document_type.replace(/_/g, " ")}
+          {row.document_type?.replace(/_/g, " ") ?? "—"}
         </span>
       ),
     },

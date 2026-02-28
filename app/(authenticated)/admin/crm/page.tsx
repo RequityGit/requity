@@ -33,17 +33,17 @@ export default async function CrmPage() {
 
   const contacts = contactsResult.data ?? [];
   const teamMembers = (teamResult.data ?? []).map(
-    (t: { id: string; full_name: string | null; email: string }) => ({
+    (t: { id: string; full_name: string | null; email: string | null }) => ({
       id: t.id,
-      full_name: t.full_name || t.email,
+      full_name: t.full_name || t.email || "Unknown",
     })
   );
 
   // Build profiles lookup for assigned_to names
   const profileLookup: Record<string, string> = {};
   (teamResult.data ?? []).forEach(
-    (t: { id: string; full_name: string | null; email: string }) => {
-      profileLookup[t.id] = t.full_name || t.email;
+    (t: { id: string; full_name: string | null; email: string | null }) => {
+      profileLookup[t.id] = t.full_name || t.email || "Unknown";
     }
   );
 

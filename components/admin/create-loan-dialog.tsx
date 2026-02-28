@@ -168,7 +168,7 @@ export function CreateLoanDialog({
           ...(form.property_zip ? { property_zip: form.property_zip } : {}),
           ...(form.appraised_value ? { appraised_value: parseFloat(form.appraised_value) } : {}),
           ...(form.interest_rate ? { interest_rate: parseFloat(form.interest_rate) } : {}),
-          ...(form.term_months ? { term_months: parseInt(form.term_months) } : {}),
+          ...(form.term_months ? { loan_term_months: parseInt(form.term_months) } : {}),
           ...(originatorName ? { originator: originatorName } : {}),
           ...(form.notes ? { notes: form.notes } : {}),
           ...(form.purchase_price ? { purchase_price: parseFloat(form.purchase_price) } : {}),
@@ -188,8 +188,8 @@ export function CreateLoanDialog({
       // 2. Log the loan creation in activity log
       await supabase.from("loan_activity_log").insert({
         loan_id: newLoan.id,
-        user_id: currentUserId,
-        activity_type: "loan_created",
+        performed_by: currentUserId,
+        action: "loan_created",
         description: `Loan created for ${form.property_address || "new property"}`,
       });
 

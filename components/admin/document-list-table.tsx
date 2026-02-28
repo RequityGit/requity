@@ -19,7 +19,7 @@ interface DocumentRow {
   id: string;
   file_name: string;
   description: string | null;
-  document_type: string;
+  document_type: string | null;
   owner_name: string;
   fund_name: string | null;
   loan_address: string | null;
@@ -75,7 +75,7 @@ export function DocumentListTable({ data }: DocumentListTableProps) {
       key: "document_type",
       header: "Type",
       cell: (row) => (
-        <span className="text-sm">{getDocTypeLabel(row.document_type)}</span>
+        <span className="text-sm">{row.document_type ? getDocTypeLabel(row.document_type) : "—"}</span>
       ),
     },
     {

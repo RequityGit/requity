@@ -92,7 +92,7 @@ export function TaskList({ tasks, projectNames, onToggleTask, onStopRecurrence, 
                   {task.is_recurring ? (
                     <RecurringBadge
                       pattern={task.recurrence_pattern}
-                      isActive={task.is_active_recurrence}
+                      isActive={task.is_active_recurrence ?? false}
                     />
                   ) : (
                     <span className="text-muted-foreground text-sm">—</span>

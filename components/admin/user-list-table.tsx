@@ -100,7 +100,7 @@ export function UserListTable({
       result = result.filter(
         (u) =>
           (u.full_name ?? "").toLowerCase().includes(q) ||
-          u.email.toLowerCase().includes(q)
+          (u.email ?? "").toLowerCase().includes(q)
       );
     }
 
@@ -196,8 +196,8 @@ export function UserListTable({
   const allRoles = useMemo(() => {
     const roles = new Set<string>();
     data.forEach((u) => {
-      roles.add(u.role);
-      u.allowed_roles.forEach((r) => roles.add(r));
+      if (u.role) roles.add(u.role);
+      u.allowed_roles.forEach((r) => { if (r) roles.add(r); });
       u.user_roles.forEach((r) => {
         if (r.is_active) roles.add(r.role);
       });
@@ -421,10 +421,10 @@ function getRoleBadges(user: UserRow) {
   const roles = new Set<string>();
 
   // Primary role from profile
-  roles.add(user.role);
+  if (user.role) roles.add(user.role);
 
   // allowed_roles from profile
-  user.allowed_roles.forEach((r) => roles.add(r));
+  user.allowed_roles.forEach((r) => { if (r) roles.add(r); });
 
   // Active roles from user_roles table
   user.user_roles.forEach((r) => {

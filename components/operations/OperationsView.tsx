@@ -237,7 +237,7 @@ export function OperationsView({ projects, tasks, teamMembers }: OperationsViewP
       const task = tasks.find((t) => t.id === taskId);
       if (task?.is_recurring && task?.is_active_recurrence) {
         const { data, error: rpcError } = await supabase.rpc(
-          "generate_next_recurring_task",
+          "generate_next_recurring_task" as any,
           { task_id: taskId }
         );
 

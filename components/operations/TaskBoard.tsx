@@ -63,7 +63,7 @@ export function TaskBoard({ tasks, projectNames }: TaskBoardProps) {
                     <div className="flex items-center gap-1.5 flex-wrap">
                       <PriorityBadge priority={task.priority} />
                       {task.is_recurring && (
-                        <RecurringBadge pattern={task.recurrence_pattern} isActive={task.is_active_recurrence} />
+                        <RecurringBadge pattern={task.recurrence_pattern} isActive={task.is_active_recurrence ?? false} />
                       )}
                     </div>
 

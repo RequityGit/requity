@@ -52,14 +52,17 @@ export default async function BorrowerDashboardPage() {
     .in("status", ["submitted", "under_review"]);
 
   // Fetch next payment due
-  const { data: nextPayments } = await supabase
-    .from("loan_payments")
-    .select("*")
-    .eq("borrower_id", user.id)
-    .eq("status", "pending")
-    .gte("due_date", new Date().toISOString().split("T")[0])
-    .order("due_date", { ascending: true })
-    .limit(1);
+  const loanIds = activeLoans.map((l) => l.id);
+  const { data: nextPayments } = loanIds.length > 0
+    ? await supabase
+        .from("loan_payments")
+        .select("*")
+        .in("loan_id", loanIds)
+        .eq("status", "pending")
+        .gte("payment_date", new Date().toISOString().split("T")[0])
+        .order("payment_date", { ascending: true })
+        .limit(1)
+    : { data: null };
 
   const nextPayment = nextPayments?.[0] ?? null;
 
@@ -88,11 +91,11 @@ export default async function BorrowerDashboardPage() {
           title="Next Payment Due"
           value={
             nextPayment
-              ? formatCurrencyDetailed(nextPayment.amount_due)
+              ? formatCurrencyDetailed(nextPayment.amount)
               : "None"
           }
           description={
-            nextPayment ? `Due ${formatDate(nextPayment.due_date)}` : "No upcoming payments"
+            nextPayment ? `Due ${formatDate(nextPayment.payment_date)}` : "No upcoming payments"
           }
           icon={<CalendarClock className="h-5 w-5" />}
         />
@@ -162,12 +165,12 @@ export default async function BorrowerDashboardPage() {
                     </div>
                     <div>
                       <p className="text-muted-foreground text-xs">Term</p>
-                      <p className="font-medium">{loan.term_months} mo</p>
+                      <p className="font-medium">{loan.loan_term_months} mo</p>
                     </div>
                   </div>
                   <div className="mt-3 pt-3 border-t flex items-center justify-between text-xs text-muted-foreground">
                     <span>Loan #{loan.loan_number}</span>
-                    <span>{(loan.loan_type ?? "").replace(/_/g, " ")}</span>
+                    <span>{(loan.type ?? "").replace(/_/g, " ")}</span>
                   </div>
                 </CardContent>
               </Card>

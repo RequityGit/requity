@@ -117,7 +117,6 @@ export function AddContactDialog({
         zip: form.zip || null,
         next_follow_up_date: form.next_follow_up_date || null,
         notes: form.notes || null,
-        created_by: currentUserId,
       };
 
       const { error } = await supabase.from("crm_contacts").insert(insertData);

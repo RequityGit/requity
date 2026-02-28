@@ -37,13 +37,13 @@ export default async function AuthenticatedLayout({
   const cookieStore = cookies();
   const activeRoleCookie = cookieStore.get("active_role")?.value;
   const allowedRoles: string[] = profile.allowed_roles?.length
-    ? profile.allowed_roles
-    : [profile.role];
+    ? (profile.allowed_roles.filter(Boolean) as string[])
+    : [profile.role].filter(Boolean) as string[];
 
   const effectiveRole =
     activeRoleCookie && allowedRoles.includes(activeRoleCookie)
       ? activeRoleCookie
-      : profile.role;
+      : (profile.role ?? "borrower");
 
   return (
     <div className="flex h-screen overflow-hidden">
@@ -52,7 +52,7 @@ export default async function AuthenticatedLayout({
         <Topbar
           userName={profile.full_name || ""}
           role={effectiveRole}
-          email={profile.email}
+          email={profile.email ?? ""}
           allowedRoles={allowedRoles}
         />
         <main className="flex-1 overflow-y-auto bg-slate-50 p-6">

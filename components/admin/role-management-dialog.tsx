@@ -55,8 +55,8 @@ export function RoleManagementDialog({
 
   // Get current active roles
   const currentRoles = new Set<string>();
-  currentRoles.add(user.role);
-  user.allowed_roles.forEach((r) => currentRoles.add(r));
+  if (user.role) currentRoles.add(user.role);
+  user.allowed_roles.forEach((r) => { if (r) currentRoles.add(r); });
   user.user_roles.forEach((r) => {
     if (r.is_active) currentRoles.add(r.role);
   });

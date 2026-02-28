@@ -49,10 +49,11 @@ interface TemplateItem {
   description: string | null;
   borrower_description: string | null;
   category: string;
-  responsible_party: string;
+  responsible_party: string | null;
   due_date_offset_days: number | null;
-  is_critical_path: boolean;
-  sort_order: number;
+  is_critical_path: boolean | null;
+  sort_order: number | null;
+  created_at: string | null;
 }
 
 interface Template {

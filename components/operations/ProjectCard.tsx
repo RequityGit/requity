@@ -33,15 +33,19 @@ export interface OpsTask {
   linked_entity_type: string | null;
   linked_entity_id: string | null;
   linked_entity_label: string | null;
-  is_recurring: boolean;
+  is_recurring: boolean | null;
   recurrence_pattern: string | null;
   recurring_series_id: string | null;
   source_task_id: string | null;
   recurrence_end_date: string | null;
-  is_active_recurrence: boolean;
+  is_active_recurrence: boolean | null;
+  next_recurrence_date: string | null;
+  parent_task_id: string | null;
+  recurrence_day_of_month: number | null;
+  recurrence_day_of_week: number | null;
   created_by: string | null;
   updated_at: string | null;
-  created_at: string;
+  created_at: string | null;
 }
 
 export interface OpsProject {
@@ -59,7 +63,7 @@ export interface OpsProject {
   started_at: string | null;
   completed_at: string | null;
   updated_at: string | null;
-  created_at: string;
+  created_at: string | null;
 }
 
 interface ProjectCardProps {
@@ -202,7 +206,7 @@ export function ProjectCard({ project, tasks, onToggleTask, onStopRecurrence, on
                     <div className="flex items-center gap-1.5">
                       <PriorityBadge priority={task.priority} />
                       {task.is_recurring && (
-                        <RecurringBadge pattern={task.recurrence_pattern} isActive={task.is_active_recurrence} />
+                        <RecurringBadge pattern={task.recurrence_pattern} isActive={task.is_active_recurrence ?? false} />
                       )}
                       <DueDateLabel dueDate={task.due_date} />
                       <DropdownMenu>

@@ -122,19 +122,24 @@ export function CapitalCallForm({ funds }: CapitalCallFormProps) {
 
     const supabase = createClient();
 
-    const calls = investors
-      .filter(
-        (inv) =>
-          callAmounts[inv.id] && parseFloat(callAmounts[inv.id]) > 0
-      )
-      .map((inv) => ({
-        fund_id: fundId,
-        investor_id: inv.investor_id,
-        commitment_id: inv.id,
-        call_amount: parseFloat(callAmounts[inv.id]),
-        due_date: dueDate,
-        status: "pending" as const,
-      }));
+    const filteredInvestors = investors.filter(
+      (inv) =>
+        callAmounts[inv.id] && parseFloat(callAmounts[inv.id]) > 0
+    );
+    const totalAmount = filteredInvestors.reduce(
+      (sum, inv) => sum + parseFloat(callAmounts[inv.id]),
+      0
+    );
+    const calls = filteredInvestors.map((inv, idx) => ({
+      fund_id: fundId,
+      investor_id: inv.investor_id,
+      commitment_id: inv.id,
+      call_amount: parseFloat(callAmounts[inv.id]),
+      total_amount: totalAmount,
+      call_number: idx + 1,
+      due_date: dueDate,
+      status: "pending" as const,
+    }));
 
     if (calls.length === 0) {
       toast({

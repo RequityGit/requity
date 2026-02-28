@@ -11,8 +11,8 @@ interface Loan {
   property_address: string | null;
   property_city: string | null;
   property_state: string | null;
-  loan_type: string | null;
-  loan_amount: number;
+  type: string;
+  loan_amount: number | null;
   stage: string;
   origination_date: string | null;
 }
@@ -43,11 +43,11 @@ const loanColumns: Column<Loan>[] = [
         : "—",
   },
   {
-    key: "loan_type",
+    key: "type",
     header: "Type",
     cell: (row) =>
-      row.loan_type ? (
-        <span className="capitalize">{row.loan_type.replace(/_/g, " ")}</span>
+      row.type ? (
+        <span className="capitalize">{row.type.replace(/_/g, " ")}</span>
       ) : (
         "—"
       ),

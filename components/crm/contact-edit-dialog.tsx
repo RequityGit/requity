@@ -52,8 +52,8 @@ export function ContactEditDialog({
   const { toast } = useToast();
 
   const [form, setForm] = useState({
-    first_name: contact.first_name,
-    last_name: contact.last_name,
+    first_name: contact.first_name ?? "",
+    last_name: contact.last_name ?? "",
     email: contact.email || "",
     phone: contact.phone || "",
     company_name: contact.company_name || "",

@@ -80,7 +80,7 @@ export function LoanKanban({ data, currentUserId }: LoanKanbanProps) {
     const { error } = await supabase
       .from("loans")
       .update({
-        stage: newStage,
+        stage: newStage as any,
         stage_updated_at: now,
         updated_at: now,
       })
@@ -102,12 +102,9 @@ export function LoanKanban({ data, currentUserId }: LoanKanbanProps) {
     // Log the stage change
     await supabase.from("loan_activity_log").insert({
       loan_id: loanId,
-      user_id: currentUserId,
-      activity_type: "stage_change",
+      performed_by: currentUserId,
+      action: "stage_change",
       description: `Moved from ${LOAN_STAGE_LABELS[loan.stage as LoanStage] || loan.stage} to ${LOAN_STAGE_LABELS[newStage as LoanStage] || newStage}`,
-      old_value: loan.stage,
-      new_value: newStage,
-      field_name: "stage",
     });
 
     setLoans((prev) =>

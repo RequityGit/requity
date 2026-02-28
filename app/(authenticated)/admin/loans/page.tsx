@@ -99,7 +99,7 @@ export default async function AdminLoansPage() {
     property_state: l.property_state,
     borrower_name: borrowerLookup[l.borrower_id] ?? "—",
     borrower_id: l.borrower_id,
-    loan_type: l.loan_type,
+    loan_type: l.type,
     loan_amount: l.loan_amount,
     stage: l.stage,
     stage_updated_at: l.stage_updated_at,

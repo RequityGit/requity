@@ -104,7 +104,7 @@ export default async function AdminLoanDetailPage({ params }: PageProps) {
   const underwriterName = (loan.underwriter_id && teamProfiles[loan.underwriter_id]) ?? "—";
   const closerName = (loan.closer_id && teamProfiles[loan.closer_id]) ?? "—";
 
-  const loanTypeLabel = LOAN_TYPES.find((t) => t.value === loan.loan_type)?.label ?? (loan.loan_type ?? "—").replace(/_/g, " ");
+  const loanTypeLabel = LOAN_TYPES.find((t) => t.value === loan.type)?.label ?? (loan.type ?? "—").replace(/_/g, " ");
 
   // Condition summary for the header
   const condTotal = conditions.length;
@@ -184,7 +184,7 @@ export default async function AdminLoanDetailPage({ params }: PageProps) {
               value={formatPercent(loan.interest_rate)}
             />
             <DetailField label="Points" value={loan.points ? `${loan.points}%` : "—"} />
-            <DetailField label="Term" value={loan.term_months ? `${loan.term_months} months` : "—"} />
+            <DetailField label="Term" value={loan.loan_term_months ? `${loan.loan_term_months} months` : "—"} />
             <DetailField
               label="Expected Close"
               value={formatDate(loan.expected_close_date)}
@@ -256,14 +256,14 @@ export default async function AdminLoanDetailPage({ params }: PageProps) {
           loan_number: loan.loan_number,
           borrower_id: loan.borrower_id,
           borrower_name: borrowerName,
-          loan_type: loan.loan_type,
+          loan_type: loan.type,
           property_address: loan.property_address,
           property_city: loan.property_city,
           property_state: loan.property_state,
           property_zip: loan.property_zip,
           loan_amount: loan.loan_amount,
           interest_rate: loan.interest_rate,
-          term_months: loan.term_months,
+          term_months: loan.loan_term_months,
           origination_date: loan.origination_date,
           maturity_date: loan.maturity_date,
           stage: loan.stage,

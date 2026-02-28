@@ -10,7 +10,7 @@ interface FundRow {
   name: string;
   fund_type: string;
   target_size: number | null;
-  current_aum: number;
+  current_aum: number | null;
   vintage_year: number | null;
   status: string;
   irr_target: number | null;

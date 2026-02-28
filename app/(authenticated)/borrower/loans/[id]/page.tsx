@@ -57,7 +57,7 @@ export default async function LoanDetailPage({ params }: LoanDetailPageProps) {
     .order("created_at", { ascending: false });
 
   const loanTypeLabel =
-    LOAN_TYPES.find((t) => t.value === loan.loan_type)?.label ?? loan.loan_type ?? "—";
+    LOAN_TYPES.find((t) => t.value === loan.type)?.label ?? loan.type ?? "—";
 
   const fullAddress = [
     loan.property_address,
@@ -121,7 +121,7 @@ export default async function LoanDetailPage({ params }: LoanDetailPageProps) {
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Term</span>
                   <span className="font-medium">
-                    {loan.term_months} months
+                    {loan.loan_term_months} months
                   </span>
                 </div>
                 {loan.ltv != null && (

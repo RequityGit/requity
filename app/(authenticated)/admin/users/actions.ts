@@ -34,12 +34,12 @@ async function requireAdmin(): Promise<
 
 export interface UserRow {
   id: string;
-  email: string;
+  email: string | null;
   full_name: string | null;
-  role: string;
-  allowed_roles: string[];
+  role: string | null;
+  allowed_roles: (string | null)[];
   activation_status: string;
-  created_at: string;
+  created_at: string | null;
   last_sign_in_at: string | null;
   user_roles: {
     role: string;
@@ -464,7 +464,7 @@ export async function resendInviteAction(
       .eq("id", userId)
       .single();
 
-    if (!profile) return { error: "User not found" };
+    if (!profile || !profile.email) return { error: "User not found or has no email" };
 
     // Generate a new magic link
     const { error: linkError } = await admin.auth.admin.generateLink({
@@ -493,7 +493,7 @@ export async function resendInviteAction(
 // ---------------------------------------------------------------------------
 
 export async function fetchInvestorsAction(): Promise<
-  { success: true; investors: { id: string; full_name: string | null; email: string }[] } | { error: string }
+  { success: true; investors: { id: string; full_name: string | null; email: string | null }[] } | { error: string }
 > {
   try {
     const auth = await requireAdmin();

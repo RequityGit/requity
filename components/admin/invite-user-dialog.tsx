@@ -52,7 +52,7 @@ export function InviteUserDialog({
 
   // Data for linking
   const [investors, setInvestors] = useState<
-    { id: string; full_name: string | null; email: string }[]
+    { id: string; full_name: string | null; email: string | null }[]
   >([]);
   const [borrowers, setBorrowers] = useState<
     { id: string; first_name: string; last_name: string; email: string | null }[]

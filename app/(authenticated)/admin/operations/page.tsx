@@ -31,9 +31,9 @@ export default async function OperationsPage() {
   const projects = projectsRes.data ?? [];
   const tasks = tasksRes.data ?? [];
   const teamMembers = (membersRes.data ?? []).map(
-    (t: { id: string; full_name: string | null; email: string }) => ({
+    (t: { id: string; full_name: string | null; email: string | null }) => ({
       id: t.id,
-      full_name: t.full_name || t.email,
+      full_name: t.full_name || t.email || "Unknown",
     })
   );
 

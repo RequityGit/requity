@@ -175,7 +175,7 @@ export default async function AdminInvestorDetailPage({ params }: PageProps) {
       header: "Type",
       cell: (row) => (
         <span className="capitalize">
-          {row.document_type.replace(/_/g, " ")}
+          {row.document_type?.replace(/_/g, " ") ?? "—"}
         </span>
       ),
     },

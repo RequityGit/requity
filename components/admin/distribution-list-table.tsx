@@ -9,7 +9,7 @@ interface DistributionRow {
   fund_name: string;
   investor_name: string;
   distribution_type: string;
-  amount: number;
+  amount: number | null;
   distribution_date: string;
   description: string | null;
   status: string;

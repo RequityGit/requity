@@ -70,7 +70,7 @@ export function BorrowerEntityDialog({
       setCity(entity.city || "");
       setState(entity.state || "");
       setZip(entity.zip || "");
-      setIsForeignFiled(entity.is_foreign_filed);
+      setIsForeignFiled(entity.is_foreign_filed ?? false);
       setForeignFiledStates(entity.foreign_filed_states?.join(", ") || "");
       setNotes(entity.notes || "");
     } else {

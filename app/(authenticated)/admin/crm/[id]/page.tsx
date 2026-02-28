@@ -58,17 +58,17 @@ export default async function CrmContactDetailPage({ params }: PageProps) {
   ]);
 
   const teamMembers = (teamResult.data ?? []).map(
-    (t: { id: string; full_name: string | null; email: string }) => ({
+    (t: { id: string; full_name: string | null; email: string | null }) => ({
       id: t.id,
-      full_name: t.full_name || t.email,
+      full_name: t.full_name || t.email || "Unknown",
     })
   );
 
   // Build profile lookup for activity created_by names
   const profileLookup: Record<string, string> = {};
   (teamResult.data ?? []).forEach(
-    (t: { id: string; full_name: string | null; email: string }) => {
-      profileLookup[t.id] = t.full_name || t.email;
+    (t: { id: string; full_name: string | null; email: string | null }) => {
+      profileLookup[t.id] = t.full_name || t.email || "Unknown";
     }
   );
 

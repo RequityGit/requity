@@ -22,14 +22,14 @@ interface LoanDetailTabsProps {
 export function LoanDetailTabs({ payments, documents }: LoanDetailTabsProps) {
   const paymentColumns: Column<LoanPayment>[] = [
     {
-      key: "due_date",
-      header: "Due Date",
-      cell: (row) => formatDate(row.due_date),
+      key: "payment_date",
+      header: "Date",
+      cell: (row) => formatDate(row.payment_date),
     },
     {
-      key: "amount_due",
-      header: "Amount Due",
-      cell: (row) => formatCurrencyDetailed(row.amount_due),
+      key: "amount",
+      header: "Amount",
+      cell: (row) => formatCurrencyDetailed(row.amount),
     },
     {
       key: "principal",
@@ -40,19 +40,6 @@ export function LoanDetailTabs({ payments, documents }: LoanDetailTabsProps) {
       key: "interest",
       header: "Interest",
       cell: (row) => formatCurrencyDetailed(row.interest_amount),
-    },
-    {
-      key: "amount_paid",
-      header: "Amount Paid",
-      cell: (row) =>
-        row.amount_paid != null
-          ? formatCurrencyDetailed(row.amount_paid)
-          : "\u2014",
-    },
-    {
-      key: "paid_date",
-      header: "Paid Date",
-      cell: (row) => formatDate(row.paid_date),
     },
     {
       key: "status",
@@ -78,7 +65,7 @@ export function LoanDetailTabs({ payments, documents }: LoanDetailTabsProps) {
       cell: (row) => {
         const label =
           DOCUMENT_TYPES.find((t) => t.value === row.document_type)?.label ??
-          row.document_type.replace(/_/g, " ");
+          row.document_type?.replace(/_/g, " ") ?? "—";
         return <span className="capitalize text-sm">{label}</span>;
       },
     },
@@ -97,8 +84,8 @@ export function LoanDetailTabs({ payments, documents }: LoanDetailTabsProps) {
       header: "",
       cell: (row) => (
         <DocumentDownload
-          filePath={row.file_path}
-          fileName={row.file_name}
+          filePath={row.file_path ?? ""}
+          fileName={row.file_name ?? ""}
         />
       ),
     },

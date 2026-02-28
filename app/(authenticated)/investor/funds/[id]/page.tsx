@@ -181,7 +181,7 @@ export default async function InvestorFundDetailPage({ params }: PageProps) {
       header: "Type",
       cell: (row) => (
         <span className="capitalize">
-          {row.document_type.replace(/_/g, " ")}
+          {row.document_type?.replace(/_/g, " ") ?? "—"}
         </span>
       ),
     },
@@ -194,7 +194,7 @@ export default async function InvestorFundDetailPage({ params }: PageProps) {
       key: "download",
       header: "",
       cell: (row) => (
-        <DocumentDownload filePath={row.file_path} fileName={row.file_name} />
+        <DocumentDownload filePath={row.file_path ?? ""} fileName={row.file_name} />
       ),
     },
   ];
