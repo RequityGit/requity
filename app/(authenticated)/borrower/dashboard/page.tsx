@@ -24,11 +24,11 @@ export default async function BorrowerDashboardPage() {
     redirect("/login");
   }
 
-  // Fetch all loans for this borrower
+  // Fetch all loans for this borrower (profile_id links to auth user)
   const { data: loans } = await supabase
     .from("loans")
     .select("*")
-    .eq("borrower_id", user.id)
+    .eq("profile_id", user.id)
     .order("created_at", { ascending: false });
 
   const allLoans = loans ?? [];

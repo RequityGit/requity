@@ -31,7 +31,7 @@ export default async function AdminLoanDetailPage({ params }: PageProps) {
 
   const { data: loan } = await supabase
     .from("loans")
-    .select(`*, borrower:profiles!loans_borrower_id_fkey(full_name, email)`)
+    .select(`*, borrower:borrowers!loans_borrower_id_fkey(first_name, last_name, email)`)
     .eq("id", id)
     .single();
 
@@ -95,7 +95,10 @@ export default async function AdminLoanDetailPage({ params }: PageProps) {
   const conditions = conditionsResult.data ?? [];
   const activityLog = activityResult.data ?? [];
 
-  const borrowerName = (loan as any).borrower?.full_name ?? "—";
+  const borrowerRaw = (loan as any).borrower;
+  const borrowerName = borrowerRaw
+    ? `${borrowerRaw.first_name ?? ""} ${borrowerRaw.last_name ?? ""}`.trim() || "—"
+    : "—";
   const originatorName = (loan.originator_id && teamProfiles[loan.originator_id]) ?? loan.originator ?? "—";
   const processorName = (loan.processor_id && teamProfiles[loan.processor_id]) ?? "—";
   const underwriterName = (loan.underwriter_id && teamProfiles[loan.underwriter_id]) ?? "—";
