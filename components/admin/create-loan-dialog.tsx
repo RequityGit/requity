@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -24,7 +24,7 @@ import {
 } from "@/components/ui/select";
 import { LOAN_TYPES, LOAN_PRIORITIES } from "@/lib/constants";
 import { useToast } from "@/components/ui/use-toast";
-import { PlusCircle } from "lucide-react";
+import { PlusCircle, Search, Check, X } from "lucide-react";
 
 interface TeamMember {
   id: string;
@@ -58,8 +58,33 @@ export function CreateLoanDialog({
 }: CreateLoanDialogProps) {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [borrowerSearch, setBorrowerSearch] = useState("");
+  const [borrowerDropdownOpen, setBorrowerDropdownOpen] = useState(false);
+  const borrowerRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
   const { toast } = useToast();
+
+  const filteredBorrowers = useMemo(() => {
+    if (!borrowerSearch.trim()) return borrowers;
+    const query = borrowerSearch.toLowerCase();
+    return borrowers.filter(
+      (b) =>
+        b.full_name?.toLowerCase().includes(query) ||
+        b.email?.toLowerCase().includes(query) ||
+        b.company_name?.toLowerCase().includes(query)
+    );
+  }, [borrowers, borrowerSearch]);
+
+  // Close dropdown on click outside
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (borrowerRef.current && !borrowerRef.current.contains(e.target as Node)) {
+        setBorrowerDropdownOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   const [form, setForm] = useState({
     borrower_id: "",
@@ -82,6 +107,8 @@ export function CreateLoanDialog({
     expected_close_date: "",
     notes: "",
   });
+
+  const selectedBorrower = borrowers.find((b) => b.id === form.borrower_id);
 
   function updateField(field: string, value: string) {
     setForm((prev) => ({ ...prev, [field]: value }));
@@ -109,6 +136,8 @@ export function CreateLoanDialog({
       expected_close_date: "",
       notes: "",
     });
+    setBorrowerSearch("");
+    setBorrowerDropdownOpen(false);
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -242,27 +271,83 @@ export function CreateLoanDialog({
           <DialogTitle>Create New Loan</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Borrower Selection */}
+          {/* Borrower Selection - Typeahead Search */}
           <div className="space-y-2">
             <Label>
               Borrower <span className="text-red-500">*</span>
             </Label>
-            <Select
-              value={form.borrower_id}
-              onValueChange={(v) => updateField("borrower_id", v)}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Select borrower..." />
-              </SelectTrigger>
-              <SelectContent>
-                {borrowers.map((b) => (
-                  <SelectItem key={b.id} value={b.id}>
-                    {b.full_name}
-                    {b.company_name ? ` (${b.company_name})` : ""}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <div ref={borrowerRef} className="relative">
+              {selectedBorrower && !borrowerDropdownOpen ? (
+                <div className="flex items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm">
+                  <span>
+                    {selectedBorrower.full_name}
+                    {selectedBorrower.company_name
+                      ? ` (${selectedBorrower.company_name})`
+                      : ""}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      updateField("borrower_id", "");
+                      setBorrowerSearch("");
+                      setBorrowerDropdownOpen(true);
+                    }}
+                    className="ml-2 rounded-sm opacity-50 hover:opacity-100"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                </div>
+              ) : (
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                  <Input
+                    value={borrowerSearch}
+                    onChange={(e) => {
+                      setBorrowerSearch(e.target.value);
+                      setBorrowerDropdownOpen(true);
+                    }}
+                    onFocus={() => setBorrowerDropdownOpen(true)}
+                    placeholder="Search by name, email, or company..."
+                    className="pl-9"
+                  />
+                </div>
+              )}
+              {borrowerDropdownOpen && (
+                <div className="absolute z-50 mt-1 w-full rounded-md border bg-popover shadow-md">
+                  <div className="max-h-[200px] overflow-y-auto p-1">
+                    {filteredBorrowers.length === 0 ? (
+                      <div className="py-4 text-center text-sm text-muted-foreground">
+                        No borrowers found
+                      </div>
+                    ) : (
+                      filteredBorrowers.map((b) => (
+                        <button
+                          key={b.id}
+                          type="button"
+                          onClick={() => {
+                            updateField("borrower_id", b.id);
+                            setBorrowerSearch("");
+                            setBorrowerDropdownOpen(false);
+                          }}
+                          className="flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-sm hover:bg-accent hover:text-accent-foreground cursor-pointer"
+                        >
+                          {form.borrower_id === b.id && (
+                            <Check className="h-4 w-4 shrink-0" />
+                          )}
+                          <div className={form.borrower_id === b.id ? "" : "pl-6"}>
+                            <div className="font-medium">{b.full_name}</div>
+                            <div className="text-xs text-muted-foreground">
+                              {b.email}
+                              {b.company_name ? ` · ${b.company_name}` : ""}
+                            </div>
+                          </div>
+                        </button>
+                      ))
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
 
           {/* Loan Type & Priority */}
