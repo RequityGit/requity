@@ -12,7 +12,12 @@ CREATE TABLE IF NOT EXISTS public.condition_templates (
   id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
   name text NOT NULL,
   loan_type text,
-  description text,
+  internal_description text,
+  borrower_description text,
+  responsible_party text DEFAULT 'borrower' CHECK (responsible_party IN (
+    'borrower', 'broker', 'title_company', 'insurance_agent', 'internal', 'attorney', 'other'
+  )),
+  critical_path_item boolean DEFAULT false,
   is_default boolean DEFAULT false,
   created_by uuid REFERENCES public.profiles(id),
   created_at timestamptz DEFAULT now(),
@@ -45,14 +50,14 @@ CREATE TABLE IF NOT EXISTS public.condition_template_items (
   id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
   template_id uuid REFERENCES public.condition_templates(id) ON DELETE CASCADE NOT NULL,
   name text NOT NULL,
-  description text,
+  internal_description text,
   borrower_description text,
-  category text NOT NULL CHECK (category IN ('pta', 'ptf')),
+  category text NOT NULL CHECK (category IN ('pta', 'ptf', 'prior_to_approval', 'prior_to_funding')),
   responsible_party text DEFAULT 'borrower' CHECK (responsible_party IN (
     'borrower', 'broker', 'title_company', 'insurance_agent', 'internal', 'attorney', 'other'
   )),
   due_date_offset_days int DEFAULT 5,
-  is_critical_path boolean DEFAULT false,
+  critical_path_item boolean DEFAULT false,
   sort_order int DEFAULT 0,
   created_at timestamptz DEFAULT now()
 );
@@ -83,16 +88,16 @@ CREATE TABLE IF NOT EXISTS public.loan_conditions (
   loan_id uuid REFERENCES public.loans(id) ON DELETE CASCADE NOT NULL,
   template_item_id uuid REFERENCES public.condition_template_items(id),
   name text NOT NULL,
-  description text,
+  internal_description text,
   borrower_description text,
-  category text NOT NULL CHECK (category IN ('pta', 'ptf')),
+  category text NOT NULL CHECK (category IN ('pta', 'ptf', 'prior_to_approval', 'prior_to_funding')),
   status text DEFAULT 'not_requested' CHECK (status IN (
     'not_requested', 'requested', 'received', 'under_review', 'approved', 'waived', 'rejected'
   )),
   responsible_party text DEFAULT 'borrower' CHECK (responsible_party IN (
     'borrower', 'broker', 'title_company', 'insurance_agent', 'internal', 'attorney', 'other'
   )),
-  is_critical_path boolean DEFAULT false,
+  critical_path_item boolean DEFAULT false,
   sort_order int DEFAULT 0,
   -- Dates
   requested_date date,

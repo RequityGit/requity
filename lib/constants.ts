@@ -246,6 +246,8 @@ export type ConditionStatus =
 export const CONDITION_CATEGORIES = [
   { value: "pta", label: "Prior to Approval (PTA)" },
   { value: "ptf", label: "Prior to Funding (PTF)" },
+  { value: "prior_to_approval", label: "Prior to Approval" },
+  { value: "prior_to_funding", label: "Prior to Funding" },
 ] as const;
 
 export const RESPONSIBLE_PARTIES = [

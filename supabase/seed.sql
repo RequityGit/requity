@@ -198,7 +198,7 @@ ON CONFLICT (id) DO NOTHING;
 -- ============================================
 -- CONDITION TEMPLATES
 -- ============================================
-INSERT INTO public.condition_templates (id, name, loan_type, description, is_default, created_by) VALUES
+INSERT INTO public.condition_templates (id, name, loan_type, internal_description, is_default, created_by) VALUES
   ('ct000000-0000-0000-0000-000000000001', 'Residential Bridge - Standard', 'bridge_residential', 'Standard conditions for residential bridge loans', true, '00000000-0000-0000-0000-000000000001'),
   ('ct000000-0000-0000-0000-000000000002', 'Commercial Bridge - Standard', 'bridge_commercial', 'Standard conditions for commercial bridge loans', true, '00000000-0000-0000-0000-000000000001'),
   ('ct000000-0000-0000-0000-000000000003', 'Fix & Flip - Standard', 'fix_and_flip', 'Standard conditions for fix and flip loans', true, '00000000-0000-0000-0000-000000000001'),
@@ -210,7 +210,7 @@ ON CONFLICT (id) DO NOTHING;
 -- ============================================
 -- CONDITION TEMPLATE ITEMS — Residential Bridge
 -- ============================================
-INSERT INTO public.condition_template_items (id, template_id, name, description, borrower_description, category, responsible_party, due_date_offset_days, is_critical_path, sort_order) VALUES
+INSERT INTO public.condition_template_items (id, template_id, name, internal_description, borrower_description, category, responsible_party, due_date_offset_days, critical_path_item, sort_order) VALUES
   -- PTA Conditions
   ('cti00000-0000-0000-0001-000000000001', 'ct000000-0000-0000-0000-000000000001', 'Signed Loan Application', 'Complete and signed loan application form', 'Please complete and sign the loan application', 'pta', 'borrower', 3, true, 1),
   ('cti00000-0000-0000-0001-000000000002', 'ct000000-0000-0000-0000-000000000001', 'Credit Authorization', 'Signed credit check authorization', 'Please sign the credit authorization form so we can run your credit', 'pta', 'borrower', 3, true, 2),
@@ -234,7 +234,7 @@ ON CONFLICT (id) DO NOTHING;
 -- ============================================
 -- CONDITION TEMPLATE ITEMS — Commercial Bridge
 -- ============================================
-INSERT INTO public.condition_template_items (id, template_id, name, description, borrower_description, category, responsible_party, due_date_offset_days, is_critical_path, sort_order) VALUES
+INSERT INTO public.condition_template_items (id, template_id, name, internal_description, borrower_description, category, responsible_party, due_date_offset_days, critical_path_item, sort_order) VALUES
   -- PTA
   ('cti00000-0000-0000-0002-000000000001', 'ct000000-0000-0000-0000-000000000002', 'Signed Loan Application', 'Complete and signed loan application form', 'Please complete and sign the loan application', 'pta', 'borrower', 3, true, 1),
   ('cti00000-0000-0000-0002-000000000002', 'ct000000-0000-0000-0000-000000000002', 'Credit Authorization', 'Signed credit check authorization', 'Please sign the credit authorization form', 'pta', 'borrower', 3, true, 2),
@@ -260,7 +260,7 @@ ON CONFLICT (id) DO NOTHING;
 -- ============================================
 -- CONDITION TEMPLATE ITEMS — Fix & Flip
 -- ============================================
-INSERT INTO public.condition_template_items (id, template_id, name, description, borrower_description, category, responsible_party, due_date_offset_days, is_critical_path, sort_order) VALUES
+INSERT INTO public.condition_template_items (id, template_id, name, internal_description, borrower_description, category, responsible_party, due_date_offset_days, critical_path_item, sort_order) VALUES
   ('cti00000-0000-0000-0003-000000000001', 'ct000000-0000-0000-0000-000000000003', 'Signed Loan Application', 'Complete and signed application', 'Please complete and sign the loan application', 'pta', 'borrower', 3, true, 1),
   ('cti00000-0000-0000-0003-000000000002', 'ct000000-0000-0000-0000-000000000003', 'Credit Authorization', 'Signed credit authorization', 'Please sign the credit authorization form', 'pta', 'borrower', 3, true, 2),
   ('cti00000-0000-0000-0003-000000000003', 'ct000000-0000-0000-0000-000000000003', 'Entity Documents', 'Articles of Org, Operating Agreement, EIN Letter', 'Please provide entity formation documents', 'pta', 'borrower', 5, true, 3),

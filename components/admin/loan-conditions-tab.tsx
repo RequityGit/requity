@@ -61,10 +61,10 @@ export function LoanConditionsTab({
   const { toast } = useToast();
 
   const ptaConditions = conditions
-    .filter((c) => c.category === "pta")
+    .filter((c) => c.category === "pta" || c.category === "prior_to_approval")
     .sort((a, b) => a.sort_order - b.sort_order);
   const ptfConditions = conditions
-    .filter((c) => c.category === "ptf")
+    .filter((c) => c.category === "ptf" || c.category === "prior_to_funding")
     .sort((a, b) => a.sort_order - b.sort_order);
 
   // Summary stats
@@ -454,16 +454,16 @@ function ConditionRow({
             <span className="text-sm font-medium text-[#1a2b4a]">
               {condition.name}
             </span>
-            {condition.is_critical_path && (
+            {condition.critical_path_item && (
               <Badge className="bg-red-100 text-red-700 border-red-200 text-[10px] px-1.5 py-0">
                 Critical
               </Badge>
             )}
             <StatusBadge status={condition.status} />
           </div>
-          {condition.description && (
+          {condition.internal_description && (
             <p className="text-xs text-muted-foreground mt-0.5">
-              {condition.description}
+              {condition.internal_description}
             </p>
           )}
           <div className="flex items-center gap-3 mt-1 text-[11px] text-muted-foreground">
@@ -584,11 +584,11 @@ function AddConditionDialog({
 
   const [form, setForm] = useState({
     name: "",
-    description: "",
+    internal_description: "",
     borrower_description: "",
     category: "pta",
     responsible_party: "borrower",
-    is_critical_path: false,
+    critical_path_item: false,
     due_date: "",
     internal_note: "",
   });
@@ -607,11 +607,11 @@ function AddConditionDialog({
       const { error } = await supabase.from("loan_conditions").insert({
         loan_id: loanId,
         name: form.name,
-        description: form.description || null,
+        internal_description: form.internal_description || null,
         borrower_description: form.borrower_description || null,
         category: form.category,
         responsible_party: form.responsible_party,
-        is_critical_path: form.is_critical_path,
+        critical_path_item: form.critical_path_item,
         due_date: form.due_date || null,
         internal_note: form.internal_note || null,
         status: "not_requested",
@@ -623,11 +623,11 @@ function AddConditionDialog({
       setOpen(false);
       setForm({
         name: "",
-        description: "",
+        internal_description: "",
         borrower_description: "",
         category: "pta",
         responsible_party: "borrower",
-        is_critical_path: false,
+        critical_path_item: false,
         due_date: "",
         internal_note: "",
       });
@@ -718,9 +718,9 @@ function AddConditionDialog({
               <label className="flex items-center gap-2 text-sm cursor-pointer">
                 <input
                   type="checkbox"
-                  checked={form.is_critical_path}
+                  checked={form.critical_path_item}
                   onChange={(e) =>
-                    updateField("is_critical_path", e.target.checked)
+                    updateField("critical_path_item", e.target.checked)
                   }
                   className="rounded border-gray-300"
                 />
@@ -731,8 +731,8 @@ function AddConditionDialog({
           <div className="space-y-2">
             <Label>Internal Description</Label>
             <Textarea
-              value={form.description}
-              onChange={(e) => updateField("description", e.target.value)}
+              value={form.internal_description}
+              onChange={(e) => updateField("internal_description", e.target.value)}
               rows={2}
               placeholder="Visible to team only"
             />

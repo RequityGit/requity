@@ -38,11 +38,12 @@ interface ConditionWithLoan {
   id: string;
   loan_id: string;
   name: string;
-  description: string | null;
+  internal_description: string | null;
+  borrower_description: string | null;
   category: string;
   status: string;
   responsible_party: string;
-  is_critical_path: boolean;
+  critical_path_item: boolean;
   due_date: string | null;
   received_date: string | null;
   approved_date: string | null;
@@ -98,7 +99,7 @@ export function ConditionsDashboard({
     ).length;
     const criticalOutstanding = conditions.filter(
       (c: ConditionWithLoan) =>
-        c.is_critical_path && !["approved", "waived"].includes(c.status)
+        c.critical_path_item && !["approved", "waived"].includes(c.status)
     ).length;
     const uniqueLoans = new Set(conditions.map((c: ConditionWithLoan) => c.loan_id)).size;
 
@@ -434,7 +435,7 @@ export function ConditionsDashboard({
                             >
                               {condition.category}
                             </Badge>
-                            {condition.is_critical_path && (
+                            {condition.critical_path_item && (
                               <Badge className="bg-red-100 text-red-700 border-red-200 text-[10px] px-1.5 py-0">
                                 Critical
                               </Badge>

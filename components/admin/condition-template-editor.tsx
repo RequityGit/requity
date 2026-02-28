@@ -46,12 +46,12 @@ interface TemplateItem {
   id: string;
   template_id: string;
   name: string;
-  description: string | null;
+  internal_description: string | null;
   borrower_description: string | null;
   category: string;
   responsible_party: string;
   due_date_offset_days: number | null;
-  is_critical_path: boolean;
+  critical_path_item: boolean;
   sort_order: number;
 }
 
@@ -59,7 +59,10 @@ interface Template {
   id: string;
   name: string;
   loan_type: string;
-  description: string | null;
+  internal_description: string | null;
+  borrower_description: string | null;
+  responsible_party: string;
+  critical_path_item: boolean;
   is_default: boolean;
   created_by: string | null;
   items: TemplateItem[];
@@ -160,7 +163,10 @@ export function ConditionTemplateEditor({
       .insert({
         name: `${template.name} (Copy)`,
         loan_type: template.loan_type,
-        description: template.description,
+        internal_description: template.internal_description,
+        borrower_description: template.borrower_description,
+        responsible_party: template.responsible_party,
+        critical_path_item: template.critical_path_item,
         is_default: false,
         created_by: currentUserId,
       })
@@ -181,12 +187,12 @@ export function ConditionTemplateEditor({
       const newItems = template.items.map((item) => ({
         template_id: newTemplate.id,
         name: item.name,
-        description: item.description,
+        internal_description: item.internal_description,
         borrower_description: item.borrower_description,
         category: item.category,
         responsible_party: item.responsible_party,
         due_date_offset_days: item.due_date_offset_days ?? undefined,
-        is_critical_path: item.is_critical_path,
+        critical_path_item: item.critical_path_item,
         sort_order: item.sort_order,
       }));
 
@@ -271,10 +277,10 @@ export function ConditionTemplateEditor({
             {typeTemplates.map((template: Template) => {
               const isExpanded = expandedId === template.id;
               const ptaCount = template.items.filter(
-                (i: TemplateItem) => i.category === "pta"
+                (i: TemplateItem) => i.category === "pta" || i.category === "prior_to_approval"
               ).length;
               const ptfCount = template.items.filter(
-                (i: TemplateItem) => i.category === "ptf"
+                (i: TemplateItem) => i.category === "ptf" || i.category === "prior_to_funding"
               ).length;
 
               return (
@@ -348,9 +354,9 @@ export function ConditionTemplateEditor({
                         </Button>
                       </div>
                     </div>
-                    {template.description && (
+                    {template.internal_description && (
                       <p className="text-xs text-muted-foreground ml-6">
-                        {template.description}
+                        {template.internal_description}
                       </p>
                     )}
                   </CardHeader>
@@ -359,7 +365,7 @@ export function ConditionTemplateEditor({
                       <div className="space-y-1">
                         {/* PTA Items */}
                         {template.items
-                          .filter((i: TemplateItem) => i.category === "pta")
+                          .filter((i: TemplateItem) => i.category === "pta" || i.category === "prior_to_approval")
                           .map((item: TemplateItem) => (
                             <TemplateItemRow
                               key={item.id}
@@ -374,7 +380,7 @@ export function ConditionTemplateEditor({
                         )}
                         {/* PTF Items */}
                         {template.items
-                          .filter((i: TemplateItem) => i.category === "ptf")
+                          .filter((i: TemplateItem) => i.category === "ptf" || i.category === "prior_to_funding")
                           .map((item: TemplateItem) => (
                             <TemplateItemRow
                               key={item.id}
@@ -443,7 +449,7 @@ function TemplateItemRow({
           >
             {categoryLabel}
           </Badge>
-          {item.is_critical_path && (
+          {item.critical_path_item && (
             <Badge className="bg-red-100 text-red-700 border-red-200 text-[10px] px-1.5 py-0">
               Critical
             </Badge>
@@ -485,7 +491,7 @@ function CreateTemplateDialog({
   const [form, setForm] = useState({
     name: "",
     loan_type: "",
-    description: "",
+    internal_description: "",
     is_default: false,
   });
 
@@ -514,7 +520,7 @@ function CreateTemplateDialog({
         .insert({
           name: form.name,
           loan_type: form.loan_type,
-          description: form.description || null,
+          internal_description: form.internal_description || null,
           is_default: form.is_default,
           created_by: currentUserId,
         })
@@ -526,7 +532,7 @@ function CreateTemplateDialog({
       onCreated({ ...data, loan_type: data.loan_type ?? "", items: [] } as Template);
       toast({ title: "Template created" });
       setOpen(false);
-      setForm({ name: "", loan_type: "", description: "", is_default: false });
+      setForm({ name: "", loan_type: "", internal_description: "", is_default: false });
     } catch (err: any) {
       toast({
         title: "Error creating template",
@@ -583,12 +589,12 @@ function CreateTemplateDialog({
             </Select>
           </div>
           <div className="space-y-2">
-            <Label>Description</Label>
+            <Label>Internal Description</Label>
             <Textarea
-              value={form.description}
-              onChange={(e) => updateField("description", e.target.value)}
+              value={form.internal_description}
+              onChange={(e) => updateField("internal_description", e.target.value)}
               rows={2}
-              placeholder="Optional description..."
+              placeholder="Optional internal description..."
             />
           </div>
           <label className="flex items-center gap-2 text-sm cursor-pointer">
@@ -639,12 +645,12 @@ function AddTemplateItemDialog({
 
   const [form, setForm] = useState({
     name: "",
-    description: "",
+    internal_description: "",
     borrower_description: "",
     category: "pta",
     responsible_party: "borrower",
     due_date_offset_days: "5",
-    is_critical_path: false,
+    critical_path_item: false,
   });
 
   function updateField(field: string, value: string | boolean) {
@@ -663,14 +669,14 @@ function AddTemplateItemDialog({
         .insert({
           template_id: templateId,
           name: form.name,
-          description: form.description || null,
+          internal_description: form.internal_description || null,
           borrower_description: form.borrower_description || null,
           category: form.category,
           responsible_party: form.responsible_party,
           due_date_offset_days: form.due_date_offset_days
             ? parseInt(form.due_date_offset_days)
             : undefined,
-          is_critical_path: form.is_critical_path,
+          critical_path_item: form.critical_path_item,
           sort_order: nextSortOrder,
         })
         .select()
@@ -683,12 +689,12 @@ function AddTemplateItemDialog({
       setOpen(false);
       setForm({
         name: "",
-        description: "",
+        internal_description: "",
         borrower_description: "",
         category: "pta",
         responsible_party: "borrower",
         due_date_offset_days: "5",
-        is_critical_path: false,
+        critical_path_item: false,
       });
     } catch (err: any) {
       toast({
@@ -780,9 +786,9 @@ function AddTemplateItemDialog({
               <label className="flex items-center gap-2 text-sm cursor-pointer">
                 <input
                   type="checkbox"
-                  checked={form.is_critical_path}
+                  checked={form.critical_path_item}
                   onChange={(e) =>
-                    updateField("is_critical_path", e.target.checked)
+                    updateField("critical_path_item", e.target.checked)
                   }
                   className="rounded border-gray-300"
                 />
@@ -793,8 +799,8 @@ function AddTemplateItemDialog({
           <div className="space-y-2">
             <Label>Internal Description</Label>
             <Textarea
-              value={form.description}
-              onChange={(e) => updateField("description", e.target.value)}
+              value={form.internal_description}
+              onChange={(e) => updateField("internal_description", e.target.value)}
               rows={2}
               placeholder="Visible to team only"
             />
