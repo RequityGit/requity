@@ -126,6 +126,44 @@ export const DISTRIBUTION_TYPES = [
 ] as const;
 
 // ---------------------------------------------------------------------------
+// Condition Statuses
+// ---------------------------------------------------------------------------
+
+export const CONDITION_STATUSES = [
+  { value: "not_requested", label: "Not Requested" },
+  { value: "requested", label: "Requested" },
+  { value: "received", label: "Received" },
+  { value: "under_review", label: "Under Review" },
+  { value: "approved", label: "Approved" },
+  { value: "waived", label: "Waived" },
+  { value: "rejected", label: "Rejected" },
+] as const;
+
+export type ConditionStatus =
+  | "not_requested"
+  | "requested"
+  | "received"
+  | "under_review"
+  | "approved"
+  | "waived"
+  | "rejected";
+
+export const CONDITION_CATEGORIES = [
+  { value: "pta", label: "Prior to Approval (PTA)" },
+  { value: "ptf", label: "Prior to Funding (PTF)" },
+] as const;
+
+export const RESPONSIBLE_PARTIES = [
+  { value: "borrower", label: "Borrower" },
+  { value: "broker", label: "Broker" },
+  { value: "title_company", label: "Title Company" },
+  { value: "insurance_agent", label: "Insurance Agent" },
+  { value: "internal", label: "Internal" },
+  { value: "attorney", label: "Attorney" },
+  { value: "other", label: "Other" },
+] as const;
+
+// ---------------------------------------------------------------------------
 // Activity Log Types
 // ---------------------------------------------------------------------------
 
@@ -180,6 +218,12 @@ export const STATUS_COLORS: Record<string, string> = {
   hot: "bg-red-100 text-red-800",
   normal: "bg-slate-100 text-slate-700",
   on_hold: "bg-amber-100 text-amber-800",
+
+  // Condition statuses
+  not_requested: "bg-gray-100 text-gray-600",
+  requested: "bg-blue-100 text-blue-800",
+  received: "bg-indigo-100 text-indigo-800",
+  waived: "bg-slate-100 text-slate-600",
 };
 
 // Days-in-stage color thresholds

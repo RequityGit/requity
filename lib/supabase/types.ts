@@ -676,6 +676,208 @@ export type Database = {
           },
         ];
       };
+      condition_templates: {
+        Row: {
+          id: string;
+          name: string;
+          loan_type: string | null;
+          description: string | null;
+          is_default: boolean;
+          created_by: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          name: string;
+          loan_type?: string | null;
+          description?: string | null;
+          is_default?: boolean;
+          created_by?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          name?: string;
+          loan_type?: string | null;
+          description?: string | null;
+          is_default?: boolean;
+          created_by?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
+      condition_template_items: {
+        Row: {
+          id: string;
+          template_id: string;
+          name: string;
+          description: string | null;
+          borrower_description: string | null;
+          category: string;
+          responsible_party: string;
+          due_date_offset_days: number;
+          is_critical_path: boolean;
+          sort_order: number;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          template_id: string;
+          name: string;
+          description?: string | null;
+          borrower_description?: string | null;
+          category: string;
+          responsible_party?: string;
+          due_date_offset_days?: number;
+          is_critical_path?: boolean;
+          sort_order?: number;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          template_id?: string;
+          name?: string;
+          description?: string | null;
+          borrower_description?: string | null;
+          category?: string;
+          responsible_party?: string;
+          due_date_offset_days?: number;
+          is_critical_path?: boolean;
+          sort_order?: number;
+          created_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "condition_template_items_template_id_fkey";
+            columns: ["template_id"];
+            isOneToOne: false;
+            referencedRelation: "condition_templates";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      loan_conditions: {
+        Row: {
+          id: string;
+          loan_id: string;
+          template_item_id: string | null;
+          name: string;
+          description: string | null;
+          borrower_description: string | null;
+          category: string;
+          status: string;
+          responsible_party: string;
+          is_critical_path: boolean;
+          sort_order: number;
+          requested_date: string | null;
+          due_date: string | null;
+          received_date: string | null;
+          approved_date: string | null;
+          approved_by: string | null;
+          waived_by: string | null;
+          rejection_reason: string | null;
+          internal_note: string | null;
+          borrower_note: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          loan_id: string;
+          template_item_id?: string | null;
+          name: string;
+          description?: string | null;
+          borrower_description?: string | null;
+          category: string;
+          status?: string;
+          responsible_party?: string;
+          is_critical_path?: boolean;
+          sort_order?: number;
+          requested_date?: string | null;
+          due_date?: string | null;
+          received_date?: string | null;
+          approved_date?: string | null;
+          approved_by?: string | null;
+          waived_by?: string | null;
+          rejection_reason?: string | null;
+          internal_note?: string | null;
+          borrower_note?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          loan_id?: string;
+          template_item_id?: string | null;
+          name?: string;
+          description?: string | null;
+          borrower_description?: string | null;
+          category?: string;
+          status?: string;
+          responsible_party?: string;
+          is_critical_path?: boolean;
+          sort_order?: number;
+          requested_date?: string | null;
+          due_date?: string | null;
+          received_date?: string | null;
+          approved_date?: string | null;
+          approved_by?: string | null;
+          waived_by?: string | null;
+          rejection_reason?: string | null;
+          internal_note?: string | null;
+          borrower_note?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "loan_conditions_loan_id_fkey";
+            columns: ["loan_id"];
+            isOneToOne: false;
+            referencedRelation: "loans";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      loan_condition_documents: {
+        Row: {
+          id: string;
+          condition_id: string;
+          document_id: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          condition_id: string;
+          document_id: string;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          condition_id?: string;
+          document_id?: string;
+          created_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "loan_condition_documents_condition_id_fkey";
+            columns: ["condition_id"];
+            isOneToOne: false;
+            referencedRelation: "loan_conditions";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "loan_condition_documents_document_id_fkey";
+            columns: ["document_id"];
+            isOneToOne: false;
+            referencedRelation: "documents";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
     };
     Views: {
       [_ in never]: never;
@@ -732,3 +934,19 @@ export type DocumentUpdate = Database["public"]["Tables"]["documents"]["Update"]
 export type LoanActivityLog = Database["public"]["Tables"]["loan_activity_log"]["Row"];
 export type LoanActivityLogInsert = Database["public"]["Tables"]["loan_activity_log"]["Insert"];
 export type LoanActivityLogUpdate = Database["public"]["Tables"]["loan_activity_log"]["Update"];
+
+export type ConditionTemplate = Database["public"]["Tables"]["condition_templates"]["Row"];
+export type ConditionTemplateInsert = Database["public"]["Tables"]["condition_templates"]["Insert"];
+export type ConditionTemplateUpdate = Database["public"]["Tables"]["condition_templates"]["Update"];
+
+export type ConditionTemplateItem = Database["public"]["Tables"]["condition_template_items"]["Row"];
+export type ConditionTemplateItemInsert = Database["public"]["Tables"]["condition_template_items"]["Insert"];
+export type ConditionTemplateItemUpdate = Database["public"]["Tables"]["condition_template_items"]["Update"];
+
+export type LoanCondition = Database["public"]["Tables"]["loan_conditions"]["Row"];
+export type LoanConditionInsert = Database["public"]["Tables"]["loan_conditions"]["Insert"];
+export type LoanConditionUpdate = Database["public"]["Tables"]["loan_conditions"]["Update"];
+
+export type LoanConditionDocument = Database["public"]["Tables"]["loan_condition_documents"]["Row"];
+export type LoanConditionDocumentInsert = Database["public"]["Tables"]["loan_condition_documents"]["Insert"];
+export type LoanConditionDocumentUpdate = Database["public"]["Tables"]["loan_condition_documents"]["Update"];

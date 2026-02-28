@@ -45,8 +45,12 @@ const statusStyles: Record<string, string> = {
   normal: "bg-slate-100 text-slate-700 border-slate-200",
   on_hold: "bg-amber-100 text-amber-800 border-amber-200",
 
-  // Documents
+  // Documents / Conditions
   rejected: "bg-red-100 text-red-800 border-red-200",
+  not_requested: "bg-gray-100 text-gray-500 border-gray-200",
+  requested: "bg-blue-100 text-blue-800 border-blue-200",
+  received: "bg-indigo-100 text-indigo-800 border-indigo-200",
+  waived: "bg-slate-100 text-slate-600 border-slate-200",
 };
 
 interface StatusBadgeProps {

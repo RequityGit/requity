@@ -56,6 +56,7 @@ const adminNav: NavItem[] = [
   { label: "Investors", href: "/admin/investors", icon: Users },
   { label: "Borrowers", href: "/admin/borrowers", icon: Building2 },
   { label: "Loans", href: "/admin/loans", icon: Home },
+  { label: "Conditions", href: "/admin/conditions", icon: ClipboardList },
   { label: "Funds", href: "/admin/funds", icon: Landmark },
   { label: "Documents", href: "/admin/documents", icon: FolderOpen },
   {
@@ -68,6 +69,7 @@ const adminNav: NavItem[] = [
     href: "/admin/distributions",
     icon: Receipt,
   },
+  { label: "Settings", href: "/admin/settings", icon: Settings },
   { label: "Account", href: "/admin/account", icon: Settings },
 ];
 

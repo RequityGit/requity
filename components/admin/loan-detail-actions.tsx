@@ -41,8 +41,11 @@ import {
   XCircle,
   DollarSign,
   Upload,
+  ClipboardList,
+  Activity,
 } from "lucide-react";
-import type { DrawRequest, LoanPayment, Document } from "@/lib/supabase/types";
+import type { DrawRequest, LoanPayment, Document, LoanCondition } from "@/lib/supabase/types";
+import { LoanConditionsTab } from "@/components/admin/loan-conditions-tab";
 
 interface LoanInfo {
   id: string;
@@ -65,11 +68,28 @@ interface LoanInfo {
   notes: string | null;
 }
 
+interface ActivityLogEntry {
+  id: string;
+  loan_id: string;
+  user_id: string | null;
+  activity_type: string;
+  description: string | null;
+  old_value: string | null;
+  new_value: string | null;
+  field_name: string | null;
+  created_at: string;
+  user?: { full_name: string | null } | null;
+}
+
 interface LoanDetailActionsProps {
   loan: LoanInfo;
   drawRequests: DrawRequest[];
   payments: LoanPayment[];
   documents: Document[];
+  conditions: LoanCondition[];
+  activityLog: ActivityLogEntry[];
+  currentUserId: string;
+  loanId: string;
 }
 
 export function LoanDetailActions({
@@ -77,6 +97,10 @@ export function LoanDetailActions({
   drawRequests,
   payments,
   documents,
+  conditions,
+  activityLog,
+  currentUserId,
+  loanId,
 }: LoanDetailActionsProps) {
   const router = useRouter();
 
@@ -90,8 +114,12 @@ export function LoanDetailActions({
       </div>
 
       {/* Tabbed data */}
-      <Tabs defaultValue="draw-requests">
+      <Tabs defaultValue="conditions">
         <TabsList>
+          <TabsTrigger value="conditions" className="gap-1">
+            <ClipboardList className="h-3.5 w-3.5" />
+            Conditions ({conditions.length})
+          </TabsTrigger>
           <TabsTrigger value="draw-requests">
             Draw Requests ({drawRequests.length})
           </TabsTrigger>
@@ -101,7 +129,19 @@ export function LoanDetailActions({
           <TabsTrigger value="documents">
             Documents ({documents.length})
           </TabsTrigger>
+          <TabsTrigger value="activity" className="gap-1">
+            <Activity className="h-3.5 w-3.5" />
+            Activity
+          </TabsTrigger>
         </TabsList>
+
+        <TabsContent value="conditions" className="mt-4">
+          <LoanConditionsTab
+            conditions={conditions}
+            loanId={loanId}
+            currentUserId={currentUserId}
+          />
+        </TabsContent>
 
         <TabsContent value="draw-requests" className="mt-4">
           <DrawRequestsTab
@@ -116,6 +156,10 @@ export function LoanDetailActions({
 
         <TabsContent value="documents" className="mt-4">
           <DocumentsTable documents={documents} />
+        </TabsContent>
+
+        <TabsContent value="activity" className="mt-4">
+          <ActivityLogTab activityLog={activityLog} />
         </TabsContent>
       </Tabs>
     </div>
@@ -925,5 +969,100 @@ function DocumentsTable({ documents }: { documents: Document[] }) {
       data={documents}
       emptyMessage="No documents for this loan."
     />
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Activity Log Tab
+// ---------------------------------------------------------------------------
+
+const ACTIVITY_TYPE_LABELS: Record<string, string> = {
+  loan_created: "Loan Created",
+  stage_change: "Stage Change",
+  condition_status_change: "Condition Updated",
+  field_updated: "Field Updated",
+  document_uploaded: "Document Uploaded",
+  draw_submitted: "Draw Submitted",
+  draw_reviewed: "Draw Reviewed",
+  payment_recorded: "Payment Recorded",
+  note_added: "Note Added",
+};
+
+function ActivityLogTab({
+  activityLog,
+}: {
+  activityLog: ActivityLogEntry[];
+}) {
+  if (activityLog.length === 0) {
+    return (
+      <Card>
+        <CardContent className="py-8 text-center text-muted-foreground">
+          No activity recorded yet.
+        </CardContent>
+      </Card>
+    );
+  }
+
+  return (
+    <Card>
+      <CardContent className="pt-4 pb-2">
+        <div className="space-y-0">
+          {activityLog.map((entry, idx) => {
+            const isLast = idx === activityLog.length - 1;
+            const typeLabel =
+              ACTIVITY_TYPE_LABELS[entry.activity_type] ||
+              entry.activity_type.replace(/_/g, " ");
+            const userName =
+              (entry as any).user?.full_name || "System";
+            const timestamp = new Date(entry.created_at);
+            const timeStr = timestamp.toLocaleDateString("en-US", {
+              month: "short",
+              day: "numeric",
+              hour: "numeric",
+              minute: "2-digit",
+            });
+
+            return (
+              <div key={entry.id} className="flex gap-3">
+                {/* Timeline line + dot */}
+                <div className="flex flex-col items-center">
+                  <div className="w-2 h-2 rounded-full bg-[#1a2b4a] mt-2 flex-shrink-0" />
+                  {!isLast && (
+                    <div className="w-px flex-1 bg-slate-200 my-1" />
+                  )}
+                </div>
+
+                {/* Content */}
+                <div className={`pb-4 flex-1 min-w-0 ${isLast ? "" : ""}`}>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="text-xs font-medium text-[#1a2b4a]">
+                      {typeLabel}
+                    </span>
+                    <span className="text-[11px] text-muted-foreground">
+                      by {userName}
+                    </span>
+                    <span className="text-[11px] text-muted-foreground ml-auto">
+                      {timeStr}
+                    </span>
+                  </div>
+                  {entry.description && (
+                    <p className="text-sm text-muted-foreground mt-0.5">
+                      {entry.description}
+                    </p>
+                  )}
+                  {entry.old_value && entry.new_value && (
+                    <p className="text-xs text-muted-foreground mt-0.5">
+                      <span className="line-through">{entry.old_value.replace(/_/g, " ")}</span>
+                      {" → "}
+                      <span className="font-medium">{entry.new_value.replace(/_/g, " ")}</span>
+                    </p>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </CardContent>
+    </Card>
   );
 }
