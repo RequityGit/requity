@@ -6,9 +6,9 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { formatDate } from "@/lib/format";
-import { Building2, Plus, Pencil, Trash2, MapPin, FileText } from "lucide-react";
+import { Building2, Plus, Pencil, Trash2, MapPin } from "lucide-react";
 import { BorrowerEntityDialog } from "@/components/admin/borrower-entity-dialog";
-import { createClient } from "@/lib/supabase/client";
+import { deleteEntityAction } from "@/app/(authenticated)/admin/borrowers/new/actions";
 import { useToast } from "@/components/ui/use-toast";
 import type { BorrowerEntity } from "@/lib/supabase/types";
 import {
@@ -50,16 +50,12 @@ export function BorrowerEntityList({
   }
 
   async function handleDelete(entityId: string) {
-    const supabase = createClient();
-    const { error } = await supabase
-      .from("borrower_entities")
-      .delete()
-      .eq("id", entityId);
+    const result = await deleteEntityAction(entityId);
 
-    if (error) {
+    if (result.error) {
       toast({
         title: "Error deleting entity",
-        description: error.message,
+        description: result.error,
         variant: "destructive",
       });
     } else {

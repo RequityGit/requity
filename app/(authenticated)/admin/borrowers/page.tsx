@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { redirect } from "next/navigation";
 import { PageHeader } from "@/components/shared/page-header";
 import { Button } from "@/components/ui/button";
@@ -14,19 +15,21 @@ export default async function AdminBorrowersPage() {
 
   if (!user) redirect("/login");
 
+  const admin = createAdminClient();
+
   // Fetch all borrowers from the dedicated borrowers table
-  const { data: borrowers } = await supabase
+  const { data: borrowers } = await admin
     .from("borrowers")
     .select("*")
     .order("created_at", { ascending: false });
 
   // Fetch entity counts per borrower
-  const { data: entities } = await supabase
+  const { data: entities } = await admin
     .from("borrower_entities")
     .select("borrower_id");
 
-  // Fetch loan counts per borrower
-  const { data: loans } = await supabase
+  // Fetch loan counts per borrower (loans may still FK to profiles or borrowers)
+  const { data: loans } = await admin
     .from("loans")
     .select("borrower_id, stage");
 

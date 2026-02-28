@@ -1,7 +1,35 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import type { BorrowerInsert } from "@/lib/supabase/types";
+
+// ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
+
+async function requireAdmin() {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) return { error: "Not authenticated" } as const;
+
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("role")
+    .eq("id", user.id)
+    .single();
+
+  if (profile?.role !== "admin") return { error: "Unauthorized" } as const;
+
+  return { user } as const;
+}
+
+// ---------------------------------------------------------------------------
+// Borrower CRUD
+// ---------------------------------------------------------------------------
 
 interface AddBorrowerInput {
   first_name: string;
@@ -24,24 +52,10 @@ interface AddBorrowerInput {
 }
 
 export async function addBorrowerAction(input: AddBorrowerInput) {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const auth = await requireAdmin();
+  if ("error" in auth) return { error: auth.error };
 
-  if (!user) {
-    return { error: "Not authenticated" };
-  }
-
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("role")
-    .eq("id", user.id)
-    .single();
-
-  if (profile?.role !== "admin") {
-    return { error: "Unauthorized" };
-  }
+  const admin = createAdminClient();
 
   const borrowerData: BorrowerInsert = {
     first_name: input.first_name,
@@ -63,7 +77,7 @@ export async function addBorrowerAction(input: AddBorrowerInput) {
     notes: input.notes || null,
   };
 
-  const { data, error } = await supabase
+  const { data, error } = await admin
     .from("borrowers")
     .insert(borrowerData)
     .select("id")
@@ -81,26 +95,12 @@ interface UpdateBorrowerInput extends AddBorrowerInput {
 }
 
 export async function updateBorrowerAction(input: UpdateBorrowerInput) {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const auth = await requireAdmin();
+  if ("error" in auth) return { error: auth.error };
 
-  if (!user) {
-    return { error: "Not authenticated" };
-  }
+  const admin = createAdminClient();
 
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("role")
-    .eq("id", user.id)
-    .single();
-
-  if (profile?.role !== "admin") {
-    return { error: "Unauthorized" };
-  }
-
-  const { error } = await supabase
+  const { error } = await admin
     .from("borrowers")
     .update({
       first_name: input.first_name,
@@ -122,6 +122,118 @@ export async function updateBorrowerAction(input: UpdateBorrowerInput) {
       notes: input.notes || null,
     })
     .eq("id", input.id);
+
+  if (error) {
+    return { error: error.message };
+  }
+
+  return { success: true };
+}
+
+// ---------------------------------------------------------------------------
+// Entity CRUD
+// ---------------------------------------------------------------------------
+
+interface AddEntityInput {
+  borrower_id: string;
+  entity_name: string;
+  entity_type: string;
+  ein?: string;
+  state_of_formation?: string;
+  address_line1?: string;
+  address_line2?: string;
+  city?: string;
+  state?: string;
+  zip?: string;
+  is_foreign_filed?: boolean;
+  foreign_filed_states?: string[];
+  notes?: string;
+}
+
+export async function addEntityAction(input: AddEntityInput) {
+  const auth = await requireAdmin();
+  if ("error" in auth) return { error: auth.error };
+
+  const admin = createAdminClient();
+
+  const { data, error } = await admin
+    .from("borrower_entities")
+    .insert({
+      borrower_id: input.borrower_id,
+      entity_name: input.entity_name,
+      entity_type: input.entity_type,
+      ein: input.ein || null,
+      state_of_formation: input.state_of_formation || null,
+      address_line1: input.address_line1 || null,
+      address_line2: input.address_line2 || null,
+      city: input.city || null,
+      state: input.state || null,
+      zip: input.zip || null,
+      is_foreign_filed: input.is_foreign_filed ?? false,
+      foreign_filed_states:
+        input.is_foreign_filed && input.foreign_filed_states?.length
+          ? input.foreign_filed_states
+          : null,
+      notes: input.notes || null,
+    })
+    .select("id")
+    .single();
+
+  if (error) {
+    return { error: error.message };
+  }
+
+  return { success: true, entityId: data.id };
+}
+
+interface UpdateEntityInput extends AddEntityInput {
+  id: string;
+}
+
+export async function updateEntityAction(input: UpdateEntityInput) {
+  const auth = await requireAdmin();
+  if ("error" in auth) return { error: auth.error };
+
+  const admin = createAdminClient();
+
+  const { error } = await admin
+    .from("borrower_entities")
+    .update({
+      entity_name: input.entity_name,
+      entity_type: input.entity_type,
+      ein: input.ein || null,
+      state_of_formation: input.state_of_formation || null,
+      address_line1: input.address_line1 || null,
+      address_line2: input.address_line2 || null,
+      city: input.city || null,
+      state: input.state || null,
+      zip: input.zip || null,
+      is_foreign_filed: input.is_foreign_filed ?? false,
+      foreign_filed_states:
+        input.is_foreign_filed && input.foreign_filed_states?.length
+          ? input.foreign_filed_states
+          : null,
+      notes: input.notes || null,
+    })
+    .eq("id", input.id);
+
+  if (error) {
+    return { error: error.message };
+  }
+
+  return { success: true };
+}
+
+export async function deleteEntityAction(entityId: string) {
+  const auth = await requireAdmin();
+  if ("error" in auth) return { error: auth.error };
+
+  const admin = createAdminClient();
+
+  const { error } = await admin
+    .from("borrower_entities")
+    .delete()
+    .eq("id", entityId);
 
   if (error) {
     return { error: error.message };

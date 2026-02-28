@@ -21,7 +21,10 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useToast } from "@/components/ui/use-toast";
-import { createClient } from "@/lib/supabase/client";
+import {
+  addEntityAction,
+  updateEntityAction,
+} from "@/app/(authenticated)/admin/borrowers/new/actions";
 import { Loader2 } from "lucide-react";
 import { US_STATES, ENTITY_TYPES } from "@/lib/constants";
 import type { BorrowerEntity } from "@/lib/supabase/types";
@@ -91,46 +94,42 @@ export function BorrowerEntityDialog({
     if (!entityName.trim() || !entityType) return;
 
     setLoading(true);
-    const supabase = createClient();
 
     const foreignStatesArray = foreignFiledStates
       .split(",")
       .map((s) => s.trim())
       .filter(Boolean);
 
-    const data = {
+    const payload = {
       borrower_id: borrowerId,
       entity_name: entityName.trim(),
       entity_type: entityType,
-      ein: ein.trim() || null,
-      state_of_formation: stateOfFormation || null,
-      address_line1: addressLine1.trim() || null,
-      address_line2: addressLine2.trim() || null,
-      city: city.trim() || null,
-      state: state || null,
-      zip: zip.trim() || null,
+      ein: ein.trim() || undefined,
+      state_of_formation: stateOfFormation || undefined,
+      address_line1: addressLine1.trim() || undefined,
+      address_line2: addressLine2.trim() || undefined,
+      city: city.trim() || undefined,
+      state: state || undefined,
+      zip: zip.trim() || undefined,
       is_foreign_filed: isForeignFiled,
       foreign_filed_states:
         isForeignFiled && foreignStatesArray.length > 0
           ? foreignStatesArray
-          : null,
-      notes: notes.trim() || null,
+          : undefined,
+      notes: notes.trim() || undefined,
     };
 
-    let error;
+    let result;
     if (entity) {
-      ({ error } = await supabase
-        .from("borrower_entities")
-        .update(data)
-        .eq("id", entity.id));
+      result = await updateEntityAction({ ...payload, id: entity.id });
     } else {
-      ({ error } = await supabase.from("borrower_entities").insert(data));
+      result = await addEntityAction(payload);
     }
 
-    if (error) {
+    if (result.error) {
       toast({
         title: entity ? "Error updating entity" : "Error adding entity",
-        description: error.message,
+        description: result.error,
         variant: "destructive",
       });
     } else {

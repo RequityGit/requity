@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { redirect, notFound } from "next/navigation";
 import { PageHeader } from "@/components/shared/page-header";
 import { Card, CardContent } from "@/components/ui/card";
@@ -14,9 +15,7 @@ import {
   CreditCard,
   Shield,
   Hash,
-  Pencil,
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { BorrowerEntityList } from "@/components/admin/borrower-entity-list";
 import { BorrowerEditDialog } from "@/components/admin/borrower-edit-dialog";
@@ -34,8 +33,9 @@ export default async function AdminBorrowerDetailPage({ params }: PageProps) {
   if (!user) redirect("/login");
 
   const { id } = await params;
+  const admin = createAdminClient();
 
-  const { data: borrower } = await supabase
+  const { data: borrower } = await admin
     .from("borrowers")
     .select("*")
     .eq("id", id)
@@ -45,12 +45,12 @@ export default async function AdminBorrowerDetailPage({ params }: PageProps) {
 
   // Fetch related data in parallel
   const [entitiesResult, loansResult] = await Promise.all([
-    supabase
+    admin
       .from("borrower_entities")
       .select("*")
       .eq("borrower_id", id)
       .order("created_at", { ascending: false }),
-    supabase
+    admin
       .from("loans")
       .select("*")
       .eq("borrower_id", id)
