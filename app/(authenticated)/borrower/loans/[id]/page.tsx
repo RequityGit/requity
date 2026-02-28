@@ -30,12 +30,12 @@ export default async function LoanDetailPage({ params }: LoanDetailPageProps) {
     redirect("/login");
   }
 
-  // Fetch loan and verify ownership
+  // Fetch loan and verify ownership (profile_id links loan to auth user)
   const { data: loan } = await supabase
     .from("loans")
     .select("*")
     .eq("id", params.id)
-    .eq("borrower_id", user.id)
+    .eq("profile_id", user.id)
     .single();
 
   if (!loan) {

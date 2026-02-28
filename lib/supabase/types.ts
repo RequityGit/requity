@@ -414,6 +414,7 @@ export type Database = {
         Row: {
           id: string;
           borrower_id: string;
+          profile_id: string | null;
           loan_number: string | null;
           loan_type: string | null;
           property_address: string | null;
@@ -454,6 +455,7 @@ export type Database = {
         Insert: {
           id?: string;
           borrower_id: string;
+          profile_id?: string | null;
           loan_number?: string | null;
           loan_type?: string | null;
           property_address?: string | null;
@@ -493,6 +495,7 @@ export type Database = {
         Update: {
           id?: string;
           borrower_id?: string;
+          profile_id?: string | null;
           loan_number?: string | null;
           loan_type?: string | null;
           property_address?: string | null;
@@ -533,6 +536,13 @@ export type Database = {
           {
             foreignKeyName: "loans_borrower_id_fkey";
             columns: ["borrower_id"];
+            isOneToOne: false;
+            referencedRelation: "borrowers";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "loans_profile_id_fkey";
+            columns: ["profile_id"];
             isOneToOne: false;
             referencedRelation: "profiles";
             referencedColumns: ["id"];

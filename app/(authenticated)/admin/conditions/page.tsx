@@ -47,16 +47,16 @@ export default async function AdminConditionsPage() {
     }
   }
 
-  // Fetch borrower names for the loans
+  // Fetch borrower names for the loans (borrower_id now references borrowers table)
   const borrowerIds = Array.from(new Set((activeLoans ?? []).map((l: any) => l.borrower_id).filter(Boolean)));
   let borrowerNames: Record<string, string> = {};
   if (borrowerIds.length > 0) {
-    const { data: profiles } = await supabase
-      .from("profiles")
-      .select("id, full_name")
+    const { data: borrowerRows } = await supabase
+      .from("borrowers")
+      .select("id, first_name, last_name")
       .in("id", borrowerIds);
-    (profiles ?? []).forEach((p: any) => {
-      borrowerNames[p.id] = p.full_name ?? "Unknown";
+    (borrowerRows ?? []).forEach((b: any) => {
+      borrowerNames[b.id] = `${b.first_name ?? ""} ${b.last_name ?? ""}`.trim() || "Unknown";
     });
   }
 
