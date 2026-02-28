@@ -25,6 +25,7 @@ import {
 import { useToast } from "@/components/ui/use-toast";
 import { PlusCircle, Loader2 } from "lucide-react";
 import type { OpsProject } from "./ProjectCard";
+import type { TeamMember } from "./OperationsView";
 
 const STATUSES = ["To Do", "In Progress", "In Review", "Blocked", "Complete"];
 const PRIORITIES = ["Critical", "High", "Medium", "Low"];
@@ -52,9 +53,10 @@ const INITIAL_FORM = {
 
 interface AddTaskDialogProps {
   projects: OpsProject[];
+  teamMembers: TeamMember[];
 }
 
-export function AddTaskDialog({ projects }: AddTaskDialogProps) {
+export function AddTaskDialog({ projects, teamMembers }: AddTaskDialogProps) {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [form, setForm] = useState(INITIAL_FORM);
@@ -218,14 +220,24 @@ export function AddTaskDialog({ projects }: AddTaskDialogProps) {
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="assigned_to_name">Assignee</Label>
-              <Input
-                id="assigned_to_name"
-                placeholder="Assignee name"
-                value={form.assigned_to_name}
-                onChange={(e) =>
-                  setForm({ ...form, assigned_to_name: e.target.value })
+              <Select
+                value={form.assigned_to_name || "none"}
+                onValueChange={(v) =>
+                  setForm({ ...form, assigned_to_name: v === "none" ? "" : v })
                 }
-              />
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select assignee" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">Unassigned</SelectItem>
+                  {teamMembers.map((m) => (
+                    <SelectItem key={m.id} value={m.full_name}>
+                      {m.full_name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
 
             <div className="space-y-2">

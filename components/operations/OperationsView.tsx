@@ -23,9 +23,15 @@ import { TaskBoard } from "./TaskBoard";
 import { AddProjectDialog } from "./AddProjectDialog";
 import { AddTaskDialog } from "./AddTaskDialog";
 
+export interface TeamMember {
+  id: string;
+  full_name: string;
+}
+
 interface OperationsViewProps {
   projects: OpsProject[];
   tasks: OpsTask[];
+  teamMembers: TeamMember[];
 }
 
 const priorityOrder: Record<string, number> = {
@@ -39,7 +45,7 @@ function getUniqueValues(items: (string | null)[]): string[] {
   return Array.from(new Set(items.filter((v): v is string => v != null))).sort();
 }
 
-export function OperationsView({ projects, tasks }: OperationsViewProps) {
+export function OperationsView({ projects, tasks, teamMembers }: OperationsViewProps) {
   const router = useRouter();
   const supabase = createClient();
   const { toast } = useToast();
@@ -288,8 +294,8 @@ export function OperationsView({ projects, tasks }: OperationsViewProps) {
         description="Manage projects and tasks across the organization."
         action={
           <div className="flex items-center gap-2">
-            <AddTaskDialog projects={projects} />
-            <AddProjectDialog />
+            <AddTaskDialog projects={projects} teamMembers={teamMembers} />
+            <AddProjectDialog teamMembers={teamMembers} />
           </div>
         }
       />

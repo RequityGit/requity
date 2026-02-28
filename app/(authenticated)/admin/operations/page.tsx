@@ -13,7 +13,7 @@ export default async function OperationsPage() {
 
   if (!user) redirect("/login");
 
-  const [projectsRes, tasksRes] = await Promise.all([
+  const [projectsRes, tasksRes, membersRes] = await Promise.all([
     supabase
       .from("ops_projects" as never)
       .select("*")
@@ -22,10 +22,21 @@ export default async function OperationsPage() {
       .from("ops_tasks" as never)
       .select("*")
       .order("created_at", { ascending: false }),
+    supabase
+      .from("profiles")
+      .select("id, full_name, email")
+      .eq("role", "admin")
+      .order("full_name"),
   ]);
 
   const projects = (projectsRes.data ?? []) as unknown as OpsProject[];
   const tasks = (tasksRes.data ?? []) as unknown as OpsTask[];
+  const teamMembers = (membersRes.data ?? []).map(
+    (t: { id: string; full_name: string | null; email: string }) => ({
+      id: t.id,
+      full_name: t.full_name || t.email,
+    })
+  );
 
-  return <OperationsView projects={projects} tasks={tasks} />;
+  return <OperationsView projects={projects} tasks={tasks} teamMembers={teamMembers} />;
 }
