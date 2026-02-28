@@ -2,6 +2,10 @@
 
 import { createClient as createServerClient } from "@/lib/supabase/server";
 import { createClient } from "@supabase/supabase-js";
+import {
+  resilientProfileUpdate,
+  resilientProfileUpsert,
+} from "@/lib/supabase/resilient-profile-update";
 
 interface AddInvestorInput {
   email: string;
@@ -47,7 +51,10 @@ export async function addInvestorAction(input: AddInvestorInput) {
     });
 
     // Check if an investor profile with this email already exists
-    let existingProfiles: { id: string; email: string; role: string; full_name?: string }[] | null = null;
+    let existingProfiles:
+      | { id: string; email: string; role: string; full_name?: string }[]
+      | null = null;
+
     const { data: profilesWithName, error: selectError } = await adminClient
       .from("profiles")
       .select("id, email, role, full_name")
@@ -70,46 +77,23 @@ export async function addInvestorAction(input: AddInvestorInput) {
       );
       if (existingInvestor) {
         // An investor with this email already exists — update their profile
-        // instead of trying to create a duplicate auth user
         const profileUpdate: Record<string, unknown> = {
           full_name: input.full_name,
-          phone: input.phone || null,
           activation_status: "pending",
         };
         if (input.company_name) {
           profileUpdate.company_name = input.company_name;
         }
+        if (input.phone) {
+          profileUpdate.phone = input.phone;
+        }
 
-        let { error: updateError } = await adminClient
-          .from("profiles")
-          .update(profileUpdate)
-          .eq("id", existingInvestor.id);
-
-        // Retry removing columns that don't exist in the schema
-        if (updateError && updateError.message.includes("phone")) {
-          delete profileUpdate.phone;
-          ({ error: updateError } = await adminClient
-            .from("profiles")
-            .update(profileUpdate)
-            .eq("id", existingInvestor.id));
-        }
-        if (updateError && updateError.message.includes("company_name")) {
-          delete profileUpdate.company_name;
-          ({ error: updateError } = await adminClient
-            .from("profiles")
-            .update(profileUpdate)
-            .eq("id", existingInvestor.id));
-        }
-        if (updateError && updateError.message.includes("full_name")) {
-          delete profileUpdate.full_name;
-          ({ error: updateError } = await adminClient
-            .from("profiles")
-            .update(profileUpdate)
-            .eq("id", existingInvestor.id));
-        }
-        if (updateError) {
-          return { error: updateError.message };
-        }
+        const result = await resilientProfileUpdate(
+          adminClient,
+          existingInvestor.id,
+          profileUpdate
+        );
+        if (result.error) return { error: result.error };
 
         return { success: true, investorId: existingInvestor.id };
       }
@@ -140,57 +124,24 @@ export async function addInvestorAction(input: AddInvestorInput) {
         );
         if (existingAuthUser) {
           const profileUpdate: Record<string, unknown> = {
+            id: existingAuthUser.id,
+            email: input.email,
             full_name: input.full_name,
-            phone: input.phone || null,
             role: "investor",
             activation_status: "pending",
           };
           if (input.company_name) {
             profileUpdate.company_name = input.company_name;
           }
+          if (input.phone) {
+            profileUpdate.phone = input.phone;
+          }
 
-          let { error: upsertError } = await adminClient
-            .from("profiles")
-            .upsert({
-              id: existingAuthUser.id,
-              email: input.email,
-              ...profileUpdate,
-            });
-
-          // Retry removing columns that don't exist in the schema
-          if (upsertError && upsertError.message.includes("phone")) {
-            delete profileUpdate.phone;
-            ({ error: upsertError } = await adminClient
-              .from("profiles")
-              .upsert({
-                id: existingAuthUser.id,
-                email: input.email,
-                ...profileUpdate,
-              }));
-          }
-          if (upsertError && upsertError.message.includes("company_name")) {
-            delete profileUpdate.company_name;
-            ({ error: upsertError } = await adminClient
-              .from("profiles")
-              .upsert({
-                id: existingAuthUser.id,
-                email: input.email,
-                ...profileUpdate,
-              }));
-          }
-          if (upsertError && upsertError.message.includes("full_name")) {
-            delete profileUpdate.full_name;
-            ({ error: upsertError } = await adminClient
-              .from("profiles")
-              .upsert({
-                id: existingAuthUser.id,
-                email: input.email,
-                ...profileUpdate,
-              }));
-          }
-          if (upsertError) {
-            return { error: upsertError.message };
-          }
+          const result = await resilientProfileUpsert(
+            adminClient,
+            profileUpdate
+          );
+          if (result.error) return { error: result.error };
 
           return { success: true, investorId: existingAuthUser.id };
         }
@@ -205,44 +156,24 @@ export async function addInvestorAction(input: AddInvestorInput) {
     // Update the auto-created profile with additional details + pending status
     const profileUpdate: Record<string, unknown> = {
       full_name: input.full_name,
-      phone: input.phone || null,
       activation_status: "pending",
     };
     if (input.company_name) {
       profileUpdate.company_name = input.company_name;
     }
+    if (input.phone) {
+      profileUpdate.phone = input.phone;
+    }
 
-    let { error: updateError } = await adminClient
-      .from("profiles")
-      .update(profileUpdate)
-      .eq("id", newUser.user.id);
-
-    // Retry removing columns that don't exist in the schema
-    if (updateError && updateError.message.includes("phone")) {
-      delete profileUpdate.phone;
-      ({ error: updateError } = await adminClient
-        .from("profiles")
-        .update(profileUpdate)
-        .eq("id", newUser.user.id));
-    }
-    if (updateError && updateError.message.includes("company_name")) {
-      delete profileUpdate.company_name;
-      ({ error: updateError } = await adminClient
-        .from("profiles")
-        .update(profileUpdate)
-        .eq("id", newUser.user.id));
-    }
-    if (updateError && updateError.message.includes("full_name")) {
-      delete profileUpdate.full_name;
-      ({ error: updateError } = await adminClient
-        .from("profiles")
-        .update(profileUpdate)
-        .eq("id", newUser.user.id));
-    }
-    if (updateError) {
+    const result = await resilientProfileUpdate(
+      adminClient,
+      newUser.user.id,
+      profileUpdate
+    );
+    if (result.error) {
       // Clean up: delete the auth user since we can't set up the profile
       await adminClient.auth.admin.deleteUser(newUser.user.id);
-      return { error: updateError.message };
+      return { error: result.error };
     }
 
     return { success: true, investorId: newUser.user.id };
@@ -331,7 +262,7 @@ export async function sendActivationLinkAction(investorId: string) {
     // Mark as link_sent
     const { error: updateError } = await supabase
       .from("profiles")
-      .update({ activation_status: "link_sent" })
+      .update({ activation_status: "link_sent" } as any)
       .eq("id", investorId);
 
     if (updateError) {

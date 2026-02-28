@@ -11,6 +11,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/components/ui/use-toast";
 import { Loader2, Save, User } from "lucide-react";
 import type { Profile } from "@/lib/supabase/types";
+import { resilientProfileUpdate } from "@/lib/supabase/resilient-profile-update";
 
 export default function AdminAccountPage() {
   const { toast } = useToast();
@@ -75,21 +76,18 @@ export default function AdminAccountPage() {
         return;
       }
 
-      const { error } = await supabase
-        .from("profiles")
-        .update({
-          full_name: fullName || null,
-          email,
-          phone: phone || null,
-          company_name: company || null,
-          updated_at: new Date().toISOString(),
-        })
-        .eq("id", user.id);
+      const result = await resilientProfileUpdate(supabase, user.id, {
+        full_name: fullName || null,
+        email,
+        phone: phone || null,
+        company_name: company || null,
+        updated_at: new Date().toISOString(),
+      });
 
-      if (error) {
+      if (result.error) {
         toast({
           title: "Error",
-          description: error.message,
+          description: result.error,
           variant: "destructive",
         });
         return;

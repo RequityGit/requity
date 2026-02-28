@@ -14,6 +14,7 @@ import { formatCurrency, formatDate } from "@/lib/format";
 import { useToast } from "@/components/ui/use-toast";
 import { PhoneVerifyDialog } from "@/components/investor/phone-verify-dialog";
 import { Save, Loader2, User, Building2, ShieldCheck } from "lucide-react";
+import { resilientProfileUpdate } from "@/lib/supabase/resilient-profile-update";
 
 type ProfileData = {
   id: string;
@@ -144,18 +145,15 @@ export default function InvestorAccountPage() {
 
     setSaving(true);
     try {
-      const { error } = await (supabase
-        .from("profiles") as any)
-        .update({
-          full_name: fullName || null,
-          email,
-          phone: phone || null,
-          company_name: company || null,
-          updated_at: new Date().toISOString(),
-        })
-        .eq("id", profile.id);
+      const result = await resilientProfileUpdate(supabase, profile.id, {
+        full_name: fullName || null,
+        email,
+        phone: phone || null,
+        company_name: company || null,
+        updated_at: new Date().toISOString(),
+      });
 
-      if (error) {
+      if (result.error) {
         toast({
           title: "Error",
           description: "Failed to update profile. Please try again.",
