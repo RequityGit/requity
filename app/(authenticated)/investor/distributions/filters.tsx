@@ -68,10 +68,10 @@ export function DistributionFilters({
         }
       >
         <SelectTrigger className="w-[200px] bg-white">
-          <SelectValue placeholder="All Funds" />
+          <SelectValue placeholder="All Investments" />
         </SelectTrigger>
         <SelectContent>
-          <SelectItem value="all">All Funds</SelectItem>
+          <SelectItem value="all">All Investments</SelectItem>
           {funds.map((fund) => (
             <SelectItem key={fund.id} value={fund.id}>
               {fund.name}

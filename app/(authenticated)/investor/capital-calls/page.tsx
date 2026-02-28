@@ -89,7 +89,7 @@ export default async function CapitalCallsPage({
   // Transform data for the table
   const rows: CapitalCallRow[] = capitalCalls.map((cc) => ({
     id: cc.id,
-    fund_name: cc.funds?.name ?? "Unknown Fund",
+    fund_name: cc.funds?.name ?? "Unknown Investment",
     call_amount: cc.call_amount,
     due_date: cc.due_date,
     paid_date: cc.paid_date,
@@ -107,14 +107,14 @@ export default async function CapitalCallsPage({
   const columns: Column<CapitalCallRow>[] = [
     {
       key: "fund_name",
-      header: "Fund",
+      header: "Investment",
       cell: (row) => (
         <span className="font-medium text-[#1a2b4a]">{row.fund_name}</span>
       ),
     },
     {
       key: "call_amount",
-      header: "Call Amount",
+      header: "Contribution Amount",
       cell: (row) => (
         <span className="font-medium">{formatCurrency(row.call_amount)}</span>
       ),
@@ -153,8 +153,8 @@ export default async function CapitalCallsPage({
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Capital Calls"
-        description="Track all capital call notices and payment status across your fund commitments."
+        title="Contributions"
+        description="Track all contribution notices and payment status across your investment commitments."
       />
 
       {/* Summary KPIs */}
@@ -162,7 +162,7 @@ export default async function CapitalCallsPage({
         <KpiCard
           title="Total Called"
           value={formatCurrency(totalCalled)}
-          description={`${rows.length} capital call${rows.length !== 1 ? "s" : ""}`}
+          description={`${rows.length} contribution${rows.length !== 1 ? "s" : ""}`}
           icon={<BanknoteIcon className="h-5 w-5" />}
         />
         <KpiCard
@@ -172,7 +172,7 @@ export default async function CapitalCallsPage({
           icon={<CheckCircle2 className="h-5 w-5" />}
         />
         <KpiCard
-          title="Pending Calls"
+          title="Pending Contributions"
           value={pendingCount}
           description="Awaiting payment"
           icon={<Clock className="h-5 w-5" />}
@@ -199,7 +199,7 @@ export default async function CapitalCallsPage({
           <DataTable<CapitalCallRow>
             columns={columns}
             data={rows}
-            emptyMessage="No capital calls found. Adjust your filters or check back later."
+            emptyMessage="No contributions found. Adjust your filters or check back later."
           />
         </CardContent>
       </Card>

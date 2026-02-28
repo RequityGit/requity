@@ -106,13 +106,13 @@ function RecordCapitalCallDialog({
 
       if (error) throw error;
 
-      toast({ title: "Capital call recorded successfully" });
+      toast({ title: "Contribution recorded successfully" });
       setOpen(false);
       resetCapitalCallForm();
       router.refresh();
     } catch (err: any) {
       toast({
-        title: "Error recording capital call",
+        title: "Error recording contribution",
         description: err.message,
         variant: "destructive",
       });
@@ -132,16 +132,16 @@ function RecordCapitalCallDialog({
       <DialogTrigger asChild>
         <Button variant="outline" className="gap-2">
           <ArrowDownCircle className="h-4 w-4" />
-          Record Capital Call
+          Record Contribution
         </Button>
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Record Capital Call</DialogTitle>
+          <DialogTitle>Record Contribution</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
-            <Label>Fund / Commitment</Label>
+            <Label>Investment / Commitment</Label>
             <Select value={commitmentId} onValueChange={setCommitmentId}>
               <SelectTrigger>
                 <SelectValue placeholder="Select a commitment" />
@@ -185,7 +185,7 @@ function RecordCapitalCallDialog({
               Cancel
             </Button>
             <Button type="submit" disabled={loading}>
-              {loading ? "Saving..." : "Record Capital Call"}
+              {loading ? "Saving..." : "Record Contribution"}
             </Button>
           </DialogFooter>
         </form>
@@ -276,7 +276,7 @@ function RecordDistributionDialog({
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
-            <Label>Fund / Commitment</Label>
+            <Label>Investment / Commitment</Label>
             <Select value={commitmentId} onValueChange={setCommitmentId}>
               <SelectTrigger>
                 <SelectValue placeholder="Select a commitment" />
@@ -458,10 +458,10 @@ function UploadDocumentDialog({
             </Select>
           </div>
           <div className="space-y-2">
-            <Label>Fund (optional)</Label>
+            <Label>Investment (optional)</Label>
             <Select value={fundId} onValueChange={setFundId}>
               <SelectTrigger>
-                <SelectValue placeholder="Select fund" />
+                <SelectValue placeholder="Select investment" />
               </SelectTrigger>
               <SelectContent>
                 {funds.map((f) => (

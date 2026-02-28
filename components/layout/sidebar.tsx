@@ -32,8 +32,8 @@ interface NavItem {
 
 const investorNav: NavItem[] = [
   { label: "Dashboard", href: "/investor/dashboard", icon: LayoutDashboard },
-  { label: "My Funds", href: "/investor/funds", icon: Landmark },
-  { label: "Capital Calls", href: "/investor/capital-calls", icon: DollarSign },
+  { label: "My Investments", href: "/investor/funds", icon: Landmark },
+  { label: "Contributions", href: "/investor/capital-calls", icon: DollarSign },
   {
     label: "Distributions",
     href: "/investor/distributions",
@@ -57,10 +57,10 @@ const adminNav: NavItem[] = [
   { label: "Borrowers", href: "/admin/borrowers", icon: Building2 },
   { label: "Loans", href: "/admin/loans", icon: Home },
   { label: "Conditions", href: "/admin/conditions", icon: ClipboardList },
-  { label: "Funds", href: "/admin/funds", icon: Landmark },
+  { label: "Investments", href: "/admin/funds", icon: Landmark },
   { label: "Documents", href: "/admin/documents", icon: FolderOpen },
   {
-    label: "Capital Calls",
+    label: "Contributions",
     href: "/admin/capital-calls",
     icon: DollarSign,
   },

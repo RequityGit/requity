@@ -35,13 +35,13 @@ export default async function AdminFundsPage() {
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Funds"
-        description="Manage all investment funds."
+        title="Investments"
+        description="Manage all investments."
         action={
           <Link href="/admin/funds">
             <Button className="gap-2">
               <PlusCircle className="h-4 w-4" />
-              Create Fund
+              Create Investment
             </Button>
           </Link>
         }

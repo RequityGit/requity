@@ -39,8 +39,8 @@ export default async function AdminCapitalCallsPage() {
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Capital Calls"
-        description="Create and manage capital calls across funds."
+        title="Contributions"
+        description="Create and manage contributions across investments."
         action={<CapitalCallForm funds={funds ?? []} />}
       />
 

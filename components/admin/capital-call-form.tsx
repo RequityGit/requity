@@ -114,7 +114,7 @@ export function CapitalCallForm({ funds }: CapitalCallFormProps) {
     if (!fundId || !dueDate) {
       toast({
         title: "Missing fields",
-        description: "Select a fund and due date.",
+        description: "Select an investment and due date.",
         variant: "destructive",
       });
       return;
@@ -139,7 +139,7 @@ export function CapitalCallForm({ funds }: CapitalCallFormProps) {
     if (calls.length === 0) {
       toast({
         title: "No amounts entered",
-        description: "Enter at least one call amount.",
+        description: "Enter at least one contribution amount.",
         variant: "destructive",
       });
       return;
@@ -150,13 +150,13 @@ export function CapitalCallForm({ funds }: CapitalCallFormProps) {
 
     if (error) {
       toast({
-        title: "Error creating capital calls",
+        title: "Error creating contributions",
         description: error.message,
         variant: "destructive",
       });
     } else {
       toast({
-        title: `Created ${calls.length} capital call(s)`,
+        title: `Created ${calls.length} contribution(s)`,
       });
       setOpen(false);
       setFundId("");
@@ -172,20 +172,20 @@ export function CapitalCallForm({ funds }: CapitalCallFormProps) {
       <DialogTrigger asChild>
         <Button className="gap-2">
           <Plus className="h-4 w-4" />
-          Create Capital Call
+          Create Contribution
         </Button>
       </DialogTrigger>
       <DialogContent className="max-w-xl">
         <DialogHeader>
-          <DialogTitle>Create Capital Call</DialogTitle>
+          <DialogTitle>Create Contribution</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label>Fund *</Label>
+              <Label>Investment *</Label>
               <Select value={fundId} onValueChange={setFundId}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Select fund" />
+                  <SelectValue placeholder="Select investment" />
                 </SelectTrigger>
                 <SelectContent>
                   {funds.map((f) => (
@@ -233,7 +233,7 @@ export function CapitalCallForm({ funds }: CapitalCallFormProps) {
               </div>
 
               <div className="space-y-2">
-                <Label>Call Amounts per Investor</Label>
+                <Label>Contribution Amounts per Investor</Label>
                 <div className="space-y-3 max-h-[300px] overflow-y-auto">
                   {investors.map((inv) => (
                     <div
@@ -275,7 +275,7 @@ export function CapitalCallForm({ funds }: CapitalCallFormProps) {
 
           {fundId && investors.length === 0 && (
             <p className="text-sm text-muted-foreground text-center py-4">
-              No active commitments found for this fund.
+              No active commitments found for this investment.
             </p>
           )}
 
@@ -289,7 +289,7 @@ export function CapitalCallForm({ funds }: CapitalCallFormProps) {
             </Button>
             <Button type="submit" disabled={loading}>
               {loading && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-              {loading ? "Creating..." : "Create Calls"}
+              {loading ? "Creating..." : "Create Contributions"}
             </Button>
           </DialogFooter>
         </form>

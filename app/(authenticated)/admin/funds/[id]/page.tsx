@@ -169,7 +169,7 @@ export default async function AdminFundDetailPage({ params }: PageProps) {
     <div className="space-y-6">
       <PageHeader
         title={fund.name}
-        description={`${(fund.fund_type ?? "fund").replace(/_/g, " ")} - Vintage ${fund.vintage_year || "N/A"}`}
+        description={`${(fund.fund_type ?? "investment").replace(/_/g, " ")} - Vintage ${fund.vintage_year || "N/A"}`}
       />
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -203,7 +203,7 @@ export default async function AdminFundDetailPage({ params }: PageProps) {
 
       <Card>
         <CardHeader>
-          <CardTitle className="text-lg">Fund Details</CardTitle>
+          <CardTitle className="text-lg">Investment Details</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-y-4 gap-x-6">
@@ -244,7 +244,7 @@ export default async function AdminFundDetailPage({ params }: PageProps) {
             Commitments ({commitments.length})
           </TabsTrigger>
           <TabsTrigger value="capital-calls">
-            Capital Calls ({capitalCalls.length})
+            Contributions ({capitalCalls.length})
           </TabsTrigger>
           <TabsTrigger value="distributions">
             Distributions ({distributions.length})
@@ -255,7 +255,7 @@ export default async function AdminFundDetailPage({ params }: PageProps) {
           <DataTable
             columns={commitmentColumns}
             data={commitments}
-            emptyMessage="No commitments for this fund."
+            emptyMessage="No commitments for this investment."
           />
         </TabsContent>
 
@@ -263,7 +263,7 @@ export default async function AdminFundDetailPage({ params }: PageProps) {
           <DataTable
             columns={capitalCallColumns}
             data={capitalCalls}
-            emptyMessage="No capital calls for this fund."
+            emptyMessage="No contributions for this investment."
           />
         </TabsContent>
 
@@ -271,7 +271,7 @@ export default async function AdminFundDetailPage({ params }: PageProps) {
           <DataTable
             columns={distributionColumns}
             data={distributions}
-            emptyMessage="No distributions for this fund."
+            emptyMessage="No distributions for this investment."
           />
         </TabsContent>
       </Tabs>

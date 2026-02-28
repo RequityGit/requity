@@ -68,7 +68,7 @@ export default async function AdminInvestorDetailPage({ params }: PageProps) {
   const commitmentColumns: Column<any>[] = [
     {
       key: "fund",
-      header: "Fund",
+      header: "Investment",
       cell: (row) => (row as any).funds?.name ?? "—",
     },
     {
@@ -101,7 +101,7 @@ export default async function AdminInvestorDetailPage({ params }: PageProps) {
   const capitalCallColumns: Column<any>[] = [
     {
       key: "fund",
-      header: "Fund",
+      header: "Investment",
       cell: (row) => (row as any).funds?.name ?? "—",
     },
     {
@@ -129,7 +129,7 @@ export default async function AdminInvestorDetailPage({ params }: PageProps) {
   const distributionColumns: Column<any>[] = [
     {
       key: "fund",
-      header: "Fund",
+      header: "Investment",
       cell: (row) => (row as any).funds?.name ?? "—",
     },
     {
@@ -252,7 +252,7 @@ export default async function AdminInvestorDetailPage({ params }: PageProps) {
             Commitments ({commitments.length})
           </TabsTrigger>
           <TabsTrigger value="capital-calls">
-            Capital Calls ({capitalCalls.length})
+            Contributions ({capitalCalls.length})
           </TabsTrigger>
           <TabsTrigger value="distributions">
             Distributions ({distributions.length})
@@ -274,7 +274,7 @@ export default async function AdminInvestorDetailPage({ params }: PageProps) {
           <DataTable
             columns={capitalCallColumns}
             data={capitalCalls}
-            emptyMessage="No capital calls for this investor."
+            emptyMessage="No contributions for this investor."
           />
         </TabsContent>
 

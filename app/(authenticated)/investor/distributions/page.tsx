@@ -114,7 +114,7 @@ export default async function DistributionsPage({
   // Transform data
   const rows: DistributionRow[] = distributions.map((d) => ({
     id: d.id,
-    fund_name: d.funds?.name ?? "Unknown Fund",
+    fund_name: d.funds?.name ?? "Unknown Investment",
     distribution_type: d.distribution_type,
     amount: d.amount,
     distribution_date: d.distribution_date,
@@ -148,7 +148,7 @@ export default async function DistributionsPage({
     },
     {
       key: "fund_name",
-      header: "Fund",
+      header: "Investment",
       cell: (row) => (
         <span className="font-medium text-[#1a2b4a]">{row.fund_name}</span>
       ),
@@ -192,7 +192,7 @@ export default async function DistributionsPage({
     <div className="space-y-6">
       <PageHeader
         title="Distributions"
-        description="View your distribution history and payment details across all fund investments."
+        description="View your distribution history and payment details across all investments."
       />
 
       {/* Summary KPIs */}
