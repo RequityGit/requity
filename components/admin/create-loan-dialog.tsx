@@ -22,7 +22,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { LOAN_TYPES, LOAN_PRIORITIES, LOAN_DB_TYPES, LOAN_PURPOSES } from "@/lib/constants";
+import { LOAN_PRIORITIES, LOAN_DB_TYPES, LOAN_PURPOSES } from "@/lib/constants";
 import { useToast } from "@/components/ui/use-toast";
 import { PlusCircle, Search, Check, X, UserPlus } from "lucide-react";
 
@@ -88,7 +88,6 @@ export function CreateLoanDialog({
 
   const [form, setForm] = useState({
     borrower_id: "",
-    loan_type: "",
     type: "",
     purpose: "",
     property_address: "",
@@ -119,7 +118,6 @@ export function CreateLoanDialog({
   function resetForm() {
     setForm({
       borrower_id: "",
-      loan_type: "",
       type: "",
       purpose: "",
       property_address: "",
@@ -151,7 +149,6 @@ export function CreateLoanDialog({
     setLoading(true);
     try {
       const supabase = createClient();
-      const now = new Date().toISOString();
 
       // 1. Create the loan
       // All optional fields use conditional spread so that empty/null values
@@ -165,18 +162,15 @@ export function CreateLoanDialog({
           type: form.type as "commercial" | "dscr" | "guc" | "rtl" | "transactional",
           purpose: form.purpose as "purchase" | "refinance" | "cash_out_refinance",
           loan_amount: parseFloat(form.loan_amount),
-          stage: "lead",
-          stage_updated_at: now,
-          ...(form.property_address ? { property_address: form.property_address } : {}),
+          ...(form.property_address ? { property_address_line1: form.property_address } : {}),
           ...(form.property_city ? { property_city: form.property_city } : {}),
           ...(form.property_state ? { property_state: form.property_state } : {}),
           ...(form.property_zip ? { property_zip: form.property_zip } : {}),
           ...(form.appraised_value ? { appraised_value: parseFloat(form.appraised_value) } : {}),
           ...(form.interest_rate ? { interest_rate: parseFloat(form.interest_rate) } : {}),
-          ...(form.term_months ? { term_months: parseInt(form.term_months) } : {}),
+          ...(form.term_months ? { loan_term_months: parseInt(form.term_months) } : {}),
           ...(originatorName ? { originator: originatorName } : {}),
           ...(form.notes ? { notes: form.notes } : {}),
-          ...(form.loan_type ? { loan_type: form.loan_type } : {}),
           ...(form.purchase_price ? { purchase_price: parseFloat(form.purchase_price) } : {}),
           ...(form.arv ? { arv: parseFloat(form.arv) } : {}),
           ...(form.points ? { points: parseFloat(form.points) } : {}),
@@ -194,15 +188,10 @@ export function CreateLoanDialog({
       // 2. Log the loan creation in activity log
       await supabase.from("loan_activity_log").insert({
         loan_id: newLoan.id,
-        user_id: currentUserId,
-        activity_type: "loan_created",
+        performed_by: currentUserId,
+        action: "loan_created",
         description: `Loan created for ${form.property_address || "new property"}`,
       });
-
-      // 3. Auto-populate conditions from template based on loan type
-      if (form.loan_type) {
-        await populateConditionsFromTemplate(supabase, newLoan.id, form.loan_type);
-      }
 
       toast({ title: "Loan created successfully" });
       setOpen(false);
@@ -218,54 +207,6 @@ export function CreateLoanDialog({
     } finally {
       setLoading(false);
     }
-  }
-
-  async function populateConditionsFromTemplate(
-    supabase: any,
-    loanId: string,
-    loanType: string
-  ) {
-    // Find the default template for this loan type
-    const { data: template } = await supabase
-      .from("condition_templates")
-      .select("id")
-      .eq("loan_type", loanType)
-      .eq("is_default", true)
-      .single();
-
-    if (!template) return;
-
-    // Get all template items
-    const { data: items } = await supabase
-      .from("condition_template_items")
-      .select("*")
-      .eq("template_id", template.id)
-      .order("sort_order");
-
-    if (!items || items.length === 0) return;
-
-    // Create loan conditions from template items
-    const today = new Date();
-    const conditions = items.map((item: any) => {
-      const dueDate = new Date(today);
-      dueDate.setDate(dueDate.getDate() + (item.due_date_offset_days || 5));
-
-      return {
-        loan_id: loanId,
-        template_item_id: item.id,
-        name: item.name,
-        description: item.description,
-        borrower_description: item.borrower_description,
-        category: item.category,
-        responsible_party: item.responsible_party,
-        is_critical_path: item.is_critical_path,
-        sort_order: item.sort_order,
-        status: "not_requested",
-        due_date: dueDate.toISOString().split("T")[0],
-      };
-    });
-
-    await supabase.from("loan_conditions").insert(conditions);
   }
 
   return (
@@ -376,16 +317,18 @@ export function CreateLoanDialog({
           {/* Loan Type & Priority */}
           <div className="grid grid-cols-3 gap-4">
             <div className="space-y-2">
-              <Label>Loan Type</Label>
+              <Label>
+                Loan Type <span className="text-red-500">*</span>
+              </Label>
               <Select
-                value={form.loan_type}
-                onValueChange={(v) => updateField("loan_type", v)}
+                value={form.type}
+                onValueChange={(v) => updateField("type", v)}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Select type..." />
                 </SelectTrigger>
                 <SelectContent>
-                  {LOAN_TYPES.map((t) => (
+                  {LOAN_DB_TYPES.map((t) => (
                     <SelectItem key={t.value} value={t.value}>
                       {t.label}
                     </SelectItem>
@@ -479,26 +422,6 @@ export function CreateLoanDialog({
               Financial Terms
             </h4>
             <div className="grid grid-cols-3 gap-4">
-              <div className="space-y-2">
-                <Label>
-                  Loan Type <span className="text-red-500">*</span>
-                </Label>
-                <Select
-                  value={form.type}
-                  onValueChange={(v) => updateField("type", v)}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select loan type..." />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {LOAN_DB_TYPES.map((t) => (
-                      <SelectItem key={t.value} value={t.value}>
-                        {t.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
               <div className="space-y-2">
                 <Label>
                   Loan Purpose <span className="text-red-500">*</span>
