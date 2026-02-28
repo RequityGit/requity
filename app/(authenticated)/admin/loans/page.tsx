@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { redirect } from "next/navigation";
 import { PageHeader } from "@/components/shared/page-header";
 import { LoanListView } from "@/components/admin/loan-list-view";
@@ -14,11 +15,13 @@ export default async function AdminLoansPage() {
 
   if (!user) redirect("/login");
 
-  // Core data: loans, team, borrowers
+  const admin = createAdminClient();
+
+  // Core data: loans, team, borrowers (from dedicated borrowers table), documents
   const [loansResult, teamResult, borrowersResult, documentsResult] = await Promise.all([
     supabase
       .from("loans")
-      .select(`*, borrower:profiles!loans_borrower_id_fkey(full_name)`)
+      .select(`*`)
       .is("deleted_at", null)
       .order("created_at", { ascending: false }),
     supabase
@@ -26,11 +29,10 @@ export default async function AdminLoansPage() {
       .select("id, full_name")
       .eq("role", "admin")
       .order("full_name"),
-    supabase
-      .from("profiles")
-      .select("id, full_name, email, company_name")
-      .eq("role", "borrower")
-      .order("full_name"),
+    admin
+      .from("borrowers")
+      .select("id, first_name, last_name, email")
+      .order("last_name"),
     supabase
       .from("documents")
       .select("loan_id")
@@ -58,11 +60,11 @@ export default async function AdminLoansPage() {
     id: t.id,
     full_name: t.full_name ?? "Unknown",
   }));
-  const borrowers = (borrowersResult.data ?? []).map((b: { id: string; full_name: string | null; email: string; company_name: string | null }) => ({
+  const borrowers = (borrowersResult.data ?? []).map((b: { id: string; first_name: string; last_name: string; email: string | null }) => ({
     id: b.id,
-    full_name: b.full_name ?? "Unknown",
-    email: b.email,
-    company_name: b.company_name,
+    full_name: `${b.first_name} ${b.last_name}`.trim() || "Unknown",
+    email: b.email ?? "",
+    company_name: null as string | null,
   }));
 
   // Count documents per loan
@@ -83,13 +85,19 @@ export default async function AdminLoansPage() {
     }
   });
 
+  // Build a borrower lookup for loan row display
+  const borrowerLookup: Record<string, string> = {};
+  borrowers.forEach((b) => {
+    borrowerLookup[b.id] = b.full_name;
+  });
+
   const loanRows = loans.map((l: any) => ({
     id: l.id,
     loan_number: l.loan_number,
     property_address: l.property_address,
     property_city: l.property_city,
     property_state: l.property_state,
-    borrower_name: (l as any).borrower?.full_name ?? "—",
+    borrower_name: borrowerLookup[l.borrower_id] ?? "—",
     borrower_id: l.borrower_id,
     loan_type: l.loan_type,
     loan_amount: l.loan_amount,

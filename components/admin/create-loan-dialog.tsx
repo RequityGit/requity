@@ -24,7 +24,7 @@ import {
 } from "@/components/ui/select";
 import { LOAN_TYPES, LOAN_PRIORITIES } from "@/lib/constants";
 import { useToast } from "@/components/ui/use-toast";
-import { PlusCircle, Search, Check, X } from "lucide-react";
+import { PlusCircle, Search, Check, X, UserPlus } from "lucide-react";
 
 interface TeamMember {
   id: string;
@@ -344,6 +344,19 @@ export function CreateLoanDialog({
                         </button>
                       ))
                     )}
+                  </div>
+                  <div className="border-t p-1">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setBorrowerDropdownOpen(false);
+                        window.open("/admin/borrowers/new", "_blank");
+                      }}
+                      className="flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-sm font-medium text-primary hover:bg-accent hover:text-accent-foreground cursor-pointer"
+                    >
+                      <UserPlus className="h-4 w-4 shrink-0" />
+                      <span>Add Borrower</span>
+                    </button>
                   </div>
                 </div>
               )}
