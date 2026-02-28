@@ -9,17 +9,27 @@ import {
 import { DataTable, type Column } from "@/components/shared/data-table";
 import { StatusBadge } from "@/components/shared/status-badge";
 import { DocumentDownload } from "@/components/borrower/document-download";
+import { BorrowerConditionsTab } from "@/components/borrower/borrower-conditions-tab";
 import { formatCurrencyDetailed, formatDate } from "@/lib/format";
 import { DOCUMENT_TYPES } from "@/lib/constants";
-import type { LoanPayment, Document } from "@/lib/supabase/types";
-import { FileText, CreditCard } from "lucide-react";
+import type { LoanPayment, Document, LoanCondition } from "@/lib/supabase/types";
+import { FileText, CreditCard, ClipboardList } from "lucide-react";
 
 interface LoanDetailTabsProps {
   payments: LoanPayment[];
   documents: Document[];
+  conditions: LoanCondition[];
+  loanId: string;
+  currentUserId: string;
 }
 
-export function LoanDetailTabs({ payments, documents }: LoanDetailTabsProps) {
+export function LoanDetailTabs({
+  payments,
+  documents,
+  conditions,
+  loanId,
+  currentUserId,
+}: LoanDetailTabsProps) {
   const paymentColumns: Column<LoanPayment>[] = [
     {
       key: "payment_date",
@@ -91,9 +101,22 @@ export function LoanDetailTabs({ payments, documents }: LoanDetailTabsProps) {
     },
   ];
 
+  const outstandingCount = conditions.filter(
+    (c) => !["approved", "waived", "not_applicable"].includes(c.status)
+  ).length;
+
   return (
-    <Tabs defaultValue="payments">
+    <Tabs defaultValue="conditions">
       <TabsList>
+        <TabsTrigger value="conditions" className="gap-1.5">
+          <ClipboardList className="h-4 w-4" />
+          Conditions
+          {outstandingCount > 0 && (
+            <span className="ml-1 rounded-full bg-amber-100 text-amber-700 text-[10px] font-semibold px-1.5 py-0.5">
+              {outstandingCount}
+            </span>
+          )}
+        </TabsTrigger>
         <TabsTrigger value="payments" className="gap-1.5">
           <CreditCard className="h-4 w-4" />
           Payments
@@ -103,6 +126,14 @@ export function LoanDetailTabs({ payments, documents }: LoanDetailTabsProps) {
           Documents
         </TabsTrigger>
       </TabsList>
+
+      <TabsContent value="conditions" className="mt-4">
+        <BorrowerConditionsTab
+          conditions={conditions}
+          loanId={loanId}
+          currentUserId={currentUserId}
+        />
+      </TabsContent>
 
       <TabsContent value="payments" className="mt-4">
         <DataTable

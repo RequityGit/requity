@@ -56,6 +56,13 @@ export default async function LoanDetailPage({ params }: LoanDetailPageProps) {
     .eq("loan_id", loan.id)
     .order("created_at", { ascending: false });
 
+  // Fetch conditions for this loan (RLS ensures borrower only sees their own)
+  const { data: conditions } = await supabase
+    .from("loan_conditions")
+    .select("*")
+    .eq("loan_id", loan.id)
+    .order("sort_order", { ascending: true });
+
   const loanTypeLabel =
     LOAN_TYPES.find((t) => t.value === loan.type)?.label ?? loan.type ?? "—";
 
@@ -190,10 +197,13 @@ export default async function LoanDetailPage({ params }: LoanDetailPageProps) {
         </CardContent>
       </Card>
 
-      {/* Payments & Documents Tabs */}
+      {/* Conditions, Payments & Documents Tabs */}
       <LoanDetailTabs
         payments={payments ?? []}
         documents={documents ?? []}
+        conditions={conditions ?? []}
+        loanId={loan.id}
+        currentUserId={user.id}
       />
     </div>
   );

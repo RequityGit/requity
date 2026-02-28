@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { StatusBadge } from "@/components/shared/status-badge";
+import { DocumentDownload } from "@/components/borrower/document-download";
 import {
   Dialog,
   DialogContent,
@@ -40,8 +41,28 @@ import {
   FileText,
   ChevronDown,
   ChevronRight,
+  MessageCircle,
+  Lock,
+  Paperclip,
+  Upload,
+  X,
+  Send,
 } from "lucide-react";
-import type { LoanCondition } from "@/lib/supabase/types";
+import type { LoanCondition, LoanDocument } from "@/lib/supabase/types";
+
+// ---------------------------------------------------------------------------
+// Local type for loan_condition_comments (not yet in generated types)
+// ---------------------------------------------------------------------------
+interface ConditionComment {
+  id: string;
+  condition_id: string;
+  loan_id: string;
+  author_id: string | null;
+  author_name: string | null;
+  comment: string;
+  is_internal: boolean;
+  created_at: string;
+}
 
 interface LoanConditionsTabProps {
   conditions: LoanCondition[];
@@ -363,6 +384,20 @@ function ConditionRow({
   const [rejectOpen, setRejectOpen] = useState(false);
   const [rejectReason, setRejectReason] = useState("");
 
+  // Comments & documents panel state
+  const [panelOpen, setPanelOpen] = useState(false);
+  const [panelLoaded, setPanelLoaded] = useState(false);
+  const [comments, setComments] = useState<ConditionComment[]>([]);
+  const [documents, setDocuments] = useState<LoanDocument[]>([]);
+  const [commentText, setCommentText] = useState("");
+  const [isInternal, setIsInternal] = useState(true);
+  const [commentLoading, setCommentLoading] = useState(false);
+  const [uploadFile, setUploadFile] = useState<File | null>(null);
+  const [uploadLoading, setUploadLoading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const { toast } = useToast();
+
   const isOverdue =
     condition.due_date &&
     new Date(condition.due_date) < new Date() &&
@@ -373,6 +408,127 @@ function ConditionRow({
   const partyLabel =
     RESPONSIBLE_PARTIES.find((p) => p.value === condition.responsible_party)
       ?.label ?? condition.responsible_party;
+
+  async function loadPanelData() {
+    const supabase = createClient();
+    const [commentsRes, docsRes] = await Promise.all([
+      (supabase as any)
+        .from("loan_condition_comments")
+        .select("*")
+        .eq("condition_id", condition.id)
+        .order("created_at", { ascending: true }),
+      supabase
+        .from("loan_documents")
+        .select("*")
+        .eq("condition_id", condition.id)
+        .order("created_at", { ascending: false }),
+    ]);
+    setComments((commentsRes.data as ConditionComment[]) ?? []);
+    setDocuments(docsRes.data ?? []);
+    setPanelLoaded(true);
+  }
+
+  async function togglePanel() {
+    if (!panelOpen && !panelLoaded) {
+      await loadPanelData();
+    }
+    setPanelOpen((prev) => !prev);
+  }
+
+  async function handleAddComment() {
+    if (!commentText.trim()) return;
+    setCommentLoading(true);
+
+    const supabase = createClient();
+
+    // Fetch author name lazily
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("full_name")
+      .eq("id", currentUserId)
+      .single();
+    const authorName = (profile as any)?.full_name ?? "Admin";
+
+    const newComment: Omit<ConditionComment, "id"> = {
+      condition_id: condition.id,
+      loan_id: loanId,
+      author_id: currentUserId,
+      author_name: authorName,
+      comment: commentText.trim(),
+      is_internal: isInternal,
+      created_at: new Date().toISOString(),
+    };
+
+    const { data, error } = await (supabase as any)
+      .from("loan_condition_comments")
+      .insert(newComment)
+      .select()
+      .single();
+
+    if (error) {
+      toast({
+        title: "Error adding comment",
+        description: error.message,
+        variant: "destructive",
+      });
+    } else {
+      setComments((prev) => [...prev, data as ConditionComment]);
+      setCommentText("");
+      toast({ title: isInternal ? "Internal note added" : "Comment added" });
+    }
+    setCommentLoading(false);
+  }
+
+  async function handleUploadDocument() {
+    if (!uploadFile) return;
+    setUploadLoading(true);
+
+    const supabase = createClient();
+    const fileName = `${Date.now()}_${uploadFile.name}`;
+    const storagePath = `${loanId}/${fileName}`;
+
+    const { error: storageError } = await supabase.storage
+      .from("loan-documents")
+      .upload(storagePath, uploadFile);
+
+    if (storageError) {
+      toast({
+        title: "Upload failed",
+        description: storageError.message,
+        variant: "destructive",
+      });
+      setUploadLoading(false);
+      return;
+    }
+
+    const { data: docData, error: dbError } = await supabase
+      .from("loan_documents")
+      .insert({
+        loan_id: loanId,
+        condition_id: condition.id,
+        document_name: uploadFile.name,
+        file_url: storagePath,
+        uploaded_by: currentUserId,
+        file_size_bytes: uploadFile.size,
+        mime_type: uploadFile.type,
+      })
+      .select()
+      .single();
+
+    if (dbError) {
+      toast({
+        title: "Error saving document record",
+        description: dbError.message,
+        variant: "destructive",
+      });
+    } else {
+      setDocuments((prev) => [docData, ...prev]);
+      setUploadFile(null);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+      toast({ title: "Document uploaded" });
+    }
+    setUploadLoading(false);
+  }
 
   // Quick action buttons based on current status
   function getQuickActions() {
@@ -427,99 +583,291 @@ function ConditionRow({
     }
   }
 
+  const commentCount = comments.length;
+
   return (
     <>
-      <div
-        className={`flex items-start gap-3 p-3 rounded-lg border ${
-          isComplete
-            ? "bg-green-50/50 border-green-100"
-            : isOverdue
-              ? "bg-red-50/50 border-red-100"
-              : "bg-white"
-        }`}
-      >
-        {/* Status indicator */}
-        <div className="mt-0.5">
-          {isComplete ? (
-            <CheckCircle2 className="h-4 w-4 text-green-600" />
-          ) : isOverdue ? (
-            <AlertTriangle className="h-4 w-4 text-red-500" />
-          ) : (
-            <Clock className="h-4 w-4 text-muted-foreground" />
-          )}
-        </div>
-
-        {/* Content */}
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 flex-wrap">
-            <span className="text-sm font-medium text-[#1a2b4a]">
-              {condition.condition_name}
-            </span>
-            {condition.critical_path_item && (
-              <Badge className="bg-red-100 text-red-700 border-red-200 text-[10px] px-1.5 py-0">
-                Critical
-              </Badge>
-            )}
-            <StatusBadge status={condition.status} />
-          </div>
-          {condition.internal_description && (
-            <p className="text-xs text-muted-foreground mt-0.5">
-              {condition.internal_description}
-            </p>
-          )}
-          <div className="flex items-center gap-3 mt-1 text-[11px] text-muted-foreground">
-            <span>{partyLabel}</span>
-            {condition.due_date && (
-              <span className={isOverdue ? "text-red-600 font-medium" : ""}>
-                Due: {formatDate(condition.due_date)}
-              </span>
-            )}
-            {condition.received_date && (
-              <span>Received: {formatDate(condition.received_date)}</span>
-            )}
-            {condition.approved_date && (
-              <span className="text-green-700">
-                Approved: {formatDate(condition.approved_date)}
-              </span>
+      <div className="rounded-lg border overflow-hidden">
+        {/* Main row */}
+        <div
+          className={`flex items-start gap-3 p-3 ${
+            isComplete
+              ? "bg-green-50/50"
+              : isOverdue
+                ? "bg-red-50/50"
+                : "bg-white"
+          }`}
+        >
+          {/* Status indicator */}
+          <div className="mt-0.5">
+            {isComplete ? (
+              <CheckCircle2 className="h-4 w-4 text-green-600" />
+            ) : isOverdue ? (
+              <AlertTriangle className="h-4 w-4 text-red-500" />
+            ) : (
+              <Clock className="h-4 w-4 text-muted-foreground" />
             )}
           </div>
-          {condition.rejection_reason && (
-            <p className="text-xs text-red-600 mt-1">
-              Rejection reason: {condition.rejection_reason}
-            </p>
-          )}
-          {condition.notes && (
-            <p className="text-xs text-muted-foreground mt-1 italic">
-              Note: {condition.notes}
-            </p>
-          )}
+
+          {/* Content */}
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="text-sm font-medium text-[#1a2b4a]">
+                {condition.condition_name}
+              </span>
+              {condition.critical_path_item && (
+                <Badge className="bg-red-100 text-red-700 border-red-200 text-[10px] px-1.5 py-0">
+                  Critical
+                </Badge>
+              )}
+              <StatusBadge status={condition.status} />
+            </div>
+            {condition.internal_description && (
+              <p className="text-xs text-muted-foreground mt-0.5">
+                {condition.internal_description}
+              </p>
+            )}
+            <div className="flex items-center gap-3 mt-1 text-[11px] text-muted-foreground">
+              <span>{partyLabel}</span>
+              {condition.due_date && (
+                <span className={isOverdue ? "text-red-600 font-medium" : ""}>
+                  Due: {formatDate(condition.due_date)}
+                </span>
+              )}
+              {condition.received_date && (
+                <span>Received: {formatDate(condition.received_date)}</span>
+              )}
+              {condition.approved_date && (
+                <span className="text-green-700">
+                  Approved: {formatDate(condition.approved_date)}
+                </span>
+              )}
+            </div>
+            {condition.rejection_reason && (
+              <p className="text-xs text-red-600 mt-1">
+                Rejection reason: {condition.rejection_reason}
+              </p>
+            )}
+            {condition.notes && (
+              <p className="text-xs text-muted-foreground mt-1 italic">
+                Note: {condition.notes}
+              </p>
+            )}
+            {/* Toggle button */}
+            <button
+              onClick={togglePanel}
+              className="mt-2 flex items-center gap-1.5 text-[11px] text-muted-foreground hover:text-[#1a2b4a] transition-colors"
+            >
+              <MessageCircle className="h-3 w-3" />
+              {panelLoaded
+                ? `${commentCount} comment${commentCount !== 1 ? "s" : ""} · ${documents.length} doc${documents.length !== 1 ? "s" : ""}`
+                : "Comments & Documents"}
+              {panelOpen ? (
+                <ChevronDown className="h-3 w-3" />
+              ) : (
+                <ChevronRight className="h-3 w-3" />
+              )}
+            </button>
+          </div>
+
+          {/* Status select + quick actions */}
+          <div className="flex items-center gap-2 flex-shrink-0">
+            {getQuickActions()}
+            <Select
+              value={condition.status}
+              onValueChange={(v) => {
+                if (v === "rejected") {
+                  setRejectOpen(true);
+                } else {
+                  onStatusChange(condition.id, v);
+                }
+              }}
+            >
+              <SelectTrigger className="w-[130px] h-7 text-xs">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {CONDITION_STATUSES.map((s) => (
+                  <SelectItem key={s.value} value={s.value}>
+                    {s.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
         </div>
 
-        {/* Status select + quick actions */}
-        <div className="flex items-center gap-2 flex-shrink-0">
-          {getQuickActions()}
-          <Select
-            value={condition.status}
-            onValueChange={(v) => {
-              if (v === "rejected") {
-                setRejectOpen(true);
-              } else {
-                onStatusChange(condition.id, v);
-              }
-            }}
-          >
-            <SelectTrigger className="w-[130px] h-7 text-xs">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {CONDITION_STATUSES.map((s) => (
-                <SelectItem key={s.value} value={s.value}>
-                  {s.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
+        {/* Comments & Documents Panel */}
+        {panelOpen && (
+          <div className="border-t bg-slate-50/60 p-4 space-y-4">
+            {/* Documents Section */}
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <h4 className="text-xs font-semibold text-[#1a2b4a] flex items-center gap-1.5">
+                  <Paperclip className="h-3.5 w-3.5" />
+                  Documents ({documents.length})
+                </h4>
+                {/* Compact upload trigger */}
+                <div className="flex items-center gap-2">
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    className="hidden"
+                    onChange={(e) =>
+                      setUploadFile(e.target.files?.[0] ?? null)
+                    }
+                  />
+                  {uploadFile ? (
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs text-muted-foreground truncate max-w-[140px]">
+                        {uploadFile.name}
+                      </span>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="h-6 w-6 p-0"
+                        onClick={() => {
+                          setUploadFile(null);
+                          if (fileInputRef.current)
+                            fileInputRef.current.value = "";
+                        }}
+                      >
+                        <X className="h-3 w-3" />
+                      </Button>
+                      <Button
+                        size="sm"
+                        className="h-6 text-xs px-2"
+                        onClick={handleUploadDocument}
+                        disabled={uploadLoading}
+                      >
+                        <Upload className="h-3 w-3 mr-1" />
+                        {uploadLoading ? "Uploading..." : "Upload"}
+                      </Button>
+                    </div>
+                  ) : (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="h-6 text-xs px-2"
+                      onClick={() => fileInputRef.current?.click()}
+                    >
+                      <Upload className="h-3 w-3 mr-1" />
+                      Attach File
+                    </Button>
+                  )}
+                </div>
+              </div>
+
+              {documents.length === 0 ? (
+                <p className="text-xs text-muted-foreground italic">
+                  No documents attached yet.
+                </p>
+              ) : (
+                <div className="space-y-1.5">
+                  {documents.map((doc) => (
+                    <div
+                      key={doc.id}
+                      className="flex items-center gap-2 text-xs bg-white rounded border px-3 py-1.5"
+                    >
+                      <FileText className="h-3.5 w-3.5 text-blue-500 flex-shrink-0" />
+                      <span className="flex-1 truncate">{doc.document_name}</span>
+                      <span className="text-muted-foreground">
+                        {formatDate(doc.created_at)}
+                      </span>
+                      <DocumentDownload
+                        filePath={doc.file_url}
+                        fileName={doc.document_name}
+                      />
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Divider */}
+            <div className="border-t" />
+
+            {/* Comments Section */}
+            <div className="space-y-3">
+              <h4 className="text-xs font-semibold text-[#1a2b4a] flex items-center gap-1.5">
+                <MessageCircle className="h-3.5 w-3.5" />
+                Comments ({comments.length})
+              </h4>
+
+              {/* Comment thread */}
+              {comments.length === 0 ? (
+                <p className="text-xs text-muted-foreground italic">
+                  No comments yet.
+                </p>
+              ) : (
+                <div className="space-y-2">
+                  {comments.map((c) => (
+                    <div
+                      key={c.id}
+                      className={`rounded-md px-3 py-2 text-xs ${
+                        c.is_internal
+                          ? "bg-amber-50 border border-amber-200"
+                          : "bg-white border"
+                      }`}
+                    >
+                      <div className="flex items-center gap-2 mb-1">
+                        {c.is_internal && (
+                          <Lock className="h-3 w-3 text-amber-600" />
+                        )}
+                        <span className="font-medium">
+                          {c.author_name ?? "Team"}
+                        </span>
+                        {c.is_internal && (
+                          <Badge className="bg-amber-100 text-amber-700 border-amber-200 text-[10px] px-1 py-0">
+                            Internal
+                          </Badge>
+                        )}
+                        <span className="text-muted-foreground ml-auto">
+                          {formatDate(c.created_at)}
+                        </span>
+                      </div>
+                      <p className="text-muted-foreground whitespace-pre-wrap">
+                        {c.comment}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Add comment form */}
+              <div className="space-y-2">
+                <Textarea
+                  value={commentText}
+                  onChange={(e) => setCommentText(e.target.value)}
+                  placeholder="Add a comment..."
+                  rows={2}
+                  className="text-xs resize-none"
+                />
+                <div className="flex items-center justify-between">
+                  <label className="flex items-center gap-2 text-xs cursor-pointer select-none">
+                    <input
+                      type="checkbox"
+                      checked={isInternal}
+                      onChange={(e) => setIsInternal(e.target.checked)}
+                      className="rounded border-gray-300 h-3 w-3"
+                    />
+                    <Lock className="h-3 w-3 text-amber-600" />
+                    Internal only (hidden from borrower)
+                  </label>
+                  <Button
+                    size="sm"
+                    className="h-7 text-xs px-3"
+                    onClick={handleAddComment}
+                    disabled={commentLoading || !commentText.trim()}
+                  >
+                    <Send className="h-3 w-3 mr-1" />
+                    {commentLoading ? "Posting..." : "Post"}
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Reject Dialog */}
