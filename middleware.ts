@@ -50,13 +50,21 @@ export async function middleware(request: NextRequest) {
   if (user && isPublicRoute) {
     const { data: profile } = await supabase
       .from("profiles")
-      .select("role")
+      .select("role, allowed_roles")
       .eq("id", user.id)
       .single();
 
     if (profile?.role) {
+      // Use the active_role cookie if it's valid, otherwise use the default role
+      const activeRoleCookie = request.cookies.get("active_role")?.value;
+      const allowedRoles: string[] = profile.allowed_roles || [profile.role];
+      const effectiveRole =
+        activeRoleCookie && allowedRoles.includes(activeRoleCookie)
+          ? activeRoleCookie
+          : profile.role;
+
       const dashboardPath =
-        ROLE_DASHBOARDS[profile.role] || "/borrower/dashboard";
+        ROLE_DASHBOARDS[effectiveRole] || "/borrower/dashboard";
       const url = request.nextUrl.clone();
       url.pathname = dashboardPath;
       return NextResponse.redirect(url);
@@ -64,7 +72,8 @@ export async function middleware(request: NextRequest) {
   }
 
   // -----------------------------------------------------------------------
-  // Authenticated user accessing a role-restricted route they don't own
+  // Authenticated user accessing a role-restricted route
+  // Validate against allowed_roles (supports role switching)
   // -----------------------------------------------------------------------
   if (user) {
     const isRoleRoute = Object.values(ROLE_ROUTES).some((prefix) =>
@@ -74,18 +83,36 @@ export async function middleware(request: NextRequest) {
     if (isRoleRoute) {
       const { data: profile } = await supabase
         .from("profiles")
-        .select("role")
+        .select("role, allowed_roles")
         .eq("id", user.id)
         .single();
 
       if (profile?.role) {
-        const allowedPrefix = ROLE_ROUTES[profile.role];
+        const allowedRoles: string[] = profile.allowed_roles || [profile.role];
 
-        // User is trying to access a route outside their role
-        if (allowedPrefix && !pathname.startsWith(allowedPrefix)) {
+        // Determine which role prefix the user is trying to access
+        const targetRoleEntry = Object.entries(ROLE_ROUTES).find(([, prefix]) =>
+          pathname.startsWith(prefix)
+        );
+
+        if (targetRoleEntry) {
+          const targetRole = targetRoleEntry[0];
+
+          // Allow if the target role is in the user's allowed_roles
+          if (allowedRoles.includes(targetRole)) {
+            return supabaseResponse;
+          }
+
+          // Otherwise redirect to the effective role's dashboard
+          const activeRoleCookie = request.cookies.get("active_role")?.value;
+          const effectiveRole =
+            activeRoleCookie && allowedRoles.includes(activeRoleCookie)
+              ? activeRoleCookie
+              : profile.role;
+
           const url = request.nextUrl.clone();
           url.pathname =
-            ROLE_DASHBOARDS[profile.role] || "/borrower/dashboard";
+            ROLE_DASHBOARDS[effectiveRole] || "/borrower/dashboard";
           return NextResponse.redirect(url);
         }
       }

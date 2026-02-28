@@ -10,22 +10,17 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Badge } from "@/components/ui/badge";
 import { LogOut, User } from "lucide-react";
+import { RoleSwitcher } from "./role-switcher";
 
 interface TopbarProps {
   userName: string;
   role: string;
   email: string;
+  allowedRoles: string[];
 }
 
-const roleBadgeColors: Record<string, string> = {
-  admin: "bg-purple-100 text-purple-800",
-  investor: "bg-teal-100 text-teal-800",
-  borrower: "bg-blue-100 text-blue-800",
-};
-
-export function Topbar({ userName, role, email }: TopbarProps) {
+export function Topbar({ userName, role, email, allowedRoles }: TopbarProps) {
   const router = useRouter();
   const supabase = createClient();
 
@@ -39,9 +34,7 @@ export function Topbar({ userName, role, email }: TopbarProps) {
     <header className="sticky top-0 z-30 h-16 border-b bg-white flex items-center justify-between px-6">
       <div />
       <div className="flex items-center gap-4">
-        <Badge variant="outline" className={roleBadgeColors[role]}>
-          {role.charAt(0).toUpperCase() + role.slice(1)}
-        </Badge>
+        <RoleSwitcher activeRole={role} allowedRoles={allowedRoles} />
 
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
