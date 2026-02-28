@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -24,6 +24,7 @@ import {
 } from "@/components/ui/select";
 import { useToast } from "@/components/ui/use-toast";
 import { PlusCircle, Loader2 } from "lucide-react";
+import type { TeamMember } from "./OperationsView";
 
 const STATUSES = ["Planning", "Active", "On Hold", "Completed", "Cancelled"];
 const PRIORITIES = ["Critical", "High", "Medium", "Low"];
@@ -52,31 +53,16 @@ const INITIAL_FORM = {
   due_date: "",
 };
 
-export function AddProjectDialog() {
+interface AddProjectDialogProps {
+  teamMembers: TeamMember[];
+}
+
+export function AddProjectDialog({ teamMembers }: AddProjectDialogProps) {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [form, setForm] = useState(INITIAL_FORM);
-  const [teamMembers, setTeamMembers] = useState<{ id: string; full_name: string }[]>([]);
   const router = useRouter();
   const { toast } = useToast();
-
-  useEffect(() => {
-    async function fetchTeamMembers() {
-      const supabase = createClient();
-      const { data } = await supabase
-        .from("profiles")
-        .select("id, full_name")
-        .eq("role", "admin")
-        .order("full_name");
-      setTeamMembers(
-        (data ?? []).map((t: { id: string; full_name: string | null }) => ({
-          id: t.id,
-          full_name: t.full_name ?? "Unknown",
-        }))
-      );
-    }
-    fetchTeamMembers();
-  }, []);
 
   function resetForm() {
     setForm(INITIAL_FORM);
