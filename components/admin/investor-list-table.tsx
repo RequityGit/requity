@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { DataTable, Column } from "@/components/shared/data-table";
+import { StatusBadge } from "@/components/shared/status-badge";
 import { formatCurrency } from "@/lib/format";
 import { Input } from "@/components/ui/input";
 import { useState, useMemo } from "react";
@@ -12,6 +13,7 @@ interface InvestorRow {
   full_name: string;
   email: string;
   company: string;
+  activationStatus: string;
   totalCommitted: number;
   totalFunded: number;
   fundCount: number;
@@ -68,6 +70,11 @@ export function InvestorListTable({ data }: InvestorListTableProps) {
       key: "fundCount",
       header: "Investments",
       cell: (row) => row.fundCount,
+    },
+    {
+      key: "activationStatus",
+      header: "Portal Status",
+      cell: (row) => <StatusBadge status={row.activationStatus} />,
     },
   ];
 

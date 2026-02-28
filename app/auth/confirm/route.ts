@@ -54,11 +54,19 @@ export async function GET(request: NextRequest) {
       if (user) {
         const { data: profile } = await supabase
           .from("profiles")
-          .select("role")
+          .select("role, activation_status")
           .eq("id", user.id)
           .single();
 
         if (profile?.role) {
+          // Mark portal as activated on first sign-in
+          if (profile.activation_status && profile.activation_status !== "activated") {
+            await supabase
+              .from("profiles")
+              .update({ activation_status: "activated" })
+              .eq("id", user.id);
+          }
+
           return NextResponse.redirect(`${origin}/${profile.role}/dashboard`);
         }
       }

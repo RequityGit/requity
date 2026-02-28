@@ -56,6 +56,7 @@ export default async function AdminInvestorsPage() {
       full_name: inv.full_name || "—",
       email: inv.email,
       company: inv.company_name || "—",
+      activationStatus: inv.activation_status ?? "activated",
       totalCommitted: agg.totalCommitted,
       totalFunded: agg.totalFunded,
       fundCount: agg.fundCount,

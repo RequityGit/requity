@@ -7,6 +7,7 @@ import { DataTable, Column } from "@/components/shared/data-table";
 import { StatusBadge } from "@/components/shared/status-badge";
 import { formatCurrency, formatDate } from "@/lib/format";
 import { InvestorActions } from "@/components/admin/investor-actions";
+import { StatusBadge as ActivationBadge } from "@/components/shared/status-badge";
 import { Mail, Phone, Building2, Calendar } from "lucide-react";
 
 interface PageProps {
@@ -197,7 +198,7 @@ export default async function AdminInvestorDetailPage({ params }: PageProps) {
       {/* Investor Info Header */}
       <Card>
         <CardContent className="pt-6">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
             <div className="flex items-center gap-2">
               <Mail className="h-4 w-4 text-muted-foreground" />
               <div>
@@ -230,6 +231,10 @@ export default async function AdminInvestorDetailPage({ params }: PageProps) {
                 </p>
               </div>
             </div>
+            <div>
+              <p className="text-xs text-muted-foreground mb-1">Portal Status</p>
+              <ActivationBadge status={investor.activation_status ?? "activated"} />
+            </div>
           </div>
         </CardContent>
       </Card>
@@ -243,6 +248,7 @@ export default async function AdminInvestorDetailPage({ params }: PageProps) {
           fund_id: c.fund_id,
           fundName: (c as any).funds?.name ?? "—",
         }))}
+        activationStatus={investor.activation_status ?? "activated"}
       />
 
       {/* Tabbed Data */}
