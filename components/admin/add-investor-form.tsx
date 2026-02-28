@@ -12,23 +12,23 @@ import { Loader2 } from "lucide-react";
 
 export function AddInvestorForm() {
   const [loading, setLoading] = useState(false);
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
-  const [fullName, setFullName] = useState("");
-  const [companyName, setCompanyName] = useState("");
   const [phone, setPhone] = useState("");
   const router = useRouter();
   const { toast } = useToast();
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!email || !fullName) return;
+    if (!firstName || !lastName || !email) return;
 
     setLoading(true);
     try {
       const result = await addInvestorAction({
+        first_name: firstName,
+        last_name: lastName,
         email,
-        full_name: fullName,
-        company_name: companyName || undefined,
         phone: phone || undefined,
       });
 
@@ -43,10 +43,10 @@ export function AddInvestorForm() {
 
       toast({ title: "Investor added successfully" });
       router.push(`/admin/investors/${result.investorId}`);
-    } catch (err: any) {
+    } catch (err: unknown) {
       toast({
         title: "Error adding investor",
-        description: err.message,
+        description: err instanceof Error ? err.message : "An unexpected error occurred",
         variant: "destructive",
       });
     } finally {
@@ -61,15 +61,27 @@ export function AddInvestorForm() {
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="fullName">Full Name *</Label>
-            <Input
-              id="fullName"
-              value={fullName}
-              onChange={(e) => setFullName(e.target.value)}
-              placeholder="John Doe"
-              required
-            />
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="firstName">First Name *</Label>
+              <Input
+                id="firstName"
+                value={firstName}
+                onChange={(e) => setFirstName(e.target.value)}
+                placeholder="John"
+                required
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="lastName">Last Name *</Label>
+              <Input
+                id="lastName"
+                value={lastName}
+                onChange={(e) => setLastName(e.target.value)}
+                placeholder="Doe"
+                required
+              />
+            </div>
           </div>
           <div className="space-y-2">
             <Label htmlFor="email">Email Address *</Label>
@@ -80,15 +92,6 @@ export function AddInvestorForm() {
               onChange={(e) => setEmail(e.target.value)}
               placeholder="investor@example.com"
               required
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="companyName">Company Name</Label>
-            <Input
-              id="companyName"
-              value={companyName}
-              onChange={(e) => setCompanyName(e.target.value)}
-              placeholder="Acme Capital LLC"
             />
           </div>
           <div className="space-y-2">

@@ -10,10 +10,11 @@ import { Search } from "lucide-react";
 
 interface InvestorRow {
   id: string;
-  full_name: string;
+  first_name: string;
+  last_name: string;
   email: string;
-  company: string;
-  activationStatus: string;
+  phone: string;
+  accreditation_status: string;
   totalCommitted: number;
   totalFunded: number;
   fundCount: number;
@@ -32,18 +33,20 @@ export function InvestorListTable({ data }: InvestorListTableProps) {
     const q = search.toLowerCase();
     return data.filter(
       (inv) =>
-        inv.full_name.toLowerCase().includes(q) ||
-        inv.email.toLowerCase().includes(q) ||
-        inv.company.toLowerCase().includes(q)
+        inv.first_name.toLowerCase().includes(q) ||
+        inv.last_name.toLowerCase().includes(q) ||
+        inv.email.toLowerCase().includes(q)
     );
   }, [data, search]);
 
   const columns: Column<InvestorRow>[] = [
     {
-      key: "full_name",
+      key: "last_name",
       header: "Name",
       cell: (row) => (
-        <span className="font-medium text-[#1a2b4a]">{row.full_name}</span>
+        <span className="font-medium text-[#1a2b4a]">
+          {row.first_name} {row.last_name}
+        </span>
       ),
     },
     {
@@ -52,9 +55,9 @@ export function InvestorListTable({ data }: InvestorListTableProps) {
       cell: (row) => row.email,
     },
     {
-      key: "company",
-      header: "Company",
-      cell: (row) => row.company,
+      key: "phone",
+      header: "Phone",
+      cell: (row) => row.phone,
     },
     {
       key: "totalCommitted",
@@ -72,9 +75,9 @@ export function InvestorListTable({ data }: InvestorListTableProps) {
       cell: (row) => row.fundCount,
     },
     {
-      key: "activationStatus",
-      header: "Portal Status",
-      cell: (row) => <StatusBadge status={row.activationStatus} />,
+      key: "accreditation_status",
+      header: "Accreditation",
+      cell: (row) => <StatusBadge status={row.accreditation_status} />,
     },
   ];
 

@@ -2,14 +2,12 @@ import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { redirect, notFound } from "next/navigation";
 import { PageHeader } from "@/components/shared/page-header";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { DataTable, Column } from "@/components/shared/data-table";
 import { StatusBadge } from "@/components/shared/status-badge";
 import { formatCurrency, formatDate } from "@/lib/format";
-import { InvestorActions } from "@/components/admin/investor-actions";
-import { StatusBadge as ActivationBadge } from "@/components/shared/status-badge";
-import { Mail, Phone, Building2, Calendar } from "lucide-react";
+import { Mail, Phone, MapPin, Calendar, Shield } from "lucide-react";
 
 interface PageProps {
   params: { id: string };
@@ -25,41 +23,43 @@ export default async function AdminInvestorDetailPage({ params }: PageProps) {
 
   const { id } = await params;
 
-  // Use admin client to ensure we can always read the investor profile,
+  // Use admin client to ensure we can always read the investor,
   // bypassing any RLS timing issues for newly created investors.
-  const adminSupabase = createAdminClient();
-  const { data: investor } = await adminSupabase
-    .from("profiles")
+  const admin = createAdminClient();
+  const { data: investor } = await admin
+    .from("investors")
     .select("*")
     .eq("id", id)
     .single();
 
   if (!investor) notFound();
 
+  const investorName = `${investor.first_name} ${investor.last_name}`;
+
   // Fetch related data in parallel
   const [commitmentsResult, capitalCallsResult, distributionsResult, documentsResult, fundsResult] =
     await Promise.all([
-      supabase
+      admin
         .from("investor_commitments")
         .select("*, funds(name)")
         .eq("investor_id", id)
         .order("created_at", { ascending: false }),
-      supabase
+      admin
         .from("capital_calls")
         .select("*, funds(name)")
         .eq("investor_id", id)
         .order("due_date", { ascending: false }),
-      supabase
+      admin
         .from("distributions")
         .select("*, funds(name)")
         .eq("investor_id", id)
         .order("distribution_date", { ascending: false }),
-      supabase
+      admin
         .from("documents")
         .select("*")
         .eq("owner_id", id)
         .order("created_at", { ascending: false }),
-      supabase.from("funds").select("id, name").order("name"),
+      admin.from("funds").select("id, name").order("name"),
     ]);
 
   const commitments = commitmentsResult.data ?? [];
@@ -69,11 +69,11 @@ export default async function AdminInvestorDetailPage({ params }: PageProps) {
   const funds = fundsResult.data ?? [];
 
   // Define columns for each tab
-  const commitmentColumns: Column<any>[] = [
+  const commitmentColumns: Column<(typeof commitments)[number]>[] = [
     {
       key: "fund",
       header: "Investment",
-      cell: (row) => (row as any).funds?.name ?? "—",
+      cell: (row) => (row as Record<string, unknown> & { funds?: { name?: string } }).funds?.name ?? "—",
     },
     {
       key: "commitment_amount",
@@ -102,11 +102,11 @@ export default async function AdminInvestorDetailPage({ params }: PageProps) {
     },
   ];
 
-  const capitalCallColumns: Column<any>[] = [
+  const capitalCallColumns: Column<(typeof capitalCalls)[number]>[] = [
     {
       key: "fund",
       header: "Investment",
-      cell: (row) => (row as any).funds?.name ?? "—",
+      cell: (row) => (row as Record<string, unknown> & { funds?: { name?: string } }).funds?.name ?? "—",
     },
     {
       key: "call_amount",
@@ -130,18 +130,18 @@ export default async function AdminInvestorDetailPage({ params }: PageProps) {
     },
   ];
 
-  const distributionColumns: Column<any>[] = [
+  const distributionColumns: Column<(typeof distributions)[number]>[] = [
     {
       key: "fund",
       header: "Investment",
-      cell: (row) => (row as any).funds?.name ?? "—",
+      cell: (row) => (row as Record<string, unknown> & { funds?: { name?: string } }).funds?.name ?? "—",
     },
     {
       key: "distribution_type",
       header: "Type",
       cell: (row) => (
         <span className="capitalize">
-          {row.distribution_type.replace(/_/g, " ")}
+          {(row.distribution_type ?? "").replace(/_/g, " ")}
         </span>
       ),
     },
@@ -162,7 +162,7 @@ export default async function AdminInvestorDetailPage({ params }: PageProps) {
     },
   ];
 
-  const documentColumns: Column<any>[] = [
+  const documentColumns: Column<(typeof documents)[number]>[] = [
     {
       key: "file_name",
       header: "File Name",
@@ -187,14 +187,24 @@ export default async function AdminInvestorDetailPage({ params }: PageProps) {
     {
       key: "status",
       header: "Status",
-      cell: (row) => <StatusBadge status={row.status} />,
+      cell: (row) => <StatusBadge status={row.status ?? "pending"} />,
     },
   ];
+
+  const fullAddress = [
+    investor.address_line1,
+    investor.address_line2,
+    investor.city,
+    investor.state,
+    investor.zip,
+  ]
+    .filter(Boolean)
+    .join(", ");
 
   return (
     <div className="space-y-6">
       <PageHeader
-        title={investor.full_name || "Investor"}
+        title={investorName}
         description="Investor profile and activity"
       />
 
@@ -217,42 +227,33 @@ export default async function AdminInvestorDetailPage({ params }: PageProps) {
               </div>
             </div>
             <div className="flex items-center gap-2">
-              <Building2 className="h-4 w-4 text-muted-foreground" />
+              <MapPin className="h-4 w-4 text-muted-foreground" />
               <div>
-                <p className="text-xs text-muted-foreground">Company</p>
+                <p className="text-xs text-muted-foreground">Address</p>
                 <p className="text-sm font-medium">
-                  {investor.company_name || "—"}
+                  {fullAddress || "—"}
                 </p>
               </div>
             </div>
             <div className="flex items-center gap-2">
               <Calendar className="h-4 w-4 text-muted-foreground" />
               <div>
-                <p className="text-xs text-muted-foreground">Joined</p>
+                <p className="text-xs text-muted-foreground">Added</p>
                 <p className="text-sm font-medium">
                   {formatDate(investor.created_at)}
                 </p>
               </div>
             </div>
-            <div>
-              <p className="text-xs text-muted-foreground mb-1">Portal Status</p>
-              <ActivationBadge status={investor.activation_status ?? "activated"} />
+            <div className="flex items-center gap-2">
+              <Shield className="h-4 w-4 text-muted-foreground" />
+              <div>
+                <p className="text-xs text-muted-foreground">Accreditation</p>
+                <StatusBadge status={investor.accreditation_status} />
+              </div>
             </div>
           </div>
         </CardContent>
       </Card>
-
-      {/* Actions */}
-      <InvestorActions
-        investorId={id}
-        funds={funds}
-        commitments={commitments.map((c) => ({
-          id: c.id,
-          fund_id: c.fund_id,
-          fundName: (c as any).funds?.name ?? "—",
-        }))}
-        activationStatus={investor.activation_status ?? "activated"}
-      />
 
       {/* Tabbed Data */}
       <Tabs defaultValue="commitments">

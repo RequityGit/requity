@@ -197,6 +197,78 @@ export type Database = {
         };
         Relationships: [];
       };
+      investors: {
+        Row: {
+          id: string;
+          first_name: string;
+          last_name: string;
+          email: string;
+          phone: string | null;
+          address_line1: string | null;
+          address_line2: string | null;
+          city: string | null;
+          state: string | null;
+          zip: string | null;
+          country: string;
+          accreditation_status:
+            | "pending"
+            | "verified"
+            | "expired"
+            | "not_accredited";
+          accreditation_verified_at: string | null;
+          notes: string | null;
+          user_id: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          first_name: string;
+          last_name: string;
+          email: string;
+          phone?: string | null;
+          address_line1?: string | null;
+          address_line2?: string | null;
+          city?: string | null;
+          state?: string | null;
+          zip?: string | null;
+          country?: string;
+          accreditation_status?:
+            | "pending"
+            | "verified"
+            | "expired"
+            | "not_accredited";
+          accreditation_verified_at?: string | null;
+          notes?: string | null;
+          user_id?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          first_name?: string;
+          last_name?: string;
+          email?: string;
+          phone?: string | null;
+          address_line1?: string | null;
+          address_line2?: string | null;
+          city?: string | null;
+          state?: string | null;
+          zip?: string | null;
+          country?: string;
+          accreditation_status?:
+            | "pending"
+            | "verified"
+            | "expired"
+            | "not_accredited";
+          accreditation_verified_at?: string | null;
+          notes?: string | null;
+          user_id?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
       funds: {
         Row: {
           id: string;
@@ -1380,6 +1452,10 @@ export type ProfileUpdate = Database["public"]["Tables"]["profiles"]["Update"];
 export type Fund = Database["public"]["Tables"]["funds"]["Row"];
 export type FundInsert = Database["public"]["Tables"]["funds"]["Insert"];
 export type FundUpdate = Database["public"]["Tables"]["funds"]["Update"];
+
+export type Investor = Database["public"]["Tables"]["investors"]["Row"];
+export type InvestorInsert = Database["public"]["Tables"]["investors"]["Insert"];
+export type InvestorUpdate = Database["public"]["Tables"]["investors"]["Update"];
 
 export type InvestorCommitment = Database["public"]["Tables"]["investor_commitments"]["Row"];
 export type InvestorCommitmentInsert = Database["public"]["Tables"]["investor_commitments"]["Insert"];

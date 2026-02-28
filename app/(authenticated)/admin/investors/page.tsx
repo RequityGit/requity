@@ -1,7 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { redirect } from "next/navigation";
 import { PageHeader } from "@/components/shared/page-header";
-import { formatCurrency } from "@/lib/format";
 import { Button } from "@/components/ui/button";
 import { UserPlus } from "lucide-react";
 import Link from "next/link";
@@ -15,15 +15,16 @@ export default async function AdminInvestorsPage() {
 
   if (!user) redirect("/login");
 
-  // Fetch all investor profiles
-  const { data: investors } = await supabase
-    .from("profiles")
+  const admin = createAdminClient();
+
+  // Fetch all investors from the dedicated investors table
+  const { data: investors } = await admin
+    .from("investors")
     .select("*")
-    .eq("role", "investor")
-    .order("full_name");
+    .order("last_name");
 
   // Fetch all commitments grouped by investor
-  const { data: commitments } = await supabase
+  const { data: commitments } = await admin
     .from("investor_commitments")
     .select("investor_id, commitment_amount, funded_amount, fund_id");
 
@@ -53,10 +54,11 @@ export default async function AdminInvestorsPage() {
     };
     return {
       id: inv.id,
-      full_name: inv.full_name || "—",
+      first_name: inv.first_name,
+      last_name: inv.last_name,
       email: inv.email,
-      company: inv.company_name || "—",
-      activationStatus: inv.activation_status ?? "activated",
+      phone: inv.phone || "—",
+      accreditation_status: inv.accreditation_status,
       totalCommitted: agg.totalCommitted,
       totalFunded: agg.totalFunded,
       fundCount: agg.fundCount,

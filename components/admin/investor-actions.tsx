@@ -25,8 +25,7 @@ import {
 import { FileUpload } from "@/components/shared/file-upload";
 import { DOCUMENT_TYPES, DISTRIBUTION_TYPES } from "@/lib/constants";
 import { useToast } from "@/components/ui/use-toast";
-import { ArrowDownCircle, DollarSign, Upload, Send, Check } from "lucide-react";
-import { sendActivationLinkAction } from "@/app/(authenticated)/admin/investors/new/actions";
+import { ArrowDownCircle, DollarSign, Upload } from "lucide-react";
 
 interface Fund {
   id: string;
@@ -43,23 +42,15 @@ interface InvestorActionsProps {
   investorId: string;
   funds: Fund[];
   commitments: CommitmentRef[];
-  activationStatus?: string;
 }
 
 export function InvestorActions({
   investorId,
   funds,
   commitments,
-  activationStatus,
 }: InvestorActionsProps) {
   return (
     <div className="flex flex-wrap gap-3">
-      {activationStatus !== "activated" && (
-        <SendActivationLinkButton
-          investorId={investorId}
-          activationStatus={activationStatus}
-        />
-      )}
       <RecordCapitalCallDialog
         investorId={investorId}
         commitments={commitments}
@@ -70,70 +61,6 @@ export function InvestorActions({
       />
       <UploadDocumentDialog investorId={investorId} funds={funds} />
     </div>
-  );
-}
-
-// ---------------------------------------------------------------------------
-// Send Activation Link Button
-// ---------------------------------------------------------------------------
-
-function SendActivationLinkButton({
-  investorId,
-  activationStatus,
-}: {
-  investorId: string;
-  activationStatus?: string;
-}) {
-  const [loading, setLoading] = useState(false);
-  const [sent, setSent] = useState(activationStatus === "link_sent");
-  const router = useRouter();
-  const { toast } = useToast();
-
-  async function handleSend() {
-    setLoading(true);
-    try {
-      const result = await sendActivationLinkAction(investorId);
-      if (result.error) {
-        toast({
-          title: "Error sending activation link",
-          description: result.error,
-          variant: "destructive",
-        });
-      } else {
-        toast({ title: "Portal activation link sent" });
-        setSent(true);
-        router.refresh();
-      }
-    } catch (err: any) {
-      toast({
-        title: "Error sending activation link",
-        description: err.message,
-        variant: "destructive",
-      });
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  return (
-    <Button
-      variant={sent ? "outline" : "default"}
-      className="gap-2"
-      onClick={handleSend}
-      disabled={loading}
-    >
-      {sent ? (
-        <>
-          <Check className="h-4 w-4" />
-          {loading ? "Resending..." : "Resend Activation Link"}
-        </>
-      ) : (
-        <>
-          <Send className="h-4 w-4" />
-          {loading ? "Sending..." : "Send Portal Activation Link"}
-        </>
-      )}
-    </Button>
   );
 }
 
