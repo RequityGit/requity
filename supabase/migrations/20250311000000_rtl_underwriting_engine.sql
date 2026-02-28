@@ -507,7 +507,7 @@ CREATE POLICY "Borrowers can view own deal_leverage_adjustments"
   USING (EXISTS (
     SELECT 1 FROM public.loans l
     WHERE l.id = deal_leverage_adjustments.loan_id
-    AND l.borrower_id IN (SELECT my_borrower_ids())
+    AND l.borrower_id IN (SELECT * FROM my_borrower_ids())
   ));
 
 -- --- loan_comps: borrower own, admin all ---
@@ -534,7 +534,7 @@ CREATE POLICY "Borrowers can view own loan_comps"
   USING (EXISTS (
     SELECT 1 FROM public.loans l
     WHERE l.id = loan_comps.loan_id
-    AND l.borrower_id IN (SELECT my_borrower_ids())
+    AND l.borrower_id IN (SELECT * FROM my_borrower_ids())
   ));
 
 -- --- loan_draws: borrower own, admin all ---
@@ -561,7 +561,7 @@ CREATE POLICY "Borrowers can view own loan_draws"
   USING (EXISTS (
     SELECT 1 FROM public.loans l
     WHERE l.id = loan_draws.loan_id
-    AND l.borrower_id IN (SELECT my_borrower_ids())
+    AND l.borrower_id IN (SELECT * FROM my_borrower_ids())
   ));
 
 CREATE POLICY "Borrowers can request own loan_draws"
@@ -569,7 +569,7 @@ CREATE POLICY "Borrowers can request own loan_draws"
   WITH CHECK (EXISTS (
     SELECT 1 FROM public.loans l
     WHERE l.id = loan_draws.loan_id
-    AND l.borrower_id IN (SELECT my_borrower_ids())
+    AND l.borrower_id IN (SELECT * FROM my_borrower_ids())
   ));
 
 -- --- loan_eligibility_checks: borrower own, admin all ---
@@ -596,7 +596,7 @@ CREATE POLICY "Borrowers can view own loan_eligibility_checks"
   USING (EXISTS (
     SELECT 1 FROM public.loans l
     WHERE l.id = loan_eligibility_checks.loan_id
-    AND l.borrower_id IN (SELECT my_borrower_ids())
+    AND l.borrower_id IN (SELECT * FROM my_borrower_ids())
   ));
 
 
