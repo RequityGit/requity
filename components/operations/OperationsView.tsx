@@ -18,6 +18,8 @@ import { MultiSelectFilter } from "./MultiSelectFilter";
 import { ProjectCard, type OpsProject, type OpsTask } from "./ProjectCard";
 import { TaskList } from "./TaskList";
 import { TaskBoard } from "./TaskBoard";
+import { AddProjectDialog } from "./AddProjectDialog";
+import { AddTaskDialog } from "./AddTaskDialog";
 
 interface OperationsViewProps {
   projects: OpsProject[];
@@ -210,6 +212,12 @@ export function OperationsView({ projects, tasks }: OperationsViewProps) {
       <PageHeader
         title="Operations"
         description="Manage projects and tasks across the organization."
+        action={
+          <div className="flex items-center gap-2">
+            <AddTaskDialog projects={projects} />
+            <AddProjectDialog />
+          </div>
+        }
       />
 
       <OperationsStats {...stats} />
