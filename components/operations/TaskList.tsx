@@ -20,7 +20,7 @@ import {
   RecurringBadge,
   DueDateLabel,
 } from "./badges";
-import { MoreHorizontal, Pause } from "lucide-react";
+import { MoreHorizontal, Pause, Trash2 } from "lucide-react";
 import type { OpsTask } from "./ProjectCard";
 
 interface TaskListProps {
@@ -28,9 +28,10 @@ interface TaskListProps {
   projectNames: Record<string, string>;
   onToggleTask: (taskId: string, completed: boolean) => void;
   onStopRecurrence: (taskId: string) => void;
+  onDeleteTask: (taskId: string) => void;
 }
 
-export function TaskList({ tasks, projectNames, onToggleTask, onStopRecurrence }: TaskListProps) {
+export function TaskList({ tasks, projectNames, onToggleTask, onStopRecurrence, onDeleteTask }: TaskListProps) {
   if (tasks.length === 0) {
     return (
       <div className="rounded-md border bg-white">
@@ -54,6 +55,7 @@ export function TaskList({ tasks, projectNames, onToggleTask, onStopRecurrence }
             <TableHead>Status</TableHead>
             <TableHead>Recurring</TableHead>
             <TableHead>Due Date</TableHead>
+            <TableHead className="w-10" />
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -88,33 +90,40 @@ export function TaskList({ tasks, projectNames, onToggleTask, onStopRecurrence }
                 </TableCell>
                 <TableCell>
                   {task.is_recurring ? (
-                    <div className="flex items-center gap-1">
-                      <RecurringBadge
-                        pattern={task.recurrence_pattern}
-                        isActive={task.is_active_recurrence}
-                      />
-                      {task.is_active_recurrence && (
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <button className="p-0.5 rounded hover:bg-slate-100 text-muted-foreground">
-                              <MoreHorizontal className="h-3.5 w-3.5" />
-                            </button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuItem onClick={() => onStopRecurrence(task.id)}>
-                              <Pause className="h-3.5 w-3.5 mr-2" />
-                              Stop recurrence
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      )}
-                    </div>
+                    <RecurringBadge
+                      pattern={task.recurrence_pattern}
+                      isActive={task.is_active_recurrence}
+                    />
                   ) : (
                     <span className="text-muted-foreground text-sm">—</span>
                   )}
                 </TableCell>
                 <TableCell>
                   <DueDateLabel dueDate={task.due_date} />
+                </TableCell>
+                <TableCell>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <button className="p-1 rounded hover:bg-slate-100 text-muted-foreground">
+                        <MoreHorizontal className="h-3.5 w-3.5" />
+                      </button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      {task.is_recurring && task.is_active_recurrence && (
+                        <DropdownMenuItem onClick={() => onStopRecurrence(task.id)}>
+                          <Pause className="h-3.5 w-3.5 mr-2" />
+                          Stop recurrence
+                        </DropdownMenuItem>
+                      )}
+                      <DropdownMenuItem
+                        className="text-red-600 focus:text-red-600"
+                        onClick={() => onDeleteTask(task.id)}
+                      >
+                        <Trash2 className="h-3.5 w-3.5 mr-2" />
+                        Delete task
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                 </TableCell>
               </TableRow>
             );

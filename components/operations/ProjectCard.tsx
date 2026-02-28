@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { ChevronDown, ChevronRight, MoreHorizontal, Pause } from "lucide-react";
+import { ChevronDown, ChevronRight, MoreHorizontal, Pause, Trash2 } from "lucide-react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import {
   DropdownMenu,
@@ -67,6 +67,8 @@ interface ProjectCardProps {
   tasks: OpsTask[];
   onToggleTask: (taskId: string, completed: boolean) => void;
   onStopRecurrence: (taskId: string) => void;
+  onDeleteTask: (taskId: string) => void;
+  onDeleteProject: (projectId: string) => void;
 }
 
 const priorityOrder: Record<string, number> = {
@@ -76,7 +78,7 @@ const priorityOrder: Record<string, number> = {
   Low: 3,
 };
 
-export function ProjectCard({ project, tasks, onToggleTask, onStopRecurrence }: ProjectCardProps) {
+export function ProjectCard({ project, tasks, onToggleTask, onStopRecurrence, onDeleteTask, onDeleteProject }: ProjectCardProps) {
   const [expanded, setExpanded] = useState(false);
 
   const completedCount = tasks.filter((t) => t.status === "Complete").length;
@@ -90,51 +92,74 @@ export function ProjectCard({ project, tasks, onToggleTask, onStopRecurrence }: 
   return (
     <Card className="transition-shadow hover:shadow-md">
       <CardHeader className="pb-3">
-        <button
-          type="button"
-          onClick={() => setExpanded(!expanded)}
-          className="flex items-start gap-3 text-left w-full"
-        >
-          <div className="mt-0.5">
-            {expanded ? (
-              <ChevronDown className="h-4 w-4 text-muted-foreground" />
-            ) : (
-              <ChevronRight className="h-4 w-4 text-muted-foreground" />
-            )}
-          </div>
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2 flex-wrap">
-              <h3 className="text-sm font-semibold text-[#1a2b4a]">
-                {project.project_name}
-              </h3>
-              <PriorityBadge priority={project.priority} />
-              <StatusBadge status={project.status} />
-            </div>
-            <div className="flex items-center gap-2 mt-1.5 flex-wrap">
-              <OwnerBadge name={project.owner} />
-              {project.category && (
-                <span className="text-xs text-muted-foreground">
-                  {project.category}
-                </span>
+        <div className="flex items-start gap-2">
+          <button
+            type="button"
+            onClick={() => setExpanded(!expanded)}
+            className="flex items-start gap-3 text-left flex-1 min-w-0"
+          >
+            <div className="mt-0.5 shrink-0">
+              {expanded ? (
+                <ChevronDown className="h-4 w-4 text-muted-foreground" />
+              ) : (
+                <ChevronRight className="h-4 w-4 text-muted-foreground" />
               )}
             </div>
-
-            {/* Task progress bar */}
-            {totalCount > 0 && (
-              <div className="mt-2 flex items-center gap-2">
-                <div className="flex-1 h-1.5 bg-slate-100 rounded-full overflow-hidden">
-                  <div
-                    className="h-full bg-teal-500 rounded-full transition-all"
-                    style={{ width: `${progress}%` }}
-                  />
-                </div>
-                <span className="text-xs text-muted-foreground whitespace-nowrap">
-                  {completedCount}/{totalCount} tasks
-                </span>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2 flex-wrap">
+                <h3 className="text-sm font-semibold text-[#1a2b4a]">
+                  {project.project_name}
+                </h3>
+                <PriorityBadge priority={project.priority} />
+                <StatusBadge status={project.status} />
               </div>
-            )}
-          </div>
-        </button>
+              <div className="flex items-center gap-2 mt-1.5 flex-wrap">
+                <OwnerBadge name={project.owner} />
+                {project.category && (
+                  <span className="text-xs text-muted-foreground">
+                    {project.category}
+                  </span>
+                )}
+              </div>
+
+              {/* Task progress bar */}
+              {totalCount > 0 && (
+                <div className="mt-2 flex items-center gap-2">
+                  <div className="flex-1 h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                    <div
+                      className="h-full bg-teal-500 rounded-full transition-all"
+                      style={{ width: `${progress}%` }}
+                    />
+                  </div>
+                  <span className="text-xs text-muted-foreground whitespace-nowrap">
+                    {completedCount}/{totalCount} tasks
+                  </span>
+                </div>
+              )}
+            </div>
+          </button>
+
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button
+                type="button"
+                className="shrink-0 p-1 rounded hover:bg-slate-100 text-muted-foreground"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <MoreHorizontal className="h-4 w-4" />
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem
+                className="text-red-600 focus:text-red-600"
+                onClick={() => onDeleteProject(project.id)}
+              >
+                <Trash2 className="h-3.5 w-3.5 mr-2" />
+                Delete project
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
       </CardHeader>
 
       {expanded && (
@@ -177,26 +202,31 @@ export function ProjectCard({ project, tasks, onToggleTask, onStopRecurrence }: 
                     <div className="flex items-center gap-1.5">
                       <PriorityBadge priority={task.priority} />
                       {task.is_recurring && (
-                        <div className="flex items-center gap-0.5">
-                          <RecurringBadge pattern={task.recurrence_pattern} isActive={task.is_active_recurrence} />
-                          {task.is_active_recurrence && (
-                            <DropdownMenu>
-                              <DropdownMenuTrigger asChild>
-                                <button className="p-0.5 rounded hover:bg-slate-200 text-muted-foreground">
-                                  <MoreHorizontal className="h-3 w-3" />
-                                </button>
-                              </DropdownMenuTrigger>
-                              <DropdownMenuContent align="end">
-                                <DropdownMenuItem onClick={() => onStopRecurrence(task.id)}>
-                                  <Pause className="h-3.5 w-3.5 mr-2" />
-                                  Stop recurrence
-                                </DropdownMenuItem>
-                              </DropdownMenuContent>
-                            </DropdownMenu>
-                          )}
-                        </div>
+                        <RecurringBadge pattern={task.recurrence_pattern} isActive={task.is_active_recurrence} />
                       )}
                       <DueDateLabel dueDate={task.due_date} />
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <button className="p-0.5 rounded hover:bg-slate-200 text-muted-foreground">
+                            <MoreHorizontal className="h-3 w-3" />
+                          </button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          {task.is_recurring && task.is_active_recurrence && (
+                            <DropdownMenuItem onClick={() => onStopRecurrence(task.id)}>
+                              <Pause className="h-3.5 w-3.5 mr-2" />
+                              Stop recurrence
+                            </DropdownMenuItem>
+                          )}
+                          <DropdownMenuItem
+                            className="text-red-600 focus:text-red-600"
+                            onClick={() => onDeleteTask(task.id)}
+                          >
+                            <Trash2 className="h-3.5 w-3.5 mr-2" />
+                            Delete task
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     </div>
                   </div>
                 );

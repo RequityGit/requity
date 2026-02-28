@@ -265,6 +265,29 @@ export function OperationsView({ projects, tasks, teamMembers }: OperationsViewP
     router.refresh();
   }
 
+  // Delete a task
+  async function handleDeleteTask(taskId: string) {
+    const { error } = await supabase.from("ops_tasks").delete().eq("id", taskId);
+    if (error) {
+      toast({ title: "Error", description: "Could not delete task.", variant: "destructive" });
+      return;
+    }
+    toast({ title: "Task deleted" });
+    router.refresh();
+  }
+
+  // Delete a project (nulls out project_id on linked tasks first to avoid FK violation)
+  async function handleDeleteProject(projectId: string) {
+    await supabase.from("ops_tasks").update({ project_id: null }).eq("project_id", projectId);
+    const { error } = await supabase.from("ops_projects").delete().eq("id", projectId);
+    if (error) {
+      toast({ title: "Error", description: "Could not delete project.", variant: "destructive" });
+      return;
+    }
+    toast({ title: "Project deleted" });
+    router.refresh();
+  }
+
   // Stop a recurring series from generating future tasks
   async function handleStopRecurrence(taskId: string) {
     const task = tasks.find((t) => t.id === taskId);
@@ -369,6 +392,8 @@ export function OperationsView({ projects, tasks, teamMembers }: OperationsViewP
                   tasks={tasksByProject[project.id] ?? []}
                   onToggleTask={handleToggleTask}
                   onStopRecurrence={handleStopRecurrence}
+                  onDeleteTask={handleDeleteTask}
+                  onDeleteProject={handleDeleteProject}
                 />
               ))}
             </div>
@@ -467,6 +492,7 @@ export function OperationsView({ projects, tasks, teamMembers }: OperationsViewP
               projectNames={projectNames}
               onToggleTask={handleToggleTask}
               onStopRecurrence={handleStopRecurrence}
+              onDeleteTask={handleDeleteTask}
             />
           ) : (
             <TaskBoard
