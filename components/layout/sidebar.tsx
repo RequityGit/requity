@@ -68,6 +68,7 @@ const adminNav: NavItem[] = [
     href: "/admin/distributions",
     icon: Receipt,
   },
+  { label: "Account", href: "/admin/account", icon: Settings },
 ];
 
 function getNavItems(role: string): NavItem[] {
