@@ -22,7 +22,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { LOAN_TYPES, LOAN_PRIORITIES } from "@/lib/constants";
+import { LOAN_TYPES, LOAN_PRIORITIES, LOAN_DB_TYPES, LOAN_PURPOSES } from "@/lib/constants";
 import { useToast } from "@/components/ui/use-toast";
 import { PlusCircle, Search, Check, X, UserPlus } from "lucide-react";
 
@@ -89,6 +89,8 @@ export function CreateLoanDialog({
   const [form, setForm] = useState({
     borrower_id: "",
     loan_type: "",
+    type: "",
+    purpose: "",
     property_address: "",
     property_city: "",
     property_state: "",
@@ -118,6 +120,8 @@ export function CreateLoanDialog({
     setForm({
       borrower_id: "",
       loan_type: "",
+      type: "",
+      purpose: "",
       property_address: "",
       property_city: "",
       property_state: "",
@@ -142,7 +146,7 @@ export function CreateLoanDialog({
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!form.borrower_id || !form.loan_amount) return;
+    if (!form.borrower_id || !form.loan_amount || !form.type || !form.purpose) return;
 
     setLoading(true);
     try {
@@ -158,6 +162,8 @@ export function CreateLoanDialog({
         .from("loans")
         .insert({
           borrower_id: form.borrower_id,
+          type: form.type as "commercial" | "dscr" | "guc" | "rtl" | "transactional",
+          purpose: form.purpose as "purchase" | "refinance" | "cash_out_refinance",
           loan_amount: parseFloat(form.loan_amount),
           stage: "lead",
           stage_updated_at: now,
@@ -203,12 +209,10 @@ export function CreateLoanDialog({
       resetForm();
       router.push(`/admin/loans/${newLoan.id}`);
     } catch (err: any) {
-      const isSchemaError = err.message?.includes("schema cache") || err.message?.includes("Could not find the");
+      console.error("Loan creation error:", err);
       toast({
         title: "Error creating loan",
-        description: isSchemaError
-          ? "Database schema needs to be refreshed. Please contact your administrator to reload the Supabase schema cache."
-          : err.message,
+        description: err.details || err.message || "An unexpected error occurred.",
         variant: "destructive",
       });
     } finally {
@@ -477,6 +481,46 @@ export function CreateLoanDialog({
             <div className="grid grid-cols-3 gap-4">
               <div className="space-y-2">
                 <Label>
+                  Loan Type <span className="text-red-500">*</span>
+                </Label>
+                <Select
+                  value={form.type}
+                  onValueChange={(v) => updateField("type", v)}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select loan type..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {LOAN_DB_TYPES.map((t) => (
+                      <SelectItem key={t.value} value={t.value}>
+                        {t.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label>
+                  Loan Purpose <span className="text-red-500">*</span>
+                </Label>
+                <Select
+                  value={form.purpose}
+                  onValueChange={(v) => updateField("purpose", v)}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select purpose..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {LOAN_PURPOSES.map((p) => (
+                      <SelectItem key={p.value} value={p.value}>
+                        {p.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label>
                   Loan Amount ($) <span className="text-red-500">*</span>
                 </Label>
                 <Input
@@ -628,7 +672,7 @@ export function CreateLoanDialog({
             >
               Cancel
             </Button>
-            <Button type="submit" disabled={loading || !form.borrower_id || !form.loan_amount}>
+            <Button type="submit" disabled={loading || !form.borrower_id || !form.loan_amount || !form.type || !form.purpose}>
               {loading ? "Creating..." : "Create Loan"}
             </Button>
           </DialogFooter>

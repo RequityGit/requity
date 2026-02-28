@@ -165,7 +165,7 @@ export const DOCUMENT_TYPES = [
 ] as const;
 
 // ---------------------------------------------------------------------------
-// Loan Types
+// Loan Types (loan_type column — legacy/display classification)
 // ---------------------------------------------------------------------------
 
 export const LOAN_TYPES = [
@@ -176,6 +176,28 @@ export const LOAN_TYPES = [
   { value: "dscr", label: "DSCR" },
   { value: "stabilized", label: "Stabilized" },
   { value: "other", label: "Other" },
+] as const;
+
+// ---------------------------------------------------------------------------
+// Loan DB Type (type column — required enum)
+// ---------------------------------------------------------------------------
+
+export const LOAN_DB_TYPES = [
+  { value: "commercial", label: "Commercial" },
+  { value: "dscr", label: "DSCR" },
+  { value: "guc", label: "Ground Up Construction" },
+  { value: "rtl", label: "RTL (Fix & Flip)" },
+  { value: "transactional", label: "Transactional" },
+] as const;
+
+// ---------------------------------------------------------------------------
+// Loan Purpose (purpose column — required enum)
+// ---------------------------------------------------------------------------
+
+export const LOAN_PURPOSES = [
+  { value: "purchase", label: "Purchase" },
+  { value: "refinance", label: "Refinance" },
+  { value: "cash_out_refinance", label: "Cash-Out Refinance" },
 ] as const;
 
 // ---------------------------------------------------------------------------
