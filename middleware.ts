@@ -15,6 +15,11 @@ export async function middleware(request: NextRequest) {
   const { supabase, user, supabaseResponse } = await updateSession(request);
   const { pathname } = request.nextUrl;
 
+  // If Supabase is not configured, let requests through
+  if (!supabase) {
+    return supabaseResponse;
+  }
+
   // -----------------------------------------------------------------------
   // Check if the current route is public
   // -----------------------------------------------------------------------

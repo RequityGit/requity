@@ -4,12 +4,15 @@ import { Sidebar } from "@/components/layout/sidebar";
 import { Topbar } from "@/components/layout/topbar";
 import { Toaster } from "@/components/ui/toaster";
 
+// Never statically generate authenticated pages
+export const dynamic = "force-dynamic";
+
 export default async function AuthenticatedLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const supabase = await createClient();
+  const supabase = createClient();
 
   const {
     data: { user },
