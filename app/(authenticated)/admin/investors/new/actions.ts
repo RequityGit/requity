@@ -1,8 +1,8 @@
 "use server";
 
-import { createAdminClient } from "@/lib/supabase/admin";
-import { createClient } from "@/lib/supabase/server";
-import { redirect } from "next/navigation";
+import { createClient as createServerClient } from "@/lib/supabase/server";
+import { createClient } from "@supabase/supabase-js";
+import crypto from "crypto";
 
 interface AddInvestorInput {
   email: string;
@@ -13,7 +13,7 @@ interface AddInvestorInput {
 
 export async function addInvestorAction(input: AddInvestorInput) {
   // Verify the current user is an admin
-  const supabase = await createClient();
+  const supabase = await createServerClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
@@ -32,40 +32,97 @@ export async function addInvestorAction(input: AddInvestorInput) {
     return { error: "Unauthorized" };
   }
 
-  // Create the investor auth user via admin API
-  const adminClient = createAdminClient();
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
-  const { data: newUser, error: createError } =
-    await adminClient.auth.admin.createUser({
-      email: input.email,
-      email_confirm: true,
-      user_metadata: {
-        role: "investor",
+  if (!supabaseUrl || !supabaseAnonKey) {
+    return { error: "Missing Supabase configuration" };
+  }
+
+  // If service role key is available, use admin API (preferred)
+  if (supabaseServiceRoleKey) {
+    const adminClient = createClient(supabaseUrl, supabaseServiceRoleKey, {
+      auth: { autoRefreshToken: false, persistSession: false },
+    });
+
+    const { data: newUser, error: createError } =
+      await adminClient.auth.admin.createUser({
+        email: input.email,
+        email_confirm: true,
+        user_metadata: { role: "investor", full_name: input.full_name },
+      });
+
+    if (createError) {
+      return { error: createError.message };
+    }
+
+    if (!newUser.user) {
+      return { error: "Failed to create user" };
+    }
+
+    // Update the auto-created profile with additional details
+    const { error: updateError } = await adminClient
+      .from("profiles")
+      .update({
         full_name: input.full_name,
+        company_name: input.company_name || null,
+        phone: input.phone || null,
+      })
+      .eq("id", newUser.user.id);
+
+    if (updateError) {
+      return { error: updateError.message };
+    }
+
+    // Send password reset so investor can set their own password
+    await adminClient.auth.resetPasswordForEmail(input.email);
+
+    return { success: true, investorId: newUser.user.id };
+  }
+
+  // Fallback: use signUp with anon key (no service role key needed)
+  const anonClient = createClient(supabaseUrl, supabaseAnonKey, {
+    auth: { autoRefreshToken: false, persistSession: false },
+  });
+
+  const tempPassword = crypto.randomBytes(24).toString("base64url");
+
+  const { data: signUpData, error: signUpError } =
+    await anonClient.auth.signUp({
+      email: input.email,
+      password: tempPassword,
+      options: {
+        data: { role: "investor", full_name: input.full_name },
       },
     });
 
-  if (createError) {
-    return { error: createError.message };
+  if (signUpError) {
+    return { error: signUpError.message };
   }
 
-  if (!newUser.user) {
-    return { error: "Failed to create user" };
+  if (!signUpData.user) {
+    return { error: "Failed to create investor account" };
   }
 
-  // Update the auto-created profile with additional details
-  const { error: updateError } = await adminClient
+  const newUserId = signUpData.user.id;
+
+  // Update the auto-created profile with additional details (admin RLS allows this)
+  const { error: updateError } = await supabase
     .from("profiles")
     .update({
       full_name: input.full_name,
       company_name: input.company_name || null,
       phone: input.phone || null,
     })
-    .eq("id", newUser.user.id);
+    .eq("id", newUserId);
 
   if (updateError) {
     return { error: updateError.message };
   }
 
-  return { success: true, investorId: newUser.user.id };
+  // Send password reset email so investor can set their own password
+  await anonClient.auth.resetPasswordForEmail(input.email);
+
+  return { success: true, investorId: newUserId };
 }
