@@ -102,31 +102,31 @@ export default async function LoanDetailPage({ params }: LoanDetailPageProps) {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {/* Financial Details */}
             <div className="space-y-3">
-              <h3 className="text-sm font-semibold text-surface-white">
+              <h3 className="text-sm font-semibold text-[#1a2b4a]">
                 Financial
               </h3>
               <div className="space-y-2 text-sm">
                 <div className="flex justify-between">
-                  <span className="text-surface-muted">Loan Amount</span>
+                  <span className="text-muted-foreground">Loan Amount</span>
                   <span className="font-medium">
                     {formatCurrency(loan.loan_amount)}
                   </span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-surface-muted">Interest Rate</span>
+                  <span className="text-muted-foreground">Interest Rate</span>
                   <span className="font-medium">
                     {formatPercent(loan.interest_rate)}
                   </span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-surface-muted">Term</span>
+                  <span className="text-muted-foreground">Term</span>
                   <span className="font-medium">
                     {loan.term_months} months
                   </span>
                 </div>
                 {loan.ltv != null && (
                   <div className="flex justify-between">
-                    <span className="text-surface-muted">LTV</span>
+                    <span className="text-muted-foreground">LTV</span>
                     <span className="font-medium">
                       {formatPercent(loan.ltv)}
                     </span>
@@ -137,19 +137,19 @@ export default async function LoanDetailPage({ params }: LoanDetailPageProps) {
 
             {/* Property Details */}
             <div className="space-y-3">
-              <h3 className="text-sm font-semibold text-surface-white">
+              <h3 className="text-sm font-semibold text-[#1a2b4a]">
                 Property
               </h3>
               <div className="space-y-2 text-sm">
                 <div className="flex justify-between">
-                  <span className="text-surface-muted">Address</span>
+                  <span className="text-muted-foreground">Address</span>
                   <span className="font-medium text-right max-w-[60%]">
                     {fullAddress}
                   </span>
                 </div>
                 {loan.appraised_value != null && (
                   <div className="flex justify-between">
-                    <span className="text-surface-muted">
+                    <span className="text-muted-foreground">
                       Appraised Value
                     </span>
                     <span className="font-medium">
@@ -162,10 +162,10 @@ export default async function LoanDetailPage({ params }: LoanDetailPageProps) {
 
             {/* Dates */}
             <div className="space-y-3">
-              <h3 className="text-sm font-semibold text-surface-white">Dates</h3>
+              <h3 className="text-sm font-semibold text-[#1a2b4a]">Dates</h3>
               <div className="space-y-2 text-sm">
                 <div className="flex justify-between">
-                  <span className="text-surface-muted">
+                  <span className="text-muted-foreground">
                     Origination Date
                   </span>
                   <span className="font-medium">
@@ -173,13 +173,13 @@ export default async function LoanDetailPage({ params }: LoanDetailPageProps) {
                   </span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-surface-muted">Maturity Date</span>
+                  <span className="text-muted-foreground">Maturity Date</span>
                   <span className="font-medium">
                     {formatDate(loan.maturity_date)}
                   </span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-surface-muted">Created</span>
+                  <span className="text-muted-foreground">Created</span>
                   <span className="font-medium">
                     {formatDate(loan.created_at)}
                   </span>

@@ -14,7 +14,7 @@ const priorityConfig: Record<string, { className: string }> = {
 export function PriorityBadge({ priority }: { priority: string | null }) {
   if (!priority) return null;
   const config = priorityConfig[priority] ?? {
-    className: "bg-navy-mid text-slate-800 border-navy-light",
+    className: "bg-slate-100 text-slate-800 border-slate-200",
   };
   return (
     <Badge variant="outline" className={cn("text-xs", config.className)}>
@@ -25,7 +25,7 @@ export function PriorityBadge({ priority }: { priority: string | null }) {
 
 // --- Status Badge ---
 const statusConfig: Record<string, { className: string }> = {
-  "To Do": { className: "bg-navy-mid text-slate-800 border-navy-light" },
+  "To Do": { className: "bg-slate-100 text-slate-800 border-slate-200" },
   "In Progress": { className: "bg-blue-100 text-blue-800 border-blue-200" },
   "In Review": { className: "bg-indigo-100 text-indigo-800 border-indigo-200" },
   Blocked: { className: "bg-red-100 text-red-800 border-red-200" },
@@ -40,7 +40,7 @@ const statusConfig: Record<string, { className: string }> = {
 export function StatusBadge({ status }: { status: string | null }) {
   if (!status) return null;
   const config = statusConfig[status] ?? {
-    className: "bg-navy-mid text-slate-800 border-navy-light",
+    className: "bg-slate-100 text-slate-800 border-slate-200",
   };
   return (
     <Badge variant="outline" className={cn("text-xs", config.className)}>
@@ -128,7 +128,7 @@ export function RecurringBadge({
 
 // --- Due Date Label ---
 export function DueDateLabel({ dueDate }: { dueDate: string | null }) {
-  if (!dueDate) return <span className="text-surface-muted text-sm">—</span>;
+  if (!dueDate) return <span className="text-muted-foreground text-sm">—</span>;
 
   const now = new Date();
   now.setHours(0, 0, 0, 0);
@@ -143,7 +143,7 @@ export function DueDateLabel({ dueDate }: { dueDate: string | null }) {
   if (diffDays < 0) {
     const absDays = Math.abs(diffDays);
     label = absDays === 1 ? "1d overdue" : `${absDays}d overdue`;
-    colorClass = "text-status-danger font-medium";
+    colorClass = "text-red-600 font-medium";
   } else if (diffDays === 0) {
     label = "Today";
     colorClass = "text-amber-600 font-medium";
@@ -158,7 +158,7 @@ export function DueDateLabel({ dueDate }: { dueDate: string | null }) {
       month: "short",
       day: "numeric",
     });
-    colorClass = "text-surface-muted";
+    colorClass = "text-muted-foreground";
   }
 
   return <span className={cn("text-sm", colorClass)}>{label}</span>;

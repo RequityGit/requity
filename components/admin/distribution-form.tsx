@@ -288,7 +288,7 @@ export function DistributionForm({ funds }: DistributionFormProps) {
                             inv.profiles?.email ||
                             "Unknown"}
                         </p>
-                        <p className="text-xs text-surface-muted">
+                        <p className="text-xs text-muted-foreground">
                           Funded: {formatCurrency(inv.funded_amount)}
                         </p>
                       </div>
@@ -315,7 +315,7 @@ export function DistributionForm({ funds }: DistributionFormProps) {
           )}
 
           {fundId && investors.length === 0 && (
-            <p className="text-sm text-surface-muted text-center py-4">
+            <p className="text-sm text-muted-foreground text-center py-4">
               No active commitments found for this investment.
             </p>
           )}

@@ -236,7 +236,7 @@ export default async function AdminLoanDetailPage({ params }: PageProps) {
             <>
               <Separator className="my-4" />
               <div>
-                <p className="text-xs text-surface-muted mb-1">
+                <p className="text-xs text-muted-foreground mb-1">
                   Internal Notes
                 </p>
                 <p className="text-sm">{loan.notes}</p>
@@ -289,7 +289,7 @@ function DetailField({
 }) {
   return (
     <div>
-      <p className="text-xs text-surface-muted">{label}</p>
+      <p className="text-xs text-muted-foreground">{label}</p>
       <p className="text-sm font-medium capitalize">{value}</p>
     </div>
   );

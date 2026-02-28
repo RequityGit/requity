@@ -32,15 +32,15 @@ export function TaskBoard({ tasks, projectNames }: TaskBoardProps) {
       {columns.map((col) => (
         <div key={col.key} className="space-y-3">
           <div className="flex items-center justify-between">
-            <h3 className="text-sm font-semibold text-surface-white">{col.key}</h3>
-            <span className="text-xs text-surface-muted rounded-full bg-navy-mid px-2 py-0.5">
+            <h3 className="text-sm font-semibold text-[#1a2b4a]">{col.key}</h3>
+            <span className="text-xs text-muted-foreground rounded-full bg-slate-100 px-2 py-0.5">
               {col.tasks.length}
             </span>
           </div>
 
           <div className={cn("space-y-2 min-h-[200px]")}>
             {col.tasks.length === 0 ? (
-              <div className="rounded-md border border-dashed bg-navy p-4 text-center text-sm text-surface-muted">
+              <div className="rounded-md border border-dashed bg-slate-50 p-4 text-center text-sm text-muted-foreground">
                 No tasks
               </div>
             ) : (
@@ -50,12 +50,12 @@ export function TaskBoard({ tasks, projectNames }: TaskBoardProps) {
                   className={cn("border-t-2", col.color)}
                 >
                   <CardContent className="p-3 space-y-2">
-                    <p className="text-sm font-medium text-surface-white leading-snug">
+                    <p className="text-sm font-medium text-[#1a2b4a] leading-snug">
                       {task.title}
                     </p>
 
                     {task.project_id && projectNames[task.project_id] && (
-                      <p className="text-xs text-surface-muted">
+                      <p className="text-xs text-muted-foreground">
                         {projectNames[task.project_id]}
                       </p>
                     )}
@@ -69,7 +69,7 @@ export function TaskBoard({ tasks, projectNames }: TaskBoardProps) {
 
                     <div className="flex items-center justify-between">
                       {task.assigned_to_name ? (
-                        <span className="text-xs text-surface-muted">
+                        <span className="text-xs text-muted-foreground">
                           {task.assigned_to_name}
                         </span>
                       ) : (

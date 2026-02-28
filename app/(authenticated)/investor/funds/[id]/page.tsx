@@ -114,7 +114,7 @@ export default async function InvestorFundDetailPage({ params }: PageProps) {
         const isOverdue =
           row.status === "pending" && new Date(row.due_date) < new Date();
         return (
-          <span className={isOverdue ? "text-status-danger font-medium" : ""}>
+          <span className={isOverdue ? "text-red-600 font-medium" : ""}>
             {formatDate(row.due_date)}
           </span>
         );
@@ -127,7 +127,7 @@ export default async function InvestorFundDetailPage({ params }: PageProps) {
         row.paid_date ? (
           formatDate(row.paid_date)
         ) : (
-          <span className="text-surface-muted">--</span>
+          <span className="text-muted-foreground">--</span>
         ),
     },
     {
@@ -173,7 +173,7 @@ export default async function InvestorFundDetailPage({ params }: PageProps) {
       key: "file_name",
       header: "File Name",
       cell: (row) => (
-        <span className="font-medium text-surface-white">{row.file_name}</span>
+        <span className="font-medium text-[#1a2b4a]">{row.file_name}</span>
       ),
     },
     {
@@ -204,7 +204,7 @@ export default async function InvestorFundDetailPage({ params }: PageProps) {
       {/* Back link */}
       <Link
         href="/investor/funds"
-        className="inline-flex items-center gap-1.5 text-sm text-surface-muted hover:text-surface-white transition-colors"
+        className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-[#1a2b4a] transition-colors"
       >
         <ArrowLeft className="h-4 w-4" />
         Back to Investments
@@ -246,7 +246,7 @@ export default async function InvestorFundDetailPage({ params }: PageProps) {
       {/* Fund Details Card */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-lg font-semibold text-surface-white">
+          <CardTitle className="text-lg font-semibold text-[#1a2b4a]">
             Investment Details
           </CardTitle>
         </CardHeader>
@@ -265,7 +265,7 @@ export default async function InvestorFundDetailPage({ params }: PageProps) {
             <>
               <Separator className="my-4" />
               <div>
-                <p className="text-xs text-surface-muted mb-1">
+                <p className="text-xs text-muted-foreground mb-1">
                   Description
                 </p>
                 <p className="text-sm">{fund.description}</p>
@@ -277,16 +277,16 @@ export default async function InvestorFundDetailPage({ params }: PageProps) {
           <Separator className="my-4" />
           <div>
             <div className="flex items-center justify-between text-sm mb-2">
-              <span className="text-surface-muted">My Funding Progress</span>
+              <span className="text-muted-foreground">My Funding Progress</span>
               <span className="font-medium">{pctFunded}%</span>
             </div>
-            <div className="w-full bg-navy-mid rounded-full h-3">
+            <div className="w-full bg-slate-100 rounded-full h-3">
               <div
-                className="bg-navy h-3 rounded-full transition-all"
+                className="bg-[#1a2b4a] h-3 rounded-full transition-all"
                 style={{ width: `${Math.min(pctFunded, 100)}%` }}
               />
             </div>
-            <div className="flex items-center justify-between text-xs text-surface-muted mt-1">
+            <div className="flex items-center justify-between text-xs text-muted-foreground mt-1">
               <span>{formatCurrency(commitment.funded_amount)} funded</span>
               <span>{formatCurrency(commitment.commitment_amount)} committed</span>
             </div>
@@ -357,7 +357,7 @@ function DetailField({
 }) {
   return (
     <div>
-      <p className="text-xs text-surface-muted">{label}</p>
+      <p className="text-xs text-muted-foreground">{label}</p>
       <p className="text-sm font-medium capitalize">{value}</p>
     </div>
   );

@@ -150,7 +150,7 @@ export default async function DistributionsPage({
       key: "fund_name",
       header: "Investment",
       cell: (row) => (
-        <span className="font-medium text-surface-white">{row.fund_name}</span>
+        <span className="font-medium text-[#1a2b4a]">{row.fund_name}</span>
       ),
     },
     {
@@ -176,7 +176,7 @@ export default async function DistributionsPage({
       key: "description",
       header: "Period / Description",
       cell: (row) => (
-        <span className="text-surface-muted text-sm">
+        <span className="text-muted-foreground text-sm">
           {row.description ?? "--"}
         </span>
       ),
@@ -256,11 +256,11 @@ export default async function DistributionsPage({
         <Card>
           <CardContent className="py-4 px-6">
             <div className="flex items-center justify-between">
-              <span className="text-sm font-medium text-surface-muted">
+              <span className="text-sm font-medium text-muted-foreground">
                 Total for Current View ({rows.length} distribution
                 {rows.length !== 1 ? "s" : ""})
               </span>
-              <span className="text-lg font-bold text-surface-white">
+              <span className="text-lg font-bold text-[#1a2b4a]">
                 {formatCurrency(totalDistributed)}
               </span>
             </div>

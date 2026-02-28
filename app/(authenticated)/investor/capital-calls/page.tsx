@@ -109,7 +109,7 @@ export default async function CapitalCallsPage({
       key: "fund_name",
       header: "Investment",
       cell: (row) => (
-        <span className="font-medium text-surface-white">{row.fund_name}</span>
+        <span className="font-medium text-[#1a2b4a]">{row.fund_name}</span>
       ),
     },
     {
@@ -127,7 +127,7 @@ export default async function CapitalCallsPage({
           row.status === "pending" &&
           new Date(row.due_date) < new Date();
         return (
-          <span className={isOverdue ? "text-status-danger font-medium" : ""}>
+          <span className={isOverdue ? "text-red-600 font-medium" : ""}>
             {formatDate(row.due_date)}
           </span>
         );
@@ -145,7 +145,7 @@ export default async function CapitalCallsPage({
         row.paid_date ? (
           formatDate(row.paid_date)
         ) : (
-          <span className="text-surface-muted">--</span>
+          <span className="text-muted-foreground">--</span>
         ),
     },
   ];

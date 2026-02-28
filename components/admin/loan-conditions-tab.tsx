@@ -216,7 +216,7 @@ export function LoanConditionsTab({
 
       {conditions.length === 0 && (
         <Card>
-          <CardContent className="py-8 text-center text-surface-muted">
+          <CardContent className="py-8 text-center text-muted-foreground">
             <FileText className="h-8 w-8 mx-auto mb-2 opacity-50" />
             <p>No conditions have been added to this loan yet.</p>
             <p className="text-sm mt-1">
@@ -243,9 +243,9 @@ function SummaryCard({
   color?: string;
 }) {
   return (
-    <div className="bg-navy-mid rounded-lg border px-3 py-2">
-      <p className="text-xs text-surface-muted">{label}</p>
-      <p className={`text-lg font-semibold ${color || "text-surface-white"}`}>
+    <div className="bg-white rounded-lg border px-3 py-2">
+      <p className="text-xs text-muted-foreground">{label}</p>
+      <p className={`text-lg font-semibold ${color || "text-[#1a2b4a]"}`}>
         {value}
       </p>
     </div>
@@ -267,14 +267,14 @@ function ProgressCard({
   const pct = total > 0 ? Math.round((completed / total) * 100) : 0;
 
   return (
-    <div className="bg-navy-mid rounded-lg border px-4 py-3">
+    <div className="bg-white rounded-lg border px-4 py-3">
       <div className="flex items-center justify-between mb-1">
-        <span className="text-sm font-medium text-surface-white">{label}</span>
-        <span className="text-xs text-surface-muted">
+        <span className="text-sm font-medium text-[#1a2b4a]">{label}</span>
+        <span className="text-xs text-muted-foreground">
           {completed}/{total} ({pct}%)
         </span>
       </div>
-      <div className="w-full bg-navy-mid rounded-full h-2">
+      <div className="w-full bg-slate-100 rounded-full h-2">
         <div
           className="bg-green-600 h-2 rounded-full transition-all"
           style={{ width: `${pct}%` }}
@@ -431,27 +431,27 @@ function ConditionRow({
       <div
         className={`flex items-start gap-3 p-3 rounded-lg border ${
           isComplete
-            ? "bg-status-success/10/50 border-green-100"
+            ? "bg-green-50/50 border-green-100"
             : isOverdue
               ? "bg-red-50/50 border-red-100"
-              : "bg-navy-mid"
+              : "bg-white"
         }`}
       >
         {/* Status indicator */}
         <div className="mt-0.5">
           {isComplete ? (
-            <CheckCircle2 className="h-4 w-4 text-status-success" />
+            <CheckCircle2 className="h-4 w-4 text-green-600" />
           ) : isOverdue ? (
             <AlertTriangle className="h-4 w-4 text-red-500" />
           ) : (
-            <Clock className="h-4 w-4 text-surface-muted" />
+            <Clock className="h-4 w-4 text-muted-foreground" />
           )}
         </div>
 
         {/* Content */}
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
-            <span className="text-sm font-medium text-surface-white">
+            <span className="text-sm font-medium text-[#1a2b4a]">
               {condition.name}
             </span>
             {condition.is_critical_path && (
@@ -462,14 +462,14 @@ function ConditionRow({
             <StatusBadge status={condition.status} />
           </div>
           {condition.description && (
-            <p className="text-xs text-surface-muted mt-0.5">
+            <p className="text-xs text-muted-foreground mt-0.5">
               {condition.description}
             </p>
           )}
-          <div className="flex items-center gap-3 mt-1 text-[11px] text-surface-muted">
+          <div className="flex items-center gap-3 mt-1 text-[11px] text-muted-foreground">
             <span>{partyLabel}</span>
             {condition.due_date && (
-              <span className={isOverdue ? "text-status-danger font-medium" : ""}>
+              <span className={isOverdue ? "text-red-600 font-medium" : ""}>
                 Due: {formatDate(condition.due_date)}
               </span>
             )}
@@ -483,12 +483,12 @@ function ConditionRow({
             )}
           </div>
           {condition.rejection_reason && (
-            <p className="text-xs text-status-danger mt-1">
+            <p className="text-xs text-red-600 mt-1">
               Rejection reason: {condition.rejection_reason}
             </p>
           )}
           {condition.internal_note && (
-            <p className="text-xs text-surface-muted mt-1 italic">
+            <p className="text-xs text-muted-foreground mt-1 italic">
               Note: {condition.internal_note}
             </p>
           )}
@@ -528,7 +528,7 @@ function ConditionRow({
             <DialogTitle>Reject Condition</DialogTitle>
           </DialogHeader>
           <div className="space-y-3">
-            <p className="text-sm text-surface-muted">
+            <p className="text-sm text-muted-foreground">
               Rejecting: <strong>{condition.name}</strong>
             </p>
             <div className="space-y-2">

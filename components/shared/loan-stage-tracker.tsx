@@ -27,10 +27,10 @@ export function LoanStageTracker({ currentStage }: LoanStageTrackerProps) {
                   className={cn(
                     "w-8 h-8 rounded-full flex items-center justify-center text-xs font-medium border-2 transition-colors",
                     isPast && "bg-green-600 border-green-600 text-white",
-                    isCurrent && "bg-navy border-[#1a2b4a] text-white",
+                    isCurrent && "bg-[#1a2b4a] border-[#1a2b4a] text-white",
                     !isPast &&
                       !isCurrent &&
-                      "bg-navy-mid border-slate-300 text-slate-400"
+                      "bg-white border-slate-300 text-slate-400"
                   )}
                 >
                   {isPast ? <Check className="h-4 w-4" /> : idx + 1}
@@ -39,8 +39,8 @@ export function LoanStageTracker({ currentStage }: LoanStageTrackerProps) {
                   className={cn(
                     "text-[10px] mt-1 text-center leading-tight max-w-[80px]",
                     isCurrent
-                      ? "font-semibold text-surface-white"
-                      : "text-surface-muted"
+                      ? "font-semibold text-[#1a2b4a]"
+                      : "text-muted-foreground"
                   )}
                 >
                   {LOAN_STAGE_LABELS[stage]}
@@ -62,7 +62,7 @@ export function LoanStageTracker({ currentStage }: LoanStageTrackerProps) {
       </div>
       {isTerminalStage && (
         <div className="text-center mt-1">
-          <span className="text-xs font-medium text-surface-muted">
+          <span className="text-xs font-medium text-muted-foreground">
             Current: {LOAN_STAGE_LABELS[currentStage as LoanStage] ?? currentStage}
           </span>
         </div>

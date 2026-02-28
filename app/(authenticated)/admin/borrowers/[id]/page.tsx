@@ -67,7 +67,7 @@ export default async function AdminBorrowerDetailPage({ params }: PageProps) {
       cell: (row) => (
         <Link
           href={`/admin/loans/${row.id}`}
-          className="font-medium text-gold hover:underline"
+          className="font-medium text-blue-600 hover:underline"
         >
           {row.loan_number || "—"}
         </Link>
@@ -123,27 +123,27 @@ export default async function AdminBorrowerDetailPage({ params }: PageProps) {
         <CardContent className="pt-6">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             <div className="flex items-center gap-3">
-              <Mail className="h-4 w-4 text-surface-muted shrink-0" />
+              <Mail className="h-4 w-4 text-muted-foreground shrink-0" />
               <div>
-                <p className="text-xs text-surface-muted">Email</p>
+                <p className="text-xs text-muted-foreground">Email</p>
                 <p className="text-sm font-medium">
                   {borrower.email || "—"}
                 </p>
               </div>
             </div>
             <div className="flex items-center gap-3">
-              <Phone className="h-4 w-4 text-surface-muted shrink-0" />
+              <Phone className="h-4 w-4 text-muted-foreground shrink-0" />
               <div>
-                <p className="text-xs text-surface-muted">Phone</p>
+                <p className="text-xs text-muted-foreground">Phone</p>
                 <p className="text-sm font-medium">
                   {borrower.phone || "—"}
                 </p>
               </div>
             </div>
             <div className="flex items-center gap-3">
-              <MapPin className="h-4 w-4 text-surface-muted shrink-0" />
+              <MapPin className="h-4 w-4 text-muted-foreground shrink-0" />
               <div>
-                <p className="text-xs text-surface-muted">Location</p>
+                <p className="text-xs text-muted-foreground">Location</p>
                 <p className="text-sm font-medium">
                   {borrower.city && borrower.state
                     ? `${borrower.city}, ${borrower.state}`
@@ -152,27 +152,27 @@ export default async function AdminBorrowerDetailPage({ params }: PageProps) {
               </div>
             </div>
             <div className="flex items-center gap-3">
-              <Calendar className="h-4 w-4 text-surface-muted shrink-0" />
+              <Calendar className="h-4 w-4 text-muted-foreground shrink-0" />
               <div>
-                <p className="text-xs text-surface-muted">Date of Birth</p>
+                <p className="text-xs text-muted-foreground">Date of Birth</p>
                 <p className="text-sm font-medium">
                   {formatDate(borrower.date_of_birth)}
                 </p>
               </div>
             </div>
             <div className="flex items-center gap-3">
-              <CreditCard className="h-4 w-4 text-surface-muted shrink-0" />
+              <CreditCard className="h-4 w-4 text-muted-foreground shrink-0" />
               <div>
-                <p className="text-xs text-surface-muted">Credit Score</p>
+                <p className="text-xs text-muted-foreground">Credit Score</p>
                 <p className="text-sm font-medium">
                   {borrower.credit_score ? (
                     <span
                       className={`${
                         borrower.credit_score >= 740
-                          ? "text-status-success"
+                          ? "text-green-600"
                           : borrower.credit_score >= 680
                           ? "text-amber-600"
-                          : "text-status-danger"
+                          : "text-red-600"
                       }`}
                     >
                       {borrower.credit_score}
@@ -181,7 +181,7 @@ export default async function AdminBorrowerDetailPage({ params }: PageProps) {
                     "—"
                   )}
                   {borrower.credit_report_date && (
-                    <span className="text-xs text-surface-muted ml-1">
+                    <span className="text-xs text-muted-foreground ml-1">
                       ({formatDate(borrower.credit_report_date)})
                     </span>
                   )}
@@ -189,9 +189,9 @@ export default async function AdminBorrowerDetailPage({ params }: PageProps) {
               </div>
             </div>
             <div className="flex items-center gap-3">
-              <Hash className="h-4 w-4 text-surface-muted shrink-0" />
+              <Hash className="h-4 w-4 text-muted-foreground shrink-0" />
               <div>
-                <p className="text-xs text-surface-muted">Experience</p>
+                <p className="text-xs text-muted-foreground">Experience</p>
                 <p className="text-sm font-medium">
                   {borrower.experience_count}{" "}
                   {borrower.experience_count === 1 ? "deal" : "deals"}
@@ -199,18 +199,18 @@ export default async function AdminBorrowerDetailPage({ params }: PageProps) {
               </div>
             </div>
             <div className="flex items-center gap-3">
-              <Shield className="h-4 w-4 text-surface-muted shrink-0" />
+              <Shield className="h-4 w-4 text-muted-foreground shrink-0" />
               <div>
-                <p className="text-xs text-surface-muted">US Citizen</p>
+                <p className="text-xs text-muted-foreground">US Citizen</p>
                 <p className="text-sm font-medium">
                   {borrower.is_us_citizen ? "Yes" : "No"}
                 </p>
               </div>
             </div>
             <div className="flex items-center gap-3">
-              <Calendar className="h-4 w-4 text-surface-muted shrink-0" />
+              <Calendar className="h-4 w-4 text-muted-foreground shrink-0" />
               <div>
-                <p className="text-xs text-surface-muted">Added</p>
+                <p className="text-xs text-muted-foreground">Added</p>
                 <p className="text-sm font-medium">
                   {formatDate(borrower.created_at)}
                 </p>
@@ -221,7 +221,7 @@ export default async function AdminBorrowerDetailPage({ params }: PageProps) {
           {/* Address */}
           {borrower.address_line1 && (
             <div className="mt-4 pt-4 border-t">
-              <p className="text-xs text-surface-muted mb-1">Address</p>
+              <p className="text-xs text-muted-foreground mb-1">Address</p>
               <p className="text-sm">
                 {borrower.address_line1}
                 {borrower.address_line2 && `, ${borrower.address_line2}`}
@@ -235,7 +235,7 @@ export default async function AdminBorrowerDetailPage({ params }: PageProps) {
           {/* Notes */}
           {borrower.notes && (
             <div className="mt-4 pt-4 border-t">
-              <p className="text-xs text-surface-muted mb-1">Notes</p>
+              <p className="text-xs text-muted-foreground mb-1">Notes</p>
               <p className="text-sm whitespace-pre-wrap">{borrower.notes}</p>
             </div>
           )}

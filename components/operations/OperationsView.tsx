@@ -349,7 +349,7 @@ export function OperationsView({ projects, tasks, teamMembers }: OperationsViewP
                 variant="ghost"
                 size="sm"
                 onClick={clearFilters}
-                className="gap-1 text-surface-muted"
+                className="gap-1 text-muted-foreground"
               >
                 <X className="h-3 w-3" />
                 Clear filters
@@ -359,7 +359,7 @@ export function OperationsView({ projects, tasks, teamMembers }: OperationsViewP
 
           {/* Project Cards */}
           {filteredProjects.length === 0 ? (
-            <div className="rounded-md border bg-navy-mid p-8 text-center text-surface-muted">
+            <div className="rounded-md border bg-white p-8 text-center text-muted-foreground">
               No projects found.
             </div>
           ) : (
@@ -411,7 +411,7 @@ export function OperationsView({ projects, tasks, teamMembers }: OperationsViewP
                   variant="ghost"
                   size="sm"
                   onClick={clearFilters}
-                  className="gap-1 text-surface-muted"
+                  className="gap-1 text-muted-foreground"
                 >
                   <X className="h-3 w-3" />
                   Clear filters
@@ -425,22 +425,22 @@ export function OperationsView({ projects, tasks, teamMembers }: OperationsViewP
                 onClick={() => setShowCompletedRecurring(!showCompletedRecurring)}
                 className={`flex items-center gap-1.5 text-sm font-medium transition-colors ${
                   showCompletedRecurring
-                    ? "text-gold"
-                    : "text-surface-muted hover:text-foreground"
+                    ? "text-purple-700"
+                    : "text-muted-foreground hover:text-foreground"
                 }`}
               >
                 <History className="h-3.5 w-3.5" />
                 {showCompletedRecurring ? "Hide" : "Show"} history
               </button>
 
-              <div className="flex items-center rounded-md border bg-navy-mid p-0.5">
+              <div className="flex items-center rounded-md border bg-white p-0.5">
                 <button
                   type="button"
                   onClick={() => setTaskView("list")}
                   className={`flex items-center gap-1.5 rounded px-3 py-1.5 text-sm font-medium transition-colors ${
                     taskView === "list"
-                      ? "bg-navy-light text-foreground"
-                      : "text-surface-muted hover:text-foreground"
+                      ? "bg-slate-100 text-foreground"
+                      : "text-muted-foreground hover:text-foreground"
                   }`}
                 >
                   <TableIcon className="h-4 w-4" />
@@ -451,8 +451,8 @@ export function OperationsView({ projects, tasks, teamMembers }: OperationsViewP
                   onClick={() => setTaskView("board")}
                   className={`flex items-center gap-1.5 rounded px-3 py-1.5 text-sm font-medium transition-colors ${
                     taskView === "board"
-                      ? "bg-navy-light text-foreground"
-                      : "text-surface-muted hover:text-foreground"
+                      ? "bg-slate-100 text-foreground"
+                      : "text-muted-foreground hover:text-foreground"
                   }`}
                 >
                   <LayoutGrid className="h-4 w-4" />

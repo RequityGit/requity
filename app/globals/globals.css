@@ -4,36 +4,71 @@
 
 @layer base {
   :root {
-    /* Cinematic Institutional — Dark mode ONLY */
-    --background: 216 52% 10%;
-    --foreground: 40 14% 96%;
+    /* Deep navy professional theme for Requity Group */
+    --background: 0 0% 100%;
+    --foreground: 220 40% 13%;
 
-    --card: 213 52% 21%;
-    --card-foreground: 40 14% 96%;
+    --card: 0 0% 100%;
+    --card-foreground: 220 40% 13%;
 
-    --popover: 216 52% 10%;
-    --popover-foreground: 40 14% 96%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 220 40% 13%;
 
-    --primary: 34 40% 56%;
-    --primary-foreground: 216 52% 10%;
+    /* Primary: deep navy (#1a2b4a) */
+    --primary: 218 47% 20%;
+    --primary-foreground: 0 0% 100%;
 
-    --secondary: 213 52% 21%;
-    --secondary-foreground: 40 14% 96%;
+    /* Secondary: lighter navy */
+    --secondary: 220 20% 96%;
+    --secondary-foreground: 218 47% 20%;
 
-    --muted: 213 52% 21%;
-    --muted-foreground: 30 4% 54%;
+    /* Muted: light gray */
+    --muted: 220 15% 96%;
+    --muted-foreground: 220 10% 46%;
 
-    --accent: 213 52% 27%;
-    --accent-foreground: 40 14% 96%;
+    /* Accent: teal */
+    --accent: 174 60% 40%;
+    --accent-foreground: 0 0% 100%;
 
-    --destructive: 4 63% 46%;
-    --destructive-foreground: 40 14% 96%;
+    /* Destructive: red */
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
 
-    --border: 213 52% 27%;
-    --input: 213 52% 27%;
-    --ring: 34 40% 56%;
+    --border: 220 13% 91%;
+    --input: 220 13% 91%;
+    --ring: 218 47% 20%;
 
     --radius: 0.5rem;
+  }
+
+  .dark {
+    --background: 222 47% 11%;
+    --foreground: 210 40% 98%;
+
+    --card: 222 47% 13%;
+    --card-foreground: 210 40% 98%;
+
+    --popover: 222 47% 13%;
+    --popover-foreground: 210 40% 98%;
+
+    --primary: 210 40% 98%;
+    --primary-foreground: 218 47% 20%;
+
+    --secondary: 217 33% 17%;
+    --secondary-foreground: 210 40% 98%;
+
+    --muted: 217 33% 17%;
+    --muted-foreground: 215 20% 65%;
+
+    --accent: 174 60% 40%;
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 63% 51%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 217 33% 22%;
+    --input: 217 33% 22%;
+    --ring: 212 50% 60%;
   }
 }
 
@@ -41,57 +76,7 @@
   * {
     @apply border-border;
   }
-
-  html {
-    color-scheme: dark;
-  }
-
   body {
-    @apply bg-navy-deep text-surface-white font-body antialiased;
-  }
-
-  ::-webkit-scrollbar {
-    width: 6px;
-    height: 6px;
-  }
-
-  ::-webkit-scrollbar-track {
-    background: #0A1628;
-  }
-
-  ::-webkit-scrollbar-thumb {
-    background: #243D66;
-    border-radius: 3px;
-  }
-
-  ::-webkit-scrollbar-thumb:hover {
-    background: #C5975B;
-  }
-}
-
-@layer components {
-  .skeleton-shimmer {
-    background: linear-gradient(
-      90deg,
-      #1A3355 0%,
-      rgba(197, 151, 91, 0.1) 50%,
-      #1A3355 100%
-    );
-    background-size: 200% 100%;
-    animation: shimmer 1.5s ease-in-out infinite;
-  }
-
-  .font-financial {
-    font-family: 'JetBrains Mono', monospace;
-    font-variant-numeric: tabular-nums;
-  }
-
-  .card-cinematic {
-    @apply bg-navy-mid rounded-lg p-6;
-    border: 1px solid rgba(197, 151, 91, 0.15);
-  }
-
-  .border-gold-active {
-    border-left: 3px solid #C5975B;
+    @apply bg-background text-foreground;
   }
 }

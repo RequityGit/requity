@@ -246,7 +246,7 @@ export function CapitalCallForm({ funds }: CapitalCallFormProps) {
                             inv.profiles?.email ||
                             "Unknown"}
                         </p>
-                        <p className="text-xs text-surface-muted">
+                        <p className="text-xs text-muted-foreground">
                           Committed: {formatCurrency(inv.commitment_amount)} |
                           Unfunded: {formatCurrency(inv.unfunded_amount)}
                         </p>
@@ -274,7 +274,7 @@ export function CapitalCallForm({ funds }: CapitalCallFormProps) {
           )}
 
           {fundId && investors.length === 0 && (
-            <p className="text-sm text-surface-muted text-center py-4">
+            <p className="text-sm text-muted-foreground text-center py-4">
               No active commitments found for this investment.
             </p>
           )}

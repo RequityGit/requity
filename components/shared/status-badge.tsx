@@ -1,94 +1,80 @@
-"use client";
-
+import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 
-type BadgeVariant = "success" | "warning" | "danger" | "neutral" | "gold";
+const statusStyles: Record<string, string> = {
+  // Capital calls / payments
+  pending: "bg-yellow-100 text-yellow-800 border-yellow-200",
+  paid: "bg-green-100 text-green-800 border-green-200",
+  overdue: "bg-red-100 text-red-800 border-red-200",
+  posted: "bg-green-100 text-green-800 border-green-200",
+  reversed: "bg-gray-100 text-gray-800 border-gray-200",
+  nsf: "bg-red-100 text-red-800 border-red-200",
+
+  // Commitments
+  active: "bg-green-100 text-green-800 border-green-200",
+  partially_called: "bg-blue-100 text-blue-800 border-blue-200",
+  fully_called: "bg-purple-100 text-purple-800 border-purple-200",
+  redeemed: "bg-gray-100 text-gray-800 border-gray-200",
+
+  // Portal activation
+  link_sent: "bg-blue-100 text-blue-800 border-blue-200",
+  activated: "bg-green-100 text-green-800 border-green-200",
+
+  // Draw requests
+  submitted: "bg-yellow-100 text-yellow-800 border-yellow-200",
+  under_review: "bg-blue-100 text-blue-800 border-blue-200",
+  approved: "bg-green-100 text-green-800 border-green-200",
+  funded: "bg-green-100 text-green-800 border-green-200",
+  denied: "bg-red-100 text-red-800 border-red-200",
+
+  // Funds
+  open: "bg-green-100 text-green-800 border-green-200",
+  closed: "bg-gray-100 text-gray-800 border-gray-200",
+  fully_deployed: "bg-blue-100 text-blue-800 border-blue-200",
+
+  // Loan pipeline stages
+  lead: "bg-slate-100 text-slate-800 border-slate-200",
+  application: "bg-blue-100 text-blue-800 border-blue-200",
+  processing: "bg-indigo-100 text-indigo-800 border-indigo-200",
+  underwriting: "bg-purple-100 text-purple-800 border-purple-200",
+  clear_to_close: "bg-teal-100 text-teal-800 border-teal-200",
+  servicing: "bg-cyan-100 text-cyan-800 border-cyan-200",
+  payoff: "bg-gray-100 text-gray-800 border-gray-200",
+  default: "bg-red-100 text-red-800 border-red-200",
+  reo: "bg-orange-100 text-orange-800 border-orange-200",
+  paid_off: "bg-gray-100 text-gray-600 border-gray-200",
+
+  // Priority
+  hot: "bg-red-100 text-red-800 border-red-200",
+  normal: "bg-slate-100 text-slate-700 border-slate-200",
+  on_hold: "bg-amber-100 text-amber-800 border-amber-200",
+
+  // Documents / Conditions
+  rejected: "bg-red-100 text-red-800 border-red-200",
+  not_requested: "bg-gray-100 text-gray-500 border-gray-200",
+  requested: "bg-blue-100 text-blue-800 border-blue-200",
+  received: "bg-indigo-100 text-indigo-800 border-indigo-200",
+  waived: "bg-slate-100 text-slate-600 border-slate-200",
+};
 
 interface StatusBadgeProps {
   status: string;
-  variant?: BadgeVariant;
   className?: string;
 }
 
-const STATUS_VARIANT_MAP: Record<string, BadgeVariant> = {
-  funded: "success",
-  servicing: "success",
-  approved: "success",
-  clear_to_close: "success",
-  active: "success",
-  paid: "success",
-  paid_off: "success",
-  posted: "success",
-  activated: "success",
-  open: "success",
-  verified: "success",
-  processing: "gold",
-  underwriting: "gold",
-  pending: "gold",
-  under_review: "gold",
-  submitted: "gold",
-  in_review: "gold",
-  application: "gold",
-  link_sent: "gold",
-  partially_called: "gold",
-  received: "gold",
-  requested: "gold",
-  lead: "neutral",
-  draft: "neutral",
-  not_requested: "neutral",
-  not_applicable: "neutral",
-  normal: "neutral",
-  closed: "neutral",
-  redeemed: "neutral",
-  waived: "neutral",
-  fully_called: "neutral",
-  fully_deployed: "neutral",
-  overdue: "danger",
-  rejected: "danger",
-  default: "danger",
-  denied: "danger",
-  withdrawn: "danger",
-  expired: "danger",
-  nsf: "danger",
-  reo: "danger",
-  hot: "danger",
-  reversed: "danger",
-  on_hold: "warning",
-  warning: "warning",
-  payoff: "warning",
-};
-
-const VARIANT_CLASSES: Record<BadgeVariant, string> = {
-  success:
-    "bg-status-success/10 text-status-success border border-status-success/20",
-  gold: "bg-gold/10 text-gold border border-gold/20",
-  danger:
-    "bg-status-danger/10 text-status-danger border border-status-danger/20",
-  warning:
-    "bg-status-warning/10 text-status-warning border border-status-warning/20",
-  neutral:
-    "bg-surface-muted/10 text-surface-gray border border-surface-muted/20",
-};
-
-function formatStatusLabel(status: string): string {
-  return status
-    .replace(/_/g, " ")
-    .replace(/\b\w/g, (c) => c.toUpperCase());
-}
-
-export function StatusBadge({ status, variant, className }: StatusBadgeProps) {
-  const resolvedVariant =
-    variant || STATUS_VARIANT_MAP[status.toLowerCase()] || "neutral";
+export function StatusBadge({ status, className }: StatusBadgeProps) {
+  const label = status.replace(/_/g, " ");
 
   return (
-    <span
+    <Badge
+      variant="outline"
       className={cn(
-        "inline-flex items-center px-2.5 py-0.5 rounded-md text-xs font-body font-semibold",
-        VARIANT_CLASSES[resolvedVariant],
+        "capitalize text-xs font-medium",
+        statusStyles[status] || "bg-gray-100 text-gray-800 border-gray-200",
         className
       )}
     >
-      {formatStatusLabel(status)}
-    </span>
+      {label}
+    </Badge>
   );
 }

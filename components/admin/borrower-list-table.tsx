@@ -140,13 +140,13 @@ export function BorrowerListTable({ data }: BorrowerListTableProps) {
 
   if (data.length === 0) {
     return (
-      <div className="rounded-md border bg-navy-mid p-12 text-center">
+      <div className="rounded-md border bg-white p-12 text-center">
         <div className="mx-auto max-w-sm space-y-4">
-          <UserPlus className="mx-auto h-12 w-12 text-surface-muted" />
-          <h3 className="text-lg font-semibold text-surface-white">
+          <UserPlus className="mx-auto h-12 w-12 text-muted-foreground" />
+          <h3 className="text-lg font-semibold text-[#1a2b4a]">
             No borrowers yet
           </h3>
-          <p className="text-sm text-surface-muted">
+          <p className="text-sm text-muted-foreground">
             Get started by adding your first borrower to the system.
           </p>
           <Link href="/admin/borrowers/new">
@@ -163,7 +163,7 @@ export function BorrowerListTable({ data }: BorrowerListTableProps) {
   return (
     <div className="space-y-4">
       <div className="relative max-w-sm">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-surface-muted" />
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
         <Input
           placeholder="Search by name, email, or state..."
           value={search}
@@ -175,14 +175,14 @@ export function BorrowerListTable({ data }: BorrowerListTableProps) {
         />
       </div>
 
-      <div className="rounded-md border bg-navy-mid">
+      <div className="rounded-md border bg-white">
         <Table>
           <TableHeader>
             <TableRow>
               <TableHead>
                 <button
                   onClick={() => toggleSort("name")}
-                  className="flex items-center font-medium hover:text-surface-white"
+                  className="flex items-center font-medium hover:text-[#1a2b4a]"
                 >
                   Full Name
                   <SortIcon col="name" />
@@ -191,7 +191,7 @@ export function BorrowerListTable({ data }: BorrowerListTableProps) {
               <TableHead>
                 <button
                   onClick={() => toggleSort("email")}
-                  className="flex items-center font-medium hover:text-surface-white"
+                  className="flex items-center font-medium hover:text-[#1a2b4a]"
                 >
                   Email
                   <SortIcon col="email" />
@@ -200,7 +200,7 @@ export function BorrowerListTable({ data }: BorrowerListTableProps) {
               <TableHead>
                 <button
                   onClick={() => toggleSort("phone")}
-                  className="flex items-center font-medium hover:text-surface-white"
+                  className="flex items-center font-medium hover:text-[#1a2b4a]"
                 >
                   Phone
                   <SortIcon col="phone" />
@@ -209,7 +209,7 @@ export function BorrowerListTable({ data }: BorrowerListTableProps) {
               <TableHead>
                 <button
                   onClick={() => toggleSort("credit_score")}
-                  className="flex items-center font-medium hover:text-surface-white"
+                  className="flex items-center font-medium hover:text-[#1a2b4a]"
                 >
                   Credit Score
                   <SortIcon col="credit_score" />
@@ -218,7 +218,7 @@ export function BorrowerListTable({ data }: BorrowerListTableProps) {
               <TableHead>
                 <button
                   onClick={() => toggleSort("experience_count")}
-                  className="flex items-center font-medium hover:text-surface-white"
+                  className="flex items-center font-medium hover:text-[#1a2b4a]"
                 >
                   Experience
                   <SortIcon col="experience_count" />
@@ -227,7 +227,7 @@ export function BorrowerListTable({ data }: BorrowerListTableProps) {
               <TableHead>
                 <button
                   onClick={() => toggleSort("entity_count")}
-                  className="flex items-center font-medium hover:text-surface-white"
+                  className="flex items-center font-medium hover:text-[#1a2b4a]"
                 >
                   Entities
                   <SortIcon col="entity_count" />
@@ -236,7 +236,7 @@ export function BorrowerListTable({ data }: BorrowerListTableProps) {
               <TableHead>
                 <button
                   onClick={() => toggleSort("loan_count")}
-                  className="flex items-center font-medium hover:text-surface-white"
+                  className="flex items-center font-medium hover:text-[#1a2b4a]"
                 >
                   Loans
                   <SortIcon col="loan_count" />
@@ -245,7 +245,7 @@ export function BorrowerListTable({ data }: BorrowerListTableProps) {
               <TableHead>
                 <button
                   onClick={() => toggleSort("created_at")}
-                  className="flex items-center font-medium hover:text-surface-white"
+                  className="flex items-center font-medium hover:text-[#1a2b4a]"
                 >
                   Created
                   <SortIcon col="created_at" />
@@ -258,7 +258,7 @@ export function BorrowerListTable({ data }: BorrowerListTableProps) {
               <TableRow>
                 <TableCell
                   colSpan={8}
-                  className="h-24 text-center text-surface-muted"
+                  className="h-24 text-center text-muted-foreground"
                 >
                   No borrowers match your search.
                 </TableCell>
@@ -267,11 +267,11 @@ export function BorrowerListTable({ data }: BorrowerListTableProps) {
               paginated.map((row) => (
                 <TableRow
                   key={row.id}
-                  className="cursor-pointer hover:bg-navy-light"
+                  className="cursor-pointer hover:bg-slate-50"
                   onClick={() => router.push(`/admin/borrowers/${row.id}`)}
                 >
                   <TableCell>
-                    <span className="font-medium text-surface-white">
+                    <span className="font-medium text-[#1a2b4a]">
                       {row.first_name} {row.last_name}
                     </span>
                   </TableCell>
@@ -282,10 +282,10 @@ export function BorrowerListTable({ data }: BorrowerListTableProps) {
                       <span
                         className={`font-medium ${
                           row.credit_score >= 740
-                            ? "text-status-success"
+                            ? "text-green-600"
                             : row.credit_score >= 680
                             ? "text-amber-600"
-                            : "text-status-danger"
+                            : "text-red-600"
                         }`}
                       >
                         {row.credit_score}
@@ -308,7 +308,7 @@ export function BorrowerListTable({ data }: BorrowerListTableProps) {
       {/* Pagination */}
       {totalPages > 1 && (
         <div className="flex items-center justify-between">
-          <p className="text-sm text-surface-muted">
+          <p className="text-sm text-muted-foreground">
             Showing {page * PAGE_SIZE + 1}–
             {Math.min((page + 1) * PAGE_SIZE, sorted.length)} of{" "}
             {sorted.length} borrowers
@@ -322,7 +322,7 @@ export function BorrowerListTable({ data }: BorrowerListTableProps) {
             >
               <ChevronLeft className="h-4 w-4" />
             </Button>
-            <span className="text-sm text-surface-muted">
+            <span className="text-sm text-muted-foreground">
               Page {page + 1} of {totalPages}
             </span>
             <Button

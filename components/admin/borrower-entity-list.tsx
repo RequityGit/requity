@@ -71,12 +71,12 @@ export function BorrowerEntityList({
 
   if (entities.length === 0 && !dialogOpen) {
     return (
-      <div className="rounded-md border bg-navy-mid p-8 text-center">
-        <Building2 className="mx-auto h-10 w-10 text-surface-muted mb-3" />
-        <h3 className="text-sm font-semibold text-surface-white mb-1">
+      <div className="rounded-md border bg-white p-8 text-center">
+        <Building2 className="mx-auto h-10 w-10 text-muted-foreground mb-3" />
+        <h3 className="text-sm font-semibold text-[#1a2b4a] mb-1">
           No entities yet
         </h3>
-        <p className="text-sm text-surface-muted mb-4">
+        <p className="text-sm text-muted-foreground mb-4">
           Add an LLC, Corporation, or other entity for this borrower.
         </p>
         <Button size="sm" onClick={handleAdd} className="gap-2">
@@ -108,8 +108,8 @@ export function BorrowerEntityList({
             <CardContent className="pt-5">
               <div className="flex items-start justify-between mb-3">
                 <div className="flex items-center gap-2">
-                  <Building2 className="h-4 w-4 text-surface-muted" />
-                  <h4 className="font-semibold text-surface-white">
+                  <Building2 className="h-4 w-4 text-muted-foreground" />
+                  <h4 className="font-semibold text-[#1a2b4a]">
                     {entity.entity_name}
                   </h4>
                 </div>
@@ -127,7 +127,7 @@ export function BorrowerEntityList({
                       <Button
                         variant="ghost"
                         size="sm"
-                        className="h-7 w-7 p-0 text-status-danger hover:text-red-700"
+                        className="h-7 w-7 p-0 text-red-600 hover:text-red-700"
                       >
                         <Trash2 className="h-3.5 w-3.5" />
                       </Button>
@@ -160,18 +160,18 @@ export function BorrowerEntityList({
                     {entity.entity_type.replace(/_/g, " ")}
                   </Badge>
                   {entity.state_of_formation && (
-                    <span className="text-surface-muted">
+                    <span className="text-muted-foreground">
                       Formed in {entity.state_of_formation}
                     </span>
                   )}
                 </div>
 
                 {entity.ein && (
-                  <p className="text-surface-muted">EIN: {entity.ein}</p>
+                  <p className="text-muted-foreground">EIN: {entity.ein}</p>
                 )}
 
                 {entity.address_line1 && (
-                  <div className="flex items-start gap-1.5 text-surface-muted">
+                  <div className="flex items-start gap-1.5 text-muted-foreground">
                     <MapPin className="h-3.5 w-3.5 mt-0.5 shrink-0" />
                     <span>
                       {entity.address_line1}
@@ -183,13 +183,13 @@ export function BorrowerEntityList({
                 )}
 
                 {entity.is_foreign_filed && entity.foreign_filed_states && (
-                  <p className="text-surface-muted">
+                  <p className="text-muted-foreground">
                     Foreign filed in: {entity.foreign_filed_states.join(", ")}
                   </p>
                 )}
 
                 {entity.notes && (
-                  <p className="text-surface-muted text-xs mt-2">
+                  <p className="text-muted-foreground text-xs mt-2">
                     {entity.notes}
                   </p>
                 )}

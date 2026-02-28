@@ -187,7 +187,7 @@ export function NewDrawForm() {
           <div className="space-y-2">
             <Label htmlFor="loan">Loan</Label>
             {loadingLoans ? (
-              <div className="flex items-center gap-2 text-sm text-surface-muted py-2">
+              <div className="flex items-center gap-2 text-sm text-muted-foreground py-2">
                 <Loader2 className="h-4 w-4 animate-spin" />
                 Loading loans...
               </div>

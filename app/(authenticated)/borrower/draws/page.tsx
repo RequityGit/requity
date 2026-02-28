@@ -60,7 +60,7 @@ export default async function BorrowerDrawsPage() {
           <p className="font-medium text-sm">
             {row.loans?.property_address ?? "Unknown"}
           </p>
-          <p className="text-xs text-surface-muted">
+          <p className="text-xs text-muted-foreground">
             {row.loans?.loan_number ?? ""}
           </p>
         </div>

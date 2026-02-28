@@ -1,3 +1,4 @@
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 
 interface KpiCardProps {
@@ -16,21 +17,19 @@ export function KpiCard({
   className,
 }: KpiCardProps) {
   return (
-    <div className={cn("card-cinematic", className)}>
-      <div className="flex items-start justify-between">
-        <p className="text-xs font-body font-semibold uppercase tracking-wider text-surface-muted">
+    <Card className={cn("", className)}>
+      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+        <CardTitle className="text-sm font-medium text-muted-foreground">
           {title}
-        </p>
-        {icon && <div className="text-gold/60">{icon}</div>}
-      </div>
-      <div className="mt-2 text-2xl font-mono font-semibold text-surface-white tabular-nums">
-        {value}
-      </div>
-      {description && (
-        <p className="text-xs text-surface-gray font-body mt-2">
-          {description}
-        </p>
-      )}
-    </div>
+        </CardTitle>
+        {icon && <div className="text-muted-foreground">{icon}</div>}
+      </CardHeader>
+      <CardContent>
+        <div className="text-2xl font-bold text-[#1a2b4a]">{value}</div>
+        {description && (
+          <p className="text-xs text-muted-foreground mt-1">{description}</p>
+        )}
+      </CardContent>
+    </Card>
   );
 }

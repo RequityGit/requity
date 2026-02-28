@@ -228,7 +228,7 @@ export default async function AdminFundDetailPage({ params }: PageProps) {
             <>
               <Separator className="my-4" />
               <div>
-                <p className="text-xs text-surface-muted mb-1">
+                <p className="text-xs text-muted-foreground mb-1">
                   Description
                 </p>
                 <p className="text-sm">{fund.description}</p>
@@ -288,7 +288,7 @@ function DetailField({
 }) {
   return (
     <div>
-      <p className="text-xs text-surface-muted">{label}</p>
+      <p className="text-xs text-muted-foreground">{label}</p>
       <p className="text-sm font-medium capitalize">{value}</p>
     </div>
   );

@@ -57,22 +57,22 @@ export function FileUpload({
       {!selectedFile ? (
         <div
           onClick={() => inputRef.current?.click()}
-          className="border-2 border-dashed border-navy-light rounded-lg p-6 text-center cursor-pointer hover:border-slate-400 transition-colors"
+          className="border-2 border-dashed border-slate-200 rounded-lg p-6 text-center cursor-pointer hover:border-slate-400 transition-colors"
         >
-          <Upload className="h-8 w-8 mx-auto text-surface-muted mb-2" />
-          <p className="text-sm text-surface-muted">
+          <Upload className="h-8 w-8 mx-auto text-muted-foreground mb-2" />
+          <p className="text-sm text-muted-foreground">
             Click to upload a file
           </p>
-          <p className="text-xs text-surface-muted mt-1">
+          <p className="text-xs text-muted-foreground mt-1">
             Max {maxSize}MB
           </p>
         </div>
       ) : (
-        <div className="flex items-center gap-3 p-3 border rounded-lg bg-navy">
-          <File className="h-5 w-5 text-gold flex-shrink-0" />
+        <div className="flex items-center gap-3 p-3 border rounded-lg bg-slate-50">
+          <File className="h-5 w-5 text-blue-600 flex-shrink-0" />
           <div className="flex-1 min-w-0">
             <p className="text-sm font-medium truncate">{selectedFile.name}</p>
-            <p className="text-xs text-surface-muted">
+            <p className="text-xs text-muted-foreground">
               {(selectedFile.size / 1024 / 1024).toFixed(2)} MB
             </p>
           </div>

@@ -67,7 +67,7 @@ export function DistributionFilters({
           handleFilterChange("fund", val === "all" ? undefined : val)
         }
       >
-        <SelectTrigger className="w-[200px] bg-navy-mid">
+        <SelectTrigger className="w-[200px] bg-white">
           <SelectValue placeholder="All Investments" />
         </SelectTrigger>
         <SelectContent>
@@ -86,7 +86,7 @@ export function DistributionFilters({
           handleFilterChange("year", val === "all" ? undefined : val)
         }
       >
-        <SelectTrigger className="w-[140px] bg-navy-mid">
+        <SelectTrigger className="w-[140px] bg-white">
           <SelectValue placeholder="All Years" />
         </SelectTrigger>
         <SelectContent>
@@ -105,7 +105,7 @@ export function DistributionFilters({
           handleFilterChange("type", val === "all" ? undefined : val)
         }
       >
-        <SelectTrigger className="w-[200px] bg-navy-mid">
+        <SelectTrigger className="w-[200px] bg-white">
           <SelectValue placeholder="All Types" />
         </SelectTrigger>
         <SelectContent>
@@ -123,7 +123,7 @@ export function DistributionFilters({
           variant="ghost"
           size="sm"
           onClick={clearFilters}
-          className="text-surface-muted"
+          className="text-muted-foreground"
         >
           <X className="h-4 w-4 mr-1" />
           Clear filters

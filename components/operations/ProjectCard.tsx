@@ -97,14 +97,14 @@ export function ProjectCard({ project, tasks, onToggleTask, onStopRecurrence }: 
         >
           <div className="mt-0.5">
             {expanded ? (
-              <ChevronDown className="h-4 w-4 text-surface-muted" />
+              <ChevronDown className="h-4 w-4 text-muted-foreground" />
             ) : (
-              <ChevronRight className="h-4 w-4 text-surface-muted" />
+              <ChevronRight className="h-4 w-4 text-muted-foreground" />
             )}
           </div>
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 flex-wrap">
-              <h3 className="text-sm font-semibold text-surface-white">
+              <h3 className="text-sm font-semibold text-[#1a2b4a]">
                 {project.project_name}
               </h3>
               <PriorityBadge priority={project.priority} />
@@ -113,7 +113,7 @@ export function ProjectCard({ project, tasks, onToggleTask, onStopRecurrence }: 
             <div className="flex items-center gap-2 mt-1.5 flex-wrap">
               <OwnerBadge name={project.owner} />
               {project.category && (
-                <span className="text-xs text-surface-muted">
+                <span className="text-xs text-muted-foreground">
                   {project.category}
                 </span>
               )}
@@ -122,13 +122,13 @@ export function ProjectCard({ project, tasks, onToggleTask, onStopRecurrence }: 
             {/* Task progress bar */}
             {totalCount > 0 && (
               <div className="mt-2 flex items-center gap-2">
-                <div className="flex-1 h-1.5 bg-navy-mid rounded-full overflow-hidden">
+                <div className="flex-1 h-1.5 bg-slate-100 rounded-full overflow-hidden">
                   <div
                     className="h-full bg-teal-500 rounded-full transition-all"
                     style={{ width: `${progress}%` }}
                   />
                 </div>
-                <span className="text-xs text-surface-muted whitespace-nowrap">
+                <span className="text-xs text-muted-foreground whitespace-nowrap">
                   {completedCount}/{totalCount} tasks
                 </span>
               </div>
@@ -141,8 +141,8 @@ export function ProjectCard({ project, tasks, onToggleTask, onStopRecurrence }: 
         <CardContent className="pt-0">
           {/* Latest update */}
           {project.latest_update && (
-            <div className="mb-4 rounded-md bg-navy p-3 border border-slate-100">
-              <p className="text-xs font-medium text-surface-muted mb-1">
+            <div className="mb-4 rounded-md bg-slate-50 p-3 border border-slate-100">
+              <p className="text-xs font-medium text-muted-foreground mb-1">
                 Latest Update
               </p>
               <p className="text-sm text-foreground">{project.latest_update}</p>
@@ -152,13 +152,13 @@ export function ProjectCard({ project, tasks, onToggleTask, onStopRecurrence }: 
           {/* Linked tasks */}
           {sortedTasks.length > 0 ? (
             <div className="space-y-2">
-              <p className="text-xs font-medium text-surface-muted">Tasks</p>
+              <p className="text-xs font-medium text-muted-foreground">Tasks</p>
               {sortedTasks.map((task) => {
                 const isComplete = task.status === "Complete";
                 return (
                   <div
                     key={task.id}
-                    className="flex items-center gap-3 py-1.5 px-2 rounded hover:bg-navy-light"
+                    className="flex items-center gap-3 py-1.5 px-2 rounded hover:bg-slate-50"
                   >
                     <input
                       type="checkbox"
@@ -169,7 +169,7 @@ export function ProjectCard({ project, tasks, onToggleTask, onStopRecurrence }: 
                     <span
                       className={cn(
                         "flex-1 text-sm",
-                        isComplete && "line-through text-surface-muted"
+                        isComplete && "line-through text-muted-foreground"
                       )}
                     >
                       {task.title}
@@ -203,7 +203,7 @@ export function ProjectCard({ project, tasks, onToggleTask, onStopRecurrence }: 
               })}
             </div>
           ) : (
-            <p className="text-sm text-surface-muted">No tasks linked.</p>
+            <p className="text-sm text-muted-foreground">No tasks linked.</p>
           )}
         </CardContent>
       )}

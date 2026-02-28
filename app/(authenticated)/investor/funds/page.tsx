@@ -56,9 +56,9 @@ export default async function InvestorFundsPage() {
 
       {commitments.length === 0 ? (
         <Card>
-          <CardContent className="py-12 text-center text-surface-muted">
-            <Landmark className="h-12 w-12 mx-auto mb-3 text-surface-muted" />
-            <p className="text-lg font-medium text-surface-white">
+          <CardContent className="py-12 text-center text-muted-foreground">
+            <Landmark className="h-12 w-12 mx-auto mb-3 text-slate-300" />
+            <p className="text-lg font-medium text-[#1a2b4a]">
               No investment commitments found
             </p>
             <p className="text-sm mt-1">
@@ -89,14 +89,14 @@ export default async function InvestorFundsPage() {
                   <CardContent className="p-6">
                     <div className="flex items-start justify-between mb-4">
                       <div className="flex items-center gap-3">
-                        <div className="rounded-full p-2 bg-navy/5">
-                          <Landmark className="h-5 w-5 text-surface-white" />
+                        <div className="rounded-full p-2 bg-[#1a2b4a]/5">
+                          <Landmark className="h-5 w-5 text-[#1a2b4a]" />
                         </div>
                         <div>
-                          <h3 className="font-semibold text-surface-white">
+                          <h3 className="font-semibold text-[#1a2b4a]">
                             {fund.name}
                           </h3>
-                          <p className="text-xs text-surface-muted capitalize">
+                          <p className="text-xs text-muted-foreground capitalize">
                             {fund.fund_type?.replace(/_/g, " ") ?? "Investment"}
                             {fund.vintage_year
                               ? ` - Vintage ${fund.vintage_year}`
@@ -106,13 +106,13 @@ export default async function InvestorFundsPage() {
                       </div>
                       <div className="flex items-center gap-2">
                         <StatusBadge status={fund.status} />
-                        <ArrowRight className="h-4 w-4 text-surface-muted" />
+                        <ArrowRight className="h-4 w-4 text-muted-foreground" />
                       </div>
                     </div>
 
                     <div className="grid grid-cols-3 gap-4 text-sm mb-4">
                       <div>
-                        <p className="text-surface-muted text-xs">
+                        <p className="text-muted-foreground text-xs">
                           Committed
                         </p>
                         <p className="font-medium">
@@ -120,13 +120,13 @@ export default async function InvestorFundsPage() {
                         </p>
                       </div>
                       <div>
-                        <p className="text-surface-muted text-xs">Funded</p>
+                        <p className="text-muted-foreground text-xs">Funded</p>
                         <p className="font-medium">
                           {formatCurrency(commitment.funded_amount)}
                         </p>
                       </div>
                       <div>
-                        <p className="text-surface-muted text-xs">
+                        <p className="text-muted-foreground text-xs">
                           Unfunded
                         </p>
                         <p className="font-medium">
@@ -137,13 +137,13 @@ export default async function InvestorFundsPage() {
 
                     {/* Funding Progress */}
                     <div>
-                      <div className="flex items-center justify-between text-xs text-surface-muted mb-1">
+                      <div className="flex items-center justify-between text-xs text-muted-foreground mb-1">
                         <span>Funding Progress</span>
                         <span>{pctFunded}%</span>
                       </div>
-                      <div className="w-full bg-navy-mid rounded-full h-2">
+                      <div className="w-full bg-slate-100 rounded-full h-2">
                         <div
-                          className="bg-navy h-2 rounded-full transition-all"
+                          className="bg-[#1a2b4a] h-2 rounded-full transition-all"
                           style={{
                             width: `${Math.min(pctFunded, 100)}%`,
                           }}
@@ -152,7 +152,7 @@ export default async function InvestorFundsPage() {
                     </div>
 
                     {fund.irr_target && (
-                      <p className="text-xs text-surface-muted mt-3">
+                      <p className="text-xs text-muted-foreground mt-3">
                         Target IRR: {formatPercent(fund.irr_target)}
                       </p>
                     )}
