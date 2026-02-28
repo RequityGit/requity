@@ -150,6 +150,9 @@ export function CreateLoanDialog({
       const now = new Date().toISOString();
 
       // 1. Create the loan
+      // Pipeline fields (arv, purchase_price, points, etc.) are only included
+      // when they have values, to avoid errors if the pipeline migration
+      // (20250302000000_loan_pipeline.sql) hasn't been applied yet.
       const { data: newLoan, error: loanError } = await supabase
         .from("loans")
         .insert({
@@ -160,22 +163,21 @@ export function CreateLoanDialog({
           property_state: form.property_state || null,
           property_zip: form.property_zip || null,
           loan_amount: parseFloat(form.loan_amount),
-          purchase_price: form.purchase_price ? parseFloat(form.purchase_price) : null,
           appraised_value: form.appraised_value ? parseFloat(form.appraised_value) : null,
-          arv: form.arv ? parseFloat(form.arv) : null,
           interest_rate: form.interest_rate ? parseFloat(form.interest_rate) : null,
-          points: form.points ? parseFloat(form.points) : null,
-          origination_fee: form.origination_fee ? parseFloat(form.origination_fee) : null,
           term_months: form.term_months ? parseInt(form.term_months) : null,
-          originator_id: form.originator_id || null,
           originator: teamMembers.find((t) => t.id === form.originator_id)?.full_name || null,
-          processor_id: form.processor_id || null,
-          priority: form.priority,
-          expected_close_date: form.expected_close_date || null,
           notes: form.notes || null,
           stage: "lead",
           stage_updated_at: now,
-          application_date: new Date().toISOString().split("T")[0],
+          ...(form.purchase_price ? { purchase_price: parseFloat(form.purchase_price) } : {}),
+          ...(form.arv ? { arv: parseFloat(form.arv) } : {}),
+          ...(form.points ? { points: parseFloat(form.points) } : {}),
+          ...(form.origination_fee ? { origination_fee: parseFloat(form.origination_fee) } : {}),
+          ...(form.originator_id ? { originator_id: form.originator_id } : {}),
+          ...(form.processor_id ? { processor_id: form.processor_id } : {}),
+          ...(form.priority !== "normal" ? { priority: form.priority } : {}),
+          ...(form.expected_close_date ? { expected_close_date: form.expected_close_date } : {}),
         })
         .select()
         .single();
