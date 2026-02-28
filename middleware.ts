@@ -8,6 +8,13 @@ const ROLE_ROUTES: Record<string, string> = {
   investor: "/investor",
 };
 
+// Default dashboards for each role
+const ROLE_DASHBOARDS: Record<string, string> = {
+  admin: "/admin/dashboard",
+  borrower: "/borrower/dashboard",
+  investor: "/investor/dashboard",
+};
+
 // Routes that don't require authentication
 const PUBLIC_ROUTES = ["/login", "/auth/callback", "/auth/confirm"];
 
@@ -48,7 +55,8 @@ export async function middleware(request: NextRequest) {
       .single();
 
     if (profile?.role) {
-      const dashboardPath = ROLE_ROUTES[profile.role] || "/login";
+      const dashboardPath =
+        ROLE_DASHBOARDS[profile.role] || "/borrower/dashboard";
       const url = request.nextUrl.clone();
       url.pathname = dashboardPath;
       return NextResponse.redirect(url);
@@ -76,7 +84,8 @@ export async function middleware(request: NextRequest) {
         // User is trying to access a route outside their role
         if (allowedPrefix && !pathname.startsWith(allowedPrefix)) {
           const url = request.nextUrl.clone();
-          url.pathname = allowedPrefix;
+          url.pathname =
+            ROLE_DASHBOARDS[profile.role] || "/borrower/dashboard";
           return NextResponse.redirect(url);
         }
       }

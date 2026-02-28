@@ -28,38 +28,43 @@ export default function LoginPage() {
     setLoading(true);
     setError(null);
 
-    const supabase = getClient();
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
+    try {
+      const supabase = getClient();
+      const { error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
 
-    if (error) {
-      setError(error.message);
-      setLoading(false);
-      return;
-    }
-
-    // Get user role to redirect appropriately
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-    if (user) {
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("role")
-        .eq("id", user.id)
-        .single();
-
-      if (profile?.role) {
-        router.push(`/${profile.role}/dashboard`);
-        router.refresh();
+      if (error) {
+        setError(error.message);
+        setLoading(false);
         return;
       }
-    }
 
-    router.push("/borrower/dashboard");
-    router.refresh();
+      // Get user role to redirect appropriately
+      let redirectPath = "/borrower/dashboard";
+
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (user) {
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("role")
+          .eq("id", user.id)
+          .single();
+
+        if (profile?.role) {
+          redirectPath = `/${profile.role}/dashboard`;
+        }
+      }
+
+      router.push(redirectPath);
+      router.refresh();
+    } catch {
+      setError("An unexpected error occurred. Please try again.");
+      setLoading(false);
+    }
   }
 
   return (
