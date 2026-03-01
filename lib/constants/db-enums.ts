@@ -551,17 +551,24 @@ export const CRM_CONTACT_TYPES = [
 ] as const;
 
 /**
- * Constraint: crm_contacts_source_check
- * Note: The DB also has a crm_contact_source enum with different values
- * used by the new CRM data model (email_campaign, event, paid_ad, etc.).
+ * Constraint: crm_contacts_source_check / crm_contact_source enum
+ * Only values shown in UI are listed here. Hidden DB values:
+ * email_campaign, paid_ad, organic, repeat_client, social_media
  */
 export const CRM_CONTACT_SOURCES = [
+  { value: "cold_call", label: "Cold Call" },
+  { value: "inbound_call", label: "Inbound Call" },
+  { value: "broker", label: "Broker" },
   { value: "referral", label: "Referral" },
   { value: "website", label: "Website" },
-  { value: "cold_call", label: "Cold Call" },
-  { value: "social_media", label: "Social Media" },
-  { value: "conference", label: "Conference" },
-  { value: "existing_relationship", label: "Existing Relationship" },
+  { value: "linkedin", label: "LinkedIn" },
+  { value: "facebook", label: "Facebook" },
+  { value: "event", label: "Event" },
+  { value: "cix", label: "CIX" },
+  { value: "lendersa", label: "LenderSA" },
+  { value: "bl2425apn", label: "BL2425APN" },
+  { value: "capitalize", label: "Capitalize" },
+  { value: "data_migration", label: "Data Migration" },
   { value: "other", label: "Other" },
 ] as const;
 
@@ -608,9 +615,9 @@ export const CRM_RELATIONSHIP_TYPES = [
   { value: "referral_partner", label: "Referral Partner" },
 ] as const;
 
-/** DB enum: lifecycle_stage_enum */
+/** DB enum: lifecycle_stage_enum — "lead" exists in DB but is hidden from UI */
 export const CRM_LIFECYCLE_STAGES = [
-  { value: "lead", label: "Lead" },
+  { value: "uncontacted", label: "Uncontacted" },
   { value: "prospect", label: "Prospect" },
   { value: "active", label: "Active" },
   { value: "past", label: "Past" },
@@ -633,6 +640,8 @@ export const CRM_VENDOR_TYPES = [
   { value: "appraisal", label: "Appraisal" },
   { value: "engineer", label: "Engineer" },
   { value: "inspector", label: "Inspector" },
+  { value: "software", label: "Software" },
+  { value: "accounting_firm", label: "Accounting Firm" },
   { value: "other", label: "Other" },
 ] as const;
 

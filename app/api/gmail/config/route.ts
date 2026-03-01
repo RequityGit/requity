@@ -17,6 +17,6 @@ export async function GET() {
   const clientSecret = process.env.GMAIL_CLIENT_SECRET;
 
   return NextResponse.json({
-    configured: !!(clientId && clientSecret),
+    configured: Boolean(clientId && clientSecret),
   });
 }

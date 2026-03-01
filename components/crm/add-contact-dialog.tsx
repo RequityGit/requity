@@ -77,7 +77,7 @@ export function AddContactDialog({
     company_id: "" as string,
     company_name: "",
     source: "",
-    lifecycle_stage: "lead",
+    lifecycle_stage: "uncontacted",
     assigned_to: "",
     address_line1: "",
     city: "",
@@ -85,7 +85,6 @@ export function AddContactDialog({
     zip: "",
     next_follow_up_date: "",
     notes: "",
-    tags: "",
   });
 
   // Relationship types state
@@ -162,7 +161,7 @@ export function AddContactDialog({
       company_id: "",
       company_name: "",
       source: "",
-      lifecycle_stage: "lead",
+      lifecycle_stage: "uncontacted",
       assigned_to: "",
       address_line1: "",
       city: "",
@@ -170,7 +169,6 @@ export function AddContactDialog({
       zip: "",
       next_follow_up_date: "",
       notes: "",
-      tags: "",
     });
     setSelectedRelationships([]);
     setLenderDirection("");
@@ -264,23 +262,6 @@ export function AddContactDialog({
           .from("contact_relationship_types")
           .insert(relationshipInserts);
         if (relError) throw relError;
-      }
-
-      // Insert tags
-      const tags = form.tags
-        .split(",")
-        .map((t) => t.trim())
-        .filter(Boolean);
-      if (tags.length > 0) {
-        const tagInserts = tags.map((tag) => ({
-          contact_id: newContact.id,
-          tag,
-          created_by: currentUserId,
-        }));
-        const { error: tagError } = await supabase
-          .from("contact_tags")
-          .insert(tagInserts);
-        if (tagError) throw tagError;
       }
 
       toast({ title: "Contact added successfully" });
@@ -671,19 +652,6 @@ export function AddContactDialog({
                 </div>
               </div>
             </div>
-          </div>
-
-          {/* Tags */}
-          <div className="space-y-2">
-            <Label>Tags</Label>
-            <Input
-              value={form.tags}
-              onChange={(e) => updateField("tags", e.target.value)}
-              placeholder="Enter tags separated by commas..."
-            />
-            <p className="text-xs text-muted-foreground">
-              Comma-separated tags (e.g., &quot;VIP, high-value, referral&quot;)
-            </p>
           </div>
 
           {/* Notes */}

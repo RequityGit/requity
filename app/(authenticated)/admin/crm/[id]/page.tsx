@@ -8,7 +8,6 @@ import { StatusBadge } from "@/components/shared/status-badge";
 import { CrmActivityLog } from "@/components/crm/crm-activity-log";
 import { ContactEditDialog } from "@/components/crm/contact-edit-dialog";
 import { ContactRelationships } from "@/components/crm/contact-relationships";
-import { ContactTags } from "@/components/crm/contact-tags";
 import { EmailActivityFeed } from "@/components/crm/email-activity-feed";
 import { formatDate, formatCurrency } from "@/lib/format";
 import { CRM_CONTACT_SOURCES } from "@/lib/constants";
@@ -78,7 +77,6 @@ export default async function CrmContactDetailPage({ params }: PageProps) {
     teamResult,
     emailsResult,
     relationshipsResult,
-    tagsResult,
     auditLogResult,
     companyResult,
   ] = await Promise.all([
@@ -99,11 +97,6 @@ export default async function CrmContactDetailPage({ params }: PageProps) {
       .order("created_at", { ascending: false }),
     admin
       .from("contact_relationship_types")
-      .select("*")
-      .eq("contact_id", id)
-      .order("created_at", { ascending: false }),
-    admin
-      .from("contact_tags")
       .select("*")
       .eq("contact_id", id)
       .order("created_at", { ascending: false }),
@@ -217,7 +210,6 @@ export default async function CrmContactDetailPage({ params }: PageProps) {
   }));
 
   const relationships = relationshipsResult.data ?? [];
-  const tags = tagsResult.data ?? [];
   const auditLog = auditLogResult.data ?? [];
   const company = companyResult.data;
 
@@ -462,13 +454,6 @@ export default async function CrmContactDetailPage({ params }: PageProps) {
       <ContactRelationships
         contactId={contact.id}
         relationships={relationships}
-      />
-
-      {/* Tags */}
-      <ContactTags
-        contactId={contact.id}
-        tags={tags}
-        currentUserId={user.id}
       />
 
       {/* Linked Investor Details */}

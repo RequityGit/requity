@@ -215,7 +215,7 @@ export function CrmContactList({
 
     const pipeline = contacts.filter(
       (c) =>
-        c.lifecycle_stage === "lead" || c.lifecycle_stage === "prospect"
+        c.lifecycle_stage === "uncontacted" || c.lifecycle_stage === "prospect"
     ).length;
 
     return [

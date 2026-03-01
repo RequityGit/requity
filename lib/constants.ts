@@ -141,6 +141,7 @@ export const RELATIONSHIP_COLORS: Record<string, string> = {
 };
 
 export const LIFECYCLE_STAGE_COLORS: Record<string, string> = {
+  uncontacted: "bg-slate-100 text-slate-800",
   lead: "bg-slate-100 text-slate-800",
   prospect: "bg-amber-100 text-amber-800",
   active: "bg-green-100 text-green-800",
