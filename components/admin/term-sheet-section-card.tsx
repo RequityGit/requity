@@ -1,0 +1,328 @@
+"use client";
+
+import { useState } from "react";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  ChevronDown,
+  ChevronRight,
+  Eye,
+  EyeOff,
+  GripVertical,
+  Info,
+} from "lucide-react";
+import { cn } from "@/lib/utils";
+import type { TermSheetSectionDef } from "@/lib/term-sheet-fields";
+import { SAMPLE_DATA } from "@/lib/term-sheet-fields";
+
+// ---------------------------------------------------------------------------
+// Types
+// ---------------------------------------------------------------------------
+
+interface Props {
+  section: TermSheetSectionDef;
+  /** Whether the whole section is visible on the term sheet */
+  sectionVisible: boolean;
+  onToggleSection: () => void;
+  /** Current heading text */
+  heading: string;
+  onHeadingChange: (value: string) => void;
+  /** Per-field visibility: { field_key: boolean } */
+  fieldVisibility: Record<string, boolean>;
+  onToggleField: (fieldKey: string) => void;
+  /** Custom label overrides: { field_key: "Custom Label" } */
+  fieldLabels: Record<string, string>;
+  onFieldLabelChange: (fieldKey: string, label: string) => void;
+  /** Custom text value (for sections that support it) */
+  customText?: string;
+  onCustomTextChange?: (value: string) => void;
+  /** Reorder controls */
+  index: number;
+  totalSections: number;
+  onMoveUp: () => void;
+  onMoveDown: () => void;
+}
+
+// ---------------------------------------------------------------------------
+// Component
+// ---------------------------------------------------------------------------
+
+export function TermSheetSectionCard({
+  section,
+  sectionVisible,
+  onToggleSection,
+  heading,
+  onHeadingChange,
+  fieldVisibility,
+  onToggleField,
+  fieldLabels,
+  onFieldLabelChange,
+  customText,
+  onCustomTextChange,
+  index,
+  totalSections,
+  onMoveUp,
+  onMoveDown,
+}: Props) {
+  const [expanded, setExpanded] = useState(false);
+
+  const visibleFieldCount = section.fields.filter(
+    (f) => fieldVisibility[f.key] !== false
+  ).length;
+  const totalFieldCount = section.fields.length;
+
+  return (
+    <div
+      className={cn(
+        "rounded-lg border transition-all",
+        sectionVisible
+          ? "bg-white border-slate-200 shadow-sm"
+          : "bg-slate-50 border-slate-100 opacity-60"
+      )}
+    >
+      {/* ----------------------------------------------------------------- */}
+      {/* Header row — always visible                                       */}
+      {/* ----------------------------------------------------------------- */}
+      <div className="flex items-center gap-2 p-3">
+        {/* Reorder buttons */}
+        <div className="flex flex-col gap-0.5 shrink-0">
+          <button
+            type="button"
+            onClick={onMoveUp}
+            disabled={index === 0}
+            className="text-slate-400 hover:text-slate-700 disabled:opacity-30 text-xs leading-none"
+            aria-label="Move up"
+          >
+            ▲
+          </button>
+          <GripVertical className="h-4 w-4 text-slate-300 mx-auto" />
+          <button
+            type="button"
+            onClick={onMoveDown}
+            disabled={index === totalSections - 1}
+            className="text-slate-400 hover:text-slate-700 disabled:opacity-30 text-xs leading-none"
+            aria-label="Move down"
+          >
+            ▼
+          </button>
+        </div>
+
+        {/* Section visibility toggle */}
+        <button
+          type="button"
+          onClick={onToggleSection}
+          className={cn(
+            "shrink-0 rounded p-1.5 transition-colors",
+            sectionVisible
+              ? "text-emerald-600 hover:bg-emerald-50"
+              : "text-slate-400 hover:bg-slate-100"
+          )}
+          aria-label={sectionVisible ? "Hide section" : "Show section"}
+        >
+          {sectionVisible ? (
+            <Eye className="h-4 w-4" />
+          ) : (
+            <EyeOff className="h-4 w-4" />
+          )}
+        </button>
+
+        {/* Expand / collapse toggle */}
+        <button
+          type="button"
+          onClick={() => setExpanded(!expanded)}
+          className="shrink-0 rounded p-1 text-slate-500 hover:text-slate-800 hover:bg-slate-100 transition-colors"
+          aria-label={expanded ? "Collapse" : "Expand"}
+        >
+          {expanded ? (
+            <ChevronDown className="h-4 w-4" />
+          ) : (
+            <ChevronRight className="h-4 w-4" />
+          )}
+        </button>
+
+        {/* Section label + description */}
+        <button
+          type="button"
+          onClick={() => setExpanded(!expanded)}
+          className="flex-1 text-left min-w-0"
+        >
+          <span className="text-sm font-semibold text-[#1a2b4a] block truncate">
+            {section.label}
+          </span>
+          <span className="text-xs text-muted-foreground block truncate">
+            {section.description}
+          </span>
+        </button>
+
+        {/* Field counter badge */}
+        {totalFieldCount > 0 && (
+          <span className="shrink-0 text-xs font-medium rounded-full px-2 py-0.5 bg-slate-100 text-slate-600">
+            {visibleFieldCount}/{totalFieldCount} fields
+          </span>
+        )}
+
+        {/* Heading input (compact) */}
+        <Input
+          value={heading}
+          onChange={(e) => onHeadingChange(e.target.value)}
+          placeholder={section.label}
+          className="w-48 h-8 text-sm shrink-0 hidden lg:block"
+          title="Section heading on the term sheet"
+        />
+      </div>
+
+      {/* Mobile heading input */}
+      <div className="px-3 pb-2 lg:hidden">
+        <Input
+          value={heading}
+          onChange={(e) => onHeadingChange(e.target.value)}
+          placeholder={section.label}
+          className="h-8 text-sm"
+        />
+      </div>
+
+      {/* ----------------------------------------------------------------- */}
+      {/* Expanded content — field list + preview                           */}
+      {/* ----------------------------------------------------------------- */}
+      {expanded && (
+        <div className="border-t border-slate-100">
+          {/* Field list */}
+          {section.fields.length > 0 && (
+            <div className="p-3 space-y-1">
+              <p className="text-xs font-medium text-slate-500 uppercase tracking-wider mb-2">
+                Fields in this section
+              </p>
+              {section.fields.map((field) => {
+                const isVisible = fieldVisibility[field.key] !== false;
+                const customLabel = fieldLabels[field.key] ?? "";
+
+                return (
+                  <div
+                    key={field.key}
+                    className={cn(
+                      "flex items-center gap-3 rounded-md px-3 py-2 transition-colors",
+                      isVisible
+                        ? "bg-white hover:bg-slate-50"
+                        : "bg-slate-50 opacity-50"
+                    )}
+                  >
+                    {/* Field toggle */}
+                    <button
+                      type="button"
+                      onClick={() => onToggleField(field.key)}
+                      className={cn(
+                        "shrink-0 flex items-center justify-center w-5 h-5 rounded border transition-colors",
+                        isVisible
+                          ? "bg-[#1a2b4a] border-[#1a2b4a] text-white"
+                          : "bg-white border-slate-300 text-transparent"
+                      )}
+                      aria-label={
+                        isVisible ? `Hide ${field.label}` : `Show ${field.label}`
+                      }
+                    >
+                      {isVisible && (
+                        <svg
+                          className="w-3 h-3"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                          strokeWidth={3}
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            d="M5 13l4 4L19 7"
+                          />
+                        </svg>
+                      )}
+                    </button>
+
+                    {/* Field info */}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-sm font-medium text-slate-800">
+                          {field.label}
+                        </span>
+                        {field.format && field.format !== "text" && (
+                          <span className="text-[10px] font-mono px-1 py-0.5 rounded bg-slate-100 text-slate-500">
+                            {field.format}
+                          </span>
+                        )}
+                      </div>
+                      <span className="text-xs text-muted-foreground">
+                        {field.description}
+                      </span>
+                    </div>
+
+                    {/* Custom label override */}
+                    <Input
+                      value={customLabel}
+                      onChange={(e) =>
+                        onFieldLabelChange(field.key, e.target.value)
+                      }
+                      placeholder={field.label}
+                      className="w-40 h-7 text-xs shrink-0 hidden md:block"
+                      title="Custom label (leave blank to use default)"
+                    />
+                  </div>
+                );
+              })}
+            </div>
+          )}
+
+          {/* Custom text block */}
+          {section.hasCustomText && onCustomTextChange && (
+            <div className="p-3 border-t border-slate-100">
+              <Label className="text-xs font-medium text-slate-500 uppercase tracking-wider mb-2 block">
+                Custom text for this section
+              </Label>
+              <Textarea
+                value={customText ?? ""}
+                onChange={(e) => onCustomTextChange(e.target.value)}
+                rows={3}
+                placeholder={`Add custom text that will appear in the ${section.label} section...`}
+                className="text-sm"
+              />
+            </div>
+          )}
+
+          {/* Mini preview */}
+          {section.fields.length > 0 && (
+            <div className="p-3 border-t border-slate-100 bg-slate-50/50">
+              <div className="flex items-center gap-1.5 mb-2">
+                <Info className="h-3.5 w-3.5 text-slate-400" />
+                <span className="text-xs font-medium text-slate-500 uppercase tracking-wider">
+                  Preview (sample data)
+                </span>
+              </div>
+              <div className="bg-white rounded border border-slate-200 p-3 font-mono text-xs space-y-1">
+                <div className="font-bold text-[#1a2b4a] text-sm mb-2 border-b border-slate-100 pb-1">
+                  {heading || section.label}
+                </div>
+                {section.fields
+                  .filter((f) => fieldVisibility[f.key] !== false)
+                  .map((field) => (
+                    <div key={field.key} className="flex gap-2">
+                      <span className="text-slate-500 w-40 shrink-0 text-right">
+                        {fieldLabels[field.key] || field.label}:
+                      </span>
+                      <span className="text-slate-800 font-medium">
+                        {SAMPLE_DATA[field.key] ?? "—"}
+                      </span>
+                    </div>
+                  ))}
+                {section.fields.filter((f) => fieldVisibility[f.key] !== false)
+                  .length === 0 && (
+                  <span className="text-slate-400 italic">
+                    No fields visible
+                  </span>
+                )}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
