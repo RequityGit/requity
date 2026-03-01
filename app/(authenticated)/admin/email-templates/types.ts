@@ -1,58 +1,66 @@
-export interface EmailTemplate {
-  id: string;
-  name: string;
-  slug: string;
-  subject: string;
-  category: string;
-  html_body: string;
-  variables: TemplateVariable[];
-  is_active: boolean;
-  created_at: string;
-  updated_at: string;
-}
-
 export interface TemplateVariable {
   key: string;
-  label: string;
+  label?: string;
+  description?: string;
   example?: string;
+}
+
+export interface EmailTemplate {
+  id: string;
+  display_name: string;
+  slug: string;
+  subject_template: string;
+  html_body_template: string;
+  text_body_template: string | null;
+  available_variables: TemplateVariable[];
+  preview_data: Record<string, string> | null;
+  is_active: boolean;
+  version: number;
+  notification_type_id: string | null;
+  last_edited_by: string | null;
+  last_edited_at: string | null;
+  created_at: string;
+  updated_at: string;
+  /** Derived from notification_types join — not a real column */
+  category?: string;
 }
 
 export interface EmailTemplateVersion {
   id: string;
   template_id: string;
-  version_number: number;
-  subject: string;
-  html_body: string;
-  changed_by: string | null;
+  version: number;
+  subject_template: string;
+  html_body_template: string;
+  text_body_template: string | null;
+  edited_by: string | null;
+  change_notes: string | null;
   created_at: string;
 }
 
 export interface CreateTemplateInput {
-  name: string;
+  display_name: string;
   slug: string;
-  subject: string;
-  category: string;
-  html_body: string;
-  variables: TemplateVariable[];
+  subject_template: string;
+  html_body_template: string;
+  available_variables: TemplateVariable[];
 }
 
 export interface UpdateTemplateInput {
-  name?: string;
+  display_name?: string;
   slug?: string;
-  subject?: string;
-  category?: string;
-  html_body?: string;
-  variables?: TemplateVariable[];
+  subject_template?: string;
+  html_body_template?: string;
+  text_body_template?: string | null;
+  available_variables?: TemplateVariable[];
   is_active?: boolean;
 }
 
 export const TEMPLATE_CATEGORIES = [
-  "general",
-  "loan",
-  "investor",
-  "borrower",
-  "notification",
-  "onboarding",
+  "lending",
+  "investments",
+  "operations",
+  "crm",
+  "system",
 ] as const;
 
 export const MERGE_VARIABLES: TemplateVariable[] = [
@@ -72,4 +80,7 @@ export const MERGE_VARIABLES: TemplateVariable[] = [
   { key: "company_name", label: "Company Name", example: "Requity Group" },
   { key: "current_date", label: "Current Date", example: "March 1, 2026" },
   { key: "portal_url", label: "Portal URL", example: "https://portal.requitygroup.com" },
+  { key: "recipient_name", label: "Recipient Name", example: "Dylan Marma" },
+  { key: "action_url", label: "Action URL", example: "https://portal.requitygroup.com" },
+  { key: "preferences_url", label: "Preferences URL", example: "https://portal.requitygroup.com/settings/notifications" },
 ];

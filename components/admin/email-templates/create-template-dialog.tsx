@@ -13,15 +13,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Plus } from "lucide-react";
-import { TEMPLATE_CATEGORIES } from "@/app/(authenticated)/admin/email-templates/types";
 import { createTemplateAction } from "@/app/(authenticated)/admin/email-templates/actions-write";
 
 export function CreateTemplateDialog() {
@@ -30,7 +22,6 @@ export function CreateTemplateDialog() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [name, setName] = useState("");
-  const [category, setCategory] = useState("general");
 
   function toSlug(value: string) {
     return value
@@ -49,12 +40,11 @@ export function CreateTemplateDialog() {
     setError(null);
 
     const result = await createTemplateAction({
-      name: name.trim(),
+      display_name: name.trim(),
       slug: toSlug(name.trim()),
-      subject: "",
-      category,
-      html_body: "",
-      variables: [],
+      subject_template: "",
+      html_body_template: "",
+      available_variables: [],
     });
 
     setLoading(false);
@@ -66,7 +56,6 @@ export function CreateTemplateDialog() {
 
     setOpen(false);
     setName("");
-    setCategory("general");
     router.push(`/admin/email-templates/${result.template.id}`);
   }
 
@@ -82,8 +71,8 @@ export function CreateTemplateDialog() {
         <DialogHeader>
           <DialogTitle>Create Email Template</DialogTitle>
           <DialogDescription>
-            Give your template a name and category. You can edit the content
-            after creating it.
+            Give your template a name. You can edit the subject, content, and
+            other details after creating it.
           </DialogDescription>
         </DialogHeader>
 
@@ -99,25 +88,7 @@ export function CreateTemplateDialog() {
             />
           </div>
 
-          <div className="space-y-2">
-            <Label>Category</Label>
-            <Select value={category} onValueChange={setCategory}>
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {TEMPLATE_CATEGORIES.map((cat) => (
-                  <SelectItem key={cat} value={cat}>
-                    <span className="capitalize">{cat}</span>
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          {error && (
-            <p className="text-sm text-red-600">{error}</p>
-          )}
+          {error && <p className="text-sm text-red-600">{error}</p>}
 
           <div className="flex justify-end gap-2">
             <Button

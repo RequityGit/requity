@@ -22,7 +22,8 @@ export async function duplicateTemplateAction(
       .eq("id" as never, id as never)
       .single();
 
-    if (fetchErr) return { error: (fetchErr as { message: string }).message };
+    if (fetchErr)
+      return { error: (fetchErr as { message: string }).message };
     if (!source) return { error: "Template not found" };
 
     const src = source as unknown as EmailTemplate;
@@ -44,12 +45,16 @@ export async function duplicateTemplateAction(
     const { data, error } = await admin
       .from("email_templates" as never)
       .insert({
-        name: `${src.name} (Copy)`,
+        display_name: `${src.display_name} (Copy)`,
         slug: newSlug,
-        subject: src.subject,
-        category: src.category,
-        html_body: src.html_body,
-        variables: JSON.stringify(src.variables),
+        subject_template: src.subject_template,
+        html_body_template: src.html_body_template,
+        text_body_template: src.text_body_template,
+        available_variables: JSON.stringify(src.available_variables),
+        preview_data: src.preview_data
+          ? JSON.stringify(src.preview_data)
+          : null,
+        notification_type_id: src.notification_type_id,
         is_active: false,
       } as never)
       .select("*" as never)
@@ -60,7 +65,8 @@ export async function duplicateTemplateAction(
     return { success: true, template: data as unknown as EmailTemplate };
   } catch (err: unknown) {
     console.error("duplicateTemplateAction error:", err);
-    const message = err instanceof Error ? err.message : "An unexpected error occurred";
+    const message =
+      err instanceof Error ? err.message : "An unexpected error occurred";
     return { error: message };
   }
 }
@@ -88,7 +94,8 @@ export async function toggleTemplateActiveAction(
     return { success: true };
   } catch (err: unknown) {
     console.error("toggleTemplateActiveAction error:", err);
-    const message = err instanceof Error ? err.message : "An unexpected error occurred";
+    const message =
+      err instanceof Error ? err.message : "An unexpected error occurred";
     return { error: message };
   }
 }

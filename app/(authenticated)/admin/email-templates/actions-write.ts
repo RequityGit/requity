@@ -23,12 +23,11 @@ export async function createTemplateAction(
     const { data, error } = await admin
       .from("email_templates" as never)
       .insert({
-        name: input.name,
+        display_name: input.display_name,
         slug: input.slug,
-        subject: input.subject,
-        category: input.category,
-        html_body: input.html_body,
-        variables: JSON.stringify(input.variables),
+        subject_template: input.subject_template,
+        html_body_template: input.html_body_template,
+        available_variables: JSON.stringify(input.available_variables),
       } as never)
       .select("*" as never)
       .single();
@@ -38,7 +37,8 @@ export async function createTemplateAction(
     return { success: true, template: data as unknown as EmailTemplate };
   } catch (err: unknown) {
     console.error("createTemplateAction error:", err);
-    const message = err instanceof Error ? err.message : "An unexpected error occurred";
+    const message =
+      err instanceof Error ? err.message : "An unexpected error occurred";
     return { error: message };
   }
 }
@@ -53,7 +53,8 @@ export async function updateTemplateAction(
 ): Promise<{ success: true; template: EmailTemplate } | { error: string }> {
   try {
     const auth = await requireAdmin();
-    if (auth.error || !auth.user) return { error: auth.error ?? "Not authenticated" };
+    if (auth.error || !auth.user)
+      return { error: auth.error ?? "Not authenticated" };
     const userId = auth.user.id;
 
     const admin = createAdminClient();
@@ -71,39 +72,58 @@ export async function updateTemplateAction(
     const cur = current as unknown as EmailTemplate;
 
     // Only snapshot if subject or body changed
-    const subjectChanged = input.subject !== undefined && input.subject !== cur.subject;
-    const bodyChanged = input.html_body !== undefined && input.html_body !== cur.html_body;
+    const subjectChanged =
+      input.subject_template !== undefined &&
+      input.subject_template !== cur.subject_template;
+    const bodyChanged =
+      input.html_body_template !== undefined &&
+      input.html_body_template !== cur.html_body_template;
 
     if (subjectChanged || bodyChanged) {
       const { data: lastVersion } = await admin
         .from("email_template_versions" as never)
-        .select("version_number" as never)
+        .select("version" as never)
         .eq("template_id" as never, id as never)
-        .order("version_number" as never, { descending: true } as never)
+        .order("version" as never, { ascending: false } as never)
         .limit(1)
         .single();
 
       const nextVersion =
-        ((lastVersion as unknown as { version_number: number } | null)?.version_number ?? 0) + 1;
+        ((lastVersion as unknown as { version: number } | null)?.version ?? 0) +
+        1;
 
       await admin.from("email_template_versions" as never).insert({
         template_id: id,
-        version_number: nextVersion,
-        subject: cur.subject,
-        html_body: cur.html_body,
-        changed_by: userId,
+        version: nextVersion,
+        subject_template: cur.subject_template,
+        html_body_template: cur.html_body_template,
+        edited_by: userId,
       } as never);
     }
 
     // Build update payload (only set provided fields)
     const updateData: Record<string, unknown> = {};
-    if (input.name !== undefined) updateData.name = input.name;
+    if (input.display_name !== undefined)
+      updateData.display_name = input.display_name;
     if (input.slug !== undefined) updateData.slug = input.slug;
-    if (input.subject !== undefined) updateData.subject = input.subject;
-    if (input.category !== undefined) updateData.category = input.category;
-    if (input.html_body !== undefined) updateData.html_body = input.html_body;
-    if (input.variables !== undefined) updateData.variables = JSON.stringify(input.variables);
+    if (input.subject_template !== undefined)
+      updateData.subject_template = input.subject_template;
+    if (input.html_body_template !== undefined)
+      updateData.html_body_template = input.html_body_template;
+    if (input.available_variables !== undefined)
+      updateData.available_variables = JSON.stringify(
+        input.available_variables
+      );
     if (input.is_active !== undefined) updateData.is_active = input.is_active;
+
+    // Track who last edited
+    updateData.last_edited_by = userId;
+    updateData.last_edited_at = new Date().toISOString();
+
+    // Bump version number if content changed
+    if (subjectChanged || bodyChanged) {
+      updateData.version = cur.version + 1;
+    }
 
     const { data, error } = await admin
       .from("email_templates" as never)
@@ -117,7 +137,8 @@ export async function updateTemplateAction(
     return { success: true, template: data as unknown as EmailTemplate };
   } catch (err: unknown) {
     console.error("updateTemplateAction error:", err);
-    const message = err instanceof Error ? err.message : "An unexpected error occurred";
+    const message =
+      err instanceof Error ? err.message : "An unexpected error occurred";
     return { error: message };
   }
 }
@@ -144,7 +165,8 @@ export async function deleteTemplateAction(
     return { success: true };
   } catch (err: unknown) {
     console.error("deleteTemplateAction error:", err);
-    const message = err instanceof Error ? err.message : "An unexpected error occurred";
+    const message =
+      err instanceof Error ? err.message : "An unexpected error occurred";
     return { error: message };
   }
 }
