@@ -7,6 +7,7 @@ import {
   FileText,
   Landmark,
   ArrowRight,
+  Mail,
 } from "lucide-react";
 import Link from "next/link";
 
@@ -123,6 +124,36 @@ export default async function ControlCenterOverview() {
               <p className="text-xs text-muted-foreground">
                 Configure the master checklist of loan conditions that
                 auto-populate for new loans.
+              </p>
+            </CardContent>
+          </Card>
+        </Link>
+        <Link href="/control-center/email-templates" className="group">
+          <Card className="hover:border-teal-300 hover:shadow-md transition-all">
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-sm font-medium">
+                Email Templates
+              </CardTitle>
+              <ArrowRight className="h-4 w-4 text-muted-foreground group-hover:text-teal-600 transition-colors" />
+            </CardHeader>
+            <CardContent>
+              <p className="text-xs text-muted-foreground">
+                Manage email templates used across the platform.
+              </p>
+            </CardContent>
+          </Card>
+        </Link>
+        <Link href="/control-center/term-sheets" className="group">
+          <Card className="hover:border-teal-300 hover:shadow-md transition-all">
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-sm font-medium">
+                Term Sheet Templates
+              </CardTitle>
+              <ArrowRight className="h-4 w-4 text-muted-foreground group-hover:text-teal-600 transition-colors" />
+            </CardHeader>
+            <CardContent>
+              <p className="text-xs text-muted-foreground">
+                Configure how term sheets look for each loan type.
               </p>
             </CardContent>
           </Card>

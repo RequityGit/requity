@@ -56,7 +56,7 @@ export function CreateTemplateDialog() {
 
     setOpen(false);
     setName("");
-    router.push(`/admin/email-templates/${result.template.id}`);
+    router.push(`/control-center/email-templates/${result.template.id}`);
   }
 
   return (

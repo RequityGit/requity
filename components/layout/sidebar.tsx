@@ -22,7 +22,6 @@ import {
   Contact,
   Banknote,
   Cog,
-  Mail,
 } from "lucide-react";
 import { useState } from "react";
 import { useViewAs } from "@/contexts/view-as-context";
@@ -81,17 +80,6 @@ const adminNav: NavItem[] = [
     label: "Distributions",
     href: "/admin/distributions",
     icon: Receipt,
-  },
-  {
-    label: "Email Templates",
-    href: "/admin/email-templates",
-    icon: Mail,
-  },
-  {
-    label: "Settings",
-    href: "/admin/settings",
-    icon: Cog,
-    activePaths: ["/admin/settings/term-sheets"],
   },
 ];
 

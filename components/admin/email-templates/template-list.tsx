@@ -105,7 +105,7 @@ export function TemplateList({ templates: initial }: TemplateListProps) {
                 <TableRow
                   key={t.id}
                   className="cursor-pointer hover:bg-slate-50"
-                  onClick={() => router.push(`/admin/email-templates/${t.id}`)}
+                  onClick={() => router.push(`/control-center/email-templates/${t.id}`)}
                 >
                   <TableCell className="font-medium">
                     {t.display_name}
