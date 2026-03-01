@@ -33,9 +33,10 @@ import {
 import { Label } from "@/components/ui/label";
 import { RoleBadge } from "@/components/control-center/role-badge";
 import { useToast } from "@/components/ui/use-toast";
-import { Search, Plus, Eye, EyeOff } from "lucide-react";
+import { Search, Plus, Eye, EyeOff, UserPlus } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { grantRole, revokeRole, reactivateRole } from "@/app/(authenticated)/control-center/users/actions";
+import { AddUserDialog } from "@/components/control-center/add-user-dialog";
 import { useImpersonation } from "@/components/layout/impersonation-context";
 import {
   Tooltip,
@@ -113,6 +114,7 @@ export function UsersClient({
   const [search, setSearch] = useState("");
   const [roleFilter, setRoleFilter] = useState("all");
   const [showRevoked, setShowRevoked] = useState(false);
+  const [addUserOpen, setAddUserOpen] = useState(false);
 
   // Grant role modal
   const [grantModalOpen, setGrantModalOpen] = useState(false);
@@ -252,6 +254,14 @@ export function UsersClient({
         >
           {showRevoked ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
           {showRevoked ? "Hide" : "Show"} Revoked
+        </Button>
+        <Button
+          size="sm"
+          onClick={() => setAddUserOpen(true)}
+          className="gap-1.5"
+        >
+          <UserPlus className="h-4 w-4" />
+          Add User
         </Button>
       </div>
 
@@ -559,6 +569,18 @@ export function UsersClient({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Add User Dialog */}
+      <AddUserDialog
+        open={addUserOpen}
+        onOpenChange={setAddUserOpen}
+        onSuccess={() => {
+          setAddUserOpen(false);
+          router.refresh();
+        }}
+        investors={investors}
+        borrowers={borrowers}
+      />
     </div>
   );
 }
