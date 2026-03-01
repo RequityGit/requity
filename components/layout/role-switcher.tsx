@@ -11,9 +11,18 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
-import { Check, ChevronsUpDown, Shield, Landmark, Building2 } from "lucide-react";
+import {
+  Check,
+  ChevronsUpDown,
+  Shield,
+  Landmark,
+  Building2,
+  Eye,
+  Crown,
+} from "lucide-react";
+import { useViewAs } from "@/contexts/view-as-context";
 
-type Role = "admin" | "investor" | "borrower";
+type Role = "super_admin" | "admin" | "investor" | "borrower";
 
 interface RoleSwitcherProps {
   activeRole: string;
@@ -24,6 +33,11 @@ const roleConfig: Record<
   Role,
   { label: string; icon: React.ElementType; badgeClass: string }
 > = {
+  super_admin: {
+    label: "Super Admin",
+    icon: Crown,
+    badgeClass: "bg-amber-100 text-amber-800 hover:bg-amber-200 border-amber-300",
+  },
   admin: {
     label: "Admin",
     icon: Shield,
@@ -41,12 +55,27 @@ const roleConfig: Record<
   },
 };
 
+const viewAsRoles: { role: "admin" | "investor" | "borrower"; label: string; icon: React.ElementType }[] = [
+  { role: "admin", label: "Admin", icon: Shield },
+  { role: "investor", label: "Investor", icon: Landmark },
+  { role: "borrower", label: "Borrower", icon: Building2 },
+];
+
 export function RoleSwitcher({ activeRole, allowedRoles }: RoleSwitcherProps) {
   const router = useRouter();
   const [switching, setSwitching] = useState(false);
+  const { isSuperAdmin, viewAsRole, setViewAsRole, isViewingAs, exitViewAs } =
+    useViewAs();
 
+  // Determine the display role
+  const displayRole: Role = isViewingAs && viewAsRole
+    ? viewAsRole
+    : isSuperAdmin
+      ? "super_admin"
+      : (activeRole as Role);
+
+  const current = roleConfig[displayRole] ?? roleConfig.admin;
   const canSwitch = allowedRoles.length > 1;
-  const current = roleConfig[activeRole as Role];
 
   async function handleSwitch(newRole: string) {
     if (newRole === activeRole || switching) return;
@@ -69,14 +98,78 @@ export function RoleSwitcher({ activeRole, allowedRoles }: RoleSwitcherProps) {
     }
   }
 
+  function handleViewAs(role: "admin" | "investor" | "borrower") {
+    setViewAsRole(role);
+  }
+
+  // Super admin: always show dropdown with view-as options
+  if (isSuperAdmin) {
+    const CurrentIcon = current.icon;
+    return (
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <button
+            className="flex items-center gap-1.5 rounded-md px-2.5 py-1 text-sm font-medium transition-colors focus:outline-none disabled:opacity-50"
+            disabled={switching}
+          >
+            <Badge variant="outline" className={`${current.badgeClass} cursor-pointer`}>
+              <span className="flex items-center gap-1.5">
+                <CurrentIcon className="h-3.5 w-3.5" />
+                {current.label}
+                <ChevronsUpDown className="h-3 w-3 opacity-60" />
+              </span>
+            </Badge>
+          </button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end" className="w-52">
+          <DropdownMenuLabel className="text-xs text-muted-foreground">
+            <span className="flex items-center gap-1.5">
+              <Eye className="h-3 w-3" />
+              View portal as
+            </span>
+          </DropdownMenuLabel>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem
+            onClick={() => exitViewAs()}
+            className="cursor-pointer flex items-center justify-between"
+          >
+            <span className="flex items-center gap-2">
+              <Crown className="h-4 w-4" />
+              Super Admin
+            </span>
+            {!isViewingAs && <Check className="h-4 w-4 text-green-600" />}
+          </DropdownMenuItem>
+          {viewAsRoles.map(({ role, label, icon: Icon }) => {
+            const isActive = isViewingAs && viewAsRole === role;
+            return (
+              <DropdownMenuItem
+                key={role}
+                onClick={() => handleViewAs(role)}
+                className="cursor-pointer flex items-center justify-between"
+              >
+                <span className="flex items-center gap-2">
+                  <Icon className="h-4 w-4" />
+                  {label}
+                </span>
+                {isActive && <Check className="h-4 w-4 text-green-600" />}
+              </DropdownMenuItem>
+            );
+          })}
+        </DropdownMenuContent>
+      </DropdownMenu>
+    );
+  }
+
+  // Non-super-admin with single role: static badge
   if (!canSwitch) {
     return (
-      <Badge variant="outline" className={current?.badgeClass}>
-        {current?.label}
+      <Badge variant="outline" className={current.badgeClass}>
+        {current.label}
       </Badge>
     );
   }
 
+  // Non-super-admin with multiple roles: existing role-switch dropdown
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -84,9 +177,9 @@ export function RoleSwitcher({ activeRole, allowedRoles }: RoleSwitcherProps) {
           className="flex items-center gap-1.5 rounded-md px-2.5 py-1 text-sm font-medium transition-colors focus:outline-none disabled:opacity-50"
           disabled={switching}
         >
-          <Badge variant="outline" className={`${current?.badgeClass} cursor-pointer`}>
+          <Badge variant="outline" className={`${current.badgeClass} cursor-pointer`}>
             <span className="flex items-center gap-1.5">
-              {current?.label}
+              {current.label}
               <ChevronsUpDown className="h-3 w-3 opacity-60" />
             </span>
           </Badge>

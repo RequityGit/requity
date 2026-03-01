@@ -24,6 +24,7 @@ import {
   Cog,
 } from "lucide-react";
 import { useState } from "react";
+import { useViewAs } from "@/contexts/view-as-context";
 
 interface NavItem {
   label: string;
@@ -95,7 +96,11 @@ function getNavItems(role: string): NavItem[] {
 export function Sidebar({ role, isSuperAdmin }: { role: string; isSuperAdmin?: boolean }) {
   const pathname = usePathname();
   const [collapsed, setCollapsed] = useState(false);
-  const navItems = getNavItems(role);
+  const { effectiveViewRole, isViewingAs } = useViewAs();
+
+  // Use view-as role for navigation when super admin is simulating
+  const navRole = isViewingAs ? effectiveViewRole : role;
+  const navItems = getNavItems(navRole);
 
   return (
     <aside
@@ -150,7 +155,7 @@ export function Sidebar({ role, isSuperAdmin }: { role: string; isSuperAdmin?: b
         })}
       </nav>
 
-      {isSuperAdmin && (
+      {isSuperAdmin && !isViewingAs && (
         <div className="px-2 pb-2">
           <Link
             href="/control-center"
@@ -170,7 +175,7 @@ export function Sidebar({ role, isSuperAdmin }: { role: string; isSuperAdmin?: b
       <div className="p-4 border-t border-white/10">
         {!collapsed && (
           <div className="text-xs text-white/50">
-            <span className="capitalize">{role}</span> Portal
+            <span className="capitalize">{isViewingAs ? effectiveViewRole : (isSuperAdmin ? "Super Admin" : role)}</span> Portal
           </div>
         )}
       </div>
