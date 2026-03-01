@@ -68,6 +68,17 @@ export default async function AdminLoanDetailPage({ params }: PageProps) {
         .order("sort_order"),
     ]);
 
+  // Underwriting versions — may not exist if migration hasn't been applied
+  let underwritingVersions: any[] = [];
+  try {
+    const { data } = await supabase
+      .from("loan_underwriting_versions")
+      .select("*, creator:profiles!loan_underwriting_versions_created_by_fkey(full_name)")
+      .eq("loan_id", id)
+      .order("version_number", { ascending: false });
+    underwritingVersions = data ?? [];
+  } catch { /* table may not exist */ }
+
   // Conditions and activity log — may not exist if migrations haven't been applied
   let conditionsResult: { data: any[] | null } = { data: [] };
   let activityResult: { data: any[] | null } = { data: [] };
@@ -283,6 +294,24 @@ export default async function AdminLoanDetailPage({ params }: PageProps) {
           ltv: loan.ltv,
           appraised_value: loan.appraised_value,
           notes: loan.notes,
+          purchase_price: loan.purchase_price,
+          points: loan.points,
+          after_repair_value: loan.after_repair_value ?? loan.arv,
+          rehab_budget: loan.rehab_budget,
+          property_type: loan.property_type,
+          heated_sqft: loan.heated_sqft,
+          annual_property_tax: loan.annual_property_tax,
+          annual_insurance: loan.annual_insurance,
+          monthly_hoa: loan.monthly_hoa,
+          monthly_utilities: loan.monthly_utilities,
+          holding_period_months: loan.holding_period_months,
+          sales_disposition_pct: loan.sales_disposition_pct,
+          mobilization_draw: loan.mobilization_draw,
+          lender_fees_flat: loan.lender_fees_flat,
+          title_closing_escrow: loan.title_closing_escrow,
+          num_partners: loan.num_partners,
+          credit_score: loan.credit_score,
+          experience_count: loan.experience_deals_24mo,
         }}
         drawRequests={drawRequests}
         payments={payments}
@@ -322,6 +351,7 @@ export default async function AdminLoanDetailPage({ params }: PageProps) {
           num_partners: loan.num_partners,
           program_id: loan.program_id,
         }}
+        underwritingVersions={underwritingVersions}
       />
     </div>
   );

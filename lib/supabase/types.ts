@@ -3118,6 +3118,63 @@ export type Database = {
           },
         ]
       }
+      loan_underwriting_versions: {
+        Row: {
+          id: string
+          loan_id: string
+          version_number: number
+          is_active: boolean
+          created_by: string
+          created_at: string
+          label: string | null
+          notes: string | null
+          calculator_inputs: Json
+          calculator_outputs: Json
+          status: string
+        }
+        Insert: {
+          id?: string
+          loan_id: string
+          version_number?: number
+          is_active?: boolean
+          created_by: string
+          created_at?: string
+          label?: string | null
+          notes?: string | null
+          calculator_inputs?: Json
+          calculator_outputs?: Json
+          status?: string
+        }
+        Update: {
+          id?: string
+          loan_id?: string
+          version_number?: number
+          is_active?: boolean
+          created_by?: string
+          created_at?: string
+          label?: string | null
+          notes?: string | null
+          calculator_inputs?: Json
+          calculator_outputs?: Json
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "loan_underwriting_versions_loan_id_fkey"
+            columns: ["loan_id"]
+            isOneToOne: false
+            referencedRelation: "loans"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "loan_underwriting_versions_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       borrowers_portal: {
@@ -3562,6 +3619,12 @@ export type Database = {
         }
         Returns: Json
       }
+      set_active_underwriting_version: {
+        Args: {
+          p_version_id: string
+        }
+        Returns: undefined
+      }
     }
     Enums: {
       app_role: "super_admin" | "admin" | "investor" | "borrower"
@@ -3932,3 +3995,7 @@ export type LoanCompInsert = Database["public"]["Tables"]["loan_comps"]["Insert"
 export type LoanDraw = Database["public"]["Tables"]["loan_draws"]["Row"];
 export type LoanDrawInsert = Database["public"]["Tables"]["loan_draws"]["Insert"];
 export type LoanEligibilityCheck = Database["public"]["Tables"]["loan_eligibility_checks"]["Row"];
+
+// Underwriting versions
+export type LoanUnderwritingVersion = Database["public"]["Tables"]["loan_underwriting_versions"]["Row"];
+export type LoanUnderwritingVersionInsert = Database["public"]["Tables"]["loan_underwriting_versions"]["Insert"];
