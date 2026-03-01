@@ -65,6 +65,7 @@ export default async function AuthenticatedLayout({
           role={effectiveRole}
           email={profile.email ?? ""}
           allowedRoles={allowedRoles}
+          userId={user.id}
         />
         <main className="flex-1 overflow-y-auto bg-slate-50 p-6">
           {children}
