@@ -24,26 +24,33 @@ export function PriorityBadge({ priority }: { priority: string | null }) {
 }
 
 // --- Status Badge ---
-// Map lowercase DB values to display labels
+// Map legacy lowercase DB values to canonical display labels
 const statusDisplayMap: Record<string, string> = {
+  "not started": "Not Started",
+  not_started: "Not Started",
   planning: "Planning",
-  active: "Active",
+  "in progress": "In Progress",
+  in_progress: "In Progress",
+  active: "In Progress",
+  blocked: "Blocked",
   on_hold: "On Hold",
-  completed: "Completed",
-  cancelled: "Cancelled",
+  "on hold": "On Hold",
+  complete: "Complete",
+  completed: "Complete",
+  cancelled: "Complete",
 };
 
 const statusConfig: Record<string, { className: string }> = {
-  "To Do": { className: "bg-slate-100 text-slate-800 border-slate-200" },
-  "In Progress": { className: "bg-blue-100 text-blue-800 border-blue-200" },
-  "In Review": { className: "bg-indigo-100 text-indigo-800 border-indigo-200" },
-  Blocked: { className: "bg-red-100 text-red-800 border-red-200" },
-  Complete: { className: "bg-green-100 text-green-800 border-green-200" },
-  Active: { className: "bg-blue-100 text-blue-800 border-blue-200" },
-  "On Hold": { className: "bg-yellow-100 text-yellow-800 border-yellow-200" },
+  // Project statuses
+  "Not Started": { className: "bg-slate-100 text-slate-800 border-slate-200" },
   Planning: { className: "bg-purple-100 text-purple-800 border-purple-200" },
-  Completed: { className: "bg-green-100 text-green-800 border-green-200" },
-  Cancelled: { className: "bg-gray-100 text-gray-800 border-gray-200" },
+  "In Progress": { className: "bg-blue-100 text-blue-800 border-blue-200" },
+  Blocked: { className: "bg-red-100 text-red-800 border-red-200" },
+  "On Hold": { className: "bg-yellow-100 text-yellow-800 border-yellow-200" },
+  Complete: { className: "bg-green-100 text-green-800 border-green-200" },
+  // Task statuses
+  "To Do": { className: "bg-slate-100 text-slate-800 border-slate-200" },
+  "In Review": { className: "bg-indigo-100 text-indigo-800 border-indigo-200" },
 };
 
 export function normalizeStatusDisplay(status: string): string {

@@ -225,7 +225,7 @@ export function OperationsView({ projects: rawProjects, tasks, teamMembers, curr
     endOfWeek.setDate(endOfWeek.getDate() + (7 - endOfWeek.getDay()));
 
     const activeProjects = projects.filter(
-      (p) => p.status && !["Completed", "Cancelled"].includes(p.status)
+      (p) => p.status && p.status !== "Complete"
     ).length;
 
     const criticalTasks = tasks.filter(

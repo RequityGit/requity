@@ -26,17 +26,8 @@ import { useToast } from "@/components/ui/use-toast";
 import { PlusCircle, Loader2 } from "lucide-react";
 import type { TeamMember } from "./OperationsView";
 
-const STATUSES = ["Planning", "Active", "On Hold", "Completed", "Cancelled"];
+const STATUSES = ["Not Started", "Planning", "In Progress", "Blocked", "On Hold", "Complete"];
 const PRIORITIES = ["Critical", "High", "Medium", "Low"];
-
-// Map PascalCase display values to lowercase DB values for the status check constraint
-const STATUS_TO_DB: Record<string, string> = {
-  Planning: "planning",
-  Active: "active",
-  "On Hold": "on_hold",
-  Completed: "completed",
-  Cancelled: "cancelled",
-};
 
 const CATEGORIES = [
   "Engineering",
@@ -58,7 +49,7 @@ const INITIAL_FORM = {
   project_name: "",
   category: "",
   owner: "",
-  status: "Planning",
+  status: "Not Started",
   priority: "Medium",
   description: "",
   due_date: "",
@@ -103,7 +94,7 @@ export function AddProjectDialog({ teamMembers }: AddProjectDialogProps) {
         project_name: form.project_name.trim(),
         category: form.category.trim() || "General",
         owner: form.owner.trim() || "unassigned",
-        status: STATUS_TO_DB[form.status] ?? form.status.toLowerCase(),
+        status: form.status,
         priority: form.priority,
         description: form.description.trim() || null,
         due_date: form.due_date || null,
