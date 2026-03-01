@@ -56,6 +56,8 @@ import { EmailActivityFeed, type EmailRecord } from "@/components/crm/email-acti
 import type { UnderwritingInputs } from "@/lib/underwriting/types";
 import { Scale, Building2 } from "lucide-react";
 import Link from "next/link";
+import { Separator } from "@/components/ui/separator";
+import { DeleteLoanButton } from "@/components/admin/delete-loan-button";
 
 interface LoanInfo {
   id: string;
@@ -156,6 +158,7 @@ interface LoanDetailActionsProps {
   borrowerEmail?: string;
   borrowerName?: string;
   currentUserName?: string;
+  isSuperAdmin?: boolean;
 }
 
 export function LoanDetailActions({
@@ -175,6 +178,7 @@ export function LoanDetailActions({
   borrowerEmail,
   borrowerName,
   currentUserName,
+  isSuperAdmin = false,
 }: LoanDetailActionsProps) {
   const router = useRouter();
   const hasPricing = programs && programs.length > 0 && adjusters && loanForPricing;
@@ -353,6 +357,21 @@ export function LoanDetailActions({
           </TabsContent>
         )}
       </Tabs>
+
+      {isSuperAdmin && (
+        <>
+          <Separator />
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-red-600">Delete Loan</p>
+              <p className="text-xs text-muted-foreground">
+                Permanently remove this loan and all associated conditions.
+              </p>
+            </div>
+            <DeleteLoanButton loanId={loan.id} loanNumber={loan.loan_number} />
+          </div>
+        </>
+      )}
     </div>
   );
 }

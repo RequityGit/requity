@@ -29,6 +29,17 @@ export default async function AdminLoanDetailPage({ params }: PageProps) {
 
   if (!user) redirect("/login");
 
+  // Check if current user is a super admin
+  const { data: superAdminRole } = await supabase
+    .from("user_roles")
+    .select("id")
+    .eq("user_id", user.id)
+    .eq("role", "super_admin")
+    .eq("is_active", true)
+    .maybeSingle();
+
+  const isSuperAdmin = !!superAdminRole;
+
   const { id } = await params;
 
   const { data: loan } = await supabase
@@ -418,6 +429,7 @@ export default async function AdminLoanDetailPage({ params }: PageProps) {
         borrowerEmail={borrowerEmail}
         borrowerName={borrowerName}
         currentUserName={currentUserName}
+        isSuperAdmin={isSuperAdmin}
       />
     </div>
   );
