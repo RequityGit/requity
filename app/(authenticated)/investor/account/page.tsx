@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { PageHeader } from "@/components/shared/page-header";
+import { AccountSettingsTabs } from "@/components/shared/account-settings-tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -42,6 +43,7 @@ export default function InvestorAccountPage() {
   const [saving, setSaving] = useState(false);
   const [profile, setProfile] = useState<ProfileData | null>(null);
   const [commitments, setCommitments] = useState<CommitmentData[]>([]);
+  const [userId, setUserId] = useState<string | null>(null);
 
   // Form state
   const [fullName, setFullName] = useState("");
@@ -65,6 +67,8 @@ export default function InvestorAccountPage() {
         } = await supabase.auth.getUser();
 
         if (!user) return;
+
+        setUserId(user.id);
 
         // Load profile
         const { data: profileData } = await supabase
@@ -191,7 +195,7 @@ export default function InvestorAccountPage() {
     });
   };
 
-  if (loading) {
+  if (!userId) {
     return (
       <div className="space-y-6">
         <PageHeader title="Account Settings" />
@@ -208,218 +212,231 @@ export default function InvestorAccountPage() {
   }
 
   return (
-    <div className="space-y-6">
-      <PageHeader
-        title="Account Settings"
-        description="Manage your profile information and view your fund commitments."
-      />
-
-      {/* Profile Form */}
-      <Card>
-        <CardHeader className="pb-4">
-          <div className="flex items-center gap-2">
-            <User className="h-5 w-5 text-[#1a2b4a]" />
-            <CardTitle className="text-lg font-semibold text-[#1a2b4a]">
-              Personal Information
-            </CardTitle>
-          </div>
-        </CardHeader>
-        <CardContent>
-          <div className="grid gap-6 sm:grid-cols-2">
-            <div className="space-y-2">
-              <Label htmlFor="fullName">Full Name</Label>
-              <Input
-                id="fullName"
-                value={fullName}
-                onChange={(e) => setFullName(e.target.value)}
-                placeholder="Enter your full name"
-              />
+    <AccountSettingsTabs
+      userId={userId}
+      description="Manage your profile information and view your fund commitments."
+    >
+      <div className="space-y-6">
+        {/* Profile Form */}
+        <Card>
+          <CardHeader className="pb-4">
+            <div className="flex items-center gap-2">
+              <User className="h-5 w-5 text-[#1a2b4a]" />
+              <CardTitle className="text-lg font-semibold text-[#1a2b4a]">
+                Personal Information
+              </CardTitle>
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="email">
-                Email Address
-                {email !== originalEmail && (
-                  <span className="ml-2 text-xs text-amber-600 font-normal">
-                    (requires verification)
-                  </span>
-                )}
-              </Label>
-              <Input
-                id="email"
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="Enter your email"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="phone">
-                Phone Number
-                {phone !== originalPhone && (
-                  <span className="ml-2 text-xs text-amber-600 font-normal">
-                    (requires verification)
-                  </span>
-                )}
-              </Label>
-              <Input
-                id="phone"
-                type="tel"
-                value={phone}
-                onChange={(e) => setPhone(e.target.value)}
-                placeholder="Enter your phone number"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="company">Company</Label>
-              <Input
-                id="company"
-                value={company}
-                onChange={(e) => setCompany(e.target.value)}
-                placeholder="Enter your company name"
-              />
-            </div>
-          </div>
-
-          {/* Sensitive change notice */}
-          {hasSensitiveChanges && !otpVerified && (
-            <div className="mt-4 flex items-start gap-3 rounded-md border border-amber-200 bg-amber-50 p-3">
-              <ShieldCheck className="h-5 w-5 text-amber-600 mt-0.5 flex-shrink-0" />
-              <div>
-                <p className="text-sm font-medium text-amber-800">
-                  Identity verification required
-                </p>
-                <p className="text-xs text-amber-700 mt-0.5">
-                  Changing your email or phone number requires SMS verification
-                  for security.
-                </p>
+          </CardHeader>
+          <CardContent>
+            {loading ? (
+              <div className="grid gap-6 sm:grid-cols-2">
+                {Array.from({ length: 4 }).map((_, i) => (
+                  <div key={i} className="space-y-2">
+                    <Skeleton className="h-4 w-20" />
+                    <Skeleton className="h-10 w-full" />
+                  </div>
+                ))}
               </div>
-            </div>
-          )}
+            ) : (
+              <>
+                <div className="grid gap-6 sm:grid-cols-2">
+                  <div className="space-y-2">
+                    <Label htmlFor="fullName">Full Name</Label>
+                    <Input
+                      id="fullName"
+                      value={fullName}
+                      onChange={(e) => setFullName(e.target.value)}
+                      placeholder="Enter your full name"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="email">
+                      Email Address
+                      {email !== originalEmail && (
+                        <span className="ml-2 text-xs text-amber-600 font-normal">
+                          (requires verification)
+                        </span>
+                      )}
+                    </Label>
+                    <Input
+                      id="email"
+                      type="email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      placeholder="Enter your email"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="phone">
+                      Phone Number
+                      {phone !== originalPhone && (
+                        <span className="ml-2 text-xs text-amber-600 font-normal">
+                          (requires verification)
+                        </span>
+                      )}
+                    </Label>
+                    <Input
+                      id="phone"
+                      type="tel"
+                      value={phone}
+                      onChange={(e) => setPhone(e.target.value)}
+                      placeholder="Enter your phone number"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="company">Company</Label>
+                    <Input
+                      id="company"
+                      value={company}
+                      onChange={(e) => setCompany(e.target.value)}
+                      placeholder="Enter your company name"
+                    />
+                  </div>
+                </div>
 
-          {hasSensitiveChanges && otpVerified && (
-            <div className="mt-4 flex items-start gap-3 rounded-md border border-green-200 bg-green-50 p-3">
-              <ShieldCheck className="h-5 w-5 text-green-600 mt-0.5 flex-shrink-0" />
-              <div>
-                <p className="text-sm font-medium text-green-800">
-                  Identity verified
-                </p>
-                <p className="text-xs text-green-700 mt-0.5">
-                  You can now save your changes.
-                </p>
-              </div>
-            </div>
-          )}
-
-          <div className="mt-6 flex justify-end">
-            <Button onClick={handleSave} disabled={saving}>
-              {saving ? (
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-              ) : requiresOtp ? (
-                <ShieldCheck className="h-4 w-4 mr-2" />
-              ) : (
-                <Save className="h-4 w-4 mr-2" />
-              )}
-              {requiresOtp ? "Verify & Save" : "Save Changes"}
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
-
-      <Separator />
-
-      {/* Read-only Commitments Section */}
-      <Card>
-        <CardHeader className="pb-4">
-          <div className="flex items-center gap-2">
-            <Building2 className="h-5 w-5 text-[#1a2b4a]" />
-            <CardTitle className="text-lg font-semibold text-[#1a2b4a]">
-              Investment Commitments
-            </CardTitle>
-          </div>
-        </CardHeader>
-        <CardContent>
-          {commitments.length === 0 ? (
-            <p className="text-sm text-muted-foreground py-8 text-center">
-              No investment commitments on record.
-            </p>
-          ) : (
-            <div className="space-y-4">
-              {commitments.map((commitment) => {
-                const pctFunded =
-                  commitment.commitment_amount > 0
-                    ? Math.round(
-                        (commitment.funded_amount /
-                          commitment.commitment_amount) *
-                          100
-                      )
-                    : 0;
-
-                return (
-                  <div
-                    key={commitment.id}
-                    className="rounded-lg border p-4 bg-slate-50/50"
-                  >
-                    <div className="flex items-center justify-between mb-3">
-                      <h4 className="font-medium text-[#1a2b4a]">
-                        {commitment.fund_name}
-                      </h4>
-                      <StatusBadge status={commitment.status} />
-                    </div>
-
-                    <div className="grid gap-4 sm:grid-cols-4 text-sm">
-                      <div>
-                        <p className="text-muted-foreground">Committed</p>
-                        <p className="font-medium">
-                          {formatCurrency(commitment.commitment_amount)}
-                        </p>
-                      </div>
-                      <div>
-                        <p className="text-muted-foreground">Funded</p>
-                        <p className="font-medium">
-                          {formatCurrency(commitment.funded_amount)}
-                        </p>
-                      </div>
-                      <div>
-                        <p className="text-muted-foreground">Unfunded</p>
-                        <p className="font-medium">
-                          {formatCurrency(commitment.unfunded_amount)}
-                        </p>
-                      </div>
-                      <div>
-                        <p className="text-muted-foreground">Commitment Date</p>
-                        <p className="font-medium">
-                          {formatDate(commitment.commitment_date)}
-                        </p>
-                      </div>
-                    </div>
-
-                    <div className="mt-3">
-                      <div className="flex items-center justify-between text-xs text-muted-foreground mb-1">
-                        <span>Funding Progress</span>
-                        <span>{pctFunded}%</span>
-                      </div>
-                      <div className="w-full bg-white rounded-full h-2 border">
-                        <div
-                          className="bg-[#1a2b4a] h-2 rounded-full transition-all"
-                          style={{ width: `${Math.min(pctFunded, 100)}%` }}
-                        />
-                      </div>
+                {/* Sensitive change notice */}
+                {hasSensitiveChanges && !otpVerified && (
+                  <div className="mt-4 flex items-start gap-3 rounded-md border border-amber-200 bg-amber-50 p-3">
+                    <ShieldCheck className="h-5 w-5 text-amber-600 mt-0.5 flex-shrink-0" />
+                    <div>
+                      <p className="text-sm font-medium text-amber-800">
+                        Identity verification required
+                      </p>
+                      <p className="text-xs text-amber-700 mt-0.5">
+                        Changing your email or phone number requires SMS verification
+                        for security.
+                      </p>
                     </div>
                   </div>
-                );
-              })}
-            </div>
-          )}
-        </CardContent>
-      </Card>
+                )}
 
-      {/* OTP Verification Dialog */}
-      <PhoneVerifyDialog
-        open={showOtpDialog}
-        onOpenChange={setShowOtpDialog}
-        phone={originalPhone}
-        onVerified={handleOtpVerified}
-      />
-    </div>
+                {hasSensitiveChanges && otpVerified && (
+                  <div className="mt-4 flex items-start gap-3 rounded-md border border-green-200 bg-green-50 p-3">
+                    <ShieldCheck className="h-5 w-5 text-green-600 mt-0.5 flex-shrink-0" />
+                    <div>
+                      <p className="text-sm font-medium text-green-800">
+                        Identity verified
+                      </p>
+                      <p className="text-xs text-green-700 mt-0.5">
+                        You can now save your changes.
+                      </p>
+                    </div>
+                  </div>
+                )}
+
+                <div className="mt-6 flex justify-end">
+                  <Button onClick={handleSave} disabled={saving}>
+                    {saving ? (
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    ) : requiresOtp ? (
+                      <ShieldCheck className="h-4 w-4 mr-2" />
+                    ) : (
+                      <Save className="h-4 w-4 mr-2" />
+                    )}
+                    {requiresOtp ? "Verify & Save" : "Save Changes"}
+                  </Button>
+                </div>
+              </>
+            )}
+          </CardContent>
+        </Card>
+
+        <Separator />
+
+        {/* Read-only Commitments Section */}
+        <Card>
+          <CardHeader className="pb-4">
+            <div className="flex items-center gap-2">
+              <Building2 className="h-5 w-5 text-[#1a2b4a]" />
+              <CardTitle className="text-lg font-semibold text-[#1a2b4a]">
+                Investment Commitments
+              </CardTitle>
+            </div>
+          </CardHeader>
+          <CardContent>
+            {commitments.length === 0 ? (
+              <p className="text-sm text-muted-foreground py-8 text-center">
+                No investment commitments on record.
+              </p>
+            ) : (
+              <div className="space-y-4">
+                {commitments.map((commitment) => {
+                  const pctFunded =
+                    commitment.commitment_amount > 0
+                      ? Math.round(
+                          (commitment.funded_amount /
+                            commitment.commitment_amount) *
+                            100
+                        )
+                      : 0;
+
+                  return (
+                    <div
+                      key={commitment.id}
+                      className="rounded-lg border p-4 bg-slate-50/50"
+                    >
+                      <div className="flex items-center justify-between mb-3">
+                        <h4 className="font-medium text-[#1a2b4a]">
+                          {commitment.fund_name}
+                        </h4>
+                        <StatusBadge status={commitment.status} />
+                      </div>
+
+                      <div className="grid gap-4 sm:grid-cols-4 text-sm">
+                        <div>
+                          <p className="text-muted-foreground">Committed</p>
+                          <p className="font-medium">
+                            {formatCurrency(commitment.commitment_amount)}
+                          </p>
+                        </div>
+                        <div>
+                          <p className="text-muted-foreground">Funded</p>
+                          <p className="font-medium">
+                            {formatCurrency(commitment.funded_amount)}
+                          </p>
+                        </div>
+                        <div>
+                          <p className="text-muted-foreground">Unfunded</p>
+                          <p className="font-medium">
+                            {formatCurrency(commitment.unfunded_amount)}
+                          </p>
+                        </div>
+                        <div>
+                          <p className="text-muted-foreground">Commitment Date</p>
+                          <p className="font-medium">
+                            {formatDate(commitment.commitment_date)}
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="mt-3">
+                        <div className="flex items-center justify-between text-xs text-muted-foreground mb-1">
+                          <span>Funding Progress</span>
+                          <span>{pctFunded}%</span>
+                        </div>
+                        <div className="w-full bg-white rounded-full h-2 border">
+                          <div
+                            className="bg-[#1a2b4a] h-2 rounded-full transition-all"
+                            style={{ width: `${Math.min(pctFunded, 100)}%` }}
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* OTP Verification Dialog */}
+        <PhoneVerifyDialog
+          open={showOtpDialog}
+          onOpenChange={setShowOtpDialog}
+          phone={originalPhone}
+          onVerified={handleOtpVerified}
+        />
+      </div>
+    </AccountSettingsTabs>
   );
 }
