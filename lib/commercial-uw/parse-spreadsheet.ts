@@ -25,13 +25,29 @@ export async function parseSpreadsheet(file: File): Promise<ParsedSpreadsheet> {
 
   if (raw.length < 2) throw new Error("File must have at least a header row and one data row");
 
-  const headers = raw[0].map((h) => String(h).trim());
+  const rawHeaders = raw[0].map((h) => String(h).trim());
+
+  // Track which original column indices have valid (non-empty) headers
+  const validIndices: number[] = [];
+  const seen = new Map<string, number>();
+  const headers: string[] = [];
+
+  for (let colIdx = 0; colIdx < rawHeaders.length; colIdx++) {
+    const h = rawHeaders[colIdx];
+    if (!h) continue; // Skip empty column headers
+    validIndices.push(colIdx);
+    const count = seen.get(h) ?? 0;
+    seen.set(h, count + 1);
+    headers.push(count > 0 ? `${h} (${count + 1})` : h);
+  }
+
   const rows: Record<string, string>[] = [];
 
   for (let i = 1; i < raw.length; i++) {
     const row: Record<string, string> = {};
     let hasData = false;
-    headers.forEach((header, colIdx) => {
+    headers.forEach((header, idx) => {
+      const colIdx = validIndices[idx];
       const val = String(raw[i][colIdx] ?? "").trim();
       row[header] = val;
       if (val) hasData = true;

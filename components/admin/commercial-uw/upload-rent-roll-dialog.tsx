@@ -81,7 +81,10 @@ export function UploadRentRollDialog({ open, onOpenChange, onImport }: Props) {
   const handleFileSelect = async (file: File) => {
     try {
       setError(null);
+      console.log("[RentRoll] Parsing file:", file.name, file.size, "bytes");
       const result = await parseSpreadsheet(file);
+      console.log("[RentRoll] Parsed:", result.headers.length, "headers,", result.rows.length, "rows");
+      console.log("[RentRoll] Headers:", result.headers);
       setParsed(result);
       setFilename(file.name);
       // Auto-map columns
@@ -89,6 +92,7 @@ export function UploadRentRollDialog({ open, onOpenChange, onImport }: Props) {
       setMapping(autoMapped);
       setStep("map");
     } catch (err) {
+      console.error("[RentRoll] Parse error:", err);
       setError(err instanceof Error ? err.message : "Failed to parse file");
     }
   };
@@ -152,15 +156,21 @@ export function UploadRentRollDialog({ open, onOpenChange, onImport }: Props) {
   };
 
   const handleConfirm = () => {
-    const rows = convertToRentRollRows();
-    onImport(rows, {
-      filename,
-      columnMapping: mapping,
-      rowCount: rows.length,
-      parsedData: rows as unknown as Record<string, unknown>[],
-    });
-    reset();
-    onOpenChange(false);
+    try {
+      const rows = convertToRentRollRows();
+      onImport(rows, {
+        filename,
+        columnMapping: mapping,
+        rowCount: rows.length,
+        parsedData: rows as unknown as Record<string, unknown>[],
+      });
+      reset();
+      onOpenChange(false);
+    } catch (err) {
+      console.error("[RentRoll] Import error:", err);
+      setError(err instanceof Error ? err.message : "Failed to import rent roll data");
+      setStep("upload");
+    }
   };
 
   const mappedCount = Object.values(mapping).filter(
@@ -242,7 +252,9 @@ export function UploadRentRollDialog({ open, onOpenChange, onImport }: Props) {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value={SKIP_VALUE}>— Skip —</SelectItem>
-                      {parsed.headers.map((h) => (
+                      {parsed.headers
+                        .filter((h) => h && h.trim() !== "")
+                        .map((h) => (
                         <SelectItem key={h} value={h}>
                           {h}
                         </SelectItem>
@@ -252,6 +264,9 @@ export function UploadRentRollDialog({ open, onOpenChange, onImport }: Props) {
                 </div>
               ))}
             </div>
+            {error && (
+              <p className="text-sm text-destructive mt-2">{error}</p>
+            )}
           </div>
         )}
 
