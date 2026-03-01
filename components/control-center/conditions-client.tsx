@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useCallback } from "react";
+import { useState, useMemo, useCallback, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import {
@@ -90,6 +90,16 @@ export function ConditionsClient({ templates }: ConditionsClientProps) {
   const router = useRouter();
   const { toast } = useToast();
 
+  // Optimistic local state — badges update instantly, server syncs in background
+  const [localTemplates, setLocalTemplates] = useState(templates);
+  const localTemplatesRef = useRef(localTemplates);
+  localTemplatesRef.current = localTemplates;
+
+  // Sync local state when server data changes (from router.refresh on save/deactivate/etc.)
+  useEffect(() => {
+    setLocalTemplates(templates);
+  }, [templates]);
+
   const [loanTypeFilter, setLoanTypeFilter] = useState("all");
   const [stageFilter, setStageFilter] = useState("all");
   const [categoryFilter, setCategoryFilter] = useState("all");
@@ -108,7 +118,7 @@ export function ConditionsClient({ templates }: ConditionsClientProps) {
 
   // Apply filters
   const filtered = useMemo(() => {
-    return templates.filter((t) => {
+    return localTemplates.filter((t) => {
       // Active filter
       if (!showInactive && !t.is_active) return false;
 
@@ -126,7 +136,7 @@ export function ConditionsClient({ templates }: ConditionsClientProps) {
 
       return true;
     });
-  }, [templates, loanTypeFilter, stageFilter, categoryFilter, showInactive]);
+  }, [localTemplates, loanTypeFilter, stageFilter, categoryFilter, showInactive]);
 
   // Group by category
   const grouped = useMemo(() => {
@@ -161,9 +171,9 @@ export function ConditionsClient({ templates }: ConditionsClientProps) {
     return result;
   }, [filtered]);
 
-  const activeCount = templates.filter((t) => t.is_active).length;
+  const activeCount = localTemplates.filter((t) => t.is_active).length;
   const categoryCount = new Set(
-    templates.filter((t) => t.is_active).map((t) => t.category)
+    localTemplates.filter((t) => t.is_active).map((t) => t.category)
   ).size;
 
   function toggleCategory(cat: string) {
@@ -231,8 +241,22 @@ export function ConditionsClient({ templates }: ConditionsClientProps) {
         applies_to_transactional: boolean;
       }>
     ): Promise<boolean> => {
+      // Capture old state for revert on failure
+      const oldTemplate = localTemplatesRef.current.find((t) => t.id === id);
+
+      // Optimistic update — UI reflects the change instantly
+      setLocalTemplates((prev) =>
+        prev.map((t) => (t.id === id ? { ...t, ...fields } : t))
+      );
+
       const result = await updateConditionInline(id, fields);
       if (result.error) {
+        // Revert optimistic update on failure
+        if (oldTemplate) {
+          setLocalTemplates((prev) =>
+            prev.map((t) => (t.id === id ? oldTemplate : t))
+          );
+        }
         toast({
           title: "Error",
           description: result.error,
@@ -240,10 +264,10 @@ export function ConditionsClient({ templates }: ConditionsClientProps) {
         });
         return false;
       }
-      router.refresh();
+      // No router.refresh() needed — local state already reflects the change
       return true;
     },
-    [toast, router]
+    [toast]
   );
 
   const handleReorder = useCallback(
@@ -379,7 +403,7 @@ export function ConditionsClient({ templates }: ConditionsClientProps) {
         condition={editingCondition}
         presetCategory={presetCategory}
         onSave={handleSave}
-        templates={templates}
+        templates={localTemplates}
       />
     </div>
   );
