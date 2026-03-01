@@ -43,7 +43,7 @@ export function InviteUserDialog({
   const [step, setStep] = useState<Step>(1);
   const [email, setEmail] = useState("");
   const [fullName, setFullName] = useState("");
-  const [role, setRole] = useState<"admin" | "investor" | "borrower">(
+  const [role, setRole] = useState<"super_admin" | "admin" | "investor" | "borrower">(
     "investor"
   );
   const [investorId, setInvestorId] = useState<string>("");
@@ -95,8 +95,8 @@ export function InviteUserDialog({
 
   const handleNext = () => {
     if (step === 1 && canProceedStep1) {
-      // If admin role, skip step 2 (no linking needed)
-      if (role === "admin") {
+      // If admin or super_admin role, skip step 2 (no linking needed)
+      if (role === "admin" || role === "super_admin") {
         setStep(3);
       } else {
         setStep(2);
@@ -108,7 +108,7 @@ export function InviteUserDialog({
 
   const handleBack = () => {
     if (step === 3) {
-      if (role === "admin") {
+      if (role === "admin" || role === "super_admin") {
         setStep(1);
       } else {
         setStep(2);
@@ -123,7 +123,7 @@ export function InviteUserDialog({
     const result = await inviteUserAction({
       email: email.trim(),
       full_name: fullName.trim(),
-      role,
+      role: role as "super_admin" | "admin" | "investor" | "borrower",
       investor_id: role === "investor" && investorId ? investorId : undefined,
       borrower_id: role === "borrower" && borrowerId ? borrowerId : undefined,
     });
@@ -192,7 +192,7 @@ export function InviteUserDialog({
               <Select
                 value={role}
                 onValueChange={(v) =>
-                  setRole(v as "admin" | "investor" | "borrower")
+                  setRole(v as "super_admin" | "admin" | "investor" | "borrower")
                 }
               >
                 <SelectTrigger>
@@ -202,6 +202,7 @@ export function InviteUserDialog({
                   <SelectItem value="investor">Investor</SelectItem>
                   <SelectItem value="borrower">Borrower</SelectItem>
                   <SelectItem value="admin">Admin</SelectItem>
+                  <SelectItem value="super_admin">Super Admin</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -286,7 +287,7 @@ export function InviteUserDialog({
               </div>
               <div className="flex justify-between text-sm">
                 <span className="text-muted-foreground">Role</span>
-                <span className="font-medium capitalize">{role}</span>
+                <span className="font-medium capitalize">{role.replace(/_/g, " ")}</span>
               </div>
               {role === "investor" && investorId && investorId !== "none" && (
                 <div className="flex justify-between text-sm">
