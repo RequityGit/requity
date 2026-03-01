@@ -83,7 +83,7 @@ export function UploadRentRollDialog({ open, onOpenChange, onImport }: Props) {
       setError(null);
       console.log("[RentRoll] Parsing file:", file.name, file.size, "bytes");
       const result = await parseSpreadsheet(file);
-      console.log("[RentRoll] Parsed:", result.headers.length, "headers,", result.rows.length, "rows");
+      console.log("[RentRoll] Parsed:", result.headers.length, "headers,", result.rows.length, "rows (header detected at row", result.headerRowIndex + 1, ")");
       console.log("[RentRoll] Headers:", result.headers);
       setParsed(result);
       setFilename(file.name);
@@ -124,8 +124,8 @@ export function UploadRentRollDialog({ open, onOpenChange, onImport }: Props) {
         vacantRaw === "true" ||
         vacantRaw === "yes" ||
         vacantRaw === "1" ||
-        vacantRaw === "vacant" ||
-        vacantRaw === "y";
+        vacantRaw === "y" ||
+        vacantRaw.startsWith("vacant");
 
       const leaseTypeRaw = get("lease_type");
       const leaseType: LeaseType =
