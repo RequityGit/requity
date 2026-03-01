@@ -14,6 +14,7 @@ import {
 import { LOAN_STAGE_LABELS, LOAN_DB_TYPES } from "@/lib/constants";
 import { LoanDetailActions } from "@/components/admin/loan-detail-actions";
 import { Flame, Pause } from "lucide-react";
+import GenerateTermSheetButton from "@/components/loans/GenerateTermSheetButton";
 import type { PricingProgram, LeverageAdjuster } from "@/lib/supabase/types";
 
 interface PageProps {
@@ -190,6 +191,11 @@ export default async function AdminLoanDetailPage({ params }: PageProps) {
                   {condComplete}/{condTotal} conditions
                 </Badge>
               )}
+              <GenerateTermSheetButton
+                loanId={loanData.id}
+                loanNumber={loanData.loan_number}
+                borrowerLastName={borrowerRaw?.last_name}
+              />
             </div>
           </div>
         </CardHeader>
