@@ -41,6 +41,7 @@ const CATEGORIES = [
   "Servicing",
   "Capital Markets",
   "IT",
+  "General",
 ];
 
 const INITIAL_FORM = {
@@ -90,7 +91,7 @@ export function AddProjectDialog({ teamMembers }: AddProjectDialogProps) {
 
       const { error } = await supabase.from("ops_projects").insert({
         project_name: form.project_name.trim(),
-        category: form.category.trim() || "general",
+        category: form.category.trim() || "General",
         owner: form.owner.trim() || "unassigned",
         status: form.status,
         priority: form.priority,
