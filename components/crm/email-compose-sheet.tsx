@@ -69,9 +69,7 @@ export function EmailComposeSheet({
   useEffect(() => {
     async function checkGmail() {
       const supabase = createClient();
-      // gmail_tokens table exists in the DB but is not yet in the generated types
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { data } = await (supabase as any)
+      const { data } = await supabase
         .from("gmail_tokens")
         .select("email")
         .eq("user_id", currentUserId)

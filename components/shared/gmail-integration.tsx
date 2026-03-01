@@ -14,7 +14,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/components/ui/use-toast";
-import { Mail, CheckCircle2, XCircle, Loader2, Unplug } from "lucide-react";
+import { Mail, CheckCircle2, XCircle, Loader2, Unplug, AlertTriangle } from "lucide-react";
 
 interface GmailToken {
   id: string;
@@ -32,6 +32,7 @@ export function GmailIntegration() {
   const [connecting, setConnecting] = useState(false);
   const [disconnecting, setDisconnecting] = useState(false);
   const [gmailToken, setGmailToken] = useState<GmailToken | null>(null);
+  const [gmailConfigured, setGmailConfigured] = useState<boolean | null>(null);
 
   const fetchGmailStatus = useCallback(async () => {
     try {
@@ -41,9 +42,7 @@ export function GmailIntegration() {
       } = await supabase.auth.getUser();
       if (!user) return;
 
-      // gmail_tokens table exists in the DB but is not yet in the generated types
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { data } = await (supabase as any)
+      const { data } = await supabase
         .from("gmail_tokens")
         .select("id, email, is_active, connected_at")
         .eq("user_id", user.id)
@@ -56,6 +55,20 @@ export function GmailIntegration() {
     } finally {
       setLoading(false);
     }
+  }, []);
+
+  // Check if Gmail OAuth is configured on the server
+  useEffect(() => {
+    async function checkConfig() {
+      try {
+        const res = await fetch("/api/gmail/config");
+        const data = await res.json();
+        setGmailConfigured(data.configured ?? false);
+      } catch {
+        setGmailConfigured(false);
+      }
+    }
+    checkConfig();
   }, []);
 
   // Handle OAuth callback query params
@@ -138,9 +151,7 @@ export function GmailIntegration() {
       } = await supabase.auth.getUser();
       if (!user) return;
 
-      // gmail_tokens table exists in the DB but is not yet in the generated types
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { error } = await (supabase as any)
+      const { error } = await supabase
         .from("gmail_tokens")
         .update({ is_active: false })
         .eq("user_id", user.id)
@@ -248,6 +259,18 @@ export function GmailIntegration() {
                 </>
               )}
             </Button>
+          </div>
+        ) : gmailConfigured === false ? (
+          <div className="flex items-center gap-3 p-3 rounded-md bg-amber-50 border border-amber-200">
+            <AlertTriangle className="h-5 w-5 text-amber-600 flex-shrink-0" />
+            <div>
+              <p className="text-sm font-medium text-amber-900">
+                Gmail integration is not configured
+              </p>
+              <p className="text-xs text-amber-700">
+                Contact your administrator to enable Gmail OAuth.
+              </p>
+            </div>
           </div>
         ) : (
           <div className="space-y-4">

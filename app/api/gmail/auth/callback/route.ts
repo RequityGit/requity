@@ -2,14 +2,19 @@ import { NextResponse, type NextRequest } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 
+const VALID_ROLES = ["admin", "borrower", "investor"];
+
 export async function GET(request: NextRequest) {
   const { searchParams, origin } = new URL(request.url);
   const code = searchParams.get("code");
   const state = searchParams.get("state");
   const error = searchParams.get("error");
 
-  // Determine redirect base — we'll append query params later
-  const fallbackRedirect = `${origin}/admin/account`;
+  // Determine redirect base using active_role cookie
+  const cookieRole = request.cookies.get("active_role")?.value;
+  const role =
+    cookieRole && VALID_ROLES.includes(cookieRole) ? cookieRole : "admin";
+  const fallbackRedirect = `${origin}/${role}/account`;
 
   if (error) {
     const message = encodeURIComponent(
@@ -56,9 +61,9 @@ export async function GET(request: NextRequest) {
   // Exchange authorization code for tokens
   const clientId = process.env.GOOGLE_CLIENT_ID;
   const clientSecret = process.env.GOOGLE_CLIENT_SECRET;
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL;
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || origin;
 
-  if (!clientId || !clientSecret || !appUrl) {
+  if (!clientId || !clientSecret) {
     return NextResponse.redirect(
       `${fallbackRedirect}?gmail=error&message=${encodeURIComponent("Google OAuth is not configured on the server.")}`
     );
@@ -127,16 +132,14 @@ export async function GET(request: NextRequest) {
   const adminSupabase = createAdminClient();
 
   // Deactivate any existing active tokens for this user
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  await (adminSupabase as any)
+  await adminSupabase
     .from("gmail_tokens")
     .update({ is_active: false })
     .eq("user_id", user.id)
     .eq("is_active", true);
 
   // Insert the new token
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { error: insertError } = await (adminSupabase as any)
+  const { error: insertError } = await adminSupabase
     .from("gmail_tokens")
     .insert({
       user_id: user.id,
@@ -163,8 +166,10 @@ export async function GET(request: NextRequest) {
     .eq("id", user.id)
     .single();
 
-  const activeRole = profile?.role || "admin";
-  const redirectPath = `${origin}/${activeRole}/account`;
+  const profileRole = profile?.role || "admin";
+  const effectiveRole =
+    cookieRole && VALID_ROLES.includes(cookieRole) ? cookieRole : profileRole;
+  const redirectPath = `${origin}/${effectiveRole}/account`;
 
   return NextResponse.redirect(`${redirectPath}?gmail=connected`);
 }

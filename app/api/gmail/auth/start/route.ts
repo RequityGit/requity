@@ -1,14 +1,16 @@
-import { NextResponse } from "next/server";
+import { NextResponse, type NextRequest } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import crypto from "crypto";
 
-export async function POST() {
+export async function POST(request: NextRequest) {
   const clientId = process.env.GOOGLE_CLIENT_ID;
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL;
+  const clientSecret = process.env.GOOGLE_CLIENT_SECRET;
+  const appUrl =
+    process.env.NEXT_PUBLIC_APP_URL || new URL(request.url).origin;
 
-  if (!clientId || !appUrl) {
+  if (!clientId || !clientSecret) {
     return NextResponse.json(
-      { error: "Google OAuth is not configured. Set GOOGLE_CLIENT_ID and NEXT_PUBLIC_APP_URL." },
+      { error: "Google OAuth is not configured. Contact your administrator." },
       { status: 500 }
     );
   }

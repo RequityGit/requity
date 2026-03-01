@@ -2493,6 +2493,53 @@ export type Database = {
           },
         ]
       }
+      gmail_tokens: {
+        Row: {
+          access_token: string
+          connected_at: string
+          created_at: string
+          email: string
+          id: string
+          is_active: boolean
+          refresh_token: string | null
+          token_expires_at: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          access_token: string
+          connected_at?: string
+          created_at?: string
+          email: string
+          id?: string
+          is_active?: boolean
+          refresh_token?: string | null
+          token_expires_at?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          access_token?: string
+          connected_at?: string
+          created_at?: string
+          email?: string
+          id?: string
+          is_active?: boolean
+          refresh_token?: string | null
+          token_expires_at?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "gmail_tokens_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       investing_entities: {
         Row: {
           address_line1: string | null
