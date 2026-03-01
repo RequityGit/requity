@@ -5,6 +5,9 @@ import { Sidebar } from "@/components/layout/sidebar";
 import { Topbar } from "@/components/layout/topbar";
 import { Toaster } from "@/components/ui/toaster";
 import { ViewAsProvider } from "@/contexts/view-as-context";
+import { ImpersonationProvider } from "@/components/layout/impersonation-context";
+import { ImpersonationBanner } from "@/components/layout/impersonation-banner";
+import { getImpersonationState } from "@/lib/impersonation";
 
 // Never statically generate authenticated pages
 export const dynamic = "force-dynamic";
@@ -57,24 +60,44 @@ export default async function AuthenticatedLayout({
 
   const isSuperAdmin = !!superAdminRole;
 
+  // Check impersonation state
+  const impersonation = getImpersonationState();
+
+  // When impersonating, override the sidebar role to match the impersonated user's role
+  const sidebarRole = impersonation.isImpersonating && impersonation.targetRole
+    ? impersonation.targetRole
+    : effectiveRole;
+
   return (
-    <ViewAsProvider isSuperAdmin={isSuperAdmin} actualRole={effectiveRole}>
-      <div className="flex h-screen overflow-hidden">
-        <Sidebar role={effectiveRole} isSuperAdmin={isSuperAdmin} />
-        <div className="flex-1 flex flex-col overflow-hidden">
-          <Topbar
-            userName={profile.full_name || ""}
-            role={effectiveRole}
-            email={profile.email ?? ""}
-            allowedRoles={allowedRoles}
-            userId={user.id}
-          />
-          <main className="flex-1 overflow-y-auto bg-slate-50 p-6">
-            {children}
-          </main>
+    <ImpersonationProvider
+      initialState={impersonation}
+      isSuperAdmin={isSuperAdmin}
+    >
+      <ViewAsProvider isSuperAdmin={isSuperAdmin} actualRole={effectiveRole}>
+        <div className="flex flex-col h-screen overflow-hidden">
+          <ImpersonationBanner />
+          <div className="flex flex-1 overflow-hidden">
+            <Sidebar
+              role={sidebarRole}
+              isSuperAdmin={isSuperAdmin && !impersonation.isImpersonating}
+            />
+            <div className="flex-1 flex flex-col overflow-hidden">
+              <Topbar
+                userName={profile.full_name || ""}
+                role={effectiveRole}
+                email={profile.email ?? ""}
+                allowedRoles={allowedRoles}
+                userId={user.id}
+                isSuperAdmin={isSuperAdmin}
+              />
+              <main className="flex-1 overflow-y-auto bg-slate-50 p-6">
+                {children}
+              </main>
+            </div>
+          </div>
+          <Toaster />
         </div>
-      </div>
-      <Toaster />
-    </ViewAsProvider>
+      </ViewAsProvider>
+    </ImpersonationProvider>
   );
 }

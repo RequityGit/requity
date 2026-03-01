@@ -1,6 +1,5 @@
-import { createClient } from "@/lib/supabase/server";
-import { redirect } from "next/navigation";
 import { PageHeader } from "@/components/shared/page-header";
+import { getEffectiveAuth } from "@/lib/impersonation";
 import { Card, CardContent } from "@/components/ui/card";
 import { StatusBadge } from "@/components/shared/status-badge";
 import { formatCurrency, formatPercent } from "@/lib/format";
@@ -28,20 +27,12 @@ type CommitmentWithFund = {
 };
 
 export default async function InvestorFundsPage() {
-  const supabase = await createClient();
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
-    redirect("/login");
-  }
+  const { supabase, userId } = await getEffectiveAuth();
 
   const { data: rawCommitments } = await supabase
     .from("investor_commitments")
     .select("*, funds(*)")
-    .eq("investor_id", user.id)
+    .eq("investor_id", userId)
     .order("commitment_date", { ascending: false });
 
   const commitments =

@@ -2,6 +2,7 @@
 
 import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
+import { useState } from "react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -10,10 +11,13 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { LogOut, ShieldCheck, User } from "lucide-react";
+import { LogOut, ShieldCheck, User, Eye } from "lucide-react";
 import { RoleSwitcher } from "./role-switcher";
 import { ViewAsBanner } from "./view-as-banner";
 import { NotificationBell } from "@/components/notifications/notification-bell";
+import { useImpersonation } from "./impersonation-context";
+import { UserSearchModal } from "./user-search-modal";
+import { Badge } from "@/components/ui/badge";
 
 interface TopbarProps {
   userName: string;
@@ -21,11 +25,14 @@ interface TopbarProps {
   email: string;
   allowedRoles: string[];
   userId: string;
+  isSuperAdmin?: boolean;
 }
 
-export function Topbar({ userName, role, email, allowedRoles, userId }: TopbarProps) {
+export function Topbar({ userName, role, email, allowedRoles, userId, isSuperAdmin }: TopbarProps) {
   const router = useRouter();
   const supabase = createClient();
+  const { isImpersonating, targetRole, targetUserName } = useImpersonation();
+  const [userSearchOpen, setUserSearchOpen] = useState(false);
 
   async function handleLogout() {
     await supabase.auth.signOut();
@@ -33,14 +40,46 @@ export function Topbar({ userName, role, email, allowedRoles, userId }: TopbarPr
     router.refresh();
   }
 
+  // When impersonating, show the impersonated user's role in the badge
+  const displayRole = isImpersonating && targetRole ? targetRole : role;
+
   return (
     <>
       <ViewAsBanner />
       <header className="sticky top-0 z-30 h-16 border-b bg-white flex items-center justify-between px-6">
-        <div />
+        <div>
+          {isImpersonating && (
+            <div className="flex items-center gap-2 text-sm text-amber-700">
+              <Eye className="h-4 w-4" />
+              <span className="font-medium">Viewing as {targetUserName}</span>
+            </div>
+          )}
+        </div>
         <div className="flex items-center gap-4">
           <NotificationBell userId={userId} />
-          <RoleSwitcher activeRole={role} allowedRoles={allowedRoles} />
+
+          {isImpersonating ? (
+            <Badge
+              variant="outline"
+              className="bg-amber-100 text-amber-800 border-amber-300"
+            >
+              <Eye className="h-3 w-3 mr-1" />
+              {displayRole === "admin"
+                ? "Admin"
+                : displayRole === "investor"
+                  ? "Investor"
+                  : displayRole === "borrower"
+                    ? "Borrower"
+                    : displayRole}
+            </Badge>
+          ) : (
+            <RoleSwitcher
+              activeRole={role}
+              allowedRoles={allowedRoles}
+              isSuperAdmin={isSuperAdmin}
+              onViewAsUser={() => setUserSearchOpen(true)}
+            />
+          )}
 
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -68,23 +107,27 @@ export function Topbar({ userName, role, email, allowedRoles, userId }: TopbarPr
                 </div>
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
-              <DropdownMenuItem
-                onClick={() => router.push(`/${role}/account`)}
-                className="cursor-pointer"
-              >
-                <User className="mr-2 h-4 w-4" />
-                Account Settings
-              </DropdownMenuItem>
-              {role === "admin" && (
-                <DropdownMenuItem
-                  onClick={() => router.push("/admin/users")}
-                  className="cursor-pointer"
-                >
-                  <ShieldCheck className="mr-2 h-4 w-4" />
-                  User Management
-                </DropdownMenuItem>
+              {!isImpersonating && (
+                <>
+                  <DropdownMenuItem
+                    onClick={() => router.push(`/${role}/account`)}
+                    className="cursor-pointer"
+                  >
+                    <User className="mr-2 h-4 w-4" />
+                    Account Settings
+                  </DropdownMenuItem>
+                  {role === "admin" && (
+                    <DropdownMenuItem
+                      onClick={() => router.push("/admin/users")}
+                      className="cursor-pointer"
+                    >
+                      <ShieldCheck className="mr-2 h-4 w-4" />
+                      User Management
+                    </DropdownMenuItem>
+                  )}
+                  <DropdownMenuSeparator />
+                </>
               )}
-              <DropdownMenuSeparator />
               <DropdownMenuItem
                 onClick={handleLogout}
                 className="cursor-pointer text-red-600"
@@ -96,6 +139,13 @@ export function Topbar({ userName, role, email, allowedRoles, userId }: TopbarPr
           </DropdownMenu>
         </div>
       </header>
+
+      {isSuperAdmin && (
+        <UserSearchModal
+          open={userSearchOpen}
+          onOpenChange={setUserSearchOpen}
+        />
+      )}
     </>
   );
 }

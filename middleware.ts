@@ -81,6 +81,30 @@ export async function middleware(request: NextRequest) {
     );
 
     if (isRoleRoute) {
+      // Check if user is impersonating — super_admins impersonating can
+      // access any role route matching the impersonated user's role
+      const impersonateUserId = request.cookies.get("impersonate_user_id")?.value;
+      const impersonateRole = request.cookies.get("impersonate_role")?.value;
+
+      if (impersonateUserId && impersonateRole) {
+        // The impersonating super_admin can access the impersonated user's role routes
+        const targetRoleEntry = Object.entries(ROLE_ROUTES).find(([, prefix]) =>
+          pathname.startsWith(prefix)
+        );
+
+        if (targetRoleEntry) {
+          const targetRole = targetRoleEntry[0];
+          // Allow access if the route matches the impersonated role
+          if (targetRole === impersonateRole) {
+            return supabaseResponse;
+          }
+          // Otherwise redirect to the impersonated role's dashboard
+          const url = request.nextUrl.clone();
+          url.pathname = ROLE_DASHBOARDS[impersonateRole] || "/admin/dashboard";
+          return NextResponse.redirect(url);
+        }
+      }
+
       const { data: profile } = await supabase
         .from("profiles")
         .select("role, allowed_roles")

@@ -1,6 +1,6 @@
-import { createClient } from "@/lib/supabase/server";
-import { redirect, notFound } from "next/navigation";
+import { notFound } from "next/navigation";
 import { PageHeader } from "@/components/shared/page-header";
+import { getEffectiveAuth } from "@/lib/impersonation";
 import { KpiCard } from "@/components/shared/kpi-card";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -27,13 +27,7 @@ interface PageProps {
 }
 
 export default async function InvestorFundDetailPage({ params }: PageProps) {
-  const supabase = await createClient();
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) redirect("/login");
+  const { supabase, userId } = await getEffectiveAuth();
 
   const { id } = await params;
 
@@ -41,7 +35,7 @@ export default async function InvestorFundDetailPage({ params }: PageProps) {
   const { data: commitment } = await supabase
     .from("investor_commitments")
     .select("*")
-    .eq("investor_id", user.id)
+    .eq("investor_id", userId)
     .eq("fund_id", id)
     .single();
 
@@ -63,19 +57,19 @@ export default async function InvestorFundDetailPage({ params }: PageProps) {
         .from("capital_calls")
         .select("*")
         .eq("fund_id", id)
-        .eq("investor_id", user.id)
+        .eq("investor_id", userId)
         .order("due_date", { ascending: false }),
       supabase
         .from("distributions")
         .select("*")
         .eq("fund_id", id)
-        .eq("investor_id", user.id)
+        .eq("investor_id", userId)
         .order("distribution_date", { ascending: false }),
       supabase
         .from("documents")
         .select("*")
         .eq("fund_id", id)
-        .eq("owner_id", user.id)
+        .eq("owner_id", userId)
         .order("created_at", { ascending: false }),
     ]);
 

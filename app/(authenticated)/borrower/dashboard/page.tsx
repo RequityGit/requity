@@ -1,4 +1,3 @@
-import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { KpiCard } from "@/components/shared/kpi-card";
@@ -12,23 +11,16 @@ import {
   CalendarClock,
   FileText,
 } from "lucide-react";
+import { getEffectiveAuth } from "@/lib/impersonation";
 
 export default async function BorrowerDashboardPage() {
-  const supabase = await createClient();
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
-    redirect("/login");
-  }
+  const { supabase, userId } = await getEffectiveAuth();
 
   // Fetch all loans for this borrower (profile_id links to auth user)
   const { data: loans } = await supabase
     .from("loans")
     .select("*")
-    .eq("profile_id", user.id)
+    .eq("profile_id", userId)
     .order("created_at", { ascending: false });
 
   const allLoans = loans ?? [];
@@ -48,7 +40,7 @@ export default async function BorrowerDashboardPage() {
   const { count: pendingDraws } = await supabase
     .from("draw_requests")
     .select("*", { count: "exact", head: true })
-    .eq("borrower_id", user.id)
+    .eq("borrower_id", userId)
     .in("status", ["submitted", "under_review"]);
 
   // Fetch next payment due

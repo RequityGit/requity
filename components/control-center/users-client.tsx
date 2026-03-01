@@ -36,6 +36,13 @@ import { useToast } from "@/components/ui/use-toast";
 import { Search, Plus, Eye, EyeOff } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { grantRole, revokeRole, reactivateRole } from "@/app/(authenticated)/control-center/users/actions";
+import { useImpersonation } from "@/components/layout/impersonation-context";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 interface UserRole {
   id: string;
@@ -101,6 +108,7 @@ export function UsersClient({
 }: UsersClientProps) {
   const router = useRouter();
   const { toast } = useToast();
+  const { startImpersonation } = useImpersonation();
 
   const [search, setSearch] = useState("");
   const [roleFilter, setRoleFilter] = useState("all");
@@ -355,15 +363,36 @@ export function UsersClient({
                       : "—"}
                   </td>
                   <td className="px-4 py-3 text-right">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => openGrantModal(profile)}
-                      className="gap-1"
-                    >
-                      <Plus className="h-3 w-3" />
-                      Grant Role
-                    </Button>
+                    <div className="flex items-center justify-end gap-2">
+                      {profile.id !== currentUserId && activeRoles.length > 0 && (
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => startImpersonation(profile.id)}
+                                className="gap-1 text-amber-700 hover:text-amber-800 hover:bg-amber-50"
+                              >
+                                <Eye className="h-3.5 w-3.5" />
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <p>View as this user</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+                      )}
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => openGrantModal(profile)}
+                        className="gap-1"
+                      >
+                        <Plus className="h-3 w-3" />
+                        Grant Role
+                      </Button>
+                    </div>
                   </td>
                 </tr>
               );

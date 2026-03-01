@@ -1,10 +1,9 @@
-import { createClient } from "@/lib/supabase/server";
-import { redirect } from "next/navigation";
 import { PageHeader } from "@/components/shared/page-header";
 import { StatusBadge } from "@/components/shared/status-badge";
 import { DataTable, type Column } from "@/components/shared/data-table";
-import { formatCurrency, formatCurrencyDetailed, formatDate } from "@/lib/format";
+import { formatCurrencyDetailed, formatDate } from "@/lib/format";
 import { NewDrawForm } from "@/components/borrower/new-draw-form";
+import { getEffectiveAuth } from "@/lib/impersonation";
 
 interface DrawWithLoan {
   id: string;
@@ -25,15 +24,7 @@ interface DrawWithLoan {
 }
 
 export default async function BorrowerDrawsPage() {
-  const supabase = await createClient();
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
-    redirect("/login");
-  }
+  const { supabase, userId, isImpersonating } = await getEffectiveAuth();
 
   const { data: drawRequests } = await supabase
     .from("draw_requests")
@@ -46,7 +37,7 @@ export default async function BorrowerDrawsPage() {
       )
     `
     )
-    .eq("borrower_id", user.id)
+    .eq("borrower_id", userId)
     .order("submitted_at", { ascending: false });
 
   const draws = (drawRequests ?? []) as unknown as DrawWithLoan[];
@@ -101,7 +92,7 @@ export default async function BorrowerDrawsPage() {
       <PageHeader
         title="Draw Requests"
         description="Submit and track draw requests for your loans"
-        action={<NewDrawForm />}
+        action={!isImpersonating ? <NewDrawForm /> : undefined}
       />
 
       <DataTable

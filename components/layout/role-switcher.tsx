@@ -27,6 +27,8 @@ type Role = "super_admin" | "admin" | "investor" | "borrower";
 interface RoleSwitcherProps {
   activeRole: string;
   allowedRoles: string[];
+  isSuperAdmin?: boolean;
+  onViewAsUser?: () => void;
 }
 
 const roleConfig: Record<
@@ -61,7 +63,7 @@ const viewAsRoles: { role: "admin" | "investor" | "borrower"; label: string; ico
   { role: "borrower", label: "Borrower", icon: Building2 },
 ];
 
-export function RoleSwitcher({ activeRole, allowedRoles }: RoleSwitcherProps) {
+export function RoleSwitcher({ activeRole, allowedRoles, onViewAsUser }: RoleSwitcherProps) {
   const router = useRouter();
   const [switching, setSwitching] = useState(false);
   const { isSuperAdmin, viewAsRole, setViewAsRole, isViewingAs, exitViewAs } =
@@ -155,6 +157,18 @@ export function RoleSwitcher({ activeRole, allowedRoles }: RoleSwitcherProps) {
               </DropdownMenuItem>
             );
           })}
+          {onViewAsUser && (
+            <>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                onClick={onViewAsUser}
+                className="cursor-pointer flex items-center gap-2 text-amber-700"
+              >
+                <Eye className="h-4 w-4" />
+                View as specific user...
+              </DropdownMenuItem>
+            </>
+          )}
         </DropdownMenuContent>
       </DropdownMenu>
     );

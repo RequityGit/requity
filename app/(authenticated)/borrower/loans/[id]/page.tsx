@@ -1,5 +1,4 @@
-import { createClient } from "@/lib/supabase/server";
-import { redirect, notFound } from "next/navigation";
+import { notFound } from "next/navigation";
 import { PageHeader } from "@/components/shared/page-header";
 import { LoanStageTracker } from "@/components/shared/loan-stage-tracker";
 import { StatusBadge } from "@/components/shared/status-badge";
@@ -14,28 +13,21 @@ import { LOAN_TYPES } from "@/lib/constants";
 import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { LoanDetailTabs } from "@/components/borrower/loan-detail-tabs";
+import { getEffectiveAuth } from "@/lib/impersonation";
 
 interface LoanDetailPageProps {
   params: { id: string };
 }
 
 export default async function LoanDetailPage({ params }: LoanDetailPageProps) {
-  const supabase = await createClient();
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
-    redirect("/login");
-  }
+  const { supabase, userId } = await getEffectiveAuth();
 
   // Fetch loan and verify ownership (profile_id links loan to auth user)
   const { data: loan } = await supabase
     .from("loans")
     .select("*")
     .eq("id", params.id)
-    .eq("profile_id", user.id)
+    .eq("profile_id", userId)
     .single();
 
   if (!loan) {
@@ -203,7 +195,7 @@ export default async function LoanDetailPage({ params }: LoanDetailPageProps) {
         documents={documents ?? []}
         conditions={conditions ?? []}
         loanId={loan.id}
-        currentUserId={user.id}
+        currentUserId={userId}
       />
     </div>
   );

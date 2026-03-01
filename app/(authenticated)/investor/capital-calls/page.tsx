@@ -1,6 +1,5 @@
-import { createClient } from "@/lib/supabase/server";
-import { redirect } from "next/navigation";
 import { PageHeader } from "@/components/shared/page-header";
+import { getEffectiveAuth } from "@/lib/impersonation";
 import { DataTable, type Column } from "@/components/shared/data-table";
 import { StatusBadge } from "@/components/shared/status-badge";
 import { formatCurrency, formatDate } from "@/lib/format";
@@ -28,21 +27,13 @@ export default async function CapitalCallsPage({
 }: {
   searchParams: { fund?: string; status?: string };
 }) {
-  const supabase = await createClient();
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
-    redirect("/login");
-  }
+  const { supabase, userId } = await getEffectiveAuth();
 
   // Build query
   let query = supabase
     .from("capital_calls")
     .select("*, funds(name)")
-    .eq("investor_id", user.id)
+    .eq("investor_id", userId)
     .order("due_date", { ascending: false });
 
   if (searchParams.fund) {
@@ -72,7 +63,7 @@ export default async function CapitalCallsPage({
   const { data: commitments } = await supabase
     .from("investor_commitments")
     .select("fund_id, funds(id, name)")
-    .eq("investor_id", user.id);
+    .eq("investor_id", userId);
 
   const funds = (commitments ?? [])
     .map((c) => {

@@ -1,6 +1,6 @@
-import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { PageHeader } from "@/components/shared/page-header";
+import { getEffectiveAuth } from "@/lib/impersonation";
 import { KpiCard } from "@/components/shared/kpi-card";
 import { StatusBadge } from "@/components/shared/status-badge";
 import { formatCurrency, formatDate } from "@/lib/format";
@@ -62,20 +62,12 @@ type ActivityItem = {
 };
 
 export default async function InvestorDashboardPage() {
-  const supabase = await createClient();
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
-    redirect("/login");
-  }
+  const { supabase, userId } = await getEffectiveAuth();
 
   const { data: rawProfile } = await supabase
     .from("profiles")
     .select("*")
-    .eq("id", user.id)
+    .eq("id", userId)
     .single();
 
   const profile = rawProfile as unknown as {
@@ -92,7 +84,7 @@ export default async function InvestorDashboardPage() {
   const { data: rawCommitments } = await supabase
     .from("investor_commitments")
     .select("*, funds(name)")
-    .eq("investor_id", user.id);
+    .eq("investor_id", userId);
 
   const commitments = (rawCommitments as unknown as CommitmentWithFund[]) ?? [];
 
@@ -100,7 +92,7 @@ export default async function InvestorDashboardPage() {
   const { data: rawCapitalCalls } = await supabase
     .from("capital_calls")
     .select("*, funds(name)")
-    .eq("investor_id", user.id)
+    .eq("investor_id", userId)
     .order("due_date", { ascending: false })
     .limit(5);
 
@@ -111,7 +103,7 @@ export default async function InvestorDashboardPage() {
   const { data: rawDistributions } = await supabase
     .from("distributions")
     .select("*, funds(name)")
-    .eq("investor_id", user.id)
+    .eq("investor_id", userId)
     .order("distribution_date", { ascending: false })
     .limit(5);
 
@@ -122,7 +114,7 @@ export default async function InvestorDashboardPage() {
   const { data: rawDocuments } = await supabase
     .from("documents")
     .select("*, funds(name)")
-    .eq("owner_id", user.id)
+    .eq("owner_id", userId)
     .order("created_at", { ascending: false })
     .limit(5);
 
@@ -148,7 +140,7 @@ export default async function InvestorDashboardPage() {
   const { data: rawYtd } = await supabase
     .from("distributions")
     .select("amount")
-    .eq("investor_id", user.id)
+    .eq("investor_id", userId)
     .gte("distribution_date", `${currentYear}-01-01`)
     .lte("distribution_date", `${currentYear}-12-31`);
 
