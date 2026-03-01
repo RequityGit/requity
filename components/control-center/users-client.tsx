@@ -39,6 +39,7 @@ import { grantRole, revokeRole, reactivateRole } from "@/app/(authenticated)/con
 
 interface UserRole {
   id: string;
+  user_id: string;
   role: string;
   is_active: boolean;
   granted_by: string | null;
