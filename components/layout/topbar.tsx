@@ -65,7 +65,7 @@ export function Topbar({ userName, role, email, allowedRoles, userId, isSuperAdm
 
         {/* Right side — actions */}
         <div className="flex shrink-0 items-center gap-4">
-          <NotificationBell userId={userId} />
+          <NotificationBell userId={userId} activeRole={displayRole} />
 
           {isImpersonating ? (
             <Badge

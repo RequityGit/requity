@@ -19,6 +19,7 @@ import { categoryDisplayNames } from "@/lib/notifications";
 
 interface NotificationsPageClientProps {
   userId: string;
+  activeRole: string;
 }
 
 const categories: { value: string; label: string }[] = [
@@ -52,6 +53,7 @@ const dateRanges: { value: "today" | "week" | "month" | "all"; label: string }[]
 
 export function NotificationsPageClient({
   userId,
+  activeRole,
 }: NotificationsPageClientProps) {
   const [categoryFilter, setCategoryFilter] = useState("all");
   const [priorityFilter, setPriorityFilter] = useState("all");
@@ -357,6 +359,7 @@ export function NotificationsPageClient({
                 <NotificationItem
                   key={notification.id}
                   notification={notification}
+                  activeRole={activeRole}
                   onMarkAsRead={(id) => markAsRead([id])}
                   onArchive={archiveNotification}
                   variant="full"

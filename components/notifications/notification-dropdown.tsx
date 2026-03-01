@@ -8,12 +8,14 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 interface NotificationDropdownProps {
   userId: string;
+  activeRole: string;
   onClose: () => void;
   onCountChange?: () => void;
 }
 
 export function NotificationDropdown({
   userId,
+  activeRole,
   onClose,
   onCountChange,
 }: NotificationDropdownProps) {
@@ -91,6 +93,7 @@ export function NotificationDropdown({
               <NotificationItem
                 key={notification.id}
                 notification={notification}
+                activeRole={activeRole}
                 onMarkAsRead={handleMarkAsRead}
                 variant="compact"
               />

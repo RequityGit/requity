@@ -113,6 +113,93 @@ export const categoryDisplayNames: Record<NotificationCategory, string> = {
   system: "System",
 };
 
+// Role-specific dashboard fallbacks
+const ROLE_DASHBOARDS: Record<string, string> = {
+  super_admin: "/admin/dashboard",
+  admin: "/admin/dashboard",
+  borrower: "/borrower/dashboard",
+  investor: "/investor/dashboard",
+};
+
+/**
+ * Resolves the correct route for a notification based on entity_type, entity_id,
+ * and the user's active role. Falls back to action_url, then to the role dashboard.
+ */
+export function getNotificationRoute(
+  notification: Pick<Notification, "entity_type" | "entity_id" | "action_url">,
+  activeRole: string
+): string {
+  const { entity_type, entity_id, action_url } = notification;
+  const isAdmin = activeRole === "admin" || activeRole === "super_admin";
+
+  if (entity_type && entity_id) {
+    switch (entity_type) {
+      case "loan":
+        if (activeRole === "borrower") return `/borrower/loans/${entity_id}`;
+        return `/admin/loans/${entity_id}`;
+
+      case "borrower":
+        if (isAdmin) return `/admin/borrowers/${entity_id}`;
+        return ROLE_DASHBOARDS[activeRole] ?? "/borrower/dashboard";
+
+      case "investor":
+        if (isAdmin) return `/admin/investors/${entity_id}`;
+        return ROLE_DASHBOARDS[activeRole] ?? "/investor/dashboard";
+
+      case "fund":
+        if (activeRole === "investor") return `/investor/funds/${entity_id}`;
+        return `/admin/funds/${entity_id}`;
+
+      case "condition": {
+        // Conditions belong to loans — try to extract loan_id from the stored action_url
+        const loanMatch = action_url?.match(/\/loans\/([0-9a-f-]+)/i);
+        if (loanMatch) {
+          const loanId = loanMatch[1];
+          if (activeRole === "borrower") return `/borrower/loans/${loanId}`;
+          return `/admin/loans/${loanId}?condition=${entity_id}`;
+        }
+        if (isAdmin) return "/admin/conditions";
+        return ROLE_DASHBOARDS[activeRole] ?? "/admin/dashboard";
+      }
+
+      case "draw_request":
+        if (activeRole === "borrower") return "/borrower/draws";
+        return "/admin/servicing";
+
+      case "payment":
+        if (activeRole === "borrower") return "/borrower/payments";
+        return "/admin/servicing";
+
+      case "task":
+      case "project":
+        if (isAdmin) return "/admin/operations";
+        return ROLE_DASHBOARDS[activeRole] ?? "/admin/dashboard";
+    }
+  }
+
+  // If action_url exists, try to adapt it to the user's role
+  if (action_url) {
+    if (isAdmin) return action_url;
+
+    // Convert admin-prefixed routes to role-specific routes where possible
+    if (action_url.startsWith("/admin/loans/") && activeRole === "borrower") {
+      return action_url.replace("/admin/loans/", "/borrower/loans/").split("?")[0];
+    }
+    if (action_url.startsWith("/admin/funds/") && activeRole === "investor") {
+      return action_url.replace("/admin/funds/", "/investor/funds/");
+    }
+
+    // If the action_url starts with a role prefix the user can't access, redirect to dashboard
+    if (action_url.startsWith("/admin/") && !isAdmin) {
+      return ROLE_DASHBOARDS[activeRole] ?? "/borrower/dashboard";
+    }
+
+    return action_url;
+  }
+
+  return ROLE_DASHBOARDS[activeRole] ?? "/admin/dashboard";
+}
+
 // Relative time formatting
 export function formatRelativeTime(dateString: string): string {
   const now = new Date();

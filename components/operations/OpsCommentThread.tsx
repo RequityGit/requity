@@ -305,6 +305,7 @@ export function OpsCommentThread({
             entity_type: entityType,
             entity_id: entityId,
             notification_slug: "ops_comment_mention",
+            action_url: "/admin/operations",
           }));
 
         if (notifs.length > 0) {

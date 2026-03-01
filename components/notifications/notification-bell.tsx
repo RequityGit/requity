@@ -8,9 +8,10 @@ import { NotificationDropdown } from "./notification-dropdown";
 
 interface NotificationBellProps {
   userId: string;
+  activeRole: string;
 }
 
-export function NotificationBell({ userId }: NotificationBellProps) {
+export function NotificationBell({ userId, activeRole }: NotificationBellProps) {
   const [open, setOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const { count, refetch } = useUnreadCount(userId);
@@ -77,6 +78,7 @@ export function NotificationBell({ userId }: NotificationBellProps) {
         <div className="absolute right-0 top-full mt-2 z-50">
           <NotificationDropdown
             userId={userId}
+            activeRole={activeRole}
             onClose={() => setOpen(false)}
             onCountChange={refetch}
           />

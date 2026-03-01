@@ -4,11 +4,12 @@ import { cn } from "@/lib/utils";
 import { useRouter } from "next/navigation";
 import { Archive, Check } from "lucide-react";
 import type { Notification } from "@/lib/notifications";
-import { formatRelativeTime, getPriorityColor } from "@/lib/notifications";
+import { formatRelativeTime, getPriorityColor, getNotificationRoute } from "@/lib/notifications";
 import { NotificationPriorityBadge } from "./notification-priority-badge";
 
 interface NotificationItemProps {
   notification: Notification;
+  activeRole: string;
   onMarkAsRead?: (id: string) => void;
   onArchive?: (id: string) => void;
   variant?: "compact" | "full";
@@ -16,20 +17,20 @@ interface NotificationItemProps {
 
 export function NotificationItem({
   notification,
+  activeRole,
   onMarkAsRead,
   onArchive,
   variant = "compact",
 }: NotificationItemProps) {
   const router = useRouter();
   const priorityColors = getPriorityColor(notification.priority);
+  const resolvedRoute = getNotificationRoute(notification, activeRole);
 
   function handleClick() {
     if (!notification.is_read && onMarkAsRead) {
       onMarkAsRead(notification.id);
     }
-    if (notification.action_url) {
-      router.push(notification.action_url);
-    }
+    router.push(resolvedRoute);
   }
 
   if (variant === "full") {
@@ -40,7 +41,7 @@ export function NotificationItem({
           !notification.is_read && "border-l-4",
           !notification.is_read && priorityColors.border,
           notification.is_read && "border-gray-200",
-          notification.action_url && "cursor-pointer hover:bg-gray-50"
+          "cursor-pointer hover:bg-gray-50"
         )}
         onClick={handleClick}
       >

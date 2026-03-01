@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { PageHeader } from "@/components/shared/page-header";
 import { NotificationsPageClient } from "@/components/notifications/notifications-page-client";
@@ -14,6 +15,24 @@ export default async function NotificationsPage() {
 
   if (!user) redirect("/login");
 
+  // Determine the user's active role for notification routing
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("role, allowed_roles")
+    .eq("id", user.id)
+    .single();
+
+  const cookieStore = cookies();
+  const activeRoleCookie = cookieStore.get("active_role")?.value;
+  const allowedRoles: string[] = profile?.allowed_roles?.length
+    ? (profile.allowed_roles.filter(Boolean) as string[])
+    : [profile?.role].filter(Boolean) as string[];
+
+  const effectiveRole =
+    activeRoleCookie && allowedRoles.includes(activeRoleCookie)
+      ? activeRoleCookie
+      : (profile?.role ?? "borrower");
+
   return (
     <div className="space-y-6">
       <PageHeader
@@ -28,7 +47,7 @@ export default async function NotificationsPage() {
           </Link>
         }
       />
-      <NotificationsPageClient userId={user.id} />
+      <NotificationsPageClient userId={user.id} activeRole={effectiveRole} />
     </div>
   );
 }
