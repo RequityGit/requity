@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
@@ -63,6 +63,24 @@ export function EmailComposeSheet({
 
   const [sending, setSending] = useState(false);
   const [showCcBcc, setShowCcBcc] = useState(false);
+  const [gmailEmail, setGmailEmail] = useState<string | null>(null);
+
+  // Check if the current user has an active Gmail OAuth connection
+  useEffect(() => {
+    async function checkGmail() {
+      const supabase = createClient();
+      // gmail_tokens table exists in the DB but is not yet in the generated types
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data } = await (supabase as any)
+        .from("gmail_tokens")
+        .select("email")
+        .eq("user_id", currentUserId)
+        .eq("is_active", true)
+        .maybeSingle();
+      if (data?.email) setGmailEmail(data.email);
+    }
+    checkGmail();
+  }, [currentUserId]);
   const [form, setForm] = useState({
     to_email: toEmail,
     to_name: toName,
@@ -175,6 +193,8 @@ export function EmailComposeSheet({
         linked_investor_id: linkedInvestorId || null,
         attachments: attachmentMeta.length > 0 ? attachmentMeta : null,
         postmark_status: "queued",
+        // Use Gmail address when OAuth is connected, otherwise omit to use DB default
+        ...(gmailEmail ? { from_email: gmailEmail } : {}),
       };
 
       const { error } = await supabase.from("crm_emails").insert(insertData);
@@ -232,7 +252,7 @@ export function EmailComposeSheet({
         <SheetHeader>
           <SheetTitle>Compose Email</SheetTitle>
           <SheetDescription>
-            Send an email from info@requitylending.com
+            Send an email from {gmailEmail ?? "info@requitylending.com"}
           </SheetDescription>
         </SheetHeader>
 
