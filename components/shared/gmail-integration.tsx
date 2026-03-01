@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { useSearchParams, useRouter } from "next/navigation";
+import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import {
   Card,
@@ -26,6 +26,7 @@ interface GmailToken {
 export function GmailIntegration() {
   const { toast } = useToast();
   const router = useRouter();
+  const pathname = usePathname();
   const searchParams = useSearchParams();
   const [loading, setLoading] = useState(true);
   const [connecting, setConnecting] = useState(false);
@@ -67,7 +68,7 @@ export function GmailIntegration() {
           "Your Gmail account has been connected successfully. Emails will now be sent via your Gmail.",
       });
       // Clean up the URL
-      router.replace("/settings", { scroll: false });
+      router.replace(pathname, { scroll: false });
     } else if (gmailParam === "error") {
       const message = searchParams.get("message");
       toast({
@@ -76,9 +77,9 @@ export function GmailIntegration() {
           message || "Something went wrong connecting your Gmail account. Please try again.",
         variant: "destructive",
       });
-      router.replace("/settings", { scroll: false });
+      router.replace(pathname, { scroll: false });
     }
-  }, [searchParams, toast, router]);
+  }, [searchParams, toast, router, pathname]);
 
   useEffect(() => {
     fetchGmailStatus();
