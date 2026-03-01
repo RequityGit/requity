@@ -70,7 +70,7 @@ export async function POST(request: NextRequest) {
   // Validate required fields
   if (!email.to_email || !email.subject) {
     return NextResponse.json(
-      { error: "Email record is missing required fields (to_email, subject)." },
+      { error: "Recipient email address is missing." },
       { status: 400 }
     );
   }
