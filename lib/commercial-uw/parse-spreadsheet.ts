@@ -182,6 +182,30 @@ export function autoMapColumns(
   return mapping;
 }
 
+/**
+ * Auto-map spreadsheet headers to target fields (reversed direction).
+ * Returns a mapping of sourceHeader -> targetFieldKey.
+ * Multiple source headers CAN map to the same target field.
+ */
+export function autoMapColumnsReversed(
+  headers: string[],
+  fieldAliases: Record<string, string[]>
+): Record<string, string> {
+  const mapping: Record<string, string> = {};
+
+  for (const header of headers) {
+    if (!header || !header.trim()) continue;
+    for (const [field, aliases] of Object.entries(fieldAliases)) {
+      if (fuzzyMatch(header, aliases)) {
+        mapping[header] = field;
+        break;
+      }
+    }
+  }
+
+  return mapping;
+}
+
 // Rent Roll field aliases for auto-mapping
 export const RENT_ROLL_ALIASES: Record<string, string[]> = {
   unit_number: ["unit", "unit #", "unit number", "unit no", "apt", "suite", "space", "unit/suite", "site", "site #", "lot", "lot #"],

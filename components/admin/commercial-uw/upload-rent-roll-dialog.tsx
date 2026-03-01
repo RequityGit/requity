@@ -24,7 +24,7 @@ import { formatCurrency } from "@/lib/format";
 import {
   parseSpreadsheet,
   parseNumber,
-  autoMapColumns,
+  autoMapColumnsReversed,
   RENT_ROLL_ALIASES,
 } from "@/lib/commercial-uw/parse-spreadsheet";
 import type { ParsedSpreadsheet } from "@/lib/commercial-uw/parse-spreadsheet";
@@ -61,12 +61,61 @@ const MAPPABLE_FIELDS = [
   { key: "lease_end", label: "Lease End" },
 ];
 
+const NUMERIC_FIELDS = new Set([
+  "sf",
+  "current_monthly_rent",
+  "cam_nnn",
+  "other_income",
+  "market_rent",
+]);
+
 const SKIP_VALUE = "__skip__";
+
+/**
+ * Build a reverse lookup: targetFieldKey -> sourceHeader[] from the
+ * source-keyed mapping (sourceHeader -> targetFieldKey).
+ */
+function buildTargetToSources(
+  mapping: Record<string, string>
+): Record<string, string[]> {
+  const result: Record<string, string[]> = {};
+  for (const [sourceHeader, targetKey] of Object.entries(mapping)) {
+    if (!targetKey || targetKey === SKIP_VALUE) continue;
+    if (!result[targetKey]) result[targetKey] = [];
+    result[targetKey].push(sourceHeader);
+  }
+  return result;
+}
+
+/**
+ * Aggregate multiple source column values for a single target field in one row.
+ * Numeric fields: SUM. Text fields: CONCATENATE with " | ".
+ */
+function aggregateValues(
+  row: Record<string, string>,
+  sourceHeaders: string[],
+  targetKey: string
+): string {
+  const values = sourceHeaders
+    .map((h) => (row[h] ?? "").trim())
+    .filter(Boolean);
+
+  if (values.length === 0) return "";
+
+  if (NUMERIC_FIELDS.has(targetKey)) {
+    const sum = values.reduce((acc, v) => acc + parseNumber(v), 0);
+    return String(sum);
+  }
+
+  // Text / other: concatenate unique non-empty values
+  return values.join(" | ");
+}
 
 export function UploadRentRollDialog({ open, onOpenChange, onImport }: Props) {
   const [step, setStep] = useState<Step>("upload");
   const [parsed, setParsed] = useState<ParsedSpreadsheet | null>(null);
   const [filename, setFilename] = useState("");
+  // mapping: sourceHeader -> targetFieldKey (or SKIP_VALUE)
   const [mapping, setMapping] = useState<Record<string, string>>({});
   const [error, setError] = useState<string | null>(null);
 
@@ -83,13 +132,31 @@ export function UploadRentRollDialog({ open, onOpenChange, onImport }: Props) {
       setError(null);
       console.log("[RentRoll] Parsing file:", file.name, file.size, "bytes");
       const result = await parseSpreadsheet(file);
-      console.log("[RentRoll] Parsed:", result.headers.length, "headers,", result.rows.length, "rows (header detected at row", result.headerRowIndex + 1, ")");
+      console.log(
+        "[RentRoll] Parsed:",
+        result.headers.length,
+        "headers,",
+        result.rows.length,
+        "rows (header detected at row",
+        result.headerRowIndex + 1,
+        ")"
+      );
       console.log("[RentRoll] Headers:", result.headers);
       setParsed(result);
       setFilename(file.name);
-      // Auto-map columns
-      const autoMapped = autoMapColumns(result.headers, RENT_ROLL_ALIASES);
-      setMapping(autoMapped);
+      // Auto-map: sourceHeader -> targetFieldKey
+      const autoMapped = autoMapColumnsReversed(
+        result.headers,
+        RENT_ROLL_ALIASES
+      );
+      // Initialize all headers — unmapped ones default to SKIP
+      const fullMapping: Record<string, string> = {};
+      for (const h of result.headers) {
+        if (h && h.trim()) {
+          fullMapping[h] = autoMapped[h] ?? SKIP_VALUE;
+        }
+      }
+      setMapping(fullMapping);
       setStep("map");
     } catch (err) {
       console.error("[RentRoll] Parse error:", err);
@@ -97,26 +164,36 @@ export function UploadRentRollDialog({ open, onOpenChange, onImport }: Props) {
     }
   };
 
+  // Reverse lookup for preview/conversion: targetFieldKey -> sourceHeader[]
+  const targetToSources = useMemo(() => buildTargetToSources(mapping), [mapping]);
+
+  // Which target fields have at least one source mapped?
+  const activeMappableFields = useMemo(
+    () => MAPPABLE_FIELDS.filter(({ key }) => (targetToSources[key]?.length ?? 0) > 0),
+    [targetToSources]
+  );
+
   const previewRows = useMemo(() => {
     if (!parsed) return [];
     return parsed.rows.slice(0, 5).map((row) => {
       const mapped: Record<string, string> = {};
-      for (const [field, header] of Object.entries(mapping)) {
-        if (header && header !== SKIP_VALUE) {
-          mapped[field] = row[header] ?? "";
+      for (const { key } of activeMappableFields) {
+        const sources = targetToSources[key];
+        if (sources && sources.length > 0) {
+          mapped[key] = aggregateValues(row, sources, key);
         }
       }
       return mapped;
     });
-  }, [parsed, mapping]);
+  }, [parsed, targetToSources, activeMappableFields]);
 
   const convertToRentRollRows = (): RentRollRow[] => {
     if (!parsed) return [];
     return parsed.rows.map((row, idx) => {
-      const get = (field: string) => {
-        const header = mapping[field];
-        if (!header || header === SKIP_VALUE) return "";
-        return row[header] ?? "";
+      const get = (field: string): string => {
+        const sources = targetToSources[field];
+        if (!sources || sources.length === 0) return "";
+        return aggregateValues(row, sources, field);
       };
 
       const vacantRaw = get("is_vacant").toLowerCase();
@@ -168,14 +245,19 @@ export function UploadRentRollDialog({ open, onOpenChange, onImport }: Props) {
       onOpenChange(false);
     } catch (err) {
       console.error("[RentRoll] Import error:", err);
-      setError(err instanceof Error ? err.message : "Failed to import rent roll data");
+      setError(
+        err instanceof Error ? err.message : "Failed to import rent roll data"
+      );
       setStep("upload");
     }
   };
 
+  // Count of source columns that are mapped (not skipped)
+  const sourceHeaders = parsed?.headers.filter((h) => h && h.trim()) ?? [];
   const mappedCount = Object.values(mapping).filter(
     (v) => v && v !== SKIP_VALUE
   ).length;
+  const totalSourceColumns = sourceHeaders.length;
 
   return (
     <Dialog
@@ -192,9 +274,12 @@ export function UploadRentRollDialog({ open, onOpenChange, onImport }: Props) {
             Upload Rent Roll
           </DialogTitle>
           <DialogDescription>
-            {step === "upload" && "Upload a CSV or Excel file containing your rent roll data."}
-            {step === "map" && "Map your spreadsheet columns to rent roll fields."}
-            {step === "preview" && "Review the mapped data before importing."}
+            {step === "upload" &&
+              "Upload a CSV or Excel file containing your rent roll data."}
+            {step === "map" &&
+              "Map your spreadsheet columns to rent roll fields."}
+            {step === "preview" &&
+              "Review the mapped data before importing."}
           </DialogDescription>
         </DialogHeader>
 
@@ -207,7 +292,12 @@ export function UploadRentRollDialog({ open, onOpenChange, onImport }: Props) {
                 variant={step === s ? "default" : "outline"}
                 className="text-xs"
               >
-                {i + 1}. {s === "upload" ? "Upload" : s === "map" ? "Map Columns" : "Preview"}
+                {i + 1}.{" "}
+                {s === "upload"
+                  ? "Upload"
+                  : s === "map"
+                    ? "Map Columns"
+                    : "Preview"}
               </Badge>
             </div>
           ))}
@@ -227,36 +317,39 @@ export function UploadRentRollDialog({ open, onOpenChange, onImport }: Props) {
           </div>
         )}
 
-        {/* Step 2: Map Columns */}
+        {/* Step 2: Map Columns — source headers on left, target field dropdown on right */}
         {step === "map" && parsed && (
           <div className="space-y-3 py-2">
             <div className="flex items-center justify-between text-sm">
               <span className="text-muted-foreground">
-                Found {parsed.headers.length} columns, {parsed.rows.length} rows in <strong>{filename}</strong>
+                Found {parsed.headers.length} columns, {parsed.rows.length}{" "}
+                rows in <strong>{filename}</strong>
               </span>
-              <Badge variant="outline">{mappedCount} / {MAPPABLE_FIELDS.length} mapped</Badge>
+              <Badge variant="outline">
+                {mappedCount} / {totalSourceColumns} columns mapped
+              </Badge>
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
-              {MAPPABLE_FIELDS.map(({ key, label }) => (
-                <div key={key} className="flex items-center gap-2">
-                  <label className="text-xs font-medium w-28 flex-shrink-0">{label}</label>
+            <div className="space-y-2 max-h-[50vh] overflow-y-auto pr-1">
+              {sourceHeaders.map((header) => (
+                <div key={header} className="flex items-center gap-2">
+                  <label className="text-xs font-medium w-48 flex-shrink-0 truncate" title={header}>
+                    {header}
+                  </label>
                   <Select
-                    value={mapping[key] ?? SKIP_VALUE}
+                    value={mapping[header] ?? SKIP_VALUE}
                     onValueChange={(v) =>
-                      setMapping({ ...mapping, [key]: v })
+                      setMapping({ ...mapping, [header]: v })
                     }
                   >
                     <SelectTrigger className="h-8 text-xs flex-1">
-                      <SelectValue placeholder="Skip" />
+                      <SelectValue placeholder="— Skip —" />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value={SKIP_VALUE}>— Skip —</SelectItem>
-                      {parsed.headers
-                        .filter((h) => h && h.trim() !== "")
-                        .map((h) => (
-                        <SelectItem key={h} value={h}>
-                          {h}
+                      {MAPPABLE_FIELDS.map(({ key, label }) => (
+                        <SelectItem key={key} value={key}>
+                          {label}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -282,11 +375,17 @@ export function UploadRentRollDialog({ open, onOpenChange, onImport }: Props) {
               <table className="w-full text-xs">
                 <thead>
                   <tr className="border-b bg-slate-50">
-                    {MAPPABLE_FIELDS.filter(
-                      ({ key }) => mapping[key] && mapping[key] !== SKIP_VALUE
-                    ).map(({ key, label }) => (
-                      <th key={key} className="p-2 text-left font-medium whitespace-nowrap">
+                    {activeMappableFields.map(({ key, label }) => (
+                      <th
+                        key={key}
+                        className="p-2 text-left font-medium whitespace-nowrap"
+                      >
                         {label}
+                        {(targetToSources[key]?.length ?? 0) > 1 && (
+                          <span className="ml-1 text-muted-foreground font-normal">
+                            ({targetToSources[key].length} cols)
+                          </span>
+                        )}
                       </th>
                     ))}
                   </tr>
@@ -294,11 +393,9 @@ export function UploadRentRollDialog({ open, onOpenChange, onImport }: Props) {
                 <tbody>
                   {previewRows.map((row, idx) => (
                     <tr key={idx} className="border-b">
-                      {MAPPABLE_FIELDS.filter(
-                        ({ key }) => mapping[key] && mapping[key] !== SKIP_VALUE
-                      ).map(({ key }) => (
+                      {activeMappableFields.map(({ key }) => (
                         <td key={key} className="p-2 whitespace-nowrap">
-                          {key === "current_monthly_rent" || key === "market_rent" || key === "cam_nnn" || key === "other_income"
+                          {NUMERIC_FIELDS.has(key)
                             ? formatCurrency(parseNumber(row[key] ?? ""))
                             : (row[key] ?? "")}
                         </td>
@@ -314,7 +411,11 @@ export function UploadRentRollDialog({ open, onOpenChange, onImport }: Props) {
         <DialogFooter>
           {step === "map" && (
             <>
-              <Button variant="outline" size="sm" onClick={() => setStep("upload")}>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setStep("upload")}
+              >
                 <ArrowLeft className="h-3 w-3 mr-1" />
                 Back
               </Button>
@@ -330,7 +431,11 @@ export function UploadRentRollDialog({ open, onOpenChange, onImport }: Props) {
           )}
           {step === "preview" && (
             <>
-              <Button variant="outline" size="sm" onClick={() => setStep("map")}>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setStep("map")}
+              >
                 <ArrowLeft className="h-3 w-3 mr-1" />
                 Back
               </Button>
