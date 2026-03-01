@@ -23,8 +23,8 @@ interface RefreshResult {
 async function refreshAccessToken(
   refreshToken: string
 ): Promise<RefreshResult> {
-  const clientId = process.env.GOOGLE_CLIENT_ID;
-  const clientSecret = process.env.GOOGLE_CLIENT_SECRET;
+  const clientId = process.env.GMAIL_CLIENT_ID;
+  const clientSecret = process.env.GMAIL_CLIENT_SECRET;
 
   if (!clientId || !clientSecret) {
     throw new Error("Google OAuth is not configured on the server.");
