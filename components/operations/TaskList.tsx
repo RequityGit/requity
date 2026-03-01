@@ -20,7 +20,7 @@ import {
   RecurringBadge,
   DueDateLabel,
 } from "./badges";
-import { MoreHorizontal, Pause, Trash2 } from "lucide-react";
+import { MessageCircle, MoreHorizontal, Pause, Trash2 } from "lucide-react";
 import type { OpsTask } from "./ProjectCard";
 
 interface TaskListProps {
@@ -29,9 +29,11 @@ interface TaskListProps {
   onToggleTask: (taskId: string, completed: boolean) => void;
   onStopRecurrence: (taskId: string) => void;
   onDeleteTask: (taskId: string) => void;
+  commentCounts: Record<string, number>;
+  onOpenTask: (task: OpsTask) => void;
 }
 
-export function TaskList({ tasks, projectNames, onToggleTask, onStopRecurrence, onDeleteTask }: TaskListProps) {
+export function TaskList({ tasks, projectNames, onToggleTask, onStopRecurrence, onDeleteTask, commentCounts, onOpenTask }: TaskListProps) {
   if (tasks.length === 0) {
     return (
       <div className="rounded-md border bg-white">
@@ -55,6 +57,7 @@ export function TaskList({ tasks, projectNames, onToggleTask, onStopRecurrence, 
             <TableHead>Status</TableHead>
             <TableHead>Recurring</TableHead>
             <TableHead>Due Date</TableHead>
+            <TableHead className="w-16"></TableHead>
             <TableHead className="w-10" />
           </TableRow>
         </TableHeader>
@@ -71,8 +74,14 @@ export function TaskList({ tasks, projectNames, onToggleTask, onStopRecurrence, 
                     className="h-4 w-4 rounded border-slate-300 text-teal-600 focus:ring-teal-500"
                   />
                 </TableCell>
-                <TableCell className="font-medium text-[#1a2b4a]">
-                  {task.title}
+                <TableCell>
+                  <button
+                    type="button"
+                    onClick={() => onOpenTask(task)}
+                    className="font-medium text-[#1a2b4a] hover:underline text-left"
+                  >
+                    {task.title}
+                  </button>
                 </TableCell>
                 <TableCell className="text-muted-foreground">
                   {task.project_id
@@ -100,6 +109,14 @@ export function TaskList({ tasks, projectNames, onToggleTask, onStopRecurrence, 
                 </TableCell>
                 <TableCell>
                   <DueDateLabel dueDate={task.due_date} />
+                </TableCell>
+                <TableCell>
+                  {(commentCounts[task.id] ?? 0) > 0 && (
+                    <span className="inline-flex items-center gap-0.5 text-xs text-muted-foreground">
+                      <MessageCircle className="h-3 w-3" />
+                      {commentCounts[task.id]}
+                    </span>
+                  )}
                 </TableCell>
                 <TableCell>
                   <DropdownMenu>

@@ -12,7 +12,7 @@ export default async function OperationsPage() {
 
   if (!user) redirect("/login");
 
-  const [projectsRes, tasksRes, membersRes] = await Promise.all([
+  const [projectsRes, tasksRes, membersRes, rolesRes, taskCommentCountsRes, projectCommentCountsRes] = await Promise.all([
     supabase
       .from("ops_projects")
       .select("*")
@@ -26,6 +26,16 @@ export default async function OperationsPage() {
       .select("id, full_name, email")
       .eq("role", "admin")
       .order("full_name"),
+    supabase
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", user.id),
+    supabase
+      .from("ops_task_comments")
+      .select("task_id"),
+    supabase
+      .from("ops_project_comments")
+      .select("project_id"),
   ]);
 
   const projects = projectsRes.data ?? [];
@@ -37,5 +47,29 @@ export default async function OperationsPage() {
     })
   );
 
-  return <OperationsView projects={projects} tasks={tasks} teamMembers={teamMembers} />;
+  const roles = (rolesRes.data ?? []).map((r: { role: string }) => r.role);
+  const isSuperAdmin = roles.includes("super_admin");
+
+  // Build comment count maps
+  const taskCommentCounts: Record<string, number> = {};
+  for (const row of taskCommentCountsRes.data ?? []) {
+    taskCommentCounts[row.task_id] = (taskCommentCounts[row.task_id] ?? 0) + 1;
+  }
+
+  const projectCommentCounts: Record<string, number> = {};
+  for (const row of projectCommentCountsRes.data ?? []) {
+    projectCommentCounts[row.project_id] = (projectCommentCounts[row.project_id] ?? 0) + 1;
+  }
+
+  return (
+    <OperationsView
+      projects={projects}
+      tasks={tasks}
+      teamMembers={teamMembers}
+      currentUserId={user.id}
+      isSuperAdmin={isSuperAdmin}
+      taskCommentCounts={taskCommentCounts}
+      projectCommentCounts={projectCommentCounts}
+    />
+  );
 }

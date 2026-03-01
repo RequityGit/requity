@@ -1349,6 +1349,151 @@ export type Database = {
           },
         ]
       }
+      crm_emails: {
+        Row: {
+          attachments: Json | null
+          bcc_emails: string[] | null
+          body_html: string | null
+          body_text: string | null
+          cc_emails: string[] | null
+          created_at: string
+          delivered_at: string | null
+          email_template_id: string | null
+          from_email: string
+          id: string
+          linked_borrower_id: string | null
+          linked_contact_id: string | null
+          linked_investor_id: string | null
+          linked_loan_id: string | null
+          opened_at: string | null
+          postmark_error: string | null
+          postmark_message_id: string | null
+          postmark_status: string | null
+          sent_by: string | null
+          sent_by_name: string | null
+          subject: string
+          template_data: Json | null
+          to_email: string
+          to_name: string | null
+        }
+        Insert: {
+          attachments?: Json | null
+          bcc_emails?: string[] | null
+          body_html?: string | null
+          body_text?: string | null
+          cc_emails?: string[] | null
+          created_at?: string
+          delivered_at?: string | null
+          email_template_id?: string | null
+          from_email?: string
+          id?: string
+          linked_borrower_id?: string | null
+          linked_contact_id?: string | null
+          linked_investor_id?: string | null
+          linked_loan_id?: string | null
+          opened_at?: string | null
+          postmark_error?: string | null
+          postmark_message_id?: string | null
+          postmark_status?: string | null
+          sent_by?: string | null
+          sent_by_name?: string | null
+          subject: string
+          template_data?: Json | null
+          to_email: string
+          to_name?: string | null
+        }
+        Update: {
+          attachments?: Json | null
+          bcc_emails?: string[] | null
+          body_html?: string | null
+          body_text?: string | null
+          cc_emails?: string[] | null
+          created_at?: string
+          delivered_at?: string | null
+          email_template_id?: string | null
+          from_email?: string
+          id?: string
+          linked_borrower_id?: string | null
+          linked_contact_id?: string | null
+          linked_investor_id?: string | null
+          linked_loan_id?: string | null
+          opened_at?: string | null
+          postmark_error?: string | null
+          postmark_message_id?: string | null
+          postmark_status?: string | null
+          sent_by?: string | null
+          sent_by_name?: string | null
+          subject?: string
+          template_data?: Json | null
+          to_email?: string
+          to_name?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "crm_emails_email_template_id_fkey"
+            columns: ["email_template_id"]
+            isOneToOne: false
+            referencedRelation: "email_templates"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "crm_emails_linked_borrower_id_fkey"
+            columns: ["linked_borrower_id"]
+            isOneToOne: false
+            referencedRelation: "borrowers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "crm_emails_linked_borrower_id_fkey"
+            columns: ["linked_borrower_id"]
+            isOneToOne: false
+            referencedRelation: "borrowers_portal"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "crm_emails_linked_borrower_id_fkey"
+            columns: ["linked_borrower_id"]
+            isOneToOne: false
+            referencedRelation: "borrowers_safe"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "crm_emails_linked_contact_id_fkey"
+            columns: ["linked_contact_id"]
+            isOneToOne: false
+            referencedRelation: "crm_contacts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "crm_emails_linked_contact_id_fkey"
+            columns: ["linked_contact_id"]
+            isOneToOne: false
+            referencedRelation: "crm_contacts_active"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "crm_emails_linked_investor_id_fkey"
+            columns: ["linked_investor_id"]
+            isOneToOne: false
+            referencedRelation: "investors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "crm_emails_linked_loan_id_fkey"
+            columns: ["linked_loan_id"]
+            isOneToOne: false
+            referencedRelation: "loan_pipeline"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "crm_emails_linked_loan_id_fkey"
+            columns: ["linked_loan_id"]
+            isOneToOne: false
+            referencedRelation: "loans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       distribution_line_items: {
         Row: {
           amount: number
@@ -3347,25 +3492,40 @@ export type Database = {
           author_id: string | null
           author_name: string | null
           comment: string
+          comment_type: string
           created_at: string | null
+          edited_at: string | null
           id: string
+          is_edited: boolean
+          mentions: string[] | null
           project_id: string
+          updated_at: string | null
         }
         Insert: {
           author_id?: string | null
           author_name?: string | null
           comment: string
+          comment_type?: string
           created_at?: string | null
+          edited_at?: string | null
           id?: string
+          is_edited?: boolean
+          mentions?: string[] | null
           project_id: string
+          updated_at?: string | null
         }
         Update: {
           author_id?: string | null
           author_name?: string | null
           comment?: string
+          comment_type?: string
           created_at?: string | null
+          edited_at?: string | null
           id?: string
+          is_edited?: boolean
+          mentions?: string[] | null
           project_id?: string
+          updated_at?: string | null
         }
         Relationships: [
           {
@@ -3500,25 +3660,40 @@ export type Database = {
           author_id: string | null
           author_name: string | null
           comment: string
+          comment_type: string
           created_at: string | null
+          edited_at: string | null
           id: string
+          is_edited: boolean
+          mentions: string[] | null
           task_id: string
+          updated_at: string | null
         }
         Insert: {
           author_id?: string | null
           author_name?: string | null
           comment: string
+          comment_type?: string
           created_at?: string | null
+          edited_at?: string | null
           id?: string
+          is_edited?: boolean
+          mentions?: string[] | null
           task_id: string
+          updated_at?: string | null
         }
         Update: {
           author_id?: string | null
           author_name?: string | null
           comment?: string
+          comment_type?: string
           created_at?: string | null
+          edited_at?: string | null
           id?: string
+          is_edited?: boolean
+          mentions?: string[] | null
           task_id?: string
+          updated_at?: string | null
         }
         Relationships: [
           {
@@ -4154,6 +4329,311 @@ export type Database = {
         }
         Relationships: []
       }
+      t12_field_mappings: {
+        Row: {
+          created_at: string | null
+          exclusion_reason: string | null
+          id: string
+          is_excluded: boolean | null
+          mapped_category: string
+          mapped_subcategory: string | null
+          t12_line_item_id: string
+          t12_upload_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          exclusion_reason?: string | null
+          id?: string
+          is_excluded?: boolean | null
+          mapped_category: string
+          mapped_subcategory?: string | null
+          t12_line_item_id: string
+          t12_upload_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          exclusion_reason?: string | null
+          id?: string
+          is_excluded?: boolean | null
+          mapped_category?: string
+          mapped_subcategory?: string | null
+          t12_line_item_id?: string
+          t12_upload_id?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "t12_field_mappings_t12_line_item_id_fkey"
+            columns: ["t12_line_item_id"]
+            isOneToOne: false
+            referencedRelation: "t12_line_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "t12_field_mappings_t12_upload_id_fkey"
+            columns: ["t12_upload_id"]
+            isOneToOne: false
+            referencedRelation: "t12_uploads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      t12_line_items: {
+        Row: {
+          amount_month_1: number | null
+          amount_month_10: number | null
+          amount_month_11: number | null
+          amount_month_12: number | null
+          amount_month_2: number | null
+          amount_month_3: number | null
+          amount_month_4: number | null
+          amount_month_5: number | null
+          amount_month_6: number | null
+          amount_month_7: number | null
+          amount_month_8: number | null
+          amount_month_9: number | null
+          annual_total: number | null
+          created_at: string | null
+          id: string
+          is_income: boolean | null
+          original_category: string | null
+          original_row_label: string
+          sort_order: number | null
+          t12_upload_id: string
+        }
+        Insert: {
+          amount_month_1?: number | null
+          amount_month_10?: number | null
+          amount_month_11?: number | null
+          amount_month_12?: number | null
+          amount_month_2?: number | null
+          amount_month_3?: number | null
+          amount_month_4?: number | null
+          amount_month_5?: number | null
+          amount_month_6?: number | null
+          amount_month_7?: number | null
+          amount_month_8?: number | null
+          amount_month_9?: number | null
+          annual_total?: number | null
+          created_at?: string | null
+          id?: string
+          is_income?: boolean | null
+          original_category?: string | null
+          original_row_label: string
+          sort_order?: number | null
+          t12_upload_id: string
+        }
+        Update: {
+          amount_month_1?: number | null
+          amount_month_10?: number | null
+          amount_month_11?: number | null
+          amount_month_12?: number | null
+          amount_month_2?: number | null
+          amount_month_3?: number | null
+          amount_month_4?: number | null
+          amount_month_5?: number | null
+          amount_month_6?: number | null
+          amount_month_7?: number | null
+          amount_month_8?: number | null
+          amount_month_9?: number | null
+          annual_total?: number | null
+          created_at?: string | null
+          id?: string
+          is_income?: boolean | null
+          original_category?: string | null
+          original_row_label?: string
+          sort_order?: number | null
+          t12_upload_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "t12_line_items_t12_upload_id_fkey"
+            columns: ["t12_upload_id"]
+            isOneToOne: false
+            referencedRelation: "t12_uploads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      t12_mapping_suggestions: {
+        Row: {
+          created_at: string | null
+          id: string
+          mapped_category: string
+          original_label: string
+          updated_at: string | null
+          usage_count: number | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          mapped_category: string
+          original_label: string
+          updated_at?: string | null
+          usage_count?: number | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          mapped_category?: string
+          original_label?: string
+          updated_at?: string | null
+          usage_count?: number | null
+        }
+        Relationships: []
+      }
+      t12_overrides: {
+        Row: {
+          category: string
+          created_at: string | null
+          id: string
+          override_annual_total: number
+          t12_upload_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          category: string
+          created_at?: string | null
+          id?: string
+          override_annual_total: number
+          t12_upload_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          category?: string
+          created_at?: string | null
+          id?: string
+          override_annual_total?: number
+          t12_upload_id?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "t12_overrides_t12_upload_id_fkey"
+            columns: ["t12_upload_id"]
+            isOneToOne: false
+            referencedRelation: "t12_uploads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      t12_uploads: {
+        Row: {
+          created_at: string | null
+          file_name: string
+          file_url: string
+          id: string
+          loan_id: string
+          notes: string | null
+          period_end: string
+          period_start: string
+          source_label: string | null
+          status: string | null
+          updated_at: string | null
+          upload_date: string | null
+          uploaded_by: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          file_name: string
+          file_url?: string
+          id?: string
+          loan_id: string
+          notes?: string | null
+          period_end: string
+          period_start: string
+          source_label?: string | null
+          status?: string | null
+          updated_at?: string | null
+          upload_date?: string | null
+          uploaded_by?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          file_name?: string
+          file_url?: string
+          id?: string
+          loan_id?: string
+          notes?: string | null
+          period_end?: string
+          period_start?: string
+          source_label?: string | null
+          status?: string | null
+          updated_at?: string | null
+          upload_date?: string | null
+          uploaded_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "t12_uploads_loan_id_fkey"
+            columns: ["loan_id"]
+            isOneToOne: false
+            referencedRelation: "loan_pipeline"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "t12_uploads_loan_id_fkey"
+            columns: ["loan_id"]
+            isOneToOne: false
+            referencedRelation: "loans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      t12_versions: {
+        Row: {
+          created_at: string | null
+          id: string
+          is_active: boolean | null
+          loan_id: string
+          t12_upload_id: string
+          version_label: string | null
+          version_number: number
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          loan_id: string
+          t12_upload_id: string
+          version_label?: string | null
+          version_number: number
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          loan_id?: string
+          t12_upload_id?: string
+          version_label?: string | null
+          version_number?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "t12_versions_loan_id_fkey"
+            columns: ["loan_id"]
+            isOneToOne: false
+            referencedRelation: "loan_pipeline"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "t12_versions_loan_id_fkey"
+            columns: ["loan_id"]
+            isOneToOne: false
+            referencedRelation: "loans"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "t12_versions_t12_upload_id_fkey"
+            columns: ["t12_upload_id"]
+            isOneToOne: false
+            referencedRelation: "t12_uploads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       term_sheet_generations: {
         Row: {
           created_at: string
@@ -4295,6 +4775,8 @@ export type Database = {
           disclaimer_section_heading: string | null
           extension_section_heading: string | null
           fees_section_heading: string | null
+          field_labels: Json | null
+          field_visibility: Json | null
           footer_rich_text: string | null
           guarantor_custom_text: string | null
           guarantor_section_heading: string | null
@@ -4345,6 +4827,8 @@ export type Database = {
           disclaimer_section_heading?: string | null
           extension_section_heading?: string | null
           fees_section_heading?: string | null
+          field_labels?: Json | null
+          field_visibility?: Json | null
           footer_rich_text?: string | null
           guarantor_custom_text?: string | null
           guarantor_section_heading?: string | null
@@ -4395,6 +4879,8 @@ export type Database = {
           disclaimer_section_heading?: string | null
           extension_section_heading?: string | null
           fees_section_heading?: string | null
+          field_labels?: Json | null
+          field_visibility?: Json | null
           footer_rich_text?: string | null
           guarantor_custom_text?: string | null
           guarantor_section_heading?: string | null
@@ -5323,10 +5809,6 @@ export const Constants = {
     },
   },
 } as const
-
-// ---------------------------------------------------------------------------
-// Convenience type aliases
-// ---------------------------------------------------------------------------
 export type Profile = Database["public"]["Tables"]["profiles"]["Row"];
 export type Borrower = Database["public"]["Tables"]["borrowers"]["Row"];
 export type BorrowerInsert = Database["public"]["Tables"]["borrowers"]["Insert"];

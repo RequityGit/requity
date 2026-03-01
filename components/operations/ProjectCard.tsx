@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { ChevronDown, ChevronRight, MoreHorizontal, Pause, Trash2 } from "lucide-react";
+import { ChevronDown, ChevronRight, MessageCircle, MoreHorizontal, Pause, Trash2 } from "lucide-react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import {
   DropdownMenu,
@@ -9,6 +9,7 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
 } from "@/components/ui/dropdown-menu";
+import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
 import {
   PriorityBadge,
@@ -17,6 +18,7 @@ import {
   DueDateLabel,
   RecurringBadge,
 } from "./badges";
+import { OpsCommentThread } from "./OpsCommentThread";
 
 export interface OpsTask {
   id: string;
@@ -73,6 +75,11 @@ interface ProjectCardProps {
   onStopRecurrence: (taskId: string) => void;
   onDeleteTask: (taskId: string) => void;
   onDeleteProject: (projectId: string) => void;
+  commentCount: number;
+  currentUserId: string;
+  isSuperAdmin: boolean;
+  taskCommentCounts: Record<string, number>;
+  onOpenTask: (task: OpsTask) => void;
 }
 
 const priorityOrder: Record<string, number> = {
@@ -82,7 +89,7 @@ const priorityOrder: Record<string, number> = {
   Low: 3,
 };
 
-export function ProjectCard({ project, tasks, onToggleTask, onStopRecurrence, onDeleteTask, onDeleteProject }: ProjectCardProps) {
+export function ProjectCard({ project, tasks, onToggleTask, onStopRecurrence, onDeleteTask, onDeleteProject, commentCount, currentUserId, isSuperAdmin, taskCommentCounts, onOpenTask }: ProjectCardProps) {
   const [expanded, setExpanded] = useState(false);
 
   const completedCount = tasks.filter((t) => t.status === "Complete").length;
@@ -138,6 +145,12 @@ export function ProjectCard({ project, tasks, onToggleTask, onStopRecurrence, on
                   <span className="text-xs text-muted-foreground whitespace-nowrap">
                     {completedCount}/{totalCount} tasks
                   </span>
+                  {commentCount > 0 && (
+                    <span className="inline-flex items-center gap-0.5 text-xs text-muted-foreground whitespace-nowrap">
+                      <MessageCircle className="h-3 w-3" />
+                      {commentCount}
+                    </span>
+                  )}
                 </div>
               )}
             </div>
@@ -195,15 +208,26 @@ export function ProjectCard({ project, tasks, onToggleTask, onStopRecurrence, on
                       onChange={() => onToggleTask(task.id, !isComplete)}
                       className="h-4 w-4 rounded border-slate-300 text-teal-600 focus:ring-teal-500"
                     />
-                    <span
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onOpenTask(task);
+                      }}
                       className={cn(
-                        "flex-1 text-sm",
+                        "flex-1 text-sm text-left hover:underline",
                         isComplete && "line-through text-muted-foreground"
                       )}
                     >
                       {task.title}
-                    </span>
+                    </button>
                     <div className="flex items-center gap-1.5">
+                      {(taskCommentCounts[task.id] ?? 0) > 0 && (
+                        <span className="inline-flex items-center gap-0.5 text-xs text-muted-foreground">
+                          <MessageCircle className="h-3 w-3" />
+                          {taskCommentCounts[task.id]}
+                        </span>
+                      )}
                       <PriorityBadge priority={task.priority} />
                       {task.is_recurring && (
                         <RecurringBadge pattern={task.recurrence_pattern} isActive={task.is_active_recurrence ?? false} />
@@ -239,6 +263,15 @@ export function ProjectCard({ project, tasks, onToggleTask, onStopRecurrence, on
           ) : (
             <p className="text-sm text-muted-foreground">No tasks linked.</p>
           )}
+
+          <Separator className="my-4" />
+
+          <OpsCommentThread
+            entityType="project"
+            entityId={project.id}
+            currentUserId={currentUserId}
+            isSuperAdmin={isSuperAdmin}
+          />
         </CardContent>
       )}
     </Card>

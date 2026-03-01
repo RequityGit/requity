@@ -2,6 +2,7 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
+import { MessageCircle } from "lucide-react";
 import {
   PriorityBadge,
   RecurringBadge,
@@ -19,9 +20,11 @@ const BOARD_COLUMNS = [
 interface TaskBoardProps {
   tasks: OpsTask[];
   projectNames: Record<string, string>;
+  commentCounts: Record<string, number>;
+  onOpenTask: (task: OpsTask) => void;
 }
 
-export function TaskBoard({ tasks, projectNames }: TaskBoardProps) {
+export function TaskBoard({ tasks, projectNames, commentCounts, onOpenTask }: TaskBoardProps) {
   const columns = BOARD_COLUMNS.map((col) => ({
     ...col,
     tasks: tasks.filter((t) => t.status === col.key),
@@ -44,42 +47,54 @@ export function TaskBoard({ tasks, projectNames }: TaskBoardProps) {
                 No tasks
               </div>
             ) : (
-              col.tasks.map((task) => (
-                <Card
-                  key={task.id}
-                  className={cn("border-t-2", col.color)}
-                >
-                  <CardContent className="p-3 space-y-2">
-                    <p className="text-sm font-medium text-[#1a2b4a] leading-snug">
-                      {task.title}
-                    </p>
-
-                    {task.project_id && projectNames[task.project_id] && (
-                      <p className="text-xs text-muted-foreground">
-                        {projectNames[task.project_id]}
+              col.tasks.map((task) => {
+                const count = commentCounts[task.id] ?? 0;
+                return (
+                  <Card
+                    key={task.id}
+                    className={cn("border-t-2 cursor-pointer hover:shadow-md transition-shadow", col.color)}
+                    onClick={() => onOpenTask(task)}
+                  >
+                    <CardContent className="p-3 space-y-2">
+                      <p className="text-sm font-medium text-[#1a2b4a] leading-snug">
+                        {task.title}
                       </p>
-                    )}
 
-                    <div className="flex items-center gap-1.5 flex-wrap">
-                      <PriorityBadge priority={task.priority} />
-                      {task.is_recurring && (
-                        <RecurringBadge pattern={task.recurrence_pattern} isActive={task.is_active_recurrence ?? false} />
+                      {task.project_id && projectNames[task.project_id] && (
+                        <p className="text-xs text-muted-foreground">
+                          {projectNames[task.project_id]}
+                        </p>
                       )}
-                    </div>
 
-                    <div className="flex items-center justify-between">
-                      {task.assigned_to_name ? (
-                        <span className="text-xs text-muted-foreground">
-                          {task.assigned_to_name}
-                        </span>
-                      ) : (
-                        <span />
-                      )}
-                      <DueDateLabel dueDate={task.due_date} />
-                    </div>
-                  </CardContent>
-                </Card>
-              ))
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <PriorityBadge priority={task.priority} />
+                        {task.is_recurring && (
+                          <RecurringBadge pattern={task.recurrence_pattern} isActive={task.is_active_recurrence ?? false} />
+                        )}
+                      </div>
+
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          {task.assigned_to_name ? (
+                            <span className="text-xs text-muted-foreground">
+                              {task.assigned_to_name}
+                            </span>
+                          ) : (
+                            <span />
+                          )}
+                          {count > 0 && (
+                            <span className="inline-flex items-center gap-0.5 text-xs text-muted-foreground">
+                              <MessageCircle className="h-3 w-3" />
+                              {count}
+                            </span>
+                          )}
+                        </div>
+                        <DueDateLabel dueDate={task.due_date} />
+                      </div>
+                    </CardContent>
+                  </Card>
+                );
+              })
             )}
           </div>
         </div>

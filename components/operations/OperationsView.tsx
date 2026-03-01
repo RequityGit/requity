@@ -20,6 +20,7 @@ import { MultiSelectFilter } from "./MultiSelectFilter";
 import { ProjectCard, type OpsProject, type OpsTask } from "./ProjectCard";
 import { TaskList } from "./TaskList";
 import { TaskBoard } from "./TaskBoard";
+import { TaskDetailDrawer } from "./TaskDetailDrawer";
 import { AddProjectDialog } from "./AddProjectDialog";
 import { AddTaskDialog } from "./AddTaskDialog";
 
@@ -32,6 +33,10 @@ interface OperationsViewProps {
   projects: OpsProject[];
   tasks: OpsTask[];
   teamMembers: TeamMember[];
+  currentUserId: string;
+  isSuperAdmin: boolean;
+  taskCommentCounts: Record<string, number>;
+  projectCommentCounts: Record<string, number>;
 }
 
 const priorityOrder: Record<string, number> = {
@@ -45,7 +50,7 @@ function getUniqueValues(items: (string | null)[]): string[] {
   return Array.from(new Set(items.filter((v): v is string => v != null))).sort();
 }
 
-export function OperationsView({ projects, tasks, teamMembers }: OperationsViewProps) {
+export function OperationsView({ projects, tasks, teamMembers, currentUserId, isSuperAdmin, taskCommentCounts, projectCommentCounts }: OperationsViewProps) {
   const router = useRouter();
   const supabase = createClient();
   const { toast } = useToast();
@@ -58,6 +63,15 @@ export function OperationsView({ projects, tasks, teamMembers }: OperationsViewP
 
   // Task view mode
   const [taskView, setTaskView] = useState<"list" | "board">("list");
+
+  // Task detail drawer
+  const [selectedTask, setSelectedTask] = useState<OpsTask | null>(null);
+  const [drawerOpen, setDrawerOpen] = useState(false);
+
+  function handleOpenTask(task: OpsTask) {
+    setSelectedTask(task);
+    setDrawerOpen(true);
+  }
 
   // Toggle to show/hide completed recurring task instances
   const [showCompletedRecurring, setShowCompletedRecurring] = useState(false);
@@ -394,6 +408,11 @@ export function OperationsView({ projects, tasks, teamMembers }: OperationsViewP
                   onStopRecurrence={handleStopRecurrence}
                   onDeleteTask={handleDeleteTask}
                   onDeleteProject={handleDeleteProject}
+                  commentCount={projectCommentCounts[project.id] ?? 0}
+                  currentUserId={currentUserId}
+                  isSuperAdmin={isSuperAdmin}
+                  taskCommentCounts={taskCommentCounts}
+                  onOpenTask={handleOpenTask}
                 />
               ))}
             </div>
@@ -493,15 +512,29 @@ export function OperationsView({ projects, tasks, teamMembers }: OperationsViewP
               onToggleTask={handleToggleTask}
               onStopRecurrence={handleStopRecurrence}
               onDeleteTask={handleDeleteTask}
+              commentCounts={taskCommentCounts}
+              onOpenTask={handleOpenTask}
             />
           ) : (
             <TaskBoard
               tasks={filteredTasks}
               projectNames={projectNames}
+              commentCounts={taskCommentCounts}
+              onOpenTask={handleOpenTask}
             />
           )}
         </TabsContent>
       </Tabs>
+
+      {/* Task Detail Drawer */}
+      <TaskDetailDrawer
+        task={selectedTask}
+        open={drawerOpen}
+        onOpenChange={setDrawerOpen}
+        projectName={selectedTask?.project_id ? projectNames[selectedTask.project_id] ?? null : null}
+        currentUserId={currentUserId}
+        isSuperAdmin={isSuperAdmin}
+      />
     </div>
   );
 }
