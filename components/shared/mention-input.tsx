@@ -44,6 +44,8 @@ export function MentionInput({
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const mentionStartRef = useRef<number>(-1);
+  const mentionsRef = useRef<Map<string, string>>(new Map());
+  const initializedRef = useRef(false);
 
   // Load team members once
   const loadTeamMembers = useCallback(async () => {
@@ -105,18 +107,23 @@ export function MentionInput({
     const newValue = e.target.value;
     onChange(newValue);
 
+    // Prune stale mentions whose display text no longer appears
+    Array.from(mentionsRef.current.keys()).forEach((name) => {
+      if (!newValue.includes(`\u200B@${name}`)) {
+        mentionsRef.current.delete(name);
+      }
+    });
+
     // Check for @ trigger
     const cursorPos = e.target.selectionStart;
     const textBefore = newValue.slice(0, cursorPos);
 
-    // Find the last @ that isn't inside a mention markup
+    // Find the last @ — completed mentions are preceded by \u200B (not whitespace)
+    // so they won't pass the whitespace check below
     const lastAt = textBefore.lastIndexOf("@");
     if (lastAt >= 0) {
       const afterAt = textBefore.slice(lastAt + 1);
-      // Only trigger if no spaces yet or short query, and not inside a completed mention
-      const isInsideMention = textBefore.slice(0, lastAt).includes("@[");
       if (
-        !isInsideMention &&
         !afterAt.includes("\n") &&
         afterAt.length <= 30 &&
         (lastAt === 0 || /\s/.test(textBefore[lastAt - 1]))
@@ -138,9 +145,10 @@ export function MentionInput({
     const cursorPos = textareaRef.current?.selectionStart ?? value.length;
     const before = value.slice(0, start);
     const after = value.slice(cursorPos);
-    const mention = `@[${member.full_name}](${member.id}) `;
+    const mention = `\u200B@${member.full_name} `;
     const newValue = before + mention + after;
 
+    mentionsRef.current.set(member.full_name, member.id);
     onChange(newValue);
     setShowDropdown(false);
 
@@ -156,9 +164,70 @@ export function MentionInput({
 
   function handleSubmit() {
     if (!value.trim() || disabled) return;
-    const mentionIds = extractMentionIds(value);
-    onSubmit(value.trim(), mentionIds);
+
+    // Reconstruct markup format from display text
+    let markupText = value;
+
+    // Sort by name length descending to avoid partial matches
+    const entries = Array.from(mentionsRef.current.entries()).sort(
+      (a, b) => b[0].length - a[0].length
+    );
+
+    for (const [name, userId] of entries) {
+      markupText = markupText.replaceAll(
+        `\u200B@${name}`,
+        `@[${name}](${userId})`
+      );
+    }
+
+    // Strip any remaining zero-width spaces
+    markupText = markupText.replaceAll("\u200B", "");
+
+    const mentionIds = extractMentionIds(markupText);
+    onSubmit(markupText.trim(), mentionIds);
   }
+
+  // Convert markup format to display format when value is set externally (edit mode)
+  useEffect(() => {
+    if (initializedRef.current) return;
+    if (!value) return;
+
+    const mentionRegex = /@\[([^\]]+)\]\(([a-f0-9-]+)\)/g;
+    let match: RegExpExecArray | null;
+    const found: Array<{ name: string; userId: string }> = [];
+
+    while ((match = mentionRegex.exec(value)) !== null) {
+      found.push({ name: match[1], userId: match[2] });
+    }
+
+    if (found.length === 0) {
+      initializedRef.current = true;
+      return;
+    }
+
+    for (const { name, userId } of found) {
+      mentionsRef.current.set(name, userId);
+    }
+
+    let displayText = value;
+    for (const { name, userId } of found) {
+      displayText = displayText.replaceAll(
+        `@[${name}](${userId})`,
+        `\u200B@${name}`
+      );
+    }
+
+    initializedRef.current = true;
+    onChange(displayText);
+  }, [value, onChange]);
+
+  // Reset internal state when value is cleared (after posting)
+  useEffect(() => {
+    if (value === "") {
+      mentionsRef.current.clear();
+      initializedRef.current = false;
+    }
+  }, [value]);
 
   // Close dropdown on outside click
   useEffect(() => {
