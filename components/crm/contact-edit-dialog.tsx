@@ -88,7 +88,7 @@ export function ContactEditDialog({
     company_id: contact.company_id || "",
     company_name: contact.company_name || "",
     source: contact.source || "",
-    lifecycle_stage: contact.lifecycle_stage || "lead",
+    lifecycle_stage: contact.lifecycle_stage || "uncontacted",
     assigned_to: contact.assigned_to || "",
     address_line1: contact.address_line1 || "",
     city: contact.city || "",

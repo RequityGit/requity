@@ -10,7 +10,7 @@
 // Enums (mapped from PostgreSQL enum types)
 // ---------------------------------------------------------------------------
 
-export type LifecycleStage = 'lead' | 'prospect' | 'active' | 'past';
+export type LifecycleStage = 'uncontacted' | 'lead' | 'prospect' | 'active' | 'past';
 
 export type CompanyType =
   | 'brokerage'
@@ -43,6 +43,8 @@ export type VendorType =
   | 'appraisal'
   | 'engineer'
   | 'inspector'
+  | 'software'
+  | 'accounting_firm'
   | 'other';
 
 export type ActivityDirection = 'inbound' | 'outbound';
