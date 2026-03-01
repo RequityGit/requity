@@ -28,6 +28,16 @@ import type { TeamMember } from "./OperationsView";
 
 const STATUSES = ["Planning", "Active", "On Hold", "Completed", "Cancelled"];
 const PRIORITIES = ["Critical", "High", "Medium", "Low"];
+
+// Map PascalCase display values to lowercase DB values for the status check constraint
+const STATUS_TO_DB: Record<string, string> = {
+  Planning: "planning",
+  Active: "active",
+  "On Hold": "on_hold",
+  Completed: "completed",
+  Cancelled: "cancelled",
+};
+
 const CATEGORIES = [
   "Engineering",
   "Marketing",
@@ -93,7 +103,7 @@ export function AddProjectDialog({ teamMembers }: AddProjectDialogProps) {
         project_name: form.project_name.trim(),
         category: form.category.trim() || "General",
         owner: form.owner.trim() || "unassigned",
-        status: form.status,
+        status: STATUS_TO_DB[form.status] ?? form.status.toLowerCase(),
         priority: form.priority,
         description: form.description.trim() || null,
         due_date: form.due_date || null,

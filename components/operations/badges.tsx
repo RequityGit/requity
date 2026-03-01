@@ -24,6 +24,15 @@ export function PriorityBadge({ priority }: { priority: string | null }) {
 }
 
 // --- Status Badge ---
+// Map lowercase DB values to display labels
+const statusDisplayMap: Record<string, string> = {
+  planning: "Planning",
+  active: "Active",
+  on_hold: "On Hold",
+  completed: "Completed",
+  cancelled: "Cancelled",
+};
+
 const statusConfig: Record<string, { className: string }> = {
   "To Do": { className: "bg-slate-100 text-slate-800 border-slate-200" },
   "In Progress": { className: "bg-blue-100 text-blue-800 border-blue-200" },
@@ -37,14 +46,19 @@ const statusConfig: Record<string, { className: string }> = {
   Cancelled: { className: "bg-gray-100 text-gray-800 border-gray-200" },
 };
 
+export function normalizeStatusDisplay(status: string): string {
+  return statusDisplayMap[status] ?? status;
+}
+
 export function StatusBadge({ status }: { status: string | null }) {
   if (!status) return null;
-  const config = statusConfig[status] ?? {
+  const display = normalizeStatusDisplay(status);
+  const config = statusConfig[display] ?? {
     className: "bg-slate-100 text-slate-800 border-slate-200",
   };
   return (
     <Badge variant="outline" className={cn("text-xs", config.className)}>
-      {status}
+      {display}
     </Badge>
   );
 }
