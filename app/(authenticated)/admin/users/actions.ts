@@ -52,7 +52,7 @@ export interface UserRow {
 export interface InviteUserInput {
   email: string;
   full_name: string;
-  role: "admin" | "investor" | "borrower";
+  role: "super_admin" | "admin" | "investor" | "borrower";
   investor_id?: string;
   borrower_id?: string;
 }
@@ -158,8 +158,8 @@ async function upsertProfileRow(
     id: string;
     email: string;
     full_name: string;
-    role: "admin" | "borrower" | "investor";
-    allowed_roles: ("admin" | "borrower" | "investor")[];
+    role: "super_admin" | "admin" | "borrower" | "investor";
+    allowed_roles: ("super_admin" | "admin" | "borrower" | "investor")[];
     activation_status: "pending" | "link_sent" | "activated";
   }
 ): Promise<string | null> {
@@ -202,6 +202,13 @@ export async function inviteUserAction(input: InviteUserInput): Promise<
       };
     }
 
+    // Determine profile role and allowed_roles based on input
+    const profileRole = input.role;
+    const allowedRoles: ("super_admin" | "admin" | "borrower" | "investor")[] =
+      input.role === "super_admin"
+        ? ["admin", "super_admin"]
+        : [input.role];
+
     // Create the auth user with invite (sends email)
     const { data: newUser, error: createError } =
       await admin.auth.admin.inviteUserByEmail(input.email, {
@@ -227,21 +234,26 @@ export async function inviteUserAction(input: InviteUserInput): Promise<
             id: existingAuthUser.id,
             email: input.email,
             full_name: input.full_name,
-            role: input.role,
-            allowed_roles: [input.role],
+            role: profileRole,
+            allowed_roles: allowedRoles,
             activation_status: "link_sent",
           });
 
           if (upsertError) return { error: upsertError };
 
-          // Grant role via database function
-          await grantRoleForUser(
-            admin,
-            existingAuthUser.id,
-            input.role,
-            input.investor_id,
-            input.borrower_id
-          );
+          // Grant roles via database function
+          if (input.role === "super_admin") {
+            await grantRoleForUser(admin, existingAuthUser.id, "admin");
+            await grantRoleForUser(admin, existingAuthUser.id, "super_admin");
+          } else {
+            await grantRoleForUser(
+              admin,
+              existingAuthUser.id,
+              input.role,
+              input.investor_id,
+              input.borrower_id
+            );
+          }
 
           return { success: true, userId: existingAuthUser.id };
         }
@@ -258,8 +270,8 @@ export async function inviteUserAction(input: InviteUserInput): Promise<
       id: newUser.user.id,
       email: input.email,
       full_name: input.full_name,
-      role: input.role,
-      allowed_roles: [input.role],
+      role: profileRole,
+      allowed_roles: allowedRoles,
       activation_status: "link_sent",
     });
 
@@ -267,14 +279,19 @@ export async function inviteUserAction(input: InviteUserInput): Promise<
       console.error("Profile upsert error:", upsertError);
     }
 
-    // Grant role via database function
-    await grantRoleForUser(
-      admin,
-      newUser.user.id,
-      input.role,
-      input.investor_id,
-      input.borrower_id
-    );
+    // Grant roles via database function
+    if (input.role === "super_admin") {
+      await grantRoleForUser(admin, newUser.user.id, "admin");
+      await grantRoleForUser(admin, newUser.user.id, "super_admin");
+    } else {
+      await grantRoleForUser(
+        admin,
+        newUser.user.id,
+        input.role,
+        input.investor_id,
+        input.borrower_id
+      );
+    }
 
     return { success: true, userId: newUser.user.id };
   } catch (err: unknown) {
