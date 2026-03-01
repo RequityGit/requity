@@ -180,6 +180,67 @@ export type Database = {
         }
         Relationships: []
       }
+      campaign_sends: {
+        Row: {
+          campaign_id: string
+          clicked_at: string | null
+          contact_id: string
+          created_at: string
+          id: string
+          opened_at: string | null
+          postmark_message_id: string | null
+          sent_at: string | null
+          status: Database["public"]["Enums"]["send_status_enum"] | null
+          unsubscribed_at: string | null
+        }
+        Insert: {
+          campaign_id: string
+          clicked_at?: string | null
+          contact_id: string
+          created_at?: string
+          id?: string
+          opened_at?: string | null
+          postmark_message_id?: string | null
+          sent_at?: string | null
+          status?: Database["public"]["Enums"]["send_status_enum"] | null
+          unsubscribed_at?: string | null
+        }
+        Update: {
+          campaign_id?: string
+          clicked_at?: string | null
+          contact_id?: string
+          created_at?: string
+          id?: string
+          opened_at?: string | null
+          postmark_message_id?: string | null
+          sent_at?: string | null
+          status?: Database["public"]["Enums"]["send_status_enum"] | null
+          unsubscribed_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "campaign_sends_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "marketing_campaigns"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "campaign_sends_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "crm_contacts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "campaign_sends_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "crm_contacts_active"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       capital_call_line_items: {
         Row: {
           amount: number
@@ -1069,6 +1130,84 @@ export type Database = {
         }
         Relationships: []
       }
+      companies: {
+        Row: {
+          address_line1: string | null
+          address_line2: string | null
+          city: string | null
+          company_type: Database["public"]["Enums"]["company_type_enum"]
+          country: string | null
+          created_at: string
+          email: string | null
+          fee_agreement_on_file: boolean | null
+          id: string
+          is_active: boolean | null
+          name: string
+          notes: string | null
+          phone: string | null
+          primary_contact_id: string | null
+          state: string | null
+          updated_at: string
+          website: string | null
+          zip: string | null
+        }
+        Insert: {
+          address_line1?: string | null
+          address_line2?: string | null
+          city?: string | null
+          company_type: Database["public"]["Enums"]["company_type_enum"]
+          country?: string | null
+          created_at?: string
+          email?: string | null
+          fee_agreement_on_file?: boolean | null
+          id?: string
+          is_active?: boolean | null
+          name: string
+          notes?: string | null
+          phone?: string | null
+          primary_contact_id?: string | null
+          state?: string | null
+          updated_at?: string
+          website?: string | null
+          zip?: string | null
+        }
+        Update: {
+          address_line1?: string | null
+          address_line2?: string | null
+          city?: string | null
+          company_type?: Database["public"]["Enums"]["company_type_enum"]
+          country?: string | null
+          created_at?: string
+          email?: string | null
+          fee_agreement_on_file?: boolean | null
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          notes?: string | null
+          phone?: string | null
+          primary_contact_id?: string | null
+          state?: string | null
+          updated_at?: string
+          website?: string | null
+          zip?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fk_companies_primary_contact"
+            columns: ["primary_contact_id"]
+            isOneToOne: false
+            referencedRelation: "crm_contacts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_companies_primary_contact"
+            columns: ["primary_contact_id"]
+            isOneToOne: false
+            referencedRelation: "crm_contacts_active"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       condition_template_items: {
         Row: {
           borrower_description: string | null
@@ -1160,38 +1299,207 @@ export type Database = {
           },
         ]
       }
+      contact_audit_log: {
+        Row: {
+          action: Database["public"]["Enums"]["audit_action_enum"]
+          changed_at: string
+          changed_by: string | null
+          contact_id: string
+          context: string | null
+          field_name: string
+          id: string
+          new_value: string | null
+          old_value: string | null
+        }
+        Insert: {
+          action: Database["public"]["Enums"]["audit_action_enum"]
+          changed_at?: string
+          changed_by?: string | null
+          contact_id: string
+          context?: string | null
+          field_name: string
+          id?: string
+          new_value?: string | null
+          old_value?: string | null
+        }
+        Update: {
+          action?: Database["public"]["Enums"]["audit_action_enum"]
+          changed_at?: string
+          changed_by?: string | null
+          contact_id?: string
+          context?: string | null
+          field_name?: string
+          id?: string
+          new_value?: string | null
+          old_value?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contact_audit_log_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "crm_contacts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contact_audit_log_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "crm_contacts_active"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      contact_relationship_types: {
+        Row: {
+          contact_id: string
+          created_at: string
+          ended_at: string | null
+          id: string
+          is_active: boolean | null
+          lender_direction: Database["public"]["Enums"]["lender_direction_enum"] | null
+          notes: string | null
+          relationship_type: Database["public"]["Enums"]["relationship_type_enum"]
+          started_at: string
+          vendor_type: Database["public"]["Enums"]["vendor_type_enum"] | null
+        }
+        Insert: {
+          contact_id: string
+          created_at?: string
+          ended_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          lender_direction?: Database["public"]["Enums"]["lender_direction_enum"] | null
+          notes?: string | null
+          relationship_type: Database["public"]["Enums"]["relationship_type_enum"]
+          started_at?: string
+          vendor_type?: Database["public"]["Enums"]["vendor_type_enum"] | null
+        }
+        Update: {
+          contact_id?: string
+          created_at?: string
+          ended_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          lender_direction?: Database["public"]["Enums"]["lender_direction_enum"] | null
+          notes?: string | null
+          relationship_type?: Database["public"]["Enums"]["relationship_type_enum"]
+          started_at?: string
+          vendor_type?: Database["public"]["Enums"]["vendor_type_enum"] | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contact_relationship_types_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "crm_contacts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contact_relationship_types_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "crm_contacts_active"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      contact_tags: {
+        Row: {
+          contact_id: string
+          created_at: string
+          created_by: string | null
+          id: string
+          tag: string
+        }
+        Insert: {
+          contact_id: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          tag: string
+        }
+        Update: {
+          contact_id?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          tag?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contact_tags_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "crm_contacts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contact_tags_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "crm_contacts_active"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contact_tags_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       crm_activities: {
         Row: {
           activity_type: string
+          completed_at: string | null
           contact_id: string
           created_at: string
           description: string | null
+          direction: Database["public"]["Enums"]["activity_direction_enum"] | null
           id: string
+          is_completed: boolean | null
+          linked_entity_id: string | null
+          linked_entity_type: Database["public"]["Enums"]["linked_entity_type_enum"] | null
           metadata: Json | null
           performed_by: string | null
           performed_by_name: string | null
+          scheduled_at: string | null
           subject: string | null
         }
         Insert: {
           activity_type: string
+          completed_at?: string | null
           contact_id: string
           created_at?: string
           description?: string | null
+          direction?: Database["public"]["Enums"]["activity_direction_enum"] | null
           id?: string
+          is_completed?: boolean | null
+          linked_entity_id?: string | null
+          linked_entity_type?: Database["public"]["Enums"]["linked_entity_type_enum"] | null
           metadata?: Json | null
           performed_by?: string | null
           performed_by_name?: string | null
+          scheduled_at?: string | null
           subject?: string | null
         }
         Update: {
           activity_type?: string
+          completed_at?: string | null
           contact_id?: string
           created_at?: string
           description?: string | null
+          direction?: Database["public"]["Enums"]["activity_direction_enum"] | null
           id?: string
+          is_completed?: boolean | null
+          linked_entity_id?: string | null
+          linked_entity_type?: Database["public"]["Enums"]["linked_entity_type_enum"] | null
           metadata?: Json | null
           performed_by?: string | null
           performed_by_name?: string | null
+          scheduled_at?: string | null
           subject?: string | null
         }
         Relationships: [
@@ -1224,24 +1532,33 @@ export type Database = {
           assigned_to: string | null
           borrower_id: string | null
           city: string | null
+          company_id: string | null
           company_name: string | null
+          consent_granted_at: string | null
           contact_type: Database["public"]["Enums"]["crm_contact_type"]
           created_at: string
           deleted_at: string | null
+          dnc: boolean | null
+          dnc_reason: string | null
           email: string | null
           first_name: string | null
           id: string
           last_contacted_at: string | null
           last_name: string | null
+          lifecycle_stage: Database["public"]["Enums"]["lifecycle_stage_enum"] | null
+          lifecycle_updated_at: string | null
           linked_investor_id: string | null
           linked_loan_id: string | null
+          marketing_consent: boolean | null
           name: string | null
           next_follow_up_date: string | null
           notes: string | null
           phone: string | null
+          postmark_contact_id: string | null
           source: Database["public"]["Enums"]["crm_contact_source"] | null
           state: string | null
           status: Database["public"]["Enums"]["crm_contact_status"]
+          twilio_contact_id: string | null
           updated_at: string
           zip: string | null
         }
@@ -1250,24 +1567,33 @@ export type Database = {
           assigned_to?: string | null
           borrower_id?: string | null
           city?: string | null
+          company_id?: string | null
           company_name?: string | null
+          consent_granted_at?: string | null
           contact_type?: Database["public"]["Enums"]["crm_contact_type"]
           created_at?: string
           deleted_at?: string | null
+          dnc?: boolean | null
+          dnc_reason?: string | null
           email?: string | null
           first_name?: string | null
           id?: string
           last_contacted_at?: string | null
           last_name?: string | null
+          lifecycle_stage?: Database["public"]["Enums"]["lifecycle_stage_enum"] | null
+          lifecycle_updated_at?: string | null
           linked_investor_id?: string | null
           linked_loan_id?: string | null
+          marketing_consent?: boolean | null
           name?: string | null
           next_follow_up_date?: string | null
           notes?: string | null
           phone?: string | null
+          postmark_contact_id?: string | null
           source?: Database["public"]["Enums"]["crm_contact_source"] | null
           state?: string | null
           status?: Database["public"]["Enums"]["crm_contact_status"]
+          twilio_contact_id?: string | null
           updated_at?: string
           zip?: string | null
         }
@@ -1276,24 +1602,33 @@ export type Database = {
           assigned_to?: string | null
           borrower_id?: string | null
           city?: string | null
+          company_id?: string | null
           company_name?: string | null
+          consent_granted_at?: string | null
           contact_type?: Database["public"]["Enums"]["crm_contact_type"]
           created_at?: string
           deleted_at?: string | null
+          dnc?: boolean | null
+          dnc_reason?: string | null
           email?: string | null
           first_name?: string | null
           id?: string
           last_contacted_at?: string | null
           last_name?: string | null
+          lifecycle_stage?: Database["public"]["Enums"]["lifecycle_stage_enum"] | null
+          lifecycle_updated_at?: string | null
           linked_investor_id?: string | null
           linked_loan_id?: string | null
+          marketing_consent?: boolean | null
           name?: string | null
           next_follow_up_date?: string | null
           notes?: string | null
           phone?: string | null
+          postmark_contact_id?: string | null
           source?: Database["public"]["Enums"]["crm_contact_source"] | null
           state?: string | null
           status?: Database["public"]["Enums"]["crm_contact_status"]
+          twilio_contact_id?: string | null
           updated_at?: string
           zip?: string | null
         }
@@ -1303,6 +1638,13 @@ export type Database = {
             columns: ["assigned_to"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "crm_contacts_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
             referencedColumns: ["id"]
           },
           {
@@ -1490,6 +1832,90 @@ export type Database = {
             columns: ["linked_loan_id"]
             isOneToOne: false
             referencedRelation: "loans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      dialer_calls: {
+        Row: {
+          called_at: string
+          contact_id: string
+          created_at: string
+          direction: Database["public"]["Enums"]["call_direction_enum"]
+          duration_seconds: number | null
+          ended_at: string | null
+          id: string
+          loan_id: string | null
+          notes: string | null
+          performed_by: string | null
+          recording_url: string | null
+          status: Database["public"]["Enums"]["call_status_enum"] | null
+          twilio_call_sid: string | null
+        }
+        Insert: {
+          called_at?: string
+          contact_id: string
+          created_at?: string
+          direction: Database["public"]["Enums"]["call_direction_enum"]
+          duration_seconds?: number | null
+          ended_at?: string | null
+          id?: string
+          loan_id?: string | null
+          notes?: string | null
+          performed_by?: string | null
+          recording_url?: string | null
+          status?: Database["public"]["Enums"]["call_status_enum"] | null
+          twilio_call_sid?: string | null
+        }
+        Update: {
+          called_at?: string
+          contact_id?: string
+          created_at?: string
+          direction?: Database["public"]["Enums"]["call_direction_enum"]
+          duration_seconds?: number | null
+          ended_at?: string | null
+          id?: string
+          loan_id?: string | null
+          notes?: string | null
+          performed_by?: string | null
+          recording_url?: string | null
+          status?: Database["public"]["Enums"]["call_status_enum"] | null
+          twilio_call_sid?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dialer_calls_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "crm_contacts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "dialer_calls_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "crm_contacts_active"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "dialer_calls_loan_id_fkey"
+            columns: ["loan_id"]
+            isOneToOne: false
+            referencedRelation: "loan_pipeline"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "dialer_calls_loan_id_fkey"
+            columns: ["loan_id"]
+            isOneToOne: false
+            referencedRelation: "loans"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "dialer_calls_performed_by_fkey"
+            columns: ["performed_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -2875,8 +3301,10 @@ export type Database = {
           as_is_value: number | null
           borrower_entity_id: string | null
           borrower_id: string | null
+          broker_contact_id: string | null
           broker_fee_amount: number | null
           broker_fee_pct: number | null
+          broker_sourced: boolean | null
           capital_partner: string | null
           clear_to_close_date: string | null
           closer_id: string | null
@@ -2978,8 +3406,10 @@ export type Database = {
           as_is_value?: number | null
           borrower_entity_id?: string | null
           borrower_id?: string | null
+          broker_contact_id?: string | null
           broker_fee_amount?: number | null
           broker_fee_pct?: number | null
+          broker_sourced?: boolean | null
           capital_partner?: string | null
           clear_to_close_date?: string | null
           closer_id?: string | null
@@ -3081,8 +3511,10 @@ export type Database = {
           as_is_value?: number | null
           borrower_entity_id?: string | null
           borrower_id?: string | null
+          broker_contact_id?: string | null
           broker_fee_amount?: number | null
           broker_fee_pct?: number | null
+          broker_sourced?: boolean | null
           capital_partner?: string | null
           clear_to_close_date?: string | null
           closer_id?: string | null
@@ -3189,6 +3621,20 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "loans_broker_contact_id_fkey"
+            columns: ["broker_contact_id"]
+            isOneToOne: false
+            referencedRelation: "crm_contacts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "loans_broker_contact_id_fkey"
+            columns: ["broker_contact_id"]
+            isOneToOne: false
+            referencedRelation: "crm_contacts_active"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "loans_borrower_id_fkey"
             columns: ["borrower_id"]
             isOneToOne: false
@@ -3226,6 +3672,47 @@ export type Database = {
           {
             foreignKeyName: "loans_underwriter_id_fkey"
             columns: ["underwriter_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      marketing_campaigns: {
+        Row: {
+          audience_rules: Json | null
+          campaign_type: Database["public"]["Enums"]["campaign_type_enum"]
+          created_at: string
+          created_by: string | null
+          id: string
+          name: string
+          status: Database["public"]["Enums"]["campaign_status_enum"] | null
+          updated_at: string
+        }
+        Insert: {
+          audience_rules?: Json | null
+          campaign_type: Database["public"]["Enums"]["campaign_type_enum"]
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          name: string
+          status?: Database["public"]["Enums"]["campaign_status_enum"] | null
+          updated_at?: string
+        }
+        Update: {
+          audience_rules?: Json | null
+          campaign_type?: Database["public"]["Enums"]["campaign_type_enum"]
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          name?: string
+          status?: Database["public"]["Enums"]["campaign_status_enum"] | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "marketing_campaigns_created_by_fkey"
+            columns: ["created_by"]
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
@@ -5132,24 +5619,33 @@ export type Database = {
           assigned_to: string | null
           borrower_id: string | null
           city: string | null
+          company_id: string | null
           company_name: string | null
+          consent_granted_at: string | null
           contact_type: Database["public"]["Enums"]["crm_contact_type"] | null
           created_at: string | null
           deleted_at: string | null
+          dnc: boolean | null
+          dnc_reason: string | null
           email: string | null
           first_name: string | null
           id: string | null
           last_contacted_at: string | null
           last_name: string | null
+          lifecycle_stage: Database["public"]["Enums"]["lifecycle_stage_enum"] | null
+          lifecycle_updated_at: string | null
           linked_investor_id: string | null
           linked_loan_id: string | null
+          marketing_consent: boolean | null
           name: string | null
           next_follow_up_date: string | null
           notes: string | null
           phone: string | null
+          postmark_contact_id: string | null
           source: Database["public"]["Enums"]["crm_contact_source"] | null
           state: string | null
           status: Database["public"]["Enums"]["crm_contact_status"] | null
+          twilio_contact_id: string | null
           updated_at: string | null
           zip: string | null
         }
@@ -5158,24 +5654,33 @@ export type Database = {
           assigned_to?: string | null
           borrower_id?: string | null
           city?: string | null
+          company_id?: string | null
           company_name?: string | null
+          consent_granted_at?: string | null
           contact_type?: Database["public"]["Enums"]["crm_contact_type"] | null
           created_at?: string | null
           deleted_at?: string | null
+          dnc?: boolean | null
+          dnc_reason?: string | null
           email?: string | null
           first_name?: string | null
           id?: string | null
           last_contacted_at?: string | null
           last_name?: string | null
+          lifecycle_stage?: Database["public"]["Enums"]["lifecycle_stage_enum"] | null
+          lifecycle_updated_at?: string | null
           linked_investor_id?: string | null
           linked_loan_id?: string | null
+          marketing_consent?: boolean | null
           name?: string | null
           next_follow_up_date?: string | null
           notes?: string | null
           phone?: string | null
+          postmark_contact_id?: string | null
           source?: Database["public"]["Enums"]["crm_contact_source"] | null
           state?: string | null
           status?: Database["public"]["Enums"]["crm_contact_status"] | null
+          twilio_contact_id?: string | null
           updated_at?: string | null
           zip?: string | null
         }
@@ -5184,24 +5689,33 @@ export type Database = {
           assigned_to?: string | null
           borrower_id?: string | null
           city?: string | null
+          company_id?: string | null
           company_name?: string | null
+          consent_granted_at?: string | null
           contact_type?: Database["public"]["Enums"]["crm_contact_type"] | null
           created_at?: string | null
           deleted_at?: string | null
+          dnc?: boolean | null
+          dnc_reason?: string | null
           email?: string | null
           first_name?: string | null
           id?: string | null
           last_contacted_at?: string | null
           last_name?: string | null
+          lifecycle_stage?: Database["public"]["Enums"]["lifecycle_stage_enum"] | null
+          lifecycle_updated_at?: string | null
           linked_investor_id?: string | null
           linked_loan_id?: string | null
+          marketing_consent?: boolean | null
           name?: string | null
           next_follow_up_date?: string | null
           notes?: string | null
           phone?: string | null
+          postmark_contact_id?: string | null
           source?: Database["public"]["Enums"]["crm_contact_source"] | null
           state?: string | null
           status?: Database["public"]["Enums"]["crm_contact_status"] | null
+          twilio_contact_id?: string | null
           updated_at?: string | null
           zip?: string | null
         }
@@ -5211,6 +5725,13 @@ export type Database = {
             columns: ["assigned_to"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "crm_contacts_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
             referencedColumns: ["id"]
           },
           {
@@ -5483,7 +6004,33 @@ export type Database = {
       unaccent: { Args: { "": string }; Returns: string }
     }
     Enums: {
+      activity_direction_enum: "inbound" | "outbound"
       app_role: "super_admin" | "admin" | "investor" | "borrower"
+      audit_action_enum: "insert" | "update" | "delete"
+      call_direction_enum: "inbound" | "outbound"
+      call_status_enum:
+        | "initiated"
+        | "ringing"
+        | "in_progress"
+        | "completed"
+        | "failed"
+        | "no_answer"
+        | "busy"
+        | "voicemail"
+      campaign_status_enum: "draft" | "active" | "paused" | "completed"
+      campaign_type_enum:
+        | "investor_update"
+        | "lead_nurture"
+        | "borrower_reengagement"
+        | "broker_reengagement"
+      company_type_enum:
+        | "brokerage"
+        | "lender"
+        | "title_company"
+        | "law_firm"
+        | "insurance"
+        | "appraisal"
+        | "other"
       condition_category:
         | "borrower_documents"
         | "non_us_citizen"
@@ -5544,6 +6091,14 @@ export type Database = {
         | "partner"
         | "referral"
         | "other"
+      lender_direction_enum:
+        | "broker_to"
+        | "note_buyer"
+        | "capital_partner"
+        | "co_lender"
+        | "referral_from"
+      lifecycle_stage_enum: "lead" | "prospect" | "active" | "past"
+      linked_entity_type_enum: "loan" | "borrower" | "investor" | "fund"
       loan_purpose: "purchase" | "refinance" | "cash_out_refinance"
       loan_status:
         | "lead"
@@ -5576,6 +6131,22 @@ export type Database = {
         | "industrial"
         | "mobile_home_park"
         | "land"
+        | "other"
+      relationship_type_enum:
+        | "borrower"
+        | "investor"
+        | "broker"
+        | "lender"
+        | "vendor"
+        | "referral_partner"
+      send_status_enum: "pending" | "sent" | "delivered" | "bounced" | "failed"
+      vendor_type_enum:
+        | "title_company"
+        | "law_firm"
+        | "insurance"
+        | "appraisal"
+        | "engineer"
+        | "inspector"
         | "other"
     }
     CompositeTypes: {
@@ -5704,7 +6275,36 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      activity_direction_enum: ["inbound", "outbound"],
       app_role: ["super_admin", "admin", "investor", "borrower"],
+      audit_action_enum: ["insert", "update", "delete"],
+      call_direction_enum: ["inbound", "outbound"],
+      call_status_enum: [
+        "initiated",
+        "ringing",
+        "in_progress",
+        "completed",
+        "failed",
+        "no_answer",
+        "busy",
+        "voicemail",
+      ],
+      campaign_status_enum: ["draft", "active", "paused", "completed"],
+      campaign_type_enum: [
+        "investor_update",
+        "lead_nurture",
+        "borrower_reengagement",
+        "broker_reengagement",
+      ],
+      company_type_enum: [
+        "brokerage",
+        "lender",
+        "title_company",
+        "law_firm",
+        "insurance",
+        "appraisal",
+        "other",
+      ],
       condition_category: [
         "borrower_documents",
         "non_us_citizen",
@@ -5771,6 +6371,15 @@ export const Constants = {
         "referral",
         "other",
       ],
+      lender_direction_enum: [
+        "broker_to",
+        "note_buyer",
+        "capital_partner",
+        "co_lender",
+        "referral_from",
+      ],
+      lifecycle_stage_enum: ["lead", "prospect", "active", "past"],
+      linked_entity_type_enum: ["loan", "borrower", "investor", "fund"],
       loan_purpose: ["purchase", "refinance", "cash_out_refinance"],
       loan_status: [
         "lead",
@@ -5806,6 +6415,24 @@ export const Constants = {
         "land",
         "other",
       ],
+      relationship_type_enum: [
+        "borrower",
+        "investor",
+        "broker",
+        "lender",
+        "vendor",
+        "referral_partner",
+      ],
+      send_status_enum: ["pending", "sent", "delivered", "bounced", "failed"],
+      vendor_type_enum: [
+        "title_company",
+        "law_firm",
+        "insurance",
+        "appraisal",
+        "engineer",
+        "inspector",
+        "other",
+      ],
     },
   },
 } as const
@@ -5839,6 +6466,18 @@ export type CrmEmail = Database["public"]["Tables"]["crm_emails"]["Row"];
 export type CrmEmailInsert = Database["public"]["Tables"]["crm_emails"]["Insert"];
 export type OpsProject = Database["public"]["Tables"]["ops_projects"]["Row"];
 export type OpsTask = Database["public"]["Tables"]["ops_tasks"]["Row"];
+
+// CRM table aliases
+export type CampaignSendRow = Database["public"]["Tables"]["campaign_sends"]["Row"];
+export type CampaignSendInsertRow = Database["public"]["Tables"]["campaign_sends"]["Insert"];
+export type CompanyRow = Database["public"]["Tables"]["companies"]["Row"];
+export type CompanyInsertRow = Database["public"]["Tables"]["companies"]["Insert"];
+export type ContactAuditLogRow = Database["public"]["Tables"]["contact_audit_log"]["Row"];
+export type ContactRelationshipTypeRow = Database["public"]["Tables"]["contact_relationship_types"]["Row"];
+export type ContactTagRow = Database["public"]["Tables"]["contact_tags"]["Row"];
+export type DialerCallRow = Database["public"]["Tables"]["dialer_calls"]["Row"];
+export type MarketingCampaignRow = Database["public"]["Tables"]["marketing_campaigns"]["Row"];
+export type MarketingCampaignInsertRow = Database["public"]["Tables"]["marketing_campaigns"]["Insert"];
 
 // RTL Underwriting Engine types — tables removed from DB, using stubs
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
