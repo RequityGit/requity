@@ -22,7 +22,7 @@ import {
 } from "@/components/ui/select";
 import { Plus } from "lucide-react";
 import { TEMPLATE_CATEGORIES } from "@/app/(authenticated)/admin/email-templates/types";
-import { createTemplateAction } from "@/app/(authenticated)/admin/email-templates/actions";
+import { createTemplateAction } from "@/app/(authenticated)/admin/email-templates/actions-write";
 
 export function CreateTemplateDialog() {
   const router = useRouter();

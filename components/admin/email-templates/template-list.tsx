@@ -15,11 +15,11 @@ import {
 import { Copy, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { EmailTemplate } from "@/app/(authenticated)/admin/email-templates/types";
+import { deleteTemplateAction } from "@/app/(authenticated)/admin/email-templates/actions-write";
 import {
-  deleteTemplateAction,
   duplicateTemplateAction,
   toggleTemplateActiveAction,
-} from "@/app/(authenticated)/admin/email-templates/actions";
+} from "@/app/(authenticated)/admin/email-templates/actions-extra";
 import { DeleteConfirmDialog } from "./delete-confirm-dialog";
 import { TemplateFilters } from "./template-filters";
 
