@@ -282,3 +282,50 @@ All column names below are the **actual database columns**. Always use these exa
 - Server actions should always verify authentication and admin role before performing mutations
 - All financial amounts use `formatCurrency()` or `formatCurrencyDetailed()` from `lib/format.ts`
 - Storage buckets: `loan-documents` (structure: `{loan_id}/{filename}`) and `investor-documents` (structure: `{investor_id}/{filename}`)
+
+## Supabase MCP — Mandatory Usage
+
+**CRITICAL: ALWAYS use the Supabase MCP tools for ALL database operations. NEVER ask the user to run SQL manually.**
+
+- **Project ID**: `edhlkknvlczhbowasjna` — always pass this as `project_id` to all Supabase MCP tools
+- **Schema changes (DDL)**: Use `mcp__Supabase__apply_migration` with a descriptive `name` in snake_case
+  - After applying, also create the corresponding timestamped `.sql` file in `supabase/migrations/` for git tracking
+- **Data queries & fixes (DML/SELECT)**: Use `mcp__Supabase__execute_sql`
+- **Check applied migrations**: Use `mcp__Supabase__list_migrations`
+- **Generate TypeScript types**: Use `mcp__Supabase__generate_typescript_types` and write output to `lib/supabase/types.ts`
+- If a migration fails, debug and retry with the MCP tool — do NOT fall back to telling the user to apply it manually
+- When making schema changes that affect TypeScript types, always regenerate types after the migration succeeds
+
+## GitHub — PR Workflow
+
+**CRITICAL: ALWAYS push the branch and create a pull request. ALWAYS return a PR link to the user.**
+
+### Step 1: Push the branch
+```bash
+git push -u origin <branch-name>
+```
+
+### Step 2: Install `gh` CLI (if not available)
+```bash
+if ! which gh >/dev/null 2>&1; then
+  apt-get update -qq && apt-get install -y -qq gh 2>/dev/null
+fi
+```
+
+### Step 3: Create the PR
+Try `gh pr create` first. If `gh` is not authenticated, fall back to providing the compare URL.
+
+```bash
+# Try gh first
+gh pr create --title "..." --body "..." --base main 2>/dev/null
+
+# If gh fails (not authenticated), provide the compare URL:
+echo "https://github.com/RequityGit/borrwerportal/compare/main...<branch-name>"
+```
+
+### Rules
+- ALWAYS push the branch — never skip this step
+- ALWAYS attempt `gh pr create` — it works when `gh` is authenticated
+- If `gh auth status` fails, provide the GitHub compare URL so the user can create the PR with one click
+- PR body should include a `## Summary` section with bullet points describing the changes
+- ALWAYS include either the PR URL or the compare URL in your response — never leave the user without a link
