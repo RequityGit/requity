@@ -12,15 +12,17 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { LogOut, ShieldCheck, User } from "lucide-react";
 import { RoleSwitcher } from "./role-switcher";
+import { NotificationBell } from "@/components/notifications/notification-bell";
 
 interface TopbarProps {
   userName: string;
   role: string;
   email: string;
   allowedRoles: string[];
+  userId: string;
 }
 
-export function Topbar({ userName, role, email, allowedRoles }: TopbarProps) {
+export function Topbar({ userName, role, email, allowedRoles, userId }: TopbarProps) {
   const router = useRouter();
   const supabase = createClient();
 
@@ -34,6 +36,7 @@ export function Topbar({ userName, role, email, allowedRoles }: TopbarProps) {
     <header className="sticky top-0 z-30 h-16 border-b bg-white flex items-center justify-between px-6">
       <div />
       <div className="flex items-center gap-4">
+        <NotificationBell userId={userId} />
         <RoleSwitcher activeRole={role} allowedRoles={allowedRoles} />
 
         <DropdownMenu>
