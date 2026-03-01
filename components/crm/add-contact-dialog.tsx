@@ -231,6 +231,7 @@ export function AddContactDialog({
           company_id: companyId,
           company_name: form.company_name || null,
           contact_type: "other" as any, // legacy default
+          contact_types: selectedRelationships.length > 0 ? selectedRelationships : ["other"],
           source: (form.source || null) as any,
           status: "active" as any, // legacy default
           lifecycle_stage: form.lifecycle_stage as any,

@@ -1554,6 +1554,7 @@ export type Database = {
           company_name: string | null
           consent_granted_at: string | null
           contact_type: Database["public"]["Enums"]["crm_contact_type"]
+          contact_types: string[]
           created_at: string
           deleted_at: string | null
           dnc: boolean | null
@@ -1580,6 +1581,7 @@ export type Database = {
           status: Database["public"]["Enums"]["crm_contact_status"]
           twilio_contact_id: string | null
           updated_at: string
+          user_id: string | null
           zip: string | null
         }
         Insert: {
@@ -1591,6 +1593,7 @@ export type Database = {
           company_name?: string | null
           consent_granted_at?: string | null
           contact_type?: Database["public"]["Enums"]["crm_contact_type"]
+          contact_types?: string[]
           created_at?: string
           deleted_at?: string | null
           dnc?: boolean | null
@@ -1617,6 +1620,7 @@ export type Database = {
           status?: Database["public"]["Enums"]["crm_contact_status"]
           twilio_contact_id?: string | null
           updated_at?: string
+          user_id?: string | null
           zip?: string | null
         }
         Update: {
@@ -1628,6 +1632,7 @@ export type Database = {
           company_name?: string | null
           consent_granted_at?: string | null
           contact_type?: Database["public"]["Enums"]["crm_contact_type"]
+          contact_types?: string[]
           created_at?: string
           deleted_at?: string | null
           dnc?: boolean | null
@@ -1654,6 +1659,7 @@ export type Database = {
           status?: Database["public"]["Enums"]["crm_contact_status"]
           twilio_contact_id?: string | null
           updated_at?: string
+          user_id?: string | null
           zip?: string | null
         }
         Relationships: [
@@ -1711,6 +1717,13 @@ export type Database = {
             columns: ["linked_loan_id"]
             isOneToOne: false
             referencedRelation: "loans"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "crm_contacts_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -5682,25 +5695,37 @@ export type Database = {
           assigned_to: string | null
           borrower_id: string | null
           city: string | null
+          company_id: string | null
           company_name: string | null
           contact_type: Database["public"]["Enums"]["crm_contact_type"] | null
+          contact_types: string[] | null
           created_at: string | null
           deleted_at: string | null
+          dnc: boolean | null
+          dnc_reason: string | null
           email: string | null
           first_name: string | null
           id: string | null
           last_contacted_at: string | null
           last_name: string | null
+          lifecycle_stage:
+            | Database["public"]["Enums"]["lifecycle_stage_enum"]
+            | null
+          lifecycle_updated_at: string | null
           linked_investor_id: string | null
           linked_loan_id: string | null
+          marketing_consent: boolean | null
           name: string | null
           next_follow_up_date: string | null
           notes: string | null
           phone: string | null
+          postmark_contact_id: string | null
           source: Database["public"]["Enums"]["crm_contact_source"] | null
           state: string | null
           status: Database["public"]["Enums"]["crm_contact_status"] | null
+          twilio_contact_id: string | null
           updated_at: string | null
+          user_id: string | null
           zip: string | null
         }
         Insert: {
@@ -5708,25 +5733,37 @@ export type Database = {
           assigned_to?: string | null
           borrower_id?: string | null
           city?: string | null
+          company_id?: string | null
           company_name?: string | null
           contact_type?: Database["public"]["Enums"]["crm_contact_type"] | null
+          contact_types?: string[] | null
           created_at?: string | null
           deleted_at?: string | null
+          dnc?: boolean | null
+          dnc_reason?: string | null
           email?: string | null
           first_name?: string | null
           id?: string | null
           last_contacted_at?: string | null
           last_name?: string | null
+          lifecycle_stage?:
+            | Database["public"]["Enums"]["lifecycle_stage_enum"]
+            | null
+          lifecycle_updated_at?: string | null
           linked_investor_id?: string | null
           linked_loan_id?: string | null
+          marketing_consent?: boolean | null
           name?: string | null
           next_follow_up_date?: string | null
           notes?: string | null
           phone?: string | null
+          postmark_contact_id?: string | null
           source?: Database["public"]["Enums"]["crm_contact_source"] | null
           state?: string | null
           status?: Database["public"]["Enums"]["crm_contact_status"] | null
+          twilio_contact_id?: string | null
           updated_at?: string | null
+          user_id?: string | null
           zip?: string | null
         }
         Update: {
@@ -5734,25 +5771,37 @@ export type Database = {
           assigned_to?: string | null
           borrower_id?: string | null
           city?: string | null
+          company_id?: string | null
           company_name?: string | null
           contact_type?: Database["public"]["Enums"]["crm_contact_type"] | null
+          contact_types?: string[] | null
           created_at?: string | null
           deleted_at?: string | null
+          dnc?: boolean | null
+          dnc_reason?: string | null
           email?: string | null
           first_name?: string | null
           id?: string | null
           last_contacted_at?: string | null
           last_name?: string | null
+          lifecycle_stage?:
+            | Database["public"]["Enums"]["lifecycle_stage_enum"]
+            | null
+          lifecycle_updated_at?: string | null
           linked_investor_id?: string | null
           linked_loan_id?: string | null
+          marketing_consent?: boolean | null
           name?: string | null
           next_follow_up_date?: string | null
           notes?: string | null
           phone?: string | null
+          postmark_contact_id?: string | null
           source?: Database["public"]["Enums"]["crm_contact_source"] | null
           state?: string | null
           status?: Database["public"]["Enums"]["crm_contact_status"] | null
+          twilio_contact_id?: string | null
           updated_at?: string | null
+          user_id?: string | null
           zip?: string | null
         }
         Relationships: [
@@ -5761,6 +5810,13 @@ export type Database = {
             columns: ["assigned_to"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "crm_contacts_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
             referencedColumns: ["id"]
           },
           {
@@ -5803,6 +5859,13 @@ export type Database = {
             columns: ["linked_loan_id"]
             isOneToOne: false
             referencedRelation: "loans"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "crm_contacts_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
