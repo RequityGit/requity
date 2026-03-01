@@ -109,12 +109,12 @@ export async function addConditionComment(
       .eq("id", user.id)
       .single();
 
-    const authorName = (profile as any)?.full_name ?? "Borrower";
+    const authorName = profile?.full_name ?? "Borrower";
 
     // RLS policy on loan_condition_comments enforces borrower ownership
     // and prevents is_internal = true from being set by borrowers.
-    const { error } = await supabase
-      .from("loan_condition_comments" as any)
+    const { error } = await (supabase as any)
+      .from("loan_condition_comments")
       .insert({
         condition_id: conditionId,
         loan_id: loanId,
@@ -122,6 +122,7 @@ export async function addConditionComment(
         author_name: authorName,
         comment: comment.trim(),
         is_internal: false,
+        mentions: [],
       });
 
     if (error) return { error: error.message };

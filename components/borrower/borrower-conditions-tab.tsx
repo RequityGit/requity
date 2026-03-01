@@ -23,13 +23,14 @@ import {
   FileText,
   Upload,
 } from "lucide-react";
+import { CommentRenderer } from "@/components/shared/comment-renderer";
 import {
   uploadConditionDocument,
   addConditionComment,
 } from "@/app/(authenticated)/borrower/loans/[id]/actions";
 import type { LoanCondition, LoanDocument } from "@/lib/supabase/types";
 
-// Local type — loan_condition_comments not yet in generated types
+// Local type — includes new mention/edit fields
 interface ConditionComment {
   id: string;
   condition_id: string;
@@ -37,7 +38,11 @@ interface ConditionComment {
   author_id: string | null;
   author_name: string | null;
   comment: string;
+  mentions: string[] | null;
   is_internal: boolean;
+  is_edited: boolean;
+  edited_at: string | null;
+  parent_comment_id: string | null;
   created_at: string;
 }
 
@@ -227,7 +232,11 @@ function BorrowerConditionCard({
             author_id: currentUserId,
             author_name: "You",
             comment: commentText.trim(),
+            mentions: [],
             is_internal: false,
+            is_edited: false,
+            edited_at: null,
+            parent_comment_id: null,
             created_at: new Date().toISOString(),
           },
         ]);
@@ -447,31 +456,17 @@ function BorrowerConditionCard({
               </p>
             ) : (
               <div className="space-y-2">
-                {comments.map((c) => {
-                  const isOwn = c.author_id === currentUserId;
-                  return (
-                    <div
-                      key={c.id}
-                      className={`rounded-lg px-3 py-2.5 text-xs ${
-                        isOwn
-                          ? "bg-[#1a2b4a]/5 border border-[#1a2b4a]/10 ml-4"
-                          : "bg-white border mr-4"
-                      }`}
-                    >
-                      <div className="flex items-center gap-2 mb-1">
-                        <span className="font-medium">
-                          {isOwn ? "You" : c.author_name ?? "Loan Team"}
-                        </span>
-                        <span className="text-muted-foreground ml-auto">
-                          {formatDate(c.created_at)}
-                        </span>
-                      </div>
-                      <p className="text-muted-foreground whitespace-pre-wrap">
-                        {c.comment}
-                      </p>
-                    </div>
-                  );
-                })}
+                {comments.map((c) => (
+                  <CommentRenderer
+                    key={c.id}
+                    comment={c.comment}
+                    authorName={c.author_name}
+                    isInternal={false}
+                    isEdited={c.is_edited}
+                    createdAt={c.created_at}
+                    isOwnComment={c.author_id === currentUserId}
+                  />
+                ))}
               </div>
             )}
 

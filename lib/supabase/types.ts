@@ -3999,3 +3999,48 @@ export type LoanEligibilityCheck = Database["public"]["Tables"]["loan_eligibilit
 // Underwriting versions
 export type LoanUnderwritingVersion = Database["public"]["Tables"]["loan_underwriting_versions"]["Row"];
 export type LoanUnderwritingVersionInsert = Database["public"]["Tables"]["loan_underwriting_versions"]["Insert"];
+
+// ---------------------------------------------------------------------------
+// Chatter system types (added via migration, not yet in generated Database type)
+// ---------------------------------------------------------------------------
+export interface LoanCommentRow {
+  id: string;
+  created_at: string;
+  updated_at: string;
+  loan_id: string;
+  author_id: string;
+  author_name: string | null;
+  comment: string;
+  mentions: string[] | null;
+  is_internal: boolean;
+  is_edited: boolean;
+  edited_at: string | null;
+  parent_comment_id: string | null;
+}
+
+export interface LoanConditionCommentRow {
+  id: string;
+  condition_id: string;
+  loan_id: string;
+  author_id: string | null;
+  author_name: string | null;
+  comment: string;
+  mentions: string[] | null;
+  is_internal: boolean;
+  is_edited: boolean;
+  edited_at: string | null;
+  parent_comment_id: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CommentMentionRow {
+  id: string;
+  created_at: string;
+  comment_type: string;
+  comment_id: string;
+  mentioned_user_id: string;
+  loan_id: string;
+  condition_id: string | null;
+  notification_sent: boolean;
+}

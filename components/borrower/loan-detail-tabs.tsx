@@ -13,7 +13,8 @@ import { BorrowerConditionsTab } from "@/components/borrower/borrower-conditions
 import { formatCurrencyDetailed, formatDate } from "@/lib/format";
 import { DOCUMENT_TYPES } from "@/lib/constants";
 import type { LoanPayment, Document, LoanCondition } from "@/lib/supabase/types";
-import { FileText, CreditCard, ClipboardList } from "lucide-react";
+import { FileText, CreditCard, ClipboardList, MessageCircle } from "lucide-react";
+import { LoanChatter } from "@/components/shared/loan-chatter";
 
 interface LoanDetailTabsProps {
   payments: LoanPayment[];
@@ -125,6 +126,10 @@ export function LoanDetailTabs({
           <FileText className="h-4 w-4" />
           Documents
         </TabsTrigger>
+        <TabsTrigger value="messages" className="gap-1.5">
+          <MessageCircle className="h-4 w-4" />
+          Messages
+        </TabsTrigger>
       </TabsList>
 
       <TabsContent value="conditions" className="mt-4">
@@ -148,6 +153,14 @@ export function LoanDetailTabs({
           columns={documentColumns}
           data={documents}
           emptyMessage="No documents found for this loan."
+        />
+      </TabsContent>
+
+      <TabsContent value="messages" className="mt-4">
+        <LoanChatter
+          loanId={loanId}
+          currentUserId={currentUserId}
+          isAdmin={false}
         />
       </TabsContent>
     </Tabs>

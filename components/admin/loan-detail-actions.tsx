@@ -44,11 +44,13 @@ import {
   ClipboardList,
   Activity,
   Calculator,
+  MessageCircle,
 } from "lucide-react";
 import type { DrawRequest, LoanPayment, Document, LoanCondition, PricingProgram, LeverageAdjuster } from "@/lib/supabase/types";
 import { LoanConditionsTab } from "@/components/admin/loan-conditions-tab";
 import { LoanPricingTab } from "@/components/admin/loan-pricing-tab";
 import { LoanUnderwritingTab } from "@/components/admin/loan-underwriting-tab";
+import { LoanChatter } from "@/components/shared/loan-chatter";
 import type { UnderwritingInputs } from "@/lib/underwriting/types";
 import { Scale } from "lucide-react";
 
@@ -215,6 +217,10 @@ export function LoanDetailActions({
             <ClipboardList className="h-3.5 w-3.5" />
             Conditions ({conditions.length})
           </TabsTrigger>
+          <TabsTrigger value="chatter" className="gap-1">
+            <MessageCircle className="h-3.5 w-3.5" />
+            Chatter
+          </TabsTrigger>
           <TabsTrigger value="draw-requests">
             Draw Requests ({drawRequests.length})
           </TabsTrigger>
@@ -250,6 +256,14 @@ export function LoanDetailActions({
             conditions={conditions}
             loanId={loanId}
             currentUserId={currentUserId}
+          />
+        </TabsContent>
+
+        <TabsContent value="chatter" className="mt-4">
+          <LoanChatter
+            loanId={loanId}
+            currentUserId={currentUserId}
+            isAdmin={true}
           />
         </TabsContent>
 

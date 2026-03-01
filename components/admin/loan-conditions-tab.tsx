@@ -48,8 +48,12 @@ import {
   Upload,
   X,
   Send,
+  Pencil,
 } from "lucide-react";
 import type { LoanCondition, LoanDocument } from "@/lib/supabase/types";
+import { MentionInput } from "@/components/shared/mention-input";
+import { CommentRenderer } from "@/components/shared/comment-renderer";
+import { extractMentionIds } from "@/lib/comment-utils";
 
 // ---------------------------------------------------------------------------
 // Local type for loan_condition_comments (not yet in generated types)
@@ -61,7 +65,11 @@ interface ConditionComment {
   author_id: string | null;
   author_name: string | null;
   comment: string;
+  mentions: string[] | null;
   is_internal: boolean;
+  is_edited: boolean;
+  edited_at: string | null;
+  parent_comment_id: string | null;
   created_at: string;
 }
 
@@ -426,8 +434,8 @@ function ConditionRow({
     setPanelOpen((prev) => !prev);
   }
 
-  async function handleAddComment() {
-    if (!commentText.trim()) return;
+  async function handleAddComment(text: string, mentionIds: string[]) {
+    if (!text.trim()) return;
     setCommentLoading(true);
 
     const supabase = createClient();
@@ -438,21 +446,19 @@ function ConditionRow({
       .select("full_name")
       .eq("id", currentUserId)
       .single();
-    const authorName = (profile as any)?.full_name ?? "Admin";
-
-    const newComment: Omit<ConditionComment, "id"> = {
-      condition_id: condition.id,
-      loan_id: loanId,
-      author_id: currentUserId,
-      author_name: authorName,
-      comment: commentText.trim(),
-      is_internal: isInternal,
-      created_at: new Date().toISOString(),
-    };
+    const authorName = profile?.full_name ?? "Admin";
 
     const { data, error } = await (supabase as any)
       .from("loan_condition_comments")
-      .insert(newComment)
+      .insert({
+        condition_id: condition.id,
+        loan_id: loanId,
+        author_id: currentUserId,
+        author_name: authorName,
+        comment: text.trim(),
+        mentions: mentionIds.length > 0 ? mentionIds : [],
+        is_internal: isInternal,
+      })
       .select()
       .single();
 
@@ -800,48 +806,43 @@ function ConditionRow({
               ) : (
                 <div className="space-y-2">
                   {comments.map((c) => (
-                    <div
+                    <CommentRenderer
                       key={c.id}
-                      className={`rounded-md px-3 py-2 text-xs ${
-                        c.is_internal
-                          ? "bg-amber-50 border border-amber-200"
-                          : "bg-white border"
-                      }`}
-                    >
-                      <div className="flex items-center gap-2 mb-1">
-                        {c.is_internal && (
-                          <Lock className="h-3 w-3 text-amber-600" />
-                        )}
-                        <span className="font-medium">
-                          {c.author_name ?? "Team"}
-                        </span>
-                        {c.is_internal && (
-                          <Badge className="bg-amber-100 text-amber-700 border-amber-200 text-[10px] px-1 py-0">
-                            Internal
-                          </Badge>
-                        )}
-                        <span className="text-muted-foreground ml-auto">
-                          {formatDate(c.created_at)}
-                        </span>
-                      </div>
-                      <p className="text-muted-foreground whitespace-pre-wrap">
-                        {c.comment}
-                      </p>
-                    </div>
+                      comment={c.comment}
+                      authorName={c.author_name}
+                      isInternal={c.is_internal}
+                      isEdited={c.is_edited}
+                      createdAt={c.created_at}
+                      isOwnComment={c.author_id === currentUserId}
+                      actions={
+                        c.author_id === currentUserId ? (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setCommentText(c.comment);
+                            }}
+                            className="text-muted-foreground hover:text-foreground ml-1"
+                          >
+                            <Pencil className="h-3 w-3" />
+                          </button>
+                        ) : undefined
+                      }
+                    />
                   ))}
                 </div>
               )}
 
-              {/* Add comment form */}
-              <div className="space-y-2">
-                <Textarea
-                  value={commentText}
-                  onChange={(e) => setCommentText(e.target.value)}
-                  placeholder="Add a comment..."
-                  rows={2}
-                  className="text-xs resize-none"
-                />
-                <div className="flex items-center justify-between">
+              {/* Add comment form with @mention support */}
+              <MentionInput
+                value={commentText}
+                onChange={setCommentText}
+                onSubmit={handleAddComment}
+                placeholder="Add a comment... (type @ to mention)"
+                disabled={commentLoading}
+                submitLabel={commentLoading ? "Posting..." : "Post"}
+                submitIcon={<Send className="h-3 w-3" />}
+                rows={2}
+                extraControls={
                   <label className="flex items-center gap-2 text-xs cursor-pointer select-none">
                     <input
                       type="checkbox"
@@ -850,19 +851,10 @@ function ConditionRow({
                       className="rounded border-gray-300 h-3 w-3"
                     />
                     <Lock className="h-3 w-3 text-amber-600" />
-                    Internal only (hidden from borrower)
+                    Internal only
                   </label>
-                  <Button
-                    size="sm"
-                    className="h-7 text-xs px-3"
-                    onClick={handleAddComment}
-                    disabled={commentLoading || !commentText.trim()}
-                  >
-                    <Send className="h-3 w-3 mr-1" />
-                    {commentLoading ? "Posting..." : "Post"}
-                  </Button>
-                </div>
-              </div>
+                }
+              />
             </div>
           </div>
         )}
