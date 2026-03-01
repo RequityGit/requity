@@ -54,8 +54,28 @@ import {
   isLeaseBased,
   isOccupancyBased,
 } from "@/lib/commercial-uw/types";
+import {
+  createT12Upload,
+  saveT12LineItems,
+  saveT12Mappings,
+  saveT12Overrides,
+  activateT12Version,
+  getT12UploadData,
+  updateT12MappingSuggestions,
+} from "@/app/(authenticated)/admin/loans/[id]/commercial-uw/t12-actions";
+import type {
+  T12LineItem,
+  T12FieldMapping,
+  T12Upload,
+  T12Version,
+  T12Override,
+  T12Category,
+} from "@/lib/commercial-uw/types";
+import { T12_TO_PROFORMA_MAP } from "@/lib/commercial-uw/types";
+import type { T12HistoricalsImportData } from "./upload-t12-historicals-dialog";
 import { IncomeTab } from "./income-tab";
 import { ExpensesTab } from "./expenses-tab";
+import { HistoricalsTab } from "./historicals-tab";
 import { ProFormaTab } from "./proforma-tab";
 import { FinancingTab } from "./financing-tab";
 import { SummaryTab } from "./summary-tab";
@@ -76,6 +96,60 @@ interface Props {
   existingProforma: unknown[];
   existingUploadMappings: unknown[];
   expenseDefaults: ExpenseDefault[];
+  existingT12Upload?: T12Upload | null;
+  existingT12LineItems?: T12LineItem[];
+  existingT12Mappings?: T12FieldMapping[];
+  existingT12Versions?: T12Version[];
+  existingT12Overrides?: T12Override[];
+  existingT12PreviousMappings?: Record<
+    string,
+    { category: string; is_excluded: boolean; exclusion_reason: string | null }
+  >;
+}
+
+// Build simple T12Data (for ProForma) from historicals line items + mappings + overrides
+function buildT12DataFromHistoricals(
+  lineItems: T12LineItem[],
+  mappings: T12FieldMapping[],
+  overrides: T12Override[]
+): T12Data {
+  const categoryTotals: Record<string, number> = {};
+
+  for (const mapping of mappings) {
+    if (mapping.is_excluded) continue;
+    const lineItem = lineItems.find((li) => li.id === mapping.t12_line_item_id);
+    if (!lineItem) continue;
+    const cat = mapping.mapped_category;
+    categoryTotals[cat] = (categoryTotals[cat] ?? 0) + (lineItem.annual_total ?? 0);
+  }
+
+  // Apply overrides
+  for (const override of overrides) {
+    categoryTotals[override.category] = override.override_annual_total;
+  }
+
+  // Map to ProForma T12Data keys
+  const get = (cat: string) => categoryTotals[cat] ?? 0;
+  const gpr = get("gross_potential_rent");
+  const vacancyLoss = get("vacancy_loss");
+  const badDebt = get("bad_debt");
+  const egi = gpr - Math.abs(vacancyLoss) - Math.abs(badDebt) + get("other_income") - Math.abs(get("concessions"));
+
+  return {
+    gpi: gpr,
+    vacancy_pct: gpr > 0 ? (Math.abs(vacancyLoss) / gpr) * 100 : 0,
+    bad_debt_pct: gpr > 0 ? (Math.abs(badDebt) / gpr) * 100 : 0,
+    mgmt_fee: get("management_fee"),
+    taxes: get("real_estate_taxes"),
+    insurance: get("insurance"),
+    utilities: get("water_sewer") + get("electricity") + get("gas"),
+    repairs: get("repairs_maintenance"),
+    contract_services: get("contract_services"),
+    payroll: get("payroll"),
+    marketing: get("marketing"),
+    ga: get("general_administrative"),
+    replacement_reserve: get("replacement_reserve"),
+  };
 }
 
 const STATUS_LABELS: Record<UWStatus, string> = {
@@ -102,6 +176,12 @@ export function CommercialUWClient({
   existingProforma,
   existingUploadMappings,
   expenseDefaults,
+  existingT12Upload,
+  existingT12LineItems,
+  existingT12Mappings,
+  existingT12Versions,
+  existingT12Overrides,
+  existingT12PreviousMappings,
 }: Props) {
   const router = useRouter();
   const { toast } = useToast();
@@ -242,6 +322,23 @@ export function CommercialUWClient({
     (existingUW?.poh_expense_ratio as number) ?? 50
   );
 
+  // T12 Historicals state
+  const [t12Upload, setT12Upload] = useState<T12Upload | null>(
+    existingT12Upload ?? null
+  );
+  const [t12LineItems, setT12LineItems] = useState<T12LineItem[]>(
+    existingT12LineItems ?? []
+  );
+  const [t12Mappings, setT12Mappings] = useState<T12FieldMapping[]>(
+    existingT12Mappings ?? []
+  );
+  const [t12Versions, setT12Versions] = useState<T12Version[]>(
+    existingT12Versions ?? []
+  );
+  const [t12Overrides, setT12Overrides] = useState<T12Override[]>(
+    existingT12Overrides ?? []
+  );
+
   // Upload version history
   const [rentRollVersions, setRentRollVersions] = useState<UploadVersion[]>(
     () => {
@@ -311,6 +408,213 @@ export function CommercialUWClient({
       toast({ title: "Restored", description: "Rent roll restored from previous version. Click Save Draft to persist." });
     },
     [toast]
+  );
+
+  // ---- T12 Historicals Handlers ----
+
+  const handleT12HistoricalsImport = useCallback(
+    async (data: T12HistoricalsImportData) => {
+      try {
+        // 1. Create upload record + version
+        const uploadResult = await createT12Upload(
+          loanId,
+          data.fileName,
+          data.periodStart,
+          data.periodEnd,
+          data.sourceLabel || null
+        );
+        if (uploadResult.error || !uploadResult.uploadId) {
+          toast({ title: "Error", description: uploadResult.error ?? "Failed to create upload", variant: "destructive" });
+          return;
+        }
+        const uploadId = uploadResult.uploadId;
+
+        // 2. Save line items
+        const lineItemsResult = await saveT12LineItems(uploadId, data.lineItems);
+        if (lineItemsResult.error || !lineItemsResult.ids) {
+          toast({ title: "Error", description: lineItemsResult.error ?? "Failed to save line items", variant: "destructive" });
+          return;
+        }
+        const lineItemIds = lineItemsResult.ids;
+
+        // 3. Save mappings (map lineItemIndex to actual IDs)
+        const mappingsToSave = data.mappings.map((m) => ({
+          t12_line_item_id: lineItemIds[m.lineItemIndex],
+          mapped_category: m.mapped_category,
+          is_excluded: m.is_excluded,
+          exclusion_reason: m.exclusion_reason,
+        }));
+        const mappingsResult = await saveT12Mappings(uploadId, mappingsToSave);
+        if (mappingsResult.error) {
+          toast({ title: "Error", description: mappingsResult.error, variant: "destructive" });
+          return;
+        }
+
+        // 4. Update global mapping suggestions
+        const suggestions = data.mappings
+          .filter((m) => !m.is_excluded)
+          .map((m) => ({
+            label: data.lineItems[m.lineItemIndex]?.original_row_label ?? "",
+            category: m.mapped_category,
+          }))
+          .filter((s) => s.label);
+        await updateT12MappingSuggestions(suggestions);
+
+        // 5. Update local state
+        const newUpload: T12Upload = {
+          id: uploadId,
+          loan_id: loanId,
+          file_name: data.fileName,
+          file_url: "",
+          upload_date: new Date().toISOString(),
+          period_start: data.periodStart,
+          period_end: data.periodEnd,
+          source_label: data.sourceLabel || null,
+          uploaded_by: null,
+          status: "mapped",
+          notes: null,
+          created_at: new Date().toISOString(),
+        };
+        setT12Upload(newUpload);
+
+        const newLineItems: T12LineItem[] = data.lineItems.map((li, i) => ({
+          id: lineItemIds[i],
+          t12_upload_id: uploadId,
+          original_row_label: li.original_row_label,
+          original_category: li.original_category,
+          amount_month_1: li.amounts[0] ?? null,
+          amount_month_2: li.amounts[1] ?? null,
+          amount_month_3: li.amounts[2] ?? null,
+          amount_month_4: li.amounts[3] ?? null,
+          amount_month_5: li.amounts[4] ?? null,
+          amount_month_6: li.amounts[5] ?? null,
+          amount_month_7: li.amounts[6] ?? null,
+          amount_month_8: li.amounts[7] ?? null,
+          amount_month_9: li.amounts[8] ?? null,
+          amount_month_10: li.amounts[9] ?? null,
+          amount_month_11: li.amounts[10] ?? null,
+          amount_month_12: li.amounts[11] ?? null,
+          annual_total: li.annual_total,
+          is_income: li.is_income,
+          sort_order: li.sort_order,
+        }));
+        setT12LineItems(newLineItems);
+
+        const newMappings: T12FieldMapping[] = mappingsToSave.map((m, i) => ({
+          id: `mapping-${i}`,
+          t12_upload_id: uploadId,
+          t12_line_item_id: m.t12_line_item_id,
+          mapped_category: m.mapped_category as T12Category,
+          mapped_subcategory: null,
+          is_excluded: m.is_excluded,
+          exclusion_reason: m.exclusion_reason ?? null,
+        }));
+        setT12Mappings(newMappings);
+
+        // Update versions list
+        setT12Versions((prev) => {
+          const deactivated = prev.map((v) => ({ ...v, is_active: false }));
+          const fmt = (d: string) =>
+            new Date(d).toLocaleDateString("en-US", { month: "short", year: "numeric" });
+          return [
+            {
+              id: `version-${Date.now()}`,
+              loan_id: loanId,
+              t12_upload_id: uploadId,
+              version_number: (prev[0]?.version_number ?? 0) + 1,
+              version_label: `T12 ${fmt(data.periodStart)} – ${fmt(data.periodEnd)}`,
+              is_active: true,
+              created_at: new Date().toISOString(),
+            },
+            ...deactivated,
+          ];
+        });
+        setT12Overrides([]);
+
+        // 6. Also update the simple T12Data for ProForma compatibility
+        const t12Data = buildT12DataFromHistoricals(newLineItems, newMappings, []);
+        setT12(t12Data);
+
+        toast({
+          title: "T12 Imported",
+          description: `${data.lineItems.length} rows imported and mapped from ${data.fileName}`,
+        });
+      } catch (err) {
+        console.error("T12 import error:", err);
+        toast({ title: "Error", description: "Failed to import T12 data", variant: "destructive" });
+      }
+    },
+    [loanId, toast]
+  );
+
+  const handleActivateT12Version = useCallback(
+    async (versionId: string) => {
+      const version = t12Versions.find((v) => v.id === versionId);
+      if (!version) return;
+
+      const result = await activateT12Version(loanId, versionId);
+      if (result.error) {
+        toast({ title: "Error", description: result.error, variant: "destructive" });
+        return;
+      }
+
+      // Fetch data for this version's upload
+      const uploadData = await getT12UploadData(version.t12_upload_id);
+      if (uploadData.error) {
+        toast({ title: "Error", description: uploadData.error, variant: "destructive" });
+        return;
+      }
+
+      setT12Upload(uploadData.upload as T12Upload | null);
+      setT12LineItems((uploadData.lineItems ?? []) as T12LineItem[]);
+      setT12Mappings((uploadData.mappings ?? []) as T12FieldMapping[]);
+      setT12Overrides((uploadData.overrides ?? []) as T12Override[]);
+      setT12Versions((prev) =>
+        prev.map((v) => ({ ...v, is_active: v.id === versionId }))
+      );
+
+      // Update ProForma T12 data
+      const t12Data = buildT12DataFromHistoricals(
+        (uploadData.lineItems ?? []) as T12LineItem[],
+        (uploadData.mappings ?? []) as T12FieldMapping[],
+        (uploadData.overrides ?? []) as T12Override[]
+      );
+      setT12(t12Data);
+
+      toast({ title: "Version Activated", description: "T12 version switched successfully." });
+    },
+    [loanId, t12Versions, toast]
+  );
+
+  const handleT12OverrideChange = useCallback(
+    (category: string, value: number | null) => {
+      setT12Overrides((prev) => {
+        if (value === null) {
+          return prev.filter((o) => o.category !== category);
+        }
+        const existing = prev.find((o) => o.category === category);
+        if (existing) {
+          return prev.map((o) =>
+            o.category === category
+              ? { ...o, override_annual_total: value }
+              : o
+          );
+        }
+        return [
+          ...prev,
+          {
+            id: `override-${Date.now()}`,
+            t12_upload_id: t12Upload?.id ?? "",
+            category,
+            override_annual_total: value,
+          },
+        ];
+      });
+
+      // Save overrides to DB (debounced via save button)
+      // The overrides will be persisted on next Save Draft
+    },
+    [t12Upload?.id]
   );
 
   // ---- Computed Values ----
@@ -546,20 +850,32 @@ export function CommercialUWClient({
         )
       );
 
+      // Save T12 overrides if we have an active upload
+      const t12OverridePromise = t12Upload?.id && t12Overrides.length > 0
+        ? saveT12Overrides(
+            t12Upload.id,
+            t12Overrides.map((o) => ({
+              category: o.category,
+              override_annual_total: o.override_annual_total,
+            }))
+          )
+        : Promise.resolve({ success: true } as { success: boolean; error?: string });
+
       const results = await Promise.all([
         saveUnderwriting(currentUwId, uwData),
         saveRentRoll(currentUwId, rrRows),
         saveOccupancyRows(currentUwId, occRows),
         saveAncillaryRows(currentUwId, ancRows),
         saveProFormaYears(currentUwId, pfRows),
+        t12OverridePromise,
         ...uploadPromises,
       ]);
 
-      const hasError = results.some((r) => r.error);
+      const hasError = results.some((r) => "error" in r && r.error);
       if (hasError) {
         toast({
           title: "Save Error",
-          description: results.find((r) => r.error)?.error,
+          description: results.find((r) => "error" in r && r.error)?.error as string,
           variant: "destructive",
         });
       } else {
@@ -583,6 +899,7 @@ export function CommercialUWClient({
     financing, purchasePrice, goingInCapRate, computedGoingInCap, exitCapRate,
     dispositionCostPct, equityInvested, pohRentalIncome, pohExpenseRatio,
     rentRoll, occupancyRows, ancillaryRows, proforma, toast, pendingUploads,
+    t12Upload, t12Overrides,
   ]);
 
   const handleSubmitForReview = useCallback(async () => {
@@ -659,9 +976,10 @@ export function CommercialUWClient({
 
       {/* Main Tabs */}
       <Tabs defaultValue="income" className="space-y-4">
-        <TabsList className="grid w-full grid-cols-5">
+        <TabsList className="grid w-full grid-cols-6">
           <TabsTrigger value="income">Income</TabsTrigger>
           <TabsTrigger value="expenses">Expenses</TabsTrigger>
+          <TabsTrigger value="historicals">Historicals</TabsTrigger>
           <TabsTrigger value="proforma">Pro Forma</TabsTrigger>
           <TabsTrigger value="financing">Financing</TabsTrigger>
           <TabsTrigger value="summary">Summary</TabsTrigger>
@@ -706,6 +1024,22 @@ export function CommercialUWClient({
             basisCount={basisCount}
             propertyType={propertyType}
             onT12Import={handleT12Import}
+          />
+        </TabsContent>
+
+        <TabsContent value="historicals">
+          <HistoricalsTab
+            loanId={loanId}
+            totalUnits={totalUnits}
+            upload={t12Upload}
+            lineItems={t12LineItems}
+            mappings={t12Mappings}
+            versions={t12Versions}
+            overrides={t12Overrides}
+            onUploadT12={handleT12HistoricalsImport}
+            onActivateVersion={handleActivateT12Version}
+            onOverrideChange={handleT12OverrideChange}
+            previousMappings={existingT12PreviousMappings}
           />
         </TabsContent>
 

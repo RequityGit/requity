@@ -79,6 +79,69 @@ export default async function CommercialUWPage({ params }: PageProps) {
     uploadMappings = umResult.data ?? [];
   }
 
+  // Fetch T12 historicals data
+  const { data: t12Versions } = await supabase
+    .from("t12_versions")
+    .select("*")
+    .eq("loan_id", loanId)
+    .order("version_number", { ascending: false });
+
+  const activeT12Version = t12Versions?.find((v) => v.is_active);
+  let t12Upload = null;
+  let t12LineItems: unknown[] = [];
+  let t12Mappings: unknown[] = [];
+  let t12Overrides: unknown[] = [];
+  let t12PreviousMappings: Record<string, { category: string; is_excluded: boolean; exclusion_reason: string | null }> = {};
+
+  if (activeT12Version) {
+    const [uploadResult, lineItemsResult, mappingsResult, overridesResult] =
+      await Promise.all([
+        supabase
+          .from("t12_uploads")
+          .select("*")
+          .eq("id", activeT12Version.t12_upload_id)
+          .single(),
+        supabase
+          .from("t12_line_items")
+          .select("*")
+          .eq("t12_upload_id", activeT12Version.t12_upload_id)
+          .order("sort_order"),
+        supabase
+          .from("t12_field_mappings")
+          .select("*")
+          .eq("t12_upload_id", activeT12Version.t12_upload_id),
+        supabase
+          .from("t12_overrides")
+          .select("*")
+          .eq("t12_upload_id", activeT12Version.t12_upload_id),
+      ]);
+
+    t12Upload = uploadResult.data;
+    t12LineItems = lineItemsResult.data ?? [];
+    t12Mappings = mappingsResult.data ?? [];
+    t12Overrides = overridesResult.data ?? [];
+
+    // Build previous mappings for re-upload auto-mapping
+    if (lineItemsResult.data && mappingsResult.data) {
+      for (const mapping of mappingsResult.data) {
+        const lineItem = lineItemsResult.data.find(
+          (li: { id: string }) => li.id === mapping.t12_line_item_id
+        );
+        if (lineItem) {
+          t12PreviousMappings[
+            (lineItem as { original_row_label: string }).original_row_label
+              .toLowerCase()
+              .trim()
+          ] = {
+            category: mapping.mapped_category,
+            is_excluded: mapping.is_excluded ?? false,
+            exclusion_reason: mapping.exclusion_reason,
+          };
+        }
+      }
+    }
+  }
+
   // Fetch expense defaults
   const { data: expenseDefaults } = await supabase
     .from("commercial_expense_defaults")
@@ -122,6 +185,12 @@ export default async function CommercialUWPage({ params }: PageProps) {
         existingProforma={proformaYears}
         existingUploadMappings={uploadMappings}
         expenseDefaults={expenseDefaults ?? []}
+        existingT12Upload={t12Upload}
+        existingT12LineItems={t12LineItems as never[]}
+        existingT12Mappings={t12Mappings as never[]}
+        existingT12Versions={t12Versions ?? []}
+        existingT12Overrides={t12Overrides as never[]}
+        existingT12PreviousMappings={t12PreviousMappings}
       />
     </div>
   );

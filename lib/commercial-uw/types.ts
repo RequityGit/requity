@@ -267,6 +267,191 @@ export interface ExpenseOverrides {
   reserve: number | null;
 }
 
+// ------------ T12 Historicals Types ------------
+
+export const T12_STANDARDIZED_INCOME_CATEGORIES = [
+  "gross_potential_rent",
+  "vacancy_loss",
+  "bad_debt",
+  "concessions",
+  "other_income",
+] as const;
+
+export const T12_STANDARDIZED_EXPENSE_CATEGORIES = [
+  "management_fee",
+  "real_estate_taxes",
+  "insurance",
+  "water_sewer",
+  "electricity",
+  "gas",
+  "repairs_maintenance",
+  "contract_services",
+  "payroll",
+  "marketing",
+  "general_administrative",
+  "replacement_reserve",
+  "other_misc",
+] as const;
+
+export const T12_ALL_CATEGORIES = [
+  ...T12_STANDARDIZED_INCOME_CATEGORIES,
+  ...T12_STANDARDIZED_EXPENSE_CATEGORIES,
+] as const;
+
+export type T12Category = (typeof T12_ALL_CATEGORIES)[number];
+
+export const T12_CATEGORY_LABELS: Record<T12Category, string> = {
+  gross_potential_rent: "Gross Potential Rent",
+  vacancy_loss: "Vacancy Loss",
+  bad_debt: "Bad Debt / Write-Offs",
+  concessions: "Concessions",
+  other_income: "Other Income",
+  management_fee: "Management Fee",
+  real_estate_taxes: "Real Estate Taxes",
+  insurance: "Insurance",
+  water_sewer: "Water & Sewer",
+  electricity: "Electricity",
+  gas: "Gas",
+  repairs_maintenance: "Repairs & Maintenance",
+  contract_services: "Contract Services",
+  payroll: "On-Site Management (Payroll)",
+  marketing: "Marketing",
+  general_administrative: "General & Administrative",
+  replacement_reserve: "Replacement Reserve",
+  other_misc: "Other / Miscellaneous",
+};
+
+export const T12_CATEGORY_IS_INCOME: Record<T12Category, boolean> = {
+  gross_potential_rent: true,
+  vacancy_loss: true,
+  bad_debt: true,
+  concessions: true,
+  other_income: true,
+  management_fee: false,
+  real_estate_taxes: false,
+  insurance: false,
+  water_sewer: false,
+  electricity: false,
+  gas: false,
+  repairs_maintenance: false,
+  contract_services: false,
+  payroll: false,
+  marketing: false,
+  general_administrative: false,
+  replacement_reserve: false,
+  other_misc: false,
+};
+
+// Auto-mapping rules: label patterns -> standardized category
+export const T12_AUTO_MAP_RULES: { patterns: string[]; category: T12Category }[] = [
+  { patterns: ["rent", "rental income", "gross potential", "gpr", "base rent"], category: "gross_potential_rent" },
+  { patterns: ["vacancy", "vacant"], category: "vacancy_loss" },
+  { patterns: ["bad debt", "write-off", "write off", "collections loss"], category: "bad_debt" },
+  { patterns: ["concession"], category: "concessions" },
+  { patterns: ["other income", "laundry", "parking", "pet fee", "late fee", "application fee", "misc income", "miscellaneous income"], category: "other_income" },
+  { patterns: ["management fee", "mgmt fee", "property management"], category: "management_fee" },
+  { patterns: ["tax", "property tax", "real estate tax", "re tax"], category: "real_estate_taxes" },
+  { patterns: ["insurance", "ins ", "property insurance", "liability insurance", "flood insurance", "renters insurance"], category: "insurance" },
+  { patterns: ["water", "sewer", "water & sewer", "water/sewer"], category: "water_sewer" },
+  { patterns: ["electric", "electricity"], category: "electricity" },
+  { patterns: ["gas", "propane", "natural gas"], category: "gas" },
+  { patterns: ["repair", "maintenance", "r&m", "repairs & maintenance"], category: "repairs_maintenance" },
+  { patterns: ["contract", "landscap", "pest", "security", "janitorial", "cleaning", "elevator", "professional fee"], category: "contract_services" },
+  { patterns: ["payroll", "salary", "salaries", "wages", "personnel", "on-site", "onsite"], category: "payroll" },
+  { patterns: ["marketing", "advertising", "promotion", "leasing"], category: "marketing" },
+  { patterns: ["office", "admin", "g&a", "general & admin", "general and admin", "administrative"], category: "general_administrative" },
+  { patterns: ["replacement", "reserve", "capex", "capital reserve"], category: "replacement_reserve" },
+];
+
+// Maps T12 standardized categories to the simpler ProForma expense keys
+export const T12_TO_PROFORMA_MAP: Partial<Record<T12Category, keyof T12Data>> = {
+  gross_potential_rent: "gpi",
+  management_fee: "mgmt_fee",
+  real_estate_taxes: "taxes",
+  insurance: "insurance",
+  water_sewer: "utilities",
+  electricity: "utilities",
+  gas: "utilities",
+  repairs_maintenance: "repairs",
+  contract_services: "contract_services",
+  payroll: "payroll",
+  marketing: "marketing",
+  general_administrative: "ga",
+  replacement_reserve: "replacement_reserve",
+};
+
+export interface T12LineItem {
+  id: string;
+  t12_upload_id: string;
+  original_row_label: string;
+  original_category: string | null;
+  amount_month_1: number | null;
+  amount_month_2: number | null;
+  amount_month_3: number | null;
+  amount_month_4: number | null;
+  amount_month_5: number | null;
+  amount_month_6: number | null;
+  amount_month_7: number | null;
+  amount_month_8: number | null;
+  amount_month_9: number | null;
+  amount_month_10: number | null;
+  amount_month_11: number | null;
+  amount_month_12: number | null;
+  annual_total: number | null;
+  is_income: boolean;
+  sort_order: number | null;
+}
+
+export interface T12FieldMapping {
+  id: string;
+  t12_upload_id: string;
+  t12_line_item_id: string;
+  mapped_category: T12Category;
+  mapped_subcategory: string | null;
+  is_excluded: boolean;
+  exclusion_reason: string | null;
+}
+
+export interface T12Upload {
+  id: string;
+  loan_id: string;
+  file_name: string;
+  file_url: string;
+  upload_date: string | null;
+  period_start: string;
+  period_end: string;
+  source_label: string | null;
+  uploaded_by: string | null;
+  status: string | null;
+  notes: string | null;
+  created_at: string | null;
+}
+
+export interface T12Version {
+  id: string;
+  loan_id: string;
+  t12_upload_id: string;
+  version_number: number;
+  version_label: string | null;
+  is_active: boolean | null;
+  created_at: string | null;
+}
+
+export interface T12Override {
+  id: string;
+  t12_upload_id: string;
+  category: string;
+  override_annual_total: number;
+}
+
+export interface T12HistoricalsState {
+  upload: T12Upload | null;
+  lineItems: T12LineItem[];
+  mappings: T12FieldMapping[];
+  versions: T12Version[];
+  overrides: T12Override[];
+}
+
 // Full UW state for the form/context
 export interface CommercialUWState {
   id?: string;
