@@ -1,11 +1,12 @@
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { redirect, notFound } from "next/navigation";
 import { PageHeader } from "@/components/shared/page-header";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { StatusBadge } from "@/components/shared/status-badge";
 import { CrmActivityLog } from "@/components/crm/crm-activity-log";
 import { ContactEditDialog } from "@/components/crm/contact-edit-dialog";
-import { formatDate } from "@/lib/format";
+import { formatDate, formatCurrency } from "@/lib/format";
 import { CRM_CONTACT_TYPES, CRM_CONTACT_SOURCES } from "@/lib/constants";
 import {
   Mail,
@@ -16,6 +17,10 @@ import {
   User,
   Tag,
   Bell,
+  Landmark,
+  ShieldCheck,
+  CreditCard,
+  Briefcase,
 } from "lucide-react";
 import Link from "next/link";
 
@@ -34,6 +39,7 @@ export default async function CrmContactDetailPage({ params }: PageProps) {
   if (!user) redirect("/login");
 
   const { id } = await params;
+  const admin = createAdminClient();
 
   const { data: contact } = await supabase
     .from("crm_contacts")
@@ -43,7 +49,7 @@ export default async function CrmContactDetailPage({ params }: PageProps) {
 
   if (!contact) notFound();
 
-  // Fetch activities and team members in parallel
+  // Fetch activities and team members
   const [activitiesResult, teamResult] = await Promise.all([
     supabase
       .from("crm_activities")
@@ -56,6 +62,57 @@ export default async function CrmContactDetailPage({ params }: PageProps) {
       .eq("role", "admin")
       .order("full_name"),
   ]);
+
+  // Fetch linked investor data if applicable
+  let investorData: any = null;
+  let investorCommitments: any[] = [];
+  let investorEntities: any[] = [];
+  if (contact.linked_investor_id) {
+    const [invResult, commitmentsResult, entitiesResult] = await Promise.all([
+      admin
+        .from("investors")
+        .select("*")
+        .eq("id", contact.linked_investor_id)
+        .single(),
+      admin
+        .from("investor_commitments")
+        .select("*, funds(name)")
+        .eq("investor_id", contact.linked_investor_id),
+      admin
+        .from("investing_entities")
+        .select("*")
+        .eq("investor_id", contact.linked_investor_id),
+    ]);
+    investorData = invResult.data;
+    investorCommitments = commitmentsResult.data ?? [];
+    investorEntities = entitiesResult.data ?? [];
+  }
+
+  // Fetch linked borrower data if applicable
+  let borrowerData: any = null;
+  let borrowerEntities: any[] = [];
+  let borrowerLoans: any[] = [];
+  if (contact.borrower_id) {
+    const [borResult, borEntitiesResult, loansResult] = await Promise.all([
+      admin
+        .from("borrowers")
+        .select("*")
+        .eq("id", contact.borrower_id)
+        .single(),
+      admin
+        .from("borrower_entities")
+        .select("*")
+        .eq("borrower_id", contact.borrower_id),
+      admin
+        .from("loans")
+        .select("id, loan_number, property_address, type, loan_amount, stage")
+        .eq("borrower_id", contact.borrower_id)
+        .is("deleted_at", null),
+    ]);
+    borrowerData = borResult.data;
+    borrowerEntities = borEntitiesResult.data ?? [];
+    borrowerLoans = loansResult.data ?? [];
+  }
 
   const teamMembers = (teamResult.data ?? []).map(
     (t: { id: string; full_name: string | null; email: string | null }) => ({
@@ -229,6 +286,21 @@ export default async function CrmContactDetailPage({ params }: PageProps) {
             </div>
           </div>
 
+          {/* Linked Investor */}
+          {contact.linked_investor_id && (
+            <div className="mt-4 pt-4 border-t">
+              <p className="text-xs text-muted-foreground mb-1">
+                Linked Investor
+              </p>
+              <Link
+                href={`/admin/investors/${contact.linked_investor_id}`}
+                className="text-sm text-blue-600 hover:underline font-medium"
+              >
+                View Investor Profile
+              </Link>
+            </div>
+          )}
+
           {/* Linked Borrower */}
           {contact.borrower_id && (
             <div className="mt-4 pt-4 border-t">
@@ -253,6 +325,250 @@ export default async function CrmContactDetailPage({ params }: PageProps) {
           )}
         </CardContent>
       </Card>
+
+      {/* Linked Investor Details */}
+      {investorData && (
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base flex items-center gap-2">
+              <Landmark className="h-4 w-4" />
+              Investor Details
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+              <div className="flex items-center gap-3">
+                <ShieldCheck className="h-4 w-4 text-muted-foreground shrink-0" />
+                <div>
+                  <p className="text-xs text-muted-foreground">
+                    Accreditation Status
+                  </p>
+                  <StatusBadge
+                    status={investorData.accreditation_status || "pending"}
+                  />
+                </div>
+              </div>
+              {investorData.phone && (
+                <div className="flex items-center gap-3">
+                  <Phone className="h-4 w-4 text-muted-foreground shrink-0" />
+                  <div>
+                    <p className="text-xs text-muted-foreground">
+                      Investor Phone
+                    </p>
+                    <p className="text-sm font-medium">{investorData.phone}</p>
+                  </div>
+                </div>
+              )}
+              {investorData.email && (
+                <div className="flex items-center gap-3">
+                  <Mail className="h-4 w-4 text-muted-foreground shrink-0" />
+                  <div>
+                    <p className="text-xs text-muted-foreground">
+                      Investor Email
+                    </p>
+                    <p className="text-sm font-medium">{investorData.email}</p>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Investing Entities */}
+            {investorEntities.length > 0 && (
+              <div className="mt-4 pt-4 border-t">
+                <p className="text-xs text-muted-foreground mb-2 font-medium uppercase tracking-wide">
+                  Investing Entities
+                </p>
+                <div className="space-y-2">
+                  {investorEntities.map((entity: any) => (
+                    <div
+                      key={entity.id}
+                      className="flex items-center justify-between rounded-md border px-3 py-2 text-sm"
+                    >
+                      <div className="flex items-center gap-2">
+                        <Building2 className="h-3.5 w-3.5 text-muted-foreground" />
+                        <span className="font-medium">{entity.entity_name}</span>
+                        {entity.entity_type && (
+                          <StatusBadge status={entity.entity_type} />
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Fund Commitments */}
+            {investorCommitments.length > 0 && (
+              <div className="mt-4 pt-4 border-t">
+                <p className="text-xs text-muted-foreground mb-2 font-medium uppercase tracking-wide">
+                  Fund Commitments
+                </p>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="border-b text-left text-muted-foreground">
+                        <th className="pb-2 font-medium">Fund</th>
+                        <th className="pb-2 font-medium">Committed</th>
+                        <th className="pb-2 font-medium">Funded</th>
+                        <th className="pb-2 font-medium">Status</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {investorCommitments.map((c: any) => (
+                        <tr key={c.id} className="border-b last:border-0">
+                          <td className="py-2">
+                            {c.funds?.name || "—"}
+                          </td>
+                          <td className="py-2">
+                            {formatCurrency(c.commitment_amount)}
+                          </td>
+                          <td className="py-2">
+                            {formatCurrency(c.funded_amount)}
+                          </td>
+                          <td className="py-2">
+                            <StatusBadge status={c.status} />
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Linked Borrower Details */}
+      {borrowerData && (
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base flex items-center gap-2">
+              <Building2 className="h-4 w-4" />
+              Borrower Details
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+              <div className="flex items-center gap-3">
+                <CreditCard className="h-4 w-4 text-muted-foreground shrink-0" />
+                <div>
+                  <p className="text-xs text-muted-foreground">Credit Score</p>
+                  <p className="text-sm font-medium">
+                    {borrowerData.credit_score ?? "—"}
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-3">
+                <Briefcase className="h-4 w-4 text-muted-foreground shrink-0" />
+                <div>
+                  <p className="text-xs text-muted-foreground">Experience</p>
+                  <p className="text-sm font-medium">
+                    {borrowerData.experience_count ?? 0} deals
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-3">
+                <User className="h-4 w-4 text-muted-foreground shrink-0" />
+                <div>
+                  <p className="text-xs text-muted-foreground">US Citizen</p>
+                  <p className="text-sm font-medium">
+                    {borrowerData.is_us_citizen ? "Yes" : "No"}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Borrower Entities */}
+            {borrowerEntities.length > 0 && (
+              <div className="mt-4 pt-4 border-t">
+                <p className="text-xs text-muted-foreground mb-2 font-medium uppercase tracking-wide">
+                  Borrower Entities
+                </p>
+                <div className="space-y-2">
+                  {borrowerEntities.map((entity: any) => (
+                    <div
+                      key={entity.id}
+                      className="flex items-center justify-between rounded-md border px-3 py-2 text-sm"
+                    >
+                      <div className="flex items-center gap-2">
+                        <Building2 className="h-3.5 w-3.5 text-muted-foreground" />
+                        <span className="font-medium">{entity.entity_name}</span>
+                        {entity.entity_type && (
+                          <StatusBadge status={entity.entity_type} />
+                        )}
+                      </div>
+                      {entity.state_of_formation && (
+                        <span className="text-xs text-muted-foreground">
+                          {entity.state_of_formation}
+                        </span>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Linked Loans */}
+            {borrowerLoans.length > 0 && (
+              <div className="mt-4 pt-4 border-t">
+                <p className="text-xs text-muted-foreground mb-2 font-medium uppercase tracking-wide">
+                  Linked Loans
+                </p>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="border-b text-left text-muted-foreground">
+                        <th className="pb-2 font-medium">Loan #</th>
+                        <th className="pb-2 font-medium">Property</th>
+                        <th className="pb-2 font-medium">Type</th>
+                        <th className="pb-2 font-medium">Amount</th>
+                        <th className="pb-2 font-medium">Stage</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {borrowerLoans.map((loan: any) => (
+                        <tr key={loan.id} className="border-b last:border-0">
+                          <td className="py-2">
+                            <Link
+                              href={`/admin/loans/${loan.id}`}
+                              className="text-blue-600 hover:underline"
+                            >
+                              {loan.loan_number || "—"}
+                            </Link>
+                          </td>
+                          <td className="py-2">
+                            {loan.property_address || "—"}
+                          </td>
+                          <td className="py-2">
+                            {loan.type ? (
+                              <StatusBadge status={loan.type} />
+                            ) : (
+                              "—"
+                            )}
+                          </td>
+                          <td className="py-2">
+                            {loan.loan_amount
+                              ? formatCurrency(loan.loan_amount)
+                              : "—"}
+                          </td>
+                          <td className="py-2">
+                            {loan.stage ? (
+                              <StatusBadge status={loan.stage} />
+                            ) : (
+                              "—"
+                            )}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
 
       {/* Activity Log */}
       <CrmActivityLog

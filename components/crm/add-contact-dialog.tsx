@@ -40,11 +40,13 @@ interface TeamMember {
 interface AddContactDialogProps {
   teamMembers: TeamMember[];
   currentUserId: string;
+  defaultContactType?: string;
 }
 
 export function AddContactDialog({
   teamMembers,
   currentUserId,
+  defaultContactType = "lead",
 }: AddContactDialogProps) {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -57,7 +59,7 @@ export function AddContactDialog({
     email: "",
     phone: "",
     company_name: "",
-    contact_type: "lead",
+    contact_type: defaultContactType,
     source: "",
     status: "active",
     assigned_to: "",
@@ -80,7 +82,7 @@ export function AddContactDialog({
       email: "",
       phone: "",
       company_name: "",
-      contact_type: "lead",
+      contact_type: defaultContactType,
       source: "",
       status: "active",
       assigned_to: "",

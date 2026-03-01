@@ -55,9 +55,12 @@ const borrowerNav: NavItem[] = [
 
 const adminNav: NavItem[] = [
   { label: "Dashboard", href: "/admin/dashboard", icon: LayoutDashboard },
-  { label: "CRM", href: "/admin/crm", icon: Contact },
-  { label: "Investors", href: "/admin/investors", icon: Users },
-  { label: "Borrowers", href: "/admin/borrowers", icon: Building2 },
+  {
+    label: "CRM",
+    href: "/admin/crm",
+    icon: Contact,
+    activePaths: ["/admin/investors", "/admin/borrowers"],
+  },
   {
     label: "Originations",
     href: "/admin/originations",
