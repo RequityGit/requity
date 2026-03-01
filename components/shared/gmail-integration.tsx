@@ -276,10 +276,10 @@ export function GmailIntegration() {
                     </p>
                     <ul className="list-disc list-inside space-y-0.5 ml-1">
                       <li>
-                        <code className="bg-amber-100 px-1 rounded text-[11px]">GOOGLE_CLIENT_ID</code>
+                        <code className="bg-amber-100 px-1 rounded text-[11px]">GMAIL_CLIENT_ID</code>
                       </li>
                       <li>
-                        <code className="bg-amber-100 px-1 rounded text-[11px]">GOOGLE_CLIENT_SECRET</code>
+                        <code className="bg-amber-100 px-1 rounded text-[11px]">GMAIL_CLIENT_SECRET</code>
                       </li>
                     </ul>
                     <p>

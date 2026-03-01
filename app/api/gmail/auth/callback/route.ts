@@ -59,8 +59,8 @@ export async function GET(request: NextRequest) {
   }
 
   // Exchange authorization code for tokens
-  const clientId = process.env.GOOGLE_CLIENT_ID;
-  const clientSecret = process.env.GOOGLE_CLIENT_SECRET;
+  const clientId = process.env.GMAIL_CLIENT_ID;
+  const clientSecret = process.env.GMAIL_CLIENT_SECRET;
   const appUrl = process.env.NEXT_PUBLIC_APP_URL || origin;
 
   if (!clientId || !clientSecret) {

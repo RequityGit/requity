@@ -3,8 +3,8 @@ import { createClient } from "@/lib/supabase/server";
 import crypto from "crypto";
 
 export async function POST(request: NextRequest) {
-  const clientId = process.env.GOOGLE_CLIENT_ID;
-  const clientSecret = process.env.GOOGLE_CLIENT_SECRET;
+  const clientId = process.env.GMAIL_CLIENT_ID;
+  const clientSecret = process.env.GMAIL_CLIENT_SECRET;
   const appUrl =
     process.env.NEXT_PUBLIC_APP_URL || new URL(request.url).origin;
 
