@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import { createClient } from "@/lib/supabase/server";
 import { redirect, notFound } from "next/navigation";
 import { PageHeader } from "@/components/shared/page-header";
@@ -347,6 +348,7 @@ export default async function AdminLoanDetailPage({ params }: PageProps) {
       </Card>
 
       {/* Actions + Tabbed Data */}
+      <Suspense fallback={null}>
       <LoanDetailActions
         loan={{
           id: loanData.id,
@@ -431,6 +433,7 @@ export default async function AdminLoanDetailPage({ params }: PageProps) {
         currentUserName={currentUserName}
         isSuperAdmin={isSuperAdmin}
       />
+      </Suspense>
     </div>
   );
 }

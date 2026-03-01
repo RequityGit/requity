@@ -405,13 +405,18 @@ export function ConditionsDashboard({
                     return (
                       <div
                         key={condition.id}
-                        className={`flex items-center gap-3 py-2 px-3 rounded-lg border ${
+                        className={`flex items-center gap-3 py-2 px-3 rounded-lg border cursor-pointer transition-colors ${
                           isComplete
-                            ? "bg-green-50/50 border-green-100"
+                            ? "bg-green-50/50 border-green-100 hover:bg-green-50"
                             : isOverdue
-                              ? "bg-red-50/50 border-red-100"
-                              : "bg-white"
+                              ? "bg-red-50/50 border-red-100 hover:bg-red-100/50"
+                              : "bg-white hover:bg-slate-50"
                         }`}
+                        onClick={() =>
+                          router.push(
+                            `/admin/loans/${condition.loan_id}?tab=conditions`
+                          )
+                        }
                       >
                         <div className="flex-shrink-0">
                           {isComplete ? (
@@ -460,7 +465,10 @@ export function ConditionsDashboard({
                             )}
                           </div>
                         </div>
-                        <div className="flex items-center gap-1 flex-shrink-0">
+                        <div
+                          className="flex items-center gap-1 flex-shrink-0"
+                          onClick={(e) => e.stopPropagation()}
+                        >
                           {condition.status === "pending" && (
                             <Button
                               size="sm"

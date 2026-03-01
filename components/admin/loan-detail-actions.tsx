@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -181,6 +181,8 @@ export function LoanDetailActions({
   isSuperAdmin = false,
 }: LoanDetailActionsProps) {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const initialTab = searchParams.get("tab") || "conditions";
   const hasPricing = programs && programs.length > 0 && adjusters && loanForPricing;
   const isCommercial = loan.loan_type === "commercial";
   const uwVersions = underwritingVersions ?? [];
@@ -223,7 +225,7 @@ export function LoanDetailActions({
       </div>
 
       {/* Tabbed data */}
-      <Tabs defaultValue="conditions">
+      <Tabs defaultValue={initialTab}>
         <TabsList>
           <TabsTrigger value="underwriting" className="gap-1">
             <Scale className="h-3.5 w-3.5" />
