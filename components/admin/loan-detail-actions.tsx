@@ -784,7 +784,7 @@ function UploadDocumentDialog({
       const filePath = `loans/${loanId}/${Date.now()}_${file.name}`;
 
       const { error: uploadError } = await supabase.storage
-        .from("documents")
+        .from("loan-documents")
         .upload(filePath, file);
 
       if (uploadError) throw uploadError;

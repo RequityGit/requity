@@ -13,7 +13,7 @@ interface DocumentDownloadProps {
 
 export function DocumentDownload({
   filePath,
-  bucket = "documents",
+  bucket = "investor-documents",
   fileName,
 }: DocumentDownloadProps) {
   const [loading, setLoading] = useState(false);

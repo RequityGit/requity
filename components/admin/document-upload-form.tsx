@@ -73,10 +73,11 @@ export function DocumentUploadForm({
     try {
       const supabase = createClient();
 
-      // Upload file to storage
+      // Upload file to storage — use the appropriate bucket based on context
+      const bucket = loanId ? "loan-documents" : fundId ? "investor-documents" : "loan-documents";
       const filePath = `admin/${ownerId}/${documentType}/${Date.now()}_${file.name}`;
       const { error: uploadError } = await supabase.storage
-        .from("documents")
+        .from(bucket)
         .upload(filePath, file);
 
       if (uploadError) throw uploadError;
