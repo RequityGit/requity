@@ -403,6 +403,21 @@ export default async function CrmContactDetailPage({ params }: PageProps) {
             </div>
           </div>
 
+          {/* Linked Portal User */}
+          {contact.user_id && (
+            <div className="mt-4 pt-4 border-t">
+              <div className="flex items-center gap-3">
+                <User className="h-4 w-4 text-muted-foreground shrink-0" />
+                <div>
+                  <p className="text-xs text-muted-foreground">Portal User</p>
+                  <p className="text-sm font-medium text-green-700">
+                    Linked to portal login
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Linked Investor */}
           {contact.linked_investor_id && (
             <div className="mt-4 pt-4 border-t">
