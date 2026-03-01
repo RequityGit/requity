@@ -960,6 +960,7 @@ export type Database = {
           created_by: string | null
           id: string
           original_filename: string | null
+          parsed_data: Json | null
           row_count: number | null
           underwriting_id: string
           upload_type: string
@@ -970,6 +971,7 @@ export type Database = {
           created_by?: string | null
           id?: string
           original_filename?: string | null
+          parsed_data?: Json | null
           row_count?: number | null
           underwriting_id: string
           upload_type: string
@@ -980,6 +982,7 @@ export type Database = {
           created_by?: string | null
           id?: string
           original_filename?: string | null
+          parsed_data?: Json | null
           row_count?: number | null
           underwriting_id?: string
           upload_type?: string
@@ -993,6 +996,78 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      commercial_uw_assumptions: {
+        Row: {
+          bad_debt_pct: number
+          created_at: string
+          disposition_cost_pct: number
+          exit_cap_rate: number
+          expense_growth_yr1: number
+          expense_growth_yr2: number
+          expense_growth_yr3: number
+          expense_growth_yr4: number
+          expense_growth_yr5: number
+          going_in_cap_rate: number
+          id: string
+          mgmt_fee_pct: number
+          property_type: string
+          rent_growth_yr1: number
+          rent_growth_yr2: number
+          rent_growth_yr3: number
+          rent_growth_yr4: number
+          rent_growth_yr5: number
+          stabilized_vacancy_pct: number
+          updated_at: string
+          vacancy_pct: number
+        }
+        Insert: {
+          bad_debt_pct?: number
+          created_at?: string
+          disposition_cost_pct?: number
+          exit_cap_rate?: number
+          expense_growth_yr1?: number
+          expense_growth_yr2?: number
+          expense_growth_yr3?: number
+          expense_growth_yr4?: number
+          expense_growth_yr5?: number
+          going_in_cap_rate?: number
+          id?: string
+          mgmt_fee_pct?: number
+          property_type: string
+          rent_growth_yr1?: number
+          rent_growth_yr2?: number
+          rent_growth_yr3?: number
+          rent_growth_yr4?: number
+          rent_growth_yr5?: number
+          stabilized_vacancy_pct?: number
+          updated_at?: string
+          vacancy_pct?: number
+        }
+        Update: {
+          bad_debt_pct?: number
+          created_at?: string
+          disposition_cost_pct?: number
+          exit_cap_rate?: number
+          expense_growth_yr1?: number
+          expense_growth_yr2?: number
+          expense_growth_yr3?: number
+          expense_growth_yr4?: number
+          expense_growth_yr5?: number
+          going_in_cap_rate?: number
+          id?: string
+          mgmt_fee_pct?: number
+          property_type?: string
+          rent_growth_yr1?: number
+          rent_growth_yr2?: number
+          rent_growth_yr3?: number
+          rent_growth_yr4?: number
+          rent_growth_yr5?: number
+          stabilized_vacancy_pct?: number
+          updated_at?: string
+          vacancy_pct?: number
+        }
+        Relationships: []
       }
       condition_template_items: {
         Row: {

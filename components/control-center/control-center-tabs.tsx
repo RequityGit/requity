@@ -22,6 +22,10 @@ const TABS: TabConfig[] = [
   { label: "Loan Condition Templates", href: "/control-center/conditions" },
   { label: "Email Templates", href: "/control-center/email-templates" },
   { label: "Term Sheet Templates", href: "/control-center/term-sheets" },
+  {
+    label: "Underwriting Assumptions",
+    href: "/control-center/underwriting",
+  },
   { label: "Pricing Engine", href: "/control-center/pricing", disabled: true },
   {
     label: "System Settings",
