@@ -17,6 +17,7 @@ import {
 import { BorrowerEntityList } from "@/components/admin/borrower-entity-list";
 import { BorrowerEditDialog } from "@/components/admin/borrower-edit-dialog";
 import { BorrowerLoanTable } from "@/components/admin/borrower-loan-table";
+import { EmailActivityFeed } from "@/components/crm/email-activity-feed";
 
 interface PageProps {
   params: { id: string };
@@ -42,7 +43,7 @@ export default async function AdminBorrowerDetailPage({ params }: PageProps) {
   if (!borrower) notFound();
 
   // Fetch related data in parallel
-  const [entitiesResult, loansResult] = await Promise.all([
+  const [entitiesResult, loansResult, emailsResult, profileResult] = await Promise.all([
     admin
       .from("borrower_entities")
       .select("*")
@@ -53,10 +54,38 @@ export default async function AdminBorrowerDetailPage({ params }: PageProps) {
       .select("*")
       .eq("borrower_id", id)
       .order("created_at", { ascending: false }),
+    admin
+      .from("crm_emails")
+      .select("*")
+      .eq("linked_borrower_id", id)
+      .order("created_at", { ascending: false }),
+    admin
+      .from("profiles")
+      .select("id, full_name")
+      .eq("id", user.id)
+      .single(),
   ]);
 
   const entities = entitiesResult.data ?? [];
   const loans = loansResult.data ?? [];
+  const emails = (emailsResult.data ?? []).map((e: any) => ({
+    id: e.id,
+    created_at: e.created_at,
+    from_email: e.from_email,
+    to_email: e.to_email,
+    to_name: e.to_name,
+    subject: e.subject,
+    body_text: e.body_text,
+    body_html: e.body_html,
+    cc_emails: e.cc_emails,
+    bcc_emails: e.bcc_emails,
+    sent_by_name: e.sent_by_name,
+    postmark_status: e.postmark_status,
+    delivered_at: e.delivered_at,
+    opened_at: e.opened_at,
+    attachments: e.attachments,
+  }));
+  const currentUserName = profileResult.data?.full_name || user.email || "Unknown";
 
   const fullName = `${borrower.first_name} ${borrower.last_name}`;
 
@@ -199,6 +228,7 @@ export default async function AdminBorrowerDetailPage({ params }: PageProps) {
             Entities ({entities.length})
           </TabsTrigger>
           <TabsTrigger value="loans">Loans ({loans.length})</TabsTrigger>
+          <TabsTrigger value="emails">Emails ({emails.length})</TabsTrigger>
         </TabsList>
 
         <TabsContent value="entities" className="mt-4">
@@ -210,6 +240,17 @@ export default async function AdminBorrowerDetailPage({ params }: PageProps) {
 
         <TabsContent value="loans" className="mt-4">
           <BorrowerLoanTable loans={loans} />
+        </TabsContent>
+
+        <TabsContent value="emails" className="mt-4">
+          <EmailActivityFeed
+            emails={emails}
+            defaultToEmail={borrower.email || undefined}
+            defaultToName={fullName}
+            linkedBorrowerId={borrower.id}
+            currentUserId={user.id}
+            currentUserName={currentUserName}
+          />
         </TabsContent>
       </Tabs>
     </div>

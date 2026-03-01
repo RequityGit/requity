@@ -115,6 +115,17 @@ export default async function AdminLoanDetailPage({ params }: PageProps) {
       .limit(50);
   } catch { /* table may not exist */ }
 
+  // Fetch emails for this loan
+  let emailsData: any[] = [];
+  try {
+    const { data } = await supabase
+      .from("crm_emails")
+      .select("*")
+      .eq("linked_loan_id", id)
+      .order("created_at", { ascending: false });
+    emailsData = data ?? [];
+  } catch { /* table may not exist */ }
+
   // Lookup team member names
   const teamIds = [loanData.originator_id, loanData.processor_id, loanData.underwriter_id, loanData.closer_id].filter((id): id is string => Boolean(id));
   let teamProfiles: Record<string, string> = {};
@@ -128,6 +139,17 @@ export default async function AdminLoanDetailPage({ params }: PageProps) {
     });
   }
 
+  // Current user name for email compose
+  let currentUserName = user.email ?? "Unknown";
+  {
+    const { data: myProfile } = await supabase
+      .from("profiles")
+      .select("full_name")
+      .eq("id", user.id)
+      .single();
+    if (myProfile?.full_name) currentUserName = myProfile.full_name;
+  }
+
   const drawRequests = drawRequestsResult.data ?? [];
   const payments = paymentsResult.data ?? [];
   const documents = documentsResult.data ?? [];
@@ -135,11 +157,29 @@ export default async function AdminLoanDetailPage({ params }: PageProps) {
   const activityLog = activityResult.data ?? [];
   const programs = (programsResult.data ?? []) as PricingProgram[];
   const adjusters = (adjustersResult.data ?? []) as LeverageAdjuster[];
+  const emails = emailsData.map((e: any) => ({
+    id: e.id,
+    created_at: e.created_at,
+    from_email: e.from_email,
+    to_email: e.to_email,
+    to_name: e.to_name,
+    subject: e.subject,
+    body_text: e.body_text,
+    body_html: e.body_html,
+    cc_emails: e.cc_emails,
+    bcc_emails: e.bcc_emails,
+    sent_by_name: e.sent_by_name,
+    postmark_status: e.postmark_status,
+    delivered_at: e.delivered_at,
+    opened_at: e.opened_at,
+    attachments: e.attachments,
+  }));
 
   const borrowerRaw = (loanData as any).borrower;
   const borrowerName = borrowerRaw
     ? `${borrowerRaw.first_name ?? ""} ${borrowerRaw.last_name ?? ""}`.trim() || "—"
     : "—";
+  const borrowerEmail = borrowerRaw?.email ?? undefined;
   const originatorName = (loanData.originator_id && teamProfiles[loanData.originator_id]) ?? loanData.originator ?? "—";
   const processorName = (loanData.processor_id && teamProfiles[loanData.processor_id]) ?? "—";
   const underwriterName = (loanData.underwriter_id && teamProfiles[loanData.underwriter_id]) ?? "—";
@@ -374,6 +414,10 @@ export default async function AdminLoanDetailPage({ params }: PageProps) {
           program_id: loanData.program_id,
         }}
         underwritingVersions={underwritingVersions}
+        emails={emails}
+        borrowerEmail={borrowerEmail}
+        borrowerName={borrowerName}
+        currentUserName={currentUserName}
       />
     </div>
   );

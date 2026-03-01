@@ -8,6 +8,7 @@ import { DataTable, Column } from "@/components/shared/data-table";
 import { StatusBadge } from "@/components/shared/status-badge";
 import { formatCurrency, formatDate } from "@/lib/format";
 import { Mail, Phone, MapPin, Calendar, Shield } from "lucide-react";
+import { EmailActivityFeed } from "@/components/crm/email-activity-feed";
 
 interface PageProps {
   params: { id: string };
@@ -37,7 +38,7 @@ export default async function AdminInvestorDetailPage({ params }: PageProps) {
   const investorName = `${investor.first_name} ${investor.last_name}`;
 
   // Fetch related data in parallel
-  const [commitmentsResult, capitalCallsResult, distributionsResult, documentsResult, fundsResult] =
+  const [commitmentsResult, capitalCallsResult, distributionsResult, documentsResult, fundsResult, emailsResult, profileResult] =
     await Promise.all([
       admin
         .from("investor_commitments")
@@ -60,6 +61,16 @@ export default async function AdminInvestorDetailPage({ params }: PageProps) {
         .eq("owner_id", id)
         .order("created_at", { ascending: false }),
       admin.from("funds").select("id, name").order("name"),
+      admin
+        .from("crm_emails")
+        .select("*")
+        .eq("linked_investor_id", id)
+        .order("created_at", { ascending: false }),
+      admin
+        .from("profiles")
+        .select("id, full_name")
+        .eq("id", user.id)
+        .single(),
     ]);
 
   const commitments = commitmentsResult.data ?? [];
@@ -67,6 +78,24 @@ export default async function AdminInvestorDetailPage({ params }: PageProps) {
   const distributions = distributionsResult.data ?? [];
   const documents = documentsResult.data ?? [];
   const funds = fundsResult.data ?? [];
+  const emails = (emailsResult.data ?? []).map((e: any) => ({
+    id: e.id,
+    created_at: e.created_at,
+    from_email: e.from_email,
+    to_email: e.to_email,
+    to_name: e.to_name,
+    subject: e.subject,
+    body_text: e.body_text,
+    body_html: e.body_html,
+    cc_emails: e.cc_emails,
+    bcc_emails: e.bcc_emails,
+    sent_by_name: e.sent_by_name,
+    postmark_status: e.postmark_status,
+    delivered_at: e.delivered_at,
+    opened_at: e.opened_at,
+    attachments: e.attachments,
+  }));
+  const currentUserName = profileResult.data?.full_name || user.email || "Unknown";
 
   // Define columns for each tab
   const commitmentColumns: Column<(typeof commitments)[number]>[] = [
@@ -270,6 +299,9 @@ export default async function AdminInvestorDetailPage({ params }: PageProps) {
           <TabsTrigger value="documents">
             Documents ({documents.length})
           </TabsTrigger>
+          <TabsTrigger value="emails">
+            Emails ({emails.length})
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="commitments" className="mt-4">
@@ -301,6 +333,17 @@ export default async function AdminInvestorDetailPage({ params }: PageProps) {
             columns={documentColumns}
             data={documents}
             emptyMessage="No documents for this investor."
+          />
+        </TabsContent>
+
+        <TabsContent value="emails" className="mt-4">
+          <EmailActivityFeed
+            emails={emails}
+            defaultToEmail={investor.email || undefined}
+            defaultToName={investorName}
+            linkedInvestorId={investor.id}
+            currentUserId={user.id}
+            currentUserName={currentUserName}
           />
         </TabsContent>
       </Tabs>
