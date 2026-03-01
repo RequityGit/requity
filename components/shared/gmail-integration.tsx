@@ -261,15 +261,49 @@ export function GmailIntegration() {
             </Button>
           </div>
         ) : gmailConfigured === false ? (
-          <div className="flex items-center gap-3 p-3 rounded-md bg-amber-50 border border-amber-200">
-            <AlertTriangle className="h-5 w-5 text-amber-600 flex-shrink-0" />
-            <div>
-              <p className="text-sm font-medium text-amber-900">
-                Gmail integration is not configured
-              </p>
-              <p className="text-xs text-amber-700">
-                Contact your administrator to enable Gmail OAuth.
-              </p>
+          <div className="space-y-3">
+            <div className="flex items-center gap-3 p-3 rounded-md bg-amber-50 border border-amber-200">
+              <AlertTriangle className="h-5 w-5 text-amber-600 flex-shrink-0" />
+              <div>
+                <p className="text-sm font-medium text-amber-900">
+                  Gmail integration is not configured
+                </p>
+                {pathname.startsWith("/admin") || pathname.startsWith("/control-center") ? (
+                  <div className="text-xs text-amber-700 space-y-1 mt-1">
+                    <p>
+                      To enable Gmail integration, add these environment variables
+                      to your deployment:
+                    </p>
+                    <ul className="list-disc list-inside space-y-0.5 ml-1">
+                      <li>
+                        <code className="bg-amber-100 px-1 rounded text-[11px]">GOOGLE_CLIENT_ID</code>
+                      </li>
+                      <li>
+                        <code className="bg-amber-100 px-1 rounded text-[11px]">GOOGLE_CLIENT_SECRET</code>
+                      </li>
+                    </ul>
+                    <p>
+                      Create OAuth credentials in the{" "}
+                      <a
+                        href="https://console.cloud.google.com/apis/credentials"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="underline font-medium"
+                      >
+                        Google Cloud Console
+                      </a>{" "}
+                      and set the redirect URI to{" "}
+                      <code className="bg-amber-100 px-1 rounded text-[11px]">
+                        {"<your-domain>"}/api/gmail/auth/callback
+                      </code>
+                    </p>
+                  </div>
+                ) : (
+                  <p className="text-xs text-amber-700">
+                    Contact your administrator to enable Gmail OAuth.
+                  </p>
+                )}
+              </div>
             </div>
           </div>
         ) : (

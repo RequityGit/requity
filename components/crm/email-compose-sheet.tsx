@@ -195,7 +195,11 @@ export function EmailComposeSheet({
         ...(gmailEmail ? { from_email: gmailEmail } : {}),
       };
 
-      const { error } = await supabase.from("crm_emails").insert(insertData);
+      const { data: insertedEmail, error } = await supabase
+        .from("crm_emails")
+        .insert(insertData)
+        .select("id")
+        .single();
       if (error) throw error;
 
       // Also log as CRM activity if linked to a contact
@@ -214,7 +218,35 @@ export function EmailComposeSheet({
           .eq("id", linkedContactId);
       }
 
-      toast({ title: "Email queued", description: "Your email has been saved and queued for sending." });
+      // Send the email via Gmail API if the user has an active Gmail connection
+      if (gmailEmail && insertedEmail?.id) {
+        try {
+          const sendRes = await fetch("/api/gmail/send", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ emailId: insertedEmail.id }),
+          });
+          const sendData = await sendRes.json();
+
+          if (sendRes.ok) {
+            toast({ title: "Email sent", description: "Your email has been sent via Gmail." });
+          } else {
+            toast({
+              title: "Email saved",
+              description: sendData?.error || "Email was saved but could not be sent immediately. It will be retried.",
+              variant: "destructive",
+            });
+          }
+        } catch {
+          toast({
+            title: "Email saved",
+            description: "Email was saved but could not be sent immediately. It will be retried.",
+            variant: "destructive",
+          });
+        }
+      } else {
+        toast({ title: "Email queued", description: "Your email has been saved and queued for sending." });
+      }
       onOpenChange(false);
 
       // Reset form
