@@ -87,6 +87,12 @@ const adminNav: NavItem[] = [
     href: "/admin/email-templates",
     icon: Mail,
   },
+  {
+    label: "Settings",
+    href: "/admin/settings",
+    icon: Cog,
+    activePaths: ["/admin/settings/term-sheets"],
+  },
 ];
 
 function getNavItems(role: string): NavItem[] {
