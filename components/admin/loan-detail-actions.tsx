@@ -48,6 +48,9 @@ import {
 import type { DrawRequest, LoanPayment, Document, LoanCondition, PricingProgram, LeverageAdjuster } from "@/lib/supabase/types";
 import { LoanConditionsTab } from "@/components/admin/loan-conditions-tab";
 import { LoanPricingTab } from "@/components/admin/loan-pricing-tab";
+import { LoanUnderwritingTab } from "@/components/admin/loan-underwriting-tab";
+import type { UnderwritingInputs } from "@/lib/underwriting/types";
+import { Scale } from "lucide-react";
 
 interface LoanInfo {
   id: string;
@@ -68,6 +71,24 @@ interface LoanInfo {
   ltv: number | null;
   appraised_value: number | null;
   notes: string | null;
+  purchase_price?: number | null;
+  points?: number | null;
+  after_repair_value?: number | null;
+  rehab_budget?: number | null;
+  property_type?: string | null;
+  heated_sqft?: number | null;
+  annual_property_tax?: number | null;
+  annual_insurance?: number | null;
+  monthly_hoa?: number | null;
+  monthly_utilities?: number | null;
+  holding_period_months?: number | null;
+  sales_disposition_pct?: number | null;
+  mobilization_draw?: number | null;
+  lender_fees_flat?: number | null;
+  title_closing_escrow?: number | null;
+  num_partners?: number | null;
+  credit_score?: number | null;
+  experience_count?: number | null;
 }
 
 interface ActivityLogEntry {
@@ -125,6 +146,7 @@ interface LoanDetailActionsProps {
   programs?: PricingProgram[];
   adjusters?: LeverageAdjuster[];
   loanForPricing?: LoanForPricing;
+  underwritingVersions?: any[];
 }
 
 export function LoanDetailActions({
@@ -139,9 +161,39 @@ export function LoanDetailActions({
   programs,
   adjusters,
   loanForPricing,
+  underwritingVersions,
 }: LoanDetailActionsProps) {
   const router = useRouter();
   const hasPricing = programs && programs.length > 0 && adjusters && loanForPricing;
+  const uwVersions = underwritingVersions ?? [];
+
+  // Build loan defaults for pre-populating first underwriting version
+  const loanDefaults: Partial<UnderwritingInputs> = {
+    loan_amount: loan.loan_amount,
+    purchase_price: loan.purchase_price ?? null,
+    appraised_value: loan.appraised_value,
+    interest_rate: loan.interest_rate,
+    points: loan.points ?? null,
+    loan_term_months: loan.term_months,
+    loan_type: loan.loan_type,
+    property_address: loan.property_address,
+    after_repair_value: loan.after_repair_value ?? null,
+    rehab_budget: loan.rehab_budget ?? null,
+    property_type: loan.property_type ?? null,
+    heated_sqft: loan.heated_sqft ?? null,
+    annual_property_tax: loan.annual_property_tax ?? null,
+    annual_insurance: loan.annual_insurance ?? null,
+    monthly_hoa: loan.monthly_hoa ?? null,
+    monthly_utilities: loan.monthly_utilities ?? null,
+    holding_period_months: loan.holding_period_months ?? null,
+    sales_disposition_pct: loan.sales_disposition_pct ?? null,
+    mobilization_draw: loan.mobilization_draw ?? null,
+    lender_fees_flat: loan.lender_fees_flat ?? null,
+    title_closing_escrow: loan.title_closing_escrow ?? null,
+    num_partners: loan.num_partners ?? null,
+    credit_score: loan.credit_score ?? null,
+    experience_count: loan.experience_count ?? null,
+  };
 
   return (
     <div className="space-y-4">
@@ -155,6 +207,10 @@ export function LoanDetailActions({
       {/* Tabbed data */}
       <Tabs defaultValue="conditions">
         <TabsList>
+          <TabsTrigger value="underwriting" className="gap-1">
+            <Scale className="h-3.5 w-3.5" />
+            Underwriting
+          </TabsTrigger>
           <TabsTrigger value="conditions" className="gap-1">
             <ClipboardList className="h-3.5 w-3.5" />
             Conditions ({conditions.length})
@@ -179,6 +235,15 @@ export function LoanDetailActions({
             </TabsTrigger>
           )}
         </TabsList>
+
+        <TabsContent value="underwriting" className="mt-4">
+          <LoanUnderwritingTab
+            loanId={loanId}
+            versions={uwVersions}
+            currentUserId={currentUserId}
+            loanDefaults={loanDefaults}
+          />
+        </TabsContent>
 
         <TabsContent value="conditions" className="mt-4">
           <LoanConditionsTab
