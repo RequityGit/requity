@@ -55,6 +55,18 @@ const statusStyles: Record<string, string> = {
   requested: "bg-blue-100 text-blue-800 border-blue-200",
   received: "bg-indigo-100 text-indigo-800 border-indigo-200",
   waived: "bg-slate-100 text-slate-600 border-slate-200",
+
+  // Servicing statuses (Title Case)
+  Active: "bg-green-100 text-green-800 border-green-200",
+  "Paid Off": "bg-gray-100 text-gray-600 border-gray-200",
+  Sold: "bg-blue-100 text-blue-800 border-blue-200",
+  "In Default": "bg-red-100 text-red-800 border-red-200",
+  Pending: "bg-yellow-100 text-yellow-800 border-yellow-200",
+  Funded: "bg-green-100 text-green-800 border-green-200",
+  Original: "bg-slate-100 text-slate-700 border-slate-200",
+  Reversal: "bg-amber-100 text-amber-800 border-amber-200",
+  Dutch: "bg-purple-100 text-purple-800 border-purple-200",
+  "Non Dutch": "bg-slate-100 text-slate-700 border-slate-200",
 };
 
 interface StatusBadgeProps {
