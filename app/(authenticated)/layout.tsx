@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { Sidebar } from "@/components/layout/sidebar";
 import { Topbar } from "@/components/layout/topbar";
 import { Toaster } from "@/components/ui/toaster";
+import { ViewAsProvider } from "@/contexts/view-as-context";
 
 // Never statically generate authenticated pages
 export const dynamic = "force-dynamic";
@@ -57,21 +58,23 @@ export default async function AuthenticatedLayout({
   const isSuperAdmin = !!superAdminRole;
 
   return (
-    <div className="flex h-screen overflow-hidden">
-      <Sidebar role={effectiveRole} isSuperAdmin={isSuperAdmin} />
-      <div className="flex-1 flex flex-col overflow-hidden">
-        <Topbar
-          userName={profile.full_name || ""}
-          role={effectiveRole}
-          email={profile.email ?? ""}
-          allowedRoles={allowedRoles}
-          userId={user.id}
-        />
-        <main className="flex-1 overflow-y-auto bg-slate-50 p-6">
-          {children}
-        </main>
+    <ViewAsProvider isSuperAdmin={isSuperAdmin} actualRole={effectiveRole}>
+      <div className="flex h-screen overflow-hidden">
+        <Sidebar role={effectiveRole} isSuperAdmin={isSuperAdmin} />
+        <div className="flex-1 flex flex-col overflow-hidden">
+          <Topbar
+            userName={profile.full_name || ""}
+            role={effectiveRole}
+            email={profile.email ?? ""}
+            allowedRoles={allowedRoles}
+            userId={user.id}
+          />
+          <main className="flex-1 overflow-y-auto bg-slate-50 p-6">
+            {children}
+          </main>
+        </div>
       </div>
       <Toaster />
-    </div>
+    </ViewAsProvider>
   );
 }
