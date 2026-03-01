@@ -67,7 +67,8 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  if (!email.to_email) {
+  // Validate required fields
+  if (!email.to_email || !email.subject) {
     return NextResponse.json(
       { error: "Recipient email address is missing." },
       { status: 400 }
