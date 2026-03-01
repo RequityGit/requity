@@ -23,6 +23,7 @@ import {
   Settings2,
   Contact,
   Calculator,
+  Banknote,
 } from "lucide-react";
 import { useState } from "react";
 
@@ -57,6 +58,7 @@ const adminNav: NavItem[] = [
   { label: "Investors", href: "/admin/investors", icon: Users },
   { label: "Borrowers", href: "/admin/borrowers", icon: Building2 },
   { label: "Loans", href: "/admin/loans", icon: Home },
+  { label: "Servicing", href: "/admin/servicing", icon: Banknote },
   { label: "Conditions", href: "/admin/conditions", icon: ClipboardList },
   { label: "Pricing", href: "/admin/pricing", icon: Calculator },
   { label: "Investments", href: "/admin/funds", icon: Landmark },
