@@ -45,9 +45,20 @@ export default async function AuthenticatedLayout({
       ? activeRoleCookie
       : (profile.role ?? "borrower");
 
+  // Check if user has super_admin role for Control Center access
+  const { data: superAdminRole } = await supabase
+    .from("user_roles")
+    .select("id")
+    .eq("user_id", user.id)
+    .eq("role", "super_admin")
+    .eq("is_active", true)
+    .maybeSingle();
+
+  const isSuperAdmin = !!superAdminRole;
+
   return (
     <div className="flex h-screen overflow-hidden">
-      <Sidebar role={effectiveRole} />
+      <Sidebar role={effectiveRole} isSuperAdmin={isSuperAdmin} />
       <div className="flex-1 flex flex-col overflow-hidden">
         <Topbar
           userName={profile.full_name || ""}

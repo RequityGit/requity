@@ -21,6 +21,7 @@ import {
   Settings2,
   Contact,
   Banknote,
+  Cog,
 } from "lucide-react";
 import { useState } from "react";
 
@@ -91,7 +92,7 @@ function getNavItems(role: string): NavItem[] {
   }
 }
 
-export function Sidebar({ role }: { role: string }) {
+export function Sidebar({ role, isSuperAdmin }: { role: string; isSuperAdmin?: boolean }) {
   const pathname = usePathname();
   const [collapsed, setCollapsed] = useState(false);
   const navItems = getNavItems(role);
@@ -149,6 +150,23 @@ export function Sidebar({ role }: { role: string }) {
         })}
       </nav>
 
+      {isSuperAdmin && (
+        <div className="px-2 pb-2">
+          <Link
+            href="/control-center"
+            className={cn(
+              "flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors",
+              pathname.startsWith("/control-center")
+                ? "bg-white/15 text-white"
+                : "text-white/70 hover:bg-white/10 hover:text-white"
+            )}
+            title={collapsed ? "Control Center" : undefined}
+          >
+            <Cog className="h-5 w-5 flex-shrink-0" />
+            {!collapsed && <span>Control Center</span>}
+          </Link>
+        </div>
+      )}
       <div className="p-4 border-t border-white/10">
         {!collapsed && (
           <div className="text-xs text-white/50">
