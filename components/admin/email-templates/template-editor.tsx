@@ -1,14 +1,15 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ArrowLeft, Save } from "lucide-react";
+import { ArrowLeft, Save, Eye, Code } from "lucide-react";
 import Link from "next/link";
+import { cn } from "@/lib/utils";
 import type {
   EmailTemplate,
   EmailTemplateVersion,
@@ -18,6 +19,7 @@ import { HtmlEditor } from "./html-editor";
 import { TemplatePreview } from "./template-preview";
 import { VariableInserter } from "./variable-inserter";
 import { VersionHistory } from "./version-history";
+import { VisualEditor, type VisualEditorHandle } from "./visual-editor";
 
 interface TemplateEditorProps {
   template: EmailTemplate;
@@ -33,6 +35,8 @@ export function TemplateEditor({
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
+  const [editorMode, setEditorMode] = useState<"visual" | "source">("visual");
+  const visualEditorRef = useRef<VisualEditorHandle>(null);
 
   const handleFieldChange = useCallback(
     (field: keyof EmailTemplate, value: string | boolean) => {
@@ -42,13 +46,21 @@ export function TemplateEditor({
     []
   );
 
-  const handleInsertVariable = useCallback((variable: string) => {
-    setTemplate((prev) => ({
-      ...prev,
-      html_body_template: prev.html_body_template + `{{${variable}}}`,
-    }));
-    setSaved(false);
-  }, []);
+  const handleInsertVariable = useCallback(
+    (variable: string) => {
+      if (editorMode === "visual" && visualEditorRef.current) {
+        visualEditorRef.current.insertMergeVariable(variable);
+        setSaved(false);
+      } else {
+        setTemplate((prev) => ({
+          ...prev,
+          html_body_template: prev.html_body_template + `{{${variable}}}`,
+        }));
+        setSaved(false);
+      }
+    },
+    [editorMode]
+  );
 
   async function handleSave() {
     setSaving(true);
@@ -146,11 +158,55 @@ export function TemplateEditor({
         </TabsList>
 
         <TabsContent value="editor" className="space-y-4">
+          {/* Visual / Source mode toggle */}
+          <div className="flex items-center justify-between">
+            <div className="inline-flex h-9 items-center justify-center rounded-lg bg-muted p-1 text-muted-foreground">
+              <button
+                type="button"
+                onClick={() => setEditorMode("visual")}
+                className={cn(
+                  "inline-flex items-center justify-center whitespace-nowrap rounded-md px-3 py-1 text-sm font-medium transition-all",
+                  editorMode === "visual" &&
+                    "bg-background text-foreground shadow-sm"
+                )}
+              >
+                <Eye className="h-4 w-4 mr-1.5" />
+                Visual
+              </button>
+              <button
+                type="button"
+                onClick={() => setEditorMode("source")}
+                className={cn(
+                  "inline-flex items-center justify-center whitespace-nowrap rounded-md px-3 py-1 text-sm font-medium transition-all",
+                  editorMode === "source" &&
+                    "bg-background text-foreground shadow-sm"
+                )}
+              >
+                <Code className="h-4 w-4 mr-1.5" />
+                HTML Source
+              </button>
+            </div>
+          </div>
+
+          {/* Merge variable inserter (shown in both modes, inserts at cursor in visual) */}
           <VariableInserter onInsert={handleInsertVariable} />
-          <HtmlEditor
-            value={template.html_body_template}
-            onChange={(v) => handleFieldChange("html_body_template", v)}
-          />
+
+          {/* Visual editor (Tiptap) */}
+          {editorMode === "visual" && (
+            <VisualEditor
+              ref={visualEditorRef}
+              value={template.html_body_template}
+              onChange={(v) => handleFieldChange("html_body_template", v)}
+            />
+          )}
+
+          {/* Source editor (raw HTML textarea) */}
+          {editorMode === "source" && (
+            <HtmlEditor
+              value={template.html_body_template}
+              onChange={(v) => handleFieldChange("html_body_template", v)}
+            />
+          )}
         </TabsContent>
 
         <TabsContent value="preview">
