@@ -45,12 +45,14 @@ import {
   Activity,
   Calculator,
   MessageCircle,
+  Mail,
 } from "lucide-react";
 import type { DrawRequest, LoanPayment, Document, LoanCondition, PricingProgram, LeverageAdjuster } from "@/lib/supabase/types";
 import { LoanConditionsTab } from "@/components/admin/loan-conditions-tab";
 import { LoanPricingTab } from "@/components/admin/loan-pricing-tab";
 import { LoanUnderwritingTab } from "@/components/admin/loan-underwriting-tab";
 import { LoanChatter } from "@/components/shared/loan-chatter";
+import { EmailActivityFeed, type EmailRecord } from "@/components/crm/email-activity-feed";
 import type { UnderwritingInputs } from "@/lib/underwriting/types";
 import { Scale, Building2 } from "lucide-react";
 import Link from "next/link";
@@ -150,6 +152,10 @@ interface LoanDetailActionsProps {
   adjusters?: LeverageAdjuster[];
   loanForPricing?: LoanForPricing;
   underwritingVersions?: any[];
+  emails?: EmailRecord[];
+  borrowerEmail?: string;
+  borrowerName?: string;
+  currentUserName?: string;
 }
 
 export function LoanDetailActions({
@@ -165,6 +171,10 @@ export function LoanDetailActions({
   adjusters,
   loanForPricing,
   underwritingVersions,
+  emails = [],
+  borrowerEmail,
+  borrowerName,
+  currentUserName,
 }: LoanDetailActionsProps) {
   const router = useRouter();
   const hasPricing = programs && programs.length > 0 && adjusters && loanForPricing;
@@ -232,6 +242,10 @@ export function LoanDetailActions({
           <TabsTrigger value="documents">
             Documents ({documents.length})
           </TabsTrigger>
+          <TabsTrigger value="emails" className="gap-1">
+            <Mail className="h-3.5 w-3.5" />
+            Emails ({emails.length})
+          </TabsTrigger>
           <TabsTrigger value="activity" className="gap-1">
             <Activity className="h-3.5 w-3.5" />
             Activity
@@ -288,6 +302,17 @@ export function LoanDetailActions({
 
         <TabsContent value="documents" className="mt-4">
           <DocumentsTable documents={documents} />
+        </TabsContent>
+
+        <TabsContent value="emails" className="mt-4">
+          <EmailActivityFeed
+            emails={emails}
+            defaultToEmail={borrowerEmail}
+            defaultToName={borrowerName}
+            linkedLoanId={loanId}
+            currentUserId={currentUserId}
+            currentUserName={currentUserName}
+          />
         </TabsContent>
 
         <TabsContent value="activity" className="mt-4">
