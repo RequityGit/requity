@@ -1,28 +1,45 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { nq } from "@/lib/notifications";
 
 export function useUnreadCount(userId: string | undefined) {
   const [count, setCount] = useState(0);
-  const supabase = createClient();
+  const supabaseRef = useRef(createClient());
+  const fetchCountRef = useRef<() => Promise<void>>();
+  const debounceRef = useRef<ReturnType<typeof setTimeout>>();
 
   const fetchCount = useCallback(async () => {
     if (!userId) return;
-    const { data, error } = await nq(supabase).rpc("get_unread_notification_count");
+    const { data, error } = await nq(supabaseRef.current).rpc(
+      "get_unread_notification_count"
+    );
     if (!error && data !== null) {
       setCount(data as number);
     }
-  }, [userId, supabase]);
+  }, [userId]);
 
+  // Keep ref in sync so the realtime handler always calls the latest version
+  fetchCountRef.current = fetchCount;
+
+  // Initial fetch
   useEffect(() => {
     fetchCount();
   }, [fetchCount]);
 
-  // Subscribe to realtime changes for this user's notifications
+  // Stable realtime subscription — only depends on userId
   useEffect(() => {
     if (!userId) return;
+
+    const supabase = supabaseRef.current;
+
+    const debouncedRefetch = () => {
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+      debounceRef.current = setTimeout(() => {
+        fetchCountRef.current?.();
+      }, 300);
+    };
 
     const channel = supabase
       .channel(`unread-count-${userId}`)
@@ -46,16 +63,25 @@ export function useUnreadCount(userId: string | undefined) {
           table: "notifications",
           filter: `user_id=eq.${userId}`,
         },
-        () => {
-          fetchCount();
-        }
+        debouncedRefetch
+      )
+      .on(
+        "postgres_changes",
+        {
+          event: "DELETE",
+          schema: "public",
+          table: "notifications",
+          filter: `user_id=eq.${userId}`,
+        },
+        debouncedRefetch
       )
       .subscribe();
 
     return () => {
+      if (debounceRef.current) clearTimeout(debounceRef.current);
       supabase.removeChannel(channel);
     };
-  }, [userId, supabase, fetchCount]);
+  }, [userId]);
 
   return { count, refetch: fetchCount };
 }
