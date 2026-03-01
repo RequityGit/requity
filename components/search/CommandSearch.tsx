@@ -2,20 +2,20 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Search, Loader2 } from "lucide-react";
-import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
+import { Search, Loader2, X } from "lucide-react";
 import { useSearch, type SearchResult as SearchResultType } from "@/hooks/useSearch";
 import { SearchResult } from "./SearchResult";
 import { CategoryChips } from "./CategoryChips";
-import { EmptyState, NoResults } from "./EmptyState";
-import { QuickActions } from "./QuickActions";
+import { NoResults } from "./EmptyState";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   getCategoriesForRole,
   getEntityUrl,
   saveRecentSearch,
+  getRecentSearches,
   type SearchEntityType,
 } from "@/lib/search-utils";
+import { Clock } from "lucide-react";
 
 interface CommandSearchProps {
   role: string;
@@ -27,6 +27,7 @@ export function CommandSearch({ role }: CommandSearchProps) {
   const router = useRouter();
   const inputRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
 
   const { query, setQuery, results, loading, activeFilter, setActiveFilter } =
     useSearch();
@@ -39,9 +40,7 @@ export function CommandSearch({ role }: CommandSearchProps) {
     for (const result of results) {
       const type = result.entity_type;
       counts[type] = (counts[type] || 0) + 1;
-      // Also aggregate for grouped categories (e.g. "borrower" chip covers borrower + borrower_entity)
     }
-    // Map to chip keys
     const chipCounts: Record<string, number> = {};
     for (const cat of categories) {
       if (cat.key) {
@@ -59,25 +58,39 @@ export function CommandSearch({ role }: CommandSearchProps) {
     function handleKeyDown(e: KeyboardEvent) {
       if ((e.metaKey || e.ctrlKey) && e.key === "k") {
         e.preventDefault();
-        setOpen((prev) => !prev);
+        setOpen(true);
+        setTimeout(() => inputRef.current?.focus(), 0);
       }
     }
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
   }, []);
 
-  // Reset state when dialog opens
+  // Close dropdown when clicking outside
   useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (
+        containerRef.current &&
+        !containerRef.current.contains(e.target as Node)
+      ) {
+        setOpen(false);
+      }
+    }
     if (open) {
-      setSelectedIndex(0);
-      setTimeout(() => inputRef.current?.focus(), 0);
-    } else {
-      // Save search query if we had one
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [open]);
+
+  // Reset state when dropdown closes
+  useEffect(() => {
+    if (!open) {
       if (query.trim()) {
         saveRecentSearch(query.trim());
       }
       setQuery("");
       setActiveFilter(null);
+      setSelectedIndex(0);
     }
   }, [open, query, setQuery, setActiveFilter]);
 
@@ -107,6 +120,12 @@ export function CommandSearch({ role }: CommandSearchProps) {
   // Keyboard navigation within results
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent) => {
+      if (e.key === "Escape") {
+        e.preventDefault();
+        setOpen(false);
+        inputRef.current?.blur();
+        return;
+      }
       if (e.key === "ArrowDown") {
         e.preventDefault();
         setSelectedIndex((prev) =>
@@ -135,7 +154,7 @@ export function CommandSearch({ role }: CommandSearchProps) {
     }
   }, [selectedIndex]);
 
-  // Handle filter change — map chip key to entity_filter value
+  // Handle filter change
   const handleFilterChange = useCallback(
     (filterKey: string | null) => {
       if (!filterKey) {
@@ -165,48 +184,57 @@ export function CommandSearch({ role }: CommandSearchProps) {
     return matchedCategory?.key ?? activeFilter;
   }, [activeFilter, categories]);
 
-  const selectedResult = results[selectedIndex] || null;
+  const recentSearches = getRecentSearches();
+  const showDropdown = open;
+  const hasQuery = query.trim().length > 0;
 
   return (
-    <>
-      {/* Search trigger button in topbar */}
-      <button
-        type="button"
-        onClick={() => setOpen(true)}
-        className="flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-sm text-slate-500 hover:bg-slate-50 hover:border-slate-300 transition-colors"
+    <div ref={containerRef} className="relative w-full max-w-xl" onKeyDown={handleKeyDown}>
+      {/* Inline search input — always visible */}
+      <div
+        className={`flex items-center rounded-lg border bg-white px-3 py-1.5 transition-all ${
+          open
+            ? "border-blue-300 ring-2 ring-blue-100 shadow-sm"
+            : "border-slate-200 hover:border-slate-300"
+        }`}
       >
-        <Search className="h-4 w-4" />
-        <span className="hidden sm:inline">Search...</span>
-        <kbd className="hidden sm:inline-flex h-5 items-center gap-0.5 rounded border border-slate-200 bg-slate-100 px-1.5 font-mono text-[10px] font-medium text-slate-500">
+        <Search className="mr-2 h-4 w-4 shrink-0 text-slate-400" />
+        <input
+          ref={inputRef}
+          value={query}
+          onChange={(e) => {
+            setQuery(e.target.value);
+            if (!open) setOpen(true);
+          }}
+          onFocus={() => setOpen(true)}
+          placeholder="Search loans, borrowers, investors..."
+          className="flex h-7 w-full bg-transparent text-sm outline-none placeholder:text-slate-400"
+        />
+        {loading && (
+          <Loader2 className="ml-2 h-4 w-4 shrink-0 animate-spin text-slate-400" />
+        )}
+        {hasQuery && !loading && (
+          <button
+            type="button"
+            onClick={() => {
+              setQuery("");
+              inputRef.current?.focus();
+            }}
+            className="ml-1 rounded p-0.5 text-slate-400 hover:text-slate-600 transition-colors"
+          >
+            <X className="h-3.5 w-3.5" />
+          </button>
+        )}
+        <kbd className="ml-2 hidden sm:inline-flex h-5 items-center gap-0.5 rounded border border-slate-200 bg-slate-100 px-1.5 font-mono text-[10px] font-medium text-slate-400">
           <span className="text-xs">⌘</span>K
         </kbd>
-      </button>
+      </div>
 
-      {/* Search dialog */}
-      <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent
-          className="max-w-2xl gap-0 overflow-hidden p-0 sm:rounded-xl"
-          onKeyDown={handleKeyDown}
-        >
-          <DialogTitle className="sr-only">Universal Search</DialogTitle>
-
-          {/* Search input */}
-          <div className="flex items-center border-b border-slate-200 px-4">
-            <Search className="mr-3 h-5 w-5 shrink-0 text-slate-400" />
-            <input
-              ref={inputRef}
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              placeholder="Search loans, borrowers, investors, documents..."
-              className="flex h-12 w-full bg-transparent text-sm outline-none placeholder:text-slate-400"
-            />
-            {loading && (
-              <Loader2 className="ml-2 h-4 w-4 shrink-0 animate-spin text-slate-400" />
-            )}
-          </div>
-
+      {/* Dropdown results panel */}
+      {showDropdown && (
+        <div className="absolute left-0 right-0 top-full z-50 mt-1 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-lg">
           {/* Category chips — show when there's a query */}
-          {query.trim() && (
+          {hasQuery && (
             <CategoryChips
               categories={categories}
               activeFilter={activeChipKey}
@@ -216,21 +244,41 @@ export function CommandSearch({ role }: CommandSearchProps) {
           )}
 
           {/* Results area */}
-          <div className="max-h-[60vh] overflow-y-auto" ref={listRef}>
-            {/* Empty state: no query */}
-            {!query.trim() && (
-              <EmptyState
-                role={role}
-                onSelectRecentSearch={(search) => setQuery(search)}
-                onClose={() => setOpen(false)}
-              />
+          <div className="max-h-[400px] overflow-y-auto" ref={listRef}>
+            {/* Empty state: no query — show recent searches */}
+            {!hasQuery && recentSearches.length > 0 && (
+              <div className="px-3 py-2">
+                <h3 className="px-1 pb-1.5 text-[10px] font-medium uppercase tracking-wider text-slate-400">
+                  Recent Searches
+                </h3>
+                {recentSearches.map((search) => (
+                  <button
+                    key={search}
+                    type="button"
+                    onClick={() => setQuery(search)}
+                    className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm text-slate-600 hover:bg-slate-100 transition-colors"
+                  >
+                    <Clock className="h-3.5 w-3.5 text-slate-400" />
+                    <span className="truncate">{search}</span>
+                  </button>
+                ))}
+              </div>
+            )}
+
+            {/* Empty state: no query and no recent searches */}
+            {!hasQuery && recentSearches.length === 0 && (
+              <div className="px-4 py-6 text-center">
+                <p className="text-sm text-slate-400">
+                  Start typing to search across your portal
+                </p>
+              </div>
             )}
 
             {/* Loading skeleton */}
-            {query.trim() && loading && results.length === 0 && (
-              <div className="space-y-1 p-2">
-                {Array.from({ length: 5 }).map((_, i) => (
-                  <div key={i} className="flex items-center gap-3 px-4 py-3">
+            {hasQuery && loading && results.length === 0 && (
+              <div className="space-y-0.5 p-1.5">
+                {Array.from({ length: 4 }).map((_, i) => (
+                  <div key={i} className="flex items-center gap-3 px-3 py-2.5">
                     <Skeleton className="h-8 w-8 rounded-md" />
                     <div className="flex-1 space-y-1.5">
                       <Skeleton className="h-3.5 w-48" />
@@ -243,13 +291,13 @@ export function CommandSearch({ role }: CommandSearchProps) {
             )}
 
             {/* No results */}
-            {query.trim() && !loading && results.length === 0 && (
+            {hasQuery && !loading && results.length === 0 && (
               <NoResults query={query} />
             )}
 
             {/* Results list */}
             {results.length > 0 && (
-              <div className="py-1">
+              <div className="py-0.5">
                 {results.map((result, index) => (
                   <div key={`${result.entity_type}-${result.id}`} data-index={index}>
                     <SearchResult
@@ -266,30 +314,19 @@ export function CommandSearch({ role }: CommandSearchProps) {
             )}
           </div>
 
-          {/* Quick actions for selected result */}
-          {selectedResult && results.length > 0 && (
-            <QuickActions
-              entityType={selectedResult.entity_type as SearchEntityType}
-              id={selectedResult.id}
-              metadata={selectedResult.metadata}
-              role={role}
-              onClose={() => setOpen(false)}
-            />
-          )}
-
-          {/* Footer with keyboard shortcuts */}
-          <div className="flex items-center justify-between border-t border-slate-200 px-4 py-2">
-            <div className="flex items-center gap-3 text-[10px] text-slate-400">
+          {/* Footer */}
+          <div className="flex items-center justify-between border-t border-slate-100 px-3 py-1.5">
+            <div className="flex items-center gap-2.5 text-[10px] text-slate-400">
               <span>
-                <kbd className="rounded border border-slate-200 bg-slate-100 px-1 py-0.5 font-mono">↑↓</kbd>{" "}
+                <kbd className="rounded border border-slate-200 bg-slate-50 px-1 py-0.5 font-mono">↑↓</kbd>{" "}
                 Navigate
               </span>
               <span>
-                <kbd className="rounded border border-slate-200 bg-slate-100 px-1 py-0.5 font-mono">↵</kbd>{" "}
+                <kbd className="rounded border border-slate-200 bg-slate-50 px-1 py-0.5 font-mono">↵</kbd>{" "}
                 Open
               </span>
               <span>
-                <kbd className="rounded border border-slate-200 bg-slate-100 px-1 py-0.5 font-mono">esc</kbd>{" "}
+                <kbd className="rounded border border-slate-200 bg-slate-50 px-1 py-0.5 font-mono">esc</kbd>{" "}
                 Close
               </span>
             </div>
@@ -299,8 +336,8 @@ export function CommandSearch({ role }: CommandSearchProps) {
               </span>
             )}
           </div>
-        </DialogContent>
-      </Dialog>
-    </>
+        </div>
+      )}
+    </div>
   );
 }

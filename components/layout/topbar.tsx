@@ -47,8 +47,9 @@ export function Topbar({ userName, role, email, allowedRoles, userId, isSuperAdm
   return (
     <>
       <ViewAsBanner />
-      <header className="sticky top-0 z-30 h-16 border-b bg-white flex items-center justify-between px-6">
-        <div>
+      <header className="sticky top-0 z-30 h-16 border-b bg-white flex items-center px-6">
+        {/* Left side — impersonation indicator or spacer */}
+        <div className="shrink-0 w-48">
           {isImpersonating && (
             <div className="flex items-center gap-2 text-sm text-amber-700">
               <Eye className="h-4 w-4" />
@@ -56,8 +57,14 @@ export function Topbar({ userName, role, email, allowedRoles, userId, isSuperAdm
             </div>
           )}
         </div>
-        <div className="flex items-center gap-4">
+
+        {/* Center — search bar */}
+        <div className="flex-1 flex justify-center px-4">
           <CommandSearch role={role} />
+        </div>
+
+        {/* Right side — actions */}
+        <div className="flex shrink-0 items-center gap-4">
           <NotificationBell userId={userId} />
 
           {isImpersonating ? (

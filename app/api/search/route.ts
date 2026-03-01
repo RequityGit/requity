@@ -1,6 +1,10 @@
 import { createClient } from "@/lib/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
 
+// Track when the materialized view was last refreshed
+let lastRefreshTime = 0;
+const REFRESH_INTERVAL_MS = 60_000; // Refresh at most once per minute
+
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const query = searchParams.get("q") || "";
@@ -20,6 +24,19 @@ export async function GET(request: NextRequest) {
 
   if (!user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  // Refresh the materialized view if stale (at most once per minute)
+  const now = Date.now();
+  if (now - lastRefreshTime > REFRESH_INTERVAL_MS) {
+    lastRefreshTime = now;
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      await (supabase.rpc as any)("refresh_search_index");
+    } catch {
+      // Non-critical — log but continue with potentially stale data
+      console.warn("Failed to refresh search index");
+    }
   }
 
   // Get user's active role
@@ -53,8 +70,6 @@ export async function GET(request: NextRequest) {
     : null;
 
   // Call the search RPC function
-  // Note: search_portal is created by migration but not yet in generated types.
-  // After running the migration and regenerating types, this cast can be removed.
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { data, error } = await (supabase.rpc as any)("search_portal", {
     query_text: query.trim().slice(0, 100),
