@@ -1134,19 +1134,32 @@ export type Database = {
         Row: {
           address_line1: string | null
           address_line2: string | null
+          asset_types: string[] | null
           city: string | null
+          company_capabilities: string[] | null
+          company_subtype:
+            | Database["public"]["Enums"]["company_subtype_enum"]
+            | null
           company_type: Database["public"]["Enums"]["company_type_enum"]
           country: string | null
           created_at: string
           email: string | null
           fee_agreement_on_file: boolean | null
+          geographies: string[] | null
           id: string
           is_active: boolean | null
+          lender_programs: string[] | null
           name: string
+          nda_created_date: string | null
+          nda_expiration_date: string | null
           notes: string | null
+          other_names: string | null
           phone: string | null
           primary_contact_id: string | null
+          referral_contact_id: string | null
+          source: string | null
           state: string | null
+          title_company_verified: boolean | null
           updated_at: string
           website: string | null
           zip: string | null
@@ -1154,19 +1167,32 @@ export type Database = {
         Insert: {
           address_line1?: string | null
           address_line2?: string | null
+          asset_types?: string[] | null
           city?: string | null
+          company_capabilities?: string[] | null
+          company_subtype?:
+            | Database["public"]["Enums"]["company_subtype_enum"]
+            | null
           company_type: Database["public"]["Enums"]["company_type_enum"]
           country?: string | null
           created_at?: string
           email?: string | null
           fee_agreement_on_file?: boolean | null
+          geographies?: string[] | null
           id?: string
           is_active?: boolean | null
+          lender_programs?: string[] | null
           name: string
+          nda_created_date?: string | null
+          nda_expiration_date?: string | null
           notes?: string | null
+          other_names?: string | null
           phone?: string | null
           primary_contact_id?: string | null
+          referral_contact_id?: string | null
+          source?: string | null
           state?: string | null
+          title_company_verified?: boolean | null
           updated_at?: string
           website?: string | null
           zip?: string | null
@@ -1174,24 +1200,51 @@ export type Database = {
         Update: {
           address_line1?: string | null
           address_line2?: string | null
+          asset_types?: string[] | null
           city?: string | null
+          company_capabilities?: string[] | null
+          company_subtype?:
+            | Database["public"]["Enums"]["company_subtype_enum"]
+            | null
           company_type?: Database["public"]["Enums"]["company_type_enum"]
           country?: string | null
           created_at?: string
           email?: string | null
           fee_agreement_on_file?: boolean | null
+          geographies?: string[] | null
           id?: string
           is_active?: boolean | null
+          lender_programs?: string[] | null
           name?: string
+          nda_created_date?: string | null
+          nda_expiration_date?: string | null
           notes?: string | null
+          other_names?: string | null
           phone?: string | null
           primary_contact_id?: string | null
+          referral_contact_id?: string | null
+          source?: string | null
           state?: string | null
+          title_company_verified?: boolean | null
           updated_at?: string
           website?: string | null
           zip?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "companies_referral_contact_id_fkey"
+            columns: ["referral_contact_id"]
+            isOneToOne: false
+            referencedRelation: "crm_contacts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "companies_referral_contact_id_fkey"
+            columns: ["referral_contact_id"]
+            isOneToOne: false
+            referencedRelation: "crm_contacts_active"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "fk_companies_primary_contact"
             columns: ["primary_contact_id"]
@@ -1562,6 +1615,7 @@ export type Database = {
           email: string | null
           first_name: string | null
           id: string
+          language_preference: string | null
           last_contacted_at: string | null
           last_name: string | null
           lifecycle_stage:
@@ -1581,6 +1635,7 @@ export type Database = {
           status: Database["public"]["Enums"]["crm_contact_status"]
           twilio_contact_id: string | null
           updated_at: string
+          user_function: string | null
           user_id: string | null
           zip: string | null
         }
@@ -1601,6 +1656,7 @@ export type Database = {
           email?: string | null
           first_name?: string | null
           id?: string
+          language_preference?: string | null
           last_contacted_at?: string | null
           last_name?: string | null
           lifecycle_stage?:
@@ -1620,6 +1676,7 @@ export type Database = {
           status?: Database["public"]["Enums"]["crm_contact_status"]
           twilio_contact_id?: string | null
           updated_at?: string
+          user_function?: string | null
           user_id?: string | null
           zip?: string | null
         }
@@ -1640,6 +1697,7 @@ export type Database = {
           email?: string | null
           first_name?: string | null
           id?: string
+          language_preference?: string | null
           last_contacted_at?: string | null
           last_name?: string | null
           lifecycle_stage?:
@@ -1659,6 +1717,7 @@ export type Database = {
           status?: Database["public"]["Enums"]["crm_contact_status"]
           twilio_contact_id?: string | null
           updated_at?: string
+          user_function?: string | null
           user_id?: string | null
           zip?: string | null
         }
@@ -1737,23 +1796,36 @@ export type Database = {
           cc_emails: string[] | null
           created_at: string
           delivered_at: string | null
+          direction: string
           email_template_id: string | null
-          from_email: string
+          from_email: string | null
+          from_name: string | null
+          gmail_labels: string[] | null
+          gmail_message_id: string | null
+          gmail_thread_id: string | null
           id: string
+          is_read: boolean | null
           linked_borrower_id: string | null
           linked_contact_id: string | null
+          linked_fund_id: string | null
           linked_investor_id: string | null
           linked_loan_id: string | null
+          match_status: string | null
           opened_at: string | null
           postmark_error: string | null
           postmark_message_id: string | null
           postmark_status: string | null
+          reply_to: string | null
           sent_by: string | null
           sent_by_name: string | null
-          subject: string
+          subject: string | null
+          synced_at: string | null
+          synced_by: string | null
           template_data: Json | null
-          to_email: string
+          to_email: string | null
+          to_emails: string[] | null
           to_name: string | null
+          to_names: string[] | null
         }
         Insert: {
           attachments?: Json | null
@@ -1763,23 +1835,36 @@ export type Database = {
           cc_emails?: string[] | null
           created_at?: string
           delivered_at?: string | null
+          direction?: string
           email_template_id?: string | null
-          from_email?: string
+          from_email?: string | null
+          from_name?: string | null
+          gmail_labels?: string[] | null
+          gmail_message_id?: string | null
+          gmail_thread_id?: string | null
           id?: string
+          is_read?: boolean | null
           linked_borrower_id?: string | null
           linked_contact_id?: string | null
+          linked_fund_id?: string | null
           linked_investor_id?: string | null
           linked_loan_id?: string | null
+          match_status?: string | null
           opened_at?: string | null
           postmark_error?: string | null
           postmark_message_id?: string | null
           postmark_status?: string | null
+          reply_to?: string | null
           sent_by?: string | null
           sent_by_name?: string | null
-          subject: string
+          subject?: string | null
+          synced_at?: string | null
+          synced_by?: string | null
           template_data?: Json | null
-          to_email: string
+          to_email?: string | null
+          to_emails?: string[] | null
           to_name?: string | null
+          to_names?: string[] | null
         }
         Update: {
           attachments?: Json | null
@@ -1789,23 +1874,36 @@ export type Database = {
           cc_emails?: string[] | null
           created_at?: string
           delivered_at?: string | null
+          direction?: string
           email_template_id?: string | null
-          from_email?: string
+          from_email?: string | null
+          from_name?: string | null
+          gmail_labels?: string[] | null
+          gmail_message_id?: string | null
+          gmail_thread_id?: string | null
           id?: string
+          is_read?: boolean | null
           linked_borrower_id?: string | null
           linked_contact_id?: string | null
+          linked_fund_id?: string | null
           linked_investor_id?: string | null
           linked_loan_id?: string | null
+          match_status?: string | null
           opened_at?: string | null
           postmark_error?: string | null
           postmark_message_id?: string | null
           postmark_status?: string | null
+          reply_to?: string | null
           sent_by?: string | null
           sent_by_name?: string | null
-          subject?: string
+          subject?: string | null
+          synced_at?: string | null
+          synced_by?: string | null
           template_data?: Json | null
-          to_email?: string
+          to_email?: string | null
+          to_emails?: string[] | null
           to_name?: string | null
+          to_names?: string[] | null
         }
         Relationships: [
           {
@@ -1848,6 +1946,13 @@ export type Database = {
             columns: ["linked_contact_id"]
             isOneToOne: false
             referencedRelation: "crm_contacts_active"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "crm_emails_linked_fund_id_fkey"
+            columns: ["linked_fund_id"]
+            isOneToOne: false
+            referencedRelation: "funds"
             referencedColumns: ["id"]
           },
           {
@@ -2281,6 +2386,102 @@ export type Database = {
           },
         ]
       }
+      email_participants: {
+        Row: {
+          borrower_id: string | null
+          contact_id: string | null
+          created_at: string
+          display_name: string | null
+          email_address: string
+          email_id: string
+          id: string
+          investor_id: string | null
+          participant_role: string
+          profile_id: string | null
+        }
+        Insert: {
+          borrower_id?: string | null
+          contact_id?: string | null
+          created_at?: string
+          display_name?: string | null
+          email_address: string
+          email_id: string
+          id?: string
+          investor_id?: string | null
+          participant_role: string
+          profile_id?: string | null
+        }
+        Update: {
+          borrower_id?: string | null
+          contact_id?: string | null
+          created_at?: string
+          display_name?: string | null
+          email_address?: string
+          email_id?: string
+          id?: string
+          investor_id?: string | null
+          participant_role?: string
+          profile_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "email_participants_borrower_id_fkey"
+            columns: ["borrower_id"]
+            isOneToOne: false
+            referencedRelation: "borrowers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "email_participants_borrower_id_fkey"
+            columns: ["borrower_id"]
+            isOneToOne: false
+            referencedRelation: "borrowers_portal"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "email_participants_borrower_id_fkey"
+            columns: ["borrower_id"]
+            isOneToOne: false
+            referencedRelation: "borrowers_safe"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "email_participants_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "crm_contacts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "email_participants_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "crm_contacts_active"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "email_participants_email_id_fkey"
+            columns: ["email_id"]
+            isOneToOne: false
+            referencedRelation: "crm_emails"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "email_participants_investor_id_fkey"
+            columns: ["investor_id"]
+            isOneToOne: false
+            referencedRelation: "investors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "email_participants_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       email_template_versions: {
         Row: {
           change_notes: string | null
@@ -2529,6 +2730,48 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      gmail_sync_state: {
+        Row: {
+          created_at: string
+          error_message: string | null
+          gmail_email: string
+          history_id: number | null
+          id: string
+          last_full_sync_at: string | null
+          last_sync_at: string | null
+          messages_synced: number
+          sync_status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          error_message?: string | null
+          gmail_email: string
+          history_id?: number | null
+          id?: string
+          last_full_sync_at?: string | null
+          last_sync_at?: string | null
+          messages_synced?: number
+          sync_status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          error_message?: string | null
+          gmail_email?: string
+          history_id?: number | null
+          id?: string
+          last_full_sync_at?: string | null
+          last_sync_at?: string | null
+          messages_synced?: number
+          sync_status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       gmail_tokens: {
         Row: {
@@ -5697,6 +5940,7 @@ export type Database = {
           city: string | null
           company_id: string | null
           company_name: string | null
+          consent_granted_at: string | null
           contact_type: Database["public"]["Enums"]["crm_contact_type"] | null
           contact_types: string[] | null
           created_at: string | null
@@ -5735,6 +5979,7 @@ export type Database = {
           city?: string | null
           company_id?: string | null
           company_name?: string | null
+          consent_granted_at?: string | null
           contact_type?: Database["public"]["Enums"]["crm_contact_type"] | null
           contact_types?: string[] | null
           created_at?: string | null
@@ -5773,6 +6018,7 @@ export type Database = {
           city?: string | null
           company_id?: string | null
           company_name?: string | null
+          consent_granted_at?: string | null
           contact_type?: Database["public"]["Enums"]["crm_contact_type"] | null
           contact_types?: string[] | null
           created_at?: string | null
@@ -6038,10 +6284,32 @@ export type Database = {
       }
       is_admin: { Args: never; Returns: boolean }
       is_super_admin: { Args: never; Returns: boolean }
+      link_contact_to_user: {
+        Args: { contact_email: string }
+        Returns: {
+          already_linked: boolean
+          contact_id: string
+          contact_name: string
+          profile_email: string
+          profile_id: string
+        }[]
+      }
       mark_all_notifications_read: { Args: never; Returns: undefined }
       mark_notifications_read: {
         Args: { p_notification_ids: string[] }
         Returns: undefined
+      }
+      match_email_to_entities: {
+        Args: { lookup_email: string }
+        Returns: {
+          borrower_id: string
+          contact_id: string
+          investor_id: string
+          linked_loan_id: string
+          profile_id: string
+          source_id: string
+          source_type: string
+        }[]
       }
       my_borrower_ids: { Args: never; Returns: string[] }
       my_investor_ids: { Args: never; Returns: string[] }
@@ -6115,6 +6383,12 @@ export type Database = {
         | "lead_nurture"
         | "borrower_reengagement"
         | "broker_reengagement"
+      company_subtype_enum:
+        | "bank"
+        | "agency_lender"
+        | "private_lender"
+        | "correspondent"
+        | "credit_union"
       company_type_enum:
         | "brokerage"
         | "lender"
@@ -6123,6 +6397,9 @@ export type Database = {
         | "insurance"
         | "appraisal"
         | "other"
+        | "equity_investor"
+        | "software"
+        | "accounting_firm"
       condition_category:
         | "borrower_documents"
         | "non_us_citizen"
@@ -6168,6 +6445,14 @@ export type Database = {
         | "broker"
         | "repeat_client"
         | "other"
+        | "inbound_call"
+        | "data_migration"
+        | "cix"
+        | "lendersa"
+        | "bl2425apn"
+        | "capitalize"
+        | "linkedin"
+        | "facebook"
       crm_contact_status:
         | "active"
         | "inactive"
@@ -6189,7 +6474,12 @@ export type Database = {
         | "capital_partner"
         | "co_lender"
         | "referral_from"
-      lifecycle_stage_enum: "lead" | "prospect" | "active" | "past"
+      lifecycle_stage_enum:
+        | "uncontacted"
+        | "lead"
+        | "prospect"
+        | "active"
+        | "past"
       linked_entity_type_enum: "loan" | "borrower" | "investor" | "fund"
       loan_purpose: "purchase" | "refinance" | "cash_out_refinance"
       loan_status:
@@ -6240,6 +6530,8 @@ export type Database = {
         | "engineer"
         | "inspector"
         | "other"
+        | "software"
+        | "accounting_firm"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -6388,6 +6680,13 @@ export const Constants = {
         "borrower_reengagement",
         "broker_reengagement",
       ],
+      company_subtype_enum: [
+        "bank",
+        "agency_lender",
+        "private_lender",
+        "correspondent",
+        "credit_union",
+      ],
       company_type_enum: [
         "brokerage",
         "lender",
@@ -6396,6 +6695,9 @@ export const Constants = {
         "insurance",
         "appraisal",
         "other",
+        "equity_investor",
+        "software",
+        "accounting_firm",
       ],
       condition_category: [
         "borrower_documents",
@@ -6445,6 +6747,14 @@ export const Constants = {
         "broker",
         "repeat_client",
         "other",
+        "inbound_call",
+        "data_migration",
+        "cix",
+        "lendersa",
+        "bl2425apn",
+        "capitalize",
+        "linkedin",
+        "facebook",
       ],
       crm_contact_status: [
         "active",
@@ -6470,7 +6780,13 @@ export const Constants = {
         "co_lender",
         "referral_from",
       ],
-      lifecycle_stage_enum: ["lead", "prospect", "active", "past"],
+      lifecycle_stage_enum: [
+        "uncontacted",
+        "lead",
+        "prospect",
+        "active",
+        "past",
+      ],
       linked_entity_type_enum: ["loan", "borrower", "investor", "fund"],
       loan_purpose: ["purchase", "refinance", "cash_out_refinance"],
       loan_status: [
@@ -6524,15 +6840,20 @@ export const Constants = {
         "engineer",
         "inspector",
         "other",
+        "software",
+        "accounting_firm",
       ],
     },
   },
 } as const
 
-
-// Convenience type aliases
+// ---- Custom type aliases ----
 export type Profile = Database["public"]["Tables"]["profiles"]["Row"];
 export type Loan = Database["public"]["Tables"]["loans"]["Row"];
+export type LoanInsert = Database["public"]["Tables"]["loans"]["Insert"];
+export type Fund = Database["public"]["Tables"]["funds"]["Row"];
+export type Investor = Database["public"]["Tables"]["investors"]["Row"];
+export type InvestorCommitment = Database["public"]["Tables"]["investor_commitments"]["Row"];
 export type LoanPayment = Database["public"]["Tables"]["loan_payments"]["Row"];
 export type LoanCondition = Database["public"]["Tables"]["loan_conditions"]["Row"];
 export type LoanDocument = Database["public"]["Tables"]["loan_documents"]["Row"];
@@ -6553,3 +6874,11 @@ export type CrmContact = Database["public"]["Tables"]["crm_contacts"]["Row"];
 export type CrmActivity = Database["public"]["Tables"]["crm_activities"]["Row"];
 export type CrmEmail = Database["public"]["Tables"]["crm_emails"]["Row"];
 export type CrmEmailInsert = Database["public"]["Tables"]["crm_emails"]["Insert"];
+
+// New: Inbound email sync types
+export type GmailSyncState = Database["public"]["Tables"]["gmail_sync_state"]["Row"];
+export type GmailSyncStateInsert = Database["public"]["Tables"]["gmail_sync_state"]["Insert"];
+export type EmailParticipant = Database["public"]["Tables"]["email_participants"]["Row"];
+export type EmailParticipantInsert = Database["public"]["Tables"]["email_participants"]["Insert"];
+export type GmailToken = Database["public"]["Tables"]["gmail_tokens"]["Row"];
+

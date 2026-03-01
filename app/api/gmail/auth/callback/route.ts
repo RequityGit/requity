@@ -76,6 +76,7 @@ export async function GET(request: NextRequest) {
     refresh_token?: string;
     expires_in: number;
     token_type: string;
+    scope?: string;
   };
 
   try {
@@ -138,6 +139,11 @@ export async function GET(request: NextRequest) {
     .eq("user_id", user.id)
     .eq("is_active", true);
 
+  // Parse granted scopes from token response
+  const grantedScopes = tokenData.scope
+    ? tokenData.scope.split(" ")
+    : [];
+
   // Insert the new token
   const { error: insertError } = await adminSupabase
     .from("gmail_tokens")
@@ -150,6 +156,7 @@ export async function GET(request: NextRequest) {
         Date.now() + tokenData.expires_in * 1000
       ).toISOString(),
       is_active: true,
+      scopes: grantedScopes,
     });
 
   if (insertError) {

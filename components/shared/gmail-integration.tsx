@@ -14,13 +14,14 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/components/ui/use-toast";
-import { Mail, CheckCircle2, XCircle, Loader2, Unplug, AlertTriangle } from "lucide-react";
+import { Mail, CheckCircle2, XCircle, Loader2, Unplug, AlertTriangle, RefreshCw, Inbox } from "lucide-react";
 
 interface GmailToken {
   id: string;
   email: string;
   is_active: boolean;
   connected_at: string;
+  scopes: string[] | null;
 }
 
 export function GmailIntegration() {
@@ -33,6 +34,11 @@ export function GmailIntegration() {
   const [disconnecting, setDisconnecting] = useState(false);
   const [gmailToken, setGmailToken] = useState<GmailToken | null>(null);
   const [gmailConfigured, setGmailConfigured] = useState<boolean | null>(null);
+  const [syncing, setSyncing] = useState(false);
+  const [syncResult, setSyncResult] = useState<{
+    messagesProcessed: number;
+    errors: string[];
+  } | null>(null);
 
   const fetchGmailStatus = useCallback(async () => {
     try {
@@ -44,7 +50,7 @@ export function GmailIntegration() {
 
       const { data } = await supabase
         .from("gmail_tokens")
-        .select("id, email, is_active, connected_at")
+        .select("id, email, is_active, connected_at, scopes")
         .eq("user_id", user.id)
         .eq("is_active", true)
         .maybeSingle();
@@ -184,6 +190,58 @@ export function GmailIntegration() {
     }
   }
 
+  // Check if the token has gmail.readonly scope for email sync
+  const hasReadScope = gmailToken?.scopes?.some(
+    (s) => s.includes("gmail.readonly") || s.includes("mail.google.com")
+  );
+
+  async function handleSyncNow() {
+    setSyncing(true);
+    setSyncResult(null);
+    try {
+      const supabase = createClient();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const res = await fetch("/api/gmail/sync", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId: user.id }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        toast({
+          title: "Sync failed",
+          description: data?.error || "Failed to sync emails.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      setSyncResult({
+        messagesProcessed: data.messagesProcessed,
+        errors: data.errors || [],
+      });
+
+      toast({
+        title: "Sync complete",
+        description: `Synced ${data.messagesProcessed} new email${data.messagesProcessed === 1 ? "" : "s"}.`,
+      });
+    } catch (err) {
+      console.error("Gmail sync error:", err);
+      toast({
+        title: "Sync failed",
+        description: "An unexpected error occurred.",
+        variant: "destructive",
+      });
+    } finally {
+      setSyncing(false);
+    }
+  }
+
   return (
     <Card className="max-w-2xl">
       <CardHeader>
@@ -194,8 +252,7 @@ export function GmailIntegration() {
           <div className="flex-1">
             <CardTitle className="text-base">Gmail Integration</CardTitle>
             <CardDescription>
-              Connect your Gmail account to send CRM emails directly from your
-              address
+              Connect your Gmail account to send and sync CRM emails
             </CardDescription>
           </div>
           {!loading && (
@@ -241,6 +298,82 @@ export function GmailIntegration() {
                 </p>
               </div>
             </div>
+
+            {/* Re-auth banner when gmail.readonly scope is missing */}
+            {!hasReadScope && (
+              <div className="flex items-start gap-3 p-3 rounded-md bg-amber-50 border border-amber-200">
+                <Inbox className="h-5 w-5 text-amber-600 flex-shrink-0 mt-0.5" />
+                <div className="flex-1">
+                  <p className="text-sm font-medium text-amber-900">
+                    Email sync requires updated permissions
+                  </p>
+                  <p className="text-xs text-amber-700 mt-1">
+                    Re-authorize your Gmail connection to enable inbound email
+                    sync. Your sent email capability will not be affected.
+                  </p>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="mt-2 text-amber-700 border-amber-300 hover:bg-amber-100"
+                    onClick={handleConnect}
+                    disabled={connecting}
+                  >
+                    {connecting ? (
+                      <>
+                        <Loader2 className="h-3 w-3 mr-1.5 animate-spin" />
+                        Redirecting...
+                      </>
+                    ) : (
+                      <>
+                        <RefreshCw className="h-3 w-3 mr-1.5" />
+                        Re-authorize Gmail
+                      </>
+                    )}
+                  </Button>
+                </div>
+              </div>
+            )}
+
+            {/* Sync controls — only show when read scope is available */}
+            {hasReadScope && (
+              <div className="flex items-center gap-3 p-3 rounded-md bg-blue-50 border border-blue-200">
+                <Inbox className="h-5 w-5 text-blue-600 flex-shrink-0" />
+                <div className="flex-1">
+                  <p className="text-sm font-medium text-blue-900">
+                    Email sync is active
+                  </p>
+                  <p className="text-xs text-blue-700">
+                    Inbound emails matching your contacts are synced automatically every 5 minutes
+                  </p>
+                  {syncResult && (
+                    <p className="text-xs text-blue-600 mt-1">
+                      Last sync: {syncResult.messagesProcessed} new email{syncResult.messagesProcessed === 1 ? "" : "s"}
+                      {syncResult.errors.length > 0 && ` (${syncResult.errors.length} error${syncResult.errors.length === 1 ? "" : "s"})`}
+                    </p>
+                  )}
+                </div>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={handleSyncNow}
+                  disabled={syncing}
+                  className="text-blue-700 border-blue-300 hover:bg-blue-100"
+                >
+                  {syncing ? (
+                    <>
+                      <Loader2 className="h-3 w-3 mr-1.5 animate-spin" />
+                      Syncing...
+                    </>
+                  ) : (
+                    <>
+                      <RefreshCw className="h-3 w-3 mr-1.5" />
+                      Sync Now
+                    </>
+                  )}
+                </Button>
+              </div>
+            )}
+
             <Button
               variant="outline"
               onClick={handleDisconnect}
