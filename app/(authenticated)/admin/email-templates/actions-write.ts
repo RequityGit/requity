@@ -54,6 +54,7 @@ export async function updateTemplateAction(
   try {
     const auth = await requireAdmin();
     if (auth.error) return { error: auth.error };
+    const userId = auth.user.id;
 
     const admin = createAdminClient();
 
@@ -90,7 +91,7 @@ export async function updateTemplateAction(
         version_number: nextVersion,
         subject: cur.subject,
         html_body: cur.html_body,
-        changed_by: auth.user.id,
+        changed_by: userId,
       } as never);
     }
 
