@@ -96,16 +96,13 @@ export function GmailIntegration() {
   async function handleConnect() {
     setConnecting(true);
     try {
-      const supabase = createClient();
-      const { data, error } = await supabase.functions.invoke(
-        "gmail-oauth-start",
-        { method: "POST" }
-      );
+      const res = await fetch("/api/gmail/auth/start", { method: "POST" });
+      const data = await res.json();
 
-      if (error) {
+      if (!res.ok) {
         toast({
           title: "Error",
-          description: "Failed to start Gmail authorization. Please try again.",
+          description: data?.error || "Failed to start Gmail authorization. Please try again.",
           variant: "destructive",
         });
         return;
