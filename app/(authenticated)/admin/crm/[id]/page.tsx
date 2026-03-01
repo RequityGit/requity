@@ -3,12 +3,19 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { redirect, notFound } from "next/navigation";
 import { PageHeader } from "@/components/shared/page-header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { StatusBadge } from "@/components/shared/status-badge";
 import { CrmActivityLog } from "@/components/crm/crm-activity-log";
 import { ContactEditDialog } from "@/components/crm/contact-edit-dialog";
+import { ContactRelationships } from "@/components/crm/contact-relationships";
+import { ContactTags } from "@/components/crm/contact-tags";
 import { EmailActivityFeed } from "@/components/crm/email-activity-feed";
 import { formatDate, formatCurrency } from "@/lib/format";
-import { CRM_CONTACT_TYPES, CRM_CONTACT_SOURCES } from "@/lib/constants";
+import { CRM_CONTACT_SOURCES } from "@/lib/constants";
+import {
+  LIFECYCLE_STAGE_COLORS,
+  CRM_LIFECYCLE_STAGES,
+} from "@/lib/constants";
 import {
   Mail,
   Phone,
@@ -22,8 +29,12 @@ import {
   ShieldCheck,
   CreditCard,
   Briefcase,
+  Ban,
+  Shield,
+  History,
 } from "lucide-react";
 import Link from "next/link";
+import { cn } from "@/lib/utils";
 
 interface PageProps {
   params: { id: string };
@@ -61,8 +72,16 @@ export default async function CrmContactDetailPage({ params }: PageProps) {
 
   if (!contact) notFound();
 
-  // Fetch activities, team members, and emails
-  const [activitiesResult, teamResult, emailsResult] = await Promise.all([
+  // Fetch all related data in parallel
+  const [
+    activitiesResult,
+    teamResult,
+    emailsResult,
+    relationshipsResult,
+    tagsResult,
+    auditLogResult,
+    companyResult,
+  ] = await Promise.all([
     supabase
       .from("crm_activities")
       .select("*")
@@ -78,6 +97,29 @@ export default async function CrmContactDetailPage({ params }: PageProps) {
       .select("*")
       .eq("linked_contact_id", id)
       .order("created_at", { ascending: false }),
+    admin
+      .from("contact_relationship_types")
+      .select("*")
+      .eq("contact_id", id)
+      .order("created_at", { ascending: false }),
+    admin
+      .from("contact_tags")
+      .select("*")
+      .eq("contact_id", id)
+      .order("created_at", { ascending: false }),
+    admin
+      .from("contact_audit_log")
+      .select("*")
+      .eq("contact_id", id)
+      .order("changed_at", { ascending: false })
+      .limit(50),
+    contact.company_id
+      ? admin
+          .from("companies")
+          .select("id, name, company_type")
+          .eq("id", contact.company_id)
+          .single()
+      : Promise.resolve({ data: null }),
   ]);
 
   // Fetch linked investor data if applicable
@@ -174,18 +216,25 @@ export default async function CrmContactDetailPage({ params }: PageProps) {
     attachments: e.attachments,
   }));
 
+  const relationships = relationshipsResult.data ?? [];
+  const tags = tagsResult.data ?? [];
+  const auditLog = auditLogResult.data ?? [];
+  const company = companyResult.data;
+
   const currentUserName = profileLookup[user.id] || user.email || "Unknown";
 
   const fullName = `${contact.first_name} ${contact.last_name}`;
   const assignedToName = contact.assigned_to
     ? profileLookup[contact.assigned_to] || null
     : null;
-  const contactTypeLabel =
-    CRM_CONTACT_TYPES.find((t) => t.value === contact.contact_type)?.label ||
-    contact.contact_type;
   const sourceLabel = contact.source
     ? CRM_CONTACT_SOURCES.find((s) => s.value === contact.source)?.label ||
       contact.source
+    : null;
+
+  const lifecycleLabel = contact.lifecycle_stage
+    ? CRM_LIFECYCLE_STAGES.find((s) => s.value === contact.lifecycle_stage)
+        ?.label || contact.lifecycle_stage
     : null;
 
   const isFollowUpOverdue =
@@ -194,9 +243,33 @@ export default async function CrmContactDetailPage({ params }: PageProps) {
 
   return (
     <div className="space-y-6">
+      {/* Header with lifecycle + DNC badges */}
       <PageHeader
         title={fullName}
-        description={`${contactTypeLabel} contact`}
+        description={
+          <div className="flex items-center gap-2 mt-1">
+            {contact.lifecycle_stage && (
+              <Badge
+                variant="outline"
+                className={cn(
+                  "text-xs font-medium capitalize",
+                  LIFECYCLE_STAGE_COLORS[contact.lifecycle_stage] ?? ""
+                )}
+              >
+                {lifecycleLabel}
+              </Badge>
+            )}
+            {contact.dnc && (
+              <Badge
+                variant="outline"
+                className="text-xs font-semibold bg-red-100 text-red-800 border-red-200"
+              >
+                <Ban className="h-3 w-3 mr-1" />
+                DNC
+              </Badge>
+            )}
+          </div>
+        }
         action={
           <ContactEditDialog
             contact={contact}
@@ -232,23 +305,15 @@ export default async function CrmContactDetailPage({ params }: PageProps) {
               <Building2 className="h-4 w-4 text-muted-foreground shrink-0" />
               <div>
                 <p className="text-xs text-muted-foreground">Company</p>
-                <p className="text-sm font-medium">
-                  {contact.company_name || "—"}
-                </p>
-              </div>
-            </div>
-            <div className="flex items-center gap-3">
-              <Tag className="h-4 w-4 text-muted-foreground shrink-0" />
-              <div>
-                <p className="text-xs text-muted-foreground">Type</p>
-                <StatusBadge status={contact.contact_type} />
-              </div>
-            </div>
-            <div className="flex items-center gap-3">
-              <Tag className="h-4 w-4 text-muted-foreground shrink-0" />
-              <div>
-                <p className="text-xs text-muted-foreground">Status</p>
-                <StatusBadge status={contact.status} />
+                {company ? (
+                  <p className="text-sm font-medium">{company.name}</p>
+                ) : contact.company_name ? (
+                  <p className="text-sm font-medium text-muted-foreground">
+                    {contact.company_name}
+                  </p>
+                ) : (
+                  <p className="text-sm font-medium">—</p>
+                )}
               </div>
             </div>
             <div className="flex items-center gap-3">
@@ -278,6 +343,17 @@ export default async function CrmContactDetailPage({ params }: PageProps) {
                 >
                   {formatDate(contact.next_follow_up_date)}
                   {isFollowUpOverdue && " (Overdue)"}
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-3">
+              <Shield className="h-4 w-4 text-muted-foreground shrink-0" />
+              <div>
+                <p className="text-xs text-muted-foreground">
+                  Marketing Consent
+                </p>
+                <p className="text-sm font-medium">
+                  {contact.marketing_consent ? "Yes" : "No"}
                 </p>
               </div>
             </div>
@@ -367,6 +443,19 @@ export default async function CrmContactDetailPage({ params }: PageProps) {
         </CardContent>
       </Card>
 
+      {/* Relationships */}
+      <ContactRelationships
+        contactId={contact.id}
+        relationships={relationships}
+      />
+
+      {/* Tags */}
+      <ContactTags
+        contactId={contact.id}
+        tags={tags}
+        currentUserId={user.id}
+      />
+
       {/* Linked Investor Details */}
       {investorData && (
         <Card>
@@ -413,7 +502,6 @@ export default async function CrmContactDetailPage({ params }: PageProps) {
               )}
             </div>
 
-            {/* Investing Entities */}
             {investorEntities.length > 0 && (
               <div className="mt-4 pt-4 border-t">
                 <p className="text-xs text-muted-foreground mb-2 font-medium uppercase tracking-wide">
@@ -438,7 +526,6 @@ export default async function CrmContactDetailPage({ params }: PageProps) {
               </div>
             )}
 
-            {/* Fund Commitments */}
             {investorCommitments.length > 0 && (
               <div className="mt-4 pt-4 border-t">
                 <p className="text-xs text-muted-foreground mb-2 font-medium uppercase tracking-wide">
@@ -520,7 +607,6 @@ export default async function CrmContactDetailPage({ params }: PageProps) {
               </div>
             </div>
 
-            {/* Borrower Entities */}
             {borrowerEntities.length > 0 && (
               <div className="mt-4 pt-4 border-t">
                 <p className="text-xs text-muted-foreground mb-2 font-medium uppercase tracking-wide">
@@ -550,7 +636,6 @@ export default async function CrmContactDetailPage({ params }: PageProps) {
               </div>
             )}
 
-            {/* Linked Loans */}
             {borrowerLoans.length > 0 && (
               <div className="mt-4 pt-4 border-t">
                 <p className="text-xs text-muted-foreground mb-2 font-medium uppercase tracking-wide">
@@ -607,6 +692,47 @@ export default async function CrmContactDetailPage({ params }: PageProps) {
                 </div>
               </div>
             )}
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Compliance Audit Trail */}
+      {auditLog.length > 0 && (
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base flex items-center gap-2">
+              <History className="h-4 w-4" />
+              Compliance Audit Trail
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-2">
+              {auditLog.map((entry: any) => (
+                <div
+                  key={entry.id}
+                  className="flex items-start gap-3 rounded-md border px-3 py-2 text-sm"
+                >
+                  <div className="flex-1">
+                    <span className="font-medium capitalize">
+                      {(entry.field_name || "").replace(/_/g, " ")}
+                    </span>
+                    <span className="text-muted-foreground mx-1">:</span>
+                    {entry.old_value && (
+                      <>
+                        <span className="text-red-600 line-through">
+                          {entry.old_value}
+                        </span>
+                        <span className="text-muted-foreground mx-1">&rarr;</span>
+                      </>
+                    )}
+                    <span className="text-green-700">{entry.new_value}</span>
+                  </div>
+                  <span className="text-xs text-muted-foreground whitespace-nowrap">
+                    {formatDate(entry.changed_at)}
+                  </span>
+                </div>
+              ))}
+            </div>
           </CardContent>
         </Card>
       )}

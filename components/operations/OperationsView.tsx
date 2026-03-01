@@ -23,6 +23,7 @@ import { TaskBoard } from "./TaskBoard";
 import { TaskDetailDrawer } from "./TaskDetailDrawer";
 import { AddProjectDialog } from "./AddProjectDialog";
 import { AddTaskDialog } from "./AddTaskDialog";
+import { normalizeStatusDisplay } from "./badges";
 
 export interface TeamMember {
   id: string;
@@ -50,10 +51,19 @@ function getUniqueValues(items: (string | null)[]): string[] {
   return Array.from(new Set(items.filter((v): v is string => v != null))).sort();
 }
 
-export function OperationsView({ projects, tasks, teamMembers, currentUserId, isSuperAdmin, taskCommentCounts, projectCommentCounts }: OperationsViewProps) {
+export function OperationsView({ projects: rawProjects, tasks, teamMembers, currentUserId, isSuperAdmin, taskCommentCounts, projectCommentCounts }: OperationsViewProps) {
   const router = useRouter();
   const supabase = createClient();
   const { toast } = useToast();
+
+  // Normalize project statuses from DB (may be lowercase) to PascalCase display values
+  const projects = useMemo(
+    () => rawProjects.map((p) => ({
+      ...p,
+      status: p.status ? normalizeStatusDisplay(p.status) : p.status,
+    })),
+    [rawProjects]
+  );
 
   // Filter state
   const [statusFilter, setStatusFilter] = useState<string[]>([]);

@@ -280,7 +280,7 @@ export const RESPONSIBLE_PARTIES = [
 ] as const;
 
 // ---------------------------------------------------------------------------
-// CRM Contact Types
+// CRM Contact Types (legacy — kept for backward compat)
 // ---------------------------------------------------------------------------
 
 export const CRM_CONTACT_TYPES = [
@@ -310,6 +310,70 @@ export const CRM_CONTACT_STATUSES = [
   { value: "converted", label: "Converted" },
   { value: "inactive", label: "Inactive" },
   { value: "do_not_contact", label: "Do Not Contact" },
+] as const;
+
+// ---------------------------------------------------------------------------
+// CRM Relationship Types (NEW data model)
+// ---------------------------------------------------------------------------
+
+export const CRM_RELATIONSHIP_TYPES = [
+  { value: "borrower", label: "Borrower" },
+  { value: "investor", label: "Investor" },
+  { value: "broker", label: "Broker" },
+  { value: "lender", label: "Lender" },
+  { value: "vendor", label: "Vendor" },
+  { value: "referral_partner", label: "Referral Partner" },
+] as const;
+
+export const RELATIONSHIP_COLORS: Record<string, string> = {
+  borrower: "bg-blue-100 text-blue-800 border-blue-200",
+  investor: "bg-green-100 text-green-800 border-green-200",
+  broker: "bg-orange-100 text-orange-800 border-orange-200",
+  lender: "bg-purple-100 text-purple-800 border-purple-200",
+  vendor: "bg-gray-100 text-gray-800 border-gray-200",
+  referral_partner: "bg-teal-100 text-teal-800 border-teal-200",
+};
+
+export const CRM_LIFECYCLE_STAGES = [
+  { value: "lead", label: "Lead" },
+  { value: "prospect", label: "Prospect" },
+  { value: "active", label: "Active" },
+  { value: "past", label: "Past" },
+] as const;
+
+export const LIFECYCLE_STAGE_COLORS: Record<string, string> = {
+  lead: "bg-slate-100 text-slate-800",
+  prospect: "bg-amber-100 text-amber-800",
+  active: "bg-green-100 text-green-800",
+  past: "bg-gray-100 text-gray-500",
+};
+
+export const CRM_LENDER_DIRECTIONS = [
+  { value: "broker_to", label: "Broker To" },
+  { value: "note_buyer", label: "Note Buyer" },
+  { value: "capital_partner", label: "Capital Partner" },
+  { value: "co_lender", label: "Co-Lender" },
+  { value: "referral_from", label: "Referral From" },
+] as const;
+
+export const CRM_VENDOR_TYPES = [
+  { value: "title_company", label: "Title Company" },
+  { value: "law_firm", label: "Law Firm" },
+  { value: "insurance", label: "Insurance" },
+  { value: "appraisal", label: "Appraisal" },
+  { value: "engineer", label: "Engineer" },
+  { value: "inspector", label: "Inspector" },
+  { value: "other", label: "Other" },
+] as const;
+
+export const CRM_COMPANY_TYPES = [
+  { value: "brokerage", label: "Brokerage" },
+  { value: "lender", label: "Lender" },
+  { value: "title_company", label: "Title Company" },
+  { value: "law_firm", label: "Law Firm" },
+  { value: "insurance", label: "Insurance" },
+  { value: "appraisal", label: "Appraisal" },
+  { value: "other", label: "Other" },
 ] as const;
 
 export const CRM_ACTIVITY_TYPES = [

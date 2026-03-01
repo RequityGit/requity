@@ -145,7 +145,7 @@ export async function GET(request: NextRequest) {
       user_id: user.id,
       email: gmailEmail,
       access_token: tokenData.access_token,
-      refresh_token: tokenData.refresh_token || null,
+      refresh_token: tokenData.refresh_token || "",
       token_expires_at: new Date(
         Date.now() + tokenData.expires_in * 1000
       ).toISOString(),

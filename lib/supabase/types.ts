@@ -1357,10 +1357,12 @@ export type Database = {
           ended_at: string | null
           id: string
           is_active: boolean | null
-          lender_direction: Database["public"]["Enums"]["lender_direction_enum"] | null
+          lender_direction:
+            | Database["public"]["Enums"]["lender_direction_enum"]
+            | null
           notes: string | null
           relationship_type: Database["public"]["Enums"]["relationship_type_enum"]
-          started_at: string
+          started_at: string | null
           vendor_type: Database["public"]["Enums"]["vendor_type_enum"] | null
         }
         Insert: {
@@ -1369,10 +1371,12 @@ export type Database = {
           ended_at?: string | null
           id?: string
           is_active?: boolean | null
-          lender_direction?: Database["public"]["Enums"]["lender_direction_enum"] | null
+          lender_direction?:
+            | Database["public"]["Enums"]["lender_direction_enum"]
+            | null
           notes?: string | null
           relationship_type: Database["public"]["Enums"]["relationship_type_enum"]
-          started_at?: string
+          started_at?: string | null
           vendor_type?: Database["public"]["Enums"]["vendor_type_enum"] | null
         }
         Update: {
@@ -1381,10 +1385,12 @@ export type Database = {
           ended_at?: string | null
           id?: string
           is_active?: boolean | null
-          lender_direction?: Database["public"]["Enums"]["lender_direction_enum"] | null
+          lender_direction?:
+            | Database["public"]["Enums"]["lender_direction_enum"]
+            | null
           notes?: string | null
           relationship_type?: Database["public"]["Enums"]["relationship_type_enum"]
-          started_at?: string
+          started_at?: string | null
           vendor_type?: Database["public"]["Enums"]["vendor_type_enum"] | null
         }
         Relationships: [
@@ -1457,11 +1463,15 @@ export type Database = {
           contact_id: string
           created_at: string
           description: string | null
-          direction: Database["public"]["Enums"]["activity_direction_enum"] | null
+          direction:
+            | Database["public"]["Enums"]["activity_direction_enum"]
+            | null
           id: string
           is_completed: boolean | null
           linked_entity_id: string | null
-          linked_entity_type: Database["public"]["Enums"]["linked_entity_type_enum"] | null
+          linked_entity_type:
+            | Database["public"]["Enums"]["linked_entity_type_enum"]
+            | null
           metadata: Json | null
           performed_by: string | null
           performed_by_name: string | null
@@ -1474,11 +1484,15 @@ export type Database = {
           contact_id: string
           created_at?: string
           description?: string | null
-          direction?: Database["public"]["Enums"]["activity_direction_enum"] | null
+          direction?:
+            | Database["public"]["Enums"]["activity_direction_enum"]
+            | null
           id?: string
           is_completed?: boolean | null
           linked_entity_id?: string | null
-          linked_entity_type?: Database["public"]["Enums"]["linked_entity_type_enum"] | null
+          linked_entity_type?:
+            | Database["public"]["Enums"]["linked_entity_type_enum"]
+            | null
           metadata?: Json | null
           performed_by?: string | null
           performed_by_name?: string | null
@@ -1491,11 +1505,15 @@ export type Database = {
           contact_id?: string
           created_at?: string
           description?: string | null
-          direction?: Database["public"]["Enums"]["activity_direction_enum"] | null
+          direction?:
+            | Database["public"]["Enums"]["activity_direction_enum"]
+            | null
           id?: string
           is_completed?: boolean | null
           linked_entity_id?: string | null
-          linked_entity_type?: Database["public"]["Enums"]["linked_entity_type_enum"] | null
+          linked_entity_type?:
+            | Database["public"]["Enums"]["linked_entity_type_enum"]
+            | null
           metadata?: Json | null
           performed_by?: string | null
           performed_by_name?: string | null
@@ -1545,7 +1563,9 @@ export type Database = {
           id: string
           last_contacted_at: string | null
           last_name: string | null
-          lifecycle_stage: Database["public"]["Enums"]["lifecycle_stage_enum"] | null
+          lifecycle_stage:
+            | Database["public"]["Enums"]["lifecycle_stage_enum"]
+            | null
           lifecycle_updated_at: string | null
           linked_investor_id: string | null
           linked_loan_id: string | null
@@ -1580,7 +1600,9 @@ export type Database = {
           id?: string
           last_contacted_at?: string | null
           last_name?: string | null
-          lifecycle_stage?: Database["public"]["Enums"]["lifecycle_stage_enum"] | null
+          lifecycle_stage?:
+            | Database["public"]["Enums"]["lifecycle_stage_enum"]
+            | null
           lifecycle_updated_at?: string | null
           linked_investor_id?: string | null
           linked_loan_id?: string | null
@@ -1615,7 +1637,9 @@ export type Database = {
           id?: string
           last_contacted_at?: string | null
           last_name?: string | null
-          lifecycle_stage?: Database["public"]["Enums"]["lifecycle_stage_enum"] | null
+          lifecycle_stage?:
+            | Database["public"]["Enums"]["lifecycle_stage_enum"]
+            | null
           lifecycle_updated_at?: string | null
           linked_investor_id?: string | null
           linked_loan_id?: string | null
@@ -1838,7 +1862,7 @@ export type Database = {
       }
       dialer_calls: {
         Row: {
-          called_at: string
+          called_at: string | null
           contact_id: string
           created_at: string
           direction: Database["public"]["Enums"]["call_direction_enum"]
@@ -1853,7 +1877,7 @@ export type Database = {
           twilio_call_sid: string | null
         }
         Insert: {
-          called_at?: string
+          called_at?: string | null
           contact_id: string
           created_at?: string
           direction: Database["public"]["Enums"]["call_direction_enum"]
@@ -1868,7 +1892,7 @@ export type Database = {
           twilio_call_sid?: string | null
         }
         Update: {
-          called_at?: string
+          called_at?: string | null
           contact_id?: string
           created_at?: string
           direction?: Database["public"]["Enums"]["call_direction_enum"]
@@ -2496,49 +2520,41 @@ export type Database = {
       gmail_tokens: {
         Row: {
           access_token: string
-          connected_at: string
-          created_at: string
+          connected_at: string | null
           email: string
           id: string
-          is_active: boolean
-          refresh_token: string | null
-          token_expires_at: string | null
-          updated_at: string
+          is_active: boolean | null
+          refresh_token: string
+          scopes: string[] | null
+          token_expires_at: string
+          updated_at: string | null
           user_id: string
         }
         Insert: {
           access_token: string
-          connected_at?: string
-          created_at?: string
+          connected_at?: string | null
           email: string
           id?: string
-          is_active?: boolean
-          refresh_token?: string | null
-          token_expires_at?: string | null
-          updated_at?: string
+          is_active?: boolean | null
+          refresh_token: string
+          scopes?: string[] | null
+          token_expires_at: string
+          updated_at?: string | null
           user_id: string
         }
         Update: {
           access_token?: string
-          connected_at?: string
-          created_at?: string
+          connected_at?: string | null
           email?: string
           id?: string
-          is_active?: boolean
-          refresh_token?: string | null
-          token_expires_at?: string | null
-          updated_at?: string
+          is_active?: boolean | null
+          refresh_token?: string
+          scopes?: string[] | null
+          token_expires_at?: string
+          updated_at?: string | null
           user_id?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "gmail_tokens_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       investing_entities: {
         Row: {
@@ -3668,20 +3684,6 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "loans_broker_contact_id_fkey"
-            columns: ["broker_contact_id"]
-            isOneToOne: false
-            referencedRelation: "crm_contacts"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "loans_broker_contact_id_fkey"
-            columns: ["broker_contact_id"]
-            isOneToOne: false
-            referencedRelation: "crm_contacts_active"
-            referencedColumns: ["id"]
-          },
-          {
             foreignKeyName: "loans_borrower_id_fkey"
             columns: ["borrower_id"]
             isOneToOne: false
@@ -3693,6 +3695,20 @@ export type Database = {
             columns: ["borrower_id"]
             isOneToOne: false
             referencedRelation: "borrowers_safe"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "loans_broker_contact_id_fkey"
+            columns: ["broker_contact_id"]
+            isOneToOne: false
+            referencedRelation: "crm_contacts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "loans_broker_contact_id_fkey"
+            columns: ["broker_contact_id"]
+            isOneToOne: false
+            referencedRelation: "crm_contacts_active"
             referencedColumns: ["id"]
           },
           {
@@ -5666,33 +5682,24 @@ export type Database = {
           assigned_to: string | null
           borrower_id: string | null
           city: string | null
-          company_id: string | null
           company_name: string | null
-          consent_granted_at: string | null
           contact_type: Database["public"]["Enums"]["crm_contact_type"] | null
           created_at: string | null
           deleted_at: string | null
-          dnc: boolean | null
-          dnc_reason: string | null
           email: string | null
           first_name: string | null
           id: string | null
           last_contacted_at: string | null
           last_name: string | null
-          lifecycle_stage: Database["public"]["Enums"]["lifecycle_stage_enum"] | null
-          lifecycle_updated_at: string | null
           linked_investor_id: string | null
           linked_loan_id: string | null
-          marketing_consent: boolean | null
           name: string | null
           next_follow_up_date: string | null
           notes: string | null
           phone: string | null
-          postmark_contact_id: string | null
           source: Database["public"]["Enums"]["crm_contact_source"] | null
           state: string | null
           status: Database["public"]["Enums"]["crm_contact_status"] | null
-          twilio_contact_id: string | null
           updated_at: string | null
           zip: string | null
         }
@@ -5701,33 +5708,24 @@ export type Database = {
           assigned_to?: string | null
           borrower_id?: string | null
           city?: string | null
-          company_id?: string | null
           company_name?: string | null
-          consent_granted_at?: string | null
           contact_type?: Database["public"]["Enums"]["crm_contact_type"] | null
           created_at?: string | null
           deleted_at?: string | null
-          dnc?: boolean | null
-          dnc_reason?: string | null
           email?: string | null
           first_name?: string | null
           id?: string | null
           last_contacted_at?: string | null
           last_name?: string | null
-          lifecycle_stage?: Database["public"]["Enums"]["lifecycle_stage_enum"] | null
-          lifecycle_updated_at?: string | null
           linked_investor_id?: string | null
           linked_loan_id?: string | null
-          marketing_consent?: boolean | null
           name?: string | null
           next_follow_up_date?: string | null
           notes?: string | null
           phone?: string | null
-          postmark_contact_id?: string | null
           source?: Database["public"]["Enums"]["crm_contact_source"] | null
           state?: string | null
           status?: Database["public"]["Enums"]["crm_contact_status"] | null
-          twilio_contact_id?: string | null
           updated_at?: string | null
           zip?: string | null
         }
@@ -5736,33 +5734,24 @@ export type Database = {
           assigned_to?: string | null
           borrower_id?: string | null
           city?: string | null
-          company_id?: string | null
           company_name?: string | null
-          consent_granted_at?: string | null
           contact_type?: Database["public"]["Enums"]["crm_contact_type"] | null
           created_at?: string | null
           deleted_at?: string | null
-          dnc?: boolean | null
-          dnc_reason?: string | null
           email?: string | null
           first_name?: string | null
           id?: string | null
           last_contacted_at?: string | null
           last_name?: string | null
-          lifecycle_stage?: Database["public"]["Enums"]["lifecycle_stage_enum"] | null
-          lifecycle_updated_at?: string | null
           linked_investor_id?: string | null
           linked_loan_id?: string | null
-          marketing_consent?: boolean | null
           name?: string | null
           next_follow_up_date?: string | null
           notes?: string | null
           phone?: string | null
-          postmark_contact_id?: string | null
           source?: Database["public"]["Enums"]["crm_contact_source"] | null
           state?: string | null
           status?: Database["public"]["Enums"]["crm_contact_status"] | null
-          twilio_contact_id?: string | null
           updated_at?: string | null
           zip?: string | null
         }
@@ -5772,13 +5761,6 @@ export type Database = {
             columns: ["assigned_to"]
             isOneToOne: false
             referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "crm_contacts_company_id_fkey"
-            columns: ["company_id"]
-            isOneToOne: false
-            referencedRelation: "companies"
             referencedColumns: ["id"]
           },
           {
@@ -6484,118 +6466,27 @@ export const Constants = {
   },
 } as const
 
-// ---------------------------------------------------------------------------
-// Convenience aliases for common row types
-// ---------------------------------------------------------------------------
+
+// Convenience type aliases
 export type Profile = Database["public"]["Tables"]["profiles"]["Row"];
+export type Loan = Database["public"]["Tables"]["loans"]["Row"];
+export type LoanPayment = Database["public"]["Tables"]["loan_payments"]["Row"];
+export type LoanCondition = Database["public"]["Tables"]["loan_conditions"]["Row"];
+export type LoanDocument = Database["public"]["Tables"]["loan_documents"]["Row"];
+export type LoanConditionTemplate = Database["public"]["Tables"]["loan_condition_templates"]["Row"];
+export type DrawRequest = Database["public"]["Tables"]["draw_requests"]["Row"];
 export type Borrower = Database["public"]["Tables"]["borrowers"]["Row"];
 export type BorrowerInsert = Database["public"]["Tables"]["borrowers"]["Insert"];
-export type BorrowerUpdate = Database["public"]["Tables"]["borrowers"]["Update"];
 export type BorrowerEntity = Database["public"]["Tables"]["borrower_entities"]["Row"];
-export type Investor = Database["public"]["Tables"]["investors"]["Row"];
 export type InvestorInsert = Database["public"]["Tables"]["investors"]["Insert"];
-export type Loan = Database["public"]["Tables"]["loans"]["Row"];
-export type LoanInsert = Database["public"]["Tables"]["loans"]["Insert"];
-export type LoanUpdate = Database["public"]["Tables"]["loans"]["Update"];
-export type LoanCondition = Database["public"]["Tables"]["loan_conditions"]["Row"];
-export type LoanConditionTemplate = Database["public"]["Tables"]["loan_condition_templates"]["Row"];
-export type LoanDocument = Database["public"]["Tables"]["loan_documents"]["Row"];
-export type DrawRequest = Database["public"]["Tables"]["draw_requests"]["Row"];
-export type LoanPayment = Database["public"]["Tables"]["loan_payments"]["Row"];
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export type PricingProgram = any;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export type LeverageAdjuster = any;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export type PricingProgramVersion = any;
 export type Document = Database["public"]["Tables"]["documents"]["Row"];
-export type Fund = Database["public"]["Tables"]["funds"]["Row"];
-export type InvestorCommitment = Database["public"]["Tables"]["investor_commitments"]["Row"];
-export type CapitalCall = Database["public"]["Tables"]["capital_calls"]["Row"];
-export type Distribution = Database["public"]["Tables"]["distributions"]["Row"];
 export type CrmContact = Database["public"]["Tables"]["crm_contacts"]["Row"];
 export type CrmActivity = Database["public"]["Tables"]["crm_activities"]["Row"];
 export type CrmEmail = Database["public"]["Tables"]["crm_emails"]["Row"];
 export type CrmEmailInsert = Database["public"]["Tables"]["crm_emails"]["Insert"];
-export type OpsProject = Database["public"]["Tables"]["ops_projects"]["Row"];
-export type OpsTask = Database["public"]["Tables"]["ops_tasks"]["Row"];
-
-// CRM table aliases
-export type CampaignSendRow = Database["public"]["Tables"]["campaign_sends"]["Row"];
-export type CampaignSendInsertRow = Database["public"]["Tables"]["campaign_sends"]["Insert"];
-export type CompanyRow = Database["public"]["Tables"]["companies"]["Row"];
-export type CompanyInsertRow = Database["public"]["Tables"]["companies"]["Insert"];
-export type ContactAuditLogRow = Database["public"]["Tables"]["contact_audit_log"]["Row"];
-export type ContactRelationshipTypeRow = Database["public"]["Tables"]["contact_relationship_types"]["Row"];
-export type ContactTagRow = Database["public"]["Tables"]["contact_tags"]["Row"];
-export type DialerCallRow = Database["public"]["Tables"]["dialer_calls"]["Row"];
-export type MarketingCampaignRow = Database["public"]["Tables"]["marketing_campaigns"]["Row"];
-export type MarketingCampaignInsertRow = Database["public"]["Tables"]["marketing_campaigns"]["Insert"];
-
-// RTL Underwriting Engine types — tables removed from DB, using stubs
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export type PricingProgram = any;
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export type PricingProgramInsert = any;
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export type PricingProgramVersion = any;
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export type LeverageAdjuster = any;
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export type DealLeverageAdjustment = any;
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export type DealLeverageAdjustmentInsert = any;
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export type LoanComp = any;
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export type LoanCompInsert = any;
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export type LoanDraw = any;
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export type LoanDrawInsert = any;
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export type LoanEligibilityCheck = any;
-
-// Underwriting versions
-export type LoanUnderwritingVersion = Database["public"]["Tables"]["loan_underwriting_versions"]["Row"];
-export type LoanUnderwritingVersionInsert = Database["public"]["Tables"]["loan_underwriting_versions"]["Insert"];
-
-// ---------------------------------------------------------------------------
-// Chatter system types (added via migration, not yet in generated Database type)
-// ---------------------------------------------------------------------------
-export interface LoanCommentRow {
-  id: string;
-  created_at: string;
-  updated_at: string;
-  loan_id: string;
-  author_id: string;
-  author_name: string | null;
-  comment: string;
-  mentions: string[] | null;
-  is_internal: boolean;
-  is_edited: boolean;
-  edited_at: string | null;
-  parent_comment_id: string | null;
-}
-
-export interface LoanConditionCommentRow {
-  id: string;
-  condition_id: string;
-  loan_id: string;
-  author_id: string | null;
-  author_name: string | null;
-  comment: string;
-  mentions: string[] | null;
-  is_internal: boolean;
-  is_edited: boolean;
-  edited_at: string | null;
-  parent_comment_id: string | null;
-  created_at: string;
-  updated_at: string;
-}
-
-export interface CommentMentionRow {
-  id: string;
-  created_at: string;
-  comment_type: string;
-  comment_id: string;
-  mentioned_user_id: string;
-  loan_id: string;
-  condition_id: string | null;
-  notification_sent: boolean;
-}
-
