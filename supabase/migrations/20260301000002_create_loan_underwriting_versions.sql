@@ -65,21 +65,20 @@ alter table public.loan_underwriting_versions enable row level security;
 create policy "Admins full access on underwriting versions"
   on public.loan_underwriting_versions
   for all
+  to authenticated
   using (is_admin())
   with check (is_admin());
 
--- RLS: All authenticated internal users (non-borrowers) can view
+-- RLS: Internal users (non-borrowers) can view
 create policy "Internal users can view underwriting versions"
   on public.loan_underwriting_versions
   for select
+  to authenticated
   using (
-    auth.uid() is not null
-    and (
-      is_admin()
-      or exists (
-        select 1 from public.user_roles
-        where user_id = (select auth.uid())
-        and role in ('admin', 'super_admin', 'investor')
-      )
+    is_admin()
+    or exists (
+      select 1 from public.user_roles
+      where user_id = (select auth.uid())
+      and role in ('admin', 'super_admin', 'investor')
     )
   );
