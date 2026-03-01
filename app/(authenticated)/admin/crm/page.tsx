@@ -22,6 +22,7 @@ export default async function CrmPage() {
       supabase
         .from("crm_contacts")
         .select("*")
+        .is("deleted_at", null)
         .order("created_at", { ascending: false }),
       supabase
         .from("profiles")
