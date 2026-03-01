@@ -1,29 +1,71 @@
 "use client";
 
 import { useMemo } from "react";
-import { MERGE_VARIABLES } from "@/app/(authenticated)/admin/email-templates/types";
+import {
+  MERGE_VARIABLES,
+  type TemplateVariable,
+} from "@/app/(authenticated)/admin/email-templates/types";
 
 interface TemplatePreviewProps {
   subject: string;
   htmlBody: string;
+  previewData?: Record<string, string> | null;
+  availableVariables?: TemplateVariable[];
 }
 
-export function TemplatePreview({ subject, htmlBody }: TemplatePreviewProps) {
-  const renderedSubject = useMemo(() => {
-    let result = subject;
-    for (const v of MERGE_VARIABLES) {
-      result = result.replaceAll(`{{${v.key}}}`, v.example ?? v.key);
-    }
-    return result;
-  }, [subject]);
+function replaceVariables(
+  text: string,
+  vars: Record<string, string>
+): string {
+  let result = text;
+  Object.keys(vars).forEach((key) => {
+    result = result.replaceAll(`{{${key}}}`, vars[key]);
+  });
+  return result;
+}
 
-  const renderedBody = useMemo(() => {
-    let result = htmlBody;
-    for (const v of MERGE_VARIABLES) {
-      result = result.replaceAll(`{{${v.key}}}`, v.example ?? v.key);
+export function TemplatePreview({
+  subject,
+  htmlBody,
+  previewData,
+  availableVariables,
+}: TemplatePreviewProps) {
+  // Build a variable -> example value map, preferring preview_data, then
+  // available_variables examples, then global MERGE_VARIABLES examples.
+  const variableMap = useMemo(() => {
+    const map: Record<string, string> = {};
+
+    // Start with global merge variable examples
+    MERGE_VARIABLES.forEach((v) => {
+      if (v.example) map[v.key] = v.example;
+    });
+
+    // Layer on per-template available_variables examples
+    if (availableVariables) {
+      availableVariables.forEach((v) => {
+        if (v.example) map[v.key] = v.example;
+      });
     }
-    return result;
-  }, [htmlBody]);
+
+    // Layer on per-template preview_data (highest priority)
+    if (previewData) {
+      Object.keys(previewData).forEach((key) => {
+        map[key] = previewData[key];
+      });
+    }
+
+    return map;
+  }, [previewData, availableVariables]);
+
+  const renderedSubject = useMemo(
+    () => replaceVariables(subject, variableMap),
+    [subject, variableMap]
+  );
+
+  const renderedBody = useMemo(
+    () => replaceVariables(htmlBody, variableMap),
+    [htmlBody, variableMap]
+  );
 
   if (!htmlBody.trim()) {
     return (
@@ -50,7 +92,7 @@ export function TemplatePreview({ subject, htmlBody }: TemplatePreviewProps) {
             srcDoc={renderedBody}
             title="Email preview"
             className="w-full min-h-[500px] border-0"
-            sandbox=""
+            sandbox="allow-same-origin"
           />
         </div>
       </div>

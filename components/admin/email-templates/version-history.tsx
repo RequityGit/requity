@@ -77,10 +77,14 @@ export function VersionHistory({
             {versions.map((v) => (
               <TableRow key={v.id}>
                 <TableCell className="font-mono text-sm">
-                  v{v.version_number}
+                  v{v.version}
                 </TableCell>
                 <TableCell className="truncate max-w-[300px]">
-                  {v.subject || <span className="italic text-muted-foreground">No subject</span>}
+                  {v.subject_template || (
+                    <span className="italic text-muted-foreground">
+                      No subject
+                    </span>
+                  )}
                 </TableCell>
                 <TableCell className="text-sm text-muted-foreground">
                   {new Date(v.created_at).toLocaleDateString("en-US", {
@@ -106,12 +110,13 @@ export function VersionHistory({
         </Table>
       </div>
 
-      <Dialog open={!!selected} onOpenChange={(open) => !open && setSelected(null)}>
+      <Dialog
+        open={!!selected}
+        onOpenChange={(open) => !open && setSelected(null)}
+      >
         <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>
-              Version {selected?.version_number}
-            </DialogTitle>
+            <DialogTitle>Version {selected?.version}</DialogTitle>
             <DialogDescription>
               Saved on{" "}
               {selected &&
@@ -131,7 +136,7 @@ export function VersionHistory({
                   Subject
                 </div>
                 <div className="text-sm border rounded-md p-2 bg-slate-50">
-                  {selected.subject || "No subject"}
+                  {selected.subject_template || "No subject"}
                 </div>
               </div>
               <div>
@@ -139,7 +144,7 @@ export function VersionHistory({
                   HTML Body
                 </div>
                 <pre className="text-xs border rounded-md p-3 bg-slate-50 overflow-x-auto whitespace-pre-wrap max-h-[400px] overflow-y-auto">
-                  {selected.html_body || "No content"}
+                  {selected.html_body_template || "No content"}
                 </pre>
               </div>
             </div>

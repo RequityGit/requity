@@ -19,7 +19,7 @@ export function VariableInserter({ onInsert }: VariableInserterProps) {
     (v) =>
       !search ||
       v.key.includes(search.toLowerCase()) ||
-      v.label.toLowerCase().includes(search.toLowerCase())
+      (v.label ?? v.key).toLowerCase().includes(search.toLowerCase())
   );
 
   return (
@@ -62,7 +62,7 @@ export function VariableInserter({ onInsert }: VariableInserterProps) {
                 >
                   {`{{${v.key}}}`}
                 </Badge>
-                <span className="text-muted-foreground">{v.label}</span>
+                <span className="text-muted-foreground">{v.label ?? v.key}</span>
               </Button>
             ))}
             {filtered.length === 0 && (

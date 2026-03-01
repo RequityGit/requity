@@ -37,9 +37,9 @@ export function TemplateList({ templates: initial }: TemplateListProps) {
   const filtered = templates.filter((t) => {
     const matchesSearch =
       !search ||
-      t.name.toLowerCase().includes(search.toLowerCase()) ||
+      t.display_name.toLowerCase().includes(search.toLowerCase()) ||
       t.slug.toLowerCase().includes(search.toLowerCase()) ||
-      t.subject.toLowerCase().includes(search.toLowerCase());
+      t.subject_template.toLowerCase().includes(search.toLowerCase());
     const matchesCategory =
       categoryFilter === "all" || t.category === categoryFilter;
     return matchesSearch && matchesCategory;
@@ -107,13 +107,17 @@ export function TemplateList({ templates: initial }: TemplateListProps) {
                   className="cursor-pointer hover:bg-slate-50"
                   onClick={() => router.push(`/admin/email-templates/${t.id}`)}
                 >
-                  <TableCell className="font-medium">{t.name}</TableCell>
+                  <TableCell className="font-medium">
+                    {t.display_name}
+                  </TableCell>
                   <TableCell className="text-muted-foreground max-w-[300px] truncate">
-                    {t.subject || <span className="italic">No subject</span>}
+                    {t.subject_template || (
+                      <span className="italic">No subject</span>
+                    )}
                   </TableCell>
                   <TableCell>
                     <Badge variant="secondary" className="capitalize">
-                      {t.category}
+                      {t.category ?? "general"}
                     </Badge>
                   </TableCell>
                   <TableCell>

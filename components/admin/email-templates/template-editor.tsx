@@ -5,17 +5,10 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ArrowLeft, Save } from "lucide-react";
 import Link from "next/link";
-import { TEMPLATE_CATEGORIES } from "@/app/(authenticated)/admin/email-templates/types";
 import type {
   EmailTemplate,
   EmailTemplateVersion,
@@ -52,7 +45,7 @@ export function TemplateEditor({
   const handleInsertVariable = useCallback((variable: string) => {
     setTemplate((prev) => ({
       ...prev,
-      html_body: prev.html_body + `{{${variable}}}`,
+      html_body_template: prev.html_body_template + `{{${variable}}}`,
     }));
     setSaved(false);
   }, []);
@@ -62,11 +55,10 @@ export function TemplateEditor({
     setError(null);
 
     const result = await updateTemplateAction(template.id, {
-      name: template.name,
+      display_name: template.display_name,
       slug: template.slug,
-      subject: template.subject,
-      category: template.category,
-      html_body: template.html_body,
+      subject_template: template.subject_template,
+      html_body_template: template.html_body_template,
     });
 
     setSaving(false);
@@ -76,7 +68,7 @@ export function TemplateEditor({
       return;
     }
 
-    setTemplate(result.template);
+    setTemplate((prev) => ({ ...result.template, category: prev.category }));
     setSaved(true);
     router.refresh();
   }
@@ -107,11 +99,13 @@ export function TemplateEditor({
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         <div className="space-y-2">
-          <Label htmlFor="name">Template Name</Label>
+          <Label htmlFor="display_name">Template Name</Label>
           <Input
-            id="name"
-            value={template.name}
-            onChange={(e) => handleFieldChange("name", e.target.value)}
+            id="display_name"
+            value={template.display_name}
+            onChange={(e) =>
+              handleFieldChange("display_name", e.target.value)
+            }
           />
         </div>
         <div className="space-y-2">
@@ -124,30 +118,22 @@ export function TemplateEditor({
         </div>
         <div className="space-y-2">
           <Label>Category</Label>
-          <Select
-            value={template.category}
-            onValueChange={(v) => handleFieldChange("category", v)}
-          >
-            <SelectTrigger>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {TEMPLATE_CATEGORIES.map((cat) => (
-                <SelectItem key={cat} value={cat}>
-                  <span className="capitalize">{cat}</span>
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <div className="flex items-center h-10">
+            <Badge variant="secondary" className="capitalize text-sm">
+              {template.category ?? "general"}
+            </Badge>
+          </div>
         </div>
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="subject">Subject Line</Label>
+        <Label htmlFor="subject_template">Subject Line</Label>
         <Input
-          id="subject"
-          value={template.subject}
-          onChange={(e) => handleFieldChange("subject", e.target.value)}
+          id="subject_template"
+          value={template.subject_template}
+          onChange={(e) =>
+            handleFieldChange("subject_template", e.target.value)
+          }
           placeholder="e.g. Your loan {{loan_number}} has been approved"
         />
       </div>
@@ -162,15 +148,17 @@ export function TemplateEditor({
         <TabsContent value="editor" className="space-y-4">
           <VariableInserter onInsert={handleInsertVariable} />
           <HtmlEditor
-            value={template.html_body}
-            onChange={(v) => handleFieldChange("html_body", v)}
+            value={template.html_body_template}
+            onChange={(v) => handleFieldChange("html_body_template", v)}
           />
         </TabsContent>
 
         <TabsContent value="preview">
           <TemplatePreview
-            subject={template.subject}
-            htmlBody={template.html_body}
+            subject={template.subject_template}
+            htmlBody={template.html_body_template}
+            previewData={template.preview_data}
+            availableVariables={template.available_variables}
           />
         </TabsContent>
 
