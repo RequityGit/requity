@@ -514,30 +514,17 @@ export async function resendInviteAction(
 // ---------------------------------------------------------------------------
 
 export async function fetchInvestorsAction(): Promise<
-  { success: true; investors: { id: string; full_name: string | null; email: string | null }[] } | { error: string }
+  { success: true; investors: { id: string; first_name: string; last_name: string; email: string | null }[] } | { error: string }
 > {
   try {
     const auth = await requireAdmin();
     if (auth.error) return { error: auth.error };
 
     const admin = createAdminClient();
-    let { data, error } = await admin
-      .from("profiles")
-      .select("id, full_name, email")
-      .eq("role", "investor")
-      .order("full_name");
-
-    if (error?.message?.includes("full_name")) {
-      // full_name column not yet in DB — fall back to selecting without it
-      const result = await admin
-        .from("profiles")
-        .select("id, email")
-        .eq("role", "investor")
-        .order("email");
-      if (result.error) return { error: result.error.message };
-      data = (result.data ?? []).map((p) => ({ ...p, full_name: null }));
-      error = null;
-    }
+    const { data, error } = await admin
+      .from("investors")
+      .select("id, first_name, last_name, email")
+      .order("last_name");
 
     if (error) return { error: error.message };
 

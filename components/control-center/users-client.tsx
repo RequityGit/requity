@@ -446,7 +446,7 @@ export function UsersClient({
 
             {selectedRole === "investor" && (
               <div className="space-y-2">
-                <Label>Link to Investor Record (optional)</Label>
+                <Label>Link to Investor Record *</Label>
                 <Select
                   value={selectedInvestorId}
                   onValueChange={setSelectedInvestorId}
@@ -470,7 +470,7 @@ export function UsersClient({
 
             {selectedRole === "borrower" && (
               <div className="space-y-2">
-                <Label>Link to Borrower Record (optional)</Label>
+                <Label>Link to Borrower Record *</Label>
                 <Select
                   value={selectedBorrowerId}
                   onValueChange={setSelectedBorrowerId}
@@ -500,7 +500,12 @@ export function UsersClient({
             </Button>
             <Button
               onClick={handleGrantRole}
-              disabled={!selectedRole || grantLoading}
+              disabled={
+                !selectedRole ||
+                grantLoading ||
+                (selectedRole === "investor" && !selectedInvestorId) ||
+                (selectedRole === "borrower" && !selectedBorrowerId)
+              }
             >
               {grantLoading ? "Granting..." : "Grant Role"}
             </Button>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Dialog,
   DialogContent,
@@ -24,6 +24,8 @@ import { useToast } from "@/components/ui/use-toast";
 import {
   addRoleAction,
   removeRoleAction,
+  fetchInvestorsAction,
+  fetchBorrowersAction,
   type UserRow,
 } from "@/app/(authenticated)/admin/users/actions";
 
@@ -51,7 +53,45 @@ export function RoleManagementDialog({
 }: RoleManagementDialogProps) {
   const [loading, setLoading] = useState(false);
   const [newRole, setNewRole] = useState<string>("");
+  const [selectedInvestorId, setSelectedInvestorId] = useState<string>("");
+  const [selectedBorrowerId, setSelectedBorrowerId] = useState<string>("");
+  const [investors, setInvestors] = useState<
+    { id: string; first_name: string; last_name: string; email: string | null }[]
+  >([]);
+  const [borrowers, setBorrowers] = useState<
+    { id: string; first_name: string; last_name: string; email: string | null }[]
+  >([]);
+  const [entityLoading, setEntityLoading] = useState(false);
   const { toast } = useToast();
+
+  // Fetch entity data when role selection changes
+  useEffect(() => {
+    setSelectedInvestorId("");
+    setSelectedBorrowerId("");
+
+    if (newRole === "investor") {
+      setEntityLoading(true);
+      fetchInvestorsAction().then((result) => {
+        if ("success" in result) setInvestors(result.investors);
+        setEntityLoading(false);
+      });
+    } else if (newRole === "borrower") {
+      setEntityLoading(true);
+      fetchBorrowersAction().then((result) => {
+        if ("success" in result) setBorrowers(result.borrowers);
+        setEntityLoading(false);
+      });
+    }
+  }, [newRole]);
+
+  // Reset state when dialog closes
+  useEffect(() => {
+    if (!open) {
+      setNewRole("");
+      setSelectedInvestorId("");
+      setSelectedBorrowerId("");
+    }
+  }, [open]);
 
   // Get current active roles
   const currentRoles = new Set<string>();
@@ -66,8 +106,16 @@ export function RoleManagementDialog({
 
   const handleAddRole = async () => {
     if (!newRole) return;
+    if (newRole === "investor" && !selectedInvestorId) return;
+    if (newRole === "borrower" && !selectedBorrowerId) return;
+
     setLoading(true);
-    const result = await addRoleAction(user.id, newRole);
+    const result = await addRoleAction(
+      user.id,
+      newRole,
+      newRole === "investor" ? selectedInvestorId : undefined,
+      newRole === "borrower" ? selectedBorrowerId : undefined
+    );
     if ("error" in result) {
       toast({
         title: "Failed to add role",
@@ -77,6 +125,8 @@ export function RoleManagementDialog({
     } else {
       toast({ title: `Added ${newRole} role to ${user.full_name ?? user.email}` });
       setNewRole("");
+      setSelectedInvestorId("");
+      setSelectedBorrowerId("");
       onSuccess();
     }
     setLoading(false);
@@ -176,7 +226,13 @@ export function RoleManagementDialog({
                 <Button
                   size="sm"
                   onClick={handleAddRole}
-                  disabled={!newRole || loading}
+                  disabled={
+                    !newRole ||
+                    loading ||
+                    entityLoading ||
+                    (newRole === "investor" && !selectedInvestorId) ||
+                    (newRole === "borrower" && !selectedBorrowerId)
+                  }
                   className="gap-1"
                 >
                   {loading ? (
@@ -187,6 +243,78 @@ export function RoleManagementDialog({
                   Add
                 </Button>
               </div>
+
+              {/* Entity selection for investor role */}
+              {newRole === "investor" && (
+                <div className="mt-3">
+                  <label className="text-sm font-medium text-muted-foreground mb-1.5 block">
+                    Link to Investor Record *
+                  </label>
+                  {entityLoading ? (
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground py-2">
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      Loading investors...
+                    </div>
+                  ) : investors.length === 0 ? (
+                    <p className="text-sm text-muted-foreground py-2">
+                      No investor records found. Create an investor record first.
+                    </p>
+                  ) : (
+                    <Select value={selectedInvestorId} onValueChange={setSelectedInvestorId}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select an investor..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {investors.map((inv) => (
+                          <SelectItem key={inv.id} value={inv.id}>
+                            {inv.first_name} {inv.last_name}
+                            {inv.email ? ` (${inv.email})` : ""}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  )}
+                  <p className="text-xs text-muted-foreground mt-1">
+                    An investor record must be linked to grant the investor role.
+                  </p>
+                </div>
+              )}
+
+              {/* Entity selection for borrower role */}
+              {newRole === "borrower" && (
+                <div className="mt-3">
+                  <label className="text-sm font-medium text-muted-foreground mb-1.5 block">
+                    Link to Borrower Record *
+                  </label>
+                  {entityLoading ? (
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground py-2">
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      Loading borrowers...
+                    </div>
+                  ) : borrowers.length === 0 ? (
+                    <p className="text-sm text-muted-foreground py-2">
+                      No borrower records found. Create a borrower record first.
+                    </p>
+                  ) : (
+                    <Select value={selectedBorrowerId} onValueChange={setSelectedBorrowerId}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select a borrower..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {borrowers.map((b) => (
+                          <SelectItem key={b.id} value={b.id}>
+                            {b.first_name} {b.last_name}
+                            {b.email ? ` (${b.email})` : ""}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  )}
+                  <p className="text-xs text-muted-foreground mt-1">
+                    A borrower record must be linked to grant the borrower role.
+                  </p>
+                </div>
+              )}
             </div>
           )}
 
