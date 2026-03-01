@@ -53,7 +53,7 @@ export async function updateTemplateAction(
 ): Promise<{ success: true; template: EmailTemplate } | { error: string }> {
   try {
     const auth = await requireAdmin();
-    if (auth.error) return { error: auth.error };
+    if (auth.error || !auth.user) return { error: auth.error ?? "Not authenticated" };
     const userId = auth.user.id;
 
     const admin = createAdminClient();
