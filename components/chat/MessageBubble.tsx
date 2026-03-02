@@ -60,7 +60,7 @@ export function MessageBubble({
     const checkBookmark = async () => {
       const supabase = createClient();
       const { data } = await supabase
-        .from("chat_bookmarks" as never)
+        .from("chat_bookmarks")
         .select("id")
         .eq("user_id", currentUserId)
         .eq("message_id", message.id)
@@ -105,8 +105,8 @@ export function MessageBubble({
     }
 
     await supabase
-      .from("chat_messages" as never)
-      .update({ reactions: newReactions } as never)
+      .from("chat_messages")
+      .update({ reactions: newReactions })
       .eq("id", message.id);
 
     setShowEmojiPicker(false);
@@ -118,17 +118,17 @@ export function MessageBubble({
 
     if (isBookmarked) {
       await supabase
-        .from("chat_bookmarks" as never)
+        .from("chat_bookmarks")
         .delete()
         .eq("user_id", currentUserId)
         .eq("message_id", message.id);
       setIsBookmarked(false);
     } else {
-      await supabase.from("chat_bookmarks" as never).insert({
+      await supabase.from("chat_bookmarks").insert({
         user_id: currentUserId,
         message_id: message.id,
         channel_id: channelId,
-      } as never);
+      });
       setIsBookmarked(true);
     }
   };
@@ -137,11 +137,11 @@ export function MessageBubble({
     if (!currentUserId || !channelId) return;
     const supabase = createClient();
     await supabase
-      .from("chat_channel_members" as never)
+      .from("chat_channel_members")
       .update({
         last_read_message_id: message.id,
         last_read_at: message.created_at,
-      } as never)
+      })
       .eq("channel_id", channelId)
       .eq("user_id", currentUserId);
     setShowMoreMenu(false);
@@ -150,11 +150,11 @@ export function MessageBubble({
   const handleDeleteMessage = async () => {
     const supabase = createClient();
     await supabase
-      .from("chat_messages" as never)
+      .from("chat_messages")
       .update({
         is_deleted: true,
         deleted_at: new Date().toISOString(),
-      } as never)
+      })
       .eq("id", message.id);
     setShowMoreMenu(false);
   };
@@ -162,11 +162,11 @@ export function MessageBubble({
   const handlePinMessage = async () => {
     if (!currentUserId || !channelId) return;
     const supabase = createClient();
-    await supabase.from("chat_pinned_messages" as never).insert({
+    await supabase.from("chat_pinned_messages").insert({
       channel_id: channelId,
       message_id: message.id,
       pinned_by: currentUserId,
-    } as never);
+    });
     setShowMoreMenu(false);
   };
 

@@ -129,7 +129,8 @@ export function MessageInput({
       isEveryoneMention = true;
     }
 
-    const { error } = await supabase.from("chat_messages" as never).insert({
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { error } = await (supabase as any).from("chat_messages").insert({
       channel_id: channelId,
       sender_id: userId,
       message_type: "text",
@@ -138,7 +139,7 @@ export function MessageInput({
       linked_entities: linkedEntities.length > 0 ? linkedEntities : [],
       attachments: [],
       reactions: {},
-    } as never);
+    });
 
     if (error) {
       console.error("Error sending message:", error);

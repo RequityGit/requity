@@ -11,7 +11,7 @@ export function useUnreadCounts(userId: string | undefined) {
     if (!userId) return;
     const supabase = supabaseRef.current;
     const { data } = await supabase
-      .from("chat_channel_members" as never)
+      .from("chat_channel_members")
       .select("unread_count, is_muted")
       .eq("user_id", userId)
       .is("left_at", null);

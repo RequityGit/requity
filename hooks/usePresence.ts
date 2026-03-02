@@ -33,13 +33,13 @@ export function usePresence(userId: string | undefined) {
     const supabase = supabaseRef.current;
 
     const updatePresence = async (status: PresenceStatus) => {
-      await supabase.from("chat_user_presence" as never).upsert(
+      await supabase.from("chat_user_presence").upsert(
         {
           user_id: userId,
           status,
           last_seen_at: new Date().toISOString(),
           updated_at: new Date().toISOString(),
-        } as never,
+        },
         { onConflict: "user_id" }
       );
     };
@@ -88,7 +88,7 @@ export function usePresence(userId: string | undefined) {
     // Initial fetch
     const fetchAll = async () => {
       const { data } = await supabase
-        .from("chat_user_presence" as never)
+        .from("chat_user_presence")
         .select("*");
       if (data) {
         const map = new Map<string, ChatUserPresence>();

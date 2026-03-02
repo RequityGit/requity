@@ -32,7 +32,7 @@ export function useMentions(channelId: string | null) {
       // Search users (channel members first, then all)
       if (channelId) {
         const { data: members } = await supabase
-          .from("chat_channel_members" as never)
+          .from("chat_channel_members")
           .select("user_id, profiles:user_id(id, full_name, avatar_url, email)")
           .eq("channel_id", channelId)
           .is("left_at", null);

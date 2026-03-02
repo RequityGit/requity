@@ -209,8 +209,8 @@ function ConversationItem({
   const handleIconChange = async (emoji: string) => {
     const supabase = createClient();
     await supabase
-      .from("chat_channels" as never)
-      .update({ icon: emoji } as never)
+      .from("chat_channels")
+      .update({ icon: emoji })
       .eq("id", channel.id);
   };
 

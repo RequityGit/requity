@@ -518,6 +518,52 @@ export type Database = {
           },
         ]
       }
+      chat_bookmarks: {
+        Row: {
+          channel_id: string
+          created_at: string
+          id: string
+          message_id: string
+          user_id: string
+        }
+        Insert: {
+          channel_id: string
+          created_at?: string
+          id?: string
+          message_id: string
+          user_id: string
+        }
+        Update: {
+          channel_id?: string
+          created_at?: string
+          id?: string
+          message_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chat_bookmarks_channel_id_fkey"
+            columns: ["channel_id"]
+            isOneToOne: false
+            referencedRelation: "chat_channels"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "chat_bookmarks_channel_id_fkey"
+            columns: ["channel_id"]
+            isOneToOne: false
+            referencedRelation: "chat_channels_with_unread"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "chat_bookmarks_message_id_fkey"
+            columns: ["message_id"]
+            isOneToOne: false
+            referencedRelation: "chat_messages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       chat_channel_members: {
         Row: {
           channel_id: string
@@ -10220,3 +10266,12 @@ export interface LenderQuote {
   updated_at: string;
   [key: string]: unknown;
 }
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export type LenderQuoteInsert = any;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export type LenderQuoteUpdate = any;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export type LenderQuoteActivity = any;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export type LenderQuoteActivityInsert = any;

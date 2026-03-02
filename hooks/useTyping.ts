@@ -20,12 +20,12 @@ export function useTyping(channelId: string | null, userId: string | undefined) 
     lastTypingRef.current = now;
 
     const supabase = supabaseRef.current;
-    await supabase.from("chat_typing_indicators" as never).upsert(
+    await supabase.from("chat_typing_indicators").upsert(
       {
         channel_id: channelId,
         user_id: userId,
         started_at: new Date().toISOString(),
-      } as never,
+      },
       { onConflict: "channel_id,user_id" }
     );
 
@@ -39,7 +39,7 @@ export function useTyping(channelId: string | null, userId: string | undefined) 
     if (!channelId || !userId) return;
     const supabase = supabaseRef.current;
     await supabase
-      .from("chat_typing_indicators" as never)
+      .from("chat_typing_indicators")
       .delete()
       .eq("channel_id", channelId)
       .eq("user_id", userId);
@@ -56,7 +56,7 @@ export function useTyping(channelId: string | null, userId: string | undefined) 
 
     const fetchTyping = async () => {
       const { data } = await supabase
-        .from("chat_typing_indicators" as never)
+        .from("chat_typing_indicators")
         .select("channel_id, user_id, started_at")
         .eq("channel_id", channelId);
 

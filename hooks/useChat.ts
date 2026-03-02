@@ -21,7 +21,7 @@ export function useChat(userId: string | undefined) {
     if (!userId) return;
     const supabase = supabaseRef.current;
     const { data, error } = await supabase
-      .from("chat_channels_with_unread" as never)
+      .from("chat_channels_with_unread")
       .select("*")
       .order("last_message_at", { ascending: false, nullsFirst: false });
 

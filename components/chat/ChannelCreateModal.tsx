@@ -99,7 +99,7 @@ export function ChannelCreateModal({
       if (selectedMembers.length === 1) {
         const otherUserId = selectedMembers[0].id;
         const { data: existingChannels } = await supabase
-          .from("chat_channel_members" as never)
+          .from("chat_channel_members")
           .select("channel_id")
           .eq("user_id", userId);
 
@@ -108,7 +108,7 @@ export function ChannelCreateModal({
             channel_id: string;
           }>) {
             const { data: ch } = await supabase
-              .from("chat_channels" as never)
+              .from("chat_channels")
               .select("id, channel_type")
               .eq("id", ec.channel_id)
               .eq("channel_type", "direct")
@@ -117,7 +117,7 @@ export function ChannelCreateModal({
             if (ch) {
               const chTyped = ch as unknown as { id: string };
               const { data: otherMember } = await supabase
-                .from("chat_channel_members" as never)
+                .from("chat_channel_members")
                 .select("id")
                 .eq("channel_id", chTyped.id)
                 .eq("user_id", otherUserId)
@@ -145,12 +145,12 @@ export function ChannelCreateModal({
               .join(", ");
 
       const { data: channelData, error } = await supabase
-        .from("chat_channels" as never)
+        .from("chat_channels")
         .insert({
           name: channelName,
           channel_type: channelType,
           is_private: true,
-        } as never)
+        })
         .select("id")
         .single();
 
@@ -174,21 +174,19 @@ export function ChannelCreateModal({
         })),
       ];
 
-      await supabase
-        .from("chat_channel_members" as never)
-        .insert(members as never);
+      await supabase.from("chat_channel_members").insert(members);
       onChannelCreated(channel.id);
     } else {
       if (!name.trim()) return;
 
       const { data: channelData2, error } = await supabase
-        .from("chat_channels" as never)
+        .from("chat_channels")
         .insert({
           name: name.trim(),
           description: description.trim() || null,
           channel_type: "team" as ChatChannelType,
           is_private: isPrivate,
-        } as never)
+        })
         .select("id")
         .single();
 
@@ -212,9 +210,7 @@ export function ChannelCreateModal({
         })),
       ];
 
-      await supabase
-        .from("chat_channel_members" as never)
-        .insert(members as never);
+      await supabase.from("chat_channel_members").insert(members);
       onChannelCreated(channel.id);
     }
 
