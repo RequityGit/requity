@@ -61,16 +61,16 @@ export type InvestorCommitmentStatus =
   (typeof INVESTOR_COMMITMENT_STATUSES)[number];
 
 // ============================================
-// capital_calls
+// contributions (capital_calls table)
 // ============================================
 
 /** Constraint: capital_calls_status_check */
-export const CAPITAL_CALL_STATUSES = [
+export const CONTRIBUTION_STATUSES = [
   "pending",
   "paid",
   "overdue",
 ] as const;
-export type CapitalCallStatus = (typeof CAPITAL_CALL_STATUSES)[number];
+export type ContributionStatus = (typeof CONTRIBUTION_STATUSES)[number];
 
 // ============================================
 // distributions

@@ -54,8 +54,8 @@ export default async function InvestorFundDetailPage({ params }: PageProps) {
 
   if (!fund) notFound();
 
-  // Fetch capital calls, distributions, and documents for this fund+investor
-  const [capitalCallsResult, distributionsResult, documentsResult] =
+  // Fetch contributions, distributions, and documents for this fund+investor
+  const [contributionsResult, distributionsResult, documentsResult] =
     await Promise.all([
       supabase
         .from("capital_calls")
@@ -77,12 +77,12 @@ export default async function InvestorFundDetailPage({ params }: PageProps) {
         .order("created_at", { ascending: false }),
     ]);
 
-  const capitalCalls = capitalCallsResult.data ?? [];
+  const contributions = contributionsResult.data ?? [];
   const distributions = distributionsResult.data ?? [];
   const documents = documentsResult.data ?? [];
 
   // KPIs
-  const totalCalled = capitalCalls.reduce(
+  const totalCalled = contributions.reduce(
     (sum, cc) => sum + (cc.call_amount || 0),
     0
   );
@@ -96,8 +96,8 @@ export default async function InvestorFundDetailPage({ params }: PageProps) {
         )
       : 0;
 
-  // Capital call columns
-  const capitalCallColumns: Column<(typeof capitalCalls)[number]>[] = [
+  // Contribution columns
+  const contributionColumns: Column<(typeof contributions)[number]>[] = [
     {
       key: "call_amount",
       header: "Amount",
@@ -230,7 +230,7 @@ export default async function InvestorFundDetailPage({ params }: PageProps) {
         <KpiCard
           title="Total Called"
           value={formatCurrency(totalCalled)}
-          description={`${capitalCalls.length} contribution${capitalCalls.length !== 1 ? "s" : ""}`}
+          description={`${contributions.length} contribution${contributions.length !== 1 ? "s" : ""}`}
           icon={<PiggyBank className="h-5 w-5" />}
         />
         <KpiCard
@@ -293,10 +293,10 @@ export default async function InvestorFundDetailPage({ params }: PageProps) {
       </Card>
 
       {/* Tabbed Data */}
-      <Tabs defaultValue="capital-calls">
+      <Tabs defaultValue="contributions">
         <TabsList>
-          <TabsTrigger value="capital-calls">
-            Contributions ({capitalCalls.length})
+          <TabsTrigger value="contributions">
+            Contributions ({contributions.length})
           </TabsTrigger>
           <TabsTrigger value="distributions">
             Distributions ({distributions.length})
@@ -306,12 +306,12 @@ export default async function InvestorFundDetailPage({ params }: PageProps) {
           </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="capital-calls" className="mt-4">
+        <TabsContent value="contributions" className="mt-4">
           <Card>
             <CardContent className="p-0">
               <DataTable
-                columns={capitalCallColumns}
-                data={capitalCalls}
+                columns={contributionColumns}
+                data={contributions}
                 emptyMessage="No contributions for this investment."
               />
             </CardContent>

@@ -51,7 +51,7 @@ export function InvestorActions({
 }: InvestorActionsProps) {
   return (
     <div className="flex flex-wrap gap-3">
-      <RecordCapitalCallDialog
+      <RecordContributionDialog
         investorId={investorId}
         commitments={commitments}
       />
@@ -65,10 +65,10 @@ export function InvestorActions({
 }
 
 // ---------------------------------------------------------------------------
-// Record Capital Call Dialog
+// Record Contribution Dialog
 // ---------------------------------------------------------------------------
 
-function RecordCapitalCallDialog({
+function RecordContributionDialog({
   investorId,
   commitments,
 }: {
@@ -110,7 +110,7 @@ function RecordCapitalCallDialog({
 
       toast({ title: "Contribution recorded successfully" });
       setOpen(false);
-      resetCapitalCallForm();
+      resetContributionForm();
       router.refresh();
     } catch (err: any) {
       toast({
@@ -123,7 +123,7 @@ function RecordCapitalCallDialog({
     }
   }
 
-  function resetCapitalCallForm() {
+  function resetContributionForm() {
     setCommitmentId("");
     setAmount("");
     setDueDate("");

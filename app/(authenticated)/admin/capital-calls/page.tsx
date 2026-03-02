@@ -1,8 +1,8 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { PageHeader } from "@/components/shared/page-header";
-import { CapitalCallForm } from "@/components/admin/capital-call-form";
-import { CapitalCallListTable } from "@/components/admin/capital-call-list-table";
+import { ContributionForm } from "@/components/admin/contribution-form";
+import { ContributionListTable } from "@/components/admin/contribution-list-table";
 
 // Helper to extract investor name, with fallback to profile names
 function getInvestorName(
@@ -24,7 +24,7 @@ function getInvestorName(
   return "Unknown";
 }
 
-export default async function AdminCapitalCallsPage() {
+export default async function AdminContributionsPage() {
   const supabase = await createClient();
   const {
     data: { user },
@@ -32,7 +32,7 @@ export default async function AdminCapitalCallsPage() {
 
   if (!user) redirect("/login");
 
-  const { data: capitalCalls } = await supabase
+  const { data: contributions } = await supabase
     .from("capital_calls")
     .select(
       "*, funds(name), investors(user_id, crm_contacts(name, first_name, last_name)), investor_commitments(commitment_amount)"
@@ -46,7 +46,7 @@ export default async function AdminCapitalCallsPage() {
 
   // Build profile name fallback
   const investorUserIds = new Set<string>();
-  (capitalCalls ?? []).forEach((row) => {
+  (contributions ?? []).forEach((row) => {
     const inv = (row as Record<string, unknown>).investors as Record<string, unknown> | null;
     if (inv?.user_id) investorUserIds.add(inv.user_id as string);
   });
@@ -61,7 +61,7 @@ export default async function AdminCapitalCallsPage() {
     });
   }
 
-  const callRows = (capitalCalls ?? []).map((cc) => ({
+  const contributionRows = (contributions ?? []).map((cc) => ({
     id: cc.id,
     fund_name: (cc as any).funds?.name ?? "---",
     investor_name: getInvestorName(cc as unknown as Record<string, unknown>, profileNames),
@@ -78,10 +78,10 @@ export default async function AdminCapitalCallsPage() {
       <PageHeader
         title="Contributions"
         description="Create and manage contributions across investments."
-        action={<CapitalCallForm funds={funds ?? []} />}
+        action={<ContributionForm funds={funds ?? []} />}
       />
 
-      <CapitalCallListTable data={callRows} />
+      <ContributionListTable data={contributionRows} />
     </div>
   );
 }

@@ -92,7 +92,7 @@ export async function getEffectiveAuth(): Promise<EffectiveAuth> {
 
 /**
  * Resolve the auth user's ID to the corresponding investors.id.
- * The investor_commitments, capital_calls, and distributions tables
+ * The investor_commitments, capital_calls (contributions), and distributions tables
  * reference investors.id — NOT auth.users.id — so this lookup is
  * required before querying those tables.
  */

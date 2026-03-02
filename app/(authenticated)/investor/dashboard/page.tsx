@@ -27,7 +27,7 @@ type CommitmentWithFund = {
   funds: { name: string } | null;
 };
 
-type CapitalCallWithFund = {
+type ContributionWithFund = {
   id: string;
   call_amount: number;
   due_date: string;
@@ -54,7 +54,7 @@ type DocumentWithFund = {
 
 type ActivityItem = {
   id: string;
-  type: "distribution" | "capital_call" | "document";
+  type: "distribution" | "contribution" | "document";
   title: string;
   description: string;
   date: string;
@@ -93,8 +93,8 @@ export default async function InvestorDashboardPage() {
 
   const commitments = (rawCommitments as unknown as CommitmentWithFund[]) ?? [];
 
-  // Fetch recent capital calls
-  const { data: rawCapitalCalls } = investorId
+  // Fetch recent contributions
+  const { data: rawContributions } = investorId
     ? await supabase
         .from("capital_calls")
         .select("*, funds(name)")
@@ -103,8 +103,8 @@ export default async function InvestorDashboardPage() {
         .limit(5)
     : { data: null };
 
-  const recentCapitalCalls =
-    (rawCapitalCalls as unknown as CapitalCallWithFund[]) ?? [];
+  const recentContributions =
+    (rawContributions as unknown as ContributionWithFund[]) ?? [];
 
   // Fetch recent distributions
   const { data: rawDistributions } = investorId
@@ -161,7 +161,7 @@ export default async function InvestorDashboardPage() {
     0
   );
 
-  // Build activity feed: merge recent distributions, capital calls, and documents
+  // Build activity feed: merge recent distributions, contributions, and documents
   const activityItems: ActivityItem[] = [];
 
   recentDistributions.forEach((d) => {
@@ -175,10 +175,10 @@ export default async function InvestorDashboardPage() {
     });
   });
 
-  recentCapitalCalls.forEach((cc) => {
+  recentContributions.forEach((cc) => {
     activityItems.push({
       id: cc.id,
-      type: "capital_call",
+      type: "contribution",
       title: "Contribution",
       description: `${formatCurrency(cc.call_amount)} for ${cc.funds?.name ?? "Unknown Investment"} - Due ${formatDate(cc.due_date)}`,
       date: cc.due_date,
@@ -223,7 +223,7 @@ export default async function InvestorDashboardPage() {
         <KpiCard
           title="Total Funded"
           value={formatCurrency(totalFunded)}
-          description={`${totalCommitted > 0 ? Math.round((totalFunded / totalCommitted) * 100) : 0}% of commitment called`}
+          description={`${totalCommitted > 0 ? Math.round((totalFunded / totalCommitted) * 100) : 0}% of commitment funded`}
           icon={<Wallet className="h-5 w-5" />}
         />
         <KpiCard
@@ -264,7 +264,7 @@ export default async function InvestorDashboardPage() {
                       {item.type === "distribution" && (
                         <CircleDollarSign className="h-4 w-4 text-green-600" />
                       )}
-                      {item.type === "capital_call" && (
+                      {item.type === "contribution" && (
                         <BanknoteIcon className="h-4 w-4 text-blue-600" />
                       )}
                       {item.type === "document" && (

@@ -11,10 +11,10 @@ import {
   CheckCircle2,
   AlertCircle,
 } from "lucide-react";
-import { CapitalCallFilters } from "./filters";
+import { ContributionFilters } from "./filters";
 import { InvestmentTabs } from "@/components/investor/investment-tabs";
 
-type CapitalCallRow = {
+type ContributionRow = {
   id: string;
   fund_name: string;
   call_amount: number;
@@ -23,7 +23,7 @@ type CapitalCallRow = {
   status: string;
 };
 
-export default async function CapitalCallsPage({
+export default async function ContributionsPage({
   searchParams,
 }: {
   searchParams: { fund?: string; status?: string };
@@ -33,7 +33,7 @@ export default async function CapitalCallsPage({
   // Resolve auth user ID → investors.id
   const investorId = await getInvestorId(supabase, userId);
 
-  type CapitalCallJoined = {
+  type ContributionJoined = {
     id: string;
     fund_id: string;
     call_amount: number;
@@ -43,7 +43,7 @@ export default async function CapitalCallsPage({
     funds: { name: string } | null;
   };
 
-  let capitalCalls: CapitalCallJoined[] = [];
+  let contributions: ContributionJoined[] = [];
 
   if (investorId) {
     // Build query
@@ -61,9 +61,9 @@ export default async function CapitalCallsPage({
       query = query.eq("status", searchParams.status);
     }
 
-    const { data: rawCapitalCalls } = await query;
-    capitalCalls =
-      (rawCapitalCalls as unknown as CapitalCallJoined[]) ?? [];
+    const { data: rawContributions } = await query;
+    contributions =
+      (rawContributions as unknown as ContributionJoined[]) ?? [];
   }
 
   // Get list of funds for the filter
@@ -87,7 +87,7 @@ export default async function CapitalCallsPage({
   );
 
   // Transform data for the table
-  const rows: CapitalCallRow[] = capitalCalls.map((cc) => ({
+  const rows: ContributionRow[] = contributions.map((cc) => ({
     id: cc.id,
     fund_name: cc.funds?.name ?? "Unknown Investment",
     call_amount: cc.call_amount,
@@ -104,7 +104,7 @@ export default async function CapitalCallsPage({
   const pendingCount = rows.filter((r) => r.status === "pending").length;
   const overdueCount = rows.filter((r) => r.status === "overdue").length;
 
-  const columns: Column<CapitalCallRow>[] = [
+  const columns: Column<ContributionRow>[] = [
     {
       key: "fund_name",
       header: "Investment",
@@ -189,7 +189,7 @@ export default async function CapitalCallsPage({
       </div>
 
       {/* Filters */}
-      <CapitalCallFilters
+      <ContributionFilters
         funds={uniqueFunds}
         currentFund={searchParams.fund}
         currentStatus={searchParams.status}
@@ -198,7 +198,7 @@ export default async function CapitalCallsPage({
       {/* Table */}
       <Card>
         <CardContent className="p-0">
-          <DataTable<CapitalCallRow>
+          <DataTable<ContributionRow>
             columns={columns}
             data={rows}
             emptyMessage="No contributions found. Adjust your filters or check back later."

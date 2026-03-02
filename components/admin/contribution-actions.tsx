@@ -6,12 +6,12 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
 import { Check } from "lucide-react";
 
-interface CapitalCallActionsProps {
-  capitalCallId: string;
+interface ContributionActionsProps {
+  contributionId: string;
   status: string;
 }
 
-export function CapitalCallActions({ capitalCallId, status }: CapitalCallActionsProps) {
+export function ContributionActions({ contributionId, status }: ContributionActionsProps) {
   const supabase = createClient();
   const router = useRouter();
   const { toast } = useToast();
@@ -23,7 +23,7 @@ export function CapitalCallActions({ capitalCallId, status }: CapitalCallActions
         status: "paid",
         paid_date: new Date().toISOString().split("T")[0],
       })
-      .eq("id", capitalCallId);
+      .eq("id", contributionId);
 
     if (error) {
       toast({ title: "Error", description: error.message, variant: "destructive" });

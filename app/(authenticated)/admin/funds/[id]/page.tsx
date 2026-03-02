@@ -72,7 +72,7 @@ export default async function AdminFundDetailPage({ params }: PageProps) {
 
   const [
     commitmentsResult,
-    capitalCallsResult,
+    contributionsResult,
     distributionsResult,
     documentsResult,
   ] = await Promise.all([
@@ -99,14 +99,14 @@ export default async function AdminFundDetailPage({ params }: PageProps) {
   ]);
 
   const commitments = commitmentsResult.data ?? [];
-  const capitalCalls = capitalCallsResult.data ?? [];
+  const contributions = contributionsResult.data ?? [];
   const distributions = distributionsResult.data ?? [];
   const documents = documentsResult.data ?? [];
 
   // Build a profile name lookup for investors whose crm_contact_id is null.
   // Collect unique user_ids from all investor joins, then batch-fetch profiles.
   const investorUserIds = new Set<string>();
-  [...commitments, ...capitalCalls, ...distributions].forEach((row) => {
+  [...commitments, ...contributions, ...distributions].forEach((row) => {
     const inv = (row as Record<string, unknown>).investors as Record<string, unknown> | null;
     if (inv?.user_id) investorUserIds.add(inv.user_id as string);
   });
@@ -131,7 +131,7 @@ export default async function AdminFundDetailPage({ params }: PageProps) {
     (sum, c) => sum + (c.funded_amount || 0),
     0
   );
-  const totalContributions = capitalCalls.reduce(
+  const totalContributions = contributions.reduce(
     (sum, cc) => sum + (cc.call_amount || 0),
     0
   );
@@ -177,8 +177,8 @@ export default async function AdminFundDetailPage({ params }: PageProps) {
     },
   ];
 
-  // Capital call columns
-  const capitalCallColumns: Column<(typeof capitalCalls)[number]>[] = [
+  // Contribution columns
+  const contributionColumns: Column<(typeof contributions)[number]>[] = [
     {
       key: "investor",
       header: "Investor",
@@ -328,7 +328,7 @@ export default async function AdminFundDetailPage({ params }: PageProps) {
         <KpiCard
           title="Total Contributions"
           value={formatCurrency(totalContributions)}
-          description={`${capitalCalls.length} call${capitalCalls.length !== 1 ? "s" : ""}`}
+          description={`${contributions.length} contribution${contributions.length !== 1 ? "s" : ""}`}
           icon={<PiggyBank className="h-5 w-5" />}
         />
         <KpiCard
@@ -409,8 +409,8 @@ export default async function AdminFundDetailPage({ params }: PageProps) {
           <TabsTrigger value="commitments">
             Commitments ({commitments.length})
           </TabsTrigger>
-          <TabsTrigger value="capital-calls">
-            Contributions ({capitalCalls.length})
+          <TabsTrigger value="contributions">
+            Contributions ({contributions.length})
           </TabsTrigger>
           <TabsTrigger value="distributions">
             Distributions ({distributions.length})
@@ -432,23 +432,23 @@ export default async function AdminFundDetailPage({ params }: PageProps) {
           </Card>
         </TabsContent>
 
-        <TabsContent value="capital-calls" className="mt-4">
+        <TabsContent value="contributions" className="mt-4">
           <Card>
             <CardContent className="p-0">
               <DataTable
-                columns={capitalCallColumns}
-                data={capitalCalls}
+                columns={contributionColumns}
+                data={contributions}
                 emptyMessage="No contributions for this investment."
               />
             </CardContent>
           </Card>
-          {capitalCalls.length > 0 && (
+          {contributions.length > 0 && (
             <Card className="mt-4">
               <CardContent className="py-4 px-6">
                 <div className="flex items-center justify-between">
                   <span className="text-sm font-medium text-muted-foreground">
-                    Total Contributions ({capitalCalls.length} call
-                    {capitalCalls.length !== 1 ? "s" : ""})
+                    Total Contributions ({contributions.length} contribution
+                    {contributions.length !== 1 ? "s" : ""})
                   </span>
                   <span className="text-lg font-bold text-foreground">
                     {formatCurrency(totalContributions)}

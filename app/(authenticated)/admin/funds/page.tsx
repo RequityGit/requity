@@ -3,8 +3,8 @@ import { redirect } from "next/navigation";
 import { PageHeader } from "@/components/shared/page-header";
 import { InvestmentForm } from "@/components/admin/investment-form";
 import { FundListTable } from "@/components/admin/fund-list-table";
-import { CapitalCallForm } from "@/components/admin/capital-call-form";
-import { CapitalCallListTable } from "@/components/admin/capital-call-list-table";
+import { ContributionForm } from "@/components/admin/contribution-form";
+import { ContributionListTable } from "@/components/admin/contribution-list-table";
 import { DistributionForm } from "@/components/admin/distribution-form";
 import { DistributionListTable } from "@/components/admin/distribution-list-table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -37,7 +37,7 @@ export default async function AdminFundsPage() {
 
   if (!user) redirect("/login");
 
-  const [fundsResult, capitalCallsResult, distributionsResult] =
+  const [fundsResult, contributionsResult, distributionsResult] =
     await Promise.all([
       supabase
         .from("funds")
@@ -56,12 +56,12 @@ export default async function AdminFundsPage() {
     ]);
 
   const funds = fundsResult.data ?? [];
-  const capitalCalls = capitalCallsResult.data ?? [];
+  const contributions = contributionsResult.data ?? [];
   const distributions = distributionsResult.data ?? [];
 
   // Build profile name fallback for investors without crm_contact_id
   const investorUserIds = new Set<string>();
-  [...capitalCalls, ...distributions].forEach((row) => {
+  [...contributions, ...distributions].forEach((row) => {
     const inv = (row as Record<string, unknown>).investors as Record<string, unknown> | null;
     if (inv?.user_id) investorUserIds.add(inv.user_id as string);
   });
@@ -91,7 +91,7 @@ export default async function AdminFundsPage() {
 
   const fundOptions = funds.map((f) => ({ id: f.id, name: f.name }));
 
-  const callRows = capitalCalls.map((cc) => ({
+  const contributionRows = contributions.map((cc) => ({
     id: cc.id,
     fund_name: (cc as any).funds?.name ?? "---",
     investor_name: getInvestorName(cc as unknown as Record<string, unknown>, profileNames),
@@ -128,7 +128,7 @@ export default async function AdminFundsPage() {
             Investments ({fundRows.length})
           </TabsTrigger>
           <TabsTrigger value="contributions">
-            Contributions ({callRows.length})
+            Contributions ({contributionRows.length})
           </TabsTrigger>
           <TabsTrigger value="distributions">
             Distributions ({distRows.length})
@@ -141,9 +141,9 @@ export default async function AdminFundsPage() {
 
         <TabsContent value="contributions" className="mt-4">
           <div className="flex justify-end mb-4">
-            <CapitalCallForm funds={fundOptions} />
+            <ContributionForm funds={fundOptions} />
           </div>
-          <CapitalCallListTable data={callRows} />
+          <ContributionListTable data={contributionRows} />
         </TabsContent>
 
         <TabsContent value="distributions" className="mt-4">

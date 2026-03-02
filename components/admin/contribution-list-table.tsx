@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
 import { Check } from "lucide-react";
 
-interface CapitalCallRow {
+interface ContributionRow {
   id: string;
   fund_name: string;
   investor_name: string;
@@ -21,17 +21,17 @@ interface CapitalCallRow {
   commitment_amount: number | null;
 }
 
-interface CapitalCallListTableProps {
-  data: CapitalCallRow[];
+interface ContributionListTableProps {
+  data: ContributionRow[];
 }
 
-export function CapitalCallListTable({ data }: CapitalCallListTableProps) {
+export function ContributionListTable({ data }: ContributionListTableProps) {
   const router = useRouter();
   const { toast } = useToast();
   const [processing, setProcessing] = useState<string | null>(null);
 
-  async function markAsPaid(callId: string) {
-    setProcessing(callId);
+  async function markAsPaid(contributionId: string) {
+    setProcessing(contributionId);
     try {
       const supabase = createClient();
       const { error } = await supabase
@@ -40,7 +40,7 @@ export function CapitalCallListTable({ data }: CapitalCallListTableProps) {
           status: "paid",
           paid_date: new Date().toISOString().split("T")[0],
         })
-        .eq("id", callId);
+        .eq("id", contributionId);
 
       if (error) throw error;
 
@@ -57,7 +57,7 @@ export function CapitalCallListTable({ data }: CapitalCallListTableProps) {
     }
   }
 
-  const columns: Column<CapitalCallRow>[] = [
+  const columns: Column<ContributionRow>[] = [
     {
       key: "fund_name",
       header: "Investment",
@@ -115,7 +115,7 @@ export function CapitalCallListTable({ data }: CapitalCallListTableProps) {
   ];
 
   return (
-    <DataTable<CapitalCallRow>
+    <DataTable<ContributionRow>
       columns={columns}
       data={data}
       emptyMessage="No contributions found."

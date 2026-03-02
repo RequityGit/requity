@@ -25,7 +25,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { formatCurrency } from "@/lib/format";
 import { Plus, Loader2 } from "lucide-react";
 
-interface CapitalCallFormProps {
+interface ContributionFormProps {
   funds: Array<{ id: string; name: string }>;
 }
 
@@ -38,13 +38,13 @@ interface InvestorCommitment {
   profiles: { full_name: string | null; email: string } | null;
 }
 
-export function CapitalCallForm({ funds }: CapitalCallFormProps) {
+export function ContributionForm({ funds }: ContributionFormProps) {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [fundId, setFundId] = useState("");
   const [dueDate, setDueDate] = useState("");
   const [investors, setInvestors] = useState<InvestorCommitment[]>([]);
-  const [callAmounts, setCallAmounts] = useState<Record<string, string>>({});
+  const [contributionAmounts, setContributionAmounts] = useState<Record<string, string>>({});
   const [proRataTotal, setProRataTotal] = useState("");
 
   const router = useRouter();
@@ -53,7 +53,7 @@ export function CapitalCallForm({ funds }: CapitalCallFormProps) {
   useEffect(() => {
     if (!fundId) {
       setInvestors([]);
-      setCallAmounts({});
+      setContributionAmounts({});
       return;
     }
 
@@ -71,7 +71,7 @@ export function CapitalCallForm({ funds }: CapitalCallFormProps) {
         data.forEach((c: any) => {
           amounts[c.id] = "";
         });
-        setCallAmounts(amounts);
+        setContributionAmounts(amounts);
       }
     }
     loadInvestors();
@@ -106,7 +106,7 @@ export function CapitalCallForm({ funds }: CapitalCallFormProps) {
       const ratio = (inv.unfunded_amount || 0) / totalUnfunded;
       newAmounts[inv.id] = (Math.round(totalCall * ratio * 100) / 100).toString();
     });
-    setCallAmounts(newAmounts);
+    setContributionAmounts(newAmounts);
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -124,17 +124,17 @@ export function CapitalCallForm({ funds }: CapitalCallFormProps) {
 
     const filteredInvestors = investors.filter(
       (inv) =>
-        callAmounts[inv.id] && parseFloat(callAmounts[inv.id]) > 0
+        contributionAmounts[inv.id] && parseFloat(contributionAmounts[inv.id]) > 0
     );
     const totalAmount = filteredInvestors.reduce(
-      (sum, inv) => sum + parseFloat(callAmounts[inv.id]),
+      (sum, inv) => sum + parseFloat(contributionAmounts[inv.id]),
       0
     );
     const calls = filteredInvestors.map((inv, idx) => ({
       fund_id: fundId,
       investor_id: inv.investor_id,
       commitment_id: inv.id,
-      call_amount: parseFloat(callAmounts[inv.id]),
+      call_amount: parseFloat(contributionAmounts[inv.id]),
       total_amount: totalAmount,
       call_number: idx + 1,
       due_date: dueDate,
@@ -262,10 +262,10 @@ export function CapitalCallForm({ funds }: CapitalCallFormProps) {
                           step="0.01"
                           min="0"
                           placeholder="Amount"
-                          value={callAmounts[inv.id] || ""}
+                          value={contributionAmounts[inv.id] || ""}
                           onChange={(e) =>
-                            setCallAmounts({
-                              ...callAmounts,
+                            setContributionAmounts({
+                              ...contributionAmounts,
                               [inv.id]: e.target.value,
                             })
                           }

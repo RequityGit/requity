@@ -41,7 +41,7 @@ export default async function AdminInvestorDetailPage({ params }: PageProps) {
   const investorName = `${inv.first_name ?? ""} ${inv.last_name ?? ""}`.trim() || "Unknown";
 
   // Fetch related data in parallel
-  const [commitmentsResult, capitalCallsResult, distributionsResult, documentsResult, fundsResult, emailsResult, profileResult] =
+  const [commitmentsResult, contributionsResult, distributionsResult, documentsResult, fundsResult, emailsResult, profileResult] =
     await Promise.all([
       admin
         .from("investor_commitments")
@@ -77,7 +77,7 @@ export default async function AdminInvestorDetailPage({ params }: PageProps) {
     ]);
 
   const commitments = commitmentsResult.data ?? [];
-  const capitalCalls = capitalCallsResult.data ?? [];
+  const contributions = contributionsResult.data ?? [];
   const distributions = distributionsResult.data ?? [];
   const documents = documentsResult.data ?? [];
   const funds = fundsResult.data ?? [];
@@ -134,7 +134,7 @@ export default async function AdminInvestorDetailPage({ params }: PageProps) {
     },
   ];
 
-  const capitalCallColumns: Column<(typeof capitalCalls)[number]>[] = [
+  const contributionColumns: Column<(typeof contributions)[number]>[] = [
     {
       key: "fund",
       header: "Investment",
@@ -293,8 +293,8 @@ export default async function AdminInvestorDetailPage({ params }: PageProps) {
           <TabsTrigger value="commitments">
             Commitments ({commitments.length})
           </TabsTrigger>
-          <TabsTrigger value="capital-calls">
-            Contributions ({capitalCalls.length})
+          <TabsTrigger value="contributions">
+            Contributions ({contributions.length})
           </TabsTrigger>
           <TabsTrigger value="distributions">
             Distributions ({distributions.length})
@@ -315,10 +315,10 @@ export default async function AdminInvestorDetailPage({ params }: PageProps) {
           />
         </TabsContent>
 
-        <TabsContent value="capital-calls" className="mt-4">
+        <TabsContent value="contributions" className="mt-4">
           <DataTable
-            columns={capitalCallColumns}
-            data={capitalCalls}
+            columns={contributionColumns}
+            data={contributions}
             emptyMessage="No contributions for this investor."
           />
         </TabsContent>

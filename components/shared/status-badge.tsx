@@ -2,7 +2,7 @@ import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 
 const statusStyles: Record<string, string> = {
-  // Capital calls / payments
+  // Contributions / payments
   pending: "bg-yellow-100 text-yellow-800 border-yellow-200",
   paid: "bg-green-100 text-green-800 border-green-200",
   overdue: "bg-red-100 text-red-800 border-red-200",

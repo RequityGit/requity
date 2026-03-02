@@ -12,7 +12,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { X } from "lucide-react";
 
-interface CapitalCallFiltersProps {
+interface ContributionFiltersProps {
   funds: { id: string; name: string }[];
   currentFund?: string;
   currentStatus?: string;
@@ -24,11 +24,11 @@ const STATUSES = [
   { value: "overdue", label: "Overdue" },
 ];
 
-export function CapitalCallFilters({
+export function ContributionFilters({
   funds,
   currentFund,
   currentStatus,
-}: CapitalCallFiltersProps) {
+}: ContributionFiltersProps) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
