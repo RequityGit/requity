@@ -5,6 +5,9 @@ export const metadata: Metadata = {
   title: "Requity Group Portal",
   description:
     "Unified portal for borrowers, investors, and administrators at Requity Group.",
+  icons: {
+    icon: "https://edhlkknvlczhbowasjna.supabase.co/storage/v1/object/public/brand-assets/Diamond%20Favicon%20White.svg",
+  },
 };
 
 export default function RootLayout({
