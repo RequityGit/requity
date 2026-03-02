@@ -124,7 +124,7 @@ export function Sidebar({ role, isSuperAdmin }: { role: string; isSuperAdmin?: b
         {!collapsed && (
           <Link href={`/${role}/dashboard`} className="flex items-center">
             <img
-              src="https://edhlkknvlczhbowasjna.supabase.co/storage/v1/object/public/brand-assets/Requity%20Logo%20White.svg"
+              src="https://edhlkknvlczhbowasjna.supabase.co/storage/v1/object/public/brand-assets/Requity%20Logo%20White.svg?v=2"
               alt="Requity"
               className="h-16 w-auto"
             />
