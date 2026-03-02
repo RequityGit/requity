@@ -44,7 +44,7 @@ CREATE TABLE IF NOT EXISTS approval_requests (
 
   CONSTRAINT valid_status CHECK (status IN ('pending', 'approved', 'changes_requested', 'declined', 'cancelled')),
   CONSTRAINT valid_priority CHECK (priority IN ('low', 'normal', 'high', 'urgent')),
-  CONSTRAINT valid_entity_type CHECK (entity_type IN ('loan', 'draw_request', 'payoff', 'exception', 'investor_distribution'))
+  CONSTRAINT valid_entity_type CHECK (entity_type IN ('loan', 'draw_request', 'payoff', 'exception', 'investor_distribution', 'opportunity'))
 );
 
 -- Indexes
