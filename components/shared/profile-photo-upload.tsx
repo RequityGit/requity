@@ -125,11 +125,55 @@ export function ProfilePhotoUpload({
           title: "Photo updated",
           description: "Your profile photo has been updated successfully.",
         });
-      } catch (err) {
+      } catch (err: unknown) {
         console.error("Photo upload failed:", err);
+
+        let description = "Could not upload your photo. Please try again.";
+
+        if (err && typeof err === "object" && "message" in err) {
+          const msg = (err as { message: string }).message.toLowerCase();
+          if (
+            msg.includes("payload too large") ||
+            msg.includes("file size") ||
+            msg.includes("too large") ||
+            msg.includes("exceeded") ||
+            msg.includes("413")
+          ) {
+            description =
+              "The file exceeds the maximum allowed size. Please upload an image under 5MB (JPEG, PNG, or WebP).";
+          } else if (
+            msg.includes("mime") ||
+            msg.includes("content type") ||
+            msg.includes("not allowed") ||
+            msg.includes("invalid type")
+          ) {
+            description =
+              "This file type is not supported. Please upload a JPEG, PNG, or WebP image (max 5MB).";
+          } else if (
+            msg.includes("not found") ||
+            msg.includes("bucket")
+          ) {
+            description =
+              "Photo storage is not configured. Please contact support.";
+          } else if (
+            msg.includes("permission") ||
+            msg.includes("policy") ||
+            msg.includes("unauthorized") ||
+            msg.includes("403")
+          ) {
+            description =
+              "You don't have permission to upload photos. Please contact support.";
+          } else {
+            description = `Upload failed: ${(err as { message: string }).message}. Accepted formats: JPEG, PNG, or WebP (max 5MB).`;
+          }
+        } else {
+          description =
+            "Could not upload your photo. Please ensure your image is a JPEG, PNG, or WebP file under 5MB and try again.";
+        }
+
         toast({
           title: "Upload failed",
-          description: "Could not upload your photo. Please try again.",
+          description,
           variant: "destructive",
         });
       } finally {
