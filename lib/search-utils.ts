@@ -158,28 +158,28 @@ export function getEntityUrl(
     case "loan":
       return role === "borrower"
         ? `/borrower/loans/${id}`
-        : `/admin/lending/loans/${id}`;
+        : `/admin/loans/${id}`;
     case "borrower":
-      return `/admin/lending/borrowers/${id}`;
+      return `/admin/borrowers/${id}`;
     case "borrower_entity":
-      return `/admin/lending/borrowers/${metadata.borrower_id}`;
+      return `/admin/borrowers/${metadata.borrower_id}`;
     case "investor":
-      return `/admin/investments/investors/${id}`;
+      return `/admin/investors/${id}`;
     case "investing_entity":
-      return `/admin/investments/investors/${metadata.investor_id}`;
+      return `/admin/investors/${metadata.investor_id}`;
     case "fund":
       return role === "investor"
         ? `/investor/funds/${id}`
-        : `/admin/investments/funds/${id}`;
+        : `/admin/funds/${id}`;
     case "crm_contact":
       return `/admin/crm/contacts/${id}`;
     case "document":
-      if (metadata.loan_id) return `/admin/lending/loans/${metadata.loan_id}`;
-      if (metadata.fund_id) return `/admin/investments/funds/${metadata.fund_id}`;
+      if (metadata.loan_id) return `/admin/loans/${metadata.loan_id}`;
+      if (metadata.fund_id) return `/admin/funds/${metadata.fund_id}`;
       return "#";
     case "loan_document":
       return metadata.loan_id
-        ? `/admin/lending/loans/${metadata.loan_id}`
+        ? `/admin/loans/${metadata.loan_id}`
         : "#";
     case "project":
       return `/admin/operations/projects/${id}`;
@@ -396,8 +396,8 @@ export function getQuickLinks(role: string): QuickLink[] {
     ];
   }
   return [
-    { label: "Pipeline", href: "/admin/lending/loans", icon: Banknote },
-    { label: "Investors", href: "/admin/investments/investors", icon: TrendingUp },
+    { label: "Pipeline", href: "/admin/loans", icon: Banknote },
+    { label: "Investors", href: "/admin/investors", icon: TrendingUp },
     { label: "CRM", href: "/admin/crm/contacts", icon: Contact },
     { label: "Projects", href: "/admin/operations/projects", icon: FolderKanban },
   ];

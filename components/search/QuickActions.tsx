@@ -40,7 +40,7 @@ function getQuickActionsForEntity(
           href:
             role === "borrower"
               ? "/borrower/loans"
-              : "/admin/lending/loans",
+              : "/admin/loans",
         },
         {
           label: "Open Conditions",
@@ -48,7 +48,7 @@ function getQuickActionsForEntity(
           href:
             role === "borrower"
               ? `/borrower/loans/${id}`
-              : `/admin/lending/loans/${id}`,
+              : `/admin/loans/${id}`,
         },
       ];
     case "borrower":
@@ -56,7 +56,7 @@ function getQuickActionsForEntity(
         {
           label: "View Loans",
           icon: ListChecks,
-          href: `/admin/lending/borrowers/${id}`,
+          href: `/admin/borrowers/${id}`,
         },
       ];
     case "investor":
@@ -64,7 +64,7 @@ function getQuickActionsForEntity(
         {
           label: "View Commitments",
           icon: TrendingUp,
-          href: `/admin/investments/investors/${id}`,
+          href: `/admin/investors/${id}`,
         },
       ];
     case "crm_contact":
@@ -83,7 +83,7 @@ function getQuickActionsForEntity(
           href:
             role === "investor"
               ? `/investor/funds/${id}`
-              : `/admin/investments/funds/${id}`,
+              : `/admin/funds/${id}`,
         },
       ];
     default:
