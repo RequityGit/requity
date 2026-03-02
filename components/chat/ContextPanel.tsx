@@ -70,13 +70,20 @@ export function ContextPanel({ channel, onClose }: ContextPanelProps) {
         // Also fetch borrower name
         let borrowerName = null;
         if ((data as Record<string, unknown>).borrower_id) {
-          const { data: borrower } = await supabase
+          const { data: bRow } = await supabase
             .from("borrowers")
-            .select("first_name, last_name")
+            .select("crm_contact_id")
             .eq("id", (data as Record<string, unknown>).borrower_id as string)
             .single();
-          if (borrower) {
-            borrowerName = `${borrower.first_name || ""} ${borrower.last_name || ""}`.trim();
+          if (bRow?.crm_contact_id) {
+            const { data: contact } = await (supabase as any)
+              .from("crm_contacts")
+              .select("first_name, last_name")
+              .eq("id", bRow.crm_contact_id)
+              .single();
+            if (contact) {
+              borrowerName = `${contact.first_name || ""} ${contact.last_name || ""}`.trim();
+            }
           }
         }
 

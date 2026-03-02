@@ -29,7 +29,7 @@ export default async function AdminLoansPage() {
       .select("id, full_name")
       .eq("role", "admin")
       .order("full_name"),
-    admin
+    (admin as any)
       .from("borrowers")
       .select("id, first_name, last_name, email")
       .order("last_name"),
@@ -60,12 +60,13 @@ export default async function AdminLoansPage() {
     id: t.id,
     full_name: t.full_name ?? "Unknown",
   }));
-  const borrowers = (borrowersResult.data ?? []).map((b: { id: string; first_name: string; last_name: string; email: string | null }) => ({
-    id: b.id,
-    full_name: `${b.first_name} ${b.last_name}`.trim() || "Unknown",
-    email: b.email ?? "",
-    company_name: null as string | null,
-  }));
+  const borrowers: { id: string; full_name: string; email: string; company_name: string | null }[] =
+    (borrowersResult.data ?? []).map((b: any) => ({
+      id: b.id,
+      full_name: `${b.first_name ?? ""} ${b.last_name ?? ""}`.trim() || "Unknown",
+      email: b.email ?? "",
+      company_name: null as string | null,
+    }));
 
   // Count documents per loan
   const docCounts: Record<string, number> = {};

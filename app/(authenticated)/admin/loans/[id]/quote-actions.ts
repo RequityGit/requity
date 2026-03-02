@@ -1,7 +1,11 @@
 "use server";
 
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+
+// lender_quotes / lender_quote_activities tables may not be in the generated
+// TypeScript schema yet — use `any` casts on admin client for these tables.
 
 async function requireAdmin(): Promise<
   { user: { id: string }; error?: never } | { error: string; user?: never }
@@ -45,7 +49,7 @@ export async function createLenderQuote(input: {
 
     const admin = createAdminClient();
 
-    const { data, error } = await admin
+    const { data, error } = await (admin as any)
       .from("lender_quotes")
       .insert({
         quote_name: input.quote_name,
@@ -69,7 +73,7 @@ export async function createLenderQuote(input: {
     }
 
     // Log activity
-    await admin.from("lender_quote_activities").insert({
+    await (admin as any).from("lender_quote_activities").insert({
       quote_id: data.id,
       activity_type: "status_change",
       description: "Quote created with status: Request for Quote",
@@ -117,7 +121,7 @@ export async function updateLenderQuote(
 
     const admin = createAdminClient();
 
-    const { data, error } = await admin
+    const { data, error } = await (admin as any)
       .from("lender_quotes")
       .update({
         ...input,
@@ -155,7 +159,7 @@ export async function changeQuoteStatus(
     const admin = createAdminClient();
 
     // Get current status
-    const { data: current, error: fetchError } = await admin
+    const { data: current, error: fetchError } = await (admin as any)
       .from("lender_quotes")
       .select("status")
       .eq("id", quoteId)
@@ -185,7 +189,7 @@ export async function changeQuoteStatus(
       }
     }
 
-    const { data, error } = await admin
+    const { data, error } = await (admin as any)
       .from("lender_quotes")
       .update(updateData)
       .eq("id", quoteId)
@@ -206,7 +210,7 @@ export async function changeQuoteStatus(
       complete: "Complete",
     };
 
-    await admin.from("lender_quote_activities").insert({
+    await (admin as any).from("lender_quote_activities").insert({
       quote_id: quoteId,
       activity_type: "status_change",
       description: `Status changed from "${statusLabels[oldStatus] ?? oldStatus}" to "${statusLabels[newStatus] ?? newStatus}"`,
@@ -237,7 +241,7 @@ export async function declineOtherQuotes(
     const admin = createAdminClient();
 
     // Get all other non-declined, non-complete quotes for this loan
-    const { data: otherQuotes, error: fetchError } = await admin
+    const { data: otherQuotes, error: fetchError } = await (admin as any)
       .from("lender_quotes")
       .select("id, status, quote_name")
       .eq("loan_id", loanId)
@@ -252,7 +256,7 @@ export async function declineOtherQuotes(
     const now = new Date().toISOString();
 
     for (const quote of otherQuotes ?? []) {
-      await admin
+      await (admin as any)
         .from("lender_quotes")
         .update({
           status: "declined",
@@ -263,7 +267,7 @@ export async function declineOtherQuotes(
         })
         .eq("id", quote.id);
 
-      await admin.from("lender_quote_activities").insert({
+      await (admin as any).from("lender_quote_activities").insert({
         quote_id: quote.id,
         activity_type: "status_change",
         description: `Auto-declined: another quote was accepted for this deal`,
@@ -295,7 +299,7 @@ export async function addQuoteActivity(input: {
 
     const admin = createAdminClient();
 
-    const { data, error } = await admin
+    const { data, error } = await (admin as any)
       .from("lender_quote_activities")
       .insert({
         quote_id: input.quote_id,
@@ -330,7 +334,7 @@ export async function deleteLenderQuote(quoteId: string) {
     const admin = createAdminClient();
 
     // Activities cascade delete via FK
-    const { error } = await admin
+    const { error } = await (admin as any)
       .from("lender_quotes")
       .delete()
       .eq("id", quoteId);

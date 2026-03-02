@@ -14,6 +14,54 @@ export type Database = {
   }
   public: {
     Tables: {
+      approval_parameters: {
+        Row: {
+          created_at: string | null
+          created_by: string | null
+          id: string
+          is_active: boolean | null
+          loan_type: string
+          max_loan_amount: number | null
+          max_ltarv: number | null
+          max_ltv: number | null
+          min_credit_score: number | null
+          min_dscr: number | null
+          min_experience_count: number | null
+          notes: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          is_active?: boolean | null
+          loan_type: string
+          max_loan_amount?: number | null
+          max_ltarv?: number | null
+          max_ltv?: number | null
+          min_credit_score?: number | null
+          min_dscr?: number | null
+          min_experience_count?: number | null
+          notes?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          is_active?: boolean | null
+          loan_type?: string
+          max_loan_amount?: number | null
+          max_ltarv?: number | null
+          max_ltv?: number | null
+          min_credit_score?: number | null
+          min_dscr?: number | null
+          min_experience_count?: number | null
+          notes?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       borrower_entities: {
         Row: {
           address_line1: string | null
@@ -29,10 +77,12 @@ export type Database = {
           entity_name: string
           entity_type: string
           foreign_filed_states: string[] | null
+          formation_date: string | null
           id: string
           is_foreign_filed: boolean | null
           notes: string | null
           operating_agreement_url: string | null
+          ownership_details: string | null
           state: string | null
           state_of_formation: string | null
           updated_at: string
@@ -52,10 +102,12 @@ export type Database = {
           entity_name: string
           entity_type: string
           foreign_filed_states?: string[] | null
+          formation_date?: string | null
           id?: string
           is_foreign_filed?: boolean | null
           notes?: string | null
           operating_agreement_url?: string | null
+          ownership_details?: string | null
           state?: string | null
           state_of_formation?: string | null
           updated_at?: string
@@ -75,10 +127,12 @@ export type Database = {
           entity_name?: string
           entity_type?: string
           foreign_filed_states?: string[] | null
+          formation_date?: string | null
           id?: string
           is_foreign_filed?: boolean | null
           notes?: string | null
           operating_agreement_url?: string | null
+          ownership_details?: string | null
           state?: string | null
           state_of_formation?: string | null
           updated_at?: string
@@ -110,75 +164,78 @@ export type Database = {
       }
       borrowers: {
         Row: {
-          address_line1: string | null
-          address_line2: string | null
-          city: string | null
-          country: string | null
           created_at: string
           credit_report_date: string | null
           credit_score: number | null
+          crm_contact_id: string | null
           date_of_birth: string | null
-          email: string | null
           experience_count: number | null
-          first_name: string
           id: string
           is_us_citizen: boolean | null
-          last_name: string
+          marital_status: string | null
           notes: string | null
-          phone: string | null
           ssn_last_four: string | null
-          state: string | null
+          stated_liquidity: number | null
+          stated_net_worth: number | null
           updated_at: string
           user_id: string | null
-          zip: string | null
+          verified_liquidity: number | null
+          verified_net_worth: number | null
         }
         Insert: {
-          address_line1?: string | null
-          address_line2?: string | null
-          city?: string | null
-          country?: string | null
           created_at?: string
           credit_report_date?: string | null
           credit_score?: number | null
+          crm_contact_id?: string | null
           date_of_birth?: string | null
-          email?: string | null
           experience_count?: number | null
-          first_name: string
           id?: string
           is_us_citizen?: boolean | null
-          last_name: string
+          marital_status?: string | null
           notes?: string | null
-          phone?: string | null
           ssn_last_four?: string | null
-          state?: string | null
+          stated_liquidity?: number | null
+          stated_net_worth?: number | null
           updated_at?: string
           user_id?: string | null
-          zip?: string | null
+          verified_liquidity?: number | null
+          verified_net_worth?: number | null
         }
         Update: {
-          address_line1?: string | null
-          address_line2?: string | null
-          city?: string | null
-          country?: string | null
           created_at?: string
           credit_report_date?: string | null
           credit_score?: number | null
+          crm_contact_id?: string | null
           date_of_birth?: string | null
-          email?: string | null
           experience_count?: number | null
-          first_name?: string
           id?: string
           is_us_citizen?: boolean | null
-          last_name?: string
+          marital_status?: string | null
           notes?: string | null
-          phone?: string | null
           ssn_last_four?: string | null
-          state?: string | null
+          stated_liquidity?: number | null
+          stated_net_worth?: number | null
           updated_at?: string
           user_id?: string | null
-          zip?: string | null
+          verified_liquidity?: number | null
+          verified_net_worth?: number | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "borrowers_crm_contact_id_fkey"
+            columns: ["crm_contact_id"]
+            isOneToOne: false
+            referencedRelation: "crm_contacts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "borrowers_crm_contact_id_fkey"
+            columns: ["crm_contact_id"]
+            isOneToOne: false
+            referencedRelation: "crm_contacts_active"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       campaign_sends: {
         Row: {
@@ -382,6 +439,20 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "capital_calls_investor_id_fkey"
+            columns: ["investor_id"]
+            isOneToOne: false
+            referencedRelation: "investors_portal"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "capital_calls_investor_id_fkey"
+            columns: ["investor_id"]
+            isOneToOne: false
+            referencedRelation: "investors_safe"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "capital_calls_issued_by_fkey"
             columns: ["issued_by"]
             isOneToOne: false
@@ -389,6 +460,495 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      chat_activity_feed: {
+        Row: {
+          actor_id: string | null
+          channel_id: string
+          created_at: string
+          event_data: Json
+          event_source: string
+          event_type: string
+          icon: string | null
+          id: string
+          source_id: string | null
+          source_table: string | null
+          summary: string
+        }
+        Insert: {
+          actor_id?: string | null
+          channel_id: string
+          created_at?: string
+          event_data?: Json
+          event_source: string
+          event_type: string
+          icon?: string | null
+          id?: string
+          source_id?: string | null
+          source_table?: string | null
+          summary: string
+        }
+        Update: {
+          actor_id?: string | null
+          channel_id?: string
+          created_at?: string
+          event_data?: Json
+          event_source?: string
+          event_type?: string
+          icon?: string | null
+          id?: string
+          source_id?: string | null
+          source_table?: string | null
+          summary?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chat_activity_feed_channel_id_fkey"
+            columns: ["channel_id"]
+            isOneToOne: false
+            referencedRelation: "chat_channels"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "chat_activity_feed_channel_id_fkey"
+            columns: ["channel_id"]
+            isOneToOne: false
+            referencedRelation: "chat_channels_with_unread"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      chat_channel_members: {
+        Row: {
+          channel_id: string
+          id: string
+          is_muted: boolean
+          is_pinned: boolean
+          joined_at: string
+          last_read_at: string | null
+          last_read_message_id: string | null
+          left_at: string | null
+          metadata: Json | null
+          notification_level: string | null
+          role: Database["public"]["Enums"]["chat_member_role"]
+          unread_count: number
+          user_id: string
+        }
+        Insert: {
+          channel_id: string
+          id?: string
+          is_muted?: boolean
+          is_pinned?: boolean
+          joined_at?: string
+          last_read_at?: string | null
+          last_read_message_id?: string | null
+          left_at?: string | null
+          metadata?: Json | null
+          notification_level?: string | null
+          role?: Database["public"]["Enums"]["chat_member_role"]
+          unread_count?: number
+          user_id: string
+        }
+        Update: {
+          channel_id?: string
+          id?: string
+          is_muted?: boolean
+          is_pinned?: boolean
+          joined_at?: string
+          last_read_at?: string | null
+          last_read_message_id?: string | null
+          left_at?: string | null
+          metadata?: Json | null
+          notification_level?: string | null
+          role?: Database["public"]["Enums"]["chat_member_role"]
+          unread_count?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chat_channel_members_channel_id_fkey"
+            columns: ["channel_id"]
+            isOneToOne: false
+            referencedRelation: "chat_channels"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "chat_channel_members_channel_id_fkey"
+            columns: ["channel_id"]
+            isOneToOne: false
+            referencedRelation: "chat_channels_with_unread"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      chat_channels: {
+        Row: {
+          allow_external: boolean
+          auto_created: boolean
+          channel_type: Database["public"]["Enums"]["chat_channel_type"]
+          created_at: string
+          default_notification_level: string
+          description: string | null
+          icon: string | null
+          id: string
+          is_archived: boolean
+          is_private: boolean
+          last_message_at: string | null
+          linked_entity_id: string | null
+          linked_entity_type:
+            | Database["public"]["Enums"]["chat_entity_type"]
+            | null
+          metadata: Json | null
+          name: string
+          pinned_context: Json | null
+          updated_at: string
+        }
+        Insert: {
+          allow_external?: boolean
+          auto_created?: boolean
+          channel_type: Database["public"]["Enums"]["chat_channel_type"]
+          created_at?: string
+          default_notification_level?: string
+          description?: string | null
+          icon?: string | null
+          id?: string
+          is_archived?: boolean
+          is_private?: boolean
+          last_message_at?: string | null
+          linked_entity_id?: string | null
+          linked_entity_type?:
+            | Database["public"]["Enums"]["chat_entity_type"]
+            | null
+          metadata?: Json | null
+          name: string
+          pinned_context?: Json | null
+          updated_at?: string
+        }
+        Update: {
+          allow_external?: boolean
+          auto_created?: boolean
+          channel_type?: Database["public"]["Enums"]["chat_channel_type"]
+          created_at?: string
+          default_notification_level?: string
+          description?: string | null
+          icon?: string | null
+          id?: string
+          is_archived?: boolean
+          is_private?: boolean
+          last_message_at?: string | null
+          linked_entity_id?: string | null
+          linked_entity_type?:
+            | Database["public"]["Enums"]["chat_entity_type"]
+            | null
+          metadata?: Json | null
+          name?: string
+          pinned_context?: Json | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      chat_escalation_rules: {
+        Row: {
+          channel_type: Database["public"]["Enums"]["chat_channel_type"] | null
+          created_at: string
+          entity_type: Database["public"]["Enums"]["chat_entity_type"] | null
+          escalation_assignee_id: string | null
+          escalation_timeout_minutes: number
+          event_pattern: string
+          id: string
+          is_active: boolean
+          metadata: Json | null
+          primary_assignee_id: string | null
+          priority: string
+          updated_at: string
+        }
+        Insert: {
+          channel_type?: Database["public"]["Enums"]["chat_channel_type"] | null
+          created_at?: string
+          entity_type?: Database["public"]["Enums"]["chat_entity_type"] | null
+          escalation_assignee_id?: string | null
+          escalation_timeout_minutes?: number
+          event_pattern: string
+          id?: string
+          is_active?: boolean
+          metadata?: Json | null
+          primary_assignee_id?: string | null
+          priority?: string
+          updated_at?: string
+        }
+        Update: {
+          channel_type?: Database["public"]["Enums"]["chat_channel_type"] | null
+          created_at?: string
+          entity_type?: Database["public"]["Enums"]["chat_entity_type"] | null
+          escalation_assignee_id?: string | null
+          escalation_timeout_minutes?: number
+          event_pattern?: string
+          id?: string
+          is_active?: boolean
+          metadata?: Json | null
+          primary_assignee_id?: string | null
+          priority?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      chat_mentions: {
+        Row: {
+          channel_id: string
+          created_at: string
+          id: string
+          mention_type: string
+          mentioned_entity_id: string | null
+          mentioned_entity_type:
+            | Database["public"]["Enums"]["chat_entity_type"]
+            | null
+          mentioned_user_id: string | null
+          message_id: string
+        }
+        Insert: {
+          channel_id: string
+          created_at?: string
+          id?: string
+          mention_type?: string
+          mentioned_entity_id?: string | null
+          mentioned_entity_type?:
+            | Database["public"]["Enums"]["chat_entity_type"]
+            | null
+          mentioned_user_id?: string | null
+          message_id: string
+        }
+        Update: {
+          channel_id?: string
+          created_at?: string
+          id?: string
+          mention_type?: string
+          mentioned_entity_id?: string | null
+          mentioned_entity_type?:
+            | Database["public"]["Enums"]["chat_entity_type"]
+            | null
+          mentioned_user_id?: string | null
+          message_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chat_mentions_channel_id_fkey"
+            columns: ["channel_id"]
+            isOneToOne: false
+            referencedRelation: "chat_channels"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "chat_mentions_channel_id_fkey"
+            columns: ["channel_id"]
+            isOneToOne: false
+            referencedRelation: "chat_channels_with_unread"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "chat_mentions_message_id_fkey"
+            columns: ["message_id"]
+            isOneToOne: false
+            referencedRelation: "chat_messages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      chat_messages: {
+        Row: {
+          action_item: Json | null
+          ai_metadata: Json | null
+          attachments: Json | null
+          channel_id: string
+          content: string | null
+          content_html: string | null
+          created_at: string
+          deleted_at: string | null
+          edited_at: string | null
+          id: string
+          is_deleted: boolean
+          is_edited: boolean
+          linked_entities: Json | null
+          message_type: Database["public"]["Enums"]["chat_message_type"]
+          metadata: Json | null
+          parent_message_id: string | null
+          reactions: Json | null
+          sender_id: string | null
+          thread_count: number
+          thread_last_reply_at: string | null
+          updated_at: string
+        }
+        Insert: {
+          action_item?: Json | null
+          ai_metadata?: Json | null
+          attachments?: Json | null
+          channel_id: string
+          content?: string | null
+          content_html?: string | null
+          created_at?: string
+          deleted_at?: string | null
+          edited_at?: string | null
+          id?: string
+          is_deleted?: boolean
+          is_edited?: boolean
+          linked_entities?: Json | null
+          message_type?: Database["public"]["Enums"]["chat_message_type"]
+          metadata?: Json | null
+          parent_message_id?: string | null
+          reactions?: Json | null
+          sender_id?: string | null
+          thread_count?: number
+          thread_last_reply_at?: string | null
+          updated_at?: string
+        }
+        Update: {
+          action_item?: Json | null
+          ai_metadata?: Json | null
+          attachments?: Json | null
+          channel_id?: string
+          content?: string | null
+          content_html?: string | null
+          created_at?: string
+          deleted_at?: string | null
+          edited_at?: string | null
+          id?: string
+          is_deleted?: boolean
+          is_edited?: boolean
+          linked_entities?: Json | null
+          message_type?: Database["public"]["Enums"]["chat_message_type"]
+          metadata?: Json | null
+          parent_message_id?: string | null
+          reactions?: Json | null
+          sender_id?: string | null
+          thread_count?: number
+          thread_last_reply_at?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chat_messages_channel_id_fkey"
+            columns: ["channel_id"]
+            isOneToOne: false
+            referencedRelation: "chat_channels"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "chat_messages_channel_id_fkey"
+            columns: ["channel_id"]
+            isOneToOne: false
+            referencedRelation: "chat_channels_with_unread"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "chat_messages_parent_message_id_fkey"
+            columns: ["parent_message_id"]
+            isOneToOne: false
+            referencedRelation: "chat_messages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      chat_pinned_messages: {
+        Row: {
+          channel_id: string
+          id: string
+          message_id: string
+          pinned_at: string
+          pinned_by: string
+        }
+        Insert: {
+          channel_id: string
+          id?: string
+          message_id: string
+          pinned_at?: string
+          pinned_by: string
+        }
+        Update: {
+          channel_id?: string
+          id?: string
+          message_id?: string
+          pinned_at?: string
+          pinned_by?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chat_pinned_messages_channel_id_fkey"
+            columns: ["channel_id"]
+            isOneToOne: false
+            referencedRelation: "chat_channels"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "chat_pinned_messages_channel_id_fkey"
+            columns: ["channel_id"]
+            isOneToOne: false
+            referencedRelation: "chat_channels_with_unread"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "chat_pinned_messages_message_id_fkey"
+            columns: ["message_id"]
+            isOneToOne: false
+            referencedRelation: "chat_messages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      chat_typing_indicators: {
+        Row: {
+          channel_id: string
+          started_at: string
+          user_id: string
+        }
+        Insert: {
+          channel_id: string
+          started_at?: string
+          user_id: string
+        }
+        Update: {
+          channel_id?: string
+          started_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chat_typing_indicators_channel_id_fkey"
+            columns: ["channel_id"]
+            isOneToOne: false
+            referencedRelation: "chat_channels"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "chat_typing_indicators_channel_id_fkey"
+            columns: ["channel_id"]
+            isOneToOne: false
+            referencedRelation: "chat_channels_with_unread"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      chat_user_presence: {
+        Row: {
+          custom_status: string | null
+          last_seen_at: string
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          custom_status?: string | null
+          last_seen_at?: string
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          custom_status?: string | null
+          last_seen_at?: string
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       comment_mentions: {
         Row: {
@@ -1410,6 +1970,7 @@ export type Database = {
           ended_at: string | null
           id: string
           is_active: boolean | null
+          is_auto_derived: boolean | null
           lender_direction:
             | Database["public"]["Enums"]["lender_direction_enum"]
             | null
@@ -1424,6 +1985,7 @@ export type Database = {
           ended_at?: string | null
           id?: string
           is_active?: boolean | null
+          is_auto_derived?: boolean | null
           lender_direction?:
             | Database["public"]["Enums"]["lender_direction_enum"]
             | null
@@ -1438,6 +2000,7 @@ export type Database = {
           ended_at?: string | null
           id?: string
           is_active?: boolean | null
+          is_auto_derived?: boolean | null
           lender_direction?:
             | Database["public"]["Enums"]["lender_direction_enum"]
             | null
@@ -1600,6 +2163,7 @@ export type Database = {
       crm_contacts: {
         Row: {
           address_line1: string | null
+          address_line2: string | null
           assigned_to: string | null
           borrower_id: string | null
           city: string | null
@@ -1608,6 +2172,7 @@ export type Database = {
           consent_granted_at: string | null
           contact_type: Database["public"]["Enums"]["crm_contact_type"]
           contact_types: string[]
+          country: string | null
           created_at: string
           deleted_at: string | null
           dnc: boolean | null
@@ -1615,6 +2180,7 @@ export type Database = {
           email: string | null
           first_name: string | null
           id: string
+          is_independent_broker: boolean | null
           language_preference: string | null
           last_contacted_at: string | null
           last_name: string | null
@@ -1641,6 +2207,7 @@ export type Database = {
         }
         Insert: {
           address_line1?: string | null
+          address_line2?: string | null
           assigned_to?: string | null
           borrower_id?: string | null
           city?: string | null
@@ -1649,6 +2216,7 @@ export type Database = {
           consent_granted_at?: string | null
           contact_type?: Database["public"]["Enums"]["crm_contact_type"]
           contact_types?: string[]
+          country?: string | null
           created_at?: string
           deleted_at?: string | null
           dnc?: boolean | null
@@ -1656,6 +2224,7 @@ export type Database = {
           email?: string | null
           first_name?: string | null
           id?: string
+          is_independent_broker?: boolean | null
           language_preference?: string | null
           last_contacted_at?: string | null
           last_name?: string | null
@@ -1682,6 +2251,7 @@ export type Database = {
         }
         Update: {
           address_line1?: string | null
+          address_line2?: string | null
           assigned_to?: string | null
           borrower_id?: string | null
           city?: string | null
@@ -1690,6 +2260,7 @@ export type Database = {
           consent_granted_at?: string | null
           contact_type?: Database["public"]["Enums"]["crm_contact_type"]
           contact_types?: string[]
+          country?: string | null
           created_at?: string
           deleted_at?: string | null
           dnc?: boolean | null
@@ -1697,6 +2268,7 @@ export type Database = {
           email?: string | null
           first_name?: string | null
           id?: string
+          is_independent_broker?: boolean | null
           language_preference?: string | null
           last_contacted_at?: string | null
           last_name?: string | null
@@ -1762,6 +2334,20 @@ export type Database = {
             columns: ["linked_investor_id"]
             isOneToOne: false
             referencedRelation: "investors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "crm_contacts_linked_investor_id_fkey"
+            columns: ["linked_investor_id"]
+            isOneToOne: false
+            referencedRelation: "investors_portal"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "crm_contacts_linked_investor_id_fkey"
+            columns: ["linked_investor_id"]
+            isOneToOne: false
+            referencedRelation: "investors_safe"
             referencedColumns: ["id"]
           },
           {
@@ -1960,6 +2546,20 @@ export type Database = {
             columns: ["linked_investor_id"]
             isOneToOne: false
             referencedRelation: "investors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "crm_emails_linked_investor_id_fkey"
+            columns: ["linked_investor_id"]
+            isOneToOne: false
+            referencedRelation: "investors_portal"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "crm_emails_linked_investor_id_fkey"
+            columns: ["linked_investor_id"]
+            isOneToOne: false
+            referencedRelation: "investors_safe"
             referencedColumns: ["id"]
           },
           {
@@ -2212,6 +2812,20 @@ export type Database = {
             referencedRelation: "investors"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "distributions_investor_id_fkey"
+            columns: ["investor_id"]
+            isOneToOne: false
+            referencedRelation: "investors_portal"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "distributions_investor_id_fkey"
+            columns: ["investor_id"]
+            isOneToOne: false
+            referencedRelation: "investors_safe"
+            referencedColumns: ["id"]
+          },
         ]
       }
       documents: {
@@ -2386,6 +3000,661 @@ export type Database = {
           },
         ]
       }
+      dscr_base_rates: {
+        Row: {
+          base_price: number
+          id: string
+          note_rate: number
+          product_id: string
+        }
+        Insert: {
+          base_price: number
+          id?: string
+          note_rate: number
+          product_id: string
+        }
+        Update: {
+          base_price?: number
+          id?: string
+          note_rate?: number
+          product_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dscr_base_rates_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "dscr_lender_products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      dscr_fico_ltv_adjustments: {
+        Row: {
+          adjustment: number | null
+          fico_label: string | null
+          fico_max: number | null
+          fico_min: number
+          id: string
+          loan_purpose: string
+          ltv_label: string | null
+          ltv_max: number
+          ltv_min: number
+          product_id: string
+        }
+        Insert: {
+          adjustment?: number | null
+          fico_label?: string | null
+          fico_max?: number | null
+          fico_min: number
+          id?: string
+          loan_purpose: string
+          ltv_label?: string | null
+          ltv_max: number
+          ltv_min: number
+          product_id: string
+        }
+        Update: {
+          adjustment?: number | null
+          fico_label?: string | null
+          fico_max?: number | null
+          fico_min?: number
+          id?: string
+          loan_purpose?: string
+          ltv_label?: string | null
+          ltv_max?: number
+          ltv_min?: number
+          product_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dscr_fico_ltv_adjustments_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "dscr_lender_products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      dscr_lender_products: {
+        Row: {
+          created_at: string | null
+          desk_review_fee: number | null
+          eligible_borrower_types: Json | null
+          eligible_property_types: Json | null
+          eligible_vesting: Json | null
+          entity_review_fee: number | null
+          floor_rate: number | null
+          funding_fee: number | null
+          id: string
+          is_active: boolean | null
+          lender_id: string
+          lock_period_days: number | null
+          max_financed_points: number | null
+          max_loan_amount: number | null
+          max_ltv_cashout: number | null
+          max_ltv_purchase: number | null
+          max_ltv_rate_term: number | null
+          max_price: number | null
+          min_loan_amount: number | null
+          min_price: number | null
+          min_rate: number | null
+          notes: string | null
+          other_fees: Json | null
+          processing_fee: number | null
+          product_name: string
+          product_type: string
+          rate_sheet_date: string | null
+          rate_sheet_effective_at: string | null
+          servicing: string | null
+          state_license_required: Json | null
+          state_restrictions: Json | null
+          underwriting_fee: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          desk_review_fee?: number | null
+          eligible_borrower_types?: Json | null
+          eligible_property_types?: Json | null
+          eligible_vesting?: Json | null
+          entity_review_fee?: number | null
+          floor_rate?: number | null
+          funding_fee?: number | null
+          id?: string
+          is_active?: boolean | null
+          lender_id: string
+          lock_period_days?: number | null
+          max_financed_points?: number | null
+          max_loan_amount?: number | null
+          max_ltv_cashout?: number | null
+          max_ltv_purchase?: number | null
+          max_ltv_rate_term?: number | null
+          max_price?: number | null
+          min_loan_amount?: number | null
+          min_price?: number | null
+          min_rate?: number | null
+          notes?: string | null
+          other_fees?: Json | null
+          processing_fee?: number | null
+          product_name: string
+          product_type?: string
+          rate_sheet_date?: string | null
+          rate_sheet_effective_at?: string | null
+          servicing?: string | null
+          state_license_required?: Json | null
+          state_restrictions?: Json | null
+          underwriting_fee?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          desk_review_fee?: number | null
+          eligible_borrower_types?: Json | null
+          eligible_property_types?: Json | null
+          eligible_vesting?: Json | null
+          entity_review_fee?: number | null
+          floor_rate?: number | null
+          funding_fee?: number | null
+          id?: string
+          is_active?: boolean | null
+          lender_id?: string
+          lock_period_days?: number | null
+          max_financed_points?: number | null
+          max_loan_amount?: number | null
+          max_ltv_cashout?: number | null
+          max_ltv_purchase?: number | null
+          max_ltv_rate_term?: number | null
+          max_price?: number | null
+          min_loan_amount?: number | null
+          min_price?: number | null
+          min_rate?: number | null
+          notes?: string | null
+          other_fees?: Json | null
+          processing_fee?: number | null
+          product_name?: string
+          product_type?: string
+          rate_sheet_date?: string | null
+          rate_sheet_effective_at?: string | null
+          servicing?: string | null
+          state_license_required?: Json | null
+          state_restrictions?: Json | null
+          underwriting_fee?: number | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dscr_lender_products_lender_id_fkey"
+            columns: ["lender_id"]
+            isOneToOne: false
+            referencedRelation: "dscr_lenders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      dscr_lenders: {
+        Row: {
+          account_executive: string | null
+          ae_email: string | null
+          ae_phone: string | null
+          contact_email: string | null
+          contact_name: string | null
+          contact_phone: string | null
+          created_at: string | null
+          id: string
+          is_active: boolean | null
+          name: string
+          nmls_id: string | null
+          notes: string | null
+          short_name: string
+          updated_at: string | null
+        }
+        Insert: {
+          account_executive?: string | null
+          ae_email?: string | null
+          ae_phone?: string | null
+          contact_email?: string | null
+          contact_name?: string | null
+          contact_phone?: string | null
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          name: string
+          nmls_id?: string | null
+          notes?: string | null
+          short_name: string
+          updated_at?: string | null
+        }
+        Update: {
+          account_executive?: string | null
+          ae_email?: string | null
+          ae_phone?: string | null
+          contact_email?: string | null
+          contact_name?: string | null
+          contact_phone?: string | null
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          nmls_id?: string | null
+          notes?: string | null
+          short_name?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      dscr_prepay_restrictions: {
+        Row: {
+          id: string
+          max_interest_rate: number | null
+          max_ppp_term_months: number | null
+          max_ppp_tier: string | null
+          notes: string | null
+          product_id: string
+          requires_llc: boolean | null
+          restriction_type: string
+          state_code: string
+        }
+        Insert: {
+          id?: string
+          max_interest_rate?: number | null
+          max_ppp_term_months?: number | null
+          max_ppp_tier?: string | null
+          notes?: string | null
+          product_id: string
+          requires_llc?: boolean | null
+          restriction_type: string
+          state_code: string
+        }
+        Update: {
+          id?: string
+          max_interest_rate?: number | null
+          max_ppp_term_months?: number | null
+          max_ppp_tier?: string | null
+          notes?: string | null
+          product_id?: string
+          requires_llc?: boolean | null
+          restriction_type?: string
+          state_code?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dscr_prepay_restrictions_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "dscr_lender_products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      dscr_price_adjustments: {
+        Row: {
+          adj_ltv_0_50: number | null
+          adj_ltv_50_55: number | null
+          adj_ltv_55_60: number | null
+          adj_ltv_60_65: number | null
+          adj_ltv_65_70: number | null
+          adj_ltv_70_75: number | null
+          adj_ltv_75_80: number | null
+          adj_ltv_80_85: number | null
+          adj_ltv_85_90: number | null
+          category: string
+          condition_key: string
+          condition_label: string
+          id: string
+          notes: string | null
+          product_id: string
+          sort_order: number | null
+        }
+        Insert: {
+          adj_ltv_0_50?: number | null
+          adj_ltv_50_55?: number | null
+          adj_ltv_55_60?: number | null
+          adj_ltv_60_65?: number | null
+          adj_ltv_65_70?: number | null
+          adj_ltv_70_75?: number | null
+          adj_ltv_75_80?: number | null
+          adj_ltv_80_85?: number | null
+          adj_ltv_85_90?: number | null
+          category: string
+          condition_key: string
+          condition_label: string
+          id?: string
+          notes?: string | null
+          product_id: string
+          sort_order?: number | null
+        }
+        Update: {
+          adj_ltv_0_50?: number | null
+          adj_ltv_50_55?: number | null
+          adj_ltv_55_60?: number | null
+          adj_ltv_60_65?: number | null
+          adj_ltv_65_70?: number | null
+          adj_ltv_70_75?: number | null
+          adj_ltv_75_80?: number | null
+          adj_ltv_80_85?: number | null
+          adj_ltv_85_90?: number | null
+          category?: string
+          condition_key?: string
+          condition_label?: string
+          id?: string
+          notes?: string | null
+          product_id?: string
+          sort_order?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dscr_price_adjustments_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "dscr_lender_products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      dscr_pricing_runs: {
+        Row: {
+          best_execution_lender: string | null
+          best_execution_price: number | null
+          best_execution_rate: number | null
+          borrower_entity: string | null
+          borrower_name: string | null
+          borrower_type: string
+          broker_points: number | null
+          created_at: string | null
+          escrow_waiver: boolean | null
+          fico_score: number
+          id: string
+          income_doc_type: string | null
+          is_interest_only: boolean | null
+          is_short_term_rental: boolean | null
+          loan_amount: number
+          loan_id: string | null
+          loan_purpose: string
+          lock_period_days: number | null
+          ltv: number | null
+          monthly_flood: number | null
+          monthly_hoa: number | null
+          monthly_insurance: number | null
+          monthly_rent: number
+          monthly_taxes: number | null
+          num_units: number | null
+          prepay_preference: string | null
+          property_address: string | null
+          property_city: string | null
+          property_state: string
+          property_type: string
+          property_value: number
+          property_zip: string | null
+          quoted_at: string | null
+          results: Json
+          run_by: string | null
+          status: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          best_execution_lender?: string | null
+          best_execution_price?: number | null
+          best_execution_rate?: number | null
+          borrower_entity?: string | null
+          borrower_name?: string | null
+          borrower_type?: string
+          broker_points?: number | null
+          created_at?: string | null
+          escrow_waiver?: boolean | null
+          fico_score: number
+          id?: string
+          income_doc_type?: string | null
+          is_interest_only?: boolean | null
+          is_short_term_rental?: boolean | null
+          loan_amount: number
+          loan_id?: string | null
+          loan_purpose: string
+          lock_period_days?: number | null
+          ltv?: number | null
+          monthly_flood?: number | null
+          monthly_hoa?: number | null
+          monthly_insurance?: number | null
+          monthly_rent: number
+          monthly_taxes?: number | null
+          num_units?: number | null
+          prepay_preference?: string | null
+          property_address?: string | null
+          property_city?: string | null
+          property_state: string
+          property_type: string
+          property_value: number
+          property_zip?: string | null
+          quoted_at?: string | null
+          results?: Json
+          run_by?: string | null
+          status?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          best_execution_lender?: string | null
+          best_execution_price?: number | null
+          best_execution_rate?: number | null
+          borrower_entity?: string | null
+          borrower_name?: string | null
+          borrower_type?: string
+          broker_points?: number | null
+          created_at?: string | null
+          escrow_waiver?: boolean | null
+          fico_score?: number
+          id?: string
+          income_doc_type?: string | null
+          is_interest_only?: boolean | null
+          is_short_term_rental?: boolean | null
+          loan_amount?: number
+          loan_id?: string | null
+          loan_purpose?: string
+          lock_period_days?: number | null
+          ltv?: number | null
+          monthly_flood?: number | null
+          monthly_hoa?: number | null
+          monthly_insurance?: number | null
+          monthly_rent?: number
+          monthly_taxes?: number | null
+          num_units?: number | null
+          prepay_preference?: string | null
+          property_address?: string | null
+          property_city?: string | null
+          property_state?: string
+          property_type?: string
+          property_value?: number
+          property_zip?: string | null
+          quoted_at?: string | null
+          results?: Json
+          run_by?: string | null
+          status?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      dscr_pricing_versions: {
+        Row: {
+          change_description: string | null
+          change_type: string
+          changed_at: string | null
+          changed_by: string | null
+          id: string
+          lender_id: string | null
+          lender_name: string | null
+          product_id: string | null
+          product_name: string | null
+          snapshot: Json | null
+          version: number
+        }
+        Insert: {
+          change_description?: string | null
+          change_type?: string
+          changed_at?: string | null
+          changed_by?: string | null
+          id?: string
+          lender_id?: string | null
+          lender_name?: string | null
+          product_id?: string | null
+          product_name?: string | null
+          snapshot?: Json | null
+          version?: number
+        }
+        Update: {
+          change_description?: string | null
+          change_type?: string
+          changed_at?: string | null
+          changed_by?: string | null
+          id?: string
+          lender_id?: string | null
+          lender_name?: string | null
+          product_id?: string | null
+          product_name?: string | null
+          snapshot?: Json | null
+          version?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dscr_pricing_versions_lender_id_fkey"
+            columns: ["lender_id"]
+            isOneToOne: false
+            referencedRelation: "dscr_lenders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "dscr_pricing_versions_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "dscr_lender_products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      dscr_quotes: {
+        Row: {
+          borrower_email: string | null
+          borrower_name: string | null
+          broker_points: number | null
+          created_at: string | null
+          expires_at: string | null
+          id: string
+          loan_id: string | null
+          pricing_run_id: string
+          quote_pdf_path: string | null
+          selected_lender_product_id: string | null
+          selected_price: number | null
+          selected_rate: number | null
+          sent_at: string | null
+          status: string | null
+        }
+        Insert: {
+          borrower_email?: string | null
+          borrower_name?: string | null
+          broker_points?: number | null
+          created_at?: string | null
+          expires_at?: string | null
+          id?: string
+          loan_id?: string | null
+          pricing_run_id: string
+          quote_pdf_path?: string | null
+          selected_lender_product_id?: string | null
+          selected_price?: number | null
+          selected_rate?: number | null
+          sent_at?: string | null
+          status?: string | null
+        }
+        Update: {
+          borrower_email?: string | null
+          borrower_name?: string | null
+          broker_points?: number | null
+          created_at?: string | null
+          expires_at?: string | null
+          id?: string
+          loan_id?: string | null
+          pricing_run_id?: string
+          quote_pdf_path?: string | null
+          selected_lender_product_id?: string | null
+          selected_price?: number | null
+          selected_rate?: number | null
+          sent_at?: string | null
+          status?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dscr_quotes_pricing_run_id_fkey"
+            columns: ["pricing_run_id"]
+            isOneToOne: false
+            referencedRelation: "dscr_pricing_runs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "dscr_quotes_selected_lender_product_id_fkey"
+            columns: ["selected_lender_product_id"]
+            isOneToOne: false
+            referencedRelation: "dscr_lender_products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      dscr_rate_sheet_uploads: {
+        Row: {
+          created_at: string | null
+          effective_date: string | null
+          file_name: string
+          file_path: string
+          id: string
+          lender_id: string
+          parsed_at: string | null
+          parsed_by: string | null
+          parsing_notes: string | null
+          parsing_status: string | null
+          product_id: string | null
+          raw_parsed_data: Json | null
+        }
+        Insert: {
+          created_at?: string | null
+          effective_date?: string | null
+          file_name: string
+          file_path: string
+          id?: string
+          lender_id: string
+          parsed_at?: string | null
+          parsed_by?: string | null
+          parsing_notes?: string | null
+          parsing_status?: string | null
+          product_id?: string | null
+          raw_parsed_data?: Json | null
+        }
+        Update: {
+          created_at?: string | null
+          effective_date?: string | null
+          file_name?: string
+          file_path?: string
+          id?: string
+          lender_id?: string
+          parsed_at?: string | null
+          parsed_by?: string | null
+          parsing_notes?: string | null
+          parsing_status?: string | null
+          product_id?: string | null
+          raw_parsed_data?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dscr_rate_sheet_uploads_lender_id_fkey"
+            columns: ["lender_id"]
+            isOneToOne: false
+            referencedRelation: "dscr_lenders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "dscr_rate_sheet_uploads_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "dscr_lender_products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       email_participants: {
         Row: {
           borrower_id: string | null
@@ -2471,6 +3740,20 @@ export type Database = {
             columns: ["investor_id"]
             isOneToOne: false
             referencedRelation: "investors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "email_participants_investor_id_fkey"
+            columns: ["investor_id"]
+            isOneToOne: false
+            referencedRelation: "investors_portal"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "email_participants_investor_id_fkey"
+            columns: ["investor_id"]
+            isOneToOne: false
+            referencedRelation: "investors_safe"
             referencedColumns: ["id"]
           },
           {
@@ -2584,6 +3867,154 @@ export type Database = {
             columns: ["notification_type_id"]
             isOneToOne: true
             referencedRelation: "notification_types"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      entity_investors: {
+        Row: {
+          created_at: string | null
+          entity_id: string
+          id: string
+          investor_id: string
+          is_signing_member: boolean | null
+          notes: string | null
+          ownership_pct: number | null
+          title: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          entity_id: string
+          id?: string
+          investor_id: string
+          is_signing_member?: boolean | null
+          notes?: string | null
+          ownership_pct?: number | null
+          title?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          entity_id?: string
+          id?: string
+          investor_id?: string
+          is_signing_member?: boolean | null
+          notes?: string | null
+          ownership_pct?: number | null
+          title?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "entity_investors_entity_id_fkey"
+            columns: ["entity_id"]
+            isOneToOne: false
+            referencedRelation: "investing_entities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "entity_investors_entity_id_fkey"
+            columns: ["entity_id"]
+            isOneToOne: false
+            referencedRelation: "investing_entities_portal"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "entity_investors_entity_id_fkey"
+            columns: ["entity_id"]
+            isOneToOne: false
+            referencedRelation: "investing_entities_safe"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "entity_investors_investor_id_fkey"
+            columns: ["investor_id"]
+            isOneToOne: false
+            referencedRelation: "investors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "entity_investors_investor_id_fkey"
+            columns: ["investor_id"]
+            isOneToOne: false
+            referencedRelation: "investors_portal"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "entity_investors_investor_id_fkey"
+            columns: ["investor_id"]
+            isOneToOne: false
+            referencedRelation: "investors_safe"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      entity_owners: {
+        Row: {
+          borrower_id: string
+          created_at: string | null
+          entity_id: string
+          id: string
+          is_guarantor: boolean | null
+          is_signing_member: boolean | null
+          notes: string | null
+          ownership_pct: number | null
+          title: string | null
+        }
+        Insert: {
+          borrower_id: string
+          created_at?: string | null
+          entity_id: string
+          id?: string
+          is_guarantor?: boolean | null
+          is_signing_member?: boolean | null
+          notes?: string | null
+          ownership_pct?: number | null
+          title?: string | null
+        }
+        Update: {
+          borrower_id?: string
+          created_at?: string | null
+          entity_id?: string
+          id?: string
+          is_guarantor?: boolean | null
+          is_signing_member?: boolean | null
+          notes?: string | null
+          ownership_pct?: number | null
+          title?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "entity_owners_borrower_id_fkey"
+            columns: ["borrower_id"]
+            isOneToOne: false
+            referencedRelation: "borrowers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "entity_owners_borrower_id_fkey"
+            columns: ["borrower_id"]
+            isOneToOne: false
+            referencedRelation: "borrowers_portal"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "entity_owners_borrower_id_fkey"
+            columns: ["borrower_id"]
+            isOneToOne: false
+            referencedRelation: "borrowers_safe"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "entity_owners_entity_id_fkey"
+            columns: ["entity_id"]
+            isOneToOne: false
+            referencedRelation: "borrower_entities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "entity_owners_entity_id_fkey"
+            columns: ["entity_id"]
+            isOneToOne: false
+            referencedRelation: "borrower_entities_safe"
             referencedColumns: ["id"]
           },
         ]
@@ -2881,6 +4312,20 @@ export type Database = {
             referencedRelation: "investors"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "investing_entities_investor_id_fkey"
+            columns: ["investor_id"]
+            isOneToOne: false
+            referencedRelation: "investors_portal"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "investing_entities_investor_id_fkey"
+            columns: ["investor_id"]
+            isOneToOne: false
+            referencedRelation: "investors_safe"
+            referencedColumns: ["id"]
+          },
         ]
       }
       investor_commitments: {
@@ -2951,6 +4396,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "investor_commitments_entity_id_fkey"
+            columns: ["entity_id"]
+            isOneToOne: false
+            referencedRelation: "investing_entities_safe"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "investor_commitments_fund_id_fkey"
             columns: ["fund_id"]
             isOneToOne: false
@@ -2964,243 +4416,66 @@ export type Database = {
             referencedRelation: "investors"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "investor_commitments_investor_id_fkey"
+            columns: ["investor_id"]
+            isOneToOne: false
+            referencedRelation: "investors_portal"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "investor_commitments_investor_id_fkey"
+            columns: ["investor_id"]
+            isOneToOne: false
+            referencedRelation: "investors_safe"
+            referencedColumns: ["id"]
+          },
         ]
       }
       investors: {
         Row: {
           accreditation_status: string
           accreditation_verified_at: string | null
-          address_line1: string | null
-          address_line2: string | null
-          city: string | null
-          country: string | null
           created_at: string
-          email: string
-          first_name: string
+          crm_contact_id: string | null
           id: string
-          last_name: string
           notes: string | null
-          phone: string | null
-          state: string | null
           updated_at: string
           user_id: string | null
-          zip: string | null
         }
         Insert: {
           accreditation_status?: string
           accreditation_verified_at?: string | null
-          address_line1?: string | null
-          address_line2?: string | null
-          city?: string | null
-          country?: string | null
           created_at?: string
-          email: string
-          first_name: string
+          crm_contact_id?: string | null
           id?: string
-          last_name: string
           notes?: string | null
-          phone?: string | null
-          state?: string | null
           updated_at?: string
           user_id?: string | null
-          zip?: string | null
         }
         Update: {
           accreditation_status?: string
           accreditation_verified_at?: string | null
-          address_line1?: string | null
-          address_line2?: string | null
-          city?: string | null
-          country?: string | null
           created_at?: string
-          email?: string
-          first_name?: string
+          crm_contact_id?: string | null
           id?: string
-          last_name?: string
           notes?: string | null
-          phone?: string | null
-          state?: string | null
           updated_at?: string
           user_id?: string | null
-          zip?: string | null
-        }
-        Relationships: []
-      }
-      lender_quote_activities: {
-        Row: {
-          activity_type: string
-          created_at: string
-          created_by: string | null
-          description: string
-          id: string
-          new_status: string | null
-          old_status: string | null
-          quote_id: string
-        }
-        Insert: {
-          activity_type: string
-          created_at?: string
-          created_by?: string | null
-          description: string
-          id?: string
-          new_status?: string | null
-          old_status?: string | null
-          quote_id: string
-        }
-        Update: {
-          activity_type?: string
-          created_at?: string
-          created_by?: string | null
-          description?: string
-          id?: string
-          new_status?: string | null
-          old_status?: string | null
-          quote_id?: string
         }
         Relationships: [
           {
-            foreignKeyName: "lender_quote_activities_quote_id_fkey"
-            columns: ["quote_id"]
+            foreignKeyName: "investors_crm_contact_id_fkey"
+            columns: ["crm_contact_id"]
             isOneToOne: false
-            referencedRelation: "lender_quotes"
+            referencedRelation: "crm_contacts"
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "lender_quote_activities_created_by_fkey"
-            columns: ["created_by"]
+            foreignKeyName: "investors_crm_contact_id_fkey"
+            columns: ["crm_contact_id"]
             isOneToOne: false
-            referencedRelation: "users"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      lender_quotes: {
-        Row: {
-          accepted_at: string | null
-          amortization_months: number | null
-          created_at: string
-          created_by: string | null
-          declined_at: string | null
-          declined_reason: string | null
-          description: string | null
-          id: string
-          interest_only_period_months: number | null
-          interest_rate: number | null
-          lender_company_id: string | null
-          lender_contact_name: string | null
-          linked_property_id: string | null
-          loan_amount: number | null
-          loan_id: string | null
-          loan_term_months: number | null
-          ltv: number | null
-          origination_fee: number | null
-          prepayment_penalty: string | null
-          quote_name: string
-          received_at: string | null
-          requested_at: string | null
-          requity_lending_fee: number | null
-          status: string
-          status_changed_at: string | null
-          term_sheet_url: string | null
-          updated_at: string
-          updated_by: string | null
-          uw_processing_fee: number | null
-          ym_amount: number | null
-          ym_spread: number | null
-        }
-        Insert: {
-          accepted_at?: string | null
-          amortization_months?: number | null
-          created_at?: string
-          created_by?: string | null
-          declined_at?: string | null
-          declined_reason?: string | null
-          description?: string | null
-          id?: string
-          interest_only_period_months?: number | null
-          interest_rate?: number | null
-          lender_company_id?: string | null
-          lender_contact_name?: string | null
-          linked_property_id?: string | null
-          loan_amount?: number | null
-          loan_id?: string | null
-          loan_term_months?: number | null
-          ltv?: number | null
-          origination_fee?: number | null
-          prepayment_penalty?: string | null
-          quote_name: string
-          received_at?: string | null
-          requested_at?: string | null
-          requity_lending_fee?: number | null
-          status?: string
-          status_changed_at?: string | null
-          term_sheet_url?: string | null
-          updated_at?: string
-          updated_by?: string | null
-          uw_processing_fee?: number | null
-          ym_amount?: number | null
-          ym_spread?: number | null
-        }
-        Update: {
-          accepted_at?: string | null
-          amortization_months?: number | null
-          created_at?: string
-          created_by?: string | null
-          declined_at?: string | null
-          declined_reason?: string | null
-          description?: string | null
-          id?: string
-          interest_only_period_months?: number | null
-          interest_rate?: number | null
-          lender_company_id?: string | null
-          lender_contact_name?: string | null
-          linked_property_id?: string | null
-          loan_amount?: number | null
-          loan_id?: string | null
-          loan_term_months?: number | null
-          ltv?: number | null
-          origination_fee?: number | null
-          prepayment_penalty?: string | null
-          quote_name?: string
-          received_at?: string | null
-          requested_at?: string | null
-          requity_lending_fee?: number | null
-          status?: string
-          status_changed_at?: string | null
-          term_sheet_url?: string | null
-          updated_at?: string
-          updated_by?: string | null
-          uw_processing_fee?: number | null
-          ym_amount?: number | null
-          ym_spread?: number | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "lender_quotes_loan_id_fkey"
-            columns: ["loan_id"]
-            isOneToOne: false
-            referencedRelation: "loans"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "lender_quotes_lender_company_id_fkey"
-            columns: ["lender_company_id"]
-            isOneToOne: false
-            referencedRelation: "companies"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "lender_quotes_created_by_fkey"
-            columns: ["created_by"]
-            isOneToOne: false
-            referencedRelation: "users"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "lender_quotes_updated_by_fkey"
-            columns: ["updated_by"]
-            isOneToOne: false
-            referencedRelation: "users"
+            referencedRelation: "crm_contacts_active"
             referencedColumns: ["id"]
           },
         ]
@@ -3243,6 +4518,90 @@ export type Database = {
           },
           {
             foreignKeyName: "loan_activity_log_loan_id_fkey"
+            columns: ["loan_id"]
+            isOneToOne: false
+            referencedRelation: "loans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      loan_borrowers: {
+        Row: {
+          borrower_id: string
+          created_at: string | null
+          credit_report_date_at_intake: string | null
+          credit_score_at_intake: number | null
+          id: string
+          loan_id: string
+          notes: string | null
+          role: string
+          sort_order: number
+          stated_liquidity_at_intake: number | null
+          stated_net_worth_at_intake: number | null
+          verified_liquidity_at_intake: number | null
+          verified_net_worth_at_intake: number | null
+        }
+        Insert: {
+          borrower_id: string
+          created_at?: string | null
+          credit_report_date_at_intake?: string | null
+          credit_score_at_intake?: number | null
+          id?: string
+          loan_id: string
+          notes?: string | null
+          role?: string
+          sort_order?: number
+          stated_liquidity_at_intake?: number | null
+          stated_net_worth_at_intake?: number | null
+          verified_liquidity_at_intake?: number | null
+          verified_net_worth_at_intake?: number | null
+        }
+        Update: {
+          borrower_id?: string
+          created_at?: string | null
+          credit_report_date_at_intake?: string | null
+          credit_score_at_intake?: number | null
+          id?: string
+          loan_id?: string
+          notes?: string | null
+          role?: string
+          sort_order?: number
+          stated_liquidity_at_intake?: number | null
+          stated_net_worth_at_intake?: number | null
+          verified_liquidity_at_intake?: number | null
+          verified_net_worth_at_intake?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "loan_borrowers_borrower_id_fkey"
+            columns: ["borrower_id"]
+            isOneToOne: false
+            referencedRelation: "borrowers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "loan_borrowers_borrower_id_fkey"
+            columns: ["borrower_id"]
+            isOneToOne: false
+            referencedRelation: "borrowers_portal"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "loan_borrowers_borrower_id_fkey"
+            columns: ["borrower_id"]
+            isOneToOne: false
+            referencedRelation: "borrowers_safe"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "loan_borrowers_loan_id_fkey"
+            columns: ["loan_id"]
+            isOneToOne: false
+            referencedRelation: "loan_pipeline"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "loan_borrowers_loan_id_fkey"
             columns: ["loan_id"]
             isOneToOne: false
             referencedRelation: "loans"
@@ -3795,6 +5154,13 @@ export type Database = {
           application_date: string | null
           appraised_value: number | null
           approval_date: string | null
+          approval_decided_at: string | null
+          approval_decided_by: string | null
+          approval_notes: string | null
+          approval_requested_at: string | null
+          approval_requested_by: string | null
+          approval_status: string | null
+          approval_type: string | null
           arv: number | null
           as_is_value: number | null
           borrower_entity_id: string | null
@@ -3804,12 +5170,18 @@ export type Database = {
           broker_fee_pct: number | null
           broker_sourced: boolean | null
           capital_partner: string | null
+          cash_to_close: number | null
           clear_to_close_date: string | null
           closer_id: string | null
           closing_attorney_name: string | null
           closing_date: string | null
           co_borrower_name: string | null
+          combined_liquidity: number | null
+          combined_net_worth: number | null
           created_at: string
+          deal_financing: string | null
+          deal_programs: string[] | null
+          debt_tranche: string | null
           default_rate: number | null
           deleted_at: string | null
           dscr_ratio: number | null
@@ -3822,6 +5194,7 @@ export type Database = {
           file_complete_date: string | null
           first_payment_date: string | null
           flood_zone_type: string | null
+          funding_channel: string | null
           funding_date: string | null
           funding_source: string | null
           has_co_borrower: boolean | null
@@ -3833,12 +5206,16 @@ export type Database = {
           interest_rate: number | null
           interest_reserve: number | null
           internal_notes: string | null
+          investment_strategy: string | null
           is_in_flood_zone: boolean | null
           is_short_term_rental: boolean | null
+          lease_type: string | null
           legal_fee: number | null
           loan_amount: number | null
           loan_number: string | null
           loan_term_months: number | null
+          loan_type_interest: string[] | null
+          loss_reason: string | null
           ltarv: number | null
           ltv: number | null
           maturity_date: string | null
@@ -3850,6 +5227,8 @@ export type Database = {
           note_sold_to: string | null
           notes: string | null
           number_of_units: number | null
+          occupancy_pct: number | null
+          opportunity_id: string | null
           origination_date: string | null
           origination_fee: number | null
           origination_fee_amount: number | null
@@ -3860,6 +5239,8 @@ export type Database = {
           payoff_date: string | null
           points: number | null
           prepayment_penalty_months: number | null
+          prepayment_penalty_pct: number | null
+          prepayment_penalty_type: string | null
           prepayment_terms: string | null
           priority: string | null
           processing_fee: number | null
@@ -3870,6 +5251,7 @@ export type Database = {
           property_address_line2: string | null
           property_city: string | null
           property_county: string | null
+          property_id: string | null
           property_state: string | null
           property_type: Database["public"]["Enums"]["property_type"] | null
           property_zip: string | null
@@ -3877,8 +5259,11 @@ export type Database = {
           purpose: Database["public"]["Enums"]["loan_purpose"]
           rehab_budget: number | null
           rehab_holdback: number | null
+          rental_status: string | null
           salesforce_opportunity_id: string | null
+          secondary_liens: boolean | null
           servicing_platform: string | null
+          source_of_funds: string | null
           stage: Database["public"]["Enums"]["loan_status"]
           stage_history: Json | null
           stage_updated_at: string | null
@@ -3892,6 +5277,7 @@ export type Database = {
           underwriter: string | null
           underwriter_id: string | null
           updated_at: string
+          value_method: string | null
         }
         Insert: {
           ach_autopull_active?: boolean | null
@@ -3900,6 +5286,13 @@ export type Database = {
           application_date?: string | null
           appraised_value?: number | null
           approval_date?: string | null
+          approval_decided_at?: string | null
+          approval_decided_by?: string | null
+          approval_notes?: string | null
+          approval_requested_at?: string | null
+          approval_requested_by?: string | null
+          approval_status?: string | null
+          approval_type?: string | null
           arv?: number | null
           as_is_value?: number | null
           borrower_entity_id?: string | null
@@ -3909,12 +5302,18 @@ export type Database = {
           broker_fee_pct?: number | null
           broker_sourced?: boolean | null
           capital_partner?: string | null
+          cash_to_close?: number | null
           clear_to_close_date?: string | null
           closer_id?: string | null
           closing_attorney_name?: string | null
           closing_date?: string | null
           co_borrower_name?: string | null
+          combined_liquidity?: number | null
+          combined_net_worth?: number | null
           created_at?: string
+          deal_financing?: string | null
+          deal_programs?: string[] | null
+          debt_tranche?: string | null
           default_rate?: number | null
           deleted_at?: string | null
           dscr_ratio?: number | null
@@ -3927,6 +5326,7 @@ export type Database = {
           file_complete_date?: string | null
           first_payment_date?: string | null
           flood_zone_type?: string | null
+          funding_channel?: string | null
           funding_date?: string | null
           funding_source?: string | null
           has_co_borrower?: boolean | null
@@ -3938,12 +5338,16 @@ export type Database = {
           interest_rate?: number | null
           interest_reserve?: number | null
           internal_notes?: string | null
+          investment_strategy?: string | null
           is_in_flood_zone?: boolean | null
           is_short_term_rental?: boolean | null
+          lease_type?: string | null
           legal_fee?: number | null
           loan_amount?: number | null
           loan_number?: string | null
           loan_term_months?: number | null
+          loan_type_interest?: string[] | null
+          loss_reason?: string | null
           ltarv?: number | null
           ltv?: number | null
           maturity_date?: string | null
@@ -3955,6 +5359,8 @@ export type Database = {
           note_sold_to?: string | null
           notes?: string | null
           number_of_units?: number | null
+          occupancy_pct?: number | null
+          opportunity_id?: string | null
           origination_date?: string | null
           origination_fee?: number | null
           origination_fee_amount?: number | null
@@ -3965,6 +5371,8 @@ export type Database = {
           payoff_date?: string | null
           points?: number | null
           prepayment_penalty_months?: number | null
+          prepayment_penalty_pct?: number | null
+          prepayment_penalty_type?: string | null
           prepayment_terms?: string | null
           priority?: string | null
           processing_fee?: number | null
@@ -3975,6 +5383,7 @@ export type Database = {
           property_address_line2?: string | null
           property_city?: string | null
           property_county?: string | null
+          property_id?: string | null
           property_state?: string | null
           property_type?: Database["public"]["Enums"]["property_type"] | null
           property_zip?: string | null
@@ -3982,8 +5391,11 @@ export type Database = {
           purpose?: Database["public"]["Enums"]["loan_purpose"]
           rehab_budget?: number | null
           rehab_holdback?: number | null
+          rental_status?: string | null
           salesforce_opportunity_id?: string | null
+          secondary_liens?: boolean | null
           servicing_platform?: string | null
+          source_of_funds?: string | null
           stage?: Database["public"]["Enums"]["loan_status"]
           stage_history?: Json | null
           stage_updated_at?: string | null
@@ -3997,6 +5409,7 @@ export type Database = {
           underwriter?: string | null
           underwriter_id?: string | null
           updated_at?: string
+          value_method?: string | null
         }
         Update: {
           ach_autopull_active?: boolean | null
@@ -4005,6 +5418,13 @@ export type Database = {
           application_date?: string | null
           appraised_value?: number | null
           approval_date?: string | null
+          approval_decided_at?: string | null
+          approval_decided_by?: string | null
+          approval_notes?: string | null
+          approval_requested_at?: string | null
+          approval_requested_by?: string | null
+          approval_status?: string | null
+          approval_type?: string | null
           arv?: number | null
           as_is_value?: number | null
           borrower_entity_id?: string | null
@@ -4014,12 +5434,18 @@ export type Database = {
           broker_fee_pct?: number | null
           broker_sourced?: boolean | null
           capital_partner?: string | null
+          cash_to_close?: number | null
           clear_to_close_date?: string | null
           closer_id?: string | null
           closing_attorney_name?: string | null
           closing_date?: string | null
           co_borrower_name?: string | null
+          combined_liquidity?: number | null
+          combined_net_worth?: number | null
           created_at?: string
+          deal_financing?: string | null
+          deal_programs?: string[] | null
+          debt_tranche?: string | null
           default_rate?: number | null
           deleted_at?: string | null
           dscr_ratio?: number | null
@@ -4032,6 +5458,7 @@ export type Database = {
           file_complete_date?: string | null
           first_payment_date?: string | null
           flood_zone_type?: string | null
+          funding_channel?: string | null
           funding_date?: string | null
           funding_source?: string | null
           has_co_borrower?: boolean | null
@@ -4043,12 +5470,16 @@ export type Database = {
           interest_rate?: number | null
           interest_reserve?: number | null
           internal_notes?: string | null
+          investment_strategy?: string | null
           is_in_flood_zone?: boolean | null
           is_short_term_rental?: boolean | null
+          lease_type?: string | null
           legal_fee?: number | null
           loan_amount?: number | null
           loan_number?: string | null
           loan_term_months?: number | null
+          loan_type_interest?: string[] | null
+          loss_reason?: string | null
           ltarv?: number | null
           ltv?: number | null
           maturity_date?: string | null
@@ -4060,6 +5491,8 @@ export type Database = {
           note_sold_to?: string | null
           notes?: string | null
           number_of_units?: number | null
+          occupancy_pct?: number | null
+          opportunity_id?: string | null
           origination_date?: string | null
           origination_fee?: number | null
           origination_fee_amount?: number | null
@@ -4070,6 +5503,8 @@ export type Database = {
           payoff_date?: string | null
           points?: number | null
           prepayment_penalty_months?: number | null
+          prepayment_penalty_pct?: number | null
+          prepayment_penalty_type?: string | null
           prepayment_terms?: string | null
           priority?: string | null
           processing_fee?: number | null
@@ -4080,6 +5515,7 @@ export type Database = {
           property_address_line2?: string | null
           property_city?: string | null
           property_county?: string | null
+          property_id?: string | null
           property_state?: string | null
           property_type?: Database["public"]["Enums"]["property_type"] | null
           property_zip?: string | null
@@ -4087,8 +5523,11 @@ export type Database = {
           purpose?: Database["public"]["Enums"]["loan_purpose"]
           rehab_budget?: number | null
           rehab_holdback?: number | null
+          rental_status?: string | null
           salesforce_opportunity_id?: string | null
+          secondary_liens?: boolean | null
           servicing_platform?: string | null
+          source_of_funds?: string | null
           stage?: Database["public"]["Enums"]["loan_status"]
           stage_history?: Json | null
           stage_updated_at?: string | null
@@ -4102,6 +5541,7 @@ export type Database = {
           underwriter?: string | null
           underwriter_id?: string | null
           updated_at?: string
+          value_method?: string | null
         }
         Relationships: [
           {
@@ -4109,6 +5549,13 @@ export type Database = {
             columns: ["borrower_entity_id"]
             isOneToOne: false
             referencedRelation: "borrower_entities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "loans_borrower_entity_id_fkey"
+            columns: ["borrower_entity_id"]
+            isOneToOne: false
+            referencedRelation: "borrower_entities_safe"
             referencedColumns: ["id"]
           },
           {
@@ -4154,6 +5601,20 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "loans_opportunity_id_fkey"
+            columns: ["opportunity_id"]
+            isOneToOne: false
+            referencedRelation: "opportunities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "loans_opportunity_id_fkey"
+            columns: ["opportunity_id"]
+            isOneToOne: false
+            referencedRelation: "opportunity_pipeline"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "loans_originator_id_fkey"
             columns: ["originator_id"]
             isOneToOne: false
@@ -4165,6 +5626,13 @@ export type Database = {
             columns: ["processor_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "loans_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
             referencedColumns: ["id"]
           },
           {
@@ -4468,6 +5936,288 @@ export type Database = {
             columns: ["notification_type_id"]
             isOneToOne: false
             referencedRelation: "notification_types"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      opportunities: {
+        Row: {
+          approval_decided_at: string | null
+          approval_decided_by: string | null
+          approval_notes: string | null
+          approval_requested_at: string | null
+          approval_requested_by: string | null
+          approval_status: string | null
+          approval_type: string | null
+          assigned_underwriter: string | null
+          borrower_entity_id: string | null
+          capital_partner: string | null
+          cash_to_close: number | null
+          combined_liquidity: number | null
+          combined_net_worth: number | null
+          created_at: string
+          created_by: string | null
+          deal_financing: string | null
+          deal_name: string | null
+          deal_programs: string[] | null
+          debt_tranche: string | null
+          funding_channel: string | null
+          funding_source: string | null
+          id: string
+          internal_notes: string | null
+          investment_strategy: string | null
+          lease_type: string | null
+          loan_id: string | null
+          loan_purpose: string | null
+          loan_type: string | null
+          loan_type_interest: string[] | null
+          loss_reason: string | null
+          occupancy_pct: number | null
+          originator: string | null
+          prepayment_penalty_months: number | null
+          prepayment_penalty_pct: number | null
+          prepayment_penalty_type: string | null
+          prepayment_terms: string | null
+          processor: string | null
+          property_id: string | null
+          proposed_interest_rate: number | null
+          proposed_loan_amount: number | null
+          proposed_loan_term_months: number | null
+          proposed_ltarv: number | null
+          proposed_ltv: number | null
+          rental_status: string | null
+          secondary_liens: boolean | null
+          source_of_funds: string | null
+          stage: string
+          stage_changed_at: string | null
+          stage_changed_by: string | null
+          updated_at: string
+          value_method: string | null
+        }
+        Insert: {
+          approval_decided_at?: string | null
+          approval_decided_by?: string | null
+          approval_notes?: string | null
+          approval_requested_at?: string | null
+          approval_requested_by?: string | null
+          approval_status?: string | null
+          approval_type?: string | null
+          assigned_underwriter?: string | null
+          borrower_entity_id?: string | null
+          capital_partner?: string | null
+          cash_to_close?: number | null
+          combined_liquidity?: number | null
+          combined_net_worth?: number | null
+          created_at?: string
+          created_by?: string | null
+          deal_financing?: string | null
+          deal_name?: string | null
+          deal_programs?: string[] | null
+          debt_tranche?: string | null
+          funding_channel?: string | null
+          funding_source?: string | null
+          id?: string
+          internal_notes?: string | null
+          investment_strategy?: string | null
+          lease_type?: string | null
+          loan_id?: string | null
+          loan_purpose?: string | null
+          loan_type?: string | null
+          loan_type_interest?: string[] | null
+          loss_reason?: string | null
+          occupancy_pct?: number | null
+          originator?: string | null
+          prepayment_penalty_months?: number | null
+          prepayment_penalty_pct?: number | null
+          prepayment_penalty_type?: string | null
+          prepayment_terms?: string | null
+          processor?: string | null
+          property_id?: string | null
+          proposed_interest_rate?: number | null
+          proposed_loan_amount?: number | null
+          proposed_loan_term_months?: number | null
+          proposed_ltarv?: number | null
+          proposed_ltv?: number | null
+          rental_status?: string | null
+          secondary_liens?: boolean | null
+          source_of_funds?: string | null
+          stage?: string
+          stage_changed_at?: string | null
+          stage_changed_by?: string | null
+          updated_at?: string
+          value_method?: string | null
+        }
+        Update: {
+          approval_decided_at?: string | null
+          approval_decided_by?: string | null
+          approval_notes?: string | null
+          approval_requested_at?: string | null
+          approval_requested_by?: string | null
+          approval_status?: string | null
+          approval_type?: string | null
+          assigned_underwriter?: string | null
+          borrower_entity_id?: string | null
+          capital_partner?: string | null
+          cash_to_close?: number | null
+          combined_liquidity?: number | null
+          combined_net_worth?: number | null
+          created_at?: string
+          created_by?: string | null
+          deal_financing?: string | null
+          deal_name?: string | null
+          deal_programs?: string[] | null
+          debt_tranche?: string | null
+          funding_channel?: string | null
+          funding_source?: string | null
+          id?: string
+          internal_notes?: string | null
+          investment_strategy?: string | null
+          lease_type?: string | null
+          loan_id?: string | null
+          loan_purpose?: string | null
+          loan_type?: string | null
+          loan_type_interest?: string[] | null
+          loss_reason?: string | null
+          occupancy_pct?: number | null
+          originator?: string | null
+          prepayment_penalty_months?: number | null
+          prepayment_penalty_pct?: number | null
+          prepayment_penalty_type?: string | null
+          prepayment_terms?: string | null
+          processor?: string | null
+          property_id?: string | null
+          proposed_interest_rate?: number | null
+          proposed_loan_amount?: number | null
+          proposed_loan_term_months?: number | null
+          proposed_ltarv?: number | null
+          proposed_ltv?: number | null
+          rental_status?: string | null
+          secondary_liens?: boolean | null
+          source_of_funds?: string | null
+          stage?: string
+          stage_changed_at?: string | null
+          stage_changed_by?: string | null
+          updated_at?: string
+          value_method?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "opportunities_borrower_entity_id_fkey"
+            columns: ["borrower_entity_id"]
+            isOneToOne: false
+            referencedRelation: "borrower_entities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "opportunities_borrower_entity_id_fkey"
+            columns: ["borrower_entity_id"]
+            isOneToOne: false
+            referencedRelation: "borrower_entities_safe"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "opportunities_loan_id_fkey"
+            columns: ["loan_id"]
+            isOneToOne: false
+            referencedRelation: "loan_pipeline"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "opportunities_loan_id_fkey"
+            columns: ["loan_id"]
+            isOneToOne: false
+            referencedRelation: "loans"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "opportunities_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      opportunity_borrowers: {
+        Row: {
+          borrower_id: string
+          created_at: string
+          credit_report_date_at_intake: string | null
+          credit_score_at_intake: number | null
+          id: string
+          notes: string | null
+          opportunity_id: string
+          role: string | null
+          sort_order: number | null
+          stated_liquidity_at_intake: number | null
+          stated_net_worth_at_intake: number | null
+          verified_liquidity_at_intake: number | null
+          verified_net_worth_at_intake: number | null
+        }
+        Insert: {
+          borrower_id: string
+          created_at?: string
+          credit_report_date_at_intake?: string | null
+          credit_score_at_intake?: number | null
+          id?: string
+          notes?: string | null
+          opportunity_id: string
+          role?: string | null
+          sort_order?: number | null
+          stated_liquidity_at_intake?: number | null
+          stated_net_worth_at_intake?: number | null
+          verified_liquidity_at_intake?: number | null
+          verified_net_worth_at_intake?: number | null
+        }
+        Update: {
+          borrower_id?: string
+          created_at?: string
+          credit_report_date_at_intake?: string | null
+          credit_score_at_intake?: number | null
+          id?: string
+          notes?: string | null
+          opportunity_id?: string
+          role?: string | null
+          sort_order?: number | null
+          stated_liquidity_at_intake?: number | null
+          stated_net_worth_at_intake?: number | null
+          verified_liquidity_at_intake?: number | null
+          verified_net_worth_at_intake?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "opportunity_borrowers_borrower_id_fkey"
+            columns: ["borrower_id"]
+            isOneToOne: false
+            referencedRelation: "borrowers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "opportunity_borrowers_borrower_id_fkey"
+            columns: ["borrower_id"]
+            isOneToOne: false
+            referencedRelation: "borrowers_portal"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "opportunity_borrowers_borrower_id_fkey"
+            columns: ["borrower_id"]
+            isOneToOne: false
+            referencedRelation: "borrowers_safe"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "opportunity_borrowers_opportunity_id_fkey"
+            columns: ["opportunity_id"]
+            isOneToOne: false
+            referencedRelation: "opportunities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "opportunity_borrowers_opportunity_id_fkey"
+            columns: ["opportunity_id"]
+            isOneToOne: false
+            referencedRelation: "opportunity_pipeline"
             referencedColumns: ["id"]
           },
         ]
@@ -4823,6 +6573,59 @@ export type Database = {
           },
         ]
       }
+      portal_activity_log: {
+        Row: {
+          action_type: string
+          component: string | null
+          created_at: string
+          department: string | null
+          duration_ms: number | null
+          id: string
+          metadata: Json | null
+          page_path: string | null
+          profile_id: string | null
+          role: string | null
+          session_id: string | null
+          user_id: string | null
+        }
+        Insert: {
+          action_type: string
+          component?: string | null
+          created_at?: string
+          department?: string | null
+          duration_ms?: number | null
+          id?: string
+          metadata?: Json | null
+          page_path?: string | null
+          profile_id?: string | null
+          role?: string | null
+          session_id?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          action_type?: string
+          component?: string | null
+          created_at?: string
+          department?: string | null
+          duration_ms?: number | null
+          id?: string
+          metadata?: Json | null
+          page_path?: string | null
+          profile_id?: string | null
+          role?: string | null
+          session_id?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "portal_activity_log_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           activation_status: string | null
@@ -4837,6 +6640,7 @@ export type Database = {
           name: string | null
           phone: string | null
           role: string | null
+          updated_at: string | null
         }
         Insert: {
           activation_status?: string | null
@@ -4851,6 +6655,7 @@ export type Database = {
           name?: string | null
           phone?: string | null
           role?: string | null
+          updated_at?: string | null
         }
         Update: {
           activation_status?: string | null
@@ -4865,8 +6670,268 @@ export type Database = {
           name?: string | null
           phone?: string | null
           role?: string | null
+          updated_at?: string | null
         }
         Relationships: []
+      }
+      properties: {
+        Row: {
+          address_line1: string | null
+          address_line2: string | null
+          asset_sub_type: string | null
+          asset_type: string | null
+          building_class: string | null
+          building_status: string | null
+          city: string | null
+          condo_status: string | null
+          county: string | null
+          created_at: string
+          deleted_at: string | null
+          flood_zone: string | null
+          gross_building_area_sqft: number | null
+          id: string
+          internal_notes: string | null
+          listing_status: string | null
+          lot_size_acres: number | null
+          net_rentable_area_sqft: number | null
+          notes: string | null
+          number_of_buildings: number | null
+          number_of_stories: number | null
+          number_of_units: number | null
+          parcel_id: string | null
+          permitting_status: string | null
+          property_type: string | null
+          rural_check_consumer_finance: boolean | null
+          rural_check_usda: boolean | null
+          sewer_system: string | null
+          state: string | null
+          survey_required: boolean | null
+          tiered_llc_check: boolean | null
+          updated_at: string
+          water_system: string | null
+          year_built: number | null
+          zip: string | null
+          zoning: string | null
+        }
+        Insert: {
+          address_line1?: string | null
+          address_line2?: string | null
+          asset_sub_type?: string | null
+          asset_type?: string | null
+          building_class?: string | null
+          building_status?: string | null
+          city?: string | null
+          condo_status?: string | null
+          county?: string | null
+          created_at?: string
+          deleted_at?: string | null
+          flood_zone?: string | null
+          gross_building_area_sqft?: number | null
+          id?: string
+          internal_notes?: string | null
+          listing_status?: string | null
+          lot_size_acres?: number | null
+          net_rentable_area_sqft?: number | null
+          notes?: string | null
+          number_of_buildings?: number | null
+          number_of_stories?: number | null
+          number_of_units?: number | null
+          parcel_id?: string | null
+          permitting_status?: string | null
+          property_type?: string | null
+          rural_check_consumer_finance?: boolean | null
+          rural_check_usda?: boolean | null
+          sewer_system?: string | null
+          state?: string | null
+          survey_required?: boolean | null
+          tiered_llc_check?: boolean | null
+          updated_at?: string
+          water_system?: string | null
+          year_built?: number | null
+          zip?: string | null
+          zoning?: string | null
+        }
+        Update: {
+          address_line1?: string | null
+          address_line2?: string | null
+          asset_sub_type?: string | null
+          asset_type?: string | null
+          building_class?: string | null
+          building_status?: string | null
+          city?: string | null
+          condo_status?: string | null
+          county?: string | null
+          created_at?: string
+          deleted_at?: string | null
+          flood_zone?: string | null
+          gross_building_area_sqft?: number | null
+          id?: string
+          internal_notes?: string | null
+          listing_status?: string | null
+          lot_size_acres?: number | null
+          net_rentable_area_sqft?: number | null
+          notes?: string | null
+          number_of_buildings?: number | null
+          number_of_stories?: number | null
+          number_of_units?: number | null
+          parcel_id?: string | null
+          permitting_status?: string | null
+          property_type?: string | null
+          rural_check_consumer_finance?: boolean | null
+          rural_check_usda?: boolean | null
+          sewer_system?: string | null
+          state?: string | null
+          survey_required?: boolean | null
+          tiered_llc_check?: boolean | null
+          updated_at?: string
+          water_system?: string | null
+          year_built?: number | null
+          zip?: string | null
+          zoning?: string | null
+        }
+        Relationships: []
+      }
+      property_financial_snapshots: {
+        Row: {
+          annual_debt_service: number | null
+          avg_rent_per_sqft: number | null
+          avg_rent_per_unit: number | null
+          capex: number | null
+          created_at: string
+          created_by: string | null
+          dscr: number | null
+          economic_occupancy_pct: number | null
+          effective_date: string
+          effective_gross_income: number | null
+          gross_potential_rent: number | null
+          gross_scheduled_rent: number | null
+          id: string
+          insurance: number | null
+          management_fee: number | null
+          net_operating_income: number | null
+          noi_after_capex: number | null
+          notes: string | null
+          number_of_occupied_units: number | null
+          number_of_vacant_units: number | null
+          occupancy_pct: number | null
+          opportunity_id: string | null
+          other_expenses: number | null
+          other_income: number | null
+          property_id: string
+          rent_roll_document_url: string | null
+          repairs_maintenance: number | null
+          snapshot_type: string
+          source: string | null
+          supporting_document_url: string | null
+          t12_document_url: string | null
+          taxes: number | null
+          total_operating_expenses: number | null
+          updated_at: string
+          utilities: number | null
+          vacancy_loss: number | null
+          vacancy_rate_pct: number | null
+        }
+        Insert: {
+          annual_debt_service?: number | null
+          avg_rent_per_sqft?: number | null
+          avg_rent_per_unit?: number | null
+          capex?: number | null
+          created_at?: string
+          created_by?: string | null
+          dscr?: number | null
+          economic_occupancy_pct?: number | null
+          effective_date: string
+          effective_gross_income?: number | null
+          gross_potential_rent?: number | null
+          gross_scheduled_rent?: number | null
+          id?: string
+          insurance?: number | null
+          management_fee?: number | null
+          net_operating_income?: number | null
+          noi_after_capex?: number | null
+          notes?: string | null
+          number_of_occupied_units?: number | null
+          number_of_vacant_units?: number | null
+          occupancy_pct?: number | null
+          opportunity_id?: string | null
+          other_expenses?: number | null
+          other_income?: number | null
+          property_id: string
+          rent_roll_document_url?: string | null
+          repairs_maintenance?: number | null
+          snapshot_type: string
+          source?: string | null
+          supporting_document_url?: string | null
+          t12_document_url?: string | null
+          taxes?: number | null
+          total_operating_expenses?: number | null
+          updated_at?: string
+          utilities?: number | null
+          vacancy_loss?: number | null
+          vacancy_rate_pct?: number | null
+        }
+        Update: {
+          annual_debt_service?: number | null
+          avg_rent_per_sqft?: number | null
+          avg_rent_per_unit?: number | null
+          capex?: number | null
+          created_at?: string
+          created_by?: string | null
+          dscr?: number | null
+          economic_occupancy_pct?: number | null
+          effective_date?: string
+          effective_gross_income?: number | null
+          gross_potential_rent?: number | null
+          gross_scheduled_rent?: number | null
+          id?: string
+          insurance?: number | null
+          management_fee?: number | null
+          net_operating_income?: number | null
+          noi_after_capex?: number | null
+          notes?: string | null
+          number_of_occupied_units?: number | null
+          number_of_vacant_units?: number | null
+          occupancy_pct?: number | null
+          opportunity_id?: string | null
+          other_expenses?: number | null
+          other_income?: number | null
+          property_id?: string
+          rent_roll_document_url?: string | null
+          repairs_maintenance?: number | null
+          snapshot_type?: string
+          source?: string | null
+          supporting_document_url?: string | null
+          t12_document_url?: string | null
+          taxes?: number | null
+          total_operating_expenses?: number | null
+          updated_at?: string
+          utilities?: number | null
+          vacancy_loss?: number | null
+          vacancy_rate_pct?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "property_financial_snapshots_opportunity_id_fkey"
+            columns: ["opportunity_id"]
+            isOneToOne: false
+            referencedRelation: "opportunities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "property_financial_snapshots_opportunity_id_fkey"
+            columns: ["opportunity_id"]
+            isOneToOne: false
+            referencedRelation: "opportunity_pipeline"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "property_financial_snapshots_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       site_company_info: {
         Row: {
@@ -5313,6 +7378,325 @@ export type Database = {
           value_type?: string
         }
         Relationships: []
+      }
+      sop_categories: {
+        Row: {
+          created_at: string
+          department: string | null
+          description: string | null
+          icon: string | null
+          id: string
+          name: string
+          parent_id: string | null
+          slug: string
+          sort_order: number | null
+        }
+        Insert: {
+          created_at?: string
+          department?: string | null
+          description?: string | null
+          icon?: string | null
+          id?: string
+          name: string
+          parent_id?: string | null
+          slug: string
+          sort_order?: number | null
+        }
+        Update: {
+          created_at?: string
+          department?: string | null
+          description?: string | null
+          icon?: string | null
+          id?: string
+          name?: string
+          parent_id?: string | null
+          slug?: string
+          sort_order?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sop_categories_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "sop_categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sop_embeddings: {
+        Row: {
+          chunk_index: number
+          chunk_text: string
+          created_at: string
+          embedding: string | null
+          id: string
+          sop_id: string
+        }
+        Insert: {
+          chunk_index: number
+          chunk_text: string
+          created_at?: string
+          embedding?: string | null
+          id?: string
+          sop_id: string
+        }
+        Update: {
+          chunk_index?: number
+          chunk_text?: string
+          created_at?: string
+          embedding?: string | null
+          id?: string
+          sop_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sop_embeddings_sop_id_fkey"
+            columns: ["sop_id"]
+            isOneToOne: false
+            referencedRelation: "sops"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sop_questions_log: {
+        Row: {
+          answer: string | null
+          confidence_score: number | null
+          created_at: string
+          feedback: string | null
+          id: string
+          matched_sop_ids: string[] | null
+          page_context: string | null
+          profile_id: string | null
+          question: string
+          session_id: string | null
+          user_id: string | null
+          was_helpful: boolean | null
+        }
+        Insert: {
+          answer?: string | null
+          confidence_score?: number | null
+          created_at?: string
+          feedback?: string | null
+          id?: string
+          matched_sop_ids?: string[] | null
+          page_context?: string | null
+          profile_id?: string | null
+          question: string
+          session_id?: string | null
+          user_id?: string | null
+          was_helpful?: boolean | null
+        }
+        Update: {
+          answer?: string | null
+          confidence_score?: number | null
+          created_at?: string
+          feedback?: string | null
+          id?: string
+          matched_sop_ids?: string[] | null
+          page_context?: string | null
+          profile_id?: string | null
+          question?: string
+          session_id?: string | null
+          user_id?: string | null
+          was_helpful?: boolean | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sop_questions_log_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sop_staleness_flags: {
+        Row: {
+          created_at: string
+          description: string | null
+          detected_pattern: Json | null
+          flag_type: string
+          id: string
+          resolved_at: string | null
+          resolved_by: string | null
+          sop_id: string
+          status: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          detected_pattern?: Json | null
+          flag_type?: string
+          id?: string
+          resolved_at?: string | null
+          resolved_by?: string | null
+          sop_id: string
+          status?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          detected_pattern?: Json | null
+          flag_type?: string
+          id?: string
+          resolved_at?: string | null
+          resolved_by?: string | null
+          sop_id?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sop_staleness_flags_resolved_by_fkey"
+            columns: ["resolved_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sop_staleness_flags_sop_id_fkey"
+            columns: ["sop_id"]
+            isOneToOne: false
+            referencedRelation: "sops"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sop_versions: {
+        Row: {
+          change_notes: string | null
+          changed_by: string | null
+          content: string
+          created_at: string
+          diff_summary: string | null
+          id: string
+          sop_id: string
+          summary: string | null
+          version_number: number
+        }
+        Insert: {
+          change_notes?: string | null
+          changed_by?: string | null
+          content: string
+          created_at?: string
+          diff_summary?: string | null
+          id?: string
+          sop_id: string
+          summary?: string | null
+          version_number: number
+        }
+        Update: {
+          change_notes?: string | null
+          changed_by?: string | null
+          content?: string
+          created_at?: string
+          diff_summary?: string | null
+          id?: string
+          sop_id?: string
+          summary?: string | null
+          version_number?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sop_versions_sop_id_fkey"
+            columns: ["sop_id"]
+            isOneToOne: false
+            referencedRelation: "sops"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sops: {
+        Row: {
+          ai_confidence: number | null
+          approved_at: string | null
+          approved_by: string | null
+          category: string | null
+          category_id: string | null
+          content: string
+          created_at: string
+          created_by: string | null
+          department: string | null
+          generated_from: Json | null
+          id: string
+          last_reviewed_at: string | null
+          review_required_by: string | null
+          search_vector: unknown
+          slug: string | null
+          source_type: string | null
+          status: string
+          summary: string | null
+          tags: string[] | null
+          title: string
+          updated_at: string
+          version: number
+          visibility: string
+          visible_to_departments: string[] | null
+          visible_to_roles: string[] | null
+        }
+        Insert: {
+          ai_confidence?: number | null
+          approved_at?: string | null
+          approved_by?: string | null
+          category?: string | null
+          category_id?: string | null
+          content: string
+          created_at?: string
+          created_by?: string | null
+          department?: string | null
+          generated_from?: Json | null
+          id?: string
+          last_reviewed_at?: string | null
+          review_required_by?: string | null
+          search_vector?: unknown
+          slug?: string | null
+          source_type?: string | null
+          status?: string
+          summary?: string | null
+          tags?: string[] | null
+          title: string
+          updated_at?: string
+          version?: number
+          visibility?: string
+          visible_to_departments?: string[] | null
+          visible_to_roles?: string[] | null
+        }
+        Update: {
+          ai_confidence?: number | null
+          approved_at?: string | null
+          approved_by?: string | null
+          category?: string | null
+          category_id?: string | null
+          content?: string
+          created_at?: string
+          created_by?: string | null
+          department?: string | null
+          generated_from?: Json | null
+          id?: string
+          last_reviewed_at?: string | null
+          review_required_by?: string | null
+          search_vector?: unknown
+          slug?: string | null
+          source_type?: string | null
+          status?: string
+          summary?: string | null
+          tags?: string[] | null
+          title?: string
+          updated_at?: string
+          version?: number
+          visibility?: string
+          visible_to_departments?: string[] | null
+          visible_to_roles?: string[] | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sops_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "sop_categories"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       t12_field_mappings: {
         Row: {
@@ -5966,10 +8350,109 @@ export type Database = {
             referencedRelation: "investors"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "user_roles_investor_id_fkey"
+            columns: ["investor_id"]
+            isOneToOne: false
+            referencedRelation: "investors_portal"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_roles_investor_id_fkey"
+            columns: ["investor_id"]
+            isOneToOne: false
+            referencedRelation: "investors_safe"
+            referencedColumns: ["id"]
+          },
         ]
       }
     }
     Views: {
+      borrower_entities_safe: {
+        Row: {
+          address_line1: string | null
+          address_line2: string | null
+          borrower_id: string | null
+          city: string | null
+          country: string | null
+          created_at: string | null
+          ein: string | null
+          entity_name: string | null
+          entity_type: string | null
+          foreign_filed_states: string[] | null
+          formation_date: string | null
+          id: string | null
+          is_foreign_filed: boolean | null
+          notes: string | null
+          state: string | null
+          state_of_formation: string | null
+          updated_at: string | null
+          zip: string | null
+        }
+        Insert: {
+          address_line1?: string | null
+          address_line2?: string | null
+          borrower_id?: string | null
+          city?: string | null
+          country?: string | null
+          created_at?: string | null
+          ein?: never
+          entity_name?: string | null
+          entity_type?: string | null
+          foreign_filed_states?: string[] | null
+          formation_date?: string | null
+          id?: string | null
+          is_foreign_filed?: boolean | null
+          notes?: string | null
+          state?: string | null
+          state_of_formation?: string | null
+          updated_at?: string | null
+          zip?: string | null
+        }
+        Update: {
+          address_line1?: string | null
+          address_line2?: string | null
+          borrower_id?: string | null
+          city?: string | null
+          country?: string | null
+          created_at?: string | null
+          ein?: never
+          entity_name?: string | null
+          entity_type?: string | null
+          foreign_filed_states?: string[] | null
+          formation_date?: string | null
+          id?: string | null
+          is_foreign_filed?: boolean | null
+          notes?: string | null
+          state?: string | null
+          state_of_formation?: string | null
+          updated_at?: string | null
+          zip?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "borrower_entities_borrower_id_fkey"
+            columns: ["borrower_id"]
+            isOneToOne: false
+            referencedRelation: "borrowers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "borrower_entities_borrower_id_fkey"
+            columns: ["borrower_id"]
+            isOneToOne: false
+            referencedRelation: "borrowers_portal"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "borrower_entities_borrower_id_fkey"
+            columns: ["borrower_id"]
+            isOneToOne: false
+            referencedRelation: "borrowers_safe"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       borrowers_portal: {
         Row: {
           address_line1: string | null
@@ -5979,6 +8462,7 @@ export type Database = {
           created_at: string | null
           credit_report_date: string | null
           credit_score: number | null
+          crm_contact_id: string | null
           date_of_birth: string | null
           email: string | null
           experience_count: number | null
@@ -5986,6 +8470,7 @@ export type Database = {
           id: string | null
           is_us_citizen: boolean | null
           last_name: string | null
+          marital_status: string | null
           notes: string | null
           phone: string | null
           ssn_last_four: string | null
@@ -5994,53 +8479,22 @@ export type Database = {
           user_id: string | null
           zip: string | null
         }
-        Insert: {
-          address_line1?: string | null
-          address_line2?: string | null
-          city?: string | null
-          country?: string | null
-          created_at?: string | null
-          credit_report_date?: string | null
-          credit_score?: number | null
-          date_of_birth?: never
-          email?: string | null
-          experience_count?: number | null
-          first_name?: string | null
-          id?: string | null
-          is_us_citizen?: boolean | null
-          last_name?: string | null
-          notes?: string | null
-          phone?: string | null
-          ssn_last_four?: never
-          state?: string | null
-          updated_at?: string | null
-          user_id?: string | null
-          zip?: string | null
-        }
-        Update: {
-          address_line1?: string | null
-          address_line2?: string | null
-          city?: string | null
-          country?: string | null
-          created_at?: string | null
-          credit_report_date?: string | null
-          credit_score?: number | null
-          date_of_birth?: never
-          email?: string | null
-          experience_count?: number | null
-          first_name?: string | null
-          id?: string | null
-          is_us_citizen?: boolean | null
-          last_name?: string | null
-          notes?: string | null
-          phone?: string | null
-          ssn_last_four?: never
-          state?: string | null
-          updated_at?: string | null
-          user_id?: string | null
-          zip?: string | null
-        }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "borrowers_crm_contact_id_fkey"
+            columns: ["crm_contact_id"]
+            isOneToOne: false
+            referencedRelation: "crm_contacts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "borrowers_crm_contact_id_fkey"
+            columns: ["crm_contact_id"]
+            isOneToOne: false
+            referencedRelation: "crm_contacts_active"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       borrowers_safe: {
         Row: {
@@ -6051,6 +8505,7 @@ export type Database = {
           created_at: string | null
           credit_report_date: string | null
           credit_score: number | null
+          crm_contact_id: string | null
           date_of_birth: string | null
           email: string | null
           experience_count: number | null
@@ -6065,51 +8520,96 @@ export type Database = {
           updated_at: string | null
           zip: string | null
         }
-        Insert: {
-          address_line1?: string | null
-          address_line2?: string | null
-          city?: string | null
-          country?: string | null
-          created_at?: string | null
-          credit_report_date?: string | null
-          credit_score?: number | null
-          date_of_birth?: never
-          email?: string | null
-          experience_count?: number | null
-          first_name?: string | null
-          id?: string | null
-          is_us_citizen?: boolean | null
-          last_name?: string | null
-          notes?: string | null
-          phone?: string | null
-          ssn_last_four?: never
-          state?: string | null
-          updated_at?: string | null
-          zip?: string | null
-        }
-        Update: {
-          address_line1?: string | null
-          address_line2?: string | null
-          city?: string | null
-          country?: string | null
-          created_at?: string | null
-          credit_report_date?: string | null
-          credit_score?: number | null
-          date_of_birth?: never
-          email?: string | null
-          experience_count?: number | null
-          first_name?: string | null
-          id?: string | null
-          is_us_citizen?: boolean | null
-          last_name?: string | null
-          notes?: string | null
-          phone?: string | null
-          ssn_last_four?: never
-          state?: string | null
-          updated_at?: string | null
-          zip?: string | null
+        Relationships: [
+          {
+            foreignKeyName: "borrowers_crm_contact_id_fkey"
+            columns: ["crm_contact_id"]
+            isOneToOne: false
+            referencedRelation: "crm_contacts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "borrowers_crm_contact_id_fkey"
+            columns: ["crm_contact_id"]
+            isOneToOne: false
+            referencedRelation: "crm_contacts_active"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      chat_channels_with_unread: {
+        Row: {
+          allow_external: boolean | null
+          auto_created: boolean | null
+          channel_type: Database["public"]["Enums"]["chat_channel_type"] | null
+          created_at: string | null
+          default_notification_level: string | null
+          description: string | null
+          icon: string | null
+          id: string | null
+          is_archived: boolean | null
+          is_muted: boolean | null
+          is_pinned: boolean | null
+          is_private: boolean | null
+          last_message: Json | null
+          last_message_at: string | null
+          last_read_at: string | null
+          linked_entity_id: string | null
+          linked_entity_type:
+            | Database["public"]["Enums"]["chat_entity_type"]
+            | null
+          member_role: Database["public"]["Enums"]["chat_member_role"] | null
+          metadata: Json | null
+          name: string | null
+          notification_level: string | null
+          pinned_context: Json | null
+          unread_count: number | null
+          updated_at: string | null
         }
         Relationships: []
+      }
+      chat_my_mentions: {
+        Row: {
+          channel_id: string | null
+          channel_name: string | null
+          channel_type: Database["public"]["Enums"]["chat_channel_type"] | null
+          created_at: string | null
+          id: string | null
+          linked_entity_id: string | null
+          linked_entity_type:
+            | Database["public"]["Enums"]["chat_entity_type"]
+            | null
+          mention_type: string | null
+          message_content: string | null
+          message_id: string | null
+          message_type: Database["public"]["Enums"]["chat_message_type"] | null
+          sender_avatar: string | null
+          sender_id: string | null
+          sender_name: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chat_mentions_channel_id_fkey"
+            columns: ["channel_id"]
+            isOneToOne: false
+            referencedRelation: "chat_channels"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "chat_mentions_channel_id_fkey"
+            columns: ["channel_id"]
+            isOneToOne: false
+            referencedRelation: "chat_channels_with_unread"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "chat_mentions_message_id_fkey"
+            columns: ["message_id"]
+            isOneToOne: false
+            referencedRelation: "chat_messages"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       crm_contacts_active: {
         Row: {
@@ -6273,6 +8773,20 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "crm_contacts_linked_investor_id_fkey"
+            columns: ["linked_investor_id"]
+            isOneToOne: false
+            referencedRelation: "investors_portal"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "crm_contacts_linked_investor_id_fkey"
+            columns: ["linked_investor_id"]
+            isOneToOne: false
+            referencedRelation: "investors_safe"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "crm_contacts_linked_loan_id_fkey"
             columns: ["linked_loan_id"]
             isOneToOne: false
@@ -6291,6 +8805,127 @@ export type Database = {
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      entity_investors_detail: {
+        Row: {
+          ein: string | null
+          email: string | null
+          entity_id: string | null
+          entity_investor_id: string | null
+          entity_name: string | null
+          entity_type: string | null
+          first_name: string | null
+          investor_id: string | null
+          is_signing_member: boolean | null
+          last_name: string | null
+          owner_name: string | null
+          ownership_pct: number | null
+          phone: string | null
+          state_of_formation: string | null
+          title: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "entity_investors_entity_id_fkey"
+            columns: ["entity_id"]
+            isOneToOne: false
+            referencedRelation: "investing_entities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "entity_investors_entity_id_fkey"
+            columns: ["entity_id"]
+            isOneToOne: false
+            referencedRelation: "investing_entities_portal"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "entity_investors_entity_id_fkey"
+            columns: ["entity_id"]
+            isOneToOne: false
+            referencedRelation: "investing_entities_safe"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "entity_investors_investor_id_fkey"
+            columns: ["investor_id"]
+            isOneToOne: false
+            referencedRelation: "investors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "entity_investors_investor_id_fkey"
+            columns: ["investor_id"]
+            isOneToOne: false
+            referencedRelation: "investors_portal"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "entity_investors_investor_id_fkey"
+            columns: ["investor_id"]
+            isOneToOne: false
+            referencedRelation: "investors_safe"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      entity_owners_detail: {
+        Row: {
+          borrower_id: string | null
+          ein: string | null
+          email: string | null
+          entity_id: string | null
+          entity_name: string | null
+          entity_owner_id: string | null
+          entity_type: string | null
+          first_name: string | null
+          formation_date: string | null
+          is_guarantor: boolean | null
+          is_signing_member: boolean | null
+          last_name: string | null
+          owner_name: string | null
+          ownership_pct: number | null
+          phone: string | null
+          state_of_formation: string | null
+          title: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "entity_owners_borrower_id_fkey"
+            columns: ["borrower_id"]
+            isOneToOne: false
+            referencedRelation: "borrowers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "entity_owners_borrower_id_fkey"
+            columns: ["borrower_id"]
+            isOneToOne: false
+            referencedRelation: "borrowers_portal"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "entity_owners_borrower_id_fkey"
+            columns: ["borrower_id"]
+            isOneToOne: false
+            referencedRelation: "borrowers_safe"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "entity_owners_entity_id_fkey"
+            columns: ["entity_id"]
+            isOneToOne: false
+            referencedRelation: "borrower_entities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "entity_owners_entity_id_fkey"
+            columns: ["entity_id"]
+            isOneToOne: false
+            referencedRelation: "borrower_entities_safe"
             referencedColumns: ["id"]
           },
         ]
@@ -6364,15 +8999,259 @@ export type Database = {
             referencedRelation: "investors"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "investing_entities_investor_id_fkey"
+            columns: ["investor_id"]
+            isOneToOne: false
+            referencedRelation: "investors_portal"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "investing_entities_investor_id_fkey"
+            columns: ["investor_id"]
+            isOneToOne: false
+            referencedRelation: "investors_safe"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      investing_entities_safe: {
+        Row: {
+          address_line1: string | null
+          address_line2: string | null
+          city: string | null
+          country: string | null
+          created_at: string | null
+          ein: string | null
+          entity_name: string | null
+          entity_type: string | null
+          id: string | null
+          investor_id: string | null
+          notes: string | null
+          state: string | null
+          state_of_formation: string | null
+          updated_at: string | null
+          zip: string | null
+        }
+        Insert: {
+          address_line1?: string | null
+          address_line2?: string | null
+          city?: string | null
+          country?: string | null
+          created_at?: string | null
+          ein?: never
+          entity_name?: string | null
+          entity_type?: string | null
+          id?: string | null
+          investor_id?: string | null
+          notes?: string | null
+          state?: string | null
+          state_of_formation?: string | null
+          updated_at?: string | null
+          zip?: string | null
+        }
+        Update: {
+          address_line1?: string | null
+          address_line2?: string | null
+          city?: string | null
+          country?: string | null
+          created_at?: string | null
+          ein?: never
+          entity_name?: string | null
+          entity_type?: string | null
+          id?: string | null
+          investor_id?: string | null
+          notes?: string | null
+          state?: string | null
+          state_of_formation?: string | null
+          updated_at?: string | null
+          zip?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "investing_entities_investor_id_fkey"
+            columns: ["investor_id"]
+            isOneToOne: false
+            referencedRelation: "investors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "investing_entities_investor_id_fkey"
+            columns: ["investor_id"]
+            isOneToOne: false
+            referencedRelation: "investors_portal"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "investing_entities_investor_id_fkey"
+            columns: ["investor_id"]
+            isOneToOne: false
+            referencedRelation: "investors_safe"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      investors_portal: {
+        Row: {
+          accreditation_status: string | null
+          accreditation_verified_at: string | null
+          address_line1: string | null
+          address_line2: string | null
+          city: string | null
+          country: string | null
+          created_at: string | null
+          crm_contact_id: string | null
+          email: string | null
+          first_name: string | null
+          id: string | null
+          last_name: string | null
+          notes: string | null
+          phone: string | null
+          state: string | null
+          updated_at: string | null
+          user_id: string | null
+          zip: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "investors_crm_contact_id_fkey"
+            columns: ["crm_contact_id"]
+            isOneToOne: false
+            referencedRelation: "crm_contacts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "investors_crm_contact_id_fkey"
+            columns: ["crm_contact_id"]
+            isOneToOne: false
+            referencedRelation: "crm_contacts_active"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      investors_safe: {
+        Row: {
+          accreditation_status: string | null
+          accreditation_verified_at: string | null
+          address_line1: string | null
+          address_line2: string | null
+          city: string | null
+          country: string | null
+          created_at: string | null
+          crm_contact_id: string | null
+          email: string | null
+          first_name: string | null
+          id: string | null
+          last_name: string | null
+          notes: string | null
+          phone: string | null
+          state: string | null
+          updated_at: string | null
+          zip: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "investors_crm_contact_id_fkey"
+            columns: ["crm_contact_id"]
+            isOneToOne: false
+            referencedRelation: "crm_contacts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "investors_crm_contact_id_fkey"
+            columns: ["crm_contact_id"]
+            isOneToOne: false
+            referencedRelation: "crm_contacts_active"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      loan_borrowers_detail: {
+        Row: {
+          borrower_id: string | null
+          credit_report_date_at_intake: string | null
+          credit_score_at_intake: number | null
+          crm_contact_id: string | null
+          deals_last_2_years: number | null
+          email: string | null
+          experience_count: number | null
+          first_name: string | null
+          full_name: string | null
+          is_us_citizen: boolean | null
+          last_name: string | null
+          loan_borrower_id: string | null
+          loan_id: string | null
+          marital_status: string | null
+          phone: string | null
+          role: string | null
+          role_notes: string | null
+          sort_order: number | null
+          stated_liquidity_at_intake: number | null
+          stated_net_worth_at_intake: number | null
+          verified_liquidity_at_intake: number | null
+          verified_net_worth_at_intake: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "borrowers_crm_contact_id_fkey"
+            columns: ["crm_contact_id"]
+            isOneToOne: false
+            referencedRelation: "crm_contacts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "borrowers_crm_contact_id_fkey"
+            columns: ["crm_contact_id"]
+            isOneToOne: false
+            referencedRelation: "crm_contacts_active"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "loan_borrowers_borrower_id_fkey"
+            columns: ["borrower_id"]
+            isOneToOne: false
+            referencedRelation: "borrowers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "loan_borrowers_borrower_id_fkey"
+            columns: ["borrower_id"]
+            isOneToOne: false
+            referencedRelation: "borrowers_portal"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "loan_borrowers_borrower_id_fkey"
+            columns: ["borrower_id"]
+            isOneToOne: false
+            referencedRelation: "borrowers_safe"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "loan_borrowers_loan_id_fkey"
+            columns: ["loan_id"]
+            isOneToOne: false
+            referencedRelation: "loan_pipeline"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "loan_borrowers_loan_id_fkey"
+            columns: ["loan_id"]
+            isOneToOne: false
+            referencedRelation: "loans"
+            referencedColumns: ["id"]
+          },
         ]
       }
       loan_pipeline: {
         Row: {
+          approval_status: string | null
           approved_conditions: number | null
           borrower_name: string | null
           closing_date: string | null
           created_at: string | null
           entity_name: string | null
+          funding_channel: string | null
           funding_source: string | null
           id: string | null
           interest_rate: number | null
@@ -6394,6 +9273,58 @@ export type Database = {
           updated_at: string | null
         }
         Relationships: []
+      }
+      opportunity_pipeline: {
+        Row: {
+          approval_status: string | null
+          asset_type: string | null
+          assigned_underwriter: string | null
+          borrower_count: number | null
+          borrower_name: string | null
+          capital_partner: string | null
+          combined_liquidity: number | null
+          combined_net_worth: number | null
+          created_at: string | null
+          deal_name: string | null
+          entity_name: string | null
+          funding_channel: string | null
+          id: string | null
+          internal_notes: string | null
+          loan_id: string | null
+          loan_purpose: string | null
+          loan_type: string | null
+          number_of_units: number | null
+          originator: string | null
+          processor: string | null
+          property_address: string | null
+          property_city: string | null
+          property_state: string | null
+          property_type: string | null
+          property_zip: string | null
+          proposed_interest_rate: number | null
+          proposed_loan_amount: number | null
+          proposed_ltarv: number | null
+          proposed_ltv: number | null
+          stage: string | null
+          stage_changed_at: string | null
+          updated_at: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "opportunities_loan_id_fkey"
+            columns: ["loan_id"]
+            isOneToOne: false
+            referencedRelation: "loan_pipeline"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "opportunities_loan_id_fkey"
+            columns: ["loan_id"]
+            isOneToOne: false
+            referencedRelation: "loans"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       search_index: {
         Row: {
@@ -6434,7 +9365,12 @@ export type Database = {
       daitch_mokotoff: { Args: { "": string }; Returns: string[] }
       dmetaphone: { Args: { "": string }; Returns: string }
       dmetaphone_alt: { Args: { "": string }; Returns: string }
+      evaluate_auto_approval: { Args: { p_loan_id: string }; Returns: string }
       generate_loan_conditions: { Args: { p_loan_id: string }; Returns: number }
+      get_borrower_deals_last_2_years: {
+        Args: { p_borrower_id: string }
+        Returns: number
+      }
       get_my_roles: {
         Args: never
         Returns: {
@@ -6462,6 +9398,11 @@ export type Database = {
         Returns: boolean
       }
       is_admin: { Args: never; Returns: boolean }
+      is_channel_member: {
+        Args: { p_channel_id: string; p_user_id: string }
+        Returns: boolean
+      }
+      is_chat_admin: { Args: { p_user_id: string }; Returns: boolean }
       is_super_admin: { Args: never; Returns: boolean }
       link_contact_to_user: {
         Args: { contact_email: string }
@@ -6490,6 +9431,7 @@ export type Database = {
           source_type: string
         }[]
       }
+      match_or_create_property: { Args: { p_loan_id: string }; Returns: string }
       my_borrower_ids: { Args: never; Returns: string[] }
       my_investor_ids: { Args: never; Returns: string[] }
       notify_admins: {
@@ -6504,6 +9446,14 @@ export type Database = {
           p_slug: string
           p_title: string
         }
+        Returns: undefined
+      }
+      populate_loan_from_property: {
+        Args: { p_loan_id: string; p_property_id: string }
+        Returns: Json
+      }
+      recalc_combined_borrower_financials: {
+        Args: { p_loan_id: string }
         Returns: undefined
       }
       refresh_search_index: { Args: never; Returns: undefined }
@@ -6530,6 +9480,32 @@ export type Database = {
           metadata: Json
           rank: number
           updated_at: string
+        }[]
+      }
+      search_sop_embeddings: {
+        Args: {
+          match_count?: number
+          match_threshold?: number
+          query_embedding: string
+        }
+        Returns: {
+          chunk_text: string
+          similarity: number
+          sop_id: string
+          sop_title: string
+        }[]
+      }
+      search_sops: {
+        Args: { cat?: string; dept?: string; search_query: string }
+        Returns: {
+          category: string
+          department: string
+          id: string
+          rank: number
+          slug: string
+          status: string
+          summary: string
+          title: string
         }[]
       }
       set_active_underwriting_version: {
@@ -6562,6 +9538,32 @@ export type Database = {
         | "lead_nurture"
         | "borrower_reengagement"
         | "broker_reengagement"
+      chat_channel_type:
+        | "deal_room"
+        | "team"
+        | "direct"
+        | "group"
+        | "investor_room"
+        | "borrower_room"
+        | "project_room"
+      chat_entity_type:
+        | "loan"
+        | "property"
+        | "fund"
+        | "investor"
+        | "borrower"
+        | "borrower_entity"
+        | "ops_project"
+        | "crm_contact"
+      chat_member_role: "owner" | "admin" | "member" | "guest" | "observer"
+      chat_message_type:
+        | "text"
+        | "system"
+        | "file"
+        | "ai_response"
+        | "action_item"
+        | "status_update"
+        | "mention_link"
       company_subtype_enum:
         | "bank"
         | "agency_lender"
@@ -6660,7 +9662,12 @@ export type Database = {
         | "active"
         | "past"
       linked_entity_type_enum: "loan" | "borrower" | "investor" | "fund"
-      loan_purpose: "purchase" | "refinance" | "cash_out_refinance"
+      loan_purpose:
+        | "purchase"
+        | "refinance"
+        | "cash_out_refinance"
+        | "guc"
+        | "transactional"
       loan_status:
         | "lead"
         | "application"
@@ -6677,6 +9684,13 @@ export type Database = {
         | "denied"
         | "reo"
         | "paid_off"
+        | "awaiting_info"
+        | "uw"
+        | "quoting"
+        | "offer_placed"
+        | "closed"
+        | "onboarding"
+        | "closed_lost"
       loan_type: "commercial" | "dscr" | "guc" | "rtl" | "transactional"
       property_type:
         | "sfr"
@@ -6693,6 +9707,10 @@ export type Database = {
         | "mobile_home_park"
         | "land"
         | "other"
+        | "rv_campground"
+        | "self_storage"
+        | "hotel_hospitality"
+        | "healthcare"
       relationship_type_enum:
         | "borrower"
         | "investor"
@@ -6859,6 +9877,35 @@ export const Constants = {
         "borrower_reengagement",
         "broker_reengagement",
       ],
+      chat_channel_type: [
+        "deal_room",
+        "team",
+        "direct",
+        "group",
+        "investor_room",
+        "borrower_room",
+        "project_room",
+      ],
+      chat_entity_type: [
+        "loan",
+        "property",
+        "fund",
+        "investor",
+        "borrower",
+        "borrower_entity",
+        "ops_project",
+        "crm_contact",
+      ],
+      chat_member_role: ["owner", "admin", "member", "guest", "observer"],
+      chat_message_type: [
+        "text",
+        "system",
+        "file",
+        "ai_response",
+        "action_item",
+        "status_update",
+        "mention_link",
+      ],
       company_subtype_enum: [
         "bank",
         "agency_lender",
@@ -6967,7 +10014,13 @@ export const Constants = {
         "past",
       ],
       linked_entity_type_enum: ["loan", "borrower", "investor", "fund"],
-      loan_purpose: ["purchase", "refinance", "cash_out_refinance"],
+      loan_purpose: [
+        "purchase",
+        "refinance",
+        "cash_out_refinance",
+        "guc",
+        "transactional",
+      ],
       loan_status: [
         "lead",
         "application",
@@ -6984,6 +10037,13 @@ export const Constants = {
         "denied",
         "reo",
         "paid_off",
+        "awaiting_info",
+        "uw",
+        "quoting",
+        "offer_placed",
+        "closed",
+        "onboarding",
+        "closed_lost",
       ],
       loan_type: ["commercial", "dscr", "guc", "rtl", "transactional"],
       property_type: [
@@ -7001,6 +10061,10 @@ export const Constants = {
         "mobile_home_park",
         "land",
         "other",
+        "rv_campground",
+        "self_storage",
+        "hotel_hospitality",
+        "healthcare",
       ],
       relationship_type_enum: [
         "borrower",
@@ -7026,44 +10090,133 @@ export const Constants = {
   },
 } as const
 
-// ---- Custom type aliases ----
+
+// Type exports for convenience
 export type Profile = Database["public"]["Tables"]["profiles"]["Row"];
 export type Loan = Database["public"]["Tables"]["loans"]["Row"];
 export type LoanInsert = Database["public"]["Tables"]["loans"]["Insert"];
+export type Borrower = Database["public"]["Tables"]["borrowers"]["Row"];
+export type BorrowerInsert = Database["public"]["Tables"]["borrowers"]["Insert"];
+export type BorrowerEntity = Database["public"]["Tables"]["borrower_entities"]["Row"];
 export type Fund = Database["public"]["Tables"]["funds"]["Row"];
 export type Investor = Database["public"]["Tables"]["investors"]["Row"];
+export type InvestorInsert = Database["public"]["Tables"]["investors"]["Insert"];
 export type InvestorCommitment = Database["public"]["Tables"]["investor_commitments"]["Row"];
 export type LoanPayment = Database["public"]["Tables"]["loan_payments"]["Row"];
 export type LoanCondition = Database["public"]["Tables"]["loan_conditions"]["Row"];
 export type LoanDocument = Database["public"]["Tables"]["loan_documents"]["Row"];
-export type LoanConditionTemplate = Database["public"]["Tables"]["loan_condition_templates"]["Row"];
 export type DrawRequest = Database["public"]["Tables"]["draw_requests"]["Row"];
-export type Borrower = Database["public"]["Tables"]["borrowers"]["Row"];
-export type BorrowerInsert = Database["public"]["Tables"]["borrowers"]["Insert"];
-export type BorrowerEntity = Database["public"]["Tables"]["borrower_entities"]["Row"];
-export type InvestorInsert = Database["public"]["Tables"]["investors"]["Insert"];
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export type PricingProgram = any;
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export type LeverageAdjuster = any;
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export type PricingProgramVersion = any;
+
+// New opportunity types
+export type Opportunity = Database["public"]["Tables"]["opportunities"]["Row"];
+export type OpportunityInsert = Database["public"]["Tables"]["opportunities"]["Insert"];
+export type OpportunityUpdate = Database["public"]["Tables"]["opportunities"]["Update"];
+export type OpportunityBorrower = Database["public"]["Tables"]["opportunity_borrowers"]["Row"];
+export type OpportunityBorrowerInsert = Database["public"]["Tables"]["opportunity_borrowers"]["Insert"];
+export type PropertyFinancialSnapshot = Database["public"]["Tables"]["property_financial_snapshots"]["Row"];
+export type PropertyFinancialSnapshotInsert = Database["public"]["Tables"]["property_financial_snapshots"]["Insert"];
+export type Property = Database["public"]["Tables"]["properties"]["Row"];
+export type PropertyInsert = Database["public"]["Tables"]["properties"]["Insert"];
+export type EntityOwner = Database["public"]["Tables"]["entity_owners"]["Row"];
+
+// Pipeline view type
+export type OpportunityPipeline = Database["public"]["Views"]["opportunity_pipeline"]["Row"];
+
+// Table-derived types for tables that exist in the schema
 export type Document = Database["public"]["Tables"]["documents"]["Row"];
+export type LoanConditionTemplate = Database["public"]["Tables"]["loan_condition_templates"]["Row"];
 export type CrmContact = Database["public"]["Tables"]["crm_contacts"]["Row"];
-export type CrmActivity = Database["public"]["Tables"]["crm_activities"]["Row"];
-export type CrmEmail = Database["public"]["Tables"]["crm_emails"]["Row"];
-export type CrmEmailInsert = Database["public"]["Tables"]["crm_emails"]["Insert"];
 
-// New: Inbound email sync types
-export type GmailSyncState = Database["public"]["Tables"]["gmail_sync_state"]["Row"];
-export type GmailSyncStateInsert = Database["public"]["Tables"]["gmail_sync_state"]["Insert"];
-export type EmailParticipant = Database["public"]["Tables"]["email_participants"]["Row"];
-export type EmailParticipantInsert = Database["public"]["Tables"]["email_participants"]["Insert"];
-export type GmailToken = Database["public"]["Tables"]["gmail_tokens"]["Row"];
+// Manual type definitions for tables that may not exist yet in generated types
+export interface PricingProgram {
+  id: string;
+  program_id: string;
+  loan_type: string;
+  program_name: string;
+  arv_label: string;
+  interest_rate: number;
+  rate_type: string;
+  origination_points: number;
+  min_origination_fee: number;
+  points_note: string;
+  max_ltv: number;
+  ltv_note: string;
+  max_ltc: number;
+  ltc_note: string;
+  max_ltp: number;
+  loan_term_months: number;
+  exit_points: number;
+  term_note: string;
+  legal_doc_fee: number;
+  bpo_appraisal_cost: number;
+  bpo_appraisal_note: string;
+  min_credit_score: number;
+  min_deals_24mo: number;
+  citizenship: string;
+  version: number;
+  is_current: boolean;
+  effective_date: string | null;
+  created_at?: string;
+  updated_at?: string;
+}
 
-// Lender quote tracker types
-export type LenderQuote = Database["public"]["Tables"]["lender_quotes"]["Row"];
-export type LenderQuoteInsert = Database["public"]["Tables"]["lender_quotes"]["Insert"];
-export type LenderQuoteUpdate = Database["public"]["Tables"]["lender_quotes"]["Update"];
-export type LenderQuoteActivity = Database["public"]["Tables"]["lender_quote_activities"]["Row"];
-export type LenderQuoteActivityInsert = Database["public"]["Tables"]["lender_quote_activities"]["Insert"];
+export interface LeverageAdjuster {
+  id: string;
+  risk_factor: string;
+  display_name: string;
+  condition_description: string;
+  ltc_adjustment: number;
+  ltv_adjustment: number;
+  note: string;
+  is_active: boolean;
+  sort_order?: number;
+}
+
+export interface PricingProgramVersion {
+  id: string;
+  program_id: string;
+  version: number;
+  changed_at: string;
+  changed_by: string | null;
+  change_summary: string | null;
+  change_description: string | null;
+}
+
+export interface LenderQuote {
+  id: string;
+  loan_id: string;
+  quote_name: string;
+  lender_company_id: string | null;
+  lender_contact_name: string | null;
+  interest_rate: number | null;
+  origination_fee: number | null;
+  origination_points: number | null;
+  loan_amount: number | null;
+  ltv: number | null;
+  ltc: number | null;
+  loan_term_months: number | null;
+  interest_only_period_months: number | null;
+  amortization_months: number | null;
+  uw_processing_fee: number | null;
+  requity_lending_fee: number | null;
+  ym_spread: number | null;
+  ym_amount: number | null;
+  prepayment_penalty: string | null;
+  closing_costs: number | null;
+  notes: string | null;
+  description: string | null;
+  status: string;
+  status_changed_at: string | null;
+  linked_property_id: string | null;
+  term_sheet_url: string | null;
+  requested_at: string | null;
+  received_at: string | null;
+  accepted_at: string | null;
+  declined_at: string | null;
+  declined_reason: string | null;
+  created_by: string | null;
+  updated_by: string | null;
+  created_at: string;
+  updated_at: string;
+  [key: string]: unknown;
+}

@@ -855,3 +855,276 @@ export const APP_ROLES = [
   "borrower",
 ] as const;
 export type AppRole = (typeof APP_ROLES)[number];
+
+// ============================================
+// Opportunities — Pipeline Stages
+// ============================================
+
+/** Opportunity pipeline stages (on opportunities table) */
+export const OPPORTUNITY_STAGES = [
+  "awaiting_info",
+  "uw",
+  "quoting",
+  "offer_placed",
+  "processing",
+  "closed",
+  "onboarding",
+  "closed_lost",
+] as const;
+export type OpportunityStage = (typeof OPPORTUNITY_STAGES)[number];
+
+/** Active pipeline stages shown on board */
+export const OPPORTUNITY_PIPELINE_STAGES: OpportunityStage[] = [
+  "awaiting_info",
+  "uw",
+  "quoting",
+  "offer_placed",
+  "processing",
+  "closed",
+  "onboarding",
+];
+
+export const OPPORTUNITY_STAGE_LABELS: Record<string, string> = {
+  awaiting_info: "Awaiting Info",
+  uw: "UW",
+  quoting: "Quoting",
+  offer_placed: "Offer(s) Placed",
+  processing: "Processing",
+  closed: "Closed",
+  onboarding: "Onboarding",
+  closed_lost: "Closed Lost",
+};
+
+export const OPPORTUNITY_STAGE_COLORS: Record<string, string> = {
+  awaiting_info: "bg-slate-100 text-slate-800",
+  uw: "bg-purple-100 text-purple-800",
+  quoting: "bg-blue-100 text-blue-800",
+  offer_placed: "bg-indigo-100 text-indigo-800",
+  processing: "bg-amber-100 text-amber-800",
+  closed: "bg-green-100 text-green-800",
+  onboarding: "bg-teal-100 text-teal-800",
+  closed_lost: "bg-red-100 text-red-800",
+};
+
+/** Loss reasons when stage = closed_lost */
+export const LOSS_REASONS = [
+  { value: "unqualified", label: "Unqualified" },
+  { value: "pricing_lost_to_competitor", label: "Pricing / Lost to Competitor" },
+  { value: "non_responsive_borrower", label: "Non-Responsive Borrower" },
+  { value: "business_plan_change", label: "Business Plan Change" },
+  { value: "ice", label: "ICE (On Hold)" },
+] as const;
+
+// ============================================
+// Opportunities — Funding Channel
+// ============================================
+
+export const FUNDING_CHANNELS = [
+  { value: "balance_sheet", label: "Balance Sheet" },
+  { value: "brokered", label: "Brokered" },
+  { value: "correspondent", label: "Correspondent" },
+] as const;
+
+// ============================================
+// Opportunities — Approval Status
+// ============================================
+
+export const APPROVAL_STATUSES = [
+  { value: "not_required", label: "Not Required" },
+  { value: "pending", label: "Pending" },
+  { value: "approved", label: "Approved" },
+  { value: "denied", label: "Denied" },
+  { value: "auto_approved", label: "Auto-Approved" },
+  { value: "auto_flagged", label: "Auto-Flagged" },
+] as const;
+
+export const APPROVAL_STATUS_COLORS: Record<string, string> = {
+  not_required: "bg-slate-100 text-slate-600",
+  pending: "bg-yellow-100 text-yellow-800",
+  approved: "bg-green-100 text-green-800",
+  denied: "bg-red-100 text-red-800",
+  auto_approved: "bg-green-100 text-green-800",
+  auto_flagged: "bg-red-100 text-red-800",
+};
+
+// ============================================
+// Opportunities — Deal Classification
+// ============================================
+
+export const DEBT_TRANCHES = [
+  { value: "mezzanine", label: "Mezzanine" },
+  { value: "senior_financing", label: "Senior Financing" },
+  { value: "preferred_equity", label: "Preferred Equity" },
+] as const;
+
+export const INVESTMENT_STRATEGIES = [
+  { value: "core", label: "Core" },
+  { value: "core_plus", label: "Core Plus" },
+  { value: "value_add", label: "Value Add" },
+  { value: "opportunistic", label: "Opportunistic" },
+  { value: "distressed", label: "Distressed" },
+  { value: "debt", label: "Debt" },
+  { value: "fund_of_funds", label: "Fund of Funds" },
+  { value: "secondaries", label: "Secondaries" },
+] as const;
+
+export const DEAL_FINANCING_OPTIONS = [
+  { value: "all_cash", label: "All Cash" },
+  { value: "financed_by_buyer", label: "Financed by Buyer" },
+  { value: "financed_by_competitor", label: "Financed by Competitor" },
+  { value: "debt_assumed", label: "Debt Assumed" },
+  { value: "financed_by_requity", label: "Financed by Requity" },
+] as const;
+
+export const VALUE_METHODS = [
+  { value: "underwritten_arv", label: "Underwritten ARV" },
+  { value: "borrower_arv", label: "Borrower ARV" },
+  { value: "appraisal_1_arv", label: "Appraisal 1 ARV" },
+  { value: "appraisal_2_arv", label: "Appraisal 2 ARV" },
+] as const;
+
+export const PREPAYMENT_PENALTY_TYPES = [
+  { value: "none", label: "None" },
+  { value: "flat", label: "Flat" },
+  { value: "step_down", label: "Step Down" },
+  { value: "yield_maintenance", label: "Yield Maintenance" },
+  { value: "defeasance", label: "Defeasance" },
+] as const;
+
+export const RENTAL_STATUSES = [
+  { value: "owner_occupied", label: "Owner Occupied" },
+  { value: "non_owner_occupied", label: "Non-Owner Occupied" },
+  { value: "partially_owner_occupied", label: "Partially Owner Occupied" },
+  { value: "vacant", label: "Vacant" },
+  { value: "partially_vacant", label: "Partially Vacant" },
+] as const;
+
+export const LEASE_TYPES = [
+  { value: "nnn", label: "NNN" },
+  { value: "nn", label: "NN" },
+  { value: "gross", label: "Gross" },
+] as const;
+
+// ============================================
+// Opportunities — Borrower Roles
+// ============================================
+
+export const BORROWER_ROLES = [
+  { value: "primary", label: "Primary (B1)" },
+  { value: "co_borrower", label: "Co-Borrower" },
+  { value: "guarantor", label: "Guarantor" },
+  { value: "key_principal", label: "Key Principal" },
+] as const;
+
+// ============================================
+// Property Financial Snapshots
+// ============================================
+
+export const SNAPSHOT_TYPES = [
+  { value: "rent_roll", label: "Rent Roll" },
+  { value: "t12", label: "T12" },
+  { value: "pro_forma", label: "Pro Forma" },
+  { value: "appraisal", label: "Appraisal" },
+  { value: "broker_opinion", label: "Broker Opinion" },
+] as const;
+
+export const SNAPSHOT_SOURCES = [
+  { value: "borrower_provided", label: "Borrower Provided" },
+  { value: "appraiser", label: "Appraiser" },
+  { value: "property_manager", label: "Property Manager" },
+  { value: "broker", label: "Broker" },
+  { value: "internal_uw", label: "Internal UW" },
+  { value: "other", label: "Other" },
+] as const;
+
+// ============================================
+// Property — Asset Types & Classification
+// ============================================
+
+export const ASSET_TYPES = [
+  { value: "Residential", label: "Residential" },
+  { value: "Multifamily", label: "Multifamily" },
+  { value: "MHC", label: "MHC" },
+  { value: "RV Campground", label: "RV Campground" },
+  { value: "Industrial", label: "Industrial" },
+  { value: "Land", label: "Land" },
+  { value: "Retail", label: "Retail" },
+  { value: "Self-storage", label: "Self-storage" },
+  { value: "Hotels & Hospitality", label: "Hotels & Hospitality" },
+  { value: "Healthcare", label: "Healthcare" },
+  { value: "Mixed Use", label: "Mixed Use" },
+  { value: "Office", label: "Office" },
+  { value: "Other", label: "Other" },
+] as const;
+
+export const BUILDING_CLASSES = [
+  { value: "trophy", label: "Trophy" },
+  { value: "class_a", label: "Class A" },
+  { value: "class_b", label: "Class B" },
+  { value: "class_c", label: "Class C" },
+  { value: "class_sub_c", label: "Sub-C" },
+  { value: "not_applicable", label: "N/A" },
+] as const;
+
+export const BUILDING_STATUSES = [
+  { value: "existing", label: "Existing" },
+  { value: "under_construction", label: "Under Construction" },
+  { value: "proposed_no_permission", label: "Proposed (No Permission)" },
+  { value: "proposed", label: "Proposed" },
+  { value: "under_renovation", label: "Under Renovation" },
+] as const;
+
+export const SEWER_SYSTEMS = [
+  { value: "city_sewer_direct", label: "City Sewer (Direct)" },
+  { value: "city_sewer_billed_back", label: "City Sewer (Billed Back)" },
+  { value: "septic_1_1", label: "Septic 1:1" },
+  { value: "septic_2_1", label: "Septic 2:1" },
+  { value: "septic_other", label: "Septic Other" },
+  { value: "wwtp", label: "WWTP" },
+  { value: "other", label: "Other" },
+] as const;
+
+export const WATER_SYSTEMS = [
+  { value: "city_water_direct", label: "City Water (Direct)" },
+  { value: "city_water_master_billed", label: "City Water (Master Billed)" },
+  { value: "city_water_master_not_billed", label: "City Water (Master Not Billed)" },
+  { value: "well_water", label: "Well Water" },
+] as const;
+
+export const PERMITTING_STATUSES = [
+  { value: "no_permits_required", label: "No Permits Required" },
+  { value: "fully_permitted", label: "Fully Permitted" },
+  { value: "permits_pending", label: "Permits Pending" },
+  { value: "permits_required_not_submitted", label: "Permits Required (Not Submitted)" },
+  { value: "unknown", label: "Unknown" },
+] as const;
+
+export const FLOOD_ZONES = [
+  { value: "yes", label: "Yes" },
+  { value: "no", label: "No" },
+  { value: "partial", label: "Partial" },
+] as const;
+
+export const LISTING_STATUSES = [
+  { value: "listed", label: "Listed" },
+  { value: "recent_listed", label: "Recently Listed" },
+  { value: "not_listed", label: "Not Listed" },
+] as const;
+
+export const CONDO_STATUSES = [
+  { value: "not_a_condo", label: "Not a Condo" },
+  { value: "warrantable", label: "Warrantable" },
+  { value: "non_warrantable", label: "Non-Warrantable" },
+] as const;
+
+// ============================================
+// Entity Owner Titles
+// ============================================
+
+export const ENTITY_OWNER_TITLES = [
+  { value: "member", label: "Member" },
+  { value: "manager", label: "Manager" },
+  { value: "managing_member", label: "Managing Member" },
+  { value: "authorized_signer", label: "Authorized Signer" },
+  { value: "officer", label: "Officer" },
+] as const;

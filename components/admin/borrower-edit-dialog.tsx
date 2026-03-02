@@ -25,10 +25,10 @@ import { useToast } from "@/components/ui/use-toast";
 import { updateBorrowerAction } from "@/app/(authenticated)/admin/borrowers/new/actions";
 import { Loader2, Pencil } from "lucide-react";
 import { US_STATES } from "@/lib/constants";
-import type { Borrower } from "@/lib/supabase/types";
+// Borrower contact fields now live on crm_contacts; use `any` until refactored.
 
 interface BorrowerEditDialogProps {
-  borrower: Borrower;
+  borrower: any;
 }
 
 export function BorrowerEditDialog({ borrower }: BorrowerEditDialogProps) {

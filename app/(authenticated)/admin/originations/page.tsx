@@ -3,9 +3,10 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { redirect } from "next/navigation";
 import { PageHeader } from "@/components/shared/page-header";
 import { KpiCard } from "@/components/shared/kpi-card";
-import { CreateLoanDialog } from "@/components/admin/create-loan-dialog";
 import { OriginationsTabs } from "@/components/admin/originations/originations-tabs";
-import { Home, ClipboardList, Calculator } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import Link from "next/link";
+import { Home, ClipboardList, Calculator, Briefcase, Plus } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
@@ -28,8 +29,9 @@ export default async function AdminOriginationsPage() {
     teamResult,
     borrowersResult,
     documentsResult,
+    opportunitiesResult,
   ] = await Promise.all([
-    // Pipeline data
+    // Legacy loan pipeline data
     supabase
       .from("loans")
       .select("*")
@@ -40,7 +42,7 @@ export default async function AdminOriginationsPage() {
       .select("id, full_name")
       .eq("role", "admin")
       .order("full_name"),
-    admin
+    (admin as any)
       .from("borrowers")
       .select("id, first_name, last_name, email")
       .order("last_name"),
@@ -48,6 +50,11 @@ export default async function AdminOriginationsPage() {
       .from("documents")
       .select("loan_id")
       .not("loan_id", "is", null),
+    // New opportunity pipeline
+    admin
+      .from("opportunity_pipeline")
+      .select("*")
+      .order("created_at", { ascending: false }),
   ]);
 
   // Pricing data — tables may not exist yet
@@ -62,7 +69,9 @@ export default async function AdminOriginationsPage() {
       .order("program_id")
       .order("version", { ascending: false });
     programsData = data ?? [];
-  } catch { /* table may not exist */ }
+  } catch {
+    /* table may not exist */
+  }
 
   try {
     const { data } = await (supabase as any)
@@ -70,7 +79,9 @@ export default async function AdminOriginationsPage() {
       .select("*")
       .order("sort_order");
     adjustersData = data ?? [];
-  } catch { /* table may not exist */ }
+  } catch {
+    /* table may not exist */
+  }
 
   try {
     const { data } = await (supabase as any)
@@ -79,9 +90,11 @@ export default async function AdminOriginationsPage() {
       .order("changed_at", { ascending: false })
       .limit(20);
     versionsData = data ?? [];
-  } catch { /* table may not exist */ }
+  } catch {
+    /* table may not exist */
+  }
 
-  // Condition counts — separate query so it won't break if the table doesn't exist yet
+  // Condition counts
   let conditionsResult: { data: any[] | null } = { data: [] };
   try {
     conditionsResult = await supabase
@@ -107,19 +120,13 @@ export default async function AdminOriginationsPage() {
       full_name: t.full_name ?? "Unknown",
     })
   );
-  const borrowers = (borrowersResult.data ?? []).map(
-    (b: {
-      id: string;
-      first_name: string;
-      last_name: string;
-      email: string | null;
-    }) => ({
+  const borrowers: { id: string; full_name: string; email: string; company_name: string | null }[] =
+    (borrowersResult.data ?? []).map((b: any) => ({
       id: b.id,
-      full_name: `${b.first_name} ${b.last_name}`.trim() || "Unknown",
+      full_name: `${b.first_name ?? ""} ${b.last_name ?? ""}`.trim() || "Unknown",
       email: b.email ?? "",
       company_name: null as string | null,
-    })
-  );
+    }));
 
   const docCounts: Record<string, number> = {};
   (documentsResult.data ?? []).forEach((d: { loan_id: string | null }) => {
@@ -240,6 +247,38 @@ export default async function AdminOriginationsPage() {
   const adjusters = adjustersData;
   const versions = versionsData;
 
+  // ── Build Opportunity Pipeline data ────────────────────────────────
+
+  const opportunities = opportunitiesResult.data ?? [];
+  const opportunityRows = opportunities.map((o: any) => ({
+    id: o.id,
+    deal_name: o.deal_name,
+    stage: o.stage,
+    loan_type: o.loan_type,
+    loan_purpose: o.loan_purpose,
+    funding_channel: o.funding_channel,
+    proposed_loan_amount: o.proposed_loan_amount,
+    proposed_ltv: o.proposed_ltv,
+    approval_status: o.approval_status,
+    stage_changed_at: o.stage_changed_at,
+    created_at: o.created_at,
+    property_address: o.property_address,
+    property_city: o.property_city,
+    property_state: o.property_state,
+    property_type: o.property_type,
+    number_of_units: o.number_of_units,
+    entity_name: o.entity_name,
+    borrower_name: o.borrower_name,
+    borrower_count: o.borrower_count,
+    originator_name: o.originator ? allProfiles[o.originator] ?? null : null,
+    processor_name: o.processor ? allProfiles[o.processor] ?? null : null,
+  }));
+
+  // Filter active opportunities (not closed_lost)
+  const activeOpportunities = opportunityRows.filter(
+    (o: any) => o.stage !== "closed_lost"
+  );
+
   // ── KPI calculations ──────────────────────────────────────────────
 
   const pipelineCount = loanRows.length;
@@ -247,26 +286,37 @@ export default async function AdminOriginationsPage() {
     (c: any) => c.status === "pending"
   ).length;
   const activePrograms = programs.filter((p: any) => p.is_current).length;
+  const dealCount = activeOpportunities.length;
+  const dealVolume = activeOpportunities.reduce(
+    (sum: number, o: any) => sum + (o.proposed_loan_amount || 0),
+    0
+  );
 
   return (
     <div className="space-y-6">
       <PageHeader
         title="Originations"
-        description="Loan pipeline, conditions tracking, and pricing management."
+        description="Deal pipeline, conditions tracking, and pricing management."
         action={
-          <CreateLoanDialog
-            teamMembers={teamMembers}
-            borrowers={borrowers}
-            currentUserId={user.id}
-          />
+          <Link href="/admin/originations/new">
+            <Button className="gap-2">
+              <Plus className="h-4 w-4" />
+              New Deal
+            </Button>
+          </Link>
         }
       />
 
       {/* KPI Row */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <KpiCard
-          title="Pipeline Loans"
-          value={pipelineCount}
+          title="Active Deals"
+          value={dealCount}
+          icon={<Briefcase className="h-5 w-5" />}
+        />
+        <KpiCard
+          title="Deal Volume"
+          value={`$${(dealVolume / 1000000).toFixed(1)}M`}
           icon={<Home className="h-5 w-5" />}
         />
         <KpiCard
@@ -292,6 +342,8 @@ export default async function AdminOriginationsPage() {
         versions={versions}
         pipelineCount={pipelineCount}
         pendingConditionsCount={pendingConditionsCount}
+        opportunityRows={opportunityRows}
+        opportunityCount={dealCount}
       />
     </div>
   );

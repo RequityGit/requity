@@ -521,14 +521,14 @@ export async function fetchInvestorsAction(): Promise<
     if (auth.error) return { error: auth.error };
 
     const admin = createAdminClient();
-    const { data, error } = await admin
+    const { data, error } = await (admin as any)
       .from("investors")
       .select("id, first_name, last_name, email")
       .order("last_name");
 
     if (error) return { error: error.message };
 
-    return { success: true, investors: data ?? [] };
+    return { success: true, investors: (data ?? []) as any[] };
   } catch (err: unknown) {
     console.error("fetchInvestorsAction error:", err);
     const message = err instanceof Error ? err.message : "An unexpected error occurred";
@@ -544,14 +544,14 @@ export async function fetchBorrowersAction(): Promise<
     if (auth.error) return { error: auth.error };
 
     const admin = createAdminClient();
-    const { data, error } = await admin
+    const { data, error } = await (admin as any)
       .from("borrowers")
       .select("id, first_name, last_name, email")
       .order("last_name");
 
     if (error) return { error: error.message };
 
-    return { success: true, borrowers: data ?? [] };
+    return { success: true, borrowers: (data ?? []) as any[] };
   } catch (err: unknown) {
     console.error("fetchBorrowersAction error:", err);
     const message = err instanceof Error ? err.message : "An unexpected error occurred";

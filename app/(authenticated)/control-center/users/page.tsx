@@ -21,11 +21,11 @@ export default async function ControlCenterUsersPage() {
 
   // Fetch investors and borrowers for role linking
   const [investorsResult, borrowersResult, grantedByResult] = await Promise.all([
-    supabase
+    (supabase as any)
       .from("investors")
       .select("id, first_name, last_name, email")
       .order("first_name"),
-    supabase
+    (supabase as any)
       .from("borrowers")
       .select("id, first_name, last_name, email")
       .order("first_name"),

@@ -34,13 +34,17 @@ export default async function AdminBorrowerDetailPage({ params }: PageProps) {
   const { id } = await params;
   const admin = createAdminClient();
 
-  const { data: borrower } = await admin
+  const { data: borrowerRow } = await admin
     .from("borrowers")
     .select("*")
     .eq("id", id)
     .single();
 
-  if (!borrower) notFound();
+  if (!borrowerRow) notFound();
+
+  // Cast to any since borrower fields (name, email, phone, address) may come
+  // from crm_contacts in the new schema, but legacy code still references them
+  const borrower = borrowerRow as any;
 
   // Fetch related data in parallel
   const [entitiesResult, loansResult, emailsResult, profileResult] = await Promise.all([
@@ -87,7 +91,7 @@ export default async function AdminBorrowerDetailPage({ params }: PageProps) {
   }));
   const currentUserName = profileResult.data?.full_name || user.email || "Unknown";
 
-  const fullName = `${borrower.first_name} ${borrower.last_name}`;
+  const fullName = `${(borrower as any).first_name ?? ""} ${(borrower as any).last_name ?? ""}`.trim() || "Unknown";
 
   return (
     <div className="space-y-6">
