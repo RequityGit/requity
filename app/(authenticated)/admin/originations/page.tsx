@@ -50,6 +50,10 @@ export default async function AdminOriginationsPage() {
       .not("loan_id", "is", null),
   ]);
 
+  if (borrowersResult.error) {
+    console.error("Failed to fetch borrowers:", borrowersResult.error);
+  }
+
   // RTL Pricing data — tables may not exist yet
   let programsData: any[] = [];
   let adjustersData: any[] = [];

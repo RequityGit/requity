@@ -39,6 +39,10 @@ export default async function AdminLoansPage() {
       .not("loan_id", "is", null),
   ]);
 
+  if (borrowersResult.error) {
+    console.error("Failed to fetch borrowers:", borrowersResult.error);
+  }
+
   // Condition counts — separate query so it won't break if the table doesn't exist yet
   let conditionsResult: { data: any[] | null } = { data: [] };
   try {

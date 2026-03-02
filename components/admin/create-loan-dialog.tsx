@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useRef, useEffect, useMemo } from "react";
+import { useState, useRef, useEffect, useMemo, useCallback } from "react";
+import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -60,7 +61,13 @@ export function CreateLoanDialog({
   const [loading, setLoading] = useState(false);
   const [borrowerSearch, setBorrowerSearch] = useState("");
   const [borrowerDropdownOpen, setBorrowerDropdownOpen] = useState(false);
+  const [dropdownPosition, setDropdownPosition] = useState<{
+    top: number;
+    left: number;
+    width: number;
+  } | null>(null);
   const borrowerRef = useRef<HTMLDivElement>(null);
+  const dropdownMenuRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
   const { toast } = useToast();
 
@@ -75,10 +82,55 @@ export function CreateLoanDialog({
     );
   }, [borrowers, borrowerSearch]);
 
-  // Close dropdown on click outside
+  // Calculate dropdown position relative to viewport
+  const updateDropdownPosition = useCallback(() => {
+    if (borrowerRef.current) {
+      const rect = borrowerRef.current.getBoundingClientRect();
+      setDropdownPosition({
+        top: rect.bottom + 4,
+        left: rect.left,
+        width: rect.width,
+      });
+    }
+  }, []);
+
+  // Recalculate position when dropdown opens
+  useEffect(() => {
+    if (!borrowerDropdownOpen) {
+      setDropdownPosition(null);
+      return;
+    }
+    updateDropdownPosition();
+  }, [borrowerDropdownOpen, updateDropdownPosition]);
+
+  // Close dropdown on dialog scroll or window resize
+  useEffect(() => {
+    if (!borrowerDropdownOpen) return;
+
+    const handleResize = () => setBorrowerDropdownOpen(false);
+    window.addEventListener("resize", handleResize);
+
+    const dialogEl = borrowerRef.current?.closest('[role="dialog"]');
+    const handleScroll = () => setBorrowerDropdownOpen(false);
+    if (dialogEl) {
+      dialogEl.addEventListener("scroll", handleScroll, true);
+    }
+
+    return () => {
+      window.removeEventListener("resize", handleResize);
+      if (dialogEl) {
+        dialogEl.removeEventListener("scroll", handleScroll, true);
+      }
+    };
+  }, [borrowerDropdownOpen]);
+
+  // Close dropdown on click outside (checks both trigger and portal)
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
-      if (borrowerRef.current && !borrowerRef.current.contains(e.target as Node)) {
+      const target = e.target as Node;
+      const isInsideTrigger = borrowerRef.current?.contains(target);
+      const isInsideDropdown = dropdownMenuRef.current?.contains(target);
+      if (!isInsideTrigger && !isInsideDropdown) {
         setBorrowerDropdownOpen(false);
       }
     }
@@ -250,7 +302,7 @@ export function CreateLoanDialog({
                 </div>
               ) : (
                 <div className="relative">
-                  <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                  <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground pointer-events-none" />
                   <Input
                     value={borrowerSearch}
                     onChange={(e) => {
@@ -263,54 +315,68 @@ export function CreateLoanDialog({
                   />
                 </div>
               )}
-              {borrowerDropdownOpen && (
-                <div className="absolute z-50 mt-1 w-full rounded-md border bg-popover shadow-md">
-                  <div className="max-h-[200px] overflow-y-auto p-1">
-                    {filteredBorrowers.length === 0 ? (
-                      <div className="py-4 text-center text-sm text-muted-foreground">
-                        No borrowers found
-                      </div>
-                    ) : (
-                      filteredBorrowers.map((b) => (
-                        <button
-                          key={b.id}
-                          type="button"
-                          onClick={() => {
-                            updateField("borrower_id", b.id);
-                            setBorrowerSearch("");
-                            setBorrowerDropdownOpen(false);
-                          }}
-                          className="flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-sm hover:bg-accent hover:text-accent-foreground cursor-pointer"
-                        >
-                          {form.borrower_id === b.id && (
-                            <Check className="h-4 w-4 shrink-0" />
-                          )}
-                          <div className={form.borrower_id === b.id ? "" : "pl-6"}>
-                            <div className="font-medium">{b.full_name}</div>
-                            <div className="text-xs text-muted-foreground">
-                              {b.email}
-                              {b.company_name ? ` · ${b.company_name}` : ""}
+              {borrowerDropdownOpen &&
+                dropdownPosition &&
+                createPortal(
+                  <div
+                    ref={dropdownMenuRef}
+                    className="rounded-md border bg-popover shadow-md"
+                    style={{
+                      position: "fixed",
+                      top: dropdownPosition.top,
+                      left: dropdownPosition.left,
+                      width: dropdownPosition.width,
+                      zIndex: 9999,
+                    }}
+                    onPointerDown={(e) => e.stopPropagation()}
+                  >
+                    <div className="max-h-[200px] overflow-y-auto p-1">
+                      {filteredBorrowers.length === 0 ? (
+                        <div className="py-4 text-center text-sm text-muted-foreground">
+                          No borrowers found
+                        </div>
+                      ) : (
+                        filteredBorrowers.map((b) => (
+                          <button
+                            key={b.id}
+                            type="button"
+                            onClick={() => {
+                              updateField("borrower_id", b.id);
+                              setBorrowerSearch("");
+                              setBorrowerDropdownOpen(false);
+                            }}
+                            className="flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-sm hover:bg-accent hover:text-accent-foreground cursor-pointer"
+                          >
+                            {form.borrower_id === b.id && (
+                              <Check className="h-4 w-4 shrink-0" />
+                            )}
+                            <div className={form.borrower_id === b.id ? "" : "pl-6"}>
+                              <div className="font-medium">{b.full_name}</div>
+                              <div className="text-xs text-muted-foreground">
+                                {b.email}
+                                {b.company_name ? ` · ${b.company_name}` : ""}
+                              </div>
                             </div>
-                          </div>
-                        </button>
-                      ))
-                    )}
-                  </div>
-                  <div className="border-t p-1">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setBorrowerDropdownOpen(false);
-                        window.open("/admin/borrowers/new", "_blank");
-                      }}
-                      className="flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-sm font-medium text-primary hover:bg-accent hover:text-accent-foreground cursor-pointer"
-                    >
-                      <UserPlus className="h-4 w-4 shrink-0" />
-                      <span>Add Borrower</span>
-                    </button>
-                  </div>
-                </div>
-              )}
+                          </button>
+                        ))
+                      )}
+                    </div>
+                    <div className="border-t p-1">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setBorrowerDropdownOpen(false);
+                          window.open("/admin/borrowers/new", "_blank");
+                        }}
+                        className="flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-sm font-medium text-primary hover:bg-accent hover:text-accent-foreground cursor-pointer"
+                      >
+                        <UserPlus className="h-4 w-4 shrink-0" />
+                        <span>Add Borrower</span>
+                      </button>
+                    </div>
+                  </div>,
+                  document.body
+                )}
             </div>
           </div>
 
