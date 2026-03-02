@@ -24,16 +24,32 @@ interface PageProps {
   params: { id: string };
 }
 
-// Helper to extract investor name from the nested join chain
-function getInvestorName(row: Record<string, unknown>): string {
+// Helper to extract investor name from the nested join chain,
+// falling back to the profile name lookup map when crm_contact_id is null.
+function getInvestorName(
+  row: Record<string, unknown>,
+  profileNames?: Map<string, string>
+): string {
   const investors = row.investors as Record<string, unknown> | null;
   if (!investors) return "Unknown";
+
+  // Try CRM contact name first
   const crm = investors.crm_contacts as Record<string, unknown> | null;
-  if (!crm) return "Unknown";
-  if (crm.name) return crm.name as string;
-  const first = (crm.first_name as string) ?? "";
-  const last = (crm.last_name as string) ?? "";
-  return `${first} ${last}`.trim() || "Unknown";
+  if (crm) {
+    if (crm.name) return crm.name as string;
+    const first = (crm.first_name as string) ?? "";
+    const last = (crm.last_name as string) ?? "";
+    const crmName = `${first} ${last}`.trim();
+    if (crmName) return crmName;
+  }
+
+  // Fallback: look up profile name via investors.user_id
+  const userId = investors.user_id as string | null;
+  if (userId && profileNames?.has(userId)) {
+    return profileNames.get(userId)!;
+  }
+
+  return "Unknown";
 }
 
 export default async function AdminFundDetailPage({ params }: PageProps) {
@@ -62,17 +78,17 @@ export default async function AdminFundDetailPage({ params }: PageProps) {
   ] = await Promise.all([
     supabase
       .from("investor_commitments")
-      .select("*, investors(crm_contacts(name, first_name, last_name))")
+      .select("*, investors(user_id, crm_contacts(name, first_name, last_name))")
       .eq("fund_id", id)
       .order("commitment_date", { ascending: false }),
     supabase
       .from("capital_calls")
-      .select("*, investors(crm_contacts(name, first_name, last_name))")
+      .select("*, investors(user_id, crm_contacts(name, first_name, last_name))")
       .eq("fund_id", id)
       .order("due_date", { ascending: false }),
     supabase
       .from("distributions")
-      .select("*, investors(crm_contacts(name, first_name, last_name))")
+      .select("*, investors(user_id, crm_contacts(name, first_name, last_name))")
       .eq("fund_id", id)
       .order("distribution_date", { ascending: false }),
     supabase
@@ -86,6 +102,25 @@ export default async function AdminFundDetailPage({ params }: PageProps) {
   const capitalCalls = capitalCallsResult.data ?? [];
   const distributions = distributionsResult.data ?? [];
   const documents = documentsResult.data ?? [];
+
+  // Build a profile name lookup for investors whose crm_contact_id is null.
+  // Collect unique user_ids from all investor joins, then batch-fetch profiles.
+  const investorUserIds = new Set<string>();
+  [...commitments, ...capitalCalls, ...distributions].forEach((row) => {
+    const inv = (row as Record<string, unknown>).investors as Record<string, unknown> | null;
+    if (inv?.user_id) investorUserIds.add(inv.user_id as string);
+  });
+
+  const profileNames = new Map<string, string>();
+  if (investorUserIds.size > 0) {
+    const { data: profiles } = await supabase
+      .from("profiles")
+      .select("id, full_name")
+      .in("id", Array.from(investorUserIds));
+    (profiles ?? []).forEach((p) => {
+      if (p.full_name) profileNames.set(p.id, p.full_name);
+    });
+  }
 
   // KPI calculations
   const totalCommitted = commitments.reduce(
@@ -111,7 +146,7 @@ export default async function AdminFundDetailPage({ params }: PageProps) {
       header: "Investor",
       cell: (row) => (
         <span className="font-medium">
-          {getInvestorName(row as unknown as Record<string, unknown>)}
+          {getInvestorName(row as unknown as Record<string, unknown>, profileNames)}
         </span>
       ),
     },
@@ -149,7 +184,7 @@ export default async function AdminFundDetailPage({ params }: PageProps) {
       header: "Investor",
       cell: (row) => (
         <span className="font-medium">
-          {getInvestorName(row as unknown as Record<string, unknown>)}
+          {getInvestorName(row as unknown as Record<string, unknown>, profileNames)}
         </span>
       ),
     },
@@ -195,7 +230,7 @@ export default async function AdminFundDetailPage({ params }: PageProps) {
       header: "Investor",
       cell: (row) => (
         <span className="font-medium">
-          {getInvestorName(row as unknown as Record<string, unknown>)}
+          {getInvestorName(row as unknown as Record<string, unknown>, profileNames)}
         </span>
       ),
     },
