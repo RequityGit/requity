@@ -132,32 +132,29 @@ export async function GET(request: NextRequest) {
   // Store tokens in gmail_tokens table using admin client (bypasses RLS)
   const adminSupabase = createAdminClient();
 
-  // Deactivate any existing active tokens for this user
-  await adminSupabase
-    .from("gmail_tokens")
-    .update({ is_active: false })
-    .eq("user_id", user.id)
-    .eq("is_active", true);
-
   // Parse granted scopes from token response
   const grantedScopes = tokenData.scope
     ? tokenData.scope.split(" ")
     : [];
 
-  // Insert the new token
+  // Upsert the token (gmail_tokens has a UNIQUE constraint on user_id)
   const { error: insertError } = await adminSupabase
     .from("gmail_tokens")
-    .insert({
-      user_id: user.id,
-      email: gmailEmail,
-      access_token: tokenData.access_token,
-      refresh_token: tokenData.refresh_token || "",
-      token_expires_at: new Date(
-        Date.now() + tokenData.expires_in * 1000
-      ).toISOString(),
-      is_active: true,
-      scopes: grantedScopes,
-    });
+    .upsert(
+      {
+        user_id: user.id,
+        email: gmailEmail,
+        access_token: tokenData.access_token,
+        refresh_token: tokenData.refresh_token || "",
+        token_expires_at: new Date(
+          Date.now() + tokenData.expires_in * 1000
+        ).toISOString(),
+        is_active: true,
+        scopes: grantedScopes,
+        connected_at: new Date().toISOString(),
+      },
+      { onConflict: "user_id" }
+    );
 
   if (insertError) {
     console.error("Failed to store Gmail token:", insertError);
