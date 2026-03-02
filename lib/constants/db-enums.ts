@@ -706,19 +706,16 @@ export type OpsProjectPriority = (typeof OPS_PROJECT_PRIORITIES)[number];
 
 /** Constraint: ops_projects_category_check */
 export const OPS_PROJECT_CATEGORIES = [
-  "Engineering",
-  "Marketing",
-  "Finance",
-  "Operations",
-  "Compliance",
-  "Legal",
-  "Sales",
-  "HR",
-  "Underwriting",
-  "Servicing",
-  "Capital Markets",
-  "IT",
+  "Lending Ops",
+  "Investments",
+  "Tech/Infrastructure",
+  "Investor Relations",
+  "Marketing/Website",
+  "Finance/Accounting",
   "General",
+  "Acquisitions",
+  "Asset Management",
+  "Compliance",
 ] as const;
 export type OpsProjectCategory = (typeof OPS_PROJECT_CATEGORIES)[number];
 
