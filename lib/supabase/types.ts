@@ -3026,6 +3026,185 @@ export type Database = {
         }
         Relationships: []
       }
+      lender_quote_activities: {
+        Row: {
+          activity_type: string
+          created_at: string
+          created_by: string | null
+          description: string
+          id: string
+          new_status: string | null
+          old_status: string | null
+          quote_id: string
+        }
+        Insert: {
+          activity_type: string
+          created_at?: string
+          created_by?: string | null
+          description: string
+          id?: string
+          new_status?: string | null
+          old_status?: string | null
+          quote_id: string
+        }
+        Update: {
+          activity_type?: string
+          created_at?: string
+          created_by?: string | null
+          description?: string
+          id?: string
+          new_status?: string | null
+          old_status?: string | null
+          quote_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lender_quote_activities_quote_id_fkey"
+            columns: ["quote_id"]
+            isOneToOne: false
+            referencedRelation: "lender_quotes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lender_quote_activities_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      lender_quotes: {
+        Row: {
+          accepted_at: string | null
+          amortization_months: number | null
+          created_at: string
+          created_by: string | null
+          declined_at: string | null
+          declined_reason: string | null
+          description: string | null
+          id: string
+          interest_only_period_months: number | null
+          interest_rate: number | null
+          lender_company_id: string | null
+          lender_contact_name: string | null
+          linked_property_id: string | null
+          loan_amount: number | null
+          loan_id: string | null
+          loan_term_months: number | null
+          ltv: number | null
+          origination_fee: number | null
+          prepayment_penalty: string | null
+          quote_name: string
+          received_at: string | null
+          requested_at: string | null
+          requity_lending_fee: number | null
+          status: string
+          status_changed_at: string | null
+          term_sheet_url: string | null
+          updated_at: string
+          updated_by: string | null
+          uw_processing_fee: number | null
+          ym_amount: number | null
+          ym_spread: number | null
+        }
+        Insert: {
+          accepted_at?: string | null
+          amortization_months?: number | null
+          created_at?: string
+          created_by?: string | null
+          declined_at?: string | null
+          declined_reason?: string | null
+          description?: string | null
+          id?: string
+          interest_only_period_months?: number | null
+          interest_rate?: number | null
+          lender_company_id?: string | null
+          lender_contact_name?: string | null
+          linked_property_id?: string | null
+          loan_amount?: number | null
+          loan_id?: string | null
+          loan_term_months?: number | null
+          ltv?: number | null
+          origination_fee?: number | null
+          prepayment_penalty?: string | null
+          quote_name: string
+          received_at?: string | null
+          requested_at?: string | null
+          requity_lending_fee?: number | null
+          status?: string
+          status_changed_at?: string | null
+          term_sheet_url?: string | null
+          updated_at?: string
+          updated_by?: string | null
+          uw_processing_fee?: number | null
+          ym_amount?: number | null
+          ym_spread?: number | null
+        }
+        Update: {
+          accepted_at?: string | null
+          amortization_months?: number | null
+          created_at?: string
+          created_by?: string | null
+          declined_at?: string | null
+          declined_reason?: string | null
+          description?: string | null
+          id?: string
+          interest_only_period_months?: number | null
+          interest_rate?: number | null
+          lender_company_id?: string | null
+          lender_contact_name?: string | null
+          linked_property_id?: string | null
+          loan_amount?: number | null
+          loan_id?: string | null
+          loan_term_months?: number | null
+          ltv?: number | null
+          origination_fee?: number | null
+          prepayment_penalty?: string | null
+          quote_name?: string
+          received_at?: string | null
+          requested_at?: string | null
+          requity_lending_fee?: number | null
+          status?: string
+          status_changed_at?: string | null
+          term_sheet_url?: string | null
+          updated_at?: string
+          updated_by?: string | null
+          uw_processing_fee?: number | null
+          ym_amount?: number | null
+          ym_spread?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lender_quotes_loan_id_fkey"
+            columns: ["loan_id"]
+            isOneToOne: false
+            referencedRelation: "loans"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lender_quotes_lender_company_id_fkey"
+            columns: ["lender_company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lender_quotes_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lender_quotes_updated_by_fkey"
+            columns: ["updated_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       loan_activity_log: {
         Row: {
           action: string
@@ -6882,3 +7061,9 @@ export type EmailParticipant = Database["public"]["Tables"]["email_participants"
 export type EmailParticipantInsert = Database["public"]["Tables"]["email_participants"]["Insert"];
 export type GmailToken = Database["public"]["Tables"]["gmail_tokens"]["Row"];
 
+// Lender quote tracker types
+export type LenderQuote = Database["public"]["Tables"]["lender_quotes"]["Row"];
+export type LenderQuoteInsert = Database["public"]["Tables"]["lender_quotes"]["Insert"];
+export type LenderQuoteUpdate = Database["public"]["Tables"]["lender_quotes"]["Update"];
+export type LenderQuoteActivity = Database["public"]["Tables"]["lender_quote_activities"]["Row"];
+export type LenderQuoteActivityInsert = Database["public"]["Tables"]["lender_quote_activities"]["Insert"];

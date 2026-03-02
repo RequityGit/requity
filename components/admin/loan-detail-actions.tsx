@@ -54,10 +54,12 @@ import { LoanUnderwritingTab } from "@/components/admin/loan-underwriting-tab";
 import { LoanChatter } from "@/components/shared/loan-chatter";
 import { EmailActivityFeed, type EmailRecord } from "@/components/crm/email-activity-feed";
 import type { UnderwritingInputs } from "@/lib/underwriting/types";
-import { Scale, Building2 } from "lucide-react";
+import { Scale, Building2, Handshake } from "lucide-react";
 import Link from "next/link";
 import { Separator } from "@/components/ui/separator";
 import { DeleteLoanButton } from "@/components/admin/delete-loan-button";
+import { LenderQuotesTab } from "@/components/admin/lender-quotes-tab";
+import type { LenderQuote } from "@/lib/supabase/types";
 
 interface LoanInfo {
   id: string;
@@ -159,6 +161,8 @@ interface LoanDetailActionsProps {
   borrowerName?: string;
   currentUserName?: string;
   isSuperAdmin?: boolean;
+  lenderQuotes?: LenderQuote[];
+  lenderCompanies?: { id: string; name: string }[];
 }
 
 export function LoanDetailActions({
@@ -179,6 +183,8 @@ export function LoanDetailActions({
   borrowerName,
   currentUserName,
   isSuperAdmin = false,
+  lenderQuotes = [],
+  lenderCompanies = [],
 }: LoanDetailActionsProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -252,6 +258,10 @@ export function LoanDetailActions({
             <Mail className="h-3.5 w-3.5" />
             Emails ({emails.length})
           </TabsTrigger>
+          <TabsTrigger value="quotes" className="gap-1">
+            <Handshake className="h-3.5 w-3.5" />
+            Quotes ({lenderQuotes.length})
+          </TabsTrigger>
           <TabsTrigger value="activity" className="gap-1">
             <Activity className="h-3.5 w-3.5" />
             Activity
@@ -318,6 +328,14 @@ export function LoanDetailActions({
             linkedLoanId={loanId}
             currentUserId={currentUserId}
             currentUserName={currentUserName}
+          />
+        </TabsContent>
+
+        <TabsContent value="quotes" className="mt-4">
+          <LenderQuotesTab
+            quotes={lenderQuotes}
+            loanId={loanId}
+            companies={lenderCompanies}
           />
         </TabsContent>
 

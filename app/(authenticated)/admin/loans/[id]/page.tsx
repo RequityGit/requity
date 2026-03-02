@@ -138,6 +138,25 @@ export default async function AdminLoanDetailPage({ params }: PageProps) {
     emailsData = data ?? [];
   } catch { /* table may not exist */ }
 
+  // Fetch lender quotes and companies for this loan
+  let lenderQuotesData: any[] = [];
+  let companiesData: any[] = [];
+  try {
+    const { data } = await supabase
+      .from("lender_quotes")
+      .select("*")
+      .eq("loan_id", id)
+      .order("created_at", { ascending: false });
+    lenderQuotesData = data ?? [];
+  } catch { /* table may not exist */ }
+  try {
+    const { data } = await supabase
+      .from("companies")
+      .select("id, name")
+      .order("name");
+    companiesData = (data ?? []).map((c: any) => ({ id: c.id, name: c.name }));
+  } catch { /* table may not exist */ }
+
   // Lookup team member names
   const teamIds = [loanData.originator_id, loanData.processor_id, loanData.underwriter_id, loanData.closer_id].filter((id): id is string => Boolean(id));
   let teamProfiles: Record<string, string> = {};
@@ -432,6 +451,8 @@ export default async function AdminLoanDetailPage({ params }: PageProps) {
         borrowerName={borrowerName}
         currentUserName={currentUserName}
         isSuperAdmin={isSuperAdmin}
+        lenderQuotes={lenderQuotesData}
+        lenderCompanies={companiesData}
       />
       </Suspense>
     </div>
