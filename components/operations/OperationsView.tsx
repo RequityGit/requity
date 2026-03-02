@@ -12,6 +12,7 @@ import {
   TableIcon,
   X,
   History,
+  ShieldCheck,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
@@ -339,6 +340,15 @@ export function OperationsView({ projects: rawProjects, tasks, teamMembers, curr
         description="Manage projects and tasks across the organization."
         action={
           <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              className="gap-2"
+              onClick={() => router.push("/admin/operations/approvals")}
+            >
+              <ShieldCheck className="h-4 w-4" />
+              Approvals
+            </Button>
             <AddTaskDialog projects={projects} teamMembers={teamMembers} />
             <AddProjectDialog teamMembers={teamMembers} />
           </div>

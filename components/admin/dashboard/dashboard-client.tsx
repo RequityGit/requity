@@ -11,6 +11,7 @@ import { OriginationChart } from "./origination-chart";
 import { AumPathCard } from "./aum-path-card";
 import { TeamActivity } from "./team-activity";
 import { QuickActions } from "./quick-actions";
+import { PendingApprovalsWidget } from "@/components/approvals/pending-approvals-widget";
 import type { DashboardData } from "@/lib/dashboard.server";
 import "@/app/globals/dashboard.css";
 
@@ -55,6 +56,11 @@ export function DashboardClient({ data, userName }: DashboardClientProps) {
 
         {/* Tier 2: Dense Secondary Metrics */}
         <SecondaryMetrics data={data.secondary} />
+
+        {/* Pending Approvals Widget */}
+        <div className="dash-fade-up dash-delay-3 mb-4">
+          <PendingApprovalsWidget />
+        </div>
 
         {/* Tier 3: Action Items */}
         <ActionItems items={data.actions} />

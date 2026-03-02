@@ -16,6 +16,7 @@ import { LOAN_STAGE_LABELS, LOAN_DB_TYPES } from "@/lib/constants";
 import { LoanDetailActions } from "@/components/admin/loan-detail-actions";
 import { Flame, Pause } from "lucide-react";
 import GenerateTermSheetButton from "@/components/loans/GenerateTermSheetButton";
+import { LoanApprovalSection } from "@/components/approvals/loan-approval-section";
 import type { PricingProgram, LeverageAdjuster } from "@/lib/supabase/types";
 
 interface PageProps {
@@ -260,6 +261,29 @@ export default async function AdminLoanDetailPage({ params }: PageProps) {
           <LoanStageTracker currentStage={loanData.stage} />
         </CardContent>
       </Card>
+
+      {/* Approval Status */}
+      <LoanApprovalSection
+        loanId={loanData.id}
+        loanData={{
+          loan_amount: loanData.loan_amount,
+          ltv: loanData.ltv,
+          property_type: loanData.property_type,
+          property_address: loanData.property_address,
+          property_city: loanData.property_city,
+          property_state: loanData.property_state,
+          property_zip: loanData.property_zip,
+          type: loanData.type,
+          loan_type: loanData.type,
+          interest_rate: loanData.interest_rate,
+          loan_term_months: loanData.loan_term_months,
+          term_months: loanData.loan_term_months,
+          borrower_id: loanData.borrower_id,
+          purchase_price: loanData.purchase_price,
+          appraised_value: loanData.appraised_value,
+        }}
+        borrowerName={borrowerName}
+      />
 
       {/* Overview Card */}
       <Card>

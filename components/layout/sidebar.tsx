@@ -82,7 +82,12 @@ const adminNav: NavItem[] = [
     activePaths: ["/admin/capital-calls", "/admin/distributions"],
   },
   { label: "Documents", href: "/admin/documents", icon: FolderOpen },
-  { label: "Operations", href: "/admin/operations", icon: Settings2 },
+  {
+    label: "Operations",
+    href: "/admin/operations",
+    icon: Settings2,
+    activePaths: ["/admin/operations/approvals"],
+  },
 ];
 
 function getNavItems(role: string): NavItem[] {
