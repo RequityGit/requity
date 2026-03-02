@@ -331,7 +331,7 @@ export function RoleManagementDialog({
                     className={cn(
                       "text-sm flex items-center justify-between px-3 py-1.5 rounded border",
                       r.is_active
-                        ? "bg-white border-gray-200"
+                        ? "bg-card border-border"
                         : "bg-gray-50 border-gray-100 text-muted-foreground"
                     )}
                   >

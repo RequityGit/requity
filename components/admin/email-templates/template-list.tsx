@@ -79,7 +79,7 @@ export function TemplateList({ templates: initial }: TemplateListProps) {
         onCategoryChange={setCategoryFilter}
       />
 
-      <div className="rounded-md border bg-white">
+      <div className="rounded-md border bg-card">
         <Table>
           <TableHeader>
             <TableRow>

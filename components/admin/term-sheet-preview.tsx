@@ -47,7 +47,7 @@ export function TermSheetPreview({
     );
 
   return (
-    <div className="bg-white rounded-lg border border-slate-200 shadow-sm overflow-hidden">
+    <div className="bg-card rounded-lg border border-border shadow-sm overflow-hidden">
       {/* Preview header */}
       <div className="bg-slate-50 border-b border-slate-200 px-4 py-2 flex items-center gap-2">
         <FileText className="h-4 w-4 text-slate-500" />

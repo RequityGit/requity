@@ -172,7 +172,7 @@ export function ApprovalsListView({ approvals, currentUserId, isSuperAdmin }: Ap
         {/* All tab contents share the same table */}
         {["pending", "changes_requested", "approved", "declined", "all"].map((tab) => (
           <TabsContent key={tab} value={tab} className="mt-4">
-            <div className="rounded-md border bg-white">
+            <div className="rounded-md border bg-card">
               <Table>
                 <TableHeader>
                   <TableRow>

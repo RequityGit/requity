@@ -270,7 +270,7 @@ export function UsersClient({
       </p>
 
       {/* Users Table */}
-      <div className="rounded-md border bg-white overflow-hidden">
+      <div className="rounded-md border bg-card overflow-hidden">
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b bg-slate-50">

@@ -9,7 +9,7 @@ interface HtmlEditorProps {
 
 export function HtmlEditor({ value, onChange }: HtmlEditorProps) {
   return (
-    <div className="rounded-md border bg-white">
+    <div className="rounded-md border bg-card">
       <div className="border-b px-3 py-2 bg-slate-50">
         <span className="text-xs font-medium text-muted-foreground">
           HTML Body

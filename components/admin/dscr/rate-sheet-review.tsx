@@ -298,7 +298,7 @@ export function RateSheetReview({
                           <Table>
                             <TableHeader>
                               <TableRow>
-                                <TableHead className="sticky left-0 bg-white">FICO</TableHead>
+                                <TableHead className="sticky left-0 bg-card">FICO</TableHead>
                                 {LTV_BAND_KEYS.map((k) => (
                                   <TableHead key={k} className="text-xs whitespace-nowrap">
                                     {k}%
@@ -309,7 +309,7 @@ export function RateSheetReview({
                             <TableBody>
                               {(rows as any[]).map((row: any, i: number) => (
                                 <TableRow key={i}>
-                                  <TableCell className="sticky left-0 bg-white font-medium text-sm">
+                                  <TableCell className="sticky left-0 bg-card font-medium text-sm">
                                     {row.fico_label}
                                   </TableCell>
                                   {LTV_BAND_KEYS.map((k) => {
@@ -357,8 +357,8 @@ export function RateSheetReview({
                   <Table>
                     <TableHeader>
                       <TableRow>
-                        <TableHead className="sticky left-0 bg-white">Adjuster</TableHead>
-                        <TableHead className="sticky left-[120px] bg-white">Category</TableHead>
+                        <TableHead className="sticky left-0 bg-card">Adjuster</TableHead>
+                        <TableHead className="sticky left-[120px] bg-card">Category</TableHead>
                         {LTV_BAND_KEYS.map((k) => (
                           <TableHead key={k} className="text-xs whitespace-nowrap">
                             {k}%
@@ -369,10 +369,10 @@ export function RateSheetReview({
                     <TableBody>
                       {currentParsed.price_adjustments.map((adj: any, i: number) => (
                         <TableRow key={i}>
-                          <TableCell className="sticky left-0 bg-white text-sm font-medium">
+                          <TableCell className="sticky left-0 bg-card text-sm font-medium">
                             {adj.label || adj.name}
                           </TableCell>
-                          <TableCell className="sticky left-[120px] bg-white">
+                          <TableCell className="sticky left-[120px] bg-card">
                             <Badge variant="outline" className="text-xs">
                               {adj.category}
                             </Badge>

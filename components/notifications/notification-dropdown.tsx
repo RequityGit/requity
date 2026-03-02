@@ -39,7 +39,7 @@ export function NotificationDropdown({
   }
 
   return (
-    <div className="w-[380px] rounded-lg border border-gray-200 bg-white shadow-lg">
+    <div className="w-[380px] rounded-lg border border-border bg-card shadow-lg">
       {/* Header */}
       <div className="flex items-center justify-between border-b border-gray-100 px-4 py-3">
         <div className="flex items-center gap-2">

@@ -23,7 +23,7 @@ export function VariableInserter({ onInsert }: VariableInserterProps) {
   );
 
   return (
-    <div className="rounded-md border bg-white">
+    <div className="rounded-md border bg-card">
       <button
         onClick={() => setExpanded(!expanded)}
         className="w-full flex items-center gap-2 px-3 py-2 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"

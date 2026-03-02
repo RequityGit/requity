@@ -30,7 +30,7 @@ export function DataTable<T extends { id?: string }>({
   onRowClick,
 }: DataTableProps<T>) {
   return (
-    <div className="rounded-md border bg-white">
+    <div className="rounded-md border bg-card">
       <Table>
         <TableHeader>
           <TableRow>

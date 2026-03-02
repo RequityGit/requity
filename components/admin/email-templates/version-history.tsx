@@ -45,7 +45,7 @@ export function VersionHistory({
 
   if (versions.length === 0) {
     return (
-      <div className="rounded-md border bg-white p-8 text-center text-muted-foreground">
+      <div className="rounded-md border bg-card p-8 text-center text-muted-foreground">
         No version history yet. Versions are created automatically when you
         update the subject or body.
       </div>
@@ -63,7 +63,7 @@ export function VersionHistory({
         </Button>
       </div>
 
-      <div className="rounded-md border bg-white">
+      <div className="rounded-md border bg-card">
         <Table>
           <TableHeader>
             <TableRow>

@@ -344,7 +344,7 @@ export function AddContactDialog({
                       "inline-flex items-center rounded-full border px-3 py-1 text-xs font-medium transition-colors cursor-pointer",
                       selected
                         ? colors
-                        : "bg-white text-gray-500 border-gray-200 hover:bg-gray-50"
+                        : "bg-card text-muted-foreground border-border hover:bg-muted"
                     )}
                   >
                     {rt.label}

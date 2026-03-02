@@ -140,7 +140,7 @@ export function BorrowerListTable({ data }: BorrowerListTableProps) {
 
   if (data.length === 0) {
     return (
-      <div className="rounded-md border bg-white p-12 text-center">
+      <div className="rounded-md border bg-card p-12 text-center">
         <div className="mx-auto max-w-sm space-y-4">
           <UserPlus className="mx-auto h-12 w-12 text-muted-foreground" />
           <h3 className="text-lg font-semibold text-foreground">
@@ -175,7 +175,7 @@ export function BorrowerListTable({ data }: BorrowerListTableProps) {
         />
       </div>
 
-      <div className="rounded-md border bg-white">
+      <div className="rounded-md border bg-card">
         <Table>
           <TableHeader>
             <TableRow>

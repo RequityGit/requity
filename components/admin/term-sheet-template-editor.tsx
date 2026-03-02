@@ -282,7 +282,7 @@ export function TermSheetTemplateEditor({ templates: initial }: Props) {
               "px-4 py-2 rounded-md text-sm font-medium transition-colors border",
               t.loan_type === activeLoanType
                 ? "bg-primary text-white border-primary"
-                : "bg-white text-foreground border-slate-200 hover:bg-muted"
+                : "bg-card text-foreground border-border hover:bg-muted"
             )}
           >
             {LOAN_TYPE_LABELS[t.loan_type] ?? t.loan_type}

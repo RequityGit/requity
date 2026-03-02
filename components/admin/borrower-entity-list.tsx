@@ -71,7 +71,7 @@ export function BorrowerEntityList({
 
   if (entities.length === 0 && !dialogOpen) {
     return (
-      <div className="rounded-md border bg-white p-8 text-center">
+      <div className="rounded-md border bg-card p-8 text-center">
         <Building2 className="mx-auto h-10 w-10 text-muted-foreground mb-3" />
         <h3 className="text-sm font-semibold text-foreground mb-1">
           No entities yet

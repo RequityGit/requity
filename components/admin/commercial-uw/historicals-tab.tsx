@@ -558,7 +558,7 @@ function CategoryRow({
     // Show empty expense rows with just the override column
     return (
       <tr className="border-b hover:bg-muted/50">
-        <td className="p-2 pl-4 text-muted-foreground sticky left-0 bg-white">
+        <td className="p-2 pl-4 text-muted-foreground sticky left-0 bg-card">
           {data.label}
         </td>
         {Array.from({ length: 12 }, (_, i) => (
@@ -573,7 +573,7 @@ function CategoryRow({
           <Input
             type="number"
             placeholder="—"
-            className="h-6 text-xs w-20 text-right ml-auto bg-white"
+            className="h-6 text-xs w-20 text-right ml-auto bg-card"
             value={data.override ?? ""}
             onChange={(e) =>
               onOverrideChange(
@@ -595,7 +595,7 @@ function CategoryRow({
         } ${hasMultipleSources ? "cursor-pointer" : ""}`}
         onClick={hasMultipleSources ? onToggle : undefined}
       >
-        <td className="p-2 pl-4 sticky left-0 bg-white">
+        <td className="p-2 pl-4 sticky left-0 bg-card">
           <span className="flex items-center gap-1">
             {hasMultipleSources && (
               <>
@@ -658,7 +658,7 @@ function CategoryRow({
               className={`h-6 text-xs w-20 text-right ml-auto ${
                 hasOverride
                   ? "bg-amber-100 border-amber-300"
-                  : "bg-white"
+                  : "bg-card"
               }`}
               value={data.override ?? ""}
               onChange={(e) => {

@@ -307,7 +307,7 @@ function TemplateRow({
   return (
     <div
       className={`flex items-start gap-3 p-3 rounded-lg border ${
-        template.is_active ? "bg-white" : "bg-slate-50/80 opacity-60"
+        template.is_active ? "bg-card" : "bg-slate-50/80 opacity-60"
       }`}
     >
       <div className="flex-1 min-w-0">

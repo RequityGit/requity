@@ -264,7 +264,7 @@ function SummaryCard({
   color?: string;
 }) {
   return (
-    <div className="bg-white rounded-lg border px-3 py-2">
+    <div className="bg-card rounded-lg border px-3 py-2">
       <p className="text-xs text-muted-foreground">{label}</p>
       <p className={`text-lg font-semibold ${color || "text-foreground"}`}>
         {value}
@@ -288,7 +288,7 @@ function ProgressCard({
   const pct = total > 0 ? Math.round((completed / total) * 100) : 0;
 
   return (
-    <div className="bg-white rounded-lg border px-4 py-3">
+    <div className="bg-card rounded-lg border px-4 py-3">
       <div className="flex items-center justify-between mb-1">
         <span className="text-sm font-medium text-foreground">{label}</span>
         <span className="text-xs text-muted-foreground">
@@ -591,7 +591,7 @@ function ConditionRow({
               ? "bg-green-50/50"
               : isOverdue
                 ? "bg-red-50/50"
-                : "bg-white"
+                : "bg-card"
           }`}
         >
           {/* Status indicator */}
@@ -771,7 +771,7 @@ function ConditionRow({
                   {documents.map((doc) => (
                     <div
                       key={doc.id}
-                      className="flex items-center gap-2 text-xs bg-white rounded border px-3 py-1.5"
+                      className="flex items-center gap-2 text-xs bg-card rounded border px-3 py-1.5"
                     >
                       <FileText className="h-3.5 w-3.5 text-blue-500 flex-shrink-0" />
                       <span className="flex-1 truncate">{doc.document_name}</span>

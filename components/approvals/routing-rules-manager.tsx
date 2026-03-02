@@ -173,7 +173,7 @@ export function RoutingRulesManager({ rules, teamMembers }: RoutingRulesManagerP
             {rules.map((rule, i) => (
               <div
                 key={rule.id}
-                className="flex items-center gap-3 p-3 rounded-lg border bg-white hover:bg-slate-50"
+                className="flex items-center gap-3 p-3 rounded-lg border bg-card hover:bg-muted"
               >
                 <GripVertical className="h-4 w-4 text-muted-foreground flex-shrink-0" />
                 <div className="flex-1 min-w-0">

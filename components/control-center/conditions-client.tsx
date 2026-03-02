@@ -313,7 +313,7 @@ export function ConditionsClient({ templates }: ConditionsClientProps) {
             <span className="text-xs font-medium text-muted-foreground mr-1">
               Loan Type:
             </span>
-            <div className="inline-flex rounded-md border bg-white">
+            <div className="inline-flex rounded-md border bg-card">
               {LOAN_TYPE_FILTERS.map((f) => (
                 <button
                   key={f.value}

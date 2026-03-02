@@ -109,7 +109,7 @@ export const VisualEditor = forwardRef<VisualEditorHandle, VisualEditorProps>(
     );
 
     return (
-      <div className="rounded-md border bg-white overflow-hidden">
+      <div className="rounded-md border bg-card overflow-hidden">
         <EditorToolbar editor={editor} />
         <EditorContent editor={editor} />
       </div>

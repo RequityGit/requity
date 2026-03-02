@@ -33,7 +33,7 @@ export function CommentRenderer({
           ? "bg-amber-50 border border-amber-200"
           : isOwnComment
             ? "bg-primary/5 border border-primary/10 ml-4"
-            : "bg-white border"
+            : "bg-card border"
       }`}
     >
       <div className="flex items-center gap-2 mb-1">

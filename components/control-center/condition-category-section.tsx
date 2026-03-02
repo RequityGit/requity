@@ -184,7 +184,7 @@ export function ConditionCategorySection({
   }
 
   return (
-    <div className="rounded-md border bg-white overflow-hidden">
+    <div className="rounded-md border bg-card overflow-hidden">
       {/* Header */}
       <button
         onClick={onToggle}

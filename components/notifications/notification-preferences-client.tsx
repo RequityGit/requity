@@ -128,7 +128,7 @@ export function NotificationPreferencesClient({
     return (
       <div className="space-y-6">
         {Array.from({ length: 3 }).map((_, i) => (
-          <div key={i} className="rounded-lg border border-gray-200 bg-white">
+          <div key={i} className="rounded-lg border border-border bg-card">
             <div className="border-b border-gray-100 px-4 py-3">
               <Skeleton className="h-5 w-32" />
             </div>
@@ -172,7 +172,7 @@ export function NotificationPreferencesClient({
           return (
             <div
               key={category}
-              className="rounded-lg border border-gray-200 bg-white overflow-hidden"
+              className="rounded-lg border border-border bg-card overflow-hidden"
             >
               {/* Category header */}
               <div className="flex items-center justify-between border-b border-gray-100 px-4 py-3 bg-gray-50/50">

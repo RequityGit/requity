@@ -936,7 +936,7 @@ export function CommercialUWClient({
   return (
     <div className="space-y-4">
       {/* Status + Actions Bar */}
-      <div className="flex items-center justify-between bg-white border rounded-lg p-3">
+      <div className="flex items-center justify-between bg-card border rounded-lg p-3">
         <div className="flex items-center gap-3">
           <Badge className={STATUS_COLORS[status]}>{STATUS_LABELS[status]}</Badge>
           {uwId && (

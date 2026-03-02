@@ -37,7 +37,7 @@ export function NotificationItem({
     return (
       <div
         className={cn(
-          "group relative flex items-start gap-4 rounded-lg border bg-white p-4 transition-colors",
+          "group relative flex items-start gap-4 rounded-lg border bg-card p-4 transition-colors",
           !notification.is_read && "border-l-4",
           !notification.is_read && priorityColors.border,
           notification.is_read && "border-gray-200",

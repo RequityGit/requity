@@ -187,7 +187,7 @@ export function NotificationsPageClient({
       {/* Main content */}
       <div className="flex-1 min-w-0">
         {/* Top bar with actions */}
-        <div className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-lg border border-gray-200 bg-white p-4">
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-lg border border-border bg-card p-4">
           <div className="flex items-center gap-3">
             <span className="text-sm text-gray-600">
               {unreadCount > 0
@@ -239,7 +239,7 @@ export function NotificationsPageClient({
 
         {/* Mobile filters (collapsible) */}
         {showFilters && (
-          <div className="mb-4 rounded-lg border border-gray-200 bg-white p-4 lg:hidden">
+          <div className="mb-4 rounded-lg border border-border bg-card p-4 lg:hidden">
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="mb-1 block text-xs font-medium text-gray-500">
@@ -323,7 +323,7 @@ export function NotificationsPageClient({
             {Array.from({ length: 6 }).map((_, i) => (
               <div
                 key={i}
-                className="rounded-lg border border-gray-200 bg-white p-4"
+                className="rounded-lg border border-border bg-card p-4"
               >
                 <div className="flex items-start gap-4">
                   <Skeleton className="h-2.5 w-2.5 rounded-full mt-1" />
@@ -341,7 +341,7 @@ export function NotificationsPageClient({
             ))}
           </div>
         ) : notifications.length === 0 ? (
-          <div className="flex flex-col items-center justify-center rounded-lg border border-gray-200 bg-white py-16">
+          <div className="flex flex-col items-center justify-center rounded-lg border border-border bg-card py-16">
             <div className="flex h-16 w-16 items-center justify-center rounded-full bg-green-100">
               <Bell className="h-8 w-8 text-green-600" />
             </div>

@@ -30,7 +30,7 @@ export function LoanStageTracker({ currentStage }: LoanStageTrackerProps) {
                     isCurrent && "bg-primary border-primary text-white",
                     !isPast &&
                       !isCurrent &&
-                      "bg-white border-slate-300 text-slate-400"
+                      "bg-background border-border text-muted-foreground"
                   )}
                 >
                   {isPast ? <Check className="h-4 w-4" /> : idx + 1}
@@ -52,7 +52,7 @@ export function LoanStageTracker({ currentStage }: LoanStageTrackerProps) {
                     "flex-1 h-0.5 mx-1",
                     isPast || (isTerminalStage && idx < PIPELINE_STAGES.length - 1)
                       ? "bg-green-600"
-                      : "bg-slate-200"
+                      : "bg-border"
                   )}
                 />
               )}

@@ -53,7 +53,7 @@ export function RentRollVersionHistory({ versions, onRestore }: Props) {
         {versions.map((v, idx) => (
           <div
             key={v.id}
-            className="flex items-center gap-3 p-2 bg-white border rounded text-sm"
+            className="flex items-center gap-3 p-2 bg-card border rounded text-sm"
           >
             <FileSpreadsheet className="h-4 w-4 text-blue-500 flex-shrink-0" />
             <div className="flex-1 min-w-0">

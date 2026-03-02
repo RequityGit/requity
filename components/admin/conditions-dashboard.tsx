@@ -261,7 +261,7 @@ export function ConditionsDashboard({
                   className={`px-3 py-1.5 text-xs font-medium transition-colors ${
                     viewMode === mode.key
                       ? "bg-primary text-white"
-                      : "bg-white text-muted-foreground hover:bg-muted"
+                      : "bg-card text-muted-foreground hover:bg-muted"
                   }`}
                 >
                   {mode.label}
@@ -410,7 +410,7 @@ export function ConditionsDashboard({
                             ? "bg-green-50/50 border-green-100 hover:bg-green-50"
                             : isOverdue
                               ? "bg-red-50/50 border-red-100 hover:bg-red-100/50"
-                              : "bg-white hover:bg-muted"
+                              : "bg-card hover:bg-muted"
                         }`}
                         onClick={() =>
                           router.push(
@@ -549,7 +549,7 @@ function StatCard({
   color?: string;
 }) {
   return (
-    <div className="bg-white rounded-lg border px-3 py-2">
+    <div className="bg-card rounded-lg border px-3 py-2">
       <p className="text-xs text-muted-foreground">{label}</p>
       <p className={`text-lg font-semibold ${color || "text-foreground"}`}>
         {value}

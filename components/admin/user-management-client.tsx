@@ -60,7 +60,7 @@ export function UserManagementClient({
       {loading ? (
         <div className="space-y-4">
           <Skeleton className="h-10 w-72" />
-          <div className="rounded-md border bg-white">
+          <div className="rounded-md border bg-card">
             <div className="p-4 space-y-3">
               {Array.from({ length: 5 }).map((_, i) => (
                 <Skeleton key={i} className="h-12 w-full" />

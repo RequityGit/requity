@@ -192,10 +192,10 @@ export function CommandSearch({ role }: CommandSearchProps) {
     <div ref={containerRef} className="relative w-full max-w-xl" onKeyDown={handleKeyDown}>
       {/* Inline search input — always visible */}
       <div
-        className={`flex items-center rounded-lg border bg-white px-3 py-1.5 transition-all ${
+        className={`flex items-center rounded-lg border bg-card px-3 py-1.5 transition-all ${
           open
-            ? "border-blue-300 ring-2 ring-blue-100 shadow-sm"
-            : "border-slate-200 hover:border-slate-300"
+            ? "border-accent ring-2 ring-accent/20 shadow-sm"
+            : "border-border hover:border-muted-foreground/30"
         }`}
       >
         <Search className="mr-2 h-4 w-4 shrink-0 text-slate-400" />
@@ -232,7 +232,7 @@ export function CommandSearch({ role }: CommandSearchProps) {
 
       {/* Dropdown results panel */}
       {showDropdown && (
-        <div className="absolute left-0 right-0 top-full z-50 mt-1 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-lg">
+        <div className="absolute left-0 right-0 top-full z-50 mt-1 overflow-hidden rounded-xl border border-border bg-card shadow-lg">
           {/* Category chips — show when there's a query */}
           {hasQuery && (
             <CategoryChips

@@ -309,7 +309,7 @@ export function LenderQuotesTab({
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead className="w-[180px] sticky left-0 bg-white z-10 border-r">
+                  <TableHead className="w-[180px] sticky left-0 bg-card z-10 border-r">
                     Term
                   </TableHead>
                   {quotes.map((q) => (
@@ -341,7 +341,7 @@ export function LenderQuotesTab({
               <TableBody>
                 {/* Status row */}
                 <TableRow>
-                  <TableCell className="font-medium text-xs text-muted-foreground sticky left-0 bg-white border-r">
+                  <TableCell className="font-medium text-xs text-muted-foreground sticky left-0 bg-card border-r">
                     Status
                   </TableCell>
                   {quotes.map((q) => (
@@ -359,7 +359,7 @@ export function LenderQuotesTab({
 
                 {/* Lender Contact row */}
                 <TableRow>
-                  <TableCell className="font-medium text-xs text-muted-foreground sticky left-0 bg-white border-r">
+                  <TableCell className="font-medium text-xs text-muted-foreground sticky left-0 bg-card border-r">
                     Lender Contact
                   </TableCell>
                   {quotes.map((q) => (
@@ -378,7 +378,7 @@ export function LenderQuotesTab({
                 {/* Comparison rows */}
                 {COMPARISON_ROWS.map((row) => (
                   <TableRow key={row.field}>
-                    <TableCell className="font-medium text-xs text-muted-foreground sticky left-0 bg-white border-r">
+                    <TableCell className="font-medium text-xs text-muted-foreground sticky left-0 bg-card border-r">
                       {row.label}
                     </TableCell>
                     {quotes.map((q) => {
@@ -406,7 +406,7 @@ export function LenderQuotesTab({
 
                 {/* Requity Fee Income row */}
                 <TableRow className="border-t-2">
-                  <TableCell className="font-semibold text-xs text-foreground sticky left-0 bg-white border-r">
+                  <TableCell className="font-semibold text-xs text-foreground sticky left-0 bg-card border-r">
                     Requity Fee Income
                   </TableCell>
                   {quotes.map((q) => {
@@ -431,7 +431,7 @@ export function LenderQuotesTab({
 
                 {/* Actions row */}
                 <TableRow>
-                  <TableCell className="font-medium text-xs text-muted-foreground sticky left-0 bg-white border-r">
+                  <TableCell className="font-medium text-xs text-muted-foreground sticky left-0 bg-card border-r">
                     Actions
                   </TableCell>
                   {quotes.map((q) => (
