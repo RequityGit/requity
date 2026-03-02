@@ -24,9 +24,12 @@ import {
   Cog,
   BookOpen,
   Calculator,
+  MessageSquare,
 } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useViewAs } from "@/contexts/view-as-context";
+import { useUnreadCounts } from "@/hooks/useUnreadCounts";
+import { createClient } from "@/lib/supabase/client";
 
 interface NavItem {
   label: string;
@@ -108,6 +111,15 @@ export function Sidebar({ role, isSuperAdmin }: { role: string; isSuperAdmin?: b
   const pathname = usePathname();
   const [collapsed, setCollapsed] = useState(false);
   const { effectiveViewRole, isViewingAs } = useViewAs();
+  const [userId, setUserId] = useState<string | undefined>();
+  const { totalUnread } = useUnreadCounts(userId);
+
+  useEffect(() => {
+    const supabase = createClient();
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (user) setUserId(user.id);
+    });
+  }, []);
 
   // Use view-as role for navigation when super admin is simulating
   const navRole = isViewingAs ? effectiveViewRole : role;
@@ -169,6 +181,33 @@ export function Sidebar({ role, isSuperAdmin }: { role: string; isSuperAdmin?: b
         })}
       </nav>
 
+      <div className="px-2 pb-1">
+        <Link
+          href="/chat"
+          className={cn(
+            "flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors relative",
+            pathname.startsWith("/chat")
+              ? "bg-white/15 text-white"
+              : "text-white/70 hover:bg-white/10 hover:text-white"
+          )}
+          title={collapsed ? "Messages" : undefined}
+        >
+          <div className="relative flex-shrink-0">
+            <MessageSquare className="h-5 w-5" />
+            {totalUnread > 0 && (
+              <span className="absolute -top-1.5 -right-1.5 h-4 min-w-[16px] px-1 flex items-center justify-center rounded-full bg-red-500 text-white text-[10px] font-bold">
+                {totalUnread > 99 ? "99+" : totalUnread}
+              </span>
+            )}
+          </div>
+          {!collapsed && <span>Messages</span>}
+          {!collapsed && totalUnread > 0 && (
+            <span className="ml-auto bg-red-500 text-white text-[10px] font-bold rounded-full h-5 min-w-[20px] px-1.5 flex items-center justify-center">
+              {totalUnread > 99 ? "99+" : totalUnread}
+            </span>
+          )}
+        </Link>
+      </div>
       <div className="px-2 pb-2">
         <Link
           href="/sops"
