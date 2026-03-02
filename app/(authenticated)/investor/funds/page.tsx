@@ -5,6 +5,7 @@ import { StatusBadge } from "@/components/shared/status-badge";
 import { formatCurrency, formatPercent } from "@/lib/format";
 import { Landmark, ArrowRight } from "lucide-react";
 import Link from "next/link";
+import { InvestmentTabs } from "@/components/investor/investment-tabs";
 
 type CommitmentWithFund = {
   id: string;
@@ -44,6 +45,8 @@ export default async function InvestorFundsPage() {
         title="My Investments"
         description="View details on the investments you are invested in."
       />
+
+      <InvestmentTabs />
 
       {commitments.length === 0 ? (
         <Card>

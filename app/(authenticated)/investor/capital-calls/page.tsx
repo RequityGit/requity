@@ -12,6 +12,7 @@ import {
   AlertCircle,
 } from "lucide-react";
 import { CapitalCallFilters } from "./filters";
+import { InvestmentTabs } from "@/components/investor/investment-tabs";
 
 type CapitalCallRow = {
   id: string;
@@ -147,6 +148,8 @@ export default async function CapitalCallsPage({
         title="Contributions"
         description="Track all contribution notices and payment status across your investment commitments."
       />
+
+      <InvestmentTabs />
 
       {/* Summary KPIs */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">

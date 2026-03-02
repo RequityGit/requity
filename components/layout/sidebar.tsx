@@ -6,17 +6,14 @@ import { cn } from "@/lib/utils";
 import {
   LayoutDashboard,
   FileText,
-  DollarSign,
   Building2,
   Users,
   Briefcase,
-  PiggyBank,
   CreditCard,
   ChevronLeft,
   ChevronRight,
   Landmark,
   FolderOpen,
-  Receipt,
   Hammer,
   Settings2,
   Contact,
@@ -41,12 +38,11 @@ interface NavItem {
 
 const investorNav: NavItem[] = [
   { label: "Dashboard", href: "/investor/dashboard", icon: LayoutDashboard },
-  { label: "My Investments", href: "/investor/funds", icon: Landmark },
-  { label: "Contributions", href: "/investor/capital-calls", icon: DollarSign },
   {
-    label: "Distributions",
-    href: "/investor/distributions",
-    icon: PiggyBank,
+    label: "My Investments",
+    href: "/investor/funds",
+    icon: Landmark,
+    activePaths: ["/investor/capital-calls", "/investor/distributions"],
   },
   { label: "Documents", href: "/investor/documents", icon: FileText },
 ];
@@ -79,19 +75,14 @@ const adminNav: NavItem[] = [
     activePaths: ["/admin/dscr"],
   },
   { label: "Servicing", href: "/admin/servicing", icon: Banknote },
-  { label: "Investments", href: "/admin/funds", icon: Landmark },
+  {
+    label: "Investments",
+    href: "/admin/funds",
+    icon: Landmark,
+    activePaths: ["/admin/capital-calls", "/admin/distributions"],
+  },
   { label: "Documents", href: "/admin/documents", icon: FolderOpen },
   { label: "Operations", href: "/admin/operations", icon: Settings2 },
-  {
-    label: "Contributions",
-    href: "/admin/capital-calls",
-    icon: DollarSign,
-  },
-  {
-    label: "Distributions",
-    href: "/admin/distributions",
-    icon: Receipt,
-  },
 ];
 
 function getNavItems(role: string): NavItem[] {

@@ -13,6 +13,7 @@ import {
   Layers,
 } from "lucide-react";
 import { DistributionFilters } from "./filters";
+import { InvestmentTabs } from "@/components/investor/investment-tabs";
 
 type DistributionRow = {
   id: string;
@@ -185,6 +186,8 @@ export default async function DistributionsPage({
         title="Distributions"
         description="View your distribution history and payment details across all investments."
       />
+
+      <InvestmentTabs />
 
       {/* Summary KPIs */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
