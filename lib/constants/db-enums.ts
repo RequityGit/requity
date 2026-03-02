@@ -260,33 +260,77 @@ export const PROPERTY_TYPES = [
 export type PropertyType = (typeof PROPERTY_TYPES)[number];
 
 // ============================================
-// draw_requests
+// draw_requests (enum: draw_request_status)
 // ============================================
 
-/** Constraint: draw_requests_status_check (updated to use 'denied' instead of 'rejected') */
+/** PostgreSQL enum: draw_request_status */
 export const DRAW_REQUEST_STATUSES = [
+  "draft",
   "submitted",
+  "inspection_ordered",
+  "inspection_complete",
   "under_review",
   "approved",
   "funded",
+  "rejected",
   "denied",
+  "withdrawn",
 ] as const;
 export type DrawRequestStatus = (typeof DRAW_REQUEST_STATUSES)[number];
 
 // ============================================
-// loan_draws
+// construction budget statuses (enum: budget_status)
 // ============================================
 
-/** Constraint: inline check on loan_draws.status */
-export const LOAN_DRAW_STATUSES = [
-  "pending",
-  "requested",
-  "inspected",
-  "approved",
-  "funded",
-  "denied",
+/** PostgreSQL enum: budget_status */
+export const BUDGET_STATUSES = [
+  "draft",
+  "active",
+  "completed",
+  "closed",
 ] as const;
-export type LoanDrawStatus = (typeof LOAN_DRAW_STATUSES)[number];
+export type BudgetStatus = (typeof BUDGET_STATUSES)[number];
+
+// ============================================
+// budget change request statuses (enum: budget_change_request_status)
+// ============================================
+
+/** PostgreSQL enum: budget_change_request_status */
+export const BUDGET_CHANGE_REQUEST_STATUSES = [
+  "pending",
+  "approved",
+  "rejected",
+  "withdrawn",
+] as const;
+export type BudgetChangeRequestStatus = (typeof BUDGET_CHANGE_REQUEST_STATUSES)[number];
+
+// ============================================
+// inspection method (enum: inspection_method)
+// ============================================
+
+/** PostgreSQL enum: inspection_method */
+export const INSPECTION_METHODS = [
+  "physical_inspector",
+  "sitewire",
+  "internal_review",
+  "waived",
+] as const;
+export type InspectionMethod = (typeof INSPECTION_METHODS)[number];
+
+// ============================================
+// draw document type (enum: draw_document_type)
+// ============================================
+
+/** PostgreSQL enum: draw_document_type */
+export const DRAW_DOCUMENT_TYPES = [
+  "photo",
+  "invoice",
+  "inspector_report",
+  "lien_waiver",
+  "sitewire_report",
+  "other",
+] as const;
+export type DrawDocumentType = (typeof DRAW_DOCUMENT_TYPES)[number];
 
 // ============================================
 // loan_payments
