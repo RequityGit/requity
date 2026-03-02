@@ -12171,3 +12171,112 @@ export const Constants = {
     },
   },
 } as const
+
+// ── Convenience type aliases ─────────────────────────────────────────────
+// These map friendly names to generated Supabase row types.
+// Tables present in the generated schema use Tables<'...'>.
+// Tables not yet in the generated schema are defined manually from migrations.
+
+export type Profile = Tables<'profiles'>
+export type Loan = Tables<'loans'>
+export type LoanPayment = Tables<'loan_payments'>
+export type LoanCondition = Tables<'loan_conditions'>
+export type LoanDocument = Tables<'loan_documents'>
+export type Document = Tables<'documents'>
+export type DrawRequest = Tables<'draw_requests'>
+export type CrmContact = Tables<'crm_contacts'>
+export type LoanConditionTemplate = Tables<'loan_condition_templates'>
+export type BorrowerEntity = Tables<'borrower_entities'>
+
+// pricing_programs — not yet in generated types (migration 20250311)
+export interface PricingProgram {
+  id: string
+  program_id: string
+  loan_type: string
+  program_name: string
+  arv_label: string | null
+  interest_rate: number
+  rate_type: string
+  origination_points: number
+  min_origination_fee: number
+  points_note: string | null
+  max_ltv: number
+  ltv_note: string | null
+  max_ltc: number
+  ltc_note: string | null
+  max_ltp: number
+  loan_term_months: number
+  exit_points: number
+  term_note: string | null
+  legal_doc_fee: number
+  bpo_appraisal_cost: number
+  bpo_appraisal_note: string | null
+  min_credit_score: number
+  min_deals_24mo: number
+  citizenship: string
+  version: number
+  is_current: boolean
+  effective_date: string
+  created_at: string
+  created_by: string | null
+}
+
+// pricing_program_versions — not yet in generated types (migration 20250311)
+export interface PricingProgramVersion {
+  id: string
+  program_id: string
+  version: number
+  change_description: string | null
+  changed_by: string | null
+  changed_at: string
+  snapshot: Json
+}
+
+// leverage_adjusters — not yet in generated types (migration 20250311)
+export interface LeverageAdjuster {
+  id: string
+  program_id: string
+  risk_factor: string
+  display_name: string
+  condition_description: string | null
+  ltc_adjustment: number
+  ltv_adjustment: number
+  note: string | null
+  is_active: boolean
+  sort_order: number
+}
+
+// lender_quotes — not yet in generated types (migration 20260302)
+export interface LenderQuote {
+  id: string
+  created_at: string | null
+  updated_at: string | null
+  quote_name: string
+  status: string
+  status_changed_at: string | null
+  loan_id: string | null
+  lender_company_id: string | null
+  lender_contact_name: string | null
+  linked_property_id: string | null
+  loan_amount: number | null
+  interest_rate: number | null
+  loan_term_months: number | null
+  interest_only_period_months: number | null
+  ltv: number | null
+  amortization_months: number | null
+  origination_fee: number | null
+  uw_processing_fee: number | null
+  requity_lending_fee: number | null
+  prepayment_penalty: string | null
+  ym_spread: number | null
+  ym_amount: number | null
+  term_sheet_url: string | null
+  description: string | null
+  requested_at: string | null
+  received_at: string | null
+  accepted_at: string | null
+  declined_at: string | null
+  declined_reason: string | null
+  created_by: string | null
+  updated_by: string | null
+}
