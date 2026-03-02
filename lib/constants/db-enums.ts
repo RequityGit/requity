@@ -1157,6 +1157,97 @@ export const CONDO_STATUSES = [
 ] as const;
 
 // ============================================
+// Equity Pipeline — Deal Stages
+// ============================================
+
+/** Enum: equity_deal_stage */
+export const EQUITY_DEAL_STAGES = [
+  "sourcing",
+  "screening",
+  "due_diligence",
+  "loi_negotiation",
+  "under_contract",
+  "closing",
+  "closed",
+  "asset_management",
+  "disposition",
+  "dead",
+] as const;
+export type EquityDealStage = (typeof EQUITY_DEAL_STAGES)[number];
+
+/** Active pipeline stages shown on the equity board */
+export const EQUITY_PIPELINE_STAGES: EquityDealStage[] = [
+  "sourcing",
+  "screening",
+  "due_diligence",
+  "loi_negotiation",
+  "under_contract",
+  "closing",
+  "closed",
+  "asset_management",
+  "disposition",
+];
+
+export const EQUITY_STAGE_LABELS: Record<string, string> = {
+  sourcing: "Sourcing",
+  screening: "Screening",
+  due_diligence: "Due Diligence",
+  loi_negotiation: "LOI Negotiation",
+  under_contract: "Under Contract",
+  closing: "Closing",
+  closed: "Closed",
+  asset_management: "Asset Mgmt",
+  disposition: "Disposition",
+  dead: "Dead",
+};
+
+export const EQUITY_STAGE_COLORS: Record<string, string> = {
+  sourcing: "bg-slate-100 text-slate-800",
+  screening: "bg-blue-100 text-blue-800",
+  due_diligence: "bg-purple-100 text-purple-800",
+  loi_negotiation: "bg-indigo-100 text-indigo-800",
+  under_contract: "bg-amber-100 text-amber-800",
+  closing: "bg-teal-100 text-teal-800",
+  closed: "bg-green-100 text-green-800",
+  asset_management: "bg-cyan-100 text-cyan-800",
+  disposition: "bg-orange-100 text-orange-800",
+  dead: "bg-red-100 text-red-800",
+};
+
+/** Enum: equity_deal_source */
+export const EQUITY_DEAL_SOURCES = [
+  { value: "broker", label: "Broker" },
+  { value: "off_market", label: "Off-Market" },
+  { value: "auction", label: "Auction" },
+  { value: "direct_to_seller", label: "Direct to Seller" },
+  { value: "referral", label: "Referral" },
+  { value: "internal_portfolio", label: "Internal Portfolio" },
+  { value: "mls", label: "MLS" },
+  { value: "other", label: "Other" },
+] as const;
+
+/** Enum: equity_task_status */
+export const EQUITY_TASK_STATUSES = [
+  { value: "not_started", label: "Not Started" },
+  { value: "in_progress", label: "In Progress" },
+  { value: "completed", label: "Completed" },
+  { value: "blocked", label: "Blocked" },
+  { value: "waived", label: "Waived" },
+] as const;
+
+/** Equity deal loss reasons */
+export const EQUITY_LOSS_REASONS = [
+  { value: "pricing", label: "Pricing Too High" },
+  { value: "competition", label: "Lost to Competitor" },
+  { value: "due_diligence_failed", label: "Due Diligence Failed" },
+  { value: "financing_fell_through", label: "Financing Fell Through" },
+  { value: "seller_withdrew", label: "Seller Withdrew" },
+  { value: "market_conditions", label: "Market Conditions" },
+  { value: "regulatory", label: "Regulatory Issue" },
+  { value: "other", label: "Other" },
+] as const;
+
+// ============================================
 // Entity Owner Titles
 // ============================================
 

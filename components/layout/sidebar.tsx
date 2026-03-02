@@ -74,6 +74,11 @@ const adminNav: NavItem[] = [
     icon: Calculator,
     activePaths: ["/admin/dscr"],
   },
+  {
+    label: "Equity",
+    href: "/admin/equity-pipeline",
+    icon: Building2,
+  },
   { label: "Servicing", href: "/admin/servicing", icon: Banknote },
   {
     label: "Investments",
