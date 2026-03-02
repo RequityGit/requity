@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 2936 568" width="2936" height="568">
+  <defs>
+    <style>
+      .navy { fill: #1a2b4a; }
+      .teal { fill: #2b9e8f; }
+    </style>
+  </defs>
+  <!-- Icon: stylized "R" mark -->
+  <g transform="translate(40, 44)">
+    <!-- Shield / house shape background -->
+    <path class="navy" d="M240,0 L480,120 L480,360 C480,420 400,480 240,480 C80,480 0,420 0,360 L0,120 Z"/>
+    <!-- Stylized R letter -->
+    <path fill="#ffffff" d="M160,100 L280,100 C330,100 370,130 370,175 C370,210 350,235 320,245 L380,380 L320,380 L265,250 L220,250 L220,380 L160,380 Z M220,155 L220,200 L270,200 C295,200 310,190 310,177 C310,164 295,155 270,155 Z"/>
+    <!-- Teal accent bar -->
+    <rect class="teal" x="140" y="400" width="200" height="16" rx="8"/>
+  </g>
+  <!-- Wordmark: REQUITY -->
+  <g transform="translate(580, 100)">
+    <!-- R -->
+    <path class="navy" d="M0,0 L120,0 C175,0 210,35 210,80 C210,115 192,142 162,155 L220,368 L160,368 L108,165 L60,165 L60,368 L0,368 Z M60,55 L60,115 L110,115 C138,115 152,100 152,82 C152,64 138,55 110,55 Z"/>
+    <!-- E -->
+    <path class="navy" d="M260,0 L460,0 L460,55 L320,55 L320,150 L440,150 L440,205 L320,205 L320,313 L465,313 L465,368 L260,368 Z"/>
+    <!-- Q -->
+    <path class="navy" d="M590,184 C590,80 660,0 770,0 C880,0 950,80 950,184 C950,270 900,340 830,365 L960,400 L930,450 L780,405 C775,406 772,406 770,406 C660,406 590,310 590,184 Z M650,184 C650,275 700,348 770,348 C840,348 890,275 890,184 C890,93 840,58 770,58 C700,58 650,93 650,184 Z"/>
+    <!-- U -->
+    <path class="navy" d="M1010,0 L1070,0 L1070,240 C1070,305 1100,340 1150,340 C1200,340 1230,305 1230,240 L1230,0 L1290,0 L1290,248 C1290,340 1235,400 1150,400 C1065,400 1010,340 1010,248 Z"/>
+    <!-- I -->
+    <path class="navy" d="M1360,0 L1420,0 L1420,368 L1360,368 Z"/>
+    <!-- T -->
+    <path class="navy" d="M1480,0 L1720,0 L1720,55 L1630,55 L1630,368 L1570,368 L1570,55 L1480,55 Z"/>
+    <!-- Y -->
+    <path class="navy" d="M1770,0 L1870,160 L1970,0 L2040,0 L1900,210 L1900,368 L1840,368 L1840,210 L1700,0 Z"/>
+  </g>
+  <!-- Tagline: GROUP -->
+  <g transform="translate(582, 480)">
+    <text class="teal" font-family="Arial, Helvetica, sans-serif" font-size="62" font-weight="600" letter-spacing="18">GROUP</text>
+  </g>
+</svg>

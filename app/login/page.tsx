@@ -2,7 +2,7 @@
 
 import { useState, useRef } from "react";
 import { createClient } from "@/lib/supabase/client";
-import { Briefcase, Mail, Loader2, Chrome } from "lucide-react";
+import { Mail, Loader2, Chrome } from "lucide-react";
 
 function getSupabase() {
   return createClient();
@@ -81,12 +81,11 @@ export default function LoginPage() {
         <div className="bg-white rounded-lg shadow-lg p-8">
           {/* Logo / Header */}
           <div className="text-center mb-8">
-            <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-[#1a2b4a] mb-4">
-              <Briefcase className="h-6 w-6 text-teal-400" />
-            </div>
-            <h1 className="text-2xl font-bold text-[#1a2b4a]">
-              Requity Group
-            </h1>
+            <img
+              src="https://edhlkknvlczhbowasjna.supabase.co/storage/v1/object/public/brand-assets/Requity%20Logo%20Color.svg"
+              alt="Requity Group"
+              className="h-12 mx-auto mb-4"
+            />
             <p className="text-muted-foreground mt-2">
               Sign in to your investor portal
             </p>

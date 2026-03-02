@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 2000 2000" width="2000" height="2000">
+  <defs>
+    <style>
+      .white { fill: #ffffff; }
+      .teal-light { fill: #5ec4b6; }
+    </style>
+  </defs>
+  <!-- Background: transparent (for use on dark backgrounds) -->
+  <!-- Shield / house shape -->
+  <g transform="translate(300, 200)">
+    <path class="white" d="M700,0 L1400,280 L1400,900 C1400,1060 1160,1200 700,1200 C240,1200 0,1060 0,900 L0,280 Z"/>
+    <!-- Stylized R letter in navy -->
+    <path fill="#1a2b4a" d="M440,240 L820,240 C950,240 1040,320 1040,430 C1040,520 990,580 910,610 L1080,940 L940,940 L790,630 L600,630 L600,940 L440,940 Z M600,380 L600,500 L780,500 C840,500 870,475 870,440 C870,405 840,380 780,380 Z"/>
+    <!-- Teal accent bar -->
+    <rect class="teal-light" x="380" y="1020" width="640" height="40" rx="20"/>
+  </g>
+  <!-- REQUITY text -->
+  <g transform="translate(260, 1520)">
+    <!-- R -->
+    <path class="white" d="M0,0 L100,0 C145,0 175,28 175,65 C175,95 158,115 135,125 L182,295 L140,295 L98,130 L48,130 L48,295 L0,295 Z M48,44 L48,92 L92,92 C114,92 126,80 126,66 C126,52 114,44 92,44 Z"/>
+    <!-- E -->
+    <path class="white" d="M220,0 L380,0 L380,44 L268,44 L268,120 L365,120 L365,164 L268,164 L268,251 L385,251 L385,295 L220,295 Z"/>
+    <!-- Q -->
+    <path class="white" d="M480,148 C480,65 535,0 620,0 C705,0 760,65 760,148 C760,218 720,272 665,293 L770,320 L746,360 L625,325 C623,325 621,325 620,325 C535,325 480,250 480,148 Z M528,148 C528,222 570,280 620,280 C670,280 712,222 712,148 C712,74 670,46 620,46 C570,46 528,74 528,148 Z"/>
+    <!-- U -->
+    <path class="white" d="M815,0 L863,0 L863,195 C863,245 886,275 925,275 C964,275 987,245 987,195 L987,0 L1035,0 L1035,200 C1035,275 990,320 925,320 C860,320 815,275 815,200 Z"/>
+    <!-- I -->
+    <path class="white" d="M1095,0 L1143,0 L1143,295 L1095,295 Z"/>
+    <!-- T -->
+    <path class="white" d="M1190,0 L1382,0 L1382,44 L1310,44 L1310,295 L1262,295 L1262,44 L1190,44 Z"/>
+    <!-- Y -->
+    <path class="white" d="M1420,0 L1500,128 L1580,0 L1636,0 L1524,168 L1524,295 L1476,295 L1476,168 L1364,0 Z"/>
+  </g>
+  <!-- GROUP tagline -->
+  <g transform="translate(262, 1850)">
+    <text class="teal-light" font-family="Arial, Helvetica, sans-serif" font-size="50" font-weight="600" letter-spacing="15">GROUP</text>
+  </g>
+</svg>

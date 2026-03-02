@@ -115,9 +115,12 @@ export function Sidebar({ role, isSuperAdmin }: { role: string; isSuperAdmin?: b
     >
       <div className="flex items-center justify-between p-4 border-b border-white/10">
         {!collapsed && (
-          <Link href={`/${role}/dashboard`} className="flex items-center gap-2">
-            <Briefcase className="h-6 w-6 text-teal-400" />
-            <span className="font-bold text-lg">Requity</span>
+          <Link href={`/${role}/dashboard`} className="flex items-center">
+            <img
+              src="https://edhlkknvlczhbowasjna.supabase.co/storage/v1/object/public/brand-assets/Requity%20Logo%20White.svg"
+              alt="Requity"
+              className="h-8"
+            />
           </Link>
         )}
         <button
