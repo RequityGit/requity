@@ -20,7 +20,7 @@ export function TypingIndicator({ typingUsers }: TypingIndicatorProps) {
   }
 
   return (
-    <div className="flex items-center gap-2 px-4 py-1.5 text-xs text-[#C4C0B8] bg-[#0F2140]">
+    <div className="flex items-center gap-2 px-4 py-1.5 text-xs text-muted-foreground bg-secondary">
       <span className="flex gap-0.5">
         <span
           className="animate-bounce inline-block h-1.5 w-1.5 rounded-full bg-[#C5975B]"

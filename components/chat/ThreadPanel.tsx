@@ -119,13 +119,13 @@ export function ThreadPanel({
   }, [parentMessageId]);
 
   return (
-    <div className="w-96 h-full border-l border-[rgba(197,151,91,0.08)] bg-[#0A1628] flex flex-col">
+    <div className="w-96 h-full border-l border-border bg-card flex flex-col">
       {/* Header */}
-      <div className="flex items-center justify-between px-4 py-3 border-b border-[rgba(197,151,91,0.08)]">
-        <h3 className="text-sm font-semibold text-[#FAFAF8]">Thread</h3>
+      <div className="flex items-center justify-between px-4 py-3 border-b border-border">
+        <h3 className="text-sm font-semibold text-foreground">Thread</h3>
         <button
           onClick={onClose}
-          className="p-1 rounded hover:bg-[rgba(255,255,255,0.06)] text-[#C4C0B8] transition-colors duration-200"
+          className="p-1 rounded hover:bg-[rgba(255,255,255,0.06)] text-muted-foreground transition-colors duration-200"
         >
           <X className="h-4 w-4" />
         </button>
@@ -133,32 +133,32 @@ export function ThreadPanel({
 
       {loading ? (
         <div className="flex-1 flex items-center justify-center">
-          <Loader2 className="h-6 w-6 animate-spin text-[#C5975B]" />
+          <Loader2 className="h-6 w-6 animate-spin text-gold" />
         </div>
       ) : (
         <>
           {/* Parent message */}
           {parentMessage && (
-            <div className="px-4 py-3 border-b border-[rgba(197,151,91,0.08)] bg-[#0F2140]">
+            <div className="px-4 py-3 border-b border-border bg-secondary">
               <div className="flex items-center gap-2 mb-1.5">
                 <ChatAvatar
                   src={parentMessage.sender?.avatar_url}
                   name={parentMessage.sender?.full_name}
                   size="header"
                 />
-                <span className="text-sm font-semibold text-[#FAFAF8]">
+                <span className="text-sm font-semibold text-foreground">
                   {parentMessage.sender?.full_name || "Unknown"}
                 </span>
-                <span className="text-xs text-[#8A8680]">
+                <span className="text-xs text-muted-foreground">
                   {formatMessageTime(parentMessage.created_at)}
                 </span>
               </div>
-              <div className="text-sm text-[#F0EDE6] prose prose-sm prose-invert max-w-none prose-p:my-0">
+              <div className="text-sm text-foreground prose prose-sm prose-invert max-w-none prose-p:my-0">
                 <ReactMarkdown remarkPlugins={[remarkGfm]}>
                   {parentMessage.content || ""}
                 </ReactMarkdown>
               </div>
-              <div className="mt-2 text-xs text-[#8A8680]">
+              <div className="mt-2 text-xs text-muted-foreground">
                 {replies.length}{" "}
                 {replies.length === 1 ? "reply" : "replies"}
               </div>
@@ -166,7 +166,7 @@ export function ThreadPanel({
           )}
 
           {/* Replies */}
-          <div className="flex-1 overflow-y-auto py-2 bg-[#0F2140]">
+          <div className="flex-1 overflow-y-auto py-2 bg-secondary">
             {replies.map((reply) => (
               <div key={reply.id} className="flex gap-2.5 px-4 py-1.5">
                 <ChatAvatar
@@ -177,14 +177,14 @@ export function ThreadPanel({
                 />
                 <div className="min-w-0 flex-1">
                   <div className="flex items-baseline gap-2 mb-0.5">
-                    <span className="text-sm font-semibold text-[#FAFAF8]">
+                    <span className="text-sm font-semibold text-foreground">
                       {reply.sender?.full_name || "Unknown"}
                     </span>
-                    <span className="text-xs text-[#8A8680]">
+                    <span className="text-xs text-muted-foreground">
                       {formatMessageTime(reply.created_at)}
                     </span>
                   </div>
-                  <div className="text-sm text-[#F0EDE6] prose prose-sm prose-invert max-w-none prose-p:my-0">
+                  <div className="text-sm text-foreground prose prose-sm prose-invert max-w-none prose-p:my-0">
                     <ReactMarkdown remarkPlugins={[remarkGfm]}>
                       {reply.content || ""}
                     </ReactMarkdown>

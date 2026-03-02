@@ -181,7 +181,7 @@ export function ApprovalDetailView({
             <ArrowLeft className="h-4 w-4 mr-1" />
             Back to Approvals
           </Button>
-          <h1 className="text-2xl font-bold text-[#1a2b4a]">
+          <h1 className="text-2xl font-bold text-foreground">
             Approve: {snapshot?.borrower_name || "Unknown"} –{" "}
             {snapshot?.loan_amount ? formatCurrency(Number(snapshot.loan_amount)) : ""}{" "}
             {snapshot?.property_type || snapshot?.type || ""}
@@ -216,37 +216,37 @@ export function ApprovalDetailView({
           <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
             <div>
               <p className="text-xs text-muted-foreground mb-1">Loan Amount</p>
-              <p className="font-semibold text-[#1a2b4a]">
+              <p className="font-semibold text-foreground">
                 {snapshot?.loan_amount ? formatCurrency(Number(snapshot.loan_amount)) : "—"}
               </p>
             </div>
             <div>
               <p className="text-xs text-muted-foreground mb-1">LTV</p>
-              <p className="font-semibold text-[#1a2b4a]">
+              <p className="font-semibold text-foreground">
                 {snapshot?.ltv ? formatPercent(Number(snapshot.ltv)) : "—"}
               </p>
             </div>
             <div>
               <p className="text-xs text-muted-foreground mb-1">Property Type</p>
-              <p className="font-semibold text-[#1a2b4a]">
+              <p className="font-semibold text-foreground">
                 {(snapshot?.property_type || "—").toUpperCase()}
               </p>
             </div>
             <div>
               <p className="text-xs text-muted-foreground mb-1">Interest Rate</p>
-              <p className="font-semibold text-[#1a2b4a]">
+              <p className="font-semibold text-foreground">
                 {snapshot?.interest_rate ? formatPercent(Number(snapshot.interest_rate)) : "—"}
               </p>
             </div>
             <div>
               <p className="text-xs text-muted-foreground mb-1">Term</p>
-              <p className="font-semibold text-[#1a2b4a]">
+              <p className="font-semibold text-foreground">
                 {snapshot?.loan_term_months ? `${snapshot.loan_term_months} months` : "—"}
               </p>
             </div>
             <div>
               <p className="text-xs text-muted-foreground mb-1">Loan Type</p>
-              <p className="font-semibold text-[#1a2b4a]">
+              <p className="font-semibold text-foreground">
                 {(snapshot?.type || "—").toUpperCase()}
               </p>
             </div>
@@ -344,7 +344,7 @@ export function ApprovalDetailView({
 
       {/* Action Panel */}
       {isPending && isApprover && (
-        <Card className="border-2 border-[#1a2b4a]/10">
+        <Card className="border-2 border-primary/10">
           <CardHeader className="pb-3">
             <CardTitle className="text-base">Decision</CardTitle>
           </CardHeader>

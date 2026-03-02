@@ -32,10 +32,10 @@ export function QuickActions() {
             <Link
               key={a.label}
               href={a.href}
-              className={`flex items-center gap-1 px-3 py-1.5 rounded-[5px] font-body text-[11.5px] font-semibold transition-all duration-150 no-underline ${
+              className={`flex items-center gap-1 px-3 py-1.5 rounded-[5px] text-[11.5px] font-semibold transition-all duration-150 no-underline ${
                 a.primary
-                  ? "bg-gradient-to-br from-gold to-gold-light text-navy shadow-[0_2px_8px_rgba(197,151,91,0.25)] hover:shadow-[0_4px_16px_rgba(197,151,91,0.35)] border-none"
-                  : "bg-transparent text-dash-text-sec border border-navy/[0.13] hover:border-navy/[0.20] hover:text-navy"
+                  ? "bg-gold text-white border-none hover:bg-gold-light"
+                  : "bg-transparent text-dash-text-sec border border-border hover:border-foreground/20 hover:text-foreground"
               }`}
             >
               <a.icon size={12} strokeWidth={1.5} />

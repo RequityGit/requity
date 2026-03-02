@@ -73,19 +73,19 @@ export function ChatSearchOverlay({
   }, [query, handleSearch]);
 
   return (
-    <div className="absolute inset-0 bg-[#0A1628]/95 backdrop-blur-sm z-40 flex flex-col">
-      <div className="flex items-center gap-2 px-4 py-3 border-b border-[rgba(197,151,91,0.08)]">
-        <Search className="h-5 w-5 text-[#8A8680] flex-shrink-0" />
+    <div className="absolute inset-0 bg-card/95 backdrop-blur-sm z-40 flex flex-col">
+      <div className="flex items-center gap-2 px-4 py-3 border-b border-border">
+        <Search className="h-5 w-5 text-muted-foreground flex-shrink-0" />
         <input
           ref={inputRef}
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           placeholder="Search messages in this channel..."
-          className="flex-1 bg-transparent border-0 text-base text-[#FAFAF8] placeholder:text-[#8A8680] focus:outline-none"
+          className="flex-1 bg-transparent border-0 text-base text-foreground placeholder:text-muted-foreground focus:outline-none"
         />
         <button
           onClick={onClose}
-          className="p-1.5 rounded hover:bg-[rgba(255,255,255,0.06)] text-[#C4C0B8] flex-shrink-0 transition-colors duration-200"
+          className="p-1.5 rounded hover:bg-[rgba(255,255,255,0.06)] text-muted-foreground flex-shrink-0 transition-colors duration-200"
         >
           <X className="h-5 w-5" />
         </button>
@@ -94,10 +94,10 @@ export function ChatSearchOverlay({
       <div className="flex-1 overflow-y-auto">
         {loading ? (
           <div className="flex items-center justify-center py-8">
-            <Loader2 className="h-6 w-6 animate-spin text-[#C5975B]" />
+            <Loader2 className="h-6 w-6 animate-spin text-gold" />
           </div>
         ) : results.length === 0 ? (
-          <div className="text-center py-8 text-sm text-[#8A8680]">
+          <div className="text-center py-8 text-sm text-muted-foreground">
             {query.trim()
               ? "No messages found"
               : "Type to search messages..."}
@@ -121,14 +121,14 @@ export function ChatSearchOverlay({
                 />
                 <div className="min-w-0 flex-1">
                   <div className="flex items-baseline gap-2">
-                    <span className="text-sm font-semibold text-[#FAFAF8]">
+                    <span className="text-sm font-semibold text-foreground">
                       {msg.sender?.full_name || "Unknown"}
                     </span>
-                    <span className="text-xs text-[#8A8680]">
+                    <span className="text-xs text-muted-foreground">
                       {formatMessageTime(msg.created_at)}
                     </span>
                   </div>
-                  <div className="text-sm text-[#C4C0B8] mt-0.5 line-clamp-2">
+                  <div className="text-sm text-muted-foreground mt-0.5 line-clamp-2">
                     {msg.content}
                   </div>
                 </div>

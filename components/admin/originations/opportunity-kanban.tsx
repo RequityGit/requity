@@ -249,7 +249,7 @@ export function OpportunityKanban({ data }: OpportunityKanbanProps) {
                   {/* Column header */}
                   <div className="mb-3">
                     <div className="flex items-center justify-between">
-                      <h3 className="text-sm font-semibold text-[#1a2b4a]">
+                      <h3 className="text-sm font-semibold text-foreground">
                         {OPPORTUNITY_STAGE_LABELS[stage]}
                       </h3>
                       <Badge variant="secondary" className="text-xs">
@@ -291,7 +291,7 @@ export function OpportunityKanban({ data }: OpportunityKanbanProps) {
                                 }
                               >
                                 {/* Deal name / property address */}
-                                <p className="text-sm font-medium text-[#1a2b4a] truncate">
+                                <p className="text-sm font-medium text-foreground truncate">
                                   {opp.deal_name ||
                                     opp.property_address ||
                                     "Untitled Deal"}
@@ -299,7 +299,7 @@ export function OpportunityKanban({ data }: OpportunityKanbanProps) {
 
                                 {/* Loan type + amount + LTV */}
                                 <div className="flex items-center justify-between mt-1">
-                                  <span className="text-xs font-semibold text-[#1a2b4a]">
+                                  <span className="text-xs font-semibold text-foreground">
                                     {formatCurrency(
                                       opp.proposed_loan_amount
                                     )}

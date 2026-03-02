@@ -212,7 +212,7 @@ export default async function DocumentsPage({
           <Badge
             key={groupKey}
             variant="outline"
-            className="bg-slate-50 font-normal"
+            className="bg-muted font-normal"
           >
             {DOCUMENT_GROUPS[groupKey]?.label ?? groupKey}: {docs.length}
           </Badge>
@@ -234,7 +234,7 @@ export default async function DocumentsPage({
         <Card>
           <CardContent className="py-12 text-center text-muted-foreground">
             <FileText className="h-12 w-12 mx-auto mb-3 text-slate-300" />
-            <p className="text-lg font-medium text-[#1a2b4a]">
+            <p className="text-lg font-medium text-foreground">
               No documents found
             </p>
             <p className="text-sm mt-1">
@@ -254,7 +254,7 @@ export default async function DocumentsPage({
                 <CardHeader className="pb-3">
                   <div className="flex items-center gap-2">
                     {group.icon}
-                    <CardTitle className="text-base font-semibold text-[#1a2b4a]">
+                    <CardTitle className="text-base font-semibold text-foreground">
                       {group.label}
                     </CardTitle>
                     <Badge variant="outline" className="ml-auto font-normal">
@@ -271,7 +271,7 @@ export default async function DocumentsPage({
                       >
                         <div className="flex-1 min-w-0 mr-4">
                           <div className="flex items-center gap-2">
-                            <p className="text-sm font-medium text-[#1a2b4a] truncate">
+                            <p className="text-sm font-medium text-foreground truncate">
                               {doc.file_name}
                             </p>
                           </div>

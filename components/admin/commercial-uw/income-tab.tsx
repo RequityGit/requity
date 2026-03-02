@@ -283,7 +283,7 @@ export function IncomeTab({
                 </thead>
                 <tbody>
                   {rentRoll.map((row, idx) => (
-                    <tr key={idx} className="border-b hover:bg-slate-50">
+                    <tr key={idx} className="border-b hover:bg-muted">
                       <td className="p-1">
                         <Input
                           value={row.unit_number}
@@ -459,7 +459,7 @@ export function IncomeTab({
                 </thead>
                 <tbody>
                   {occupancyRows.map((row, idx) => (
-                    <tr key={idx} className="border-b hover:bg-slate-50">
+                    <tr key={idx} className="border-b hover:bg-muted">
                       <td className="p-1">
                         <Input
                           value={row.space_type}
@@ -596,7 +596,7 @@ export function IncomeTab({
               </thead>
               <tbody>
                 {ancillaryRows.map((row, idx) => (
-                  <tr key={idx} className="border-b hover:bg-slate-50">
+                  <tr key={idx} className="border-b hover:bg-muted">
                     <td className="p-1">
                       <Input
                         value={row.income_source}
@@ -650,7 +650,7 @@ export function IncomeTab({
         <div className="grid grid-cols-3 gap-4 text-center">
           <div>
             <p className="text-xs text-muted-foreground">Current GPI</p>
-            <p className="text-lg font-bold text-[#1a2b4a]">
+            <p className="text-lg font-bold text-foreground">
               {formatCurrency(gpi.current)}
             </p>
           </div>

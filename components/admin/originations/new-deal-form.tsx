@@ -189,7 +189,7 @@ export function NewDealForm({
               <button
                 className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm transition-colors ${
                   isActive
-                    ? "bg-[#1a2b4a] text-white"
+                    ? "bg-primary text-white"
                     : isComplete
                       ? "bg-green-100 text-green-800"
                       : "bg-slate-100 text-slate-500"

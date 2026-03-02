@@ -120,9 +120,9 @@ export function UserSearchModal({ open, onOpenChange }: UserSearchModalProps) {
                     key={user.id}
                     onClick={() => handleSelect(user.id)}
                     disabled={!!impersonating}
-                    className="w-full flex items-center gap-3 px-3 py-2.5 rounded-md text-left hover:bg-slate-100 transition-colors disabled:opacity-50"
+                    className="w-full flex items-center gap-3 px-3 py-2.5 rounded-md text-left hover:bg-muted transition-colors disabled:opacity-50"
                   >
-                    <div className="h-8 w-8 rounded-full bg-[#1a2b4a] flex items-center justify-center text-white text-xs font-medium flex-shrink-0">
+                    <div className="h-8 w-8 rounded-lg bg-primary flex items-center justify-center text-primary-foreground text-xs font-medium flex-shrink-0">
                       {displayName
                         .split(" ")
                         .map((n) => n[0])

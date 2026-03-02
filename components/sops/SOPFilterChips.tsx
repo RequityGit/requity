@@ -21,7 +21,7 @@ export function SOPFilterChips({
           "rounded-full border px-3 py-1.5 text-xs font-medium transition",
           !activeDepartment
             ? "border-gold bg-gold/15 text-gold"
-            : "border-navy-light bg-navy-mid text-[#C4C0B8] hover:border-gold/30 hover:text-[#FAFAF8]"
+            : "border-border bg-card text-muted-foreground hover:border-border hover:text-foreground"
         )}
       >
         All
@@ -34,7 +34,7 @@ export function SOPFilterChips({
             "rounded-full border px-3 py-1.5 text-xs font-medium transition",
             activeDepartment === dept
               ? "border-gold bg-gold/15 text-gold"
-              : "border-navy-light bg-navy-mid text-[#C4C0B8] hover:border-gold/30 hover:text-[#FAFAF8]"
+              : "border-border bg-card text-muted-foreground hover:border-border hover:text-foreground"
           )}
         >
           {dept}

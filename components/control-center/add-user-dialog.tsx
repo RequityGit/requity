@@ -160,7 +160,7 @@ export function AddUserDialog({
             <div
               key={s}
               className={`flex-1 h-1.5 rounded-full transition-colors ${
-                s <= step ? "bg-[#1a2b4a]" : "bg-gray-200"
+                s <= step ? "bg-primary" : "bg-gray-200"
               }`}
             />
           ))}

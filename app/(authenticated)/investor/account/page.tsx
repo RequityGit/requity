@@ -233,7 +233,7 @@ export default function InvestorAccountPage() {
                 onAvatarChange={setAvatarUrl}
               />
               <div className="pt-2">
-                <CardTitle className="text-lg font-semibold text-[#1a2b4a]">
+                <CardTitle className="text-lg font-semibold text-foreground">
                   Personal Information
                 </CardTitle>
                 <p className="text-xs text-muted-foreground mt-0.5">
@@ -362,8 +362,8 @@ export default function InvestorAccountPage() {
         <Card>
           <CardHeader className="pb-4">
             <div className="flex items-center gap-2">
-              <Building2 className="h-5 w-5 text-[#1a2b4a]" />
-              <CardTitle className="text-lg font-semibold text-[#1a2b4a]">
+              <Building2 className="h-5 w-5 text-foreground" />
+              <CardTitle className="text-lg font-semibold text-foreground">
                 Investment Commitments
               </CardTitle>
             </div>
@@ -388,10 +388,10 @@ export default function InvestorAccountPage() {
                   return (
                     <div
                       key={commitment.id}
-                      className="rounded-lg border p-4 bg-slate-50/50"
+                      className="rounded-lg border p-4 bg-muted/50"
                     >
                       <div className="flex items-center justify-between mb-3">
-                        <h4 className="font-medium text-[#1a2b4a]">
+                        <h4 className="font-medium text-foreground">
                           {commitment.fund_name}
                         </h4>
                         <StatusBadge status={commitment.status} />
@@ -429,9 +429,9 @@ export default function InvestorAccountPage() {
                           <span>Funding Progress</span>
                           <span>{pctFunded}%</span>
                         </div>
-                        <div className="w-full bg-white rounded-full h-2 border">
+                        <div className="w-full bg-card rounded-full h-2 border">
                           <div
-                            className="bg-[#1a2b4a] h-2 rounded-full transition-all"
+                            className="bg-primary h-2 rounded-full transition-all"
                             style={{ width: `${Math.min(pctFunded, 100)}%` }}
                           />
                         </div>

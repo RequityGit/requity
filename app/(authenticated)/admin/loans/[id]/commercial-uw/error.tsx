@@ -18,7 +18,7 @@ export default function CommercialUWError({
   return (
     <div className="flex flex-col items-center justify-center min-h-[400px] space-y-4">
       <AlertTriangle className="h-12 w-12 text-amber-500" />
-      <h2 className="text-lg font-semibold text-[#1a2b4a]">
+      <h2 className="text-lg font-semibold text-foreground">
         Something went wrong
       </h2>
       <p className="text-sm text-muted-foreground max-w-md text-center">

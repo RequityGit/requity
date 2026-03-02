@@ -26,8 +26,8 @@ export function InvestmentTabs() {
               className={cn(
                 "px-1 py-2 text-sm font-medium border-b-2 transition-colors -mb-px",
                 isActive
-                  ? "border-[#1a2b4a] text-[#1a2b4a]"
-                  : "border-transparent text-muted-foreground hover:text-[#1a2b4a] hover:border-slate-300"
+                  ? "border-primary text-foreground"
+                  : "border-transparent text-muted-foreground hover:text-foreground hover:border-slate-300"
               )}
             >
               {tab.label}

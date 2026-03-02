@@ -77,16 +77,16 @@ export function SOPsLandingClient({
     : null;
 
   return (
-    <div className="min-h-screen bg-navy-DEFAULT">
+    <div className="min-h-screen bg-background">
       <div className="mx-auto max-w-6xl px-6 py-8">
         {/* Header */}
         <div className="mb-8">
           <div className="flex items-start justify-between">
             <div>
-              <h1 className="font-display text-3xl font-semibold text-[#FAFAF8]">
+              <h1 className="text-3xl font-semibold text-foreground">
                 Knowledge Base
               </h1>
-              <p className="mt-1 text-[#C4C0B8]">
+              <p className="mt-1 text-muted-foreground">
                 Standard Operating Procedures &amp; Process Documentation
               </p>
             </div>
@@ -112,7 +112,7 @@ export function SOPsLandingClient({
                 )}
                 <Link
                   href="/sops/new"
-                  className="flex items-center gap-2 rounded-lg bg-gold px-4 py-2 text-sm font-semibold text-[#0A1628] transition hover:bg-gold-light"
+                  className="flex items-center gap-2 rounded-lg bg-gold px-4 py-2 text-sm font-semibold text-foreground transition hover:bg-gold-light"
                 >
                   <Plus className="h-4 w-4" />
                   Create SOP
@@ -141,7 +141,7 @@ export function SOPsLandingClient({
         {/* Category Grid */}
         {!categoryParam && (
           <section className="mb-10">
-            <h2 className="mb-4 font-display text-xl font-semibold text-[#FAFAF8]">
+            <h2 className="mb-4 text-xl font-semibold text-foreground">
               Browse by Category
             </h2>
             {filteredCategories.length > 0 ? (
@@ -155,8 +155,8 @@ export function SOPsLandingClient({
                 ))}
               </div>
             ) : (
-              <div className="rounded-xl border border-gold/10 bg-navy-mid p-8 text-center">
-                <p className="text-[#C4C0B8]">No categories found.</p>
+              <div className="rounded-xl border border-border bg-card p-8 text-center">
+                <p className="text-muted-foreground">No categories found.</p>
               </div>
             )}
           </section>
@@ -164,7 +164,7 @@ export function SOPsLandingClient({
 
         {/* SOPs List */}
         <section>
-          <h2 className="mb-4 font-display text-xl font-semibold text-[#FAFAF8]">
+          <h2 className="mb-4 text-xl font-semibold text-foreground">
             {selectedCategoryName
               ? selectedCategoryName
               : "Recently Updated SOPs"}
@@ -186,8 +186,8 @@ export function SOPsLandingClient({
               ))}
             </div>
           ) : (
-            <div className="rounded-xl border border-gold/10 bg-navy-mid p-8 text-center">
-              <p className="text-[#C4C0B8]">
+            <div className="rounded-xl border border-border bg-card p-8 text-center">
+              <p className="text-muted-foreground">
                 {selectedCategoryName
                   ? "No SOPs in this category yet."
                   : "No SOPs yet. Create your first SOP to start building your knowledge base."}
@@ -195,7 +195,7 @@ export function SOPsLandingClient({
               {isAdmin && (
                 <Link
                   href="/sops/new"
-                  className="mt-4 inline-flex items-center gap-2 rounded-lg bg-gold px-4 py-2 text-sm font-semibold text-[#0A1628] transition hover:bg-gold-light"
+                  className="mt-4 inline-flex items-center gap-2 rounded-lg bg-gold px-4 py-2 text-sm font-semibold text-foreground transition hover:bg-gold-light"
                 >
                   <Plus className="h-4 w-4" />
                   Create SOP

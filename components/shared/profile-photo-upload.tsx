@@ -251,7 +251,7 @@ export function ProfilePhotoUpload({
               className="object-cover"
             />
           )}
-          <AvatarFallback className="bg-[#1a2b4a] text-white text-xl font-medium">
+          <AvatarFallback className="bg-primary text-white text-xl font-medium">
             {getInitials(fullName)}
           </AvatarFallback>
         </Avatar>
@@ -283,7 +283,7 @@ export function ProfilePhotoUpload({
           type="button"
           onClick={() => fileInputRef.current?.click()}
           disabled={uploading}
-          className="text-xs text-[#1a2b4a] hover:underline font-medium disabled:opacity-50"
+          className="text-xs text-foreground hover:underline font-medium disabled:opacity-50"
         >
           {currentUrl ? "Change photo" : "Upload photo"}
         </button>

@@ -76,9 +76,9 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-slate-50">
+    <div className="min-h-screen flex items-center justify-center bg-muted">
       <div className="w-full max-w-md">
-        <div className="bg-white rounded-lg shadow-lg p-8">
+        <div className="bg-card rounded-lg shadow-lg p-8">
           {/* Logo / Header */}
           <div className="text-center mb-8">
             <img
@@ -104,12 +104,12 @@ export default function LoginPage() {
               <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-green-50 mb-2">
                 <Mail className="h-8 w-8 text-green-600" />
               </div>
-              <h2 className="text-lg font-semibold text-[#1a2b4a]">
+              <h2 className="text-lg font-semibold text-foreground">
                 Check your email
               </h2>
               <p className="text-sm text-muted-foreground">
                 We sent a sign-in link to{" "}
-                <span className="font-medium text-[#1a2b4a]">{email}</span>.
+                <span className="font-medium text-foreground">{email}</span>.
                 Click the link in the email to sign in.
               </p>
               <button
@@ -117,7 +117,7 @@ export default function LoginPage() {
                   setMagicLinkSent(false);
                   setEmail("");
                 }}
-                className="text-sm text-[#1a2b4a] underline underline-offset-4 hover:text-[#243a5e] transition-colors"
+                className="text-sm text-foreground underline underline-offset-4 hover:text-[#243a5e] transition-colors"
               >
                 Use a different email
               </button>
@@ -128,7 +128,7 @@ export default function LoginPage() {
               <button
                 onClick={handleGoogleLogin}
                 disabled={loading !== null}
-                className="w-full h-11 px-4 py-2 border border-slate-200 bg-white rounded-md text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-3"
+                className="w-full h-11 px-4 py-2 border border-border bg-card rounded-md text-sm font-medium text-foreground hover:bg-muted disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-3"
               >
                 {loading === "google" ? (
                   <Loader2 className="h-5 w-5 animate-spin" />
@@ -144,7 +144,7 @@ export default function LoginPage() {
                   <div className="w-full border-t border-slate-200" />
                 </div>
                 <div className="relative flex justify-center text-xs uppercase">
-                  <span className="bg-white px-2 text-muted-foreground">
+                  <span className="bg-card px-2 text-muted-foreground">
                     Or
                   </span>
                 </div>
@@ -173,7 +173,7 @@ export default function LoginPage() {
                 <button
                   type="submit"
                   disabled={loading !== null || !email}
-                  className="w-full h-10 px-4 py-2 bg-[#1a2b4a] text-white rounded-md text-sm font-medium hover:bg-[#243a5e] disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
+                  className="w-full h-10 px-4 py-2 bg-primary text-white rounded-md text-sm font-medium hover:bg-[#243a5e] disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
                 >
                   {loading === "magic" ? (
                     <Loader2 className="h-4 w-4 animate-spin" />

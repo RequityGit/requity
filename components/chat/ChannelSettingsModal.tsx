@@ -160,12 +160,12 @@ export function ChannelSettingsModal({
 
   return (
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className="sm:max-w-md bg-[#0F2140] border-[rgba(197,151,91,0.12)] text-[#FAFAF8]">
+      <DialogContent className="sm:max-w-md bg-secondary border-border text-foreground">
         <DialogHeader>
-          <DialogTitle className="text-[#FAFAF8]">
+          <DialogTitle className="text-foreground">
             Channel Settings
           </DialogTitle>
-          <DialogDescription className="text-[#8A8680]">
+          <DialogDescription className="text-muted-foreground">
             Manage {channel.name} settings and members.
           </DialogDescription>
         </DialogHeader>
@@ -175,7 +175,7 @@ export function ChannelSettingsModal({
           <div className="flex gap-2">
             <button
               onClick={handleToggleMute}
-              className="flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-md border border-[rgba(197,151,91,0.15)] text-[#C4C0B8] hover:bg-[rgba(255,255,255,0.06)] transition-colors duration-200"
+              className="flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-md border border-[rgba(197,151,91,0.15)] text-muted-foreground hover:bg-[rgba(255,255,255,0.06)] transition-colors duration-200"
             >
               {channel.is_muted ? (
                 <>
@@ -189,7 +189,7 @@ export function ChannelSettingsModal({
             </button>
             <button
               onClick={handleTogglePin}
-              className="flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-md border border-[rgba(197,151,91,0.15)] text-[#C4C0B8] hover:bg-[rgba(255,255,255,0.06)] transition-colors duration-200"
+              className="flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-md border border-[rgba(197,151,91,0.15)] text-muted-foreground hover:bg-[rgba(255,255,255,0.06)] transition-colors duration-200"
             >
               {channel.is_pinned ? (
                 <>
@@ -203,44 +203,44 @@ export function ChannelSettingsModal({
             </button>
           </div>
 
-          <div className="border-t border-[rgba(197,151,91,0.08)]" />
+          <div className="border-t border-border" />
 
           {/* Edit name and description */}
           {(isAdmin || channel.member_role === "owner") && (
             <>
               <div>
-                <label className="text-sm font-medium text-[#C4C0B8] block mb-1">
+                <label className="text-sm font-medium text-muted-foreground block mb-1">
                   Channel Name
                 </label>
                 <input
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  className="w-full px-3 py-2 text-sm bg-[#0A1628] border border-[rgba(197,151,91,0.08)] rounded-md text-[#F0EDE6] focus:outline-none focus:ring-1 focus:ring-[#C5975B] focus:border-[#C5975B]"
+                  className="w-full px-3 py-2 text-sm bg-card border border-border rounded-md text-foreground focus:outline-none focus:ring-1 focus:ring-gold focus:border-gold"
                 />
               </div>
               <div>
-                <label className="text-sm font-medium text-[#C4C0B8] block mb-1">
+                <label className="text-sm font-medium text-muted-foreground block mb-1">
                   Description
                 </label>
                 <input
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
-                  className="w-full px-3 py-2 text-sm bg-[#0A1628] border border-[rgba(197,151,91,0.08)] rounded-md text-[#F0EDE6] focus:outline-none focus:ring-1 focus:ring-[#C5975B] focus:border-[#C5975B]"
+                  className="w-full px-3 py-2 text-sm bg-card border border-border rounded-md text-foreground focus:outline-none focus:ring-1 focus:ring-gold focus:border-gold"
                 />
               </div>
-              <div className="border-t border-[rgba(197,151,91,0.08)]" />
+              <div className="border-t border-border" />
             </>
           )}
 
           {/* Members list */}
           <div>
-            <label className="text-sm font-medium text-[#C4C0B8] mb-2 block">
+            <label className="text-sm font-medium text-muted-foreground mb-2 block">
               Members ({members.length})
             </label>
             <div className="max-h-48 overflow-y-auto space-y-1">
               {loading ? (
                 <div className="flex justify-center py-4">
-                  <Loader2 className="h-5 w-5 animate-spin text-[#C5975B]" />
+                  <Loader2 className="h-5 w-5 animate-spin text-gold" />
                 </div>
               ) : (
                 members.map((m) => (
@@ -255,17 +255,17 @@ export function ChannelSettingsModal({
                         size="header"
                       />
                       <div>
-                        <div className="text-sm font-medium text-[#FAFAF8]">
+                        <div className="text-sm font-medium text-foreground">
                           {m.profile?.full_name || "Unknown"}
                           {m.user_id === userId && (
-                            <span className="text-[#8A8680] ml-1">
+                            <span className="text-muted-foreground ml-1">
                               (you)
                             </span>
                           )}
                         </div>
                       </div>
                     </div>
-                    <span className="text-xs text-[#8A8680] capitalize bg-[#1A3355] px-2 py-0.5 rounded">
+                    <span className="text-xs text-muted-foreground capitalize bg-muted px-2 py-0.5 rounded">
                       {m.role}
                     </span>
                   </div>
@@ -300,7 +300,7 @@ export function ChannelSettingsModal({
             <Button
               variant="outline"
               onClick={onClose}
-              className="border-[rgba(197,151,91,0.15)] text-[#C4C0B8] hover:bg-[rgba(255,255,255,0.06)] hover:text-[#FAFAF8]"
+              className="border-[rgba(197,151,91,0.15)] text-muted-foreground hover:bg-[rgba(255,255,255,0.06)] hover:text-foreground"
             >
               Cancel
             </Button>
@@ -308,7 +308,7 @@ export function ChannelSettingsModal({
               <Button
                 onClick={handleSave}
                 disabled={saving || !name.trim()}
-                className="bg-gradient-to-r from-[#C5975B] to-[#D4AD72] text-[#0A1628] hover:from-[#D4AD72] hover:to-[#E8D5B0] disabled:opacity-50"
+                className="bg-gold text-foreground hover:bg-gold-light disabled:opacity-50"
               >
                 {saving && (
                   <Loader2 className="h-4 w-4 mr-2 animate-spin" />

@@ -281,8 +281,8 @@ export function TermSheetTemplateEditor({ templates: initial }: Props) {
             className={cn(
               "px-4 py-2 rounded-md text-sm font-medium transition-colors border",
               t.loan_type === activeLoanType
-                ? "bg-[#1a2b4a] text-white border-[#1a2b4a]"
-                : "bg-white text-[#1a2b4a] border-slate-200 hover:bg-slate-50"
+                ? "bg-primary text-white border-primary"
+                : "bg-white text-foreground border-slate-200 hover:bg-muted"
             )}
           >
             {LOAN_TYPE_LABELS[t.loan_type] ?? t.loan_type}
@@ -312,7 +312,7 @@ export function TermSheetTemplateEditor({ templates: initial }: Props) {
         <Button
           onClick={handleSave}
           disabled={saving || !isDirty}
-          className="bg-[#1a2b4a] hover:bg-[#243a5e] text-white gap-2"
+          className="bg-primary hover:bg-[#243a5e] text-white gap-2"
         >
           {saving ? (
             <Loader2 className="h-4 w-4 animate-spin" />
@@ -414,7 +414,7 @@ export function TermSheetTemplateEditor({ templates: initial }: Props) {
             <TabsContent value="branding">
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-lg text-[#1a2b4a]">
+                  <CardTitle className="text-lg text-foreground">
                     Branding &amp; Header
                   </CardTitle>
                   <p className="text-sm text-muted-foreground">
@@ -496,7 +496,7 @@ export function TermSheetTemplateEditor({ templates: initial }: Props) {
             <TabsContent value="settings">
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-lg text-[#1a2b4a]">
+                  <CardTitle className="text-lg text-foreground">
                     Template Settings
                   </CardTitle>
                 </CardHeader>
@@ -518,7 +518,7 @@ export function TermSheetTemplateEditor({ templates: initial }: Props) {
                       }
                       className={cn(
                         "relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
-                        current.is_active ? "bg-[#1a2b4a]" : "bg-slate-200"
+                        current.is_active ? "bg-primary" : "bg-slate-200"
                       )}
                     >
                       <span
@@ -551,7 +551,7 @@ export function TermSheetTemplateEditor({ templates: initial }: Props) {
                     <Label className="text-sm font-medium">Loan Type</Label>
                     <Badge
                       variant="outline"
-                      className="bg-[#1a2b4a]/5 text-[#1a2b4a]"
+                      className="bg-primary/5 text-foreground"
                     >
                       {LOAN_TYPE_LABELS[current.loan_type] ?? current.loan_type}
                     </Badge>

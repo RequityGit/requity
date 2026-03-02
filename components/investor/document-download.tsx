@@ -55,7 +55,7 @@ export function DocumentDownload({
       size="sm"
       onClick={handleDownload}
       disabled={loading}
-      className="text-[#1a2b4a] hover:text-[#1a2b4a]/80"
+      className="text-foreground hover:text-foreground/80"
     >
       {loading ? (
         <Loader2 className="h-4 w-4 animate-spin" />

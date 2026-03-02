@@ -499,7 +499,7 @@ export function DealDetailClient({
             <Badge className={`text-sm px-3 py-1 ${OPPORTUNITY_STAGE_COLORS[opp.stage] || ""}`}>
               {OPPORTUNITY_STAGE_LABELS[opp.stage] || opp.stage}
             </Badge>
-            <h1 className="text-xl font-bold text-[#1a2b4a]">
+            <h1 className="text-xl font-bold text-foreground">
               {opp.deal_name || property?.address_line1 || "Untitled Deal"}
             </h1>
           </div>

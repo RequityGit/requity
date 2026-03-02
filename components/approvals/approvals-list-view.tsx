@@ -208,7 +208,7 @@ export function ApprovalsListView({ approvals, currentUserId, isSuperAdmin }: Ap
                           onClick={() => router.push(`/admin/operations/approvals/${approval.id}`)}
                         >
                           <TableCell>
-                            <div className="font-medium text-[#1a2b4a]">
+                            <div className="font-medium text-foreground">
                               {snapshot?.borrower_name || "—"}
                             </div>
                             <div className="text-xs text-muted-foreground truncate max-w-[200px]">

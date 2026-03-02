@@ -28,39 +28,39 @@ export function HeroMetrics({ data }: HeroMetricsProps) {
 
   return (
     <div className="grid grid-cols-[2.2fr_1fr_1fr_1fr] gap-2.5 mb-3 dash-fade-up dash-delay-1">
-      {/* AUM Card - Navy gradient */}
+      {/* AUM Card - Primary accent */}
       <DashCard
         hover
-        className="!p-[18px_22px] !bg-gradient-to-br !from-navy !to-navy-mid !border-none text-white"
+        className="!p-[18px_22px] !bg-primary !border-none text-primary-foreground"
       >
         <div className="flex justify-between items-start">
-          <span className="font-body text-[9.5px] font-bold uppercase tracking-[0.12em] text-navy-text">
+          <span className="text-[9.5px] font-bold uppercase tracking-[0.12em] text-primary-foreground/60">
             Total AUM
           </span>
           <div className="flex items-center gap-1.5">
-            <div className="w-[5px] h-[5px] rounded-full bg-[#22C55E] shadow-[0_0_8px_rgba(34,197,94,0.5)]" />
-            <span className="text-[9px] text-navy-text font-mono">LIVE</span>
+            <div className="w-[5px] h-[5px] rounded-full bg-[#22C55E]" />
+            <span className="text-[9px] text-primary-foreground/60 font-mono">LIVE</span>
           </div>
         </div>
         <div className="flex items-baseline gap-2.5 mt-2">
-          <span className="font-mono text-[40px] font-bold text-[#FAFAF8] leading-none tracking-tight">
+          <span className="font-mono text-[40px] font-bold text-primary-foreground leading-none tracking-tight">
             <CountUp end={aum.whole} decimals={aum.decimal} prefix="$" duration={900} delay={100} />
-            <span className="text-[22px] text-navy-text">{aum.suffix}</span>
+            <span className="text-[22px] text-primary-foreground/60">{aum.suffix}</span>
           </span>
           <span className="font-mono text-[10.5px] font-semibold px-1.5 py-0.5 rounded-[3px] bg-[rgba(34,197,94,0.12)] text-[#22C55E] inline-flex items-center gap-0.5">
             <ArrowUpRight size={10} strokeWidth={2.5} />+12.3%
           </span>
         </div>
         <div className="flex gap-5 mt-2.5">
-          <span className="text-[11px] text-navy-text">
+          <span className="text-[11px] text-primary-foreground/60">
             Lending{" "}
-            <span className="font-mono text-navy-text-bright font-semibold">
+            <span className="font-mono text-primary-foreground/80 font-semibold">
               {fmtShort(data.lendingAum)}
             </span>
           </span>
-          <span className="text-[11px] text-navy-text">
+          <span className="text-[11px] text-primary-foreground/60">
             Investments{" "}
-            <span className="font-mono text-navy-text-bright font-semibold">
+            <span className="font-mono text-primary-foreground/80 font-semibold">
               {fmtShort(data.investmentAum)}
             </span>
           </span>
@@ -69,27 +69,27 @@ export function HeroMetrics({ data }: HeroMetricsProps) {
 
       {/* Active Loans */}
       <DashCard hover className="!p-[14px_16px]">
-        <span className="font-body text-[9px] font-bold uppercase tracking-[0.1em] text-dash-text-faint">
+        <span className="text-[9px] font-bold uppercase tracking-[0.1em] text-dash-text-faint">
           Active Loans
         </span>
         <div className="flex items-baseline gap-1.5 mt-1.5">
-          <span className="font-mono text-[26px] font-bold text-navy leading-none">
+          <span className="font-mono text-[26px] font-bold text-foreground leading-none">
             <CountUp end={data.activeLoansCount} duration={600} delay={200} />
           </span>
           <DeltaBadge value={`+${Math.max(1, Math.floor(data.activeLoansCount * 0.1))}`} delay={200} />
         </div>
-        <span className="font-body text-[10px] text-dash-text-faint mt-0.5 block">
+        <span className="text-[10px] text-dash-text-faint mt-0.5 block">
           {fmtShort(data.activeLoansOutstanding)} outstanding
         </span>
       </DashCard>
 
       {/* Investor Capital */}
       <DashCard hover className="!p-[14px_16px]">
-        <span className="font-body text-[9px] font-bold uppercase tracking-[0.1em] text-dash-text-faint">
+        <span className="text-[9px] font-bold uppercase tracking-[0.1em] text-dash-text-faint">
           Investor Capital
         </span>
         <div className="flex items-baseline gap-1.5 mt-1.5">
-          <span className="font-mono text-[26px] font-bold text-navy leading-none">
+          <span className="font-mono text-[26px] font-bold text-foreground leading-none">
             <CountUp
               end={data.investorCapital / 1e6}
               decimals={1}
@@ -101,23 +101,23 @@ export function HeroMetrics({ data }: HeroMetricsProps) {
           </span>
           <DeltaBadge value="+$2.1M" delay={300} />
         </div>
-        <span className="font-body text-[10px] text-dash-text-faint mt-0.5 block">
+        <span className="text-[10px] text-dash-text-faint mt-0.5 block">
           {data.investorCount} investors
         </span>
       </DashCard>
 
       {/* Properties */}
       <DashCard hover className="!p-[14px_16px]">
-        <span className="font-body text-[9px] font-bold uppercase tracking-[0.1em] text-dash-text-faint">
+        <span className="text-[9px] font-bold uppercase tracking-[0.1em] text-dash-text-faint">
           Properties
         </span>
         <div className="flex items-baseline gap-1.5 mt-1.5">
-          <span className="font-mono text-[26px] font-bold text-navy leading-none">
+          <span className="font-mono text-[26px] font-bold text-foreground leading-none">
             <CountUp end={data.propertiesCount} duration={600} delay={400} />
           </span>
           <DeltaBadge value="+2" delay={400} />
         </div>
-        <span className="font-body text-[10px] text-dash-text-faint mt-0.5 block">
+        <span className="text-[10px] text-dash-text-faint mt-0.5 block">
           {data.totalUnits} total units
         </span>
       </DashCard>

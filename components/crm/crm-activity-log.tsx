@@ -150,7 +150,7 @@ export function CrmActivityLog({
         {showForm && (
           <form
             onSubmit={handleSubmit}
-            className="rounded-md border bg-slate-50 p-4 space-y-4"
+            className="rounded-md border bg-muted p-4 space-y-4"
           >
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">

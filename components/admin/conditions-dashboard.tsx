@@ -260,8 +260,8 @@ export function ConditionsDashboard({
                   onClick={() => setViewMode(mode.key)}
                   className={`px-3 py-1.5 text-xs font-medium transition-colors ${
                     viewMode === mode.key
-                      ? "bg-[#1a2b4a] text-white"
-                      : "bg-white text-muted-foreground hover:bg-slate-50"
+                      ? "bg-primary text-white"
+                      : "bg-white text-muted-foreground hover:bg-muted"
                   }`}
                 >
                   {mode.label}
@@ -364,7 +364,7 @@ export function ConditionsDashboard({
                   <div className="flex items-center gap-3">
                     <div>
                       <div className="flex items-center gap-2">
-                        <span className="text-sm font-semibold text-[#1a2b4a]">
+                        <span className="text-sm font-semibold text-foreground">
                           {loan?.loan_number ?? "—"}
                         </span>
                         <StatusBadge status={loan?.stage ?? "lead"} />
@@ -410,7 +410,7 @@ export function ConditionsDashboard({
                             ? "bg-green-50/50 border-green-100 hover:bg-green-50"
                             : isOverdue
                               ? "bg-red-50/50 border-red-100 hover:bg-red-100/50"
-                              : "bg-white hover:bg-slate-50"
+                              : "bg-white hover:bg-muted"
                         }`}
                         onClick={() =>
                           router.push(
@@ -551,7 +551,7 @@ function StatCard({
   return (
     <div className="bg-white rounded-lg border px-3 py-2">
       <p className="text-xs text-muted-foreground">{label}</p>
-      <p className={`text-lg font-semibold ${color || "text-[#1a2b4a]"}`}>
+      <p className={`text-lg font-semibold ${color || "text-foreground"}`}>
         {value}
       </p>
     </div>

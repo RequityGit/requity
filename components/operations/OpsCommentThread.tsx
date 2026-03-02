@@ -107,7 +107,7 @@ function OpsCommentItem({
   return (
     <div className="flex gap-2.5 group">
       {/* Avatar */}
-      <div className="w-7 h-7 rounded-full bg-[#1a2b4a] text-white flex items-center justify-center text-[10px] font-medium flex-shrink-0 mt-0.5">
+      <div className="w-7 h-7 rounded-md bg-primary text-primary-foreground flex items-center justify-center text-[10px] font-medium flex-shrink-0 mt-0.5">
         {initials}
       </div>
 
@@ -131,7 +131,7 @@ function OpsCommentItem({
               <button
                 type="button"
                 onClick={() => onStartEdit(comment)}
-                className="p-0.5 rounded hover:bg-slate-100 text-muted-foreground hover:text-foreground"
+                className="p-0.5 rounded hover:bg-muted text-muted-foreground hover:text-foreground"
               >
                 <Pencil className="h-3 w-3" />
               </button>
@@ -154,7 +154,7 @@ function OpsCommentItem({
             seg.type === "mention" ? (
               <span
                 key={i}
-                className="inline-flex items-center font-semibold text-[#1a2b4a] bg-blue-50 border border-blue-200 rounded px-1 mx-0.5"
+                className="inline-flex items-center font-semibold text-foreground bg-blue-50 border border-blue-200 rounded px-1 mx-0.5"
               >
                 @{seg.value}
               </span>
@@ -357,8 +357,8 @@ export function OpsCommentThread({
     <div className="space-y-3">
       {/* Header */}
       <div className="flex items-center gap-2">
-        <MessageCircle className="h-4 w-4 text-[#1a2b4a]" />
-        <span className="text-sm font-semibold text-[#1a2b4a]">Comments</span>
+        <MessageCircle className="h-4 w-4 text-foreground" />
+        <span className="text-sm font-semibold text-foreground">Comments</span>
         <Badge variant="secondary" className="text-xs">
           {comments.length}
         </Badge>
@@ -380,7 +380,7 @@ export function OpsCommentThread({
               <select
                 value={commentType}
                 onChange={(e) => setCommentType(e.target.value)}
-                className="appearance-none text-xs border rounded-md pl-2 pr-6 py-1 bg-white cursor-pointer focus:outline-none focus:ring-2 focus:ring-ring"
+                className="appearance-none text-xs border rounded-md pl-2 pr-6 py-1 bg-card cursor-pointer focus:outline-none focus:ring-2 focus:ring-ring"
               >
                 {commentTypes.map((ct) => (
                   <option key={ct.value} value={ct.value}>

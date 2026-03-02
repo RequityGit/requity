@@ -98,7 +98,7 @@ export default function GenerateTermSheetButton({
     primary: `${baseClasses} px-6 py-3 rounded-lg text-sm ${
       status === "success" ? "bg-green-700 text-white"
       : status === "error" ? "bg-red-700 text-white"
-      : "text-[#0A1628]"
+      : "text-foreground"
     }`,
     secondary: `${baseClasses} px-6 py-3 rounded-lg text-sm border ${
       status === "success" ? "border-green-600 text-green-500"
@@ -130,7 +130,7 @@ export default function GenerateTermSheetButton({
         {status === "idle" && variant === "primary" && <Download size={14} className="opacity-60 ml-0.5" />}
       </button>
       {status === "error" && errorMsg && (
-        <div className="absolute top-full mt-2 left-1/2 -translate-x-1/2 bg-[#0F2140] border border-red-800/30 rounded-md px-3 py-2 text-xs text-red-400 whitespace-nowrap z-50 shadow-lg">
+        <div className="absolute top-full mt-2 left-1/2 -translate-x-1/2 bg-popover border border-red-800/30 rounded-md px-3 py-2 text-xs text-red-400 whitespace-nowrap z-50 shadow-lg">
           {errorMsg}
         </div>
       )}

@@ -58,7 +58,7 @@ export function ChatEmojiPicker({
       )}
     >
       {/* Frequently used */}
-      <div className="text-[10px] uppercase tracking-wider text-[#8A8680] mb-1.5 px-0.5">
+      <div className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1.5 px-0.5">
         Frequently Used
       </div>
       <div className="grid grid-cols-8 gap-0.5 mb-2">
@@ -142,7 +142,7 @@ export function GroupIconPicker({
         className
       )}
     >
-      <div className="text-[10px] uppercase tracking-wider text-[#8A8680] mb-1.5 px-0.5">
+      <div className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1.5 px-0.5">
         Choose Group Icon
       </div>
       <div className="grid grid-cols-8 gap-0.5">

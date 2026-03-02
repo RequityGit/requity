@@ -303,7 +303,7 @@ export function UserListTable({
                 filtered.map((user) => (
                   <TableRow key={user.id}>
                     <TableCell>
-                      <span className="font-medium text-[#1a2b4a]">
+                      <span className="font-medium text-foreground">
                         {user.full_name || "—"}
                       </span>
                       {user.id === currentUserId && (

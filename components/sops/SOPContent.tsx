@@ -61,31 +61,31 @@ export function SOPContent({ content }: SOPContentProps) {
     <div className="flex gap-8">
       {/* Main content */}
       <div className="min-w-0 flex-1">
-        <div className="sop-prose prose prose-invert max-w-none">
+        <div className="sop-prose prose max-w-none">
           <ReactMarkdown
             remarkPlugins={[remarkGfm]}
             rehypePlugins={[rehypeRaw, rehypeSlug]}
             components={{
               h1: (props) => (
-                <h1 className="font-display text-2xl font-semibold text-[#FAFAF8] mt-8 mb-4" {...props} />
+                <h1 className="text-2xl font-semibold text-foreground mt-8 mb-4" {...props} />
               ),
               h2: (props) => (
-                <h2 className="font-display text-xl font-semibold text-[#FAFAF8] mt-6 mb-3 border-b border-gold/10 pb-2" {...props} />
+                <h2 className="text-xl font-semibold text-foreground mt-6 mb-3 border-b border-border pb-2" {...props} />
               ),
               h3: (props) => (
-                <h3 className="font-display text-lg font-medium text-[#FAFAF8] mt-5 mb-2" {...props} />
+                <h3 className="text-lg font-medium text-foreground mt-5 mb-2" {...props} />
               ),
               p: (props) => (
-                <p className="mb-3 leading-relaxed text-[#C4C0B8]" {...props} />
+                <p className="mb-3 leading-relaxed text-muted-foreground" {...props} />
               ),
               ul: (props) => (
-                <ul className="mb-3 ml-4 list-disc space-y-1 text-[#C4C0B8]" {...props} />
+                <ul className="mb-3 ml-4 list-disc space-y-1 text-muted-foreground" {...props} />
               ),
               ol: (props) => (
-                <ol className="mb-3 ml-4 list-decimal space-y-1 text-[#C4C0B8]" {...props} />
+                <ol className="mb-3 ml-4 list-decimal space-y-1 text-muted-foreground" {...props} />
               ),
               li: (props) => (
-                <li className="text-[#C4C0B8]" {...props} />
+                <li className="text-muted-foreground" {...props} />
               ),
               a: (props) => (
                 <a className="text-gold hover:text-gold-light underline" target="_blank" rel="noopener noreferrer" {...props} />
@@ -95,7 +95,7 @@ export function SOPContent({ content }: SOPContentProps) {
                 if (isInline) {
                   return (
                     <code
-                      className="rounded bg-navy-light px-1.5 py-0.5 font-mono text-sm text-gold-pale"
+                      className="rounded bg-muted px-1.5 py-0.5 font-mono text-sm text-gold-pale"
                       {...props}
                     >
                       {children}
@@ -109,30 +109,30 @@ export function SOPContent({ content }: SOPContentProps) {
                 );
               },
               pre: (props) => (
-                <pre className="mb-4 overflow-x-auto rounded-lg bg-navy-light p-4 font-mono text-sm text-[#FAFAF8]" {...props} />
+                <pre className="mb-4 overflow-x-auto rounded-lg bg-muted p-4 font-mono text-sm text-foreground" {...props} />
               ),
               table: (props) => (
-                <div className="mb-4 overflow-x-auto rounded-lg border border-navy-light">
+                <div className="mb-4 overflow-x-auto rounded-lg border border-border">
                   <table className="w-full text-sm" {...props} />
                 </div>
               ),
               thead: (props) => (
-                <thead className="bg-navy-light text-[#FAFAF8]" {...props} />
+                <thead className="bg-muted text-foreground" {...props} />
               ),
               th: (props) => (
                 <th className="px-3 py-2 text-left font-medium" {...props} />
               ),
               td: (props) => (
-                <td className="border-t border-navy-light px-3 py-2 text-[#C4C0B8]" {...props} />
+                <td className="border-t border-border px-3 py-2 text-muted-foreground" {...props} />
               ),
               blockquote: (props) => (
-                <blockquote className="mb-4 border-l-4 border-gold/30 pl-4 italic text-[#C4C0B8]" {...props} />
+                <blockquote className="mb-4 border-l-4 border-border pl-4 italic text-muted-foreground" {...props} />
               ),
               hr: () => (
-                <hr className="my-6 border-t border-navy-light" />
+                <hr className="my-6 border-t border-border" />
               ),
               strong: (props) => (
-                <strong className="font-semibold text-[#FAFAF8]" {...props} />
+                <strong className="font-semibold text-foreground" {...props} />
               ),
             }}
           >
@@ -145,7 +145,7 @@ export function SOPContent({ content }: SOPContentProps) {
       {toc.length > 0 && (
         <aside className="hidden w-56 shrink-0 lg:block">
           <div className="sticky top-24">
-            <h4 className="mb-3 text-xs font-semibold uppercase tracking-wider text-[#8A8680]">
+            <h4 className="mb-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
               On this page
             </h4>
             <nav className="space-y-1">
@@ -158,7 +158,7 @@ export function SOPContent({ content }: SOPContentProps) {
                   } ${
                     activeId === item.id
                       ? "bg-gold/10 text-gold"
-                      : "text-[#8A8680] hover:text-[#C4C0B8]"
+                      : "text-muted-foreground hover:text-foreground"
                   }`}
                 >
                   {item.text}

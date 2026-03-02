@@ -52,7 +52,7 @@ export function MultiSelectFilter({
         onClick={() => setOpen(!open)}
         className={cn(
           "flex items-center gap-2 rounded-md border px-3 py-2 text-sm font-medium transition-colors",
-          "bg-white hover:bg-slate-50 text-foreground",
+          "bg-card hover:bg-muted text-foreground",
           selected.length > 0 && "border-blue-300 bg-blue-50"
         )}
       >
@@ -66,7 +66,7 @@ export function MultiSelectFilter({
       </button>
 
       {open && (
-        <div className="absolute top-full left-0 z-50 mt-1 w-52 rounded-md border bg-white shadow-lg">
+        <div className="absolute top-full left-0 z-50 mt-1 w-52 rounded-md border bg-card shadow-lg">
           <div className="max-h-60 overflow-y-auto p-1">
             {options.map((option) => {
               const isSelected = selected.includes(option);
@@ -77,7 +77,7 @@ export function MultiSelectFilter({
                   onClick={() => toggle(option)}
                   className={cn(
                     "flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-sm transition-colors",
-                    "hover:bg-slate-100",
+                    "hover:bg-muted",
                     isSelected && "bg-slate-50"
                   )}
                 >

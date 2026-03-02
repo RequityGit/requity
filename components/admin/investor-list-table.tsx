@@ -44,7 +44,7 @@ export function InvestorListTable({ data }: InvestorListTableProps) {
       key: "last_name",
       header: "Name",
       cell: (row) => (
-        <span className="font-medium text-[#1a2b4a]">
+        <span className="font-medium text-foreground">
           {row.first_name} {row.last_name}
         </span>
       ),

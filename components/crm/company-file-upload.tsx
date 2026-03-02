@@ -156,11 +156,11 @@ export function CompanyFileUpload({
             "border-2 border-dashed rounded-xl p-6 text-center cursor-pointer transition-all",
             dragging
               ? "border-gold/50 bg-gold/5"
-              : "border-gray-200 hover:border-gold/30 hover:bg-slate-50"
+              : "border-gray-200 hover:border-gold/30 hover:bg-muted"
           )}
         >
           <Upload className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
-          <p className="text-sm font-medium text-[#1a2b4a]">
+          <p className="text-sm font-medium text-foreground">
             Drop files here or click to upload
           </p>
           <p className="text-xs text-muted-foreground mt-1">

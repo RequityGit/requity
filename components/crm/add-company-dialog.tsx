@@ -254,7 +254,7 @@ export function AddCompanyDialog({ trigger }: AddCompanyDialogProps) {
 
           {/* Address */}
           <div>
-            <h4 className="text-sm font-semibold text-[#1a2b4a] mb-3">
+            <h4 className="text-sm font-semibold text-foreground mb-3">
               Address
             </h4>
             <div className="space-y-4">

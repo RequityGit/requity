@@ -104,7 +104,7 @@ export function SubmitForApprovalDialog({
     <Dialog open={open} onOpenChange={handleOpen}>
       <DialogTrigger asChild>
         {trigger || (
-          <Button className="gap-2 bg-[#1a2b4a] hover:bg-[#1a2b4a]/90">
+          <Button className="gap-2 bg-primary hover:bg-primary/90">
             <Send className="h-4 w-4" />
             {existingApprovalId ? "Resubmit for Approval" : "Submit for Approval"}
           </Button>
@@ -198,7 +198,7 @@ export function SubmitForApprovalDialog({
                   <Button
                     onClick={handleSubmit}
                     disabled={loading}
-                    className="gap-2 bg-[#1a2b4a] hover:bg-[#1a2b4a]/90"
+                    className="gap-2 bg-primary hover:bg-primary/90"
                   >
                     {loading && <Loader2 className="h-4 w-4 animate-spin" />}
                     <Send className="h-4 w-4" />

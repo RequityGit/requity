@@ -496,7 +496,7 @@ export function AddContactDialog({
                   placeholder="Search companies..."
                 />
                 {showCompanyDropdown && (
-                  <div className="absolute z-50 mt-1 w-full rounded-md border bg-white shadow-lg max-h-48 overflow-y-auto">
+                  <div className="absolute z-50 mt-1 w-full rounded-md border bg-card shadow-lg max-h-48 overflow-y-auto">
                     {companies.map((c) => (
                       <button
                         key={c.id}
@@ -605,7 +605,7 @@ export function AddContactDialog({
 
           {/* Address */}
           <div>
-            <h4 className="text-sm font-semibold text-[#1a2b4a] mb-3">
+            <h4 className="text-sm font-semibold text-foreground mb-3">
               Address
             </h4>
             <div className="space-y-4">

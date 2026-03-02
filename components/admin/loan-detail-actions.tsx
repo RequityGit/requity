@@ -1196,7 +1196,7 @@ function ActivityLogTab({
               <div key={entry.id} className="flex gap-3">
                 {/* Timeline line + dot */}
                 <div className="flex flex-col items-center">
-                  <div className="w-2 h-2 rounded-full bg-[#1a2b4a] mt-2 flex-shrink-0" />
+                  <div className="w-2 h-2 rounded-full bg-primary mt-2 flex-shrink-0" />
                   {!isLast && (
                     <div className="w-px flex-1 bg-slate-200 my-1" />
                   )}
@@ -1205,7 +1205,7 @@ function ActivityLogTab({
                 {/* Content */}
                 <div className={`pb-4 flex-1 min-w-0 ${isLast ? "" : ""}`}>
                   <div className="flex items-center gap-2 flex-wrap">
-                    <span className="text-xs font-medium text-[#1a2b4a]">
+                    <span className="text-xs font-medium text-foreground">
                       {typeLabel}
                     </span>
                     <span className="text-[11px] text-muted-foreground">

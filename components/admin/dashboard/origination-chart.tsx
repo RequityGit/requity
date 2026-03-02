@@ -35,7 +35,7 @@ export function OriginationChart({ data }: OriginationChartProps) {
             <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,0,0,0.04)" />
             <XAxis
               dataKey="month"
-              tick={{ fill: "#9FAAB5", fontSize: 10, fontFamily: "'Source Sans 3', sans-serif" }}
+              tick={{ fill: "#9FAAB5", fontSize: 10, fontFamily: "'Inter', sans-serif" }}
               axisLine={false}
               tickLine={false}
             />
@@ -48,13 +48,13 @@ export function OriginationChart({ data }: OriginationChartProps) {
             />
             <Tooltip
               contentStyle={{
-                background: "#fff",
-                border: "1px solid rgba(11,25,41,0.08)",
+                background: "hsl(var(--card))",
+                border: "1px solid hsl(var(--border))",
                 borderRadius: 6,
-                color: "#0B1929",
+                color: "hsl(var(--foreground))",
                 fontFamily: "'JetBrains Mono', monospace",
                 fontSize: 11,
-                boxShadow: "0 2px 6px rgba(11,25,41,0.08), 0 8px 24px rgba(11,25,41,0.06)",
+                boxShadow: "0 2px 6px hsl(var(--foreground) / 0.06), 0 8px 24px hsl(var(--foreground) / 0.04)",
               }}
               formatter={(v) => [`$${Number(v ?? 0).toLocaleString()}`, "Volume"]}
             />

@@ -52,7 +52,7 @@ export default async function InvestorFundsPage() {
         <Card>
           <CardContent className="py-12 text-center text-muted-foreground">
             <Landmark className="h-12 w-12 mx-auto mb-3 text-slate-300" />
-            <p className="text-lg font-medium text-[#1a2b4a]">
+            <p className="text-lg font-medium text-foreground">
               No investment commitments found
             </p>
             <p className="text-sm mt-1">
@@ -83,11 +83,11 @@ export default async function InvestorFundsPage() {
                   <CardContent className="p-6">
                     <div className="flex items-start justify-between mb-4">
                       <div className="flex items-center gap-3">
-                        <div className="rounded-full p-2 bg-[#1a2b4a]/5">
-                          <Landmark className="h-5 w-5 text-[#1a2b4a]" />
+                        <div className="rounded-full p-2 bg-primary/5">
+                          <Landmark className="h-5 w-5 text-foreground" />
                         </div>
                         <div>
-                          <h3 className="font-semibold text-[#1a2b4a]">
+                          <h3 className="font-semibold text-foreground">
                             {fund.name}
                           </h3>
                           <p className="text-xs text-muted-foreground capitalize">
@@ -135,9 +135,9 @@ export default async function InvestorFundsPage() {
                         <span>Funding Progress</span>
                         <span>{pctFunded}%</span>
                       </div>
-                      <div className="w-full bg-slate-100 rounded-full h-2">
+                      <div className="w-full bg-muted rounded-full h-2">
                         <div
-                          className="bg-[#1a2b4a] h-2 rounded-full transition-all"
+                          className="bg-primary h-2 rounded-full transition-all"
                           style={{
                             width: `${Math.min(pctFunded, 100)}%`,
                           }}

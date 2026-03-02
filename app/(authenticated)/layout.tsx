@@ -92,7 +92,7 @@ export default async function AuthenticatedLayout({
                 isSuperAdmin={isSuperAdmin}
                 avatarUrl={profile.avatar_url}
               />
-              <main className="flex-1 overflow-y-auto bg-slate-50 p-6">
+              <main className="flex-1 overflow-y-auto bg-background p-6">
                 <ActivityTrackerProvider role={effectiveRole}>
                   {children}
                 </ActivityTrackerProvider>

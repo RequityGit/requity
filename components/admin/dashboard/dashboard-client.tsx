@@ -33,17 +33,17 @@ export function DashboardClient({ data, userName }: DashboardClientProps) {
   const currentMonthVol = data.originations[data.originations.length - 1]?.volume ?? 0;
 
   return (
-    <div className="font-body -m-6 min-h-full bg-dash-bg">
+    <div className="-m-6 min-h-full bg-dash-bg">
       <div className="max-w-[1360px] mx-auto px-6 py-5 pb-10">
         {/* Greeting + Tabs */}
         <div className="dash-fade-up dash-delay-0">
           <div className="flex justify-between items-end mb-[18px]">
             <div>
-              <h1 className="font-display text-2xl font-normal text-navy leading-tight">
+              <h1 className="text-2xl font-semibold text-foreground leading-tight">
                 {greeting},{" "}
                 <span className="text-gold">{firstName}</span>
               </h1>
-              <p className="font-body text-[12.5px] text-dash-text-mut mt-0.5">
+              <p className="text-[12.5px] text-dash-text-mut mt-0.5">
                 Portfolio command center · Requity Group
               </p>
             </div>

@@ -71,28 +71,28 @@ export function ChatSidebar({
   };
 
   return (
-    <div className="w-80 h-full flex flex-col bg-[#0A1628] border-r border-[rgba(197,151,91,0.08)]">
+    <div className="w-80 h-full flex flex-col bg-card border-r border-border">
       {/* Header */}
-      <div className="p-4 border-b border-[rgba(197,151,91,0.08)]">
+      <div className="p-4 border-b border-border">
         <div className="flex items-center justify-between mb-3">
-          <h2 className="font-display text-base font-medium tracking-wide text-[#C5975B]">
+          <h2 className="font-semibold text-base font-medium tracking-wide text-gold">
             MESSAGES
           </h2>
           <button
             onClick={onNewChannel}
-            className="p-1.5 rounded-md text-[#C4C0B8] hover:text-[#C5975B] hover:bg-[rgba(197,151,91,0.06)] transition-all duration-200 ease-[cubic-bezier(0.4,0,0.2,1)]"
+            className="p-1.5 rounded-md text-muted-foreground hover:text-gold hover:bg-[rgba(197,151,91,0.06)] transition-all duration-200 ease-[cubic-bezier(0.4,0,0.2,1)]"
             title="New message"
           >
             <Plus className="h-5 w-5" />
           </button>
         </div>
         <div className="relative">
-          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-[#8A8680]" />
+          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <input
             value={searchQuery}
             onChange={(e) => onSearchChange(e.target.value)}
             placeholder="Search channels..."
-            className="w-full pl-8 pr-3 h-8 text-sm bg-[#0F2140] border border-[rgba(197,151,91,0.08)] rounded-md text-[#F0EDE6] placeholder:text-[#8A8680] focus:outline-none focus:ring-1 focus:ring-[#C5975B] focus:border-[#C5975B] transition-all duration-200"
+            className="w-full pl-8 pr-3 h-8 text-sm bg-secondary border border-border rounded-md text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-gold focus:border-gold transition-all duration-200"
           />
         </div>
       </div>
@@ -103,16 +103,16 @@ export function ChatSidebar({
           <div className="p-4 space-y-3">
             {Array.from({ length: 6 }).map((_, i) => (
               <div key={i} className="flex items-center gap-3">
-                <div className="h-[44px] w-[44px] rounded-[10px] bg-[#0F2140] animate-pulse" />
+                <div className="h-[44px] w-[44px] rounded-[10px] bg-secondary animate-pulse" />
                 <div className="flex-1 space-y-1.5">
-                  <div className="h-3 w-24 bg-[#0F2140] rounded animate-pulse" />
-                  <div className="h-2.5 w-36 bg-[#0F2140] rounded animate-pulse" />
+                  <div className="h-3 w-24 bg-secondary rounded animate-pulse" />
+                  <div className="h-2.5 w-36 bg-secondary rounded animate-pulse" />
                 </div>
               </div>
             ))}
           </div>
         ) : groups.length === 0 ? (
-          <div className="p-4 text-center text-sm text-[#8A8680]">
+          <div className="p-4 text-center text-sm text-muted-foreground">
             {searchQuery ? "No channels found" : "No channels yet"}
           </div>
         ) : (
@@ -123,7 +123,7 @@ export function ChatSidebar({
               <div key={group.label} className="mb-1">
                 <button
                   onClick={() => toggleGroup(group.label)}
-                  className="flex items-center gap-1.5 w-full px-4 py-2 text-[11px] font-semibold text-[#8A8680] uppercase tracking-[0.1em] hover:text-[#C4C0B8] transition-colors duration-200"
+                  className="flex items-center gap-1.5 w-full px-4 py-2 text-[11px] font-semibold text-muted-foreground uppercase tracking-[0.1em] hover:text-muted-foreground transition-colors duration-200"
                 >
                   {isCollapsed ? (
                     <ChevronRight className="h-3 w-3" />
@@ -131,7 +131,7 @@ export function ChatSidebar({
                     <ChevronDown className="h-3 w-3" />
                   )}
                   {sectionLabel}
-                  <span className="text-[#8A8680] font-normal normal-case ml-1">
+                  <span className="text-muted-foreground font-normal normal-case ml-1">
                     ({group.channels.length})
                   </span>
                 </button>
@@ -157,7 +157,7 @@ export function ChatSidebar({
 
       {/* Current user footer */}
       {currentUser && (
-        <div className="p-3 border-t border-[rgba(197,151,91,0.08)] flex items-center gap-3">
+        <div className="p-3 border-t border-border flex items-center gap-3">
           <div className="relative">
             <ChatAvatar
               src={currentUser.avatar_url}
@@ -173,7 +173,7 @@ export function ChatSidebar({
             )}
           </div>
           <div className="min-w-0 flex-1">
-            <div className="text-sm font-medium text-[#FAFAF8] truncate">
+            <div className="text-sm font-medium text-foreground truncate">
               {currentUser.full_name || "Unknown"}
             </div>
             <div className="text-xs text-[#2D8A56]">Online</div>
@@ -265,31 +265,31 @@ function ConversationItem({
               className={cn(
                 "text-sm truncate",
                 channel.unread_count > 0 && !channel.is_muted
-                  ? "font-semibold text-[#FAFAF8]"
-                  : "font-medium text-[#F0EDE6]"
+                  ? "font-semibold text-foreground"
+                  : "font-medium text-foreground"
               )}
             >
               {channel.name}
             </span>
             <div className="flex items-center gap-1.5 flex-shrink-0">
               {channel.is_muted && (
-                <VolumeX className="h-3 w-3 text-[#8A8680]" />
+                <VolumeX className="h-3 w-3 text-muted-foreground" />
               )}
               {lastMsg?.created_at && (
-                <span className="text-[11px] text-[#8A8680]">
+                <span className="text-[11px] text-muted-foreground">
                   {formatChatTime(lastMsg.created_at)}
                 </span>
               )}
             </div>
           </div>
           <div className="flex items-center justify-between gap-1 mt-0.5">
-            <span className="text-xs text-[#C4C0B8] truncate">
+            <span className="text-xs text-muted-foreground truncate">
               {lastMsg?.message_type === "system"
                 ? lastMsg.content || ""
                 : truncate(lastMsg?.content || "", 40)}
             </span>
             {channel.unread_count > 0 && !channel.is_muted && (
-              <span className="flex-shrink-0 inline-flex items-center justify-center h-[18px] min-w-[18px] px-1 rounded-full bg-[#C5975B] text-[#0A1628] text-[10px] font-bold">
+              <span className="flex-shrink-0 inline-flex items-center justify-center h-[18px] min-w-[18px] px-1 rounded-full bg-[#C5975B] text-foreground text-[10px] font-bold">
                 {channel.unread_count > 99 ? "99+" : channel.unread_count}
               </span>
             )}

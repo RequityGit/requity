@@ -73,7 +73,7 @@ export function MessageBubble({
   if (isSystem) {
     return (
       <div className="flex items-center justify-center py-2">
-        <div className="text-xs text-[#8A8680] bg-[#0F2140] px-3 py-1 rounded-full">
+        <div className="text-xs text-muted-foreground bg-secondary px-3 py-1 rounded-full">
           {message.content}
         </div>
       </div>
@@ -198,7 +198,7 @@ export function MessageBubble({
             <PresenceIndicator
               status={getPresenceStatus(message.sender_id)}
               size="sm"
-              borderColor="border-[#0F2140]"
+              borderColor="border-border"
               className="absolute -bottom-0.5 -right-0.5"
             />
           )}
@@ -209,21 +209,21 @@ export function MessageBubble({
       <div className="min-w-0 flex-1">
         {showAvatar && (
           <div className="flex items-baseline gap-2 mb-0.5">
-            <span className="font-semibold text-sm text-[#FAFAF8]">
+            <span className="font-semibold text-sm text-foreground">
               {message.sender?.full_name || "Unknown"}
             </span>
-            <span className="text-[11px] text-[#8A8680]">
+            <span className="text-[11px] text-muted-foreground">
               {formatMessageTime(message.created_at)}
             </span>
             {message.is_edited && (
-              <span className="text-[11px] text-[#8A8680]">(edited)</span>
+              <span className="text-[11px] text-muted-foreground">(edited)</span>
             )}
           </div>
         )}
 
         {/* Text content with markdown */}
         {message.content && (
-          <div className="text-sm text-[#F0EDE6] prose prose-sm prose-invert max-w-none prose-p:my-0 prose-p:leading-relaxed prose-a:text-[#D4AD72] prose-code:text-sm prose-code:bg-[#1A3355] prose-code:px-1 prose-code:py-0.5 prose-code:rounded prose-code:text-[#E8D5B0]">
+          <div className="text-sm text-foreground prose prose-sm prose-invert max-w-none prose-p:my-0 prose-p:leading-relaxed prose-a:text-gold-light prose-code:text-sm prose-code:bg-muted prose-code:px-1 prose-code:py-0.5 prose-code:rounded prose-code:text-[#E8D5B0]">
             <ReactMarkdown remarkPlugins={[remarkGfm]}>
               {message.content}
             </ReactMarkdown>
@@ -254,11 +254,11 @@ export function MessageBubble({
                   href={att.url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center gap-2 bg-[rgba(197,151,91,0.06)] border border-[rgba(197,151,91,0.12)] px-3 py-1.5 rounded-md text-sm text-[#E8D5B0] hover:bg-[rgba(197,151,91,0.1)] transition-colors duration-200"
+                  className="flex items-center gap-2 bg-[rgba(197,151,91,0.06)] border border-border px-3 py-1.5 rounded-md text-sm text-[#E8D5B0] hover:bg-[rgba(197,151,91,0.1)] transition-colors duration-200"
                 >
-                  <FileText className="h-4 w-4 text-[#C5975B]" />
+                  <FileText className="h-4 w-4 text-gold" />
                   <span className="truncate max-w-[200px]">{att.name}</span>
-                  <span className="text-xs text-[#8A8680]">
+                  <span className="text-xs text-muted-foreground">
                     {(att.size / 1024).toFixed(0)}KB
                   </span>
                 </a>
@@ -285,8 +285,8 @@ export function MessageBubble({
                 className={cn(
                   "flex items-center gap-1 px-2 py-0.5 rounded-full text-xs border transition-all duration-200",
                   currentUserId && users.includes(currentUserId)
-                    ? "bg-[rgba(197,151,91,0.1)] border-[rgba(197,151,91,0.3)] text-[#C5975B]"
-                    : "bg-[rgba(255,255,255,0.04)] border-[rgba(255,255,255,0.08)] text-[#C4C0B8] hover:bg-[rgba(255,255,255,0.08)]"
+                    ? "bg-[rgba(197,151,91,0.1)] border-[rgba(197,151,91,0.3)] text-gold"
+                    : "bg-[rgba(255,255,255,0.04)] border-border text-muted-foreground hover:bg-[rgba(255,255,255,0.08)]"
                 )}
                 onClick={() => handleReaction(emoji)}
               >
@@ -300,7 +300,7 @@ export function MessageBubble({
         {/* Thread indicator */}
         {message.thread_count > 0 && (
           <button
-            className="mt-1.5 flex items-center gap-1.5 text-xs text-[#C5975B] hover:text-[#D4AD72] transition-colors duration-200"
+            className="mt-1.5 flex items-center gap-1.5 text-xs text-gold hover:text-gold-light transition-colors duration-200"
             onClick={() => onThreadClick?.(message.id)}
           >
             <MessageSquare className="h-3.5 w-3.5" />
@@ -309,7 +309,7 @@ export function MessageBubble({
               {message.thread_count === 1 ? "reply" : "replies"}
             </span>
             {message.thread_last_reply_at && (
-              <span className="text-[#8A8680]">
+              <span className="text-muted-foreground">
                 Last reply {formatMessageTime(message.thread_last_reply_at)}
               </span>
             )}
@@ -346,7 +346,7 @@ export function MessageBubble({
             title={isBookmarked ? "Remove bookmark" : "Bookmark"}
             icon={
               isBookmarked ? (
-                <BookmarkCheck className="h-[18px] w-[18px] text-[#C5975B]" />
+                <BookmarkCheck className="h-[18px] w-[18px] text-gold" />
               ) : (
                 <Bookmark className="h-[18px] w-[18px]" />
               )
@@ -423,7 +423,7 @@ function ToolbarButton({
     <button
       type="button"
       onClick={onClick}
-      className="p-1 rounded hover:bg-[rgba(255,255,255,0.08)] text-[#C4C0B8] transition-colors duration-200"
+      className="p-1 rounded hover:bg-[rgba(255,255,255,0.08)] text-muted-foreground transition-colors duration-200"
       title={title}
     >
       {icon}
@@ -449,7 +449,7 @@ function MoreMenuItem({
         "w-full flex items-center gap-2.5 px-3 py-2 text-sm transition-colors duration-200",
         danger
           ? "text-[#C0392B] hover:bg-[rgba(192,57,43,0.1)]"
-          : "text-[#F0EDE6] hover:bg-[rgba(255,255,255,0.06)]"
+          : "text-foreground hover:bg-[rgba(255,255,255,0.06)]"
       )}
     >
       {icon}

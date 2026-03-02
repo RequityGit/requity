@@ -67,7 +67,7 @@ export function CapitalCallFilters({
           handleFilterChange("fund", val === "all" ? undefined : val)
         }
       >
-        <SelectTrigger className="w-[200px] bg-white">
+        <SelectTrigger className="w-[200px] bg-card">
           <SelectValue placeholder="All Investments" />
         </SelectTrigger>
         <SelectContent>
@@ -86,7 +86,7 @@ export function CapitalCallFilters({
           handleFilterChange("status", val === "all" ? undefined : val)
         }
       >
-        <SelectTrigger className="w-[160px] bg-white">
+        <SelectTrigger className="w-[160px] bg-card">
           <SelectValue placeholder="All Statuses" />
         </SelectTrigger>
         <SelectContent>

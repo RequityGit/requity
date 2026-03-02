@@ -101,7 +101,7 @@ export default async function LoanDetailPage({ params }: LoanDetailPageProps) {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {/* Financial Details */}
             <div className="space-y-3">
-              <h3 className="text-sm font-semibold text-[#1a2b4a]">
+              <h3 className="text-sm font-semibold text-foreground">
                 Financial
               </h3>
               <div className="space-y-2 text-sm">
@@ -136,7 +136,7 @@ export default async function LoanDetailPage({ params }: LoanDetailPageProps) {
 
             {/* Property Details */}
             <div className="space-y-3">
-              <h3 className="text-sm font-semibold text-[#1a2b4a]">
+              <h3 className="text-sm font-semibold text-foreground">
                 Property
               </h3>
               <div className="space-y-2 text-sm">
@@ -161,7 +161,7 @@ export default async function LoanDetailPage({ params }: LoanDetailPageProps) {
 
             {/* Dates */}
             <div className="space-y-3">
-              <h3 className="text-sm font-semibold text-[#1a2b4a]">Dates</h3>
+              <h3 className="text-sm font-semibold text-foreground">Dates</h3>
               <div className="space-y-2 text-sm">
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">

@@ -57,7 +57,7 @@ function ToolbarButton({
           disabled={disabled}
           className={cn(
             "inline-flex items-center justify-center rounded-md h-8 w-8 text-sm transition-colors",
-            "hover:bg-slate-200 disabled:opacity-50 disabled:cursor-not-allowed",
+            "hover:bg-muted disabled:opacity-50 disabled:cursor-not-allowed",
             active ? "bg-slate-200 text-foreground" : "text-muted-foreground"
           )}
         >

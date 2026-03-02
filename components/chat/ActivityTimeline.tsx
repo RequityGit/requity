@@ -30,8 +30,8 @@ const eventIcons: Record<string, React.ElementType> = {
 };
 
 const eventColors: Record<string, string> = {
-  loan_status_change: "bg-[rgba(197,151,91,0.15)] text-[#C5975B]",
-  document_upload: "bg-[rgba(197,151,91,0.1)] text-[#D4AD72]",
+  loan_status_change: "bg-[rgba(197,151,91,0.15)] text-gold",
+  document_upload: "bg-[rgba(197,151,91,0.1)] text-gold-light",
   payment_received: "bg-[rgba(45,138,86,0.15)] text-[#2D8A56]",
   member_joined: "bg-[rgba(45,138,86,0.1)] text-[#2D8A56]",
   condition_approved: "bg-[rgba(45,138,86,0.15)] text-[#2D8A56]",
@@ -87,15 +87,15 @@ export function ActivityTimeline({ channelId }: ActivityTimelineProps) {
 
   if (loading) {
     return (
-      <div className="flex-1 flex items-center justify-center bg-[#0F2140]">
-        <Loader2 className="h-6 w-6 animate-spin text-[#C5975B]" />
+      <div className="flex-1 flex items-center justify-center bg-secondary">
+        <Loader2 className="h-6 w-6 animate-spin text-gold" />
       </div>
     );
   }
 
   if (items.length === 0) {
     return (
-      <div className="flex-1 flex flex-col items-center justify-center text-[#8A8680] bg-[#0F2140]">
+      <div className="flex-1 flex flex-col items-center justify-center text-muted-foreground bg-secondary">
         <Activity className="h-8 w-8 mb-2" />
         <div className="text-sm">No activity yet</div>
       </div>
@@ -103,7 +103,7 @@ export function ActivityTimeline({ channelId }: ActivityTimelineProps) {
   }
 
   return (
-    <div className="flex-1 overflow-y-auto px-4 py-3 bg-[#0F2140]">
+    <div className="flex-1 overflow-y-auto px-4 py-3 bg-secondary">
       <div className="relative">
         <div className="absolute left-4 top-0 bottom-0 w-px bg-[rgba(197,151,91,0.08)]" />
 
@@ -111,7 +111,7 @@ export function ActivityTimeline({ channelId }: ActivityTimelineProps) {
           const Icon = eventIcons[item.event_type] || Activity;
           const color =
             eventColors[item.event_type] ||
-            "bg-[#1A3355] text-[#C4C0B8]";
+            "bg-muted text-muted-foreground";
 
           return (
             <div key={item.id} className="relative flex gap-3 pb-4">
@@ -121,8 +121,8 @@ export function ActivityTimeline({ channelId }: ActivityTimelineProps) {
                 <Icon className="h-4 w-4" />
               </div>
               <div className="min-w-0 flex-1 pt-0.5">
-                <div className="text-sm text-[#F0EDE6]">{item.summary}</div>
-                <div className="text-xs text-[#8A8680] mt-0.5">
+                <div className="text-sm text-foreground">{item.summary}</div>
+                <div className="text-xs text-muted-foreground mt-0.5">
                   {new Date(item.created_at).toLocaleDateString("en-US", {
                     month: "short",
                     day: "numeric",
@@ -131,7 +131,7 @@ export function ActivityTimeline({ channelId }: ActivityTimelineProps) {
                     hour12: true,
                   })}
                   {item.event_source && (
-                    <span className="ml-2 text-[#8A8680]/60">
+                    <span className="ml-2 text-muted-foreground/60">
                       via {item.event_source}
                     </span>
                   )}

@@ -28,38 +28,38 @@ export function SOPVersionHistory({ versions }: SOPVersionHistoryProps) {
   if (sorted.length === 0) return null;
 
   return (
-    <div className="rounded-xl border border-gold/15 bg-navy-mid p-4">
+    <div className="rounded-xl border border-border bg-card p-4">
       <button
         onClick={() => setExpanded(!expanded)}
         className="flex w-full items-center justify-between text-left"
       >
-        <h4 className="flex items-center gap-2 text-sm font-semibold text-[#FAFAF8]">
+        <h4 className="flex items-center gap-2 text-sm font-semibold text-foreground">
           <Clock className="h-4 w-4 text-gold" />
           Version History
         </h4>
         {sorted.length > 3 &&
           (expanded ? (
-            <ChevronUp className="h-4 w-4 text-[#8A8680]" />
+            <ChevronUp className="h-4 w-4 text-muted-foreground" />
           ) : (
-            <ChevronDown className="h-4 w-4 text-[#8A8680]" />
+            <ChevronDown className="h-4 w-4 text-muted-foreground" />
           ))}
       </button>
       <div className="mt-3 space-y-2">
         {visible.map((v) => (
           <div
             key={v.id}
-            className="rounded-lg border border-navy-light bg-navy p-3"
+            className="rounded-lg border border-border bg-secondary p-3"
           >
             <div className="flex items-center justify-between">
               <span className="text-xs font-medium text-gold">
                 v{v.version_number}
               </span>
-              <span className="text-xs text-[#8A8680]">
+              <span className="text-xs text-muted-foreground">
                 {formatDate(v.created_at)}
               </span>
             </div>
             {v.change_notes && (
-              <p className="mt-1 text-xs text-[#C4C0B8]">{v.change_notes}</p>
+              <p className="mt-1 text-xs text-muted-foreground">{v.change_notes}</p>
             )}
           </div>
         ))}

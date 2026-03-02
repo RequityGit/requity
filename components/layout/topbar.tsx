@@ -12,7 +12,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { LogOut, ShieldCheck, User, Eye, BookOpen } from "lucide-react";
+import { LogOut, ShieldCheck, User, Eye, BookOpen, Sun, Moon } from "lucide-react";
 import { RoleSwitcher } from "./role-switcher";
 import { ViewAsBanner } from "./view-as-banner";
 import { NotificationBell } from "@/components/notifications/notification-bell";
@@ -20,6 +20,7 @@ import { useImpersonation } from "./impersonation-context";
 import { UserSearchModal } from "./user-search-modal";
 import { Badge } from "@/components/ui/badge";
 import { CommandSearch } from "@/components/search/CommandSearch";
+import { useTheme } from "@/components/theme-provider";
 
 interface TopbarProps {
   userName: string;
@@ -36,6 +37,7 @@ export function Topbar({ userName, role, email, allowedRoles, userId, isSuperAdm
   const supabase = createClient();
   const { isImpersonating, targetRole, targetUserName } = useImpersonation();
   const [userSearchOpen, setUserSearchOpen] = useState(false);
+  const { theme, toggleTheme } = useTheme();
 
   async function handleLogout() {
     await supabase.auth.signOut();
@@ -49,7 +51,7 @@ export function Topbar({ userName, role, email, allowedRoles, userId, isSuperAdm
   return (
     <>
       <ViewAsBanner />
-      <header className="sticky top-0 z-30 h-16 border-b bg-white flex items-center px-6">
+      <header className="sticky top-0 z-30 h-16 border-b bg-card flex items-center px-6">
         {/* Left side — impersonation indicator or spacer */}
         <div className="shrink-0 w-48">
           {isImpersonating && (
@@ -67,6 +69,13 @@ export function Topbar({ userName, role, email, allowedRoles, userId, isSuperAdm
 
         {/* Right side — actions */}
         <div className="flex shrink-0 items-center gap-4">
+          <button
+            onClick={toggleTheme}
+            className="flex items-center justify-center h-9 w-9 rounded-md text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
+            aria-label="Toggle theme"
+          >
+            {theme === "dark" ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
+          </button>
           <NotificationBell userId={userId} activeRole={displayRole} />
 
           {isImpersonating ? (
@@ -94,18 +103,18 @@ export function Topbar({ userName, role, email, allowedRoles, userId, isSuperAdm
 
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <button className="flex items-center gap-2 hover:bg-slate-100 rounded-md px-3 py-2 transition-colors">
+              <button className="flex items-center gap-2 hover:bg-muted rounded-md px-3 py-2 transition-colors">
                 {avatarUrl ? (
                   <Image
                     src={avatarUrl}
                     alt={userName || "Profile"}
                     width={32}
                     height={32}
-                    className="h-8 w-8 rounded-full object-cover"
+                    className="h-8 w-8 rounded-lg object-cover"
                     unoptimized
                   />
                 ) : (
-                  <div className="h-8 w-8 rounded-full bg-[#1a2b4a] flex items-center justify-center text-white text-sm font-medium">
+                  <div className="h-8 w-8 rounded-lg bg-primary flex items-center justify-center text-primary-foreground text-sm font-medium">
                     {userName
                       ? userName
                           .split(" ")

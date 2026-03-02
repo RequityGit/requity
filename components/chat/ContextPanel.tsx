@@ -37,14 +37,14 @@ interface LoanContext {
 }
 
 const stageColors: Record<string, string> = {
-  lead: "bg-[#1A3355] text-[#C4C0B8]",
-  application: "bg-[rgba(197,151,91,0.1)] text-[#C5975B]",
-  processing: "bg-[rgba(197,151,91,0.1)] text-[#D4AD72]",
-  underwriting: "bg-[rgba(197,151,91,0.15)] text-[#D4AD72]",
+  lead: "bg-muted text-muted-foreground",
+  application: "bg-[rgba(197,151,91,0.1)] text-gold",
+  processing: "bg-[rgba(197,151,91,0.1)] text-gold-light",
+  underwriting: "bg-[rgba(197,151,91,0.15)] text-gold-light",
   approved: "bg-[rgba(45,138,86,0.15)] text-[#2D8A56]",
   clear_to_close: "bg-[rgba(45,138,86,0.2)] text-[#2D8A56]",
   funded: "bg-[rgba(45,138,86,0.15)] text-[#2D8A56]",
-  servicing: "bg-[#1A3355] text-[#C4C0B8]",
+  servicing: "bg-muted text-muted-foreground",
   default: "bg-[rgba(192,57,43,0.15)] text-[#C0392B]",
 };
 
@@ -104,12 +104,12 @@ export function ContextPanel({ channel, onClose }: ContextPanelProps) {
   if (channel.linked_entity_type !== "loan") return null;
 
   return (
-    <div className="w-72 border-l border-[rgba(197,151,91,0.08)] bg-[#0A1628] flex flex-col">
-      <div className="flex items-center justify-between p-3 border-b border-[rgba(197,151,91,0.08)]">
-        <h3 className="text-sm font-semibold text-[#FAFAF8]">Deal Context</h3>
+    <div className="w-72 border-l border-border bg-card flex flex-col">
+      <div className="flex items-center justify-between p-3 border-b border-border">
+        <h3 className="text-sm font-semibold text-foreground">Deal Context</h3>
         <button
           onClick={onClose}
-          className="p-1 rounded hover:bg-[rgba(255,255,255,0.06)] text-[#C4C0B8] transition-colors duration-200"
+          className="p-1 rounded hover:bg-[rgba(255,255,255,0.06)] text-muted-foreground transition-colors duration-200"
         >
           <X className="h-4 w-4" />
         </button>
@@ -119,23 +119,23 @@ export function ContextPanel({ channel, onClose }: ContextPanelProps) {
         <div className="p-3 space-y-3">
           {Array.from({ length: 5 }).map((_, i) => (
             <div key={i} className="space-y-1">
-              <div className="h-3 w-16 bg-[#0F2140] rounded animate-pulse" />
-              <div className="h-4 w-32 bg-[#0F2140] rounded animate-pulse" />
+              <div className="h-3 w-16 bg-secondary rounded animate-pulse" />
+              <div className="h-4 w-32 bg-secondary rounded animate-pulse" />
             </div>
           ))}
         </div>
       ) : loan ? (
         <div className="flex-1 overflow-y-auto p-3 space-y-4">
           <div>
-            <div className="text-xs text-[#8A8680] mb-1">Loan Number</div>
+            <div className="text-xs text-muted-foreground mb-1">Loan Number</div>
             <div className="flex items-center gap-2">
-              <span className="font-semibold text-[#FAFAF8]">
+              <span className="font-semibold text-foreground">
                 {loan.loan_number || "N/A"}
               </span>
               <Badge
                 className={
                   stageColors[loan.stage || ""] ||
-                  "bg-[#1A3355] text-[#C4C0B8]"
+                  "bg-muted text-muted-foreground"
                 }
               >
                 {(loan.stage || "unknown").replace(/_/g, " ")}
@@ -144,8 +144,8 @@ export function ContextPanel({ channel, onClose }: ContextPanelProps) {
           </div>
 
           <div>
-            <div className="text-xs text-[#8A8680] mb-1">Type / Purpose</div>
-            <div className="text-sm text-[#F0EDE6]">
+            <div className="text-xs text-muted-foreground mb-1">Type / Purpose</div>
+            <div className="text-sm text-foreground">
               {(loan.type || "N/A").toUpperCase()} &mdash;{" "}
               {(loan.purpose || "N/A").replace(/_/g, " ")}
             </div>
@@ -153,10 +153,10 @@ export function ContextPanel({ channel, onClose }: ContextPanelProps) {
 
           {loan.loan_amount && (
             <div>
-              <div className="text-xs text-[#8A8680] mb-1 flex items-center gap-1">
+              <div className="text-xs text-muted-foreground mb-1 flex items-center gap-1">
                 <DollarSign className="h-3 w-3" /> Loan Amount
               </div>
-              <div className="text-sm font-semibold text-[#C5975B]">
+              <div className="text-sm font-semibold text-gold">
                 {formatCurrency(loan.loan_amount)}
               </div>
             </div>
@@ -164,14 +164,14 @@ export function ContextPanel({ channel, onClose }: ContextPanelProps) {
 
           {loan.property_address && (
             <div>
-              <div className="text-xs text-[#8A8680] mb-1 flex items-center gap-1">
+              <div className="text-xs text-muted-foreground mb-1 flex items-center gap-1">
                 <MapPin className="h-3 w-3" /> Property
               </div>
-              <div className="text-sm text-[#F0EDE6]">
+              <div className="text-sm text-foreground">
                 {loan.property_address}
               </div>
               {loan.property_type && (
-                <div className="text-xs text-[#8A8680] mt-0.5">
+                <div className="text-xs text-muted-foreground mt-0.5">
                   {loan.property_type.replace(/_/g, " ").toUpperCase()}
                 </div>
               )}
@@ -180,8 +180,8 @@ export function ContextPanel({ channel, onClose }: ContextPanelProps) {
 
           {(loan.interest_rate || loan.loan_term_months) && (
             <div>
-              <div className="text-xs text-[#8A8680] mb-1">Terms</div>
-              <div className="text-sm text-[#F0EDE6]">
+              <div className="text-xs text-muted-foreground mb-1">Terms</div>
+              <div className="text-sm text-foreground">
                 {loan.interest_rate && `${loan.interest_rate}% rate`}
                 {loan.interest_rate && loan.loan_term_months && " / "}
                 {loan.loan_term_months &&
@@ -192,20 +192,20 @@ export function ContextPanel({ channel, onClose }: ContextPanelProps) {
 
           {loan.borrower_name && (
             <div>
-              <div className="text-xs text-[#8A8680] mb-1 flex items-center gap-1">
+              <div className="text-xs text-muted-foreground mb-1 flex items-center gap-1">
                 <User className="h-3 w-3" /> Borrower
               </div>
-              <div className="text-sm text-[#F0EDE6]">
+              <div className="text-sm text-foreground">
                 {loan.borrower_name}
               </div>
             </div>
           )}
 
           <div>
-            <div className="text-xs text-[#8A8680] mb-1 flex items-center gap-1">
+            <div className="text-xs text-muted-foreground mb-1 flex items-center gap-1">
               <Calendar className="h-3 w-3" /> Key Dates
             </div>
-            <div className="space-y-1 text-sm text-[#C4C0B8]">
+            <div className="space-y-1 text-sm text-muted-foreground">
               <div>
                 Created:{" "}
                 {new Date(loan.created_at).toLocaleDateString("en-US", {
@@ -232,14 +232,14 @@ export function ContextPanel({ channel, onClose }: ContextPanelProps) {
 
           <Link
             href={`/admin/loans/${loan.id}`}
-            className="flex items-center gap-2 text-sm text-[#C5975B] hover:text-[#D4AD72] font-medium transition-colors duration-200"
+            className="flex items-center gap-2 text-sm text-gold hover:text-gold-light font-medium transition-colors duration-200"
           >
             <ExternalLink className="h-4 w-4" />
             View full loan details
           </Link>
         </div>
       ) : (
-        <div className="p-4 text-sm text-[#8A8680] text-center">
+        <div className="p-4 text-sm text-muted-foreground text-center">
           Loan not found
         </div>
       )}

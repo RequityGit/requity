@@ -21,10 +21,10 @@ export function DivisionTabs({ activeTab, onTabChange }: DivisionTabsProps) {
   }, [activeTab]);
 
   return (
-    <div className="flex relative bg-dash-surface-alt rounded-md p-[3px] border border-navy/[0.08]">
+    <div className="flex relative bg-dash-surface-alt rounded-md p-[3px] border border-border">
       {/* Sliding pill */}
       <div
-        className="absolute top-[3px] h-[calc(100%-6px)] bg-white rounded shadow-sm dash-tab-pill"
+        className="absolute top-[3px] h-[calc(100%-6px)] bg-card rounded shadow-sm dash-tab-pill"
         style={{ left: pillStyle.left, width: pillStyle.width }}
       />
       {TABS.map((key) => (
@@ -34,8 +34,8 @@ export function DivisionTabs({ activeTab, onTabChange }: DivisionTabsProps) {
             tabRefs.current[key] = el;
           }}
           onClick={() => onTabChange(key)}
-          className={`px-4 py-[5px] rounded border-none cursor-pointer font-body text-[10.5px] font-semibold tracking-[0.03em] uppercase bg-transparent relative z-[1] transition-colors duration-150 ${
-            activeTab === key ? "text-navy" : "text-dash-text-mut"
+          className={`px-4 py-[5px] rounded border-none cursor-pointer text-[10.5px] font-semibold tracking-[0.03em] uppercase bg-transparent relative z-[1] transition-colors duration-150 ${
+            activeTab === key ? "text-foreground" : "text-dash-text-mut"
           }`}
         >
           {key}

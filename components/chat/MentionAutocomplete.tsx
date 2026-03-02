@@ -43,25 +43,25 @@ export function MentionAutocomplete({
               </div>
             ) : s.type === "entity" ? (
               <div className="h-7 w-7 flex items-center justify-center rounded-md bg-[rgba(197,151,91,0.15)]">
-                <Landmark className="h-4 w-4 text-[#C5975B]" />
+                <Landmark className="h-4 w-4 text-gold" />
               </div>
             ) : (
-              <div className="h-7 w-7 flex items-center justify-center rounded-md bg-[#1A3355]">
-                <Hash className="h-4 w-4 text-[#C4C0B8]" />
+              <div className="h-7 w-7 flex items-center justify-center rounded-md bg-muted">
+                <Hash className="h-4 w-4 text-muted-foreground" />
               </div>
             )}
             <div className="min-w-0 flex-1">
-              <div className="font-medium text-[#FAFAF8] truncate">
+              <div className="font-medium text-foreground truncate">
                 {s.label}
               </div>
               {s.sublabel && (
-                <div className="text-xs text-[#8A8680] truncate">
+                <div className="text-xs text-muted-foreground truncate">
                   {s.sublabel}
                 </div>
               )}
             </div>
             {s.type === "entity" && s.entity_type && (
-              <span className="text-xs text-[#C5975B] bg-[rgba(197,151,91,0.1)] px-1.5 py-0.5 rounded">
+              <span className="text-xs text-gold bg-[rgba(197,151,91,0.1)] px-1.5 py-0.5 rounded">
                 {s.entity_type}
               </span>
             )}

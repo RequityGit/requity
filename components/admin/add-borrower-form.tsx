@@ -150,15 +150,15 @@ export function AddBorrowerForm({ borrower }: AddBorrowerFormProps) {
                 if (i < step || canProceed()) setStep(i);
               }}
               className={`flex items-center gap-2 ${
-                i <= step ? "text-[#1a2b4a]" : "text-muted-foreground"
+                i <= step ? "text-foreground" : "text-muted-foreground"
               }`}
             >
               <div
                 className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium border-2 ${
                   i < step
-                    ? "bg-[#1a2b4a] text-white border-[#1a2b4a]"
+                    ? "bg-primary text-white border-primary"
                     : i === step
-                    ? "border-[#1a2b4a] text-[#1a2b4a]"
+                    ? "border-primary text-foreground"
                     : "border-gray-300 text-gray-400"
                 }`}
               >
@@ -171,7 +171,7 @@ export function AddBorrowerForm({ borrower }: AddBorrowerFormProps) {
             {i < STEPS.length - 1 && (
               <div
                 className={`w-8 sm:w-16 h-0.5 mx-2 ${
-                  i < step ? "bg-[#1a2b4a]" : "bg-gray-300"
+                  i < step ? "bg-primary" : "bg-gray-300"
                 }`}
               />
             )}

@@ -35,7 +35,7 @@ export function TaskBoard({ tasks, projectNames, commentCounts, onOpenTask }: Ta
       {columns.map((col) => (
         <div key={col.key} className="space-y-3">
           <div className="flex items-center justify-between">
-            <h3 className="text-sm font-semibold text-[#1a2b4a]">{col.key}</h3>
+            <h3 className="text-sm font-semibold text-foreground">{col.key}</h3>
             <span className="text-xs text-muted-foreground rounded-full bg-slate-100 px-2 py-0.5">
               {col.tasks.length}
             </span>
@@ -56,7 +56,7 @@ export function TaskBoard({ tasks, projectNames, commentCounts, onOpenTask }: Ta
                     onClick={() => onOpenTask(task)}
                   >
                     <CardContent className="p-3 space-y-2">
-                      <p className="text-sm font-medium text-[#1a2b4a] leading-snug">
+                      <p className="text-sm font-medium text-foreground leading-snug">
                         {task.title}
                       </p>
 

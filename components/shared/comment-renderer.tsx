@@ -32,7 +32,7 @@ export function CommentRenderer({
         isInternal
           ? "bg-amber-50 border border-amber-200"
           : isOwnComment
-            ? "bg-[#1a2b4a]/5 border border-[#1a2b4a]/10 ml-4"
+            ? "bg-primary/5 border border-primary/10 ml-4"
             : "bg-white border"
       }`}
     >
@@ -59,7 +59,7 @@ export function CommentRenderer({
           seg.type === "mention" ? (
             <span
               key={i}
-              className="inline-flex items-center font-semibold text-[#1a2b4a] bg-blue-50 border border-blue-200 rounded px-1 mx-0.5"
+              className="inline-flex items-center font-semibold text-foreground bg-blue-50 border border-blue-200 rounded px-1 mx-0.5"
             >
               @{seg.value}
             </span>

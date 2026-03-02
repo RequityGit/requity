@@ -116,7 +116,7 @@ export function TermSheetSectionCard({
             "shrink-0 rounded p-1.5 transition-colors",
             sectionVisible
               ? "text-emerald-600 hover:bg-emerald-50"
-              : "text-slate-400 hover:bg-slate-100"
+              : "text-slate-400 hover:bg-muted"
           )}
           aria-label={sectionVisible ? "Hide section" : "Show section"}
         >
@@ -131,7 +131,7 @@ export function TermSheetSectionCard({
         <button
           type="button"
           onClick={() => setExpanded(!expanded)}
-          className="shrink-0 rounded p-1 text-slate-500 hover:text-slate-800 hover:bg-slate-100 transition-colors"
+          className="shrink-0 rounded p-1 text-slate-500 hover:text-slate-800 hover:bg-muted transition-colors"
           aria-label={expanded ? "Collapse" : "Expand"}
         >
           {expanded ? (
@@ -147,7 +147,7 @@ export function TermSheetSectionCard({
           onClick={() => setExpanded(!expanded)}
           className="flex-1 text-left min-w-0"
         >
-          <span className="text-sm font-semibold text-[#1a2b4a] block truncate">
+          <span className="text-sm font-semibold text-foreground block truncate">
             {section.label}
           </span>
           <span className="text-xs text-muted-foreground block truncate">
@@ -203,7 +203,7 @@ export function TermSheetSectionCard({
                     className={cn(
                       "flex items-center gap-3 rounded-md px-3 py-2 transition-colors",
                       isVisible
-                        ? "bg-white hover:bg-slate-50"
+                        ? "bg-white hover:bg-muted"
                         : "bg-slate-50 opacity-50"
                     )}
                   >
@@ -214,7 +214,7 @@ export function TermSheetSectionCard({
                       className={cn(
                         "shrink-0 flex items-center justify-center w-5 h-5 rounded border transition-colors",
                         isVisible
-                          ? "bg-[#1a2b4a] border-[#1a2b4a] text-white"
+                          ? "bg-primary border-primary text-white"
                           : "bg-white border-slate-300 text-transparent"
                       )}
                       aria-label={
@@ -297,7 +297,7 @@ export function TermSheetSectionCard({
                 </span>
               </div>
               <div className="bg-white rounded border border-slate-200 p-3 font-mono text-xs space-y-1">
-                <div className="font-bold text-[#1a2b4a] text-sm mb-2 border-b border-slate-100 pb-1">
+                <div className="font-bold text-foreground text-sm mb-2 border-b border-slate-100 pb-1">
                   {heading || section.label}
                 </div>
                 {section.fields

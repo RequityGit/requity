@@ -40,7 +40,7 @@ export function TaskDetailDrawer({
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent className="w-full sm:max-w-lg overflow-y-auto">
         <SheetHeader className="pb-4">
-          <SheetTitle className="text-base text-[#1a2b4a] leading-snug text-left">
+          <SheetTitle className="text-base text-foreground leading-snug text-left">
             {task.title}
           </SheetTitle>
         </SheetHeader>

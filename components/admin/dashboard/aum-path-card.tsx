@@ -41,25 +41,22 @@ export function AumPathCard({
   ];
 
   return (
-    <div className="rounded-lg p-4 relative overflow-hidden bg-gradient-to-br from-navy via-navy-mid to-navy-light shadow-[0_4px_10px_rgba(11,25,41,0.10),0_14px_32px_rgba(11,25,41,0.08)]">
-      {/* Decorative glow */}
-      <div className="absolute -top-[50px] -right-10 w-[140px] h-[140px] rounded-full bg-[radial-gradient(circle,rgba(197,151,91,0.08)_0%,transparent_60%)] pointer-events-none" />
-
-      <span className="font-body text-[9px] font-bold uppercase tracking-[0.14em] text-gold relative">
+    <div className="rounded-lg p-4 relative overflow-hidden bg-primary text-primary-foreground shadow-md">
+      <span className="text-[9px] font-bold uppercase tracking-[0.14em] text-gold relative">
         Path to $1B AUM
       </span>
-      <div className="font-mono text-[32px] font-bold text-[#FAFAF8] mt-1.5 leading-none relative">
+      <div className="font-mono text-[32px] font-bold text-primary-foreground mt-1.5 leading-none relative">
         {aumDisplay}
-        <span className="text-[17px] text-navy-text font-semibold">{aumSuffix}</span>
+        <span className="text-[17px] text-primary-foreground/60 font-semibold">{aumSuffix}</span>
       </div>
-      <div className="text-[10px] text-navy-text font-mono mt-0.5">
+      <div className="text-[10px] text-primary-foreground/60 font-mono mt-0.5">
         {pct.toFixed(2)}% of target
       </div>
 
-      {/* Progress bar */}
-      <div className="h-1 bg-white/[0.06] rounded-sm overflow-hidden my-3 relative">
+      {/* Progress bar — flat gold */}
+      <div className="h-1 bg-primary-foreground/[0.06] rounded-sm overflow-hidden my-3 relative">
         <div
-          className="h-full rounded-sm bg-gradient-to-r from-gold to-gold-light dash-progress-glow"
+          className="h-full rounded-sm bg-gold"
           style={{ width: `${Math.max(pct, 1)}%` }}
         />
       </div>
@@ -69,12 +66,12 @@ export function AumPathCard({
         {miniStats.map((m) => (
           <div
             key={m.label}
-            className="bg-white/[0.04] rounded border border-white/[0.04] px-2 py-1.5"
+            className="bg-primary-foreground/[0.04] rounded border border-primary-foreground/[0.04] px-2 py-1.5"
           >
-            <div className="text-[8px] font-bold uppercase tracking-[0.08em] text-navy-text">
+            <div className="text-[8px] font-bold uppercase tracking-[0.08em] text-primary-foreground/60">
               {m.label}
             </div>
-            <div className="font-mono text-[13px] font-bold text-[#FAFAF8] mt-0.5">
+            <div className="font-mono text-[13px] font-bold text-primary-foreground mt-0.5">
               {m.value}
             </div>
           </div>
@@ -83,7 +80,7 @@ export function AumPathCard({
 
       {/* Mini capital chart */}
       <div className="mt-2.5">
-        <span className="text-[8.5px] font-bold uppercase tracking-[0.08em] text-navy-text">
+        <span className="text-[8.5px] font-bold uppercase tracking-[0.08em] text-primary-foreground/60">
           Capital Raised (6mo)
         </span>
         <ResponsiveContainer width="100%" height={65}>
@@ -91,13 +88,13 @@ export function AumPathCard({
             <Bar dataKey="raised" fill="#C5975B" radius={[2, 2, 0, 0]} opacity={0.5} />
             <Tooltip
               contentStyle={{
-                background: "#122640",
-                border: "1px solid rgba(255,255,255,0.08)",
+                background: "hsl(var(--card))",
+                border: "1px solid hsl(var(--border))",
                 borderRadius: 4,
-                color: "#fff",
+                color: "hsl(var(--foreground))",
                 fontFamily: "'JetBrains Mono', monospace",
                 fontSize: 10,
-                boxShadow: "0 4px 16px rgba(0,0,0,0.4)",
+                boxShadow: "0 4px 16px rgba(0,0,0,0.2)",
               }}
               formatter={(v) => [`$${Number(v ?? 0).toLocaleString()}`, "Raised"]}
             />

@@ -52,28 +52,33 @@ const config = {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
         },
-        // Dashboard navy/gold design system
-        navy: {
-          DEFAULT: "#0B1929",
-          mid: "#122640",
-          light: "#1A3355",
-          subtle: "#24405E",
-          text: "#8BA2C0",
-          "text-bright": "#CADAEA",
+        // Sidebar uses theme tokens
+        sidebar: {
+          DEFAULT: "hsl(var(--sidebar-bg))",
+          foreground: "hsl(var(--sidebar-fg))",
+          border: "hsl(var(--sidebar-border))",
+          active: "hsl(var(--sidebar-active))",
+          hover: "hsl(var(--sidebar-hover))",
         },
+        // Gold accent (flat, no glow)
         gold: {
           DEFAULT: "#C5975B",
           light: "#D4AD72",
           pale: "#E8D5B0",
         },
+        // Notification badge pink
+        badge: {
+          pink: "#F0719B",
+        },
+        // Dashboard semantic colors (light/dark via CSS vars)
         dash: {
-          bg: "#E8E4DD",
-          surface: "#FFFFFF",
-          "surface-alt": "#F4F2ED",
-          "surface-hover": "#F0EDE6",
-          "text-sec": "#2C3E50",
-          "text-mut": "#6B7B8D",
-          "text-faint": "#9FAAB5",
+          bg: "hsl(var(--dash-bg))",
+          surface: "hsl(var(--dash-surface))",
+          "surface-alt": "hsl(var(--dash-surface-alt))",
+          "surface-hover": "hsl(var(--dash-surface-hover))",
+          "text-sec": "hsl(var(--dash-text-sec))",
+          "text-mut": "hsl(var(--dash-text-mut))",
+          "text-faint": "hsl(var(--dash-text-faint))",
           success: "#1B7A44",
           warning: "#B8822A",
           danger: "#B23225",
@@ -81,8 +86,9 @@ const config = {
         },
       },
       fontFamily: {
-        display: ["'Cormorant Garamond'", "Georgia", "serif"],
-        body: ["'Source Sans 3'", "-apple-system", "sans-serif"],
+        sans: ["'Inter'", "-apple-system", "BlinkMacSystemFont", "sans-serif"],
+        display: ["'Inter'", "-apple-system", "BlinkMacSystemFont", "sans-serif"],
+        body: ["'Inter'", "-apple-system", "BlinkMacSystemFont", "sans-serif"],
         mono: ["'JetBrains Mono'", "monospace"],
       },
       borderRadius: {

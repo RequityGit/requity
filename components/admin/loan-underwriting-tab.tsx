@@ -921,7 +921,7 @@ function MetricCard({
         <p className="text-[11px] text-muted-foreground uppercase tracking-wide">
           {label}
         </p>
-        <p className="text-lg font-bold text-[#1a2b4a] mt-0.5">{value}</p>
+        <p className="text-lg font-bold text-foreground mt-0.5">{value}</p>
       </CardContent>
     </Card>
   );
@@ -971,7 +971,7 @@ function OutputRow({
     <div className="flex justify-between items-center">
       <span className="text-xs text-muted-foreground">{label}</span>
       <span
-        className={`text-sm font-medium ${highlight ? "text-[#1a2b4a] font-bold" : ""}`}
+        className={`text-sm font-medium ${highlight ? "text-foreground font-bold" : ""}`}
       >
         {value}
       </span>

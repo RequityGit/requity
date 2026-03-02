@@ -414,7 +414,7 @@ export function OperationsView({ projects: rawProjects, tasks, teamMembers, curr
 
           {/* Project Cards */}
           {filteredProjects.length === 0 ? (
-            <div className="rounded-md border bg-white p-8 text-center text-muted-foreground">
+            <div className="rounded-md border bg-card p-8 text-center text-muted-foreground">
               No projects found.
             </div>
           ) : (
@@ -495,7 +495,7 @@ export function OperationsView({ projects: rawProjects, tasks, teamMembers, curr
                 {showCompletedRecurring ? "Hide" : "Show"} history
               </button>
 
-              <div className="flex items-center rounded-md border bg-white p-0.5">
+              <div className="flex items-center rounded-md border bg-card p-0.5">
                 <button
                   type="button"
                   onClick={() => setTaskView("list")}

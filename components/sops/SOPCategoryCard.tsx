@@ -27,18 +27,18 @@ export function SOPCategoryCard({ category, sopCount }: SOPCategoryCardProps) {
   return (
     <Link
       href={`/sops?category=${category.slug}`}
-      className="group block rounded-xl border border-gold/15 bg-navy-mid p-5 shadow-[0_4px_24px_rgba(0,0,0,0.3)] transition hover:border-gold/30 hover:shadow-[0_8px_32px_rgba(0,0,0,0.4)]"
+      className="group block rounded-xl border border-border bg-card p-5 shadow-md transition hover:border-border hover:shadow-lg"
     >
       <div className="mb-3 flex items-center gap-3">
         <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-gold/10">
           <Icon className="h-5 w-5 text-gold" />
         </div>
-        <h3 className="font-display text-lg font-semibold text-[#FAFAF8]">
+        <h3 className="text-lg font-semibold text-foreground">
           {category.name}
         </h3>
       </div>
       {category.description && (
-        <p className="mb-3 text-sm leading-relaxed text-[#C4C0B8]">
+        <p className="mb-3 text-sm leading-relaxed text-muted-foreground">
           {category.description}
         </p>
       )}

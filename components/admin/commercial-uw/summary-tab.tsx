@@ -45,7 +45,7 @@ function MetricCard({
   return (
     <div className="border rounded-lg p-3 text-center">
       <p className="text-xs text-muted-foreground">{label}</p>
-      <p className="text-lg font-bold text-[#1a2b4a]">{value}</p>
+      <p className="text-lg font-bold text-foreground">{value}</p>
       {sub && <p className="text-[10px] text-muted-foreground">{sub}</p>}
     </div>
   );

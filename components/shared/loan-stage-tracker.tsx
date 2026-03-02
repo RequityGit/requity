@@ -27,7 +27,7 @@ export function LoanStageTracker({ currentStage }: LoanStageTrackerProps) {
                   className={cn(
                     "w-8 h-8 rounded-full flex items-center justify-center text-xs font-medium border-2 transition-colors",
                     isPast && "bg-green-600 border-green-600 text-white",
-                    isCurrent && "bg-[#1a2b4a] border-[#1a2b4a] text-white",
+                    isCurrent && "bg-primary border-primary text-white",
                     !isPast &&
                       !isCurrent &&
                       "bg-white border-slate-300 text-slate-400"
@@ -39,7 +39,7 @@ export function LoanStageTracker({ currentStage }: LoanStageTrackerProps) {
                   className={cn(
                     "text-[10px] mt-1 text-center leading-tight max-w-[80px]",
                     isCurrent
-                      ? "font-semibold text-[#1a2b4a]"
+                      ? "font-semibold text-foreground"
                       : "text-muted-foreground"
                   )}
                 >

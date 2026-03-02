@@ -118,7 +118,7 @@ export function ProjectCard({ project, tasks, onToggleTask, onStopRecurrence, on
             </div>
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 flex-wrap">
-                <h3 className="text-sm font-semibold text-[#1a2b4a]">
+                <h3 className="text-sm font-semibold text-foreground">
                   {project.project_name}
                 </h3>
                 <PriorityBadge priority={project.priority} />
@@ -160,7 +160,7 @@ export function ProjectCard({ project, tasks, onToggleTask, onStopRecurrence, on
             <DropdownMenuTrigger asChild>
               <button
                 type="button"
-                className="shrink-0 p-1 rounded hover:bg-slate-100 text-muted-foreground"
+                className="shrink-0 p-1 rounded hover:bg-muted text-muted-foreground"
                 onClick={(e) => e.stopPropagation()}
               >
                 <MoreHorizontal className="h-4 w-4" />
@@ -200,7 +200,7 @@ export function ProjectCard({ project, tasks, onToggleTask, onStopRecurrence, on
                 return (
                   <div
                     key={task.id}
-                    className="flex items-center gap-3 py-1.5 px-2 rounded hover:bg-slate-50"
+                    className="flex items-center gap-3 py-1.5 px-2 rounded hover:bg-muted"
                   >
                     <input
                       type="checkbox"
@@ -235,7 +235,7 @@ export function ProjectCard({ project, tasks, onToggleTask, onStopRecurrence, on
                       <DueDateLabel dueDate={task.due_date} />
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                          <button className="p-0.5 rounded hover:bg-slate-200 text-muted-foreground">
+                          <button className="p-0.5 rounded hover:bg-muted text-muted-foreground">
                             <MoreHorizontal className="h-3 w-3" />
                           </button>
                         </DropdownMenuTrigger>

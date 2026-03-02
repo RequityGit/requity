@@ -25,20 +25,20 @@ export function SecondaryMetrics({ data }: SecondaryMetricsProps) {
       {metrics.map((m, i) => (
         <div
           key={i}
-          className={`rounded-md px-3 py-2.5 border shadow-[0_1px_3px_rgba(11,25,41,0.06),0_4px_14px_rgba(11,25,41,0.04)] ${
+          className={`rounded-md px-3 py-2.5 border shadow-sm ${
             m.accent
               ? "bg-gold/[0.08] border-gold/[0.12]"
-              : "bg-white border-navy/[0.08]"
+              : "bg-card border-border"
           }`}
         >
           <span
-            className={`font-body text-[9px] font-bold uppercase tracking-[0.08em] ${
+            className={`text-[9px] font-bold uppercase tracking-[0.08em] ${
               m.accent ? "text-gold" : "text-dash-text-faint"
             }`}
           >
             {m.label}
           </span>
-          <div className="font-mono text-[15px] font-bold text-navy mt-0.5">
+          <div className="font-mono text-[15px] font-bold text-foreground mt-0.5">
             {m.value}
           </div>
         </div>

@@ -20,24 +20,24 @@ export function SOPCard({ sop }: SOPCardProps) {
   return (
     <Link
       href={`/sops/${sop.slug}`}
-      className="group block rounded-xl border border-gold/15 bg-navy-mid p-4 shadow-[0_4px_24px_rgba(0,0,0,0.3)] transition hover:border-gold/30"
+      className="group block rounded-xl border border-border bg-card p-4 shadow-md transition hover:border-border"
     >
       <div className="mb-2 flex items-start justify-between gap-2">
-        <h4 className="font-display text-base font-semibold text-[#FAFAF8] group-hover:text-gold-light transition-colors">
+        <h4 className="text-base font-semibold text-foreground group-hover:text-gold-light transition-colors">
           {sop.title}
         </h4>
         <StatusBadge status={sop.status} />
       </div>
       {sop.summary && (
-        <p className="mb-3 line-clamp-2 text-sm text-[#C4C0B8]">
+        <p className="mb-3 line-clamp-2 text-sm text-muted-foreground">
           {sop.summary}
         </p>
       )}
-      <div className="flex items-center gap-2 text-xs text-[#8A8680]">
+      <div className="flex items-center gap-2 text-xs text-muted-foreground">
         {sop.department && (
           <Badge
             variant="outline"
-            className="border-gold/20 bg-gold/5 text-gold-light text-xs"
+            className="border-border bg-gold/5 text-gold-light text-xs"
           >
             {sop.department}
           </Badge>

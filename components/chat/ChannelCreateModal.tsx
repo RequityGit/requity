@@ -229,12 +229,12 @@ export function ChannelCreateModal({
 
   return (
     <Dialog open={open} onOpenChange={(o) => !o && resetAndClose()}>
-      <DialogContent className="sm:max-w-md bg-[#0F2140] border-[rgba(197,151,91,0.12)] text-[#FAFAF8]">
+      <DialogContent className="sm:max-w-md bg-secondary border-border text-foreground">
         <DialogHeader>
-          <DialogTitle className="text-[#FAFAF8]">
+          <DialogTitle className="text-foreground">
             New Conversation
           </DialogTitle>
-          <DialogDescription className="text-[#8A8680]">
+          <DialogDescription className="text-muted-foreground">
             Create a team channel or start a direct message.
           </DialogDescription>
         </DialogHeader>
@@ -245,8 +245,8 @@ export function ChannelCreateModal({
             onClick={() => setMode("channel")}
             className={`flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-all duration-200 ${
               mode === "channel"
-                ? "bg-[rgba(197,151,91,0.1)] text-[#C5975B] border border-[rgba(197,151,91,0.2)]"
-                : "bg-[#1A3355] text-[#C4C0B8] border border-[rgba(255,255,255,0.08)] hover:bg-[#243D66]"
+                ? "bg-[rgba(197,151,91,0.1)] text-gold border border-border"
+                : "bg-muted text-muted-foreground border border-border hover:bg-muted"
             }`}
           >
             <Users className="h-4 w-4" />
@@ -256,8 +256,8 @@ export function ChannelCreateModal({
             onClick={() => setMode("dm")}
             className={`flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-all duration-200 ${
               mode === "dm"
-                ? "bg-[rgba(197,151,91,0.1)] text-[#C5975B] border border-[rgba(197,151,91,0.2)]"
-                : "bg-[#1A3355] text-[#C4C0B8] border border-[rgba(255,255,255,0.08)] hover:bg-[#243D66]"
+                ? "bg-[rgba(197,151,91,0.1)] text-gold border border-border"
+                : "bg-muted text-muted-foreground border border-border hover:bg-muted"
             }`}
           >
             <MessageCircle className="h-4 w-4" />
@@ -269,25 +269,25 @@ export function ChannelCreateModal({
         {mode === "channel" && (
           <div className="space-y-3">
             <div>
-              <label className="text-sm font-medium text-[#C4C0B8] block mb-1">
+              <label className="text-sm font-medium text-muted-foreground block mb-1">
                 Channel Name
               </label>
               <input
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 placeholder="e.g., general, marketing"
-                className="w-full px-3 py-2 text-sm bg-[#0A1628] border border-[rgba(197,151,91,0.08)] rounded-md text-[#F0EDE6] placeholder:text-[#8A8680] focus:outline-none focus:ring-1 focus:ring-[#C5975B] focus:border-[#C5975B]"
+                className="w-full px-3 py-2 text-sm bg-card border border-border rounded-md text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-gold focus:border-gold"
               />
             </div>
             <div>
-              <label className="text-sm font-medium text-[#C4C0B8] block mb-1">
+              <label className="text-sm font-medium text-muted-foreground block mb-1">
                 Description (optional)
               </label>
               <input
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 placeholder="What is this channel about?"
-                className="w-full px-3 py-2 text-sm bg-[#0A1628] border border-[rgba(197,151,91,0.08)] rounded-md text-[#F0EDE6] placeholder:text-[#8A8680] focus:outline-none focus:ring-1 focus:ring-[#C5975B] focus:border-[#C5975B]"
+                className="w-full px-3 py-2 text-sm bg-card border border-border rounded-md text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-gold focus:border-gold"
               />
             </div>
             <label className="flex items-center gap-2 text-sm">
@@ -295,16 +295,16 @@ export function ChannelCreateModal({
                 type="checkbox"
                 checked={isPrivate}
                 onChange={(e) => setIsPrivate(e.target.checked)}
-                className="rounded border-[rgba(197,151,91,0.2)] bg-[#0A1628]"
+                className="rounded border-border bg-card"
               />
-              <span className="text-[#C4C0B8]">Make private</span>
+              <span className="text-muted-foreground">Make private</span>
             </label>
           </div>
         )}
 
         {/* Member search */}
         <div className="mt-2">
-          <label className="text-sm font-medium text-[#C4C0B8] block mb-1">
+          <label className="text-sm font-medium text-muted-foreground block mb-1">
             {mode === "dm" ? "Send to" : "Add members (optional)"}
           </label>
 
@@ -313,7 +313,7 @@ export function ChannelCreateModal({
               {selectedMembers.map((m) => (
                 <span
                   key={m.id}
-                  className="inline-flex items-center gap-1 px-2 py-1 bg-[rgba(197,151,91,0.1)] text-[#C5975B] text-xs rounded-md border border-[rgba(197,151,91,0.2)]"
+                  className="inline-flex items-center gap-1 px-2 py-1 bg-[rgba(197,151,91,0.1)] text-gold text-xs rounded-md border border-border"
                 >
                   {m.full_name || m.email}
                   <button
@@ -328,17 +328,17 @@ export function ChannelCreateModal({
           )}
 
           <div className="relative mt-1">
-            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-[#8A8680]" />
+            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <input
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search by name or email..."
-              className="w-full pl-8 pr-3 py-2 text-sm bg-[#0A1628] border border-[rgba(197,151,91,0.08)] rounded-md text-[#F0EDE6] placeholder:text-[#8A8680] focus:outline-none focus:ring-1 focus:ring-[#C5975B] focus:border-[#C5975B]"
+              className="w-full pl-8 pr-3 py-2 text-sm bg-card border border-border rounded-md text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-gold focus:border-gold"
             />
           </div>
 
           {searchResults.length > 0 && (
-            <div className="mt-1 border border-[rgba(255,255,255,0.08)] rounded-md max-h-40 overflow-y-auto bg-[#0A1628]">
+            <div className="mt-1 border border-border rounded-md max-h-40 overflow-y-auto bg-card">
               {searchResults.map((user) => (
                 <button
                   key={user.id}
@@ -351,10 +351,10 @@ export function ChannelCreateModal({
                     size="header"
                   />
                   <div className="min-w-0">
-                    <div className="text-sm font-medium text-[#FAFAF8] truncate">
+                    <div className="text-sm font-medium text-foreground truncate">
                       {user.full_name || "Unknown"}
                     </div>
-                    <div className="text-xs text-[#8A8680] truncate">
+                    <div className="text-xs text-muted-foreground truncate">
                       {user.email}
                     </div>
                   </div>
@@ -368,7 +368,7 @@ export function ChannelCreateModal({
           <Button
             variant="outline"
             onClick={resetAndClose}
-            className="border-[rgba(197,151,91,0.15)] text-[#C4C0B8] hover:bg-[rgba(255,255,255,0.06)] hover:text-[#FAFAF8]"
+            className="border-[rgba(197,151,91,0.15)] text-muted-foreground hover:bg-[rgba(255,255,255,0.06)] hover:text-foreground"
           >
             Cancel
           </Button>
@@ -379,7 +379,7 @@ export function ChannelCreateModal({
               (mode === "channel" && !name.trim()) ||
               (mode === "dm" && selectedMembers.length === 0)
             }
-            className="bg-gradient-to-r from-[#C5975B] to-[#D4AD72] text-[#0A1628] hover:from-[#D4AD72] hover:to-[#E8D5B0] disabled:opacity-50"
+            className="bg-gold text-foreground hover:bg-gold-light disabled:opacity-50"
           >
             {creating && (
               <Loader2 className="h-4 w-4 mr-2 animate-spin" />

@@ -233,7 +233,7 @@ export default async function InvestorDashboardPage() {
         {/* Recent Activity Feed */}
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-4">
-            <CardTitle className="text-lg font-semibold text-[#1a2b4a]">
+            <CardTitle className="text-lg font-semibold text-foreground">
               Recent Activity
             </CardTitle>
           </CardHeader>
@@ -249,7 +249,7 @@ export default async function InvestorDashboardPage() {
                     key={`${item.type}-${item.id}`}
                     className="flex items-start gap-3 pb-4 border-b last:border-b-0 last:pb-0"
                   >
-                    <div className="mt-0.5 rounded-full p-2 bg-slate-100">
+                    <div className="mt-0.5 rounded-full p-2 bg-muted">
                       {item.type === "distribution" && (
                         <CircleDollarSign className="h-4 w-4 text-green-600" />
                       )}
@@ -262,7 +262,7 @@ export default async function InvestorDashboardPage() {
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center justify-between gap-2">
-                        <p className="text-sm font-medium text-[#1a2b4a]">
+                        <p className="text-sm font-medium text-foreground">
                           {item.title}
                         </p>
                         {item.status && <StatusBadge status={item.status} />}
@@ -284,7 +284,7 @@ export default async function InvestorDashboardPage() {
         {/* Commitments by Fund */}
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-4">
-            <CardTitle className="text-lg font-semibold text-[#1a2b4a]">
+            <CardTitle className="text-lg font-semibold text-foreground">
               Investment Commitments
             </CardTitle>
           </CardHeader>
@@ -311,7 +311,7 @@ export default async function InvestorDashboardPage() {
                       className="pb-4 border-b last:border-b-0 last:pb-0"
                     >
                       <div className="flex items-center justify-between mb-2">
-                        <p className="text-sm font-medium text-[#1a2b4a]">
+                        <p className="text-sm font-medium text-foreground">
                           {commitment.funds?.name ?? "Unknown Investment"}
                         </p>
                         <StatusBadge status={commitment.status} />
@@ -323,9 +323,9 @@ export default async function InvestorDashboardPage() {
                         </span>
                         <span>{pctFunded}% funded</span>
                       </div>
-                      <div className="w-full bg-slate-100 rounded-full h-2">
+                      <div className="w-full bg-muted rounded-full h-2">
                         <div
-                          className="bg-[#1a2b4a] h-2 rounded-full transition-all"
+                          className="bg-primary h-2 rounded-full transition-all"
                           style={{ width: `${Math.min(pctFunded, 100)}%` }}
                         />
                       </div>
@@ -348,7 +348,7 @@ export default async function InvestorDashboardPage() {
                   <BanknoteIcon className="h-5 w-5 text-blue-600" />
                 </div>
                 <div>
-                  <p className="text-sm font-medium text-[#1a2b4a]">
+                  <p className="text-sm font-medium text-foreground">
                     Contributions
                   </p>
                   <p className="text-xs text-muted-foreground">
@@ -368,7 +368,7 @@ export default async function InvestorDashboardPage() {
                   <CircleDollarSign className="h-5 w-5 text-green-600" />
                 </div>
                 <div>
-                  <p className="text-sm font-medium text-[#1a2b4a]">
+                  <p className="text-sm font-medium text-foreground">
                     Distributions
                   </p>
                   <p className="text-xs text-muted-foreground">
@@ -384,11 +384,11 @@ export default async function InvestorDashboardPage() {
           <Card className="hover:shadow-md transition-shadow cursor-pointer">
             <CardContent className="flex items-center justify-between p-4">
               <div className="flex items-center gap-3">
-                <div className="rounded-full p-2 bg-slate-50">
+                <div className="rounded-full p-2 bg-muted">
                   <FileText className="h-5 w-5 text-slate-600" />
                 </div>
                 <div>
-                  <p className="text-sm font-medium text-[#1a2b4a]">
+                  <p className="text-sm font-medium text-foreground">
                     Documents
                   </p>
                   <p className="text-xs text-muted-foreground">

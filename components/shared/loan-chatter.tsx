@@ -196,7 +196,7 @@ export function LoanChatter({
     <Card>
       <CardHeader className="pb-3 px-4 py-3">
         <div className="flex items-center gap-2">
-          <MessageCircle className="h-4 w-4 text-[#1a2b4a]" />
+          <MessageCircle className="h-4 w-4 text-foreground" />
           <CardTitle className="text-sm">
             Loan Comments
           </CardTitle>

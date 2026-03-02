@@ -20,11 +20,11 @@ export function TeamActivity({ entries }: TeamActivityProps) {
           <div
             key={e.id}
             className={`flex gap-2.5 py-[7px] ${
-              i < entries.length - 1 ? "border-b border-navy/[0.08]" : ""
+              i < entries.length - 1 ? "border-b border-border" : ""
             }`}
           >
             <div
-              className="w-6 h-6 rounded flex items-center justify-center flex-shrink-0 font-body text-[8.5px] font-bold text-white"
+              className="w-6 h-6 rounded-md flex items-center justify-center flex-shrink-0 text-[8.5px] font-bold text-white"
               style={{
                 background: e.color,
                 boxShadow: `0 2px 6px ${e.color}30`,
@@ -34,7 +34,7 @@ export function TeamActivity({ entries }: TeamActivityProps) {
             </div>
             <div className="flex-1">
               <div className="text-[11.5px] text-dash-text-sec leading-tight">
-                <span className="font-semibold text-navy">{e.person}</span>{" "}
+                <span className="font-semibold text-foreground">{e.person}</span>{" "}
                 {e.action}
               </div>
               <div className="text-[10.5px] text-dash-text-mut mt-0.5">

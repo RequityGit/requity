@@ -191,7 +191,7 @@ export function LoanListView({
             {row.priority === "on_hold" && (
               <Pause className="h-3 w-3 text-amber-500 flex-shrink-0" />
             )}
-            <p className="font-medium text-[#1a2b4a]">
+            <p className="font-medium text-foreground">
               {row.property_address ?? "—"}
             </p>
           </div>
@@ -290,13 +290,13 @@ export function LoanListView({
       {/* Pipeline summary bar */}
       <div className="flex items-center gap-4 text-sm">
         <span className="text-muted-foreground">
-          <span className="font-semibold text-[#1a2b4a]">
+          <span className="font-semibold text-foreground">
             {pipelineStats.total}
           </span>{" "}
           loans
         </span>
         <span className="text-muted-foreground">
-          <span className="font-semibold text-[#1a2b4a]">
+          <span className="font-semibold text-foreground">
             {formatCurrency(pipelineStats.totalVolume)}
           </span>{" "}
           pipeline volume

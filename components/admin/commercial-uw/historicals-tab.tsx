@@ -557,7 +557,7 @@ function CategoryRow({
   if (data.annualTotal === 0 && data.sourceRows.length === 0 && !data.isIncome) {
     // Show empty expense rows with just the override column
     return (
-      <tr className="border-b hover:bg-slate-50/50">
+      <tr className="border-b hover:bg-muted/50">
         <td className="p-2 pl-4 text-muted-foreground sticky left-0 bg-white">
           {data.label}
         </td>
@@ -590,7 +590,7 @@ function CategoryRow({
   return (
     <>
       <tr
-        className={`border-b hover:bg-slate-50/50 ${
+        className={`border-b hover:bg-muted/50 ${
           hasOverride ? "bg-amber-50/30" : ""
         } ${hasMultipleSources ? "cursor-pointer" : ""}`}
         onClick={hasMultipleSources ? onToggle : undefined}

@@ -92,19 +92,19 @@ export function BorrowerConditionsTab({
     <div className="space-y-6">
       {/* Summary row */}
       <div className="grid grid-cols-3 gap-3">
-        <div className="bg-white rounded-lg border px-4 py-3 text-center">
-          <p className="text-2xl font-semibold text-[#1a2b4a]">
+        <div className="bg-card rounded-lg border px-4 py-3 text-center">
+          <p className="text-2xl font-semibold text-foreground">
             {conditions.length}
           </p>
           <p className="text-xs text-muted-foreground mt-0.5">Total</p>
         </div>
-        <div className="bg-white rounded-lg border px-4 py-3 text-center">
+        <div className="bg-card rounded-lg border px-4 py-3 text-center">
           <p className="text-2xl font-semibold text-amber-600">
             {outstanding.length}
           </p>
           <p className="text-xs text-muted-foreground mt-0.5">Outstanding</p>
         </div>
-        <div className="bg-white rounded-lg border px-4 py-3 text-center">
+        <div className="bg-card rounded-lg border px-4 py-3 text-center">
           <p className="text-2xl font-semibold text-green-600">
             {complete.length}
           </p>
@@ -115,7 +115,7 @@ export function BorrowerConditionsTab({
       {/* Outstanding conditions */}
       {outstanding.length > 0 && (
         <div className="space-y-2">
-          <h3 className="text-sm font-semibold text-[#1a2b4a]">
+          <h3 className="text-sm font-semibold text-foreground">
             Outstanding ({outstanding.length})
           </h3>
           {outstanding.map((c) => (
@@ -285,7 +285,7 @@ function BorrowerConditionCard({
             ? "bg-green-50/50 hover:bg-green-50"
             : isOverdue
               ? "bg-red-50/50 hover:bg-red-50"
-              : "bg-white hover:bg-slate-50"
+              : "bg-card hover:bg-muted"
         }`}
       >
         <div className="mt-0.5 flex-shrink-0">
@@ -300,7 +300,7 @@ function BorrowerConditionCard({
 
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
-            <span className="text-sm font-medium text-[#1a2b4a]">
+            <span className="text-sm font-medium text-foreground">
               {condition.condition_name}
             </span>
             {condition.critical_path_item && (
@@ -359,11 +359,11 @@ function BorrowerConditionCard({
 
       {/* Expanded panel */}
       {expanded && (
-        <div className="border-t bg-slate-50/60 p-4 space-y-5">
+        <div className="border-t bg-muted/60 p-4 space-y-5">
           {/* Documents */}
           <div className="space-y-2">
             <div className="flex items-center justify-between">
-              <h4 className="text-xs font-semibold text-[#1a2b4a] flex items-center gap-1.5">
+              <h4 className="text-xs font-semibold text-foreground flex items-center gap-1.5">
                 <Paperclip className="h-3.5 w-3.5" />
                 Uploaded Documents ({documents.length})
               </h4>
@@ -381,7 +381,7 @@ function BorrowerConditionCard({
             </div>
 
             {showUpload && !isComplete && (
-              <div className="space-y-2 rounded-lg border bg-white p-3">
+              <div className="space-y-2 rounded-lg border bg-card p-3">
                 <FileUpload
                   onFileSelect={(file) => setSelectedFile(file)}
                   maxSize={25}
@@ -422,7 +422,7 @@ function BorrowerConditionCard({
                 {documents.map((doc) => (
                   <div
                     key={doc.id}
-                    className="flex items-center gap-2 text-xs bg-white rounded border px-3 py-2"
+                    className="flex items-center gap-2 text-xs bg-card rounded border px-3 py-2"
                   >
                     <FileText className="h-3.5 w-3.5 text-blue-500 flex-shrink-0" />
                     <span className="flex-1 truncate">{doc.document_name}</span>
@@ -444,7 +444,7 @@ function BorrowerConditionCard({
 
           {/* Messages / Comments */}
           <div className="space-y-3">
-            <h4 className="text-xs font-semibold text-[#1a2b4a] flex items-center gap-1.5">
+            <h4 className="text-xs font-semibold text-foreground flex items-center gap-1.5">
               <MessageCircle className="h-3.5 w-3.5" />
               Messages ({comments.length})
             </h4>

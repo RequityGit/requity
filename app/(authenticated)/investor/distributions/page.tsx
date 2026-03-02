@@ -142,7 +142,7 @@ export default async function DistributionsPage({
       key: "fund_name",
       header: "Investment",
       cell: (row) => (
-        <span className="font-medium text-[#1a2b4a]">{row.fund_name}</span>
+        <span className="font-medium text-foreground">{row.fund_name}</span>
       ),
     },
     {
@@ -254,7 +254,7 @@ export default async function DistributionsPage({
                 Total for Current View ({rows.length} distribution
                 {rows.length !== 1 ? "s" : ""})
               </span>
-              <span className="text-lg font-bold text-[#1a2b4a]">
+              <span className="text-lg font-bold text-foreground">
                 {formatCurrency(totalDistributed)}
               </span>
             </div>

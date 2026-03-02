@@ -201,7 +201,7 @@ export function MessageInput({
   const hasContent = content.trim().length > 0;
 
   return (
-    <div className="relative border-t border-[rgba(197,151,91,0.08)] bg-[#0A1628] px-4 py-3">
+    <div className="relative border-t border-border bg-card px-4 py-3">
       {/* Mention autocomplete */}
       {mentionQuery !== null && suggestions.length > 0 && (
         <MentionAutocomplete
@@ -227,7 +227,7 @@ export function MessageInput({
 
       <div className="flex items-end gap-2">
         <button
-          className="p-2 rounded-lg text-[#C4C0B8] hover:text-[#FAFAF8] hover:bg-[rgba(255,255,255,0.06)] transition-all duration-200 flex-shrink-0"
+          className="p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-[rgba(255,255,255,0.06)] transition-all duration-200 flex-shrink-0"
           title="Attach file"
         >
           <Paperclip className="h-5 w-5" />
@@ -247,7 +247,7 @@ export function MessageInput({
             }}
             placeholder={placeholder}
             rows={1}
-            className="w-full resize-none bg-[#0F2140] border border-[rgba(197,151,91,0.08)] rounded-lg px-3 py-2 text-sm text-[#F0EDE6] placeholder:text-[#8A8680] focus:outline-none focus:ring-1 focus:ring-[#C5975B] focus:border-[#C5975B] transition-all duration-200"
+            className="w-full resize-none bg-secondary border border-border rounded-lg px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-gold focus:border-gold transition-all duration-200"
             disabled={sending}
           />
         </div>
@@ -258,8 +258,8 @@ export function MessageInput({
           className={cn(
             "p-2 rounded-lg transition-all duration-200 flex-shrink-0",
             hasContent
-              ? "bg-gradient-to-r from-[#C5975B] to-[#D4AD72] text-[#0A1628] hover:from-[#D4AD72] hover:to-[#E8D5B0] shadow-sm"
-              : "bg-[#1A3355] text-[#8A8680]"
+              ? "bg-gold text-foreground hover:bg-gold-light shadow-sm"
+              : "bg-muted text-muted-foreground"
           )}
           title="Send message"
         >
@@ -267,19 +267,19 @@ export function MessageInput({
         </button>
       </div>
 
-      <div className="flex items-center gap-4 mt-1.5 px-1 text-xs text-[#8A8680]">
+      <div className="flex items-center gap-4 mt-1.5 px-1 text-xs text-muted-foreground">
         <span>
-          <kbd className="px-1 py-0.5 bg-[#1A3355] rounded text-[10px] text-[#C4C0B8]">
+          <kbd className="px-1 py-0.5 bg-muted rounded text-[10px] text-muted-foreground">
             Enter
           </kbd>{" "}
           to send,{" "}
-          <kbd className="px-1 py-0.5 bg-[#1A3355] rounded text-[10px] text-[#C4C0B8]">
+          <kbd className="px-1 py-0.5 bg-muted rounded text-[10px] text-muted-foreground">
             Shift+Enter
           </kbd>{" "}
           for newline
         </span>
         <span>
-          <kbd className="px-1 py-0.5 bg-[#1A3355] rounded text-[10px] text-[#C4C0B8]">
+          <kbd className="px-1 py-0.5 bg-muted rounded text-[10px] text-muted-foreground">
             @
           </kbd>{" "}
           to mention

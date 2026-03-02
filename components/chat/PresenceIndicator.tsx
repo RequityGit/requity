@@ -33,7 +33,7 @@ export function PresenceIndicator({
     <span
       className={cn(
         "inline-block rounded-full border-2",
-        borderColor || "border-[#0A1628]",
+        borderColor || "border-card",
         sizeClasses[size],
         statusColors[status],
         className

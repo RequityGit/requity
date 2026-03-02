@@ -51,7 +51,7 @@ interface EmailActivityFeedProps {
 }
 
 const statusConfig: Record<string, { icon: React.ElementType; label: string; className: string }> = {
-  queued: { icon: Clock, label: "Queued", className: "bg-slate-100 text-slate-600" },
+  queued: { icon: Clock, label: "Queued", className: "bg-muted text-slate-600" },
   sent: { icon: Send, label: "Sent", className: "bg-blue-100 text-blue-600" },
   delivered: { icon: CheckCircle2, label: "Delivered", className: "bg-green-100 text-green-600" },
   opened: { icon: Eye, label: "Opened", className: "bg-purple-100 text-purple-600" },
@@ -116,7 +116,7 @@ export function EmailActivityFeed({
                     {/* Header row */}
                     <button
                       type="button"
-                      className="w-full flex items-start gap-3 p-3 text-left hover:bg-slate-50 transition-colors"
+                      className="w-full flex items-start gap-3 p-3 text-left hover:bg-muted transition-colors"
                       onClick={() => toggleExpanded(email.id)}
                     >
                       <div
@@ -194,7 +194,7 @@ export function EmailActivityFeed({
 
                           {/* Body */}
                           {email.body_text && (
-                            <div className="mt-2 p-3 rounded-md bg-slate-50 text-sm whitespace-pre-wrap max-h-60 overflow-y-auto">
+                            <div className="mt-2 p-3 rounded-md bg-muted text-sm whitespace-pre-wrap max-h-60 overflow-y-auto">
                               {email.body_text}
                             </div>
                           )}

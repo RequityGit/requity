@@ -55,14 +55,14 @@ export function ActionItems({ items }: ActionItemsProps) {
                   }`}
                 />
                 <div className="flex-1 min-w-0">
-                  <span className="text-xs font-semibold text-navy">
+                  <span className="text-xs font-semibold text-foreground">
                     {item.label}
                   </span>
                   <span className="text-[11px] text-dash-text-mut ml-1.5">
                     {item.detail}
                   </span>
                 </div>
-                <span className="text-[10px] font-semibold text-dash-text-sec px-1.5 py-0.5 bg-dash-surface-alt rounded-[3px] font-body flex-shrink-0">
+                <span className="text-[10px] font-semibold text-dash-text-sec px-1.5 py-0.5 bg-dash-surface-alt rounded-[3px] flex-shrink-0">
                   {item.assignee}
                 </span>
                 <span className="text-[10px] text-dash-text-faint font-mono flex-shrink-0 w-7 text-right">

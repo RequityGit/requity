@@ -167,7 +167,7 @@ export default async function InvestorFundDetailPage({ params }: PageProps) {
       key: "file_name",
       header: "File Name",
       cell: (row) => (
-        <span className="font-medium text-[#1a2b4a]">{row.file_name}</span>
+        <span className="font-medium text-foreground">{row.file_name}</span>
       ),
     },
     {
@@ -198,7 +198,7 @@ export default async function InvestorFundDetailPage({ params }: PageProps) {
       {/* Back link */}
       <Link
         href="/investor/funds"
-        className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-[#1a2b4a] transition-colors"
+        className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
       >
         <ArrowLeft className="h-4 w-4" />
         Back to Investments
@@ -240,7 +240,7 @@ export default async function InvestorFundDetailPage({ params }: PageProps) {
       {/* Fund Details Card */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-lg font-semibold text-[#1a2b4a]">
+          <CardTitle className="text-lg font-semibold text-foreground">
             Investment Details
           </CardTitle>
         </CardHeader>
@@ -274,9 +274,9 @@ export default async function InvestorFundDetailPage({ params }: PageProps) {
               <span className="text-muted-foreground">My Funding Progress</span>
               <span className="font-medium">{pctFunded}%</span>
             </div>
-            <div className="w-full bg-slate-100 rounded-full h-3">
+            <div className="w-full bg-muted rounded-full h-3">
               <div
-                className="bg-[#1a2b4a] h-3 rounded-full transition-all"
+                className="bg-primary h-3 rounded-full transition-all"
                 style={{ width: `${Math.min(pctFunded, 100)}%` }}
               />
             </div>

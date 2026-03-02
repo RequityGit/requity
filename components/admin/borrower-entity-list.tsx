@@ -73,7 +73,7 @@ export function BorrowerEntityList({
     return (
       <div className="rounded-md border bg-white p-8 text-center">
         <Building2 className="mx-auto h-10 w-10 text-muted-foreground mb-3" />
-        <h3 className="text-sm font-semibold text-[#1a2b4a] mb-1">
+        <h3 className="text-sm font-semibold text-foreground mb-1">
           No entities yet
         </h3>
         <p className="text-sm text-muted-foreground mb-4">
@@ -109,7 +109,7 @@ export function BorrowerEntityList({
               <div className="flex items-start justify-between mb-3">
                 <div className="flex items-center gap-2">
                   <Building2 className="h-4 w-4 text-muted-foreground" />
-                  <h4 className="font-semibold text-[#1a2b4a]">
+                  <h4 className="font-semibold text-foreground">
                     {entity.entity_name}
                   </h4>
                 </div>

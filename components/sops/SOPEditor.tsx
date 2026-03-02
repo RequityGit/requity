@@ -155,18 +155,18 @@ export function SOPEditor({ sop, categories, userId }: SOPEditorProps) {
   }
 
   return (
-    <div className="min-h-screen bg-navy-DEFAULT">
+    <div className="min-h-screen bg-background">
       <div className="mx-auto max-w-5xl px-6 py-8">
         {/* Back link */}
         <Link
           href={sop ? `/sops/${sop.slug}` : "/sops"}
-          className="mb-6 inline-flex items-center gap-1.5 text-sm text-[#8A8680] hover:text-gold transition"
+          className="mb-6 inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-gold transition"
         >
           <ArrowLeft className="h-4 w-4" />
           {sop ? "Back to SOP" : "Back to Knowledge Base"}
         </Link>
 
-        <h1 className="mb-8 font-display text-3xl font-semibold text-[#FAFAF8]">
+        <h1 className="mb-8 text-3xl font-semibold text-foreground">
           {isNew ? "Create New SOP" : `Edit: ${sop.title}`}
         </h1>
 
@@ -179,7 +179,7 @@ export function SOPEditor({ sop, categories, userId }: SOPEditorProps) {
         <div className="space-y-6">
           {/* Title */}
           <div>
-            <label className="mb-1.5 block text-sm font-medium text-[#C4C0B8]">
+            <label className="mb-1.5 block text-sm font-medium text-muted-foreground">
               Title
             </label>
             <input
@@ -187,13 +187,13 @@ export function SOPEditor({ sop, categories, userId }: SOPEditorProps) {
               value={title}
               onChange={(e) => handleTitleChange(e.target.value)}
               placeholder="SOP title..."
-              className="w-full rounded-lg border border-navy-light bg-navy px-4 py-2.5 text-[#FAFAF8] placeholder-[#8A8680] outline-none transition focus:border-gold focus:shadow-[0_0_0_3px_rgba(197,151,91,0.15)]"
+              className="w-full rounded-lg border border-border bg-secondary px-4 py-2.5 text-foreground placeholder:text-muted-foreground outline-none transition focus:border-ring focus:ring-2 focus:ring-ring"
             />
           </div>
 
           {/* Slug */}
           <div>
-            <label className="mb-1.5 block text-sm font-medium text-[#C4C0B8]">
+            <label className="mb-1.5 block text-sm font-medium text-muted-foreground">
               Slug
             </label>
             <input
@@ -201,14 +201,14 @@ export function SOPEditor({ sop, categories, userId }: SOPEditorProps) {
               value={slug}
               onChange={(e) => setSlug(e.target.value)}
               placeholder="url-friendly-slug"
-              className="w-full rounded-lg border border-navy-light bg-navy px-4 py-2.5 font-mono text-sm text-[#FAFAF8] placeholder-[#8A8680] outline-none transition focus:border-gold focus:shadow-[0_0_0_3px_rgba(197,151,91,0.15)]"
+              className="w-full rounded-lg border border-border bg-secondary px-4 py-2.5 font-mono text-sm text-foreground placeholder:text-muted-foreground outline-none transition focus:border-ring focus:ring-2 focus:ring-ring"
             />
           </div>
 
           {/* Department & Category */}
           <div className="grid gap-4 sm:grid-cols-2">
             <div>
-              <label className="mb-1.5 block text-sm font-medium text-[#C4C0B8]">
+              <label className="mb-1.5 block text-sm font-medium text-muted-foreground">
                 Department
               </label>
               <select
@@ -217,7 +217,7 @@ export function SOPEditor({ sop, categories, userId }: SOPEditorProps) {
                   setDepartment(e.target.value);
                   setCategoryId("");
                 }}
-                className="w-full rounded-lg border border-navy-light bg-navy px-4 py-2.5 text-[#FAFAF8] outline-none transition focus:border-gold focus:shadow-[0_0_0_3px_rgba(197,151,91,0.15)]"
+                className="w-full rounded-lg border border-border bg-secondary px-4 py-2.5 text-foreground outline-none transition focus:border-ring focus:ring-2 focus:ring-ring"
               >
                 <option value="">Select department...</option>
                 {departments.map((d) => (
@@ -228,13 +228,13 @@ export function SOPEditor({ sop, categories, userId }: SOPEditorProps) {
               </select>
             </div>
             <div>
-              <label className="mb-1.5 block text-sm font-medium text-[#C4C0B8]">
+              <label className="mb-1.5 block text-sm font-medium text-muted-foreground">
                 Category
               </label>
               <select
                 value={categoryId}
                 onChange={(e) => setCategoryId(e.target.value)}
-                className="w-full rounded-lg border border-navy-light bg-navy px-4 py-2.5 text-[#FAFAF8] outline-none transition focus:border-gold focus:shadow-[0_0_0_3px_rgba(197,151,91,0.15)]"
+                className="w-full rounded-lg border border-border bg-secondary px-4 py-2.5 text-foreground outline-none transition focus:border-ring focus:ring-2 focus:ring-ring"
               >
                 <option value="">Select category...</option>
                 {filteredCategories.map((c) => (
@@ -248,7 +248,7 @@ export function SOPEditor({ sop, categories, userId }: SOPEditorProps) {
 
           {/* Tags */}
           <div>
-            <label className="mb-1.5 block text-sm font-medium text-[#C4C0B8]">
+            <label className="mb-1.5 block text-sm font-medium text-muted-foreground">
               Tags (comma-separated)
             </label>
             <input
@@ -256,13 +256,13 @@ export function SOPEditor({ sop, categories, userId }: SOPEditorProps) {
               value={tags}
               onChange={(e) => setTags(e.target.value)}
               placeholder="onboarding, compliance, process..."
-              className="w-full rounded-lg border border-navy-light bg-navy px-4 py-2.5 text-[#FAFAF8] placeholder-[#8A8680] outline-none transition focus:border-gold focus:shadow-[0_0_0_3px_rgba(197,151,91,0.15)]"
+              className="w-full rounded-lg border border-border bg-secondary px-4 py-2.5 text-foreground placeholder:text-muted-foreground outline-none transition focus:border-ring focus:ring-2 focus:ring-ring"
             />
           </div>
 
           {/* Visibility */}
           <div>
-            <label className="mb-1.5 block text-sm font-medium text-[#C4C0B8]">
+            <label className="mb-1.5 block text-sm font-medium text-muted-foreground">
               Visibility
             </label>
             <div className="flex gap-4">
@@ -276,7 +276,7 @@ export function SOPEditor({ sop, categories, userId }: SOPEditorProps) {
                     onChange={() => setVisibility(v)}
                     className="accent-gold"
                   />
-                  <span className="text-sm text-[#C4C0B8] capitalize">{v === "role" ? "Role-based" : v}</span>
+                  <span className="text-sm text-muted-foreground capitalize">{v === "role" ? "Role-based" : v}</span>
                 </label>
               ))}
             </div>
@@ -298,7 +298,7 @@ export function SOPEditor({ sop, categories, userId }: SOPEditorProps) {
                       }}
                       className="accent-gold"
                     />
-                    <span className="text-sm text-[#C4C0B8] capitalize">
+                    <span className="text-sm text-muted-foreground capitalize">
                       {r}
                     </span>
                   </label>
@@ -309,10 +309,10 @@ export function SOPEditor({ sop, categories, userId }: SOPEditorProps) {
 
           {/* Content editor */}
           <div>
-            <label className="mb-1.5 block text-sm font-medium text-[#C4C0B8]">
+            <label className="mb-1.5 block text-sm font-medium text-muted-foreground">
               Content (Markdown)
             </label>
-            <div data-color-mode="dark" className="rounded-lg overflow-hidden border border-navy-light">
+            <div data-color-mode="dark" className="rounded-lg overflow-hidden border border-border">
               <MDEditor
                 value={content}
                 onChange={(val) => setContent(val ?? "")}
@@ -324,7 +324,7 @@ export function SOPEditor({ sop, categories, userId }: SOPEditorProps) {
 
           {/* Summary */}
           <div>
-            <label className="mb-1.5 block text-sm font-medium text-[#C4C0B8]">
+            <label className="mb-1.5 block text-sm font-medium text-muted-foreground">
               Summary (auto-generated if empty)
             </label>
             <textarea
@@ -332,14 +332,14 @@ export function SOPEditor({ sop, categories, userId }: SOPEditorProps) {
               onChange={(e) => setSummary(e.target.value)}
               rows={3}
               placeholder="Brief summary of this SOP..."
-              className="w-full rounded-lg border border-navy-light bg-navy px-4 py-2.5 text-[#FAFAF8] placeholder-[#8A8680] outline-none transition focus:border-gold focus:shadow-[0_0_0_3px_rgba(197,151,91,0.15)] resize-none"
+              className="w-full rounded-lg border border-border bg-secondary px-4 py-2.5 text-foreground placeholder:text-muted-foreground outline-none transition focus:border-ring focus:ring-2 focus:ring-ring resize-none"
             />
           </div>
 
           {/* Change notes (for edits) */}
           {!isNew && (
             <div>
-              <label className="mb-1.5 block text-sm font-medium text-[#C4C0B8]">
+              <label className="mb-1.5 block text-sm font-medium text-muted-foreground">
                 Change Notes (optional)
               </label>
               <input
@@ -347,13 +347,13 @@ export function SOPEditor({ sop, categories, userId }: SOPEditorProps) {
                 value={changeNotes}
                 onChange={(e) => setChangeNotes(e.target.value)}
                 placeholder="What did you change?"
-                className="w-full rounded-lg border border-navy-light bg-navy px-4 py-2.5 text-[#FAFAF8] placeholder-[#8A8680] outline-none transition focus:border-gold focus:shadow-[0_0_0_3px_rgba(197,151,91,0.15)]"
+                className="w-full rounded-lg border border-border bg-secondary px-4 py-2.5 text-foreground placeholder:text-muted-foreground outline-none transition focus:border-ring focus:ring-2 focus:ring-ring"
               />
             </div>
           )}
 
           {/* Actions */}
-          <div className="flex items-center justify-between border-t border-navy-light pt-6">
+          <div className="flex items-center justify-between border-t border-border pt-6">
             <button
               onClick={() => setPreviewOpen(!previewOpen)}
               className="flex items-center gap-1.5 rounded-lg border border-gold px-4 py-2 text-sm font-medium text-gold transition hover:bg-gold/10"
@@ -365,7 +365,7 @@ export function SOPEditor({ sop, categories, userId }: SOPEditorProps) {
               <button
                 onClick={() => handleSave(false)}
                 disabled={saving}
-                className="flex items-center gap-1.5 rounded-lg border border-navy-light bg-navy-mid px-4 py-2 text-sm font-medium text-[#FAFAF8] transition hover:bg-navy-light disabled:opacity-50"
+                className="flex items-center gap-1.5 rounded-lg border border-border bg-card px-4 py-2 text-sm font-medium text-foreground transition hover:bg-muted disabled:opacity-50"
               >
                 <Save className="h-4 w-4" />
                 {saving ? "Saving..." : "Save as Draft"}
@@ -373,7 +373,7 @@ export function SOPEditor({ sop, categories, userId }: SOPEditorProps) {
               <button
                 onClick={() => handleSave(true)}
                 disabled={saving}
-                className="flex items-center gap-1.5 rounded-lg bg-gold px-4 py-2 text-sm font-semibold text-[#0A1628] transition hover:bg-gold-light disabled:opacity-50"
+                className="flex items-center gap-1.5 rounded-lg bg-gold px-4 py-2 text-sm font-semibold text-foreground transition hover:bg-gold-light disabled:opacity-50"
               >
                 <Send className="h-4 w-4" />
                 {saving ? "Publishing..." : "Publish"}
@@ -383,14 +383,14 @@ export function SOPEditor({ sop, categories, userId }: SOPEditorProps) {
 
           {/* Preview area */}
           {previewOpen && (
-            <div className="rounded-xl border border-gold/15 bg-navy-mid p-6">
-              <h3 className="mb-4 font-display text-xl font-semibold text-[#FAFAF8]">
+            <div className="rounded-xl border border-border bg-card p-6">
+              <h3 className="mb-4 text-xl font-semibold text-foreground">
                 Preview
               </h3>
               {content ? (
                 <SOPContentPreview content={content} />
               ) : (
-                <p className="text-[#8A8680]">
+                <p className="text-muted-foreground">
                   Start writing to see a preview...
                 </p>
               )}

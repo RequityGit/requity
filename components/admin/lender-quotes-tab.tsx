@@ -323,7 +323,7 @@ export function LenderQuotesTab({
                       <div className="space-y-1">
                         <Link
                           href={`/admin/loans/${loanId}/quotes/${q.id}`}
-                          className="hover:underline font-medium text-sm text-[#1a2b4a]"
+                          className="hover:underline font-medium text-sm text-foreground"
                         >
                           {q.quote_name}
                         </Link>
@@ -406,7 +406,7 @@ export function LenderQuotesTab({
 
                 {/* Requity Fee Income row */}
                 <TableRow className="border-t-2">
-                  <TableCell className="font-semibold text-xs text-[#1a2b4a] sticky left-0 bg-white border-r">
+                  <TableCell className="font-semibold text-xs text-foreground sticky left-0 bg-white border-r">
                     Requity Fee Income
                   </TableCell>
                   {quotes.map((q) => {

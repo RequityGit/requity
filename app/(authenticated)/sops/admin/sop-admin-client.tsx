@@ -67,11 +67,11 @@ function MetricCard({
   color: string;
 }) {
   return (
-    <div className="rounded-xl border border-gold/15 bg-navy-mid p-5 shadow-[0_4px_24px_rgba(0,0,0,0.3)]">
+    <div className="rounded-xl border border-border bg-card p-5 shadow-md">
       <div className="flex items-center justify-between">
         <div>
-          <p className="text-sm text-[#8A8680]">{title}</p>
-          <p className="mt-1 text-3xl font-bold text-[#FAFAF8]">{value}</p>
+          <p className="text-sm text-muted-foreground">{title}</p>
+          <p className="mt-1 text-3xl font-bold text-foreground">{value}</p>
         </div>
         <div
           className={`flex h-10 w-10 items-center justify-center rounded-lg ${color}`}
@@ -116,18 +116,18 @@ export function SOPAdminClient({
   }
 
   return (
-    <div className="min-h-screen bg-navy-DEFAULT">
+    <div className="min-h-screen bg-background">
       <div className="mx-auto max-w-6xl px-6 py-8">
         {/* Header */}
         <Link
           href="/sops"
-          className="mb-6 inline-flex items-center gap-1.5 text-sm text-[#8A8680] hover:text-gold transition"
+          className="mb-6 inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-gold transition"
         >
           <ArrowLeft className="h-4 w-4" />
           Back to Knowledge Base
         </Link>
 
-        <h1 className="mb-8 font-display text-3xl font-semibold text-[#FAFAF8]">
+        <h1 className="mb-8 text-3xl font-semibold text-foreground">
           SOP Analytics &amp; Management
         </h1>
 
@@ -161,27 +161,27 @@ export function SOPAdminClient({
 
         {/* Staleness Flags Table */}
         <section className="mb-8">
-          <h2 className="mb-4 font-display text-xl font-semibold text-[#FAFAF8]">
+          <h2 className="mb-4 text-xl font-semibold text-foreground">
             Open Staleness Flags
           </h2>
           {flags.length > 0 ? (
-            <div className="rounded-xl border border-gold/15 bg-navy-mid overflow-hidden">
+            <div className="rounded-xl border border-border bg-card overflow-hidden">
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="border-b border-navy-light">
-                    <th className="px-4 py-3 text-left font-medium text-[#8A8680]">
+                  <tr className="border-b border-border">
+                    <th className="px-4 py-3 text-left font-medium text-muted-foreground">
                       SOP
                     </th>
-                    <th className="px-4 py-3 text-left font-medium text-[#8A8680]">
+                    <th className="px-4 py-3 text-left font-medium text-muted-foreground">
                       Type
                     </th>
-                    <th className="px-4 py-3 text-left font-medium text-[#8A8680]">
+                    <th className="px-4 py-3 text-left font-medium text-muted-foreground">
                       Description
                     </th>
-                    <th className="px-4 py-3 text-left font-medium text-[#8A8680]">
+                    <th className="px-4 py-3 text-left font-medium text-muted-foreground">
                       Flagged
                     </th>
-                    <th className="px-4 py-3 text-right font-medium text-[#8A8680]">
+                    <th className="px-4 py-3 text-right font-medium text-muted-foreground">
                       Actions
                     </th>
                   </tr>
@@ -190,18 +190,18 @@ export function SOPAdminClient({
                   {flags.map((flag) => (
                     <tr
                       key={flag.id}
-                      className="border-b border-navy-light/50 last:border-b-0"
+                      className="border-b border-border/50 last:border-b-0"
                     >
                       <td className="px-4 py-3">
                         {flag.sops ? (
                           <Link
                             href={`/sops/${flag.sops.slug}`}
-                            className="text-[#FAFAF8] hover:text-gold transition"
+                            className="text-foreground hover:text-gold transition"
                           >
                             {flag.sops.title}
                           </Link>
                         ) : (
-                          <span className="text-[#8A8680]">Unknown</span>
+                          <span className="text-muted-foreground">Unknown</span>
                         )}
                       </td>
                       <td className="px-4 py-3">
@@ -209,10 +209,10 @@ export function SOPAdminClient({
                           {flag.flag_type.replace(/_/g, " ")}
                         </span>
                       </td>
-                      <td className="px-4 py-3 text-[#C4C0B8]">
+                      <td className="px-4 py-3 text-muted-foreground">
                         {flag.description ?? "—"}
                       </td>
-                      <td className="px-4 py-3 text-[#8A8680]">
+                      <td className="px-4 py-3 text-muted-foreground">
                         {formatDate(flag.created_at)}
                       </td>
                       <td className="px-4 py-3">
@@ -220,7 +220,7 @@ export function SOPAdminClient({
                           {flag.sops && (
                             <Link
                               href={`/sops/${flag.sops.slug}`}
-                              className="rounded-md p-1.5 text-[#8A8680] transition hover:bg-navy-light hover:text-[#FAFAF8]"
+                              className="rounded-md p-1.5 text-muted-foreground transition hover:bg-muted hover:text-foreground"
                               title="Review"
                             >
                               <Eye className="h-4 w-4" />
@@ -235,7 +235,7 @@ export function SOPAdminClient({
                           </button>
                           <button
                             onClick={() => handleDismissFlag(flag.id)}
-                            className="rounded-md p-1.5 text-[#8A8680] transition hover:bg-navy-light hover:text-[#C0392B]"
+                            className="rounded-md p-1.5 text-muted-foreground transition hover:bg-muted hover:text-[#C0392B]"
                             title="Dismiss"
                           >
                             <X className="h-4 w-4" />
@@ -248,8 +248,8 @@ export function SOPAdminClient({
               </table>
             </div>
           ) : (
-            <div className="rounded-xl border border-gold/10 bg-navy-mid p-6 text-center">
-              <p className="text-[#C4C0B8]">
+            <div className="rounded-xl border border-border bg-card p-6 text-center">
+              <p className="text-muted-foreground">
                 No open staleness flags. All SOPs are up to date.
               </p>
             </div>
@@ -258,21 +258,21 @@ export function SOPAdminClient({
 
         {/* Question Gap Analysis */}
         <section className="mb-8">
-          <h2 className="mb-4 font-display text-xl font-semibold text-[#FAFAF8]">
+          <h2 className="mb-4 text-xl font-semibold text-foreground">
             Questions Without SOP Coverage
           </h2>
           {uncoveredQuestions.length > 0 ? (
-            <div className="rounded-xl border border-gold/15 bg-navy-mid overflow-hidden">
+            <div className="rounded-xl border border-border bg-card overflow-hidden">
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="border-b border-navy-light">
-                    <th className="px-4 py-3 text-left font-medium text-[#8A8680]">
+                  <tr className="border-b border-border">
+                    <th className="px-4 py-3 text-left font-medium text-muted-foreground">
                       Question
                     </th>
-                    <th className="px-4 py-3 text-left font-medium text-[#8A8680]">
+                    <th className="px-4 py-3 text-left font-medium text-muted-foreground">
                       Asked
                     </th>
-                    <th className="px-4 py-3 text-right font-medium text-[#8A8680]">
+                    <th className="px-4 py-3 text-right font-medium text-muted-foreground">
                       Action
                     </th>
                   </tr>
@@ -281,12 +281,12 @@ export function SOPAdminClient({
                   {uncoveredQuestions.map((q) => (
                     <tr
                       key={q.id}
-                      className="border-b border-navy-light/50 last:border-b-0"
+                      className="border-b border-border/50 last:border-b-0"
                     >
-                      <td className="px-4 py-3 text-[#C4C0B8]">
+                      <td className="px-4 py-3 text-muted-foreground">
                         {q.question}
                       </td>
-                      <td className="px-4 py-3 text-[#8A8680] whitespace-nowrap">
+                      <td className="px-4 py-3 text-muted-foreground whitespace-nowrap">
                         {formatDate(q.created_at)}
                       </td>
                       <td className="px-4 py-3 text-right">
@@ -304,8 +304,8 @@ export function SOPAdminClient({
               </table>
             </div>
           ) : (
-            <div className="rounded-xl border border-gold/10 bg-navy-mid p-6 text-center">
-              <p className="text-[#C4C0B8]">
+            <div className="rounded-xl border border-border bg-card p-6 text-center">
+              <p className="text-muted-foreground">
                 All questions have SOP coverage. Great job!
               </p>
             </div>
@@ -314,18 +314,18 @@ export function SOPAdminClient({
 
         {/* Most Viewed SOPs */}
         <section>
-          <h2 className="mb-4 font-display text-xl font-semibold text-[#FAFAF8]">
+          <h2 className="mb-4 text-xl font-semibold text-foreground">
             Most Viewed SOPs
           </h2>
           {topViewed.length > 0 ? (
-            <div className="rounded-xl border border-gold/15 bg-navy-mid overflow-hidden">
+            <div className="rounded-xl border border-border bg-card overflow-hidden">
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="border-b border-navy-light">
-                    <th className="px-4 py-3 text-left font-medium text-[#8A8680]">
+                  <tr className="border-b border-border">
+                    <th className="px-4 py-3 text-left font-medium text-muted-foreground">
                       SOP Path
                     </th>
-                    <th className="px-4 py-3 text-right font-medium text-[#8A8680]">
+                    <th className="px-4 py-3 text-right font-medium text-muted-foreground">
                       Views
                     </th>
                   </tr>
@@ -334,12 +334,12 @@ export function SOPAdminClient({
                   {topViewed.map((v) => (
                     <tr
                       key={v.path}
-                      className="border-b border-navy-light/50 last:border-b-0"
+                      className="border-b border-border/50 last:border-b-0"
                     >
                       <td className="px-4 py-3">
                         <Link
                           href={v.path}
-                          className="text-[#FAFAF8] hover:text-gold transition"
+                          className="text-foreground hover:text-gold transition"
                         >
                           {v.slug}
                         </Link>
@@ -353,8 +353,8 @@ export function SOPAdminClient({
               </table>
             </div>
           ) : (
-            <div className="rounded-xl border border-gold/10 bg-navy-mid p-6 text-center">
-              <p className="text-[#C4C0B8]">
+            <div className="rounded-xl border border-border bg-card p-6 text-center">
+              <p className="text-muted-foreground">
                 No SOP view data yet. Views will appear as users browse the
                 Knowledge Base.
               </p>

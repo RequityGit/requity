@@ -71,25 +71,25 @@ export function MessageList({
 
   if (loading && messages.length === 0) {
     return (
-      <div className="flex-1 flex items-center justify-center bg-[#0F2140]">
-        <Loader2 className="h-6 w-6 animate-spin text-[#C5975B]" />
+      <div className="flex-1 flex items-center justify-center bg-secondary">
+        <Loader2 className="h-6 w-6 animate-spin text-gold" />
       </div>
     );
   }
 
   if (messages.length === 0) {
     return (
-      <div className="flex-1 flex flex-col items-center justify-center bg-[#0F2140]">
+      <div className="flex-1 flex flex-col items-center justify-center bg-secondary">
         <div className="w-16 h-16 rounded-2xl bg-[rgba(197,151,91,0.08)] flex items-center justify-center mb-4">
-          <MessageSquare className="h-8 w-8 text-[#C5975B]" />
+          <MessageSquare className="h-8 w-8 text-gold" />
         </div>
-        <div className="font-display text-lg font-medium text-[#F0EDE6]">
+        <div className="font-semibold text-lg font-medium text-foreground">
           No messages yet
         </div>
-        <div className="text-sm text-[#8A8680] mt-1 mb-4">
+        <div className="text-sm text-muted-foreground mt-1 mb-4">
           Start the conversation
         </div>
-        <button className="px-4 py-2 rounded-lg bg-gradient-to-r from-[#C5975B] to-[#D4AD72] text-[#0A1628] text-sm font-semibold hover:from-[#D4AD72] hover:to-[#E8D5B0] transition-all duration-200">
+        <button className="px-4 py-2 rounded-lg bg-gold text-foreground text-sm font-semibold hover:bg-gold-light transition-all duration-200">
           Send a message
         </button>
       </div>
@@ -99,7 +99,7 @@ export function MessageList({
   return (
     <div
       ref={containerRef}
-      className="flex-1 overflow-y-auto bg-[#0F2140]"
+      className="flex-1 overflow-y-auto bg-secondary"
       onScroll={() => {
         handleScroll();
         handleScrollTop();
@@ -110,7 +110,7 @@ export function MessageList({
         <div className="flex justify-center py-3">
           <button
             onClick={onLoadMore}
-            className="text-xs text-[#C5975B] hover:text-[#D4AD72] transition-colors duration-200"
+            className="text-xs text-gold hover:text-gold-light transition-colors duration-200"
           >
             {loading ? (
               <Loader2 className="h-4 w-4 animate-spin" />
@@ -139,11 +139,11 @@ export function MessageList({
             <div key={msg.id}>
               {showDateSep && (
                 <div className="flex items-center gap-3 px-4 py-3">
-                  <div className="flex-1 border-t border-[rgba(197,151,91,0.08)]" />
-                  <span className="text-xs font-medium text-[#8A8680]">
+                  <div className="flex-1 border-t border-border" />
+                  <span className="text-xs font-medium text-muted-foreground">
                     {formatDateSeparator(msg.created_at)}
                   </span>
-                  <div className="flex-1 border-t border-[rgba(197,151,91,0.08)]" />
+                  <div className="flex-1 border-t border-border" />
                 </div>
               )}
               <MessageBubble

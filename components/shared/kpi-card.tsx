@@ -25,7 +25,7 @@ export function KpiCard({
         {icon && <div className="text-muted-foreground">{icon}</div>}
       </CardHeader>
       <CardContent>
-        <div className="text-2xl font-bold text-[#1a2b4a]">{value}</div>
+        <div className="text-2xl font-bold text-foreground">{value}</div>
         {description && (
           <p className="text-xs text-muted-foreground mt-1">{description}</p>
         )}

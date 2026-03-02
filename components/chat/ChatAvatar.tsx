@@ -37,12 +37,12 @@ const sizeConfig: Record<
 
 // Deterministic color based on name string
 const fallbackColors = [
-  "bg-[#1A3355]",
-  "bg-[#2A3F5F]",
-  "bg-[#1F3A5A]",
-  "bg-[#243D66]",
-  "bg-[#1B3050]",
-  "bg-[#2B4570]",
+  "bg-violet-600",
+  "bg-blue-600",
+  "bg-emerald-600",
+  "bg-amber-600",
+  "bg-rose-600",
+  "bg-cyan-600",
 ];
 
 function getColorIndex(name: string | null): number {
@@ -92,7 +92,7 @@ export function ChatAvatar({
       ) : (
         <div
           className={cn(
-            "w-full h-full flex items-center justify-center text-[#C4C0B8]",
+            "w-full h-full flex items-center justify-center text-muted-foreground",
             config.text,
             fallbackColors[colorIdx]
           )}
@@ -124,13 +124,13 @@ export function ChatGroupIcon({
       type="button"
       onClick={onClick}
       className={cn(
-        "relative flex-shrink-0 overflow-hidden flex items-center justify-center bg-[#1A3355]",
+        "relative flex-shrink-0 overflow-hidden flex items-center justify-center bg-muted",
         config.size,
         config.radius,
         config.border,
-        "border-[rgba(197,151,91,0.15)]",
+        "border-border",
         "transition-all duration-200 ease-[cubic-bezier(0.4,0,0.2,1)]",
-        onClick && "hover:border-[rgba(197,151,91,0.3)] cursor-pointer",
+        onClick && "hover:border-border/80 cursor-pointer",
         !onClick && "cursor-default",
         className
       )}

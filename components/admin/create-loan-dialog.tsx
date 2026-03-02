@@ -432,7 +432,7 @@ export function CreateLoanDialog({
 
           {/* Property Information */}
           <div>
-            <h4 className="text-sm font-semibold text-[#1a2b4a] mb-3">
+            <h4 className="text-sm font-semibold text-foreground mb-3">
               Property Information
             </h4>
             <div className="space-y-4">
@@ -484,7 +484,7 @@ export function CreateLoanDialog({
 
           {/* Financial Terms */}
           <div>
-            <h4 className="text-sm font-semibold text-[#1a2b4a] mb-3">
+            <h4 className="text-sm font-semibold text-foreground mb-3">
               Financial Terms
             </h4>
             <div className="grid grid-cols-3 gap-4">
@@ -599,7 +599,7 @@ export function CreateLoanDialog({
 
           {/* Team Assignment */}
           <div>
-            <h4 className="text-sm font-semibold text-[#1a2b4a] mb-3">
+            <h4 className="text-sm font-semibold text-foreground mb-3">
               Team Assignment
             </h4>
             <div className="grid grid-cols-2 gap-4">

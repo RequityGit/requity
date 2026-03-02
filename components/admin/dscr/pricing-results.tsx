@@ -73,7 +73,7 @@ export function PricingResults({ results, pricingRunId, onBack }: PricingResults
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-xl font-bold text-[#1a2b4a]">Pricing Results</h2>
+          <h2 className="text-xl font-bold text-foreground">Pricing Results</h2>
           <p className="text-sm text-muted-foreground">
             {deal.borrower_name || "Deal"} — {formatCurrency(deal.loan_amount)} |{" "}
             {deal.ltv?.toFixed(1)}% LTV | FICO {deal.borrower_fico} | {deal.property_state} |{" "}

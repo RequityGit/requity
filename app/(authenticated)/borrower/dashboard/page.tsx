@@ -101,7 +101,7 @@ export default async function BorrowerDashboardPage() {
 
       {/* Active Loans Section */}
       <div className="mb-2">
-        <h2 className="text-lg font-semibold text-[#1a2b4a]">Your Loans</h2>
+        <h2 className="text-lg font-semibold text-foreground">Your Loans</h2>
         <p className="text-sm text-muted-foreground">
           Click a loan to view details
         </p>

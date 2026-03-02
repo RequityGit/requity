@@ -788,7 +788,7 @@ function ReadOnlyView({
       <Separator />
 
       {/* Loan Terms */}
-      <h4 className="text-sm font-medium text-[#1a2b4a]">Loan Terms</h4>
+      <h4 className="text-sm font-medium text-foreground">Loan Terms</h4>
       <div className="grid grid-cols-2 md:grid-cols-3 gap-y-4 gap-x-6">
         <DetailField
           label="Loan Amount"
@@ -833,7 +833,7 @@ function ReadOnlyView({
       <Separator />
 
       {/* Fees */}
-      <h4 className="text-sm font-medium text-[#1a2b4a]">Fees</h4>
+      <h4 className="text-sm font-medium text-foreground">Fees</h4>
       <div className="grid grid-cols-2 md:grid-cols-3 gap-y-4 gap-x-6">
         <DetailField
           label="Origination Fee"
@@ -862,7 +862,7 @@ function ReadOnlyView({
       <Separator />
 
       {/* Prepayment / YM */}
-      <h4 className="text-sm font-medium text-[#1a2b4a]">
+      <h4 className="text-sm font-medium text-foreground">
         Prepayment / Yield Maintenance
       </h4>
       <div className="grid grid-cols-2 md:grid-cols-3 gap-y-4 gap-x-6">
@@ -973,7 +973,7 @@ function EditForm({
       <Separator />
 
       {/* Loan Terms */}
-      <h4 className="text-sm font-medium text-[#1a2b4a]">Loan Terms</h4>
+      <h4 className="text-sm font-medium text-foreground">Loan Terms</h4>
       <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
         <div className="space-y-2">
           <Label>Loan Amount</Label>
@@ -1042,7 +1042,7 @@ function EditForm({
       <Separator />
 
       {/* Fees */}
-      <h4 className="text-sm font-medium text-[#1a2b4a]">Fees</h4>
+      <h4 className="text-sm font-medium text-foreground">Fees</h4>
       <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
         <div className="space-y-2">
           <Label>Origination Fee (%)</Label>
@@ -1083,7 +1083,7 @@ function EditForm({
       <Separator />
 
       {/* Prepayment / YM */}
-      <h4 className="text-sm font-medium text-[#1a2b4a]">
+      <h4 className="text-sm font-medium text-foreground">
         Prepayment / Yield Maintenance
       </h4>
       <div className="grid grid-cols-2 md:grid-cols-3 gap-4">

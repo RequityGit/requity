@@ -100,7 +100,7 @@ export function ContactTags({
             <Badge
               key={t.id}
               variant="outline"
-              className="text-xs font-medium bg-slate-50 gap-1 pr-1"
+              className="text-xs font-medium bg-muted gap-1 pr-1"
             >
               {t.tag}
               <button

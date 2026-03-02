@@ -36,7 +36,7 @@ interface TaskListProps {
 export function TaskList({ tasks, projectNames, onToggleTask, onStopRecurrence, onDeleteTask, commentCounts, onOpenTask }: TaskListProps) {
   if (tasks.length === 0) {
     return (
-      <div className="rounded-md border bg-white">
+      <div className="rounded-md border bg-card">
         <div className="h-24 flex items-center justify-center text-muted-foreground">
           No tasks found.
         </div>
@@ -45,7 +45,7 @@ export function TaskList({ tasks, projectNames, onToggleTask, onStopRecurrence, 
   }
 
   return (
-    <div className="rounded-md border bg-white">
+    <div className="rounded-md border bg-card">
       <Table>
         <TableHeader>
           <TableRow>
@@ -78,7 +78,7 @@ export function TaskList({ tasks, projectNames, onToggleTask, onStopRecurrence, 
                   <button
                     type="button"
                     onClick={() => onOpenTask(task)}
-                    className="font-medium text-[#1a2b4a] hover:underline text-left"
+                    className="font-medium text-foreground hover:underline text-left"
                   >
                     {task.title}
                   </button>
@@ -121,7 +121,7 @@ export function TaskList({ tasks, projectNames, onToggleTask, onStopRecurrence, 
                 <TableCell>
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                      <button className="p-1 rounded hover:bg-slate-100 text-muted-foreground">
+                      <button className="p-1 rounded hover:bg-muted text-muted-foreground">
                         <MoreHorizontal className="h-3.5 w-3.5" />
                       </button>
                     </DropdownMenuTrigger>

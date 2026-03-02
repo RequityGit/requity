@@ -19,7 +19,7 @@ function StatusBadge({ status }: { status: string }) {
 
   return (
     <span
-      className={`font-body text-[9.5px] font-bold tracking-[0.04em] uppercase px-1.5 py-0.5 rounded-[3px] ${c.bg} ${c.text}`}
+      className={`text-[9.5px] font-bold tracking-[0.04em] uppercase px-1.5 py-0.5 rounded-[3px] ${c.bg} ${c.text}`}
     >
       {c.label}
     </span>
@@ -73,7 +73,7 @@ export function MaturityTable({ loans }: MaturityTableProps) {
                 <Timer size={12} className={urgColor} />
               </div>
               <div className="flex-1 min-w-0">
-                <div className="text-xs font-semibold text-navy truncate">
+                <div className="text-xs font-semibold text-foreground truncate">
                   {loan.property}
                 </div>
                 <div className="text-[10.5px] text-dash-text-mut">
@@ -81,7 +81,7 @@ export function MaturityTable({ loans }: MaturityTableProps) {
                 </div>
               </div>
               <div className="text-right flex-shrink-0">
-                <div className="font-mono text-xs font-semibold text-navy">
+                <div className="font-mono text-xs font-semibold text-foreground">
                   {fmtShort(loan.amount)}
                 </div>
                 <div className={`font-mono text-[10px] font-semibold ${urgColor}`}>

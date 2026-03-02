@@ -59,8 +59,8 @@ export function TermSheetPreview({
       {/* Term sheet mock */}
       <div className="p-4 max-h-[calc(100vh-280px)] overflow-y-auto">
         {/* Company header */}
-        <div className="text-center mb-4 pb-3 border-b-2 border-[#1a2b4a]">
-          <h3 className="text-sm font-bold text-[#1a2b4a] uppercase tracking-wide">
+        <div className="text-center mb-4 pb-3 border-b-2 border-primary">
+          <h3 className="text-sm font-bold text-foreground uppercase tracking-wide">
             {companyName || "Company Name"}
           </h3>
           <p className="text-[10px] text-slate-500 mt-0.5">Term Sheet</p>
@@ -82,7 +82,7 @@ export function TermSheetPreview({
 
               return (
                 <div key={section.key}>
-                  <h4 className="text-[11px] font-bold text-[#1a2b4a] uppercase tracking-wider border-b border-slate-200 pb-1 mb-1.5">
+                  <h4 className="text-[11px] font-bold text-foreground uppercase tracking-wider border-b border-slate-200 pb-1 mb-1.5">
                     {heading}
                   </h4>
                   {sectionFields.length > 0 ? (

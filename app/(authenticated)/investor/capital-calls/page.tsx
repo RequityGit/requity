@@ -101,7 +101,7 @@ export default async function CapitalCallsPage({
       key: "fund_name",
       header: "Investment",
       cell: (row) => (
-        <span className="font-medium text-[#1a2b4a]">{row.fund_name}</span>
+        <span className="font-medium text-foreground">{row.fund_name}</span>
       ),
     },
     {

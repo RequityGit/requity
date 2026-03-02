@@ -200,7 +200,7 @@ export function OpportunityListView({ data }: OpportunityListViewProps) {
               filtered.map((opp) => (
                 <TableRow
                   key={opp.id}
-                  className="cursor-pointer hover:bg-slate-50"
+                  className="cursor-pointer hover:bg-muted"
                   onClick={() =>
                     router.push(`/admin/originations/${opp.id}`)
                   }

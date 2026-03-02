@@ -143,7 +143,7 @@ export function BorrowerListTable({ data }: BorrowerListTableProps) {
       <div className="rounded-md border bg-white p-12 text-center">
         <div className="mx-auto max-w-sm space-y-4">
           <UserPlus className="mx-auto h-12 w-12 text-muted-foreground" />
-          <h3 className="text-lg font-semibold text-[#1a2b4a]">
+          <h3 className="text-lg font-semibold text-foreground">
             No borrowers yet
           </h3>
           <p className="text-sm text-muted-foreground">
@@ -182,7 +182,7 @@ export function BorrowerListTable({ data }: BorrowerListTableProps) {
               <TableHead>
                 <button
                   onClick={() => toggleSort("name")}
-                  className="flex items-center font-medium hover:text-[#1a2b4a]"
+                  className="flex items-center font-medium hover:text-foreground"
                 >
                   Full Name
                   <SortIcon col="name" />
@@ -191,7 +191,7 @@ export function BorrowerListTable({ data }: BorrowerListTableProps) {
               <TableHead>
                 <button
                   onClick={() => toggleSort("email")}
-                  className="flex items-center font-medium hover:text-[#1a2b4a]"
+                  className="flex items-center font-medium hover:text-foreground"
                 >
                   Email
                   <SortIcon col="email" />
@@ -200,7 +200,7 @@ export function BorrowerListTable({ data }: BorrowerListTableProps) {
               <TableHead>
                 <button
                   onClick={() => toggleSort("phone")}
-                  className="flex items-center font-medium hover:text-[#1a2b4a]"
+                  className="flex items-center font-medium hover:text-foreground"
                 >
                   Phone
                   <SortIcon col="phone" />
@@ -209,7 +209,7 @@ export function BorrowerListTable({ data }: BorrowerListTableProps) {
               <TableHead>
                 <button
                   onClick={() => toggleSort("credit_score")}
-                  className="flex items-center font-medium hover:text-[#1a2b4a]"
+                  className="flex items-center font-medium hover:text-foreground"
                 >
                   Credit Score
                   <SortIcon col="credit_score" />
@@ -218,7 +218,7 @@ export function BorrowerListTable({ data }: BorrowerListTableProps) {
               <TableHead>
                 <button
                   onClick={() => toggleSort("experience_count")}
-                  className="flex items-center font-medium hover:text-[#1a2b4a]"
+                  className="flex items-center font-medium hover:text-foreground"
                 >
                   Experience
                   <SortIcon col="experience_count" />
@@ -227,7 +227,7 @@ export function BorrowerListTable({ data }: BorrowerListTableProps) {
               <TableHead>
                 <button
                   onClick={() => toggleSort("entity_count")}
-                  className="flex items-center font-medium hover:text-[#1a2b4a]"
+                  className="flex items-center font-medium hover:text-foreground"
                 >
                   Entities
                   <SortIcon col="entity_count" />
@@ -236,7 +236,7 @@ export function BorrowerListTable({ data }: BorrowerListTableProps) {
               <TableHead>
                 <button
                   onClick={() => toggleSort("loan_count")}
-                  className="flex items-center font-medium hover:text-[#1a2b4a]"
+                  className="flex items-center font-medium hover:text-foreground"
                 >
                   Loans
                   <SortIcon col="loan_count" />
@@ -245,7 +245,7 @@ export function BorrowerListTable({ data }: BorrowerListTableProps) {
               <TableHead>
                 <button
                   onClick={() => toggleSort("created_at")}
-                  className="flex items-center font-medium hover:text-[#1a2b4a]"
+                  className="flex items-center font-medium hover:text-foreground"
                 >
                   Created
                   <SortIcon col="created_at" />
@@ -267,11 +267,11 @@ export function BorrowerListTable({ data }: BorrowerListTableProps) {
               paginated.map((row) => (
                 <TableRow
                   key={row.id}
-                  className="cursor-pointer hover:bg-slate-50"
+                  className="cursor-pointer hover:bg-muted"
                   onClick={() => router.push(`/admin/borrowers/${row.id}`)}
                 >
                   <TableCell>
-                    <span className="font-medium text-[#1a2b4a]">
+                    <span className="font-medium text-foreground">
                       {row.first_name} {row.last_name}
                     </span>
                   </TableCell>

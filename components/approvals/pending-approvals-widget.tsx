@@ -66,7 +66,7 @@ export function PendingApprovalsWidget() {
     <Card className={cn("", breachedCount > 0 && "border-red-200")}>
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
         <CardTitle className="text-sm font-medium flex items-center gap-2">
-          <ShieldCheck className="h-4 w-4 text-[#1a2b4a]" />
+          <ShieldCheck className="h-4 w-4 text-foreground" />
           Pending My Approval
         </CardTitle>
         <Badge variant={breachedCount > 0 ? "destructive" : "secondary"} className="text-xs">
@@ -82,7 +82,7 @@ export function PendingApprovalsWidget() {
             return (
               <div
                 key={approval.id}
-                className="flex items-center gap-3 p-2 rounded-lg hover:bg-slate-50 cursor-pointer transition-colors"
+                className="flex items-center gap-3 p-2 rounded-lg hover:bg-muted cursor-pointer transition-colors"
                 onClick={() => router.push(`/admin/operations/approvals/${approval.id}`)}
               >
                 {approval.sla_breached ? (
@@ -91,7 +91,7 @@ export function PendingApprovalsWidget() {
                   <Clock className="h-4 w-4 text-muted-foreground flex-shrink-0" />
                 )}
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-[#1a2b4a] truncate">
+                  <p className="text-sm font-medium text-foreground truncate">
                     {snapshot?.borrower_name || "Unknown"}{" "}
                     {snapshot?.loan_amount ? `- ${formatCurrency(Number(snapshot.loan_amount))}` : ""}
                   </p>
@@ -116,7 +116,7 @@ export function PendingApprovalsWidget() {
         <Button
           variant="ghost"
           size="sm"
-          className="w-full mt-2 text-[#1a2b4a]"
+          className="w-full mt-2 text-foreground"
           onClick={() => router.push("/admin/operations/approvals")}
         >
           View All Approvals

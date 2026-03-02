@@ -371,7 +371,7 @@ export function CrmContactList({
 
       {/* Header with Add button */}
       <div className="flex items-center justify-between">
-        <h3 className="text-lg font-semibold text-[#1a2b4a]">Contacts</h3>
+        <h3 className="text-lg font-semibold text-foreground">Contacts</h3>
         <AddContactDialog
           teamMembers={teamMembers}
           currentUserId={currentUserId}

@@ -124,7 +124,7 @@ export function Sidebar({ role, isSuperAdmin }: { role: string; isSuperAdmin?: b
   return (
     <aside
       className={cn(
-        "h-screen sticky top-0 border-r bg-[#1a2b4a] text-white flex flex-col transition-all duration-300",
+        "h-screen sticky top-0 border-r bg-sidebar text-sidebar-foreground flex flex-col transition-all duration-300",
         collapsed ? "w-16" : "w-64"
       )}
     >
@@ -191,14 +191,14 @@ export function Sidebar({ role, isSuperAdmin }: { role: string; isSuperAdmin?: b
           <div className="relative flex-shrink-0">
             <MessageSquare className="h-5 w-5" />
             {totalUnread > 0 && (
-              <span className="absolute -top-1.5 -right-1.5 h-4 min-w-[16px] px-1 flex items-center justify-center rounded-full bg-red-500 text-white text-[10px] font-bold">
+              <span className="absolute -top-1.5 -right-1.5 h-4 min-w-[16px] px-1 flex items-center justify-center rounded-full bg-[#F0719B] text-white text-[10px] font-bold">
                 {totalUnread > 99 ? "99+" : totalUnread}
               </span>
             )}
           </div>
           {!collapsed && <span>Messages</span>}
           {!collapsed && totalUnread > 0 && (
-            <span className="ml-auto bg-red-500 text-white text-[10px] font-bold rounded-full h-5 min-w-[20px] px-1.5 flex items-center justify-center">
+            <span className="ml-auto bg-[#F0719B] text-white text-[10px] font-bold rounded-full h-5 min-w-[20px] px-1.5 flex items-center justify-center">
               {totalUnread > 99 ? "99+" : totalUnread}
             </span>
           )}

@@ -70,10 +70,10 @@ export function SOPDetailClient({
   }
 
   return (
-    <div className="min-h-screen bg-navy-DEFAULT">
+    <div className="min-h-screen bg-background">
       <div className="mx-auto max-w-6xl px-6 py-8">
         {/* Breadcrumb */}
-        <nav className="mb-6 flex items-center gap-2 text-sm text-[#8A8680]">
+        <nav className="mb-6 flex items-center gap-2 text-sm text-muted-foreground">
           <Link href="/sops" className="hover:text-gold transition">
             Knowledge Base
           </Link>
@@ -84,23 +84,23 @@ export function SOPDetailClient({
               <ChevronRight className="h-3.5 w-3.5" />
             </>
           )}
-          <span className="text-[#C4C0B8]">{sop.title}</span>
+          <span className="text-muted-foreground">{sop.title}</span>
         </nav>
 
         {/* Header */}
         <div className="mb-8 flex items-start justify-between gap-4">
           <div>
             <div className="mb-2 flex items-center gap-3">
-              <h1 className="font-display text-3xl font-semibold text-[#FAFAF8]">
+              <h1 className="text-3xl font-semibold text-foreground">
                 {sop.title}
               </h1>
               <StatusBadge status={sop.status} />
             </div>
-            <div className="flex flex-wrap items-center gap-3 text-sm text-[#8A8680]">
+            <div className="flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
               {sop.department && (
                 <Badge
                   variant="outline"
-                  className="border-gold/20 bg-gold/5 text-gold-light text-xs"
+                  className="border-border bg-gold/5 text-gold-light text-xs"
                 >
                   {sop.department}
                 </Badge>
@@ -108,7 +108,7 @@ export function SOPDetailClient({
               {categoryName && (
                 <Badge
                   variant="outline"
-                  className="border-navy-light bg-navy-light/50 text-[#C4C0B8] text-xs"
+                  className="border-border bg-muted/50 text-muted-foreground text-xs"
                 >
                   {categoryName}
                 </Badge>
@@ -142,7 +142,7 @@ export function SOPDetailClient({
         {/* Content + Sidebar */}
         <div className="flex gap-8">
           <div className="min-w-0 flex-1">
-            <div className="rounded-xl border border-gold/10 bg-navy-mid p-6 lg:p-8">
+            <div className="rounded-xl border border-border bg-card p-6 lg:p-8">
               <SOPContent content={sop.content} />
             </div>
           </div>
@@ -151,15 +151,15 @@ export function SOPDetailClient({
           <div className="hidden w-64 shrink-0 space-y-4 xl:block">
             {/* Tags */}
             {sop.tags && sop.tags.length > 0 && (
-              <div className="rounded-xl border border-gold/15 bg-navy-mid p-4">
-                <h4 className="mb-2 text-xs font-semibold uppercase tracking-wider text-[#8A8680]">
+              <div className="rounded-xl border border-border bg-card p-4">
+                <h4 className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                   Tags
                 </h4>
                 <div className="flex flex-wrap gap-1.5">
                   {sop.tags.map((tag) => (
                     <span
                       key={tag}
-                      className="rounded-full bg-navy-light px-2 py-0.5 text-xs text-[#C4C0B8]"
+                      className="rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground"
                     >
                       {tag}
                     </span>
@@ -173,8 +173,8 @@ export function SOPDetailClient({
 
             {/* Related SOPs */}
             {relatedSops.length > 0 && (
-              <div className="rounded-xl border border-gold/15 bg-navy-mid p-4">
-                <h4 className="mb-3 flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-[#8A8680]">
+              <div className="rounded-xl border border-border bg-card p-4">
+                <h4 className="mb-3 flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                   <FileText className="h-3.5 w-3.5" />
                   Related SOPs
                 </h4>
@@ -183,7 +183,7 @@ export function SOPDetailClient({
                     <Link
                       key={r.id}
                       href={`/sops/${r.slug}`}
-                      className="block rounded-lg px-2 py-1.5 text-sm text-[#C4C0B8] transition hover:bg-navy-light hover:text-gold-light"
+                      className="block rounded-lg px-2 py-1.5 text-sm text-muted-foreground transition hover:bg-muted hover:text-gold-light"
                     >
                       {r.title}
                     </Link>

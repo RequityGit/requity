@@ -120,11 +120,11 @@ export function CompaniesTable({ companies, onRowClick }: CompaniesTableProps) {
         header: "Company",
         cell: (row) => (
           <div className="flex items-center gap-3">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-navy-light/10">
-              <Building2 className="h-4 w-4 text-navy-text" />
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10">
+              <Building2 className="h-4 w-4 text-muted-foreground" />
             </div>
             <div>
-              <p className="text-sm font-medium text-[#1a2b4a]">{row.name}</p>
+              <p className="text-sm font-medium text-foreground">{row.name}</p>
               {row.email && (
                 <p className="text-xs text-muted-foreground">{row.email}</p>
               )}

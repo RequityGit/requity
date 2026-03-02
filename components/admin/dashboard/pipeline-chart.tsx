@@ -13,7 +13,7 @@ const STAGE_COLORS: Record<string, string> = {
   application: "bg-dash-info",
   underwriting: "bg-dash-warning",
   approved: "bg-gold",
-  clear_to_close: "bg-navy-light",
+  clear_to_close: "bg-primary",
   funded: "bg-dash-success",
 };
 
@@ -23,7 +23,7 @@ const STAGE_COLOR_HEX: Record<string, string> = {
   application: "#2E6EA6",
   underwriting: "#B8822A",
   approved: "#C5975B",
-  clear_to_close: "#1A3355",
+  clear_to_close: "#4B6A8F",
   funded: "#1B7A44",
 };
 
@@ -54,7 +54,7 @@ export function PipelineChart({
           const color = STAGE_COLOR_HEX[stage.stage] || "#9FAAB5";
           return (
             <div key={stage.stage} className="flex items-center gap-[7px]">
-              <span className="font-body text-[10.5px] font-medium text-dash-text-mut w-[66px] text-right">
+              <span className="text-[10.5px] font-medium text-dash-text-mut w-[66px] text-right">
                 {stage.label}
               </span>
               <div className="flex-1 h-5 bg-dash-surface-alt rounded-[3px] overflow-hidden">
@@ -79,7 +79,7 @@ export function PipelineChart({
           <span className="text-[10.5px] font-semibold text-gold">
             {new Date().toLocaleDateString("en-US", { month: "short" })} volume
           </span>
-          <span className="font-mono text-[13px] font-bold text-navy">
+          <span className="font-mono text-[13px] font-bold text-foreground">
             {fmtShort(monthVolume)}
           </span>
         </div>

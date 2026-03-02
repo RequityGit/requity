@@ -402,14 +402,14 @@ export function CrmUnified({
     <div className="space-y-6">
       {/* Segmented Toggle */}
       <div className="flex items-center justify-between">
-        <div className="inline-flex items-center rounded-lg border bg-white p-1">
+        <div className="inline-flex items-center rounded-lg border bg-card p-1">
           <button
             onClick={() => setActiveView("contacts")}
             className={cn(
               "inline-flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium transition-colors",
               activeView === "contacts"
-                ? "bg-[#1A3355] text-white shadow-sm"
-                : "text-muted-foreground hover:text-[#1a2b4a] hover:bg-slate-50"
+                ? "bg-primary text-primary-foreground shadow-sm"
+                : "text-muted-foreground hover:text-foreground hover:bg-muted"
             )}
           >
             <Users className="h-4 w-4" />
@@ -418,8 +418,8 @@ export function CrmUnified({
               className={cn(
                 "font-mono text-xs px-1.5 py-0.5 rounded-md",
                 activeView === "contacts"
-                  ? "bg-white/20 text-white"
-                  : "bg-slate-100 text-muted-foreground"
+                  ? "bg-primary-foreground/20 text-primary-foreground"
+                  : "bg-muted text-muted-foreground"
               )}
             >
               {contacts.length}
@@ -430,8 +430,8 @@ export function CrmUnified({
             className={cn(
               "inline-flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium transition-colors",
               activeView === "companies"
-                ? "bg-[#1A3355] text-white shadow-sm"
-                : "text-muted-foreground hover:text-[#1a2b4a] hover:bg-slate-50"
+                ? "bg-primary text-primary-foreground shadow-sm"
+                : "text-muted-foreground hover:text-foreground hover:bg-muted"
             )}
           >
             <Building2 className="h-4 w-4" />
@@ -440,8 +440,8 @@ export function CrmUnified({
               className={cn(
                 "font-mono text-xs px-1.5 py-0.5 rounded-md",
                 activeView === "companies"
-                  ? "bg-white/20 text-white"
-                  : "bg-slate-100 text-muted-foreground"
+                  ? "bg-primary-foreground/20 text-primary-foreground"
+                  : "bg-muted text-muted-foreground"
               )}
             >
               {companies.length}
@@ -476,7 +476,7 @@ export function CrmUnified({
       {/* Contacts View */}
       {activeView === "contacts" && (
         <div className="space-y-4">
-          <h3 className="text-lg font-semibold text-[#1a2b4a]">Contacts</h3>
+          <h3 className="text-lg font-semibold text-foreground">Contacts</h3>
 
           {/* Filter bar */}
           <div className="flex items-center gap-3 flex-wrap">
@@ -555,7 +555,7 @@ export function CrmUnified({
       {/* Companies View */}
       {activeView === "companies" && (
         <div className="space-y-4">
-          <h3 className="text-lg font-semibold text-[#1a2b4a]">Companies</h3>
+          <h3 className="text-lg font-semibold text-foreground">Companies</h3>
           <CompaniesTable
             companies={companies}
             onRowClick={(company) => {

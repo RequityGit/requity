@@ -208,11 +208,11 @@ export function CompanyDetailPanel({
           {/* Header */}
           <SheetHeader className="mb-4">
             <div className="flex items-start gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-navy-light/10">
-                <Building2 className="h-5 w-5 text-navy-text" />
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
+                <Building2 className="h-5 w-5 text-muted-foreground" />
               </div>
               <div className="flex-1">
-                <SheetTitle className="text-xl font-display font-semibold text-[#1a2b4a]">
+                <SheetTitle className="text-xl font-semibold text-foreground">
                   {company.name}
                 </SheetTitle>
                 <SheetDescription className="flex items-center gap-2 mt-1">
@@ -269,7 +269,7 @@ export function CompanyDetailPanel({
                 <Users className="h-3.5 w-3.5" />
                 <span className="text-xs">Contacts</span>
               </div>
-              <p className="text-xl font-mono font-semibold text-[#1a2b4a]">
+              <p className="text-xl font-mono font-semibold text-foreground">
                 {company.contact_count}
               </p>
             </div>
@@ -278,7 +278,7 @@ export function CompanyDetailPanel({
                 <Briefcase className="h-3.5 w-3.5" />
                 <span className="text-xs">Active Deals</span>
               </div>
-              <p className="text-xl font-mono font-semibold text-[#1a2b4a]">
+              <p className="text-xl font-mono font-semibold text-foreground">
                 {company.active_deals}
               </p>
             </div>
@@ -287,7 +287,7 @@ export function CompanyDetailPanel({
                 <FileText className="h-3.5 w-3.5" />
                 <span className="text-xs">Files</span>
               </div>
-              <p className="text-xl font-mono font-semibold text-[#1a2b4a]">
+              <p className="text-xl font-mono font-semibold text-foreground">
                 {files.length}
               </p>
             </div>
@@ -496,14 +496,14 @@ export function CompanyDetailPanel({
                     <Link
                       key={contact.id}
                       href={`/admin/crm/${contact.id}`}
-                      className="flex items-center gap-3 rounded-lg border px-3 py-2.5 hover:bg-slate-50 transition-colors"
+                      className="flex items-center gap-3 rounded-lg border px-3 py-2.5 hover:bg-muted transition-colors"
                     >
-                      <div className="flex h-8 w-8 items-center justify-center rounded-full bg-navy-light/10 text-navy-text text-xs font-medium">
+                      <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10 text-foreground text-xs font-medium">
                         {contact.first_name?.[0]}
                         {contact.last_name?.[0]}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-[#1a2b4a] truncate">
+                        <p className="text-sm font-medium text-foreground truncate">
                           {contact.first_name} {contact.last_name}
                         </p>
                         {contact.user_function && (

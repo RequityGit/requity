@@ -67,7 +67,7 @@ export function DistributionFilters({
           handleFilterChange("fund", val === "all" ? undefined : val)
         }
       >
-        <SelectTrigger className="w-[200px] bg-white">
+        <SelectTrigger className="w-[200px] bg-card">
           <SelectValue placeholder="All Investments" />
         </SelectTrigger>
         <SelectContent>
@@ -86,7 +86,7 @@ export function DistributionFilters({
           handleFilterChange("year", val === "all" ? undefined : val)
         }
       >
-        <SelectTrigger className="w-[140px] bg-white">
+        <SelectTrigger className="w-[140px] bg-card">
           <SelectValue placeholder="All Years" />
         </SelectTrigger>
         <SelectContent>
@@ -105,7 +105,7 @@ export function DistributionFilters({
           handleFilterChange("type", val === "all" ? undefined : val)
         }
       >
-        <SelectTrigger className="w-[200px] bg-white">
+        <SelectTrigger className="w-[200px] bg-card">
           <SelectValue placeholder="All Types" />
         </SelectTrigger>
         <SelectContent>

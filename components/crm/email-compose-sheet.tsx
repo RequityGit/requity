@@ -395,7 +395,7 @@ export function EmailComposeSheet({
                 {attachments.map((att) => (
                   <div
                     key={att.id}
-                    className="flex items-center gap-2 rounded-md border px-2.5 py-1.5 text-sm bg-slate-50"
+                    className="flex items-center gap-2 rounded-md border px-2.5 py-1.5 text-sm bg-muted"
                   >
                     <File className="h-3.5 w-3.5 text-blue-600 shrink-0" />
                     <span className="truncate flex-1">{att.file.name}</span>

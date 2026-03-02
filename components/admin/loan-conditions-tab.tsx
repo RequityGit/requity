@@ -266,7 +266,7 @@ function SummaryCard({
   return (
     <div className="bg-white rounded-lg border px-3 py-2">
       <p className="text-xs text-muted-foreground">{label}</p>
-      <p className={`text-lg font-semibold ${color || "text-[#1a2b4a]"}`}>
+      <p className={`text-lg font-semibold ${color || "text-foreground"}`}>
         {value}
       </p>
     </div>
@@ -290,7 +290,7 @@ function ProgressCard({
   return (
     <div className="bg-white rounded-lg border px-4 py-3">
       <div className="flex items-center justify-between mb-1">
-        <span className="text-sm font-medium text-[#1a2b4a]">{label}</span>
+        <span className="text-sm font-medium text-foreground">{label}</span>
         <span className="text-xs text-muted-foreground">
           {completed}/{total} ({pct}%)
         </span>
@@ -608,7 +608,7 @@ function ConditionRow({
           {/* Content */}
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 flex-wrap">
-              <span className="text-sm font-medium text-[#1a2b4a]">
+              <span className="text-sm font-medium text-foreground">
                 {condition.condition_name}
               </span>
               {condition.critical_path_item && (
@@ -660,7 +660,7 @@ function ConditionRow({
             {/* Toggle button */}
             <button
               onClick={togglePanel}
-              className="mt-2 flex items-center gap-1.5 text-[11px] text-muted-foreground hover:text-[#1a2b4a] transition-colors"
+              className="mt-2 flex items-center gap-1.5 text-[11px] text-muted-foreground hover:text-foreground transition-colors"
             >
               <MessageCircle className="h-3 w-3" />
               {panelLoaded
@@ -707,7 +707,7 @@ function ConditionRow({
             {/* Documents Section */}
             <div className="space-y-2">
               <div className="flex items-center justify-between">
-                <h4 className="text-xs font-semibold text-[#1a2b4a] flex items-center gap-1.5">
+                <h4 className="text-xs font-semibold text-foreground flex items-center gap-1.5">
                   <Paperclip className="h-3.5 w-3.5" />
                   Documents ({documents.length})
                 </h4>
@@ -793,7 +793,7 @@ function ConditionRow({
 
             {/* Comments Section */}
             <div className="space-y-3">
-              <h4 className="text-xs font-semibold text-[#1a2b4a] flex items-center gap-1.5">
+              <h4 className="text-xs font-semibold text-foreground flex items-center gap-1.5">
                 <MessageCircle className="h-3.5 w-3.5" />
                 Comments ({comments.length})
               </h4>

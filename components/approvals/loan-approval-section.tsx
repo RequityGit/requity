@@ -120,7 +120,7 @@ export function LoanApprovalSection({
         entityData={entityData}
         dealSnapshot={dealSnapshot}
         trigger={
-          <Button className="gap-2 bg-[#1a2b4a] hover:bg-[#1a2b4a]/90" size="sm">
+          <Button className="gap-2 bg-primary hover:bg-primary/90" size="sm">
             <Send className="h-4 w-4" />
             Submit for Approval
           </Button>
