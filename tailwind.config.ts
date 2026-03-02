@@ -83,6 +83,7 @@ const config = {
       fontFamily: {
         display: ["'Cormorant Garamond'", "Georgia", "serif"],
         body: ["'Source Sans 3'", "-apple-system", "sans-serif"],
+        inter: ["'Inter'", "-apple-system", "BlinkMacSystemFont", "sans-serif"],
         mono: ["'JetBrains Mono'", "monospace"],
       },
       borderRadius: {
