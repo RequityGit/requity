@@ -93,6 +93,22 @@ Server actions live in `actions.ts` files colocated with their page (e.g., `app/
 - Forms use React Hook Form with Zod schemas for validation
 - Follow existing naming conventions: PascalCase for components, camelCase for utilities, kebab-case for files
 
+## Design System
+
+**All UI/design decisions must follow [`DESIGN_SYSTEM.md`](./DESIGN_SYSTEM.md) (v2).** This is the single source of truth for colors, typography, component patterns, and layout specs.
+
+### Critical Rules (quick reference)
+
+- **Font:** Inter for all UI, JetBrains Mono for numeric/data. No serif fonts, no Source Sans 3.
+- **Colors:** Monochrome base (charcoal/black in dark, white in light) with semantic color pops. No navy blue backgrounds. No gold glow/gradient effects.
+- **Dark mode:** First-class. Every screen must support light and dark via user toggle. Dark backgrounds are true black/charcoal (`#0C0C0C`), never navy.
+- **Components:** Follow the card, button, input, table, and stage pill specs in `DESIGN_SYSTEM.md`.
+- **Icons:** Lucide React only, strokeWidth 1.5, no emoji.
+- **Charts:** Recharts with the specified token colors.
+- **Animations:** Subtle fadeUp/slideIn only. No bounce, no overshoot.
+
+For full token values, component specs, sidebar nav structure, responsive breakpoints, and anti-patterns — see `DESIGN_SYSTEM.md`.
+
 ## Database
 
 - Supabase PostgreSQL with Row Level Security (RLS) enabled on all tables
