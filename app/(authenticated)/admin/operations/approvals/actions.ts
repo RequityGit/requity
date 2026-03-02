@@ -424,6 +424,19 @@ export async function approveRequest(approvalId: string, decisionNotes?: string)
       });
     }
 
+    // Sync approval status back to opportunities table if entity_type is opportunity
+    if (appr.entity_type === "opportunity") {
+      await admin
+        .from("opportunities")
+        .update({
+          approval_status: "approved",
+          approval_decided_at: now,
+          approval_decided_by: auth.user.id,
+          approval_notes: decisionNotes || null,
+        })
+        .eq("id", appr.entity_id);
+    }
+
     // Audit log
     await admin.from("approval_audit_log" as any).insert({
       approval_id: approvalId,
@@ -616,6 +629,19 @@ export async function declineRequest(approvalId: string, decisionNotes: string) 
         action: "stage_change",
         description: `Declined by ${auth.profile?.full_name || "Admin"}: ${decisionNotes}`,
       });
+    }
+
+    // Sync approval status back to opportunities table if entity_type is opportunity
+    if (appr.entity_type === "opportunity") {
+      await admin
+        .from("opportunities")
+        .update({
+          approval_status: "denied",
+          approval_decided_at: now,
+          approval_decided_by: auth.user.id,
+          approval_notes: decisionNotes,
+        })
+        .eq("id", appr.entity_id);
     }
 
     // Audit log
@@ -937,11 +963,26 @@ export async function getPendingApprovalsCount() {
 
     const admin = createAdminClient();
 
-    const { count } = await admin
+    // Check if user is super_admin — super admins see all pending approvals
+    const supabase = await createClient();
+    const { data: roles } = await supabase
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", auth.user.id);
+
+    const isSuperAdmin = (roles ?? []).some((r: { role: string }) => r.role === "super_admin");
+
+    let query = admin
       .from("approval_requests" as any)
       .select("id", { count: "exact", head: true })
-      .eq("assigned_to", auth.user.id)
       .eq("status", "pending");
+
+    // Super admins see all pending; others see only assigned to them
+    if (!isSuperAdmin) {
+      query = query.eq("assigned_to", auth.user.id);
+    }
+
+    const { count } = await query;
 
     return { count: count ?? 0 };
   } catch {

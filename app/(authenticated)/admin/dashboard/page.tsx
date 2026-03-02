@@ -1,7 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
-import { fetchDashboardData } from "@/lib/dashboard.server";
-import { DashboardClient } from "@/components/admin/dashboard/dashboard-client";
+import { fetchCEODashboardData } from "@/lib/dashboard-ceo.server";
+import { CEODashboard } from "@/components/admin/dashboard/ceo-dashboard";
 
 export default async function AdminDashboardPage() {
   const supabase = createClient();
@@ -21,7 +21,7 @@ export default async function AdminDashboardPage() {
   const userName = profile?.full_name || "there";
 
   // Fetch all dashboard data from Supabase
-  const data = await fetchDashboardData();
+  const data = await fetchCEODashboardData();
 
-  return <DashboardClient data={data} userName={userName} />;
+  return <CEODashboard data={data} userName={userName} />;
 }

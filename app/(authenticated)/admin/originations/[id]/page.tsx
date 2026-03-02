@@ -26,6 +26,13 @@ export default async function DealDetailPage({
   const admin = createAdminClient();
   const opportunityId = params.id;
 
+  // Check if the user is a super admin
+  const { data: roles } = await supabase
+    .from("user_roles")
+    .select("role")
+    .eq("user_id", user.id);
+  const isSuperAdmin = (roles ?? []).some((r: { role: string }) => r.role === "super_admin");
+
   // Fetch all data in parallel
   const [
     oppResult,
@@ -220,6 +227,7 @@ export default async function DealDetailPage({
         snapshots={snapshotsResult.data || []}
         teamMembers={teamMembers}
         allBorrowers={allBorrowersForSelect}
+        isSuperAdmin={isSuperAdmin}
       />
     </div>
   );

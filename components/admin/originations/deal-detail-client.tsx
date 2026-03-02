@@ -70,6 +70,7 @@ import {
   updateOpportunityAction,
   moveOpportunityStageAction,
   requestApprovalAction,
+  decideApprovalAction,
   addOpportunityBorrowerAction,
   removeOpportunityBorrowerAction,
   createSnapshotAction,
@@ -90,6 +91,8 @@ import {
   Plus,
   Trash2,
   ExternalLink,
+  CheckCircle2,
+  XCircle,
 } from "lucide-react";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
@@ -107,6 +110,7 @@ interface DealDetailProps {
   snapshots: any[];
   teamMembers: { id: string; full_name: string }[];
   allBorrowers: { id: string; name: string; email: string }[];
+  isSuperAdmin?: boolean;
 }
 
 // ---------------------------------------------------------------------------
@@ -175,6 +179,7 @@ export function DealDetailClient({
   snapshots: initialSnapshots,
   teamMembers,
   allBorrowers,
+  isSuperAdmin = false,
 }: DealDetailProps) {
   const [opp, setOpp] = useState(initialOpp);
   const [property, setProperty] = useState(initialProp);
@@ -390,6 +395,18 @@ export function DealDetailClient({
     setSaving(false);
   }
 
+  async function handleDecideApproval(decision: "approved" | "denied") {
+    setSaving(true);
+    const result = await decideApprovalAction(opp.id, decision);
+    if (result.error) {
+      toast({ title: "Error", description: result.error, variant: "destructive" });
+    } else {
+      setOpp({ ...opp, approval_status: decision, approval_decided_at: new Date().toISOString() });
+      toast({ title: decision === "approved" ? "Deal approved" : "Deal denied" });
+    }
+    setSaving(false);
+  }
+
   async function handleAddBorrower() {
     if (!selectedBorrowerId) return;
     setSaving(true);
@@ -525,6 +542,16 @@ export function DealDetailClient({
             <Badge className={`${APPROVAL_STATUS_COLORS[opp.approval_status] || ""}`}>
               {opp.approval_status.replace(/_/g, " ").replace(/\b\w/g, (c: string) => c.toUpperCase())}
             </Badge>
+          )}
+          {isSuperAdmin && opp.approval_status === "pending" && (
+            <>
+              <Button size="sm" onClick={() => handleDecideApproval("approved")} disabled={saving} className="bg-green-600 hover:bg-green-700 text-white">
+                <CheckCircle2 className="h-4 w-4 mr-1" /> Approve
+              </Button>
+              <Button size="sm" variant="outline" onClick={() => handleDecideApproval("denied")} disabled={saving} className="text-red-600 border-red-300 hover:bg-red-50">
+                <XCircle className="h-4 w-4 mr-1" /> Deny
+              </Button>
+            </>
           )}
           {prevStage && (
             <Button variant="outline" size="sm" onClick={() => handleMoveStage(prevStage)} disabled={saving}>

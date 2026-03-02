@@ -41,14 +41,27 @@ export function PendingApprovalsWidget() {
         return;
       }
 
-      // Fetch pending approvals assigned to the current user
-      const { data } = await (supabase as any)
+      // Check if user is super_admin — super admins see ALL pending approvals
+      const { data: roles } = await supabase
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", user.id);
+
+      const isSuperAdmin = (roles ?? []).some((r: { role: string }) => r.role === "super_admin");
+
+      let query = (supabase as any)
         .from("approval_requests")
         .select("id, entity_type, status, priority, sla_deadline, sla_breached, created_at, deal_snapshot")
-        .eq("assigned_to", user.id)
         .eq("status", "pending")
         .order("sla_deadline", { ascending: true, nullsFirst: false })
         .limit(5);
+
+      // Super admins see all pending approvals; others see only assigned to them
+      if (!isSuperAdmin) {
+        query = query.eq("assigned_to", user.id);
+      }
+
+      const { data } = await query;
 
       setApprovals(data ?? []);
       setLoading(false);

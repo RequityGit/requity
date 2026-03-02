@@ -272,6 +272,13 @@ export async function requestApprovalAction(opportunityId: string) {
 
     const admin = createAdminClient();
 
+    // Get opportunity data for the deal snapshot
+    const { data: opp } = await admin
+      .from("opportunities")
+      .select("*, properties(*)")
+      .eq("id", opportunityId)
+      .single();
+
     const { error } = await admin
       .from("opportunities")
       .update({
@@ -283,6 +290,52 @@ export async function requestApprovalAction(opportunityId: string) {
       .eq("id", opportunityId);
 
     if (error) return { error: error.message };
+
+    // Also create an approval_requests record so it shows in the approvals queue
+    // Find the first super_admin to assign as default approver
+    const { data: superAdmins } = await admin
+      .from("user_roles")
+      .select("user_id")
+      .eq("role", "super_admin")
+      .eq("is_active", true)
+      .limit(1);
+
+    const assignedTo = superAdmins?.[0]?.user_id || auth.user.id;
+
+    const dealSnapshot: Record<string, any> = {
+      deal_name: opp?.deal_name || null,
+      loan_type: opp?.loan_type || null,
+      loan_amount: opp?.proposed_loan_amount || null,
+      interest_rate: opp?.proposed_interest_rate || null,
+      ltv: opp?.proposed_ltv || null,
+      property_type: (opp as any)?.properties?.property_type || null,
+      property_address: (opp as any)?.properties?.address_line1 || null,
+      borrower_name: opp?.deal_name || "Deal",
+      funding_channel: opp?.funding_channel || null,
+    };
+
+    const slaDeadline = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
+
+    const { error: approvalError } = await admin
+      .from("approval_requests" as any)
+      .insert({
+        entity_type: "opportunity",
+        entity_id: opportunityId,
+        submitted_by: auth.user.id,
+        assigned_to: assignedTo,
+        status: "pending",
+        priority: "normal",
+        sla_deadline: slaDeadline,
+        deal_snapshot: dealSnapshot,
+        submission_notes: null,
+        checklist_results: [],
+      });
+
+    if (approvalError) {
+      console.error("Error creating approval_requests record:", approvalError);
+      return { error: approvalError.message };
+    }
+
     return { success: true };
   } catch (err: any) {
     console.error("requestApprovalAction error:", err);
@@ -304,18 +357,41 @@ export async function decideApprovalAction(
     if ("error" in auth) return { error: auth.error };
 
     const admin = createAdminClient();
+    const now = new Date().toISOString();
 
     const { error } = await admin
       .from("opportunities")
       .update({
         approval_status: decision,
-        approval_decided_at: new Date().toISOString(),
+        approval_decided_at: now,
         approval_decided_by: auth.user.id,
         approval_notes: notes || null,
       })
       .eq("id", opportunityId);
 
     if (error) return { error: error.message };
+
+    // Also sync the formal approval_requests record if one exists
+    const { data: existing } = await admin
+      .from("approval_requests" as any)
+      .select("id")
+      .eq("entity_type", "opportunity")
+      .eq("entity_id", opportunityId)
+      .eq("status", "pending")
+      .limit(1);
+
+    if (existing && existing.length > 0) {
+      const mappedStatus = decision === "approved" ? "approved" : "declined";
+      await admin
+        .from("approval_requests" as any)
+        .update({
+          status: mappedStatus,
+          decision_at: now,
+          decision_notes: notes || null,
+        })
+        .eq("id", (existing[0] as any).id);
+    }
+
     return { success: true };
   } catch (err: any) {
     console.error("decideApprovalAction error:", err);
