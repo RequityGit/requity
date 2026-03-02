@@ -518,9 +518,9 @@ export async function runPricingAction(input: PricingRunInput) {
 
         return {
           product,
-          baseRates: (baseRatesRes.data || []) as BaseRate[],
-          ficoLtvAdj: (ficoRes.data || []) as FicoLtvAdjustment[],
-          priceAdj: (adjRes.data || []) as PriceAdjustment[],
+          baseRates: (baseRatesRes.data || []) as unknown as BaseRate[],
+          ficoLtvAdj: (ficoRes.data || []) as unknown as FicoLtvAdjustment[],
+          priceAdj: (adjRes.data || []) as unknown as PriceAdjustment[],
         };
       })
     );
