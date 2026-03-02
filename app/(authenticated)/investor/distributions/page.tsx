@@ -1,5 +1,5 @@
 import { PageHeader } from "@/components/shared/page-header";
-import { getEffectiveAuth } from "@/lib/impersonation";
+import { getEffectiveAuth, getInvestorId } from "@/lib/impersonation";
 import { DataTable, type Column } from "@/components/shared/data-table";
 import { StatusBadge } from "@/components/shared/status-badge";
 import { formatCurrency, formatDate } from "@/lib/format";
@@ -32,28 +32,8 @@ export default async function DistributionsPage({
 }) {
   const { supabase, userId } = await getEffectiveAuth();
 
-  // Build query
-  let query = supabase
-    .from("distributions")
-    .select("*, funds(name)")
-    .eq("investor_id", userId)
-    .order("distribution_date", { ascending: false });
-
-  if (searchParams.fund) {
-    query = query.eq("fund_id", searchParams.fund);
-  }
-
-  if (searchParams.year) {
-    query = query
-      .gte("distribution_date", `${searchParams.year}-01-01`)
-      .lte("distribution_date", `${searchParams.year}-12-31`);
-  }
-
-  if (searchParams.type) {
-    query = query.eq("distribution_type", searchParams.type);
-  }
-
-  const { data: rawDistributions } = await query;
+  // Resolve auth user ID → investors.id
+  const investorId = await getInvestorId(supabase, userId);
 
   type DistributionJoined = {
     id: string;
@@ -66,14 +46,42 @@ export default async function DistributionsPage({
     funds: { name: string } | null;
   };
 
-  const distributions =
-    (rawDistributions as unknown as DistributionJoined[]) ?? [];
+  let distributions: DistributionJoined[] = [];
+
+  if (investorId) {
+    // Build query
+    let query = supabase
+      .from("distributions")
+      .select("*, funds(name)")
+      .eq("investor_id", investorId)
+      .order("distribution_date", { ascending: false });
+
+    if (searchParams.fund) {
+      query = query.eq("fund_id", searchParams.fund);
+    }
+
+    if (searchParams.year) {
+      query = query
+        .gte("distribution_date", `${searchParams.year}-01-01`)
+        .lte("distribution_date", `${searchParams.year}-12-31`);
+    }
+
+    if (searchParams.type) {
+      query = query.eq("distribution_type", searchParams.type);
+    }
+
+    const { data: rawDistributions } = await query;
+    distributions =
+      (rawDistributions as unknown as DistributionJoined[]) ?? [];
+  }
 
   // Get funds for the filter
-  const { data: commitments } = await supabase
-    .from("investor_commitments")
-    .select("fund_id, funds(id, name)")
-    .eq("investor_id", userId);
+  const { data: commitments } = investorId
+    ? await supabase
+        .from("investor_commitments")
+        .select("fund_id, funds(id, name)")
+        .eq("investor_id", investorId)
+    : { data: null };
 
   const funds = (commitments ?? [])
     .map((c) => {
@@ -87,10 +95,12 @@ export default async function DistributionsPage({
   );
 
   // Get available years from distributions
-  const { data: rawAllDistributions } = await supabase
-    .from("distributions")
-    .select("distribution_date")
-    .eq("investor_id", userId);
+  const { data: rawAllDistributions } = investorId
+    ? await supabase
+        .from("distributions")
+        .select("distribution_date")
+        .eq("investor_id", investorId)
+    : { data: null };
 
   const allDistributions =
     (rawAllDistributions as unknown as Array<{ distribution_date: string }>) ?? [];

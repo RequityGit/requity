@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { PageHeader } from "@/components/shared/page-header";
 import { KpiCard } from "@/components/shared/kpi-card";
 import { ServicingTabs } from "@/components/admin/servicing/servicing-tabs";
+import { AddServicingLoanDialog } from "@/components/admin/servicing/add-servicing-loan-dialog";
 import { formatCurrency } from "@/lib/format";
 import {
   Banknote,
@@ -10,7 +11,10 @@ import {
   AlertTriangle,
   CalendarClock,
   DollarSign,
+  Receipt,
 } from "lucide-react";
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
 
 export const dynamic = "force-dynamic";
 
@@ -26,6 +30,18 @@ export default async function AdminServicingPage() {
 
   // Cast to any — servicing tables/views are not in generated types yet
   const db = supabase as any;
+
+  // Check if current user is super_admin
+  const { data: superAdminRole } = await supabase
+    .from("user_roles")
+    .select("id")
+    .eq("user_id", user.id)
+    .eq("role", "super_admin")
+    .eq("is_active", true)
+    .limit(1)
+    .single();
+
+  const isSuperAdmin = !!superAdminRole;
 
   // Fetch all servicing data in parallel
   const [portfolioResult, loansResult, maturityResult, drawsResult, paymentsResult] =
@@ -62,6 +78,17 @@ export default async function AdminServicingPage() {
       <PageHeader
         title="Loan Servicing"
         description="Portfolio management, interest billing, draws, and payment tracking."
+        action={
+          <div className="flex items-center gap-2">
+            <AddServicingLoanDialog isSuperAdmin={isSuperAdmin} />
+            <Link href="/admin/servicing/billing">
+              <Button variant="outline" className="gap-2">
+                <Receipt className="h-4 w-4" />
+                Billing & Collections
+              </Button>
+            </Link>
+          </div>
+        }
       />
 
       {/* KPI Row */}

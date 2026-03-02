@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { PageHeader } from "@/components/shared/page-header";
-import { getEffectiveAuth } from "@/lib/impersonation";
+import { getEffectiveAuth, getInvestorId } from "@/lib/impersonation";
 import { KpiCard } from "@/components/shared/kpi-card";
 import { StatusBadge } from "@/components/shared/status-badge";
 import { formatCurrency, formatDate } from "@/lib/format";
@@ -80,32 +80,41 @@ export default async function InvestorDashboardPage() {
     redirect("/login");
   }
 
+  // Resolve auth user ID → investors.id
+  const investorId = await getInvestorId(supabase, userId);
+
   // Fetch investor commitments with fund names
-  const { data: rawCommitments } = await supabase
-    .from("investor_commitments")
-    .select("*, funds(name)")
-    .eq("investor_id", userId);
+  const { data: rawCommitments } = investorId
+    ? await supabase
+        .from("investor_commitments")
+        .select("*, funds(name)")
+        .eq("investor_id", investorId)
+    : { data: null };
 
   const commitments = (rawCommitments as unknown as CommitmentWithFund[]) ?? [];
 
   // Fetch recent capital calls
-  const { data: rawCapitalCalls } = await supabase
-    .from("capital_calls")
-    .select("*, funds(name)")
-    .eq("investor_id", userId)
-    .order("due_date", { ascending: false })
-    .limit(5);
+  const { data: rawCapitalCalls } = investorId
+    ? await supabase
+        .from("capital_calls")
+        .select("*, funds(name)")
+        .eq("investor_id", investorId)
+        .order("due_date", { ascending: false })
+        .limit(5)
+    : { data: null };
 
   const recentCapitalCalls =
     (rawCapitalCalls as unknown as CapitalCallWithFund[]) ?? [];
 
   // Fetch recent distributions
-  const { data: rawDistributions } = await supabase
-    .from("distributions")
-    .select("*, funds(name)")
-    .eq("investor_id", userId)
-    .order("distribution_date", { ascending: false })
-    .limit(5);
+  const { data: rawDistributions } = investorId
+    ? await supabase
+        .from("distributions")
+        .select("*, funds(name)")
+        .eq("investor_id", investorId)
+        .order("distribution_date", { ascending: false })
+        .limit(5)
+    : { data: null };
 
   const recentDistributions =
     (rawDistributions as unknown as DistributionWithFund[]) ?? [];
@@ -137,12 +146,14 @@ export default async function InvestorDashboardPage() {
 
   // YTD distributions - fetch all for this year
   const currentYear = new Date().getFullYear();
-  const { data: rawYtd } = await supabase
-    .from("distributions")
-    .select("amount")
-    .eq("investor_id", userId)
-    .gte("distribution_date", `${currentYear}-01-01`)
-    .lte("distribution_date", `${currentYear}-12-31`);
+  const { data: rawYtd } = investorId
+    ? await supabase
+        .from("distributions")
+        .select("amount")
+        .eq("investor_id", investorId)
+        .gte("distribution_date", `${currentYear}-01-01`)
+        .lte("distribution_date", `${currentYear}-12-31`)
+    : { data: null };
 
   const ytdDistributions = (rawYtd as unknown as Array<{ amount: number }>) ?? [];
   const ytdTotal = ytdDistributions.reduce(

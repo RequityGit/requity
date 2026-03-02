@@ -89,3 +89,21 @@ export async function getEffectiveAuth(): Promise<EffectiveAuth> {
     realUserId: user.id,
   };
 }
+
+/**
+ * Resolve the auth user's ID to the corresponding investors.id.
+ * The investor_commitments, capital_calls, and distributions tables
+ * reference investors.id — NOT auth.users.id — so this lookup is
+ * required before querying those tables.
+ */
+export async function getInvestorId(
+  supabase: SupabaseClient<Database>,
+  userId: string
+): Promise<string | null> {
+  const { data } = await supabase
+    .from("investors")
+    .select("id")
+    .eq("user_id", userId)
+    .maybeSingle();
+  return data?.id ?? null;
+}

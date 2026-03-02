@@ -1,5 +1,5 @@
 import { PageHeader } from "@/components/shared/page-header";
-import { getEffectiveAuth } from "@/lib/impersonation";
+import { getEffectiveAuth, getInvestorId } from "@/lib/impersonation";
 import { DataTable, type Column } from "@/components/shared/data-table";
 import { StatusBadge } from "@/components/shared/status-badge";
 import { formatCurrency, formatDate } from "@/lib/format";
@@ -30,22 +30,8 @@ export default async function CapitalCallsPage({
 }) {
   const { supabase, userId } = await getEffectiveAuth();
 
-  // Build query
-  let query = supabase
-    .from("capital_calls")
-    .select("*, funds(name)")
-    .eq("investor_id", userId)
-    .order("due_date", { ascending: false });
-
-  if (searchParams.fund) {
-    query = query.eq("fund_id", searchParams.fund);
-  }
-
-  if (searchParams.status) {
-    query = query.eq("status", searchParams.status);
-  }
-
-  const { data: rawCapitalCalls } = await query;
+  // Resolve auth user ID → investors.id
+  const investorId = await getInvestorId(supabase, userId);
 
   type CapitalCallJoined = {
     id: string;
@@ -57,14 +43,36 @@ export default async function CapitalCallsPage({
     funds: { name: string } | null;
   };
 
-  const capitalCalls =
-    (rawCapitalCalls as unknown as CapitalCallJoined[]) ?? [];
+  let capitalCalls: CapitalCallJoined[] = [];
+
+  if (investorId) {
+    // Build query
+    let query = supabase
+      .from("capital_calls")
+      .select("*, funds(name)")
+      .eq("investor_id", investorId)
+      .order("due_date", { ascending: false });
+
+    if (searchParams.fund) {
+      query = query.eq("fund_id", searchParams.fund);
+    }
+
+    if (searchParams.status) {
+      query = query.eq("status", searchParams.status);
+    }
+
+    const { data: rawCapitalCalls } = await query;
+    capitalCalls =
+      (rawCapitalCalls as unknown as CapitalCallJoined[]) ?? [];
+  }
 
   // Get list of funds for the filter
-  const { data: commitments } = await supabase
-    .from("investor_commitments")
-    .select("fund_id, funds(id, name)")
-    .eq("investor_id", userId);
+  const { data: commitments } = investorId
+    ? await supabase
+        .from("investor_commitments")
+        .select("fund_id, funds(id, name)")
+        .eq("investor_id", investorId)
+    : { data: null };
 
   const funds = (commitments ?? [])
     .map((c) => {
