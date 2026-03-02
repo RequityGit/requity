@@ -71,7 +71,7 @@ export function ChannelSettingsModal({
     const fetchMembers = async () => {
       const supabase = supabaseRef.current;
       const { data } = await supabase
-        .from("chat_channel_members")
+        .from("chat_channel_members" as never)
         .select(
           "id, user_id, role, profiles:user_id(id, full_name, email, avatar_url)"
         )
@@ -104,11 +104,11 @@ export function ChannelSettingsModal({
     const supabase = supabaseRef.current;
 
     await supabase
-      .from("chat_channels")
+      .from("chat_channels" as never)
       .update({
         name: name.trim(),
         description: description.trim() || null,
-      })
+      } as never)
       .eq("id", channel.id);
 
     setSaving(false);
@@ -119,8 +119,8 @@ export function ChannelSettingsModal({
     if (!channel) return;
     const supabase = supabaseRef.current;
     await supabase
-      .from("chat_channel_members")
-      .update({ is_muted: !channel.is_muted })
+      .from("chat_channel_members" as never)
+      .update({ is_muted: !channel.is_muted } as never)
       .eq("channel_id", channel.id)
       .eq("user_id", userId);
     onClose();
@@ -130,8 +130,8 @@ export function ChannelSettingsModal({
     if (!channel) return;
     const supabase = supabaseRef.current;
     await supabase
-      .from("chat_channel_members")
-      .update({ is_pinned: !channel.is_pinned })
+      .from("chat_channel_members" as never)
+      .update({ is_pinned: !channel.is_pinned } as never)
       .eq("channel_id", channel.id)
       .eq("user_id", userId);
     onClose();
@@ -141,8 +141,8 @@ export function ChannelSettingsModal({
     if (!channel) return;
     const supabase = supabaseRef.current;
     await supabase
-      .from("chat_channel_members")
-      .update({ left_at: new Date().toISOString() })
+      .from("chat_channel_members" as never)
+      .update({ left_at: new Date().toISOString() } as never)
       .eq("channel_id", channel.id)
       .eq("user_id", userId);
     onClose();
@@ -152,8 +152,8 @@ export function ChannelSettingsModal({
     if (!channel) return;
     const supabase = supabaseRef.current;
     await supabase
-      .from("chat_channels")
-      .update({ is_archived: true })
+      .from("chat_channels" as never)
+      .update({ is_archived: true } as never)
       .eq("id", channel.id);
     onClose();
   };

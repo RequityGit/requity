@@ -19,7 +19,7 @@ export function useChannelMessages(channelId: string | null, userId: string | un
       const supabase = supabaseRef.current;
 
       let query = supabase
-        .from("chat_messages")
+        .from("chat_messages" as never)
         .select("*, sender:profiles!chat_messages_sender_id_fkey(id, full_name, avatar_url, email)")
         .eq("channel_id", channelId)
         .is("is_deleted", false)
@@ -69,11 +69,11 @@ export function useChannelMessages(channelId: string | null, userId: string | un
 
     const markRead = async () => {
       await supabase
-        .from("chat_channel_members")
+        .from("chat_channel_members" as never)
         .update({
           unread_count: 0,
           last_read_at: new Date().toISOString(),
-        })
+        } as never)
         .eq("channel_id", channelId)
         .eq("user_id", userId);
     };

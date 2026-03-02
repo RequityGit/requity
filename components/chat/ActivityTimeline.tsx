@@ -48,7 +48,7 @@ export function ActivityTimeline({ channelId }: ActivityTimelineProps) {
     const fetchActivity = async () => {
       const supabase = supabaseRef.current;
       const { data } = await supabase
-        .from("chat_activity_feed")
+        .from("chat_activity_feed" as never)
         .select("*")
         .eq("channel_id", channelId)
         .order("created_at", { ascending: false })

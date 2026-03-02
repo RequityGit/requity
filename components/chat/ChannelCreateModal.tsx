@@ -103,29 +103,30 @@ export function ChannelCreateModal({
         const otherUserId = selectedMembers[0].id;
         // Look for existing direct channel between these two users
         const { data: existingChannels } = await supabase
-          .from("chat_channel_members")
+          .from("chat_channel_members" as never)
           .select("channel_id")
           .eq("user_id", userId);
 
         if (existingChannels) {
-          for (const ec of existingChannels) {
+          for (const ec of existingChannels as unknown as Array<{ channel_id: string }>) {
             const { data: ch } = await supabase
-              .from("chat_channels")
+              .from("chat_channels" as never)
               .select("id, channel_type")
               .eq("id", ec.channel_id)
               .eq("channel_type", "direct")
               .single();
 
             if (ch) {
+              const chTyped = ch as unknown as { id: string };
               const { data: otherMember } = await supabase
-                .from("chat_channel_members")
+                .from("chat_channel_members" as never)
                 .select("id")
-                .eq("channel_id", ch.id)
+                .eq("channel_id", chTyped.id)
                 .eq("user_id", otherUserId)
                 .single();
 
               if (otherMember) {
-                onChannelCreated(ch.id);
+                onChannelCreated(chTyped.id);
                 resetAndClose();
                 return;
               }
@@ -141,16 +142,17 @@ export function ChannelCreateModal({
           ? selectedMembers[0].full_name || selectedMembers[0].email || "DM"
           : selectedMembers.map((m) => m.full_name?.split(" ")[0] || "?").join(", ");
 
-      const { data: channel, error } = await supabase
-        .from("chat_channels")
+      const { data: channelData, error } = await supabase
+        .from("chat_channels" as never)
         .insert({
           name: channelName,
           channel_type: channelType,
           is_private: true,
-        })
+        } as never)
         .select("id")
         .single();
 
+      const channel = channelData as unknown as { id: string } | null;
       if (error || !channel) {
         console.error("Error creating DM:", error);
         setCreating(false);
@@ -167,23 +169,24 @@ export function ChannelCreateModal({
         })),
       ];
 
-      await supabase.from("chat_channel_members").insert(members);
+      await supabase.from("chat_channel_members" as never).insert(members as never);
       onChannelCreated(channel.id);
     } else {
       // Create team channel
       if (!name.trim()) return;
 
-      const { data: channel, error } = await supabase
-        .from("chat_channels")
+      const { data: channelData2, error } = await supabase
+        .from("chat_channels" as never)
         .insert({
           name: name.trim(),
           description: description.trim() || null,
           channel_type: "team" as ChatChannelType,
           is_private: isPrivate,
-        })
+        } as never)
         .select("id")
         .single();
 
+      const channel = channelData2 as unknown as { id: string } | null;
       if (error || !channel) {
         console.error("Error creating channel:", error);
         setCreating(false);
@@ -200,7 +203,7 @@ export function ChannelCreateModal({
         })),
       ];
 
-      await supabase.from("chat_channel_members").insert(members);
+      await supabase.from("chat_channel_members" as never).insert(members as never);
       onChannelCreated(channel.id);
     }
 

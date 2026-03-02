@@ -77,8 +77,8 @@ export function MessageBubble({
     }
 
     await supabase
-      .from("chat_messages")
-      .update({ reactions: newReactions })
+      .from("chat_messages" as never)
+      .update({ reactions: newReactions } as never)
       .eq("id", message.id);
 
     setShowReactionPicker(false);

@@ -20,12 +20,12 @@ export function useTyping(channelId: string | null, userId: string | undefined) 
     lastTypingRef.current = now;
 
     const supabase = supabaseRef.current;
-    await supabase.from("chat_typing_indicators").upsert(
+    await supabase.from("chat_typing_indicators" as never).upsert(
       {
         channel_id: channelId,
         user_id: userId,
         started_at: new Date().toISOString(),
-      },
+      } as never,
       { onConflict: "channel_id,user_id" }
     );
 
@@ -39,7 +39,7 @@ export function useTyping(channelId: string | null, userId: string | undefined) 
     if (!channelId || !userId) return;
     const supabase = supabaseRef.current;
     await supabase
-      .from("chat_typing_indicators")
+      .from("chat_typing_indicators" as never)
       .delete()
       .eq("channel_id", channelId)
       .eq("user_id", userId);
@@ -56,17 +56,18 @@ export function useTyping(channelId: string | null, userId: string | undefined) 
 
     const fetchTyping = async () => {
       const { data } = await supabase
-        .from("chat_typing_indicators")
+        .from("chat_typing_indicators" as never)
         .select("channel_id, user_id, started_at")
         .eq("channel_id", channelId);
 
-      if (!data || data.length === 0) {
+      const rows = data as unknown as Array<{ channel_id: string; user_id: string; started_at: string }> | null;
+      if (!rows || rows.length === 0) {
         setTypingUsers([]);
         return;
       }
 
       // Fetch names
-      const userIds = data
+      const userIds = rows
         .filter((t) => t.user_id !== userId)
         .map((t) => t.user_id);
       if (userIds.length === 0) {
@@ -86,7 +87,7 @@ export function useTyping(channelId: string | null, userId: string | undefined) 
       }
 
       setTypingUsers(
-        data
+        rows
           .filter((t) => t.user_id !== userId)
           .map((t) => ({
             user_id: t.user_id,

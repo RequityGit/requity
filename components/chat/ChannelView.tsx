@@ -53,7 +53,7 @@ export function ChannelView({
     const fetchMembers = async () => {
       const supabase = createClient();
       const { data } = await supabase
-        .from("chat_channel_members")
+        .from("chat_channel_members" as never)
         .select("user_id, profiles:user_id(id, full_name, avatar_url)")
         .eq("channel_id", channel.id)
         .is("left_at", null)

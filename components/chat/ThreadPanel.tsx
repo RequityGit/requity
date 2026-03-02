@@ -42,7 +42,7 @@ export function ThreadPanel({
 
     // Fetch parent
     const { data: parent } = await supabase
-      .from("chat_messages")
+      .from("chat_messages" as never)
       .select(
         "*, sender:profiles!chat_messages_sender_id_fkey(id, full_name, avatar_url, email)"
       )
@@ -55,7 +55,7 @@ export function ThreadPanel({
 
     // Fetch replies
     const { data: replyData } = await supabase
-      .from("chat_messages")
+      .from("chat_messages" as never)
       .select(
         "*, sender:profiles!chat_messages_sender_id_fkey(id, full_name, avatar_url, email)"
       )
