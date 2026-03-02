@@ -29,10 +29,12 @@ import type { TeamMember } from "./OperationsView";
 import {
   OPS_TASK_STATUSES,
   OPS_TASK_PRIORITIES,
+  OPS_TASK_CATEGORIES,
 } from "@/lib/constants/db-enums";
 
 const STATUSES = OPS_TASK_STATUSES;
 const PRIORITIES = OPS_TASK_PRIORITIES;
+const CATEGORIES = OPS_TASK_CATEGORIES;
 const RECURRENCE_PATTERNS = [
   { value: "daily", label: "Daily" },
   { value: "weekly", label: "Weekly" },
@@ -242,12 +244,24 @@ export function AddTaskDialog({ projects, teamMembers }: AddTaskDialogProps) {
 
             <div className="space-y-2">
               <Label htmlFor="task_category">Category</Label>
-              <Input
-                id="task_category"
-                placeholder="e.g. Engineering"
-                value={form.category}
-                onChange={(e) => setForm({ ...form, category: e.target.value })}
-              />
+              <Select
+                value={form.category || "none"}
+                onValueChange={(v) =>
+                  setForm({ ...form, category: v === "none" ? "" : v })
+                }
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select category" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">No category</SelectItem>
+                  {CATEGORIES.map((c) => (
+                    <SelectItem key={c} value={c}>
+                      {c}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
           </div>
 

@@ -736,6 +736,21 @@ export const OPS_TASK_STATUSES = [
 ] as const;
 export type OpsTaskStatus = (typeof OPS_TASK_STATUSES)[number];
 
+/** Constraint: ops_tasks_category_check */
+export const OPS_TASK_CATEGORIES = [
+  "Lending Ops",
+  "Investments",
+  "Tech/Infrastructure",
+  "Investor Relations",
+  "Marketing/Website",
+  "Finance/Accounting",
+  "General",
+  "Acquisitions",
+  "Asset Management",
+  "Compliance",
+] as const;
+export type OpsTaskCategory = (typeof OPS_TASK_CATEGORIES)[number];
+
 /** Constraint: ops_tasks_priority_check */
 export const OPS_TASK_PRIORITIES = [
   "Critical",
