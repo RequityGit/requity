@@ -4,6 +4,18 @@ import { PageHeader } from "@/components/shared/page-header";
 import { CapitalCallForm } from "@/components/admin/capital-call-form";
 import { CapitalCallListTable } from "@/components/admin/capital-call-list-table";
 
+// Helper to extract investor name from nested join chain
+function getInvestorName(row: Record<string, unknown>): string {
+  const investors = row.investors as Record<string, unknown> | null;
+  if (!investors) return "Unknown";
+  const crm = investors.crm_contacts as Record<string, unknown> | null;
+  if (!crm) return "Unknown";
+  if (crm.name) return crm.name as string;
+  const first = (crm.first_name as string) ?? "";
+  const last = (crm.last_name as string) ?? "";
+  return `${first} ${last}`.trim() || "Unknown";
+}
+
 export default async function AdminCapitalCallsPage() {
   const supabase = await createClient();
   const {
@@ -15,7 +27,7 @@ export default async function AdminCapitalCallsPage() {
   const { data: capitalCalls } = await supabase
     .from("capital_calls")
     .select(
-      "*, funds(name), profiles(full_name), investor_commitments(commitment_amount)"
+      "*, funds(name), investors(crm_contacts(name, first_name, last_name)), investor_commitments(commitment_amount)"
     )
     .order("due_date", { ascending: false });
 
@@ -26,8 +38,8 @@ export default async function AdminCapitalCallsPage() {
 
   const callRows = (capitalCalls ?? []).map((cc) => ({
     id: cc.id,
-    fund_name: (cc as any).funds?.name ?? "—",
-    investor_name: (cc as any).profiles?.full_name ?? "Unknown",
+    fund_name: (cc as any).funds?.name ?? "---",
+    investor_name: getInvestorName(cc as unknown as Record<string, unknown>),
     call_amount: cc.call_amount,
     due_date: cc.due_date,
     paid_date: cc.paid_date,
