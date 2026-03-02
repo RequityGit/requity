@@ -10,7 +10,10 @@ import {
   AlertTriangle,
   CalendarClock,
   DollarSign,
+  Receipt,
 } from "lucide-react";
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
 
 export const dynamic = "force-dynamic";
 
@@ -62,6 +65,14 @@ export default async function AdminServicingPage() {
       <PageHeader
         title="Loan Servicing"
         description="Portfolio management, interest billing, draws, and payment tracking."
+        action={
+          <Link href="/admin/servicing/billing">
+            <Button className="gap-2">
+              <Receipt className="h-4 w-4" />
+              Billing & Collections
+            </Button>
+          </Link>
+        }
       />
 
       {/* KPI Row */}
