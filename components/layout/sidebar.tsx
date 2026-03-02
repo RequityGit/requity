@@ -119,7 +119,7 @@ export function Sidebar({ role, isSuperAdmin }: { role: string; isSuperAdmin?: b
             <img
               src="https://edhlkknvlczhbowasjna.supabase.co/storage/v1/object/public/brand-assets/Requity%20Logo%20White.svg"
               alt="Requity"
-              className="h-8"
+              className="h-16 w-auto"
             />
           </Link>
         )}
