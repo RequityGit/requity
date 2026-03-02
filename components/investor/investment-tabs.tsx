@@ -1,0 +1,40 @@
+"use client";
+
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { cn } from "@/lib/utils";
+
+const tabs = [
+  { label: "My Investments", href: "/investor/funds" },
+  { label: "Contributions", href: "/investor/capital-calls" },
+  { label: "Distributions", href: "/investor/distributions" },
+];
+
+export function InvestmentTabs() {
+  const pathname = usePathname();
+
+  return (
+    <div className="border-b">
+      <nav className="flex gap-4" aria-label="Investment navigation">
+        {tabs.map((tab) => {
+          const isActive =
+            pathname === tab.href || pathname.startsWith(tab.href + "/");
+          return (
+            <Link
+              key={tab.href}
+              href={tab.href}
+              className={cn(
+                "px-1 py-2 text-sm font-medium border-b-2 transition-colors -mb-px",
+                isActive
+                  ? "border-[#1a2b4a] text-[#1a2b4a]"
+                  : "border-transparent text-muted-foreground hover:text-[#1a2b4a] hover:border-slate-300"
+              )}
+            >
+              {tab.label}
+            </Link>
+          );
+        })}
+      </nav>
+    </div>
+  );
+}
