@@ -3,10 +3,9 @@
 import {
   createContext,
   useContext,
-  useState,
-  useCallback,
   type ReactNode,
 } from "react";
+import { useTheme } from "@/components/theme-provider";
 import {
   chatThemes,
   type ChatTheme,
@@ -16,26 +15,20 @@ import {
 interface ChatThemeContextValue {
   mode: ChatThemeMode;
   t: ChatTheme;
-  toggleMode: () => void;
 }
 
 const ChatThemeContext = createContext<ChatThemeContextValue>({
   mode: "dark",
   t: chatThemes.dark,
-  toggleMode: () => {},
 });
 
 export function ChatThemeProvider({ children }: { children: ReactNode }) {
-  const [mode, setMode] = useState<ChatThemeMode>("dark");
-
-  const toggleMode = useCallback(() => {
-    setMode((prev) => (prev === "dark" ? "light" : "dark"));
-  }, []);
-
+  const { theme } = useTheme();
+  const mode: ChatThemeMode = theme === "dark" ? "dark" : "light";
   const t = chatThemes[mode];
 
   return (
-    <ChatThemeContext.Provider value={{ mode, t, toggleMode }}>
+    <ChatThemeContext.Provider value={{ mode, t }}>
       {children}
     </ChatThemeContext.Provider>
   );

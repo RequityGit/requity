@@ -9,6 +9,7 @@ import { ChannelCreateModal } from "@/components/chat/ChannelCreateModal";
 import { useChat } from "@/hooks/useChat";
 import { usePresence } from "@/hooks/usePresence";
 import type { ChatChannelWithUnread } from "@/lib/chat-types";
+import { useChatTheme } from "@/contexts/chat-theme-context";
 import { MessageSquare, Loader2 } from "lucide-react";
 
 interface UserProfile {
@@ -111,23 +112,7 @@ function ChatPageInner() {
   }, []);
 
   if (!userId) {
-    return (
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          height: "100%",
-          background: "#0C0C0C",
-        }}
-      >
-        <Loader2
-          size={32}
-          color="#606060"
-          style={{ animation: "spin 1s linear infinite" }}
-        />
-      </div>
-    );
+    return <LoadingState />;
   }
 
   return (
@@ -188,7 +173,29 @@ function ChatPageInner() {
   );
 }
 
+function LoadingState() {
+  const { t } = useChatTheme();
+  return (
+    <div
+      style={{
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        height: "100%",
+        background: t.bg,
+      }}
+    >
+      <Loader2
+        size={32}
+        color={t.textTertiary}
+        style={{ animation: "spin 1s linear infinite" }}
+      />
+    </div>
+  );
+}
+
 function EmptyState({ loading }: { loading: boolean }) {
+  const { t } = useChatTheme();
   return (
     <div
       style={{
@@ -197,7 +204,7 @@ function EmptyState({ loading }: { loading: boolean }) {
         flexDirection: "column",
         alignItems: "center",
         justifyContent: "center",
-        background: "#0C0C0C",
+        background: t.bg,
       }}
     >
       <div
@@ -205,20 +212,20 @@ function EmptyState({ loading }: { loading: boolean }) {
           width: 64,
           height: 64,
           borderRadius: 16,
-          background: "rgba(240,240,240,0.06)",
+          background: t.accentSoft,
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
           marginBottom: 16,
         }}
       >
-        <MessageSquare size={32} strokeWidth={1.5} color="#606060" />
+        <MessageSquare size={32} strokeWidth={1.5} color={t.textTertiary} />
       </div>
       <div
         style={{
           fontSize: 18,
           fontWeight: 600,
-          color: "#F0F0F0",
+          color: t.text,
           fontFamily: "'Inter', sans-serif",
         }}
       >
@@ -227,7 +234,7 @@ function EmptyState({ loading }: { loading: boolean }) {
       <div
         style={{
           fontSize: 14,
-          color: "#606060",
+          color: t.textTertiary,
           marginTop: 4,
         }}
       >
