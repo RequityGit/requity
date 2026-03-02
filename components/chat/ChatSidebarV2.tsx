@@ -13,8 +13,6 @@ import type {
 } from "@/lib/chat-types";
 import {
   Search,
-  Sun,
-  Moon,
   Edit3,
   Pin,
   Clock,
@@ -62,7 +60,7 @@ export function ChatSidebarV2({
   currentUser,
   getPresenceStatus,
 }: ChatSidebarV2Props) {
-  const { mode, t, toggleMode } = useChatTheme();
+  const { mode, t } = useChatTheme();
   const [activeFilter, setActiveFilter] = useState("all");
   const [hoveredChannel, setHoveredChannel] = useState<string | null>(null);
   const searchRef = useRef<HTMLInputElement>(null);
@@ -131,13 +129,6 @@ export function ChatSidebarV2({
             {totalUnread > 0 && <UnreadBadge count={totalUnread} />}
           </div>
           <div style={{ display: "flex", gap: 2 }}>
-            <SidebarIconButton onClick={toggleMode}>
-              {mode === "dark" ? (
-                <Sun size={16} strokeWidth={1.5} color={t.textSecondary} />
-              ) : (
-                <Moon size={16} strokeWidth={1.5} color={t.textSecondary} />
-              )}
-            </SidebarIconButton>
             <SidebarIconButton onClick={onNewChannel}>
               <Edit3 size={16} strokeWidth={1.5} color={t.textSecondary} />
             </SidebarIconButton>
