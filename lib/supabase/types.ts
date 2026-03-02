@@ -11264,3 +11264,103 @@ export const Constants = {
   },
 } as const
 
+export type Profile = Database["public"]["Tables"]["profiles"]["Row"]
+export type BorrowerEntity = Database["public"]["Tables"]["borrower_entities"]["Row"]
+export type CrmContact = Database["public"]["Tables"]["crm_contacts"]["Row"]
+export type Loan = Database["public"]["Tables"]["loans"]["Row"]
+export type LoanCondition = Database["public"]["Tables"]["loan_conditions"]["Row"]
+export type LoanConditionTemplate = Database["public"]["Tables"]["loan_condition_templates"]["Row"]
+export type LoanDocument = Database["public"]["Tables"]["loan_documents"]["Row"]
+export type LoanPayment = Database["public"]["Tables"]["loan_payments"]["Row"]
+export type DrawRequest = Database["public"]["Tables"]["draw_requests"]["Row"]
+export type Document = Database["public"]["Tables"]["documents"]["Row"]
+
+// Types for tables not yet in the generated Database type
+export interface PricingProgram {
+  id: string
+  program_id: string
+  loan_type: string | null
+  program_name: string
+  arv_label: string | null
+  interest_rate: number
+  rate_type: string
+  origination_points: number
+  min_origination_fee: number
+  points_note: string | null
+  max_ltv: number
+  ltv_note: string | null
+  max_ltc: number
+  ltc_note: string | null
+  max_ltp: number
+  loan_term_months: number
+  exit_points: number
+  term_note: string | null
+  legal_doc_fee: number
+  bpo_appraisal_cost: number
+  bpo_appraisal_note: string | null
+  min_credit_score: number
+  min_deals_24mo: number
+  citizenship: string
+  version: number
+  is_current: boolean
+  effective_date: string | null
+  created_at: string
+  created_by: string | null
+}
+
+export interface PricingProgramVersion {
+  id: string
+  program_id: string
+  version: number
+  change_description: string | null
+  changed_at: string
+  changed_by: string | null
+}
+
+export interface LeverageAdjuster {
+  id: string
+  program_id: string
+  risk_factor: string
+  display_name: string
+  condition_description: string | null
+  ltc_adjustment: number
+  ltv_adjustment: number
+  note: string | null
+  is_active: boolean
+  sort_order: number
+}
+
+export interface LenderQuote {
+  id: string
+  loan_id: string
+  quote_name: string
+  lender_company_id: string | null
+  lender_contact_name: string | null
+  linked_property_id: string | null
+  loan_amount: number | null
+  interest_rate: number | null
+  loan_term_months: number | null
+  interest_only_period_months: number | null
+  ltv: number | null
+  amortization_months: number | null
+  origination_fee: number | null
+  uw_processing_fee: number | null
+  requity_lending_fee: number | null
+  prepayment_penalty: string | null
+  ym_spread: number | null
+  ym_amount: number | null
+  term_sheet_url: string | null
+  description: string | null
+  status: string
+  status_changed_at: string | null
+  requested_at: string | null
+  received_at: string | null
+  accepted_at: string | null
+  declined_at: string | null
+  declined_reason: string | null
+  created_at: string
+  updated_at: string
+  created_by: string | null
+  updated_by: string | null
+}
+
