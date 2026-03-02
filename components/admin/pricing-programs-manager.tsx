@@ -105,7 +105,7 @@ function ProgramCard({ program }: { program: PricingProgram }) {
       </CardHeader>
       <CardContent>
         <div className="grid grid-cols-2 gap-y-3 gap-x-4 text-sm">
-          <Field label="Loan Type" value={program.loan_type} />
+          <Field label="Loan Type" value={program.loan_type ?? "—"} />
           <Field label="Program ID" value={program.program_id} />
           <Field
             label="Interest Rate"

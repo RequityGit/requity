@@ -11,7 +11,10 @@ import {
   AlertTriangle,
   CalendarClock,
   DollarSign,
+  Receipt,
 } from "lucide-react";
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
 
 export const dynamic = "force-dynamic";
 
@@ -75,7 +78,17 @@ export default async function AdminServicingPage() {
       <PageHeader
         title="Loan Servicing"
         description="Portfolio management, interest billing, draws, and payment tracking."
-        action={<AddServicingLoanDialog isSuperAdmin={isSuperAdmin} />}
+        action={
+          <div className="flex items-center gap-2">
+            <AddServicingLoanDialog isSuperAdmin={isSuperAdmin} />
+            <Link href="/admin/servicing/billing">
+              <Button variant="outline" className="gap-2">
+                <Receipt className="h-4 w-4" />
+                Billing & Collections
+              </Button>
+            </Link>
+          </div>
+        }
       />
 
       {/* KPI Row */}
