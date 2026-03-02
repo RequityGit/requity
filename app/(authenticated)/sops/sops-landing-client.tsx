@@ -43,23 +43,33 @@ export function SOPsLandingClient({
     return categories.filter((c) => c.department === activeDepartment);
   }, [categories, activeDepartment]);
 
-  // Count SOPs per category
+  // Build a lookup from category name → category id for fallback matching
+  const categoryNameToId = useMemo(() => {
+    const map: Record<string, string> = {};
+    categories.forEach((c) => {
+      map[c.name] = c.id;
+    });
+    return map;
+  }, [categories]);
+
+  // Count SOPs per category (use category_id, fall back to matching category name)
   const sopCountByCategory = useMemo(() => {
     const map: Record<string, number> = {};
     sops.forEach((s) => {
-      if (s.category_id) {
-        map[s.category_id] = (map[s.category_id] || 0) + 1;
+      const catId = s.category_id ?? (s.category ? categoryNameToId[s.category] : null);
+      if (catId) {
+        map[catId] = (map[catId] || 0) + 1;
       }
     });
     return map;
-  }, [sops]);
+  }, [sops, categoryNameToId]);
 
   // Filter SOPs when a category slug is selected via URL
   const displaySops = useMemo(() => {
     if (!categoryParam) return sops.slice(0, 10);
     const cat = categories.find((c) => c.slug === categoryParam);
     if (!cat) return sops.slice(0, 10);
-    return sops.filter((s) => s.category_id === cat.id);
+    return sops.filter((s) => s.category_id === cat.id || s.category === cat.name);
   }, [sops, categoryParam, categories]);
 
   const selectedCategoryName = categoryParam
