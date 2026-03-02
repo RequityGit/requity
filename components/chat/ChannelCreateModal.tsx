@@ -9,12 +9,8 @@ import {
   DialogDescription,
   DialogFooter,
 } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/badge";
-import { getInitials } from "@/lib/chat-utils";
+import { ChatAvatar } from "./ChatAvatar";
 import { createClient } from "@/lib/supabase/client";
 import type { ChatChannelType } from "@/lib/chat-types";
 import { Search, X, Users, MessageCircle, Loader2 } from "lucide-react";
@@ -63,7 +59,9 @@ export function ChannelCreateModal({
       const { data } = await supabase
         .from("profiles")
         .select("id, full_name, email, avatar_url")
-        .or(`full_name.ilike.%${searchQuery}%,email.ilike.%${searchQuery}%`)
+        .or(
+          `full_name.ilike.%${searchQuery}%,email.ilike.%${searchQuery}%`
+        )
         .neq("id", userId)
         .limit(10);
 
@@ -85,8 +83,8 @@ export function ChannelCreateModal({
     setSearchResults([]);
   };
 
-  const removeMember = (userId: string) => {
-    setSelectedMembers((prev) => prev.filter((m) => m.id !== userId));
+  const removeMember = (memberId: string) => {
+    setSelectedMembers((prev) => prev.filter((m) => m.id !== memberId));
   };
 
   const handleCreate = async () => {
@@ -98,17 +96,17 @@ export function ChannelCreateModal({
     if (mode === "dm") {
       if (selectedMembers.length === 0) return;
 
-      // For 1:1, check if DM channel already exists
       if (selectedMembers.length === 1) {
         const otherUserId = selectedMembers[0].id;
-        // Look for existing direct channel between these two users
         const { data: existingChannels } = await supabase
           .from("chat_channel_members")
           .select("channel_id")
           .eq("user_id", userId);
 
         if (existingChannels) {
-          for (const ec of existingChannels as unknown as Array<{ channel_id: string }>) {
+          for (const ec of existingChannels as unknown as Array<{
+            channel_id: string;
+          }>) {
             const { data: ch } = await supabase
               .from("chat_channels")
               .select("id, channel_type")
@@ -139,8 +137,12 @@ export function ChannelCreateModal({
         selectedMembers.length === 1 ? "direct" : "group";
       const channelName =
         selectedMembers.length === 1
-          ? selectedMembers[0].full_name || selectedMembers[0].email || "DM"
-          : selectedMembers.map((m) => m.full_name?.split(" ")[0] || "?").join(", ");
+          ? selectedMembers[0].full_name ||
+            selectedMembers[0].email ||
+            "DM"
+          : selectedMembers
+              .map((m) => m.full_name?.split(" ")[0] || "?")
+              .join(", ");
 
       const { data: channelData, error } = await supabase
         .from("chat_channels")
@@ -159,9 +161,12 @@ export function ChannelCreateModal({
         return;
       }
 
-      // Add all members (including self)
       const members = [
-        { channel_id: channel.id, user_id: userId, role: "owner" as const },
+        {
+          channel_id: channel.id,
+          user_id: userId,
+          role: "owner" as const,
+        },
         ...selectedMembers.map((m) => ({
           channel_id: channel.id,
           user_id: m.id,
@@ -172,7 +177,6 @@ export function ChannelCreateModal({
       await supabase.from("chat_channel_members").insert(members);
       onChannelCreated(channel.id);
     } else {
-      // Create team channel
       if (!name.trim()) return;
 
       const { data: channelData2, error } = await supabase
@@ -193,9 +197,12 @@ export function ChannelCreateModal({
         return;
       }
 
-      // Add self as owner
       const members = [
-        { channel_id: channel.id, user_id: userId, role: "owner" as const },
+        {
+          channel_id: channel.id,
+          user_id: userId,
+          role: "owner" as const,
+        },
         ...selectedMembers.map((m) => ({
           channel_id: channel.id,
           user_id: m.id,
@@ -222,10 +229,12 @@ export function ChannelCreateModal({
 
   return (
     <Dialog open={open} onOpenChange={(o) => !o && resetAndClose()}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-md bg-[#0F2140] border-[rgba(197,151,91,0.12)] text-[#FAFAF8]">
         <DialogHeader>
-          <DialogTitle>New Conversation</DialogTitle>
-          <DialogDescription>
+          <DialogTitle className="text-[#FAFAF8]">
+            New Conversation
+          </DialogTitle>
+          <DialogDescription className="text-[#8A8680]">
             Create a team channel or start a direct message.
           </DialogDescription>
         </DialogHeader>
@@ -234,10 +243,10 @@ export function ChannelCreateModal({
         <div className="flex gap-2 mb-4">
           <button
             onClick={() => setMode("channel")}
-            className={`flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+            className={`flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-all duration-200 ${
               mode === "channel"
-                ? "bg-blue-50 text-blue-700 border border-blue-200"
-                : "bg-slate-50 text-slate-600 border border-slate-200 hover:bg-slate-100"
+                ? "bg-[rgba(197,151,91,0.1)] text-[#C5975B] border border-[rgba(197,151,91,0.2)]"
+                : "bg-[#1A3355] text-[#C4C0B8] border border-[rgba(255,255,255,0.08)] hover:bg-[#243D66]"
             }`}
           >
             <Users className="h-4 w-4" />
@@ -245,10 +254,10 @@ export function ChannelCreateModal({
           </button>
           <button
             onClick={() => setMode("dm")}
-            className={`flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+            className={`flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-all duration-200 ${
               mode === "dm"
-                ? "bg-blue-50 text-blue-700 border border-blue-200"
-                : "bg-slate-50 text-slate-600 border border-slate-200 hover:bg-slate-100"
+                ? "bg-[rgba(197,151,91,0.1)] text-[#C5975B] border border-[rgba(197,151,91,0.2)]"
+                : "bg-[#1A3355] text-[#C4C0B8] border border-[rgba(255,255,255,0.08)] hover:bg-[#243D66]"
             }`}
           >
             <MessageCircle className="h-4 w-4" />
@@ -260,23 +269,25 @@ export function ChannelCreateModal({
         {mode === "channel" && (
           <div className="space-y-3">
             <div>
-              <Label htmlFor="channel-name">Channel Name</Label>
-              <Input
-                id="channel-name"
+              <label className="text-sm font-medium text-[#C4C0B8] block mb-1">
+                Channel Name
+              </label>
+              <input
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 placeholder="e.g., general, marketing"
-                className="mt-1"
+                className="w-full px-3 py-2 text-sm bg-[#0A1628] border border-[rgba(197,151,91,0.08)] rounded-md text-[#F0EDE6] placeholder:text-[#8A8680] focus:outline-none focus:ring-1 focus:ring-[#C5975B] focus:border-[#C5975B]"
               />
             </div>
             <div>
-              <Label htmlFor="channel-desc">Description (optional)</Label>
-              <Input
-                id="channel-desc"
+              <label className="text-sm font-medium text-[#C4C0B8] block mb-1">
+                Description (optional)
+              </label>
+              <input
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 placeholder="What is this channel about?"
-                className="mt-1"
+                className="w-full px-3 py-2 text-sm bg-[#0A1628] border border-[rgba(197,151,91,0.08)] rounded-md text-[#F0EDE6] placeholder:text-[#8A8680] focus:outline-none focus:ring-1 focus:ring-[#C5975B] focus:border-[#C5975B]"
               />
             </div>
             <label className="flex items-center gap-2 text-sm">
@@ -284,68 +295,66 @@ export function ChannelCreateModal({
                 type="checkbox"
                 checked={isPrivate}
                 onChange={(e) => setIsPrivate(e.target.checked)}
-                className="rounded border-slate-300"
+                className="rounded border-[rgba(197,151,91,0.2)] bg-[#0A1628]"
               />
-              <span className="text-slate-700">Make private</span>
+              <span className="text-[#C4C0B8]">Make private</span>
             </label>
           </div>
         )}
 
         {/* Member search */}
         <div className="mt-2">
-          <Label>
+          <label className="text-sm font-medium text-[#C4C0B8] block mb-1">
             {mode === "dm" ? "Send to" : "Add members (optional)"}
-          </Label>
+          </label>
 
-          {/* Selected members */}
           {selectedMembers.length > 0 && (
             <div className="flex flex-wrap gap-1.5 mt-2 mb-2">
               {selectedMembers.map((m) => (
-                <Badge key={m.id} variant="secondary" className="gap-1 pr-1">
+                <span
+                  key={m.id}
+                  className="inline-flex items-center gap-1 px-2 py-1 bg-[rgba(197,151,91,0.1)] text-[#C5975B] text-xs rounded-md border border-[rgba(197,151,91,0.2)]"
+                >
                   {m.full_name || m.email}
                   <button
                     onClick={() => removeMember(m.id)}
-                    className="p-0.5 rounded-full hover:bg-slate-200"
+                    className="p-0.5 rounded-full hover:bg-[rgba(197,151,91,0.2)]"
                   >
                     <X className="h-3 w-3" />
                   </button>
-                </Badge>
+                </span>
               ))}
             </div>
           )}
 
           <div className="relative mt-1">
-            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-            <Input
+            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-[#8A8680]" />
+            <input
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search by name or email..."
-              className="pl-8"
+              className="w-full pl-8 pr-3 py-2 text-sm bg-[#0A1628] border border-[rgba(197,151,91,0.08)] rounded-md text-[#F0EDE6] placeholder:text-[#8A8680] focus:outline-none focus:ring-1 focus:ring-[#C5975B] focus:border-[#C5975B]"
             />
           </div>
 
-          {/* Search results */}
           {searchResults.length > 0 && (
-            <div className="mt-1 border border-slate-200 rounded-md max-h-40 overflow-y-auto">
+            <div className="mt-1 border border-[rgba(255,255,255,0.08)] rounded-md max-h-40 overflow-y-auto bg-[#0A1628]">
               {searchResults.map((user) => (
                 <button
                   key={user.id}
                   onClick={() => addMember(user)}
-                  className="w-full flex items-center gap-2.5 px-3 py-2 text-left hover:bg-slate-50 transition-colors"
+                  className="w-full flex items-center gap-2.5 px-3 py-2 text-left hover:bg-[rgba(255,255,255,0.04)] transition-colors duration-200"
                 >
-                  <Avatar className="h-7 w-7">
-                    {user.avatar_url && (
-                      <AvatarImage src={user.avatar_url} />
-                    )}
-                    <AvatarFallback className="text-xs bg-blue-100 text-blue-700">
-                      {getInitials(user.full_name)}
-                    </AvatarFallback>
-                  </Avatar>
+                  <ChatAvatar
+                    src={user.avatar_url}
+                    name={user.full_name}
+                    size="header"
+                  />
                   <div className="min-w-0">
-                    <div className="text-sm font-medium text-slate-900 truncate">
+                    <div className="text-sm font-medium text-[#FAFAF8] truncate">
                       {user.full_name || "Unknown"}
                     </div>
-                    <div className="text-xs text-slate-500 truncate">
+                    <div className="text-xs text-[#8A8680] truncate">
                       {user.email}
                     </div>
                   </div>
@@ -356,7 +365,11 @@ export function ChannelCreateModal({
         </div>
 
         <DialogFooter className="mt-4">
-          <Button variant="outline" onClick={resetAndClose}>
+          <Button
+            variant="outline"
+            onClick={resetAndClose}
+            className="border-[rgba(197,151,91,0.15)] text-[#C4C0B8] hover:bg-[rgba(255,255,255,0.06)] hover:text-[#FAFAF8]"
+          >
             Cancel
           </Button>
           <Button
@@ -366,8 +379,11 @@ export function ChannelCreateModal({
               (mode === "channel" && !name.trim()) ||
               (mode === "dm" && selectedMembers.length === 0)
             }
+            className="bg-gradient-to-r from-[#C5975B] to-[#D4AD72] text-[#0A1628] hover:from-[#D4AD72] hover:to-[#E8D5B0] disabled:opacity-50"
           >
-            {creating && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+            {creating && (
+              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+            )}
             {mode === "dm" ? "Start Chat" : "Create Channel"}
           </Button>
         </DialogFooter>

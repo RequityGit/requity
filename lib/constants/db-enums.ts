@@ -653,6 +653,30 @@ export const CRM_COMPANY_TYPES = [
   { value: "law_firm", label: "Law Firm" },
   { value: "insurance", label: "Insurance" },
   { value: "appraisal", label: "Appraisal" },
+  { value: "equity_investor", label: "Equity Investor" },
+  { value: "software", label: "Software" },
+  { value: "accounting_firm", label: "Accounting Firm" },
+  { value: "other", label: "Other" },
+] as const;
+
+/** DB enum: company_subtype_enum */
+export const CRM_COMPANY_SUBTYPES = [
+  { value: "bank", label: "Bank" },
+  { value: "agency_lender", label: "Agency Lender" },
+  { value: "private_lender", label: "Private Lender" },
+  { value: "correspondent", label: "Correspondent" },
+  { value: "credit_union", label: "Credit Union" },
+] as const;
+
+/** company_files.file_type check constraint */
+export const COMPANY_FILE_TYPES = [
+  { value: "tear_sheet", label: "Tear Sheet" },
+  { value: "nda", label: "NDA" },
+  { value: "fee_agreement", label: "Fee Agreement" },
+  { value: "rate_sheet", label: "Rate Sheet" },
+  { value: "w9", label: "W-9" },
+  { value: "broker_agreement", label: "Broker Agreement" },
+  { value: "guidelines", label: "Guidelines" },
   { value: "other", label: "Other" },
 ] as const;
 

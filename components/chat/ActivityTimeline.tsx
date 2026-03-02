@@ -30,13 +30,13 @@ const eventIcons: Record<string, React.ElementType> = {
 };
 
 const eventColors: Record<string, string> = {
-  loan_status_change: "bg-blue-100 text-blue-600",
-  document_upload: "bg-purple-100 text-purple-600",
-  payment_received: "bg-green-100 text-green-600",
-  member_joined: "bg-teal-100 text-teal-600",
-  condition_approved: "bg-emerald-100 text-emerald-600",
-  condition_submitted: "bg-amber-100 text-amber-600",
-  escalation: "bg-red-100 text-red-600",
+  loan_status_change: "bg-[rgba(197,151,91,0.15)] text-[#C5975B]",
+  document_upload: "bg-[rgba(197,151,91,0.1)] text-[#D4AD72]",
+  payment_received: "bg-[rgba(45,138,86,0.15)] text-[#2D8A56]",
+  member_joined: "bg-[rgba(45,138,86,0.1)] text-[#2D8A56]",
+  condition_approved: "bg-[rgba(45,138,86,0.15)] text-[#2D8A56]",
+  condition_submitted: "bg-[rgba(212,149,43,0.15)] text-[#D4952B]",
+  escalation: "bg-[rgba(192,57,43,0.15)] text-[#C0392B]",
 };
 
 export function ActivityTimeline({ channelId }: ActivityTimelineProps) {
@@ -62,7 +62,6 @@ export function ActivityTimeline({ channelId }: ActivityTimelineProps) {
 
     fetchActivity();
 
-    // Realtime
     const supabase = supabaseRef.current;
     const sub = supabase
       .channel(`activity-${channelId}`)
@@ -88,15 +87,15 @@ export function ActivityTimeline({ channelId }: ActivityTimelineProps) {
 
   if (loading) {
     return (
-      <div className="flex-1 flex items-center justify-center">
-        <Loader2 className="h-6 w-6 animate-spin text-slate-400" />
+      <div className="flex-1 flex items-center justify-center bg-[#0F2140]">
+        <Loader2 className="h-6 w-6 animate-spin text-[#C5975B]" />
       </div>
     );
   }
 
   if (items.length === 0) {
     return (
-      <div className="flex-1 flex flex-col items-center justify-center text-slate-400">
+      <div className="flex-1 flex flex-col items-center justify-center text-[#8A8680] bg-[#0F2140]">
         <Activity className="h-8 w-8 mb-2" />
         <div className="text-sm">No activity yet</div>
       </div>
@@ -104,15 +103,15 @@ export function ActivityTimeline({ channelId }: ActivityTimelineProps) {
   }
 
   return (
-    <div className="flex-1 overflow-y-auto px-4 py-3">
+    <div className="flex-1 overflow-y-auto px-4 py-3 bg-[#0F2140]">
       <div className="relative">
-        {/* Timeline line */}
-        <div className="absolute left-4 top-0 bottom-0 w-px bg-slate-200" />
+        <div className="absolute left-4 top-0 bottom-0 w-px bg-[rgba(197,151,91,0.08)]" />
 
         {items.map((item) => {
           const Icon = eventIcons[item.event_type] || Activity;
           const color =
-            eventColors[item.event_type] || "bg-slate-100 text-slate-600";
+            eventColors[item.event_type] ||
+            "bg-[#1A3355] text-[#C4C0B8]";
 
           return (
             <div key={item.id} className="relative flex gap-3 pb-4">
@@ -122,8 +121,8 @@ export function ActivityTimeline({ channelId }: ActivityTimelineProps) {
                 <Icon className="h-4 w-4" />
               </div>
               <div className="min-w-0 flex-1 pt-0.5">
-                <div className="text-sm text-slate-700">{item.summary}</div>
-                <div className="text-xs text-slate-400 mt-0.5">
+                <div className="text-sm text-[#F0EDE6]">{item.summary}</div>
+                <div className="text-xs text-[#8A8680] mt-0.5">
                   {new Date(item.created_at).toLocaleDateString("en-US", {
                     month: "short",
                     day: "numeric",
@@ -132,7 +131,7 @@ export function ActivityTimeline({ channelId }: ActivityTimelineProps) {
                     hour12: true,
                   })}
                   {item.event_source && (
-                    <span className="ml-2 text-slate-300">
+                    <span className="ml-2 text-[#8A8680]/60">
                       via {item.event_source}
                     </span>
                   )}

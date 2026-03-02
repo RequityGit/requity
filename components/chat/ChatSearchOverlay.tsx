@@ -2,9 +2,8 @@
 
 import { useState, useEffect, useRef, useCallback } from "react";
 import { createClient } from "@/lib/supabase/client";
-import { Input } from "@/components/ui/input";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { getInitials, formatMessageTime } from "@/lib/chat-utils";
+import { ChatAvatar } from "./ChatAvatar";
+import { formatMessageTime } from "@/lib/chat-utils";
 import type { ChatMessageWithSender } from "@/lib/chat-types";
 import { Search, X, Loader2 } from "lucide-react";
 
@@ -29,7 +28,6 @@ export function ChatSearchOverlay({
     inputRef.current?.focus();
   }, []);
 
-  // Keyboard shortcut: Escape to close
   useEffect(() => {
     const handleKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") onClose();
@@ -48,11 +46,7 @@ export function ChatSearchOverlay({
       setLoading(true);
       const supabase = supabaseRef.current;
 
-      // Use full-text search on chat_messages
-      const tsQuery = searchQuery
-        .trim()
-        .split(/\s+/)
-        .join(" & ");
+      const tsQuery = searchQuery.trim().split(/\s+/).join(" & ");
 
       const { data } = await supabase
         .from("chat_messages")
@@ -73,26 +67,25 @@ export function ChatSearchOverlay({
     [channelId]
   );
 
-  // Debounced search
   useEffect(() => {
     const timer = setTimeout(() => handleSearch(query), 300);
     return () => clearTimeout(timer);
   }, [query, handleSearch]);
 
   return (
-    <div className="absolute inset-0 bg-white/95 backdrop-blur-sm z-40 flex flex-col">
-      <div className="flex items-center gap-2 px-4 py-3 border-b border-slate-200">
-        <Search className="h-5 w-5 text-slate-400 flex-shrink-0" />
-        <Input
+    <div className="absolute inset-0 bg-[#0A1628]/95 backdrop-blur-sm z-40 flex flex-col">
+      <div className="flex items-center gap-2 px-4 py-3 border-b border-[rgba(197,151,91,0.08)]">
+        <Search className="h-5 w-5 text-[#8A8680] flex-shrink-0" />
+        <input
           ref={inputRef}
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           placeholder="Search messages in this channel..."
-          className="border-0 shadow-none focus-visible:ring-0 text-base"
+          className="flex-1 bg-transparent border-0 text-base text-[#FAFAF8] placeholder:text-[#8A8680] focus:outline-none"
         />
         <button
           onClick={onClose}
-          className="p-1.5 rounded hover:bg-slate-100 text-slate-400 flex-shrink-0"
+          className="p-1.5 rounded hover:bg-[rgba(255,255,255,0.06)] text-[#C4C0B8] flex-shrink-0 transition-colors duration-200"
         >
           <X className="h-5 w-5" />
         </button>
@@ -101,10 +94,10 @@ export function ChatSearchOverlay({
       <div className="flex-1 overflow-y-auto">
         {loading ? (
           <div className="flex items-center justify-center py-8">
-            <Loader2 className="h-6 w-6 animate-spin text-slate-400" />
+            <Loader2 className="h-6 w-6 animate-spin text-[#C5975B]" />
           </div>
         ) : results.length === 0 ? (
-          <div className="text-center py-8 text-sm text-slate-400">
+          <div className="text-center py-8 text-sm text-[#8A8680]">
             {query.trim()
               ? "No messages found"
               : "Type to search messages..."}
@@ -118,26 +111,24 @@ export function ChatSearchOverlay({
                   onNavigateToMessage(msg.id);
                   onClose();
                 }}
-                className="w-full flex items-start gap-3 px-4 py-3 text-left hover:bg-slate-50 transition-colors"
+                className="w-full flex items-start gap-3 px-4 py-3 text-left hover:bg-[rgba(255,255,255,0.04)] transition-colors duration-200"
               >
-                <Avatar className="h-8 w-8 flex-shrink-0">
-                  {msg.sender?.avatar_url && (
-                    <AvatarImage src={msg.sender.avatar_url} />
-                  )}
-                  <AvatarFallback className="text-xs bg-blue-100 text-blue-700">
-                    {getInitials(msg.sender?.full_name || null)}
-                  </AvatarFallback>
-                </Avatar>
+                <ChatAvatar
+                  src={msg.sender?.avatar_url}
+                  name={msg.sender?.full_name}
+                  size="message"
+                  className="flex-shrink-0"
+                />
                 <div className="min-w-0 flex-1">
                   <div className="flex items-baseline gap-2">
-                    <span className="text-sm font-semibold text-slate-900">
+                    <span className="text-sm font-semibold text-[#FAFAF8]">
                       {msg.sender?.full_name || "Unknown"}
                     </span>
-                    <span className="text-xs text-slate-400">
+                    <span className="text-xs text-[#8A8680]">
                       {formatMessageTime(msg.created_at)}
                     </span>
                   </div>
-                  <div className="text-sm text-slate-600 mt-0.5 line-clamp-2">
+                  <div className="text-sm text-[#C4C0B8] mt-0.5 line-clamp-2">
                     {msg.content}
                   </div>
                 </div>

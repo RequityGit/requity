@@ -9,21 +9,19 @@ import {
   DialogDescription,
   DialogFooter,
 } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
+import { ChatAvatar } from "./ChatAvatar";
 import { getInitials } from "@/lib/chat-utils";
 import { createClient } from "@/lib/supabase/client";
-import type { ChatChannelWithUnread, ChatMemberRole, NotificationLevel } from "@/lib/chat-types";
+import type {
+  ChatChannelWithUnread,
+  ChatMemberRole,
+} from "@/lib/chat-types";
 import {
   Bell,
   BellOff,
   Pin,
   PinOff,
-  UserMinus,
   LogOut,
   Archive,
   Loader2,
@@ -162,10 +160,12 @@ export function ChannelSettingsModal({
 
   return (
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-md bg-[#0F2140] border-[rgba(197,151,91,0.12)] text-[#FAFAF8]">
         <DialogHeader>
-          <DialogTitle>Channel Settings</DialogTitle>
-          <DialogDescription>
+          <DialogTitle className="text-[#FAFAF8]">
+            Channel Settings
+          </DialogTitle>
+          <DialogDescription className="text-[#8A8680]">
             Manage {channel.name} settings and members.
           </DialogDescription>
         </DialogHeader>
@@ -173,66 +173,74 @@ export function ChannelSettingsModal({
         <div className="space-y-4">
           {/* Quick actions */}
           <div className="flex gap-2">
-            <Button variant="outline" size="sm" onClick={handleToggleMute}>
+            <button
+              onClick={handleToggleMute}
+              className="flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-md border border-[rgba(197,151,91,0.15)] text-[#C4C0B8] hover:bg-[rgba(255,255,255,0.06)] transition-colors duration-200"
+            >
               {channel.is_muted ? (
                 <>
-                  <Bell className="h-4 w-4 mr-1.5" /> Unmute
+                  <Bell className="h-4 w-4" /> Unmute
                 </>
               ) : (
                 <>
-                  <BellOff className="h-4 w-4 mr-1.5" /> Mute
+                  <BellOff className="h-4 w-4" /> Mute
                 </>
               )}
-            </Button>
-            <Button variant="outline" size="sm" onClick={handleTogglePin}>
+            </button>
+            <button
+              onClick={handleTogglePin}
+              className="flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-md border border-[rgba(197,151,91,0.15)] text-[#C4C0B8] hover:bg-[rgba(255,255,255,0.06)] transition-colors duration-200"
+            >
               {channel.is_pinned ? (
                 <>
-                  <PinOff className="h-4 w-4 mr-1.5" /> Unpin
+                  <PinOff className="h-4 w-4" /> Unpin
                 </>
               ) : (
                 <>
-                  <Pin className="h-4 w-4 mr-1.5" /> Pin
+                  <Pin className="h-4 w-4" /> Pin
                 </>
               )}
-            </Button>
+            </button>
           </div>
 
-          <Separator />
+          <div className="border-t border-[rgba(197,151,91,0.08)]" />
 
-          {/* Edit name and description (admin only or channel owner) */}
+          {/* Edit name and description */}
           {(isAdmin || channel.member_role === "owner") && (
             <>
               <div>
-                <Label htmlFor="edit-name">Channel Name</Label>
-                <Input
-                  id="edit-name"
+                <label className="text-sm font-medium text-[#C4C0B8] block mb-1">
+                  Channel Name
+                </label>
+                <input
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  className="mt-1"
+                  className="w-full px-3 py-2 text-sm bg-[#0A1628] border border-[rgba(197,151,91,0.08)] rounded-md text-[#F0EDE6] focus:outline-none focus:ring-1 focus:ring-[#C5975B] focus:border-[#C5975B]"
                 />
               </div>
               <div>
-                <Label htmlFor="edit-desc">Description</Label>
-                <Input
-                  id="edit-desc"
+                <label className="text-sm font-medium text-[#C4C0B8] block mb-1">
+                  Description
+                </label>
+                <input
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
-                  className="mt-1"
+                  className="w-full px-3 py-2 text-sm bg-[#0A1628] border border-[rgba(197,151,91,0.08)] rounded-md text-[#F0EDE6] focus:outline-none focus:ring-1 focus:ring-[#C5975B] focus:border-[#C5975B]"
                 />
               </div>
-              <Separator />
+              <div className="border-t border-[rgba(197,151,91,0.08)]" />
             </>
           )}
 
           {/* Members list */}
           <div>
-            <Label className="mb-2 block">
+            <label className="text-sm font-medium text-[#C4C0B8] mb-2 block">
               Members ({members.length})
-            </Label>
+            </label>
             <div className="max-h-48 overflow-y-auto space-y-1">
               {loading ? (
                 <div className="flex justify-center py-4">
-                  <Loader2 className="h-5 w-5 animate-spin text-slate-400" />
+                  <Loader2 className="h-5 w-5 animate-spin text-[#C5975B]" />
                 </div>
               ) : (
                 members.map((m) => (
@@ -241,26 +249,25 @@ export function ChannelSettingsModal({
                     className="flex items-center justify-between py-1.5"
                   >
                     <div className="flex items-center gap-2">
-                      <Avatar className="h-7 w-7">
-                        {m.profile?.avatar_url && (
-                          <AvatarImage src={m.profile.avatar_url} />
-                        )}
-                        <AvatarFallback className="text-xs bg-blue-100 text-blue-700">
-                          {getInitials(m.profile?.full_name || null)}
-                        </AvatarFallback>
-                      </Avatar>
+                      <ChatAvatar
+                        src={m.profile?.avatar_url}
+                        name={m.profile?.full_name}
+                        size="header"
+                      />
                       <div>
-                        <div className="text-sm font-medium text-slate-900">
+                        <div className="text-sm font-medium text-[#FAFAF8]">
                           {m.profile?.full_name || "Unknown"}
                           {m.user_id === userId && (
-                            <span className="text-slate-400 ml-1">(you)</span>
+                            <span className="text-[#8A8680] ml-1">
+                              (you)
+                            </span>
                           )}
                         </div>
                       </div>
                     </div>
-                    <Badge variant="secondary" className="text-xs capitalize">
+                    <span className="text-xs text-[#8A8680] capitalize bg-[#1A3355] px-2 py-0.5 rounded">
                       {m.role}
-                    </Badge>
+                    </span>
                   </div>
                 ))
               )}
@@ -274,7 +281,7 @@ export function ChannelSettingsModal({
               variant="outline"
               size="sm"
               onClick={handleLeave}
-              className="text-red-600 hover:text-red-700"
+              className="border-[rgba(192,57,43,0.3)] text-[#C0392B] hover:bg-[rgba(192,57,43,0.1)] hover:text-[#C0392B]"
             >
               <LogOut className="h-4 w-4 mr-1.5" /> Leave
             </Button>
@@ -283,19 +290,29 @@ export function ChannelSettingsModal({
                 variant="outline"
                 size="sm"
                 onClick={handleArchive}
-                className="text-red-600 hover:text-red-700"
+                className="border-[rgba(192,57,43,0.3)] text-[#C0392B] hover:bg-[rgba(192,57,43,0.1)] hover:text-[#C0392B]"
               >
                 <Archive className="h-4 w-4 mr-1.5" /> Archive
               </Button>
             )}
           </div>
           <div className="flex gap-2">
-            <Button variant="outline" onClick={onClose}>
+            <Button
+              variant="outline"
+              onClick={onClose}
+              className="border-[rgba(197,151,91,0.15)] text-[#C4C0B8] hover:bg-[rgba(255,255,255,0.06)] hover:text-[#FAFAF8]"
+            >
               Cancel
             </Button>
             {(isAdmin || channel.member_role === "owner") && (
-              <Button onClick={handleSave} disabled={saving || !name.trim()}>
-                {saving && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+              <Button
+                onClick={handleSave}
+                disabled={saving || !name.trim()}
+                className="bg-gradient-to-r from-[#C5975B] to-[#D4AD72] text-[#0A1628] hover:from-[#D4AD72] hover:to-[#E8D5B0] disabled:opacity-50"
+              >
+                {saving && (
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                )}
                 Save
               </Button>
             )}

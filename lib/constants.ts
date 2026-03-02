@@ -42,6 +42,8 @@ export {
   CRM_LENDER_DIRECTIONS,
   CRM_VENDOR_TYPES,
   CRM_COMPANY_TYPES,
+  CRM_COMPANY_SUBTYPES,
+  COMPANY_FILE_TYPES,
   CRM_ACTIVITY_TYPES,
   // Document types
   DOCUMENT_TYPES,
@@ -146,6 +148,19 @@ export const LIFECYCLE_STAGE_COLORS: Record<string, string> = {
   prospect: "bg-amber-100 text-amber-800",
   active: "bg-green-100 text-green-800",
   past: "bg-gray-100 text-gray-500",
+};
+
+export const COMPANY_TYPE_COLORS: Record<string, string> = {
+  lender: "bg-blue-100 text-blue-800 border-blue-200",
+  equity_investor: "bg-green-100 text-green-800 border-green-200",
+  brokerage: "bg-amber-100 text-amber-800 border-amber-200",
+  title_company: "bg-yellow-100 text-yellow-800 border-yellow-200",
+  appraisal: "bg-gray-100 text-gray-800 border-gray-200",
+  law_firm: "bg-purple-100 text-purple-800 border-purple-200",
+  insurance: "bg-cyan-100 text-cyan-800 border-cyan-200",
+  software: "bg-indigo-100 text-indigo-800 border-indigo-200",
+  accounting_firm: "bg-slate-100 text-slate-800 border-slate-200",
+  other: "bg-gray-100 text-gray-700 border-gray-200",
 };
 
 export const STATUS_COLORS: Record<string, string> = {

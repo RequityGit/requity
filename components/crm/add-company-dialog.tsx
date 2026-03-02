@@ -1,0 +1,333 @@
+"use client";
+
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { CRM_COMPANY_TYPES, CRM_COMPANY_SUBTYPES, US_STATES } from "@/lib/constants";
+import { useToast } from "@/components/ui/use-toast";
+import { addCompanyAction } from "@/app/(authenticated)/admin/crm/company-actions";
+import { Building2 } from "lucide-react";
+
+interface AddCompanyDialogProps {
+  trigger?: React.ReactNode;
+}
+
+export function AddCompanyDialog({ trigger }: AddCompanyDialogProps) {
+  const [open, setOpen] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const router = useRouter();
+  const { toast } = useToast();
+
+  const [form, setForm] = useState({
+    name: "",
+    company_type: "",
+    company_subtype: "",
+    phone: "",
+    email: "",
+    website: "",
+    address_line1: "",
+    city: "",
+    state: "",
+    zip: "",
+    notes: "",
+    source: "",
+  });
+
+  const [errors, setErrors] = useState<Record<string, string>>({});
+
+  function updateField(field: string, value: string) {
+    setForm((prev) => ({ ...prev, [field]: value }));
+    if (errors[field]) {
+      setErrors((prev) => {
+        const next = { ...prev };
+        delete next[field];
+        return next;
+      });
+    }
+  }
+
+  function resetForm() {
+    setForm({
+      name: "",
+      company_type: "",
+      company_subtype: "",
+      phone: "",
+      email: "",
+      website: "",
+      address_line1: "",
+      city: "",
+      state: "",
+      zip: "",
+      notes: "",
+      source: "",
+    });
+    setErrors({});
+  }
+
+  function validate(): boolean {
+    const newErrors: Record<string, string> = {};
+    if (!form.name.trim()) newErrors.name = "Required";
+    if (!form.company_type) newErrors.company_type = "Required";
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  }
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!validate()) return;
+
+    setLoading(true);
+    try {
+      const result = await addCompanyAction({
+        name: form.name,
+        company_type: form.company_type,
+        company_subtype: form.company_subtype || null,
+        phone: form.phone || null,
+        email: form.email || null,
+        website: form.website || null,
+        address_line1: form.address_line1 || null,
+        city: form.city || null,
+        state: form.state || null,
+        zip: form.zip || null,
+        notes: form.notes || null,
+        source: form.source || null,
+      });
+
+      if ("error" in result && result.error) {
+        toast({
+          title: "Error adding company",
+          description: result.error,
+          variant: "destructive",
+        });
+      } else {
+        toast({ title: "Company added successfully" });
+        setOpen(false);
+        resetForm();
+        router.refresh();
+      }
+    } catch (err: unknown) {
+      toast({
+        title: "Error adding company",
+        description: err instanceof Error ? err.message : "An unexpected error occurred",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  return (
+    <Dialog
+      open={open}
+      onOpenChange={(v) => {
+        setOpen(v);
+        if (!v) resetForm();
+      }}
+    >
+      <DialogTrigger asChild>
+        {trigger || (
+          <Button className="gap-2">
+            <Building2 className="h-4 w-4" />
+            Add Company
+          </Button>
+        )}
+      </DialogTrigger>
+      <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>Add New Company</DialogTitle>
+        </DialogHeader>
+        <form onSubmit={handleSubmit} className="space-y-6">
+          {/* Name */}
+          <div className="space-y-2">
+            <Label>
+              Company Name <span className="text-red-500">*</span>
+            </Label>
+            <Input
+              value={form.name}
+              onChange={(e) => updateField("name", e.target.value)}
+              placeholder="Company name"
+            />
+            {errors.name && (
+              <p className="text-xs text-red-500">{errors.name}</p>
+            )}
+          </div>
+
+          {/* Type & Subtype */}
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label>
+                Company Type <span className="text-red-500">*</span>
+              </Label>
+              <Select
+                value={form.company_type}
+                onValueChange={(v) => {
+                  updateField("company_type", v);
+                  if (v !== "lender") {
+                    updateField("company_subtype", "");
+                  }
+                }}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select type..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {CRM_COMPANY_TYPES.map((t) => (
+                    <SelectItem key={t.value} value={t.value}>
+                      {t.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {errors.company_type && (
+                <p className="text-xs text-red-500">{errors.company_type}</p>
+              )}
+            </div>
+            {form.company_type === "lender" && (
+              <div className="space-y-2">
+                <Label>Subtype</Label>
+                <Select
+                  value={form.company_subtype}
+                  onValueChange={(v) => updateField("company_subtype", v)}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select subtype..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {CRM_COMPANY_SUBTYPES.map((s) => (
+                      <SelectItem key={s.value} value={s.value}>
+                        {s.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+          </div>
+
+          {/* Contact Info */}
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label>Phone</Label>
+              <Input
+                value={form.phone}
+                onChange={(e) => updateField("phone", e.target.value)}
+                placeholder="(555) 123-4567"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Email</Label>
+              <Input
+                type="email"
+                value={form.email}
+                onChange={(e) => updateField("email", e.target.value)}
+              />
+            </div>
+          </div>
+
+          {/* Website */}
+          <div className="space-y-2">
+            <Label>Website</Label>
+            <Input
+              value={form.website}
+              onChange={(e) => updateField("website", e.target.value)}
+              placeholder="https://..."
+            />
+          </div>
+
+          {/* Address */}
+          <div>
+            <h4 className="text-sm font-semibold text-[#1a2b4a] mb-3">
+              Address
+            </h4>
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label>Street Address</Label>
+                <Input
+                  value={form.address_line1}
+                  onChange={(e) => updateField("address_line1", e.target.value)}
+                />
+              </div>
+              <div className="grid grid-cols-3 gap-4">
+                <div className="space-y-2">
+                  <Label>City</Label>
+                  <Input
+                    value={form.city}
+                    onChange={(e) => updateField("city", e.target.value)}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>State</Label>
+                  <Select
+                    value={form.state}
+                    onValueChange={(v) => updateField("state", v)}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="State..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {US_STATES.map((s) => (
+                        <SelectItem key={s.value} value={s.value}>
+                          {s.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label>ZIP Code</Label>
+                  <Input
+                    value={form.zip}
+                    onChange={(e) => updateField("zip", e.target.value)}
+                    placeholder="12345"
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Notes */}
+          <div className="space-y-2">
+            <Label>Notes</Label>
+            <Textarea
+              value={form.notes}
+              onChange={(e) => updateField("notes", e.target.value)}
+              rows={3}
+              placeholder="Internal notes about this company..."
+            />
+          </div>
+
+          <DialogFooter>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setOpen(false)}
+            >
+              Cancel
+            </Button>
+            <Button type="submit" disabled={loading}>
+              {loading ? "Adding..." : "Add Company"}
+            </Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
+}

@@ -87,7 +87,7 @@ export default function LoginPage() {
               className="h-12 mx-auto mb-4"
             />
             <p className="text-muted-foreground mt-2">
-              Sign in to your investor portal
+              Platform Login
             </p>
           </div>
 
