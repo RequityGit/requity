@@ -316,7 +316,7 @@ export async function requestApprovalAction(opportunityId: string) {
 
     const slaDeadline = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
 
-    await admin
+    const { error: approvalError } = await admin
       .from("approval_requests" as any)
       .insert({
         entity_type: "opportunity",
@@ -330,6 +330,11 @@ export async function requestApprovalAction(opportunityId: string) {
         submission_notes: null,
         checklist_results: [],
       });
+
+    if (approvalError) {
+      console.error("Error creating approval_requests record:", approvalError);
+      return { error: approvalError.message };
+    }
 
     return { success: true };
   } catch (err: any) {
