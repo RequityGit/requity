@@ -78,7 +78,19 @@ export async function addLenderAction(input: LenderInput) {
       .single();
 
     if (error) return { error: error.message };
-    return { success: true, lenderId: (data as any).id };
+
+    // Record version history
+    const lenderId = (data as any).id;
+    await admin.from("dscr_pricing_versions" as any).insert({
+      lender_id: lenderId,
+      lender_name: input.short_name || input.name,
+      version: 1,
+      change_type: "lender_added",
+      change_description: `New lender added: ${input.name} (${input.short_name})`,
+      changed_by: auth.user.id,
+    });
+
+    return { success: true, lenderId };
   } catch (err: any) {
     console.error("addLenderAction error:", err);
     return { error: err?.message || "Unexpected error" };
@@ -195,7 +207,29 @@ export async function addProductAction(input: ProductInput) {
       .single();
 
     if (error) return { error: error.message };
-    return { success: true, productId: (data as any).id };
+
+    // Record version history
+    const productId = (data as any).id;
+    const { data: lender } = await admin
+      .from("dscr_lenders" as any)
+      .select("name, short_name")
+      .eq("id", input.lender_id)
+      .single();
+
+    if (lender) {
+      await admin.from("dscr_pricing_versions" as any).insert({
+        lender_id: input.lender_id,
+        product_id: productId,
+        lender_name: (lender as any).short_name || (lender as any).name,
+        product_name: input.product_name,
+        version: 1,
+        change_type: "product_added",
+        change_description: `New product added: ${input.product_name}`,
+        changed_by: auth.user.id,
+      });
+    }
+
+    return { success: true, productId };
   } catch (err: any) {
     console.error("addProductAction error:", err);
     return { error: err?.message || "Unexpected error" };
@@ -253,6 +287,28 @@ export async function toggleProductActiveAction(id: string, isActive: boolean) {
       .eq("id", id);
 
     if (error) return { error: error.message };
+
+    // Record version history
+    const { data: product } = await admin
+      .from("dscr_lender_products" as any)
+      .select("*, dscr_lenders(name, short_name)")
+      .eq("id", id)
+      .single();
+
+    if (product) {
+      const p = product as any;
+      await admin.from("dscr_pricing_versions" as any).insert({
+        lender_id: p.lender_id,
+        product_id: id,
+        lender_name: p.dscr_lenders?.short_name || p.dscr_lenders?.name,
+        product_name: p.product_name,
+        version: 0,
+        change_type: isActive ? "product_added" : "product_deactivated",
+        change_description: `Product ${isActive ? "activated" : "deactivated"}: ${p.product_name}`,
+        changed_by: auth.user.id,
+      });
+    }
+
     return { success: true };
   } catch (err: any) {
     console.error("toggleProductActiveAction error:", err);
@@ -379,6 +435,38 @@ export async function commitRateSheetAction(input: CommitRateSheetInput) {
         .from("dscr_rate_sheet_uploads" as any)
         .update({ parsing_status: "success", parsed_at: new Date().toISOString() })
         .eq("id", input.upload_id);
+    }
+
+    // Record version history
+    const { data: product } = await admin
+      .from("dscr_lender_products" as any)
+      .select("*, dscr_lenders(name, short_name)")
+      .eq("id", input.product_id)
+      .single();
+
+    if (product) {
+      const p = product as any;
+      // Get next version number
+      const { data: lastVersion } = await admin
+        .from("dscr_pricing_versions" as any)
+        .select("version")
+        .eq("product_id", input.product_id)
+        .order("version", { ascending: false })
+        .limit(1)
+        .single();
+
+      const nextVersion = ((lastVersion as any)?.version ?? 0) + 1;
+
+      await admin.from("dscr_pricing_versions" as any).insert({
+        lender_id: p.lender_id,
+        product_id: input.product_id,
+        lender_name: p.dscr_lenders?.short_name || p.dscr_lenders?.name,
+        product_name: p.product_name,
+        version: nextVersion,
+        change_type: "rate_sheet_commit",
+        change_description: `Rate sheet committed (${input.base_rates.length} rates, ${input.price_adjustments.length} LLPAs, effective ${input.rate_sheet_date})`,
+        changed_by: auth.user.id,
+      });
     }
 
     return { success: true };
