@@ -9,6 +9,18 @@ import { DistributionForm } from "@/components/admin/distribution-form";
 import { DistributionListTable } from "@/components/admin/distribution-list-table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
+// Helper to extract investor name from nested join chain
+function getInvestorName(row: Record<string, unknown>): string {
+  const investors = row.investors as Record<string, unknown> | null;
+  if (!investors) return "Unknown";
+  const crm = investors.crm_contacts as Record<string, unknown> | null;
+  if (!crm) return "Unknown";
+  if (crm.name) return crm.name as string;
+  const first = (crm.first_name as string) ?? "";
+  const last = (crm.last_name as string) ?? "";
+  return `${first} ${last}`.trim() || "Unknown";
+}
+
 export default async function AdminFundsPage() {
   const supabase = await createClient();
   const {
@@ -26,12 +38,12 @@ export default async function AdminFundsPage() {
       supabase
         .from("capital_calls")
         .select(
-          "*, funds(name), profiles(full_name), investor_commitments(commitment_amount)"
+          "*, funds(name), investors(crm_contacts(name, first_name, last_name)), investor_commitments(commitment_amount)"
         )
         .order("due_date", { ascending: false }),
       supabase
         .from("distributions")
-        .select("*, funds(name), profiles(full_name)")
+        .select("*, funds(name), investors(crm_contacts(name, first_name, last_name))")
         .order("distribution_date", { ascending: false }),
     ]);
 
@@ -54,10 +66,10 @@ export default async function AdminFundsPage() {
 
   const fundOptions = funds.map((f) => ({ id: f.id, name: f.name }));
 
-  const callRows = (capitalCalls).map((cc) => ({
+  const callRows = capitalCalls.map((cc) => ({
     id: cc.id,
-    fund_name: (cc as any).funds?.name ?? "—",
-    investor_name: (cc as any).profiles?.full_name ?? "Unknown",
+    fund_name: (cc as any).funds?.name ?? "---",
+    investor_name: getInvestorName(cc as unknown as Record<string, unknown>),
     call_amount: cc.call_amount,
     due_date: cc.due_date,
     paid_date: cc.paid_date,
@@ -66,10 +78,10 @@ export default async function AdminFundsPage() {
       (cc as any).investor_commitments?.commitment_amount ?? null,
   }));
 
-  const distRows = (distributions).map((d) => ({
+  const distRows = distributions.map((d) => ({
     id: d.id,
-    fund_name: (d as any).funds?.name ?? "—",
-    investor_name: (d as any).profiles?.full_name ?? "Unknown",
+    fund_name: (d as any).funds?.name ?? "---",
+    investor_name: getInvestorName(d as unknown as Record<string, unknown>),
     distribution_type: d.distribution_type ?? "income",
     amount: d.amount,
     distribution_date: d.distribution_date,

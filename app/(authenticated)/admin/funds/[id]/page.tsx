@@ -8,10 +8,32 @@ import { DataTable, Column } from "@/components/shared/data-table";
 import { StatusBadge } from "@/components/shared/status-badge";
 import { Separator } from "@/components/ui/separator";
 import { formatCurrency, formatDate, formatPercent } from "@/lib/format";
-import { Landmark, Users, TrendingUp, DollarSign } from "lucide-react";
+import {
+  Landmark,
+  Users,
+  TrendingUp,
+  DollarSign,
+  PiggyBank,
+  CircleDollarSign,
+  FileText,
+  ArrowLeft,
+} from "lucide-react";
+import Link from "next/link";
 
 interface PageProps {
   params: { id: string };
+}
+
+// Helper to extract investor name from the nested join chain
+function getInvestorName(row: Record<string, unknown>): string {
+  const investors = row.investors as Record<string, unknown> | null;
+  if (!investors) return "Unknown";
+  const crm = investors.crm_contacts as Record<string, unknown> | null;
+  if (!crm) return "Unknown";
+  if (crm.name) return crm.name as string;
+  const first = (crm.first_name as string) ?? "";
+  const last = (crm.last_name as string) ?? "";
+  return `${first} ${last}`.trim() || "Unknown";
 }
 
 export default async function AdminFundDetailPage({ params }: PageProps) {
@@ -32,41 +54,64 @@ export default async function AdminFundDetailPage({ params }: PageProps) {
 
   if (!fund) notFound();
 
-  const [commitmentsResult, capitalCallsResult, distributionsResult] =
-    await Promise.all([
-      supabase
-        .from("investor_commitments")
-        .select("*, profiles(full_name, email)")
-        .eq("fund_id", id)
-        .order("commitment_date", { ascending: false }),
-      supabase
-        .from("capital_calls")
-        .select("*, profiles(full_name)")
-        .eq("fund_id", id)
-        .order("due_date", { ascending: false }),
-      supabase
-        .from("distributions")
-        .select("*, profiles(full_name)")
-        .eq("fund_id", id)
-        .order("distribution_date", { ascending: false }),
-    ]);
+  const [
+    commitmentsResult,
+    capitalCallsResult,
+    distributionsResult,
+    documentsResult,
+  ] = await Promise.all([
+    supabase
+      .from("investor_commitments")
+      .select("*, investors(crm_contacts(name, first_name, last_name))")
+      .eq("fund_id", id)
+      .order("commitment_date", { ascending: false }),
+    supabase
+      .from("capital_calls")
+      .select("*, investors(crm_contacts(name, first_name, last_name))")
+      .eq("fund_id", id)
+      .order("due_date", { ascending: false }),
+    supabase
+      .from("distributions")
+      .select("*, investors(crm_contacts(name, first_name, last_name))")
+      .eq("fund_id", id)
+      .order("distribution_date", { ascending: false }),
+    supabase
+      .from("documents")
+      .select("*")
+      .eq("fund_id", id)
+      .order("created_at", { ascending: false }),
+  ]);
 
   const commitments = commitmentsResult.data ?? [];
   const capitalCalls = capitalCallsResult.data ?? [];
   const distributions = distributionsResult.data ?? [];
+  const documents = documentsResult.data ?? [];
 
+  // KPI calculations
   const totalCommitted = commitments.reduce(
     (sum, c) => sum + (c.commitment_amount || 0),
     0
   );
+  const totalFunded = commitments.reduce(
+    (sum, c) => sum + (c.funded_amount || 0),
+    0
+  );
+  const totalContributions = capitalCalls.reduce(
+    (sum, cc) => sum + (cc.call_amount || 0),
+    0
+  );
+  const totalDistributed = distributions
+    .filter((d) => d.status === "paid")
+    .reduce((sum, d) => sum + (d.amount || 0), 0);
 
-  const commitmentColumns: Column<any>[] = [
+  // Commitment columns
+  const commitmentColumns: Column<(typeof commitments)[number]>[] = [
     {
       key: "investor",
       header: "Investor",
       cell: (row) => (
         <span className="font-medium">
-          {(row as any).profiles?.full_name ?? "Unknown"}
+          {getInvestorName(row as unknown as Record<string, unknown>)}
         </span>
       ),
     },
@@ -97,13 +142,14 @@ export default async function AdminFundDetailPage({ params }: PageProps) {
     },
   ];
 
-  const capitalCallColumns: Column<any>[] = [
+  // Capital call columns
+  const capitalCallColumns: Column<(typeof capitalCalls)[number]>[] = [
     {
       key: "investor",
       header: "Investor",
       cell: (row) => (
         <span className="font-medium">
-          {(row as any).profiles?.full_name ?? "Unknown"}
+          {getInvestorName(row as unknown as Record<string, unknown>)}
         </span>
       ),
     },
@@ -115,12 +161,25 @@ export default async function AdminFundDetailPage({ params }: PageProps) {
     {
       key: "due_date",
       header: "Due Date",
-      cell: (row) => formatDate(row.due_date),
+      cell: (row) => {
+        const isOverdue =
+          row.status === "pending" && new Date(row.due_date) < new Date();
+        return (
+          <span className={isOverdue ? "text-red-600 font-medium" : ""}>
+            {formatDate(row.due_date)}
+          </span>
+        );
+      },
     },
     {
       key: "paid_date",
       header: "Paid Date",
-      cell: (row) => formatDate(row.paid_date),
+      cell: (row) =>
+        row.paid_date ? (
+          formatDate(row.paid_date)
+        ) : (
+          <span className="text-muted-foreground">--</span>
+        ),
     },
     {
       key: "status",
@@ -129,13 +188,14 @@ export default async function AdminFundDetailPage({ params }: PageProps) {
     },
   ];
 
-  const distributionColumns: Column<any>[] = [
+  // Distribution columns
+  const distributionColumns: Column<(typeof distributions)[number]>[] = [
     {
       key: "investor",
       header: "Investor",
       cell: (row) => (
         <span className="font-medium">
-          {(row as any).profiles?.full_name ?? "Unknown"}
+          {getInvestorName(row as unknown as Record<string, unknown>)}
         </span>
       ),
     },
@@ -165,14 +225,55 @@ export default async function AdminFundDetailPage({ params }: PageProps) {
     },
   ];
 
+  // Document columns
+  const documentColumns: Column<(typeof documents)[number]>[] = [
+    {
+      key: "file_name",
+      header: "File Name",
+      cell: (row) => (
+        <span className="font-medium text-foreground">{row.file_name}</span>
+      ),
+    },
+    {
+      key: "document_type",
+      header: "Type",
+      cell: (row) => (
+        <span className="capitalize">
+          {row.document_type?.replace(/_/g, " ") ?? "---"}
+        </span>
+      ),
+    },
+    {
+      key: "created_at",
+      header: "Date",
+      cell: (row) => formatDate(row.created_at),
+    },
+    {
+      key: "status",
+      header: "Status",
+      cell: (row) =>
+        row.status ? <StatusBadge status={row.status} /> : <span>--</span>,
+    },
+  ];
+
   return (
     <div className="space-y-6">
+      {/* Back link */}
+      <Link
+        href="/admin/funds"
+        className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
+      >
+        <ArrowLeft className="h-4 w-4" />
+        Back to Investments
+      </Link>
+
       <PageHeader
         title={fund.name}
         description={`${(fund.fund_type ?? "investment").replace(/_/g, " ")} - Vintage ${fund.vintage_year || "N/A"}`}
       />
 
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      {/* KPI Cards - Row 1: Fund overview */}
+      <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4">
         <KpiCard
           title="Target Size"
           value={formatCurrency(fund.target_size)}
@@ -184,29 +285,50 @@ export default async function AdminFundDetailPage({ params }: PageProps) {
           icon={<DollarSign className="h-5 w-5" />}
         />
         <KpiCard
-          title="Investors"
-          value={commitments.length.toString()}
-          description={`${formatCurrency(totalCommitted)} total committed`}
+          title="Total Committed"
+          value={formatCurrency(totalCommitted)}
+          description={`${formatCurrency(totalFunded)} funded`}
           icon={<Users className="h-5 w-5" />}
+        />
+        <KpiCard
+          title="Total Contributions"
+          value={formatCurrency(totalContributions)}
+          description={`${capitalCalls.length} call${capitalCalls.length !== 1 ? "s" : ""}`}
+          icon={<PiggyBank className="h-5 w-5" />}
+        />
+        <KpiCard
+          title="Total Distributions"
+          value={formatCurrency(totalDistributed)}
+          description={`${distributions.length} distribution${distributions.length !== 1 ? "s" : ""}`}
+          icon={<CircleDollarSign className="h-5 w-5" />}
         />
         <KpiCard
           title="Status"
           value={fund.status.replace(/_/g, " ")}
           description={
             fund.irr_target
-              ? `Target IRR: ${formatPercent(fund.irr_target)}`
-              : undefined
+              ? `IRR: ${formatPercent(fund.irr_target)}`
+              : `${commitments.length} investor${commitments.length !== 1 ? "s" : ""}`
           }
           icon={<TrendingUp className="h-5 w-5" />}
         />
       </div>
 
+      {/* Investment Details Card */}
       <Card>
         <CardHeader>
           <CardTitle className="text-lg">Investment Details</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-y-4 gap-x-6">
+            <DetailField
+              label="Investment Type"
+              value={(fund.fund_type ?? "N/A").replace(/_/g, " ")}
+            />
+            <DetailField
+              label="Vintage Year"
+              value={fund.vintage_year?.toString() ?? "N/A"}
+            />
             <DetailField
               label="Preferred Return"
               value={formatPercent(fund.preferred_return)}
@@ -220,8 +342,16 @@ export default async function AdminFundDetailPage({ params }: PageProps) {
               value={formatPercent(fund.irr_target)}
             />
             <DetailField
-              label="Vintage Year"
-              value={fund.vintage_year?.toString() ?? "N/A"}
+              label="Carry %"
+              value={formatPercent(fund.carry_pct)}
+            />
+            <DetailField
+              label="GP Commitment"
+              value={formatCurrency(fund.gp_commitment)}
+            />
+            <DetailField
+              label="Inception Date"
+              value={fund.inception_date ? formatDate(fund.inception_date) : "N/A"}
             />
           </div>
           {fund.description && (
@@ -238,6 +368,7 @@ export default async function AdminFundDetailPage({ params }: PageProps) {
         </CardContent>
       </Card>
 
+      {/* Tabbed Data */}
       <Tabs defaultValue="commitments">
         <TabsList>
           <TabsTrigger value="commitments">
@@ -249,30 +380,87 @@ export default async function AdminFundDetailPage({ params }: PageProps) {
           <TabsTrigger value="distributions">
             Distributions ({distributions.length})
           </TabsTrigger>
+          <TabsTrigger value="documents">
+            Documents ({documents.length})
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="commitments" className="mt-4">
-          <DataTable
-            columns={commitmentColumns}
-            data={commitments}
-            emptyMessage="No commitments for this investment."
-          />
+          <Card>
+            <CardContent className="p-0">
+              <DataTable
+                columns={commitmentColumns}
+                data={commitments}
+                emptyMessage="No commitments for this investment."
+              />
+            </CardContent>
+          </Card>
         </TabsContent>
 
         <TabsContent value="capital-calls" className="mt-4">
-          <DataTable
-            columns={capitalCallColumns}
-            data={capitalCalls}
-            emptyMessage="No contributions for this investment."
-          />
+          <Card>
+            <CardContent className="p-0">
+              <DataTable
+                columns={capitalCallColumns}
+                data={capitalCalls}
+                emptyMessage="No contributions for this investment."
+              />
+            </CardContent>
+          </Card>
+          {capitalCalls.length > 0 && (
+            <Card className="mt-4">
+              <CardContent className="py-4 px-6">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-medium text-muted-foreground">
+                    Total Contributions ({capitalCalls.length} call
+                    {capitalCalls.length !== 1 ? "s" : ""})
+                  </span>
+                  <span className="text-lg font-bold text-foreground">
+                    {formatCurrency(totalContributions)}
+                  </span>
+                </div>
+              </CardContent>
+            </Card>
+          )}
         </TabsContent>
 
         <TabsContent value="distributions" className="mt-4">
-          <DataTable
-            columns={distributionColumns}
-            data={distributions}
-            emptyMessage="No distributions for this investment."
-          />
+          <Card>
+            <CardContent className="p-0">
+              <DataTable
+                columns={distributionColumns}
+                data={distributions}
+                emptyMessage="No distributions for this investment."
+              />
+            </CardContent>
+          </Card>
+          {distributions.length > 0 && (
+            <Card className="mt-4">
+              <CardContent className="py-4 px-6">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-medium text-muted-foreground">
+                    Total Distributions ({distributions.length} distribution
+                    {distributions.length !== 1 ? "s" : ""})
+                  </span>
+                  <span className="text-lg font-bold text-foreground">
+                    {formatCurrency(totalDistributed)}
+                  </span>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+        </TabsContent>
+
+        <TabsContent value="documents" className="mt-4">
+          <Card>
+            <CardContent className="p-0">
+              <DataTable
+                columns={documentColumns}
+                data={documents}
+                emptyMessage="No documents for this investment."
+              />
+            </CardContent>
+          </Card>
         </TabsContent>
       </Tabs>
     </div>
