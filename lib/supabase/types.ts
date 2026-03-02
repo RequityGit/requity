@@ -415,6 +415,257 @@ export type Database = {
           },
         ]
       }
+      budget_change_request_line_items: {
+        Row: {
+          budget_change_request_id: string
+          budget_line_item_id: string | null
+          category: string | null
+          change_action: Database["public"]["Enums"]["budget_change_action"]
+          current_amount: number | null
+          delta_amount: number
+          description: string | null
+          id: string
+          proposed_amount: number | null
+        }
+        Insert: {
+          budget_change_request_id: string
+          budget_line_item_id?: string | null
+          category?: string | null
+          change_action: Database["public"]["Enums"]["budget_change_action"]
+          current_amount?: number | null
+          delta_amount: number
+          description?: string | null
+          id?: string
+          proposed_amount?: number | null
+        }
+        Update: {
+          budget_change_request_id?: string
+          budget_line_item_id?: string | null
+          category?: string | null
+          change_action?: Database["public"]["Enums"]["budget_change_action"]
+          current_amount?: number | null
+          delta_amount?: number
+          description?: string | null
+          id?: string
+          proposed_amount?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "budget_change_request_line_items_budget_change_request_id_fkey"
+            columns: ["budget_change_request_id"]
+            isOneToOne: false
+            referencedRelation: "budget_change_requests"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "budget_change_request_line_items_budget_line_item_id_fkey"
+            columns: ["budget_line_item_id"]
+            isOneToOne: false
+            referencedRelation: "budget_line_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      budget_change_requests: {
+        Row: {
+          construction_budget_id: string
+          created_at: string
+          id: string
+          loan_id: string
+          net_budget_change: number
+          reason: string
+          request_date: string
+          request_number: string | null
+          requested_by: string
+          review_notes: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          status: Database["public"]["Enums"]["budget_change_request_status"]
+          updated_at: string
+        }
+        Insert: {
+          construction_budget_id: string
+          created_at?: string
+          id?: string
+          loan_id: string
+          net_budget_change?: number
+          reason: string
+          request_date?: string
+          request_number?: string | null
+          requested_by: string
+          review_notes?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: Database["public"]["Enums"]["budget_change_request_status"]
+          updated_at?: string
+        }
+        Update: {
+          construction_budget_id?: string
+          created_at?: string
+          id?: string
+          loan_id?: string
+          net_budget_change?: number
+          reason?: string
+          request_date?: string
+          request_number?: string | null
+          requested_by?: string
+          review_notes?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: Database["public"]["Enums"]["budget_change_request_status"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "budget_change_requests_construction_budget_id_fkey"
+            columns: ["construction_budget_id"]
+            isOneToOne: false
+            referencedRelation: "construction_budgets"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "budget_change_requests_loan_id_fkey"
+            columns: ["loan_id"]
+            isOneToOne: false
+            referencedRelation: "loan_pipeline"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "budget_change_requests_loan_id_fkey"
+            columns: ["loan_id"]
+            isOneToOne: false
+            referencedRelation: "loans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      budget_line_item_history: {
+        Row: {
+          budget_change_request_id: string | null
+          budget_line_item_id: string
+          change_reason: string | null
+          change_type: Database["public"]["Enums"]["budget_line_item_change_type"]
+          changed_at: string
+          changed_by: string
+          construction_budget_id: string
+          id: string
+          new_amount: number | null
+          previous_amount: number | null
+        }
+        Insert: {
+          budget_change_request_id?: string | null
+          budget_line_item_id: string
+          change_reason?: string | null
+          change_type: Database["public"]["Enums"]["budget_line_item_change_type"]
+          changed_at?: string
+          changed_by: string
+          construction_budget_id: string
+          id?: string
+          new_amount?: number | null
+          previous_amount?: number | null
+        }
+        Update: {
+          budget_change_request_id?: string | null
+          budget_line_item_id?: string
+          change_reason?: string | null
+          change_type?: Database["public"]["Enums"]["budget_line_item_change_type"]
+          changed_at?: string
+          changed_by?: string
+          construction_budget_id?: string
+          id?: string
+          new_amount?: number | null
+          previous_amount?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "budget_line_item_history_budget_line_item_id_fkey"
+            columns: ["budget_line_item_id"]
+            isOneToOne: false
+            referencedRelation: "budget_line_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "budget_line_item_history_construction_budget_id_fkey"
+            columns: ["construction_budget_id"]
+            isOneToOne: false
+            referencedRelation: "construction_budgets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      budget_line_items: {
+        Row: {
+          budgeted_amount: number
+          category: string
+          construction_budget_id: string
+          created_at: string
+          description: string | null
+          drawn_amount: number
+          id: string
+          is_active: boolean
+          loan_id: string
+          percent_complete: number
+          remaining_amount: number | null
+          revised_amount: number
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          budgeted_amount: number
+          category: string
+          construction_budget_id: string
+          created_at?: string
+          description?: string | null
+          drawn_amount?: number
+          id?: string
+          is_active?: boolean
+          loan_id: string
+          percent_complete?: number
+          remaining_amount?: number | null
+          revised_amount: number
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          budgeted_amount?: number
+          category?: string
+          construction_budget_id?: string
+          created_at?: string
+          description?: string | null
+          drawn_amount?: number
+          id?: string
+          is_active?: boolean
+          loan_id?: string
+          percent_complete?: number
+          remaining_amount?: number | null
+          revised_amount?: number
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "budget_line_items_construction_budget_id_fkey"
+            columns: ["construction_budget_id"]
+            isOneToOne: false
+            referencedRelation: "construction_budgets"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "budget_line_items_loan_id_fkey"
+            columns: ["loan_id"]
+            isOneToOne: false
+            referencedRelation: "loan_pipeline"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "budget_line_items_loan_id_fkey"
+            columns: ["loan_id"]
+            isOneToOne: false
+            referencedRelation: "loans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       campaign_sends: {
         Row: {
           campaign_id: string
@@ -2200,6 +2451,63 @@ export type Database = {
           },
         ]
       }
+      construction_budgets: {
+        Row: {
+          budget_version: number
+          created_at: string
+          created_by: string
+          id: string
+          loan_id: string
+          notes: string | null
+          status: Database["public"]["Enums"]["budget_status"]
+          total_budget: number
+          total_drawn: number
+          total_remaining: number | null
+          updated_at: string
+        }
+        Insert: {
+          budget_version?: number
+          created_at?: string
+          created_by: string
+          id?: string
+          loan_id: string
+          notes?: string | null
+          status?: Database["public"]["Enums"]["budget_status"]
+          total_budget: number
+          total_drawn?: number
+          total_remaining?: number | null
+          updated_at?: string
+        }
+        Update: {
+          budget_version?: number
+          created_at?: string
+          created_by?: string
+          id?: string
+          loan_id?: string
+          notes?: string | null
+          status?: Database["public"]["Enums"]["budget_status"]
+          total_budget?: number
+          total_drawn?: number
+          total_remaining?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "construction_budgets_loan_id_fkey"
+            columns: ["loan_id"]
+            isOneToOne: true
+            referencedRelation: "loan_pipeline"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "construction_budgets_loan_id_fkey"
+            columns: ["loan_id"]
+            isOneToOne: true
+            referencedRelation: "loans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       contact_audit_log: {
         Row: {
           action: Database["public"]["Enums"]["audit_action_enum"]
@@ -3262,63 +3570,254 @@ export type Database = {
           },
         ]
       }
+      draw_documents: {
+        Row: {
+          budget_line_item_id: string | null
+          document_type: Database["public"]["Enums"]["draw_document_type"]
+          draw_request_id: string
+          file_name: string
+          file_path: string
+          file_size_bytes: number | null
+          geolocation_lat: number | null
+          geolocation_lng: number | null
+          id: string
+          is_geotagged: boolean
+          loan_id: string
+          mime_type: string | null
+          notes: string | null
+          photo_taken_at: string | null
+          uploaded_at: string
+          uploaded_by: string
+        }
+        Insert: {
+          budget_line_item_id?: string | null
+          document_type: Database["public"]["Enums"]["draw_document_type"]
+          draw_request_id: string
+          file_name: string
+          file_path: string
+          file_size_bytes?: number | null
+          geolocation_lat?: number | null
+          geolocation_lng?: number | null
+          id?: string
+          is_geotagged?: boolean
+          loan_id: string
+          mime_type?: string | null
+          notes?: string | null
+          photo_taken_at?: string | null
+          uploaded_at?: string
+          uploaded_by: string
+        }
+        Update: {
+          budget_line_item_id?: string | null
+          document_type?: Database["public"]["Enums"]["draw_document_type"]
+          draw_request_id?: string
+          file_name?: string
+          file_path?: string
+          file_size_bytes?: number | null
+          geolocation_lat?: number | null
+          geolocation_lng?: number | null
+          id?: string
+          is_geotagged?: boolean
+          loan_id?: string
+          mime_type?: string | null
+          notes?: string | null
+          photo_taken_at?: string | null
+          uploaded_at?: string
+          uploaded_by?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "draw_documents_budget_line_item_id_fkey"
+            columns: ["budget_line_item_id"]
+            isOneToOne: false
+            referencedRelation: "budget_line_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "draw_documents_draw_request_id_fkey"
+            columns: ["draw_request_id"]
+            isOneToOne: false
+            referencedRelation: "draw_requests"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "draw_documents_loan_id_fkey"
+            columns: ["loan_id"]
+            isOneToOne: false
+            referencedRelation: "loan_pipeline"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "draw_documents_loan_id_fkey"
+            columns: ["loan_id"]
+            isOneToOne: false
+            referencedRelation: "loans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      draw_request_line_items: {
+        Row: {
+          approved_amount: number | null
+          budget_line_item_id: string
+          draw_request_id: string
+          id: string
+          inspector_approved_percent: number | null
+          notes: string | null
+          requested_amount: number
+        }
+        Insert: {
+          approved_amount?: number | null
+          budget_line_item_id: string
+          draw_request_id: string
+          id?: string
+          inspector_approved_percent?: number | null
+          notes?: string | null
+          requested_amount: number
+        }
+        Update: {
+          approved_amount?: number | null
+          budget_line_item_id?: string
+          draw_request_id?: string
+          id?: string
+          inspector_approved_percent?: number | null
+          notes?: string | null
+          requested_amount?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "draw_request_line_items_budget_line_item_id_fkey"
+            columns: ["budget_line_item_id"]
+            isOneToOne: false
+            referencedRelation: "budget_line_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "draw_request_line_items_draw_request_id_fkey"
+            columns: ["draw_request_id"]
+            isOneToOne: false
+            referencedRelation: "draw_requests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       draw_requests: {
         Row: {
           amount_approved: number | null
           amount_requested: number
           borrower_id: string | null
+          borrower_notes: string | null
           completion_pct: number | null
+          construction_budget_id: string | null
           created_at: string
           description: string | null
           document_urls: string[] | null
           draw_number: number
+          funded_at: string | null
           id: string
+          inspection_completed_date: string | null
           inspection_date: string | null
+          inspection_ordered_date: string | null
+          inspection_type:
+            | Database["public"]["Enums"]["inspection_method"]
+            | null
+          inspector_id: string | null
           inspector_name: string | null
+          internal_notes: string | null
+          loan_event_id: string | null
           loan_id: string
+          rejection_reason: string | null
+          request_date: string | null
+          request_number: string | null
+          requested_by: string | null
           reviewed_at: string | null
+          reviewer_id: string | null
           reviewer_notes: string | null
-          status: string
+          status: Database["public"]["Enums"]["draw_request_status"]
           submitted_at: string | null
           updated_at: string
+          wire_amount: number | null
+          wire_confirmation_number: string | null
+          wire_date: string | null
+          wire_initiated_by: string | null
         }
         Insert: {
           amount_approved?: number | null
           amount_requested: number
           borrower_id?: string | null
+          borrower_notes?: string | null
           completion_pct?: number | null
+          construction_budget_id?: string | null
           created_at?: string
           description?: string | null
           document_urls?: string[] | null
           draw_number: number
+          funded_at?: string | null
           id?: string
+          inspection_completed_date?: string | null
           inspection_date?: string | null
+          inspection_ordered_date?: string | null
+          inspection_type?:
+            | Database["public"]["Enums"]["inspection_method"]
+            | null
+          inspector_id?: string | null
           inspector_name?: string | null
+          internal_notes?: string | null
+          loan_event_id?: string | null
           loan_id: string
+          rejection_reason?: string | null
+          request_date?: string | null
+          request_number?: string | null
+          requested_by?: string | null
           reviewed_at?: string | null
+          reviewer_id?: string | null
           reviewer_notes?: string | null
-          status?: string
+          status?: Database["public"]["Enums"]["draw_request_status"]
           submitted_at?: string | null
           updated_at?: string
+          wire_amount?: number | null
+          wire_confirmation_number?: string | null
+          wire_date?: string | null
+          wire_initiated_by?: string | null
         }
         Update: {
           amount_approved?: number | null
           amount_requested?: number
           borrower_id?: string | null
+          borrower_notes?: string | null
           completion_pct?: number | null
+          construction_budget_id?: string | null
           created_at?: string
           description?: string | null
           document_urls?: string[] | null
           draw_number?: number
+          funded_at?: string | null
           id?: string
+          inspection_completed_date?: string | null
           inspection_date?: string | null
+          inspection_ordered_date?: string | null
+          inspection_type?:
+            | Database["public"]["Enums"]["inspection_method"]
+            | null
+          inspector_id?: string | null
           inspector_name?: string | null
+          internal_notes?: string | null
+          loan_event_id?: string | null
           loan_id?: string
+          rejection_reason?: string | null
+          request_date?: string | null
+          request_number?: string | null
+          requested_by?: string | null
           reviewed_at?: string | null
+          reviewer_id?: string | null
           reviewer_notes?: string | null
-          status?: string
+          status?: Database["public"]["Enums"]["draw_request_status"]
           submitted_at?: string | null
           updated_at?: string
+          wire_amount?: number | null
+          wire_confirmation_number?: string | null
+          wire_date?: string | null
+          wire_initiated_by?: string | null
         }
         Relationships: [
           {
@@ -3333,6 +3832,27 @@ export type Database = {
             columns: ["borrower_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "draw_requests_construction_budget_id_fkey"
+            columns: ["construction_budget_id"]
+            isOneToOne: false
+            referencedRelation: "construction_budgets"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "draw_requests_inspector_id_fkey"
+            columns: ["inspector_id"]
+            isOneToOne: false
+            referencedRelation: "inspectors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "draw_requests_loan_event_id_fkey"
+            columns: ["loan_event_id"]
+            isOneToOne: false
+            referencedRelation: "loan_events"
             referencedColumns: ["id"]
           },
           {
@@ -5049,6 +5569,161 @@ export type Database = {
         }
         Relationships: []
       }
+      inspection_line_item_assessments: {
+        Row: {
+          budget_line_item_id: string
+          id: string
+          inspection_report_id: string
+          notes: string | null
+          percent_complete: number
+        }
+        Insert: {
+          budget_line_item_id: string
+          id?: string
+          inspection_report_id: string
+          notes?: string | null
+          percent_complete: number
+        }
+        Update: {
+          budget_line_item_id?: string
+          id?: string
+          inspection_report_id?: string
+          notes?: string | null
+          percent_complete?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "inspection_line_item_assessments_budget_line_item_id_fkey"
+            columns: ["budget_line_item_id"]
+            isOneToOne: false
+            referencedRelation: "budget_line_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "inspection_line_item_assessments_inspection_report_id_fkey"
+            columns: ["inspection_report_id"]
+            isOneToOne: false
+            referencedRelation: "inspection_reports"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      inspection_reports: {
+        Row: {
+          created_at: string
+          draw_request_id: string
+          id: string
+          inspection_date: string
+          inspection_type: Database["public"]["Enums"]["inspection_report_type"]
+          inspector_id: string | null
+          loan_id: string
+          notes: string | null
+          overall_percent_complete: number
+          report_pdf_path: string | null
+          submitted_at: string
+          submitted_by: string
+        }
+        Insert: {
+          created_at?: string
+          draw_request_id: string
+          id?: string
+          inspection_date: string
+          inspection_type: Database["public"]["Enums"]["inspection_report_type"]
+          inspector_id?: string | null
+          loan_id: string
+          notes?: string | null
+          overall_percent_complete: number
+          report_pdf_path?: string | null
+          submitted_at?: string
+          submitted_by: string
+        }
+        Update: {
+          created_at?: string
+          draw_request_id?: string
+          id?: string
+          inspection_date?: string
+          inspection_type?: Database["public"]["Enums"]["inspection_report_type"]
+          inspector_id?: string | null
+          loan_id?: string
+          notes?: string | null
+          overall_percent_complete?: number
+          report_pdf_path?: string | null
+          submitted_at?: string
+          submitted_by?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "inspection_reports_draw_request_id_fkey"
+            columns: ["draw_request_id"]
+            isOneToOne: false
+            referencedRelation: "draw_requests"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "inspection_reports_inspector_id_fkey"
+            columns: ["inspector_id"]
+            isOneToOne: false
+            referencedRelation: "inspectors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "inspection_reports_loan_id_fkey"
+            columns: ["loan_id"]
+            isOneToOne: false
+            referencedRelation: "loan_pipeline"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "inspection_reports_loan_id_fkey"
+            columns: ["loan_id"]
+            isOneToOne: false
+            referencedRelation: "loans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      inspectors: {
+        Row: {
+          active: boolean
+          company: string | null
+          created_at: string
+          email: string | null
+          has_portal_access: boolean
+          id: string
+          inspector_type: Database["public"]["Enums"]["inspector_type_enum"]
+          name: string
+          notes: string | null
+          phone: string | null
+          user_id: string | null
+        }
+        Insert: {
+          active?: boolean
+          company?: string | null
+          created_at?: string
+          email?: string | null
+          has_portal_access?: boolean
+          id?: string
+          inspector_type?: Database["public"]["Enums"]["inspector_type_enum"]
+          name: string
+          notes?: string | null
+          phone?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          active?: boolean
+          company?: string | null
+          created_at?: string
+          email?: string | null
+          has_portal_access?: boolean
+          id?: string
+          inspector_type?: Database["public"]["Enums"]["inspector_type_enum"]
+          name?: string
+          notes?: string | null
+          phone?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       investing_entities: {
         Row: {
           address_line1: string | null
@@ -5828,6 +6503,57 @@ export type Database = {
           },
         ]
       }
+      loan_events: {
+        Row: {
+          amount: number | null
+          created_at: string
+          description: string | null
+          event_date: string
+          event_type: string
+          id: string
+          loan_id: string
+          metadata: Json | null
+          performed_by: string | null
+        }
+        Insert: {
+          amount?: number | null
+          created_at?: string
+          description?: string | null
+          event_date?: string
+          event_type: string
+          id?: string
+          loan_id: string
+          metadata?: Json | null
+          performed_by?: string | null
+        }
+        Update: {
+          amount?: number | null
+          created_at?: string
+          description?: string | null
+          event_date?: string
+          event_type?: string
+          id?: string
+          loan_id?: string
+          metadata?: Json | null
+          performed_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "loan_events_loan_id_fkey"
+            columns: ["loan_id"]
+            isOneToOne: false
+            referencedRelation: "loan_pipeline"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "loan_events_loan_id_fkey"
+            columns: ["loan_id"]
+            isOneToOne: false
+            referencedRelation: "loans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       loan_payments: {
         Row: {
           amount: number
@@ -6039,12 +6765,14 @@ export type Database = {
           co_borrower_name: string | null
           combined_liquidity: number | null
           combined_net_worth: number | null
+          construction_budget_id: string | null
           created_at: string
           deal_financing: string | null
           deal_programs: string[] | null
           debt_tranche: string | null
           default_rate: number | null
           deleted_at: string | null
+          draw_count: number
           dscr_ratio: number | null
           escrow_holdback: number | null
           expected_close_date: string | null
@@ -6133,6 +6861,7 @@ export type Database = {
           title_company_email: string | null
           title_company_name: string | null
           title_company_phone: string | null
+          total_draws_funded: number
           total_loan_amount: number | null
           type: Database["public"]["Enums"]["loan_type"]
           underwriter: string | null
@@ -6171,12 +6900,14 @@ export type Database = {
           co_borrower_name?: string | null
           combined_liquidity?: number | null
           combined_net_worth?: number | null
+          construction_budget_id?: string | null
           created_at?: string
           deal_financing?: string | null
           deal_programs?: string[] | null
           debt_tranche?: string | null
           default_rate?: number | null
           deleted_at?: string | null
+          draw_count?: number
           dscr_ratio?: number | null
           escrow_holdback?: number | null
           expected_close_date?: string | null
@@ -6265,6 +6996,7 @@ export type Database = {
           title_company_email?: string | null
           title_company_name?: string | null
           title_company_phone?: string | null
+          total_draws_funded?: number
           total_loan_amount?: number | null
           type?: Database["public"]["Enums"]["loan_type"]
           underwriter?: string | null
@@ -6303,12 +7035,14 @@ export type Database = {
           co_borrower_name?: string | null
           combined_liquidity?: number | null
           combined_net_worth?: number | null
+          construction_budget_id?: string | null
           created_at?: string
           deal_financing?: string | null
           deal_programs?: string[] | null
           debt_tranche?: string | null
           default_rate?: number | null
           deleted_at?: string | null
+          draw_count?: number
           dscr_ratio?: number | null
           escrow_holdback?: number | null
           expected_close_date?: string | null
@@ -6397,6 +7131,7 @@ export type Database = {
           title_company_email?: string | null
           title_company_name?: string | null
           title_company_phone?: string | null
+          total_draws_funded?: number
           total_loan_amount?: number | null
           type?: Database["public"]["Enums"]["loan_type"]
           underwriter?: string | null
@@ -6466,6 +7201,13 @@ export type Database = {
             columns: ["closer_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "loans_construction_budget_id_fkey"
+            columns: ["construction_budget_id"]
+            isOneToOne: false
+            referencedRelation: "construction_budgets"
             referencedColumns: ["id"]
           },
           {
@@ -10458,6 +11200,20 @@ export type Database = {
       }
     }
     Functions: {
+      approve_budget_change_request: {
+        Args: { p_approved_by: string; p_request_id: string }
+        Returns: Json
+      }
+      approve_draw_request: {
+        Args: {
+          p_approved_amount: number
+          p_approved_line_items: Json
+          p_draw_request_id: string
+          p_review_notes?: string
+          p_reviewer_id: string
+        }
+        Returns: Json
+      }
       assign_role: {
         Args: {
           target_borrower_id?: string
@@ -10465,6 +11221,10 @@ export type Database = {
           target_role: Database["public"]["Enums"]["app_role"]
           target_user_id: string
         }
+        Returns: string
+      }
+      create_construction_budget: {
+        Args: { p_created_by: string; p_line_items: Json; p_loan_id: string }
         Returns: string
       }
       create_notification: {
@@ -10485,23 +11245,35 @@ export type Database = {
       dmetaphone: { Args: { "": string }; Returns: string }
       dmetaphone_alt: { Args: { "": string }; Returns: string }
       evaluate_auto_approval: { Args: { p_loan_id: string }; Returns: string }
+      fund_draw_request: {
+        Args: {
+          p_draw_request_id: string
+          p_funded_by: string
+          p_wire_amount: number
+          p_wire_confirmation_number: string
+          p_wire_date: string
+        }
+        Returns: Json
+      }
       generate_loan_conditions: { Args: { p_loan_id: string }; Returns: number }
       get_borrower_deals_last_2_years: {
         Args: { p_borrower_id: string }
         Returns: number
       }
+      get_draw_summary: { Args: { p_loan_id: string }; Returns: Json }
       get_my_roles: {
         Args: never
         Returns: {
           borrower_id: string
-          entity_display_name: string
+          display_name: string
+          id: string
           investor_id: string
           is_active: boolean
-          role: Database["public"]["Enums"]["app_role"]
-          role_id: string
+          role: string
         }[]
       }
       get_portal_context: { Args: never; Returns: Json }
+      get_portfolio_draw_dashboard: { Args: never; Returns: Json }
       get_unread_notification_count: { Args: never; Returns: number }
       grant_role: {
         Args: {
@@ -10634,13 +11406,43 @@ export type Database = {
       show_limit: { Args: never; Returns: number }
       show_trgm: { Args: { "": string }; Returns: string[] }
       soundex: { Args: { "": string }; Returns: string }
+      submit_draw_request: {
+        Args: {
+          p_borrower_notes: string
+          p_line_item_draws: Json
+          p_loan_id: string
+          p_requested_by: string
+        }
+        Returns: string
+      }
       text_soundex: { Args: { "": string }; Returns: string }
       unaccent: { Args: { "": string }; Returns: string }
+      validate_budget_integrity: {
+        Args: { p_budget_id: string }
+        Returns: boolean
+      }
+      validate_change_request_balance: {
+        Args: { p_request_id: string }
+        Returns: boolean
+      }
     }
     Enums: {
       activity_direction_enum: "inbound" | "outbound"
       app_role: "super_admin" | "admin" | "investor" | "borrower"
       audit_action_enum: "insert" | "update" | "delete"
+      budget_change_action: "add" | "increase" | "decrease" | "remove"
+      budget_change_request_status:
+        | "pending"
+        | "approved"
+        | "rejected"
+        | "withdrawn"
+      budget_line_item_change_type:
+        | "created"
+        | "amount_revised"
+        | "description_updated"
+        | "deactivated"
+        | "reactivated"
+      budget_status: "draft" | "active" | "completed" | "closed"
       call_direction_enum: "inbound" | "outbound"
       call_status_enum:
         | "initiated"
@@ -10768,6 +11570,24 @@ export type Database = {
         | "partner"
         | "referral"
         | "other"
+      draw_document_type:
+        | "photo"
+        | "invoice"
+        | "inspector_report"
+        | "lien_waiver"
+        | "sitewire_report"
+        | "other"
+      draw_request_status:
+        | "draft"
+        | "submitted"
+        | "inspection_ordered"
+        | "inspection_complete"
+        | "under_review"
+        | "approved"
+        | "funded"
+        | "rejected"
+        | "denied"
+        | "withdrawn"
       equity_deal_source:
         | "broker"
         | "off_market"
@@ -10794,6 +11614,13 @@ export type Database = {
         | "completed"
         | "blocked"
         | "waived"
+      inspection_method:
+        | "physical_inspector"
+        | "sitewire"
+        | "internal_review"
+        | "waived"
+      inspection_report_type: "physical" | "sitewire" | "desk_review"
+      inspector_type_enum: "independent" | "sitewire" | "internal"
       lender_direction_enum:
         | "broker_to"
         | "note_buyer"
@@ -11004,6 +11831,21 @@ export const Constants = {
       activity_direction_enum: ["inbound", "outbound"],
       app_role: ["super_admin", "admin", "investor", "borrower"],
       audit_action_enum: ["insert", "update", "delete"],
+      budget_change_action: ["add", "increase", "decrease", "remove"],
+      budget_change_request_status: [
+        "pending",
+        "approved",
+        "rejected",
+        "withdrawn",
+      ],
+      budget_line_item_change_type: [
+        "created",
+        "amount_revised",
+        "description_updated",
+        "deactivated",
+        "reactivated",
+      ],
+      budget_status: ["draft", "active", "completed", "closed"],
       call_direction_enum: ["inbound", "outbound"],
       call_status_enum: [
         "initiated",
@@ -11144,6 +11986,26 @@ export const Constants = {
         "referral",
         "other",
       ],
+      draw_document_type: [
+        "photo",
+        "invoice",
+        "inspector_report",
+        "lien_waiver",
+        "sitewire_report",
+        "other",
+      ],
+      draw_request_status: [
+        "draft",
+        "submitted",
+        "inspection_ordered",
+        "inspection_complete",
+        "under_review",
+        "approved",
+        "funded",
+        "rejected",
+        "denied",
+        "withdrawn",
+      ],
       equity_deal_source: [
         "broker",
         "off_market",
@@ -11173,6 +12035,14 @@ export const Constants = {
         "blocked",
         "waived",
       ],
+      inspection_method: [
+        "physical_inspector",
+        "sitewire",
+        "internal_review",
+        "waived",
+      ],
+      inspection_report_type: ["physical", "sitewire", "desk_review"],
+      inspector_type_enum: ["independent", "sitewire", "internal"],
       lender_direction_enum: [
         "broker_to",
         "note_buyer",
@@ -11263,104 +12133,3 @@ export const Constants = {
     },
   },
 } as const
-
-export type Profile = Database["public"]["Tables"]["profiles"]["Row"]
-export type BorrowerEntity = Database["public"]["Tables"]["borrower_entities"]["Row"]
-export type CrmContact = Database["public"]["Tables"]["crm_contacts"]["Row"]
-export type Loan = Database["public"]["Tables"]["loans"]["Row"]
-export type LoanCondition = Database["public"]["Tables"]["loan_conditions"]["Row"]
-export type LoanConditionTemplate = Database["public"]["Tables"]["loan_condition_templates"]["Row"]
-export type LoanDocument = Database["public"]["Tables"]["loan_documents"]["Row"]
-export type LoanPayment = Database["public"]["Tables"]["loan_payments"]["Row"]
-export type DrawRequest = Database["public"]["Tables"]["draw_requests"]["Row"]
-export type Document = Database["public"]["Tables"]["documents"]["Row"]
-
-// Types for tables not yet in the generated Database type
-export interface PricingProgram {
-  id: string
-  program_id: string
-  loan_type: string | null
-  program_name: string
-  arv_label: string | null
-  interest_rate: number
-  rate_type: string
-  origination_points: number
-  min_origination_fee: number
-  points_note: string | null
-  max_ltv: number
-  ltv_note: string | null
-  max_ltc: number
-  ltc_note: string | null
-  max_ltp: number
-  loan_term_months: number
-  exit_points: number
-  term_note: string | null
-  legal_doc_fee: number
-  bpo_appraisal_cost: number
-  bpo_appraisal_note: string | null
-  min_credit_score: number
-  min_deals_24mo: number
-  citizenship: string
-  version: number
-  is_current: boolean
-  effective_date: string | null
-  created_at: string
-  created_by: string | null
-}
-
-export interface PricingProgramVersion {
-  id: string
-  program_id: string
-  version: number
-  change_description: string | null
-  changed_at: string
-  changed_by: string | null
-}
-
-export interface LeverageAdjuster {
-  id: string
-  program_id: string
-  risk_factor: string
-  display_name: string
-  condition_description: string | null
-  ltc_adjustment: number
-  ltv_adjustment: number
-  note: string | null
-  is_active: boolean
-  sort_order: number
-}
-
-export interface LenderQuote {
-  id: string
-  loan_id: string
-  quote_name: string
-  lender_company_id: string | null
-  lender_contact_name: string | null
-  linked_property_id: string | null
-  loan_amount: number | null
-  interest_rate: number | null
-  loan_term_months: number | null
-  interest_only_period_months: number | null
-  ltv: number | null
-  amortization_months: number | null
-  origination_fee: number | null
-  uw_processing_fee: number | null
-  requity_lending_fee: number | null
-  prepayment_penalty: string | null
-  ym_spread: number | null
-  ym_amount: number | null
-  term_sheet_url: string | null
-  description: string | null
-  status: string
-  status_changed_at: string | null
-  requested_at: string | null
-  received_at: string | null
-  accepted_at: string | null
-  declined_at: string | null
-  declined_reason: string | null
-  created_at: string
-  updated_at: string
-  created_by: string | null
-  updated_by: string | null
-}
-
