@@ -1,23 +1,14 @@
 "use client";
 
-import { useState } from "react";
 import { cn } from "@/lib/utils";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/badge";
-import { getInitials } from "@/lib/chat-utils";
+import { ChatAvatar, ChatGroupIcon } from "./ChatAvatar";
 import type { ChatChannelWithUnread } from "@/lib/chat-types";
 import {
-  Hash,
-  Landmark,
-  Users,
-  MessageCircle,
-  Settings,
+  Search,
   Pin,
-  ChevronDown,
-  ChevronUp,
+  Settings,
   PanelRightOpen,
   PanelRightClose,
-  Search,
 } from "lucide-react";
 
 interface ChannelHeaderProps {
@@ -35,16 +26,6 @@ interface ChannelHeaderProps {
   onTabChange: (tab: "chat" | "activity") => void;
 }
 
-const channelTypeLabels: Record<string, string> = {
-  deal_room: "Deal Room",
-  team: "Team Channel",
-  direct: "Direct Message",
-  group: "Group Chat",
-  investor_room: "Investor Room",
-  borrower_room: "Borrower Room",
-  project_room: "Project Room",
-};
-
 export function ChannelHeader({
   channel,
   members,
@@ -56,101 +37,93 @@ export function ChannelHeader({
   onTabChange,
 }: ChannelHeaderProps) {
   const isDealRoom = channel.channel_type === "deal_room";
+  const isDM = channel.channel_type === "direct";
 
   return (
-    <div className="border-b border-slate-200 bg-white">
+    <div className="border-b border-[rgba(197,151,91,0.08)] bg-[#0F2140]">
       {/* Main header row */}
       <div className="flex items-center justify-between px-4 py-3">
         <div className="flex items-center gap-3 min-w-0">
-          <div className="flex items-center gap-2">
-            {channel.channel_type === "deal_room" ? (
-              <Landmark className="h-5 w-5 text-blue-600 flex-shrink-0" />
-            ) : channel.channel_type === "team" ? (
-              <Users className="h-5 w-5 text-emerald-600 flex-shrink-0" />
-            ) : channel.channel_type === "direct" ? (
-              <MessageCircle className="h-5 w-5 text-purple-600 flex-shrink-0" />
-            ) : (
-              <Hash className="h-5 w-5 text-slate-500 flex-shrink-0" />
-            )}
-            <h2 className="font-semibold text-slate-900 truncate">
+          {isDM ? (
+            <ChatAvatar src={null} name={channel.name} size="header" />
+          ) : (
+            <ChatGroupIcon icon={channel.icon} size="header" />
+          )}
+
+          <div className="min-w-0">
+            <h2 className="font-semibold text-[#FAFAF8] truncate text-sm">
               {channel.name}
             </h2>
-          </div>
-          <Badge variant="secondary" className="text-xs flex-shrink-0">
-            {channelTypeLabels[channel.channel_type] || channel.channel_type}
-          </Badge>
-          {channel.linked_entity_type && (
-            <Badge variant="info" className="text-xs flex-shrink-0">
-              {channel.linked_entity_type}
-            </Badge>
-          )}
-        </div>
-
-        <div className="flex items-center gap-1">
-          {/* Member avatars */}
-          <div className="flex -space-x-2 mr-2">
-            {members.slice(0, 4).map((m) => (
-              <Avatar key={m.id} className="h-7 w-7 border-2 border-white">
-                {m.avatar_url && <AvatarImage src={m.avatar_url} />}
-                <AvatarFallback className="text-[10px] bg-slate-100 text-slate-600">
-                  {getInitials(m.full_name)}
-                </AvatarFallback>
-              </Avatar>
-            ))}
-            {members.length > 4 && (
-              <div className="h-7 w-7 rounded-full bg-slate-200 border-2 border-white flex items-center justify-center text-[10px] text-slate-600 font-medium">
-                +{members.length - 4}
-              </div>
+            {!isDM && members.length > 0 && (
+              <span className="text-xs text-[#8A8680]">
+                {members.length}{" "}
+                {members.length === 1 ? "member" : "members"}
+              </span>
             )}
           </div>
+        </div>
 
-          <button
-            onClick={onSearch}
-            className="p-1.5 rounded-md text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors"
-            title="Search messages"
-          >
-            <Search className="h-4 w-4" />
-          </button>
-
-          {isDealRoom && (
-            <button
-              onClick={onToggleContextPanel}
-              className={cn(
-                "p-1.5 rounded-md transition-colors",
-                isContextPanelOpen
-                  ? "text-blue-600 bg-blue-50"
-                  : "text-slate-400 hover:text-slate-600 hover:bg-slate-100"
+        <div className="flex items-center gap-0.5">
+          {members.length > 0 && (
+            <div className="flex -space-x-1.5 mr-2">
+              {members.slice(0, 4).map((m) => (
+                <ChatAvatar
+                  key={m.id}
+                  src={m.avatar_url}
+                  name={m.full_name}
+                  size="header"
+                  className="border-[#0F2140]"
+                />
+              ))}
+              {members.length > 4 && (
+                <div className="h-7 w-7 rounded-md bg-[#1A3355] border-[1.5px] border-[#0F2140] flex items-center justify-center text-[10px] text-[#C4C0B8] font-medium">
+                  +{members.length - 4}
+                </div>
               )}
-              title="Toggle deal context"
-            >
-              {isContextPanelOpen ? (
-                <PanelRightClose className="h-4 w-4" />
-              ) : (
-                <PanelRightOpen className="h-4 w-4" />
-              )}
-            </button>
+            </div>
           )}
 
-          <button
+          <HeaderButton
+            onClick={onSearch}
+            title="Search messages"
+            icon={<Search className="h-4 w-4" />}
+          />
+          <HeaderButton
+            onClick={() => {}}
+            title="Pinned messages"
+            icon={<Pin className="h-4 w-4" />}
+          />
+          {isDealRoom && (
+            <HeaderButton
+              onClick={onToggleContextPanel}
+              title="Toggle deal context"
+              isActive={isContextPanelOpen}
+              icon={
+                isContextPanelOpen ? (
+                  <PanelRightClose className="h-4 w-4" />
+                ) : (
+                  <PanelRightOpen className="h-4 w-4" />
+                )
+              }
+            />
+          )}
+          <HeaderButton
             onClick={onSettings}
-            className="p-1.5 rounded-md text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors"
             title="Channel settings"
-          >
-            <Settings className="h-4 w-4" />
-          </button>
+            icon={<Settings className="h-4 w-4" />}
+          />
         </div>
       </div>
 
-      {/* Tab bar for deal rooms */}
       {isDealRoom && (
-        <div className="flex gap-0 px-4 border-t border-slate-100">
+        <div className="flex gap-0 px-4 border-t border-[rgba(197,151,91,0.08)]">
           <button
             onClick={() => onTabChange("chat")}
             className={cn(
-              "px-3 py-2 text-sm font-medium border-b-2 transition-colors",
+              "px-3 py-2 text-sm font-medium border-b-2 transition-all duration-200",
               activeTab === "chat"
-                ? "text-blue-600 border-blue-600"
-                : "text-slate-500 border-transparent hover:text-slate-700"
+                ? "text-[#C5975B] border-[#C5975B]"
+                : "text-[#8A8680] border-transparent hover:text-[#C4C0B8]"
             )}
           >
             Chat
@@ -158,10 +131,10 @@ export function ChannelHeader({
           <button
             onClick={() => onTabChange("activity")}
             className={cn(
-              "px-3 py-2 text-sm font-medium border-b-2 transition-colors",
+              "px-3 py-2 text-sm font-medium border-b-2 transition-all duration-200",
               activeTab === "activity"
-                ? "text-blue-600 border-blue-600"
-                : "text-slate-500 border-transparent hover:text-slate-700"
+                ? "text-[#C5975B] border-[#C5975B]"
+                : "text-[#8A8680] border-transparent hover:text-[#C4C0B8]"
             )}
           >
             Activity
@@ -169,5 +142,32 @@ export function ChannelHeader({
         </div>
       )}
     </div>
+  );
+}
+
+function HeaderButton({
+  onClick,
+  title,
+  icon,
+  isActive,
+}: {
+  onClick: () => void;
+  title: string;
+  icon: React.ReactNode;
+  isActive?: boolean;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      className={cn(
+        "p-1.5 rounded-md transition-all duration-200 ease-[cubic-bezier(0.4,0,0.2,1)]",
+        isActive
+          ? "text-[#C5975B] bg-[rgba(197,151,91,0.08)]"
+          : "text-[#C4C0B8] hover:text-[#FAFAF8] hover:bg-[rgba(255,255,255,0.06)]"
+      )}
+      title={title}
+    >
+      {icon}
+    </button>
   );
 }

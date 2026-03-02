@@ -3,9 +3,9 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { ChatAvatar } from "./ChatAvatar";
 import { MessageInput } from "./MessageInput";
-import { formatMessageTime, getInitials } from "@/lib/chat-utils";
+import { formatMessageTime } from "@/lib/chat-utils";
 import type { ChatMessageWithSender, PresenceStatus } from "@/lib/chat-types";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
@@ -30,7 +30,8 @@ export function ThreadPanel({
   onTyping,
   onStopTyping,
 }: ThreadPanelProps) {
-  const [parentMessage, setParentMessage] = useState<ChatMessageWithSender | null>(null);
+  const [parentMessage, setParentMessage] =
+    useState<ChatMessageWithSender | null>(null);
   const [replies, setReplies] = useState<ChatMessageWithSender[]>([]);
   const [loading, setLoading] = useState(true);
   const bottomRef = useRef<HTMLDivElement>(null);
@@ -40,7 +41,6 @@ export function ThreadPanel({
   const fetchThread = useCallback(async () => {
     const supabase = supabaseRef.current;
 
-    // Fetch parent
     const { data: parent } = await supabase
       .from("chat_messages" as never)
       .select(
@@ -53,7 +53,6 @@ export function ThreadPanel({
       setParentMessage(parent as unknown as ChatMessageWithSender);
     }
 
-    // Fetch replies
     const { data: replyData } = await supabase
       .from("chat_messages" as never)
       .select(
@@ -120,13 +119,13 @@ export function ThreadPanel({
   }, [parentMessageId]);
 
   return (
-    <div className="w-96 h-full border-l border-slate-200 bg-white flex flex-col">
+    <div className="w-96 h-full border-l border-[rgba(197,151,91,0.08)] bg-[#0A1628] flex flex-col">
       {/* Header */}
-      <div className="flex items-center justify-between px-4 py-3 border-b border-slate-200">
-        <h3 className="text-sm font-semibold text-slate-900">Thread</h3>
+      <div className="flex items-center justify-between px-4 py-3 border-b border-[rgba(197,151,91,0.08)]">
+        <h3 className="text-sm font-semibold text-[#FAFAF8]">Thread</h3>
         <button
           onClick={onClose}
-          className="p-1 rounded hover:bg-slate-100 text-slate-400"
+          className="p-1 rounded hover:bg-[rgba(255,255,255,0.06)] text-[#C4C0B8] transition-colors duration-200"
         >
           <X className="h-4 w-4" />
         </button>
@@ -134,62 +133,58 @@ export function ThreadPanel({
 
       {loading ? (
         <div className="flex-1 flex items-center justify-center">
-          <Loader2 className="h-6 w-6 animate-spin text-slate-400" />
+          <Loader2 className="h-6 w-6 animate-spin text-[#C5975B]" />
         </div>
       ) : (
         <>
           {/* Parent message */}
           {parentMessage && (
-            <div className="px-4 py-3 border-b border-slate-100 bg-slate-50">
+            <div className="px-4 py-3 border-b border-[rgba(197,151,91,0.08)] bg-[#0F2140]">
               <div className="flex items-center gap-2 mb-1.5">
-                <Avatar className="h-7 w-7">
-                  {parentMessage.sender?.avatar_url && (
-                    <AvatarImage src={parentMessage.sender.avatar_url} />
-                  )}
-                  <AvatarFallback className="text-xs bg-blue-100 text-blue-700">
-                    {getInitials(parentMessage.sender?.full_name || null)}
-                  </AvatarFallback>
-                </Avatar>
-                <span className="text-sm font-semibold text-slate-900">
+                <ChatAvatar
+                  src={parentMessage.sender?.avatar_url}
+                  name={parentMessage.sender?.full_name}
+                  size="header"
+                />
+                <span className="text-sm font-semibold text-[#FAFAF8]">
                   {parentMessage.sender?.full_name || "Unknown"}
                 </span>
-                <span className="text-xs text-slate-400">
+                <span className="text-xs text-[#8A8680]">
                   {formatMessageTime(parentMessage.created_at)}
                 </span>
               </div>
-              <div className="text-sm text-slate-700 prose prose-sm max-w-none prose-p:my-0">
+              <div className="text-sm text-[#F0EDE6] prose prose-sm prose-invert max-w-none prose-p:my-0">
                 <ReactMarkdown remarkPlugins={[remarkGfm]}>
                   {parentMessage.content || ""}
                 </ReactMarkdown>
               </div>
-              <div className="mt-2 text-xs text-slate-400">
-                {replies.length} {replies.length === 1 ? "reply" : "replies"}
+              <div className="mt-2 text-xs text-[#8A8680]">
+                {replies.length}{" "}
+                {replies.length === 1 ? "reply" : "replies"}
               </div>
             </div>
           )}
 
           {/* Replies */}
-          <div className="flex-1 overflow-y-auto py-2">
+          <div className="flex-1 overflow-y-auto py-2 bg-[#0F2140]">
             {replies.map((reply) => (
               <div key={reply.id} className="flex gap-2.5 px-4 py-1.5">
-                <Avatar className="h-7 w-7 flex-shrink-0">
-                  {reply.sender?.avatar_url && (
-                    <AvatarImage src={reply.sender.avatar_url} />
-                  )}
-                  <AvatarFallback className="text-xs bg-blue-100 text-blue-700">
-                    {getInitials(reply.sender?.full_name || null)}
-                  </AvatarFallback>
-                </Avatar>
+                <ChatAvatar
+                  src={reply.sender?.avatar_url}
+                  name={reply.sender?.full_name}
+                  size="header"
+                  className="flex-shrink-0"
+                />
                 <div className="min-w-0 flex-1">
                   <div className="flex items-baseline gap-2 mb-0.5">
-                    <span className="text-sm font-semibold text-slate-900">
+                    <span className="text-sm font-semibold text-[#FAFAF8]">
                       {reply.sender?.full_name || "Unknown"}
                     </span>
-                    <span className="text-xs text-slate-400">
+                    <span className="text-xs text-[#8A8680]">
                       {formatMessageTime(reply.created_at)}
                     </span>
                   </div>
-                  <div className="text-sm text-slate-700 prose prose-sm max-w-none prose-p:my-0">
+                  <div className="text-sm text-[#F0EDE6] prose prose-sm prose-invert max-w-none prose-p:my-0">
                     <ReactMarkdown remarkPlugins={[remarkGfm]}>
                       {reply.content || ""}
                     </ReactMarkdown>

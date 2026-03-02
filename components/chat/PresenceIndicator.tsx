@@ -4,21 +4,23 @@ import { cn } from "@/lib/utils";
 import type { PresenceStatus } from "@/lib/chat-types";
 
 const statusColors: Record<PresenceStatus, string> = {
-  online: "bg-green-500",
-  away: "bg-yellow-500",
-  busy: "bg-red-500",
-  offline: "bg-slate-300",
+  online: "bg-[#2D8A56]",
+  away: "bg-[#D4952B]",
+  busy: "bg-[#C0392B]",
+  offline: "bg-[#8A8680]",
 };
 
 interface PresenceIndicatorProps {
   status: PresenceStatus;
   size?: "sm" | "md" | "lg";
+  borderColor?: string;
   className?: string;
 }
 
 export function PresenceIndicator({
   status,
   size = "sm",
+  borderColor,
   className,
 }: PresenceIndicatorProps) {
   const sizeClasses = {
@@ -30,7 +32,8 @@ export function PresenceIndicator({
   return (
     <span
       className={cn(
-        "inline-block rounded-full border-2 border-white",
+        "inline-block rounded-full border-2",
+        borderColor || "border-[#0A1628]",
         sizeClasses[size],
         statusColors[status],
         className

@@ -37,15 +37,15 @@ interface LoanContext {
 }
 
 const stageColors: Record<string, string> = {
-  lead: "bg-slate-100 text-slate-800",
-  application: "bg-blue-100 text-blue-800",
-  processing: "bg-indigo-100 text-indigo-800",
-  underwriting: "bg-purple-100 text-purple-800",
-  approved: "bg-emerald-100 text-emerald-800",
-  clear_to_close: "bg-green-100 text-green-800",
-  funded: "bg-teal-100 text-teal-800",
-  servicing: "bg-cyan-100 text-cyan-800",
-  default: "bg-red-100 text-red-800",
+  lead: "bg-[#1A3355] text-[#C4C0B8]",
+  application: "bg-[rgba(197,151,91,0.1)] text-[#C5975B]",
+  processing: "bg-[rgba(197,151,91,0.1)] text-[#D4AD72]",
+  underwriting: "bg-[rgba(197,151,91,0.15)] text-[#D4AD72]",
+  approved: "bg-[rgba(45,138,86,0.15)] text-[#2D8A56]",
+  clear_to_close: "bg-[rgba(45,138,86,0.2)] text-[#2D8A56]",
+  funded: "bg-[rgba(45,138,86,0.15)] text-[#2D8A56]",
+  servicing: "bg-[#1A3355] text-[#C4C0B8]",
+  default: "bg-[rgba(192,57,43,0.15)] text-[#C0392B]",
 };
 
 export function ContextPanel({ channel, onClose }: ContextPanelProps) {
@@ -67,16 +67,19 @@ export function ContextPanel({ channel, onClose }: ContextPanelProps) {
         .single();
 
       if (data) {
-        // Also fetch borrower name
         let borrowerName = null;
         if ((data as Record<string, unknown>).borrower_id) {
           const { data: borrower } = await supabase
             .from("borrowers")
             .select("first_name, last_name")
-            .eq("id", (data as Record<string, unknown>).borrower_id as string)
+            .eq(
+              "id",
+              (data as Record<string, unknown>).borrower_id as string
+            )
             .single();
           if (borrower) {
-            borrowerName = `${borrower.first_name || ""} ${borrower.last_name || ""}`.trim();
+            borrowerName =
+              `${borrower.first_name || ""} ${borrower.last_name || ""}`.trim();
           }
         }
 
@@ -94,12 +97,12 @@ export function ContextPanel({ channel, onClose }: ContextPanelProps) {
   if (channel.linked_entity_type !== "loan") return null;
 
   return (
-    <div className="w-72 border-l border-slate-200 bg-slate-50 flex flex-col">
-      <div className="flex items-center justify-between p-3 border-b border-slate-200">
-        <h3 className="text-sm font-semibold text-slate-900">Deal Context</h3>
+    <div className="w-72 border-l border-[rgba(197,151,91,0.08)] bg-[#0A1628] flex flex-col">
+      <div className="flex items-center justify-between p-3 border-b border-[rgba(197,151,91,0.08)]">
+        <h3 className="text-sm font-semibold text-[#FAFAF8]">Deal Context</h3>
         <button
           onClick={onClose}
-          className="p-1 rounded hover:bg-slate-200 text-slate-400"
+          className="p-1 rounded hover:bg-[rgba(255,255,255,0.06)] text-[#C4C0B8] transition-colors duration-200"
         >
           <X className="h-4 w-4" />
         </button>
@@ -109,23 +112,23 @@ export function ContextPanel({ channel, onClose }: ContextPanelProps) {
         <div className="p-3 space-y-3">
           {Array.from({ length: 5 }).map((_, i) => (
             <div key={i} className="space-y-1">
-              <div className="h-3 w-16 bg-slate-200 rounded animate-pulse" />
-              <div className="h-4 w-32 bg-slate-200 rounded animate-pulse" />
+              <div className="h-3 w-16 bg-[#0F2140] rounded animate-pulse" />
+              <div className="h-4 w-32 bg-[#0F2140] rounded animate-pulse" />
             </div>
           ))}
         </div>
       ) : loan ? (
         <div className="flex-1 overflow-y-auto p-3 space-y-4">
-          {/* Loan number & status */}
           <div>
-            <div className="text-xs text-slate-500 mb-1">Loan Number</div>
+            <div className="text-xs text-[#8A8680] mb-1">Loan Number</div>
             <div className="flex items-center gap-2">
-              <span className="font-semibold text-slate-900">
+              <span className="font-semibold text-[#FAFAF8]">
                 {loan.loan_number || "N/A"}
               </span>
               <Badge
                 className={
-                  stageColors[loan.stage || ""] || "bg-slate-100 text-slate-800"
+                  stageColors[loan.stage || ""] ||
+                  "bg-[#1A3355] text-[#C4C0B8]"
                 }
               >
                 {(loan.stage || "unknown").replace(/_/g, " ")}
@@ -133,72 +136,69 @@ export function ContextPanel({ channel, onClose }: ContextPanelProps) {
             </div>
           </div>
 
-          {/* Type */}
           <div>
-            <div className="text-xs text-slate-500 mb-1">Type / Purpose</div>
-            <div className="text-sm text-slate-900">
+            <div className="text-xs text-[#8A8680] mb-1">Type / Purpose</div>
+            <div className="text-sm text-[#F0EDE6]">
               {(loan.type || "N/A").toUpperCase()} &mdash;{" "}
               {(loan.purpose || "N/A").replace(/_/g, " ")}
             </div>
           </div>
 
-          {/* Amount */}
           {loan.loan_amount && (
             <div>
-              <div className="text-xs text-slate-500 mb-1 flex items-center gap-1">
+              <div className="text-xs text-[#8A8680] mb-1 flex items-center gap-1">
                 <DollarSign className="h-3 w-3" /> Loan Amount
               </div>
-              <div className="text-sm font-semibold text-slate-900">
+              <div className="text-sm font-semibold text-[#C5975B]">
                 {formatCurrency(loan.loan_amount)}
               </div>
             </div>
           )}
 
-          {/* Property */}
           {loan.property_address && (
             <div>
-              <div className="text-xs text-slate-500 mb-1 flex items-center gap-1">
+              <div className="text-xs text-[#8A8680] mb-1 flex items-center gap-1">
                 <MapPin className="h-3 w-3" /> Property
               </div>
-              <div className="text-sm text-slate-900">
+              <div className="text-sm text-[#F0EDE6]">
                 {loan.property_address}
               </div>
               {loan.property_type && (
-                <div className="text-xs text-slate-500 mt-0.5">
+                <div className="text-xs text-[#8A8680] mt-0.5">
                   {loan.property_type.replace(/_/g, " ").toUpperCase()}
                 </div>
               )}
             </div>
           )}
 
-          {/* Terms */}
           {(loan.interest_rate || loan.loan_term_months) && (
             <div>
-              <div className="text-xs text-slate-500 mb-1">Terms</div>
-              <div className="text-sm text-slate-900">
+              <div className="text-xs text-[#8A8680] mb-1">Terms</div>
+              <div className="text-sm text-[#F0EDE6]">
                 {loan.interest_rate && `${loan.interest_rate}% rate`}
                 {loan.interest_rate && loan.loan_term_months && " / "}
-                {loan.loan_term_months && `${loan.loan_term_months} months`}
+                {loan.loan_term_months &&
+                  `${loan.loan_term_months} months`}
               </div>
             </div>
           )}
 
-          {/* Borrower */}
           {loan.borrower_name && (
             <div>
-              <div className="text-xs text-slate-500 mb-1 flex items-center gap-1">
+              <div className="text-xs text-[#8A8680] mb-1 flex items-center gap-1">
                 <User className="h-3 w-3" /> Borrower
               </div>
-              <div className="text-sm text-slate-900">{loan.borrower_name}</div>
+              <div className="text-sm text-[#F0EDE6]">
+                {loan.borrower_name}
+              </div>
             </div>
           )}
 
-          {/* Key dates */}
           <div>
-            <div className="text-xs text-slate-500 mb-1 flex items-center gap-1">
+            <div className="text-xs text-[#8A8680] mb-1 flex items-center gap-1">
               <Calendar className="h-3 w-3" /> Key Dates
             </div>
-            <div className="space-y-1 text-sm text-slate-700">
+            <div className="space-y-1 text-sm text-[#C4C0B8]">
               <div>
                 Created:{" "}
                 {new Date(loan.created_at).toLocaleDateString("en-US", {
@@ -210,27 +210,29 @@ export function ContextPanel({ channel, onClose }: ContextPanelProps) {
               {loan.stage_updated_at && (
                 <div>
                   Stage updated:{" "}
-                  {new Date(loan.stage_updated_at).toLocaleDateString("en-US", {
-                    month: "short",
-                    day: "numeric",
-                    year: "numeric",
-                  })}
+                  {new Date(loan.stage_updated_at).toLocaleDateString(
+                    "en-US",
+                    {
+                      month: "short",
+                      day: "numeric",
+                      year: "numeric",
+                    }
+                  )}
                 </div>
               )}
             </div>
           </div>
 
-          {/* Quick link to loan */}
           <Link
             href={`/admin/loans/${loan.id}`}
-            className="flex items-center gap-2 text-sm text-blue-600 hover:text-blue-800 font-medium transition-colors"
+            className="flex items-center gap-2 text-sm text-[#C5975B] hover:text-[#D4AD72] font-medium transition-colors duration-200"
           >
             <ExternalLink className="h-4 w-4" />
             View full loan details
           </Link>
         </div>
       ) : (
-        <div className="p-4 text-sm text-slate-400 text-center">
+        <div className="p-4 text-sm text-[#8A8680] text-center">
           Loan not found
         </div>
       )}

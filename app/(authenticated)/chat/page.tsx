@@ -10,8 +10,15 @@ import { usePresence } from "@/hooks/usePresence";
 import type { ChatChannelWithUnread } from "@/lib/chat-types";
 import { MessageSquare, Loader2 } from "lucide-react";
 
+interface UserProfile {
+  id: string;
+  full_name: string | null;
+  avatar_url: string | null;
+}
+
 export default function ChatPage() {
   const [userId, setUserId] = useState<string | undefined>();
+  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [selectedChannel, setSelectedChannel] =
@@ -26,6 +33,17 @@ export default function ChatPage() {
       } = await supabase.auth.getUser();
       if (user) {
         setUserId(user.id);
+
+        // Fetch profile
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("id, full_name, avatar_url")
+          .eq("id", user.id)
+          .single();
+
+        if (profile) {
+          setUserProfile(profile as UserProfile);
+        }
 
         // Check if admin
         const { data: roles } = await supabase
@@ -80,7 +98,6 @@ export default function ChatPage() {
     const handleKey = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key === "k") {
         e.preventDefault();
-        // Focus the sidebar search
         const input = document.querySelector(
           '[placeholder="Search channels..."]'
         ) as HTMLInputElement;
@@ -93,14 +110,14 @@ export default function ChatPage() {
 
   if (!userId) {
     return (
-      <div className="flex items-center justify-center h-full">
-        <Loader2 className="h-8 w-8 animate-spin text-slate-400" />
+      <div className="flex items-center justify-center h-full bg-[#0A1628]">
+        <Loader2 className="h-8 w-8 animate-spin text-[#C5975B]" />
       </div>
     );
   }
 
   return (
-    <div className="flex h-[calc(100vh-64px)] -m-6 bg-white">
+    <div className="flex h-[calc(100vh-64px)] -m-6 bg-[#0A1628]">
       {/* Chat Sidebar */}
       <ChatSidebar
         groups={groups}
@@ -110,6 +127,8 @@ export default function ChatPage() {
         onSelectChannel={setActiveChannelId}
         onSearchChange={setSearchQuery}
         onNewChannel={() => setShowCreateModal(true)}
+        currentUser={userProfile}
+        getPresenceStatus={getStatus}
       />
 
       {/* Channel content */}
@@ -121,12 +140,14 @@ export default function ChatPage() {
           getPresenceStatus={getStatus}
         />
       ) : (
-        <div className="flex-1 flex flex-col items-center justify-center text-slate-400">
-          <MessageSquare className="h-12 w-12 mb-3" />
-          <h3 className="text-lg font-medium text-slate-600">
+        <div className="flex-1 flex flex-col items-center justify-center bg-[#0F2140]">
+          <div className="w-16 h-16 rounded-2xl bg-[rgba(197,151,91,0.08)] flex items-center justify-center mb-4">
+            <MessageSquare className="h-8 w-8 text-[#C5975B]" />
+          </div>
+          <h3 className="font-display text-lg font-medium text-[#F0EDE6]">
             Requity Command Center
           </h3>
-          <p className="text-sm mt-1">
+          <p className="text-sm mt-1 text-[#8A8680]">
             {channelsLoading
               ? "Loading channels..."
               : "Select a channel to start chatting"}
