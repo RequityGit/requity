@@ -2,7 +2,8 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
-import type { InvestorInsert } from "@/lib/supabase/types";
+// NOTE: Investor contact fields (first_name, last_name, email, phone, address)
+// now live on crm_contacts. This legacy action uses `any` casts until refactored.
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -52,7 +53,8 @@ export async function addInvestorAction(input: AddInvestorInput) {
 
     const admin = createAdminClient();
 
-    const investorData: InvestorInsert = {
+    // Legacy fields — these columns now live on crm_contacts; cast to any until refactored
+    const investorData: Record<string, unknown> = {
       first_name: input.first_name,
       last_name: input.last_name,
       email: input.email,
@@ -67,7 +69,7 @@ export async function addInvestorAction(input: AddInvestorInput) {
       accreditation_status: "pending",
     };
 
-    const { data, error } = await admin
+    const { data, error } = await (admin as any)
       .from("investors")
       .insert(investorData)
       .select("id")

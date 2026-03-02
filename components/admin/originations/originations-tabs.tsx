@@ -1,18 +1,30 @@
 "use client";
 
+import { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { LoanListView } from "@/components/admin/loan-list-view";
 import { ConditionsDashboard } from "@/components/admin/conditions-dashboard";
 import { PricingProgramsManager } from "@/components/admin/pricing-programs-manager";
+import { OpportunityKanban } from "@/components/admin/originations/opportunity-kanban";
+import { OpportunityListView } from "@/components/admin/originations/opportunity-list-view";
 import { DscrPricingManager } from "@/components/admin/dscr-pricing-manager";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { Home, ClipboardList, Calculator, Building2 } from "lucide-react";
+import {
+  Home,
+  ClipboardList,
+  Calculator,
+  Briefcase,
+  Building2,
+  LayoutGrid,
+  List,
+} from "lucide-react";
+import type { OpportunityRow } from "./opportunity-kanban";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 interface OriginationsTabsProps {
-  // Pipeline tab
+  // Legacy pipeline tab
   loanRows: any[];
   teamMembers: { id: string; full_name: string }[];
   currentUserId: string;
@@ -31,6 +43,9 @@ interface OriginationsTabsProps {
   // Counts for badges
   pipelineCount: number;
   pendingConditionsCount: number;
+  // Opportunity pipeline (new)
+  opportunityRows: OpportunityRow[];
+  opportunityCount: number;
 }
 
 export function OriginationsTabs({
@@ -48,13 +63,24 @@ export function OriginationsTabs({
   dscrUploads,
   pipelineCount,
   pendingConditionsCount,
+  opportunityRows,
+  opportunityCount,
 }: OriginationsTabsProps) {
+  const [dealView, setDealView] = useState<"board" | "list">("board");
+
   return (
-    <Tabs defaultValue="pipeline">
+    <Tabs defaultValue="deals">
       <TabsList className="flex-wrap h-auto gap-1">
+        <TabsTrigger value="deals" className="gap-1.5">
+          <Briefcase className="h-3.5 w-3.5" />
+          Deals
+          <span className="ml-1 rounded-full bg-slate-200 text-slate-700 text-[10px] font-semibold px-1.5 py-0.5">
+            {opportunityCount}
+          </span>
+        </TabsTrigger>
         <TabsTrigger value="pipeline" className="gap-1.5">
           <Home className="h-3.5 w-3.5" />
-          Pipeline
+          Loans (Legacy)
           <span className="ml-1 rounded-full bg-slate-200 text-slate-700 text-[10px] font-semibold px-1.5 py-0.5">
             {pipelineCount}
           </span>
@@ -78,6 +104,42 @@ export function OriginationsTabs({
         </TabsTrigger>
       </TabsList>
 
+      {/* Deals (Opportunities) Tab */}
+      <TabsContent value="deals" className="mt-4">
+        <div className="space-y-4">
+          {/* View toggle */}
+          <div className="flex justify-end">
+            <div className="inline-flex rounded-lg border p-0.5">
+              <Button
+                variant={dealView === "board" ? "default" : "ghost"}
+                size="sm"
+                className="h-7 px-2"
+                onClick={() => setDealView("board")}
+              >
+                <LayoutGrid className="h-3.5 w-3.5 mr-1" />
+                Board
+              </Button>
+              <Button
+                variant={dealView === "list" ? "default" : "ghost"}
+                size="sm"
+                className="h-7 px-2"
+                onClick={() => setDealView("list")}
+              >
+                <List className="h-3.5 w-3.5 mr-1" />
+                List
+              </Button>
+            </div>
+          </div>
+
+          {dealView === "board" ? (
+            <OpportunityKanban data={opportunityRows} />
+          ) : (
+            <OpportunityListView data={opportunityRows} />
+          )}
+        </div>
+      </TabsContent>
+
+      {/* Legacy Loan Pipeline */}
       <TabsContent value="pipeline" className="mt-4">
         <LoanListView
           data={loanRows}

@@ -10136,43 +10136,137 @@ export const Constants = {
   },
 } as const
 
-// ---- Custom type aliases ----
+
+// Type exports for convenience
 export type Profile = Database["public"]["Tables"]["profiles"]["Row"];
 export type Loan = Database["public"]["Tables"]["loans"]["Row"];
 export type LoanInsert = Database["public"]["Tables"]["loans"]["Insert"];
+export type Borrower = Database["public"]["Tables"]["borrowers"]["Row"];
+export type BorrowerInsert = Database["public"]["Tables"]["borrowers"]["Insert"];
+export type BorrowerEntity = Database["public"]["Tables"]["borrower_entities"]["Row"];
 export type Fund = Database["public"]["Tables"]["funds"]["Row"];
 export type Investor = Database["public"]["Tables"]["investors"]["Row"];
+export type InvestorInsert = Database["public"]["Tables"]["investors"]["Insert"];
 export type InvestorCommitment = Database["public"]["Tables"]["investor_commitments"]["Row"];
 export type LoanPayment = Database["public"]["Tables"]["loan_payments"]["Row"];
 export type LoanCondition = Database["public"]["Tables"]["loan_conditions"]["Row"];
 export type LoanDocument = Database["public"]["Tables"]["loan_documents"]["Row"];
-export type LoanConditionTemplate = Database["public"]["Tables"]["loan_condition_templates"]["Row"];
 export type DrawRequest = Database["public"]["Tables"]["draw_requests"]["Row"];
-export type Borrower = Database["public"]["Tables"]["borrowers"]["Row"];
-export type BorrowerInsert = Database["public"]["Tables"]["borrowers"]["Insert"];
-export type BorrowerEntity = Database["public"]["Tables"]["borrower_entities"]["Row"];
-export type InvestorInsert = Database["public"]["Tables"]["investors"]["Insert"];
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export type PricingProgram = any;
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export type LeverageAdjuster = any;
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export type PricingProgramVersion = any;
+
+// New opportunity types
+export type Opportunity = Database["public"]["Tables"]["opportunities"]["Row"];
+export type OpportunityInsert = Database["public"]["Tables"]["opportunities"]["Insert"];
+export type OpportunityUpdate = Database["public"]["Tables"]["opportunities"]["Update"];
+export type OpportunityBorrower = Database["public"]["Tables"]["opportunity_borrowers"]["Row"];
+export type OpportunityBorrowerInsert = Database["public"]["Tables"]["opportunity_borrowers"]["Insert"];
+export type PropertyFinancialSnapshot = Database["public"]["Tables"]["property_financial_snapshots"]["Row"];
+export type PropertyFinancialSnapshotInsert = Database["public"]["Tables"]["property_financial_snapshots"]["Insert"];
+export type Property = Database["public"]["Tables"]["properties"]["Row"];
+export type PropertyInsert = Database["public"]["Tables"]["properties"]["Insert"];
+export type EntityOwner = Database["public"]["Tables"]["entity_owners"]["Row"];
+
+// Pipeline view type
+export type OpportunityPipeline = Database["public"]["Views"]["opportunity_pipeline"]["Row"];
+
+// Table-derived types for tables that exist in the schema
 export type Document = Database["public"]["Tables"]["documents"]["Row"];
+export type LoanConditionTemplate = Database["public"]["Tables"]["loan_condition_templates"]["Row"];
 export type CrmContact = Database["public"]["Tables"]["crm_contacts"]["Row"];
-export type CrmActivity = Database["public"]["Tables"]["crm_activities"]["Row"];
-export type CrmEmail = Database["public"]["Tables"]["crm_emails"]["Row"];
-export type CrmEmailInsert = Database["public"]["Tables"]["crm_emails"]["Insert"];
 
-// New: Inbound email sync types
-export type GmailSyncState = Database["public"]["Tables"]["gmail_sync_state"]["Row"];
-export type GmailSyncStateInsert = Database["public"]["Tables"]["gmail_sync_state"]["Insert"];
-export type EmailParticipant = Database["public"]["Tables"]["email_participants"]["Row"];
-export type EmailParticipantInsert = Database["public"]["Tables"]["email_participants"]["Insert"];
-export type GmailToken = Database["public"]["Tables"]["gmail_tokens"]["Row"];
+// Manual type definitions for tables that may not exist yet in generated types
+export interface PricingProgram {
+  id: string;
+  program_id: string;
+  loan_type: string;
+  program_name: string;
+  arv_label: string;
+  interest_rate: number;
+  rate_type: string;
+  origination_points: number;
+  min_origination_fee: number;
+  points_note: string;
+  max_ltv: number;
+  ltv_note: string;
+  max_ltc: number;
+  ltc_note: string;
+  max_ltp: number;
+  loan_term_months: number;
+  exit_points: number;
+  term_note: string;
+  legal_doc_fee: number;
+  bpo_appraisal_cost: number;
+  bpo_appraisal_note: string;
+  min_credit_score: number;
+  min_deals_24mo: number;
+  citizenship: string;
+  version: number;
+  is_current: boolean;
+  effective_date: string | null;
+  created_at?: string;
+  updated_at?: string;
+}
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export type LenderQuote = any;
+export interface LeverageAdjuster {
+  id: string;
+  risk_factor: string;
+  display_name: string;
+  condition_description: string;
+  ltc_adjustment: number;
+  ltv_adjustment: number;
+  note: string;
+  is_active: boolean;
+  sort_order?: number;
+}
+
+export interface PricingProgramVersion {
+  id: string;
+  program_id: string;
+  version: number;
+  changed_at: string;
+  changed_by: string | null;
+  change_summary: string | null;
+  change_description: string | null;
+}
+
+export interface LenderQuote {
+  id: string;
+  loan_id: string;
+  quote_name: string;
+  lender_company_id: string | null;
+  lender_contact_name: string | null;
+  interest_rate: number | null;
+  origination_fee: number | null;
+  origination_points: number | null;
+  loan_amount: number | null;
+  ltv: number | null;
+  ltc: number | null;
+  loan_term_months: number | null;
+  interest_only_period_months: number | null;
+  amortization_months: number | null;
+  uw_processing_fee: number | null;
+  requity_lending_fee: number | null;
+  ym_spread: number | null;
+  ym_amount: number | null;
+  prepayment_penalty: string | null;
+  closing_costs: number | null;
+  notes: string | null;
+  description: string | null;
+  status: string;
+  status_changed_at: string | null;
+  linked_property_id: string | null;
+  term_sheet_url: string | null;
+  requested_at: string | null;
+  received_at: string | null;
+  accepted_at: string | null;
+  declined_at: string | null;
+  declined_reason: string | null;
+  created_by: string | null;
+  updated_by: string | null;
+  created_at: string;
+  updated_at: string;
+  [key: string]: unknown;
+}
+
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type LenderQuoteInsert = any;
 // eslint-disable-next-line @typescript-eslint/no-explicit-any

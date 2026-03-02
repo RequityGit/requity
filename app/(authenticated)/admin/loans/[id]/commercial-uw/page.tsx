@@ -32,15 +32,22 @@ export default async function CommercialUWPage({ params }: PageProps) {
 
   if (!loan) notFound();
 
-  // Fetch borrower separately
+  // Fetch borrower name — contact fields now live on crm_contacts
   let borrowerJoin: { first_name: string | null; last_name: string | null } | null = null;
   if (loan.borrower_id) {
-    const { data } = await supabase
+    const { data: bRow } = await supabase
       .from("borrowers")
-      .select("first_name, last_name")
+      .select("crm_contact_id")
       .eq("id", loan.borrower_id)
       .maybeSingle();
-    borrowerJoin = data;
+    if (bRow?.crm_contact_id) {
+      const { data: contact } = await (supabase as any)
+        .from("crm_contacts")
+        .select("first_name, last_name")
+        .eq("id", bRow.crm_contact_id)
+        .maybeSingle();
+      borrowerJoin = contact ?? null;
+    }
   }
 
   // Fetch existing underwriting (if any)

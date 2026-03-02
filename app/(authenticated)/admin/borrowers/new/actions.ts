@@ -2,7 +2,9 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
-import type { BorrowerInsert } from "@/lib/supabase/types";
+// NOTE: Borrower contact fields (first_name, last_name, email, phone, address)
+// now live on crm_contacts. This legacy action uses `any` casts until the
+// borrower-creation flow is refactored to write to crm_contacts first.
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -58,7 +60,9 @@ export async function addBorrowerAction(input: AddBorrowerInput) {
 
     const admin = createAdminClient();
 
-    const borrowerData: BorrowerInsert = {
+    // Legacy fields (first_name, email, address, etc.) no longer exist on
+    // borrowers table — they moved to crm_contacts.  Cast to any until refactored.
+    const borrowerData: Record<string, unknown> = {
       first_name: input.first_name,
       last_name: input.last_name,
       email: input.email || null,
@@ -78,7 +82,7 @@ export async function addBorrowerAction(input: AddBorrowerInput) {
       notes: input.notes || null,
     };
 
-    const { data, error } = await admin
+    const { data, error } = await (admin as any)
       .from("borrowers")
       .insert(borrowerData)
       .select("id")
@@ -110,7 +114,7 @@ export async function updateBorrowerAction(input: UpdateBorrowerInput) {
 
     const admin = createAdminClient();
 
-    const { error } = await admin
+    const { error } = await (admin as any)
       .from("borrowers")
       .update({
         first_name: input.first_name,

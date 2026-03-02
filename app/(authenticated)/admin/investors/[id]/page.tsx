@@ -35,7 +35,10 @@ export default async function AdminInvestorDetailPage({ params }: PageProps) {
 
   if (!investor) notFound();
 
-  const investorName = `${investor.first_name} ${investor.last_name}`;
+  // Cast to any — investor contact fields (name, email, phone, address) now
+  // live on crm_contacts in the new schema, but legacy code still references them.
+  const inv = investor as any;
+  const investorName = `${inv.first_name ?? ""} ${inv.last_name ?? ""}`.trim() || "Unknown";
 
   // Fetch related data in parallel
   const [commitmentsResult, capitalCallsResult, distributionsResult, documentsResult, fundsResult, emailsResult, profileResult] =
@@ -221,11 +224,11 @@ export default async function AdminInvestorDetailPage({ params }: PageProps) {
   ];
 
   const fullAddress = [
-    investor.address_line1,
-    investor.address_line2,
-    investor.city,
-    investor.state,
-    investor.zip,
+    inv.address_line1,
+    inv.address_line2,
+    inv.city,
+    inv.state,
+    inv.zip,
   ]
     .filter(Boolean)
     .join(", ");
@@ -245,14 +248,14 @@ export default async function AdminInvestorDetailPage({ params }: PageProps) {
               <Mail className="h-4 w-4 text-muted-foreground" />
               <div>
                 <p className="text-xs text-muted-foreground">Email</p>
-                <p className="text-sm font-medium">{investor.email}</p>
+                <p className="text-sm font-medium">{inv.email}</p>
               </div>
             </div>
             <div className="flex items-center gap-2">
               <Phone className="h-4 w-4 text-muted-foreground" />
               <div>
                 <p className="text-xs text-muted-foreground">Phone</p>
-                <p className="text-sm font-medium">{investor.phone || "—"}</p>
+                <p className="text-sm font-medium">{inv.phone || "—"}</p>
               </div>
             </div>
             <div className="flex items-center gap-2">
@@ -339,7 +342,7 @@ export default async function AdminInvestorDetailPage({ params }: PageProps) {
         <TabsContent value="emails" className="mt-4">
           <EmailActivityFeed
             emails={emails}
-            defaultToEmail={investor.email || undefined}
+            defaultToEmail={inv.email || undefined}
             defaultToName={investorName}
             linkedInvestorId={investor.id}
             currentUserId={user.id}

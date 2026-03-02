@@ -24,10 +24,11 @@ import { useToast } from "@/components/ui/use-toast";
 import { addBorrowerAction } from "@/app/(authenticated)/admin/borrowers/new/actions";
 import { Loader2, ChevronRight, ChevronLeft, Check } from "lucide-react";
 import { US_STATES } from "@/lib/constants";
-import type { Borrower } from "@/lib/supabase/types";
+// Borrower contact fields (first_name, email, etc.) now live on crm_contacts.
+// Use `any` for the borrower prop until the form is refactored.
 
 interface AddBorrowerFormProps {
-  borrower?: Borrower;
+  borrower?: any;
 }
 
 const STEPS = [

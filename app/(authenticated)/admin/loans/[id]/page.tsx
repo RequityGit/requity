@@ -57,15 +57,22 @@ export default async function AdminLoanDetailPage({ params }: PageProps) {
 
   if (!loan) notFound();
 
-  // Fetch borrower separately — tolerates missing FK or RLS issues
+  // Fetch borrower name — contact fields now live on crm_contacts
   let borrowerData: { first_name: string | null; last_name: string | null; email: string | null } | null = null;
   if (loan.borrower_id) {
-    const { data: borrower } = await supabase
+    const { data: bRow } = await supabase
       .from("borrowers")
-      .select("first_name, last_name, email")
+      .select("crm_contact_id")
       .eq("id", loan.borrower_id)
       .maybeSingle();
-    borrowerData = borrower;
+    if (bRow?.crm_contact_id) {
+      const { data: contact } = await (supabase as any)
+        .from("crm_contacts")
+        .select("first_name, last_name, email")
+        .eq("id", bRow.crm_contact_id)
+        .maybeSingle();
+      borrowerData = contact ?? null;
+    }
   }
 
   // Cast to any — some column references may be stale after schema migrations
@@ -155,11 +162,11 @@ export default async function AdminLoanDetailPage({ params }: PageProps) {
     emailsData = data ?? [];
   } catch { /* table may not exist */ }
 
-  // Fetch lender quotes and companies for this loan
+  // Fetch lender quotes and companies for this loan — tables may not exist
   let lenderQuotesData: any[] = [];
   let companiesData: any[] = [];
   try {
-    const { data } = await supabase
+    const { data } = await (supabase as any)
       .from("lender_quotes")
       .select("*")
       .eq("loan_id", id)
@@ -167,7 +174,7 @@ export default async function AdminLoanDetailPage({ params }: PageProps) {
     lenderQuotesData = data ?? [];
   } catch { /* table may not exist */ }
   try {
-    const { data } = await supabase
+    const { data } = await (supabase as any)
       .from("companies")
       .select("id, name")
       .order("name");
