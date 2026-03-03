@@ -2,7 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { redirect, notFound } from "next/navigation";
 import { CRM_CONTACT_SOURCES } from "@/lib/constants";
-import { Contact360Client } from "@/components/crm/contact-360";
+import { ContactDetailClient } from "@/components/crm/contact-360";
 import type {
   ContactData,
   RelationshipData,
@@ -12,6 +12,10 @@ import type {
   InvestorCommitmentData,
   TeamMember,
   CompanyData,
+  BorrowerData,
+  InvestorProfileData,
+  EntityData,
+  TaskData,
 } from "@/components/crm/contact-360/types";
 
 interface PageProps {
@@ -57,6 +61,7 @@ export default async function CrmContactDetailPage({ params }: PageProps) {
     emailsResult,
     relationshipsResult,
     companyResult,
+    tasksResult,
   ] = await Promise.all([
     supabase
       .from("crm_activities")
@@ -85,6 +90,12 @@ export default async function CrmContactDetailPage({ params }: PageProps) {
           .eq("id", contact.company_id)
           .single()
       : Promise.resolve({ data: null }),
+    admin
+      .from("crm_tasks")
+      .select("*")
+      .eq("contact_id", id)
+      .is("deleted_at", null)
+      .order("created_at", { ascending: false }),
   ]);
 
   // Build profile lookup for display names
@@ -110,8 +121,10 @@ export default async function CrmContactDetailPage({ params }: PageProps) {
       subject: a.subject as string | null,
       description: a.description as string | null,
       outcome: (a.outcome as string | null) ?? null,
+      direction: (a.direction as string | null) ?? null,
+      call_duration_seconds: (a.call_duration_seconds as number | null) ?? null,
       created_by_name: a.performed_by
-        ? profileLookup[a.performed_by as string] || null
+        ? a.performed_by_name as string | null || profileLookup[a.performed_by as string] || null
         : null,
       created_at: a.created_at as string,
     })
@@ -154,27 +167,80 @@ export default async function CrmContactDetailPage({ params }: PageProps) {
     created_at: r.created_at as string,
   }));
 
+  // Map tasks
+  const tasks: TaskData[] = (tasksResult.data ?? []).map(
+    (t: Record<string, unknown>) => ({
+      id: t.id as string,
+      subject: t.subject as string,
+      description: t.description as string | null,
+      task_type: t.task_type as string,
+      priority: t.priority as string,
+      status: t.status as string,
+      due_date: t.due_date as string | null,
+      assigned_to_name: t.assigned_to
+        ? profileLookup[t.assigned_to as string] || null
+        : null,
+      completed_at: t.completed_at as string | null,
+    })
+  );
+
   // Determine active relationship types for data fetching
   const activeRelTypes = relationships
     .filter((r) => r.is_active)
     .map((r) => r.relationship_type);
 
-  // Fetch linked borrower loans if borrower relationship exists
+  // Fetch borrower data if borrower relationship exists
+  let borrowerData: BorrowerData | null = null;
   let borrowerLoans: LoanData[] = [];
+  let borrowerEntities: EntityData[] = [];
+
   if (
     activeRelTypes.includes("borrower") &&
     contact.borrower_id
   ) {
-    const { data: loansData } = await admin
-      .from("loans")
-      .select(
-        "id, loan_number, property_address, type, loan_amount, interest_rate, ltv, loan_term_months, stage, stage_updated_at, created_at"
-      )
-      .eq("borrower_id", contact.borrower_id)
-      .is("deleted_at", null)
-      .order("created_at", { ascending: false });
+    const [borrowerResult, loansResult, entitiesResult] = await Promise.all([
+      admin
+        .from("borrowers")
+        .select(
+          "id, credit_score, credit_report_date, experience_count, date_of_birth, is_us_citizen, marital_status, ssn_last_four, stated_liquidity, verified_liquidity, stated_net_worth, verified_net_worth"
+        )
+        .eq("id", contact.borrower_id)
+        .single(),
+      admin
+        .from("loans")
+        .select(
+          "id, loan_number, property_address, type, loan_amount, interest_rate, ltv, loan_term_months, stage, stage_updated_at, created_at"
+        )
+        .eq("borrower_id", contact.borrower_id)
+        .is("deleted_at", null)
+        .order("created_at", { ascending: false }),
+      admin
+        .from("borrower_entities")
+        .select(
+          "id, entity_name, entity_type, ein, state_of_formation, formation_date, operating_agreement_url, articles_of_org_url, certificate_good_standing_url, ein_letter_url"
+        )
+        .eq("borrower_id", contact.borrower_id),
+    ]);
 
-    borrowerLoans = (loansData ?? []).map((l: Record<string, unknown>) => ({
+    if (borrowerResult.data) {
+      const b = borrowerResult.data;
+      borrowerData = {
+        id: b.id,
+        credit_score: b.credit_score,
+        credit_report_date: b.credit_report_date,
+        experience_count: b.experience_count,
+        date_of_birth: b.date_of_birth,
+        is_us_citizen: b.is_us_citizen,
+        marital_status: b.marital_status,
+        ssn_last_four: b.ssn_last_four,
+        stated_liquidity: b.stated_liquidity,
+        verified_liquidity: b.verified_liquidity,
+        stated_net_worth: b.stated_net_worth,
+        verified_net_worth: b.verified_net_worth,
+      };
+    }
+
+    borrowerLoans = (loansResult.data ?? []).map((l: Record<string, unknown>) => ({
       id: l.id as string,
       loan_number: l.loan_number as string | null,
       property_address: l.property_address as string | null,
@@ -187,20 +253,63 @@ export default async function CrmContactDetailPage({ params }: PageProps) {
       stage_updated_at: l.stage_updated_at as string | null,
       created_at: l.created_at as string,
     }));
+
+    borrowerEntities = (entitiesResult.data ?? []).map(
+      (e: Record<string, unknown>) => ({
+        id: e.id as string,
+        entity_name: e.entity_name as string,
+        entity_type: e.entity_type as string,
+        ein: e.ein as string | null,
+        state_of_formation: e.state_of_formation as string | null,
+        formation_date: e.formation_date as string | null,
+        kind: "borrower" as const,
+        operating_agreement_url: e.operating_agreement_url as string | null,
+        articles_of_org_url: e.articles_of_org_url as string | null,
+        certificate_good_standing_url: e.certificate_good_standing_url as string | null,
+        ein_letter_url: e.ein_letter_url as string | null,
+        formation_doc_url: null,
+      })
+    );
   }
 
-  // Fetch investor commitments if investor relationship exists
+  // Fetch investor data if investor relationship exists
+  let investorProfile: InvestorProfileData | null = null;
   let investorCommitments: InvestorCommitmentData[] = [];
+  let investingEntities: EntityData[] = [];
+
   if (
     activeRelTypes.includes("investor") &&
     contact.linked_investor_id
   ) {
-    const { data: commitmentsData } = await admin
-      .from("investor_commitments")
-      .select("id, commitment_amount, funded_amount, unfunded_amount, status, funds(name)")
-      .eq("investor_id", contact.linked_investor_id);
+    const [investorResult, commitmentsResult, entitiesResult] = await Promise.all([
+      admin
+        .from("investors")
+        .select("id, accreditation_status, accreditation_verified_at")
+        .eq("id", contact.linked_investor_id)
+        .single(),
+      admin
+        .from("investor_commitments")
+        .select(
+          "id, commitment_amount, funded_amount, unfunded_amount, status, commitment_date, funds(name), investing_entities(entity_name)"
+        )
+        .eq("investor_id", contact.linked_investor_id),
+      admin
+        .from("investing_entities")
+        .select(
+          "id, entity_name, entity_type, ein, state_of_formation, operating_agreement_url, formation_doc_url, other_doc_urls"
+        )
+        .eq("investor_id", contact.linked_investor_id),
+    ]);
 
-    investorCommitments = (commitmentsData ?? []).map(
+    if (investorResult.data) {
+      investorProfile = {
+        id: investorResult.data.id,
+        accreditation_status: investorResult.data.accreditation_status,
+        accreditation_verified_at: investorResult.data.accreditation_verified_at,
+      };
+    }
+
+    investorCommitments = (commitmentsResult.data ?? []).map(
       (c: Record<string, unknown>) => ({
         id: c.id as string,
         fund_name:
@@ -210,9 +319,32 @@ export default async function CrmContactDetailPage({ params }: PageProps) {
         funded_amount: c.funded_amount as number | null,
         unfunded_amount: c.unfunded_amount as number | null,
         status: c.status as string | null,
+        commitment_date: c.commitment_date as string | null,
+        entity_name:
+          (c.investing_entities as Record<string, unknown> | null)?.entity_name as string | null ??
+          null,
+      })
+    );
+
+    investingEntities = (entitiesResult.data ?? []).map(
+      (e: Record<string, unknown>) => ({
+        id: e.id as string,
+        entity_name: e.entity_name as string,
+        entity_type: e.entity_type as string,
+        ein: e.ein as string | null,
+        state_of_formation: e.state_of_formation as string | null,
+        formation_date: null,
+        kind: "investing" as const,
+        operating_agreement_url: e.operating_agreement_url as string | null,
+        articles_of_org_url: null,
+        certificate_good_standing_url: null,
+        ein_letter_url: null,
+        formation_doc_url: e.formation_doc_url as string | null,
       })
     );
   }
+
+  const allEntities = [...borrowerEntities, ...investingEntities];
 
   const company: CompanyData | null = companyResult.data
     ? {
@@ -253,17 +385,24 @@ export default async function CrmContactDetailPage({ params }: PageProps) {
     lifecycle_stage: contact.lifecycle_stage,
     dnc: contact.dnc,
     address_line1: contact.address_line1,
+    address_line2: contact.address_line2 ?? null,
     city: contact.city,
     state: contact.state,
     zip: contact.zip,
+    country: contact.country ?? null,
     user_id: contact.user_id,
     borrower_id: contact.borrower_id,
     linked_investor_id: contact.linked_investor_id,
     notes: contact.notes,
+    contact_types: contact.contact_types ?? null,
+    rating: contact.rating ?? null,
+    status: contact.status ?? null,
+    user_function: contact.user_function ?? null,
+    language_preference: contact.language_preference ?? null,
   };
 
   return (
-    <Contact360Client
+    <ContactDetailClient
       contact={contactData}
       relationships={relationships}
       activities={activities}
@@ -272,6 +411,10 @@ export default async function CrmContactDetailPage({ params }: PageProps) {
       investorCommitments={investorCommitments}
       teamMembers={teamMembers}
       company={company}
+      borrower={borrowerData}
+      investor={investorProfile}
+      entities={allEntities}
+      tasks={tasks}
       currentUserId={user.id}
       currentUserName={currentUserName}
       assignedToName={assignedToName}
