@@ -10,7 +10,12 @@ import {
 
 export const dynamic = "force-dynamic";
 
-export default async function CrmPage() {
+interface PageProps {
+  searchParams: { view?: string; company?: string };
+}
+
+export default async function CrmPage({ searchParams }: PageProps) {
+  const resolvedSearchParams = await searchParams;
   const supabase = await createClient();
   const {
     data: { user },
@@ -190,6 +195,8 @@ export default async function CrmPage() {
         teamMembers={teamMembers}
         currentUserId={user.id}
         isSuperAdmin={isSuperAdmin}
+        initialView={resolvedSearchParams.view === "companies" ? "companies" : "contacts"}
+        initialCompanyId={resolvedSearchParams.company ?? null}
       />
     </div>
   );

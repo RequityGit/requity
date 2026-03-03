@@ -92,6 +92,7 @@ interface CrmUnifiedProps {
   currentUserId: string;
   isSuperAdmin?: boolean;
   initialView?: "contacts" | "companies";
+  initialCompanyId?: string | null;
 }
 
 // ── Helpers ──────────────────────────────────────────────────────────────
@@ -174,12 +175,18 @@ export function CrmUnified({
   currentUserId,
   isSuperAdmin = false,
   initialView = "contacts",
+  initialCompanyId,
 }: CrmUnifiedProps) {
   const [activeView, setActiveView] = useState<"contacts" | "companies">(
     initialView
   );
   const [selectedCompany, setSelectedCompany] =
-    useState<CompanyRowExtended | null>(null);
+    useState<CompanyRowExtended | null>(() => {
+      if (initialCompanyId) {
+        return companies.find((c) => c.id === initialCompanyId) ?? null;
+      }
+      return null;
+    });
 
   // Contacts state
   const [contactSearch, setContactSearch] = useState("");

@@ -298,7 +298,12 @@ export default async function CrmContactDetailPage({ params }: PageProps) {
               <div>
                 <p className="text-xs text-muted-foreground">Company</p>
                 {company ? (
-                  <p className="text-sm font-medium">{company.name}</p>
+                  <Link
+                    href={`/admin/crm?view=companies&company=${company.id}`}
+                    className="text-sm font-medium text-blue-600 hover:underline"
+                  >
+                    {company.name}
+                  </Link>
                 ) : contact.company_name ? (
                   <p className="text-sm font-medium text-muted-foreground">
                     {contact.company_name}
@@ -351,23 +356,31 @@ export default async function CrmContactDetailPage({ params }: PageProps) {
             </div>
           </div>
 
-          {/* Address */}
-          {contact.address_line1 && (
-            <div className="mt-4 pt-4 border-t">
-              <div className="flex items-center gap-3">
-                <MapPin className="h-4 w-4 text-muted-foreground shrink-0" />
-                <div>
-                  <p className="text-xs text-muted-foreground">Address</p>
-                  <p className="text-sm">
-                    {contact.address_line1}
-                    {contact.city && `, ${contact.city}`}
-                    {contact.state && `, ${contact.state}`}{" "}
-                    {contact.zip && contact.zip}
-                  </p>
-                </div>
+          {/* Mailing Address */}
+          <div className="mt-4 pt-4 border-t">
+            <div className="flex items-start gap-3">
+              <MapPin className="h-4 w-4 text-muted-foreground shrink-0 mt-0.5" />
+              <div>
+                <p className="text-xs text-muted-foreground">Mailing Address</p>
+                {contact.address_line1 ? (
+                  <div className="text-sm font-medium">
+                    <p>{contact.address_line1}</p>
+                    {contact.address_line2 && <p>{contact.address_line2}</p>}
+                    <p>
+                      {contact.city && `${contact.city}, `}
+                      {contact.state && `${contact.state} `}
+                      {contact.zip}
+                    </p>
+                    {contact.country && contact.country !== "US" && (
+                      <p>{contact.country}</p>
+                    )}
+                  </div>
+                ) : (
+                  <p className="text-sm font-medium">—</p>
+                )}
               </div>
             </div>
-          )}
+          </div>
 
           {/* Last Contacted */}
           <div className="mt-4 pt-4 border-t">
