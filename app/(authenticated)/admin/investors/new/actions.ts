@@ -1,32 +1,9 @@
 "use server";
 
-import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { requireAdmin } from "@/lib/auth/require-admin";
 // NOTE: Investor contact fields (first_name, last_name, email, phone, address)
 // now live on crm_contacts. This legacy action uses `any` casts until refactored.
-
-// ---------------------------------------------------------------------------
-// Helpers
-// ---------------------------------------------------------------------------
-
-async function requireAdmin() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) return { error: "Not authenticated" } as const;
-
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("role")
-    .eq("id", user.id)
-    .single();
-
-  if (profile?.role !== "admin" && profile?.role !== "super_admin") return { error: "Unauthorized" } as const;
-
-  return { user } as const;
-}
 
 // ---------------------------------------------------------------------------
 // Add Investor

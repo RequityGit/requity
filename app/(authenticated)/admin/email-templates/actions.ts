@@ -2,7 +2,7 @@
 
 import { createAdminClient } from "@/lib/supabase/admin";
 import type { EmailTemplate, EmailTemplateVersion } from "./types";
-import { requireAdmin } from "./require-admin";
+import { requireAdmin } from "@/lib/auth/require-admin";
 
 // ---------------------------------------------------------------------------
 // Fetch all templates (joined with notification_types for category)

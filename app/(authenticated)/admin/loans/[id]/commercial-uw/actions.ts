@@ -1,8 +1,7 @@
 "use server";
 
-import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { redirect } from "next/navigation";
+import { requireAdmin } from "@/lib/auth/require-admin";
 import type { Database, Json } from "@/lib/supabase/types";
 
 type RentRollInsert = Database["public"]["Tables"]["commercial_rent_roll"]["Insert"];
@@ -11,26 +10,9 @@ type AncillaryInsert = Database["public"]["Tables"]["commercial_ancillary_income
 type ProFormaInsert = Database["public"]["Tables"]["commercial_proforma_years"]["Insert"];
 type UWUpdate = Database["public"]["Tables"]["commercial_underwriting"]["Update"];
 
-async function requireAdmin() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) redirect("/login");
-
-  const { data: roles } = await supabase
-    .from("user_roles")
-    .select("role")
-    .eq("user_id", user.id);
-  const isAdmin = roles?.some(
-    (r: { role: string }) => r.role === "admin" || r.role === "super_admin"
-  );
-  if (!isAdmin) redirect("/login");
-  return user;
-}
-
 export async function createUnderwriting(loanId: string, propertyType: string) {
-  const user = await requireAdmin();
+  const auth = await requireAdmin();
+  if ("error" in auth) return { error: auth.error };
   const admin = createAdminClient();
 
   try {
@@ -39,7 +21,7 @@ export async function createUnderwriting(loanId: string, propertyType: string) {
       .insert({
         loan_id: loanId,
         property_type: propertyType,
-        created_by: user.id,
+        created_by: auth.user.id,
       })
       .select("id")
       .single();
@@ -59,7 +41,8 @@ export async function saveUnderwriting(
   uwId: string,
   data: Record<string, unknown>
 ) {
-  await requireAdmin();
+  const auth = await requireAdmin();
+  if ("error" in auth) return { error: auth.error };
   const admin = createAdminClient();
 
   try {
@@ -83,7 +66,8 @@ export async function saveRentRoll(
   uwId: string,
   rows: Record<string, unknown>[]
 ) {
-  await requireAdmin();
+  const auth = await requireAdmin();
+  if ("error" in auth) return { error: auth.error };
   const admin = createAdminClient();
 
   try {
@@ -115,7 +99,8 @@ export async function saveOccupancyRows(
   uwId: string,
   rows: Record<string, unknown>[]
 ) {
-  await requireAdmin();
+  const auth = await requireAdmin();
+  if ("error" in auth) return { error: auth.error };
   const admin = createAdminClient();
 
   try {
@@ -149,7 +134,8 @@ export async function saveAncillaryRows(
   uwId: string,
   rows: Record<string, unknown>[]
 ) {
-  await requireAdmin();
+  const auth = await requireAdmin();
+  if ("error" in auth) return { error: auth.error };
   const admin = createAdminClient();
 
   try {
@@ -183,7 +169,8 @@ export async function saveProFormaYears(
   uwId: string,
   years: Record<string, unknown>[]
 ) {
-  await requireAdmin();
+  const auth = await requireAdmin();
+  if ("error" in auth) return { error: auth.error };
   const admin = createAdminClient();
 
   try {
@@ -220,7 +207,8 @@ export async function saveUploadMapping(
   rowCount: number,
   parsedData: Record<string, unknown>[]
 ) {
-  const user = await requireAdmin();
+  const auth = await requireAdmin();
+  if ("error" in auth) return { error: auth.error };
   const admin = createAdminClient();
 
   try {
@@ -233,7 +221,7 @@ export async function saveUploadMapping(
         column_mapping: columnMapping as unknown as Json,
         row_count: rowCount,
         parsed_data: parsedData as unknown as Json,
-        created_by: user.id,
+        created_by: auth.user.id,
       })
       .select("id")
       .single();
@@ -250,7 +238,8 @@ export async function saveUploadMapping(
 }
 
 export async function updateUWStatus(uwId: string, status: string) {
-  await requireAdmin();
+  const auth = await requireAdmin();
+  if ("error" in auth) return { error: auth.error };
   const admin = createAdminClient();
 
   try {

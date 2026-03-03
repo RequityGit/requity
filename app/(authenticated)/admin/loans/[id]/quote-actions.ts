@@ -1,35 +1,11 @@
 "use server";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { requireAdmin } from "@/lib/auth/require-admin";
 
 // lender_quotes / lender_quote_activities tables may not be in the generated
 // TypeScript schema yet — use `any` casts on admin client for these tables.
-
-async function requireAdmin(): Promise<
-  { user: { id: string }; error?: never } | { error: string; user?: never }
-> {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) return { error: "Not authenticated" };
-
-  const { data: role } = await supabase
-    .from("user_roles")
-    .select("id")
-    .eq("user_id", user.id)
-    .in("role", ["admin", "super_admin"])
-    .eq("is_active", true)
-    .limit(1)
-    .maybeSingle();
-
-  if (!role) return { error: "Not authorized" };
-
-  return { user };
-}
 
 // ── Create Quote ──────────────────────────────────────────────────────────
 

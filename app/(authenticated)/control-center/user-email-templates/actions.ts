@@ -1,36 +1,13 @@
 "use server";
 
-import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { requireSuperAdmin } from "@/lib/auth/require-admin";
 import type {
   UserEmailTemplate,
   UserEmailTemplateVersion,
   CreateUserEmailTemplateInput,
   UpdateUserEmailTemplateInput,
 } from "@/lib/types/user-email-templates";
-
-async function requireSuperAdmin(): Promise<
-  { user: { id: string }; error?: never } | { error: string; user?: never }
-> {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) return { error: "Not authenticated" };
-
-  const { data: role } = await supabase
-    .from("user_roles")
-    .select("id")
-    .eq("user_id", user.id)
-    .eq("role", "super_admin")
-    .eq("is_active", true)
-    .maybeSingle();
-
-  if (!role) return { error: "Unauthorized — super admin required" };
-
-  return { user };
-}
 
 // ---------------------------------------------------------------------------
 // Fetch all user email templates

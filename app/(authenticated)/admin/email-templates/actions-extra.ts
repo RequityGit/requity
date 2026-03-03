@@ -2,7 +2,7 @@
 
 import { createAdminClient } from "@/lib/supabase/admin";
 import type { EmailTemplate } from "./types";
-import { requireAdmin } from "./require-admin";
+import { requireAdmin } from "@/lib/auth/require-admin";
 
 // ---------------------------------------------------------------------------
 // Duplicate template

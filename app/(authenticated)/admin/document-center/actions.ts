@@ -1,27 +1,7 @@
 "use server";
 
-import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
-
-async function requireAdmin() {
-  const supabase = createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) return { error: "Not authenticated" } as const;
-
-  const { data: roles } = await supabase
-    .from("user_roles")
-    .select("role")
-    .eq("user_id", user.id)
-    .in("role", ["admin", "super_admin"]);
-
-  if (!roles || roles.length === 0)
-    return { error: "Unauthorized" } as const;
-
-  return { user } as const;
-}
+import { requireAdmin } from "@/lib/auth/require-admin";
 
 export interface UploadDocumentInput {
   file_name: string;

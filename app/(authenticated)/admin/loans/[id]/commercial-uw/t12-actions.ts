@@ -1,26 +1,7 @@
 "use server";
 
-import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { redirect } from "next/navigation";
-
-async function requireAdmin() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) redirect("/login");
-
-  const { data: roles } = await supabase
-    .from("user_roles")
-    .select("role")
-    .eq("user_id", user.id);
-  const isAdmin = roles?.some(
-    (r: { role: string }) => r.role === "admin" || r.role === "super_admin"
-  );
-  if (!isAdmin) redirect("/login");
-  return user;
-}
+import { requireAdmin } from "@/lib/auth/require-admin";
 
 export async function createT12Upload(
   loanId: string,
@@ -29,7 +10,8 @@ export async function createT12Upload(
   periodEnd: string,
   sourceLabel: string | null
 ) {
-  const user = await requireAdmin();
+  const auth = await requireAdmin();
+  if ("error" in auth) return { error: auth.error };
   const admin = createAdminClient();
 
   try {
@@ -60,7 +42,7 @@ export async function createT12Upload(
         period_start: periodStart,
         period_end: periodEnd,
         source_label: sourceLabel,
-        uploaded_by: user.id,
+        uploaded_by: auth.user.id,
         status: "pending_mapping",
       })
       .select("id")
@@ -112,7 +94,8 @@ export async function saveT12LineItems(
     sort_order: number;
   }[]
 ) {
-  await requireAdmin();
+  const auth = await requireAdmin();
+  if ("error" in auth) return { error: auth.error };
   const admin = createAdminClient();
 
   try {
@@ -169,7 +152,8 @@ export async function saveT12Mappings(
     exclusion_reason?: string | null;
   }[]
 ) {
-  await requireAdmin();
+  const auth = await requireAdmin();
+  if ("error" in auth) return { error: auth.error };
   const admin = createAdminClient();
 
   try {
@@ -213,7 +197,8 @@ export async function saveT12Mappings(
 export async function updateT12MappingSuggestions(
   items: { label: string; category: string }[]
 ) {
-  await requireAdmin();
+  const auth = await requireAdmin();
+  if ("error" in auth) return { error: auth.error };
   const admin = createAdminClient();
 
   try {
@@ -247,7 +232,8 @@ export async function updateT12MappingSuggestions(
 }
 
 export async function getT12DataForLoan(loanId: string) {
-  await requireAdmin();
+  const auth = await requireAdmin();
+  if ("error" in auth) return { error: auth.error };
   const admin = createAdminClient();
 
   try {
@@ -317,7 +303,8 @@ export async function getT12DataForLoan(loanId: string) {
 }
 
 export async function getT12UploadData(uploadId: string) {
-  await requireAdmin();
+  const auth = await requireAdmin();
+  if ("error" in auth) return { error: auth.error };
   const admin = createAdminClient();
 
   try {
@@ -357,7 +344,8 @@ export async function getT12UploadData(uploadId: string) {
 }
 
 export async function activateT12Version(loanId: string, versionId: string) {
-  await requireAdmin();
+  const auth = await requireAdmin();
+  if ("error" in auth) return { error: auth.error };
   const admin = createAdminClient();
 
   try {
@@ -389,7 +377,8 @@ export async function saveT12Overrides(
   uploadId: string,
   overrides: { category: string; override_annual_total: number }[]
 ) {
-  await requireAdmin();
+  const auth = await requireAdmin();
+  if ("error" in auth) return { error: auth.error };
   const admin = createAdminClient();
 
   try {
@@ -419,7 +408,8 @@ export async function saveT12Overrides(
 }
 
 export async function getPreviousMappingsForLoan(loanId: string) {
-  await requireAdmin();
+  const auth = await requireAdmin();
+  if ("error" in auth) return { error: auth.error };
   const admin = createAdminClient();
 
   try {
@@ -473,7 +463,8 @@ export async function getPreviousMappingsForLoan(loanId: string) {
 }
 
 export async function getGlobalMappingSuggestions() {
-  await requireAdmin();
+  const auth = await requireAdmin();
+  if ("error" in auth) return { error: auth.error };
   const admin = createAdminClient();
 
   try {

@@ -1,53 +1,7 @@
 "use server";
 
-import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
-
-async function requireAdmin(): Promise<
-  { user: { id: string }; error?: never } | { error: string; user?: never }
-> {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) return { error: "Not authenticated" };
-
-  const { data: adminRole } = await supabase
-    .from("user_roles")
-    .select("id")
-    .eq("user_id", user.id)
-    .in("role", ["admin", "super_admin"])
-    .eq("is_active", true)
-    .maybeSingle();
-
-  if (!adminRole) return { error: "Not authorized" };
-
-  return { user };
-}
-
-async function requireSuperAdmin(): Promise<
-  { user: { id: string }; error?: never } | { error: string; user?: never }
-> {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) return { error: "Not authenticated" };
-
-  const { data: superAdminRole } = await supabase
-    .from("user_roles")
-    .select("id")
-    .eq("user_id", user.id)
-    .eq("role", "super_admin")
-    .eq("is_active", true)
-    .single();
-
-  if (!superAdminRole) return { error: "Not authorized" };
-
-  return { user };
-}
+import { requireAdmin, requireSuperAdmin } from "@/lib/auth/require-admin";
 
 export async function deleteCrmContactAction(contactId: string) {
   try {
