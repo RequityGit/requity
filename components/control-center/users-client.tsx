@@ -33,9 +33,16 @@ import {
 import { Label } from "@/components/ui/label";
 import { RoleBadge } from "@/components/control-center/role-badge";
 import { useToast } from "@/components/ui/use-toast";
-import { Search, Plus, Eye, EyeOff, UserPlus } from "lucide-react";
+import { Search, Plus, Eye, EyeOff, UserPlus, Blocks, Check } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { grantRole, revokeRole, reactivateRole } from "@/app/(authenticated)/control-center/users/actions";
+import {
+  grantRole,
+  revokeRole,
+  reactivateRole,
+  toggleModuleAccess,
+  grantAllModules,
+  revokeAllModules,
+} from "@/app/(authenticated)/control-center/users/actions";
 import { AddUserDialog } from "@/components/control-center/add-user-dialog";
 import { useImpersonation } from "@/components/layout/impersonation-context";
 import {
@@ -64,6 +71,15 @@ interface Profile {
   phone: string | null;
   activation_status: string | null;
   user_roles: UserRole[];
+  module_ids: string[];
+}
+
+interface Module {
+  id: string;
+  name: string;
+  label: string;
+  icon: string | null;
+  sort_order: number;
 }
 
 interface Investor {
@@ -86,18 +102,22 @@ interface UsersClientProps {
   borrowers: Borrower[];
   grantedByMap: Record<string, string>;
   currentUserId: string;
+  modules: Module[];
 }
 
 const STATUS_BADGES: Record<string, { label: string; className: string }> = {
   activated: {
     label: "Activated",
-    className: "bg-green-100 text-green-800",
+    className: "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400",
   },
   link_sent: {
     label: "Link Sent",
-    className: "bg-yellow-100 text-yellow-800",
+    className: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400",
   },
-  pending: { label: "Pending", className: "bg-gray-100 text-gray-800" },
+  pending: {
+    label: "Pending",
+    className: "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-400",
+  },
 };
 
 export function UsersClient({
@@ -106,6 +126,7 @@ export function UsersClient({
   borrowers,
   grantedByMap,
   currentUserId,
+  modules,
 }: UsersClientProps) {
   const router = useRouter();
   const { toast } = useToast();
@@ -136,6 +157,12 @@ export function UsersClient({
   } | null>(null);
   const [revokeLoading, setRevokeLoading] = useState(false);
 
+  // Module management dialog
+  const [moduleDialogOpen, setModuleDialogOpen] = useState(false);
+  const [moduleTargetUser, setModuleTargetUser] = useState<Profile | null>(null);
+  const [pendingModuleIds, setPendingModuleIds] = useState<Set<string>>(new Set());
+  const [moduleLoading, setModuleLoading] = useState<string | null>(null);
+
   // Filtered profiles
   const filtered = useMemo(() => {
     return profiles.filter((p) => {
@@ -165,6 +192,12 @@ export function UsersClient({
     setSelectedInvestorId("");
     setSelectedBorrowerId("");
     setGrantModalOpen(true);
+  }
+
+  function openModuleDialog(profile: Profile) {
+    setModuleTargetUser(profile);
+    setPendingModuleIds(new Set(profile.module_ids));
+    setModuleDialogOpen(true);
   }
 
   async function handleGrantRole() {
@@ -220,6 +253,72 @@ export function UsersClient({
     }
   }
 
+  async function handleToggleModule(moduleId: string) {
+    if (!moduleTargetUser) return;
+    const isCurrentlyGranted = pendingModuleIds.has(moduleId);
+    setModuleLoading(moduleId);
+
+    // Optimistic update
+    setPendingModuleIds((prev) => {
+      const next = new Set(prev);
+      if (isCurrentlyGranted) {
+        next.delete(moduleId);
+      } else {
+        next.add(moduleId);
+      }
+      return next;
+    });
+
+    const result = await toggleModuleAccess(
+      moduleTargetUser.id,
+      moduleId,
+      !isCurrentlyGranted
+    );
+    setModuleLoading(null);
+
+    if (result.error) {
+      // Revert optimistic update
+      setPendingModuleIds((prev) => {
+        const next = new Set(prev);
+        if (isCurrentlyGranted) {
+          next.add(moduleId);
+        } else {
+          next.delete(moduleId);
+        }
+        return next;
+      });
+      toast({ title: "Error", description: result.error, variant: "destructive" });
+    }
+  }
+
+  async function handleGrantAllModules() {
+    if (!moduleTargetUser) return;
+    setModuleLoading("all");
+    const result = await grantAllModules(moduleTargetUser.id);
+    setModuleLoading(null);
+
+    if (result.error) {
+      toast({ title: "Error", description: result.error, variant: "destructive" });
+    } else {
+      setPendingModuleIds(new Set(modules.map((m) => m.id)));
+      toast({ title: "All modules granted" });
+    }
+  }
+
+  async function handleRevokeAllModules() {
+    if (!moduleTargetUser) return;
+    setModuleLoading("all");
+    const result = await revokeAllModules(moduleTargetUser.id);
+    setModuleLoading(null);
+
+    if (result.error) {
+      toast({ title: "Error", description: result.error, variant: "destructive" });
+    } else {
+      setPendingModuleIds(new Set());
+      toast({ title: "All modules revoked" });
+    }
+  }
+
   return (
     <div className="space-y-4">
       {/* Filters */}
@@ -270,10 +369,10 @@ export function UsersClient({
       </p>
 
       {/* Users Table */}
-      <div className="rounded-md border bg-card overflow-hidden">
+      <div className="rounded-xl border bg-card overflow-hidden">
         <table className="w-full text-sm">
           <thead>
-            <tr className="border-b bg-slate-50">
+            <tr className="border-b bg-muted/50">
               <th className="text-left font-medium text-muted-foreground px-4 py-3">
                 Name
               </th>
@@ -287,7 +386,7 @@ export function UsersClient({
                 Roles
               </th>
               <th className="text-left font-medium text-muted-foreground px-4 py-3">
-                Granted By
+                Modules
               </th>
               <th className="text-right font-medium text-muted-foreground px-4 py-3">
                 Actions
@@ -304,6 +403,8 @@ export function UsersClient({
               const inactiveRoles = profile.user_roles.filter(
                 (r) => !r.is_active
               );
+              const moduleCount = profile.module_ids.length;
+              const totalModules = modules.length;
 
               // Most recently granted role
               const latestRole = activeRoles.sort(
@@ -315,7 +416,7 @@ export function UsersClient({
               return (
                 <tr
                   key={profile.id}
-                  className="border-b last:border-b-0 hover:bg-slate-50 transition-colors"
+                  className="border-b last:border-b-0 hover:bg-muted/30 transition-colors"
                 >
                   <td className="px-4 py-3 font-medium">{displayName}</td>
                   <td className="px-4 py-3 text-muted-foreground">
@@ -367,13 +468,26 @@ export function UsersClient({
                         ))}
                     </div>
                   </td>
-                  <td className="px-4 py-3 text-xs text-muted-foreground">
-                    {latestRole?.granted_by
-                      ? grantedByMap[latestRole.granted_by] || "Unknown"
-                      : "—"}
+                  <td className="px-4 py-3">
+                    <button
+                      onClick={() => openModuleDialog(profile)}
+                      className="inline-flex items-center gap-1.5 text-xs font-medium px-2 py-1 rounded-md border hover:bg-muted/50 transition-colors"
+                    >
+                      <Blocks className="h-3.5 w-3.5 text-muted-foreground" />
+                      <span>
+                        {moduleCount === totalModules
+                          ? "All"
+                          : moduleCount === 0
+                            ? "None"
+                            : moduleCount}
+                      </span>
+                      <span className="text-muted-foreground">
+                        / {totalModules}
+                      </span>
+                    </button>
                   </td>
                   <td className="px-4 py-3 text-right">
-                    <div className="flex items-center justify-end gap-2">
+                    <div className="flex items-center justify-end gap-1">
                       {profile.id !== currentUserId && activeRoles.length > 0 && (
                         <TooltipProvider>
                           <Tooltip>
@@ -382,7 +496,7 @@ export function UsersClient({
                                 variant="ghost"
                                 size="sm"
                                 onClick={() => startImpersonation(profile.id)}
-                                className="gap-1 text-amber-700 hover:text-amber-800 hover:bg-amber-50"
+                                className="gap-1 text-amber-700 hover:text-amber-800 hover:bg-amber-50 dark:text-amber-400 dark:hover:text-amber-300 dark:hover:bg-amber-950"
                               >
                                 <Eye className="h-3.5 w-3.5" />
                               </Button>
@@ -400,7 +514,16 @@ export function UsersClient({
                         className="gap-1"
                       >
                         <Plus className="h-3 w-3" />
-                        Grant Role
+                        Role
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => openModuleDialog(profile)}
+                        className="gap-1"
+                      >
+                        <Blocks className="h-3 w-3" />
+                        Modules
                       </Button>
                     </div>
                   </td>
@@ -415,6 +538,103 @@ export function UsersClient({
           </div>
         )}
       </div>
+
+      {/* Module Management Dialog */}
+      <Dialog
+        open={moduleDialogOpen}
+        onOpenChange={(open) => {
+          setModuleDialogOpen(open);
+          if (!open) router.refresh();
+        }}
+      >
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Module Access</DialogTitle>
+            <DialogDescription>
+              Manage which modules{" "}
+              <span className="font-medium text-foreground">
+                {moduleTargetUser?.full_name ||
+                  moduleTargetUser?.name ||
+                  moduleTargetUser?.email}
+              </span>{" "}
+              can access in the sidebar.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="flex gap-2 pt-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleGrantAllModules}
+              disabled={moduleLoading === "all"}
+              className="text-xs"
+            >
+              Grant All
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleRevokeAllModules}
+              disabled={moduleLoading === "all"}
+              className="text-xs"
+            >
+              Revoke All
+            </Button>
+          </div>
+
+          <div className="space-y-1 max-h-[400px] overflow-y-auto py-2">
+            {modules.map((mod) => {
+              const isGranted = pendingModuleIds.has(mod.id);
+              const isLoading = moduleLoading === mod.id;
+
+              return (
+                <button
+                  key={mod.id}
+                  onClick={() => handleToggleModule(mod.id)}
+                  disabled={isLoading}
+                  className={cn(
+                    "w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors text-left",
+                    isGranted
+                      ? "bg-primary/5 hover:bg-primary/10"
+                      : "hover:bg-muted/50"
+                  )}
+                >
+                  <div
+                    className={cn(
+                      "flex items-center justify-center h-5 w-5 rounded border transition-colors flex-shrink-0",
+                      isGranted
+                        ? "bg-foreground border-foreground"
+                        : "border-border"
+                    )}
+                  >
+                    {isGranted && (
+                      <Check className="h-3 w-3 text-background" />
+                    )}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="font-medium">{mod.label}</div>
+                  </div>
+                  {isLoading && (
+                    <div className="h-4 w-4 border-2 border-muted-foreground/30 border-t-muted-foreground rounded-full animate-spin" />
+                  )}
+                </button>
+              );
+            })}
+          </div>
+
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setModuleDialogOpen(false);
+                router.refresh();
+              }}
+            >
+              Done
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Grant Role Dialog */}
       <Dialog open={grantModalOpen} onOpenChange={setGrantModalOpen}>

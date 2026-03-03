@@ -35,6 +35,8 @@ interface NavItem {
   icon: React.ElementType;
   /** Additional path prefixes that should highlight this nav item */
   activePaths?: string[];
+  /** Module name for access control filtering (admin nav only) */
+  moduleName?: string;
 }
 
 const investorNav: NavItem[] = [
@@ -56,43 +58,49 @@ const borrowerNav: NavItem[] = [
 ];
 
 const adminNav: NavItem[] = [
-  { label: "Dashboard", href: "/admin/dashboard", icon: LayoutDashboard },
+  { label: "Dashboard", href: "/admin/dashboard", icon: LayoutDashboard, moduleName: "dashboard" },
   {
     label: "CRM",
     href: "/admin/crm",
     icon: Contact,
     activePaths: ["/admin/investors", "/admin/borrowers"],
+    moduleName: "crm",
   },
   {
     label: "Pipeline",
     href: "/admin/pipeline",
     icon: Columns3,
     activePaths: ["/admin/originations", "/admin/equity-pipeline", "/admin/loans", "/admin/conditions", "/admin/pricing"],
+    moduleName: "pipeline",
   },
   {
     label: "DSCR Pricing",
     href: "/admin/dscr",
     icon: Calculator,
     activePaths: ["/admin/dscr"],
+    moduleName: "dscr-pricing",
   },
-  { label: "Servicing", href: "/admin/servicing", icon: Banknote },
+  { label: "Servicing", href: "/admin/servicing", icon: Banknote, moduleName: "servicing" },
   {
     label: "Investments",
     href: "/admin/funds",
     icon: Landmark,
     activePaths: ["/admin/capital-calls", "/admin/distributions"],
+    moduleName: "investments",
   },
   {
     label: "Documents",
     href: "/admin/document-center",
     icon: FolderOpen,
     activePaths: ["/admin/documents"],
+    moduleName: "documents",
   },
   {
     label: "Operations",
     href: "/admin/operations",
     icon: Settings2,
     activePaths: ["/admin/operations/approvals"],
+    moduleName: "operations",
   },
 ];
 
@@ -109,7 +117,15 @@ function getNavItems(role: string): NavItem[] {
   }
 }
 
-export function Sidebar({ role, isSuperAdmin }: { role: string; isSuperAdmin?: boolean }) {
+export function Sidebar({
+  role,
+  isSuperAdmin,
+  accessibleModules,
+}: {
+  role: string;
+  isSuperAdmin?: boolean;
+  accessibleModules?: string[];
+}) {
   const pathname = usePathname();
   const [collapsed, setCollapsed] = useState(false);
   const { effectiveViewRole, isViewingAs } = useViewAs();
@@ -125,7 +141,35 @@ export function Sidebar({ role, isSuperAdmin }: { role: string; isSuperAdmin?: b
 
   // Use view-as role for navigation when super admin is simulating
   const navRole = isViewingAs ? effectiveViewRole : role;
-  const navItems = getNavItems(navRole);
+  const allNavItems = getNavItems(navRole);
+
+  // Filter admin nav items by module access
+  // Super admins (empty accessibleModules array) see everything
+  // Investor/borrower nav items are not gated by modules
+  const navItems =
+    navRole === "admin" && accessibleModules && accessibleModules.length > 0
+      ? allNavItems.filter(
+          (item) => !item.moduleName || accessibleModules.includes(item.moduleName)
+        )
+      : allNavItems;
+
+  // Check if bottom nav items are accessible
+  const showChatter =
+    !accessibleModules ||
+    accessibleModules.length === 0 ||
+    accessibleModules.includes("chatter") ||
+    navRole !== "admin";
+  const showKnowledgeBase =
+    !accessibleModules ||
+    accessibleModules.length === 0 ||
+    accessibleModules.includes("knowledge-base") ||
+    navRole !== "admin";
+  const showControlCenter =
+    isSuperAdmin &&
+    !isViewingAs &&
+    (!accessibleModules ||
+      accessibleModules.length === 0 ||
+      accessibleModules.includes("control-center"));
 
   return (
     <aside
@@ -183,49 +227,53 @@ export function Sidebar({ role, isSuperAdmin }: { role: string; isSuperAdmin?: b
         })}
       </nav>
 
-      <div className="px-2 pb-1">
-        <Link
-          href="/chat"
-          className={cn(
-            "flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors relative",
-            pathname.startsWith("/chat")
-              ? "bg-white/15 text-white"
-              : "text-white/70 hover:bg-white/10 hover:text-white"
-          )}
-          title={collapsed ? "Chatter" : undefined}
-        >
-          <div className="relative flex-shrink-0">
-            <MessageSquare className="h-5 w-5" />
-            {totalUnread > 0 && (
-              <span className="absolute -top-1.5 -right-1.5 h-4 min-w-[16px] px-1 flex items-center justify-center rounded-full bg-[#F0719B] text-white text-[10px] font-bold">
+      {showChatter && (
+        <div className="px-2 pb-1">
+          <Link
+            href="/chat"
+            className={cn(
+              "flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors relative",
+              pathname.startsWith("/chat")
+                ? "bg-white/15 text-white"
+                : "text-white/70 hover:bg-white/10 hover:text-white"
+            )}
+            title={collapsed ? "Chatter" : undefined}
+          >
+            <div className="relative flex-shrink-0">
+              <MessageSquare className="h-5 w-5" />
+              {totalUnread > 0 && (
+                <span className="absolute -top-1.5 -right-1.5 h-4 min-w-[16px] px-1 flex items-center justify-center rounded-full bg-[#F0719B] text-white text-[10px] font-bold">
+                  {totalUnread > 99 ? "99+" : totalUnread}
+                </span>
+              )}
+            </div>
+            {!collapsed && <span>Chatter</span>}
+            {!collapsed && totalUnread > 0 && (
+              <span className="ml-auto bg-[#F0719B] text-white text-[10px] font-bold rounded-full h-5 min-w-[20px] px-1.5 flex items-center justify-center">
                 {totalUnread > 99 ? "99+" : totalUnread}
               </span>
             )}
-          </div>
-          {!collapsed && <span>Chatter</span>}
-          {!collapsed && totalUnread > 0 && (
-            <span className="ml-auto bg-[#F0719B] text-white text-[10px] font-bold rounded-full h-5 min-w-[20px] px-1.5 flex items-center justify-center">
-              {totalUnread > 99 ? "99+" : totalUnread}
-            </span>
-          )}
-        </Link>
-      </div>
-      <div className="px-2 pb-2">
-        <Link
-          href="/sops"
-          className={cn(
-            "flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors",
-            pathname.startsWith("/sops")
-              ? "bg-white/15 text-white"
-              : "text-white/70 hover:bg-white/10 hover:text-white"
-          )}
-          title={collapsed ? "Knowledge Base" : undefined}
-        >
-          <BookOpen className="h-5 w-5 flex-shrink-0" />
-          {!collapsed && <span>Knowledge Base</span>}
-        </Link>
-      </div>
-      {isSuperAdmin && !isViewingAs && (
+          </Link>
+        </div>
+      )}
+      {showKnowledgeBase && (
+        <div className="px-2 pb-2">
+          <Link
+            href="/sops"
+            className={cn(
+              "flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors",
+              pathname.startsWith("/sops")
+                ? "bg-white/15 text-white"
+                : "text-white/70 hover:bg-white/10 hover:text-white"
+            )}
+            title={collapsed ? "Knowledge Base" : undefined}
+          >
+            <BookOpen className="h-5 w-5 flex-shrink-0" />
+            {!collapsed && <span>Knowledge Base</span>}
+          </Link>
+        </div>
+      )}
+      {showControlCenter && (
         <div className="px-2 pb-2">
           <Link
             href="/control-center"

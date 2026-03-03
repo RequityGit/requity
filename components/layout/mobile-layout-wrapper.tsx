@@ -21,6 +21,7 @@ interface MobileLayoutWrapperProps {
   role: string;
   isSuperAdmin: boolean;
   userId: string;
+  accessibleModules?: string[];
 }
 
 export function MobileLayoutWrapper({
@@ -28,6 +29,7 @@ export function MobileLayoutWrapper({
   role,
   isSuperAdmin,
   userId,
+  accessibleModules,
 }: MobileLayoutWrapperProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
@@ -42,6 +44,7 @@ export function MobileLayoutWrapper({
         isOpen={sidebarOpen}
         onClose={() => setSidebarOpen(false)}
         userId={userId}
+        accessibleModules={accessibleModules}
       />
       <MobileBottomNav role={role} userId={userId} />
     </MobileNavContext.Provider>

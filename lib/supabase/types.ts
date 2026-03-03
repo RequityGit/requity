@@ -243,6 +243,184 @@ export type Database = {
         }
         Relationships: []
       }
+      billing_cycles: {
+        Row: {
+          billing_month: string
+          generated_at: string
+          generated_by: string | null
+          id: string
+          loan_count: number
+          nacha_file_path: string | null
+          notes: string | null
+          status: Database["public"]["Enums"]["billing_cycle_status"]
+          submitted_at: string | null
+          total_billed: number
+        }
+        Insert: {
+          billing_month: string
+          generated_at?: string
+          generated_by?: string | null
+          id?: string
+          loan_count?: number
+          nacha_file_path?: string | null
+          notes?: string | null
+          status?: Database["public"]["Enums"]["billing_cycle_status"]
+          submitted_at?: string | null
+          total_billed?: number
+        }
+        Update: {
+          billing_month?: string
+          generated_at?: string
+          generated_by?: string | null
+          id?: string
+          loan_count?: number
+          nacha_file_path?: string | null
+          notes?: string | null
+          status?: Database["public"]["Enums"]["billing_cycle_status"]
+          submitted_at?: string | null
+          total_billed?: number
+        }
+        Relationships: []
+      }
+      billing_line_items: {
+        Row: {
+          base_interest: number
+          billing_cycle_id: string
+          billing_date: string
+          calculation_detail: Json
+          committed_balance: number
+          days_in_period: number
+          draw_proration_adjustment: number
+          funded_balance: number
+          id: string
+          interest_method: Database["public"]["Enums"]["interest_method_type"]
+          interest_rate: number
+          late_fee: number
+          loan_id: string
+          other_fees: number
+          per_diem: number
+          status: Database["public"]["Enums"]["billing_line_item_status"]
+          total_amount_due: number
+          total_interest_billed: number
+        }
+        Insert: {
+          base_interest: number
+          billing_cycle_id: string
+          billing_date: string
+          calculation_detail?: Json
+          committed_balance: number
+          days_in_period: number
+          draw_proration_adjustment?: number
+          funded_balance: number
+          id?: string
+          interest_method: Database["public"]["Enums"]["interest_method_type"]
+          interest_rate: number
+          late_fee?: number
+          loan_id: string
+          other_fees?: number
+          per_diem: number
+          status?: Database["public"]["Enums"]["billing_line_item_status"]
+          total_amount_due: number
+          total_interest_billed: number
+        }
+        Update: {
+          base_interest?: number
+          billing_cycle_id?: string
+          billing_date?: string
+          calculation_detail?: Json
+          committed_balance?: number
+          days_in_period?: number
+          draw_proration_adjustment?: number
+          funded_balance?: number
+          id?: string
+          interest_method?: Database["public"]["Enums"]["interest_method_type"]
+          interest_rate?: number
+          late_fee?: number
+          loan_id?: string
+          other_fees?: number
+          per_diem?: number
+          status?: Database["public"]["Enums"]["billing_line_item_status"]
+          total_amount_due?: number
+          total_interest_billed?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "billing_line_items_billing_cycle_id_fkey"
+            columns: ["billing_cycle_id"]
+            isOneToOne: false
+            referencedRelation: "billing_cycles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "billing_line_items_loan_id_fkey"
+            columns: ["loan_id"]
+            isOneToOne: false
+            referencedRelation: "servicing_loans"
+            referencedColumns: ["loan_id"]
+          },
+          {
+            foreignKeyName: "billing_line_items_loan_id_fkey"
+            columns: ["loan_id"]
+            isOneToOne: false
+            referencedRelation: "servicing_maturity_schedule"
+            referencedColumns: ["loan_id"]
+          },
+        ]
+      }
+      borrower_ach_info: {
+        Row: {
+          account_holder_name: string
+          account_number: string
+          account_type: Database["public"]["Enums"]["ach_account_type"]
+          bank_name: string
+          created_at: string
+          id: string
+          is_active: boolean
+          loan_id: string
+          routing_number: string
+          verified_at: string | null
+        }
+        Insert: {
+          account_holder_name: string
+          account_number: string
+          account_type?: Database["public"]["Enums"]["ach_account_type"]
+          bank_name: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          loan_id: string
+          routing_number: string
+          verified_at?: string | null
+        }
+        Update: {
+          account_holder_name?: string
+          account_number?: string
+          account_type?: Database["public"]["Enums"]["ach_account_type"]
+          bank_name?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          loan_id?: string
+          routing_number?: string
+          verified_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "borrower_ach_info_loan_id_fkey"
+            columns: ["loan_id"]
+            isOneToOne: false
+            referencedRelation: "servicing_loans"
+            referencedColumns: ["loan_id"]
+          },
+          {
+            foreignKeyName: "borrower_ach_info_loan_id_fkey"
+            columns: ["loan_id"]
+            isOneToOne: false
+            referencedRelation: "servicing_maturity_schedule"
+            referencedColumns: ["loan_id"]
+          },
+        ]
+      }
       borrower_entities: {
         Row: {
           address_line1: string | null
@@ -412,6 +590,20 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "crm_contacts_active"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "borrowers_crm_contact_id_fkey"
+            columns: ["crm_contact_id"]
+            isOneToOne: false
+            referencedRelation: "crm_duplicate_candidates"
+            referencedColumns: ["contact_id"]
+          },
+          {
+            foreignKeyName: "borrowers_crm_contact_id_fkey"
+            columns: ["crm_contact_id"]
+            isOneToOne: false
+            referencedRelation: "crm_duplicate_candidates"
+            referencedColumns: ["potential_duplicate_id"]
           },
         ]
       }
@@ -724,6 +916,20 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "crm_contacts_active"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "campaign_sends_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "crm_duplicate_candidates"
+            referencedColumns: ["contact_id"]
+          },
+          {
+            foreignKeyName: "campaign_sends_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "crm_duplicate_candidates"
+            referencedColumns: ["potential_duplicate_id"]
           },
         ]
       }
@@ -2288,6 +2494,20 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "companies_referral_contact_id_fkey"
+            columns: ["referral_contact_id"]
+            isOneToOne: false
+            referencedRelation: "crm_duplicate_candidates"
+            referencedColumns: ["contact_id"]
+          },
+          {
+            foreignKeyName: "companies_referral_contact_id_fkey"
+            columns: ["referral_contact_id"]
+            isOneToOne: false
+            referencedRelation: "crm_duplicate_candidates"
+            referencedColumns: ["potential_duplicate_id"]
+          },
+          {
             foreignKeyName: "fk_companies_primary_contact"
             columns: ["primary_contact_id"]
             isOneToOne: false
@@ -2300,6 +2520,20 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "crm_contacts_active"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_companies_primary_contact"
+            columns: ["primary_contact_id"]
+            isOneToOne: false
+            referencedRelation: "crm_duplicate_candidates"
+            referencedColumns: ["contact_id"]
+          },
+          {
+            foreignKeyName: "fk_companies_primary_contact"
+            columns: ["primary_contact_id"]
+            isOneToOne: false
+            referencedRelation: "crm_duplicate_candidates"
+            referencedColumns: ["potential_duplicate_id"]
           },
         ]
       }
@@ -2352,6 +2586,39 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      company_wire_instructions: {
+        Row: {
+          account_name: string
+          account_number: string
+          bank_name: string
+          id: string
+          routing_number: string
+          updated_at: string
+          updated_by: string | null
+          wire_type: string
+        }
+        Insert: {
+          account_name?: string
+          account_number?: string
+          bank_name?: string
+          id?: string
+          routing_number?: string
+          updated_at?: string
+          updated_by?: string | null
+          wire_type?: string
+        }
+        Update: {
+          account_name?: string
+          account_number?: string
+          bank_name?: string
+          id?: string
+          routing_number?: string
+          updated_at?: string
+          updated_by?: string | null
+          wire_type?: string
+        }
+        Relationships: []
       }
       condition_template_items: {
         Row: {
@@ -2557,6 +2824,20 @@ export type Database = {
             referencedRelation: "crm_contacts_active"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "contact_audit_log_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "crm_duplicate_candidates"
+            referencedColumns: ["contact_id"]
+          },
+          {
+            foreignKeyName: "contact_audit_log_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "crm_duplicate_candidates"
+            referencedColumns: ["potential_duplicate_id"]
+          },
         ]
       }
       contact_relationship_types: {
@@ -2620,6 +2901,20 @@ export type Database = {
             referencedRelation: "crm_contacts_active"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "contact_relationship_types_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "crm_duplicate_candidates"
+            referencedColumns: ["contact_id"]
+          },
+          {
+            foreignKeyName: "contact_relationship_types_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "crm_duplicate_candidates"
+            referencedColumns: ["potential_duplicate_id"]
+          },
         ]
       }
       contact_tags: {
@@ -2660,6 +2955,20 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "contact_tags_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "crm_duplicate_candidates"
+            referencedColumns: ["contact_id"]
+          },
+          {
+            foreignKeyName: "contact_tags_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "crm_duplicate_candidates"
+            referencedColumns: ["potential_duplicate_id"]
+          },
+          {
             foreignKeyName: "contact_tags_created_by_fkey"
             columns: ["created_by"]
             isOneToOne: false
@@ -2678,13 +2987,19 @@ export type Database = {
       crm_activities: {
         Row: {
           activity_type: string
+          call_disposition: string | null
+          call_duration_seconds: number | null
+          call_recording_url: string | null
+          company_id: string | null
           completed_at: string | null
           contact_id: string
           created_at: string
+          deleted_at: string | null
           description: string | null
           direction:
             | Database["public"]["Enums"]["activity_direction_enum"]
             | null
+          email_message_id: string | null
           id: string
           is_completed: boolean | null
           linked_entity_id: string | null
@@ -2696,16 +3011,23 @@ export type Database = {
           performed_by_name: string | null
           scheduled_at: string | null
           subject: string | null
+          updated_at: string | null
         }
         Insert: {
           activity_type: string
+          call_disposition?: string | null
+          call_duration_seconds?: number | null
+          call_recording_url?: string | null
+          company_id?: string | null
           completed_at?: string | null
           contact_id: string
           created_at?: string
+          deleted_at?: string | null
           description?: string | null
           direction?:
             | Database["public"]["Enums"]["activity_direction_enum"]
             | null
+          email_message_id?: string | null
           id?: string
           is_completed?: boolean | null
           linked_entity_id?: string | null
@@ -2717,16 +3039,23 @@ export type Database = {
           performed_by_name?: string | null
           scheduled_at?: string | null
           subject?: string | null
+          updated_at?: string | null
         }
         Update: {
           activity_type?: string
+          call_disposition?: string | null
+          call_duration_seconds?: number | null
+          call_recording_url?: string | null
+          company_id?: string | null
           completed_at?: string | null
           contact_id?: string
           created_at?: string
+          deleted_at?: string | null
           description?: string | null
           direction?:
             | Database["public"]["Enums"]["activity_direction_enum"]
             | null
+          email_message_id?: string | null
           id?: string
           is_completed?: boolean | null
           linked_entity_id?: string | null
@@ -2738,8 +3067,16 @@ export type Database = {
           performed_by_name?: string | null
           scheduled_at?: string | null
           subject?: string | null
+          updated_at?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "crm_activities_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "crm_activities_contact_id_fkey"
             columns: ["contact_id"]
@@ -2755,6 +3092,20 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "crm_activities_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "crm_duplicate_candidates"
+            referencedColumns: ["contact_id"]
+          },
+          {
+            foreignKeyName: "crm_activities_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "crm_duplicate_candidates"
+            referencedColumns: ["potential_duplicate_id"]
+          },
+          {
             foreignKeyName: "crm_activities_performed_by_fkey"
             columns: ["performed_by"]
             isOneToOne: false
@@ -2764,6 +3115,191 @@ export type Database = {
           {
             foreignKeyName: "crm_activities_performed_by_fkey"
             columns: ["performed_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      crm_chatter_mentions: {
+        Row: {
+          created_at: string
+          id: string
+          mentioned_user_id: string
+          notification_sent: boolean | null
+          post_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          mentioned_user_id: string
+          notification_sent?: boolean | null
+          post_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          mentioned_user_id?: string
+          notification_sent?: boolean | null
+          post_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "crm_chatter_mentions_mentioned_user_id_fkey"
+            columns: ["mentioned_user_id"]
+            isOneToOne: false
+            referencedRelation: "equity_pipeline"
+            referencedColumns: ["assigned_to_profile_id"]
+          },
+          {
+            foreignKeyName: "crm_chatter_mentions_mentioned_user_id_fkey"
+            columns: ["mentioned_user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "crm_chatter_mentions_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "crm_chatter_posts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      crm_chatter_posts: {
+        Row: {
+          author_id: string
+          body: string
+          company_id: string | null
+          contact_id: string | null
+          created_at: string
+          deleted_at: string | null
+          edited_at: string | null
+          id: string
+          is_edited: boolean | null
+          is_pinned: boolean | null
+          loan_id: string | null
+          parent_post_id: string | null
+          pinned_at: string | null
+          pinned_by: string | null
+          updated_at: string
+        }
+        Insert: {
+          author_id: string
+          body: string
+          company_id?: string | null
+          contact_id?: string | null
+          created_at?: string
+          deleted_at?: string | null
+          edited_at?: string | null
+          id?: string
+          is_edited?: boolean | null
+          is_pinned?: boolean | null
+          loan_id?: string | null
+          parent_post_id?: string | null
+          pinned_at?: string | null
+          pinned_by?: string | null
+          updated_at?: string
+        }
+        Update: {
+          author_id?: string
+          body?: string
+          company_id?: string | null
+          contact_id?: string | null
+          created_at?: string
+          deleted_at?: string | null
+          edited_at?: string | null
+          id?: string
+          is_edited?: boolean | null
+          is_pinned?: boolean | null
+          loan_id?: string | null
+          parent_post_id?: string | null
+          pinned_at?: string | null
+          pinned_by?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "crm_chatter_posts_author_id_fkey"
+            columns: ["author_id"]
+            isOneToOne: false
+            referencedRelation: "equity_pipeline"
+            referencedColumns: ["assigned_to_profile_id"]
+          },
+          {
+            foreignKeyName: "crm_chatter_posts_author_id_fkey"
+            columns: ["author_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "crm_chatter_posts_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "crm_chatter_posts_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "crm_contacts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "crm_chatter_posts_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "crm_contacts_active"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "crm_chatter_posts_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "crm_duplicate_candidates"
+            referencedColumns: ["contact_id"]
+          },
+          {
+            foreignKeyName: "crm_chatter_posts_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "crm_duplicate_candidates"
+            referencedColumns: ["potential_duplicate_id"]
+          },
+          {
+            foreignKeyName: "crm_chatter_posts_loan_id_fkey"
+            columns: ["loan_id"]
+            isOneToOne: false
+            referencedRelation: "loan_pipeline"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "crm_chatter_posts_loan_id_fkey"
+            columns: ["loan_id"]
+            isOneToOne: false
+            referencedRelation: "loans"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "crm_chatter_posts_parent_post_id_fkey"
+            columns: ["parent_post_id"]
+            isOneToOne: false
+            referencedRelation: "crm_chatter_posts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "crm_chatter_posts_pinned_by_fkey"
+            columns: ["pinned_by"]
+            isOneToOne: false
+            referencedRelation: "equity_pipeline"
+            referencedColumns: ["assigned_to_profile_id"]
+          },
+          {
+            foreignKeyName: "crm_chatter_posts_pinned_by_fkey"
+            columns: ["pinned_by"]
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
@@ -2791,7 +3327,7 @@ export type Database = {
           first_name: string | null
           id: string
           is_independent_broker: boolean | null
-          language_preference: string | null
+          language_preference: Database["public"]["Enums"]["language_preference_enum"]
           last_contacted_at: string | null
           last_name: string | null
           lifecycle_stage:
@@ -2806,6 +3342,7 @@ export type Database = {
           notes: string | null
           phone: string | null
           postmark_contact_id: string | null
+          rating: Database["public"]["Enums"]["contact_rating_enum"] | null
           source: Database["public"]["Enums"]["crm_contact_source"] | null
           state: string | null
           status: Database["public"]["Enums"]["crm_contact_status"]
@@ -2835,7 +3372,7 @@ export type Database = {
           first_name?: string | null
           id?: string
           is_independent_broker?: boolean | null
-          language_preference?: string | null
+          language_preference?: Database["public"]["Enums"]["language_preference_enum"]
           last_contacted_at?: string | null
           last_name?: string | null
           lifecycle_stage?:
@@ -2850,6 +3387,7 @@ export type Database = {
           notes?: string | null
           phone?: string | null
           postmark_contact_id?: string | null
+          rating?: Database["public"]["Enums"]["contact_rating_enum"] | null
           source?: Database["public"]["Enums"]["crm_contact_source"] | null
           state?: string | null
           status?: Database["public"]["Enums"]["crm_contact_status"]
@@ -2879,7 +3417,7 @@ export type Database = {
           first_name?: string | null
           id?: string
           is_independent_broker?: boolean | null
-          language_preference?: string | null
+          language_preference?: Database["public"]["Enums"]["language_preference_enum"]
           last_contacted_at?: string | null
           last_name?: string | null
           lifecycle_stage?:
@@ -2894,6 +3432,7 @@ export type Database = {
           notes?: string | null
           phone?: string | null
           postmark_contact_id?: string | null
+          rating?: Database["public"]["Enums"]["contact_rating_enum"] | null
           source?: Database["public"]["Enums"]["crm_contact_source"] | null
           state?: string | null
           status?: Database["public"]["Enums"]["crm_contact_status"]
@@ -3159,6 +3698,20 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "crm_emails_linked_contact_id_fkey"
+            columns: ["linked_contact_id"]
+            isOneToOne: false
+            referencedRelation: "crm_duplicate_candidates"
+            referencedColumns: ["contact_id"]
+          },
+          {
+            foreignKeyName: "crm_emails_linked_contact_id_fkey"
+            columns: ["linked_contact_id"]
+            isOneToOne: false
+            referencedRelation: "crm_duplicate_candidates"
+            referencedColumns: ["potential_duplicate_id"]
+          },
+          {
             foreignKeyName: "crm_emails_linked_fund_id_fkey"
             columns: ["linked_fund_id"]
             isOneToOne: false
@@ -3199,6 +3752,743 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "loans"
             referencedColumns: ["id"]
+          },
+        ]
+      }
+      crm_event_attendees: {
+        Row: {
+          contact_id: string | null
+          created_at: string
+          email: string | null
+          event_id: string
+          id: string
+          profile_id: string | null
+          response_status:
+            | Database["public"]["Enums"]["crm_event_response"]
+            | null
+        }
+        Insert: {
+          contact_id?: string | null
+          created_at?: string
+          email?: string | null
+          event_id: string
+          id?: string
+          profile_id?: string | null
+          response_status?:
+            | Database["public"]["Enums"]["crm_event_response"]
+            | null
+        }
+        Update: {
+          contact_id?: string | null
+          created_at?: string
+          email?: string | null
+          event_id?: string
+          id?: string
+          profile_id?: string | null
+          response_status?:
+            | Database["public"]["Enums"]["crm_event_response"]
+            | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "crm_event_attendees_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "crm_contacts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "crm_event_attendees_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "crm_contacts_active"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "crm_event_attendees_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "crm_duplicate_candidates"
+            referencedColumns: ["contact_id"]
+          },
+          {
+            foreignKeyName: "crm_event_attendees_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "crm_duplicate_candidates"
+            referencedColumns: ["potential_duplicate_id"]
+          },
+          {
+            foreignKeyName: "crm_event_attendees_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "crm_events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "crm_event_attendees_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "equity_pipeline"
+            referencedColumns: ["assigned_to_profile_id"]
+          },
+          {
+            foreignKeyName: "crm_event_attendees_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      crm_events: {
+        Row: {
+          company_id: string | null
+          contact_id: string | null
+          created_at: string
+          created_by: string | null
+          deleted_at: string | null
+          description: string | null
+          end_at: string
+          event_type: Database["public"]["Enums"]["crm_event_type"]
+          google_calendar_id: string | null
+          google_event_id: string | null
+          google_sync_status:
+            | Database["public"]["Enums"]["google_sync_status"]
+            | null
+          google_synced_at: string | null
+          id: string
+          is_all_day: boolean | null
+          loan_id: string | null
+          location: string | null
+          start_at: string
+          subject: string
+          updated_at: string
+        }
+        Insert: {
+          company_id?: string | null
+          contact_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          deleted_at?: string | null
+          description?: string | null
+          end_at: string
+          event_type?: Database["public"]["Enums"]["crm_event_type"]
+          google_calendar_id?: string | null
+          google_event_id?: string | null
+          google_sync_status?:
+            | Database["public"]["Enums"]["google_sync_status"]
+            | null
+          google_synced_at?: string | null
+          id?: string
+          is_all_day?: boolean | null
+          loan_id?: string | null
+          location?: string | null
+          start_at: string
+          subject: string
+          updated_at?: string
+        }
+        Update: {
+          company_id?: string | null
+          contact_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          deleted_at?: string | null
+          description?: string | null
+          end_at?: string
+          event_type?: Database["public"]["Enums"]["crm_event_type"]
+          google_calendar_id?: string | null
+          google_event_id?: string | null
+          google_sync_status?:
+            | Database["public"]["Enums"]["google_sync_status"]
+            | null
+          google_synced_at?: string | null
+          id?: string
+          is_all_day?: boolean | null
+          loan_id?: string | null
+          location?: string | null
+          start_at?: string
+          subject?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "crm_events_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "crm_events_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "crm_contacts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "crm_events_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "crm_contacts_active"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "crm_events_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "crm_duplicate_candidates"
+            referencedColumns: ["contact_id"]
+          },
+          {
+            foreignKeyName: "crm_events_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "crm_duplicate_candidates"
+            referencedColumns: ["potential_duplicate_id"]
+          },
+          {
+            foreignKeyName: "crm_events_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "equity_pipeline"
+            referencedColumns: ["assigned_to_profile_id"]
+          },
+          {
+            foreignKeyName: "crm_events_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "crm_events_loan_id_fkey"
+            columns: ["loan_id"]
+            isOneToOne: false
+            referencedRelation: "loan_pipeline"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "crm_events_loan_id_fkey"
+            columns: ["loan_id"]
+            isOneToOne: false
+            referencedRelation: "loans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      crm_followers: {
+        Row: {
+          company_id: string | null
+          contact_id: string | null
+          created_at: string
+          id: string
+          notify_on_activity: boolean | null
+          notify_on_chatter: boolean | null
+          notify_on_task: boolean | null
+          user_id: string
+        }
+        Insert: {
+          company_id?: string | null
+          contact_id?: string | null
+          created_at?: string
+          id?: string
+          notify_on_activity?: boolean | null
+          notify_on_chatter?: boolean | null
+          notify_on_task?: boolean | null
+          user_id: string
+        }
+        Update: {
+          company_id?: string | null
+          contact_id?: string | null
+          created_at?: string
+          id?: string
+          notify_on_activity?: boolean | null
+          notify_on_chatter?: boolean | null
+          notify_on_task?: boolean | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "crm_followers_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "crm_followers_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "crm_contacts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "crm_followers_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "crm_contacts_active"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "crm_followers_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "crm_duplicate_candidates"
+            referencedColumns: ["contact_id"]
+          },
+          {
+            foreignKeyName: "crm_followers_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "crm_duplicate_candidates"
+            referencedColumns: ["potential_duplicate_id"]
+          },
+          {
+            foreignKeyName: "crm_followers_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "equity_pipeline"
+            referencedColumns: ["assigned_to_profile_id"]
+          },
+          {
+            foreignKeyName: "crm_followers_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      crm_tasks: {
+        Row: {
+          assigned_by: string | null
+          assigned_to: string | null
+          company_id: string | null
+          completed_at: string | null
+          completed_by: string | null
+          contact_id: string | null
+          created_at: string
+          deleted_at: string | null
+          description: string | null
+          due_date: string | null
+          due_datetime: string | null
+          google_sync_status:
+            | Database["public"]["Enums"]["google_sync_status"]
+            | null
+          google_synced_at: string | null
+          google_task_id: string | null
+          id: string
+          is_recurring: boolean | null
+          loan_id: string | null
+          priority: Database["public"]["Enums"]["crm_task_priority"]
+          recurrence_rule: string | null
+          reminder_at: string | null
+          status: Database["public"]["Enums"]["crm_task_status"]
+          subject: string
+          task_type: Database["public"]["Enums"]["crm_task_type"]
+          updated_at: string
+        }
+        Insert: {
+          assigned_by?: string | null
+          assigned_to?: string | null
+          company_id?: string | null
+          completed_at?: string | null
+          completed_by?: string | null
+          contact_id?: string | null
+          created_at?: string
+          deleted_at?: string | null
+          description?: string | null
+          due_date?: string | null
+          due_datetime?: string | null
+          google_sync_status?:
+            | Database["public"]["Enums"]["google_sync_status"]
+            | null
+          google_synced_at?: string | null
+          google_task_id?: string | null
+          id?: string
+          is_recurring?: boolean | null
+          loan_id?: string | null
+          priority?: Database["public"]["Enums"]["crm_task_priority"]
+          recurrence_rule?: string | null
+          reminder_at?: string | null
+          status?: Database["public"]["Enums"]["crm_task_status"]
+          subject: string
+          task_type?: Database["public"]["Enums"]["crm_task_type"]
+          updated_at?: string
+        }
+        Update: {
+          assigned_by?: string | null
+          assigned_to?: string | null
+          company_id?: string | null
+          completed_at?: string | null
+          completed_by?: string | null
+          contact_id?: string | null
+          created_at?: string
+          deleted_at?: string | null
+          description?: string | null
+          due_date?: string | null
+          due_datetime?: string | null
+          google_sync_status?:
+            | Database["public"]["Enums"]["google_sync_status"]
+            | null
+          google_synced_at?: string | null
+          google_task_id?: string | null
+          id?: string
+          is_recurring?: boolean | null
+          loan_id?: string | null
+          priority?: Database["public"]["Enums"]["crm_task_priority"]
+          recurrence_rule?: string | null
+          reminder_at?: string | null
+          status?: Database["public"]["Enums"]["crm_task_status"]
+          subject?: string
+          task_type?: Database["public"]["Enums"]["crm_task_type"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "crm_tasks_assigned_by_fkey"
+            columns: ["assigned_by"]
+            isOneToOne: false
+            referencedRelation: "equity_pipeline"
+            referencedColumns: ["assigned_to_profile_id"]
+          },
+          {
+            foreignKeyName: "crm_tasks_assigned_by_fkey"
+            columns: ["assigned_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "crm_tasks_assigned_to_fkey"
+            columns: ["assigned_to"]
+            isOneToOne: false
+            referencedRelation: "equity_pipeline"
+            referencedColumns: ["assigned_to_profile_id"]
+          },
+          {
+            foreignKeyName: "crm_tasks_assigned_to_fkey"
+            columns: ["assigned_to"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "crm_tasks_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "crm_tasks_completed_by_fkey"
+            columns: ["completed_by"]
+            isOneToOne: false
+            referencedRelation: "equity_pipeline"
+            referencedColumns: ["assigned_to_profile_id"]
+          },
+          {
+            foreignKeyName: "crm_tasks_completed_by_fkey"
+            columns: ["completed_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "crm_tasks_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "crm_contacts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "crm_tasks_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "crm_contacts_active"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "crm_tasks_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "crm_duplicate_candidates"
+            referencedColumns: ["contact_id"]
+          },
+          {
+            foreignKeyName: "crm_tasks_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "crm_duplicate_candidates"
+            referencedColumns: ["potential_duplicate_id"]
+          },
+          {
+            foreignKeyName: "crm_tasks_loan_id_fkey"
+            columns: ["loan_id"]
+            isOneToOne: false
+            referencedRelation: "loan_pipeline"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "crm_tasks_loan_id_fkey"
+            columns: ["loan_id"]
+            isOneToOne: false
+            referencedRelation: "loans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      deal_chat_archived_messages: {
+        Row: {
+          archived_at: string
+          id: string
+          message_id: string
+          user_id: string
+        }
+        Insert: {
+          archived_at?: string
+          id?: string
+          message_id: string
+          user_id: string
+        }
+        Update: {
+          archived_at?: string
+          id?: string
+          message_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "deal_chat_archived_messages_message_id_fkey"
+            columns: ["message_id"]
+            isOneToOne: false
+            referencedRelation: "deal_chat_messages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      deal_chat_channels: {
+        Row: {
+          channel_name: string
+          channel_type: string
+          created_at: string
+          description: string | null
+          id: string
+          is_archived: boolean
+          last_message_at: string | null
+          loan_id: string
+          metadata: Json | null
+          pinned_message_ids: string[] | null
+          updated_at: string
+        }
+        Insert: {
+          channel_name?: string
+          channel_type?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_archived?: boolean
+          last_message_at?: string | null
+          loan_id: string
+          metadata?: Json | null
+          pinned_message_ids?: string[] | null
+          updated_at?: string
+        }
+        Update: {
+          channel_name?: string
+          channel_type?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_archived?: boolean
+          last_message_at?: string | null
+          loan_id?: string
+          metadata?: Json | null
+          pinned_message_ids?: string[] | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      deal_chat_messages: {
+        Row: {
+          attachments: Json | null
+          channel_id: string
+          content: string
+          content_html: string | null
+          created_at: string
+          deleted_at: string | null
+          edited_at: string | null
+          id: string
+          is_deleted: boolean
+          is_edited: boolean
+          is_pinned: boolean
+          loan_id: string
+          mentioned_user_ids: string[] | null
+          message_type: string
+          metadata: Json | null
+          sent_by: string
+          thread_last_reply_at: string | null
+          thread_parent_id: string | null
+          thread_reply_count: number
+          updated_at: string
+        }
+        Insert: {
+          attachments?: Json | null
+          channel_id: string
+          content: string
+          content_html?: string | null
+          created_at?: string
+          deleted_at?: string | null
+          edited_at?: string | null
+          id?: string
+          is_deleted?: boolean
+          is_edited?: boolean
+          is_pinned?: boolean
+          loan_id: string
+          mentioned_user_ids?: string[] | null
+          message_type?: string
+          metadata?: Json | null
+          sent_by: string
+          thread_last_reply_at?: string | null
+          thread_parent_id?: string | null
+          thread_reply_count?: number
+          updated_at?: string
+        }
+        Update: {
+          attachments?: Json | null
+          channel_id?: string
+          content?: string
+          content_html?: string | null
+          created_at?: string
+          deleted_at?: string | null
+          edited_at?: string | null
+          id?: string
+          is_deleted?: boolean
+          is_edited?: boolean
+          is_pinned?: boolean
+          loan_id?: string
+          mentioned_user_ids?: string[] | null
+          message_type?: string
+          metadata?: Json | null
+          sent_by?: string
+          thread_last_reply_at?: string | null
+          thread_parent_id?: string | null
+          thread_reply_count?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "deal_chat_messages_channel_id_fkey"
+            columns: ["channel_id"]
+            isOneToOne: false
+            referencedRelation: "deal_chat_channels"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "deal_chat_messages_thread_parent_id_fkey"
+            columns: ["thread_parent_id"]
+            isOneToOne: false
+            referencedRelation: "deal_chat_messages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      deal_chat_read_status: {
+        Row: {
+          channel_id: string
+          created_at: string
+          id: string
+          last_read_at: string
+          unread_count: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          channel_id: string
+          created_at?: string
+          id?: string
+          last_read_at?: string
+          unread_count?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          channel_id?: string
+          created_at?: string
+          id?: string
+          last_read_at?: string
+          unread_count?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "deal_chat_read_status_channel_id_fkey"
+            columns: ["channel_id"]
+            isOneToOne: false
+            referencedRelation: "deal_chat_channels"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      delinquency_records: {
+        Row: {
+          amount_past_due: number
+          days_delinquent: number
+          delinquency_status: Database["public"]["Enums"]["delinquency_bucket"]
+          id: string
+          last_payment_amount: number | null
+          last_payment_date: string | null
+          late_fee_amount: number
+          late_fee_assessed: boolean
+          loan_id: string
+          notes: string | null
+          oldest_unpaid_billing_date: string | null
+          updated_at: string
+        }
+        Insert: {
+          amount_past_due?: number
+          days_delinquent?: number
+          delinquency_status?: Database["public"]["Enums"]["delinquency_bucket"]
+          id?: string
+          last_payment_amount?: number | null
+          last_payment_date?: string | null
+          late_fee_amount?: number
+          late_fee_assessed?: boolean
+          loan_id: string
+          notes?: string | null
+          oldest_unpaid_billing_date?: string | null
+          updated_at?: string
+        }
+        Update: {
+          amount_past_due?: number
+          days_delinquent?: number
+          delinquency_status?: Database["public"]["Enums"]["delinquency_bucket"]
+          id?: string
+          last_payment_amount?: number | null
+          last_payment_date?: string | null
+          late_fee_amount?: number
+          late_fee_assessed?: boolean
+          loan_id?: string
+          notes?: string | null
+          oldest_unpaid_billing_date?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "delinquency_records_loan_id_fkey"
+            columns: ["loan_id"]
+            isOneToOne: false
+            referencedRelation: "servicing_loans"
+            referencedColumns: ["loan_id"]
+          },
+          {
+            foreignKeyName: "delinquency_records_loan_id_fkey"
+            columns: ["loan_id"]
+            isOneToOne: false
+            referencedRelation: "servicing_maturity_schedule"
+            referencedColumns: ["loan_id"]
           },
         ]
       }
@@ -3262,6 +4552,20 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "crm_contacts_active"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "dialer_calls_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "crm_duplicate_candidates"
+            referencedColumns: ["contact_id"]
+          },
+          {
+            foreignKeyName: "dialer_calls_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "crm_duplicate_candidates"
+            referencedColumns: ["potential_duplicate_id"]
           },
           {
             foreignKeyName: "dialer_calls_loan_id_fkey"
@@ -3868,13 +5172,6 @@ export type Database = {
             columns: ["inspector_id"]
             isOneToOne: false
             referencedRelation: "inspectors"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "draw_requests_loan_event_id_fkey"
-            columns: ["loan_event_id"]
-            isOneToOne: false
-            referencedRelation: "loan_events"
             referencedColumns: ["id"]
           },
           {
@@ -4620,6 +5917,20 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "crm_contacts_active"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "email_participants_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "crm_duplicate_candidates"
+            referencedColumns: ["contact_id"]
+          },
+          {
+            foreignKeyName: "email_participants_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "crm_duplicate_candidates"
+            referencedColumns: ["potential_duplicate_id"]
           },
           {
             foreignKeyName: "email_participants_email_id_fkey"
@@ -5981,6 +7292,20 @@ export type Database = {
             referencedRelation: "crm_contacts_active"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "investors_crm_contact_id_fkey"
+            columns: ["crm_contact_id"]
+            isOneToOne: false
+            referencedRelation: "crm_duplicate_candidates"
+            referencedColumns: ["contact_id"]
+          },
+          {
+            foreignKeyName: "investors_crm_contact_id_fkey"
+            columns: ["crm_contact_id"]
+            isOneToOne: false
+            referencedRelation: "crm_duplicate_candidates"
+            referencedColumns: ["potential_duplicate_id"]
+          },
         ]
       }
       loan_activity_log: {
@@ -6527,52 +7852,55 @@ export type Database = {
       }
       loan_events: {
         Row: {
-          amount: number | null
+          amount: number
           created_at: string
-          description: string | null
+          created_by: string | null
           event_date: string
-          event_type: string
+          event_type: Database["public"]["Enums"]["loan_event_type"]
           id: string
           loan_id: string
-          metadata: Json | null
-          performed_by: string | null
+          note: string | null
+          reference_id: string | null
+          running_balance: number
         }
         Insert: {
-          amount?: number | null
+          amount: number
           created_at?: string
-          description?: string | null
-          event_date?: string
-          event_type: string
+          created_by?: string | null
+          event_date: string
+          event_type: Database["public"]["Enums"]["loan_event_type"]
           id?: string
           loan_id: string
-          metadata?: Json | null
-          performed_by?: string | null
+          note?: string | null
+          reference_id?: string | null
+          running_balance: number
         }
         Update: {
-          amount?: number | null
+          amount?: number
           created_at?: string
-          description?: string | null
+          created_by?: string | null
           event_date?: string
-          event_type?: string
+          event_type?: Database["public"]["Enums"]["loan_event_type"]
           id?: string
           loan_id?: string
-          metadata?: Json | null
-          performed_by?: string | null
+          note?: string | null
+          reference_id?: string | null
+          running_balance?: number
         }
         Relationships: [
           {
             foreignKeyName: "loan_events_loan_id_fkey"
             columns: ["loan_id"]
             isOneToOne: false
-            referencedRelation: "loan_pipeline"
-            referencedColumns: ["id"]
+            referencedRelation: "servicing_loans"
+            referencedColumns: ["loan_id"]
           },
           {
             foreignKeyName: "loan_events_loan_id_fkey"
             columns: ["loan_id"]
             isOneToOne: false
-            referencedRelation: "loans"
-            referencedColumns: ["id"]
+            referencedRelation: "servicing_maturity_schedule"
+            referencedColumns: ["loan_id"]
           },
         ]
       }
@@ -7212,6 +8540,20 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "loans_broker_contact_id_fkey"
+            columns: ["broker_contact_id"]
+            isOneToOne: false
+            referencedRelation: "crm_duplicate_candidates"
+            referencedColumns: ["contact_id"]
+          },
+          {
+            foreignKeyName: "loans_broker_contact_id_fkey"
+            columns: ["broker_contact_id"]
+            isOneToOne: false
+            referencedRelation: "crm_duplicate_candidates"
+            referencedColumns: ["potential_duplicate_id"]
+          },
+          {
             foreignKeyName: "loans_closer_id_fkey"
             columns: ["closer_id"]
             isOneToOne: false
@@ -7369,6 +8711,42 @@ export type Database = {
           id?: string
           location?: string | null
           name?: string
+        }
+        Relationships: []
+      }
+      modules: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          icon: string | null
+          id: string
+          is_active: boolean | null
+          label: string
+          name: string
+          route_prefix: string
+          sort_order: number | null
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          icon?: string | null
+          id?: string
+          is_active?: boolean | null
+          label: string
+          name: string
+          route_prefix: string
+          sort_order?: number | null
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          icon?: string | null
+          id?: string
+          is_active?: boolean | null
+          label?: string
+          name?: string
+          route_prefix?: string
+          sort_order?: number | null
         }
         Relationships: []
       }
@@ -8330,6 +9708,137 @@ export type Database = {
           },
         ]
       }
+      payoff_fee_defaults: {
+        Row: {
+          created_at: string
+          default_amount: number
+          fee_label: string
+          fee_name: string
+          id: string
+          is_active: boolean
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          default_amount?: number
+          fee_label: string
+          fee_name: string
+          id?: string
+          is_active?: boolean
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          default_amount?: number
+          fee_label?: string
+          fee_name?: string
+          id?: string
+          is_active?: boolean
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      payoff_statements: {
+        Row: {
+          accrued_interest: number
+          borrower_name: string | null
+          entity_name: string | null
+          exit_fee: number
+          fee_overrides: Json | null
+          file_url: string | null
+          generated_at: string
+          generated_by: string | null
+          good_through_date: string
+          id: string
+          interest_rate: number
+          loan_id: string
+          notes: string | null
+          other_fees: number
+          outstanding_late_fees: number
+          per_diem: number
+          prepayment_penalty: number
+          property_address: string | null
+          release_fee: number
+          sent_at: string | null
+          sent_to: string | null
+          servicing_loan_id: string | null
+          status: string
+          storage_path: string | null
+          total_payoff: number
+          unpaid_principal: number
+          wire_fee: number
+        }
+        Insert: {
+          accrued_interest?: number
+          borrower_name?: string | null
+          entity_name?: string | null
+          exit_fee?: number
+          fee_overrides?: Json | null
+          file_url?: string | null
+          generated_at?: string
+          generated_by?: string | null
+          good_through_date: string
+          id?: string
+          interest_rate: number
+          loan_id: string
+          notes?: string | null
+          other_fees?: number
+          outstanding_late_fees?: number
+          per_diem: number
+          prepayment_penalty?: number
+          property_address?: string | null
+          release_fee?: number
+          sent_at?: string | null
+          sent_to?: string | null
+          servicing_loan_id?: string | null
+          status?: string
+          storage_path?: string | null
+          total_payoff: number
+          unpaid_principal: number
+          wire_fee?: number
+        }
+        Update: {
+          accrued_interest?: number
+          borrower_name?: string | null
+          entity_name?: string | null
+          exit_fee?: number
+          fee_overrides?: Json | null
+          file_url?: string | null
+          generated_at?: string
+          generated_by?: string | null
+          good_through_date?: string
+          id?: string
+          interest_rate?: number
+          loan_id?: string
+          notes?: string | null
+          other_fees?: number
+          outstanding_late_fees?: number
+          per_diem?: number
+          prepayment_penalty?: number
+          property_address?: string | null
+          release_fee?: number
+          sent_at?: string | null
+          sent_to?: string | null
+          servicing_loan_id?: string | null
+          status?: string
+          storage_path?: string | null
+          total_payoff?: number
+          unpaid_principal?: number
+          wire_fee?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payoff_statements_servicing_loan_id_fkey"
+            columns: ["servicing_loan_id"]
+            isOneToOne: false
+            referencedRelation: "servicing_loans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       pipeline_stage_config: {
         Row: {
           color: string | null
@@ -8591,134 +10100,6 @@ export type Database = {
         }
         Relationships: []
       }
-      portal_documents: {
-        Row: {
-          borrower_entity_id: string | null
-          borrower_id: string | null
-          category: string
-          company_id: string | null
-          created_at: string
-          crm_contact_id: string | null
-          deleted_at: string | null
-          display_name: string | null
-          document_type: string
-          file_name: string
-          file_path: string
-          file_size: number | null
-          fund_id: string | null
-          id: string
-          investing_entity_id: string | null
-          investor_id: string | null
-          loan_id: string | null
-          mime_type: string | null
-          notes: string | null
-          tags: string[] | null
-          updated_at: string
-          uploaded_by: string | null
-          visibility: string
-        }
-        Insert: {
-          borrower_entity_id?: string | null
-          borrower_id?: string | null
-          category?: string
-          company_id?: string | null
-          created_at?: string
-          crm_contact_id?: string | null
-          deleted_at?: string | null
-          display_name?: string | null
-          document_type?: string
-          file_name: string
-          file_path: string
-          file_size?: number | null
-          fund_id?: string | null
-          id?: string
-          investing_entity_id?: string | null
-          investor_id?: string | null
-          loan_id?: string | null
-          mime_type?: string | null
-          notes?: string | null
-          tags?: string[] | null
-          updated_at?: string
-          uploaded_by?: string | null
-          visibility?: string
-        }
-        Update: {
-          borrower_entity_id?: string | null
-          borrower_id?: string | null
-          category?: string
-          company_id?: string | null
-          created_at?: string
-          crm_contact_id?: string | null
-          deleted_at?: string | null
-          display_name?: string | null
-          document_type?: string
-          file_name?: string
-          file_path?: string
-          file_size?: number | null
-          fund_id?: string | null
-          id?: string
-          investing_entity_id?: string | null
-          investor_id?: string | null
-          loan_id?: string | null
-          mime_type?: string | null
-          notes?: string | null
-          tags?: string[] | null
-          updated_at?: string
-          uploaded_by?: string | null
-          visibility?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "portal_documents_borrower_entity_id_fkey"
-            columns: ["borrower_entity_id"]
-            isOneToOne: false
-            referencedRelation: "borrower_entities"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "portal_documents_borrower_id_fkey"
-            columns: ["borrower_id"]
-            isOneToOne: false
-            referencedRelation: "borrowers"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "portal_documents_company_id_fkey"
-            columns: ["company_id"]
-            isOneToOne: false
-            referencedRelation: "companies"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "portal_documents_crm_contact_id_fkey"
-            columns: ["crm_contact_id"]
-            isOneToOne: false
-            referencedRelation: "crm_contacts"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "portal_documents_fund_id_fkey"
-            columns: ["fund_id"]
-            isOneToOne: false
-            referencedRelation: "funds"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "portal_documents_investor_id_fkey"
-            columns: ["investor_id"]
-            isOneToOne: false
-            referencedRelation: "investors"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "portal_documents_loan_id_fkey"
-            columns: ["loan_id"]
-            isOneToOne: false
-            referencedRelation: "loans"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       property_financial_snapshots: {
         Row: {
           annual_debt_service: number | null
@@ -8858,6 +10239,563 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "properties"
             referencedColumns: ["id"]
+          },
+        ]
+      }
+      servicing_audit_log: {
+        Row: {
+          action: string
+          entry_type: string | null
+          field_changed: string | null
+          id: string
+          loan_id: string | null
+          new_value: string | null
+          notes: string | null
+          old_value: string | null
+          reference: string | null
+          tab_source: string | null
+          timestamp: string
+          user_email: string | null
+        }
+        Insert: {
+          action: string
+          entry_type?: string | null
+          field_changed?: string | null
+          id?: string
+          loan_id?: string | null
+          new_value?: string | null
+          notes?: string | null
+          old_value?: string | null
+          reference?: string | null
+          tab_source?: string | null
+          timestamp?: string
+          user_email?: string | null
+        }
+        Update: {
+          action?: string
+          entry_type?: string | null
+          field_changed?: string | null
+          id?: string
+          loan_id?: string | null
+          new_value?: string | null
+          notes?: string | null
+          old_value?: string | null
+          reference?: string | null
+          tab_source?: string | null
+          timestamp?: string
+          user_email?: string | null
+        }
+        Relationships: []
+      }
+      servicing_construction_budgets: {
+        Row: {
+          amount_drawn: number | null
+          budget_amount: number | null
+          created_at: string
+          id: string
+          inspection_link: string | null
+          inspector_notes: string | null
+          last_updated: string | null
+          line_item: string
+          loan_id: string
+          pct_complete: number | null
+          remaining: number | null
+          status: string | null
+          updated_at: string
+        }
+        Insert: {
+          amount_drawn?: number | null
+          budget_amount?: number | null
+          created_at?: string
+          id?: string
+          inspection_link?: string | null
+          inspector_notes?: string | null
+          last_updated?: string | null
+          line_item: string
+          loan_id: string
+          pct_complete?: number | null
+          remaining?: number | null
+          status?: string | null
+          updated_at?: string
+        }
+        Update: {
+          amount_drawn?: number | null
+          budget_amount?: number | null
+          created_at?: string
+          id?: string
+          inspection_link?: string | null
+          inspector_notes?: string | null
+          last_updated?: string | null
+          line_item?: string
+          loan_id?: string
+          pct_complete?: number | null
+          remaining?: number | null
+          status?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "servicing_construction_budgets_loan_id_fkey"
+            columns: ["loan_id"]
+            isOneToOne: false
+            referencedRelation: "servicing_loans"
+            referencedColumns: ["loan_id"]
+          },
+          {
+            foreignKeyName: "servicing_construction_budgets_loan_id_fkey"
+            columns: ["loan_id"]
+            isOneToOne: false
+            referencedRelation: "servicing_maturity_schedule"
+            referencedColumns: ["loan_id"]
+          },
+        ]
+      }
+      servicing_draws: {
+        Row: {
+          amount: number
+          approved_by: string | null
+          created_at: string
+          draw_number: number
+          entity_name: string | null
+          funded_date: string | null
+          id: string
+          inspection_complete: string | null
+          line_item: string | null
+          loan_id: string
+          notes: string | null
+          reference_link: string | null
+          request_date: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          amount?: number
+          approved_by?: string | null
+          created_at?: string
+          draw_number: number
+          entity_name?: string | null
+          funded_date?: string | null
+          id?: string
+          inspection_complete?: string | null
+          line_item?: string | null
+          loan_id: string
+          notes?: string | null
+          reference_link?: string | null
+          request_date?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          approved_by?: string | null
+          created_at?: string
+          draw_number?: number
+          entity_name?: string | null
+          funded_date?: string | null
+          id?: string
+          inspection_complete?: string | null
+          line_item?: string | null
+          loan_id?: string
+          notes?: string | null
+          reference_link?: string | null
+          request_date?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "servicing_draws_loan_id_fkey"
+            columns: ["loan_id"]
+            isOneToOne: false
+            referencedRelation: "servicing_loans"
+            referencedColumns: ["loan_id"]
+          },
+          {
+            foreignKeyName: "servicing_draws_loan_id_fkey"
+            columns: ["loan_id"]
+            isOneToOne: false
+            referencedRelation: "servicing_maturity_schedule"
+            referencedColumns: ["loan_id"]
+          },
+        ]
+      }
+      servicing_loans: {
+        Row: {
+          account_holder: string | null
+          account_number: string | null
+          account_type: string | null
+          ach_status: string | null
+          additional_collateral_value: number | null
+          asset_class: string | null
+          borrower_credit_score: number | null
+          borrower_name: string | null
+          city_state_zip: string | null
+          construction_holdback: number | null
+          created_at: string
+          current_balance: number | null
+          days_past_due: number | null
+          default_date: string | null
+          default_rate: number | null
+          default_status: string | null
+          draw_funds_available: number | null
+          dutch_interest: boolean
+          effective_rate: number | null
+          entity_name: string | null
+          exit_fee: number | null
+          first_payment_date: string | null
+          folder_link: string | null
+          fund_name: string | null
+          fund_ownership_pct: number | null
+          funds_released: number | null
+          grace_period_days: number | null
+          id: string
+          interest_method:
+            | Database["public"]["Enums"]["interest_method_type"]
+            | null
+          interest_rate: number | null
+          late_fee_amount: number | null
+          late_fee_type: Database["public"]["Enums"]["late_fee_type"] | null
+          loan_id: string
+          loan_purpose: string | null
+          loan_status: string
+          loan_type: string | null
+          ltc: number | null
+          ltv_origination: number | null
+          maturity_date: string | null
+          monthly_payment: number | null
+          next_payment_due: string | null
+          notes: string | null
+          origination_date: string | null
+          origination_fee: number | null
+          origination_value: number | null
+          originator: string | null
+          payment_structure:
+            | Database["public"]["Enums"]["payment_structure_type"]
+            | null
+          payment_type: string | null
+          program: string | null
+          property_address: string | null
+          purchase_price: number | null
+          routing_number: string | null
+          servicer_loan_number: string | null
+          servicing_status:
+            | Database["public"]["Enums"]["servicing_loan_status"]
+            | null
+          stabilized_value: number | null
+          term_months: number | null
+          total_loan_amount: number
+          updated_at: string
+        }
+        Insert: {
+          account_holder?: string | null
+          account_number?: string | null
+          account_type?: string | null
+          ach_status?: string | null
+          additional_collateral_value?: number | null
+          asset_class?: string | null
+          borrower_credit_score?: number | null
+          borrower_name?: string | null
+          city_state_zip?: string | null
+          construction_holdback?: number | null
+          created_at?: string
+          current_balance?: number | null
+          days_past_due?: number | null
+          default_date?: string | null
+          default_rate?: number | null
+          default_status?: string | null
+          draw_funds_available?: number | null
+          dutch_interest?: boolean
+          effective_rate?: number | null
+          entity_name?: string | null
+          exit_fee?: number | null
+          first_payment_date?: string | null
+          folder_link?: string | null
+          fund_name?: string | null
+          fund_ownership_pct?: number | null
+          funds_released?: number | null
+          grace_period_days?: number | null
+          id?: string
+          interest_method?:
+            | Database["public"]["Enums"]["interest_method_type"]
+            | null
+          interest_rate?: number | null
+          late_fee_amount?: number | null
+          late_fee_type?: Database["public"]["Enums"]["late_fee_type"] | null
+          loan_id: string
+          loan_purpose?: string | null
+          loan_status?: string
+          loan_type?: string | null
+          ltc?: number | null
+          ltv_origination?: number | null
+          maturity_date?: string | null
+          monthly_payment?: number | null
+          next_payment_due?: string | null
+          notes?: string | null
+          origination_date?: string | null
+          origination_fee?: number | null
+          origination_value?: number | null
+          originator?: string | null
+          payment_structure?:
+            | Database["public"]["Enums"]["payment_structure_type"]
+            | null
+          payment_type?: string | null
+          program?: string | null
+          property_address?: string | null
+          purchase_price?: number | null
+          routing_number?: string | null
+          servicer_loan_number?: string | null
+          servicing_status?:
+            | Database["public"]["Enums"]["servicing_loan_status"]
+            | null
+          stabilized_value?: number | null
+          term_months?: number | null
+          total_loan_amount?: number
+          updated_at?: string
+        }
+        Update: {
+          account_holder?: string | null
+          account_number?: string | null
+          account_type?: string | null
+          ach_status?: string | null
+          additional_collateral_value?: number | null
+          asset_class?: string | null
+          borrower_credit_score?: number | null
+          borrower_name?: string | null
+          city_state_zip?: string | null
+          construction_holdback?: number | null
+          created_at?: string
+          current_balance?: number | null
+          days_past_due?: number | null
+          default_date?: string | null
+          default_rate?: number | null
+          default_status?: string | null
+          draw_funds_available?: number | null
+          dutch_interest?: boolean
+          effective_rate?: number | null
+          entity_name?: string | null
+          exit_fee?: number | null
+          first_payment_date?: string | null
+          folder_link?: string | null
+          fund_name?: string | null
+          fund_ownership_pct?: number | null
+          funds_released?: number | null
+          grace_period_days?: number | null
+          id?: string
+          interest_method?:
+            | Database["public"]["Enums"]["interest_method_type"]
+            | null
+          interest_rate?: number | null
+          late_fee_amount?: number | null
+          late_fee_type?: Database["public"]["Enums"]["late_fee_type"] | null
+          loan_id?: string
+          loan_purpose?: string | null
+          loan_status?: string
+          loan_type?: string | null
+          ltc?: number | null
+          ltv_origination?: number | null
+          maturity_date?: string | null
+          monthly_payment?: number | null
+          next_payment_due?: string | null
+          notes?: string | null
+          origination_date?: string | null
+          origination_fee?: number | null
+          origination_value?: number | null
+          originator?: string | null
+          payment_structure?:
+            | Database["public"]["Enums"]["payment_structure_type"]
+            | null
+          payment_type?: string | null
+          program?: string | null
+          property_address?: string | null
+          purchase_price?: number | null
+          routing_number?: string | null
+          servicer_loan_number?: string | null
+          servicing_status?:
+            | Database["public"]["Enums"]["servicing_loan_status"]
+            | null
+          stabilized_value?: number | null
+          term_months?: number | null
+          total_loan_amount?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      servicing_payments: {
+        Row: {
+          amount_due: number | null
+          amount_paid: number | null
+          balance_after: number | null
+          billing_line_item_id: string | null
+          borrower: string | null
+          created_at: string
+          date: string
+          entered_by: string | null
+          entry_timestamp: string
+          entry_type: string
+          id: string
+          interest: number | null
+          late_fee: number | null
+          loan_id: string
+          locked: boolean
+          payment_classification:
+            | Database["public"]["Enums"]["servicing_payment_type"]
+            | null
+          payment_method: string | null
+          principal: number | null
+          reference_trace: string | null
+          return_reason: string | null
+          reversal_of: string | null
+          running_balance_check: number | null
+          type: string
+        }
+        Insert: {
+          amount_due?: number | null
+          amount_paid?: number | null
+          balance_after?: number | null
+          billing_line_item_id?: string | null
+          borrower?: string | null
+          created_at?: string
+          date: string
+          entered_by?: string | null
+          entry_timestamp?: string
+          entry_type?: string
+          id?: string
+          interest?: number | null
+          late_fee?: number | null
+          loan_id: string
+          locked?: boolean
+          payment_classification?:
+            | Database["public"]["Enums"]["servicing_payment_type"]
+            | null
+          payment_method?: string | null
+          principal?: number | null
+          reference_trace?: string | null
+          return_reason?: string | null
+          reversal_of?: string | null
+          running_balance_check?: number | null
+          type: string
+        }
+        Update: {
+          amount_due?: number | null
+          amount_paid?: number | null
+          balance_after?: number | null
+          billing_line_item_id?: string | null
+          borrower?: string | null
+          created_at?: string
+          date?: string
+          entered_by?: string | null
+          entry_timestamp?: string
+          entry_type?: string
+          id?: string
+          interest?: number | null
+          late_fee?: number | null
+          loan_id?: string
+          locked?: boolean
+          payment_classification?:
+            | Database["public"]["Enums"]["servicing_payment_type"]
+            | null
+          payment_method?: string | null
+          principal?: number | null
+          reference_trace?: string | null
+          return_reason?: string | null
+          reversal_of?: string | null
+          running_balance_check?: number | null
+          type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "servicing_payments_billing_line_item_id_fkey"
+            columns: ["billing_line_item_id"]
+            isOneToOne: false
+            referencedRelation: "billing_line_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "servicing_payments_loan_id_fkey"
+            columns: ["loan_id"]
+            isOneToOne: false
+            referencedRelation: "servicing_loans"
+            referencedColumns: ["loan_id"]
+          },
+          {
+            foreignKeyName: "servicing_payments_loan_id_fkey"
+            columns: ["loan_id"]
+            isOneToOne: false
+            referencedRelation: "servicing_maturity_schedule"
+            referencedColumns: ["loan_id"]
+          },
+          {
+            foreignKeyName: "servicing_payments_reversal_of_fkey"
+            columns: ["reversal_of"]
+            isOneToOne: false
+            referencedRelation: "servicing_payments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      servicing_pending_actions: {
+        Row: {
+          action_status: string | null
+          amount: number | null
+          created_at: string
+          entity_name: string | null
+          id: string
+          jotform_submitted: boolean | null
+          loan_id: string
+          notes: string | null
+          property: string | null
+          request_date: string | null
+          request_type: string | null
+          updated_at: string
+          wire_confirmation: string | null
+          wire_date: string | null
+        }
+        Insert: {
+          action_status?: string | null
+          amount?: number | null
+          created_at?: string
+          entity_name?: string | null
+          id?: string
+          jotform_submitted?: boolean | null
+          loan_id: string
+          notes?: string | null
+          property?: string | null
+          request_date?: string | null
+          request_type?: string | null
+          updated_at?: string
+          wire_confirmation?: string | null
+          wire_date?: string | null
+        }
+        Update: {
+          action_status?: string | null
+          amount?: number | null
+          created_at?: string
+          entity_name?: string | null
+          id?: string
+          jotform_submitted?: boolean | null
+          loan_id?: string
+          notes?: string | null
+          property?: string | null
+          request_date?: string | null
+          request_type?: string | null
+          updated_at?: string
+          wire_confirmation?: string | null
+          wire_date?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "servicing_pending_actions_loan_id_fkey"
+            columns: ["loan_id"]
+            isOneToOne: false
+            referencedRelation: "servicing_loans"
+            referencedColumns: ["loan_id"]
+          },
+          {
+            foreignKeyName: "servicing_pending_actions_loan_id_fkey"
+            columns: ["loan_id"]
+            isOneToOne: false
+            referencedRelation: "servicing_maturity_schedule"
+            referencedColumns: ["loan_id"]
           },
         ]
       }
@@ -10226,6 +12164,95 @@ export type Database = {
         }
         Relationships: []
       }
+      user_email_templates: {
+        Row: {
+          available_variables: Json
+          category: string
+          context: string
+          created_at: string
+          created_by: string | null
+          description: string | null
+          html_body: string
+          id: string
+          is_active: boolean
+          name: string
+          slug: string
+          sort_order: number
+          subject_line: string
+          text_body: string | null
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          available_variables?: Json
+          category?: string
+          context?: string
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          html_body?: string
+          id?: string
+          is_active?: boolean
+          name: string
+          slug: string
+          sort_order?: number
+          subject_line?: string
+          text_body?: string | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          available_variables?: Json
+          category?: string
+          context?: string
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          html_body?: string
+          id?: string
+          is_active?: boolean
+          name?: string
+          slug?: string
+          sort_order?: number
+          subject_line?: string
+          text_body?: string | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
+      user_module_access: {
+        Row: {
+          granted_at: string | null
+          granted_by: string | null
+          id: string
+          module_id: string
+          user_id: string
+        }
+        Insert: {
+          granted_at?: string | null
+          granted_by?: string | null
+          id?: string
+          module_id: string
+          user_id: string
+        }
+        Update: {
+          granted_at?: string | null
+          granted_by?: string | null
+          id?: string
+          module_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_module_access_module_id_fkey"
+            columns: ["module_id"]
+            isOneToOne: false
+            referencedRelation: "modules"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_roles: {
         Row: {
           borrower_id: string | null
@@ -10436,6 +12463,20 @@ export type Database = {
             referencedRelation: "crm_contacts_active"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "borrowers_crm_contact_id_fkey"
+            columns: ["crm_contact_id"]
+            isOneToOne: false
+            referencedRelation: "crm_duplicate_candidates"
+            referencedColumns: ["contact_id"]
+          },
+          {
+            foreignKeyName: "borrowers_crm_contact_id_fkey"
+            columns: ["crm_contact_id"]
+            isOneToOne: false
+            referencedRelation: "crm_duplicate_candidates"
+            referencedColumns: ["potential_duplicate_id"]
+          },
         ]
       }
       borrowers_safe: {
@@ -10476,6 +12517,20 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "crm_contacts_active"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "borrowers_crm_contact_id_fkey"
+            columns: ["crm_contact_id"]
+            isOneToOne: false
+            referencedRelation: "crm_duplicate_candidates"
+            referencedColumns: ["contact_id"]
+          },
+          {
+            foreignKeyName: "borrowers_crm_contact_id_fkey"
+            columns: ["crm_contact_id"]
+            isOneToOne: false
+            referencedRelation: "crm_duplicate_candidates"
+            referencedColumns: ["potential_duplicate_id"]
           },
         ]
       }
@@ -10552,6 +12607,27 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      crm_contact_timeline: {
+        Row: {
+          actor_id: string | null
+          actor_name: string | null
+          body: string | null
+          company_id: string | null
+          contact_id: string | null
+          created_at: string | null
+          direction: string | null
+          id: string | null
+          is_completed: boolean | null
+          item_type: string | null
+          metadata: Json | null
+          occurred_at: string | null
+          priority: Database["public"]["Enums"]["crm_task_priority"] | null
+          sub_type: string | null
+          task_status: Database["public"]["Enums"]["crm_task_status"] | null
+          title: string | null
+        }
+        Relationships: []
       }
       crm_contacts_active: {
         Row: {
@@ -10764,6 +12840,40 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      crm_duplicate_candidates: {
+        Row: {
+          confidence: number | null
+          contact_id: string | null
+          contact_name: string | null
+          dup_email: string | null
+          dup_phone: string | null
+          email: string | null
+          match_type: string | null
+          phone: string | null
+          potential_duplicate_id: string | null
+          potential_duplicate_name: string | null
+        }
+        Relationships: []
+      }
+      crm_upcoming_items: {
+        Row: {
+          assigned_to: string | null
+          assigned_to_name: string | null
+          company_id: string | null
+          company_name: string | null
+          contact_id: string | null
+          contact_name: string | null
+          due_at: string | null
+          id: string | null
+          item_type: string | null
+          priority: Database["public"]["Enums"]["crm_task_priority"] | null
+          sub_type: string | null
+          task_status: Database["public"]["Enums"]["crm_task_status"] | null
+          title: string | null
+          urgency: string | null
+        }
+        Relationships: []
       }
       entity_investors_detail: {
         Row: {
@@ -11138,6 +13248,20 @@ export type Database = {
             referencedRelation: "crm_contacts_active"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "investors_crm_contact_id_fkey"
+            columns: ["crm_contact_id"]
+            isOneToOne: false
+            referencedRelation: "crm_duplicate_candidates"
+            referencedColumns: ["contact_id"]
+          },
+          {
+            foreignKeyName: "investors_crm_contact_id_fkey"
+            columns: ["crm_contact_id"]
+            isOneToOne: false
+            referencedRelation: "crm_duplicate_candidates"
+            referencedColumns: ["potential_duplicate_id"]
+          },
         ]
       }
       investors_safe: {
@@ -11174,6 +13298,20 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "crm_contacts_active"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "investors_crm_contact_id_fkey"
+            columns: ["crm_contact_id"]
+            isOneToOne: false
+            referencedRelation: "crm_duplicate_candidates"
+            referencedColumns: ["contact_id"]
+          },
+          {
+            foreignKeyName: "investors_crm_contact_id_fkey"
+            columns: ["crm_contact_id"]
+            isOneToOne: false
+            referencedRelation: "crm_duplicate_candidates"
+            referencedColumns: ["potential_duplicate_id"]
           },
         ]
       }
@@ -11216,6 +13354,20 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "crm_contacts_active"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "borrowers_crm_contact_id_fkey"
+            columns: ["crm_contact_id"]
+            isOneToOne: false
+            referencedRelation: "crm_duplicate_candidates"
+            referencedColumns: ["contact_id"]
+          },
+          {
+            foreignKeyName: "borrowers_crm_contact_id_fkey"
+            columns: ["crm_contact_id"]
+            isOneToOne: false
+            referencedRelation: "crm_duplicate_candidates"
+            referencedColumns: ["potential_duplicate_id"]
           },
           {
             foreignKeyName: "loan_borrowers_borrower_id_fkey"
@@ -11348,8 +13500,60 @@ export type Database = {
         }
         Relationships: []
       }
+      servicing_maturity_schedule: {
+        Row: {
+          borrower_name: string | null
+          current_balance: number | null
+          days_until_maturity: number | null
+          loan_id: string | null
+          maturity_date: string | null
+          maturity_status: string | null
+          property_address: string | null
+        }
+        Insert: {
+          borrower_name?: string | null
+          current_balance?: number | null
+          days_until_maturity?: never
+          loan_id?: string | null
+          maturity_date?: string | null
+          maturity_status?: never
+          property_address?: string | null
+        }
+        Update: {
+          borrower_name?: string | null
+          current_balance?: number | null
+          days_until_maturity?: never
+          loan_id?: string | null
+          maturity_date?: string | null
+          maturity_status?: never
+          property_address?: string | null
+        }
+        Relationships: []
+      }
+      servicing_portfolio_summary: {
+        Row: {
+          average_loan_size: number | null
+          commercial_active_count: number | null
+          commercial_outstanding_balance: number | null
+          rtl_active_count: number | null
+          rtl_outstanding_balance: number | null
+          total_active_loans: number | null
+          total_outstanding_balance: number | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
+      apply_payment: {
+        Args: {
+          p_amount_received: number
+          p_applied_by: string
+          p_loan_id: string
+          p_payment_date: string
+          p_reference_number: string
+        }
+        Returns: Json
+      }
       approve_budget_change_request: {
         Args: { p_approved_by: string; p_request_id: string }
         Returns: Json
@@ -11371,6 +13575,18 @@ export type Database = {
           target_user_id: string
         }
         Returns: string
+      }
+      calculate_funded_balance: {
+        Args: { p_as_of_date: string; p_loan_id: string }
+        Returns: number
+      }
+      calculate_interest_for_period: {
+        Args: { p_billing_month: string; p_loan_id: string }
+        Returns: Json
+      }
+      calculate_per_diem: {
+        Args: { p_annual_rate: number; p_balance: number }
+        Returns: number
       }
       create_construction_budget: {
         Args: { p_created_by: string; p_line_items: Json; p_loan_id: string }
@@ -11394,6 +13610,17 @@ export type Database = {
       dmetaphone: { Args: { "": string }; Returns: string }
       dmetaphone_alt: { Args: { "": string }; Returns: string }
       evaluate_auto_approval: { Args: { p_loan_id: string }; Returns: string }
+      find_potential_duplicates: {
+        Args: { target_contact_id: string }
+        Returns: {
+          confidence: number
+          duplicate_contact_id: string
+          duplicate_email: string
+          duplicate_name: string
+          duplicate_phone: string
+          match_type: string
+        }[]
+      }
       fund_draw_request: {
         Args: {
           p_draw_request_id: string
@@ -11404,7 +13631,19 @@ export type Database = {
         }
         Returns: Json
       }
+      generate_billing_cycle: {
+        Args: { p_billing_month: string; p_created_by: string }
+        Returns: string
+      }
       generate_loan_conditions: { Args: { p_loan_id: string }; Returns: number }
+      generate_nacha_file: {
+        Args: { p_billing_cycle_id: string }
+        Returns: string
+      }
+      generate_payoff_quote: {
+        Args: { p_loan_id: string; p_payoff_date: string }
+        Returns: Json
+      }
       get_borrower_deals_last_2_years: {
         Args: { p_borrower_id: string }
         Returns: number
@@ -11424,6 +13663,10 @@ export type Database = {
       get_portal_context: { Args: never; Returns: Json }
       get_portfolio_draw_dashboard: { Args: never; Returns: Json }
       get_unread_notification_count: { Args: never; Returns: number }
+      grant_all_modules: {
+        Args: { granter_id: string; target_user_id: string }
+        Returns: undefined
+      }
       grant_role: {
         Args: {
           _borrower_id?: string
@@ -11500,6 +13743,7 @@ export type Database = {
         Args: { p_loan_id: string }
         Returns: undefined
       }
+      refresh_delinquency_records: { Args: never; Returns: Json }
       refresh_search_index: { Args: never; Returns: undefined }
       revoke_role: {
         Args: {
@@ -11509,6 +13753,10 @@ export type Database = {
           _user_id: string
         }
         Returns: boolean
+      }
+      run_reconciliation_checks: {
+        Args: { p_billing_cycle_id: string }
+        Returns: Json
       }
       search_portal: {
         Args: {
@@ -11568,6 +13816,7 @@ export type Database = {
         }
         Returns: Json
       }
+      test_servicing_infrastructure: { Args: never; Returns: Json }
       text_soundex: { Args: { "": string }; Returns: string }
       unaccent: { Args: { "": string }; Returns: string }
       validate_budget_integrity: {
@@ -11580,9 +13829,17 @@ export type Database = {
       }
     }
     Enums: {
+      ach_account_type: "checking" | "savings"
       activity_direction_enum: "inbound" | "outbound"
       app_role: "super_admin" | "admin" | "investor" | "borrower"
       audit_action_enum: "insert" | "update" | "delete"
+      billing_cycle_status: "draft" | "reconciled" | "submitted" | "complete"
+      billing_line_item_status:
+        | "pending"
+        | "paid"
+        | "partial"
+        | "delinquent"
+        | "waived"
       budget_change_action: "add" | "increase" | "decrease" | "remove"
       budget_change_request_status:
         | "pending"
@@ -11629,6 +13886,7 @@ export type Database = {
         | "borrower_entity"
         | "ops_project"
         | "crm_contact"
+        | "opportunity"
       chat_member_role: "owner" | "admin" | "member" | "guest" | "observer"
       chat_message_type:
         | "text"
@@ -11688,6 +13946,18 @@ export type Database = {
         | "not_requested"
         | "requested"
         | "received"
+      contact_rating_enum: "hot" | "warm" | "cold"
+      crm_activity_type_enum:
+        | "call"
+        | "email"
+        | "text_message"
+        | "note"
+        | "meeting"
+        | "document"
+        | "site_visit"
+        | "status_change"
+        | "system"
+        | "other"
       crm_contact_source:
         | "website"
         | "referral"
@@ -11723,6 +13993,36 @@ export type Database = {
         | "partner"
         | "referral"
         | "other"
+      crm_event_response: "pending" | "accepted" | "declined" | "tentative"
+      crm_event_type:
+        | "meeting"
+        | "call"
+        | "site_visit"
+        | "closing"
+        | "appraisal"
+        | "webinar"
+        | "conference"
+        | "lunch"
+        | "other"
+      crm_task_priority: "low" | "normal" | "high" | "urgent"
+      crm_task_status:
+        | "not_started"
+        | "in_progress"
+        | "waiting"
+        | "completed"
+        | "deferred"
+      crm_task_type:
+        | "call"
+        | "email"
+        | "send_document"
+        | "review"
+        | "follow_up"
+        | "meeting"
+        | "site_visit"
+        | "appraisal"
+        | "closing"
+        | "other"
+      delinquency_bucket: "current" | "1-30" | "31-60" | "61-90" | "90+"
       draw_document_type:
         | "photo"
         | "invoice"
@@ -11773,6 +14073,7 @@ export type Database = {
         | "completed"
         | "blocked"
         | "waived"
+      google_sync_status: "pending" | "synced" | "failed" | "not_synced"
       inspection_method:
         | "physical_inspector"
         | "sitewire"
@@ -11780,6 +14081,9 @@ export type Database = {
         | "waived"
       inspection_report_type: "physical" | "sitewire" | "desk_review"
       inspector_type_enum: "independent" | "sitewire" | "internal"
+      interest_method_type: "dutch" | "non_dutch"
+      language_preference_enum: "english" | "spanish"
+      late_fee_type: "flat" | "percentage"
       lender_direction_enum:
         | "broker_to"
         | "note_buyer"
@@ -11793,6 +14097,19 @@ export type Database = {
         | "active"
         | "past"
       linked_entity_type_enum: "loan" | "borrower" | "investor" | "fund"
+      loan_event_type:
+        | "origination"
+        | "draw_funded"
+        | "payment_received"
+        | "payment_applied_interest"
+        | "payment_applied_principal"
+        | "payment_applied_fee"
+        | "late_fee_assessed"
+        | "rate_change"
+        | "maturity_extension"
+        | "payoff_received"
+        | "adjustment"
+        | "charge_off"
       loan_purpose:
         | "purchase"
         | "refinance"
@@ -11823,6 +14140,7 @@ export type Database = {
         | "onboarding"
         | "closed_lost"
       loan_type: "commercial" | "dscr" | "guc" | "rtl" | "transactional"
+      payment_structure_type: "interest_only" | "principal_and_interest"
       property_type:
         | "sfr"
         | "condo"
@@ -11850,6 +14168,14 @@ export type Database = {
         | "vendor"
         | "referral_partner"
       send_status_enum: "pending" | "sent" | "delivered" | "bounced" | "failed"
+      servicing_loan_status:
+        | "pending"
+        | "active"
+        | "delinquent"
+        | "in_default"
+        | "paid_off"
+        | "charged_off"
+      servicing_payment_type: "regular" | "payoff" | "partial" | "returned"
       vendor_type_enum:
         | "title_company"
         | "law_firm"
@@ -11987,9 +14313,18 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      ach_account_type: ["checking", "savings"],
       activity_direction_enum: ["inbound", "outbound"],
       app_role: ["super_admin", "admin", "investor", "borrower"],
       audit_action_enum: ["insert", "update", "delete"],
+      billing_cycle_status: ["draft", "reconciled", "submitted", "complete"],
+      billing_line_item_status: [
+        "pending",
+        "paid",
+        "partial",
+        "delinquent",
+        "waived",
+      ],
       budget_change_action: ["add", "increase", "decrease", "remove"],
       budget_change_request_status: [
         "pending",
@@ -12041,6 +14376,7 @@ export const Constants = {
         "borrower_entity",
         "ops_project",
         "crm_contact",
+        "opportunity",
       ],
       chat_member_role: ["owner", "admin", "member", "guest", "observer"],
       chat_message_type: [
@@ -12107,6 +14443,19 @@ export const Constants = {
         "requested",
         "received",
       ],
+      contact_rating_enum: ["hot", "warm", "cold"],
+      crm_activity_type_enum: [
+        "call",
+        "email",
+        "text_message",
+        "note",
+        "meeting",
+        "document",
+        "site_visit",
+        "status_change",
+        "system",
+        "other",
+      ],
       crm_contact_source: [
         "website",
         "referral",
@@ -12145,6 +14494,39 @@ export const Constants = {
         "referral",
         "other",
       ],
+      crm_event_response: ["pending", "accepted", "declined", "tentative"],
+      crm_event_type: [
+        "meeting",
+        "call",
+        "site_visit",
+        "closing",
+        "appraisal",
+        "webinar",
+        "conference",
+        "lunch",
+        "other",
+      ],
+      crm_task_priority: ["low", "normal", "high", "urgent"],
+      crm_task_status: [
+        "not_started",
+        "in_progress",
+        "waiting",
+        "completed",
+        "deferred",
+      ],
+      crm_task_type: [
+        "call",
+        "email",
+        "send_document",
+        "review",
+        "follow_up",
+        "meeting",
+        "site_visit",
+        "appraisal",
+        "closing",
+        "other",
+      ],
+      delinquency_bucket: ["current", "1-30", "31-60", "61-90", "90+"],
       draw_document_type: [
         "photo",
         "invoice",
@@ -12201,6 +14583,7 @@ export const Constants = {
         "blocked",
         "waived",
       ],
+      google_sync_status: ["pending", "synced", "failed", "not_synced"],
       inspection_method: [
         "physical_inspector",
         "sitewire",
@@ -12209,6 +14592,9 @@ export const Constants = {
       ],
       inspection_report_type: ["physical", "sitewire", "desk_review"],
       inspector_type_enum: ["independent", "sitewire", "internal"],
+      interest_method_type: ["dutch", "non_dutch"],
+      language_preference_enum: ["english", "spanish"],
+      late_fee_type: ["flat", "percentage"],
       lender_direction_enum: [
         "broker_to",
         "note_buyer",
@@ -12224,6 +14610,20 @@ export const Constants = {
         "past",
       ],
       linked_entity_type_enum: ["loan", "borrower", "investor", "fund"],
+      loan_event_type: [
+        "origination",
+        "draw_funded",
+        "payment_received",
+        "payment_applied_interest",
+        "payment_applied_principal",
+        "payment_applied_fee",
+        "late_fee_assessed",
+        "rate_change",
+        "maturity_extension",
+        "payoff_received",
+        "adjustment",
+        "charge_off",
+      ],
       loan_purpose: [
         "purchase",
         "refinance",
@@ -12256,6 +14656,7 @@ export const Constants = {
         "closed_lost",
       ],
       loan_type: ["commercial", "dscr", "guc", "rtl", "transactional"],
+      payment_structure_type: ["interest_only", "principal_and_interest"],
       property_type: [
         "sfr",
         "condo",
@@ -12285,6 +14686,15 @@ export const Constants = {
         "referral_partner",
       ],
       send_status_enum: ["pending", "sent", "delivered", "bounced", "failed"],
+      servicing_loan_status: [
+        "pending",
+        "active",
+        "delinquent",
+        "in_default",
+        "paid_off",
+        "charged_off",
+      ],
+      servicing_payment_type: ["regular", "payoff", "partial", "returned"],
       vendor_type_enum: [
         "title_company",
         "law_firm",
@@ -12300,11 +14710,7 @@ export const Constants = {
   },
 } as const
 
-// ── Convenience type aliases ─────────────────────────────────────────────
-// These map friendly names to generated Supabase row types.
-// Tables present in the generated schema use Tables<'...'>.
-// Tables not yet in the generated schema are defined manually from migrations.
-
+// Custom type aliases for convenience
 export type Profile = Tables<'profiles'>
 export type Loan = Tables<'loans'>
 export type LoanPayment = Tables<'loan_payments'>
