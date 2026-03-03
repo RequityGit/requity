@@ -10,43 +10,64 @@ import {
 } from "@/lib/format";
 import { PayoffStatementGenerator } from "@/components/admin/servicing/payoff-statement-generator";
 import {
-  Hammer,
-  CreditCard,
   HardHat,
+  CreditCard,
   ScrollText,
   FileText,
 } from "lucide-react";
+import { BudgetDrawsTab } from "@/components/admin/budget-draws/budget-draws-tab";
+import type {
+  ConstructionBudget,
+  BudgetLineItem,
+  DrawRequest,
+  DrawRequestLineItem,
+  BudgetChangeRequest,
+  BudgetChangeRequestLineItem,
+  BudgetLineItemHistory,
+} from "@/components/admin/budget-draws/types";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-interface LoanDetailTabsProps {
-  draws: any[];
+interface ServicingLoanDetailTabsProps {
   payments: any[];
-  budgetItems: any[];
   auditLog: any[];
   loan: any;
   payoffStatementCount: number;
+  // New budget/draws data
+  loanUuid: string | null;
+  currentUserId: string;
+  constructionBudget: ConstructionBudget | null;
+  budgetLineItems: BudgetLineItem[];
+  drawRequests: DrawRequest[];
+  drawRequestLineItems: DrawRequestLineItem[];
+  budgetChangeRequests: BudgetChangeRequest[];
+  budgetChangeRequestLineItems: BudgetChangeRequestLineItem[];
+  budgetAuditLog: BudgetLineItemHistory[];
+  totalUnits: number;
 }
 
-export function LoanDetailTabs({
-  draws,
+export function ServicingLoanDetailTabs({
   payments,
-  budgetItems,
   auditLog,
   loan,
   payoffStatementCount,
-}: LoanDetailTabsProps) {
+  loanUuid,
+  currentUserId,
+  constructionBudget,
+  budgetLineItems,
+  drawRequests,
+  drawRequestLineItems,
+  budgetChangeRequests,
+  budgetChangeRequestLineItems,
+  budgetAuditLog,
+  totalUnits,
+}: ServicingLoanDetailTabsProps) {
   return (
-    <Tabs defaultValue="draws">
+    <Tabs defaultValue="budget-draws">
       <TabsList className="flex-wrap h-auto gap-1">
-        <TabsTrigger value="draws" className="gap-1.5">
-          <Hammer className="h-3.5 w-3.5" />
-          Draws
-          {draws.length > 0 && (
-            <span className="ml-1 rounded-full bg-slate-200 text-slate-700 text-[10px] font-semibold px-1.5 py-0.5">
-              {draws.length}
-            </span>
-          )}
+        <TabsTrigger value="budget-draws" className="gap-1.5">
+          <HardHat className="h-3.5 w-3.5" />
+          Budget & Draws
         </TabsTrigger>
         <TabsTrigger value="payments" className="gap-1.5">
           <CreditCard className="h-3.5 w-3.5" />
@@ -54,15 +75,6 @@ export function LoanDetailTabs({
           {payments.length > 0 && (
             <span className="ml-1 rounded-full bg-slate-200 text-slate-700 text-[10px] font-semibold px-1.5 py-0.5">
               {payments.length}
-            </span>
-          )}
-        </TabsTrigger>
-        <TabsTrigger value="budget" className="gap-1.5">
-          <HardHat className="h-3.5 w-3.5" />
-          Budget
-          {budgetItems.length > 0 && (
-            <span className="ml-1 rounded-full bg-slate-200 text-slate-700 text-[10px] font-semibold px-1.5 py-0.5">
-              {budgetItems.length}
             </span>
           )}
         </TabsTrigger>
@@ -81,16 +93,30 @@ export function LoanDetailTabs({
         </TabsTrigger>
       </TabsList>
 
-      <TabsContent value="draws" className="mt-4">
-        <DrawsTab draws={draws} />
+      <TabsContent value="budget-draws" className="mt-4">
+        {loanUuid ? (
+          <BudgetDrawsTab
+            loanId={loanUuid}
+            budget={constructionBudget}
+            budgetLineItems={budgetLineItems}
+            drawRequests={drawRequests}
+            drawRequestLineItems={drawRequestLineItems}
+            changeRequests={budgetChangeRequests}
+            changeRequestLineItems={budgetChangeRequestLineItems}
+            auditLog={budgetAuditLog}
+            currentUserId={currentUserId}
+            totalUnits={totalUnits}
+          />
+        ) : (
+          <div className="py-12 text-center text-muted-foreground">
+            <p>No matching loan record found in the pipeline.</p>
+            <p className="text-xs mt-1">Budget & Draws requires a linked pipeline loan.</p>
+          </div>
+        )}
       </TabsContent>
 
       <TabsContent value="payments" className="mt-4">
         <PaymentsTab payments={payments} />
-      </TabsContent>
-
-      <TabsContent value="budget" className="mt-4">
-        <BudgetTab budgetItems={budgetItems} />
       </TabsContent>
 
       <TabsContent value="audit" className="mt-4">
@@ -102,23 +128,6 @@ export function LoanDetailTabs({
       </TabsContent>
     </Tabs>
   );
-}
-
-// ── Draws Tab ──────────────────────────────────────────────────────────
-
-function DrawsTab({ draws }: { draws: any[] }) {
-  const columns: Column<any>[] = [
-    { key: "draw_number", header: "#", cell: (r) => r.draw_number },
-    { key: "line_item", header: "Description", cell: (r) => r.line_item ?? "—" },
-    { key: "amount", header: "Amount", cell: (r) => formatCurrency(r.amount) },
-    { key: "status", header: "Status", cell: (r) => <StatusBadge status={r.status} /> },
-    { key: "request_date", header: "Requested", cell: (r) => formatDate(r.request_date) },
-    { key: "funded_date", header: "Funded", cell: (r) => formatDate(r.funded_date) },
-    { key: "approved_by", header: "Approved By", cell: (r) => r.approved_by ?? "—" },
-    { key: "notes", header: "Notes", cell: (r) => <span className="text-xs text-muted-foreground">{r.notes ?? "—"}</span>, className: "max-w-[200px] truncate" },
-  ];
-
-  return <DataTable columns={columns} data={draws} emptyMessage="No draws for this loan." />;
 }
 
 // ── Payments Tab ───────────────────────────────────────────────────────
@@ -138,39 +147,6 @@ function PaymentsTab({ payments }: { payments: any[] }) {
   ];
 
   return <DataTable columns={columns} data={payments} emptyMessage="No payments for this loan." />;
-}
-
-// ── Budget Tab ─────────────────────────────────────────────────────────
-
-function BudgetTab({ budgetItems }: { budgetItems: any[] }) {
-  const columns: Column<any>[] = [
-    { key: "line_item", header: "Line Item", cell: (r) => r.line_item },
-    { key: "budget_amount", header: "Budget", cell: (r) => formatCurrency(r.budget_amount) },
-    { key: "amount_drawn", header: "Drawn", cell: (r) => formatCurrency(r.amount_drawn) },
-    { key: "remaining", header: "Remaining", cell: (r) => formatCurrency(r.remaining) },
-    {
-      key: "pct_complete",
-      header: "% Complete",
-      cell: (r) => {
-        const pct = r.pct_complete ? (r.pct_complete * 100).toFixed(0) : "0";
-        return (
-          <div className="flex items-center gap-2">
-            <div className="w-16 h-2 bg-slate-200 rounded-full overflow-hidden">
-              <div
-                className="h-full bg-blue-500 rounded-full"
-                style={{ width: `${Math.min(Number(pct), 100)}%` }}
-              />
-            </div>
-            <span className="text-xs text-muted-foreground">{pct}%</span>
-          </div>
-        );
-      },
-    },
-    { key: "status", header: "Status", cell: (r) => r.status ?? "—" },
-    { key: "inspector_notes", header: "Inspector Notes", cell: (r) => <span className="text-xs text-muted-foreground">{r.inspector_notes ?? "—"}</span>, className: "max-w-[200px] truncate" },
-  ];
-
-  return <DataTable columns={columns} data={budgetItems} emptyMessage="No budget items for this loan." />;
 }
 
 // ── Audit Log Tab ─────────────────────────────────────────────────────

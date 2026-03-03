@@ -3,7 +3,7 @@ import { redirect, notFound } from "next/navigation";
 import { PageHeader } from "@/components/shared/page-header";
 import { KpiCard } from "@/components/shared/kpi-card";
 import { StatusBadge } from "@/components/shared/status-badge";
-import { LoanDetailTabs } from "@/components/admin/servicing/loan-detail-tabs";
+import { ServicingLoanDetailTabs } from "@/components/admin/servicing/loan-detail-tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   formatCurrency,
@@ -85,12 +85,99 @@ export default async function LoanDetailPage({
   if (!loanResult.data) notFound();
 
   const loan = loanResult.data as any;
-  const draws = drawsResult.data ?? [];
   const payments = paymentsResult.data ?? [];
-  const budgetItems = budgetResult.data ?? [];
   const auditLog = auditResult.data ?? [];
   const monthlyInterest = interestResult.data?.total_interest ?? 0;
   const payoffStatementCount = payoffCountResult.count ?? 0;
+
+  // Look up the UUID loan from the pipeline by matching loan_number to servicing loan_id
+  let loanUuid: string | null = null;
+  let constructionBudgetData: any = null;
+  let budgetLineItemsData: any[] = [];
+  let drawRequestsData: any[] = [];
+  let drawRequestLineItemsData: any[] = [];
+  let budgetChangeRequestsData: any[] = [];
+  let budgetChangeRequestLineItemsData: any[] = [];
+  let budgetAuditLogData: any[] = [];
+
+  try {
+    // Try to find the pipeline loan by loan_number matching the servicing loan_id
+    const { data: pipelineLoan } = await supabase
+      .from("loans")
+      .select("id")
+      .eq("loan_number", loanId)
+      .is("deleted_at", null)
+      .maybeSingle();
+
+    if (pipelineLoan) {
+      loanUuid = pipelineLoan.id;
+
+      // Fetch construction budget data
+      const { data: budgetRow } = await supabase
+        .from("construction_budgets")
+        .select("*")
+        .eq("loan_id", loanUuid)
+        .order("budget_version", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      constructionBudgetData = budgetRow;
+
+      // Fetch draw requests
+      const { data: draws } = await supabase
+        .from("draw_requests")
+        .select("*")
+        .eq("loan_id", loanUuid)
+        .order("draw_number", { ascending: false });
+      drawRequestsData = draws ?? [];
+
+      if (budgetRow) {
+        const [lineItemsRes, changeReqRes, historyRes] = await Promise.all([
+          supabase
+            .from("budget_line_items")
+            .select("*")
+            .eq("construction_budget_id", budgetRow.id)
+            .order("sort_order"),
+          supabase
+            .from("budget_change_requests")
+            .select("*")
+            .eq("construction_budget_id", budgetRow.id)
+            .order("created_at", { ascending: false }),
+          supabase
+            .from("budget_line_item_history")
+            .select("*")
+            .eq("construction_budget_id", budgetRow.id)
+            .order("changed_at", { ascending: false })
+            .limit(100),
+        ]);
+        budgetLineItemsData = lineItemsRes.data ?? [];
+        budgetChangeRequestsData = changeReqRes.data ?? [];
+        budgetAuditLogData = historyRes.data ?? [];
+
+        // Fetch change request line items
+        if (budgetChangeRequestsData.length > 0) {
+          const coIds = budgetChangeRequestsData.map((co: any) => co.id);
+          const { data: coLineItems } = await supabase
+            .from("budget_change_request_line_items")
+            .select("*")
+            .in("budget_change_request_id", coIds);
+          budgetChangeRequestLineItemsData = coLineItems ?? [];
+        }
+      }
+
+      // Fetch draw request line items
+      if (drawRequestsData.length > 0) {
+        const drawIds = drawRequestsData.map((d: any) => d.id);
+        const { data: drLineItems } = await supabase
+          .from("draw_request_line_items")
+          .select("*")
+          .in("draw_request_id", drawIds);
+        drawRequestLineItemsData = drLineItems ?? [];
+      }
+    }
+  } catch {
+    /* construction budget tables may not exist yet */
+  }
 
   const isMatured =
     loan.maturity_date != null && new Date(loan.maturity_date) <= new Date();
@@ -231,13 +318,21 @@ export default async function LoanDetailPage({
       </Card>
 
       {/* Tabbed Content */}
-      <LoanDetailTabs
-        draws={draws}
+      <ServicingLoanDetailTabs
         payments={payments}
-        budgetItems={budgetItems}
         auditLog={auditLog}
         loan={loan}
         payoffStatementCount={payoffStatementCount}
+        loanUuid={loanUuid}
+        currentUserId={user.id}
+        constructionBudget={constructionBudgetData}
+        budgetLineItems={budgetLineItemsData}
+        drawRequests={drawRequestsData}
+        drawRequestLineItems={drawRequestLineItemsData}
+        budgetChangeRequests={budgetChangeRequestsData}
+        budgetChangeRequestLineItems={budgetChangeRequestLineItemsData}
+        budgetAuditLog={budgetAuditLogData}
+        totalUnits={1}
       />
     </div>
   );

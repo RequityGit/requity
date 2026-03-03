@@ -311,13 +311,9 @@ export default async function AdminLoanDetailPage({ params }: PageProps) {
     companiesData = (data ?? []).map((c: any) => ({ id: c.id, name: c.name }));
   } catch { /* table may not exist */ }
 
-  // Fetch construction budget data
+  // Fetch construction budget data (scope of work only for pipeline)
   let constructionBudgetData: any = null;
   let budgetLineItemsData: any[] = [];
-  let drawRequestLineItemsData: any[] = [];
-  let budgetChangeRequestsData: any[] = [];
-  let budgetChangeRequestLineItemsData: any[] = [];
-  let budgetAuditLogData: any[] = [];
 
   try {
     const { data: budgetRow } = await supabase
@@ -330,47 +326,12 @@ export default async function AdminLoanDetailPage({ params }: PageProps) {
     constructionBudgetData = budgetRow;
 
     if (budgetRow) {
-      const [lineItemsRes, changeReqRes, historyRes] = await Promise.all([
-        supabase
-          .from("budget_line_items")
-          .select("*")
-          .eq("construction_budget_id", budgetRow.id)
-          .order("sort_order"),
-        supabase
-          .from("budget_change_requests")
-          .select("*")
-          .eq("construction_budget_id", budgetRow.id)
-          .order("created_at", { ascending: false }),
-        supabase
-          .from("budget_line_item_history")
-          .select("*")
-          .eq("construction_budget_id", budgetRow.id)
-          .order("changed_at", { ascending: false })
-          .limit(100),
-      ]);
-      budgetLineItemsData = lineItemsRes.data ?? [];
-      budgetChangeRequestsData = changeReqRes.data ?? [];
-      budgetAuditLogData = historyRes.data ?? [];
-
-      // Fetch change request line items for all change requests
-      if (budgetChangeRequestsData.length > 0) {
-        const coIds = budgetChangeRequestsData.map((co: any) => co.id);
-        const { data: coLineItems } = await supabase
-          .from("budget_change_request_line_items")
-          .select("*")
-          .in("budget_change_request_id", coIds);
-        budgetChangeRequestLineItemsData = coLineItems ?? [];
-      }
-    }
-
-    // Fetch draw request line items for all draw requests
-    const drawIds = (drawRequestsResult.data ?? []).map((d: any) => d.id);
-    if (drawIds.length > 0) {
-      const { data: drLineItems } = await supabase
-        .from("draw_request_line_items")
+      const { data: lineItems } = await supabase
+        .from("budget_line_items")
         .select("*")
-        .in("draw_request_id", drawIds);
-      drawRequestLineItemsData = drLineItems ?? [];
+        .eq("construction_budget_id", budgetRow.id)
+        .order("sort_order");
+      budgetLineItemsData = lineItems ?? [];
     }
   } catch { /* construction budget tables may not exist */ }
 
@@ -696,11 +657,6 @@ export default async function AdminLoanDetailPage({ params }: PageProps) {
         lenderCompanies={companiesData}
         constructionBudget={constructionBudgetData}
         budgetLineItems={budgetLineItemsData}
-        drawRequestLineItems={drawRequestLineItemsData}
-        budgetChangeRequests={budgetChangeRequestsData}
-        budgetChangeRequestLineItems={budgetChangeRequestLineItemsData}
-        budgetAuditLog={budgetAuditLogData}
-        totalUnits={loanData.total_units ?? 1}
       />
       </Suspense>
     </div>

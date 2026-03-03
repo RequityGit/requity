@@ -62,14 +62,10 @@ import { Separator } from "@/components/ui/separator";
 import { DeleteLoanButton } from "@/components/admin/delete-loan-button";
 import { LenderQuotesTab } from "@/components/admin/lender-quotes-tab";
 import type { LenderQuote } from "@/lib/supabase/types";
-import { BudgetDrawsTab } from "@/components/admin/budget-draws/budget-draws-tab";
+import { ScopeOfWorkTab } from "@/components/admin/budget-draws/scope-of-work-tab";
 import type {
   ConstructionBudget,
   BudgetLineItem,
-  DrawRequestLineItem,
-  BudgetChangeRequest,
-  BudgetChangeRequestLineItem,
-  BudgetLineItemHistory,
 } from "@/components/admin/budget-draws/types";
 
 interface LoanInfo {
@@ -176,11 +172,6 @@ interface LoanDetailActionsProps {
   lenderCompanies?: { id: string; name: string }[];
   constructionBudget?: ConstructionBudget | null;
   budgetLineItems?: BudgetLineItem[];
-  drawRequestLineItems?: DrawRequestLineItem[];
-  budgetChangeRequests?: BudgetChangeRequest[];
-  budgetChangeRequestLineItems?: BudgetChangeRequestLineItem[];
-  budgetAuditLog?: BudgetLineItemHistory[];
-  totalUnits?: number;
 }
 
 export function LoanDetailActions({
@@ -205,11 +196,6 @@ export function LoanDetailActions({
   lenderCompanies = [],
   constructionBudget = null,
   budgetLineItems = [],
-  drawRequestLineItems = [],
-  budgetChangeRequests = [],
-  budgetChangeRequestLineItems = [],
-  budgetAuditLog = [],
-  totalUnits = 1,
 }: LoanDetailActionsProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -270,9 +256,9 @@ export function LoanDetailActions({
             <MessageCircle className="h-3.5 w-3.5" />
             Chatter
           </TabsTrigger>
-          <TabsTrigger value="budget-draws" className="gap-1">
+          <TabsTrigger value="scope-of-work" className="gap-1">
             <HardHat className="h-3.5 w-3.5" />
-            Budget & Draws
+            Scope of Work
           </TabsTrigger>
           <TabsTrigger value="payments">
             Payments ({payments.length})
@@ -331,18 +317,13 @@ export function LoanDetailActions({
           />
         </TabsContent>
 
-        <TabsContent value="budget-draws" className="mt-4">
-          <BudgetDrawsTab
+        <TabsContent value="scope-of-work" className="mt-4">
+          <ScopeOfWorkTab
             loanId={loanId}
             budget={constructionBudget ?? null}
-            budgetLineItems={budgetLineItems}
-            drawRequests={drawRequests as any}
-            drawRequestLineItems={drawRequestLineItems}
-            changeRequests={budgetChangeRequests}
-            changeRequestLineItems={budgetChangeRequestLineItems}
-            auditLog={budgetAuditLog}
+            lineItems={budgetLineItems}
             currentUserId={currentUserId}
-            totalUnits={totalUnits}
+            onRefresh={() => router.refresh()}
           />
         </TabsContent>
 
