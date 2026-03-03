@@ -26,8 +26,6 @@ import {
   Plus,
   Filter,
   MapPin,
-  Sun,
-  Moon,
 } from "lucide-react";
 import {
   CEOThemeProvider,
@@ -80,7 +78,7 @@ export function CEODashboard({ data, userName }: DashboardProps) {
 
 // ─── Inner Dashboard (needs theme context) ────────────────────────────────────
 function DashboardInner({ data, userName }: DashboardProps) {
-  const { t, mode, toggleMode } = useCEOTheme();
+  const { t, mode } = useCEOTheme();
 
   const hour = new Date().getHours();
   const greeting =
@@ -98,35 +96,16 @@ function DashboardInner({ data, userName }: DashboardProps) {
     >
       <div className="max-w-[1120px] mx-auto px-7 py-6 pb-10">
         {/* Greeting */}
-        <div className="ceo-fade-up ceo-delay-0 mb-6 flex items-start justify-between">
-          <div>
-            <h1
-              className="text-2xl font-bold font-inter"
-              style={{ letterSpacing: "-0.04em" }}
-            >
-              {greeting}, {firstName}
-            </h1>
-            <p className="text-sm mt-1" style={{ color: t.textSecondary }}>
-              Here&apos;s what&apos;s happening across Requity today.
-            </p>
-          </div>
-          <button
-            onClick={toggleMode}
-            className="flex items-center justify-center w-9 h-9 rounded-lg transition-colors"
-            style={{ background: t.accentSoft }}
-            onMouseEnter={(e) =>
-              (e.currentTarget.style.background = t.accentHover)
-            }
-            onMouseLeave={(e) =>
-              (e.currentTarget.style.background = t.accentSoft)
-            }
+        <div className="ceo-fade-up ceo-delay-0 mb-6">
+          <h1
+            className="text-2xl font-bold font-inter"
+            style={{ letterSpacing: "-0.04em" }}
           >
-            {mode === "dark" ? (
-              <Sun size={16} strokeWidth={1.5} color={t.textSecondary} />
-            ) : (
-              <Moon size={16} strokeWidth={1.5} color={t.textSecondary} />
-            )}
-          </button>
+            {greeting}, {firstName}
+          </h1>
+          <p className="text-sm mt-1" style={{ color: t.textSecondary }}>
+            Here&apos;s what&apos;s happening across Requity today.
+          </p>
         </div>
 
         {/* Hero Metrics */}
