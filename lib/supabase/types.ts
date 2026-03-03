@@ -2592,6 +2592,7 @@ export type Database = {
           account_name: string
           account_number: string
           bank_name: string
+          company_id: string | null
           id: string
           routing_number: string
           updated_at: string
@@ -2602,6 +2603,7 @@ export type Database = {
           account_name?: string
           account_number?: string
           bank_name?: string
+          company_id?: string | null
           id?: string
           routing_number?: string
           updated_at?: string
@@ -2612,13 +2614,22 @@ export type Database = {
           account_name?: string
           account_number?: string
           bank_name?: string
+          company_id?: string | null
           id?: string
           routing_number?: string
           updated_at?: string
           updated_by?: string | null
           wire_type?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "company_wire_instructions_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       condition_template_items: {
         Row: {
