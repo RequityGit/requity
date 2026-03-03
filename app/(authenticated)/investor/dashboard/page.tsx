@@ -213,7 +213,7 @@ export default async function InvestorDashboardPage() {
       />
 
       {/* KPI Cards */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 md:gap-4 lg:grid-cols-4">
         <KpiCard
           title="Total Committed"
           value={formatCurrency(totalCommitted)}
@@ -240,7 +240,7 @@ export default async function InvestorDashboardPage() {
         />
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-2">
+      <div className="grid gap-4 md:gap-6 lg:grid-cols-2">
         {/* Recent Activity Feed */}
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-4">
@@ -350,7 +350,7 @@ export default async function InvestorDashboardPage() {
       </div>
 
       {/* Quick Links */}
-      <div className="grid gap-4 md:grid-cols-3">
+      <div className="grid gap-3 md:gap-4 md:grid-cols-3">
         <Link href="/investor/capital-calls">
           <Card className="hover:shadow-md transition-shadow cursor-pointer">
             <CardContent className="flex items-center justify-between p-4">

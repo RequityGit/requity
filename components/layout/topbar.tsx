@@ -12,7 +12,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { LogOut, ShieldCheck, User, Eye, BookOpen, Sun, Moon } from "lucide-react";
+import { LogOut, ShieldCheck, User, Eye, BookOpen, Sun, Moon, Menu } from "lucide-react";
 import { RoleSwitcher } from "./role-switcher";
 import { ViewAsBanner } from "./view-as-banner";
 import { NotificationBell } from "@/components/notifications/notification-bell";
@@ -21,6 +21,7 @@ import { UserSearchModal } from "./user-search-modal";
 import { Badge } from "@/components/ui/badge";
 import { CommandSearch } from "@/components/search/CommandSearch";
 import { useTheme } from "@/components/theme-provider";
+import { useMobileNav } from "./mobile-layout-wrapper";
 
 interface TopbarProps {
   userName: string;
@@ -38,6 +39,7 @@ export function Topbar({ userName, role, email, allowedRoles, userId, isSuperAdm
   const { isImpersonating, targetRole, targetUserName } = useImpersonation();
   const [userSearchOpen, setUserSearchOpen] = useState(false);
   const { theme, toggleTheme } = useTheme();
+  const { openMobileSidebar } = useMobileNav();
 
   async function handleLogout() {
     await supabase.auth.signOut();
@@ -51,9 +53,32 @@ export function Topbar({ userName, role, email, allowedRoles, userId, isSuperAdm
   return (
     <>
       <ViewAsBanner />
-      <header className="sticky top-0 z-30 h-16 border-b bg-card flex items-center px-6">
-        {/* Left side — impersonation indicator or spacer */}
-        <div className="shrink-0 w-48">
+      <header className="sticky top-0 z-30 h-14 md:h-16 border-b bg-card flex items-center px-3 md:px-6">
+        {/* Mobile: hamburger button */}
+        <button
+          onClick={openMobileSidebar}
+          className="md:hidden flex items-center justify-center h-10 w-10 rounded-md text-muted-foreground hover:bg-muted hover:text-foreground transition-colors mr-2"
+          aria-label="Open navigation"
+        >
+          <Menu className="h-5 w-5" />
+        </button>
+
+        {/* Mobile: centered logo */}
+        <div className="md:hidden flex-1 flex justify-center">
+          <img
+            src="https://edhlkknvlczhbowasjna.supabase.co/storage/v1/object/public/brand-assets/Requity%20Logo%20White.svg?v=2"
+            alt="Requity"
+            className="h-8 w-auto dark:block hidden"
+          />
+          <img
+            src="https://edhlkknvlczhbowasjna.supabase.co/storage/v1/object/public/brand-assets/Requity%20Logo%20White.svg?v=2"
+            alt="Requity"
+            className="h-8 w-auto dark:hidden invert"
+          />
+        </div>
+
+        {/* Desktop: left side — impersonation indicator or spacer */}
+        <div className="hidden md:block shrink-0 w-48">
           {isImpersonating && (
             <div className="flex items-center gap-2 text-sm text-amber-700">
               <Eye className="h-4 w-4" />
@@ -62,13 +87,13 @@ export function Topbar({ userName, role, email, allowedRoles, userId, isSuperAdm
           )}
         </div>
 
-        {/* Center — search bar */}
-        <div className="flex-1 flex justify-center px-4">
+        {/* Desktop: center — search bar */}
+        <div className="hidden md:flex flex-1 justify-center px-4">
           <CommandSearch role={role} />
         </div>
 
         {/* Right side — actions */}
-        <div className="flex shrink-0 items-center gap-4">
+        <div className="flex shrink-0 items-center gap-2 md:gap-4">
           <button
             onClick={toggleTheme}
             className="flex items-center justify-center h-9 w-9 rounded-md text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
@@ -78,32 +103,35 @@ export function Topbar({ userName, role, email, allowedRoles, userId, isSuperAdm
           </button>
           <NotificationBell userId={userId} activeRole={displayRole} />
 
-          {isImpersonating ? (
-            <Badge
-              variant="outline"
-              className="bg-amber-100 text-amber-800 border-amber-300"
-            >
-              <Eye className="h-3 w-3 mr-1" />
-              {displayRole === "admin"
-                ? "Admin"
-                : displayRole === "investor"
-                  ? "Investor"
-                  : displayRole === "borrower"
-                    ? "Borrower"
-                    : displayRole}
-            </Badge>
-          ) : (
-            <RoleSwitcher
-              activeRole={role}
-              allowedRoles={allowedRoles}
-              isSuperAdmin={isSuperAdmin}
-              onViewAsUser={() => setUserSearchOpen(true)}
-            />
-          )}
+          {/* Role switcher - hidden on mobile */}
+          <div className="hidden md:block">
+            {isImpersonating ? (
+              <Badge
+                variant="outline"
+                className="bg-amber-100 text-amber-800 border-amber-300"
+              >
+                <Eye className="h-3 w-3 mr-1" />
+                {displayRole === "admin"
+                  ? "Admin"
+                  : displayRole === "investor"
+                    ? "Investor"
+                    : displayRole === "borrower"
+                      ? "Borrower"
+                      : displayRole}
+              </Badge>
+            ) : (
+              <RoleSwitcher
+                activeRole={role}
+                allowedRoles={allowedRoles}
+                isSuperAdmin={isSuperAdmin}
+                onViewAsUser={() => setUserSearchOpen(true)}
+              />
+            )}
+          </div>
 
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <button className="flex items-center gap-2 hover:bg-muted rounded-md px-3 py-2 transition-colors">
+              <button className="flex items-center gap-2 hover:bg-muted rounded-md px-2 md:px-3 py-2 transition-colors">
                 {avatarUrl ? (
                   <Image
                     src={avatarUrl}

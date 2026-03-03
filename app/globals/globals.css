@@ -144,3 +144,105 @@
     background-color: hsl(0 0% 13%) !important;
   }
 }
+
+/* ============================
+   Mobile-specific styles
+   ============================ */
+
+/* Gold shimmer skeleton animation */
+@keyframes rq-shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+.skeleton-shimmer {
+  background: linear-gradient(
+    90deg,
+    hsl(var(--muted)) 25%,
+    rgba(197, 151, 91, 0.08) 50%,
+    hsl(var(--muted)) 75%
+  );
+  background-size: 200% 100%;
+  animation: rq-shimmer 1.5s ease-in-out infinite;
+}
+
+/* Active press state for mobile touch */
+@media (max-width: 767px) {
+  .mobile-press:active {
+    transform: scale(0.98);
+    transition: transform 0.1s ease;
+  }
+
+  /* Ensure minimum tap targets */
+  .mobile-tap-target {
+    min-height: 44px;
+    min-width: 44px;
+  }
+}
+
+/* Smooth scrolling for iOS */
+.mobile-scroll {
+  -webkit-overflow-scrolling: touch;
+  overflow-x: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.mobile-scroll::-webkit-scrollbar {
+  display: none;
+}
+
+/* Swipe hint animation */
+@keyframes swipe-hint {
+  0%, 100% { transform: translateX(0); opacity: 0.7; }
+  50% { transform: translateX(8px); opacity: 1; }
+}
+
+.swipe-hint {
+  animation: swipe-hint 2s ease-in-out 3;
+}
+
+/* Bottom sheet animation */
+@keyframes slide-up-sheet {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+
+@keyframes slide-down-sheet {
+  from { transform: translateY(0); }
+  to { transform: translateY(100%); }
+}
+
+.bottom-sheet-enter {
+  animation: slide-up-sheet 0.3s cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+.bottom-sheet-exit {
+  animation: slide-down-sheet 0.2s cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+/* Sticky first column for mobile tables */
+@media (max-width: 1023px) {
+  .mobile-table-sticky td:first-child,
+  .mobile-table-sticky th:first-child {
+    position: sticky;
+    left: 0;
+    z-index: 1;
+    background: hsl(var(--card));
+    box-shadow: 2px 0 4px -2px rgba(0, 0, 0, 0.1);
+  }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  .skeleton-shimmer,
+  .swipe-hint,
+  .bottom-sheet-enter,
+  .bottom-sheet-exit {
+    animation: none !important;
+  }
+
+  * {
+    transition-duration: 0.01ms !important;
+  }
+}
