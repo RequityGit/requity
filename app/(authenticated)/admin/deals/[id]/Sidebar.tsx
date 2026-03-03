@@ -29,13 +29,15 @@ import {
   type DealData,
   type StageHistoryEntry,
 } from "./components";
+import { EditableDateRow } from "./EditableField";
 
 interface SidebarProps {
   deal: DealData;
   stageHistory: StageHistoryEntry[];
+  onSave?: (field: string, value: string | number | null) => Promise<boolean>;
 }
 
-export function Sidebar({ deal, stageHistory }: SidebarProps) {
+export function Sidebar({ deal, stageHistory, onSave }: SidebarProps) {
   const team = [
     { r: "Originator", m: deal._originator },
     { r: "Processor", m: deal._processor },
@@ -43,15 +45,15 @@ export function Sidebar({ deal, stageHistory }: SidebarProps) {
     { r: "Closer", m: deal._closer },
   ];
 
-  const dates = [
-    { l: "Application", d: deal.application_date },
-    { l: "Expected Close", d: deal.expected_close_date },
-    { l: "Approval", d: deal.approval_date },
-    { l: "Clear to Close", d: deal.ctc_date },
-    { l: "Closing", d: deal.closing_date },
-    { l: "Funding", d: deal.funding_date },
-    { l: "First Payment", d: deal.first_payment_date },
-    { l: "Maturity", d: deal.maturity_date },
+  const dates: { l: string; field: string; d: string | null | undefined }[] = [
+    { l: "Application", field: "application_date", d: deal.application_date },
+    { l: "Expected Close", field: "expected_close_date", d: deal.expected_close_date },
+    { l: "Approval", field: "approval_date", d: deal.approval_date },
+    { l: "Clear to Close", field: "ctc_date", d: deal.ctc_date },
+    { l: "Closing", field: "closing_date", d: deal.closing_date },
+    { l: "Funding", field: "funding_date", d: deal.funding_date },
+    { l: "First Payment", field: "first_payment_date", d: deal.first_payment_date },
+    { l: "Maturity", field: "maturity_date", d: deal.maturity_date },
   ];
 
   // Build velocity data from stage history
@@ -193,20 +195,14 @@ export function Sidebar({ deal, stageHistory }: SidebarProps) {
       <SectionCard title="Key Dates" icon={CalendarDays}>
         <div className="flex flex-col">
           {dates.map((d) => (
-            <div
+            <EditableDateRow
               key={d.l}
-              className="flex justify-between border-b border-[#F0F0F2] py-1.5"
-            >
-              <span className="text-xs text-[#8B8B8B] font-sans">
-                {d.l}
-              </span>
-              <span
-                className="text-xs font-mono"
-                style={{ color: d.d ? "#1A1A1A" : "#8B8B8B" }}
-              >
-                {fD(d.d)}
-              </span>
-            </div>
+              label={d.l}
+              field={d.field}
+              value={d.d}
+              displayValue={fD(d.d)}
+              onSave={onSave}
+            />
           ))}
         </div>
       </SectionCard>

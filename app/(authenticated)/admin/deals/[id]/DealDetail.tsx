@@ -1,8 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { ChevronRight } from "lucide-react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Header } from "./Header";
 import { Stepper } from "./Stepper";
 import { Sidebar } from "./Sidebar";
@@ -13,6 +14,7 @@ import { ActivityTab } from "./tabs/ActivityTab";
 import { CommentsTab } from "./tabs/CommentsTab";
 import { ChatTab } from "./tabs/ChatTab";
 import { UnderwritingTab } from "./tabs/UnderwritingTab";
+import { updateDealField } from "./update-deal-action";
 import {
   getDefaultTab,
   type DealData,
@@ -43,7 +45,7 @@ interface TabConfig {
 }
 
 export function DealDetail({
-  deal,
+  deal: initialDeal,
   stageHistory,
   conditions,
   documents,
@@ -53,7 +55,36 @@ export function DealDetail({
   isOpportunity,
   currentUserInitials,
 }: DealDetailProps) {
-  const [tab, setTab] = useState(getDefaultTab(deal.stage));
+  const [tab, setTab] = useState(getDefaultTab(initialDeal.stage));
+  const [deal, setDeal] = useState<DealData>(initialDeal);
+  const router = useRouter();
+
+  const handleSave = useCallback(
+    async (field: string, value: string | number | null): Promise<boolean> => {
+      if (isOpportunity) {
+        // Opportunity editing not supported yet
+        return false;
+      }
+
+      const result = await updateDealField(deal.id, { [field]: value });
+
+      if (result.error) {
+        console.error("Failed to update field:", result.error);
+        return false;
+      }
+
+      // Optimistic update: update the local deal state
+      setDeal((prev) => ({ ...prev, [field]: value }));
+
+      // Refresh server data in the background
+      router.refresh();
+      return true;
+    },
+    [deal.id, isOpportunity, router]
+  );
+
+  // Only pass onSave for loans, not opportunities
+  const onSave = isOpportunity ? undefined : handleSave;
 
   const openConditions = conditions.filter(
     (c) =>
@@ -75,7 +106,7 @@ export function DealDetail({
   const renderTab = () => {
     switch (tab) {
       case "overview":
-        return <OverviewTab deal={deal} />;
+        return <OverviewTab deal={deal} onSave={onSave} />;
       case "conditions":
         return <ConditionsTab conditions={conditions} />;
       case "documents":
@@ -170,7 +201,7 @@ export function DealDetail({
         </div>
 
         {/* Right Sidebar */}
-        <Sidebar deal={deal} stageHistory={stageHistory} />
+        <Sidebar deal={deal} stageHistory={stageHistory} onSave={onSave} />
       </div>
     </div>
   );
