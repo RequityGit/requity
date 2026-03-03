@@ -22,6 +22,7 @@ import {
   FileText,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import Link from "next/link";
 
 // ── Types ────────────────────────────────────────────────────────────────
 
@@ -46,7 +47,6 @@ export interface CompanyRow {
 
 interface CompaniesTableProps {
   companies: CompanyRow[];
-  onRowClick: (company: CompanyRow) => void;
 }
 
 // ── Helpers ──────────────────────────────────────────────────────────────
@@ -87,7 +87,7 @@ function hasValidNda(
 
 // ── Component ────────────────────────────────────────────────────────────
 
-export function CompaniesTable({ companies, onRowClick }: CompaniesTableProps) {
+export function CompaniesTable({ companies }: CompaniesTableProps) {
   const [search, setSearch] = useState("");
   const [typeFilter, setTypeFilter] = useState("all");
 
@@ -119,17 +119,22 @@ export function CompaniesTable({ companies, onRowClick }: CompaniesTableProps) {
         key: "name",
         header: "Company",
         cell: (row) => (
-          <div className="flex items-center gap-3">
+          <Link
+            href={`/admin/crm/companies/${row.id}`}
+            className="flex items-center gap-3"
+          >
             <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10">
               <Building2 className="h-4 w-4 text-muted-foreground" />
             </div>
             <div>
-              <p className="text-sm font-medium text-foreground">{row.name}</p>
+              <p className="text-sm font-medium text-foreground hover:underline">
+                {row.name}
+              </p>
               {row.email && (
                 <p className="text-xs text-muted-foreground">{row.email}</p>
               )}
             </div>
-          </div>
+          </Link>
         ),
       },
       {
@@ -264,7 +269,6 @@ export function CompaniesTable({ companies, onRowClick }: CompaniesTableProps) {
         columns={columns}
         data={filtered}
         emptyMessage="No companies found."
-        onRowClick={onRowClick}
       />
     </div>
   );

@@ -724,6 +724,19 @@ export const COMPANY_FILE_TYPES = [
   { value: "other", label: "Other" },
 ] as const;
 
+/** contact_files.file_type check constraint */
+export const CONTACT_FILE_TYPES = [
+  { value: "id_document", label: "ID Document" },
+  { value: "tax_return", label: "Tax Return" },
+  { value: "bank_statement", label: "Bank Statement" },
+  { value: "proof_of_income", label: "Proof of Income" },
+  { value: "contract", label: "Contract" },
+  { value: "correspondence", label: "Correspondence" },
+  { value: "nda", label: "NDA" },
+  { value: "application", label: "Application" },
+  { value: "other", label: "Other" },
+] as const;
+
 // ============================================
 // ops_projects
 // ============================================

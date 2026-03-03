@@ -33,6 +33,7 @@ import {
   History,
 } from "lucide-react";
 import Link from "next/link";
+import { ContactFilesSection } from "@/components/crm/contact-files-section";
 import { cn } from "@/lib/utils";
 
 interface PageProps {
@@ -455,6 +456,9 @@ export default async function CrmContactDetailPage({ params }: PageProps) {
         contactId={contact.id}
         relationships={relationships}
       />
+
+      {/* Files */}
+      <ContactFilesSection contactId={contact.id} />
 
       {/* Linked Investor Details */}
       {investorData && (
