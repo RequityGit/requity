@@ -32,6 +32,7 @@ import {
   LOAN_STAGES,
   LOAN_STAGE_LABELS,
   DOCUMENT_TYPES,
+  PROPERTY_TYPE_OPTIONS,
 } from "@/lib/constants";
 import { formatCurrency, formatDate } from "@/lib/format";
 import { useToast } from "@/components/ui/use-toast";
@@ -424,6 +425,7 @@ function EditLoanDialog({ loan }: { loan: LoanInfo }) {
 
   const [form, setForm] = useState({
     loan_type: loan.loan_type ?? "",
+    property_type: loan.property_type ?? "",
     property_address: loan.property_address ?? "",
     property_city: loan.property_city || "",
     property_state: loan.property_state || "",
@@ -458,6 +460,7 @@ function EditLoanDialog({ loan }: { loan: LoanInfo }) {
           stage_updated_at: new Date().toISOString(),
           updated_at: new Date().toISOString(),
           ...(form.loan_type ? { type: form.loan_type as any } : {}),
+          ...(form.property_type ? { property_type: form.property_type as any } : {}),
           ...(form.property_address ? { property_address: form.property_address } : {}),
           ...(form.property_city ? { property_city: form.property_city } : { property_city: null }),
           ...(form.property_state ? { property_state: form.property_state } : { property_state: null }),
@@ -503,7 +506,7 @@ function EditLoanDialog({ loan }: { loan: LoanInfo }) {
           <DialogTitle>Edit Loan {loan.loan_number}</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-3 gap-4">
             <div className="space-y-2">
               <Label>Loan Type</Label>
               <Select
@@ -515,6 +518,24 @@ function EditLoanDialog({ loan }: { loan: LoanInfo }) {
                 </SelectTrigger>
                 <SelectContent>
                   {LOAN_DB_TYPES.map((t) => (
+                    <SelectItem key={t.value} value={t.value}>
+                      {t.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>Property Type</Label>
+              <Select
+                value={form.property_type}
+                onValueChange={(v) => updateField("property_type", v)}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select type" />
+                </SelectTrigger>
+                <SelectContent>
+                  {PROPERTY_TYPE_OPTIONS.map((t) => (
                     <SelectItem key={t.value} value={t.value}>
                       {t.label}
                     </SelectItem>
