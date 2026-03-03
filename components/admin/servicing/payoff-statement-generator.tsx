@@ -19,6 +19,7 @@ import {
   Loader2,
   AlertCircle,
   Calculator,
+  CalendarDays,
 } from "lucide-react";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
@@ -62,7 +63,16 @@ interface PayoffStatement {
   notes: string | null;
 }
 
-const GOOD_THROUGH_PRESETS = [2, 3, 5, 7, 10];
+// Default good-through date: 10 days from today
+function getDefaultGoodThroughDate(): string {
+  const d = new Date();
+  d.setDate(d.getDate() + 10);
+  return d.toISOString().split("T")[0]; // YYYY-MM-DD
+}
+
+function getTodayString(): string {
+  return new Date().toISOString().split("T")[0];
+}
 
 const STATUS_STYLES: Record<string, { dot: string; bg: string; text: string }> = {
   generated: { dot: "bg-blue-500", bg: "bg-blue-50", text: "text-blue-700" },
@@ -80,7 +90,7 @@ export function PayoffStatementGenerator({ loanId, loan }: PayoffStatementGenera
   const [showFeeOverrides, setShowFeeOverrides] = useState(false);
 
   // Generator state
-  const [goodThroughDays, setGoodThroughDays] = useState(10);
+  const [goodThroughDateStr, setGoodThroughDateStr] = useState(getDefaultGoodThroughDate);
   const [feeDefaults, setFeeDefaults] = useState<FeeDefault[]>([]);
   const [feeOverrides, setFeeOverrides] = useState<Record<string, string>>({});
   const [otherFees, setOtherFees] = useState("");
@@ -131,8 +141,12 @@ export function PayoffStatementGenerator({ loanId, loan }: PayoffStatementGenera
   // Days from 1st of current month to good-through date
   const now = new Date();
   const firstOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-  const goodThroughDate = new Date(now);
-  goodThroughDate.setDate(goodThroughDate.getDate() + goodThroughDays);
+  // Parse selected date (YYYY-MM-DD) in local time
+  const [gtYear, gtMonth, gtDay] = goodThroughDateStr.split("-").map(Number);
+  const goodThroughDate = new Date(gtYear, gtMonth - 1, gtDay);
+  const goodThroughDays = Math.ceil(
+    (goodThroughDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)
+  );
   const accrualDays = Math.ceil(
     (goodThroughDate.getTime() - firstOfMonth.getTime()) / (1000 * 60 * 60 * 24)
   );
@@ -193,6 +207,7 @@ export function PayoffStatementGenerator({ loanId, loan }: PayoffStatementGenera
           body: JSON.stringify({
             loan_id: loanId,
             good_through_days: goodThroughDays,
+            good_through_date: goodThroughDateStr,
             ...(Object.keys(overrides).length > 0 && { fee_overrides: overrides }),
           }),
         }
@@ -443,30 +458,29 @@ export function PayoffStatementGenerator({ loanId, loan }: PayoffStatementGenera
             <CardTitle className="text-base">Generate Payoff Quote</CardTitle>
           </CardHeader>
           <CardContent className="space-y-6">
-            {/* Good-through-days selector */}
+            {/* Good-through date picker */}
             <div className="space-y-2">
-              <Label className="text-sm font-medium">Good Through (days from today)</Label>
-              <div className="flex flex-wrap gap-2">
-                {GOOD_THROUGH_PRESETS.map((days) => (
-                  <Button
-                    key={days}
-                    variant={goodThroughDays === days ? "default" : "outline"}
-                    size="sm"
-                    onClick={() => setGoodThroughDays(days)}
-                    className="min-w-[48px]"
-                  >
-                    {days}
-                  </Button>
-                ))}
-              </div>
+              <Label htmlFor="good-through-date" className="text-sm font-medium flex items-center gap-1.5">
+                <CalendarDays className="h-4 w-4" />
+                Payoff Good Through Date
+              </Label>
+              <Input
+                id="good-through-date"
+                type="date"
+                min={getTodayString()}
+                value={goodThroughDateStr}
+                onChange={(e) => setGoodThroughDateStr(e.target.value)}
+                className="w-full md:w-[220px]"
+              />
               <p className="text-xs text-muted-foreground">
-                Good through:{" "}
+                Statement valid through:{" "}
                 {goodThroughDate.toLocaleDateString("en-US", {
                   weekday: "short",
                   month: "short",
                   day: "numeric",
                   year: "numeric",
                 })}
+                {goodThroughDays > 0 && ` (${goodThroughDays} day${goodThroughDays !== 1 ? "s" : ""} from today)`}
               </p>
             </div>
 
