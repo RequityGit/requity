@@ -8,11 +8,13 @@ import {
   formatCurrencyDetailed,
   formatDate,
 } from "@/lib/format";
+import { PayoffStatementGenerator } from "@/components/admin/servicing/payoff-statement-generator";
 import {
   Hammer,
   CreditCard,
   HardHat,
   ScrollText,
+  FileText,
 } from "lucide-react";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
@@ -22,6 +24,8 @@ interface LoanDetailTabsProps {
   payments: any[];
   budgetItems: any[];
   auditLog: any[];
+  loan: any;
+  payoffStatementCount: number;
 }
 
 export function LoanDetailTabs({
@@ -29,6 +33,8 @@ export function LoanDetailTabs({
   payments,
   budgetItems,
   auditLog,
+  loan,
+  payoffStatementCount,
 }: LoanDetailTabsProps) {
   return (
     <Tabs defaultValue="draws">
@@ -64,6 +70,15 @@ export function LoanDetailTabs({
           <ScrollText className="h-3.5 w-3.5" />
           Audit Log
         </TabsTrigger>
+        <TabsTrigger value="payoff" className="gap-1.5">
+          <FileText className="h-3.5 w-3.5" />
+          Payoff
+          {payoffStatementCount > 0 && (
+            <span className="ml-1 rounded-full bg-slate-200 text-slate-700 text-[10px] font-semibold px-1.5 py-0.5">
+              {payoffStatementCount}
+            </span>
+          )}
+        </TabsTrigger>
       </TabsList>
 
       <TabsContent value="draws" className="mt-4">
@@ -80,6 +95,10 @@ export function LoanDetailTabs({
 
       <TabsContent value="audit" className="mt-4">
         <AuditLogTab auditLog={auditLog} />
+      </TabsContent>
+
+      <TabsContent value="payoff" className="mt-4">
+        <PayoffStatementGenerator loanId={loan?.loan_id} loan={loan} />
       </TabsContent>
     </Tabs>
   );
