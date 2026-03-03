@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/components/ui/use-toast";
 import { formatDate } from "@/lib/format";
+import { getOrCreateDealChatChannel } from "@/app/(authenticated)/admin/loans/[id]/deal-actions";
 import {
   MessageCircle,
   Send,
@@ -23,6 +24,8 @@ import {
   ChevronDown,
   Pencil,
   Trash2,
+  Plus,
+  Loader2,
 } from "lucide-react";
 
 interface ChatMessage {
@@ -82,6 +85,7 @@ export function DealChatTab({
   const [threadParentId, setThreadParentId] = useState<string | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editText, setEditText] = useState("");
+  const [creatingChannel, setCreatingChannel] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const { toast } = useToast();
@@ -313,11 +317,52 @@ export function DealChatTab({
     );
   }
 
+  async function handleCreateChannel() {
+    setCreatingChannel(true);
+    try {
+      const result = await getOrCreateDealChatChannel(loanId);
+      if ("error" in result && result.error) {
+        toast({
+          title: "Failed to create chatter",
+          description: result.error,
+          variant: "destructive",
+        });
+      } else {
+        toast({ title: "Chatter created" });
+        loadData();
+      }
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Unknown error";
+      toast({
+        title: "Failed to create chatter",
+        description: message,
+        variant: "destructive",
+      });
+    } finally {
+      setCreatingChannel(false);
+    }
+  }
+
   if (!channel) {
     return (
       <Card>
-        <CardContent className="py-10 text-center text-sm text-muted-foreground">
-          No chat channel found for this deal. It will be created automatically.
+        <CardContent className="py-10 flex flex-col items-center justify-center gap-4">
+          <MessageCircle className="h-10 w-10 text-muted-foreground/30" />
+          <p className="text-sm text-muted-foreground">
+            No chat channel found for this deal.
+          </p>
+          <Button
+            onClick={handleCreateChannel}
+            disabled={creatingChannel}
+            className="gap-2"
+          >
+            {creatingChannel ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <Plus className="h-4 w-4" />
+            )}
+            {creatingChannel ? "Creating..." : "Create Chatter"}
+          </Button>
         </CardContent>
       </Card>
     );
