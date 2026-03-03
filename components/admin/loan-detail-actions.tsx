@@ -56,12 +56,21 @@ import { EmailActivityFeed, type EmailRecord } from "@/components/crm/email-acti
 import { DealEmailTab } from "@/components/deal/deal-email-tab";
 import { DealChatTab } from "@/components/deal/deal-chat-tab";
 import type { UnderwritingInputs } from "@/lib/underwriting/types";
-import { Scale, Building2, Handshake } from "lucide-react";
+import { Scale, Building2, Handshake, HardHat } from "lucide-react";
 import Link from "next/link";
 import { Separator } from "@/components/ui/separator";
 import { DeleteLoanButton } from "@/components/admin/delete-loan-button";
 import { LenderQuotesTab } from "@/components/admin/lender-quotes-tab";
 import type { LenderQuote } from "@/lib/supabase/types";
+import { BudgetDrawsTab } from "@/components/admin/budget-draws/budget-draws-tab";
+import type {
+  ConstructionBudget,
+  BudgetLineItem,
+  DrawRequestLineItem,
+  BudgetChangeRequest,
+  BudgetChangeRequestLineItem,
+  BudgetLineItemHistory,
+} from "@/components/admin/budget-draws/types";
 
 interface LoanInfo {
   id: string;
@@ -165,6 +174,13 @@ interface LoanDetailActionsProps {
   isSuperAdmin?: boolean;
   lenderQuotes?: LenderQuote[];
   lenderCompanies?: { id: string; name: string }[];
+  constructionBudget?: ConstructionBudget | null;
+  budgetLineItems?: BudgetLineItem[];
+  drawRequestLineItems?: DrawRequestLineItem[];
+  budgetChangeRequests?: BudgetChangeRequest[];
+  budgetChangeRequestLineItems?: BudgetChangeRequestLineItem[];
+  budgetAuditLog?: BudgetLineItemHistory[];
+  totalUnits?: number;
 }
 
 export function LoanDetailActions({
@@ -187,6 +203,13 @@ export function LoanDetailActions({
   isSuperAdmin = false,
   lenderQuotes = [],
   lenderCompanies = [],
+  constructionBudget = null,
+  budgetLineItems = [],
+  drawRequestLineItems = [],
+  budgetChangeRequests = [],
+  budgetChangeRequestLineItems = [],
+  budgetAuditLog = [],
+  totalUnits = 1,
 }: LoanDetailActionsProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -247,8 +270,9 @@ export function LoanDetailActions({
             <MessageCircle className="h-3.5 w-3.5" />
             Chatter
           </TabsTrigger>
-          <TabsTrigger value="draw-requests">
-            Draw Requests ({drawRequests.length})
+          <TabsTrigger value="budget-draws" className="gap-1">
+            <HardHat className="h-3.5 w-3.5" />
+            Budget & Draws
           </TabsTrigger>
           <TabsTrigger value="payments">
             Payments ({payments.length})
@@ -307,10 +331,18 @@ export function LoanDetailActions({
           />
         </TabsContent>
 
-        <TabsContent value="draw-requests" className="mt-4">
-          <DrawRequestsTab
-            drawRequests={drawRequests}
-            loanId={loan.id}
+        <TabsContent value="budget-draws" className="mt-4">
+          <BudgetDrawsTab
+            loanId={loanId}
+            budget={constructionBudget ?? null}
+            budgetLineItems={budgetLineItems}
+            drawRequests={drawRequests as any}
+            drawRequestLineItems={drawRequestLineItems}
+            changeRequests={budgetChangeRequests}
+            changeRequestLineItems={budgetChangeRequestLineItems}
+            auditLog={budgetAuditLog}
+            currentUserId={currentUserId}
+            totalUnits={totalUnits}
           />
         </TabsContent>
 
@@ -653,135 +685,7 @@ function EditLoanDialog({ loan }: { loan: LoanInfo }) {
   );
 }
 
-// ---------------------------------------------------------------------------
-// Draw Requests Tab (with approve/deny)
-// ---------------------------------------------------------------------------
-
-function DrawRequestsTab({
-  drawRequests,
-  loanId,
-}: {
-  drawRequests: DrawRequest[];
-  loanId: string;
-}) {
-  const router = useRouter();
-  const { toast } = useToast();
-  const [processing, setProcessing] = useState<string | null>(null);
-
-  async function handleReview(
-    drawId: string,
-    action: "approved" | "denied",
-    amountApproved?: number
-  ) {
-    setProcessing(drawId);
-    try {
-      const supabase = createClient();
-
-      const { error } = await supabase
-        .from("draw_requests")
-        .update({
-          status: action,
-          amount_approved: action === "approved" ? amountApproved : null,
-          reviewed_at: new Date().toISOString(),
-        })
-        .eq("id", drawId);
-
-      if (error) throw error;
-
-      toast({
-        title: `Draw request ${action}`,
-      });
-      router.refresh();
-    } catch (err: any) {
-      toast({
-        title: "Error reviewing draw request",
-        description: err.message,
-        variant: "destructive",
-      });
-    } finally {
-      setProcessing(null);
-    }
-  }
-
-  const columns: Column<DrawRequest>[] = [
-    {
-      key: "draw_number",
-      header: "Draw #",
-      cell: (row) => row.draw_number,
-    },
-    {
-      key: "amount_requested",
-      header: "Requested",
-      cell: (row) => formatCurrency(row.amount_requested),
-    },
-    {
-      key: "amount_approved",
-      header: "Approved",
-      cell: (row) => formatCurrency(row.amount_approved),
-    },
-    {
-      key: "description",
-      header: "Description",
-      cell: (row) => row.description || "—",
-    },
-    {
-      key: "submitted_at",
-      header: "Submitted",
-      cell: (row) => formatDate(row.submitted_at),
-    },
-    {
-      key: "status",
-      header: "Status",
-      cell: (row) => <StatusBadge status={row.status} />,
-    },
-    {
-      key: "actions",
-      header: "Actions",
-      cell: (row) => {
-        if (row.status !== "submitted" && row.status !== "under_review")
-          return null;
-        return (
-          <div className="flex gap-1">
-            <Button
-              size="sm"
-              variant="outline"
-              className="h-7 gap-1 text-green-700 hover:text-green-800"
-              disabled={processing === row.id}
-              onClick={(e) => {
-                e.stopPropagation();
-                handleReview(row.id, "approved", row.amount_requested);
-              }}
-            >
-              <CheckCircle2 className="h-3 w-3" />
-              Approve
-            </Button>
-            <Button
-              size="sm"
-              variant="outline"
-              className="h-7 gap-1 text-red-700 hover:text-red-800"
-              disabled={processing === row.id}
-              onClick={(e) => {
-                e.stopPropagation();
-                handleReview(row.id, "denied");
-              }}
-            >
-              <XCircle className="h-3 w-3" />
-              Deny
-            </Button>
-          </div>
-        );
-      },
-    },
-  ];
-
-  return (
-    <DataTable<DrawRequest>
-      columns={columns}
-      data={drawRequests}
-      emptyMessage="No draw requests for this loan."
-    />
-  );
-}
+// DrawRequestsTab removed — replaced by BudgetDrawsTab
 
 // ---------------------------------------------------------------------------
 // Record Payment Dialog
