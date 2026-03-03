@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { redirect } from "next/navigation";
 import { OperationsView } from "@/components/operations/OperationsView";
 
@@ -12,7 +13,9 @@ export default async function OperationsPage() {
 
   if (!user) redirect("/login");
 
-  const [projectsRes, tasksRes, membersRes, rolesRes, taskCommentCountsRes, projectCommentCountsRes] = await Promise.all([
+  const admin = createAdminClient();
+
+  const [projectsRes, tasksRes, membersRes, rolesRes, taskCommentCountsRes, projectCommentCountsRes, approvalsRes] = await Promise.all([
     supabase
       .from("ops_projects")
       .select("*")
@@ -36,6 +39,10 @@ export default async function OperationsPage() {
     supabase
       .from("ops_project_comments")
       .select("project_id"),
+    admin
+      .from("approval_requests" as never)
+      .select("*")
+      .order("created_at", { ascending: false }),
   ]);
 
   const projects = projectsRes.data ?? [];
@@ -61,6 +68,43 @@ export default async function OperationsPage() {
     projectCommentCounts[row.project_id] = (projectCommentCounts[row.project_id] ?? 0) + 1;
   }
 
+  // Enrich approvals with submitter names
+  const rawApprovals = (approvalsRes.data ?? []) as Array<Record<string, unknown>>;
+  const approvalUserIds = new Set<string>();
+  rawApprovals.forEach((a) => {
+    if (a.submitted_by) approvalUserIds.add(a.submitted_by as string);
+    if (a.assigned_to) approvalUserIds.add(a.assigned_to as string);
+  });
+
+  let profileMap: Record<string, { full_name: string | null; email: string | null }> = {};
+  if (approvalUserIds.size > 0) {
+    const { data: profiles } = await admin
+      .from("profiles")
+      .select("id, full_name, email")
+      .in("id", Array.from(approvalUserIds));
+    (profiles ?? []).forEach((p: { id: string; full_name: string | null; email: string | null }) => {
+      profileMap[p.id] = { full_name: p.full_name, email: p.email };
+    });
+  }
+
+  const approvals = rawApprovals.map((a) => ({
+    id: a.id as string,
+    entity_type: a.entity_type as string,
+    entity_id: a.entity_id as string,
+    status: a.status as string,
+    priority: a.priority as string,
+    submitted_by: a.submitted_by as string,
+    assigned_to: a.assigned_to as string,
+    submission_notes: (a.submission_notes as string) ?? null,
+    decision_notes: (a.decision_notes as string) ?? null,
+    deal_snapshot: (a.deal_snapshot as Record<string, unknown>) ?? {},
+    sla_deadline: (a.sla_deadline as string) ?? null,
+    sla_breached: (a.sla_breached as boolean) ?? false,
+    created_at: a.created_at as string,
+    submitter_name: profileMap[a.submitted_by as string]?.full_name || profileMap[a.submitted_by as string]?.email || null,
+    approver_name: profileMap[a.assigned_to as string]?.full_name || profileMap[a.assigned_to as string]?.email || null,
+  }));
+
   return (
     <OperationsView
       projects={projects}
@@ -70,6 +114,7 @@ export default async function OperationsPage() {
       isSuperAdmin={isSuperAdmin}
       taskCommentCounts={taskCommentCounts}
       projectCommentCounts={projectCommentCounts}
+      approvals={approvals}
     />
   );
 }

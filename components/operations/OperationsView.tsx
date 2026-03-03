@@ -2,33 +2,66 @@
 
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Button } from "@/components/ui/button";
-import { PageHeader } from "@/components/shared/page-header";
-import {
-  FolderKanban,
-  ListTodo,
-  LayoutGrid,
-  TableIcon,
-  X,
-  History,
-  ShieldCheck,
-} from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
-import { OperationsStats } from "./OperationsStats";
-import { MultiSelectFilter } from "./MultiSelectFilter";
-import { ProjectCard, type OpsProject, type OpsTask } from "./ProjectCard";
-import { TaskList } from "./TaskList";
-import { TaskBoard } from "./TaskBoard";
-import { TaskDetailDrawer } from "./TaskDetailDrawer";
+import { cn } from "@/lib/utils";
+import {
+  FolderKanban,
+  ListChecks,
+  Shield,
+  ChevronRight,
+  Plus,
+  MoreHorizontal,
+  CheckCircle2,
+  Circle,
+  Search,
+  CalendarDays,
+  AlertTriangle,
+  RefreshCw,
+  ArrowRight,
+  RotateCcw,
+  Inbox,
+  Loader2,
+  Eye,
+  Pause,
+  Clock,
+  Trash2,
+} from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+} from "@/components/ui/dropdown-menu";
 import { AddProjectDialog } from "./AddProjectDialog";
 import { AddTaskDialog } from "./AddTaskDialog";
-import { normalizeStatusDisplay } from "./badges";
+import { TaskDetailDrawer } from "./TaskDetailDrawer";
+import type { OpsProject, OpsTask } from "./ProjectCard";
+
+// Re-export types for external consumers
+export type { OpsProject, OpsTask };
 
 export interface TeamMember {
   id: string;
   full_name: string;
+}
+
+interface ApprovalRequest {
+  id: string;
+  entity_type: string;
+  entity_id: string;
+  status: string;
+  priority: string;
+  submitted_by: string;
+  assigned_to: string;
+  submission_notes: string | null;
+  decision_notes: string | null;
+  deal_snapshot: Record<string, unknown>;
+  sla_deadline: string | null;
+  sla_breached: boolean;
+  created_at: string;
+  submitter_name: string | null;
+  approver_name: string | null;
 }
 
 interface OperationsViewProps {
@@ -39,7 +72,60 @@ interface OperationsViewProps {
   isSuperAdmin: boolean;
   taskCommentCounts: Record<string, number>;
   projectCommentCounts: Record<string, number>;
+  approvals: ApprovalRequest[];
 }
+
+/* ── Status / Priority Config ── */
+const STATUS_CFG: Record<string, { label: string; dotClass: string; bgClass: string }> = {
+  "Not Started": { label: "Not Started", dotClass: "bg-[#8B8B8B]", bgClass: "bg-[#8B8B8B]/[0.07] text-[#8B8B8B]" },
+  "Planning": { label: "Planning", dotClass: "bg-[#8B5CF6]", bgClass: "bg-[#8B5CF6]/[0.07] text-[#8B5CF6]" },
+  "To Do": { label: "To Do", dotClass: "bg-[#8B8B8B]", bgClass: "bg-[#8B8B8B]/[0.07] text-[#8B8B8B]" },
+  "In Progress": { label: "In Progress", dotClass: "bg-[#3B82F6]", bgClass: "bg-[#3B82F6]/[0.07] text-[#3B82F6]" },
+  "Blocked": { label: "Blocked", dotClass: "bg-[#E5453D]", bgClass: "bg-[#E5453D]/[0.07] text-[#E5453D]" },
+  "In Review": { label: "In Review", dotClass: "bg-[#E5930E]", bgClass: "bg-[#E5930E]/[0.07] text-[#E5930E]" },
+  "On Hold": { label: "On Hold", dotClass: "bg-[#8B8B8B]", bgClass: "bg-[#8B8B8B]/[0.07] text-[#8B8B8B]" },
+  "Complete": { label: "Complete", dotClass: "bg-[#22A861]", bgClass: "bg-[#22A861]/[0.07] text-[#22A861]" },
+};
+
+const PRIORITY_CFG: Record<string, { label: string; dotClass: string; bgClass: string }> = {
+  "Critical": { label: "Critical", dotClass: "bg-[#E5453D]", bgClass: "bg-[#E5453D]/[0.07] text-[#E5453D]" },
+  "High": { label: "High", dotClass: "bg-[#E5930E]", bgClass: "bg-[#E5930E]/[0.07] text-[#E5930E]" },
+  "Medium": { label: "Medium", dotClass: "bg-[#3B82F6]", bgClass: "bg-[#3B82F6]/[0.07] text-[#3B82F6]" },
+  "Low": { label: "Low", dotClass: "bg-[#8B8B8B]", bgClass: "bg-[#8B8B8B]/[0.07] text-[#8B8B8B]" },
+};
+
+const CATEGORY_LABELS: Record<string, string> = {
+  "Engineering": "Engineering",
+  "Marketing": "Marketing",
+  "Finance": "Finance",
+  "Operations": "Operations",
+  "Compliance": "Compliance",
+  "Legal": "Legal",
+  "Sales": "Sales",
+  "HR": "HR",
+  "Underwriting": "Underwriting",
+  "Servicing": "Servicing",
+  "Capital Markets": "Capital Markets",
+  "IT": "IT",
+  "General": "General",
+  "Lending Ops": "Lending Ops",
+  "Investments": "Investments",
+  "Tech/Infrastructure": "Tech/Infrastructure",
+  "Investor Relations": "Investor Relations",
+  "Marketing/Website": "Marketing/Website",
+  "Finance/Accounting": "Finance/Accounting",
+  "Acquisitions": "Acquisitions",
+  "Asset Management": "Asset Management",
+};
+
+const ENTITY_TYPE_LABELS: Record<string, string> = {
+  loan: "Loan",
+  draw_request: "Draw Request",
+  payoff: "Payoff",
+  exception: "Exception",
+  investor_distribution: "Distribution",
+  opportunity: "Deal",
+};
 
 const priorityOrder: Record<string, number> = {
   Critical: 0,
@@ -48,32 +134,582 @@ const priorityOrder: Record<string, number> = {
   Low: 3,
 };
 
-function getUniqueValues(items: (string | null)[]): string[] {
-  return Array.from(new Set(items.filter((v): v is string => v != null))).sort();
+/* ── Helpers ── */
+function getInitials(name: string | null): string {
+  if (!name) return "?";
+  const parts = name.trim().split(/\s+/);
+  if (parts.length >= 2) return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+  return parts[0][0]?.toUpperCase() ?? "?";
 }
 
-export function OperationsView({ projects: rawProjects, tasks, teamMembers, currentUserId, isSuperAdmin, taskCommentCounts, projectCommentCounts }: OperationsViewProps) {
+function formatDateShort(d: string | null): string {
+  if (!d) return "—";
+  return new Date(d).toLocaleDateString("en-US", { month: "short", day: "numeric" });
+}
+
+function daysUntil(d: string | null): number | null {
+  if (!d) return null;
+  return Math.ceil((new Date(d).getTime() - new Date().getTime()) / 86400000);
+}
+
+function isOverdue(d: string | null, status: string): boolean {
+  if (!d || status === "Complete") return false;
+  return new Date(d) < new Date();
+}
+
+/* ── Primitives ── */
+function Dot({ label, dotClass, bgClass }: { label: string; dotClass: string; bgClass: string }) {
+  return (
+    <span className={cn("inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium", bgClass)}>
+      <span className={cn("w-[7px] h-[7px] rounded-full shrink-0", dotClass)} />
+      {label}
+    </span>
+  );
+}
+
+function Pill({ label }: { label: string }) {
+  return (
+    <span className="px-2.5 py-0.5 rounded-full border border-border text-xs font-medium text-muted-foreground">
+      {label}
+    </span>
+  );
+}
+
+function Av({ text, size = 28 }: { text: string; size?: number }) {
+  return (
+    <div
+      className="rounded-[7px] bg-foreground/[0.06] border border-foreground/[0.08] flex items-center justify-center font-semibold text-foreground shrink-0"
+      style={{ width: size, height: size, fontSize: size * 0.36 }}
+    >
+      {text}
+    </div>
+  );
+}
+
+function ProgressBar({ pct }: { pct: number }) {
+  const colorClass = pct === 100 ? "bg-[#22A861]" : pct > 60 ? "bg-[#3B82F6]" : pct > 30 ? "bg-[#E5930E]" : "bg-[#8B8B8B]";
+  return (
+    <div className="h-[5px] bg-muted rounded-full overflow-hidden w-full">
+      <div className={cn("h-full rounded-full transition-all duration-400", colorClass)} style={{ width: `${pct}%` }} />
+    </div>
+  );
+}
+
+/* ── Metric Card ── */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function MetricCard({ label, value, icon: Icon, accentClass }: { label: string; value: number; icon: any; accentClass: string }) {
+  return (
+    <div className="flex-1 min-w-[160px] bg-card rounded-xl border border-border p-5 flex flex-col gap-3">
+      <div className="flex justify-between items-center">
+        <span className="text-[13px] font-medium text-muted-foreground">{label}</span>
+        <div className={cn("w-8 h-8 rounded-lg flex items-center justify-center", accentClass)}>
+          <Icon size={16} />
+        </div>
+      </div>
+      <span className="font-mono text-[28px] font-semibold text-foreground leading-none">{value}</span>
+    </div>
+  );
+}
+
+/* ── Filter Dropdown ── */
+function FilterDrop({
+  label,
+  options,
+  value,
+  onChange,
+}: {
+  label: string;
+  options: { value: string; label: string }[];
+  value: string;
+  onChange: (v: string) => void;
+}) {
+  return (
+    <select
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+      className={cn(
+        "text-xs font-medium bg-card border border-border rounded-lg px-3 py-1.5 cursor-pointer appearance-none",
+        "bg-[length:10px_6px] bg-no-repeat bg-[right_10px_center]",
+        "focus:outline-none focus:ring-1 focus:ring-foreground/20",
+        value === "all" ? "text-muted-foreground" : "text-foreground"
+      )}
+      style={{
+        backgroundImage: `url("data:image/svg+xml,%3Csvg width='10' height='6' viewBox='0 0 10 6' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1L5 5L9 1' stroke='%238B8B8B' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E")`,
+        paddingRight: 28,
+      }}
+    >
+      <option value="all">{label}</option>
+      {options.map((o) => (
+        <option key={o.value} value={o.value}>{o.label}</option>
+      ))}
+    </select>
+  );
+}
+
+/* ── Task Row ── */
+function TaskRow({
+  task,
+  isLast,
+  onToggle,
+  onOpenTask,
+  onStopRecurrence,
+  onDeleteTask,
+}: {
+  task: OpsTask;
+  isLast: boolean;
+  onToggle: (taskId: string, complete: boolean) => void;
+  onOpenTask: (task: OpsTask) => void;
+  onStopRecurrence: (taskId: string) => void;
+  onDeleteTask: (taskId: string) => void;
+}) {
+  const st = STATUS_CFG[task.status] ?? STATUS_CFG["To Do"];
+  const overdue = isOverdue(task.due_date, task.status);
+  const isComplete = task.status === "Complete";
+
+  return (
+    <div
+      className={cn(
+        "flex items-center gap-3.5 py-2.5 px-5 pl-[52px]",
+        !isLast && "border-b border-muted",
+        isComplete && "bg-muted/50"
+      )}
+    >
+      <button
+        type="button"
+        onClick={(e) => {
+          e.stopPropagation();
+          onToggle(task.id, !isComplete);
+        }}
+        className="shrink-0"
+      >
+        {isComplete ? (
+          <CheckCircle2 size={16} className="text-[#22A861]" />
+        ) : (
+          <Circle size={16} className="text-border" />
+        )}
+      </button>
+      <button
+        type="button"
+        onClick={() => onOpenTask(task)}
+        className={cn(
+          "flex-1 min-w-0 text-left text-[13px] font-medium text-foreground hover:underline truncate",
+          isComplete && "line-through opacity-50"
+        )}
+      >
+        {task.title}
+      </button>
+      {task.priority === "Critical" && (
+        <Dot label="Critical" dotClass="bg-[#E5453D]" bgClass="bg-[#E5453D]/[0.07] text-[#E5453D]" />
+      )}
+      <Dot label={st.label} dotClass={st.dotClass} bgClass={st.bgClass} />
+      {task.assigned_to_name && (
+        <div className="flex items-center gap-1.5 min-w-[100px]">
+          <Av text={getInitials(task.assigned_to_name)} size={22} />
+          <span className="text-xs text-muted-foreground truncate">{task.assigned_to_name.split(" ")[0]}</span>
+        </div>
+      )}
+      <span
+        className={cn(
+          "font-mono text-[11px] min-w-[70px] text-right shrink-0",
+          overdue ? "text-[#E5453D] font-semibold" : "text-muted-foreground"
+        )}
+      >
+        {formatDateShort(task.due_date)}{overdue ? " !" : ""}
+      </span>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <button
+            type="button"
+            onClick={(e) => e.stopPropagation()}
+            className="shrink-0 p-1 rounded hover:bg-muted text-muted-foreground"
+          >
+            <MoreHorizontal size={14} />
+          </button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end">
+          {task.is_recurring && task.is_active_recurrence && (
+            <DropdownMenuItem onClick={() => onStopRecurrence(task.id)}>
+              <Pause className="h-3.5 w-3.5 mr-2" />
+              Stop recurrence
+            </DropdownMenuItem>
+          )}
+          <DropdownMenuItem
+            className="text-red-600 focus:text-red-600"
+            onClick={() => onDeleteTask(task.id)}
+          >
+            <Trash2 className="h-3.5 w-3.5 mr-2" />
+            Delete task
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+    </div>
+  );
+}
+
+/* ── Project Row ── */
+function ProjectRow({
+  project,
+  tasks,
+  expanded,
+  onToggle,
+  onToggleTask,
+  onStopRecurrence,
+  onDeleteTask,
+  onDeleteProject,
+  onOpenTask,
+  onAddTask,
+}: {
+  project: OpsProject;
+  tasks: OpsTask[];
+  expanded: boolean;
+  onToggle: () => void;
+  onToggleTask: (taskId: string, complete: boolean) => void;
+  onStopRecurrence: (taskId: string) => void;
+  onDeleteTask: (taskId: string) => void;
+  onDeleteProject: (projectId: string) => void;
+  onOpenTask: (task: OpsTask) => void;
+  onAddTask: () => void;
+}) {
+  const st = STATUS_CFG[project.status ?? "Not Started"] ?? STATUS_CFG["Not Started"];
+  const pr = PRIORITY_CFG[project.priority ?? "Medium"] ?? PRIORITY_CFG["Medium"];
+  const cat = CATEGORY_LABELS[project.category ?? ""] ?? project.category ?? "—";
+  const tasksDone = tasks.filter((t) => t.status === "Complete").length;
+  const tasksTotal = tasks.length;
+  const progress = tasksTotal > 0 ? Math.round((tasksDone / tasksTotal) * 100) : 0;
+  const overdue = isOverdue(project.due_date, project.status ?? "");
+  const dLeft = daysUntil(project.due_date);
+
+  const sortedTasks = [...tasks].sort(
+    (a, b) => (priorityOrder[a.priority] ?? 99) - (priorityOrder[b.priority] ?? 99)
+  );
+
+  return (
+    <div className="bg-card rounded-xl border border-border overflow-hidden transition-shadow">
+      {/* Project Header */}
+      <div
+        onClick={onToggle}
+        className="flex items-center gap-3.5 px-5 py-4 cursor-pointer select-none"
+      >
+        <div
+          className={cn(
+            "shrink-0 text-muted-foreground transition-transform duration-150",
+            expanded && "rotate-90"
+          )}
+        >
+          <ChevronRight size={16} />
+        </div>
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2.5 flex-wrap">
+            <span className="text-sm font-semibold text-foreground">{project.project_name}</span>
+            <Dot label={pr.label} dotClass={pr.dotClass} bgClass={pr.bgClass} />
+            <Dot label={st.label} dotClass={st.dotClass} bgClass={st.bgClass} />
+          </div>
+          <div className="flex items-center gap-3 mt-1.5">
+            {project.owner && (
+              <div className="flex items-center gap-1.5">
+                <Av text={getInitials(project.owner)} size={22} />
+                <span className="text-xs text-muted-foreground">{project.owner}</span>
+              </div>
+            )}
+            <Pill label={cat} />
+          </div>
+        </div>
+        {/* Right side: progress + due date */}
+        <div className="flex flex-col items-end gap-2 shrink-0 min-w-[160px]">
+          <div className="flex items-center gap-2.5 w-full">
+            <div className="flex-1">
+              <ProgressBar pct={progress} />
+            </div>
+            <span className="font-mono text-[11px] text-muted-foreground min-w-[36px] text-right">
+              {progress}%
+            </span>
+          </div>
+          <div className="flex items-center gap-3">
+            <span className="text-xs text-muted-foreground">
+              {tasksDone}/{tasksTotal} tasks
+            </span>
+            <span
+              className={cn(
+                "font-mono text-[11px]",
+                (project.status ?? "") === "Complete"
+                  ? "text-[#22A861]"
+                  : overdue
+                    ? "text-[#E5453D] font-semibold"
+                    : dLeft != null && dLeft <= 7
+                      ? "text-[#E5930E]"
+                      : "text-muted-foreground"
+              )}
+            >
+              {(project.status ?? "") === "Complete"
+                ? "Done"
+                : overdue
+                  ? "Overdue"
+                  : dLeft != null
+                    ? `${dLeft}d left`
+                    : "—"}
+            </span>
+          </div>
+        </div>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <button
+              type="button"
+              onClick={(e) => e.stopPropagation()}
+              className="shrink-0 p-1 rounded-md hover:bg-muted text-muted-foreground"
+            >
+              <MoreHorizontal size={16} />
+            </button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem
+              className="text-red-600 focus:text-red-600"
+              onClick={() => onDeleteProject(project.id)}
+            >
+              <Trash2 className="h-3.5 w-3.5 mr-2" />
+              Delete project
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
+
+      {/* Expanded content */}
+      {expanded && (
+        <div className="border-t border-muted">
+          {project.description && (
+            <div className="px-5 py-3 pl-[52px] border-b border-muted">
+              <span className="text-[13px] text-muted-foreground leading-relaxed">{project.description}</span>
+            </div>
+          )}
+          {sortedTasks.map((task, i) => (
+            <TaskRow
+              key={task.id}
+              task={task}
+              isLast={i === sortedTasks.length - 1}
+              onToggle={onToggleTask}
+              onOpenTask={onOpenTask}
+              onStopRecurrence={onStopRecurrence}
+              onDeleteTask={onDeleteTask}
+            />
+          ))}
+          <div className="px-5 py-2.5 pl-[52px]">
+            <button
+              type="button"
+              onClick={onAddTask}
+              className="inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors"
+            >
+              <Plus size={13} />
+              Add Task
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ── All Tasks View ── */
+function AllTasksView({
+  tasks,
+  projectNames,
+  statusFilter,
+  ownerFilter,
+  priorityFilter,
+  categoryFilter,
+  onToggleTask,
+  onOpenTask,
+  onStopRecurrence,
+  onDeleteTask,
+}: {
+  tasks: OpsTask[];
+  projectNames: Record<string, string>;
+  statusFilter: string;
+  ownerFilter: string;
+  priorityFilter: string;
+  categoryFilter: string;
+  onToggleTask: (taskId: string, complete: boolean) => void;
+  onOpenTask: (task: OpsTask) => void;
+  onStopRecurrence: (taskId: string) => void;
+  onDeleteTask: (taskId: string) => void;
+}) {
+  const sortedTasks = useMemo(() => {
+    return [...tasks].sort((a, b) => {
+      if (a.status === "Complete" && b.status !== "Complete") return 1;
+      if (a.status !== "Complete" && b.status === "Complete") return -1;
+      const aDate = a.due_date ? new Date(a.due_date).getTime() : Infinity;
+      const bDate = b.due_date ? new Date(b.due_date).getTime() : Infinity;
+      return aDate - bDate;
+    });
+  }, [tasks]);
+
+  const filtered = sortedTasks.filter((t) => {
+    if (statusFilter !== "all" && t.status !== statusFilter) return false;
+    if (ownerFilter !== "all" && t.assigned_to_name !== ownerFilter) return false;
+    if (priorityFilter !== "all" && t.priority !== priorityFilter) return false;
+    if (categoryFilter !== "all" && t.category !== categoryFilter) return false;
+    return true;
+  });
+
+  const grouped: Record<string, OpsTask[]> = {};
+  filtered.forEach((t) => {
+    const key = t.project_id ? (projectNames[t.project_id] ?? "Unlinked") : "No Project";
+    if (!grouped[key]) grouped[key] = [];
+    grouped[key].push(t);
+  });
+
+  if (Object.keys(grouped).length === 0) {
+    return (
+      <div className="bg-card rounded-xl border border-border py-12 px-5 text-center">
+        <Inbox size={36} className="mx-auto text-muted-foreground" />
+        <div className="text-[15px] font-semibold text-foreground mt-3">No tasks match filters</div>
+        <div className="text-[13px] text-muted-foreground mt-1">Try adjusting your filters to see more results.</div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex flex-col gap-3">
+      {Object.entries(grouped).map(([projName, groupTasks]) => (
+        <div key={projName} className="bg-card rounded-xl border border-border overflow-hidden">
+          <div className="flex items-center gap-2 px-5 py-3.5 border-b border-muted">
+            <FolderKanban size={16} className="text-muted-foreground" />
+            <span className="text-sm font-semibold text-foreground">{projName}</span>
+          </div>
+          <div>
+            {groupTasks.map((task, i) => (
+              <TaskRow
+                key={task.id}
+                task={task}
+                isLast={i === groupTasks.length - 1}
+                onToggle={onToggleTask}
+                onOpenTask={onOpenTask}
+                onStopRecurrence={onStopRecurrence}
+                onDeleteTask={onDeleteTask}
+              />
+            ))}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+/* ── Approvals View ── */
+function ApprovalsView({
+  approvals,
+  onNavigateToApproval,
+}: {
+  approvals: ApprovalRequest[];
+  onNavigateToApproval: (id: string) => void;
+}) {
+  const pending = approvals.filter((a) => a.status === "pending");
+
+  if (pending.length === 0) {
+    return (
+      <div className="bg-card rounded-xl border border-border py-12 px-5 text-center">
+        <Shield size={36} className="mx-auto text-muted-foreground" />
+        <div className="text-[15px] font-semibold text-foreground mt-3">No pending approvals</div>
+        <div className="text-[13px] text-muted-foreground mt-1">All caught up. New approval requests will appear here.</div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex flex-col gap-3">
+      {pending.map((ap) => {
+        const snapshot = ap.deal_snapshot as Record<string, unknown>;
+        const borrowerName = (snapshot?.borrower_name as string) || "";
+        const propertyAddress = (snapshot?.property_address as string) || "";
+        const dealLabel = [borrowerName, propertyAddress].filter(Boolean).join(" — ") || "—";
+        const entityLabel = ENTITY_TYPE_LABELS[ap.entity_type] ?? ap.entity_type;
+        const slaInfo = getSlaLabel(ap.sla_deadline, ap.sla_breached);
+
+        return (
+          <div key={ap.id} className="bg-card rounded-xl border border-border p-[18px_20px]">
+            <div className="flex items-start gap-3.5">
+              <div className="w-9 h-9 rounded-lg bg-[#E5930E]/[0.07] flex items-center justify-center shrink-0 mt-0.5">
+                <Shield size={18} className="text-[#E5930E]" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="text-sm font-semibold text-foreground">{entityLabel}</span>
+                  <Dot label="Pending" dotClass="bg-[#E5930E]" bgClass="bg-[#E5930E]/[0.07] text-[#E5930E]" />
+                  {slaInfo && (
+                    <span className={cn("text-xs font-medium flex items-center gap-1", slaInfo.className)}>
+                      <Clock size={11} />
+                      {slaInfo.label}
+                    </span>
+                  )}
+                </div>
+                <div className="text-[13px] text-muted-foreground mt-1">{dealLabel}</div>
+                {(snapshot?.from_stage != null || snapshot?.to_stage != null) ? (
+                  <div className="flex items-center gap-1.5 mt-2">
+                    <Pill label={String(snapshot.from_stage ?? "—")} />
+                    <ArrowRight size={14} className="text-muted-foreground" />
+                    <Pill label={String(snapshot.to_stage ?? "—")} />
+                  </div>
+                ) : null}
+                {ap.submission_notes && (
+                  <div className="text-[13px] text-foreground leading-relaxed mt-2.5 p-3 bg-muted/50 rounded-lg">
+                    {ap.submission_notes}
+                  </div>
+                )}
+                <div className="flex items-center gap-2.5 mt-3">
+                  <Av text={getInitials(ap.submitter_name)} size={22} />
+                  <span className="text-xs text-muted-foreground">
+                    {ap.submitter_name ?? "Unknown"} · {formatDateShort(ap.created_at)}
+                  </span>
+                </div>
+              </div>
+              <div className="flex gap-2 shrink-0 mt-0.5">
+                <button
+                  type="button"
+                  onClick={() => onNavigateToApproval(ap.id)}
+                  className="text-xs font-medium text-foreground bg-transparent border border-border rounded-lg px-3 py-1.5 hover:bg-muted transition-colors"
+                >
+                  Review
+                </button>
+              </div>
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+function getSlaLabel(deadline: string | null, breached: boolean): { label: string; className: string } | null {
+  if (breached) return { label: "SLA Breached", className: "text-[#E5453D]" };
+  if (!deadline) return null;
+  const hours = (new Date(deadline).getTime() - Date.now()) / (1000 * 60 * 60);
+  if (hours <= 0) return { label: "Overdue", className: "text-[#E5453D]" };
+  if (hours <= 4) return { label: `${Math.ceil(hours)}h left`, className: "text-[#E5930E]" };
+  if (hours <= 12) return { label: `${Math.ceil(hours)}h left`, className: "text-[#E5930E]" };
+  return null;
+}
+
+/* ── Main Component ── */
+export function OperationsView({
+  projects: rawProjects,
+  tasks,
+  teamMembers,
+  currentUserId,
+  isSuperAdmin,
+  taskCommentCounts,
+  projectCommentCounts,
+  approvals,
+}: OperationsViewProps) {
   const router = useRouter();
   const supabase = createClient();
   const { toast } = useToast();
 
-  // Normalize project statuses from DB (may be lowercase) to PascalCase display values
-  const projects = useMemo(
-    () => rawProjects.map((p) => ({
-      ...p,
-      status: p.status ? normalizeStatusDisplay(p.status) : p.status,
-    })),
-    [rawProjects]
-  );
-
-  // Filter state
-  const [statusFilter, setStatusFilter] = useState<string[]>([]);
-  const [ownerFilter, setOwnerFilter] = useState<string[]>([]);
-  const [priorityFilter, setPriorityFilter] = useState<string[]>([]);
-  const [categoryFilter, setCategoryFilter] = useState<string[]>([]);
-
-  // Task view mode
-  const [taskView, setTaskView] = useState<"list" | "board">("list");
+  const [view, setView] = useState<"projects" | "tasks" | "approvals">("projects");
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [ownerFilter, setOwnerFilter] = useState("all");
+  const [priorityFilter, setPriorityFilter] = useState("all");
+  const [categoryFilter, setCategoryFilter] = useState("all");
+  const [search, setSearch] = useState("");
+  const [expanded, setExpanded] = useState<Record<string, boolean>>({});
+  const [addTaskOpen, setAddTaskOpen] = useState(false);
 
   // Task detail drawer
   const [selectedTask, setSelectedTask] = useState<OpsTask | null>(null);
@@ -84,121 +720,28 @@ export function OperationsView({ projects: rawProjects, tasks, teamMembers, curr
     setDrawerOpen(true);
   }
 
-  // Toggle to show/hide completed recurring task instances
-  const [showCompletedRecurring, setShowCompletedRecurring] = useState(false);
+  const toggleExpand = (id: string) => setExpanded((e) => ({ ...e, [id]: !e[id] }));
 
-  // Compute filter options
-  const projectStatuses = useMemo(
-    () => getUniqueValues(projects.map((p) => p.status)),
-    [projects]
-  );
-  const projectOwners = useMemo(
-    () => getUniqueValues(projects.map((p) => p.owner)),
-    [projects]
-  );
-  const projectPriorities = useMemo(
-    () => getUniqueValues(projects.map((p) => p.priority)),
-    [projects]
-  );
-  const projectCategories = useMemo(
-    () => getUniqueValues(projects.map((p) => p.category)),
-    [projects]
-  );
-
-  const taskStatuses = useMemo(
-    () => getUniqueValues(tasks.map((t) => t.status)),
-    [tasks]
-  );
-  const taskAssignees = useMemo(
-    () => getUniqueValues(tasks.map((t) => t.assigned_to_name)),
-    [tasks]
-  );
-  const taskPriorities = useMemo(
-    () => getUniqueValues(tasks.map((t) => t.priority)),
-    [tasks]
-  );
-  const taskCategories = useMemo(
-    () => getUniqueValues(tasks.map((t) => t.category)),
-    [tasks]
-  );
-
-  const hasFilters =
-    statusFilter.length > 0 ||
-    ownerFilter.length > 0 ||
-    priorityFilter.length > 0 ||
-    categoryFilter.length > 0;
+  const hasFilters = statusFilter !== "all" || ownerFilter !== "all" || priorityFilter !== "all" || categoryFilter !== "all" || search.length > 0;
 
   function clearFilters() {
-    setStatusFilter([]);
-    setOwnerFilter([]);
-    setPriorityFilter([]);
-    setCategoryFilter([]);
+    setStatusFilter("all");
+    setOwnerFilter("all");
+    setPriorityFilter("all");
+    setCategoryFilter("all");
+    setSearch("");
   }
 
-  // Filtered projects
-  const filteredProjects = useMemo(() => {
-    let result = [...projects];
-    if (statusFilter.length > 0) {
-      result = result.filter((p) => p.status && statusFilter.includes(p.status));
-    }
-    if (ownerFilter.length > 0) {
-      result = result.filter((p) => p.owner && ownerFilter.includes(p.owner));
-    }
-    if (priorityFilter.length > 0) {
-      result = result.filter(
-        (p) => p.priority && priorityFilter.includes(p.priority)
-      );
-    }
-    if (categoryFilter.length > 0) {
-      result = result.filter(
-        (p) => p.category && categoryFilter.includes(p.category)
-      );
-    }
-    // Sort by priority
-    result.sort(
-      (a, b) =>
-        (priorityOrder[a.priority ?? ""] ?? 99) -
-        (priorityOrder[b.priority ?? ""] ?? 99)
-    );
-    return result;
-  }, [projects, statusFilter, ownerFilter, priorityFilter, categoryFilter]);
+  // Normalize project statuses
+  const projects = useMemo(() => rawProjects.map((p) => ({
+    ...p,
+    status: normalizeStatus(p.status),
+  })), [rawProjects]);
 
-  // Filtered tasks
-  const filteredTasks = useMemo(() => {
-    let result = [...tasks];
-    // Hide completed recurring series instances by default
-    if (!showCompletedRecurring) {
-      result = result.filter((t) => {
-        if (t.status !== "Complete") return true;
-        if (!t.is_recurring || !t.recurring_series_id) return true;
-        return false;
-      });
-    }
-    if (statusFilter.length > 0) {
-      result = result.filter((t) => statusFilter.includes(t.status));
-    }
-    if (ownerFilter.length > 0) {
-      result = result.filter(
-        (t) => t.assigned_to_name && ownerFilter.includes(t.assigned_to_name)
-      );
-    }
-    if (priorityFilter.length > 0) {
-      result = result.filter((t) => priorityFilter.includes(t.priority));
-    }
-    if (categoryFilter.length > 0) {
-      result = result.filter(
-        (t) => t.category && categoryFilter.includes(t.category)
-      );
-    }
-    return result;
-  }, [tasks, statusFilter, ownerFilter, priorityFilter, categoryFilter, showCompletedRecurring]);
-
-  // Project name lookup for tasks
+  // Project name lookup
   const projectNames = useMemo(() => {
     const map: Record<string, string> = {};
-    projects.forEach((p) => {
-      map[p.id] = p.project_name;
-    });
+    projects.forEach((p) => { map[p.id] = p.project_name; });
     return map;
   }, [projects]);
 
@@ -207,48 +750,57 @@ export function OperationsView({ projects: rawProjects, tasks, teamMembers, curr
     const map: Record<string, OpsTask[]> = {};
     tasks.forEach((t) => {
       if (t.project_id) {
-        // Hide completed recurring instances in project view
-        if (!showCompletedRecurring && t.status === "Complete" && t.is_recurring && t.recurring_series_id) {
-          return;
-        }
         if (!map[t.project_id]) map[t.project_id] = [];
         map[t.project_id].push(t);
       }
     });
     return map;
-  }, [tasks, showCompletedRecurring]);
+  }, [tasks]);
+
+  // Unique filter options
+  const ownerOptions = useMemo(() => {
+    const names = new Set<string>();
+    projects.forEach((p) => { if (p.owner) names.add(p.owner); });
+    tasks.forEach((t) => { if (t.assigned_to_name) names.add(t.assigned_to_name); });
+    return Array.from(names).sort();
+  }, [projects, tasks]);
+
+  const categoryOptions = useMemo(() => {
+    const cats = new Set<string>();
+    projects.forEach((p) => { if (p.category) cats.add(p.category); });
+    tasks.forEach((t) => { if (t.category) cats.add(t.category); });
+    return Array.from(cats).sort();
+  }, [projects, tasks]);
 
   // Stats
   const stats = useMemo(() => {
     const now = new Date();
-    now.setHours(0, 0, 0, 0);
     const endOfWeek = new Date(now);
-    endOfWeek.setDate(endOfWeek.getDate() + (7 - endOfWeek.getDay()));
+    endOfWeek.setDate(endOfWeek.getDate() + 7);
 
-    const activeProjects = projects.filter(
-      (p) => p.status && p.status !== "Complete"
-    ).length;
-
-    const criticalTasks = tasks.filter(
-      (t) => t.priority === "Critical" && t.status !== "Complete"
-    ).length;
-
+    const activeProjects = projects.filter((p) => p.status !== "Complete").length;
+    const criticalTasks = tasks.filter((t) => t.priority === "Critical" && t.status !== "Complete").length;
     const dueThisWeek = tasks.filter((t) => {
       if (!t.due_date || t.status === "Complete") return false;
-      const due = new Date(t.due_date);
-      due.setHours(0, 0, 0, 0);
-      return due >= now && due <= endOfWeek;
+      const d = new Date(t.due_date);
+      return d >= now && d <= endOfWeek;
     }).length;
+    const inProgress = projects.filter((p) => p.status === "In Progress").length;
 
-    // Count unique active recurring series (not all historical instances)
-    const recurringTasks = new Set(
-      tasks
-        .filter((t) => t.is_recurring && t.is_active_recurrence && t.status !== "Complete")
-        .map((t) => t.recurring_series_id ?? t.id)
-    ).size;
-
-    return { activeProjects, criticalTasks, dueThisWeek, recurringTasks };
+    return { activeProjects, criticalTasks, dueThisWeek, inProgress };
   }, [projects, tasks]);
+
+  // Filter projects
+  const filteredProjects = useMemo(() => {
+    let result = [...projects];
+    if (statusFilter !== "all") result = result.filter((p) => p.status === statusFilter);
+    if (ownerFilter !== "all") result = result.filter((p) => p.owner === ownerFilter);
+    if (priorityFilter !== "all") result = result.filter((p) => p.priority === priorityFilter);
+    if (categoryFilter !== "all") result = result.filter((p) => p.category === categoryFilter);
+    if (search) result = result.filter((p) => p.project_name.toLowerCase().includes(search.toLowerCase()));
+    result.sort((a, b) => (priorityOrder[a.priority ?? ""] ?? 99) - (priorityOrder[b.priority ?? ""] ?? 99));
+    return result;
+  }, [projects, statusFilter, ownerFilter, priorityFilter, categoryFilter, search]);
 
   // Toggle task complete/incomplete
   async function handleToggleTask(taskId: string, complete: boolean) {
@@ -257,40 +809,28 @@ export function OperationsView({ projects: rawProjects, tasks, teamMembers, curr
       completed_at: complete ? new Date().toISOString() : null,
     }).eq("id", taskId);
 
-    // If completing a recurring task, generate the next occurrence via RPC
     if (complete) {
       const task = tasks.find((t) => t.id === taskId);
       if (task?.is_recurring && task?.is_active_recurrence) {
-        const { data, error: rpcError } = await supabase.rpc(
-          "generate_next_recurring_task" as any,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const { data, error: rpcError } = await (supabase as any).rpc(
+          "generate_next_recurring_task",
           { task_id: taskId }
         );
 
         if (rpcError) {
+          toast({ title: "Task completed", description: "Could not generate next occurrence." });
+        } else if ((data as Record<string, unknown>)?.success) {
           toast({
             title: "Task completed",
-            description: "Could not generate next occurrence.",
-          });
-        } else if (data?.success) {
-          toast({
-            title: "Task completed",
-            description: `Next occurrence scheduled for ${new Date(data.next_due_date as string).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}`,
-          });
-        } else if (data?.skipped) {
-          toast({
-            title: "Task completed",
-            description: data.reason === "Past recurrence end date"
-              ? "Recurring series has ended."
-              : "Next task already exists.",
+            description: `Next occurrence scheduled for ${new Date((data as Record<string, unknown>).next_due_date as string).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}`,
           });
         }
       }
     }
-
     router.refresh();
   }
 
-  // Delete a task
   async function handleDeleteTask(taskId: string) {
     const { error } = await supabase.from("ops_tasks").delete().eq("id", taskId);
     if (error) {
@@ -301,7 +841,6 @@ export function OperationsView({ projects: rawProjects, tasks, teamMembers, curr
     router.refresh();
   }
 
-  // Delete a project (nulls out project_id on linked tasks first to avoid FK violation)
   async function handleDeleteProject(projectId: string) {
     await supabase.from("ops_tasks").update({ project_id: null }).eq("project_id", projectId);
     const { error } = await supabase.from("ops_projects").delete().eq("id", projectId);
@@ -313,238 +852,237 @@ export function OperationsView({ projects: rawProjects, tasks, teamMembers, curr
     router.refresh();
   }
 
-  // Stop a recurring series from generating future tasks
   async function handleStopRecurrence(taskId: string) {
     const task = tasks.find((t) => t.id === taskId);
-
-    await supabase.from("ops_tasks")
-      .update({ is_active_recurrence: false })
-      .eq("id", taskId);
-
-    // Also stop recurrence on all future pending tasks in the same series
+    await supabase.from("ops_tasks").update({ is_active_recurrence: false }).eq("id", taskId);
     if (task?.recurring_series_id) {
       await supabase.from("ops_tasks")
         .update({ is_active_recurrence: false })
         .eq("recurring_series_id", task.recurring_series_id)
         .neq("status", "Complete");
     }
-
     toast({ title: "Recurrence stopped", description: "No further tasks will be generated." });
     router.refresh();
   }
 
+  // Status filter options depend on the active view
+  const statusOptions = view === "tasks"
+    ? [
+        { value: "To Do", label: "To Do" },
+        { value: "In Progress", label: "In Progress" },
+        { value: "In Review", label: "In Review" },
+        { value: "Blocked", label: "Blocked" },
+        { value: "Complete", label: "Complete" },
+      ]
+    : [
+        { value: "Not Started", label: "Not Started" },
+        { value: "Planning", label: "Planning" },
+        { value: "In Progress", label: "In Progress" },
+        { value: "Blocked", label: "Blocked" },
+        { value: "On Hold", label: "On Hold" },
+        { value: "Complete", label: "Complete" },
+      ];
+
+  // Count for result text
+  const resultText = view === "projects"
+    ? `${filteredProjects.length} project${filteredProjects.length !== 1 ? "s" : ""}`
+    : view === "tasks"
+      ? `${tasks.length} tasks across ${projects.length} projects`
+      : `${approvals.filter((a) => a.status === "pending").length} pending approvals`;
+
+  const pendingApprovalCount = approvals.filter((a) => a.status === "pending").length;
+
   return (
-    <div className="space-y-6">
-      <PageHeader
-        title="Operations"
-        description="Manage projects and tasks across the organization."
-        action={
-          <div className="flex items-center gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              className="gap-2"
-              onClick={() => router.push("/admin/operations/approvals")}
-            >
-              <ShieldCheck className="h-4 w-4" />
-              Approvals
-            </Button>
-            <AddTaskDialog projects={projects} teamMembers={teamMembers} />
-            <AddProjectDialog teamMembers={teamMembers} />
-          </div>
-        }
-      />
-
-      <OperationsStats {...stats} />
-
-      <Tabs defaultValue="projects">
-        <div className="flex items-center justify-between flex-wrap gap-3">
-          <TabsList>
-            <TabsTrigger value="projects" className="gap-1.5">
-              <FolderKanban className="h-4 w-4" />
-              Projects
-            </TabsTrigger>
-            <TabsTrigger value="tasks" className="gap-1.5">
-              <ListTodo className="h-4 w-4" />
-              Tasks
-            </TabsTrigger>
-          </TabsList>
+    <div className="space-y-5">
+      {/* Page Header */}
+      <div className="flex justify-between items-start">
+        <div>
+          <h1 className="text-[22px] font-bold text-foreground">Operations</h1>
+          <p className="text-[13px] text-muted-foreground mt-1">
+            Manage projects and tasks across the organization.
+          </p>
         </div>
+        <div className="flex gap-2">
+          <AddTaskDialog projects={rawProjects} teamMembers={teamMembers} />
+          <AddProjectDialog teamMembers={teamMembers} />
+        </div>
+      </div>
 
-        {/* Projects Tab */}
-        <TabsContent value="projects" className="mt-4 space-y-4">
-          {/* Project Filters */}
-          <div className="flex items-center gap-2 flex-wrap">
-            <MultiSelectFilter
-              label="Status"
-              options={projectStatuses}
-              selected={statusFilter}
-              onChange={setStatusFilter}
-            />
-            <MultiSelectFilter
-              label="Owner"
-              options={projectOwners}
-              selected={ownerFilter}
-              onChange={setOwnerFilter}
-            />
-            <MultiSelectFilter
-              label="Priority"
-              options={projectPriorities}
-              selected={priorityFilter}
-              onChange={setPriorityFilter}
-            />
-            <MultiSelectFilter
-              label="Category"
-              options={projectCategories}
-              selected={categoryFilter}
-              onChange={setCategoryFilter}
-            />
-            {hasFilters && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={clearFilters}
-                className="gap-1 text-muted-foreground"
-              >
-                <X className="h-3 w-3" />
-                Clear filters
-              </Button>
-            )}
-          </div>
+      {/* Metric Cards */}
+      <div className="flex gap-3">
+        <MetricCard
+          label="Active Projects"
+          value={stats.activeProjects}
+          icon={FolderKanban}
+          accentClass="bg-[#3B82F6]/[0.08] text-[#3B82F6]"
+        />
+        <MetricCard
+          label="Critical Tasks"
+          value={stats.criticalTasks}
+          icon={AlertTriangle}
+          accentClass={stats.criticalTasks > 0 ? "bg-[#E5453D]/[0.08] text-[#E5453D]" : "bg-muted text-muted-foreground"}
+        />
+        <MetricCard
+          label="Due This Week"
+          value={stats.dueThisWeek}
+          icon={CalendarDays}
+          accentClass={stats.dueThisWeek > 0 ? "bg-[#E5930E]/[0.08] text-[#E5930E]" : "bg-muted text-muted-foreground"}
+        />
+        <MetricCard
+          label="In Progress"
+          value={stats.inProgress}
+          icon={RefreshCw}
+          accentClass="bg-[#22A861]/[0.08] text-[#22A861]"
+        />
+      </div>
 
-          {/* Project Cards */}
-          {filteredProjects.length === 0 ? (
-            <div className="rounded-md border bg-card p-8 text-center text-muted-foreground">
-              No projects found.
-            </div>
-          ) : (
-            <div className="space-y-3">
-              {filteredProjects.map((project) => (
-                <ProjectCard
-                  key={project.id}
-                  project={project}
-                  tasks={tasksByProject[project.id] ?? []}
-                  onToggleTask={handleToggleTask}
-                  onStopRecurrence={handleStopRecurrence}
-                  onDeleteTask={handleDeleteTask}
-                  onDeleteProject={handleDeleteProject}
-                  commentCount={projectCommentCounts[project.id] ?? 0}
-                  currentUserId={currentUserId}
-                  isSuperAdmin={isSuperAdmin}
-                  taskCommentCounts={taskCommentCounts}
-                  onOpenTask={handleOpenTask}
-                />
-              ))}
-            </div>
-          )}
-        </TabsContent>
-
-        {/* Tasks Tab */}
-        <TabsContent value="tasks" className="mt-4 space-y-4">
-          {/* Task Filters + View Toggle */}
-          <div className="flex items-center justify-between flex-wrap gap-3">
-            <div className="flex items-center gap-2 flex-wrap">
-              <MultiSelectFilter
-                label="Status"
-                options={taskStatuses}
-                selected={statusFilter}
-                onChange={setStatusFilter}
-              />
-              <MultiSelectFilter
-                label="Assignee"
-                options={taskAssignees}
-                selected={ownerFilter}
-                onChange={setOwnerFilter}
-              />
-              <MultiSelectFilter
-                label="Priority"
-                options={taskPriorities}
-                selected={priorityFilter}
-                onChange={setPriorityFilter}
-              />
-              <MultiSelectFilter
-                label="Category"
-                options={taskCategories}
-                selected={categoryFilter}
-                onChange={setCategoryFilter}
-              />
-              {hasFilters && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={clearFilters}
-                  className="gap-1 text-muted-foreground"
-                >
-                  <X className="h-3 w-3" />
-                  Clear filters
-                </Button>
+      {/* Toolbar */}
+      <div className="bg-card rounded-xl border border-border px-5 py-3 flex items-center gap-3 flex-wrap">
+        {/* View Toggle */}
+        <div className="inline-flex rounded-lg border border-border overflow-hidden">
+          {([
+            { key: "projects" as const, label: "Projects", icon: FolderKanban },
+            { key: "tasks" as const, label: "Tasks", icon: ListChecks },
+            { key: "approvals" as const, label: "Approvals", icon: Shield, count: pendingApprovalCount },
+          ]).map((v, i, arr) => (
+            <div key={v.key} className="flex items-center">
+              {i > 0 && view !== v.key && view !== arr[i - 1].key && (
+                <div className="w-px h-4 bg-border" />
               )}
-            </div>
-
-            <div className="flex items-center gap-3">
               <button
                 type="button"
-                onClick={() => setShowCompletedRecurring(!showCompletedRecurring)}
-                className={`flex items-center gap-1.5 text-sm font-medium transition-colors ${
-                  showCompletedRecurring
-                    ? "text-purple-700"
-                    : "text-muted-foreground hover:text-foreground"
-                }`}
+                onClick={() => setView(v.key)}
+                className={cn(
+                  "text-xs font-medium px-3.5 py-1.5 flex items-center gap-1.5 transition-colors",
+                  view === v.key
+                    ? "bg-foreground text-background"
+                    : "bg-transparent text-muted-foreground hover:text-foreground"
+                )}
               >
-                <History className="h-3.5 w-3.5" />
-                {showCompletedRecurring ? "Hide" : "Show"} history
+                <v.icon size={13} />
+                {v.label}
+                {v.count != null && v.count > 0 && view !== v.key && (
+                  <span className="ml-1 bg-[#E5930E]/20 text-[#E5930E] text-[10px] font-semibold px-1.5 py-0.5 rounded-full leading-none">
+                    {v.count}
+                  </span>
+                )}
               </button>
-
-              <div className="flex items-center rounded-md border bg-card p-0.5">
-                <button
-                  type="button"
-                  onClick={() => setTaskView("list")}
-                  className={`flex items-center gap-1.5 rounded px-3 py-1.5 text-sm font-medium transition-colors ${
-                    taskView === "list"
-                      ? "bg-slate-100 text-foreground"
-                      : "text-muted-foreground hover:text-foreground"
-                  }`}
-                >
-                  <TableIcon className="h-4 w-4" />
-                  List
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setTaskView("board")}
-                  className={`flex items-center gap-1.5 rounded px-3 py-1.5 text-sm font-medium transition-colors ${
-                    taskView === "board"
-                      ? "bg-slate-100 text-foreground"
-                      : "text-muted-foreground hover:text-foreground"
-                  }`}
-                >
-                  <LayoutGrid className="h-4 w-4" />
-                  Board
-                </button>
-              </div>
             </div>
-          </div>
+          ))}
+        </div>
 
-          {/* Task Views */}
-          {taskView === "list" ? (
-            <TaskList
-              tasks={filteredTasks}
-              projectNames={projectNames}
-              onToggleTask={handleToggleTask}
-              onStopRecurrence={handleStopRecurrence}
-              onDeleteTask={handleDeleteTask}
-              commentCounts={taskCommentCounts}
-              onOpenTask={handleOpenTask}
-            />
+        {/* Separator */}
+        <div className="w-px h-6 bg-border" />
+
+        {/* Search */}
+        <div className="relative flex-1 min-w-[180px]">
+          <Search size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
+          <input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search projects..."
+            className="w-full text-xs text-foreground border border-border rounded-lg py-1.5 pl-8 pr-3 bg-muted/50 focus:outline-none focus:ring-1 focus:ring-foreground/20 placeholder:text-muted-foreground"
+          />
+        </div>
+
+        {/* Filters */}
+        <FilterDrop
+          label="All Status"
+          value={statusFilter}
+          onChange={setStatusFilter}
+          options={statusOptions}
+        />
+        <FilterDrop
+          label="All Owner"
+          value={ownerFilter}
+          onChange={setOwnerFilter}
+          options={ownerOptions.map((n) => ({ value: n, label: n }))}
+        />
+        <FilterDrop
+          label="All Priority"
+          value={priorityFilter}
+          onChange={setPriorityFilter}
+          options={[
+            { value: "Critical", label: "Critical" },
+            { value: "High", label: "High" },
+            { value: "Medium", label: "Medium" },
+            { value: "Low", label: "Low" },
+          ]}
+        />
+        <FilterDrop
+          label="All Category"
+          value={categoryFilter}
+          onChange={setCategoryFilter}
+          options={categoryOptions.map((c) => ({ value: c, label: CATEGORY_LABELS[c] ?? c }))}
+        />
+
+        {hasFilters && (
+          <button
+            type="button"
+            onClick={clearFilters}
+            className="text-[11px] font-medium text-[#E5453D] flex items-center gap-1 hover:underline"
+          >
+            <RotateCcw size={11} />
+            Clear
+          </button>
+        )}
+      </div>
+
+      {/* Result Count */}
+      <div className="text-xs text-muted-foreground">
+        {resultText}
+      </div>
+
+      {/* Content */}
+      {view === "projects" && (
+        <div className="flex flex-col gap-2">
+          {filteredProjects.length === 0 ? (
+            <div className="bg-card rounded-xl border border-border py-12 px-5 text-center">
+              <Inbox size={36} className="mx-auto text-muted-foreground" />
+              <div className="text-[15px] font-semibold text-foreground mt-3">No projects match filters</div>
+              <div className="text-[13px] text-muted-foreground mt-1">Try adjusting your filters or create a new project.</div>
+            </div>
           ) : (
-            <TaskBoard
-              tasks={filteredTasks}
-              projectNames={projectNames}
-              commentCounts={taskCommentCounts}
-              onOpenTask={handleOpenTask}
-            />
+            filteredProjects.map((p) => (
+              <ProjectRow
+                key={p.id}
+                project={p}
+                tasks={tasksByProject[p.id] ?? []}
+                expanded={!!expanded[p.id]}
+                onToggle={() => toggleExpand(p.id)}
+                onToggleTask={handleToggleTask}
+                onStopRecurrence={handleStopRecurrence}
+                onDeleteTask={handleDeleteTask}
+                onDeleteProject={handleDeleteProject}
+                onOpenTask={handleOpenTask}
+                onAddTask={() => setAddTaskOpen(true)}
+              />
+            ))
           )}
-        </TabsContent>
-      </Tabs>
+        </div>
+      )}
+
+      {view === "tasks" && (
+        <AllTasksView
+          tasks={tasks}
+          projectNames={projectNames}
+          statusFilter={statusFilter}
+          ownerFilter={ownerFilter}
+          priorityFilter={priorityFilter}
+          categoryFilter={categoryFilter}
+          onToggleTask={handleToggleTask}
+          onOpenTask={handleOpenTask}
+          onStopRecurrence={handleStopRecurrence}
+          onDeleteTask={handleDeleteTask}
+        />
+      )}
+
+      {view === "approvals" && (
+        <ApprovalsView
+          approvals={approvals}
+          onNavigateToApproval={(id) => router.push(`/admin/operations/approvals/${id}`)}
+        />
+      )}
 
       {/* Task Detail Drawer */}
       <TaskDetailDrawer
@@ -557,4 +1095,25 @@ export function OperationsView({ projects: rawProjects, tasks, teamMembers, curr
       />
     </div>
   );
+}
+
+/* ── Status normalization ── */
+const statusDisplayMap: Record<string, string> = {
+  "not started": "Not Started",
+  not_started: "Not Started",
+  planning: "Planning",
+  "in progress": "In Progress",
+  in_progress: "In Progress",
+  active: "In Progress",
+  blocked: "Blocked",
+  on_hold: "On Hold",
+  "on hold": "On Hold",
+  complete: "Complete",
+  completed: "Complete",
+  cancelled: "Complete",
+};
+
+function normalizeStatus(status: string | null): string {
+  if (!status) return "Not Started";
+  return statusDisplayMap[status.toLowerCase()] ?? status;
 }
