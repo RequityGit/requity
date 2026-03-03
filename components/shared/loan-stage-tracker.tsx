@@ -14,52 +14,115 @@ export function LoanStageTracker({ currentStage }: LoanStageTrackerProps) {
   const isTerminalStage = currentIndex === -1;
 
   return (
-    <div className="w-full overflow-x-auto">
-      <div className="flex items-center min-w-[700px] px-4 py-2">
-        {PIPELINE_STAGES.map((stage, idx) => {
-          const isPast = isTerminalStage || idx < currentIndex;
-          const isCurrent = !isTerminalStage && idx === currentIndex;
+    <div className="w-full">
+      {/* Desktop: horizontal */}
+      <div className="hidden md:block overflow-x-auto">
+        <div className="flex items-center min-w-[700px] px-4 py-2">
+          {PIPELINE_STAGES.map((stage, idx) => {
+            const isPast = isTerminalStage || idx < currentIndex;
+            const isCurrent = !isTerminalStage && idx === currentIndex;
 
-          return (
-            <div key={stage} className="flex items-center flex-1">
-              <div className="flex flex-col items-center">
-                <div
-                  className={cn(
-                    "w-8 h-8 rounded-full flex items-center justify-center text-xs font-medium border-2 transition-colors",
-                    isPast && "bg-green-600 border-green-600 text-white",
-                    isCurrent && "bg-primary border-primary text-white",
-                    !isPast &&
-                      !isCurrent &&
-                      "bg-background border-border text-muted-foreground"
-                  )}
-                >
-                  {isPast ? <Check className="h-4 w-4" /> : idx + 1}
+            return (
+              <div key={stage} className="flex items-center flex-1">
+                <div className="flex flex-col items-center">
+                  <div
+                    className={cn(
+                      "w-8 h-8 rounded-full flex items-center justify-center text-xs font-medium border-2 transition-colors",
+                      isPast && "bg-green-600 border-green-600 text-white",
+                      isCurrent && "bg-primary border-primary text-white",
+                      !isPast &&
+                        !isCurrent &&
+                        "bg-background border-border text-muted-foreground"
+                    )}
+                  >
+                    {isPast ? <Check className="h-4 w-4" /> : idx + 1}
+                  </div>
+                  <span
+                    className={cn(
+                      "text-[10px] mt-1 text-center leading-tight max-w-[80px]",
+                      isCurrent
+                        ? "font-semibold text-foreground"
+                        : "text-muted-foreground"
+                    )}
+                  >
+                    {LOAN_STAGE_LABELS[stage]}
+                  </span>
                 </div>
-                <span
-                  className={cn(
-                    "text-[10px] mt-1 text-center leading-tight max-w-[80px]",
-                    isCurrent
-                      ? "font-semibold text-foreground"
-                      : "text-muted-foreground"
-                  )}
-                >
-                  {LOAN_STAGE_LABELS[stage]}
-                </span>
+                {idx < PIPELINE_STAGES.length - 1 && (
+                  <div
+                    className={cn(
+                      "flex-1 h-0.5 mx-1",
+                      isPast || (isTerminalStage && idx < PIPELINE_STAGES.length - 1)
+                        ? "bg-green-600"
+                        : "bg-border"
+                    )}
+                  />
+                )}
               </div>
-              {idx < PIPELINE_STAGES.length - 1 && (
-                <div
-                  className={cn(
-                    "flex-1 h-0.5 mx-1",
-                    isPast || (isTerminalStage && idx < PIPELINE_STAGES.length - 1)
-                      ? "bg-green-600"
-                      : "bg-border"
-                  )}
-                />
-              )}
-            </div>
-          );
-        })}
+            );
+          })}
+        </div>
       </div>
+
+      {/* Mobile: vertical */}
+      <div className="md:hidden px-2 py-1">
+        <div className="space-y-0">
+          {PIPELINE_STAGES.map((stage, idx) => {
+            const isPast = isTerminalStage || idx < currentIndex;
+            const isCurrent = !isTerminalStage && idx === currentIndex;
+
+            return (
+              <div key={stage}>
+                <div className="flex items-center gap-3 py-1.5">
+                  <div
+                    className={cn(
+                      "w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-medium border-2 transition-colors flex-shrink-0",
+                      isPast && "bg-green-600 border-green-600 text-white",
+                      isCurrent && "bg-gold border-gold text-white",
+                      !isPast &&
+                        !isCurrent &&
+                        "bg-background border-border text-muted-foreground"
+                    )}
+                  >
+                    {isPast ? <Check className="h-3.5 w-3.5" /> : idx + 1}
+                  </div>
+                  <span
+                    className={cn(
+                      "text-sm",
+                      isCurrent
+                        ? "font-semibold text-foreground"
+                        : isPast
+                          ? "text-foreground"
+                          : "text-muted-foreground"
+                    )}
+                  >
+                    {LOAN_STAGE_LABELS[stage]}
+                  </span>
+                  {isCurrent && (
+                    <span className="text-[10px] text-gold font-medium ml-auto">
+                      In Progress
+                    </span>
+                  )}
+                  {isPast && (
+                    <Check className="h-3.5 w-3.5 text-green-600 ml-auto" />
+                  )}
+                </div>
+                {idx < PIPELINE_STAGES.length - 1 && (
+                  <div
+                    className={cn(
+                      "w-0.5 h-3 ml-[13px]",
+                      isPast || (isTerminalStage && idx < PIPELINE_STAGES.length - 1)
+                        ? "bg-green-600"
+                        : "bg-border"
+                    )}
+                  />
+                )}
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
       {isTerminalStage && (
         <div className="text-center mt-1">
           <span className="text-xs font-medium text-muted-foreground">

@@ -66,7 +66,7 @@ export default async function BorrowerDashboardPage() {
       />
 
       {/* KPI Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+      <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4 mb-6 md:mb-8">
         <KpiCard
           title="Active Loans"
           value={activeLoans.length}
@@ -142,22 +142,22 @@ export default async function BorrowerDashboardPage() {
                   )}
                 </CardHeader>
                 <CardContent>
-                  <div className="grid grid-cols-3 gap-4 text-sm">
+                  <div className="grid grid-cols-3 gap-2 md:gap-4 text-sm">
                     <div>
                       <p className="text-muted-foreground text-xs">Amount</p>
-                      <p className="font-medium">
+                      <p className="font-medium font-mono text-xs md:text-sm">
                         {formatCurrency(loan.loan_amount)}
                       </p>
                     </div>
                     <div>
                       <p className="text-muted-foreground text-xs">Rate</p>
-                      <p className="font-medium">
+                      <p className="font-medium font-mono text-xs md:text-sm">
                         {formatPercent(loan.interest_rate)}
                       </p>
                     </div>
                     <div>
                       <p className="text-muted-foreground text-xs">Term</p>
-                      <p className="font-medium">{loan.loan_term_months} mo</p>
+                      <p className="font-medium text-xs md:text-sm">{loan.loan_term_months} mo</p>
                     </div>
                   </div>
                   <div className="mt-3 pt-3 border-t flex items-center justify-between text-xs text-muted-foreground">

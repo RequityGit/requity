@@ -69,11 +69,22 @@ export default async function LoanDetailPage({ params }: LoanDetailPageProps) {
 
   return (
     <div>
+      {/* Mobile back arrow */}
+      <div className="md:hidden mb-3">
+        <Link
+          href="/borrower/dashboard"
+          className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors min-h-[44px]"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          <span>Back</span>
+        </Link>
+      </div>
+
       <PageHeader
         title={loan.property_address ?? "Loan Details"}
         description={`Loan #${loan.loan_number ?? "—"} - ${loanTypeLabel}`}
         action={
-          <Link href="/borrower/dashboard">
+          <Link href="/borrower/dashboard" className="hidden md:block">
             <Button variant="outline" size="sm">
               <ArrowLeft className="h-4 w-4 mr-2" />
               Back to Dashboard
@@ -83,22 +94,22 @@ export default async function LoanDetailPage({ params }: LoanDetailPageProps) {
       />
 
       {/* Loan Stage Tracker */}
-      <Card className="mb-6">
-        <CardContent className="pt-6">
+      <Card className="mb-4 md:mb-6">
+        <CardContent className="pt-4 md:pt-6">
           <LoanStageTracker currentStage={loan.stage} />
         </CardContent>
       </Card>
 
       {/* Loan Details */}
-      <Card className="mb-6">
+      <Card className="mb-4 md:mb-6">
         <CardHeader>
           <div className="flex items-center justify-between">
-            <CardTitle className="text-base">Loan Details</CardTitle>
+            <CardTitle className="text-sm md:text-base">Loan Details</CardTitle>
             <StatusBadge status={loan.stage} />
           </div>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
             {/* Financial Details */}
             <div className="space-y-3">
               <h3 className="text-sm font-semibold text-foreground">
@@ -107,13 +118,13 @@ export default async function LoanDetailPage({ params }: LoanDetailPageProps) {
               <div className="space-y-2 text-sm">
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Loan Amount</span>
-                  <span className="font-medium">
+                  <span className="font-medium font-mono">
                     {formatCurrency(loan.loan_amount)}
                   </span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Interest Rate</span>
-                  <span className="font-medium">
+                  <span className="font-medium font-mono">
                     {formatPercent(loan.interest_rate)}
                   </span>
                 </div>
@@ -126,7 +137,7 @@ export default async function LoanDetailPage({ params }: LoanDetailPageProps) {
                 {loan.ltv != null && (
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">LTV</span>
-                    <span className="font-medium">
+                    <span className="font-medium font-mono">
                       {formatPercent(loan.ltv)}
                     </span>
                   </div>
@@ -151,7 +162,7 @@ export default async function LoanDetailPage({ params }: LoanDetailPageProps) {
                     <span className="text-muted-foreground">
                       Appraised Value
                     </span>
-                    <span className="font-medium">
+                    <span className="font-medium font-mono">
                       {formatCurrency(loan.appraised_value)}
                     </span>
                   </div>

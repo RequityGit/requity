@@ -202,7 +202,7 @@ export default async function InvestorFundDetailPage({ params }: PageProps) {
       {/* Back link */}
       <Link
         href="/investor/funds"
-        className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
+        className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors min-h-[44px]"
       >
         <ArrowLeft className="h-4 w-4" />
         Back to Investments
@@ -214,7 +214,7 @@ export default async function InvestorFundDetailPage({ params }: PageProps) {
       />
 
       {/* KPI Cards */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 md:gap-4 lg:grid-cols-4">
         <KpiCard
           title="My Commitment"
           value={formatCurrency(commitment.commitment_amount)}
@@ -353,10 +353,11 @@ function DetailField({
   label: string;
   value: string | number;
 }) {
+  const isFinancial = typeof value === "string" && (value.includes("$") || value.includes("%"));
   return (
     <div>
-      <p className="text-xs text-muted-foreground">{label}</p>
-      <p className="text-sm font-medium capitalize">{value}</p>
+      <p className="text-[11px] md:text-xs text-muted-foreground">{label}</p>
+      <p className={`text-sm font-medium capitalize ${isFinancial ? "font-mono" : ""}`}>{value}</p>
     </div>
   );
 }
