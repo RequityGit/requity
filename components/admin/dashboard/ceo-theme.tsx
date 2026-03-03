@@ -3,10 +3,9 @@
 import {
   createContext,
   useContext,
-  useState,
-  useEffect,
   type ReactNode,
 } from "react";
+import { useTheme } from "@/components/theme-provider";
 
 // ─── Theme Tokens ─────────────────────────────────────────────────────────────
 export const themes = {
@@ -105,27 +104,16 @@ export type ThemeMode = "light" | "dark";
 interface ThemeContextValue {
   t: ThemeTokens;
   mode: ThemeMode;
-  toggleMode: () => void;
 }
 
 const ThemeContext = createContext<ThemeContextValue | null>(null);
 
 export function CEOThemeProvider({ children }: { children: ReactNode }) {
-  const [mode, setMode] = useState<ThemeMode>("light");
-
-  useEffect(() => {
-    const saved = localStorage.getItem("requity-dashboard-theme") as ThemeMode | null;
-    if (saved === "dark" || saved === "light") setMode(saved);
-  }, []);
-
-  const toggleMode = () => {
-    const next: ThemeMode = mode === "dark" ? "light" : "dark";
-    setMode(next);
-    localStorage.setItem("requity-dashboard-theme", next);
-  };
+  const { theme } = useTheme();
+  const mode: ThemeMode = theme === "dark" ? "dark" : "light";
 
   return (
-    <ThemeContext.Provider value={{ t: themes[mode], mode, toggleMode }}>
+    <ThemeContext.Provider value={{ t: themes[mode], mode }}>
       {children}
     </ThemeContext.Provider>
   );
