@@ -76,11 +76,26 @@ const statusStyles: Record<string, string> = {
 };
 
 interface StatusBadgeProps {
-  status: string;
+  status: string | null | undefined;
   className?: string;
 }
 
 export function StatusBadge({ status, className }: StatusBadgeProps) {
+  if (!status) {
+    return (
+      <Badge
+        variant="outline"
+        className={cn(
+          "capitalize text-xs font-medium",
+          "bg-gray-100 text-gray-800 border-gray-200",
+          className
+        )}
+      >
+        —
+      </Badge>
+    );
+  }
+
   const label = status.replace(/_/g, " ");
 
   return (

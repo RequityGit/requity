@@ -15,6 +15,7 @@ export function useChat(userId: string | undefined) {
   const [activeChannelId, setActiveChannelId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const supabaseRef = useRef(createClient());
+  const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Fetch channels from the view
   const fetchChannels = useCallback(async () => {
@@ -36,6 +37,25 @@ export function useChat(userId: string | undefined) {
     setLoading(false);
   }, [userId]);
 
+  // Debounced version for realtime callbacks to prevent N+1 API calls
+  const debouncedFetchChannels = useCallback(() => {
+    if (debounceTimerRef.current) {
+      clearTimeout(debounceTimerRef.current);
+    }
+    debounceTimerRef.current = setTimeout(() => {
+      fetchChannels();
+    }, 300);
+  }, [fetchChannels]);
+
+  // Clean up debounce timer
+  useEffect(() => {
+    return () => {
+      if (debounceTimerRef.current) {
+        clearTimeout(debounceTimerRef.current);
+      }
+    };
+  }, []);
+
   // Initial fetch
   useEffect(() => {
     fetchChannels();
@@ -56,7 +76,7 @@ export function useChat(userId: string | undefined) {
           table: "chat_channel_members",
           filter: `user_id=eq.${userId}`,
         },
-        () => fetchChannels()
+        () => debouncedFetchChannels()
       )
       .on(
         "postgres_changes",
@@ -65,7 +85,7 @@ export function useChat(userId: string | undefined) {
           schema: "public",
           table: "chat_channels",
         },
-        () => fetchChannels()
+        () => debouncedFetchChannels()
       )
       .on(
         "postgres_changes",
@@ -74,14 +94,14 @@ export function useChat(userId: string | undefined) {
           schema: "public",
           table: "chat_messages",
         },
-        () => fetchChannels()
+        () => debouncedFetchChannels()
       )
       .subscribe();
 
     return () => {
       supabase.removeChannel(subscription);
     };
-  }, [userId, fetchChannels]);
+  }, [userId, debouncedFetchChannels]);
 
   // Filter channels by search
   const filteredGroups = searchQuery.trim()
