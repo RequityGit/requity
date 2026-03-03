@@ -2,6 +2,7 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import type { Database } from "@/lib/supabase/types";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
@@ -106,7 +107,7 @@ export async function moveOpportunityStageAction(
 
 export async function moveLoanStageAction(
   loanId: string,
-  newStage: string
+  newStage: Database["public"]["Enums"]["loan_status"]
 ) {
   try {
     const auth = await requireAdmin();

@@ -20,6 +20,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { formatCurrency } from "@/lib/format";
+import type { Database } from "@/lib/supabase/types";
 import {
   OPPORTUNITY_STAGE_LABELS,
   APPROVAL_STATUS_COLORS,
@@ -245,7 +246,7 @@ export function DebtKanban({
     if (!loan || loan.stage === newStage) return;
 
     setMovingId(loanId);
-    const result = await moveLoanStageAction(loanId, newStage);
+    const result = await moveLoanStageAction(loanId, newStage as Database["public"]["Enums"]["loan_status"]);
     if (result.error) {
       toast({
         title: "Error moving loan",
