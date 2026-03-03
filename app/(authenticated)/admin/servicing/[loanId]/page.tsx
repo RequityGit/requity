@@ -11,6 +11,7 @@ import {
   formatDate,
   formatPercent,
 } from "@/lib/format";
+import { ExportServicingButton } from "@/components/admin/servicing/export-servicing-button";
 import {
   DollarSign,
   Percent,
@@ -115,7 +116,12 @@ export default async function LoanDetailPage({
         <PageHeader
           title={`${loan.loan_id} — ${loan.entity_name ?? loan.borrower_name ?? "Unknown"}`}
           description={loan.property_address ?? undefined}
-          action={<StatusBadge status={loan.loan_status} className="text-sm px-3 py-1" />}
+          action={
+            <div className="flex items-center gap-2">
+              <ExportServicingButton loanId={loan.loan_id} />
+              <StatusBadge status={loan.loan_status} className="text-sm px-3 py-1" />
+            </div>
+          }
         />
       </div>
 
