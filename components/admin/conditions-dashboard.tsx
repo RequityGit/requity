@@ -379,7 +379,7 @@ export function ConditionsDashboard({
                       </p>
                     </div>
                   </div>
-                  <Link href={`/admin/loans/${loanId}`}>
+                  <Link href={`/admin/deals/${loanId}`}>
                     <Button
                       variant="ghost"
                       size="sm"
@@ -414,7 +414,7 @@ export function ConditionsDashboard({
                         }`}
                         onClick={() =>
                           router.push(
-                            `/admin/loans/${condition.loan_id}?tab=conditions`
+                            `/admin/deals/${condition.loan_id}?tab=conditions`
                           )
                         }
                       >

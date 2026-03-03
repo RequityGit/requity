@@ -70,10 +70,7 @@ export function PipelineCard({ deal, index, isDragging }: PipelineCardProps) {
   const docsComplete =
     deal.docsTotal > 0 && deal.docsApproved >= deal.docsTotal;
 
-  const detailUrl =
-    deal.source === "opportunity"
-      ? `/admin/loans/${deal.id}`
-      : `/admin/loans/${deal.id}`;
+  const detailUrl = `/admin/deals/${deal.id}`;
 
   // Days badge styling
   let daysBadgeStyle: React.CSSProperties;

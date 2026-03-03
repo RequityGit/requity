@@ -420,7 +420,7 @@ export function LoanListView({
             columns={columns}
             data={filtered}
             emptyMessage="No loans found."
-            onRowClick={(row) => router.push(`/admin/loans/${row.id}`)}
+            onRowClick={(row) => router.push(`/admin/deals/${row.id}`)}
           />
         </TabsContent>
       </Tabs>

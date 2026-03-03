@@ -94,7 +94,7 @@ export function LoansTab({ loans, contactId, borrowerId }: LoansTabProps) {
           return (
             <Link
               key={loan.id}
-              href={`/admin/loans/${loan.id}`}
+              href={`/admin/deals/${loan.id}`}
               className="block rounded-xl border border-[#E5E5E7] bg-white p-4 hover:bg-[#F7F7F8] transition-colors"
             >
               <div className="flex items-start justify-between mb-2">
@@ -178,7 +178,7 @@ export function LoansTab({ loans, contactId, borrowerId }: LoansTabProps) {
               {pastLoans.map((loan) => (
                 <Link
                   key={loan.id}
-                  href={`/admin/loans/${loan.id}`}
+                  href={`/admin/deals/${loan.id}`}
                   className="flex items-center justify-between rounded-lg border border-[#E5E5E7] bg-white p-3 hover:bg-[#F7F7F8] transition-colors"
                 >
                   <div className="flex items-center gap-3">

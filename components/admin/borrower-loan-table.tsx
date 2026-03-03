@@ -27,7 +27,7 @@ const loanColumns: Column<Loan>[] = [
     header: "Loan #",
     cell: (row) => (
       <Link
-        href={`/admin/loans/${row.id}`}
+        href={`/admin/deals/${row.id}`}
         className="font-medium text-blue-600 hover:underline"
       >
         {row.loan_number || "—"}

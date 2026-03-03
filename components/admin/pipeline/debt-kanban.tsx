@@ -366,7 +366,7 @@ export function DebtKanban({
                   <tr
                     key={`${item.source}-${item.id}`}
                     className="border-b hover:bg-muted/30 cursor-pointer transition-colors"
-                    onClick={() => router.push(`/admin/loans/${item.id}`)}
+                    onClick={() => router.push(`/admin/deals/${item.id}`)}
                   >
                     <td className="px-4 py-3">
                       <p className="font-medium text-foreground truncate max-w-[200px]">

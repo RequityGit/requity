@@ -34,7 +34,7 @@ export function MaturityTable({ loans }: MaturityTableProps) {
   if (loans.length === 0) {
     return (
       <DashCard className="!p-[14px_18px]">
-        <SectionTitle sub="Next 60 days" right={<ViewAllButton label="All loans" href="/admin/loans" />}>
+        <SectionTitle sub="Next 60 days" right={<ViewAllButton label="All loans" href="/admin/pipeline" />}>
           Upcoming Maturities
         </SectionTitle>
         <p className="text-dash-text-mut text-xs py-4 text-center">No upcoming maturities in the next 60 days</p>
@@ -44,7 +44,7 @@ export function MaturityTable({ loans }: MaturityTableProps) {
 
   return (
     <DashCard className="!p-[14px_18px]">
-      <SectionTitle sub="Next 60 days" right={<ViewAllButton label="All loans" href="/admin/loans" />}>
+      <SectionTitle sub="Next 60 days" right={<ViewAllButton label="All loans" href="/admin/pipeline" />}>
         Upcoming Maturities
       </SectionTitle>
       <div className="flex flex-col gap-0.5">

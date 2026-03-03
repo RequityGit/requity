@@ -158,7 +158,7 @@ export function getEntityUrl(
     case "loan":
       return role === "borrower"
         ? `/borrower/loans/${id}`
-        : `/admin/loans/${id}`;
+        : `/admin/deals/${id}`;
     case "borrower":
       return `/admin/borrowers/${id}`;
     case "borrower_entity":
@@ -174,12 +174,12 @@ export function getEntityUrl(
     case "crm_contact":
       return `/admin/crm/${id}`;
     case "document":
-      if (metadata.loan_id) return `/admin/loans/${metadata.loan_id}`;
+      if (metadata.loan_id) return `/admin/deals/${metadata.loan_id}`;
       if (metadata.fund_id) return `/admin/funds/${metadata.fund_id}`;
       return "#";
     case "loan_document":
       return metadata.loan_id
-        ? `/admin/loans/${metadata.loan_id}`
+        ? `/admin/deals/${metadata.loan_id}`
         : "#";
     case "project":
       return `/admin/operations`;
@@ -396,7 +396,7 @@ export function getQuickLinks(role: string): QuickLink[] {
     ];
   }
   return [
-    { label: "Pipeline", href: "/admin/loans", icon: Banknote },
+    { label: "Pipeline", href: "/admin/pipeline", icon: Banknote },
     { label: "Investors", href: "/admin/investors", icon: TrendingUp },
     { label: "CRM", href: "/admin/crm", icon: Contact },
     { label: "Projects", href: "/admin/operations", icon: FolderKanban },

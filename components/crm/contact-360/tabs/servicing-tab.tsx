@@ -62,7 +62,7 @@ export function ServicingTab({ loans }: ServicingTabProps) {
         {servicingLoans.map((loan) => (
           <Link
             key={loan.id}
-            href={`/admin/loans/${loan.id}`}
+            href={`/admin/deals/${loan.id}`}
             className="block rounded-xl border border-[#E5E5E7] bg-white p-4 hover:bg-[#F7F7F8] transition-colors"
           >
             <div className="flex items-start justify-between mb-2">
