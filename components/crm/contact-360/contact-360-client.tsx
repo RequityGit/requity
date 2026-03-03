@@ -26,6 +26,8 @@ import type {
   EmailData,
   LoanData,
   InvestorCommitmentData,
+  BorrowerEntityData,
+  InvestingEntityData,
   TeamMember,
   CompanyData,
 } from "./types";
@@ -40,6 +42,7 @@ import { DocumentsTab } from "./tabs/documents-tab";
 import { NotesTab } from "./tabs/notes-tab";
 import { ActivityTab } from "./tabs/activity-tab";
 import { ContactDetailsSidebar } from "./sidebar/contact-details-sidebar";
+import { EntitiesSidebar } from "./sidebar/entities-sidebar";
 import { RecentEmailsSidebar } from "./sidebar/recent-emails-sidebar";
 
 // Tab configuration with conditional visibility
@@ -83,6 +86,8 @@ interface Contact360ClientProps {
   emails: EmailData[];
   loans: LoanData[];
   investorCommitments: InvestorCommitmentData[];
+  borrowerEntities: BorrowerEntityData[];
+  investingEntities: InvestingEntityData[];
   teamMembers: TeamMember[];
   company: CompanyData | null;
   currentUserId: string;
@@ -99,6 +104,8 @@ export function Contact360Client({
   emails,
   loans,
   investorCommitments,
+  borrowerEntities,
+  investingEntities,
   teamMembers,
   company,
   currentUserId,
@@ -259,7 +266,10 @@ export function Contact360Client({
                 activeRelationships={activeRelationships}
                 loans={loans}
                 investorCommitments={investorCommitments}
+                borrowerEntities={borrowerEntities}
+                investingEntities={investingEntities}
                 activities={activities}
+                company={company}
               />
             </TabsContent>
 
@@ -322,6 +332,12 @@ export function Contact360Client({
             assignedToName={assignedToName}
             sourceLabel={sourceLabel}
           />
+          {(borrowerEntities.length > 0 || investingEntities.length > 0) && (
+            <EntitiesSidebar
+              borrowerEntities={borrowerEntities}
+              investingEntities={investingEntities}
+            />
+          )}
           <RecentEmailsSidebar
             emails={emails.slice(0, 3)}
             contactEmail={contact.email}

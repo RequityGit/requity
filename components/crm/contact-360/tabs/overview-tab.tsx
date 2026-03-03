@@ -1,6 +1,5 @@
 "use client";
 
-import { useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
@@ -10,6 +9,10 @@ import {
   Users,
   Activity,
   UserPlus,
+  MapPin,
+  Building2,
+  Landmark,
+  Home,
 } from "lucide-react";
 import { StagePill, EmptyState, MonoValue, TimelineEvent } from "../shared";
 import { formatCurrency } from "@/lib/format";
@@ -17,9 +20,40 @@ import type {
   ContactData,
   LoanData,
   InvestorCommitmentData,
+  BorrowerEntityData,
+  InvestingEntityData,
   ActivityData,
+  CompanyData,
 } from "../types";
 import Link from "next/link";
+
+function formatPropertyType(type: string): string {
+  const labels: Record<string, string> = {
+    sfr: "SFR",
+    condo: "Condo",
+    townhouse: "Townhouse",
+    duplex: "Duplex",
+    triplex: "Triplex",
+    fourplex: "Fourplex",
+    multifamily_5_plus: "Multifamily 5+",
+    mixed_use: "Mixed Use",
+    retail: "Retail",
+    office: "Office",
+    industrial: "Industrial",
+    mobile_home_park: "Mobile Home Park",
+    land: "Land",
+    other: "Other",
+  };
+  return labels[type] || type.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+}
+
+function formatEntityType(type: string): string {
+  return type.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+}
+
+function formatPurpose(purpose: string): string {
+  return purpose.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+}
 
 // Activity type icon/color mapping
 const activityIconConfig: Record<
@@ -35,8 +69,8 @@ const activityIconConfig: Record<
   deal_update: { icon: Activity, bg: "#ECFDF3", color: "#16A34A" },
 };
 
-// ---------- Active Loans Card (borrower) ----------
-function ActiveLoansCard({ loans }: { loans: LoanData[] }) {
+// ---------- Deals & Properties Card ----------
+function DealsPropertiesCard({ loans }: { loans: LoanData[] }) {
   const activeLoans = loans.filter(
     (l) =>
       l.stage &&
@@ -48,15 +82,15 @@ function ActiveLoansCard({ loans }: { loans: LoanData[] }) {
       <Card className="rounded-xl border-[#E5E5E7] bg-white">
         <CardHeader className="pb-2">
           <CardTitle className="text-sm font-semibold text-[#1A1A1A] flex items-center gap-2">
-            <DollarSign className="h-4 w-4" strokeWidth={1.5} />
-            Active Loans
+            <Home className="h-4 w-4" strokeWidth={1.5} />
+            Deals & Properties
           </CardTitle>
         </CardHeader>
         <CardContent>
           <EmptyState
-            title="No active loans"
+            title="No active deals"
             description="Start a new loan application for this borrower."
-            icon={DollarSign}
+            icon={Home}
           />
         </CardContent>
       </Card>
@@ -67,36 +101,180 @@ function ActiveLoansCard({ loans }: { loans: LoanData[] }) {
     <Card className="rounded-xl border-[#E5E5E7] bg-white">
       <CardHeader className="pb-2">
         <CardTitle className="text-sm font-semibold text-[#1A1A1A] flex items-center gap-2">
-          <DollarSign className="h-4 w-4" strokeWidth={1.5} />
-          Active Loans ({activeLoans.length})
+          <Home className="h-4 w-4" strokeWidth={1.5} />
+          Deals & Properties ({activeLoans.length})
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-3">
-        {activeLoans.slice(0, 3).map((loan) => (
+        {activeLoans.slice(0, 5).map((loan) => {
+          const location = [loan.property_city, loan.property_state]
+            .filter(Boolean)
+            .join(", ");
+          return (
+            <Link
+              key={loan.id}
+              href={`/admin/loans/${loan.id}`}
+              className="block rounded-lg border border-[#E5E5E7] p-3 hover:bg-[#F7F7F8] transition-colors"
+            >
+              <div className="flex items-start justify-between mb-1.5">
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-medium text-[#1A1A1A] truncate">
+                    {loan.property_address || "No address"}
+                  </p>
+                  {location && (
+                    <div className="flex items-center gap-1 mt-0.5">
+                      <MapPin className="h-3 w-3 text-[#9A9A9A] shrink-0" strokeWidth={1.5} />
+                      <span className="text-xs text-[#6B6B6B]">{location}</span>
+                    </div>
+                  )}
+                </div>
+                {loan.stage && <StagePill stage={loan.stage} />}
+              </div>
+              <div className="flex items-center gap-3 flex-wrap text-xs text-[#6B6B6B]">
+                <MonoValue>{formatCurrency(loan.loan_amount)}</MonoValue>
+                {loan.property_type && (
+                  <span className="inline-flex items-center rounded-md bg-[#F7F7F8] px-1.5 py-0.5 text-[10px] font-medium text-[#6B6B6B]">
+                    {formatPropertyType(loan.property_type)}
+                  </span>
+                )}
+                {loan.purpose && (
+                  <span className="text-[#9A9A9A]">{formatPurpose(loan.purpose)}</span>
+                )}
+                {loan.interest_rate != null && (
+                  <MonoValue>{loan.interest_rate}%</MonoValue>
+                )}
+                {loan.ltv != null && <MonoValue>{loan.ltv}% LTV</MonoValue>}
+              </div>
+            </Link>
+          );
+        })}
+        {activeLoans.length > 5 && (
+          <p className="text-xs text-[#6B6B6B] text-center">
+            +{activeLoans.length - 5} more deals
+          </p>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
+// ---------- Entities Card ----------
+function EntitiesCard({
+  borrowerEntities,
+  investingEntities,
+  company,
+}: {
+  borrowerEntities: BorrowerEntityData[];
+  investingEntities: InvestingEntityData[];
+  company: CompanyData | null;
+}) {
+  const hasEntities =
+    borrowerEntities.length > 0 ||
+    investingEntities.length > 0 ||
+    company !== null;
+
+  if (!hasEntities) return null;
+
+  return (
+    <Card className="rounded-xl border-[#E5E5E7] bg-white">
+      <CardHeader className="pb-2">
+        <CardTitle className="text-sm font-semibold text-[#1A1A1A] flex items-center gap-2">
+          <Building2 className="h-4 w-4" strokeWidth={1.5} />
+          Associated Entities
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-3">
+        {/* Company */}
+        {company && (
           <Link
-            key={loan.id}
-            href={`/admin/loans/${loan.id}`}
-            className="block rounded-lg border border-[#E5E5E7] p-3 hover:bg-[#F7F7F8] transition-colors"
+            href={`/admin/crm/companies/${company.id}`}
+            className="flex items-center gap-3 rounded-lg border border-[#E5E5E7] p-3 hover:bg-[#F7F7F8] transition-colors"
           >
-            <div className="flex items-center justify-between mb-1">
-              <p className="text-sm font-medium text-[#1A1A1A] truncate">
-                {loan.property_address || "No address"}
-              </p>
-              {loan.stage && <StagePill stage={loan.stage} />}
+            <div
+              className="flex h-8 w-8 items-center justify-center rounded-lg shrink-0"
+              style={{ backgroundColor: "#EFF6FF" }}
+            >
+              <Building2 className="h-4 w-4" strokeWidth={1.5} style={{ color: "#2563EB" }} />
             </div>
-            <div className="flex items-center gap-4 text-xs text-[#6B6B6B]">
-              <MonoValue>{formatCurrency(loan.loan_amount)}</MonoValue>
-              {loan.interest_rate != null && (
-                <MonoValue>{loan.interest_rate}%</MonoValue>
-              )}
-              {loan.ltv != null && <MonoValue>{loan.ltv}% LTV</MonoValue>}
+            <div className="min-w-0">
+              <p className="text-sm font-medium text-[#1A1A1A] truncate">{company.name}</p>
+              <p className="text-xs text-[#6B6B6B]">
+                {company.company_type
+                  ? company.company_type.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase())
+                  : "Company"}
+              </p>
             </div>
           </Link>
-        ))}
-        {activeLoans.length > 3 && (
-          <p className="text-xs text-[#6B6B6B] text-center">
-            +{activeLoans.length - 3} more loans
-          </p>
+        )}
+
+        {/* Borrower Entities */}
+        {borrowerEntities.length > 0 && (
+          <div className="space-y-2">
+            {(investingEntities.length > 0 || company) && (
+              <p className="text-[10px] font-medium text-[#9A9A9A] uppercase tracking-wider">
+                Borrower Entities
+              </p>
+            )}
+            {borrowerEntities.map((entity) => (
+              <div
+                key={entity.id}
+                className="flex items-center gap-3 rounded-lg border border-[#E5E5E7] p-3"
+              >
+                <div
+                  className="flex h-8 w-8 items-center justify-center rounded-lg shrink-0"
+                  style={{ backgroundColor: "#ECFDF3" }}
+                >
+                  <Landmark className="h-4 w-4" strokeWidth={1.5} style={{ color: "#16A34A" }} />
+                </div>
+                <div className="min-w-0">
+                  <p className="text-sm font-medium text-[#1A1A1A] truncate">
+                    {entity.entity_name}
+                  </p>
+                  <p className="text-xs text-[#6B6B6B]">
+                    {formatEntityType(entity.entity_type)}
+                    {entity.state_of_formation && (
+                      <span> &middot; {entity.state_of_formation}</span>
+                    )}
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Investing Entities */}
+        {investingEntities.length > 0 && (
+          <div className="space-y-2">
+            {(borrowerEntities.length > 0 || company) && (
+              <p className="text-[10px] font-medium text-[#9A9A9A] uppercase tracking-wider">
+                Investing Entities
+              </p>
+            )}
+            {investingEntities.map((entity) => (
+              <div
+                key={entity.id}
+                className="flex items-center gap-3 rounded-lg border border-[#E5E5E7] p-3"
+              >
+                <div
+                  className="flex h-8 w-8 items-center justify-center rounded-lg shrink-0"
+                  style={{ backgroundColor: "#F5F3FF" }}
+                >
+                  <Landmark className="h-4 w-4" strokeWidth={1.5} style={{ color: "#7C3AED" }} />
+                </div>
+                <div className="min-w-0">
+                  <p className="text-sm font-medium text-[#1A1A1A] truncate">
+                    {entity.entity_name}
+                  </p>
+                  <p className="text-xs text-[#6B6B6B]">
+                    {formatEntityType(entity.entity_type)}
+                    {entity.state_of_formation && (
+                      <span> &middot; {entity.state_of_formation}</span>
+                    )}
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
         )}
       </CardContent>
     </Card>
@@ -306,7 +484,10 @@ interface OverviewTabProps {
   activeRelationships: string[];
   loans: LoanData[];
   investorCommitments: InvestorCommitmentData[];
+  borrowerEntities: BorrowerEntityData[];
+  investingEntities: InvestingEntityData[];
   activities: ActivityData[];
+  company: CompanyData | null;
 }
 
 export function OverviewTab({
@@ -314,13 +495,20 @@ export function OverviewTab({
   activeRelationships,
   loans,
   investorCommitments,
+  borrowerEntities,
+  investingEntities,
   activities,
+  company,
 }: OverviewTabProps) {
   const showLoans = activeRelationships.includes("borrower");
   const showInvestments = activeRelationships.includes("investor");
   const showServicing = activeRelationships.includes("lender");
   const showReferrals = activeRelationships.includes("broker");
   const hasRelationships = activeRelationships.length > 0;
+  const hasEntities =
+    borrowerEntities.length > 0 ||
+    investingEntities.length > 0 ||
+    company !== null;
 
   return (
     <div className="space-y-4">
@@ -346,12 +534,20 @@ export function OverviewTab({
         </Card>
       )}
 
-      {showLoans && <ActiveLoansCard loans={loans} />}
+      {showLoans && <DealsPropertiesCard loans={loans} />}
       {showInvestments && (
         <InvestmentSummaryCard commitments={investorCommitments} />
       )}
       {showServicing && <ServicingSummaryCard loans={loans} />}
       {showReferrals && <ReferralSummaryCard />}
+
+      {hasEntities && (
+        <EntitiesCard
+          borrowerEntities={borrowerEntities}
+          investingEntities={investingEntities}
+          company={company}
+        />
+      )}
 
       <RecentActivityCard activities={activities} />
     </div>

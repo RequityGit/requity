@@ -4,10 +4,30 @@ import { useState, useMemo } from "react";
 import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { DollarSign, ChevronDown, ChevronUp } from "lucide-react";
+import { DollarSign, ChevronDown, ChevronUp, MapPin } from "lucide-react";
 import { StagePill, EmptyState, MonoValue } from "../shared";
 import { formatCurrency } from "@/lib/format";
 import type { LoanData } from "../types";
+
+function formatPropertyType(type: string): string {
+  const labels: Record<string, string> = {
+    sfr: "SFR",
+    condo: "Condo",
+    townhouse: "Townhouse",
+    duplex: "Duplex",
+    triplex: "Triplex",
+    fourplex: "Fourplex",
+    multifamily_5_plus: "Multifamily 5+",
+    mixed_use: "Mixed Use",
+    retail: "Retail",
+    office: "Office",
+    industrial: "Industrial",
+    mobile_home_park: "Mobile Home Park",
+    land: "Land",
+    other: "Other",
+  };
+  return labels[type] || type.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+}
 
 function getDaysInStage(stageUpdatedAt: string | null): number {
   if (!stageUpdatedAt) return 0;
@@ -84,6 +104,9 @@ export function LoansTab({ loans, contactId }: LoansTabProps) {
         )}
         {activeLoans.map((loan) => {
           const days = getDaysInStage(loan.stage_updated_at);
+          const location = [loan.property_city, loan.property_state]
+            .filter(Boolean)
+            .join(", ");
           return (
             <Link
               key={loan.id}
@@ -91,17 +114,30 @@ export function LoansTab({ loans, contactId }: LoansTabProps) {
               className="block rounded-xl border border-[#E5E5E7] bg-white p-4 hover:bg-[#F7F7F8] transition-colors"
             >
               <div className="flex items-start justify-between mb-2">
-                <div>
+                <div className="min-w-0 flex-1 mr-2">
                   <p className="text-sm font-semibold text-[#1A1A1A]">
                     {loan.property_address || "No address"}
                   </p>
-                  {loan.loan_number && (
-                    <p className="text-xs text-[#9A9A9A]">
-                      #{loan.loan_number}
-                    </p>
-                  )}
+                  <div className="flex items-center gap-2 mt-0.5 flex-wrap">
+                    {loan.loan_number && (
+                      <span className="text-xs text-[#9A9A9A]">
+                        #{loan.loan_number}
+                      </span>
+                    )}
+                    {location && (
+                      <span className="flex items-center gap-0.5 text-xs text-[#6B6B6B]">
+                        <MapPin className="h-3 w-3" strokeWidth={1.5} />
+                        {location}
+                      </span>
+                    )}
+                    {loan.property_type && (
+                      <span className="inline-flex items-center rounded-md bg-[#F7F7F8] px-1.5 py-0.5 text-[10px] font-medium text-[#6B6B6B]">
+                        {formatPropertyType(loan.property_type)}
+                      </span>
+                    )}
+                  </div>
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 shrink-0">
                   {loan.stage && <StagePill stage={loan.stage} />}
                   {days > 0 && <DaysInStageBadge days={days} />}
                 </div>

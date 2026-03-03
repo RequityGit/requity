@@ -6,6 +6,7 @@ import { createClient } from "@/lib/supabase/client";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
+import Link from "next/link";
 import {
   Send,
   Phone,
@@ -127,10 +128,15 @@ export function ContactHeader({
           {/* Contact meta line */}
           <div className="flex items-center gap-3 text-sm text-[#6B6B6B] flex-wrap">
             {company && (
-              <span className="flex items-center gap-1">
+              <Link
+                href={`/admin/crm/companies/${company.id}`}
+                className="flex items-center gap-1 hover:text-[#1A1A1A] transition-colors"
+              >
                 <Building2 className="h-3.5 w-3.5" strokeWidth={1.5} />
-                {company.name}
-              </span>
+                <span className="underline decoration-dotted underline-offset-2">
+                  {company.name}
+                </span>
+              </Link>
             )}
             {!company && contact.company_name && (
               <span className="flex items-center gap-1">
