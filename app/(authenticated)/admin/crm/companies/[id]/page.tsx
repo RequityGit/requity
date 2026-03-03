@@ -1,48 +1,26 @@
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { redirect, notFound } from "next/navigation";
-import { PageHeader } from "@/components/shared/page-header";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { CompanyEditDialog } from "@/components/crm/company-edit-dialog";
-import { CompanyFilesSection } from "@/components/crm/company-files-section";
-import { CompanyNotesSection } from "@/components/crm/company-notes-section";
-import { formatDate } from "@/lib/format";
-import {
-  CRM_COMPANY_TYPES,
-  CRM_COMPANY_SUBTYPES,
-  COMPANY_TYPE_COLORS,
-} from "@/lib/constants";
-import {
-  Phone,
-  Mail,
-  Globe,
-  MapPin,
-  Shield,
-  FileText,
-  Users,
-  ChevronRight,
-  Tag,
-  Calendar,
-  Building2,
-} from "lucide-react";
-import Link from "next/link";
-import { cn } from "@/lib/utils";
+import { CompanyDetailClient } from "@/components/crm/company-360/company-detail-client";
+import type {
+  CompanyDetailData,
+  CompanyContactData,
+  CompanyActivityData,
+  CompanyFileData,
+  CompanyTaskData,
+  CompanyNoteData,
+  CompanyWireData,
+  CompanyFollowerData,
+  CompanyDealData,
+  CompanyQuoteData,
+  TabBadgeCounts,
+} from "@/components/crm/company-360/types";
 
 interface PageProps {
   params: { id: string };
 }
 
 export const dynamic = "force-dynamic";
-
-function hasValidNda(
-  ndaCreatedDate: string | null,
-  ndaExpirationDate: string | null
-): boolean {
-  if (!ndaCreatedDate) return false;
-  if (!ndaExpirationDate) return true;
-  return new Date(ndaExpirationDate) > new Date();
-}
 
 export default async function CompanyDetailPage({ params }: PageProps) {
   const supabase = await createClient();
@@ -52,20 +30,10 @@ export default async function CompanyDetailPage({ params }: PageProps) {
 
   if (!user) redirect("/login");
 
-  // Check if user is super admin
-  const { data: superAdminRole } = await supabase
-    .from("user_roles")
-    .select("id")
-    .eq("user_id", user.id)
-    .eq("role", "super_admin")
-    .eq("is_active", true)
-    .maybeSingle();
-
-  const isSuperAdmin = !!superAdminRole;
-
   const { id } = await params;
   const admin = createAdminClient();
 
+  // Fetch company
   const { data: company } = await admin
     .from("companies")
     .select("*")
@@ -74,400 +42,265 @@ export default async function CompanyDetailPage({ params }: PageProps) {
 
   if (!company) notFound();
 
-  // Fetch related data in parallel
-  const [contactsResult, primaryContactResult, referralContactResult] =
-    await Promise.all([
-      admin
-        .from("crm_contacts")
-        .select(
-          "id, first_name, last_name, email, phone, user_function, lifecycle_stage"
-        )
-        .eq("company_id", id)
-        .is("deleted_at", null)
-        .order("first_name"),
-      company.primary_contact_id
-        ? admin
-            .from("crm_contacts")
-            .select("id, first_name, last_name, email")
-            .eq("id", company.primary_contact_id)
-            .single()
-        : Promise.resolve({ data: null }),
-      company.referral_contact_id
-        ? admin
-            .from("crm_contacts")
-            .select("id, first_name, last_name, email")
-            .eq("id", company.referral_contact_id)
-            .single()
-        : Promise.resolve({ data: null }),
-    ]);
+  // Build profile lookup
+  const { data: profiles } = await admin
+    .from("profiles")
+    .select("id, full_name, email")
+    .eq("role", "admin")
+    .order("full_name");
 
-  const contacts = contactsResult.data ?? [];
-  const primaryContact = primaryContactResult.data;
-  const referralContact = referralContactResult.data;
-
-  const typeLabel =
-    CRM_COMPANY_TYPES.find((t) => t.value === company.company_type)?.label ??
-    company.company_type;
-  const subtypeLabel = company.company_subtype
-    ? CRM_COMPANY_SUBTYPES.find((s) => s.value === company.company_subtype)
-        ?.label ?? company.company_subtype
-    : null;
-  const typeColors =
-    COMPANY_TYPE_COLORS[company.company_type] ??
-    "bg-gray-100 text-gray-700 border-gray-200";
-  const ndaOnFile = hasValidNda(
-    company.nda_created_date,
-    company.nda_expiration_date
+  const profileLookup: Record<string, string> = {};
+  (profiles ?? []).forEach(
+    (t: { id: string; full_name: string | null; email: string | null }) => {
+      profileLookup[t.id] = t.full_name || t.email || "Unknown";
+    }
   );
 
+  // Fetch all related data in parallel
+  const [
+    contactsResult,
+    primaryContactResult,
+    activitiesResult,
+    filesResult,
+    tasksResult,
+    notesResult,
+    wireResult,
+    followersResult,
+  ] = await Promise.all([
+    // Contacts
+    admin
+      .from("crm_contacts")
+      .select(
+        "id, first_name, last_name, email, phone, user_function, last_contacted_at"
+      )
+      .eq("company_id", id)
+      .is("deleted_at", null)
+      .order("first_name"),
+    // Primary contact
+    company.primary_contact_id
+      ? admin
+          .from("crm_contacts")
+          .select("id, first_name, last_name, email, phone, user_function")
+          .eq("id", company.primary_contact_id)
+          .single()
+      : Promise.resolve({ data: null }),
+    // Activities
+    admin
+      .from("crm_activities")
+      .select("*")
+      .eq("company_id", id)
+      .is("deleted_at", null)
+      .order("created_at", { ascending: false }),
+    // Files
+    admin
+      .from("company_files")
+      .select("*")
+      .eq("company_id", id)
+      .order("uploaded_at", { ascending: false }),
+    // Tasks
+    admin
+      .from("crm_tasks")
+      .select("*")
+      .eq("company_id", id)
+      .is("deleted_at", null)
+      .order("created_at", { ascending: false }),
+    // Notes (chatter posts)
+    admin
+      .from("crm_chatter_posts")
+      .select("*")
+      .eq("company_id", id)
+      .is("deleted_at", null)
+      .order("is_pinned", { ascending: false })
+      .order("created_at", { ascending: false }),
+    // Wire instructions
+    admin
+      .from("company_wire_instructions")
+      .select("*")
+      .eq("company_id", id)
+      .order("updated_at", { ascending: false })
+      .limit(1)
+      .maybeSingle(),
+    // Followers
+    admin
+      .from("crm_followers")
+      .select("id, user_id")
+      .eq("company_id", id),
+  ]);
+
+  // Map contacts
+  const contacts: CompanyContactData[] = (contactsResult.data ?? []).map(
+    (c: Record<string, unknown>) => ({
+      id: c.id as string,
+      first_name: c.first_name as string | null,
+      last_name: c.last_name as string | null,
+      email: c.email as string | null,
+      phone: c.phone as string | null,
+      user_function: c.user_function as string | null,
+      last_contacted_at: c.last_contacted_at as string | null,
+      is_primary: c.id === company.primary_contact_id,
+    })
+  );
+
+  // Map primary contact info
+  const primaryContact = primaryContactResult.data
+    ? {
+        id: primaryContactResult.data.id as string,
+        first_name: primaryContactResult.data.first_name as string | null,
+        last_name: primaryContactResult.data.last_name as string | null,
+        user_function: primaryContactResult.data.user_function as string | null,
+      }
+    : null;
+
+  // Map activities
+  const activities: CompanyActivityData[] = (activitiesResult.data ?? []).map(
+    (a: Record<string, unknown>) => ({
+      id: a.id as string,
+      activity_type: a.activity_type as string,
+      subject: a.subject as string | null,
+      description: a.description as string | null,
+      direction: (a.direction as string | null) ?? null,
+      call_duration_seconds: (a.call_duration_seconds as number | null) ?? null,
+      performed_by_name: a.performed_by
+        ? (a.performed_by_name as string | null) ||
+          profileLookup[a.performed_by as string] ||
+          null
+        : null,
+      created_at: a.created_at as string,
+    })
+  );
+
+  // Map files
+  const files: CompanyFileData[] = (filesResult.data ?? []).map(
+    (f: Record<string, unknown>) => ({
+      id: f.id as string,
+      file_name: f.file_name as string,
+      file_type: f.file_type as string,
+      file_size: f.file_size as number | null,
+      mime_type: f.mime_type as string | null,
+      storage_path: f.storage_path as string,
+      uploaded_by_name: f.uploaded_by
+        ? profileLookup[f.uploaded_by as string] || null
+        : null,
+      uploaded_at: f.uploaded_at as string | null,
+      notes: f.notes as string | null,
+    })
+  );
+
+  // Map tasks
+  const tasks: CompanyTaskData[] = (tasksResult.data ?? []).map(
+    (t: Record<string, unknown>) => ({
+      id: t.id as string,
+      subject: t.subject as string,
+      description: t.description as string | null,
+      task_type: (t.task_type as string) || "other",
+      priority: (t.priority as string) || "normal",
+      status: (t.status as string) || "not_started",
+      due_date: t.due_date as string | null,
+      assigned_to: t.assigned_to as string | null,
+      assigned_to_name: t.assigned_to
+        ? profileLookup[t.assigned_to as string] || null
+        : null,
+      completed_at: t.completed_at as string | null,
+    })
+  );
+
+  // Map notes
+  const notes: CompanyNoteData[] = (notesResult.data ?? []).map(
+    (n: Record<string, unknown>) => ({
+      id: n.id as string,
+      body: (n.body as string) || "",
+      author_name: n.author_id
+        ? profileLookup[n.author_id as string] || null
+        : null,
+      author_id: n.author_id as string | null,
+      is_pinned: (n.is_pinned as boolean) || false,
+      created_at: n.created_at as string,
+    })
+  );
+
+  // Map wire instructions
+  const wireInstructions: CompanyWireData | null = wireResult.data
+    ? {
+        id: wireResult.data.id,
+        bank_name: wireResult.data.bank_name,
+        account_name: wireResult.data.account_name,
+        account_number: wireResult.data.account_number,
+        routing_number: wireResult.data.routing_number,
+        wire_type: wireResult.data.wire_type,
+        updated_at: wireResult.data.updated_at,
+        updated_by: wireResult.data.updated_by,
+      }
+    : null;
+
+  // Map followers
+  const followers: CompanyFollowerData[] = (followersResult.data ?? []).map(
+    (f: Record<string, unknown>) => ({
+      id: f.id as string,
+      user_id: f.user_id as string,
+      user_name: profileLookup[f.user_id as string] || null,
+    })
+  );
+
+  // Compute tab badge counts
+  const openTasks = tasks.filter((t) => t.status !== "completed").length;
+  const counts: TabBadgeCounts = {
+    contacts: contacts.length,
+    activities: activities.length,
+    deals: 0, // Will be computed client-side or via a separate query
+    files: files.length,
+    openTasks,
+    notes: notes.length,
+  };
+
+  // Map company data
+  const companyData: CompanyDetailData = {
+    id: company.id,
+    name: company.name,
+    company_type: company.company_type,
+    company_subtype: company.company_subtype,
+    phone: company.phone,
+    email: company.email,
+    website: company.website,
+    address_line1: company.address_line1,
+    address_line2: company.address_line2,
+    city: company.city,
+    state: company.state,
+    zip: company.zip,
+    country: company.country,
+    fee_agreement_on_file: company.fee_agreement_on_file,
+    is_active: company.is_active,
+    primary_contact_id: company.primary_contact_id,
+    referral_contact_id: company.referral_contact_id,
+    notes: company.notes,
+    created_at: company.created_at,
+    updated_at: company.updated_at,
+    lender_programs: company.lender_programs,
+    asset_types: company.asset_types,
+    geographies: company.geographies,
+    company_capabilities: company.company_capabilities,
+    other_names: company.other_names,
+    nda_created_date: company.nda_created_date,
+    nda_expiration_date: company.nda_expiration_date,
+    source: company.source,
+    title_company_verified: company.title_company_verified,
+  };
+
+  const currentUserName = profileLookup[user.id] || user.email || "Unknown";
+
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <PageHeader
-        title={company.name}
-        description={
-          <div className="flex items-center gap-2 mt-1">
-            <Badge
-              variant="outline"
-              className={cn("text-xs font-medium", typeColors)}
-            >
-              {typeLabel}
-            </Badge>
-            {subtypeLabel && (
-              <span className="text-xs text-muted-foreground">
-                {subtypeLabel}
-              </span>
-            )}
-            {!company.is_active && (
-              <Badge
-                variant="outline"
-                className="text-xs font-semibold bg-red-100 text-red-800 border-red-200"
-              >
-                Inactive
-              </Badge>
-            )}
-          </div>
-        }
-        action={
-          <CompanyEditDialog company={company} isSuperAdmin={isSuperAdmin} />
-        }
-      />
-
-      {/* Company Info Card */}
-      <Card>
-        <CardContent className="pt-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            <div className="flex items-center gap-3">
-              <Phone className="h-4 w-4 text-muted-foreground shrink-0" />
-              <div>
-                <p className="text-xs text-muted-foreground">Phone</p>
-                <p className="text-sm font-medium">
-                  {company.phone || "—"}
-                </p>
-              </div>
-            </div>
-            <div className="flex items-center gap-3">
-              <Mail className="h-4 w-4 text-muted-foreground shrink-0" />
-              <div>
-                <p className="text-xs text-muted-foreground">Email</p>
-                <p className="text-sm font-medium">
-                  {company.email || "—"}
-                </p>
-              </div>
-            </div>
-            <div className="flex items-center gap-3">
-              <Globe className="h-4 w-4 text-muted-foreground shrink-0" />
-              <div>
-                <p className="text-xs text-muted-foreground">Website</p>
-                <p className="text-sm font-medium">
-                  {company.website || "—"}
-                </p>
-              </div>
-            </div>
-            <div className="flex items-center gap-3">
-              <Tag className="h-4 w-4 text-muted-foreground shrink-0" />
-              <div>
-                <p className="text-xs text-muted-foreground">Source</p>
-                <p className="text-sm font-medium">
-                  {company.source || "—"}
-                </p>
-              </div>
-            </div>
-          </div>
-
-          {/* Address */}
-          {company.address_line1 && (
-            <div className="mt-4 pt-4 border-t">
-              <div className="flex items-center gap-3">
-                <MapPin className="h-4 w-4 text-muted-foreground shrink-0" />
-                <div>
-                  <p className="text-xs text-muted-foreground">Address</p>
-                  <p className="text-sm">
-                    {company.address_line1}
-                    {company.city && `, ${company.city}`}
-                    {company.state && `, ${company.state}`}{" "}
-                    {company.zip && company.zip}
-                  </p>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* NDA & Fee Agreement Status */}
-          <div className="mt-4 pt-4 border-t">
-            <div className="flex flex-wrap gap-3">
-              <div
-                className={cn(
-                  "flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium border",
-                  ndaOnFile
-                    ? "bg-green-50 text-green-700 border-green-200"
-                    : "bg-red-50 text-red-700 border-red-200"
-                )}
-              >
-                <Shield className="h-3 w-3" />
-                NDA {ndaOnFile ? "On File" : "Missing"}
-                {company.nda_expiration_date && ndaOnFile && (
-                  <span className="ml-1 opacity-75">
-                    (expires {formatDate(company.nda_expiration_date)})
-                  </span>
-                )}
-              </div>
-              <div
-                className={cn(
-                  "flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium border",
-                  company.fee_agreement_on_file
-                    ? "bg-green-50 text-green-700 border-green-200"
-                    : "bg-red-50 text-red-700 border-red-200"
-                )}
-              >
-                <FileText className="h-3 w-3" />
-                Fee Agreement{" "}
-                {company.fee_agreement_on_file ? "On File" : "Missing"}
-              </div>
-            </div>
-          </div>
-
-          {/* Primary / Referral Contact */}
-          {(primaryContact || referralContact) && (
-            <div className="mt-4 pt-4 border-t grid grid-cols-1 md:grid-cols-2 gap-4">
-              {primaryContact && (
-                <div>
-                  <p className="text-xs text-muted-foreground mb-1">
-                    Primary Contact
-                  </p>
-                  <Link
-                    href={`/admin/crm/${primaryContact.id}`}
-                    className="text-sm text-blue-600 hover:underline font-medium"
-                  >
-                    {primaryContact.first_name} {primaryContact.last_name}
-                  </Link>
-                </div>
-              )}
-              {referralContact && (
-                <div>
-                  <p className="text-xs text-muted-foreground mb-1">
-                    Referral Contact
-                  </p>
-                  <Link
-                    href={`/admin/crm/${referralContact.id}`}
-                    className="text-sm text-blue-600 hover:underline font-medium"
-                  >
-                    {referralContact.first_name} {referralContact.last_name}
-                  </Link>
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* Other Names */}
-          {company.other_names && (
-            <div className="mt-4 pt-4 border-t">
-              <p className="text-xs text-muted-foreground mb-1">
-                Other Names / DBA
-              </p>
-              <p className="text-sm">{company.other_names}</p>
-            </div>
-          )}
-
-          {/* Dates */}
-          <div className="mt-4 pt-4 border-t">
-            <div className="flex items-center gap-6">
-              <div className="flex items-center gap-3">
-                <Calendar className="h-4 w-4 text-muted-foreground shrink-0" />
-                <div>
-                  <p className="text-xs text-muted-foreground">Added</p>
-                  <p className="text-sm font-medium">
-                    {formatDate(company.created_at)}
-                  </p>
-                </div>
-              </div>
-              <div className="flex items-center gap-3">
-                <Calendar className="h-4 w-4 text-muted-foreground shrink-0" />
-                <div>
-                  <p className="text-xs text-muted-foreground">Last Updated</p>
-                  <p className="text-sm font-medium">
-                    {formatDate(company.updated_at)}
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Lender Details (conditional) */}
-      {company.company_type === "lender" && (
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-base flex items-center gap-2">
-              <Building2 className="h-4 w-4" />
-              Lender Details
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {company.lender_programs &&
-                company.lender_programs.length > 0 && (
-                  <div>
-                    <p className="text-xs text-muted-foreground mb-2 font-medium uppercase tracking-wide">
-                      Lender Programs
-                    </p>
-                    <div className="flex flex-wrap gap-1.5">
-                      {company.lender_programs.map((p: string) => (
-                        <Badge
-                          key={p}
-                          variant="outline"
-                          className="text-xs bg-blue-50 text-blue-700 border-blue-200"
-                        >
-                          {p}
-                        </Badge>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              {company.asset_types && company.asset_types.length > 0 && (
-                <div>
-                  <p className="text-xs text-muted-foreground mb-2 font-medium uppercase tracking-wide">
-                    Asset Types
-                  </p>
-                  <div className="flex flex-wrap gap-1.5">
-                    {company.asset_types.map((a: string) => (
-                      <Badge key={a} variant="outline" className="text-xs">
-                        {a}
-                      </Badge>
-                    ))}
-                  </div>
-                </div>
-              )}
-              {company.geographies && company.geographies.length > 0 && (
-                <div>
-                  <p className="text-xs text-muted-foreground mb-2 font-medium uppercase tracking-wide">
-                    Geographies
-                  </p>
-                  <div className="flex flex-wrap gap-1.5">
-                    {company.geographies.map((g: string) => (
-                      <Badge key={g} variant="outline" className="text-xs">
-                        {g}
-                      </Badge>
-                    ))}
-                  </div>
-                </div>
-              )}
-              {company.company_capabilities &&
-                company.company_capabilities.length > 0 && (
-                  <div>
-                    <p className="text-xs text-muted-foreground mb-2 font-medium uppercase tracking-wide">
-                      Capabilities
-                    </p>
-                    <div className="flex flex-wrap gap-1.5">
-                      {company.company_capabilities.map((c: string) => (
-                        <Badge key={c} variant="outline" className="text-xs">
-                          {c}
-                        </Badge>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              {(!company.lender_programs || company.lender_programs.length === 0) &&
-                (!company.asset_types || company.asset_types.length === 0) &&
-                (!company.geographies || company.geographies.length === 0) &&
-                (!company.company_capabilities ||
-                  company.company_capabilities.length === 0) && (
-                  <p className="text-sm text-muted-foreground">
-                    No lender details configured yet. Use the Edit button to add
-                    programs, asset types, geographies, and capabilities.
-                  </p>
-                )}
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Related Contacts */}
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-base flex items-center gap-2">
-            <Users className="h-4 w-4" />
-            Contacts ({contacts.length})
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          {contacts.length === 0 ? (
-            <p className="text-sm text-muted-foreground py-4 text-center">
-              No contacts linked to this company.
-            </p>
-          ) : (
-            <div className="space-y-1">
-              {contacts.map(
-                (contact: {
-                  id: string;
-                  first_name: string | null;
-                  last_name: string | null;
-                  email: string | null;
-                  phone: string | null;
-                  user_function: string | null;
-                }) => (
-                  <Link
-                    key={contact.id}
-                    href={`/admin/crm/${contact.id}`}
-                    className="flex items-center gap-3 rounded-lg border px-3 py-2.5 hover:bg-muted transition-colors"
-                  >
-                    <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10 text-foreground text-xs font-medium">
-                      {contact.first_name?.[0]}
-                      {contact.last_name?.[0]}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-foreground truncate">
-                        {contact.first_name} {contact.last_name}
-                      </p>
-                      {contact.user_function && (
-                        <p className="text-xs text-muted-foreground truncate">
-                          {contact.user_function}
-                        </p>
-                      )}
-                    </div>
-                    {contact.email && (
-                      <span className="text-xs text-muted-foreground hidden md:block truncate max-w-[200px]">
-                        {contact.email}
-                      </span>
-                    )}
-                    <ChevronRight className="h-4 w-4 text-muted-foreground flex-shrink-0" />
-                  </Link>
-                )
-              )}
-            </div>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* Files */}
-      <CompanyFilesSection companyId={company.id} />
-
-      {/* Notes */}
-      <CompanyNotesSection
-        companyId={company.id}
-        initialNotes={company.notes || ""}
-      />
-    </div>
+    <CompanyDetailClient
+      company={companyData}
+      contacts={contacts}
+      primaryContact={primaryContact}
+      activities={activities}
+      files={files}
+      tasks={tasks}
+      notes={notes}
+      wireInstructions={wireInstructions}
+      followers={followers}
+      counts={counts}
+      currentUserId={user.id}
+      currentUserName={currentUserName}
+    />
   );
 }
