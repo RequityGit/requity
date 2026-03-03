@@ -94,6 +94,7 @@ export {
   EQUITY_DEAL_SOURCES,
   EQUITY_TASK_STATUSES,
   EQUITY_LOSS_REASONS,
+  PROPERTY_TYPES,
 } from "@/lib/constants/db-enums";
 
 // Re-export types
@@ -107,6 +108,27 @@ export type {
 
 // Loan activity types re-exported with legacy name
 export { LOAN_ACTIVITY_TYPES as ACTIVITY_TYPES } from "@/lib/constants/db-enums";
+
+// ---------------------------------------------------------------------------
+// Property type labels (human-readable)
+// ---------------------------------------------------------------------------
+
+export const PROPERTY_TYPE_OPTIONS: { value: string; label: string }[] = [
+  { value: "sfr", label: "Single Family (SFR)" },
+  { value: "condo", label: "Condo" },
+  { value: "townhouse", label: "Townhouse" },
+  { value: "duplex", label: "Duplex" },
+  { value: "triplex", label: "Triplex" },
+  { value: "fourplex", label: "Fourplex" },
+  { value: "multifamily_5_plus", label: "Multifamily (5+)" },
+  { value: "mixed_use", label: "Mixed Use" },
+  { value: "retail", label: "Retail" },
+  { value: "office", label: "Office" },
+  { value: "industrial", label: "Industrial" },
+  { value: "mobile_home_park", label: "Mobile Home Park" },
+  { value: "land", label: "Land" },
+  { value: "other", label: "Other" },
+];
 
 // ---------------------------------------------------------------------------
 // US States (not a DB constraint, but widely used)

@@ -13,7 +13,7 @@ import {
   formatDate,
   formatPercent,
 } from "@/lib/format";
-import { LOAN_STAGE_LABELS, LOAN_DB_TYPES } from "@/lib/constants";
+import { LOAN_STAGE_LABELS, LOAN_DB_TYPES, PROPERTY_TYPE_OPTIONS } from "@/lib/constants";
 import { LoanDetailActions } from "@/components/admin/loan-detail-actions";
 import { Flame, Pause } from "lucide-react";
 import GenerateTermSheetButton from "@/components/loans/GenerateTermSheetButton";
@@ -396,6 +396,7 @@ export default async function AdminLoanDetailPage({ params }: PageProps) {
   const closerName = (loanData.closer_id && teamProfiles[loanData.closer_id]) ?? "—";
 
   const loanTypeLabel = LOAN_DB_TYPES.find((t) => t.value === loanData.type)?.label ?? (loanData.type ?? "—").replace(/_/g, " ");
+  const propertyTypeLabel = PROPERTY_TYPE_OPTIONS.find((t) => t.value === loanData.property_type)?.label ?? (loanData.property_type ?? "—").replace(/_/g, " ");
 
   // Condition summary for the header
   const condTotal = conditions.length;
@@ -477,6 +478,7 @@ export default async function AdminLoanDetailPage({ params }: PageProps) {
             <DetailField label="Loan Number" value={loanData.loan_number ?? "—"} />
             <DetailField label="Borrower" value={borrowerName} />
             <DetailField label="Type" value={loanTypeLabel} />
+            <DetailField label="Property Type" value={propertyTypeLabel} />
             <DetailField
               label="Stage"
               value={
