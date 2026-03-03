@@ -300,7 +300,7 @@ export default async function CrmContactDetailPage({ params }: PageProps) {
                 <p className="text-xs text-muted-foreground">Company</p>
                 {company ? (
                   <Link
-                    href={`/admin/crm?view=companies&company=${company.id}`}
+                    href={`/admin/crm/companies/${company.id}`}
                     className="text-sm font-medium text-blue-600 hover:underline"
                   >
                     {company.name}
