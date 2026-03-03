@@ -1,6 +1,8 @@
 "use client";
 
+import { useState, useRef, useEffect, useCallback } from "react";
 import { cn } from "@/lib/utils";
+import { Pencil, Check, X, Loader2 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
 // ── DotPill: Pill with colored dot prefix ──
@@ -136,6 +138,180 @@ export function FieldRow({
       >
         {value || "—"}
       </span>
+    </div>
+  );
+}
+
+// ── EditableFieldRow: Click-to-edit label-value row ──
+export type FieldType = "text" | "number" | "date" | "select" | "boolean" | "currency";
+
+export interface EditableFieldRowProps {
+  label: string;
+  value: React.ReactNode;
+  rawValue: string | number | boolean | null | undefined;
+  fieldType?: FieldType;
+  selectOptions?: { label: string; value: string }[];
+  mono?: boolean;
+  danger?: boolean;
+  onSave: (newValue: string | number | boolean | null) => Promise<void>;
+}
+
+export function EditableFieldRow({
+  label,
+  value,
+  rawValue,
+  fieldType = "text",
+  selectOptions,
+  mono,
+  danger,
+  onSave,
+}: EditableFieldRowProps) {
+  const [editing, setEditing] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [editValue, setEditValue] = useState("");
+  const inputRef = useRef<HTMLInputElement | HTMLSelectElement>(null);
+
+  const startEditing = useCallback(() => {
+    if (fieldType === "boolean") {
+      setEditValue(rawValue ? "true" : "false");
+    } else if (fieldType === "currency") {
+      // Strip formatting for editing
+      const num = typeof rawValue === "number" ? rawValue : null;
+      setEditValue(num != null ? String(num) : "");
+    } else {
+      setEditValue(rawValue != null ? String(rawValue) : "");
+    }
+    setEditing(true);
+  }, [rawValue, fieldType]);
+
+  useEffect(() => {
+    if (editing && inputRef.current) {
+      inputRef.current.focus();
+      if (inputRef.current instanceof HTMLInputElement) {
+        inputRef.current.select();
+      }
+    }
+  }, [editing]);
+
+  async function handleSave() {
+    setSaving(true);
+    try {
+      let parsed: string | number | boolean | null;
+      if (editValue === "" || editValue === null) {
+        parsed = null;
+      } else if (fieldType === "number" || fieldType === "currency") {
+        parsed = Number(editValue);
+        if (isNaN(parsed)) parsed = null;
+      } else if (fieldType === "boolean" || (fieldType === "select" && selectOptions?.some(o => o.value === "true"))) {
+        parsed = editValue === "true";
+      } else {
+        parsed = editValue;
+      }
+      await onSave(parsed);
+      setEditing(false);
+    } catch {
+      // toast handled by parent
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  function handleCancel() {
+    setEditing(false);
+  }
+
+  function handleKeyDown(e: React.KeyboardEvent) {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      handleSave();
+    } else if (e.key === "Escape") {
+      handleCancel();
+    }
+  }
+
+  if (editing) {
+    return (
+      <div className="flex justify-between items-center py-1.5 border-b border-[#F7F7F8] gap-2">
+        <span className="text-xs text-[#8B8B8B] shrink-0">{label}</span>
+        <div className="flex items-center gap-1.5">
+          {(fieldType === "select" || fieldType === "boolean") ? (
+            <select
+              ref={inputRef as React.RefObject<HTMLSelectElement>}
+              value={editValue}
+              onChange={(e) => setEditValue(e.target.value)}
+              onKeyDown={handleKeyDown}
+              disabled={saving}
+              className="h-7 rounded-md border border-[#E5E5E7] bg-white px-2 text-[13px] text-[#1A1A1A] outline-none focus:border-[#1A1A1A] transition-colors"
+            >
+              <option value="">—</option>
+              {fieldType === "boolean" ? (
+                <>
+                  <option value="true">Yes</option>
+                  <option value="false">No</option>
+                </>
+              ) : (
+                selectOptions?.map((o) => (
+                  <option key={o.value} value={o.value}>{o.label}</option>
+                ))
+              )}
+            </select>
+          ) : (
+            <input
+              ref={inputRef as React.RefObject<HTMLInputElement>}
+              type={fieldType === "date" ? "date" : fieldType === "number" || fieldType === "currency" ? "number" : "text"}
+              value={editValue}
+              onChange={(e) => setEditValue(e.target.value)}
+              onKeyDown={handleKeyDown}
+              disabled={saving}
+              className={cn(
+                "h-7 w-32 rounded-md border border-[#E5E5E7] bg-white px-2 text-[13px] text-[#1A1A1A] text-right outline-none focus:border-[#1A1A1A] transition-colors",
+                mono && "font-medium"
+              )}
+              style={mono ? { fontFamily: "'JetBrains Mono', monospace" } : undefined}
+            />
+          )}
+          {saving ? (
+            <Loader2 size={14} className="text-[#8B8B8B] animate-spin" />
+          ) : (
+            <>
+              <button
+                onClick={handleSave}
+                className="h-6 w-6 rounded-md flex items-center justify-center bg-[#22A861] text-white hover:bg-[#1E9655] transition-colors"
+              >
+                <Check size={12} strokeWidth={2} />
+              </button>
+              <button
+                onClick={handleCancel}
+                className="h-6 w-6 rounded-md flex items-center justify-center bg-[#F7F7F8] text-[#6B6B6B] hover:bg-[#E5E5E7] transition-colors"
+              >
+                <X size={12} strokeWidth={2} />
+              </button>
+            </>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div
+      className="group flex justify-between items-center py-2 border-b border-[#F7F7F8] cursor-pointer hover:bg-[#FAFAFA] -mx-1 px-1 rounded transition-colors"
+      onClick={startEditing}
+    >
+      <span className="text-xs text-[#8B8B8B]">{label}</span>
+      <div className="flex items-center gap-1.5">
+        <span
+          className={cn(
+            "text-[13px] text-right",
+            danger ? "text-[#E5453D]" : "text-[#1A1A1A]",
+            mono ? "font-medium" : "font-normal"
+          )}
+          style={mono ? { fontFamily: "'JetBrains Mono', monospace" } : undefined}
+        >
+          {value || "—"}
+        </span>
+        <Pencil size={12} className="text-[#C5C5C5] opacity-0 group-hover:opacity-100 transition-opacity shrink-0" strokeWidth={1.5} />
+      </div>
     </div>
   );
 }

@@ -162,8 +162,6 @@ export function ContactDetailClient({
             fullName={fullName}
             company={company}
             assignedToName={assignedToName}
-            currentUserId={currentUserId}
-            currentUserName={currentUserName}
           />
 
           {/* Tab Bar */}
@@ -206,6 +204,7 @@ export function ContactDetailClient({
             <DetailTasksTab
               tasks={tasks}
               contactId={contact.id}
+              contactName={fullName}
               currentUserId={currentUserId}
             />
           )}

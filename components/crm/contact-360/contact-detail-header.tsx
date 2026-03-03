@@ -1,22 +1,13 @@
 "use client";
 
-import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { createClient } from "@/lib/supabase/client";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Button } from "@/components/ui/button";
-import { useToast } from "@/components/ui/use-toast";
 import {
   Mail,
   Phone,
-  PhoneCall,
-  Edit3,
-  CheckCircle2,
-  MoreHorizontal,
   MapPin,
 } from "lucide-react";
 import { DotPill, OutlinedPill, relTime } from "./contact-detail-shared";
-import { EmailComposeSheet } from "@/components/crm/email-compose-sheet";
 import { formatDate } from "@/lib/format";
 import type { ContactData, CompanyData } from "./types";
 import {
@@ -30,8 +21,6 @@ interface ContactDetailHeaderProps {
   fullName: string;
   company: CompanyData | null;
   assignedToName: string | null;
-  currentUserId: string;
-  currentUserName: string;
 }
 
 export function ContactDetailHeader({
@@ -39,13 +28,8 @@ export function ContactDetailHeader({
   fullName,
   company,
   assignedToName,
-  currentUserId,
-  currentUserName,
 }: ContactDetailHeaderProps) {
   const router = useRouter();
-  const { toast } = useToast();
-  const [logging, setLogging] = useState(false);
-  const [emailOpen, setEmailOpen] = useState(false);
 
   const initials = [contact.first_name, contact.last_name]
     .filter(Boolean)
@@ -60,29 +44,6 @@ export function ContactDetailHeader({
         .toUpperCase()
         .slice(0, 2)
     : null;
-
-  async function handleLogCall() {
-    setLogging(true);
-    try {
-      const supabase = createClient();
-      await supabase.from("crm_activities").insert({
-        contact_id: contact.id,
-        activity_type: "call" as never,
-        subject: "Phone call logged",
-        performed_by: currentUserId,
-      });
-      await supabase
-        .from("crm_contacts")
-        .update({ last_contacted_at: new Date().toISOString() })
-        .eq("id", contact.id);
-      toast({ title: "Call logged" });
-      router.refresh();
-    } catch {
-      toast({ title: "Error logging call", variant: "destructive" });
-    } finally {
-      setLogging(false);
-    }
-  }
 
   const ratingCfg = contact.rating ? RATING_CONFIG[contact.rating] : null;
   const statusColor = contact.status ? CONTACT_STATUS_CONFIG[contact.status] : null;
@@ -123,7 +84,8 @@ export function ContactDetailHeader({
             {ratingCfg && (
               <DotPill color={ratingCfg.color} label={ratingCfg.label} small />
             )}
-            {statusColor && contact.status && (
+            {/* Show status pill only when it differs from lifecycle_stage to avoid duplicates */}
+            {statusColor && contact.status && contact.status !== contact.lifecycle_stage && (
               <DotPill
                 color={statusColor}
                 label={contact.status.charAt(0).toUpperCase() + contact.status.slice(1)}
@@ -190,60 +152,6 @@ export function ContactDetailHeader({
             </div>
           )}
 
-          {/* Row 5: Action buttons */}
-          <div className="flex items-center gap-2 flex-wrap">
-            <Button
-              size="sm"
-              className="gap-1.5 rounded-lg bg-[#1A1A1A] text-white hover:bg-[#1A1A1A]/90 text-xs"
-              onClick={() => setEmailOpen(true)}
-            >
-              <Mail className="h-3.5 w-3.5" strokeWidth={1.5} />
-              Email
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              className="gap-1.5 rounded-lg border-[#E5E5E7] text-[#1A1A1A] text-xs"
-              onClick={handleLogCall}
-              disabled={logging}
-            >
-              <PhoneCall className="h-3.5 w-3.5" strokeWidth={1.5} />
-              Call
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              className="gap-1.5 rounded-lg border-[#E5E5E7] text-[#1A1A1A] text-xs"
-              onClick={() => {
-                const params = new URLSearchParams(window.location.search);
-                params.set("tab", "activity");
-                router.replace(`?${params.toString()}`, { scroll: false });
-              }}
-            >
-              <Edit3 className="h-3.5 w-3.5" strokeWidth={1.5} />
-              Log Activity
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              className="gap-1.5 rounded-lg border-[#E5E5E7] text-[#1A1A1A] text-xs"
-              onClick={() => {
-                const params = new URLSearchParams(window.location.search);
-                params.set("tab", "tasks");
-                router.replace(`?${params.toString()}`, { scroll: false });
-              }}
-            >
-              <CheckCircle2 className="h-3.5 w-3.5" strokeWidth={1.5} />
-              New Task
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="h-8 w-8 p-0 rounded-lg text-[#6B6B6B]"
-            >
-              <MoreHorizontal className="h-4 w-4" strokeWidth={1.5} />
-            </Button>
-          </div>
         </div>
 
         {/* Right side */}
@@ -279,15 +187,6 @@ export function ContactDetailHeader({
         </div>
       </div>
 
-      <EmailComposeSheet
-        open={emailOpen}
-        onOpenChange={setEmailOpen}
-        toEmail={contact.email || ""}
-        toName={fullName}
-        linkedContactId={contact.id}
-        currentUserId={currentUserId}
-        currentUserName={currentUserName}
-      />
     </div>
   );
 }
