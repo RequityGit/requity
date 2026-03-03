@@ -44,7 +44,7 @@ export default async function LoanDetailPage({
   const db = supabase as any;
 
   // Fetch loan detail and related data in parallel
-  const [loanResult, drawsResult, paymentsResult, budgetResult, auditResult, interestResult] =
+  const [loanResult, drawsResult, paymentsResult, budgetResult, auditResult, interestResult, payoffCountResult] =
     await Promise.all([
       db
         .from("servicing_loans")
@@ -75,6 +75,10 @@ export default async function LoanDetailPage({
         p_loan_id: loanId,
         p_billing_month: new Date().toISOString().slice(0, 8) + "01",
       }),
+      db
+        .from("payoff_statements")
+        .select("id", { count: "exact", head: true })
+        .eq("loan_id", loanId),
     ]);
 
   if (!loanResult.data) notFound();
@@ -85,6 +89,7 @@ export default async function LoanDetailPage({
   const budgetItems = budgetResult.data ?? [];
   const auditLog = auditResult.data ?? [];
   const monthlyInterest = interestResult.data?.total_interest ?? 0;
+  const payoffStatementCount = payoffCountResult.count ?? 0;
 
   const isMatured =
     loan.maturity_date != null && new Date(loan.maturity_date) <= new Date();
@@ -225,6 +230,8 @@ export default async function LoanDetailPage({
         payments={payments}
         budgetItems={budgetItems}
         auditLog={auditLog}
+        loan={loan}
+        payoffStatementCount={payoffStatementCount}
       />
     </div>
   );

@@ -27,6 +27,7 @@ const TABS: TabConfig[] = [
     label: "Underwriting Assumptions",
     href: "/control-center/underwriting",
   },
+  { label: "Payoff Settings", href: "/control-center/payoff-settings" },
   { label: "Pricing Engine", href: "/control-center/pricing", disabled: true },
   {
     label: "System Settings",
