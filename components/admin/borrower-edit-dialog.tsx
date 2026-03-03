@@ -37,8 +37,8 @@ export function BorrowerEditDialog({ borrower }: BorrowerEditDialogProps) {
   const router = useRouter();
   const { toast } = useToast();
 
-  const [firstName, setFirstName] = useState(borrower.first_name);
-  const [lastName, setLastName] = useState(borrower.last_name);
+  const [firstName, setFirstName] = useState(borrower.first_name || "");
+  const [lastName, setLastName] = useState(borrower.last_name || "");
   const [email, setEmail] = useState(borrower.email || "");
   const [phone, setPhone] = useState(borrower.phone || "");
   const [dateOfBirth, setDateOfBirth] = useState(
