@@ -384,7 +384,7 @@ export function DebtKanban({
                     onClick={() =>
                       router.push(
                         item.type === "opportunity"
-                          ? `/admin/originations/${item.id}`
+                          ? `/admin/loans/${item.id}`
                           : `/admin/loans/${item.id}`
                       )
                     }
@@ -516,7 +516,7 @@ export function DebtKanban({
                                 className="flex-1 min-w-0 cursor-pointer"
                                 onClick={() =>
                                   router.push(
-                                    `/admin/originations/${opp.id}`
+                                    `/admin/loans/${opp.id}`
                                   )
                                 }
                               >

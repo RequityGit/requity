@@ -202,7 +202,7 @@ export function OpportunityListView({ data }: OpportunityListViewProps) {
                   key={opp.id}
                   className="cursor-pointer hover:bg-muted"
                   onClick={() =>
-                    router.push(`/admin/originations/${opp.id}`)
+                    router.push(`/admin/loans/${opp.id}`)
                   }
                 >
                   <TableCell className="font-medium">

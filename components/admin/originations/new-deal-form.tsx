@@ -277,7 +277,7 @@ export function NewDealForm({
     }
 
     toast({ title: "Deal created successfully" });
-    router.push(`/admin/originations/${result.opportunityId}`);
+    router.push(`/admin/loans/${result.opportunityId}`);
   }
 
   return (

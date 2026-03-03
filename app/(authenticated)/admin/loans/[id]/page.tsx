@@ -1,5 +1,6 @@
 import { Suspense } from "react";
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { redirect, notFound } from "next/navigation";
 import { PageHeader } from "@/components/shared/page-header";
 import { LoanStageTracker } from "@/components/shared/loan-stage-tracker";
@@ -18,6 +19,26 @@ import { Flame, Pause } from "lucide-react";
 import GenerateTermSheetButton from "@/components/loans/GenerateTermSheetButton";
 import { LoanApprovalSection } from "@/components/approvals/loan-approval-section";
 import type { PricingProgram, LeverageAdjuster } from "@/lib/supabase/types";
+
+// TODO: stage mapping needs review — opportunity stages don't cleanly map to loan stages
+// Kanban Column → Detail View Stage mapping:
+//   awaiting_info → lead (1)
+//   quoting      → lead (1)
+//   uw           → underwriting (4)
+//   offer_placed → approved (5)
+//   processing   → processing (3)
+//   closed       → funded (7)
+//   onboarding   → servicing (terminal)
+const OPPORTUNITY_TO_LOAN_STAGE: Record<string, string> = {
+  awaiting_info: "lead",
+  quoting: "lead",
+  uw: "underwriting",
+  offer_placed: "approved",
+  processing: "processing",
+  closed: "funded",
+  onboarding: "servicing",
+  closed_lost: "withdrawn",
+};
 
 interface PageProps {
   params: { id: string };
@@ -44,27 +65,135 @@ export default async function AdminLoanDetailPage({ params }: PageProps) {
 
   const { id } = await params;
 
-  // Query loan and borrower separately to avoid FK join errors that silently
-  // return null data and trigger a false 404.
+  // Query loan first — if not found, fall back to opportunities table
   const { data: loan, error: loanError } = await supabase
     .from("loans")
     .select("*")
     .eq("id", id)
     .single();
 
-  if (loanError) {
+  if (loanError && loanError.code !== "PGRST116") {
     console.error("Loan query error:", loanError.message, loanError.code);
   }
 
-  if (!loan) notFound();
+  // If the record is an opportunity (not a loan), map it to the loan detail format
+  let isOpportunity = false;
+  let loanRecord = loan;
+
+  if (!loan) {
+    const admin = createAdminClient();
+    const { data: opp } = await admin
+      .from("opportunities")
+      .select("*")
+      .eq("id", id)
+      .single();
+
+    if (!opp) notFound();
+
+    isOpportunity = true;
+
+    // Fetch property data for the opportunity
+    let propertyData: any = null;
+    if (opp.property_id) {
+      const { data: prop } = await admin
+        .from("properties")
+        .select("*")
+        .eq("id", opp.property_id)
+        .single();
+      propertyData = prop;
+    }
+
+    // Fetch primary borrower from opportunity_borrowers
+    let oppBorrowerName: string | null = null;
+    const { data: oppBorrowers } = await admin
+      .from("opportunity_borrowers")
+      .select("borrower_id, role")
+      .eq("opportunity_id", id)
+      .order("sort_order");
+
+    const primaryBorrower = (oppBorrowers ?? []).find(
+      (b: any) => b.role === "primary"
+    ) ?? (oppBorrowers ?? [])[0];
+
+    if (primaryBorrower) {
+      const { data: bRow } = await (admin as any)
+        .from("borrowers")
+        .select("first_name, last_name, crm_contact_id")
+        .eq("id", primaryBorrower.borrower_id)
+        .maybeSingle();
+      if (bRow?.crm_contact_id) {
+        const { data: contact } = await (admin as any)
+          .from("crm_contacts")
+          .select("first_name, last_name")
+          .eq("id", bRow.crm_contact_id)
+          .maybeSingle();
+        if (contact) {
+          oppBorrowerName = `${contact.first_name ?? ""} ${contact.last_name ?? ""}`.trim() || null;
+        }
+      }
+      if (!oppBorrowerName && bRow) {
+        oppBorrowerName = `${bRow.first_name ?? ""} ${bRow.last_name ?? ""}`.trim() || null;
+      }
+    }
+
+    // Map opportunity data to loan format so the same UI can render it
+    const mappedStage = OPPORTUNITY_TO_LOAN_STAGE[opp.stage] ?? opp.stage;
+
+    loanRecord = {
+      id: opp.id,
+      loan_number: null,
+      borrower_id: primaryBorrower?.borrower_id ?? null,
+      borrower_entity_id: opp.borrower_entity_id ?? null,
+      type: opp.loan_type ?? null,
+      purpose: opp.loan_purpose ?? null,
+      stage: mappedStage,
+      status: mappedStage,
+      property_type: propertyData?.property_type ?? null,
+      property_address: propertyData
+        ? [propertyData.address_line1, propertyData.city, propertyData.state]
+            .filter(Boolean)
+            .join(", ")
+        : null,
+      property_address_line1: propertyData?.address_line1 ?? null,
+      property_city: propertyData?.city ?? null,
+      property_state: propertyData?.state ?? null,
+      property_zip: propertyData?.zip ?? null,
+      loan_amount: opp.proposed_loan_amount ?? null,
+      appraised_value: null,
+      purchase_price: null,
+      ltv: opp.proposed_ltv ?? null,
+      interest_rate: opp.proposed_interest_rate ?? null,
+      loan_term_months: opp.proposed_loan_term_months ?? null,
+      points: null,
+      originator_id: opp.originator ?? null,
+      processor_id: opp.processor ?? null,
+      underwriter_id: opp.assigned_underwriter ?? null,
+      closer_id: null,
+      priority: null,
+      notes: opp.internal_notes ?? null,
+      application_date: null,
+      approval_date: null,
+      origination_date: null,
+      maturity_date: null,
+      expected_close_date: null,
+      next_action: null,
+      created_at: opp.created_at,
+      updated_at: opp.updated_at,
+      // Carry forward opportunity-specific fields used by deal name
+      deal_name: opp.deal_name,
+      _borrower_name_override: oppBorrowerName,
+    } as any;
+  }
+
+  if (!loanRecord) notFound();
 
   // Fetch borrower name — contact fields now live on crm_contacts
   let borrowerData: { first_name: string | null; last_name: string | null; email: string | null } | null = null;
-  if (loan.borrower_id) {
+  if (!isOpportunity && loanRecord!.borrower_id) {
     const { data: bRow } = await supabase
       .from("borrowers")
       .select("crm_contact_id")
-      .eq("id", loan.borrower_id)
+      .eq("id", loanRecord!.borrower_id)
       .maybeSingle();
     if (bRow?.crm_contact_id) {
       const { data: contact } = await (supabase as any)
@@ -78,7 +207,7 @@ export default async function AdminLoanDetailPage({ params }: PageProps) {
 
   // Cast to any — some column references may be stale after schema migrations
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const loanData = loan as any;
+  const loanData = loanRecord as any;
 
   // Fetch all related data in parallel — keep conditions/activity separate so they don't break if tables don't exist
   const [drawRequestsResult, paymentsResult, documentsResult] =
@@ -231,9 +360,11 @@ export default async function AdminLoanDetailPage({ params }: PageProps) {
     attachments: e.attachments,
   }));
 
-  const borrowerName = borrowerData
-    ? `${borrowerData.first_name ?? ""} ${borrowerData.last_name ?? ""}`.trim() || "—"
-    : "—";
+  const borrowerName = isOpportunity
+    ? loanData._borrower_name_override || loanData.deal_name || "—"
+    : borrowerData
+      ? `${borrowerData.first_name ?? ""} ${borrowerData.last_name ?? ""}`.trim() || "—"
+      : "—";
   const borrowerEmail = borrowerData?.email ?? undefined;
   const originatorName = (loanData.originator_id && teamProfiles[loanData.originator_id]) ?? loanData.originator ?? "—";
   const processorName = (loanData.processor_id && teamProfiles[loanData.processor_id]) ?? "—";
@@ -251,7 +382,7 @@ export default async function AdminLoanDetailPage({ params }: PageProps) {
   return (
     <div className="space-y-6">
       <PageHeader
-        title={`Loan ${loanData.loan_number}`}
+        title={loanData.loan_number ? `Loan ${loanData.loan_number}` : (loanData.deal_name || "Deal Detail")}
         description={`${loanData.property_address ?? "No address"} — ${borrowerName}`}
       />
 
