@@ -94,25 +94,18 @@ export function ServicingLoanDetailTabs({
       </TabsList>
 
       <TabsContent value="budget-draws" className="mt-4">
-        {loanUuid ? (
-          <BudgetDrawsTab
-            loanId={loanUuid}
-            budget={constructionBudget}
-            budgetLineItems={budgetLineItems}
-            drawRequests={drawRequests}
-            drawRequestLineItems={drawRequestLineItems}
-            changeRequests={budgetChangeRequests}
-            changeRequestLineItems={budgetChangeRequestLineItems}
-            auditLog={budgetAuditLog}
-            currentUserId={currentUserId}
-            totalUnits={totalUnits}
-          />
-        ) : (
-          <div className="py-12 text-center text-muted-foreground">
-            <p>No matching loan record found in the pipeline.</p>
-            <p className="text-xs mt-1">Budget & Draws requires a linked pipeline loan.</p>
-          </div>
-        )}
+        <BudgetDrawsTab
+          loanId={loanUuid!}
+          budget={constructionBudget}
+          budgetLineItems={budgetLineItems}
+          drawRequests={drawRequests}
+          drawRequestLineItems={drawRequestLineItems}
+          changeRequests={budgetChangeRequests}
+          changeRequestLineItems={budgetChangeRequestLineItems}
+          auditLog={budgetAuditLog}
+          currentUserId={currentUserId}
+          totalUnits={totalUnits}
+        />
       </TabsContent>
 
       <TabsContent value="payments" className="mt-4">

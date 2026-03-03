@@ -162,3 +162,186 @@ export async function addLoanToServicingAction(formData: ServicingLoanFormData) 
     return { error: err instanceof Error ? err.message : "An unexpected error occurred" };
   }
 }
+
+// ---------------------------------------------------------------------------
+// Loan type mapping: pipeline enum → servicing display text
+// ---------------------------------------------------------------------------
+
+const LOAN_TYPE_MAP: Record<string, string> = {
+  rtl: "RTL",
+  commercial: "Commercial",
+  dscr: "DSCR",
+  guc: "GUC",
+  transactional: "Transactional",
+};
+
+const LOAN_PURPOSE_MAP: Record<string, string> = {
+  purchase: "Purchase",
+  refinance: "Refinance",
+  cash_out_refinance: "Refinance",
+};
+
+// ---------------------------------------------------------------------------
+// Move a pipeline loan to servicing — copies all relevant data
+// ---------------------------------------------------------------------------
+
+export async function moveToServicingAction(pipelineLoanId: string) {
+  try {
+    const auth = await requireAdmin();
+    if ("error" in auth) return { error: auth.error };
+
+    const admin = createAdminClient() as any;
+
+    // 1. Fetch pipeline loan with all fields
+    const { data: loan, error: loanErr } = await admin
+      .from("loans")
+      .select("*")
+      .eq("id", pipelineLoanId)
+      .is("deleted_at", null)
+      .single();
+
+    if (loanErr || !loan) return { error: "Pipeline loan not found" };
+
+    if (!loan.loan_number) return { error: "Pipeline loan has no loan number — cannot migrate" };
+
+    // 2. Check if a servicing record already exists
+    const { data: existingServicing } = await admin
+      .from("servicing_loans")
+      .select("id")
+      .eq("loan_id", loan.loan_number)
+      .maybeSingle();
+
+    if (existingServicing) {
+      return { error: `Loan ${loan.loan_number} already exists in servicing` };
+    }
+
+    // 3. Fetch borrower name
+    let borrowerName: string | null = null;
+    if (loan.borrower_id) {
+      const { data: borrower } = await admin
+        .from("borrowers")
+        .select("first_name, last_name, crm_contact_id")
+        .eq("id", loan.borrower_id)
+        .maybeSingle();
+
+      if (borrower?.crm_contact_id) {
+        const { data: contact } = await admin
+          .from("crm_contacts")
+          .select("first_name, last_name")
+          .eq("id", borrower.crm_contact_id)
+          .maybeSingle();
+        if (contact) {
+          borrowerName = `${contact.first_name ?? ""} ${contact.last_name ?? ""}`.trim() || null;
+        }
+      }
+      if (!borrowerName && borrower) {
+        borrowerName = `${borrower.first_name ?? ""} ${borrower.last_name ?? ""}`.trim() || null;
+      }
+    }
+
+    // 4. Fetch entity name
+    let entityName: string | null = null;
+    if (loan.borrower_entity_id) {
+      const { data: entity } = await admin
+        .from("borrower_entities")
+        .select("entity_name")
+        .eq("id", loan.borrower_entity_id)
+        .maybeSingle();
+      entityName = entity?.entity_name ?? null;
+    }
+
+    // 5. Build servicing loan payload
+    const cityStateZip = [loan.property_city, loan.property_state, loan.property_zip]
+      .filter(Boolean)
+      .join(", ");
+
+    const payload: Record<string, any> = {
+      loan_id: loan.loan_number,
+      pipeline_loan_id: loan.id,
+      loan_status: "Active",
+      total_loan_amount: loan.loan_amount ?? loan.total_loan_amount ?? 0,
+      current_balance: loan.loan_amount ?? loan.total_loan_amount ?? 0,
+    };
+
+    // Map basic info
+    if (borrowerName) payload.borrower_name = borrowerName;
+    if (entityName) payload.entity_name = entityName;
+    if (loan.property_address) payload.property_address = loan.property_address;
+    if (cityStateZip) payload.city_state_zip = cityStateZip;
+    if (loan.type) payload.loan_type = LOAN_TYPE_MAP[loan.type] ?? loan.type;
+    if (loan.purpose) payload.loan_purpose = LOAN_PURPOSE_MAP[loan.purpose] ?? loan.purpose;
+    if (loan.originator) payload.originator = loan.originator;
+    if (loan.notes) payload.notes = loan.notes;
+
+    // Map financial fields
+    if (loan.rehab_holdback != null) payload.construction_holdback = loan.rehab_holdback;
+    if (loan.interest_rate != null) payload.interest_rate = loan.interest_rate;
+    if (loan.default_rate != null) payload.default_rate = loan.default_rate;
+    if (loan.origination_date) payload.origination_date = loan.origination_date;
+    if (loan.funding_date) payload.origination_date = loan.funding_date; // prefer funding_date
+    if (loan.maturity_date) payload.maturity_date = loan.maturity_date;
+    if (loan.first_payment_date) payload.first_payment_date = loan.first_payment_date;
+    if (loan.loan_term_months) payload.term_months = loan.loan_term_months;
+    if (loan.monthly_payment) payload.monthly_payment = loan.monthly_payment;
+    if (loan.purchase_price) payload.purchase_price = loan.purchase_price;
+    if (loan.appraised_value) payload.origination_value = loan.appraised_value;
+    if (loan.after_repair_value ?? loan.arv) payload.stabilized_value = loan.after_repair_value ?? loan.arv;
+    if (loan.ltv != null) payload.ltv_origination = loan.ltv;
+    if (loan.origination_fee_amount ?? loan.origination_fee) {
+      payload.origination_fee = loan.origination_fee_amount ?? loan.origination_fee;
+    }
+
+    // Compute draw funds available from rehab budget & total draws
+    if (loan.rehab_budget != null) {
+      const totalDrawsFunded = loan.total_draws_funded ?? 0;
+      payload.draw_funds_available = Math.max(0, loan.rehab_budget - totalDrawsFunded);
+      payload.funds_released = totalDrawsFunded;
+    }
+
+    // 6. Insert servicing loan
+    const { data: newLoan, error: insertError } = await admin
+      .from("servicing_loans")
+      .insert(payload)
+      .select("id, loan_id")
+      .single();
+
+    if (insertError) {
+      console.error("moveToServicingAction insert error:", insertError);
+      return { error: insertError.message };
+    }
+
+    // 7. Update pipeline loan stage to 'servicing'
+    await admin
+      .from("loans")
+      .update({
+        stage: "servicing",
+        stage_updated_at: new Date().toISOString(),
+      })
+      .eq("id", pipelineLoanId);
+
+    // 8. Log stage history
+    await admin.from("loan_stage_history" as any).insert({
+      loan_id: pipelineLoanId,
+      from_stage: loan.stage,
+      to_stage: "servicing",
+      changed_by: auth.user.id,
+      changed_at: new Date().toISOString(),
+    });
+
+    // 9. Log to servicing audit
+    await admin.from("servicing_audit_log").insert({
+      action: "LOAN_BOARDED",
+      loan_id: loan.loan_number,
+      field_changed: "loan_status",
+      new_value: "Active",
+      entry_type: "Pipeline Migration",
+      user_email: auth.user.email ?? "unknown",
+      notes: `Loan migrated from pipeline (stage: ${loan.stage}) by ${auth.user.email}`,
+    });
+
+    return { success: true, loanId: newLoan.loan_id };
+  } catch (err: unknown) {
+    console.error("moveToServicingAction error:", err);
+    return { error: err instanceof Error ? err.message : "An unexpected error occurred" };
+  }
+}

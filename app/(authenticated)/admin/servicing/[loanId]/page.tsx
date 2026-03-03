@@ -90,7 +90,9 @@ export default async function LoanDetailPage({
   const monthlyInterest = interestResult.data?.total_interest ?? 0;
   const payoffStatementCount = payoffCountResult.count ?? 0;
 
-  // Look up the UUID loan from the pipeline by matching loan_number to servicing loan_id
+  // Determine the UUID for the budget system.
+  // Priority: 1) pipeline_loan_id stored on servicing loan, 2) pipeline loan matched by loan_number,
+  // 3) servicing loan's own id (for servicing-only budget creation)
   let loanUuid: string | null = null;
   let constructionBudgetData: any = null;
   let budgetLineItemsData: any[] = [];
@@ -101,82 +103,97 @@ export default async function LoanDetailPage({
   let budgetAuditLogData: any[] = [];
 
   try {
-    // Try to find the pipeline loan by loan_number matching the servicing loan_id
-    const { data: pipelineLoan } = await supabase
-      .from("loans")
-      .select("id")
-      .eq("loan_number", loanId)
-      .is("deleted_at", null)
-      .maybeSingle();
-
-    if (pipelineLoan) {
-      loanUuid = pipelineLoan.id;
-
-      // Fetch construction budget data
-      const { data: budgetRow } = await supabase
-        .from("construction_budgets")
-        .select("*")
-        .eq("loan_id", loanUuid)
-        .order("budget_version", { ascending: false })
-        .limit(1)
+    // First check if the servicing loan has a stored pipeline_loan_id
+    if (loan.pipeline_loan_id) {
+      loanUuid = loan.pipeline_loan_id;
+    } else {
+      // Fall back to loan_number matching
+      const { data: pipelineLoan } = await supabase
+        .from("loans")
+        .select("id")
+        .eq("loan_number", loanId)
+        .is("deleted_at", null)
         .maybeSingle();
 
-      constructionBudgetData = budgetRow;
-
-      // Fetch draw requests
-      const { data: draws } = await supabase
-        .from("draw_requests")
-        .select("*")
-        .eq("loan_id", loanUuid)
-        .order("draw_number", { ascending: false });
-      drawRequestsData = draws ?? [];
-
-      if (budgetRow) {
-        const [lineItemsRes, changeReqRes, historyRes] = await Promise.all([
-          supabase
-            .from("budget_line_items")
-            .select("*")
-            .eq("construction_budget_id", budgetRow.id)
-            .order("sort_order"),
-          supabase
-            .from("budget_change_requests")
-            .select("*")
-            .eq("construction_budget_id", budgetRow.id)
-            .order("created_at", { ascending: false }),
-          supabase
-            .from("budget_line_item_history")
-            .select("*")
-            .eq("construction_budget_id", budgetRow.id)
-            .order("changed_at", { ascending: false })
-            .limit(100),
-        ]);
-        budgetLineItemsData = lineItemsRes.data ?? [];
-        budgetChangeRequestsData = changeReqRes.data ?? [];
-        budgetAuditLogData = historyRes.data ?? [];
-
-        // Fetch change request line items
-        if (budgetChangeRequestsData.length > 0) {
-          const coIds = budgetChangeRequestsData.map((co: any) => co.id);
-          const { data: coLineItems } = await supabase
-            .from("budget_change_request_line_items")
-            .select("*")
-            .in("budget_change_request_id", coIds);
-          budgetChangeRequestLineItemsData = coLineItems ?? [];
-        }
-      }
-
-      // Fetch draw request line items
-      if (drawRequestsData.length > 0) {
-        const drawIds = drawRequestsData.map((d: any) => d.id);
-        const { data: drLineItems } = await supabase
-          .from("draw_request_line_items")
-          .select("*")
-          .in("draw_request_id", drawIds);
-        drawRequestLineItemsData = drLineItems ?? [];
+      if (pipelineLoan) {
+        loanUuid = pipelineLoan.id;
       }
     }
+
+    // If no pipeline loan found at all, use the servicing loan's own UUID
+    // so users can create budgets directly for servicing-only loans
+    if (!loanUuid) {
+      loanUuid = loan.id;
+    }
+
+    // loanUuid is guaranteed non-null at this point
+    const budgetLoanId = loanUuid as string;
+
+    // Fetch construction budget data using whichever UUID we resolved
+    const { data: budgetRow } = await supabase
+      .from("construction_budgets")
+      .select("*")
+      .eq("loan_id", budgetLoanId)
+      .order("budget_version", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    constructionBudgetData = budgetRow;
+
+    // Fetch draw requests
+    const { data: draws } = await supabase
+      .from("draw_requests")
+      .select("*")
+      .eq("loan_id", budgetLoanId)
+      .order("draw_number", { ascending: false });
+    drawRequestsData = draws ?? [];
+
+    if (budgetRow) {
+      const [lineItemsRes, changeReqRes, historyRes] = await Promise.all([
+        supabase
+          .from("budget_line_items")
+          .select("*")
+          .eq("construction_budget_id", budgetRow.id)
+          .order("sort_order"),
+        supabase
+          .from("budget_change_requests")
+          .select("*")
+          .eq("construction_budget_id", budgetRow.id)
+          .order("created_at", { ascending: false }),
+        supabase
+          .from("budget_line_item_history")
+          .select("*")
+          .eq("construction_budget_id", budgetRow.id)
+          .order("changed_at", { ascending: false })
+          .limit(100),
+      ]);
+      budgetLineItemsData = lineItemsRes.data ?? [];
+      budgetChangeRequestsData = changeReqRes.data ?? [];
+      budgetAuditLogData = historyRes.data ?? [];
+
+      // Fetch change request line items
+      if (budgetChangeRequestsData.length > 0) {
+        const coIds = budgetChangeRequestsData.map((co: any) => co.id);
+        const { data: coLineItems } = await supabase
+          .from("budget_change_request_line_items")
+          .select("*")
+          .in("budget_change_request_id", coIds);
+        budgetChangeRequestLineItemsData = coLineItems ?? [];
+      }
+    }
+
+    // Fetch draw request line items
+    if (drawRequestsData.length > 0) {
+      const drawIds = drawRequestsData.map((d: any) => d.id);
+      const { data: drLineItems } = await supabase
+        .from("draw_request_line_items")
+        .select("*")
+        .in("draw_request_id", drawIds);
+      drawRequestLineItemsData = drLineItems ?? [];
+    }
   } catch {
-    /* construction budget tables may not exist yet */
+    /* construction budget tables may not exist yet — use servicing loan id as fallback */
+    if (!loanUuid) loanUuid = loan.id;
   }
 
   const isMatured =

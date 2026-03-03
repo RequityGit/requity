@@ -18,6 +18,7 @@ import { LoanDetailActions } from "@/components/admin/loan-detail-actions";
 import { Flame, Pause } from "lucide-react";
 import GenerateTermSheetButton from "@/components/loans/GenerateTermSheetButton";
 import { LoanApprovalSection } from "@/components/approvals/loan-approval-section";
+import { MoveToServicingButton } from "@/components/admin/move-to-servicing-button";
 import type { PricingProgram, LeverageAdjuster } from "@/lib/supabase/types";
 
 // TODO: stage mapping needs review — opportunity stages don't cleanly map to loan stages
@@ -470,6 +471,13 @@ export default async function AdminLoanDetailPage({ params }: PageProps) {
                 loanNumber={loanData.loan_number}
                 borrowerLastName={borrowerData?.last_name ?? undefined}
               />
+              {!isOpportunity && (
+                <MoveToServicingButton
+                  loanId={loanData.id}
+                  loanNumber={loanData.loan_number}
+                  currentStage={loanData.stage}
+                />
+              )}
             </div>
           </div>
         </CardHeader>
