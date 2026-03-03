@@ -191,6 +191,18 @@ export default async function DealDetailPage({
     }));
   }
 
+  // Fetch all borrower entities for borrowers linked to this deal
+  let allBorrowerEntities: any[] = [];
+  if (oppBorrowerIds.length > 0) {
+    const { data: entities } = await admin
+      .from("borrower_entities")
+      .select("id, borrower_id, entity_name, entity_type")
+      .in("borrower_id", oppBorrowerIds)
+      .is("deleted_at", null)
+      .order("entity_name");
+    allBorrowerEntities = entities || [];
+  }
+
   // Team members
   const teamMembers = (teamResult.data || []).map(
     (t: { id: string; full_name: string | null }) => ({
@@ -227,6 +239,7 @@ export default async function DealDetailPage({
         snapshots={snapshotsResult.data || []}
         teamMembers={teamMembers}
         allBorrowers={allBorrowersForSelect}
+        allBorrowerEntities={allBorrowerEntities}
         isSuperAdmin={isSuperAdmin}
       />
     </div>

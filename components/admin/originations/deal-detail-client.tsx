@@ -110,6 +110,7 @@ interface DealDetailProps {
   snapshots: any[];
   teamMembers: { id: string; full_name: string }[];
   allBorrowers: { id: string; name: string; email: string }[];
+  allBorrowerEntities: { id: string; borrower_id: string; entity_name: string; entity_type: string }[];
   isSuperAdmin?: boolean;
 }
 
@@ -173,22 +174,26 @@ function Field({ label, value, className }: { label: string; value: React.ReactN
 export function DealDetailClient({
   opportunity: initialOpp,
   property: initialProp,
-  entity,
+  entity: initialEntity,
   entityOwners,
   borrowers: initialBorrowers,
   snapshots: initialSnapshots,
   teamMembers,
   allBorrowers,
+  allBorrowerEntities,
   isSuperAdmin = false,
 }: DealDetailProps) {
   const [opp, setOpp] = useState(initialOpp);
   const [property, setProperty] = useState(initialProp);
+  const [entity, setEntity] = useState(initialEntity);
   const [borrowers, setBorrowers] = useState(initialBorrowers);
   const [snapshots, setSnapshots] = useState(initialSnapshots);
   const [saving, setSaving] = useState(false);
   const [editingTerms, setEditingTerms] = useState(false);
   const [editingProperty, setEditingProperty] = useState(false);
   const [addBorrowerDialog, setAddBorrowerDialog] = useState(false);
+  const [addEntityDialog, setAddEntityDialog] = useState(false);
+  const [selectedEntityId, setSelectedEntityId] = useState("");
   const [addSnapshotDialog, setAddSnapshotDialog] = useState(false);
   const [lossDialog, setLossDialog] = useState(false);
   const [lossReason, setLossReason] = useState("");
@@ -421,6 +426,24 @@ export function DealDetailClient({
     setAddBorrowerDialog(false);
     setSelectedBorrowerId("");
     setSelectedBorrowerRole("co_borrower");
+  }
+
+  async function handleLinkEntity() {
+    if (!selectedEntityId) return;
+    setSaving(true);
+    const result = await updateOpportunityAction({ id: opp.id, borrower_entity_id: selectedEntityId });
+    if (result.error) {
+      toast({ title: "Error", description: result.error, variant: "destructive" });
+    } else {
+      const linked = allBorrowerEntities.find((e) => e.id === selectedEntityId);
+      if (linked) setEntity(linked);
+      setOpp({ ...opp, borrower_entity_id: selectedEntityId });
+      toast({ title: "Borrower entity linked" });
+      router.refresh();
+    }
+    setSaving(false);
+    setAddEntityDialog(false);
+    setSelectedEntityId("");
   }
 
   async function handleRemoveBorrower(borrowerId: string) {
@@ -670,6 +693,11 @@ export function DealDetailClient({
       <Section
         title="Borrowing Entity"
         icon={<Building2 className="h-4 w-4 text-muted-foreground" />}
+        action={
+          <Button variant="outline" size="sm" onClick={(e) => { e.stopPropagation(); setAddEntityDialog(true); }}>
+            <Plus className="h-3 w-3 mr-1" /> Add Borrower Entity
+          </Button>
+        }
       >
         {entity ? (
           <div>
@@ -1040,6 +1068,39 @@ export function DealDetailClient({
           <DialogFooter>
             <Button variant="outline" onClick={() => setAddBorrowerDialog(false)}>Cancel</Button>
             <Button onClick={handleAddBorrower} disabled={!selectedBorrowerId || saving}>Add Borrower</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Add Borrower Entity Dialog */}
+      <Dialog open={addEntityDialog} onOpenChange={setAddEntityDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Link Borrower Entity to Deal</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div>
+              <Label>Borrower Entity</Label>
+              <Select value={selectedEntityId} onValueChange={setSelectedEntityId}>
+                <SelectTrigger><SelectValue placeholder="Select entity" /></SelectTrigger>
+                <SelectContent>
+                  {allBorrowerEntities.map((e) => (
+                    <SelectItem key={e.id} value={e.id}>
+                      {e.entity_name} ({e.entity_type.replace(/_/g, " ")})
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {allBorrowerEntities.length === 0 && (
+                <p className="text-xs text-muted-foreground mt-1">
+                  No entities found. Add borrowers to this deal first, then create entities on their borrower profile.
+                </p>
+              )}
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setAddEntityDialog(false)}>Cancel</Button>
+            <Button onClick={handleLinkEntity} disabled={!selectedEntityId || saving}>Link Entity</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
