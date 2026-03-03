@@ -37,16 +37,17 @@ export default async function LoanDetailPage({
 
   if (!user) redirect("/login");
 
-  const loanId = decodeURIComponent(params.loanId);
+  const { loanId: rawLoanId } = await params;
+  const loanId = decodeURIComponent(rawLoanId);
 
-  // Cast to any — servicing tables/views are not in generated types yet
+  // Cast to any — servicing tables are not in generated types yet
   const db = supabase as any;
 
   // Fetch loan detail and related data in parallel
   const [loanResult, drawsResult, paymentsResult, budgetResult, auditResult, interestResult] =
     await Promise.all([
       db
-        .from("servicing_loan_detail")
+        .from("servicing_loans")
         .select("*")
         .eq("loan_id", loanId)
         .single(),
@@ -70,9 +71,9 @@ export default async function LoanDetailPage({
         .select("*")
         .eq("loan_id", loanId)
         .order("timestamp", { ascending: false }),
-      db.rpc("calculate_interest_for_loan", {
+      db.rpc("calculate_interest_for_period", {
         p_loan_id: loanId,
-        p_period_start: new Date().toISOString().slice(0, 8) + "01",
+        p_billing_month: new Date().toISOString().slice(0, 8) + "01",
       }),
     ]);
 
@@ -83,10 +84,12 @@ export default async function LoanDetailPage({
   const payments = paymentsResult.data ?? [];
   const budgetItems = budgetResult.data ?? [];
   const auditLog = auditResult.data ?? [];
-  const monthlyInterest = interestResult.data?.interest_due ?? 0;
+  const monthlyInterest = interestResult.data?.total_interest ?? 0;
 
+  const isMatured =
+    loan.maturity_date != null && new Date(loan.maturity_date) <= new Date();
   const daysToMaturity =
-    loan.maturity_date && new Date(loan.maturity_date) > new Date()
+    loan.maturity_date && !isMatured
       ? Math.ceil(
           (new Date(loan.maturity_date).getTime() - new Date().getTime()) /
             (1000 * 60 * 60 * 24)
@@ -144,7 +147,7 @@ export default async function LoanDetailPage({
         <KpiCard
           title="Days to Maturity"
           value={
-            loan.is_matured
+            isMatured
               ? "MATURED"
               : daysToMaturity > 0
               ? daysToMaturity.toString()
