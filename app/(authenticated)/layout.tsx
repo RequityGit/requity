@@ -10,6 +10,8 @@ import { ImpersonationBanner } from "@/components/layout/impersonation-banner";
 import { getImpersonationState } from "@/lib/impersonation";
 import { ActivityTrackerProvider } from "@/components/tracking/ActivityTracker";
 import { MobileLayoutWrapper } from "@/components/layout/mobile-layout-wrapper";
+import { ModuleAccessProvider } from "@/contexts/module-access-context";
+import { ModuleGuard } from "@/components/layout/module-guard";
 
 // Never statically generate authenticated pages
 export const dynamic = "force-dynamic";
@@ -62,6 +64,21 @@ export default async function AuthenticatedLayout({
 
   const isSuperAdmin = !!superAdminRole;
 
+  // Fetch user's module access for sidebar filtering
+  const { data: userModuleAccess } = await supabase
+    .from("user_module_access")
+    .select("module_id, modules(name)")
+    .eq("user_id", user.id);
+
+  const accessibleModules: string[] = isSuperAdmin
+    ? [] // empty means "all" for super admins (fail-safe)
+    : (userModuleAccess ?? [])
+        .map((ma) => {
+          const mod = ma.modules as unknown as { name: string } | null;
+          return mod?.name ?? "";
+        })
+        .filter(Boolean);
+
   // Check impersonation state
   const impersonation = getImpersonationState();
 
@@ -76,41 +93,50 @@ export default async function AuthenticatedLayout({
       isSuperAdmin={isSuperAdmin}
     >
       <ViewAsProvider isSuperAdmin={isSuperAdmin} actualRole={effectiveRole}>
-        <MobileLayoutWrapper
-          role={sidebarRole}
-          isSuperAdmin={isSuperAdmin && !impersonation.isImpersonating}
-          userId={user.id}
+        <ModuleAccessProvider
+          accessibleModules={accessibleModules}
+          isSuperAdmin={isSuperAdmin}
         >
-          <div className="flex flex-col h-screen overflow-hidden">
-            <ImpersonationBanner />
-            <div className="flex flex-1 overflow-hidden">
-              {/* Desktop sidebar - hidden on mobile */}
-              <div className="hidden md:block">
-                <Sidebar
-                  role={sidebarRole}
-                  isSuperAdmin={isSuperAdmin && !impersonation.isImpersonating}
-                />
+          <MobileLayoutWrapper
+            role={sidebarRole}
+            isSuperAdmin={isSuperAdmin && !impersonation.isImpersonating}
+            userId={user.id}
+            accessibleModules={accessibleModules}
+          >
+            <div className="flex flex-col h-screen overflow-hidden">
+              <ImpersonationBanner />
+              <div className="flex flex-1 overflow-hidden">
+                {/* Desktop sidebar - hidden on mobile */}
+                <div className="hidden md:block">
+                  <Sidebar
+                    role={sidebarRole}
+                    isSuperAdmin={isSuperAdmin && !impersonation.isImpersonating}
+                    accessibleModules={accessibleModules}
+                  />
+                </div>
+                <div className="flex-1 flex flex-col overflow-hidden">
+                  <Topbar
+                    userName={profile.full_name || ""}
+                    role={effectiveRole}
+                    email={profile.email ?? ""}
+                    allowedRoles={allowedRoles}
+                    userId={user.id}
+                    isSuperAdmin={isSuperAdmin}
+                    avatarUrl={profile.avatar_url}
+                  />
+                  <main className="flex-1 overflow-y-auto bg-background p-4 md:p-6 pb-20 md:pb-6">
+                    <ActivityTrackerProvider role={effectiveRole}>
+                      <ModuleGuard>
+                        {children}
+                      </ModuleGuard>
+                    </ActivityTrackerProvider>
+                  </main>
+                </div>
               </div>
-              <div className="flex-1 flex flex-col overflow-hidden">
-                <Topbar
-                  userName={profile.full_name || ""}
-                  role={effectiveRole}
-                  email={profile.email ?? ""}
-                  allowedRoles={allowedRoles}
-                  userId={user.id}
-                  isSuperAdmin={isSuperAdmin}
-                  avatarUrl={profile.avatar_url}
-                />
-                <main className="flex-1 overflow-y-auto bg-background p-4 md:p-6 pb-20 md:pb-6">
-                  <ActivityTrackerProvider role={effectiveRole}>
-                    {children}
-                  </ActivityTrackerProvider>
-                </main>
-              </div>
+              <Toaster />
             </div>
-            <Toaster />
-          </div>
-        </MobileLayoutWrapper>
+          </MobileLayoutWrapper>
+        </ModuleAccessProvider>
       </ViewAsProvider>
     </ImpersonationProvider>
   );

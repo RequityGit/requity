@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { KpiCard } from "@/components/shared/kpi-card";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -13,8 +14,9 @@ import Link from "next/link";
 
 export default async function ControlCenterOverview() {
   const supabase = createClient();
+  const admin = createAdminClient();
 
-  // Fetch all stats in parallel
+  // Use admin client to bypass RLS — this is a super-admin-only page
   const [
     profilesResult,
     profilesByStatusResult,
@@ -22,14 +24,14 @@ export default async function ControlCenterOverview() {
     loansResult,
     templatesResult,
   ] = await Promise.all([
-    supabase.from("profiles").select("*", { count: "exact", head: true }),
-    supabase.from("profiles").select("activation_status"),
-    supabase.from("user_roles").select("role").eq("is_active", true),
-    supabase
+    admin.from("profiles").select("*", { count: "exact", head: true }),
+    admin.from("profiles").select("activation_status"),
+    admin.from("user_roles").select("role").eq("is_active", true),
+    admin
       .from("loans")
       .select("*", { count: "exact", head: true })
       .is("deleted_at", null),
-    supabase
+    admin
       .from("loan_condition_templates")
       .select("category")
       .eq("is_active", true),

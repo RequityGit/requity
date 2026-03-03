@@ -292,3 +292,124 @@ export async function inviteUser(
     return { error: message };
   }
 }
+
+// ---------------------------------------------------------------------------
+// Module Access Management
+// ---------------------------------------------------------------------------
+
+export async function fetchModules() {
+  try {
+    const auth = await requireSuperAdmin();
+    if (auth.error) return { error: auth.error, data: [] };
+
+    const admin = createAdminClient();
+    const { data, error } = await admin
+      .from("modules")
+      .select("id, name, label, icon, description, route_prefix, sort_order, is_active")
+      .order("sort_order");
+
+    if (error) return { error: error.message, data: [] };
+    return { data: data ?? [] };
+  } catch (err) {
+    console.error("fetchModules error:", err);
+    return { error: "Failed to fetch modules", data: [] };
+  }
+}
+
+export async function fetchUserModuleAccess(userId: string) {
+  try {
+    const auth = await requireSuperAdmin();
+    if (auth.error) return { error: auth.error, data: [] };
+
+    const admin = createAdminClient();
+    const { data, error } = await admin
+      .from("user_module_access")
+      .select("id, module_id, granted_by, granted_at")
+      .eq("user_id", userId);
+
+    if (error) return { error: error.message, data: [] };
+    return { data: data ?? [] };
+  } catch (err) {
+    console.error("fetchUserModuleAccess error:", err);
+    return { error: "Failed to fetch module access", data: [] };
+  }
+}
+
+export async function toggleModuleAccess(
+  userId: string,
+  moduleId: string,
+  grant: boolean
+): Promise<{ success?: boolean; error?: string }> {
+  try {
+    const auth = await requireSuperAdmin();
+    if (auth.error) return { error: auth.error };
+
+    const admin = createAdminClient();
+
+    if (grant) {
+      const { error } = await admin.from("user_module_access").insert({
+        user_id: userId,
+        module_id: moduleId,
+        granted_by: auth.user.id,
+      });
+      if (error) {
+        if (error.code === "23505") return { success: true }; // already exists
+        return { error: error.message };
+      }
+    } else {
+      const { error } = await admin
+        .from("user_module_access")
+        .delete()
+        .eq("user_id", userId)
+        .eq("module_id", moduleId);
+      if (error) return { error: error.message };
+    }
+
+    return { success: true };
+  } catch (err) {
+    console.error("toggleModuleAccess error:", err);
+    return { error: "Failed to update module access" };
+  }
+}
+
+export async function grantAllModules(
+  userId: string
+): Promise<{ success?: boolean; error?: string }> {
+  try {
+    const auth = await requireSuperAdmin();
+    if (auth.error) return { error: auth.error };
+
+    const admin = createAdminClient();
+    const { error } = await admin.rpc("grant_all_modules" as never, {
+      target_user_id: userId,
+      granter_id: auth.user.id,
+    } as never);
+
+    if (error) return { error: error.message };
+    return { success: true };
+  } catch (err) {
+    console.error("grantAllModules error:", err);
+    return { error: "Failed to grant all modules" };
+  }
+}
+
+export async function revokeAllModules(
+  userId: string
+): Promise<{ success?: boolean; error?: string }> {
+  try {
+    const auth = await requireSuperAdmin();
+    if (auth.error) return { error: auth.error };
+
+    const admin = createAdminClient();
+    const { error } = await admin
+      .from("user_module_access")
+      .delete()
+      .eq("user_id", userId);
+
+    if (error) return { error: error.message };
+    return { success: true };
+  } catch (err) {
+    console.error("revokeAllModules error:", err);
+    return { error: "Failed to revoke all modules" };
+  }
+}
