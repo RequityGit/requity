@@ -143,6 +143,22 @@ export default async function ControlCenterOverview() {
             </CardContent>
           </Card>
         </Link>
+        <Link href="/control-center/user-email-templates" className="group">
+          <Card className="hover:border-teal-300 hover:shadow-md transition-all">
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-sm font-medium">
+                User Email Templates
+              </CardTitle>
+              <ArrowRight className="h-4 w-4 text-muted-foreground group-hover:text-teal-600 transition-colors" />
+            </CardHeader>
+            <CardContent>
+              <p className="text-xs text-muted-foreground">
+                Manage reusable templates for team-composed emails with
+                merge fields.
+              </p>
+            </CardContent>
+          </Card>
+        </Link>
         <Link href="/control-center/term-sheets" className="group">
           <Card className="hover:border-teal-300 hover:shadow-md transition-all">
             <CardHeader className="flex flex-row items-center justify-between pb-2">

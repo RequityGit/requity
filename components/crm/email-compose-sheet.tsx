@@ -16,8 +16,11 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import { Send, Paperclip, X, File, ChevronDown, ChevronUp } from "lucide-react";
+import { Send, Paperclip, X, File, ChevronDown, ChevronUp, Loader2 } from "lucide-react";
 import type { Database } from "@/lib/supabase/types";
+import { TemplatePicker } from "@/components/email/TemplatePicker";
+import { TemplateAppliedBanner } from "@/components/email/TemplateAppliedBanner";
+import type { UserEmailTemplate } from "@/lib/types/user-email-templates";
 
 interface Attachment {
   file: File;
@@ -64,6 +67,14 @@ export function EmailComposeSheet({
   const [sending, setSending] = useState(false);
   const [showCcBcc, setShowCcBcc] = useState(false);
   const [gmailEmail, setGmailEmail] = useState<string | null>(null);
+  const [appliedTemplate, setAppliedTemplate] = useState<{
+    id: string;
+    name: string;
+    version: number;
+    slug: string;
+    mergeData: Record<string, string> | null;
+  } | null>(null);
+  const [templateLoading, setTemplateLoading] = useState(false);
 
   // Check if the current user has an active Gmail OAuth connection
   useEffect(() => {
@@ -123,6 +134,91 @@ export function EmailComposeSheet({
     setAttachments((prev) => prev.filter((a) => a.id !== id));
   }
 
+  async function handleTemplateSelect(template: UserEmailTemplate) {
+    setTemplateLoading(true);
+    try {
+      const supabase = createClient();
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+
+      if (!session) {
+        toast({ title: "Not authenticated", variant: "destructive" });
+        return;
+      }
+
+      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+      const response = await fetch(
+        `${supabaseUrl}/functions/v1/resolve-user-template`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${session.access_token}`,
+          },
+          body: JSON.stringify({
+            template_slug: template.slug,
+            loan_id: linkedLoanId || undefined,
+            contact_id: linkedContactId || undefined,
+          }),
+        }
+      );
+
+      if (response.ok) {
+        const data = await response.json();
+        updateField("subject", data.subject);
+        updateField("body", data.body_html);
+        setAppliedTemplate({
+          id: template.id,
+          name: template.name,
+          version: template.version,
+          slug: template.slug,
+          mergeData: data.merge_data,
+        });
+      } else {
+        // Fall back to client-side preview with sample data
+        const sampleData: Record<string, string> = {};
+        for (const v of template.available_variables) {
+          sampleData[v.key] = v.sample;
+        }
+        const resolvedSubject = template.subject_template.replace(
+          /\{\{(\w+)\}\}/g,
+          (_, key: string) => sampleData[key] ?? ""
+        );
+        const resolvedBody = template.body_template.replace(
+          /\{\{(\w+)\}\}/g,
+          (_, key: string) => sampleData[key] ?? ""
+        );
+        updateField("subject", resolvedSubject);
+        updateField("body", resolvedBody);
+        setAppliedTemplate({
+          id: template.id,
+          name: template.name,
+          version: template.version,
+          slug: template.slug,
+          mergeData: sampleData,
+        });
+        toast({
+          title: "Template applied with sample data",
+          description:
+            "Could not resolve merge fields from the server. Using sample values.",
+        });
+      }
+    } catch {
+      toast({
+        title: "Failed to apply template",
+        variant: "destructive",
+      });
+    } finally {
+      setTemplateLoading(false);
+    }
+  }
+
+  function clearTemplate() {
+    setAppliedTemplate(null);
+    setForm((prev) => ({ ...prev, subject: "", body: "" }));
+  }
+
   function parseEmailList(raw: string): string[] {
     return raw
       .split(/[,;\s]+/)
@@ -180,7 +276,9 @@ export function EmailComposeSheet({
         to_name: form.to_name.trim() || null,
         subject: form.subject.trim(),
         body_text: form.body,
-        body_html: form.body ? `<pre style="font-family: sans-serif; white-space: pre-wrap;">${escapeHtml(form.body)}</pre>` : null,
+        body_html: appliedTemplate
+          ? form.body
+          : form.body ? `<pre style="font-family: sans-serif; white-space: pre-wrap;">${escapeHtml(form.body)}</pre>` : null,
         cc_emails: ccEmails.length > 0 ? ccEmails : null,
         bcc_emails: bccEmails.length > 0 ? bccEmails : null,
         sent_by: currentUserId,
@@ -201,6 +299,21 @@ export function EmailComposeSheet({
         .select("id")
         .single();
       if (error) throw error;
+
+      // Log template usage if a template was applied
+      if (appliedTemplate && insertedEmail?.id) {
+        await supabase
+          .from("user_email_sends" as never)
+          .insert({
+            template_id: appliedTemplate.id,
+            sent_by: currentUserId,
+            crm_email_id: insertedEmail.id,
+            linked_loan_id: linkedLoanId || null,
+            linked_contact_id: linkedContactId || null,
+            merge_data_snapshot: appliedTemplate.mergeData,
+            template_version: appliedTemplate.version,
+          } as never);
+      }
 
       // Also log as CRM activity if linked to a contact
       if (linkedContactId) {
@@ -259,6 +372,7 @@ export function EmailComposeSheet({
         body: "",
       });
       setAttachments([]);
+      setAppliedTemplate(null);
 
       router.refresh();
     } catch (err: unknown) {
@@ -290,6 +404,26 @@ export function EmailComposeSheet({
           onSubmit={handleSend}
           className="flex flex-col flex-1 gap-4 mt-4 overflow-y-auto"
         >
+          {/* Template Picker */}
+          <div className="space-y-2">
+            <div className="flex items-center gap-2">
+              <TemplatePicker
+                context={linkedLoanId ? "deal" : linkedContactId ? "contact" : "any"}
+                onSelect={handleTemplateSelect}
+              />
+              {templateLoading && (
+                <Loader2 className="h-3.5 w-3.5 animate-spin text-muted-foreground" />
+              )}
+            </div>
+            {appliedTemplate && (
+              <TemplateAppliedBanner
+                templateName={appliedTemplate.name}
+                templateVersion={appliedTemplate.version}
+                onClear={clearTemplate}
+              />
+            )}
+          </div>
+
           {/* To */}
           <div className="space-y-1.5">
             <Label htmlFor="to_email">To</Label>

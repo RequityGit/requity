@@ -21,6 +21,7 @@ const TABS: TabConfig[] = [
   { label: "Users & Roles", href: "/control-center/users" },
   { label: "Loan Condition Templates", href: "/control-center/conditions" },
   { label: "Email Templates", href: "/control-center/email-templates" },
+  { label: "User Email Templates", href: "/control-center/user-email-templates" },
   { label: "Term Sheet Templates", href: "/control-center/term-sheets" },
   {
     label: "Underwriting Assumptions",
