@@ -17,6 +17,10 @@ import {
   Pin,
   Clock,
   Loader2,
+  Archive,
+  ArchiveRestore,
+  ChevronDown,
+  ChevronRight,
 } from "lucide-react";
 
 // ─── Filter Tabs ──────────────────────────────────────────────────────────────
@@ -32,6 +36,7 @@ const FILTER_TABS = [
 interface ChatSidebarV2Props {
   groups: ChatChannelGroup[];
   channels: ChatChannelWithUnread[];
+  archivedChannels?: ChatChannelWithUnread[];
   activeChannelId: string | null;
   searchQuery: string;
   loading: boolean;
@@ -39,6 +44,8 @@ interface ChatSidebarV2Props {
   onSelectChannel: (channelId: string) => void;
   onSearchChange: (query: string) => void;
   onNewChannel: () => void;
+  onArchiveChannel?: (channelId: string) => void;
+  onUnarchiveChannel?: (channelId: string) => void;
   currentUser?: {
     id: string;
     full_name: string | null;
@@ -50,6 +57,7 @@ interface ChatSidebarV2Props {
 export function ChatSidebarV2({
   groups,
   channels,
+  archivedChannels = [],
   activeChannelId,
   searchQuery,
   loading,
@@ -57,12 +65,15 @@ export function ChatSidebarV2({
   onSelectChannel,
   onSearchChange,
   onNewChannel,
+  onArchiveChannel,
+  onUnarchiveChannel,
   currentUser,
   getPresenceStatus,
 }: ChatSidebarV2Props) {
   const { mode, t } = useChatTheme();
   const [activeFilter, setActiveFilter] = useState("all");
   const [hoveredChannel, setHoveredChannel] = useState<string | null>(null);
+  const [showArchived, setShowArchived] = useState(false);
   const searchRef = useRef<HTMLInputElement>(null);
 
   // Filter channels based on active filter
@@ -238,6 +249,7 @@ export function ChatSidebarV2({
                     onHover={setHoveredChannel}
                     index={i}
                     getPresenceStatus={getPresenceStatus}
+                    onArchive={onArchiveChannel ? () => onArchiveChannel(ch.id) : undefined}
                   />
                 ))}
               </>
@@ -255,8 +267,61 @@ export function ChatSidebarV2({
                     onHover={setHoveredChannel}
                     index={i + pinnedChannels.length}
                     getPresenceStatus={getPresenceStatus}
+                    onArchive={onArchiveChannel ? () => onArchiveChannel(ch.id) : undefined}
                   />
                 ))}
+              </>
+            )}
+
+            {/* Archived channels section */}
+            {archivedChannels.length > 0 && (
+              <>
+                <button
+                  onClick={() => setShowArchived(!showArchived)}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 5,
+                    padding: "14px 8px 4px",
+                    background: "transparent",
+                    border: "none",
+                    cursor: "pointer",
+                    width: "100%",
+                  }}
+                >
+                  {showArchived ? (
+                    <ChevronDown size={10} strokeWidth={2.5} color={t.textTertiary} />
+                  ) : (
+                    <ChevronRight size={10} strokeWidth={2.5} color={t.textTertiary} />
+                  )}
+                  <Archive size={10} strokeWidth={2.5} color={t.textTertiary} />
+                  <span
+                    style={{
+                      fontSize: 11,
+                      fontWeight: 600,
+                      color: t.textTertiary,
+                      textTransform: "uppercase",
+                      letterSpacing: "0.06em",
+                    }}
+                  >
+                    Archived ({archivedChannels.length})
+                  </span>
+                </button>
+                {showArchived &&
+                  archivedChannels.map((ch, i) => (
+                    <ChannelRowV2
+                      key={ch.id}
+                      channel={ch}
+                      active={activeChannelId === ch.id}
+                      hovered={hoveredChannel === ch.id}
+                      onClick={() => onSelectChannel(ch.id)}
+                      onHover={setHoveredChannel}
+                      index={i + pinnedChannels.length + unpinnedChannels.length}
+                      getPresenceStatus={getPresenceStatus}
+                      isArchived
+                      onUnarchive={onUnarchiveChannel ? () => onUnarchiveChannel(ch.id) : undefined}
+                    />
+                  ))}
               </>
             )}
           </>
@@ -341,6 +406,9 @@ interface ChannelRowV2Props {
   onHover: (id: string | null) => void;
   index: number;
   getPresenceStatus?: (uid: string) => PresenceStatus;
+  isArchived?: boolean;
+  onArchive?: () => void;
+  onUnarchive?: () => void;
 }
 
 function ChannelRowV2({
@@ -351,6 +419,9 @@ function ChannelRowV2({
   onHover,
   index,
   getPresenceStatus,
+  isArchived,
+  onArchive,
+  onUnarchive,
 }: ChannelRowV2Props) {
   const { mode, t } = useChatTheme();
   const isDM = channel.channel_type === "direct";
@@ -430,16 +501,49 @@ function ChannelRowV2({
           >
             {channel.name}
           </span>
-          <span
-            style={{
-              fontSize: 11,
-              color: unread ? t.text : t.textMuted,
-              fontWeight: unread ? 600 : 400,
-              flexShrink: 0,
-            }}
-          >
-            {lastMsg?.created_at ? formatChatTime(lastMsg.created_at) : ""}
-          </span>
+          <div style={{ display: "flex", alignItems: "center", gap: 4, flexShrink: 0 }}>
+            {/* Archive/Unarchive button on hover */}
+            {hovered && (onArchive || onUnarchive) && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  if (isArchived) onUnarchive?.();
+                  else onArchive?.();
+                }}
+                title={isArchived ? "Restore from archive" : "Archive chat"}
+                style={{
+                  background: "transparent",
+                  border: "none",
+                  cursor: "pointer",
+                  padding: 3,
+                  borderRadius: 4,
+                  display: "flex",
+                  transition: "all 0.1s",
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = t.bgHover;
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = "transparent";
+                }}
+              >
+                {isArchived ? (
+                  <ArchiveRestore size={12} strokeWidth={1.5} color={t.textTertiary} />
+                ) : (
+                  <Archive size={12} strokeWidth={1.5} color={t.textTertiary} />
+                )}
+              </button>
+            )}
+            <span
+              style={{
+                fontSize: 11,
+                color: unread ? t.text : t.textMuted,
+                fontWeight: unread ? 600 : 400,
+              }}
+            >
+              {lastMsg?.created_at ? formatChatTime(lastMsg.created_at) : ""}
+            </span>
+          </div>
         </div>
         <div
           style={{

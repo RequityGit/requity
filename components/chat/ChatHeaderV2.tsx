@@ -5,7 +5,7 @@ import { ChatAvatarV2, StagePill } from "./ChatPrimitives";
 import { getInitials } from "@/lib/chat-utils";
 import { getStageDisplayLabel } from "@/lib/chat-theme";
 import type { ChatChannelWithUnread } from "@/lib/chat-types";
-import { Phone, Video, Search, Star, Layers } from "lucide-react";
+import { Phone, Video, Search, Star, Layers, Archive, ArchiveRestore } from "lucide-react";
 
 interface ChatHeaderV2Props {
   channel: ChatChannelWithUnread;
@@ -19,6 +19,8 @@ interface ChatHeaderV2Props {
   onSearch: () => void;
   loanStage?: string | null;
   loanAmount?: string | null;
+  onArchive?: () => void;
+  onUnarchive?: () => void;
 }
 
 export function ChatHeaderV2({
@@ -29,6 +31,8 @@ export function ChatHeaderV2({
   onSearch,
   loanStage,
   loanAmount,
+  onArchive,
+  onUnarchive,
 }: ChatHeaderV2Props) {
   const { mode, t } = useChatTheme();
   const initials = getInitials(channel.name);
@@ -113,6 +117,35 @@ export function ChatHeaderV2({
             <Icon size={16} strokeWidth={1.5} color={t.textTertiary} />
           </button>
         ))}
+
+        {/* Archive / Unarchive */}
+        {(onArchive || onUnarchive) && (
+          <button
+            onClick={channel.is_archived ? onUnarchive : onArchive}
+            title={channel.is_archived ? "Restore from archive" : "Archive this chat"}
+            style={{
+              background: "transparent",
+              border: "none",
+              cursor: "pointer",
+              padding: 7,
+              borderRadius: 8,
+              display: "flex",
+              transition: "all 0.15s",
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = t.bgHover;
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = "transparent";
+            }}
+          >
+            {channel.is_archived ? (
+              <ArchiveRestore size={16} strokeWidth={1.5} color={t.textTertiary} />
+            ) : (
+              <Archive size={16} strokeWidth={1.5} color={t.textTertiary} />
+            )}
+          </button>
+        )}
 
         {/* Divider */}
         <div

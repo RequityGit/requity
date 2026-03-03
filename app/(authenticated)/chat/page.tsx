@@ -68,6 +68,7 @@ function ChatPageInner() {
 
   const {
     channels,
+    archivedChannels,
     groups,
     loading: channelsLoading,
     totalUnread,
@@ -75,19 +76,24 @@ function ChatPageInner() {
     setActiveChannelId,
     searchQuery,
     setSearchQuery,
+    archiveChannel,
+    unarchiveChannel,
   } = useChat(userId);
 
   const { getStatus } = usePresence(userId);
 
-  // When active channel changes, find the full channel object
+  // When active channel changes, find the full channel object (check both active and archived)
   useEffect(() => {
     if (activeChannelId) {
-      const ch = channels.find((c) => c.id === activeChannelId);
-      setSelectedChannel(ch || null);
+      const ch =
+        channels.find((c) => c.id === activeChannelId) ||
+        archivedChannels.find((c) => c.id === activeChannelId) ||
+        null;
+      setSelectedChannel(ch);
     } else {
       setSelectedChannel(null);
     }
-  }, [activeChannelId, channels]);
+  }, [activeChannelId, channels, archivedChannels]);
 
   // Auto-select first channel if none selected
   useEffect(() => {
@@ -136,6 +142,7 @@ function ChatPageInner() {
       <ChatSidebarV2
         groups={groups}
         channels={channels}
+        archivedChannels={archivedChannels}
         activeChannelId={activeChannelId}
         searchQuery={searchQuery}
         loading={channelsLoading}
@@ -143,6 +150,8 @@ function ChatPageInner() {
         onSelectChannel={setActiveChannelId}
         onSearchChange={setSearchQuery}
         onNewChannel={() => setShowCreateModal(true)}
+        onArchiveChannel={archiveChannel}
+        onUnarchiveChannel={unarchiveChannel}
         currentUser={userProfile}
         getPresenceStatus={getStatus}
       />
@@ -154,6 +163,8 @@ function ChatPageInner() {
           userId={userId}
           isAdmin={isAdmin}
           getPresenceStatus={getStatus}
+          onArchive={archiveChannel}
+          onUnarchive={unarchiveChannel}
         />
       ) : (
         <EmptyState loading={channelsLoading} />

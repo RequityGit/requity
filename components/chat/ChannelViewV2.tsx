@@ -19,6 +19,8 @@ interface ChannelViewV2Props {
   userId: string;
   isAdmin: boolean;
   getPresenceStatus: (uid: string) => PresenceStatus;
+  onArchive?: (channelId: string) => void;
+  onUnarchive?: (channelId: string) => void;
 }
 
 interface LoanInfo {
@@ -33,6 +35,8 @@ export function ChannelViewV2({
   userId,
   isAdmin,
   getPresenceStatus,
+  onArchive,
+  onUnarchive,
 }: ChannelViewV2Props) {
   const { t } = useChatTheme();
   const [showDetails, setShowDetails] = useState(false);
@@ -152,6 +156,8 @@ export function ChannelViewV2({
           onSearch={() => setIsSearchOpen(true)}
           loanStage={loanInfo?.stage}
           loanAmount={loanAmount}
+          onArchive={onArchive ? () => onArchive(channel.id) : undefined}
+          onUnarchive={onUnarchive ? () => onUnarchive(channel.id) : undefined}
         />
 
         {/* Messages area */}

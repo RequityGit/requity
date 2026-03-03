@@ -103,20 +103,54 @@ export function useChat(userId: string | undefined) {
     };
   }, [userId, debouncedFetchChannels]);
 
+  // Separate active and archived channels
+  const activeChannels = channels.filter((c) => !c.is_archived);
+  const archivedChannels = channels.filter((c) => c.is_archived);
+
   // Filter channels by search
   const filteredGroups = searchQuery.trim()
     ? groupChannels(
-        channels.filter((c) =>
+        activeChannels.filter((c) =>
           c.name.toLowerCase().includes(searchQuery.toLowerCase())
         )
       )
-    : groups;
+    : groupChannels(activeChannels);
 
-  // Total unread across all channels
-  const totalUnread = channels.reduce((sum, c) => sum + (c.is_muted ? 0 : c.unread_count), 0);
+  // Total unread across active (non-archived) channels
+  const totalUnread = activeChannels.reduce((sum, c) => sum + (c.is_muted ? 0 : c.unread_count), 0);
+
+  // Archive / unarchive a channel
+  const archiveChannel = useCallback(
+    async (channelId: string) => {
+      const supabase = supabaseRef.current;
+      await supabase
+        .from("chat_channels")
+        .update({ is_archived: true })
+        .eq("id", channelId);
+      // If we just archived the active channel, deselect
+      if (activeChannelId === channelId) {
+        setActiveChannelId(null);
+      }
+      fetchChannels();
+    },
+    [activeChannelId, fetchChannels]
+  );
+
+  const unarchiveChannel = useCallback(
+    async (channelId: string) => {
+      const supabase = supabaseRef.current;
+      await supabase
+        .from("chat_channels")
+        .update({ is_archived: false })
+        .eq("id", channelId);
+      fetchChannels();
+    },
+    [fetchChannels]
+  );
 
   return {
-    channels,
+    channels: activeChannels,
+    archivedChannels,
     groups: filteredGroups,
     loading,
     totalUnread,
@@ -125,5 +159,7 @@ export function useChat(userId: string | undefined) {
     searchQuery,
     setSearchQuery,
     refetch: fetchChannels,
+    archiveChannel,
+    unarchiveChannel,
   };
 }
