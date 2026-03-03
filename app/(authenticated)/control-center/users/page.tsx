@@ -24,12 +24,12 @@ export default async function ControlCenterUsersPage() {
         .select("id, user_id, role, is_active, granted_by, granted_at, investor_id, borrower_id"),
       admin
         .from("investors")
-        .select("id, first_name, last_name, email")
-        .order("first_name"),
+        .select("id, crm_contacts(first_name, last_name, email)")
+        .order("id"),
       admin
         .from("borrowers")
-        .select("id, first_name, last_name, email")
-        .order("first_name"),
+        .select("id, crm_contacts(first_name, last_name, email)")
+        .order("id"),
       admin
         .from("modules")
         .select("id, name, label, icon, sort_order, is_active")
@@ -82,14 +82,20 @@ export default async function ControlCenterUsersPage() {
     name: m.name,
     label: m.label,
     icon: m.icon,
-    sort_order: m.sort_order,
+    sort_order: m.sort_order ?? 0,
   }));
 
   return (
     <UsersClient
       profiles={profiles}
-      investors={investorsResult.data ?? []}
-      borrowers={borrowersResult.data ?? []}
+      investors={(investorsResult.data ?? []).map((inv) => {
+        const c = inv.crm_contacts as { first_name?: string | null; last_name?: string | null; email?: string | null } | null;
+        return { id: inv.id, first_name: c?.first_name ?? null, last_name: c?.last_name ?? null, email: c?.email ?? null };
+      })}
+      borrowers={(borrowersResult.data ?? []).map((b) => {
+        const c = b.crm_contacts as { first_name?: string | null; last_name?: string | null; email?: string | null } | null;
+        return { id: b.id, first_name: c?.first_name ?? null, last_name: c?.last_name ?? null, email: c?.email ?? null };
+      })}
       grantedByMap={grantedByMap}
       currentUserId={user?.id ?? ""}
       modules={modules}

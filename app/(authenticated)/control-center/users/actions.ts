@@ -342,7 +342,7 @@ export async function toggleModuleAccess(
 ): Promise<{ success?: boolean; error?: string }> {
   try {
     const auth = await requireSuperAdmin();
-    if (auth.error) return { error: auth.error };
+    if ("error" in auth) return { error: auth.error };
 
     const admin = createAdminClient();
 
@@ -377,7 +377,7 @@ export async function grantAllModules(
 ): Promise<{ success?: boolean; error?: string }> {
   try {
     const auth = await requireSuperAdmin();
-    if (auth.error) return { error: auth.error };
+    if ("error" in auth) return { error: auth.error };
 
     const admin = createAdminClient();
     const { error } = await admin.rpc("grant_all_modules" as never, {
@@ -398,7 +398,7 @@ export async function revokeAllModules(
 ): Promise<{ success?: boolean; error?: string }> {
   try {
     const auth = await requireSuperAdmin();
-    if (auth.error) return { error: auth.error };
+    if ("error" in auth) return { error: auth.error };
 
     const admin = createAdminClient();
     const { error } = await admin

@@ -33,7 +33,8 @@ export async function GET() {
 
     // Fetch all profiles with their active roles
     const admin = createAdminClient();
-    const { data: profiles } = await admin
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data: profiles } = (await (admin as any)
       .from("profiles")
       .select(
         `
@@ -41,7 +42,7 @@ export async function GET() {
         user_roles!user_roles_user_id_fkey (role, is_active)
       `
       )
-      .order("full_name");
+      .order("full_name")) as { data: unknown[] | null };
 
     type ProfileWithRoles = {
       id: string;
