@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { loginWithCredentials } from './helpers/auth';
+import { loginAsUser } from './helpers/auth';
 
 /**
  * Broken link checker — crawls internal links on key pages
@@ -80,12 +80,11 @@ test.describe('Broken link check — public pages', () => {
 test.describe('Broken link check — borrower pages', () => {
   test.beforeEach(async ({ page }) => {
     const email = process.env.BORROWER_EMAIL;
-    const password = process.env.BORROWER_PASSWORD;
-    if (!email || !password) {
+    if (!email) {
       test.skip();
       return;
     }
-    await loginWithCredentials(page, email, password);
+    await loginAsUser(page, email);
   });
 
   test('borrower dashboard has no broken internal links', async ({ page, baseURL }) => {
@@ -136,12 +135,11 @@ test.describe('Broken link check — borrower pages', () => {
 test.describe('Broken link check — investor pages', () => {
   test.beforeEach(async ({ page }) => {
     const email = process.env.INVESTOR_EMAIL;
-    const password = process.env.INVESTOR_PASSWORD;
-    if (!email || !password) {
+    if (!email) {
       test.skip();
       return;
     }
-    await loginWithCredentials(page, email, password);
+    await loginAsUser(page, email);
   });
 
   test('investor pages have no broken internal links', async ({ page, baseURL }) => {

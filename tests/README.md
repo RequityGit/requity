@@ -38,12 +38,10 @@ Edit `.env.test` with valid test account credentials:
 | `PORTAL_BASE_URL` | No | Defaults to `https://portal.requitygroup.com` |
 | `SUPABASE_URL` | Yes | Supabase project URL |
 | `SUPABASE_ANON_KEY` | Yes | Supabase anon/public key |
+| `SUPABASE_SERVICE_ROLE_KEY` | Yes | Supabase service role key (generates sessions for any user) |
 | `BORROWER_EMAIL` | Yes | Test borrower account email |
-| `BORROWER_PASSWORD` | Yes | Test borrower account password |
 | `INVESTOR_EMAIL` | Yes | Test investor account email |
-| `INVESTOR_PASSWORD` | Yes | Test investor account password |
 | `ADMIN_EMAIL` | No | Test admin account email (admin tests skip if not set) |
-| `ADMIN_PASSWORD` | No | Test admin account password |
 
 > **Important:** Never commit `.env.test` — it is gitignored.
 
@@ -107,7 +105,7 @@ npm run test:e2e:report
 
 ## How Authentication Works
 
-The portal uses **magic link** and **Google OAuth** for login — there is no email/password form in the UI. For testing, we use Supabase's `signInWithPassword` API to authenticate programmatically and inject the resulting session cookies into the Playwright browser context. This requires that test accounts have passwords set (via `supabase.auth.admin.updateUserById` or the Supabase dashboard).
+The portal uses **magic link** and **Google OAuth** for login — there is no email/password form in the UI. For testing, we use the **Supabase Admin API** (`generate_link` + `verify`) with the service role key to create sessions for any user by email. No passwords are needed — the service role key bypasses all auth flows (magic link, 2FA, etc.) and directly generates valid session tokens, which are then injected as cookies into the Playwright browser context.
 
 ## CI Integration
 
@@ -123,10 +121,9 @@ Set the environment variables in your CI provider's secrets, then:
   env:
     SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
     SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+    SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
     BORROWER_EMAIL: ${{ secrets.BORROWER_EMAIL }}
-    BORROWER_PASSWORD: ${{ secrets.BORROWER_PASSWORD }}
     INVESTOR_EMAIL: ${{ secrets.INVESTOR_EMAIL }}
-    INVESTOR_PASSWORD: ${{ secrets.INVESTOR_PASSWORD }}
 ```
 
 ## Artifacts

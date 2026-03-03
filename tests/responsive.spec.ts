@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { loginWithCredentials } from './helpers/auth';
+import { loginAsUser } from './helpers/auth';
 
 /**
  * Responsive layout tests — run key pages at mobile, tablet,
@@ -36,12 +36,11 @@ test.describe('Responsive — login page', () => {
 test.describe('Responsive — borrower pages', () => {
   test.beforeEach(async ({ page }) => {
     const email = process.env.BORROWER_EMAIL;
-    const password = process.env.BORROWER_PASSWORD;
-    if (!email || !password) {
+    if (!email) {
       test.skip();
       return;
     }
-    await loginWithCredentials(page, email, password);
+    await loginAsUser(page, email);
   });
 
   test('borrower dashboard has no horizontal overflow', async ({ page }) => {
@@ -100,12 +99,11 @@ test.describe('Responsive — borrower pages', () => {
 test.describe('Responsive — investor pages', () => {
   test.beforeEach(async ({ page }) => {
     const email = process.env.INVESTOR_EMAIL;
-    const password = process.env.INVESTOR_PASSWORD;
-    if (!email || !password) {
+    if (!email) {
       test.skip();
       return;
     }
-    await loginWithCredentials(page, email, password);
+    await loginAsUser(page, email);
   });
 
   test('investor dashboard has no horizontal overflow', async ({ page }) => {

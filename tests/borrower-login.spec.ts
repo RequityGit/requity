@@ -1,21 +1,20 @@
 import { test, expect } from '@playwright/test';
-import { loginWithCredentials, requireEnv } from './helpers/auth';
+import { loginAsUser, requireEnv } from './helpers/auth';
 
 test.describe('Borrower login flow', () => {
   test.beforeEach(async () => {
     // Ensure credentials are available
     requireEnv('BORROWER_EMAIL');
-    requireEnv('BORROWER_PASSWORD');
     requireEnv('SUPABASE_URL');
     requireEnv('SUPABASE_ANON_KEY');
+    requireEnv('SUPABASE_SERVICE_ROLE_KEY');
   });
 
   test('borrower can log in and is redirected to dashboard', async ({ page }) => {
     const email = process.env.BORROWER_EMAIL!;
-    const password = process.env.BORROWER_PASSWORD!;
 
-    // Authenticate via Supabase API and inject session cookies
-    await loginWithCredentials(page, email, password);
+    // Authenticate via Supabase Admin API and inject session cookies
+    await loginAsUser(page, email);
 
     // Navigate to the portal — should land on borrower dashboard
     await page.goto('/borrower/dashboard');
@@ -29,11 +28,7 @@ test.describe('Borrower login flow', () => {
   });
 
   test('borrower dashboard renders key elements', async ({ page }) => {
-    await loginWithCredentials(
-      page,
-      process.env.BORROWER_EMAIL!,
-      process.env.BORROWER_PASSWORD!,
-    );
+    await loginAsUser(page, process.env.BORROWER_EMAIL!);
 
     await page.goto('/borrower/dashboard');
     await page.waitForLoadState('networkidle');
@@ -84,11 +79,7 @@ test.describe('Borrower login flow', () => {
   });
 
   test('borrower cannot access admin routes', async ({ page }) => {
-    await loginWithCredentials(
-      page,
-      process.env.BORROWER_EMAIL!,
-      process.env.BORROWER_PASSWORD!,
-    );
+    await loginAsUser(page, process.env.BORROWER_EMAIL!);
 
     // Try to access admin dashboard
     await page.goto('/admin/dashboard');

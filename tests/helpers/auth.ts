@@ -1,64 +1,92 @@
-import { type Page, type BrowserContext } from '@playwright/test';
+import { type Page } from '@playwright/test';
 
 /**
- * Authenticate a user by calling the Supabase GoTrue API directly,
- * then injecting the session cookies into the browser context.
+ * Authenticate a user by generating a session via the Supabase Admin API
+ * (service role key), then injecting the session cookies into the browser.
  *
- * This avoids going through the UI magic-link flow for every test.
+ * This bypasses magic-link / 2FA flows entirely — no password required.
+ * Only an email and the SUPABASE_SERVICE_ROLE_KEY are needed.
  */
-export async function loginWithCredentials(
+export async function loginAsUser(
   page: Page,
   email: string,
-  password: string,
 ): Promise<void> {
-  const supabaseUrl = process.env.SUPABASE_URL;
-  const supabaseAnonKey = process.env.SUPABASE_ANON_KEY;
+  const supabaseUrl = requireEnv('SUPABASE_URL');
+  const serviceRoleKey = requireEnv('SUPABASE_SERVICE_ROLE_KEY');
+  const anonKey = requireEnv('SUPABASE_ANON_KEY');
 
-  if (!supabaseUrl || !supabaseAnonKey) {
-    throw new Error(
-      'SUPABASE_URL and SUPABASE_ANON_KEY must be set in .env.test',
-    );
+  if (!email) {
+    throw new Error('Email must be provided. Check your .env.test file.');
   }
 
-  if (!email || !password) {
-    throw new Error(
-      'Email and password must be provided. Check your .env.test file.',
-    );
-  }
-
-  // Call Supabase Auth REST API to get a session
-  const response = await fetch(
-    `${supabaseUrl}/auth/v1/token?grant_type=password`,
+  // Step 1: Use the Admin API to generate a magic-link token for the user.
+  // This does NOT send an email — it just returns the hashed token.
+  const linkRes = await fetch(
+    `${supabaseUrl}/auth/v1/admin/generate_link`,
     {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        apikey: supabaseAnonKey,
+        Authorization: `Bearer ${serviceRoleKey}`,
+        apikey: serviceRoleKey,
       },
-      body: JSON.stringify({ email, password }),
+      body: JSON.stringify({
+        type: 'magiclink',
+        email,
+      }),
     },
   );
 
-  if (!response.ok) {
-    const body = await response.text();
+  if (!linkRes.ok) {
+    const body = await linkRes.text();
     throw new Error(
-      `Supabase auth failed for ${email}: ${response.status} ${body}`,
+      `Failed to generate auth link for ${email}: ${linkRes.status} ${body}`,
     );
   }
 
-  const data = await response.json();
-  const accessToken: string = data.access_token;
-  const refreshToken: string = data.refresh_token;
+  const linkData = await linkRes.json();
+  const hashedToken: string = linkData.hashed_token;
 
-  if (!accessToken || !refreshToken) {
-    throw new Error('Supabase auth response missing tokens');
+  if (!hashedToken) {
+    throw new Error(
+      'Admin generate_link response missing hashed_token. ' +
+      'Ensure SUPABASE_SERVICE_ROLE_KEY is a valid service role key.',
+    );
   }
 
-  const baseURL = process.env.PORTAL_BASE_URL || 'https://portal.requitygroup.com';
+  // Step 2: Exchange the hashed token for a full session (access + refresh tokens).
+  const verifyRes = await fetch(`${supabaseUrl}/auth/v1/verify`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      apikey: anonKey,
+    },
+    body: JSON.stringify({
+      token_hash: hashedToken,
+      type: 'magiclink',
+    }),
+  });
+
+  if (!verifyRes.ok) {
+    const body = await verifyRes.text();
+    throw new Error(
+      `Failed to verify auth token for ${email}: ${verifyRes.status} ${body}`,
+    );
+  }
+
+  const session = await verifyRes.json();
+  const accessToken: string = session.access_token;
+  const refreshToken: string = session.refresh_token;
+
+  if (!accessToken || !refreshToken) {
+    throw new Error('Auth verify response missing tokens');
+  }
+
+  // Step 3: Inject the session cookies so Next.js middleware picks them up.
+  const baseURL =
+    process.env.PORTAL_BASE_URL || 'https://portal.requitygroup.com';
   const domain = new URL(baseURL).hostname;
 
-  // Supabase SSR stores auth in cookies. Set them so the Next.js middleware
-  // picks up the session on the next navigation.
   const cookieBase = {
     domain,
     path: '/',
@@ -67,25 +95,22 @@ export async function loginWithCredentials(
     sameSite: 'Lax' as const,
   };
 
-  // Supabase SSR uses chunked cookies with the project ref in the name.
-  // The cookie name pattern is: sb-<project-ref>-auth-token
   const projectRef = new URL(supabaseUrl).hostname.split('.')[0];
   const cookieName = `sb-${projectRef}-auth-token`;
 
   const sessionPayload = JSON.stringify({
     access_token: accessToken,
     refresh_token: refreshToken,
-    expires_at: data.expires_at,
-    expires_in: data.expires_in,
+    expires_at: session.expires_at,
+    expires_in: session.expires_in,
     token_type: 'bearer',
     type: 'access',
-    user: data.user,
+    user: session.user,
   });
 
   // Supabase SSR may chunk cookies if they exceed ~3500 chars.
-  // For most tokens, a single cookie suffices.
   const chunkSize = 3500;
-  const chunks = [];
+  const chunks: string[] = [];
   for (let i = 0; i < sessionPayload.length; i += chunkSize) {
     chunks.push(sessionPayload.slice(i, i + chunkSize));
   }
@@ -108,12 +133,13 @@ export async function loginWithCredentials(
 
 /**
  * Helper to check if required environment variables are set.
- * Call at the top of test files that need auth.
  */
 export function requireEnv(name: string): string {
   const value = process.env[name];
   if (!value) {
-    throw new Error(`Environment variable ${name} is required. See .env.test.example`);
+    throw new Error(
+      `Environment variable ${name} is required. See .env.test.example`,
+    );
   }
   return value;
 }

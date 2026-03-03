@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { loginWithCredentials, requireEnv } from './helpers/auth';
+import { loginAsUser, requireEnv } from './helpers/auth';
 
 /**
  * Navigation tests — log in and click through sidebar links,
@@ -16,13 +16,8 @@ test.describe('Borrower navigation', () => {
 
   test.beforeEach(async ({ page }) => {
     requireEnv('BORROWER_EMAIL');
-    requireEnv('BORROWER_PASSWORD');
 
-    await loginWithCredentials(
-      page,
-      process.env.BORROWER_EMAIL!,
-      process.env.BORROWER_PASSWORD!,
-    );
+    await loginAsUser(page, process.env.BORROWER_EMAIL!);
   });
 
   test('all borrower sidebar links are visible', async ({ page }) => {
@@ -65,13 +60,8 @@ test.describe('Investor navigation', () => {
 
   test.beforeEach(async ({ page }) => {
     requireEnv('INVESTOR_EMAIL');
-    requireEnv('INVESTOR_PASSWORD');
 
-    await loginWithCredentials(
-      page,
-      process.env.INVESTOR_EMAIL!,
-      process.env.INVESTOR_PASSWORD!,
-    );
+    await loginAsUser(page, process.env.INVESTOR_EMAIL!);
   });
 
   test('all investor sidebar links are visible', async ({ page }) => {
@@ -111,15 +101,14 @@ test.describe('Admin navigation', () => {
   ];
 
   test.beforeEach(async ({ page }) => {
-    // Admin tests are optional — skip if no admin credentials
+    // Admin tests are optional — skip if no admin email
     const email = process.env.ADMIN_EMAIL;
-    const password = process.env.ADMIN_PASSWORD;
-    if (!email || !password) {
+    if (!email) {
       test.skip();
       return;
     }
 
-    await loginWithCredentials(page, email, password);
+    await loginAsUser(page, email);
   });
 
   test('all admin sidebar links are visible', async ({ page }) => {

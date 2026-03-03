@@ -1,20 +1,16 @@
 import { test, expect } from '@playwright/test';
-import { loginWithCredentials, requireEnv } from './helpers/auth';
+import { loginAsUser, requireEnv } from './helpers/auth';
 
 test.describe('Investor login flow', () => {
   test.beforeEach(async () => {
     requireEnv('INVESTOR_EMAIL');
-    requireEnv('INVESTOR_PASSWORD');
     requireEnv('SUPABASE_URL');
     requireEnv('SUPABASE_ANON_KEY');
+    requireEnv('SUPABASE_SERVICE_ROLE_KEY');
   });
 
   test('investor can log in and is redirected to dashboard', async ({ page }) => {
-    await loginWithCredentials(
-      page,
-      process.env.INVESTOR_EMAIL!,
-      process.env.INVESTOR_PASSWORD!,
-    );
+    await loginAsUser(page, process.env.INVESTOR_EMAIL!);
 
     await page.goto('/investor/dashboard');
     await page.waitForLoadState('networkidle');
@@ -27,11 +23,7 @@ test.describe('Investor login flow', () => {
   });
 
   test('investor dashboard renders without errors', async ({ page }) => {
-    await loginWithCredentials(
-      page,
-      process.env.INVESTOR_EMAIL!,
-      process.env.INVESTOR_PASSWORD!,
-    );
+    await loginAsUser(page, process.env.INVESTOR_EMAIL!);
 
     const consoleErrors: string[] = [];
     page.on('console', (msg) => {
@@ -52,11 +44,7 @@ test.describe('Investor login flow', () => {
   });
 
   test('investor portfolio / funds page loads', async ({ page }) => {
-    await loginWithCredentials(
-      page,
-      process.env.INVESTOR_EMAIL!,
-      process.env.INVESTOR_PASSWORD!,
-    );
+    await loginAsUser(page, process.env.INVESTOR_EMAIL!);
 
     const response = await page.goto('/investor/funds');
     await page.waitForLoadState('networkidle');
@@ -70,11 +58,7 @@ test.describe('Investor login flow', () => {
   });
 
   test('investor documents page loads', async ({ page }) => {
-    await loginWithCredentials(
-      page,
-      process.env.INVESTOR_EMAIL!,
-      process.env.INVESTOR_PASSWORD!,
-    );
+    await loginAsUser(page, process.env.INVESTOR_EMAIL!);
 
     const response = await page.goto('/investor/documents');
     await page.waitForLoadState('networkidle');
@@ -84,11 +68,7 @@ test.describe('Investor login flow', () => {
   });
 
   test('investor cannot access admin routes', async ({ page }) => {
-    await loginWithCredentials(
-      page,
-      process.env.INVESTOR_EMAIL!,
-      process.env.INVESTOR_PASSWORD!,
-    );
+    await loginAsUser(page, process.env.INVESTOR_EMAIL!);
 
     await page.goto('/admin/dashboard');
     await page.waitForLoadState('networkidle');
@@ -98,11 +78,7 @@ test.describe('Investor login flow', () => {
   });
 
   test('investor cannot access borrower routes', async ({ page }) => {
-    await loginWithCredentials(
-      page,
-      process.env.INVESTOR_EMAIL!,
-      process.env.INVESTOR_PASSWORD!,
-    );
+    await loginAsUser(page, process.env.INVESTOR_EMAIL!);
 
     await page.goto('/borrower/dashboard');
     await page.waitForLoadState('networkidle');

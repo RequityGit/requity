@@ -44,12 +44,10 @@ jobs:
           PORTAL_BASE_URL: ${{ env.PORTAL_BASE_URL }}
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
           BORROWER_EMAIL: ${{ secrets.BORROWER_EMAIL }}
-          BORROWER_PASSWORD: ${{ secrets.BORROWER_PASSWORD }}
           INVESTOR_EMAIL: ${{ secrets.INVESTOR_EMAIL }}
-          INVESTOR_PASSWORD: ${{ secrets.INVESTOR_PASSWORD }}
           ADMIN_EMAIL: ${{ secrets.ADMIN_EMAIL }}
-          ADMIN_PASSWORD: ${{ secrets.ADMIN_PASSWORD }}
 
       - name: Upload test report
         uses: actions/upload-artifact@v4
