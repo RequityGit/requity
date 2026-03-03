@@ -22,6 +22,7 @@ import {
   BookOpen,
   Calculator,
   MessageSquare,
+  Columns3,
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useViewAs } from "@/contexts/view-as-context";
@@ -63,21 +64,16 @@ const adminNav: NavItem[] = [
     activePaths: ["/admin/investors", "/admin/borrowers"],
   },
   {
-    label: "Originations",
-    href: "/admin/originations",
-    icon: Briefcase,
-    activePaths: ["/admin/loans", "/admin/conditions", "/admin/pricing"],
+    label: "Pipeline",
+    href: "/admin/pipeline",
+    icon: Columns3,
+    activePaths: ["/admin/originations", "/admin/equity-pipeline", "/admin/loans", "/admin/conditions", "/admin/pricing"],
   },
   {
     label: "DSCR Pricing",
     href: "/admin/dscr",
     icon: Calculator,
     activePaths: ["/admin/dscr"],
-  },
-  {
-    label: "Equity",
-    href: "/admin/equity-pipeline",
-    icon: Building2,
   },
   { label: "Servicing", href: "/admin/servicing", icon: Banknote },
   {
