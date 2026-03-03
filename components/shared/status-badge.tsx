@@ -21,11 +21,17 @@ const statusStyles: Record<string, string> = {
   activated: "bg-green-100 text-green-800 border-green-200",
 
   // Draw requests
+  draft: "bg-gray-100 text-gray-800 border-gray-200",
   submitted: "bg-yellow-100 text-yellow-800 border-yellow-200",
+  inspection_ordered: "bg-amber-100 text-amber-800 border-amber-200",
+  inspection_complete: "bg-teal-100 text-teal-800 border-teal-200",
   under_review: "bg-blue-100 text-blue-800 border-blue-200",
   approved: "bg-green-100 text-green-800 border-green-200",
   funded: "bg-green-100 text-green-800 border-green-200",
   denied: "bg-red-100 text-red-800 border-red-200",
+  partially_approved: "bg-amber-100 text-amber-800 border-amber-200",
+  withdrawn: "bg-gray-100 text-gray-500 border-gray-200",
+  completed: "bg-green-100 text-green-800 border-green-200",
 
   // Funds
   open: "bg-green-100 text-green-800 border-green-200",
