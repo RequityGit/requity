@@ -6,7 +6,7 @@ import type {
   CreateTemplateInput,
   UpdateTemplateInput,
 } from "./types";
-import { requireAdmin } from "./require-admin";
+import { requireAdmin } from "@/lib/auth/require-admin";
 
 // ---------------------------------------------------------------------------
 // Create template

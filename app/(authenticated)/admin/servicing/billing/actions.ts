@@ -1,29 +1,19 @@
 "use server";
 
-import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { requireAdmin } from "@/lib/auth/require-admin";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-async function requireAdmin() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) throw new Error("Not authenticated");
-
-  return { user, supabase };
-}
-
 export async function generateBillingCycleAction(billingMonth: string) {
   try {
-    const { user } = await requireAdmin();
+    const auth = await requireAdmin();
+    if ("error" in auth) return { error: auth.error };
     const admin = createAdminClient() as any;
 
     const { data, error } = await admin.rpc("generate_billing_cycle", {
       p_billing_month: billingMonth,
-      p_created_by: user.id,
+      p_created_by: auth.user.id,
     });
 
     if (error) {
@@ -40,7 +30,8 @@ export async function generateBillingCycleAction(billingMonth: string) {
 
 export async function runReconciliationAction(billingCycleId: string) {
   try {
-    await requireAdmin();
+    const auth = await requireAdmin();
+    if ("error" in auth) return { error: auth.error };
     const admin = createAdminClient() as any;
 
     const { data, error } = await admin.rpc("run_reconciliation_checks", {
@@ -61,7 +52,8 @@ export async function runReconciliationAction(billingCycleId: string) {
 
 export async function approveBillingCycleAction(billingCycleId: string) {
   try {
-    await requireAdmin();
+    const auth = await requireAdmin();
+    if ("error" in auth) return { error: auth.error };
     const admin = createAdminClient() as any;
 
     // First run reconciliation checks
@@ -100,7 +92,8 @@ export async function approveBillingCycleAction(billingCycleId: string) {
 
 export async function submitBillingCycleAction(billingCycleId: string) {
   try {
-    await requireAdmin();
+    const auth = await requireAdmin();
+    if ("error" in auth) return { error: auth.error };
     const admin = createAdminClient() as any;
 
     const { error } = await admin
@@ -121,7 +114,8 @@ export async function submitBillingCycleAction(billingCycleId: string) {
 
 export async function completeBillingCycleAction(billingCycleId: string) {
   try {
-    await requireAdmin();
+    const auth = await requireAdmin();
+    if ("error" in auth) return { error: auth.error };
     const admin = createAdminClient() as any;
 
     const { error } = await admin
@@ -142,7 +136,8 @@ export async function completeBillingCycleAction(billingCycleId: string) {
 
 export async function generateNachaAction(billingCycleId: string) {
   try {
-    await requireAdmin();
+    const auth = await requireAdmin();
+    if ("error" in auth) return { error: auth.error };
     const admin = createAdminClient() as any;
 
     const { data, error } = await admin.rpc("generate_nacha_file", {
@@ -168,7 +163,8 @@ export async function applyPaymentAction(
   referenceNumber: string
 ) {
   try {
-    const { user } = await requireAdmin();
+    const auth = await requireAdmin();
+    if ("error" in auth) return { error: auth.error };
     const admin = createAdminClient() as any;
 
     const { data, error } = await admin.rpc("apply_payment", {
@@ -176,7 +172,7 @@ export async function applyPaymentAction(
       p_payment_date: paymentDate,
       p_amount_received: amount,
       p_reference_number: referenceNumber,
-      p_applied_by: user.id,
+      p_applied_by: auth.user.id,
     });
 
     if (error) {
@@ -196,7 +192,8 @@ export async function generatePayoffQuoteAction(
   payoffDate: string
 ) {
   try {
-    await requireAdmin();
+    const auth = await requireAdmin();
+    if ("error" in auth) return { error: auth.error };
     const admin = createAdminClient() as any;
 
     const { data, error } = await admin.rpc("generate_payoff_quote", {
@@ -218,7 +215,8 @@ export async function generatePayoffQuoteAction(
 
 export async function refreshDelinquencyAction() {
   try {
-    await requireAdmin();
+    const auth = await requireAdmin();
+    if ("error" in auth) return { error: auth.error };
     const admin = createAdminClient() as any;
 
     const { data, error } = await admin.rpc("refresh_delinquency_records");
@@ -237,7 +235,8 @@ export async function refreshDelinquencyAction() {
 
 export async function fetchBillingLineItemsAction(billingCycleId: string) {
   try {
-    await requireAdmin();
+    const auth = await requireAdmin();
+    if ("error" in auth) return { error: auth.error };
     const admin = createAdminClient() as any;
 
     const { data, error } = await admin
@@ -259,7 +258,8 @@ export async function fetchBillingLineItemsAction(billingCycleId: string) {
 
 export async function fetchLoanEventsAction(loanId: string) {
   try {
-    await requireAdmin();
+    const auth = await requireAdmin();
+    if ("error" in auth) return { error: auth.error };
     const admin = createAdminClient() as any;
 
     const { data, error } = await admin

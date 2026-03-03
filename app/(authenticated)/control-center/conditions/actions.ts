@@ -1,28 +1,7 @@
 "use server";
 
-import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
-
-async function requireSuperAdmin() {
-  const supabase = createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) return { error: "Not authenticated" };
-
-  const { data: superAdminRole } = await supabase
-    .from("user_roles")
-    .select("id")
-    .eq("user_id", user.id)
-    .eq("role", "super_admin")
-    .eq("is_active", true)
-    .single();
-
-  if (!superAdminRole) return { error: "Not authorized" };
-
-  return { user };
-}
+import { requireSuperAdmin } from "@/lib/auth/require-admin";
 
 export interface ConditionFormData {
   id?: string;
