@@ -6,6 +6,7 @@ import { createClient } from "@/lib/supabase/client";
 export function useUnreadCounts(userId: string | undefined) {
   const [totalUnread, setTotalUnread] = useState(0);
   const supabaseRef = useRef(createClient());
+  const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const fetchUnread = useCallback(async () => {
     if (!userId) return;
@@ -26,9 +27,27 @@ export function useUnreadCounts(userId: string | undefined) {
     }
   }, [userId]);
 
+  const debouncedFetchUnread = useCallback(() => {
+    if (debounceTimerRef.current) {
+      clearTimeout(debounceTimerRef.current);
+    }
+    debounceTimerRef.current = setTimeout(() => {
+      fetchUnread();
+    }, 300);
+  }, [fetchUnread]);
+
   useEffect(() => {
     fetchUnread();
   }, [fetchUnread]);
+
+  // Clean up debounce timer
+  useEffect(() => {
+    return () => {
+      if (debounceTimerRef.current) {
+        clearTimeout(debounceTimerRef.current);
+      }
+    };
+  }, []);
 
   // Realtime updates
   useEffect(() => {
@@ -45,14 +64,14 @@ export function useUnreadCounts(userId: string | undefined) {
           table: "chat_channel_members",
           filter: `user_id=eq.${userId}`,
         },
-        () => fetchUnread()
+        () => debouncedFetchUnread()
       )
       .subscribe();
 
     return () => {
       supabase.removeChannel(sub);
     };
-  }, [userId, fetchUnread]);
+  }, [userId, debouncedFetchUnread]);
 
   return { totalUnread, refetch: fetchUnread };
 }

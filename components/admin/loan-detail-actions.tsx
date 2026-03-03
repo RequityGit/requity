@@ -1088,7 +1088,8 @@ function ActivityLogTab({
             const isLast = idx === activityLog.length - 1;
             const typeLabel =
               ACTIVITY_TYPE_LABELS[entry.activity_type] ||
-              entry.activity_type.replace(/_/g, " ");
+              entry.activity_type?.replace(/_/g, " ") ||
+              "Unknown";
             const userName =
               (entry as any).user?.full_name || "System";
             const timestamp = new Date(entry.created_at);
@@ -1129,9 +1130,9 @@ function ActivityLogTab({
                   )}
                   {entry.old_value && entry.new_value && (
                     <p className="text-xs text-muted-foreground mt-0.5">
-                      <span className="line-through">{entry.old_value.replace(/_/g, " ")}</span>
+                      <span className="line-through">{String(entry.old_value).replace(/_/g, " ")}</span>
                       {" → "}
-                      <span className="font-medium">{entry.new_value.replace(/_/g, " ")}</span>
+                      <span className="font-medium">{String(entry.new_value).replace(/_/g, " ")}</span>
                     </p>
                   )}
                 </div>
