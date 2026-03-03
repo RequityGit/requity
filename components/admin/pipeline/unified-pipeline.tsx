@@ -126,7 +126,15 @@ export function UnifiedPipeline({
       0
     ) + activeLoans.reduce((sum, l) => sum + (l.loan_amount || 0), 0);
 
-  const uwPlusStages = ["uw", "underwriting", "approved", "clear_to_close"];
+  const uwPlusStages = [
+    "uw",
+    "uw_needs_approval",
+    "offer_placed",
+    "processing",
+    "underwriting",
+    "approved",
+    "clear_to_close",
+  ];
   const inUwPlus =
     activeOpportunities.filter((o) => uwPlusStages.includes(o.stage)).length +
     activeLoans.filter((l) => uwPlusStages.includes(l.stage)).length;

@@ -33,3 +33,12 @@ export function formatPercent(value: number | null | undefined): string {
   if (value == null) return "—";
   return `${value.toFixed(2)}%`;
 }
+
+export function formatCompactCurrency(
+  amount: number | null | undefined
+): string {
+  if (amount == null || amount === 0) return "TBD";
+  if (amount >= 1_000_000) return `$${(amount / 1_000_000).toFixed(1)}M`;
+  if (amount >= 1_000) return `$${Math.round(amount / 1_000)}k`;
+  return `$${amount}`;
+}

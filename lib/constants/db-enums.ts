@@ -1003,12 +1003,12 @@ export type AppRole = (typeof APP_ROLES)[number];
 /** Opportunity pipeline stages (on opportunities table) */
 export const OPPORTUNITY_STAGES = [
   "awaiting_info",
-  "uw",
   "quoting",
+  "uw",
+  "uw_needs_approval",
   "offer_placed",
   "processing",
   "closed",
-  "onboarding",
   "closed_lost",
 ] as const;
 export type OpportunityStage = (typeof OPPORTUNITY_STAGES)[number];
@@ -1016,33 +1016,33 @@ export type OpportunityStage = (typeof OPPORTUNITY_STAGES)[number];
 /** Active pipeline stages shown on board */
 export const OPPORTUNITY_PIPELINE_STAGES: OpportunityStage[] = [
   "awaiting_info",
-  "uw",
   "quoting",
+  "uw",
+  "uw_needs_approval",
   "offer_placed",
   "processing",
   "closed",
-  "onboarding",
 ];
 
 export const OPPORTUNITY_STAGE_LABELS: Record<string, string> = {
   awaiting_info: "Awaiting Info",
-  uw: "UW",
   quoting: "Quoting",
+  uw: "UW",
+  uw_needs_approval: "UW Needs Approval",
   offer_placed: "Offer(s) Placed",
   processing: "Processing",
   closed: "Closed",
-  onboarding: "Onboarding",
   closed_lost: "Closed Lost",
 };
 
 export const OPPORTUNITY_STAGE_COLORS: Record<string, string> = {
   awaiting_info: "bg-slate-100 text-slate-800",
-  uw: "bg-purple-100 text-purple-800",
   quoting: "bg-blue-100 text-blue-800",
-  offer_placed: "bg-indigo-100 text-indigo-800",
-  processing: "bg-amber-100 text-amber-800",
-  closed: "bg-green-100 text-green-800",
-  onboarding: "bg-teal-100 text-teal-800",
+  uw: "bg-purple-100 text-purple-800",
+  uw_needs_approval: "bg-amber-100 text-amber-800",
+  offer_placed: "bg-green-100 text-green-800",
+  processing: "bg-pink-100 text-pink-800",
+  closed: "bg-slate-900 text-white",
   closed_lost: "bg-red-100 text-red-800",
 };
 
