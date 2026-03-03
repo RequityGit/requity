@@ -21,32 +21,18 @@ export default async function NewDealPage() {
 
   const admin = createAdminClient();
 
+  // Use borrowers_safe view which joins borrowers with crm_contacts
+  // to expose first_name, last_name, email, etc.
   const [entitiesResult, borrowersResult] = await Promise.all([
     admin
       .from("borrower_entities")
       .select("id, entity_name, entity_type, borrower_id")
       .order("entity_name"),
-    admin
-      .from("borrowers")
-      .select("id, first_name, last_name, email, crm_contact_id")
+    (admin as any)
+      .from("borrowers_safe")
+      .select("id, first_name, last_name, email")
       .order("last_name"),
   ]);
-
-  // Get CRM names for borrowers
-  const crmIds = (borrowersResult.data || [])
-    .map((b: any) => b.crm_contact_id)
-    .filter(Boolean);
-
-  let crmNames: Record<string, string> = {};
-  if (crmIds.length > 0) {
-    const { data: contacts } = await admin
-      .from("crm_contacts")
-      .select("id, first_name, last_name")
-      .in("id", crmIds);
-    (contacts || []).forEach((c: any) => {
-      crmNames[c.id] = `${c.first_name || ""} ${c.last_name || ""}`.trim();
-    });
-  }
 
   const entities = (entitiesResult.data || []).map((e: any) => ({
     id: e.id,
@@ -55,17 +41,11 @@ export default async function NewDealPage() {
     borrower_id: e.borrower_id,
   }));
 
-  const borrowers = (borrowersResult.data || []).map((b: any) => {
-    const crmName = b.crm_contact_id ? crmNames[b.crm_contact_id] : null;
-    return {
-      id: b.id,
-      name:
-        crmName ||
-        `${b.first_name || ""} ${b.last_name || ""}`.trim() ||
-        "Unknown",
-      email: b.email || "",
-    };
-  });
+  const borrowers = (borrowersResult.data || []).map((b: any) => ({
+    id: b.id,
+    name: `${b.first_name || ""} ${b.last_name || ""}`.trim() || "Unknown",
+    email: b.email || "",
+  }));
 
   return (
     <div className="space-y-6">

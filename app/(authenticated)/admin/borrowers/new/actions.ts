@@ -2,9 +2,8 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
-// NOTE: Borrower contact fields (first_name, last_name, email, phone, address)
-// now live on crm_contacts. This legacy action uses `any` casts until the
-// borrower-creation flow is refactored to write to crm_contacts first.
+
+/* eslint-disable @typescript-eslint/no-explicit-any */
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -60,41 +59,62 @@ export async function addBorrowerAction(input: AddBorrowerInput) {
 
     const admin = createAdminClient();
 
-    // Legacy fields (first_name, email, address, etc.) no longer exist on
-    // borrowers table — they moved to crm_contacts.  Cast to any until refactored.
-    const borrowerData: Record<string, unknown> = {
-      first_name: input.first_name,
-      last_name: input.last_name,
-      email: input.email || null,
-      phone: input.phone || null,
-      date_of_birth: input.date_of_birth || null,
-      ssn_last_four: input.ssn_last_four || null,
-      is_us_citizen: input.is_us_citizen ?? true,
-      address_line1: input.address_line1 || null,
-      address_line2: input.address_line2 || null,
-      city: input.city || null,
-      state: input.state || null,
-      zip: input.zip || null,
-      country: input.country || "US",
-      credit_score: input.credit_score ?? null,
-      credit_report_date: input.credit_report_date || null,
-      experience_count: input.experience_count ?? 0,
-      notes: input.notes || null,
-    };
+    // 1. Create the CRM contact first (contact fields live on crm_contacts)
+    const { data: contact, error: contactError } = await admin
+      .from("crm_contacts")
+      .insert({
+        first_name: input.first_name,
+        last_name: input.last_name,
+        email: input.email || null,
+        phone: input.phone || null,
+        address_line1: input.address_line1 || null,
+        address_line2: input.address_line2 || null,
+        city: input.city || null,
+        state: input.state || null,
+        zip: input.zip || null,
+        country: input.country || "US",
+        contact_type: "borrower" as any,
+        status: "active" as any,
+        notes: input.notes || null,
+      })
+      .select("id")
+      .single();
 
-    const { data, error } = await (admin as any)
+    if (contactError) {
+      console.error("addBorrowerAction crm_contacts insert error:", contactError);
+      return { error: contactError.message };
+    }
+
+    // 2. Create the borrower record with link to CRM contact
+    const { data, error } = await admin
       .from("borrowers")
-      .insert(borrowerData)
+      .insert({
+        crm_contact_id: contact.id,
+        date_of_birth: input.date_of_birth || null,
+        ssn_last_four: input.ssn_last_four || null,
+        is_us_citizen: input.is_us_citizen ?? true,
+        credit_score: input.credit_score ?? null,
+        credit_report_date: input.credit_report_date || null,
+        experience_count: input.experience_count ?? 0,
+        notes: input.notes || null,
+      })
       .select("id")
       .single();
 
     if (error) {
+      console.error("addBorrowerAction borrowers insert error:", error);
       return { error: error.message };
     }
 
     if (!data) {
       return { error: "Failed to create borrower — no data returned" };
     }
+
+    // 3. Link CRM contact back to the borrower
+    await admin
+      .from("crm_contacts")
+      .update({ borrower_id: data.id })
+      .eq("id", contact.id);
 
     return { success: true, borrowerId: data.id };
   } catch (err: any) {
@@ -114,22 +134,13 @@ export async function updateBorrowerAction(input: UpdateBorrowerInput) {
 
     const admin = createAdminClient();
 
-    const { error } = await (admin as any)
+    // Update borrower-only fields on the borrowers table
+    const { error: borrowerError } = await admin
       .from("borrowers")
       .update({
-        first_name: input.first_name,
-        last_name: input.last_name,
-        email: input.email || null,
-        phone: input.phone || null,
         date_of_birth: input.date_of_birth || null,
         ssn_last_four: input.ssn_last_four || null,
         is_us_citizen: input.is_us_citizen ?? true,
-        address_line1: input.address_line1 || null,
-        address_line2: input.address_line2 || null,
-        city: input.city || null,
-        state: input.state || null,
-        zip: input.zip || null,
-        country: input.country || "US",
         credit_score: input.credit_score ?? null,
         credit_report_date: input.credit_report_date || null,
         experience_count: input.experience_count ?? 0,
@@ -137,8 +148,33 @@ export async function updateBorrowerAction(input: UpdateBorrowerInput) {
       })
       .eq("id", input.id);
 
-    if (error) {
-      return { error: error.message };
+    if (borrowerError) {
+      return { error: borrowerError.message };
+    }
+
+    // Update contact fields on the linked CRM contact
+    const { data: borrower } = await admin
+      .from("borrowers")
+      .select("crm_contact_id")
+      .eq("id", input.id)
+      .single();
+
+    if (borrower?.crm_contact_id) {
+      await admin
+        .from("crm_contacts")
+        .update({
+          first_name: input.first_name,
+          last_name: input.last_name,
+          email: input.email || null,
+          phone: input.phone || null,
+          address_line1: input.address_line1 || null,
+          address_line2: input.address_line2 || null,
+          city: input.city || null,
+          state: input.state || null,
+          zip: input.zip || null,
+          country: input.country || "US",
+        })
+        .eq("id", borrower.crm_contact_id);
     }
 
     return { success: true };
