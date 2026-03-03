@@ -26,7 +26,6 @@ import { AddContactDialog } from "@/components/crm/add-contact-dialog";
 import { AddCompanyDialog } from "@/components/crm/add-company-dialog";
 import { DeleteContactButton } from "@/components/crm/delete-contact-button";
 import { CompaniesTable, type CompanyRow } from "@/components/crm/companies-table";
-import { CompanyDetailPanel } from "@/components/crm/company-detail-panel";
 import { formatDate } from "@/lib/format";
 import {
   CRM_RELATIONSHIP_TYPES,
@@ -92,7 +91,6 @@ interface CrmUnifiedProps {
   currentUserId: string;
   isSuperAdmin?: boolean;
   initialView?: "contacts" | "companies";
-  initialCompanyId?: string | null;
 }
 
 // ── Helpers ──────────────────────────────────────────────────────────────
@@ -175,19 +173,10 @@ export function CrmUnified({
   currentUserId,
   isSuperAdmin = false,
   initialView = "contacts",
-  initialCompanyId,
 }: CrmUnifiedProps) {
   const [activeView, setActiveView] = useState<"contacts" | "companies">(
     initialView
   );
-  const [selectedCompany, setSelectedCompany] =
-    useState<CompanyRowExtended | null>(() => {
-      if (initialCompanyId) {
-        return companies.find((c) => c.id === initialCompanyId) ?? null;
-      }
-      return null;
-    });
-
   // Contacts state
   const [contactSearch, setContactSearch] = useState("");
   const [relationshipFilter, setRelationshipFilter] = useState<string[]>([]);
@@ -563,22 +552,9 @@ export function CrmUnified({
       {activeView === "companies" && (
         <div className="space-y-4">
           <h3 className="text-lg font-semibold text-foreground">Companies</h3>
-          <CompaniesTable
-            companies={companies}
-            onRowClick={(company) => {
-              const extended = companies.find((c) => c.id === company.id);
-              if (extended) setSelectedCompany(extended);
-            }}
-          />
+          <CompaniesTable companies={companies} />
         </div>
       )}
-
-      {/* Company Detail Panel */}
-      <CompanyDetailPanel
-        company={selectedCompany}
-        open={!!selectedCompany}
-        onClose={() => setSelectedCompany(null)}
-      />
     </div>
   );
 }

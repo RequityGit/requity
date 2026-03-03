@@ -178,6 +178,33 @@ export async function updateCompanyAction(input: UpdateCompanyInput) {
   }
 }
 
+export async function deleteCompanyAction(companyId: string) {
+  try {
+    const auth = await requireAdmin();
+    if ("error" in auth) return { error: auth.error };
+
+    const admin = createAdminClient();
+
+    const { error } = await admin
+      .from("companies")
+      .update({ is_active: false })
+      .eq("id", companyId);
+
+    if (error) {
+      console.error("deleteCompanyAction error:", error);
+      return { error: error.message };
+    }
+
+    return { success: true };
+  } catch (err: unknown) {
+    console.error("deleteCompanyAction error:", err);
+    return {
+      error:
+        err instanceof Error ? err.message : "An unexpected error occurred",
+    };
+  }
+}
+
 export async function deleteCompanyFileAction(fileId: string, storagePath: string) {
   try {
     const auth = await requireAdmin();

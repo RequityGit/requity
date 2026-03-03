@@ -196,7 +196,6 @@ export default async function CrmPage({ searchParams }: PageProps) {
         currentUserId={user.id}
         isSuperAdmin={isSuperAdmin}
         initialView={resolvedSearchParams.view === "companies" ? "companies" : "contacts"}
-        initialCompanyId={resolvedSearchParams.company ?? null}
       />
     </div>
   );
