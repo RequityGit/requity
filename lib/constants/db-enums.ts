@@ -839,6 +839,63 @@ export const DOCUMENT_TYPES = [
 ] as const;
 
 // ============================================
+// Portal document categories
+// ============================================
+
+export const PORTAL_DOCUMENT_CATEGORIES = [
+  { value: "general", label: "General" },
+  { value: "investor", label: "Investor" },
+  { value: "borrower", label: "Borrower" },
+  { value: "loan", label: "Loan" },
+  { value: "company", label: "Company" },
+  { value: "internal", label: "Internal" },
+] as const;
+
+// ============================================
+// Portal document types (extended)
+// ============================================
+
+export const PORTAL_DOCUMENT_TYPES = [
+  { value: "k1", label: "K-1" },
+  { value: "distribution_statement", label: "Distribution Statement" },
+  { value: "capital_call_notice", label: "Contribution Notice" },
+  { value: "investor_report", label: "Investor Report" },
+  { value: "loan_agreement", label: "Loan Agreement" },
+  { value: "closing_docs", label: "Closing Documents" },
+  { value: "payoff_letter", label: "Payoff Letter" },
+  { value: "draw_approval", label: "Draw Approval" },
+  { value: "appraisal", label: "Appraisal" },
+  { value: "insurance", label: "Insurance" },
+  { value: "title", label: "Title" },
+  { value: "operating_agreement", label: "Operating Agreement" },
+  { value: "articles_of_org", label: "Articles of Organization" },
+  { value: "certificate_good_standing", label: "Certificate of Good Standing" },
+  { value: "ein_letter", label: "EIN Letter" },
+  { value: "tax_return", label: "Tax Return" },
+  { value: "financial_statement", label: "Financial Statement" },
+  { value: "bank_statement", label: "Bank Statement" },
+  { value: "nda", label: "NDA" },
+  { value: "fee_agreement", label: "Fee Agreement" },
+  { value: "rate_sheet", label: "Rate Sheet" },
+  { value: "w9", label: "W-9" },
+  { value: "broker_agreement", label: "Broker Agreement" },
+  { value: "guidelines", label: "Guidelines" },
+  { value: "tear_sheet", label: "Tear Sheet" },
+  { value: "correspondence", label: "Correspondence" },
+  { value: "other", label: "Other" },
+] as const;
+
+// ============================================
+// Document visibility options
+// ============================================
+
+export const DOCUMENT_VISIBILITY_OPTIONS = [
+  { value: "admin_only", label: "Admin Only" },
+  { value: "portal_visible", label: "Visible to Portal Users" },
+  { value: "public", label: "Public" },
+] as const;
+
+// ============================================
 // Loan types (display classification, not a DB constraint)
 // ============================================
 

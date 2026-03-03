@@ -8591,6 +8591,134 @@ export type Database = {
         }
         Relationships: []
       }
+      portal_documents: {
+        Row: {
+          borrower_entity_id: string | null
+          borrower_id: string | null
+          category: string
+          company_id: string | null
+          created_at: string
+          crm_contact_id: string | null
+          deleted_at: string | null
+          display_name: string | null
+          document_type: string
+          file_name: string
+          file_path: string
+          file_size: number | null
+          fund_id: string | null
+          id: string
+          investing_entity_id: string | null
+          investor_id: string | null
+          loan_id: string | null
+          mime_type: string | null
+          notes: string | null
+          tags: string[] | null
+          updated_at: string
+          uploaded_by: string | null
+          visibility: string
+        }
+        Insert: {
+          borrower_entity_id?: string | null
+          borrower_id?: string | null
+          category?: string
+          company_id?: string | null
+          created_at?: string
+          crm_contact_id?: string | null
+          deleted_at?: string | null
+          display_name?: string | null
+          document_type?: string
+          file_name: string
+          file_path: string
+          file_size?: number | null
+          fund_id?: string | null
+          id?: string
+          investing_entity_id?: string | null
+          investor_id?: string | null
+          loan_id?: string | null
+          mime_type?: string | null
+          notes?: string | null
+          tags?: string[] | null
+          updated_at?: string
+          uploaded_by?: string | null
+          visibility?: string
+        }
+        Update: {
+          borrower_entity_id?: string | null
+          borrower_id?: string | null
+          category?: string
+          company_id?: string | null
+          created_at?: string
+          crm_contact_id?: string | null
+          deleted_at?: string | null
+          display_name?: string | null
+          document_type?: string
+          file_name?: string
+          file_path?: string
+          file_size?: number | null
+          fund_id?: string | null
+          id?: string
+          investing_entity_id?: string | null
+          investor_id?: string | null
+          loan_id?: string | null
+          mime_type?: string | null
+          notes?: string | null
+          tags?: string[] | null
+          updated_at?: string
+          uploaded_by?: string | null
+          visibility?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "portal_documents_borrower_entity_id_fkey"
+            columns: ["borrower_entity_id"]
+            isOneToOne: false
+            referencedRelation: "borrower_entities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "portal_documents_borrower_id_fkey"
+            columns: ["borrower_id"]
+            isOneToOne: false
+            referencedRelation: "borrowers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "portal_documents_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "portal_documents_crm_contact_id_fkey"
+            columns: ["crm_contact_id"]
+            isOneToOne: false
+            referencedRelation: "crm_contacts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "portal_documents_fund_id_fkey"
+            columns: ["fund_id"]
+            isOneToOne: false
+            referencedRelation: "funds"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "portal_documents_investor_id_fkey"
+            columns: ["investor_id"]
+            isOneToOne: false
+            referencedRelation: "investors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "portal_documents_loan_id_fkey"
+            columns: ["loan_id"]
+            isOneToOne: false
+            referencedRelation: "loans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       property_financial_snapshots: {
         Row: {
           annual_debt_service: number | null
