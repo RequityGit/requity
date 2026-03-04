@@ -21,8 +21,8 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { useToast } from "@/components/ui/use-toast";
+import { Badge } from "@/components/ui/badge";
 import { Plus, Check, CheckCircle2, Loader2 } from "lucide-react";
-import { DotPill } from "../contact-detail-shared";
 import { formatDate } from "@/lib/format";
 import type { TaskData } from "../types";
 import { PRIORITY_CONFIG, TASK_STATUS_CONFIG } from "../types";
@@ -309,7 +309,21 @@ export function DetailTasksTab({
               </div>
 
               {/* Priority */}
-              <DotPill color={priorityColor} label={t.priority} small />
+              <Badge
+                variant="outline"
+                className="text-[11px] gap-1 px-1.5 py-0 h-5 shrink-0"
+                style={{
+                  color: priorityColor,
+                  borderColor: `${priorityColor}30`,
+                  backgroundColor: `${priorityColor}08`,
+                }}
+              >
+                <span
+                  className="h-1.5 w-1.5 rounded-full"
+                  style={{ backgroundColor: priorityColor }}
+                />
+                {t.priority}
+              </Badge>
             </div>
           );
         })
