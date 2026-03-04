@@ -11,7 +11,7 @@ export async function resolveProfileNames(
   client: Client,
   ids: string[]
 ): Promise<Record<string, string>> {
-  const unique = [...new Set(ids.filter(Boolean))];
+  const unique = Array.from(new Set(ids.filter(Boolean)));
   if (unique.length === 0) return {};
 
   const { data } = await client

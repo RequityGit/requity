@@ -39,6 +39,7 @@ import {
   DollarSign,
   Trash2,
   Plus,
+  Briefcase,
 } from "lucide-react";
 import { ContactDrawer } from "./contact-drawer";
 import { CompanyDrawer } from "./company-drawer";
@@ -619,7 +620,7 @@ export function CrmV2Page({
                         <td className="px-4 py-3">
                           {c.assigned_to_name ? (
                             <div className="flex items-center gap-1.5">
-                              <Avatar text={c.assigned_to_initials ?? getNameInitials(c.assigned_to_name)} size="sm" />
+                              <Avatar text={c.assigned_to_initials ?? c.assigned_to_name.split(" ").map((p: string) => p[0]).join("").toUpperCase()} size="sm" />
                               <span className="text-xs text-muted-foreground whitespace-nowrap">
                                 {c.assigned_to_name.split(" ")[0]}
                               </span>
