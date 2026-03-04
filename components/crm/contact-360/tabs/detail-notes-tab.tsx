@@ -6,6 +6,7 @@ import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/components/ui/use-toast";
+import { Card, CardContent } from "@/components/ui/card";
 import { Send, MessageSquare, Pencil, Trash2 } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { relTime } from "../contact-detail-shared";
@@ -153,7 +154,8 @@ export function DetailNotesTab({
   return (
     <div className="flex flex-col gap-3">
       {/* Compose box */}
-      <div className="bg-white border border-[#E5E5E7] rounded-xl p-4">
+      <Card className="rounded-xl border-[#E5E5E7]">
+        <CardContent className="p-4">
         <Textarea
           value={content}
           onChange={(e) => setContent(e.target.value)}
@@ -172,7 +174,8 @@ export function DetailNotesTab({
             {saving ? "Saving..." : "Post Note"}
           </Button>
         </div>
-      </div>
+        </CardContent>
+      </Card>
 
       {/* Notes list */}
       {!loaded ? (
@@ -202,7 +205,8 @@ export function DetailNotesTab({
             : "?";
 
           return (
-            <div key={note.id} className="bg-white border border-[#E5E5E7] rounded-xl p-4 relative">
+            <Card key={note.id} className="rounded-xl border-[#E5E5E7]">
+              <CardContent className="p-4 relative">
               <div className="flex items-center gap-2 mb-2">
                 <Avatar className="h-6 w-6 rounded-md">
                   <AvatarFallback className="rounded-md bg-[#1A1A1A]/[0.06] text-[#1A1A1A] text-[10px] font-semibold">
@@ -272,7 +276,8 @@ export function DetailNotesTab({
                   {note.content}
                 </p>
               )}
-            </div>
+              </CardContent>
+            </Card>
           );
         })
       )}

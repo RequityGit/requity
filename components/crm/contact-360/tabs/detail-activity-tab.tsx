@@ -4,9 +4,11 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
+import { Card, CardContent } from "@/components/ui/card";
 import {
   Select,
   SelectContent,
@@ -26,7 +28,7 @@ import {
   CircleDot,
   Plus,
 } from "lucide-react";
-import { DotPill, relTime } from "../contact-detail-shared";
+import { relTime } from "../contact-detail-shared";
 import type { ActivityData } from "../types";
 import { ACTIVITY_TYPE_CONFIG } from "../types";
 
@@ -66,7 +68,9 @@ export function DetailActivityTab({
   });
 
   const filtered =
-    filter === "all" ? activities : activities.filter((a) => a.activity_type === filter);
+    filter === "all"
+      ? activities
+      : activities.filter((a) => a.activity_type === filter);
 
   function formatDuration(seconds: number | null): string {
     if (!seconds) return "";
@@ -102,7 +106,11 @@ export function DetailActivityTab({
       router.refresh();
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : "Unknown error";
-      toast({ title: "Error logging activity", description: message, variant: "destructive" });
+      toast({
+        title: "Error logging activity",
+        description: message,
+        variant: "destructive",
+      });
     } finally {
       setLoading(false);
     }
@@ -114,18 +122,19 @@ export function DetailActivityTab({
       <div className="flex items-center justify-between gap-2 mb-5 flex-wrap">
         <div className="flex gap-1.5 flex-wrap">
           {FILTER_TYPES.map((t) => (
-            <button
+            <Badge
               key={t}
+              variant={filter === t ? "default" : "outline"}
+              className="cursor-pointer text-xs px-3 py-1.5 rounded-lg"
+              style={
+                filter === t
+                  ? { background: "#1A1A1A", color: "#FFF" }
+                  : { borderColor: "#E5E5E7", color: "#6B6B6B" }
+              }
               onClick={() => setFilter(t)}
-              className="px-3 py-1.5 rounded-lg border text-xs font-medium cursor-pointer transition-all duration-150"
-              style={{
-                borderColor: filter === t ? "#1A1A1A" : "#E5E5E7",
-                background: filter === t ? "#1A1A1A" : "#FFF",
-                color: filter === t ? "#FFF" : "#6B6B6B",
-              }}
             >
               {t.charAt(0).toUpperCase() + t.slice(1)}
-            </button>
+            </Badge>
           ))}
         </div>
         <Button
@@ -141,78 +150,92 @@ export function DetailActivityTab({
 
       {/* Log Activity Form */}
       {showForm && (
-        <form
-          onSubmit={handleSubmit}
-          className="rounded-xl border border-[#E5E5E7] bg-white p-4 space-y-4 mb-5"
-        >
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label className="text-xs text-[#6B6B6B]">Activity Type</Label>
-              <Select
-                value={form.activity_type}
-                onValueChange={(v) => setForm((p) => ({ ...p, activity_type: v }))}
-              >
-                <SelectTrigger className="rounded-lg border-[#E5E5E7]">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {CRM_ACTIVITY_TYPES.map((t) => (
-                    <SelectItem key={t.value} value={t.value}>
-                      {t.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <Label className="text-xs text-[#6B6B6B]">Subject</Label>
-              <Input
-                value={form.subject}
-                onChange={(e) => setForm((p) => ({ ...p, subject: e.target.value }))}
-                placeholder="Brief summary..."
-                className="rounded-lg border-[#E5E5E7]"
-              />
-            </div>
-          </div>
-          <div className="space-y-2">
-            <Label className="text-xs text-[#6B6B6B]">Description</Label>
-            <Textarea
-              value={form.description}
-              onChange={(e) => setForm((p) => ({ ...p, description: e.target.value }))}
-              rows={3}
-              placeholder="Details..."
-              className="rounded-lg border-[#E5E5E7] resize-none"
-            />
-          </div>
-          <div className="flex justify-end gap-2">
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              className="rounded-lg border-[#E5E5E7]"
-              onClick={() => setShowForm(false)}
-            >
-              Cancel
-            </Button>
-            <Button
-              type="submit"
-              size="sm"
-              disabled={loading}
-              className="rounded-lg bg-[#1A1A1A] text-white hover:bg-[#1A1A1A]/90"
-            >
-              {loading ? "Saving..." : "Save Activity"}
-            </Button>
-          </div>
-        </form>
+        <Card className="rounded-xl border-[#E5E5E7] mb-5">
+          <CardContent className="p-4">
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label className="text-xs text-[#6B6B6B]">
+                    Activity Type
+                  </Label>
+                  <Select
+                    value={form.activity_type}
+                    onValueChange={(v) =>
+                      setForm((p) => ({ ...p, activity_type: v }))
+                    }
+                  >
+                    <SelectTrigger className="rounded-lg border-[#E5E5E7]">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {CRM_ACTIVITY_TYPES.map((t) => (
+                        <SelectItem key={t.value} value={t.value}>
+                          {t.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-xs text-[#6B6B6B]">Subject</Label>
+                  <Input
+                    value={form.subject}
+                    onChange={(e) =>
+                      setForm((p) => ({ ...p, subject: e.target.value }))
+                    }
+                    placeholder="Brief summary..."
+                    className="rounded-lg border-[#E5E5E7]"
+                  />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label className="text-xs text-[#6B6B6B]">Description</Label>
+                <Textarea
+                  value={form.description}
+                  onChange={(e) =>
+                    setForm((p) => ({ ...p, description: e.target.value }))
+                  }
+                  rows={3}
+                  placeholder="Details..."
+                  className="rounded-lg border-[#E5E5E7] resize-none"
+                />
+              </div>
+              <div className="flex justify-end gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="rounded-lg border-[#E5E5E7]"
+                  onClick={() => setShowForm(false)}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  type="submit"
+                  size="sm"
+                  disabled={loading}
+                  className="rounded-lg bg-[#1A1A1A] text-white hover:bg-[#1A1A1A]/90"
+                >
+                  {loading ? "Saving..." : "Save Activity"}
+                </Button>
+              </div>
+            </form>
+          </CardContent>
+        </Card>
       )}
 
       {/* Timeline */}
       {filtered.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-12 text-center">
           <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[#F7F7F8] mb-4">
-            <Activity className="h-6 w-6 text-[#9A9A9A]" strokeWidth={1.5} />
+            <Activity
+              className="h-6 w-6 text-[#9A9A9A]"
+              strokeWidth={1.5}
+            />
           </div>
-          <h3 className="text-sm font-semibold text-[#1A1A1A] mb-1">No activities</h3>
+          <h3 className="text-sm font-semibold text-[#1A1A1A] mb-1">
+            No activities
+          </h3>
           <p className="text-sm text-[#6B6B6B]">
             {filter !== "all"
               ? `No ${filter} activities. Try changing the filter.`
@@ -223,7 +246,9 @@ export function DetailActivityTab({
         <div className="flex flex-col gap-0">
           {filtered.map((a, i) => {
             const Icon = ACTIVITY_ICON_MAP[a.activity_type] || CircleDot;
-            const config = ACTIVITY_TYPE_CONFIG[a.activity_type] || ACTIVITY_TYPE_CONFIG.system;
+            const config =
+              ACTIVITY_TYPE_CONFIG[a.activity_type] ||
+              ACTIVITY_TYPE_CONFIG.system;
 
             return (
               <div key={a.id} className="flex gap-3.5 relative pb-5">
@@ -237,26 +262,53 @@ export function DetailActivityTab({
                   className="w-[30px] h-[30px] rounded-lg flex items-center justify-center shrink-0"
                   style={{ backgroundColor: config.bg }}
                 >
-                  <Icon size={14} style={{ color: config.color }} strokeWidth={1.5} />
+                  <Icon
+                    size={14}
+                    style={{ color: config.color }}
+                    strokeWidth={1.5}
+                  />
                 </div>
                 <div className="flex-1">
                   <div className="text-[13px] text-[#1A1A1A] font-medium leading-snug">
                     {a.subject || a.activity_type.replace(/_/g, " ")}
                   </div>
                   <div className="flex items-center gap-2 mt-0.5 flex-wrap">
-                    <span className="text-[11px] text-[#8B8B8B]">{relTime(a.created_at)}</span>
-                    <span className="text-[11px] text-[#C5C5C5]">&middot;</span>
-                    <span className="text-[11px] text-[#8B8B8B]">{a.created_by_name || "System"}</span>
-                    {a.call_duration_seconds != null && a.call_duration_seconds > 0 && (
-                      <>
-                        <span className="text-[11px] text-[#C5C5C5]">&middot;</span>
-                        <span className="text-[11px] text-[#8B8B8B]">
-                          {formatDuration(a.call_duration_seconds)}
-                        </span>
-                      </>
-                    )}
+                    <span className="text-[11px] text-[#8B8B8B]">
+                      {relTime(a.created_at)}
+                    </span>
+                    <span className="text-[11px] text-[#C5C5C5]">
+                      &middot;
+                    </span>
+                    <span className="text-[11px] text-[#8B8B8B]">
+                      {a.created_by_name || "System"}
+                    </span>
+                    {a.call_duration_seconds != null &&
+                      a.call_duration_seconds > 0 && (
+                        <>
+                          <span className="text-[11px] text-[#C5C5C5]">
+                            &middot;
+                          </span>
+                          <span className="text-[11px] text-[#8B8B8B]">
+                            {formatDuration(a.call_duration_seconds)}
+                          </span>
+                        </>
+                      )}
                     {a.direction && (
-                      <DotPill color={config.color} label={a.direction} small />
+                      <Badge
+                        variant="outline"
+                        className="text-[10px] px-1.5 py-0 h-4 gap-1"
+                        style={{
+                          color: config.color,
+                          borderColor: `${config.color}30`,
+                          backgroundColor: `${config.color}08`,
+                        }}
+                      >
+                        <span
+                          className="h-1 w-1 rounded-full"
+                          style={{ backgroundColor: config.color }}
+                        />
+                        {a.direction}
+                      </Badge>
                     )}
                   </div>
                 </div>

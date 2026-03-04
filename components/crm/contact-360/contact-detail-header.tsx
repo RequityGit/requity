@@ -2,18 +2,17 @@
 
 import { useRouter } from "next/navigation";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import {
-  Mail,
-  Phone,
-  MapPin,
-} from "lucide-react";
-import { DotPill, OutlinedPill, relTime } from "./contact-detail-shared";
+import { Badge } from "@/components/ui/badge";
+import { Label } from "@/components/ui/label";
+import { Card, CardContent } from "@/components/ui/card";
+import { Mail, Phone, MapPin, Circle } from "lucide-react";
 import { formatDate } from "@/lib/format";
+import { relTime } from "./contact-detail-shared";
 import type { ContactData, CompanyData } from "./types";
 import {
   RATING_CONFIG,
-  CONTACT_STATUS_CONFIG,
   LIFECYCLE_CONFIG,
+  RELATIONSHIP_BADGE_COLORS,
 } from "./types";
 
 interface ContactDetailHeaderProps {
@@ -21,6 +20,7 @@ interface ContactDetailHeaderProps {
   fullName: string;
   company: CompanyData | null;
   assignedToName: string | null;
+  contactTypes: string[];
 }
 
 export function ContactDetailHeader({
@@ -28,6 +28,7 @@ export function ContactDetailHeader({
   fullName,
   company,
   assignedToName,
+  contactTypes,
 }: ContactDetailHeaderProps) {
   const router = useRouter();
 
@@ -45,148 +46,182 @@ export function ContactDetailHeader({
         .slice(0, 2)
     : null;
 
-  const ratingCfg = contact.rating ? RATING_CONFIG[contact.rating] : null;
-  const statusColor = contact.status ? CONTACT_STATUS_CONFIG[contact.status] : null;
   const lifecycleCfg = contact.lifecycle_stage
     ? LIFECYCLE_CONFIG[contact.lifecycle_stage]
     : null;
 
-  const addressParts = [
-    contact.address_line1,
-    contact.address_line2,
-    [contact.city, contact.state].filter(Boolean).join(", "),
-    contact.zip,
-  ]
-    .filter(Boolean)
-    .join(", ");
+  const isActive =
+    contact.status === "active" || contact.lifecycle_stage === "active";
 
   const isFollowUpPast =
     contact.next_follow_up_date &&
     new Date(contact.next_follow_up_date) < new Date();
 
   return (
-    <div className="bg-white border border-[#E5E5E7] rounded-xl p-6 mb-5">
-      <div className="flex gap-4 items-start">
-        {/* Avatar */}
-        <Avatar className="h-14 w-14 rounded-lg shrink-0">
-          <AvatarFallback className="rounded-lg bg-[#1A1A1A]/[0.06] text-[#1A1A1A] text-lg font-semibold">
-            {initials || "?"}
-          </AvatarFallback>
-        </Avatar>
+    <Card className="rounded-xl border-[#E5E5E7] bg-white mb-5">
+      <CardContent className="p-6">
+        <div className="flex gap-4 items-start">
+          {/* Avatar */}
+          <Avatar className="h-11 w-11 rounded-lg shrink-0">
+            <AvatarFallback className="rounded-lg bg-[#1A1A1A]/[0.06] text-[#1A1A1A] text-sm font-bold">
+              {initials || "?"}
+            </AvatarFallback>
+          </Avatar>
 
-        {/* Content */}
-        <div className="flex-1 min-w-0">
-          {/* Row 1: Name + Pills */}
-          <div className="flex items-center gap-2.5 flex-wrap mb-1">
-            <h1 className="text-[22px] font-bold text-[#1A1A1A] leading-tight m-0">
-              {fullName}
-            </h1>
-            {ratingCfg && (
-              <DotPill color={ratingCfg.color} label={ratingCfg.label} small />
+          {/* Content */}
+          <div className="flex-1 min-w-0">
+            {/* Row 1: Name + Status Badge */}
+            <div className="flex items-center gap-2.5 flex-wrap mb-1">
+              <h1 className="text-lg font-bold text-[#1A1A1A] tracking-tight m-0">
+                {fullName}
+              </h1>
+              {isActive ? (
+                <Badge className="bg-emerald-50 text-emerald-700 border border-emerald-200 gap-1.5 hover:bg-emerald-50">
+                  <Circle
+                    className="h-1.5 w-1.5 fill-emerald-500"
+                    strokeWidth={0}
+                  />
+                  Active
+                </Badge>
+              ) : contact.status ? (
+                <Badge variant="secondary" className="gap-1.5">
+                  <Circle
+                    className="h-1.5 w-1.5 fill-muted-foreground"
+                    strokeWidth={0}
+                  />
+                  {contact.status.charAt(0).toUpperCase() +
+                    contact.status.slice(1)}
+                </Badge>
+              ) : null}
+              {lifecycleCfg && contact.lifecycle_stage !== "active" && (
+                <Badge
+                  variant="outline"
+                  className="gap-1.5"
+                  style={{
+                    color: lifecycleCfg.color,
+                    borderColor: `${lifecycleCfg.color}40`,
+                  }}
+                >
+                  {lifecycleCfg.label}
+                </Badge>
+              )}
+              {contact.rating && RATING_CONFIG[contact.rating] && (
+                <Badge
+                  variant="outline"
+                  style={{
+                    color: RATING_CONFIG[contact.rating].color,
+                    borderColor: `${RATING_CONFIG[contact.rating].color}40`,
+                    backgroundColor: `${RATING_CONFIG[contact.rating].color}08`,
+                  }}
+                >
+                  {RATING_CONFIG[contact.rating].label}
+                </Badge>
+              )}
+            </div>
+
+            {/* Row 2: Email */}
+            {contact.email && (
+              <div className="flex items-center gap-1.5 text-sm text-[#6B6B6B] mb-1.5">
+                <Mail className="h-3.5 w-3.5" strokeWidth={1.5} />
+                {contact.email}
+              </div>
             )}
-            {/* Show status pill only when it differs from lifecycle_stage to avoid duplicates */}
-            {statusColor && contact.status && contact.status !== contact.lifecycle_stage && (
-              <DotPill
-                color={statusColor}
-                label={contact.status.charAt(0).toUpperCase() + contact.status.slice(1)}
-                small
-              />
-            )}
-            {lifecycleCfg && (
-              <DotPill color={lifecycleCfg.color} label={lifecycleCfg.label} small />
+
+            {/* Row 3: Contact info chips */}
+            <div className="flex items-center gap-3 flex-wrap mb-2">
+              {contact.phone && (
+                <span className="flex items-center gap-1.5 text-xs text-[#6B6B6B]">
+                  <Phone className="h-3.5 w-3.5" strokeWidth={1.5} />
+                  {contact.phone}
+                </span>
+              )}
+              {(company || contact.company_name) && (
+                <span
+                  className="text-xs text-[#3B82F6] cursor-pointer hover:underline"
+                  onClick={() => {
+                    if (company?.id) {
+                      router.push(`/admin/crm/companies/${company.id}`);
+                    }
+                  }}
+                >
+                  {company?.name || contact.company_name}
+                </span>
+              )}
+              {(contact.city || contact.state) && (
+                <span className="flex items-center gap-1.5 text-xs text-[#6B6B6B]">
+                  <MapPin className="h-3.5 w-3.5" strokeWidth={1.5} />
+                  {[contact.city, contact.state].filter(Boolean).join(", ")}
+                </span>
+              )}
+            </div>
+
+            {/* Row 4: Tags / Contact Types */}
+            {contactTypes.length > 0 && (
+              <div className="flex gap-1.5 flex-wrap">
+                {contactTypes.map((type) => {
+                  const key = type.toLowerCase();
+                  const colors = RELATIONSHIP_BADGE_COLORS[key];
+                  if (colors) {
+                    return (
+                      <Badge
+                        key={type}
+                        variant="outline"
+                        style={{
+                          color: colors.text,
+                          borderColor: `${colors.text}30`,
+                          backgroundColor: colors.bg,
+                        }}
+                      >
+                        {type.charAt(0).toUpperCase() + type.slice(1)}
+                      </Badge>
+                    );
+                  }
+                  return (
+                    <Badge key={type} variant="secondary">
+                      {type.charAt(0).toUpperCase() + type.slice(1)}
+                    </Badge>
+                  );
+                })}
+              </div>
             )}
           </div>
 
-          {/* Row 2: Function · Company */}
-          <div className="flex items-center gap-1.5 mb-2">
-            {contact.user_function && (
-              <span className="text-[13px] text-[#6B6B6B]">{contact.user_function}</span>
-            )}
-            {contact.user_function && (company || contact.company_name) && (
-              <span className="text-[#D5D5D5]">&middot;</span>
-            )}
-            {(company || contact.company_name) && (
-              <span
-                className="text-[13px] text-[#3B82F6] cursor-pointer hover:underline"
-                onClick={() => {
-                  if (company?.id) {
-                    router.push(`/admin/crm/companies/${company.id}`);
-                  }
+          {/* Right side — Assigned To */}
+          <div className="text-right shrink-0 hidden md:block">
+            <Label className="text-[10px] uppercase tracking-widest text-[#8B8B8B]">
+              Assigned To
+            </Label>
+            <div className="flex items-center gap-1.5 justify-end mt-1 mb-2.5">
+              {assignedInitials && (
+                <Avatar className="h-6 w-6 rounded-md">
+                  <AvatarFallback className="rounded-md bg-[#1A1A1A]/[0.06] text-[#1A1A1A] text-[10px] font-semibold">
+                    {assignedInitials}
+                  </AvatarFallback>
+                </Avatar>
+              )}
+              <span className="text-[13px] font-medium text-[#1A1A1A]">
+                {assignedToName || "Unassigned"}
+              </span>
+            </div>
+            <div className="text-[11px] text-[#8B8B8B]">
+              Last Contact:{" "}
+              <span className="font-semibold">
+                {relTime(contact.last_contacted_at)}
+              </span>
+            </div>
+            {contact.next_follow_up_date && (
+              <div
+                className="text-[11px] mt-0.5"
+                style={{
+                  color: isFollowUpPast ? "#E5453D" : "#E5930E",
                 }}
               >
-                {company?.name || contact.company_name}
-              </span>
+                Follow-up: {formatDate(contact.next_follow_up_date)}
+              </div>
             )}
           </div>
-
-          {/* Row 3: Contact info */}
-          <div className="flex items-center gap-4 flex-wrap mb-3">
-            {contact.email && (
-              <span className="flex items-center gap-1.5 text-[13px] text-[#6B6B6B]">
-                <Mail size={13} strokeWidth={1.5} />
-                {contact.email}
-              </span>
-            )}
-            {contact.phone && (
-              <span className="flex items-center gap-1.5 text-[13px] text-[#6B6B6B]">
-                <Phone size={13} strokeWidth={1.5} />
-                {contact.phone}
-              </span>
-            )}
-            {addressParts && (
-              <span className="flex items-center gap-1.5 text-[13px] text-[#6B6B6B]">
-                <MapPin size={13} strokeWidth={1.5} />
-                {addressParts}
-              </span>
-            )}
-          </div>
-
-          {/* Row 4: Contact type pills */}
-          {contact.contact_types && contact.contact_types.length > 0 && (
-            <div className="flex gap-1.5 flex-wrap mb-3.5">
-              {contact.contact_types.map((t) => (
-                <OutlinedPill key={t}>
-                  {t.charAt(0).toUpperCase() + t.slice(1)}
-                </OutlinedPill>
-              ))}
-            </div>
-          )}
-
         </div>
-
-        {/* Right side */}
-        <div className="text-right shrink-0 hidden md:block">
-          <div className="text-[11px] text-[#8B8B8B] uppercase tracking-wide mb-0.5">
-            Assigned To
-          </div>
-          <div className="flex items-center gap-1.5 justify-end mb-2.5">
-            {assignedInitials && (
-              <Avatar className="h-6 w-6 rounded-md">
-                <AvatarFallback className="rounded-md bg-[#1A1A1A]/[0.06] text-[#1A1A1A] text-[10px] font-semibold">
-                  {assignedInitials}
-                </AvatarFallback>
-              </Avatar>
-            )}
-            <span className="text-[13px] font-medium text-[#1A1A1A]">
-              {assignedToName || "Unassigned"}
-            </span>
-          </div>
-          <div className="text-[11px] text-[#8B8B8B]">
-            Last Contact: {relTime(contact.last_contacted_at)}
-          </div>
-          {contact.next_follow_up_date && (
-            <div
-              className="text-[11px] mt-0.5"
-              style={{
-                color: isFollowUpPast ? "#E5453D" : "#E5930E",
-              }}
-            >
-              Follow-up: {formatDate(contact.next_follow_up_date)}
-            </div>
-          )}
-        </div>
-      </div>
-
-    </div>
+      </CardContent>
+    </Card>
   );
 }

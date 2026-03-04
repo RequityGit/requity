@@ -4,8 +4,17 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
-import { useToast } from "@/components/ui/use-toast";
+import { Badge } from "@/components/ui/badge";
+import { Label } from "@/components/ui/label";
+import { Separator } from "@/components/ui/separator";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import {
+  HoverCard,
+  HoverCardContent,
+  HoverCardTrigger,
+} from "@/components/ui/hover-card";
+import { useToast } from "@/components/ui/use-toast";
 import {
   Activity,
   Bell,
@@ -18,16 +27,11 @@ import {
   PhoneCall,
   Plus,
 } from "lucide-react";
-import {
-  SectionCard,
-  FieldRow,
-  DotPill,
-  MonoValue,
-  relTime,
-} from "./contact-detail-shared";
+import { MonoValue, relTime } from "./contact-detail-shared";
 import { EmailComposeSheet } from "@/components/crm/email-compose-sheet";
 import { formatDate } from "@/lib/format";
 import type { ContactData, RelationshipData } from "./types";
+import { RELATIONSHIP_BADGE_COLORS } from "./types";
 
 interface ContactDetailSidebarProps {
   contact: ContactData;
@@ -51,9 +55,9 @@ export function ContactDetailSidebar({
   const [emailOpen, setEmailOpen] = useState(false);
   const [logging, setLogging] = useState(false);
 
-  const fullName = [contact.first_name, contact.last_name]
-    .filter(Boolean)
-    .join(" ") || "Unnamed";
+  const fullName =
+    [contact.first_name, contact.last_name].filter(Boolean).join(" ") ||
+    "Unnamed";
 
   async function handleLogCall() {
     setLogging(true);
@@ -78,129 +82,268 @@ export function ContactDetailSidebar({
     }
   }
 
+  const quickActions = [
+    {
+      icon: Mail,
+      label: "Send Email",
+      onClick: () => setEmailOpen(true),
+    },
+    {
+      icon: Calendar,
+      label: "Schedule Meeting",
+      onClick: () => toast({ title: "Coming soon" }),
+    },
+    {
+      icon: CheckCircle2,
+      label: "Create Task",
+      onClick: () => {
+        const params = new URLSearchParams(window.location.search);
+        params.set("tab", "tasks");
+        router.replace(`?${params.toString()}`, { scroll: false });
+      },
+    },
+    {
+      icon: PhoneCall,
+      label: "Log Call",
+      onClick: handleLogCall,
+    },
+  ];
+
+  const assignedInitials = assignedToName
+    ? assignedToName
+        .split(" ")
+        .map((w) => w[0])
+        .join("")
+        .toUpperCase()
+        .slice(0, 2)
+    : null;
+
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-3">
       {/* Quick Actions */}
-      <SectionCard title="Quick Actions" icon={Activity}>
-        <div className="flex flex-col gap-2">
-          {[
-            { icon: Mail, label: "Send Email", onClick: () => setEmailOpen(true) },
-            { icon: Calendar, label: "Schedule Meeting", onClick: () => toast({ title: "Coming soon" }) },
-            { icon: CheckCircle2, label: "Create Task", onClick: () => {
-              const params = new URLSearchParams(window.location.search);
-              params.set("tab", "tasks");
-              router.replace(`?${params.toString()}`, { scroll: false });
-            }},
-            { icon: PhoneCall, label: "Log Call", onClick: handleLogCall },
-            { icon: Plus, label: "New Opportunity", onClick: () => toast({ title: "Coming soon" }) },
-          ].map(({ icon: I, label, onClick }) => (
-            <button
-              key={label}
-              onClick={onClick}
-              disabled={logging && label === "Log Call"}
-              className="flex items-center gap-2.5 px-3 py-2 rounded-lg border border-[#F0F0F0] bg-[#FAFAFA] cursor-pointer text-[13px] text-[#1A1A1A] font-normal transition-all duration-150 hover:bg-[#F0F0F0] disabled:opacity-50"
-            >
-              <I size={14} className="text-[#6B6B6B]" strokeWidth={1.5} />
-              {label}
-            </button>
-          ))}
-        </div>
-      </SectionCard>
-
-      {/* Followers */}
-      <SectionCard
-        title="Followers"
-        icon={Bell}
-        action={
-          <Button variant="ghost" size="sm" className="gap-1 text-xs h-7 text-[#6B6B6B]">
-            <Plus size={12} strokeWidth={1.5} /> Add
-          </Button>
-        }
-      >
-        <div className="flex gap-2 flex-wrap">
-          {assignedToName && (
-            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-[#F7F7F8]">
-              <Avatar className="h-[22px] w-[22px] rounded-md">
-                <AvatarFallback className="rounded-md bg-[#1A1A1A]/[0.06] text-[#1A1A1A] text-[9px] font-semibold">
-                  {assignedToName
-                    .split(" ")
-                    .map((w) => w[0])
-                    .join("")
-                    .toUpperCase()
-                    .slice(0, 2)}
-                </AvatarFallback>
-              </Avatar>
-              <span className="text-xs font-medium">{assignedToName.split(" ")[0]}</span>
-            </div>
-          )}
-        </div>
-      </SectionCard>
-
-      {/* Relationships */}
-      <SectionCard title="Relationships" icon={Users}>
-        {relationships.length === 0 ? (
-          <p className="text-xs text-[#8B8B8B]">No relationships defined.</p>
-        ) : (
-          <div className="flex flex-col gap-2">
-            {relationships.map((r, i) => (
-              <div
-                key={r.id}
-                className="flex justify-between items-center py-1.5"
-                style={{
-                  borderBottom:
-                    i < relationships.length - 1 ? "1px solid #F7F7F8" : "none",
-                }}
+      <Card className="rounded-xl border-[#E5E5E7]">
+        <CardHeader className="px-4 py-3 pb-0">
+          <CardTitle className="text-xs font-semibold text-[#1A1A1A] flex items-center gap-1.5">
+            <Activity size={14} className="text-[#6B6B6B]" strokeWidth={1.5} />
+            Quick Actions
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="px-4 py-3">
+          <div className="flex flex-col gap-1.5">
+            {quickActions.map(({ icon: Icon, label, onClick }) => (
+              <Button
+                key={label}
+                variant="ghost"
+                size="sm"
+                onClick={onClick}
+                disabled={logging && label === "Log Call"}
+                className="justify-start gap-2 h-8 px-2.5 text-[13px] font-normal text-[#1A1A1A] hover:bg-[#F7F7F8] rounded-lg w-full"
               >
-                <DotPill
-                  color={r.is_active ? "#22A861" : "#8B8B8B"}
-                  label={r.relationship_type.charAt(0).toUpperCase() + r.relationship_type.slice(1)}
-                  small
+                <Icon
+                  size={14}
+                  className="text-[#6B6B6B]"
+                  strokeWidth={1.5}
                 />
-                <span className="text-[11px] text-[#8B8B8B]">
-                  Since {formatDate(r.started_at)}
-                </span>
-              </div>
+                {label}
+              </Button>
             ))}
           </div>
-        )}
-      </SectionCard>
+        </CardContent>
+      </Card>
+
+      {/* Followers */}
+      <Card className="rounded-xl border-[#E5E5E7]">
+        <CardHeader className="px-4 py-3 pb-0">
+          <div className="flex items-center justify-between">
+            <CardTitle className="text-xs font-semibold text-[#1A1A1A] flex items-center gap-1.5">
+              <Bell size={14} className="text-[#6B6B6B]" strokeWidth={1.5} />
+              Followers
+            </CardTitle>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="gap-1 text-xs h-6 text-[#6B6B6B] px-1.5"
+            >
+              <Plus size={12} strokeWidth={1.5} /> Add
+            </Button>
+          </div>
+        </CardHeader>
+        <CardContent className="px-4 py-3">
+          <div className="flex gap-2 flex-wrap">
+            {assignedToName && (
+              <HoverCard>
+                <HoverCardTrigger asChild>
+                  <div className="flex items-center gap-1.5 px-2 py-1 rounded-lg bg-[#F7F7F8] cursor-pointer">
+                    <Avatar className="h-[22px] w-[22px] rounded-md">
+                      <AvatarFallback className="rounded-md bg-[#1A1A1A]/[0.06] text-[#1A1A1A] text-[9px] font-semibold">
+                        {assignedInitials}
+                      </AvatarFallback>
+                    </Avatar>
+                    <span className="text-xs font-medium">
+                      {assignedToName.split(" ")[0]}
+                    </span>
+                  </div>
+                </HoverCardTrigger>
+                <HoverCardContent
+                  className="w-48"
+                  side="left"
+                  align="start"
+                >
+                  <div className="flex items-center gap-2">
+                    <Avatar className="h-8 w-8 rounded-lg">
+                      <AvatarFallback className="rounded-lg bg-[#1A1A1A]/[0.06] text-[#1A1A1A] text-xs font-semibold">
+                        {assignedInitials}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div>
+                      <p className="text-sm font-medium">{assignedToName}</p>
+                      <p className="text-xs text-[#8B8B8B]">Assigned Owner</p>
+                    </div>
+                  </div>
+                </HoverCardContent>
+              </HoverCard>
+            )}
+            {!assignedToName && (
+              <p className="text-xs text-[#8B8B8B]">No followers yet.</p>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Relationships */}
+      <Card className="rounded-xl border-[#E5E5E7]">
+        <CardHeader className="px-4 py-3 pb-0">
+          <CardTitle className="text-xs font-semibold text-[#1A1A1A] flex items-center gap-1.5">
+            <Users size={14} className="text-[#6B6B6B]" strokeWidth={1.5} />
+            Relationships
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="px-4 py-3">
+          {relationships.length === 0 ? (
+            <p className="text-xs text-[#8B8B8B]">
+              No relationships defined.
+            </p>
+          ) : (
+            <div className="flex flex-col">
+              {relationships.map((r, i) => {
+                const key = r.relationship_type.toLowerCase();
+                const colors = RELATIONSHIP_BADGE_COLORS[key];
+                return (
+                  <div key={r.id}>
+                    <div className="flex justify-between items-center py-2">
+                      {colors ? (
+                        <Badge
+                          variant="outline"
+                          className="text-[11px] gap-1"
+                          style={{
+                            color: colors.text,
+                            borderColor: `${colors.text}30`,
+                            backgroundColor: colors.bg,
+                          }}
+                        >
+                          <span
+                            className="h-1.5 w-1.5 rounded-full"
+                            style={{
+                              backgroundColor: r.is_active
+                                ? colors.dot
+                                : "#8B8B8B",
+                            }}
+                          />
+                          {r.relationship_type.charAt(0).toUpperCase() +
+                            r.relationship_type.slice(1)}
+                        </Badge>
+                      ) : (
+                        <Badge variant="secondary" className="text-[11px]">
+                          {r.relationship_type.charAt(0).toUpperCase() +
+                            r.relationship_type.slice(1)}
+                        </Badge>
+                      )}
+                      <span className="text-[10px] text-[#8B8B8B]">
+                        Since {formatDate(r.started_at)}
+                      </span>
+                    </div>
+                    {i < relationships.length - 1 && (
+                      <Separator className="bg-[#F7F7F8]" />
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
       {/* Communication */}
-      <SectionCard title="Communication" icon={Globe}>
-        <div className="flex flex-col gap-0.5">
-          <FieldRow
-            label="Language"
-            value={
-              contact.language_preference
-                ? contact.language_preference.charAt(0).toUpperCase() +
-                  contact.language_preference.slice(1)
-                : "—"
-            }
-          />
-          <FieldRow
-            label="Marketing Consent"
-            value={contact.marketing_consent ? "Yes" : "No"}
-          />
-          <FieldRow label="Do Not Contact" value={contact.dnc ? "Yes" : "No"} />
-          <FieldRow
-            label="Source"
-            value={sourceLabel || (contact.source ? contact.source.charAt(0).toUpperCase() + contact.source.slice(1) : "—")}
-          />
-        </div>
-      </SectionCard>
+      <Card className="rounded-xl border-[#E5E5E7]">
+        <CardHeader className="px-4 py-3 pb-0">
+          <CardTitle className="text-xs font-semibold text-[#1A1A1A] flex items-center gap-1.5">
+            <Globe size={14} className="text-[#6B6B6B]" strokeWidth={1.5} />
+            Communication
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="px-4 py-3">
+          <div className="flex flex-col gap-1.5">
+            <SidebarFieldRow
+              label="Language"
+              value={
+                contact.language_preference
+                  ? contact.language_preference.charAt(0).toUpperCase() +
+                    contact.language_preference.slice(1)
+                  : "—"
+              }
+            />
+            <SidebarFieldRow
+              label="Marketing Consent"
+              value={contact.marketing_consent ? "Yes" : "No"}
+            />
+            <SidebarFieldRow
+              label="Do Not Contact"
+              value={contact.dnc ? "Yes" : "No"}
+              danger={!!contact.dnc}
+            />
+            <SidebarFieldRow
+              label="Source"
+              value={
+                sourceLabel ||
+                (contact.source
+                  ? contact.source.charAt(0).toUpperCase() +
+                    contact.source.slice(1)
+                  : "—")
+              }
+            />
+          </div>
+        </CardContent>
+      </Card>
 
       {/* System Info */}
-      <SectionCard title="System Info" icon={Hash}>
-        <div className="flex flex-col gap-0.5">
-          <FieldRow label="Created" value={formatDate(contact.created_at)} />
-          <FieldRow label="Updated" value={relTime(contact.updated_at)} />
-          <FieldRow
-            label="Contact ID"
-            value={<MonoValue className="text-xs">{contact.id.slice(0, 8)}...</MonoValue>}
-            mono
-          />
-        </div>
-      </SectionCard>
+      <Card className="rounded-xl border-[#E5E5E7]">
+        <CardHeader className="px-4 py-3 pb-0">
+          <CardTitle className="text-xs font-semibold text-[#1A1A1A] flex items-center gap-1.5">
+            <Hash size={14} className="text-[#6B6B6B]" strokeWidth={1.5} />
+            System Info
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="px-4 py-3">
+          <div className="flex flex-col gap-1.5">
+            <SidebarFieldRow
+              label="Created"
+              value={formatDate(contact.created_at)}
+            />
+            <SidebarFieldRow
+              label="Updated"
+              value={relTime(contact.updated_at)}
+            />
+            <div className="flex justify-between items-center py-1.5">
+              <Label className="text-[11px] text-[#8B8B8B] font-normal">
+                Contact ID
+              </Label>
+              <MonoValue className="text-[11px] text-[#1A1A1A]">
+                {contact.id.slice(0, 8)}...
+              </MonoValue>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
       <EmailComposeSheet
         open={emailOpen}
@@ -211,6 +354,29 @@ export function ContactDetailSidebar({
         currentUserId={currentUserId}
         currentUserName={currentUserName}
       />
+    </div>
+  );
+}
+
+/** Sidebar field row using Label */
+function SidebarFieldRow({
+  label,
+  value,
+  danger,
+}: {
+  label: string;
+  value: string;
+  danger?: boolean;
+}) {
+  return (
+    <div className="flex justify-between items-center py-1.5">
+      <Label className="text-[11px] text-[#8B8B8B] font-normal">{label}</Label>
+      <span
+        className="text-[11px] font-medium"
+        style={{ color: danger ? "#E5453D" : "#1A1A1A" }}
+      >
+        {value}
+      </span>
     </div>
   );
 }
