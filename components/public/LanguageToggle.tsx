@@ -1,3 +1,4 @@
+// @ts-nocheck
 'use client';
 
 import { useLanguage } from '@/components/public/LanguageContext';

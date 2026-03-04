@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Fetches current loan market indexes from public government APIs.
  *

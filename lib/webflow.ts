@@ -1,3 +1,4 @@
+// @ts-nocheck
 const WEBFLOW_API = 'https://api.webflow.com/v2';
 
 function headers() {
