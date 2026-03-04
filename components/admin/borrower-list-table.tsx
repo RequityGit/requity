@@ -5,6 +5,7 @@ import { formatDate } from "@/lib/format";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useState, useMemo } from "react";
+import { ClickToCallNumber } from "@/components/ui/ClickToCallNumber";
 import {
   Search,
   ArrowUpDown,
@@ -276,7 +277,7 @@ export function BorrowerListTable({ data }: BorrowerListTableProps) {
                     </span>
                   </TableCell>
                   <TableCell>{row.email}</TableCell>
-                  <TableCell>{row.phone}</TableCell>
+                  <TableCell><ClickToCallNumber number={row.phone} /></TableCell>
                   <TableCell>
                     {row.credit_score ? (
                       <span

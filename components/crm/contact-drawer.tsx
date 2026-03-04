@@ -18,6 +18,7 @@ import {
   Activity,
   Send,
 } from "lucide-react";
+import { ClickToCallNumber } from "@/components/ui/ClickToCallNumber";
 import type { CrmContactRow } from "./crm-v2-page";
 import { Avatar, RelPill, StageDot, getInitials, getNameInitials } from "./crm-primitives";
 
@@ -138,10 +139,7 @@ export function ContactDrawer({
             </div>
           )}
           {contact.phone && (
-            <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
-              <Phone className="h-3.5 w-3.5" />
-              {contact.phone}
-            </div>
+            <ClickToCallNumber number={contact.phone} className="text-sm" />
           )}
         </div>
       </div>

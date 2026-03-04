@@ -19,6 +19,7 @@ import {
   FieldRow,
 } from "@/components/crm/contact-360/contact-detail-shared";
 import { formatDate, formatCurrency, formatPercent } from "@/lib/format";
+import { ClickToCallNumber } from "@/components/ui/ClickToCallNumber";
 import type {
   CompanyDetailData,
   CompanyWireData,
@@ -128,7 +129,7 @@ export function CompanyOverviewTab({
               }
             />
           )}
-          <FieldRow label="Phone" value={company.phone} />
+          <FieldRow label="Phone" value={<ClickToCallNumber number={company.phone} showIcon={false} />} />
           <FieldRow label="Email" value={company.email} />
           <FieldRow
             label="Website"

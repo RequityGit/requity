@@ -4,22 +4,36 @@ import { Phone } from "lucide-react";
 import { useSoftphoneMaybe } from "@/lib/twilio/softphone-context";
 
 interface ClickToCallNumberProps {
-  number: string;
+  number: string | null | undefined;
+  fallback?: string;
   className?: string;
+  showIcon?: boolean;
 }
 
 export function ClickToCallNumber({
   number,
+  fallback = "—",
   className,
+  showIcon = true,
 }: ClickToCallNumberProps) {
   const softphone = useSoftphoneMaybe();
+
+  if (!number) {
+    return (
+      <span className={`text-xs text-muted-foreground ${className || ""}`}>
+        {fallback}
+      </span>
+    );
+  }
 
   const canCall = softphone?.status === "ready";
   const isBusy =
     softphone?.status === "on-call" || softphone?.status === "connecting";
   const isOffline = !softphone || softphone.status === "offline";
 
-  const handleClick = () => {
+  const handleClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    e.preventDefault();
     if (!canCall || !softphone) return;
     const normalized = number.startsWith("+")
       ? number
@@ -46,14 +60,16 @@ export function ClickToCallNumber({
           : "text-[#6B6B6B] dark:text-[#888888] cursor-default"
       } ${className || ""}`}
     >
-      <Phone
-        className={`h-3.5 w-3.5 transition-colors ${
-          canCall
-            ? "group-hover:text-[#2563EB] dark:group-hover:text-[#3B82F6]"
-            : ""
-        }`}
-        strokeWidth={1.5}
-      />
+      {showIcon && (
+        <Phone
+          className={`h-3.5 w-3.5 transition-colors ${
+            canCall
+              ? "group-hover:text-[#2563EB] dark:group-hover:text-[#3B82F6]"
+              : ""
+          }`}
+          strokeWidth={1.5}
+        />
+      )}
       {number}
     </button>
   );

@@ -16,6 +16,7 @@ import { Button } from "@/components/ui/button";
 import { formatDate } from "@/lib/format";
 import { CRM_CONTACT_TYPES, CRM_CONTACT_STATUSES } from "@/lib/constants";
 import { Search, X } from "lucide-react";
+import { ClickToCallNumber } from "@/components/ui/ClickToCallNumber";
 
 export interface CrmContactRow {
   id: string;
@@ -106,11 +107,7 @@ export function CrmContactList({ contacts }: CrmContactListProps) {
     {
       key: "phone",
       header: "Phone",
-      cell: (row) => (
-        <span className="text-sm text-muted-foreground">
-          {row.phone || "—"}
-        </span>
-      ),
+      cell: (row) => <ClickToCallNumber number={row.phone} />,
     },
     {
       key: "status",

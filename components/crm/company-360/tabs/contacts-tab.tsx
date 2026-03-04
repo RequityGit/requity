@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Plus, Mail, Phone, ChevronRight } from "lucide-react";
 import { DotPill, relTime } from "@/components/crm/contact-360/contact-detail-shared";
+import { ClickToCallNumber } from "@/components/ui/ClickToCallNumber";
 import type { CompanyContactData } from "../types";
 
 interface ContactsTabProps {
@@ -98,9 +99,7 @@ export function CompanyContactsTab({
                       </span>
                     )}
                     {ct.phone && (
-                      <span className="flex items-center gap-1">
-                        <Phone size={11} strokeWidth={1.5} /> {ct.phone}
-                      </span>
+                      <ClickToCallNumber number={ct.phone} className="text-xs" />
                     )}
                   </div>
                 </div>

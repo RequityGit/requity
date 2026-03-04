@@ -104,41 +104,48 @@ export default async function AuthenticatedLayout({
             userId={user.id}
             accessibleModules={accessibleModules}
           >
-            <div className="flex flex-col h-screen overflow-hidden">
-              <ImpersonationBanner />
-              <div className="flex flex-1 overflow-hidden">
-                {/* Desktop sidebar - hidden on mobile */}
-                <div className="hidden md:block">
-                  <Sidebar
-                    role={sidebarRole}
-                    isSuperAdmin={isSuperAdmin && !impersonation.isImpersonating}
-                    accessibleModules={accessibleModules}
-                  />
+            {(() => {
+              const isAdmin = effectiveRole === "admin" || effectiveRole === "super_admin";
+              const innerContent = (
+                <div className="flex flex-col h-screen overflow-hidden">
+                  <ImpersonationBanner />
+                  <div className="flex flex-1 overflow-hidden">
+                    {/* Desktop sidebar - hidden on mobile */}
+                    <div className="hidden md:block">
+                      <Sidebar
+                        role={sidebarRole}
+                        isSuperAdmin={isSuperAdmin && !impersonation.isImpersonating}
+                        accessibleModules={accessibleModules}
+                      />
+                    </div>
+                    <div className="flex-1 flex flex-col overflow-hidden">
+                      <Topbar
+                        userName={profile.full_name || ""}
+                        role={effectiveRole}
+                        email={profile.email ?? ""}
+                        allowedRoles={allowedRoles}
+                        userId={user.id}
+                        isSuperAdmin={isSuperAdmin}
+                        avatarUrl={profile.avatar_url}
+                      />
+                      <main className="flex-1 overflow-y-auto bg-background p-4 md:p-6 pb-20 md:pb-6">
+                        <ActivityTrackerProvider role={effectiveRole}>
+                          <ModuleGuard>
+                            {children}
+                          </ModuleGuard>
+                        </ActivityTrackerProvider>
+                      </main>
+                    </div>
+                  </div>
+                  <Toaster />
                 </div>
-                <div className="flex-1 flex flex-col overflow-hidden">
-                  <Topbar
-                    userName={profile.full_name || ""}
-                    role={effectiveRole}
-                    email={profile.email ?? ""}
-                    allowedRoles={allowedRoles}
-                    userId={user.id}
-                    isSuperAdmin={isSuperAdmin}
-                    avatarUrl={profile.avatar_url}
-                  />
-                  <main className="flex-1 overflow-y-auto bg-background p-4 md:p-6 pb-20 md:pb-6">
-                    <ActivityTrackerProvider role={effectiveRole}>
-                      <ModuleGuard>
-                        {children}
-                      </ModuleGuard>
-                    </ActivityTrackerProvider>
-                  </main>
-                </div>
-              </div>
-              <Toaster />
-              {(effectiveRole === "admin" || effectiveRole === "super_admin") && (
-                <SoftphoneWrapper />
-              )}
-            </div>
+              );
+              return isAdmin ? (
+                <SoftphoneWrapper>{innerContent}</SoftphoneWrapper>
+              ) : (
+                innerContent
+              );
+            })()}
           </MobileLayoutWrapper>
         </ModuleAccessProvider>
       </ViewAsProvider>

@@ -9,6 +9,7 @@ import { StatusBadge } from "@/components/shared/status-badge";
 import { formatCurrency, formatDate } from "@/lib/format";
 import { Mail, Phone, MapPin, Calendar, Shield } from "lucide-react";
 import { EmailActivityFeed } from "@/components/crm/email-activity-feed";
+import { ClickToCallNumber } from "@/components/ui/ClickToCallNumber";
 
 interface PageProps {
   params: { id: string };
@@ -255,7 +256,7 @@ export default async function AdminInvestorDetailPage({ params }: PageProps) {
               <Phone className="h-4 w-4 text-muted-foreground" />
               <div>
                 <p className="text-xs text-muted-foreground">Phone</p>
-                <p className="text-sm font-medium">{inv.phone || "—"}</p>
+                <ClickToCallNumber number={inv.phone} showIcon={false} className="text-sm font-medium" />
               </div>
             </div>
             <div className="flex items-center gap-2">

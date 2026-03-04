@@ -18,6 +18,7 @@ import {
 import Link from "next/link";
 import { BorrowerEntityList } from "@/components/admin/borrower-entity-list";
 import { BorrowerEditDialog } from "@/components/admin/borrower-edit-dialog";
+import { ClickToCallNumber } from "@/components/ui/ClickToCallNumber";
 import { BorrowerLoanTable } from "@/components/admin/borrower-loan-table";
 import { EmailActivityFeed } from "@/components/crm/email-activity-feed";
 
@@ -120,9 +121,7 @@ export default async function AdminBorrowerDetailPage({ params }: PageProps) {
               <Phone className="h-4 w-4 text-muted-foreground shrink-0" />
               <div>
                 <p className="text-xs text-muted-foreground">Phone</p>
-                <p className="text-sm font-medium">
-                  {borrower.phone || "—"}
-                </p>
+                <ClickToCallNumber number={borrower.phone} showIcon={false} className="text-sm font-medium" />
               </div>
             </div>
             <div className="flex items-center gap-3">

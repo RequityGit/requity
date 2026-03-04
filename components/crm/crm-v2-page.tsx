@@ -39,6 +39,7 @@ import {
   Briefcase,
 } from "lucide-react";
 import { Avatar, RelPill, StageDot, CompanyStatusDot } from "./crm-primitives";
+import { ClickToCallNumber } from "@/components/ui/ClickToCallNumber";
 
 // ── Types ────────────────────────────────────────────────────────────────
 
@@ -584,7 +585,7 @@ export function CrmV2Page({
                           {c.email || "—"}
                         </td>
                         <td className="px-4 py-3 text-sm text-muted-foreground whitespace-nowrap">
-                          {c.phone || "—"}
+                          <ClickToCallNumber number={c.phone} />
                         </td>
                         <td className="px-4 py-3">
                           <StageDot stage={c.lifecycle_stage} />

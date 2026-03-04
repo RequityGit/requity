@@ -7,6 +7,7 @@ import { formatCurrency } from "@/lib/format";
 import { Input } from "@/components/ui/input";
 import { useState, useMemo } from "react";
 import { Search } from "lucide-react";
+import { ClickToCallNumber } from "@/components/ui/ClickToCallNumber";
 
 interface InvestorRow {
   id: string;
@@ -57,7 +58,7 @@ export function InvestorListTable({ data }: InvestorListTableProps) {
     {
       key: "phone",
       header: "Phone",
-      cell: (row) => row.phone,
+      cell: (row) => <ClickToCallNumber number={row.phone} />,
     },
     {
       key: "totalCommitted",

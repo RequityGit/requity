@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
 import { Mail, Phone, MapPin, Circle } from "lucide-react";
+import { ClickToCallNumber } from "@/components/ui/ClickToCallNumber";
 import { formatDate } from "@/lib/format";
 import { relTime } from "./contact-detail-shared";
 import type { ContactData, CompanyData } from "./types";
@@ -130,10 +131,7 @@ export function ContactDetailHeader({
             {/* Row 3: Contact info chips */}
             <div className="flex items-center gap-3 flex-wrap mb-2">
               {contact.phone && (
-                <span className="flex items-center gap-1.5 text-xs text-[#6B6B6B]">
-                  <Phone className="h-3.5 w-3.5" strokeWidth={1.5} />
-                  {contact.phone}
-                </span>
+                <ClickToCallNumber number={contact.phone} />
               )}
               {(company || contact.company_name) && (
                 <span

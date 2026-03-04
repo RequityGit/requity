@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { CRM_COMPANY_TYPES } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 import { X, Building2 } from "lucide-react";
+import { ClickToCallNumber } from "@/components/ui/ClickToCallNumber";
 import type { CompanyRowV2 } from "./crm-v2-page";
 
 // ── Company Drawer ─────────────────────────────────────────────────────
@@ -64,7 +65,6 @@ export function CompanyDrawer({ company, onClose }: CompanyDrawerProps) {
             { l: "Location", v: company.city && company.state ? `${company.city}, ${company.state}` : company.city || company.state || "—" },
             { l: "Status", v: company.is_active !== false ? "Active" : "Inactive" },
             { l: "Website", v: company.website || "—", link: !!company.website },
-            { l: "Phone", v: company.phone || "—" },
             { l: "Email", v: company.email || "—" },
           ].map((f) => (
             <div key={f.l} className="flex items-center justify-between py-2.5 border-b">
@@ -79,6 +79,10 @@ export function CompanyDrawer({ company, onClose }: CompanyDrawerProps) {
               </span>
             </div>
           ))}
+          <div className="flex items-center justify-between py-2.5 border-b">
+            <span className="text-sm text-muted-foreground">Phone</span>
+            <ClickToCallNumber number={company.phone} className="text-sm font-medium" />
+          </div>
         </div>
 
         {company.notes && (

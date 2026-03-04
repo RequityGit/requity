@@ -34,6 +34,7 @@ import {
   Save,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { ClickToCallNumber } from "@/components/ui/ClickToCallNumber";
 import Link from "next/link";
 
 interface CompanyContact {
@@ -235,10 +236,7 @@ export function CompanyDetailPanel({
           {/* Quick info row */}
           <div className="flex flex-wrap gap-4 mb-4 text-sm text-muted-foreground">
             {company.phone && (
-              <div className="flex items-center gap-1.5">
-                <Phone className="h-3.5 w-3.5" />
-                {company.phone}
-              </div>
+              <ClickToCallNumber number={company.phone} />
             )}
             {company.email && (
               <div className="flex items-center gap-1.5">
@@ -368,7 +366,7 @@ export function CompanyDetailPanel({
                   </div>
                   <div>
                     <p className="text-xs text-muted-foreground mb-1">Phone</p>
-                    <p className="font-medium">{company.phone || "—"}</p>
+                    <ClickToCallNumber number={company.phone} showIcon={false} className="font-medium" />
                   </div>
                   <div>
                     <p className="text-xs text-muted-foreground mb-1">Email</p>

@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 import { RelationshipBadge } from "./shared";
 import { EmailComposeSheet } from "@/components/crm/email-compose-sheet";
+import { ClickToCallNumber } from "@/components/ui/ClickToCallNumber";
 import type { ContactData, CompanyData } from "./types";
 
 interface QuickAction {
@@ -163,10 +164,7 @@ export function ContactHeader({
               </span>
             )}
             {contact.phone && (
-              <span className="flex items-center gap-1">
-                <Phone className="h-3.5 w-3.5" strokeWidth={1.5} />
-                {contact.phone}
-              </span>
+              <ClickToCallNumber number={contact.phone} />
             )}
             {location && (
               <span className="flex items-center gap-1">

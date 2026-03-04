@@ -42,6 +42,7 @@ import {
   Ban,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { ClickToCallNumber } from "@/components/ui/ClickToCallNumber";
 
 // ── Types ────────────────────────────────────────────────────────────────
 
@@ -288,11 +289,7 @@ export function CrmContactList({
       {
         key: "phone",
         header: "Phone",
-        cell: (row) => (
-          <span className="text-sm text-muted-foreground">
-            {row.phone || "—"}
-          </span>
-        ),
+        cell: (row) => <ClickToCallNumber number={row.phone} />,
       },
       {
         key: "lifecycle_stage",

@@ -14,6 +14,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { DotPill } from "@/components/crm/contact-360/contact-detail-shared";
 import { relTime } from "@/components/crm/contact-360/contact-detail-shared";
 import { formatDate } from "@/lib/format";
+import { ClickToCallNumber } from "@/components/ui/ClickToCallNumber";
 import type { CompanyDetailData } from "./types";
 import { COMPANY_TYPE_CONFIG, SUBTYPE_LABELS } from "./types";
 
@@ -135,9 +136,7 @@ export function CompanyDetailHeader({
           {/* Contact info row */}
           <div className="flex items-center gap-4 flex-wrap mb-3">
             {company.phone && (
-              <span className="flex items-center gap-1.5 text-[13px] text-[#6B6B6B]">
-                <Phone size={13} strokeWidth={1.5} /> {company.phone}
-              </span>
+              <ClickToCallNumber number={company.phone} className="text-[13px]" />
             )}
             {company.email && (
               <span className="flex items-center gap-1.5 text-[13px] text-[#6B6B6B]">
