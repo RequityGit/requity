@@ -401,7 +401,7 @@ export async function approveRequest(approvalId: string, decisionNotes?: string)
         loan_id: appr.entity_id,
         performed_by: auth.user.id,
         action: "stage_change",
-        description: `Approval granted by ${auth.profile?.full_name || "Admin"}`,
+        description: `Approval granted by Admin`,
       });
     }
 
@@ -433,7 +433,7 @@ export async function approveRequest(approvalId: string, decisionNotes?: string)
         user_id: appr.submitted_by,
         notification_slug: "approval-decided",
         title: `Approved: ${appr.deal_snapshot?.borrower_name || "Deal"} approved`,
-        body: `${auth.profile?.full_name || "An approver"} approved your ${appr.entity_type} request.${decisionNotes ? ` Notes: ${decisionNotes}` : ""}`,
+        body: `An approver approved your ${appr.entity_type} request.${decisionNotes ? ` Notes: ${decisionNotes}` : ""}`,
         priority: "normal",
         entity_type: "task",
         entity_id: approvalId,
@@ -528,7 +528,7 @@ export async function requestChanges(approvalId: string, decisionNotes: string) 
         user_id: appr.submitted_by,
         notification_slug: "approval-changes-requested",
         title: `Changes requested: ${dealName}`,
-        body: `${auth.profile?.full_name || "An approver"} requested changes: ${decisionNotes.substring(0, 100)}`,
+        body: `An approver requested changes: ${decisionNotes.substring(0, 100)}`,
         priority: "high",
         entity_type: "task",
         entity_id: approvalId,
@@ -608,7 +608,7 @@ export async function declineRequest(approvalId: string, decisionNotes: string) 
         loan_id: appr.entity_id,
         performed_by: auth.user.id,
         action: "stage_change",
-        description: `Declined by ${auth.profile?.full_name || "Admin"}: ${decisionNotes}`,
+        description: `Declined by Admin: ${decisionNotes}`,
       });
     }
 
@@ -640,7 +640,7 @@ export async function declineRequest(approvalId: string, decisionNotes: string) 
         user_id: appr.submitted_by,
         notification_slug: "approval-decided",
         title: `Declined: ${appr.deal_snapshot?.borrower_name || "Deal"}`,
-        body: `${auth.profile?.full_name || "An approver"} declined your ${appr.entity_type}: ${decisionNotes.substring(0, 100)}`,
+        body: `An approver declined your ${appr.entity_type}: ${decisionNotes.substring(0, 100)}`,
         priority: "high",
         entity_type: "task",
         entity_id: approvalId,
