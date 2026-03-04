@@ -38,9 +38,9 @@ interface LoanContext {
 
 const stageColors: Record<string, string> = {
   lead: "bg-muted text-muted-foreground",
-  application: "bg-[rgba(197,151,91,0.1)] text-gold",
-  processing: "bg-[rgba(197,151,91,0.1)] text-gold-light",
-  underwriting: "bg-[rgba(197,151,91,0.15)] text-gold-light",
+  application: "bg-accent text-foreground",
+  processing: "bg-muted text-primary/80",
+  underwriting: "bg-muted text-primary/80",
   approved: "bg-[rgba(45,138,86,0.15)] text-[#2D8A56]",
   clear_to_close: "bg-[rgba(45,138,86,0.2)] text-[#2D8A56]",
   funded: "bg-[rgba(45,138,86,0.15)] text-[#2D8A56]",
@@ -156,7 +156,7 @@ export function ContextPanel({ channel, onClose }: ContextPanelProps) {
               <div className="text-xs text-muted-foreground mb-1 flex items-center gap-1">
                 <DollarSign className="h-3 w-3" /> Loan Amount
               </div>
-              <div className="text-sm font-semibold text-gold">
+              <div className="text-sm font-semibold text-foreground">
                 {formatCurrency(loan.loan_amount)}
               </div>
             </div>
@@ -232,7 +232,7 @@ export function ContextPanel({ channel, onClose }: ContextPanelProps) {
 
           <Link
             href={`/admin/deals/${loan.id}`}
-            className="flex items-center gap-2 text-sm text-gold hover:text-gold-light font-medium transition-colors duration-200"
+            className="flex items-center gap-2 text-sm text-primary hover:text-primary/80 font-medium transition-colors duration-200"
           >
             <ExternalLink className="h-4 w-4" />
             View full loan details

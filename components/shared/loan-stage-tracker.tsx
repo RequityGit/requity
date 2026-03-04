@@ -78,7 +78,7 @@ export function LoanStageTracker({ currentStage }: LoanStageTrackerProps) {
                     className={cn(
                       "w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-medium border-2 transition-colors flex-shrink-0",
                       isPast && "bg-green-600 border-green-600 text-white",
-                      isCurrent && "bg-gold border-gold text-white",
+                      isCurrent && "bg-primary border-primary text-white",
                       !isPast &&
                         !isCurrent &&
                         "bg-background border-border text-muted-foreground"
@@ -99,7 +99,7 @@ export function LoanStageTracker({ currentStage }: LoanStageTrackerProps) {
                     {LOAN_STAGE_LABELS[stage]}
                   </span>
                   {isCurrent && (
-                    <span className="text-[10px] text-gold font-medium ml-auto">
+                    <span className="text-[10px] text-primary font-medium ml-auto">
                       In Progress
                     </span>
                   )}

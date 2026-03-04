@@ -122,7 +122,7 @@ export function ChannelHeader({
             className={cn(
               "px-3 py-2 text-sm font-medium border-b-2 transition-all duration-200",
               activeTab === "chat"
-                ? "text-gold border-[#C5975B]"
+                ? "text-foreground border-primary"
                 : "text-muted-foreground border-transparent hover:text-muted-foreground"
             )}
           >
@@ -133,7 +133,7 @@ export function ChannelHeader({
             className={cn(
               "px-3 py-2 text-sm font-medium border-b-2 transition-all duration-200",
               activeTab === "activity"
-                ? "text-gold border-[#C5975B]"
+                ? "text-foreground border-primary"
                 : "text-muted-foreground border-transparent hover:text-muted-foreground"
             )}
           >
@@ -162,7 +162,7 @@ function HeaderButton({
       className={cn(
         "p-1.5 rounded-md transition-all duration-200 ease-[cubic-bezier(0.4,0,0.2,1)]",
         isActive
-          ? "text-gold bg-[rgba(197,151,91,0.08)]"
+          ? "text-foreground bg-accent"
           : "text-muted-foreground hover:text-foreground hover:bg-[rgba(255,255,255,0.06)]"
       )}
       title={title}

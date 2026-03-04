@@ -260,15 +260,15 @@ export default async function InvestorDashboardPage() {
                     key={`${item.type}-${item.id}`}
                     className="flex items-start gap-3 pb-4 border-b last:border-b-0 last:pb-0"
                   >
-                    <div className="mt-0.5 rounded-full p-2 bg-muted">
+                    <div className="mt-0.5 rounded-lg p-2 bg-muted">
                       {item.type === "distribution" && (
-                        <CircleDollarSign className="h-4 w-4 text-green-600" />
+                        <CircleDollarSign className="h-4 w-4 text-muted-foreground" />
                       )}
                       {item.type === "contribution" && (
-                        <BanknoteIcon className="h-4 w-4 text-blue-600" />
+                        <BanknoteIcon className="h-4 w-4 text-muted-foreground" />
                       )}
                       {item.type === "document" && (
-                        <FileText className="h-4 w-4 text-slate-600" />
+                        <FileText className="h-4 w-4 text-muted-foreground" />
                       )}
                     </div>
                     <div className="flex-1 min-w-0">
@@ -355,8 +355,8 @@ export default async function InvestorDashboardPage() {
           <Card className="hover:shadow-md transition-shadow cursor-pointer">
             <CardContent className="flex items-center justify-between p-4">
               <div className="flex items-center gap-3">
-                <div className="rounded-full p-2 bg-blue-50">
-                  <BanknoteIcon className="h-5 w-5 text-blue-600" />
+                <div className="rounded-lg p-2 bg-muted">
+                  <BanknoteIcon className="h-5 w-5 text-muted-foreground" />
                 </div>
                 <div>
                   <p className="text-sm font-medium text-foreground">
@@ -375,8 +375,8 @@ export default async function InvestorDashboardPage() {
           <Card className="hover:shadow-md transition-shadow cursor-pointer">
             <CardContent className="flex items-center justify-between p-4">
               <div className="flex items-center gap-3">
-                <div className="rounded-full p-2 bg-green-50">
-                  <CircleDollarSign className="h-5 w-5 text-green-600" />
+                <div className="rounded-lg p-2 bg-muted">
+                  <CircleDollarSign className="h-5 w-5 text-muted-foreground" />
                 </div>
                 <div>
                   <p className="text-sm font-medium text-foreground">

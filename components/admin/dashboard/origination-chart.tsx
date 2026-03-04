@@ -28,8 +28,8 @@ export function OriginationChart({ data }: OriginationChartProps) {
           <AreaChart data={data}>
             <defs>
               <linearGradient id="origGrad" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="#C5975B" stopOpacity={0.15} />
-                <stop offset="100%" stopColor="#C5975B" stopOpacity={0.01} />
+                <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity={0.15} />
+                <stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity={0.01} />
               </linearGradient>
             </defs>
             <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,0,0,0.04)" />
@@ -61,11 +61,11 @@ export function OriginationChart({ data }: OriginationChartProps) {
             <Area
               type="monotone"
               dataKey="volume"
-              stroke="#C5975B"
+              stroke="hsl(var(--primary))"
               strokeWidth={2}
               fill="url(#origGrad)"
-              dot={{ r: 2.5, fill: "#C5975B", stroke: "#fff", strokeWidth: 1.5 }}
-              activeDot={{ r: 4, fill: "#C5975B", stroke: "#fff", strokeWidth: 2 }}
+              dot={{ r: 2.5, fill: "hsl(var(--primary))", stroke: "#fff", strokeWidth: 1.5 }}
+              activeDot={{ r: 4, fill: "hsl(var(--primary))", stroke: "#fff", strokeWidth: 2 }}
             />
           </AreaChart>
         </ResponsiveContainer>

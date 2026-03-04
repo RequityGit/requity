@@ -27,13 +27,13 @@ export function SecondaryMetrics({ data }: SecondaryMetricsProps) {
           key={i}
           className={`rounded-md px-3 py-2.5 border shadow-sm ${
             m.accent
-              ? "bg-gold/[0.08] border-gold/[0.12]"
+              ? "bg-accent border-border"
               : "bg-card border-border"
           }`}
         >
           <span
             className={`text-[9px] font-bold uppercase tracking-[0.08em] ${
-              m.accent ? "text-gold" : "text-dash-text-faint"
+              m.accent ? "text-foreground" : "text-dash-text-faint"
             }`}
           >
             {m.label}

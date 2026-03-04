@@ -78,7 +78,7 @@ const STATUS_STYLES: Record<string, { dot: string; bg: string; text: string }> =
   generated: { dot: "bg-blue-500", bg: "bg-blue-50", text: "text-blue-700" },
   sent: { dot: "bg-amber-500", bg: "bg-amber-50", text: "text-amber-700" },
   paid: { dot: "bg-emerald-500", bg: "bg-emerald-50", text: "text-emerald-700" },
-  expired: { dot: "bg-gray-400", bg: "bg-gray-50", text: "text-gray-600" },
+  expired: { dot: "bg-muted-foreground", bg: "bg-muted", text: "text-muted-foreground" },
   voided: { dot: "bg-red-500", bg: "bg-red-50", text: "text-red-700" },
 };
 

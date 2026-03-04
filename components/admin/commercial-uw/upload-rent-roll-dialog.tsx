@@ -130,18 +130,7 @@ export function UploadRentRollDialog({ open, onOpenChange, onImport }: Props) {
   const handleFileSelect = async (file: File) => {
     try {
       setError(null);
-      console.log("[RentRoll] Parsing file:", file.name, file.size, "bytes");
       const result = await parseSpreadsheet(file);
-      console.log(
-        "[RentRoll] Parsed:",
-        result.headers.length,
-        "headers,",
-        result.rows.length,
-        "rows (header detected at row",
-        result.headerRowIndex + 1,
-        ")"
-      );
-      console.log("[RentRoll] Headers:", result.headers);
       setParsed(result);
       setFilename(file.name);
       // Auto-map: sourceHeader -> targetFieldKey

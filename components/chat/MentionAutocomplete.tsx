@@ -26,7 +26,7 @@ export function MentionAutocomplete({
             key={`${s.type}-${s.id}`}
             className={cn(
               "w-full flex items-center gap-3 px-3 py-2 text-left text-sm hover:bg-[rgba(255,255,255,0.06)] transition-colors duration-200",
-              i === selectedIndex && "bg-[rgba(197,151,91,0.08)]"
+              i === selectedIndex && "bg-accent"
             )}
             onClick={() => onSelect(s)}
             onMouseDown={(e) => e.preventDefault()}
@@ -42,8 +42,8 @@ export function MentionAutocomplete({
                 <Users className="h-4 w-4 text-[#D4952B]" />
               </div>
             ) : s.type === "entity" ? (
-              <div className="h-7 w-7 flex items-center justify-center rounded-md bg-[rgba(197,151,91,0.15)]">
-                <Landmark className="h-4 w-4 text-gold" />
+              <div className="h-7 w-7 flex items-center justify-center rounded-md bg-muted">
+                <Landmark className="h-4 w-4 text-foreground" />
               </div>
             ) : (
               <div className="h-7 w-7 flex items-center justify-center rounded-md bg-muted">
@@ -61,7 +61,7 @@ export function MentionAutocomplete({
               )}
             </div>
             {s.type === "entity" && s.entity_type && (
-              <span className="text-xs text-gold bg-[rgba(197,151,91,0.1)] px-1.5 py-0.5 rounded">
+              <span className="text-xs text-foreground bg-accent px-1.5 py-0.5 rounded">
                 {s.entity_type}
               </span>
             )}

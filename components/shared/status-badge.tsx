@@ -1,78 +1,106 @@
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 
-const statusStyles: Record<string, string> = {
+type DotColor = "green" | "yellow" | "red" | "blue" | "purple" | "amber" | "teal" | "cyan" | "orange" | "slate" | "indigo" | "gray";
+
+const dotColorMap: Record<DotColor, string> = {
+  green: "bg-green-500",
+  yellow: "bg-yellow-500",
+  red: "bg-red-500",
+  blue: "bg-blue-500",
+  purple: "bg-purple-500",
+  amber: "bg-amber-500",
+  teal: "bg-teal-500",
+  cyan: "bg-cyan-500",
+  orange: "bg-orange-500",
+  slate: "bg-slate-400",
+  indigo: "bg-indigo-500",
+  gray: "bg-gray-400",
+};
+
+const statusColorMap: Record<string, DotColor> = {
   // Contributions / payments
-  pending: "bg-yellow-100 text-yellow-800 border-yellow-200",
-  paid: "bg-green-100 text-green-800 border-green-200",
-  overdue: "bg-red-100 text-red-800 border-red-200",
-  posted: "bg-green-100 text-green-800 border-green-200",
-  reversed: "bg-gray-100 text-gray-800 border-gray-200",
-  nsf: "bg-red-100 text-red-800 border-red-200",
+  pending: "yellow",
+  paid: "green",
+  overdue: "red",
+  posted: "green",
+  reversed: "gray",
+  nsf: "red",
 
   // Commitments
-  active: "bg-green-100 text-green-800 border-green-200",
-  partially_called: "bg-blue-100 text-blue-800 border-blue-200",
-  fully_called: "bg-purple-100 text-purple-800 border-purple-200",
-  redeemed: "bg-gray-100 text-gray-800 border-gray-200",
+  active: "green",
+  partially_called: "blue",
+  fully_called: "purple",
+  redeemed: "gray",
 
   // Portal activation
-  link_sent: "bg-blue-100 text-blue-800 border-blue-200",
-  activated: "bg-green-100 text-green-800 border-green-200",
+  link_sent: "blue",
+  activated: "green",
 
   // Draw requests
-  draft: "bg-gray-100 text-gray-800 border-gray-200",
-  submitted: "bg-yellow-100 text-yellow-800 border-yellow-200",
-  inspection_ordered: "bg-amber-100 text-amber-800 border-amber-200",
-  inspection_complete: "bg-teal-100 text-teal-800 border-teal-200",
-  under_review: "bg-blue-100 text-blue-800 border-blue-200",
-  approved: "bg-green-100 text-green-800 border-green-200",
-  funded: "bg-green-100 text-green-800 border-green-200",
-  denied: "bg-red-100 text-red-800 border-red-200",
-  partially_approved: "bg-amber-100 text-amber-800 border-amber-200",
-  withdrawn: "bg-gray-100 text-gray-500 border-gray-200",
-  completed: "bg-green-100 text-green-800 border-green-200",
+  draft: "gray",
+  submitted: "yellow",
+  inspection_ordered: "amber",
+  inspection_complete: "teal",
+  under_review: "blue",
+  approved: "green",
+  funded: "green",
+  denied: "red",
+  partially_approved: "amber",
+  withdrawn: "gray",
+  completed: "green",
 
   // Funds
-  open: "bg-green-100 text-green-800 border-green-200",
-  closed: "bg-gray-100 text-gray-800 border-gray-200",
-  fully_deployed: "bg-blue-100 text-blue-800 border-blue-200",
+  open: "green",
+  closed: "gray",
+  fully_deployed: "blue",
+  fundraising: "blue",
+  winding_down: "amber",
+  terminated: "red",
 
   // Loan pipeline stages
-  lead: "bg-slate-100 text-slate-800 border-slate-200",
-  application: "bg-blue-100 text-blue-800 border-blue-200",
-  processing: "bg-indigo-100 text-indigo-800 border-indigo-200",
-  underwriting: "bg-purple-100 text-purple-800 border-purple-200",
-  clear_to_close: "bg-teal-100 text-teal-800 border-teal-200",
-  servicing: "bg-cyan-100 text-cyan-800 border-cyan-200",
-  payoff: "bg-gray-100 text-gray-800 border-gray-200",
-  default: "bg-red-100 text-red-800 border-red-200",
-  reo: "bg-orange-100 text-orange-800 border-orange-200",
-  paid_off: "bg-gray-100 text-gray-600 border-gray-200",
+  lead: "slate",
+  application: "blue",
+  processing: "indigo",
+  underwriting: "purple",
+  clear_to_close: "teal",
+  servicing: "cyan",
+  payoff: "gray",
+  default: "red",
+  reo: "orange",
+  paid_off: "gray",
+  note_sold: "gray",
 
   // Priority
-  hot: "bg-red-100 text-red-800 border-red-200",
-  normal: "bg-slate-100 text-slate-700 border-slate-200",
-  on_hold: "bg-amber-100 text-amber-800 border-amber-200",
+  hot: "red",
+  normal: "slate",
+  on_hold: "amber",
 
   // Documents / Conditions
-  rejected: "bg-red-100 text-red-800 border-red-200",
-  not_requested: "bg-gray-100 text-gray-500 border-gray-200",
-  requested: "bg-blue-100 text-blue-800 border-blue-200",
-  received: "bg-indigo-100 text-indigo-800 border-indigo-200",
-  waived: "bg-slate-100 text-slate-600 border-slate-200",
+  rejected: "red",
+  not_requested: "gray",
+  not_applicable: "gray",
+  requested: "blue",
+  received: "indigo",
+  waived: "slate",
 
   // Servicing statuses (Title Case)
-  Active: "bg-green-100 text-green-800 border-green-200",
-  "Paid Off": "bg-gray-100 text-gray-600 border-gray-200",
-  Sold: "bg-blue-100 text-blue-800 border-blue-200",
-  "In Default": "bg-red-100 text-red-800 border-red-200",
-  Pending: "bg-yellow-100 text-yellow-800 border-yellow-200",
-  Funded: "bg-green-100 text-green-800 border-green-200",
-  Original: "bg-slate-100 text-slate-700 border-slate-200",
-  Reversal: "bg-amber-100 text-amber-800 border-amber-200",
-  Dutch: "bg-purple-100 text-purple-800 border-purple-200",
-  "Non Dutch": "bg-slate-100 text-slate-700 border-slate-200",
+  Active: "green",
+  "Paid Off": "gray",
+  Sold: "blue",
+  "In Default": "red",
+  Pending: "yellow",
+  Funded: "green",
+  Original: "slate",
+  Reversal: "amber",
+  Dutch: "purple",
+  "Non Dutch": "slate",
+
+  // CRM
+  converted: "green",
+  lost: "red",
+  inactive: "gray",
+  do_not_contact: "red",
 };
 
 interface StatusBadgeProps {
@@ -86,27 +114,29 @@ export function StatusBadge({ status, className }: StatusBadgeProps) {
       <Badge
         variant="outline"
         className={cn(
-          "capitalize text-xs font-medium",
-          "bg-gray-100 text-gray-800 border-gray-200",
+          "capitalize text-xs font-medium gap-1.5",
           className
         )}
       >
+        <span className="h-1.5 w-1.5 rounded-full bg-gray-300 flex-shrink-0" />
         —
       </Badge>
     );
   }
 
   const label = status.replace(/_/g, " ");
+  const dotColor = statusColorMap[status] || "gray";
+  const dotClass = dotColorMap[dotColor];
 
   return (
     <Badge
       variant="outline"
       className={cn(
-        "capitalize text-xs font-medium",
-        statusStyles[status] || "bg-gray-100 text-gray-800 border-gray-200",
+        "capitalize text-xs font-medium gap-1.5",
         className
       )}
     >
+      <span className={cn("h-1.5 w-1.5 rounded-full flex-shrink-0", dotClass)} />
       {label}
     </Badge>
   );

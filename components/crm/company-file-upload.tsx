@@ -155,8 +155,8 @@ export function CompanyFileUpload({
           className={cn(
             "border-2 border-dashed rounded-xl p-6 text-center cursor-pointer transition-all",
             dragging
-              ? "border-gold/50 bg-gold/5"
-              : "border-gray-200 hover:border-gold/30 hover:bg-muted"
+              ? "border-primary/50 bg-accent"
+              : "border-gray-200 hover:border-primary/30 hover:bg-muted"
           )}
         >
           <Upload className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
@@ -183,7 +183,7 @@ export function CompanyFileUpload({
         <div className="rounded-xl border p-4 space-y-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <Upload className="h-4 w-4 text-gold" />
+              <Upload className="h-4 w-4 text-primary" />
               <span className="text-sm font-medium truncate max-w-[200px]">
                 {selectedFile.name}
               </span>
@@ -219,7 +219,7 @@ export function CompanyFileUpload({
           {uploading && progress > 0 && (
             <div className="w-full bg-gray-100 rounded-full h-1.5">
               <div
-                className="bg-gold h-1.5 rounded-full transition-all duration-300"
+                className="bg-primary h-1.5 rounded-full transition-all duration-300"
                 style={{ width: `${progress}%` }}
               />
             </div>

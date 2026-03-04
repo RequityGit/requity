@@ -223,7 +223,7 @@ export function MessageBubble({
 
         {/* Text content with markdown */}
         {message.content && (
-          <div className="text-sm text-foreground prose prose-sm prose-invert max-w-none prose-p:my-0 prose-p:leading-relaxed prose-a:text-gold-light prose-code:text-sm prose-code:bg-muted prose-code:px-1 prose-code:py-0.5 prose-code:rounded prose-code:text-[#E8D5B0]">
+          <div className="text-sm text-foreground prose prose-sm prose-invert max-w-none prose-p:my-0 prose-p:leading-relaxed prose-a:text-primary/80 prose-code:text-sm prose-code:bg-muted prose-code:px-1 prose-code:py-0.5 prose-code:rounded prose-code:text-muted-foreground">
             <ReactMarkdown remarkPlugins={[remarkGfm]}>
               {message.content}
             </ReactMarkdown>
@@ -254,9 +254,9 @@ export function MessageBubble({
                   href={att.url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center gap-2 bg-[rgba(197,151,91,0.06)] border border-border px-3 py-1.5 rounded-md text-sm text-[#E8D5B0] hover:bg-[rgba(197,151,91,0.1)] transition-colors duration-200"
+                  className="flex items-center gap-2 bg-muted border border-border px-3 py-1.5 rounded-md text-sm text-foreground hover:bg-accent transition-colors duration-200"
                 >
-                  <FileText className="h-4 w-4 text-gold" />
+                  <FileText className="h-4 w-4 text-primary" />
                   <span className="truncate max-w-[200px]">{att.name}</span>
                   <span className="text-xs text-muted-foreground">
                     {(att.size / 1024).toFixed(0)}KB
@@ -285,7 +285,7 @@ export function MessageBubble({
                 className={cn(
                   "flex items-center gap-1 px-2 py-0.5 rounded-full text-xs border transition-all duration-200",
                   currentUserId && users.includes(currentUserId)
-                    ? "bg-[rgba(197,151,91,0.1)] border-[rgba(197,151,91,0.3)] text-gold"
+                    ? "bg-accent border-primary text-foreground"
                     : "bg-[rgba(255,255,255,0.04)] border-border text-muted-foreground hover:bg-[rgba(255,255,255,0.08)]"
                 )}
                 onClick={() => handleReaction(emoji)}
@@ -300,7 +300,7 @@ export function MessageBubble({
         {/* Thread indicator */}
         {message.thread_count > 0 && (
           <button
-            className="mt-1.5 flex items-center gap-1.5 text-xs text-gold hover:text-gold-light transition-colors duration-200"
+            className="mt-1.5 flex items-center gap-1.5 text-xs text-primary hover:text-primary/80 transition-colors duration-200"
             onClick={() => onThreadClick?.(message.id)}
           >
             <MessageSquare className="h-3.5 w-3.5" />
@@ -346,7 +346,7 @@ export function MessageBubble({
             title={isBookmarked ? "Remove bookmark" : "Bookmark"}
             icon={
               isBookmarked ? (
-                <BookmarkCheck className="h-[18px] w-[18px] text-gold" />
+                <BookmarkCheck className="h-[18px] w-[18px] text-primary" />
               ) : (
                 <Bookmark className="h-[18px] w-[18px]" />
               )

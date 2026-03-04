@@ -105,8 +105,8 @@ export function CompanyFileList({ files, onDeleted }: CompanyFileListProps) {
             key={file.id}
             className="flex items-center gap-3 rounded-lg border px-3 py-2.5 hover:bg-muted transition-colors"
           >
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gold/10">
-              <FileText className="h-4 w-4 text-gold" />
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-muted">
+              <FileText className="h-4 w-4 text-muted-foreground" />
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-sm font-medium text-foreground truncate">

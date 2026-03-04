@@ -118,7 +118,7 @@ export default async function BorrowerDashboardPage() {
       {activeLoans.length === 0 ? (
         <Card>
           <CardContent className="py-12 text-center text-muted-foreground">
-            <Building2 className="h-10 w-10 mx-auto mb-3 text-slate-300" />
+            <Building2 className="h-10 w-10 mx-auto mb-3 text-muted-foreground/40" />
             <p className="font-medium">No active loans</p>
             <p className="text-sm mt-1">
               Your loans will appear here once they are created.

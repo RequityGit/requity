@@ -247,7 +247,7 @@ export function MessageInput({
             }}
             placeholder={placeholder}
             rows={1}
-            className="w-full resize-none bg-secondary border border-border rounded-lg px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-gold focus:border-gold transition-all duration-200"
+            className="w-full resize-none bg-secondary border border-border rounded-lg px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary transition-all duration-200"
             disabled={sending}
           />
         </div>
@@ -258,7 +258,7 @@ export function MessageInput({
           className={cn(
             "p-2 rounded-lg transition-all duration-200 flex-shrink-0",
             hasContent
-              ? "bg-gold text-foreground hover:bg-gold-light shadow-sm"
+              ? "bg-primary text-foreground hover:bg-primary/90 shadow-sm"
               : "bg-muted text-muted-foreground"
           )}
           title="Send message"

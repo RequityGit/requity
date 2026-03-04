@@ -52,7 +52,7 @@ export function ServicingTabs({
         <TabsTrigger value="loan-tape" className="gap-1.5">
           <FileSpreadsheet className="h-3.5 w-3.5" />
           Loan Tape
-          <span className="ml-1 rounded-full bg-slate-200 text-slate-700 text-[10px] font-semibold px-1.5 py-0.5">
+          <span className="ml-1 rounded-full bg-muted text-muted-foreground text-[10px] font-semibold px-1.5 py-0.5">
             {loans.filter((l: any) => l.loan_status === "Active").length}
           </span>
         </TabsTrigger>

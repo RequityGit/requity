@@ -23,15 +23,15 @@ export function TypingIndicator({ typingUsers }: TypingIndicatorProps) {
     <div className="flex items-center gap-2 px-4 py-1.5 text-xs text-muted-foreground bg-secondary">
       <span className="flex gap-0.5">
         <span
-          className="animate-bounce inline-block h-1.5 w-1.5 rounded-full bg-[#C5975B]"
+          className="animate-bounce inline-block h-1.5 w-1.5 rounded-full bg-muted-foreground"
           style={{ animationDelay: "0ms" }}
         />
         <span
-          className="animate-bounce inline-block h-1.5 w-1.5 rounded-full bg-[#C5975B]"
+          className="animate-bounce inline-block h-1.5 w-1.5 rounded-full bg-muted-foreground"
           style={{ animationDelay: "150ms" }}
         />
         <span
-          className="animate-bounce inline-block h-1.5 w-1.5 rounded-full bg-[#C5975B]"
+          className="animate-bounce inline-block h-1.5 w-1.5 rounded-full bg-muted-foreground"
           style={{ animationDelay: "300ms" }}
         />
       </span>

@@ -25,13 +25,13 @@ export function TemplatePreview({
           previewMode === "mobile" ? "max-w-[375px] mx-auto" : ""
         }`}
       >
-        <div className="bg-gray-100 px-3 py-1.5 border-b flex items-center gap-2">
+        <div className="bg-muted px-3 py-1.5 border-b flex items-center gap-2">
           <div className="flex gap-1">
             <div className="w-2 h-2 rounded-full bg-red-400" />
             <div className="w-2 h-2 rounded-full bg-yellow-400" />
             <div className="w-2 h-2 rounded-full bg-green-400" />
           </div>
-          <span className="text-[10px] text-gray-500">Email Preview</span>
+          <span className="text-[10px] text-muted-foreground">Email Preview</span>
         </div>
         <div
           className="p-4 overflow-auto max-h-[600px] text-black"

@@ -74,7 +74,7 @@ export function SOPDetailClient({
       <div className="mx-auto max-w-6xl px-6 py-8">
         {/* Breadcrumb */}
         <nav className="mb-6 flex items-center gap-2 text-sm text-muted-foreground">
-          <Link href="/sops" className="hover:text-gold transition">
+          <Link href="/sops" className="hover:text-foreground transition">
             Knowledge Base
           </Link>
           <ChevronRight className="h-3.5 w-3.5" />
@@ -100,7 +100,7 @@ export function SOPDetailClient({
               {sop.department && (
                 <Badge
                   variant="outline"
-                  className="border-border bg-gold/5 text-gold-light text-xs"
+                  className="border-border bg-muted text-muted-foreground text-xs"
                 >
                   {sop.department}
                 </Badge>
@@ -130,7 +130,7 @@ export function SOPDetailClient({
               )}
               <Link
                 href={`/sops/${sop.slug}/edit`}
-                className="flex items-center gap-1.5 rounded-lg border border-gold bg-transparent px-3 py-2 text-sm font-medium text-gold transition hover:bg-gold/10"
+                className="flex items-center gap-1.5 rounded-lg border border-primary bg-transparent px-3 py-2 text-sm font-medium text-primary transition hover:bg-accent"
               >
                 <Pencil className="h-3.5 w-3.5" />
                 Edit
@@ -183,7 +183,7 @@ export function SOPDetailClient({
                     <Link
                       key={r.id}
                       href={`/sops/${r.slug}`}
-                      className="block rounded-lg px-2 py-1.5 text-sm text-muted-foreground transition hover:bg-muted hover:text-gold-light"
+                      className="block rounded-lg px-2 py-1.5 text-sm text-muted-foreground transition hover:bg-muted hover:text-foreground"
                     >
                       {r.title}
                     </Link>

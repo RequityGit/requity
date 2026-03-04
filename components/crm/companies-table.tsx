@@ -170,7 +170,7 @@ export function CompaniesTable({ companies }: CompaniesTableProps) {
           <span
             className={cn(
               "text-sm font-mono text-center block",
-              row.active_deals > 0 ? "text-gold font-medium" : ""
+              row.active_deals > 0 ? "text-primary font-medium" : ""
             )}
           >
             {row.active_deals}

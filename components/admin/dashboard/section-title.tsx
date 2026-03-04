@@ -34,7 +34,7 @@ export function ViewAllButton({ label = "View all", href }: ViewAllButtonProps) 
   return (
     <Tag
       {...(href ? { href } : {})}
-      className="bg-transparent border-none cursor-pointer text-[10.5px] font-semibold text-dash-text-faint hover:text-gold flex items-center gap-0.5 transition-colors duration-150 p-0"
+      className="bg-transparent border-none cursor-pointer text-[10.5px] font-semibold text-dash-text-faint hover:text-foreground flex items-center gap-0.5 transition-colors duration-150 p-0"
     >
       {label} <ChevronRight size={11} />
     </Tag>

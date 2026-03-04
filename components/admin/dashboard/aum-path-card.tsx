@@ -42,7 +42,7 @@ export function AumPathCard({
 
   return (
     <div className="rounded-lg p-4 relative overflow-hidden bg-primary text-primary-foreground shadow-md">
-      <span className="text-[9px] font-bold uppercase tracking-[0.14em] text-gold relative">
+      <span className="text-[9px] font-bold uppercase tracking-[0.14em] text-primary-foreground relative">
         Path to $1B AUM
       </span>
       <div className="font-mono text-[32px] font-bold text-primary-foreground mt-1.5 leading-none relative">
@@ -53,10 +53,10 @@ export function AumPathCard({
         {pct.toFixed(2)}% of target
       </div>
 
-      {/* Progress bar — flat gold */}
+      {/* Progress bar */}
       <div className="h-1 bg-primary-foreground/[0.06] rounded-sm overflow-hidden my-3 relative">
         <div
-          className="h-full rounded-sm bg-gold"
+          className="h-full rounded-sm bg-primary-foreground/60"
           style={{ width: `${Math.max(pct, 1)}%` }}
         />
       </div>
@@ -85,7 +85,7 @@ export function AumPathCard({
         </span>
         <ResponsiveContainer width="100%" height={65}>
           <BarChart data={capitalData} margin={{ top: 8, right: 0, left: 0, bottom: 0 }}>
-            <Bar dataKey="raised" fill="#C5975B" radius={[2, 2, 0, 0]} opacity={0.5} />
+            <Bar dataKey="raised" fill="hsl(var(--primary))" radius={[2, 2, 0, 0]} opacity={0.5} />
             <Tooltip
               contentStyle={{
                 background: "hsl(var(--card))",

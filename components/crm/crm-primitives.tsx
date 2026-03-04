@@ -8,14 +8,14 @@ export const REL_COLORS: Record<string, { bg: string; text: string; border: stri
   investor:        { bg: "bg-green-50 dark:bg-green-950/30",  text: "text-green-600 dark:text-green-400",   border: "border-green-200 dark:border-green-800" },
   broker:          { bg: "bg-amber-50 dark:bg-amber-950/30",  text: "text-amber-600 dark:text-amber-400",   border: "border-amber-200 dark:border-amber-800" },
   lender:          { bg: "bg-purple-50 dark:bg-purple-950/30", text: "text-purple-600 dark:text-purple-400", border: "border-purple-200 dark:border-purple-800" },
-  vendor:          { bg: "bg-gray-50 dark:bg-gray-950/30",    text: "text-gray-600 dark:text-gray-400",     border: "border-gray-200 dark:border-gray-700" },
+  vendor:          { bg: "bg-muted dark:bg-muted",              text: "text-muted-foreground dark:text-muted-foreground", border: "border-border dark:border-border" },
   referral_partner: { bg: "bg-teal-50 dark:bg-teal-950/30",  text: "text-teal-600 dark:text-teal-400",     border: "border-teal-200 dark:border-teal-800" },
-  other:           { bg: "bg-gray-50 dark:bg-gray-950/30",    text: "text-gray-600 dark:text-gray-400",     border: "border-gray-200 dark:border-gray-700" },
+  other:           { bg: "bg-muted dark:bg-muted",              text: "text-muted-foreground dark:text-muted-foreground", border: "border-border dark:border-border" },
 };
 
 export const STAGE_COLORS: Record<string, { bg: string; text: string; dot: string }> = {
-  uncontacted: { bg: "bg-gray-100 dark:bg-gray-800",   text: "text-gray-600 dark:text-gray-400",   dot: "bg-gray-500" },
-  lead:        { bg: "bg-slate-100 dark:bg-slate-800",  text: "text-slate-600 dark:text-slate-400", dot: "bg-slate-500" },
+  uncontacted: { bg: "bg-muted dark:bg-muted",           text: "text-muted-foreground dark:text-muted-foreground", dot: "bg-gray-500" },
+  lead:        { bg: "bg-muted dark:bg-muted",           text: "text-muted-foreground dark:text-muted-foreground", dot: "bg-slate-500" },
   prospect:    { bg: "bg-amber-100 dark:bg-amber-900/40", text: "text-amber-700 dark:text-amber-400", dot: "bg-amber-500" },
   active:      { bg: "bg-green-100 dark:bg-green-900/40", text: "text-green-700 dark:text-green-400", dot: "bg-green-500" },
   past:        { bg: "bg-red-100 dark:bg-red-900/40",   text: "text-red-600 dark:text-red-400",     dot: "bg-red-500" },
@@ -81,7 +81,7 @@ export function CompanyStatusDot({ isActive }: { isActive: boolean | null }) {
   return (
     <span className={cn(
       "inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-[11px] font-medium",
-      active ? "bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-400" : "bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400"
+      active ? "bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-400" : "bg-muted dark:bg-muted text-muted-foreground dark:text-muted-foreground"
     )}>
       <span className={cn("h-1.5 w-1.5 rounded-full", active ? "bg-green-500" : "bg-gray-400")} />
       {active ? "Active" : "Inactive"}

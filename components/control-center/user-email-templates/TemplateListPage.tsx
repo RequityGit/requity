@@ -57,7 +57,7 @@ const categoryColors: Record<string, string> = {
   investor: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300",
   servicing: "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300",
   closing: "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300",
-  general: "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300",
+  general: "bg-muted text-muted-foreground dark:bg-muted dark:text-muted-foreground",
 };
 
 export function UserEmailTemplateListPage({

@@ -106,7 +106,7 @@ export default function LoginPage() {
           {/* Magic Link Sent Confirmation */}
           {magicLinkSent ? (
             <div className="text-center space-y-4">
-              <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-green-50 mb-2">
+              <div className="inline-flex items-center justify-center w-16 h-16 rounded-lg bg-green-50 mb-2">
                 <Mail className="h-8 w-8 text-green-600" />
               </div>
               <h2 className="text-lg font-semibold text-foreground">
@@ -146,7 +146,7 @@ export default function LoginPage() {
               {/* Divider */}
               <div className="relative">
                 <div className="absolute inset-0 flex items-center">
-                  <div className="w-full border-t border-slate-200" />
+                  <div className="w-full border-t border-border" />
                 </div>
                 <div className="relative flex justify-center text-xs uppercase">
                   <span className="bg-card px-2 text-muted-foreground">

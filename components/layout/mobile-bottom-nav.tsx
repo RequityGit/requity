@@ -57,9 +57,9 @@ const investorBottomNav: BottomNavItem[] = [
 const adminBottomNav: BottomNavItem[] = [
   {
     label: "Pipeline",
-    href: "/admin/originations",
+    href: "/admin/pipeline",
     icon: Briefcase,
-    activePaths: ["/admin/loans"],
+    activePaths: ["/admin/originations", "/admin/loans"],
   },
   { label: "Contacts", href: "/admin/crm", icon: Contact },
   {
@@ -99,10 +99,8 @@ export function MobileBottomNav({
 
   return (
     <nav
-      className="fixed bottom-0 left-0 right-0 z-50 md:hidden"
+      className="fixed bottom-0 left-0 right-0 z-50 md:hidden bg-background border-t border-border"
       style={{
-        background: "#0A1628",
-        borderTop: "1px solid rgba(197,151,91,0.12)",
         paddingBottom: "env(safe-area-inset-bottom, 0px)",
       }}
     >
@@ -121,7 +119,7 @@ export function MobileBottomNav({
               href={item.href}
               className={cn(
                 "flex flex-col items-center justify-center gap-1 min-w-[64px] min-h-[44px] px-2 py-1 transition-colors",
-                isActive ? "text-gold" : "text-white/50"
+                isActive ? "text-foreground" : "text-muted-foreground"
               )}
             >
               <div className="relative">
@@ -135,7 +133,10 @@ export function MobileBottomNav({
                   </span>
                 )}
               </div>
-              <span className="text-[10px] leading-tight">{item.label}</span>
+              <span className={cn(
+                "text-[10px] leading-tight",
+                isActive && "font-semibold"
+              )}>{item.label}</span>
             </Link>
           );
         })}

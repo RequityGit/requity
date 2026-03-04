@@ -175,7 +175,7 @@ export function ChannelSettingsModal({
           <div className="flex gap-2">
             <button
               onClick={handleToggleMute}
-              className="flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-md border border-[rgba(197,151,91,0.15)] text-muted-foreground hover:bg-[rgba(255,255,255,0.06)] transition-colors duration-200"
+              className="flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-md border border-border text-muted-foreground hover:bg-[rgba(255,255,255,0.06)] transition-colors duration-200"
             >
               {channel.is_muted ? (
                 <>
@@ -189,7 +189,7 @@ export function ChannelSettingsModal({
             </button>
             <button
               onClick={handleTogglePin}
-              className="flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-md border border-[rgba(197,151,91,0.15)] text-muted-foreground hover:bg-[rgba(255,255,255,0.06)] transition-colors duration-200"
+              className="flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-md border border-border text-muted-foreground hover:bg-[rgba(255,255,255,0.06)] transition-colors duration-200"
             >
               {channel.is_pinned ? (
                 <>
@@ -215,7 +215,7 @@ export function ChannelSettingsModal({
                 <input
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  className="w-full px-3 py-2 text-sm bg-card border border-border rounded-md text-foreground focus:outline-none focus:ring-1 focus:ring-gold focus:border-gold"
+                  className="w-full px-3 py-2 text-sm bg-card border border-border rounded-md text-foreground focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary"
                 />
               </div>
               <div>
@@ -225,7 +225,7 @@ export function ChannelSettingsModal({
                 <input
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
-                  className="w-full px-3 py-2 text-sm bg-card border border-border rounded-md text-foreground focus:outline-none focus:ring-1 focus:ring-gold focus:border-gold"
+                  className="w-full px-3 py-2 text-sm bg-card border border-border rounded-md text-foreground focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary"
                 />
               </div>
               <div className="border-t border-border" />
@@ -240,7 +240,7 @@ export function ChannelSettingsModal({
             <div className="max-h-48 overflow-y-auto space-y-1">
               {loading ? (
                 <div className="flex justify-center py-4">
-                  <Loader2 className="h-5 w-5 animate-spin text-gold" />
+                  <Loader2 className="h-5 w-5 animate-spin text-primary" />
                 </div>
               ) : (
                 members.map((m) => (
@@ -300,7 +300,7 @@ export function ChannelSettingsModal({
             <Button
               variant="outline"
               onClick={onClose}
-              className="border-[rgba(197,151,91,0.15)] text-muted-foreground hover:bg-[rgba(255,255,255,0.06)] hover:text-foreground"
+              className="border-border text-muted-foreground hover:bg-[rgba(255,255,255,0.06)] hover:text-foreground"
             >
               Cancel
             </Button>
@@ -308,7 +308,7 @@ export function ChannelSettingsModal({
               <Button
                 onClick={handleSave}
                 disabled={saving || !name.trim()}
-                className="bg-gold text-foreground hover:bg-gold-light disabled:opacity-50"
+                className="bg-primary text-foreground hover:bg-primary/90 disabled:opacity-50"
               >
                 {saving && (
                   <Loader2 className="h-4 w-4 mr-2 animate-spin" />

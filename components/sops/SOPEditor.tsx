@@ -160,7 +160,7 @@ export function SOPEditor({ sop, categories, userId }: SOPEditorProps) {
         {/* Back link */}
         <Link
           href={sop ? `/sops/${sop.slug}` : "/sops"}
-          className="mb-6 inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-gold transition"
+          className="mb-6 inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition"
         >
           <ArrowLeft className="h-4 w-4" />
           {sop ? "Back to SOP" : "Back to Knowledge Base"}
@@ -274,7 +274,7 @@ export function SOPEditor({ sop, categories, userId }: SOPEditorProps) {
                     value={v}
                     checked={visibility === v}
                     onChange={() => setVisibility(v)}
-                    className="accent-gold"
+                    className="accent-primary"
                   />
                   <span className="text-sm text-muted-foreground capitalize">{v === "role" ? "Role-based" : v}</span>
                 </label>
@@ -296,7 +296,7 @@ export function SOPEditor({ sop, categories, userId }: SOPEditorProps) {
                           );
                         }
                       }}
-                      className="accent-gold"
+                      className="accent-primary"
                     />
                     <span className="text-sm text-muted-foreground capitalize">
                       {r}
@@ -356,7 +356,7 @@ export function SOPEditor({ sop, categories, userId }: SOPEditorProps) {
           <div className="flex items-center justify-between border-t border-border pt-6">
             <button
               onClick={() => setPreviewOpen(!previewOpen)}
-              className="flex items-center gap-1.5 rounded-lg border border-gold px-4 py-2 text-sm font-medium text-gold transition hover:bg-gold/10"
+              className="flex items-center gap-1.5 rounded-lg border border-primary px-4 py-2 text-sm font-medium text-primary transition hover:bg-accent"
             >
               <Eye className="h-4 w-4" />
               {previewOpen ? "Hide Preview" : "Preview"}
@@ -373,7 +373,7 @@ export function SOPEditor({ sop, categories, userId }: SOPEditorProps) {
               <button
                 onClick={() => handleSave(true)}
                 disabled={saving}
-                className="flex items-center gap-1.5 rounded-lg bg-gold px-4 py-2 text-sm font-semibold text-foreground transition hover:bg-gold-light disabled:opacity-50"
+                className="flex items-center gap-1.5 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-foreground transition hover:bg-primary/90 disabled:opacity-50"
               >
                 <Send className="h-4 w-4" />
                 {saving ? "Publishing..." : "Publish"}

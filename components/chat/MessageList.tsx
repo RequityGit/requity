@@ -72,7 +72,7 @@ export function MessageList({
   if (loading && messages.length === 0) {
     return (
       <div className="flex-1 flex items-center justify-center bg-secondary">
-        <Loader2 className="h-6 w-6 animate-spin text-gold" />
+        <Loader2 className="h-6 w-6 animate-spin text-primary" />
       </div>
     );
   }
@@ -80,8 +80,8 @@ export function MessageList({
   if (messages.length === 0) {
     return (
       <div className="flex-1 flex flex-col items-center justify-center bg-secondary">
-        <div className="w-16 h-16 rounded-2xl bg-[rgba(197,151,91,0.08)] flex items-center justify-center mb-4">
-          <MessageSquare className="h-8 w-8 text-gold" />
+        <div className="w-16 h-16 rounded-2xl bg-accent flex items-center justify-center mb-4">
+          <MessageSquare className="h-8 w-8 text-foreground" />
         </div>
         <div className="font-semibold text-lg font-medium text-foreground">
           No messages yet
@@ -89,7 +89,18 @@ export function MessageList({
         <div className="text-sm text-muted-foreground mt-1 mb-4">
           Start the conversation
         </div>
-        <button className="px-4 py-2 rounded-lg bg-gold text-foreground text-sm font-semibold hover:bg-gold-light transition-all duration-200">
+        <button
+          className="px-4 py-2 rounded-lg bg-primary text-foreground text-sm font-semibold hover:bg-primary/90 transition-all duration-200"
+          onClick={() => {
+            const composer = document.querySelector<HTMLTextAreaElement>(
+              'textarea[placeholder="Type a message..."]'
+            );
+            if (composer) {
+              composer.scrollIntoView({ behavior: "smooth", block: "center" });
+              composer.focus();
+            }
+          }}
+        >
           Send a message
         </button>
       </div>
@@ -110,7 +121,7 @@ export function MessageList({
         <div className="flex justify-center py-3">
           <button
             onClick={onLoadMore}
-            className="text-xs text-gold hover:text-gold-light transition-colors duration-200"
+            className="text-xs text-primary hover:text-primary/80 transition-colors duration-200"
           >
             {loading ? (
               <Loader2 className="h-4 w-4 animate-spin" />

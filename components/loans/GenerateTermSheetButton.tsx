@@ -75,9 +75,7 @@ export default function GenerateTermSheetButton({
   }, [loanId, templateId, borrowerLastName, loanNumber, status]);
 
   const tokens = {
-    navyDeep: "#0A1628", gold: "#C5975B", goldLight: "#D4AD72",
-    white: "#FAFAF8", grayLight: "#C4C0B8", grayMid: "#8A8680",
-    success: "#2D8A56", danger: "#C0392B", navyLight: "#243D66",
+    success: "#2D8A56", danger: "#C0392B",
   };
 
   const iconSize = variant === "compact" ? 14 : 16;
@@ -103,18 +101,16 @@ export default function GenerateTermSheetButton({
     secondary: `${baseClasses} px-6 py-3 rounded-lg text-sm border ${
       status === "success" ? "border-green-600 text-green-500"
       : status === "error" ? "border-red-600 text-red-500"
-      : "border-[#C5975B] text-[#C5975B]"
+      : "border-primary text-primary"
     }`,
     compact: `${baseClasses} px-4 py-2 rounded-md text-xs ${
       status === "success" ? "text-green-500"
       : status === "error" ? "text-red-500"
-      : "text-[#D4AD72]"
+      : "text-muted-foreground"
     }`,
   };
 
-  const primaryGradient = status === "idle" || status === "loading"
-    ? { background: `linear-gradient(135deg, ${tokens.gold}, ${tokens.goldLight})` }
-    : {};
+  const primaryGradient = {};
 
   return (
     <div className="relative inline-block">

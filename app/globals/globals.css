@@ -35,21 +35,21 @@
 
     --radius: 0.5rem;
 
-    /* Sidebar — dark navy in light mode */
-    --sidebar-bg: 222 47% 11%;
-    --sidebar-fg: 0 0% 100%;
-    --sidebar-border: 0 0% 100% / 0.1;
-    --sidebar-active: 0 0% 100% / 0.15;
-    --sidebar-hover: 0 0% 100% / 0.1;
+    /* Sidebar — light secondary surface */
+    --sidebar-bg: 240 5% 97%;
+    --sidebar-fg: 0 0% 10%;
+    --sidebar-border: 240 6% 90%;
+    --sidebar-active: 0 0% 0% / 0.06;
+    --sidebar-hover: 0 0% 0% / 0.04;
 
     /* Dashboard tokens — light */
-    --dash-bg: 37 18% 90%;
+    --dash-bg: 0 0% 97%;
     --dash-surface: 0 0% 100%;
-    --dash-surface-alt: 37 14% 95%;
-    --dash-surface-hover: 37 16% 93%;
-    --dash-text-sec: 210 24% 24%;
-    --dash-text-mut: 210 11% 47%;
-    --dash-text-faint: 210 10% 67%;
+    --dash-surface-alt: 0 0% 97%;
+    --dash-surface-hover: 0 0% 95%;
+    --dash-text-sec: 0 0% 42%;
+    --dash-text-mut: 0 0% 60%;
+    --dash-text-faint: 0 0% 70%;
   }
 
   .dark {
@@ -82,10 +82,10 @@
     --input: 0 0% 16%;
     --ring: 0 0% 96%;
 
-    /* Sidebar — near-black in dark mode */
-    --sidebar-bg: 0 0% 5%;
+    /* Sidebar — dark charcoal */
+    --sidebar-bg: 0 0% 8%;
     --sidebar-fg: 0 0% 94%;
-    --sidebar-border: 0 0% 15%;
+    --sidebar-border: 0 0% 16%;
     --sidebar-active: 0 0% 100% / 0.12;
     --sidebar-hover: 0 0% 100% / 0.07;
 

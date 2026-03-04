@@ -74,14 +74,14 @@ export function OriginationsTabs({
         <TabsTrigger value="deals" className="gap-1.5">
           <Briefcase className="h-3.5 w-3.5" />
           Deals
-          <span className="ml-1 rounded-full bg-slate-200 text-slate-700 text-[10px] font-semibold px-1.5 py-0.5">
+          <span className="ml-1 rounded-full bg-muted text-muted-foreground text-[10px] font-semibold px-1.5 py-0.5">
             {opportunityCount}
           </span>
         </TabsTrigger>
         <TabsTrigger value="pipeline" className="gap-1.5">
           <Home className="h-3.5 w-3.5" />
           Loans (Legacy)
-          <span className="ml-1 rounded-full bg-slate-200 text-slate-700 text-[10px] font-semibold px-1.5 py-0.5">
+          <span className="ml-1 rounded-full bg-muted text-muted-foreground text-[10px] font-semibold px-1.5 py-0.5">
             {pipelineCount}
           </span>
         </TabsTrigger>

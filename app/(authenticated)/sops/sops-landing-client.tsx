@@ -112,7 +112,7 @@ export function SOPsLandingClient({
                 )}
                 <Link
                   href="/sops/new"
-                  className="flex items-center gap-2 rounded-lg bg-gold px-4 py-2 text-sm font-semibold text-foreground transition hover:bg-gold-light"
+                  className="flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-foreground transition hover:bg-primary/90"
                 >
                   <Plus className="h-4 w-4" />
                   Create SOP
@@ -173,7 +173,7 @@ export function SOPsLandingClient({
             <div className="mb-4">
               <Link
                 href="/sops"
-                className="text-sm text-gold hover:text-gold-light transition"
+                className="text-sm text-primary hover:text-foreground transition"
               >
                 &larr; Back to all categories
               </Link>
@@ -195,7 +195,7 @@ export function SOPsLandingClient({
               {isAdmin && (
                 <Link
                   href="/sops/new"
-                  className="mt-4 inline-flex items-center gap-2 rounded-lg bg-gold px-4 py-2 text-sm font-semibold text-foreground transition hover:bg-gold-light"
+                  className="mt-4 inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-foreground transition hover:bg-primary/90"
                 >
                   <Plus className="h-4 w-4" />
                   Create SOP

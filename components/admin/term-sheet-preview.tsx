@@ -49,9 +49,9 @@ export function TermSheetPreview({
   return (
     <div className="bg-card rounded-lg border border-border shadow-sm overflow-hidden">
       {/* Preview header */}
-      <div className="bg-slate-50 border-b border-slate-200 px-4 py-2 flex items-center gap-2">
-        <FileText className="h-4 w-4 text-slate-500" />
-        <span className="text-xs font-medium text-slate-600 uppercase tracking-wider">
+      <div className="bg-muted border-b border-border px-4 py-2 flex items-center gap-2">
+        <FileText className="h-4 w-4 text-muted-foreground" />
+        <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
           Live Preview
         </span>
       </div>
@@ -63,12 +63,12 @@ export function TermSheetPreview({
           <h3 className="text-sm font-bold text-foreground uppercase tracking-wide">
             {companyName || "Company Name"}
           </h3>
-          <p className="text-[10px] text-slate-500 mt-0.5">Term Sheet</p>
+          <p className="text-[10px] text-muted-foreground mt-0.5">Term Sheet</p>
         </div>
 
         {/* Sections */}
         {visibleSections.length === 0 ? (
-          <p className="text-xs text-slate-400 text-center py-8 italic">
+          <p className="text-xs text-muted-foreground/40 text-center py-8 italic">
             No sections are visible. Toggle sections on in the editor.
           </p>
         ) : (
@@ -82,7 +82,7 @@ export function TermSheetPreview({
 
               return (
                 <div key={section.key}>
-                  <h4 className="text-[11px] font-bold text-foreground uppercase tracking-wider border-b border-slate-200 pb-1 mb-1.5">
+                  <h4 className="text-[11px] font-bold text-foreground uppercase tracking-wider border-b border-border pb-1 mb-1.5">
                     {heading}
                   </h4>
                   {sectionFields.length > 0 ? (
@@ -96,10 +96,10 @@ export function TermSheetPreview({
                             key={field.key}
                             className="flex gap-1 text-[10px] leading-relaxed"
                           >
-                            <span className="text-slate-500 shrink-0 w-28 text-right">
+                            <span className="text-muted-foreground shrink-0 w-28 text-right">
                               {label}:
                             </span>
-                            <span className="text-slate-800 font-medium">
+                            <span className="text-foreground font-medium">
                               {SAMPLE_DATA[field.key] ?? "—"}
                             </span>
                           </div>
@@ -107,7 +107,7 @@ export function TermSheetPreview({
                       })}
                     </div>
                   ) : (
-                    <p className="text-[10px] text-slate-400 italic">
+                    <p className="text-[10px] text-muted-foreground/40 italic">
                       {section.hasCustomText
                         ? "(Custom text only)"
                         : "(No fields visible)"}
@@ -120,8 +120,8 @@ export function TermSheetPreview({
         )}
 
         {/* Footer */}
-        <div className="mt-4 pt-2 border-t border-slate-200">
-          <p className="text-[9px] text-slate-400 text-center">
+        <div className="mt-4 pt-2 border-t border-border">
+          <p className="text-[9px] text-muted-foreground/40 text-center">
             This is a preview with sample data. Actual values come from the loan
             record.
           </p>

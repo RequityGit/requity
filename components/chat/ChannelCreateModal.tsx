@@ -245,7 +245,7 @@ export function ChannelCreateModal({
             onClick={() => setMode("channel")}
             className={`flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-all duration-200 ${
               mode === "channel"
-                ? "bg-[rgba(197,151,91,0.1)] text-gold border border-border"
+                ? "bg-accent text-foreground border border-primary"
                 : "bg-muted text-muted-foreground border border-border hover:bg-muted"
             }`}
           >
@@ -256,7 +256,7 @@ export function ChannelCreateModal({
             onClick={() => setMode("dm")}
             className={`flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-all duration-200 ${
               mode === "dm"
-                ? "bg-[rgba(197,151,91,0.1)] text-gold border border-border"
+                ? "bg-accent text-foreground border border-primary"
                 : "bg-muted text-muted-foreground border border-border hover:bg-muted"
             }`}
           >
@@ -276,7 +276,7 @@ export function ChannelCreateModal({
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 placeholder="e.g., general, marketing"
-                className="w-full px-3 py-2 text-sm bg-card border border-border rounded-md text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-gold focus:border-gold"
+                className="w-full px-3 py-2 text-sm bg-card border border-border rounded-md text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary"
               />
             </div>
             <div>
@@ -287,7 +287,7 @@ export function ChannelCreateModal({
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 placeholder="What is this channel about?"
-                className="w-full px-3 py-2 text-sm bg-card border border-border rounded-md text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-gold focus:border-gold"
+                className="w-full px-3 py-2 text-sm bg-card border border-border rounded-md text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary"
               />
             </div>
             <label className="flex items-center gap-2 text-sm">
@@ -313,12 +313,12 @@ export function ChannelCreateModal({
               {selectedMembers.map((m) => (
                 <span
                   key={m.id}
-                  className="inline-flex items-center gap-1 px-2 py-1 bg-[rgba(197,151,91,0.1)] text-gold text-xs rounded-md border border-border"
+                  className="inline-flex items-center gap-1 px-2 py-1 bg-accent text-foreground text-xs rounded-md border border-border"
                 >
                   {m.full_name || m.email}
                   <button
                     onClick={() => removeMember(m.id)}
-                    className="p-0.5 rounded-full hover:bg-[rgba(197,151,91,0.2)]"
+                    className="p-0.5 rounded-full hover:bg-muted"
                   >
                     <X className="h-3 w-3" />
                   </button>
@@ -333,7 +333,7 @@ export function ChannelCreateModal({
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search by name or email..."
-              className="w-full pl-8 pr-3 py-2 text-sm bg-card border border-border rounded-md text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-gold focus:border-gold"
+              className="w-full pl-8 pr-3 py-2 text-sm bg-card border border-border rounded-md text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary"
             />
           </div>
 
@@ -368,7 +368,7 @@ export function ChannelCreateModal({
           <Button
             variant="outline"
             onClick={resetAndClose}
-            className="border-[rgba(197,151,91,0.15)] text-muted-foreground hover:bg-[rgba(255,255,255,0.06)] hover:text-foreground"
+            className="border-border text-muted-foreground hover:bg-[rgba(255,255,255,0.06)] hover:text-foreground"
           >
             Cancel
           </Button>
@@ -379,7 +379,7 @@ export function ChannelCreateModal({
               (mode === "channel" && !name.trim()) ||
               (mode === "dm" && selectedMembers.length === 0)
             }
-            className="bg-gold text-foreground hover:bg-gold-light disabled:opacity-50"
+            className="bg-primary text-foreground hover:bg-primary/90 disabled:opacity-50"
           >
             {creating && (
               <Loader2 className="h-4 w-4 mr-2 animate-spin" />

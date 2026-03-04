@@ -897,7 +897,7 @@ export default function ApplyPage() {
                       step={1}
                       value={sliderPercent}
                       onChange={handleSliderChange}
-                      style={{ background: `linear-gradient(to right, #c9a84c 0%, #c9a84c ${fillPercent}%, rgba(255,255,255,0.1) ${fillPercent}%, rgba(255,255,255,0.1) 100%)` }}
+                      style={{ background: `linear-gradient(to right, #f59e0b 0%, #f59e0b ${fillPercent}%, rgba(255,255,255,0.1) ${fillPercent}%, rgba(255,255,255,0.1) 100%)` }}
                     />
                     <div className="slider-labels">
                       <span>{sliderConfig.min}%</span>
@@ -909,11 +909,11 @@ export default function ApplyPage() {
                     Total project cost: ${totalCost.toLocaleString('en-US')} (Purchase + Rehab)
                   </div>
                   <div className="metric-pills">
-                    <div className={`metric-pill ${ltc <= 75 ? 'pill-green' : ltc <= 85 ? 'pill-gold' : 'pill-red'}`}>
+                    <div className={`metric-pill ${ltc <= 75 ? 'pill-green' : ltc <= 85 ? 'pill-amber' : 'pill-red'}`}>
                       <div className="mp-value">{ltc.toFixed(1)}%</div>
                       <div className="mp-label">Loan-to-Cost</div>
                     </div>
-                    <div className={`metric-pill ${ltv === null ? '' : ltv <= 65 ? 'pill-green' : ltv <= 75 ? 'pill-gold' : 'pill-red'}`}>
+                    <div className={`metric-pill ${ltv === null ? '' : ltv <= 65 ? 'pill-green' : ltv <= 75 ? 'pill-amber' : 'pill-red'}`}>
                       <div className="mp-value">{ltv !== null ? `${ltv.toFixed(1)}%` : '\u2014'}</div>
                       <div className="mp-label">Loan-to-ARV</div>
                     </div>
@@ -2338,7 +2338,7 @@ const applyStyles = `
     padding: 4px 12px;
     background: rgba(201, 168, 76, 0.15);
     border: 1px solid rgba(201, 168, 76, 0.3);
-    color: #c9a84c;
+    color: #f59e0b;
     font-size: 13px;
     font-weight: 600;
     letter-spacing: 0.5px;
@@ -2362,7 +2362,7 @@ const applyStyles = `
     width: 24px;
     height: 24px;
     border-radius: 50%;
-    background: #c9a84c;
+    background: #f59e0b;
     cursor: pointer;
     box-shadow: 0 0 12px rgba(201, 168, 76, 0.4), 0 2px 6px rgba(0,0,0,0.3);
     border: 2px solid rgba(255,255,255,0.2);
@@ -2376,7 +2376,7 @@ const applyStyles = `
     width: 24px;
     height: 24px;
     border-radius: 50%;
-    background: #c9a84c;
+    background: #f59e0b;
     cursor: pointer;
     border: 2px solid rgba(255,255,255,0.2);
     box-shadow: 0 0 12px rgba(201, 168, 76, 0.4), 0 2px 6px rgba(0,0,0,0.3);
@@ -2420,9 +2420,9 @@ const applyStyles = `
     border-color: rgba(74, 222, 128, 0.3);
     background: rgba(74, 222, 128, 0.06);
   }
-  .metric-pill.pill-gold {
-    border-color: rgba(201, 168, 76, 0.3);
-    background: rgba(201, 168, 76, 0.06);
+  .metric-pill.pill-amber {
+    border-color: rgba(245, 158, 11, 0.3);
+    background: rgba(245, 158, 11, 0.06);
   }
   .metric-pill.pill-red {
     border-color: rgba(239, 68, 68, 0.3);
@@ -2435,7 +2435,7 @@ const applyStyles = `
     transition: color 0.4s ease;
   }
   .pill-green .mp-value { color: #4ade80; }
-  .pill-gold .mp-value { color: #c9a84c; }
+  .pill-amber .mp-value { color: #f59e0b; }
   .pill-red .mp-value { color: #ef4444; }
   .mp-value.mp-white { color: #fff; }
   .mp-label {

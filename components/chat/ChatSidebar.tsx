@@ -75,12 +75,12 @@ export function ChatSidebar({
       {/* Header */}
       <div className="p-4 border-b border-border">
         <div className="flex items-center justify-between mb-3">
-          <h2 className="font-semibold text-base font-medium tracking-wide text-gold">
+          <h2 className="font-semibold text-base font-medium tracking-wide text-foreground">
             MESSAGES
           </h2>
           <button
             onClick={onNewChannel}
-            className="p-1.5 rounded-md text-muted-foreground hover:text-gold hover:bg-[rgba(197,151,91,0.06)] transition-all duration-200 ease-[cubic-bezier(0.4,0,0.2,1)]"
+            className="p-1.5 rounded-md text-muted-foreground hover:text-foreground hover:bg-accent transition-all duration-200 ease-[cubic-bezier(0.4,0,0.2,1)]"
             title="New message"
           >
             <Plus className="h-5 w-5" />
@@ -92,7 +92,7 @@ export function ChatSidebar({
             value={searchQuery}
             onChange={(e) => onSearchChange(e.target.value)}
             placeholder="Search channels..."
-            className="w-full pl-8 pr-3 h-8 text-sm bg-secondary border border-border rounded-md text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-gold focus:border-gold transition-all duration-200"
+            className="w-full pl-8 pr-3 h-8 text-sm bg-secondary border border-border rounded-md text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary transition-all duration-200"
           />
         </div>
       </div>
@@ -221,8 +221,8 @@ function ConversationItem({
         className={cn(
           "w-full flex items-center gap-3 px-4 py-2.5 text-left transition-all duration-200 ease-[cubic-bezier(0.4,0,0.2,1)]",
           isActive
-            ? "bg-[rgba(197,151,91,0.08)] border-l-[3px] border-l-[#C5975B]"
-            : "hover:bg-[rgba(197,151,91,0.06)] border-l-[3px] border-l-transparent",
+            ? "bg-accent border-l-[3px] border-l-primary"
+            : "hover:bg-muted border-l-[3px] border-l-transparent",
           channel.is_muted && "opacity-50"
         )}
       >
@@ -289,7 +289,7 @@ function ConversationItem({
                 : truncate(lastMsg?.content || "", 40)}
             </span>
             {channel.unread_count > 0 && !channel.is_muted && (
-              <span className="flex-shrink-0 inline-flex items-center justify-center h-[18px] min-w-[18px] px-1 rounded-full bg-[#C5975B] text-foreground text-[10px] font-bold">
+              <span className="flex-shrink-0 inline-flex items-center justify-center h-[18px] min-w-[18px] px-1 rounded-full bg-primary text-foreground text-[10px] font-bold">
                 {channel.unread_count > 99 ? "99+" : channel.unread_count}
               </span>
             )}

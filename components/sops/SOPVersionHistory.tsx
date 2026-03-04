@@ -34,7 +34,7 @@ export function SOPVersionHistory({ versions }: SOPVersionHistoryProps) {
         className="flex w-full items-center justify-between text-left"
       >
         <h4 className="flex items-center gap-2 text-sm font-semibold text-foreground">
-          <Clock className="h-4 w-4 text-gold" />
+          <Clock className="h-4 w-4 text-primary" />
           Version History
         </h4>
         {sorted.length > 3 &&
@@ -51,7 +51,7 @@ export function SOPVersionHistory({ versions }: SOPVersionHistoryProps) {
             className="rounded-lg border border-border bg-secondary p-3"
           >
             <div className="flex items-center justify-between">
-              <span className="text-xs font-medium text-gold">
+              <span className="text-xs font-medium text-primary">
                 v{v.version_number}
               </span>
               <span className="text-xs text-muted-foreground">
@@ -67,7 +67,7 @@ export function SOPVersionHistory({ versions }: SOPVersionHistoryProps) {
       {!expanded && sorted.length > 3 && (
         <button
           onClick={() => setExpanded(true)}
-          className="mt-2 text-xs text-gold hover:text-gold-light"
+          className="mt-2 text-xs text-primary hover:text-foreground"
         >
           Show {sorted.length - 3} more versions
         </button>

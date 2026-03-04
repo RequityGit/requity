@@ -34,7 +34,7 @@ export function QuickActions() {
               href={a.href}
               className={`flex items-center gap-1 px-3 py-1.5 rounded-[5px] text-[11.5px] font-semibold transition-all duration-150 no-underline ${
                 a.primary
-                  ? "bg-gold text-white border-none hover:bg-gold-light"
+                  ? "bg-primary text-white border-none hover:bg-primary/90"
                   : "bg-transparent text-dash-text-sec border border-border hover:border-foreground/20 hover:text-foreground"
               }`}
             >

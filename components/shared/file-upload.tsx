@@ -86,9 +86,9 @@ export function FileUpload({
             <button
               type="button"
               onClick={() => cameraRef.current?.click()}
-              className="w-full flex items-center justify-center gap-2 border-2 border-dashed border-gold/30 rounded-lg p-4 text-center cursor-pointer hover:border-gold/50 transition-colors min-h-[56px] mobile-press"
+              className="w-full flex items-center justify-center gap-2 border-2 border-dashed border-primary/30 rounded-lg p-4 text-center cursor-pointer hover:border-primary/50 transition-colors min-h-[56px] mobile-press"
             >
-              <Camera className="h-5 w-5 text-gold" strokeWidth={1.5} />
+              <Camera className="h-5 w-5 text-primary" strokeWidth={1.5} />
               <span className="text-sm font-medium text-foreground">
                 Take a Photo
               </span>
@@ -99,7 +99,7 @@ export function FileUpload({
           <div
             onClick={() => inputRef.current?.click()}
             className={cn(
-              "border-2 border-dashed border-slate-200 rounded-lg text-center cursor-pointer hover:border-slate-400 transition-colors",
+              "border-2 border-dashed border-border rounded-lg text-center cursor-pointer hover:border-border transition-colors",
               isMobile ? "p-4 min-h-[56px] flex items-center justify-center gap-2" : "p-6"
             )}
           >
@@ -122,7 +122,7 @@ export function FileUpload({
           )}
         </div>
       ) : (
-        <div className="flex items-center gap-3 p-3 border rounded-lg bg-slate-50">
+        <div className="flex items-center gap-3 p-3 border rounded-lg bg-muted">
           {preview ? (
             <img
               src={preview}

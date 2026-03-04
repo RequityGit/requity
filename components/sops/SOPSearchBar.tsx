@@ -19,7 +19,7 @@ export function SOPSearchBar() {
           className="w-full rounded-xl border border-border bg-secondary px-12 py-3 text-foreground placeholder:text-muted-foreground outline-none transition focus:border-ring focus:ring-2 focus:ring-ring"
         />
         {loading && (
-          <Loader2 className="absolute right-4 top-1/2 h-5 w-5 -translate-y-1/2 animate-spin text-gold" />
+          <Loader2 className="absolute right-4 top-1/2 h-5 w-5 -translate-y-1/2 animate-spin text-primary" />
         )}
       </div>
 

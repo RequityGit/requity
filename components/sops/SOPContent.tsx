@@ -88,14 +88,14 @@ export function SOPContent({ content }: SOPContentProps) {
                 <li className="text-muted-foreground" {...props} />
               ),
               a: (props) => (
-                <a className="text-gold hover:text-gold-light underline" target="_blank" rel="noopener noreferrer" {...props} />
+                <a className="text-primary hover:text-foreground underline" target="_blank" rel="noopener noreferrer" {...props} />
               ),
               code: ({ className, children, ...props }) => {
                 const isInline = !className;
                 if (isInline) {
                   return (
                     <code
-                      className="rounded bg-muted px-1.5 py-0.5 font-mono text-sm text-gold-pale"
+                      className="rounded bg-muted px-1.5 py-0.5 font-mono text-sm text-muted-foreground"
                       {...props}
                     >
                       {children}
@@ -157,7 +157,7 @@ export function SOPContent({ content }: SOPContentProps) {
                     item.level === 3 ? "pl-5" : ""
                   } ${
                     activeId === item.id
-                      ? "bg-gold/10 text-gold"
+                      ? "bg-accent text-primary"
                       : "text-muted-foreground hover:text-foreground"
                   }`}
                 >

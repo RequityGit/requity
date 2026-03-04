@@ -41,7 +41,7 @@ export function DashboardClient({ data, userName }: DashboardClientProps) {
             <div>
               <h1 className="text-2xl font-semibold text-foreground leading-tight">
                 {greeting},{" "}
-                <span className="text-gold">{firstName}</span>
+                <span className="text-foreground">{firstName}</span>
               </h1>
               <p className="text-[12.5px] text-dash-text-mut mt-0.5">
                 Portfolio command center · Requity Group

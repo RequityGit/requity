@@ -29,13 +29,13 @@ export function EmptyState({
       {recentSearches.length > 0 && (
         <div className="mb-4">
           <div className="flex items-center justify-between mb-2">
-            <h3 className="text-xs font-medium text-slate-500 uppercase tracking-wider">
+            <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
               Recent
             </h3>
             <button
               type="button"
               onClick={clearRecentSearches}
-              className="text-[10px] text-slate-400 hover:text-slate-600 transition-colors"
+              className="text-[10px] text-muted-foreground/40 hover:text-muted-foreground transition-colors"
             >
               Clear
             </button>
@@ -46,9 +46,9 @@ export function EmptyState({
                 key={search}
                 type="button"
                 onClick={() => onSelectRecentSearch(search)}
-                className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm text-slate-600 hover:bg-slate-100 transition-colors"
+                className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm text-muted-foreground hover:bg-muted transition-colors"
               >
-                <Clock className="h-3.5 w-3.5 text-slate-400" />
+                <Clock className="h-3.5 w-3.5 text-muted-foreground/40" />
                 <span className="truncate">{search}</span>
               </button>
             ))}
@@ -58,7 +58,7 @@ export function EmptyState({
 
       {/* Quick Navigation */}
       <div className="mb-4">
-        <h3 className="text-xs font-medium text-slate-500 uppercase tracking-wider mb-2">
+        <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2">
           Quick Navigation
         </h3>
         <div className="grid grid-cols-2 gap-1">
@@ -72,9 +72,9 @@ export function EmptyState({
                   router.push(link.href);
                   onClose();
                 }}
-                className="flex items-center gap-2 rounded-md px-2 py-2 text-sm text-slate-600 hover:bg-slate-100 transition-colors"
+                className="flex items-center gap-2 rounded-md px-2 py-2 text-sm text-muted-foreground hover:bg-muted transition-colors"
               >
-                <Icon className="h-4 w-4 text-slate-400" />
+                <Icon className="h-4 w-4 text-muted-foreground/40" />
                 {link.label}
               </button>
             );
@@ -84,13 +84,13 @@ export function EmptyState({
 
       {/* Empty illustration */}
       <div className="flex flex-col items-center py-6 text-center">
-        <div className="flex h-12 w-12 items-center justify-center rounded-full bg-slate-100 mb-3">
-          <Search className="h-5 w-5 text-slate-400" />
+        <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-muted mb-3">
+          <Search className="h-5 w-5 text-muted-foreground/40" />
         </div>
-        <p className="text-sm text-slate-500">
+        <p className="text-sm text-muted-foreground">
           Search across your entire portal
         </p>
-        <p className="text-xs text-slate-400 mt-1">
+        <p className="text-xs text-muted-foreground/40 mt-1">
           Loans, borrowers, investors, documents, and more
         </p>
       </div>
@@ -102,13 +102,13 @@ export function EmptyState({
 export function NoResults({ query }: { query: string }) {
   return (
     <div className="flex flex-col items-center py-10 text-center px-4">
-      <div className="flex h-12 w-12 items-center justify-center rounded-full bg-slate-100 mb-3">
-        <X className="h-5 w-5 text-slate-400" />
+      <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-muted mb-3">
+        <X className="h-5 w-5 text-muted-foreground/40" />
       </div>
-      <p className="text-sm text-slate-600">
+      <p className="text-sm text-muted-foreground">
         No results for &ldquo;{query.slice(0, 50)}&rdquo;
       </p>
-      <p className="text-xs text-slate-400 mt-1">
+      <p className="text-xs text-muted-foreground/40 mt-1">
         Try a different search term or check your spelling
       </p>
     </div>

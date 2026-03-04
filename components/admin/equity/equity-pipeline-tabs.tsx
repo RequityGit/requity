@@ -25,7 +25,7 @@ export function EquityPipelineTabs({
           <TabsTrigger value="pipeline" className="gap-1.5">
             <Building2 className="h-3.5 w-3.5" />
             Pipeline
-            <span className="ml-1 rounded-full bg-slate-200 text-slate-700 text-[10px] font-semibold px-1.5 py-0.5">
+            <span className="ml-1 rounded-full bg-muted text-muted-foreground text-[10px] font-semibold px-1.5 py-0.5">
               {dealCount}
             </span>
           </TabsTrigger>

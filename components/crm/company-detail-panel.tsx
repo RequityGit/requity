@@ -241,7 +241,7 @@ export function CompanyDetailPanel({
             {company.email && (
               <div className="flex items-center gap-1.5">
                 <Mail className="h-3.5 w-3.5" />
-                <span className="text-gold">{company.email}</span>
+                <span className="text-foreground">{company.email}</span>
               </div>
             )}
             {company.website && (

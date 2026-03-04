@@ -121,7 +121,7 @@ export function SOPAdminClient({
         {/* Header */}
         <Link
           href="/sops"
-          className="mb-6 inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-gold transition"
+          className="mb-6 inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition"
         >
           <ArrowLeft className="h-4 w-4" />
           Back to Knowledge Base
@@ -143,7 +143,7 @@ export function SOPAdminClient({
             title="Questions (30d)"
             value={questionsAsked}
             icon={MessageCircle}
-            color="bg-gold/15 text-gold"
+            color="bg-accent text-primary"
           />
           <MetricCard
             title="Unanswered"
@@ -196,7 +196,7 @@ export function SOPAdminClient({
                         {flag.sops ? (
                           <Link
                             href={`/sops/${flag.sops.slug}`}
-                            className="text-foreground hover:text-gold transition"
+                            className="text-foreground hover:text-foreground transition"
                           >
                             {flag.sops.title}
                           </Link>
@@ -292,7 +292,7 @@ export function SOPAdminClient({
                       <td className="px-4 py-3 text-right">
                         <Link
                           href={`/sops/new?prefill=${encodeURIComponent(q.question)}`}
-                          className="inline-flex items-center gap-1 rounded-md bg-gold/10 px-2 py-1 text-xs font-medium text-gold transition hover:bg-gold/20"
+                          className="inline-flex items-center gap-1 rounded-md bg-accent px-2 py-1 text-xs font-medium text-primary transition hover:bg-muted"
                         >
                           <Plus className="h-3 w-3" />
                           Generate SOP
@@ -339,12 +339,12 @@ export function SOPAdminClient({
                       <td className="px-4 py-3">
                         <Link
                           href={v.path}
-                          className="text-foreground hover:text-gold transition"
+                          className="text-foreground hover:text-foreground transition"
                         >
                           {v.slug}
                         </Link>
                       </td>
-                      <td className="px-4 py-3 text-right font-mono text-gold">
+                      <td className="px-4 py-3 text-right font-mono text-foreground">
                         {v.count}
                       </td>
                     </tr>

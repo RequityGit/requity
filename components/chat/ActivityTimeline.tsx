@@ -30,8 +30,8 @@ const eventIcons: Record<string, React.ElementType> = {
 };
 
 const eventColors: Record<string, string> = {
-  loan_status_change: "bg-[rgba(197,151,91,0.15)] text-gold",
-  document_upload: "bg-[rgba(197,151,91,0.1)] text-gold-light",
+  loan_status_change: "bg-accent text-foreground",
+  document_upload: "bg-muted text-primary/80",
   payment_received: "bg-[rgba(45,138,86,0.15)] text-[#2D8A56]",
   member_joined: "bg-[rgba(45,138,86,0.1)] text-[#2D8A56]",
   condition_approved: "bg-[rgba(45,138,86,0.15)] text-[#2D8A56]",
@@ -88,7 +88,7 @@ export function ActivityTimeline({ channelId }: ActivityTimelineProps) {
   if (loading) {
     return (
       <div className="flex-1 flex items-center justify-center bg-secondary">
-        <Loader2 className="h-6 w-6 animate-spin text-gold" />
+        <Loader2 className="h-6 w-6 animate-spin text-primary" />
       </div>
     );
   }
@@ -105,7 +105,7 @@ export function ActivityTimeline({ channelId }: ActivityTimelineProps) {
   return (
     <div className="flex-1 overflow-y-auto px-4 py-3 bg-secondary">
       <div className="relative">
-        <div className="absolute left-4 top-0 bottom-0 w-px bg-[rgba(197,151,91,0.08)]" />
+        <div className="absolute left-4 top-0 bottom-0 w-px bg-border" />
 
         {items.map((item) => {
           const Icon = eventIcons[item.event_type] || Activity;

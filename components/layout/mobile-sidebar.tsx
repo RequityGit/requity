@@ -20,12 +20,15 @@ import {
   BookOpen,
   Calculator,
   MessageSquare,
+  Columns3,
   X,
   User,
 } from "lucide-react";
 import { useViewAs } from "@/contexts/view-as-context";
 import { useUnreadCounts } from "@/hooks/useUnreadCounts";
 import { useEffect } from "react";
+import { Sheet, SheetContent } from "@/components/ui/sheet";
+import { Separator } from "@/components/ui/separator";
 
 interface NavItem {
   label: string;
@@ -65,10 +68,10 @@ const adminNav: NavItem[] = [
     moduleName: "crm",
   },
   {
-    label: "Originations",
-    href: "/admin/originations",
-    icon: Briefcase,
-    activePaths: ["/admin/loans", "/admin/conditions", "/admin/pricing"],
+    label: "Pipeline",
+    href: "/admin/pipeline",
+    icon: Columns3,
+    activePaths: ["/admin/originations", "/admin/equity-pipeline", "/admin/loans", "/admin/conditions", "/admin/pricing"],
     moduleName: "pipeline",
   },
   {
@@ -76,12 +79,6 @@ const adminNav: NavItem[] = [
     href: "/admin/dscr",
     icon: Calculator,
     moduleName: "dscr-pricing",
-  },
-  {
-    label: "Equity",
-    href: "/admin/equity-pipeline",
-    icon: Building2,
-    moduleName: "pipeline",
   },
   { label: "Servicing", href: "/admin/servicing", icon: Banknote, moduleName: "servicing" },
   {
@@ -91,7 +88,7 @@ const adminNav: NavItem[] = [
     activePaths: ["/admin/capital-calls", "/admin/distributions"],
     moduleName: "investments",
   },
-  { label: "Documents", href: "/admin/documents", icon: FolderOpen, moduleName: "documents" },
+  { label: "Documents", href: "/admin/document-center", icon: FolderOpen, activePaths: ["/admin/documents"], moduleName: "documents" },
   {
     label: "Operations",
     href: "/admin/operations",
@@ -168,50 +165,25 @@ export function MobileSidebar({
     onClose();
   }, [pathname]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Lock body scroll when open
-  useEffect(() => {
-    if (isOpen) {
-      document.body.style.overflow = "hidden";
-    } else {
-      document.body.style.overflow = "";
-    }
-    return () => {
-      document.body.style.overflow = "";
-    };
-  }, [isOpen]);
-
-  if (!isOpen) return null;
-
   return (
-    <div className="fixed inset-0 z-[60] md:hidden">
-      {/* Backdrop */}
-      <div
-        className="absolute inset-0 bg-black/60 backdrop-blur-sm"
-        onClick={onClose}
-      />
-
-      {/* Sidebar panel */}
-      <div
-        className="absolute inset-y-0 left-0 w-[280px] flex flex-col animate-in slide-in-from-left duration-300"
-        style={{ background: "#0A1628" }}
-      >
+    <Sheet open={isOpen} onOpenChange={(open) => !open && onClose()}>
+      <SheetContent side="left" className="w-[280px] p-0 bg-background border-r border-border">
         {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b border-white/10">
-          <img
-            src="https://edhlkknvlczhbowasjna.supabase.co/storage/v1/object/public/brand-assets/Requity%20Logo%20White.svg?v=2"
-            alt="Requity"
-            className="h-12 w-auto"
-          />
-          <button
-            onClick={onClose}
-            className="p-2 rounded-md hover:bg-white/10 transition-colors text-white/70"
-          >
-            <X className="h-5 w-5" />
-          </button>
+        <div className="flex items-center justify-between px-4 py-[18px]">
+          <div className="flex items-center gap-2">
+            <div className="h-7 w-7 rounded-md bg-foreground flex items-center justify-center">
+              <span className="text-background text-[13px] font-extrabold leading-none">R</span>
+            </div>
+            <span className="text-[15px] font-bold tracking-[-0.03em] text-foreground">
+              Requity
+            </span>
+          </div>
         </div>
 
+        <Separator />
+
         {/* Nav items */}
-        <nav className="flex-1 py-4 space-y-1 px-3 overflow-y-auto">
+        <nav className="flex-1 py-3 space-y-0.5 px-2 overflow-y-auto">
           {navItems.map((item) => {
             const isActive =
               pathname === item.href ||
@@ -224,13 +196,13 @@ export function MobileSidebar({
                 key={item.href}
                 href={item.href}
                 className={cn(
-                  "flex items-center gap-3 px-3 py-3 rounded-md text-sm font-medium transition-colors min-h-[44px]",
+                  "flex items-center gap-2.5 px-3 py-3 rounded-lg text-[13px] transition-colors min-h-[44px]",
                   isActive
-                    ? "bg-gold/20 text-gold"
-                    : "text-white/70 hover:bg-white/10 hover:text-white"
+                    ? "bg-accent text-foreground font-semibold"
+                    : "text-muted-foreground hover:bg-accent hover:text-foreground font-medium"
                 )}
               >
-                <item.icon className="h-5 w-5 flex-shrink-0" strokeWidth={1.5} />
+                <item.icon className="h-[18px] w-[18px] flex-shrink-0" strokeWidth={1.5} />
                 <span>{item.label}</span>
               </Link>
             );
@@ -238,71 +210,65 @@ export function MobileSidebar({
         </nav>
 
         {/* Bottom links */}
-        {showChatter && (
-          <div className="px-3 pb-1">
+        <div className="px-2 pb-2 space-y-0.5">
+          {showChatter && (
             <Link
               href="/chat"
               className={cn(
-                "flex items-center gap-3 px-3 py-3 rounded-md text-sm font-medium transition-colors min-h-[44px] relative",
+                "flex items-center gap-2.5 px-3 py-3 rounded-lg text-[13px] transition-colors min-h-[44px] relative",
                 pathname.startsWith("/chat")
-                  ? "bg-gold/20 text-gold"
-                  : "text-white/70 hover:bg-white/10 hover:text-white"
+                  ? "bg-accent text-foreground font-semibold"
+                  : "text-muted-foreground hover:bg-accent hover:text-foreground font-medium"
               )}
             >
               <div className="relative flex-shrink-0">
-                <MessageSquare className="h-5 w-5" strokeWidth={1.5} />
-                {totalUnread > 0 && (
-                  <span className="absolute -top-1.5 -right-1.5 h-4 min-w-[16px] px-1 flex items-center justify-center rounded-full bg-[#F0719B] text-white text-[10px] font-bold">
-                    {totalUnread > 99 ? "99+" : totalUnread}
-                  </span>
-                )}
+                <MessageSquare className="h-[18px] w-[18px]" strokeWidth={1.5} />
               </div>
               <span>Chatter</span>
               {totalUnread > 0 && (
-                <span className="ml-auto bg-[#F0719B] text-white text-[10px] font-bold rounded-full h-5 min-w-[20px] px-1.5 flex items-center justify-center">
+                <span className="ml-auto h-[17px] min-w-[20px] px-[7px] flex items-center justify-center rounded-full bg-[#F0719B] text-white text-[10px] font-bold">
                   {totalUnread > 99 ? "99+" : totalUnread}
                 </span>
               )}
             </Link>
-          </div>
-        )}
-        {showKnowledgeBase && (
-          <div className="px-3 pb-2">
+          )}
+          {showKnowledgeBase && (
             <Link
               href="/sops"
               className={cn(
-                "flex items-center gap-3 px-3 py-3 rounded-md text-sm font-medium transition-colors min-h-[44px]",
+                "flex items-center gap-2.5 px-3 py-3 rounded-lg text-[13px] transition-colors min-h-[44px]",
                 pathname.startsWith("/sops")
-                  ? "bg-gold/20 text-gold"
-                  : "text-white/70 hover:bg-white/10 hover:text-white"
+                  ? "bg-accent text-foreground font-semibold"
+                  : "text-muted-foreground hover:bg-accent hover:text-foreground font-medium"
               )}
             >
-              <BookOpen className="h-5 w-5 flex-shrink-0" strokeWidth={1.5} />
+              <BookOpen className="h-[18px] w-[18px] flex-shrink-0" strokeWidth={1.5} />
               <span>Knowledge Base</span>
             </Link>
-          </div>
-        )}
-        {showControlCenter && (
-          <div className="px-3 pb-2">
+          )}
+          {showControlCenter && (
             <Link
               href="/control-center"
               className={cn(
-                "flex items-center gap-3 px-3 py-3 rounded-md text-sm font-medium transition-colors min-h-[44px]",
+                "flex items-center gap-2.5 px-3 py-3 rounded-lg text-[13px] transition-colors min-h-[44px]",
                 pathname.startsWith("/control-center")
-                  ? "bg-gold/20 text-gold"
-                  : "text-white/70 hover:bg-white/10 hover:text-white"
+                  ? "bg-accent text-foreground font-semibold"
+                  : "text-muted-foreground hover:bg-accent hover:text-foreground font-medium"
               )}
             >
-              <Cog className="h-5 w-5 flex-shrink-0" strokeWidth={1.5} />
+              <Cog className="h-[18px] w-[18px] flex-shrink-0" strokeWidth={1.5} />
               <span>Control Center</span>
             </Link>
-          </div>
-        )}
+          )}
+        </div>
+
+        <Separator />
+
         <div
-          className="p-4 border-t border-white/10"
-          style={{ paddingBottom: "calc(16px + env(safe-area-inset-bottom, 0px))" }}
+          className="px-4 py-3"
+          style={{ paddingBottom: "calc(12px + env(safe-area-inset-bottom, 0px))" }}
         >
-          <div className="text-xs text-white/50">
+          <div className="text-[11px] text-muted-foreground font-medium">
             <span className="capitalize">
               {isViewingAs
                 ? effectiveViewRole
@@ -313,7 +279,7 @@ export function MobileSidebar({
             Portal
           </div>
         </div>
-      </div>
-    </div>
+      </SheetContent>
+    </Sheet>
   );
 }

@@ -28,6 +28,7 @@ import { useState, useEffect } from "react";
 import { useViewAs } from "@/contexts/view-as-context";
 import { useUnreadCounts } from "@/hooks/useUnreadCounts";
 import { createClient } from "@/lib/supabase/client";
+import { Separator } from "@/components/ui/separator";
 
 interface NavItem {
   label: string;
@@ -144,8 +145,6 @@ export function Sidebar({
   const allNavItems = getNavItems(navRole);
 
   // Filter admin nav items by module access
-  // Super admins (empty accessibleModules array) see everything
-  // Investor/borrower nav items are not gated by modules
   const navItems =
     navRole === "admin" && accessibleModules && accessibleModules.length > 0
       ? allNavItems.filter(
@@ -174,33 +173,39 @@ export function Sidebar({
   return (
     <aside
       className={cn(
-        "h-screen sticky top-0 border-r bg-sidebar text-sidebar-foreground flex flex-col transition-all duration-300",
-        collapsed ? "w-16" : "w-64"
+        "h-screen sticky top-0 border-r border-sidebar-border bg-sidebar text-sidebar-foreground flex flex-col transition-all duration-200",
+        collapsed ? "w-16" : "w-[220px]"
       )}
     >
-      <div className="flex items-center justify-between p-4 border-b border-white/10">
+      {/* Brand area */}
+      <div className="flex items-center justify-between px-4 py-[18px]">
         {!collapsed && (
-          <Link href={`/${role}/dashboard`} className="flex items-center">
-            <img
-              src="https://edhlkknvlczhbowasjna.supabase.co/storage/v1/object/public/brand-assets/Requity%20Logo%20White.svg?v=2"
-              alt="Requity"
-              className="h-16 w-auto"
-            />
+          <Link href={`/${role}/dashboard`} className="flex items-center gap-2">
+            <div className="h-7 w-7 rounded-md bg-foreground flex items-center justify-center">
+              <span className="text-background text-[13px] font-extrabold leading-none">R</span>
+            </div>
+            <span className="text-[15px] font-bold tracking-[-0.03em] text-sidebar-foreground">
+              Requity
+            </span>
           </Link>
         )}
         <button
           onClick={() => setCollapsed(!collapsed)}
-          className="p-1 rounded hover:bg-white/10 transition-colors"
+          className="p-1 rounded-md hover:bg-sidebar-hover transition-colors text-sidebar-foreground/60"
+          aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
         >
           {collapsed ? (
-            <ChevronRight className="h-5 w-5" />
+            <ChevronRight className="h-4 w-4" strokeWidth={1.5} />
           ) : (
-            <ChevronLeft className="h-5 w-5" />
+            <ChevronLeft className="h-4 w-4" strokeWidth={1.5} />
           )}
         </button>
       </div>
 
-      <nav className="flex-1 py-4 space-y-1 px-2 overflow-y-auto">
+      <Separator className="bg-sidebar-border" />
+
+      {/* Main navigation */}
+      <nav className="flex-1 py-3 space-y-0.5 px-2 overflow-y-auto">
         {navItems.map((item) => {
           const isActive =
             pathname === item.href ||
@@ -213,86 +218,87 @@ export function Sidebar({
               key={item.href}
               href={item.href}
               className={cn(
-                "flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors",
+                "flex items-center gap-2.5 px-3 py-[9px] rounded-lg text-[13px] transition-colors",
                 isActive
-                  ? "bg-white/15 text-white"
-                  : "text-white/70 hover:bg-white/10 hover:text-white"
+                  ? "bg-sidebar-active text-sidebar-foreground font-semibold"
+                  : "text-sidebar-foreground/60 hover:bg-sidebar-hover hover:text-sidebar-foreground font-medium"
               )}
               title={collapsed ? item.label : undefined}
             >
-              <item.icon className="h-5 w-5 flex-shrink-0" />
+              <item.icon className="h-[18px] w-[18px] flex-shrink-0" strokeWidth={1.5} />
               {!collapsed && <span>{item.label}</span>}
             </Link>
           );
         })}
       </nav>
 
-      {showChatter && (
-        <div className="px-2 pb-1">
+      {/* Bottom nav items */}
+      <div className="px-2 pb-2 space-y-0.5">
+        {showChatter && (
           <Link
             href="/chat"
             className={cn(
-              "flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors relative",
+              "flex items-center gap-2.5 px-3 py-[9px] rounded-lg text-[13px] transition-colors relative",
               pathname.startsWith("/chat")
-                ? "bg-white/15 text-white"
-                : "text-white/70 hover:bg-white/10 hover:text-white"
+                ? "bg-sidebar-active text-sidebar-foreground font-semibold"
+                : "text-sidebar-foreground/60 hover:bg-sidebar-hover hover:text-sidebar-foreground font-medium"
             )}
             title={collapsed ? "Chatter" : undefined}
           >
             <div className="relative flex-shrink-0">
-              <MessageSquare className="h-5 w-5" />
-              {totalUnread > 0 && (
-                <span className="absolute -top-1.5 -right-1.5 h-4 min-w-[16px] px-1 flex items-center justify-center rounded-full bg-[#F0719B] text-white text-[10px] font-bold">
+              <MessageSquare className="h-[18px] w-[18px]" strokeWidth={1.5} />
+              {collapsed && totalUnread > 0 && (
+                <span className="absolute -top-1.5 -right-1.5 h-[17px] min-w-[20px] px-[7px] flex items-center justify-center rounded-full bg-[#F0719B] text-white text-[10px] font-bold">
                   {totalUnread > 99 ? "99+" : totalUnread}
                 </span>
               )}
             </div>
             {!collapsed && <span>Chatter</span>}
             {!collapsed && totalUnread > 0 && (
-              <span className="ml-auto bg-[#F0719B] text-white text-[10px] font-bold rounded-full h-5 min-w-[20px] px-1.5 flex items-center justify-center">
+              <span className="ml-auto h-[17px] min-w-[20px] px-[7px] flex items-center justify-center rounded-full bg-[#F0719B] text-white text-[10px] font-bold">
                 {totalUnread > 99 ? "99+" : totalUnread}
               </span>
             )}
           </Link>
-        </div>
-      )}
-      {showKnowledgeBase && (
-        <div className="px-2 pb-2">
+        )}
+        {showKnowledgeBase && (
           <Link
             href="/sops"
             className={cn(
-              "flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors",
+              "flex items-center gap-2.5 px-3 py-[9px] rounded-lg text-[13px] transition-colors",
               pathname.startsWith("/sops")
-                ? "bg-white/15 text-white"
-                : "text-white/70 hover:bg-white/10 hover:text-white"
+                ? "bg-sidebar-active text-sidebar-foreground font-semibold"
+                : "text-sidebar-foreground/60 hover:bg-sidebar-hover hover:text-sidebar-foreground font-medium"
             )}
             title={collapsed ? "Knowledge Base" : undefined}
           >
-            <BookOpen className="h-5 w-5 flex-shrink-0" />
+            <BookOpen className="h-[18px] w-[18px] flex-shrink-0" strokeWidth={1.5} />
             {!collapsed && <span>Knowledge Base</span>}
           </Link>
-        </div>
-      )}
-      {showControlCenter && (
-        <div className="px-2 pb-2">
+        )}
+        {showControlCenter && (
           <Link
             href="/control-center"
             className={cn(
-              "flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors",
+              "flex items-center gap-2.5 px-3 py-[9px] rounded-lg text-[13px] transition-colors",
               pathname.startsWith("/control-center")
-                ? "bg-white/15 text-white"
-                : "text-white/70 hover:bg-white/10 hover:text-white"
+                ? "bg-sidebar-active text-sidebar-foreground font-semibold"
+                : "text-sidebar-foreground/60 hover:bg-sidebar-hover hover:text-sidebar-foreground font-medium"
             )}
             title={collapsed ? "Control Center" : undefined}
           >
-            <Cog className="h-5 w-5 flex-shrink-0" />
+            <Cog className="h-[18px] w-[18px] flex-shrink-0" strokeWidth={1.5} />
             {!collapsed && <span>Control Center</span>}
           </Link>
-        </div>
-      )}
-      <div className="p-4 border-t border-white/10">
+        )}
+      </div>
+
+      <Separator className="bg-sidebar-border" />
+
+      {/* User footer */}
+      <div className="px-4 py-3">
         {!collapsed && (
-          <div className="text-xs text-white/50">
+          <div className="text-[11px] text-sidebar-foreground/40 font-medium">
             <span className="capitalize">{isViewingAs ? effectiveViewRole : (isSuperAdmin ? "Super Admin" : role)}</span> Portal
           </div>
         )}

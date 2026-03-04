@@ -152,7 +152,7 @@ export function GroupIconPicker({
             type="button"
             className={cn(
               "p-1.5 rounded-md hover:bg-[rgba(255,255,255,0.08)] transition-colors duration-200 text-lg leading-none",
-              currentIcon === emoji && "bg-[rgba(197,151,91,0.15)] ring-1 ring-[#C5975B]"
+              currentIcon === emoji && "bg-accent ring-1 ring-primary"
             )}
             onClick={() => {
               onSelect(emoji);

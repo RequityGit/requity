@@ -116,7 +116,7 @@ const STATUS_BADGES: Record<string, { label: string; className: string }> = {
   },
   pending: {
     label: "Pending",
-    className: "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-400",
+    className: "bg-muted text-foreground dark:bg-muted dark:text-muted-foreground",
   },
 };
 

@@ -343,7 +343,7 @@ export function EquityKanbanBoard({
                 onDragOver={handleDragOver}
                 onDrop={(e) => handleDrop(e, config.stage_key)}
               >
-                <div className="bg-slate-100 dark:bg-slate-900 rounded-lg p-3">
+                <div className="bg-muted rounded-lg p-3">
                   <div className="mb-3">
                     <div className="flex items-center justify-between">
                       <h3 className="text-sm font-semibold text-foreground">

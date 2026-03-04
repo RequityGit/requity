@@ -220,7 +220,7 @@ export function EquityKanban({ data }: EquityKanbanProps) {
                 onDragOver={handleDragOver}
                 onDrop={(e) => handleDrop(e, stage)}
               >
-                <div className="bg-slate-100 dark:bg-slate-900 rounded-lg p-3">
+                <div className="bg-muted rounded-lg p-3">
                   {/* Column header */}
                   <div className="mb-3">
                     <div className="flex items-center justify-between">
