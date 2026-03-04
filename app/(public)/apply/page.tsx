@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect, useCallback } from 'react';
 import Link from 'next/link';
-import pricingConfig from '../../data/pricing-config.json';
+import pricingConfig from '@/data/pricing-config.json';
 import { useLanguage } from '@/components/public/LanguageContext';
 import { LanguageToggle } from '@/components/public/LanguageToggle';
 import translations from '@/lib/translations';

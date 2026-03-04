@@ -1,4 +1,4 @@
-import { findCollectionByName, getOptionMap } from '../../lib/webflow';
+import { findCollectionByName, getOptionMap } from '@/lib/webflow';
 import { getLoanIndexes } from '@/lib/loan-indexes';
 import LendingClient from '@/app/(public)/lending/LendingClient';
 
