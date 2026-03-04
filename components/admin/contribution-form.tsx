@@ -35,7 +35,7 @@ interface InvestorCommitment {
   commitment_amount: number;
   funded_amount: number;
   unfunded_amount: number;
-  profiles: { full_name: string | null; email: string } | null;
+  investors: { crm_contacts: { first_name: string | null; last_name: string | null; email: string | null } | null } | null;
 }
 
 export function ContributionForm({ funds }: ContributionFormProps) {
@@ -61,7 +61,7 @@ export function ContributionForm({ funds }: ContributionFormProps) {
       const supabase = createClient();
       const { data } = await supabase
         .from("investor_commitments")
-        .select("*, profiles(full_name, email)")
+        .select("*, investors(crm_contacts(first_name, last_name, email))")
         .eq("fund_id", fundId)
         .neq("status", "redeemed");
 
@@ -247,9 +247,9 @@ export function ContributionForm({ funds }: ContributionFormProps) {
                     >
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-medium truncate">
-                          {inv.profiles?.full_name ||
-                            inv.profiles?.email ||
-                            "Unknown"}
+                          {inv.investors?.crm_contacts
+                            ? `${inv.investors.crm_contacts.first_name ?? ""} ${inv.investors.crm_contacts.last_name ?? ""}`.trim() || inv.investors.crm_contacts.email || "Unknown"
+                            : "Unknown"}
                         </p>
                         <p className="text-xs text-muted-foreground">
                           Committed: {formatCurrency(inv.commitment_amount)} |

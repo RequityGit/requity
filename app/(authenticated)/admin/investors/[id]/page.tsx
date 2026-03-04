@@ -27,16 +27,14 @@ export default async function AdminInvestorDetailPage({ params }: PageProps) {
   // Use admin client to ensure we can always read the investor,
   // bypassing any RLS timing issues for newly created investors.
   const admin = createAdminClient();
-  const { data: investor } = await admin
-    .from("investors")
+  const { data: investor } = await (admin as any)
+    .from("investors_safe")
     .select("*")
     .eq("id", id)
     .single();
 
   if (!investor) notFound();
 
-  // Cast to any — investor contact fields (name, email, phone, address) now
-  // live on crm_contacts in the new schema, but legacy code still references them.
   const inv = investor as any;
   const investorName = `${inv.first_name ?? ""} ${inv.last_name ?? ""}`.trim() || "Unknown";
 

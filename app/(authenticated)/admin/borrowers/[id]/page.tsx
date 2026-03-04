@@ -36,16 +36,14 @@ export default async function AdminBorrowerDetailPage({ params }: PageProps) {
   const { id } = await params;
   const admin = createAdminClient();
 
-  const { data: borrowerRow } = await admin
-    .from("borrowers")
+  const { data: borrowerRow } = await (admin as any)
+    .from("borrowers_safe")
     .select("*")
     .eq("id", id)
     .single();
 
   if (!borrowerRow) notFound();
 
-  // Cast to any since borrower fields (name, email, phone, address) may come
-  // from crm_contacts in the new schema, but legacy code still references them
   const borrower = borrowerRow as any;
 
   // Fetch related data in parallel

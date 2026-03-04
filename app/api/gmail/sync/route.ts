@@ -63,7 +63,8 @@ export async function POST(request: NextRequest) {
     const { data: roles } = await supabase
       .from("user_roles")
       .select("role")
-      .eq("user_id", user.id);
+      .eq("user_id", user.id)
+      .eq("is_active", true);
 
     const isAdmin = roles?.some(
       (r) => r.role === "admin" || r.role === "super_admin"
@@ -95,7 +96,8 @@ export async function POST(request: NextRequest) {
     const { data: roles } = await supabase
       .from("user_roles")
       .select("role")
-      .eq("user_id", user.id);
+      .eq("user_id", user.id)
+      .eq("is_active", true);
 
     const isAdmin = roles?.some(
       (r) => r.role === "admin" || r.role === "super_admin"

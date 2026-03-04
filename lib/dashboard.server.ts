@@ -225,7 +225,7 @@ export async function fetchDashboardData(): Promise<DashboardData> {
       .from("crm_contacts")
       .select("id", { count: "exact", head: true })
       .in("status", ["active"])
-      .in("type", ["lead", "prospect"]),
+      .in("contact_type", ["lead", "prospect"]),
   ]);
 
   // ─── Hero Metrics ────────────────────────────────────────

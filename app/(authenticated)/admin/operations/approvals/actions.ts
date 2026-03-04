@@ -26,14 +26,22 @@ async function requireAdmin() {
 
   if (!user) return { error: "Not authenticated" } as const;
 
+  const { data: adminRole } = await supabase
+    .from("user_roles")
+    .select("id")
+    .eq("user_id", user.id)
+    .in("role", ["admin", "super_admin"])
+    .eq("is_active", true)
+    .limit(1)
+    .maybeSingle();
+
+  if (!adminRole) return { error: "Unauthorized" } as const;
+
   const { data: profile } = await supabase
     .from("profiles")
-    .select("role, full_name")
+    .select("full_name")
     .eq("id", user.id)
     .single();
-
-  if (profile?.role !== "admin" && profile?.role !== "super_admin")
-    return { error: "Unauthorized" } as const;
 
   return { user, profile } as const;
 }

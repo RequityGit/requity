@@ -219,22 +219,12 @@ export async function moveToServicingAction(pipelineLoanId: string) {
     let borrowerName: string | null = null;
     if (loan.borrower_id) {
       const { data: borrower } = await admin
-        .from("borrowers")
-        .select("first_name, last_name, crm_contact_id")
+        .from("borrowers_safe")
+        .select("first_name, last_name")
         .eq("id", loan.borrower_id)
         .maybeSingle();
 
-      if (borrower?.crm_contact_id) {
-        const { data: contact } = await admin
-          .from("crm_contacts")
-          .select("first_name, last_name")
-          .eq("id", borrower.crm_contact_id)
-          .maybeSingle();
-        if (contact) {
-          borrowerName = `${contact.first_name ?? ""} ${contact.last_name ?? ""}`.trim() || null;
-        }
-      }
-      if (!borrowerName && borrower) {
+      if (borrower) {
         borrowerName = `${borrower.first_name ?? ""} ${borrower.last_name ?? ""}`.trim() || null;
       }
     }
@@ -257,7 +247,6 @@ export async function moveToServicingAction(pipelineLoanId: string) {
 
     const payload: Record<string, any> = {
       loan_id: loan.loan_number,
-      pipeline_loan_id: loan.id,
       loan_status: "Active",
       total_loan_amount: loan.loan_amount ?? loan.total_loan_amount ?? 0,
       current_balance: loan.loan_amount ?? loan.total_loan_amount ?? 0,

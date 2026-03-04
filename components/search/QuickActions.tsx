@@ -72,7 +72,7 @@ function getQuickActionsForEntity(
         {
           label: "Log Activity",
           icon: ActivityIcon,
-          href: `/admin/crm/contacts/${id}`,
+          href: `/admin/crm/${id}`,
         },
       ];
     case "fund":

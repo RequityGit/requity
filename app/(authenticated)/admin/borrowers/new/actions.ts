@@ -18,13 +18,16 @@ async function requireAdmin() {
 
   if (!user) return { error: "Not authenticated" } as const;
 
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("role")
-    .eq("id", user.id)
-    .single();
+  const { data: adminRole } = await supabase
+    .from("user_roles")
+    .select("id")
+    .eq("user_id", user.id)
+    .in("role", ["admin", "super_admin"])
+    .eq("is_active", true)
+    .limit(1)
+    .maybeSingle();
 
-  if (profile?.role !== "admin" && profile?.role !== "super_admin") return { error: "Unauthorized" } as const;
+  if (!adminRole) return { error: "Unauthorized" } as const;
 
   return { user } as const;
 }
@@ -60,31 +63,43 @@ export async function addBorrowerAction(input: AddBorrowerInput) {
 
     const admin = createAdminClient();
 
-    // Legacy fields (first_name, email, address, etc.) no longer exist on
-    // borrowers table — they moved to crm_contacts.  Cast to any until refactored.
-    const borrowerData: Record<string, unknown> = {
-      first_name: input.first_name,
-      last_name: input.last_name,
-      email: input.email || null,
-      phone: input.phone || null,
-      date_of_birth: input.date_of_birth || null,
-      ssn_last_four: input.ssn_last_four || null,
-      is_us_citizen: input.is_us_citizen ?? true,
-      address_line1: input.address_line1 || null,
-      address_line2: input.address_line2 || null,
-      city: input.city || null,
-      state: input.state || null,
-      zip: input.zip || null,
-      country: input.country || "US",
-      credit_score: input.credit_score ?? null,
-      credit_report_date: input.credit_report_date || null,
-      experience_count: input.experience_count ?? 0,
-      notes: input.notes || null,
-    };
+    // 1. Create CRM contact with contact-level fields
+    const { data: contact, error: contactError } = await (admin as any)
+      .from("crm_contacts")
+      .insert({
+        first_name: input.first_name,
+        last_name: input.last_name,
+        email: input.email || null,
+        phone: input.phone || null,
+        address_line1: input.address_line1 || null,
+        address_line2: input.address_line2 || null,
+        city: input.city || null,
+        state: input.state || null,
+        zip: input.zip || null,
+        country: input.country || "US",
+        contact_type: "borrower",
+        status: "active",
+      })
+      .select("id")
+      .single();
 
-    const { data, error } = await (admin as any)
+    if (contactError) {
+      return { error: contactError.message };
+    }
+
+    // 2. Create borrower with borrower-specific fields + crm_contact_id link
+    const { data, error } = await admin
       .from("borrowers")
-      .insert(borrowerData)
+      .insert({
+        crm_contact_id: contact.id,
+        date_of_birth: input.date_of_birth || null,
+        ssn_last_four: input.ssn_last_four || null,
+        is_us_citizen: input.is_us_citizen ?? true,
+        credit_score: input.credit_score ?? null,
+        credit_report_date: input.credit_report_date || null,
+        experience_count: input.experience_count ?? 0,
+        notes: input.notes || null,
+      })
       .select("id")
       .single();
 
@@ -114,22 +129,39 @@ export async function updateBorrowerAction(input: UpdateBorrowerInput) {
 
     const admin = createAdminClient();
 
-    const { error } = await (admin as any)
+    // 1. Get the borrower's crm_contact_id
+    const { data: borrower } = await admin
+      .from("borrowers")
+      .select("crm_contact_id")
+      .eq("id", input.id)
+      .single();
+
+    // 2. Update CRM contact with contact-level fields
+    if (borrower?.crm_contact_id) {
+      await (admin as any)
+        .from("crm_contacts")
+        .update({
+          first_name: input.first_name,
+          last_name: input.last_name,
+          email: input.email || null,
+          phone: input.phone || null,
+          address_line1: input.address_line1 || null,
+          address_line2: input.address_line2 || null,
+          city: input.city || null,
+          state: input.state || null,
+          zip: input.zip || null,
+          country: input.country || "US",
+        })
+        .eq("id", borrower.crm_contact_id);
+    }
+
+    // 3. Update borrower-specific fields
+    const { error } = await admin
       .from("borrowers")
       .update({
-        first_name: input.first_name,
-        last_name: input.last_name,
-        email: input.email || null,
-        phone: input.phone || null,
         date_of_birth: input.date_of_birth || null,
         ssn_last_four: input.ssn_last_four || null,
         is_us_citizen: input.is_us_citizen ?? true,
-        address_line1: input.address_line1 || null,
-        address_line2: input.address_line2 || null,
-        city: input.city || null,
-        state: input.state || null,
-        zip: input.zip || null,
-        country: input.country || "US",
         credit_score: input.credit_score ?? null,
         credit_report_date: input.credit_report_date || null,
         experience_count: input.experience_count ?? 0,

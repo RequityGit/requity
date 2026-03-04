@@ -385,7 +385,7 @@ export interface QuickLink {
 export function getQuickLinks(role: string): QuickLink[] {
   if (role === "borrower") {
     return [
-      { label: "My Loans", href: "/borrower/loans", icon: Banknote },
+      { label: "My Loans", href: "/borrower/dashboard", icon: Banknote },
       { label: "My Documents", href: "/borrower/documents", icon: FileText },
     ];
   }

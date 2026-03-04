@@ -93,23 +93,11 @@ export default async function DealDetailPage({ params }: PageProps) {
     if (primaryBorrower) {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const { data: bRow } = await (admin as any)
-        .from("borrowers")
-        .select("first_name, last_name, crm_contact_id")
+        .from("borrowers_safe")
+        .select("first_name, last_name")
         .eq("id", primaryBorrower.borrower_id)
         .maybeSingle();
-      if (bRow?.crm_contact_id) {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const { data: contact } = await (admin as any)
-          .from("crm_contacts")
-          .select("first_name, last_name")
-          .eq("id", bRow.crm_contact_id)
-          .maybeSingle();
-        if (contact) {
-          oppBorrowerName =
-            `${contact.first_name ?? ""} ${contact.last_name ?? ""}`.trim() || null;
-        }
-      }
-      if (!oppBorrowerName && bRow) {
+      if (bRow) {
         oppBorrowerName =
           `${bRow.first_name ?? ""} ${bRow.last_name ?? ""}`.trim() || null;
       }
@@ -178,23 +166,11 @@ export default async function DealDetailPage({ params }: PageProps) {
   if (!isOpportunity && d.borrower_id && !d._borrower_name) {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { data: bRow } = await (supabase as any)
-      .from("borrowers")
-      .select("crm_contact_id, first_name, last_name")
+      .from("borrowers_safe")
+      .select("first_name, last_name")
       .eq("id", d.borrower_id)
       .maybeSingle();
-    if (bRow?.crm_contact_id) {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { data: contact } = await (supabase as any)
-        .from("crm_contacts")
-        .select("first_name, last_name")
-        .eq("id", bRow.crm_contact_id)
-        .maybeSingle();
-      if (contact) {
-        d._borrower_name =
-          `${contact.first_name ?? ""} ${contact.last_name ?? ""}`.trim() || null;
-      }
-    }
-    if (!d._borrower_name && bRow) {
+    if (bRow) {
       d._borrower_name =
         `${bRow.first_name ?? ""} ${bRow.last_name ?? ""}`.trim() || null;
     }
@@ -206,10 +182,10 @@ export default async function DealDetailPage({ params }: PageProps) {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const { data: entity } = await (supabase as any)
         .from("borrower_entities")
-        .select("name")
+        .select("entity_name")
         .eq("id", d.borrower_entity_id)
         .maybeSingle();
-      d._entity_name = entity?.name ?? null;
+      d._entity_name = entity?.entity_name ?? null;
     } catch {
       /* table may not exist */
     }
@@ -308,7 +284,7 @@ export default async function DealDetailPage({ params }: PageProps) {
       ),
       fetchSafe(() =>
         supabase
-          .from("documents")
+          .from("loan_documents")
           .select("*")
           .eq("loan_id", loanId)
           .order("created_at", { ascending: false })
@@ -403,16 +379,16 @@ export default async function DealDetailPage({ params }: PageProps) {
   const conditions: ConditionData[] = conditionsData.map((c: any) => ({
     id: c.id,
     loan_id: c.loan_id,
-    name: c.name ?? c.condition_name ?? "Unnamed",
+    name: c.condition_name ?? "Unnamed",
     category: c.category ?? null,
     status: c.status ?? "pending",
     assigned_to: c.assigned_to ?? null,
     due_date: c.due_date ?? null,
-    critical_path: c.critical_path ?? false,
+    critical_path: c.critical_path_item ?? false,
     notes: c.notes ?? null,
     template_id: c.template_id ?? null,
-    cleared_at: c.cleared_at ?? null,
-    cleared_by: c.cleared_by ?? null,
+    cleared_at: c.reviewed_at ?? c.approved_date ?? null,
+    cleared_by: c.reviewed_by ?? null,
     created_at: c.created_at ?? null,
     updated_at: c.updated_at ?? null,
     _doc_count: condDocCounts[c.id] || 0,
@@ -424,12 +400,12 @@ export default async function DealDetailPage({ params }: PageProps) {
     id: doc.id,
     loan_id: doc.loan_id,
     condition_id: doc.condition_id ?? null,
-    name: doc.name ?? doc.file_name ?? null,
-    file_name: doc.file_name ?? null,
-    file_url: doc.file_url ?? doc.url ?? null,
-    file_type: doc.file_type ?? null,
-    file_size: doc.file_size ?? null,
-    document_type: doc.document_type ?? doc.type ?? null,
+    name: doc.document_name ?? null,
+    file_name: doc.document_name ?? null,
+    file_url: doc.file_url ?? null,
+    file_type: doc.mime_type ?? null,
+    file_size: doc.file_size_bytes ?? null,
+    document_type: doc.document_type ?? null,
     uploaded_by: doc.uploaded_by ?? null,
     _uploaded_by_name: doc.uploaded_by
       ? nameMap[doc.uploaded_by] ?? null
@@ -455,7 +431,7 @@ export default async function DealDetailPage({ params }: PageProps) {
     loan_id: c.loan_id,
     author_id: c.author_id,
     author_name: c.author_name ?? (c.author_id ? nameMap[c.author_id] ?? null : null),
-    comment: c.comment ?? c.body ?? "",
+    comment: c.comment ?? "",
     is_internal: c.is_internal ?? false,
     is_edited: c.is_edited ?? false,
     parent_comment_id: c.parent_comment_id ?? null,

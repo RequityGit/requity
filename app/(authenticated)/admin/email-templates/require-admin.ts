@@ -10,14 +10,16 @@ export async function requireAdmin(): Promise<
 
   if (!user) return { error: "Not authenticated" };
 
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("role")
-    .eq("id", user.id)
-    .single();
+  const { data: adminRole } = await supabase
+    .from("user_roles")
+    .select("id")
+    .eq("user_id", user.id)
+    .in("role", ["admin", "super_admin"])
+    .eq("is_active", true)
+    .limit(1)
+    .maybeSingle();
 
-  if (profile?.role !== "admin" && profile?.role !== "super_admin")
-    return { error: "Unauthorized" };
+  if (!adminRole) return { error: "Unauthorized" };
 
   return { user };
 }

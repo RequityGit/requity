@@ -17,13 +17,16 @@ async function requireAdmin() {
 
   if (!user) return { error: "Not authenticated" } as const;
 
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("role")
-    .eq("id", user.id)
-    .single();
+  const { data: adminRole } = await supabase
+    .from("user_roles")
+    .select("id")
+    .eq("user_id", user.id)
+    .in("role", ["admin", "super_admin"])
+    .eq("is_active", true)
+    .limit(1)
+    .maybeSingle();
 
-  if (profile?.role !== "admin" && profile?.role !== "super_admin") return { error: "Unauthorized" } as const;
+  if (!adminRole) return { error: "Unauthorized" } as const;
 
   return { user } as const;
 }
@@ -53,33 +56,45 @@ export async function addInvestorAction(input: AddInvestorInput) {
 
     const admin = createAdminClient();
 
-    // Legacy fields — these columns now live on crm_contacts; cast to any until refactored
-    const investorData: Record<string, unknown> = {
-      first_name: input.first_name,
-      last_name: input.last_name,
-      email: input.email,
-      phone: input.phone || null,
-      address_line1: input.address_line1 || null,
-      address_line2: input.address_line2 || null,
-      city: input.city || null,
-      state: input.state || null,
-      zip: input.zip || null,
-      country: input.country || "US",
-      notes: input.notes || null,
-      accreditation_status: "pending",
-    };
+    // 1. Create CRM contact with contact-level fields
+    const { data: contact, error: contactError } = await (admin as any)
+      .from("crm_contacts")
+      .insert({
+        first_name: input.first_name,
+        last_name: input.last_name,
+        email: input.email,
+        phone: input.phone || null,
+        address_line1: input.address_line1 || null,
+        address_line2: input.address_line2 || null,
+        city: input.city || null,
+        state: input.state || null,
+        zip: input.zip || null,
+        country: input.country || "US",
+        contact_type: "investor",
+        status: "active",
+      })
+      .select("id")
+      .single();
 
-    const { data, error } = await (admin as any)
+    if (contactError) {
+      if (contactError.message.includes("duplicate") || contactError.message.includes("unique")) {
+        return { error: `A contact with email ${input.email} already exists.` };
+      }
+      return { error: contactError.message };
+    }
+
+    // 2. Create investor with investor-specific fields + crm_contact_id link
+    const { data, error } = await admin
       .from("investors")
-      .insert(investorData)
+      .insert({
+        crm_contact_id: contact.id,
+        notes: input.notes || null,
+        accreditation_status: "pending",
+      })
       .select("id")
       .single();
 
     if (error) {
-      // Handle unique constraint on email
-      if (error.message.includes("duplicate") || error.message.includes("unique")) {
-        return { error: `An investor with email ${input.email} already exists.` };
-      }
       return { error: error.message };
     }
 
