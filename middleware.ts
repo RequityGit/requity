@@ -16,7 +16,23 @@ const ROLE_DASHBOARDS: Record<string, string> = {
 };
 
 // Routes that don't require authentication
-const PUBLIC_ROUTES = ["/login", "/auth/callback", "/auth/confirm"];
+const PUBLIC_ROUTES = [
+  "/login",
+  "/auth/callback",
+  "/auth/confirm",
+  // Public marketing pages (requitygroup)
+  "/",
+  "/about",
+  "/apply",
+  "/insights",
+  "/borrower-faq",
+  "/investor-faq",
+  "/lending",
+  "/invest",
+  "/income-fund",
+  "/portfolio",
+  "/request-access",
+];
 
 export async function middleware(request: NextRequest) {
   const { supabase, user, supabaseResponse } = await updateSession(request);

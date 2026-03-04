@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 280 60" fill="none">
+  <!-- Navy circle background -->
+  <circle cx="30" cy="30" r="28" fill="#0B1526"/>
+  <!-- Cyan diamond/gem icon -->
+  <g transform="translate(30, 30)">
+    <!-- Top facet -->
+    <polygon points="0,-18 -10,-6 10,-6" fill="#4FC4E0"/>
+    <!-- Left facet -->
+    <polygon points="-10,-6 -14,2 0,18 0,-2" fill="#3BA8C8"/>
+    <!-- Right facet -->
+    <polygon points="10,-6 14,2 0,18 0,-2" fill="#5AD4EE"/>
+    <!-- Top left small -->
+    <polygon points="0,-18 -10,-6 0,-2" fill="#3DBAD6"/>
+    <!-- Top right small -->
+    <polygon points="0,-18 10,-6 0,-2" fill="#4FC4E0"/>
+    <!-- Center line accent -->
+    <line x1="0" y1="-18" x2="0" y2="18" stroke="#2A9AB5" stroke-width="0.5" opacity="0.4"/>
+  </g>
+  <!-- "Requity" text -->
+  <text x="68" y="38" font-family="'DM Sans', sans-serif" font-size="32" font-weight="600" fill="#0B1526" letter-spacing="-0.5">Requity</text>
+  <!-- ® symbol -->
+  <text x="222" y="24" font-family="'DM Sans', sans-serif" font-size="10" fill="#0B1526">®</text>
+</svg>
