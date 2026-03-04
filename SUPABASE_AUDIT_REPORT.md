@@ -464,7 +464,7 @@ All 22 tables have RLS **enabled**. Policy summary:
 ## 11. Auth Configuration
 
 - **Provider:** Email only (no OAuth providers like Google, GitHub, etc.)
-- **Users:** 16 auth.users accounts (only 2 have ever signed in: dylan@requitygroup.com and ee@requitygroup.com)
+- **Users:** 16 auth.users accounts (only 2 have ever signed in — emails redacted to avoid secret exposure in build)
 - **Leaked password protection:** DISABLED (Supabase security advisory)
 - **No custom auth hooks detected**
 - **Many test accounts** with gibberish emails that should be cleaned up
