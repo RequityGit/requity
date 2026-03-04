@@ -45,9 +45,10 @@ export async function middleware(request: NextRequest) {
 
   // -----------------------------------------------------------------------
   // Check if the current route is public
+  // "/" must be an exact match — startsWith("/") would match every path
   // -----------------------------------------------------------------------
   const isPublicRoute = PUBLIC_ROUTES.some((route) =>
-    pathname.startsWith(route)
+    route === "/" ? pathname === "/" : pathname.startsWith(route)
   );
 
   // -----------------------------------------------------------------------
