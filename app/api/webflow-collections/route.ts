@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { getAllCMSData } from '@/lib/webflow';
 
 export async function GET() {

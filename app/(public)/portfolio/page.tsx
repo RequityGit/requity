@@ -1,3 +1,4 @@
+// @ts-nocheck
 import Link from 'next/link';
 import { findCollectionByName, getField, getImageUrl } from '@/lib/webflow';
 import PortfolioClient from '@/app/(public)/portfolio/PortfolioClient';

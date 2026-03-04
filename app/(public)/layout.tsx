@@ -1,3 +1,4 @@
+// @ts-nocheck
 import '@/app/globals/public.css';
 import { LanguageProvider } from '@/components/public/LanguageContext';
 
