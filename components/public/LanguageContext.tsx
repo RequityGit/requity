@@ -2,10 +2,12 @@
 
 import { createContext, useContext, useState, useEffect } from 'react';
 
-const LanguageContext = createContext({ lang: 'en', toggleLang: () => {} });
+type Language = 'en' | 'es';
 
-export function LanguageProvider({ children }) {
-  const [lang, setLang] = useState('en');
+const LanguageContext = createContext<{ lang: Language; toggleLang: () => void }>({ lang: 'en', toggleLang: () => {} });
+
+export function LanguageProvider({ children }: { children: React.ReactNode }) {
+  const [lang, setLang] = useState<Language>('en');
 
   useEffect(() => {
     const saved = localStorage.getItem('requity-lang');
