@@ -1,5 +1,5 @@
 import { PageHeader } from "@/components/shared/page-header";
-import { getEffectiveAuth } from "@/lib/impersonation";
+import { getEffectiveAuth, getInvestorId } from "@/lib/impersonation";
 import { formatDate } from "@/lib/format";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -119,11 +119,16 @@ export default async function DocumentsPage({
 
   const documents = (rawDocuments as unknown as DocumentJoined[]) ?? [];
 
+  // Resolve auth user to investors.id
+  const investorId = await getInvestorId(supabase, userId);
+
   // Get funds for filter
-  const { data: commitments } = await supabase
-    .from("investor_commitments")
-    .select("fund_id, funds(id, name)")
-    .eq("investor_id", userId);
+  const { data: commitments } = investorId
+    ? await supabase
+        .from("investor_commitments")
+        .select("fund_id, funds(id, name)")
+        .eq("investor_id", investorId)
+    : { data: null };
 
   const funds = (commitments ?? [])
     .map((c) => {

@@ -107,3 +107,21 @@ export async function getInvestorId(
     .maybeSingle();
   return data?.id ?? null;
 }
+
+/**
+ * Resolve the auth user's ID to the corresponding borrowers.id.
+ * The loans, draw_requests, and loan_payments tables reference
+ * borrowers.id — NOT auth.users.id — so this lookup is required
+ * before querying those tables from the borrower portal.
+ */
+export async function getBorrowerId(
+  supabase: SupabaseClient<Database>,
+  userId: string
+): Promise<string | null> {
+  const { data } = await supabase
+    .from("borrowers")
+    .select("id")
+    .eq("user_id", userId)
+    .maybeSingle();
+  return data?.id ?? null;
+}

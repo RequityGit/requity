@@ -28,7 +28,7 @@ export interface SearchableDeal {
   id: string;
   loan_number: string | null;
   property_address: string | null;
-  stage: string | null;
+  loan_stage: string | null;
   borrower_name: string | null;
   loan_amount: number | null;
 }
@@ -113,11 +113,10 @@ export function ChatterMultiSearch({
       // Search active deals (loans)
       const { data: deals } = await supabase
         .from("loan_pipeline")
-        .select("id, loan_number, property_address, stage, borrower_name, loan_amount")
+        .select("id, loan_number, property_address, loan_stage, borrower_name, loan_amount")
         .or(
           `loan_number.ilike.%${q}%,property_address.ilike.%${q}%,borrower_name.ilike.%${q}%`
         )
-        .is("deleted_at", null)
         .limit(6);
 
       const filteredMembers = ((members as SearchableTeamMember[]) || []).filter(
@@ -499,8 +498,8 @@ export function ChatterMultiSearch({
                   </div>
                   {dealResults.map((deal, i) => {
                     const flatIdx = memberResults.length + i;
-                    const stageLabel = deal.stage
-                      ? getStageDisplayLabel(deal.stage)
+                    const stageLabel = deal.loan_stage
+                      ? getStageDisplayLabel(deal.loan_stage)
                       : null;
                     return (
                       <SearchResultRow

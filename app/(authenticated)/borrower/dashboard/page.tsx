@@ -11,17 +11,23 @@ import {
   CalendarClock,
   FileText,
 } from "lucide-react";
-import { getEffectiveAuth } from "@/lib/impersonation";
+import { getEffectiveAuth, getBorrowerId } from "@/lib/impersonation";
 
 export default async function BorrowerDashboardPage() {
   const { supabase, userId } = await getEffectiveAuth();
 
-  // Fetch all loans for this borrower (profile_id links to auth user)
-  const { data: loans } = await supabase
-    .from("loans")
-    .select("*")
-    .eq("profile_id", userId)
-    .order("created_at", { ascending: false });
+  // Resolve auth user to borrowers.id
+  const borrowerId = await getBorrowerId(supabase, userId);
+
+  // Fetch all loans for this borrower (borrower_id links to borrowers table)
+  const { data: loans } = borrowerId
+    ? await supabase
+        .from("loans")
+        .select("*")
+        .eq("borrower_id", borrowerId)
+        .is("deleted_at", null)
+        .order("created_at", { ascending: false })
+    : { data: null };
 
   const allLoans = loans ?? [];
 
@@ -37,11 +43,13 @@ export default async function BorrowerDashboardPage() {
   );
 
   // Fetch pending draw requests count
-  const { count: pendingDraws } = await supabase
-    .from("draw_requests")
-    .select("*", { count: "exact", head: true })
-    .eq("borrower_id", userId)
-    .in("status", ["submitted", "under_review"]);
+  const { count: pendingDraws } = borrowerId
+    ? await supabase
+        .from("draw_requests")
+        .select("*", { count: "exact", head: true })
+        .eq("borrower_id", borrowerId)
+        .in("status", ["submitted", "under_review"])
+    : { count: 0 };
 
   // Fetch next payment due
   const loanIds = activeLoans.map((l) => l.id);

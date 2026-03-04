@@ -13,7 +13,7 @@ import { LOAN_TYPES } from "@/lib/constants";
 import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { LoanDetailTabs } from "@/components/borrower/loan-detail-tabs";
-import { getEffectiveAuth } from "@/lib/impersonation";
+import { getEffectiveAuth, getBorrowerId } from "@/lib/impersonation";
 
 interface LoanDetailPageProps {
   params: { id: string };
@@ -22,13 +22,18 @@ interface LoanDetailPageProps {
 export default async function LoanDetailPage({ params }: LoanDetailPageProps) {
   const { supabase, userId } = await getEffectiveAuth();
 
-  // Fetch loan and verify ownership (profile_id links loan to auth user)
-  const { data: loan } = await supabase
-    .from("loans")
-    .select("*")
-    .eq("id", params.id)
-    .eq("profile_id", userId)
-    .single();
+  // Resolve auth user to borrowers.id
+  const borrowerId = await getBorrowerId(supabase, userId);
+
+  // Fetch loan and verify ownership (borrower_id links loan to borrowers table)
+  const { data: loan } = borrowerId
+    ? await supabase
+        .from("loans")
+        .select("*")
+        .eq("id", params.id)
+        .eq("borrower_id", borrowerId)
+        .single()
+    : { data: null };
 
   if (!loan) {
     notFound();
@@ -39,7 +44,7 @@ export default async function LoanDetailPage({ params }: LoanDetailPageProps) {
     .from("loan_payments")
     .select("*")
     .eq("loan_id", loan.id)
-    .order("due_date", { ascending: false });
+    .order("payment_date", { ascending: false });
 
   // Fetch documents for this loan
   const { data: documents } = await supabase

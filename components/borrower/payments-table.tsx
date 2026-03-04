@@ -17,14 +17,13 @@ import { formatCurrencyDetailed, formatDate } from "@/lib/format";
 interface PaymentWithLoan {
   id: string;
   loan_id: string;
-  borrower_id: string;
-  payment_number: number;
-  amount_due: number;
-  amount_paid: number | null;
+  amount: number;
   principal_amount: number | null;
   interest_amount: number | null;
-  due_date: string;
-  paid_date: string | null;
+  late_fee: number | null;
+  payment_date: string;
+  payment_method: string | null;
+  reference_number: string | null;
   status: string;
   notes: string | null;
   created_at: string;
@@ -57,11 +56,11 @@ export function PaymentsTable({ payments, loans }: PaymentsTableProps) {
     }
 
     if (dateFrom) {
-      result = result.filter((p) => p.due_date >= dateFrom);
+      result = result.filter((p) => p.payment_date >= dateFrom);
     }
 
     if (dateTo) {
-      result = result.filter((p) => p.due_date <= dateTo);
+      result = result.filter((p) => p.payment_date <= dateTo);
     }
 
     return result;
@@ -69,9 +68,9 @@ export function PaymentsTable({ payments, loans }: PaymentsTableProps) {
 
   const columns: Column<PaymentWithLoan>[] = [
     {
-      key: "due_date",
-      header: "Due Date",
-      cell: (row) => formatDate(row.due_date),
+      key: "payment_date",
+      header: "Payment Date",
+      cell: (row) => formatDate(row.payment_date),
     },
     {
       key: "loan",
@@ -85,9 +84,9 @@ export function PaymentsTable({ payments, loans }: PaymentsTableProps) {
       ),
     },
     {
-      key: "amount_due",
+      key: "amount",
       header: "Amount",
-      cell: (row) => formatCurrencyDetailed(row.amount_due),
+      cell: (row) => formatCurrencyDetailed(row.amount),
     },
     {
       key: "principal",

@@ -55,10 +55,22 @@ export function NewDrawForm() {
 
       if (!user) return;
 
+      // Look up borrower record ID from auth user
+      const { data: borrowerRecord } = await supabase
+        .from("borrowers")
+        .select("id")
+        .eq("user_id", user.id)
+        .maybeSingle();
+
+      if (!borrowerRecord) {
+        setLoans([]);
+        return;
+      }
+
       const { data } = await supabase
         .from("loans")
         .select("*")
-        .eq("borrower_id", user.id)
+        .eq("borrower_id", borrowerRecord.id)
         .in("stage", ["funded", "servicing"])
         .is("deleted_at", null)
         .order("property_address", { ascending: true });
@@ -105,6 +117,18 @@ export function NewDrawForm() {
         return;
       }
 
+      // Look up borrower record ID from auth user
+      const { data: borrowerRecord } = await supabase
+        .from("borrowers")
+        .select("id")
+        .eq("user_id", user.id)
+        .maybeSingle();
+
+      if (!borrowerRecord) {
+        setError("Borrower account not found.");
+        return;
+      }
+
       // Get the next draw number for this loan
       const { count } = await supabase
         .from("draw_requests")
@@ -118,11 +142,11 @@ export function NewDrawForm() {
         .from("draw_requests")
         .insert({
           loan_id: selectedLoanId,
-          borrower_id: user.id,
+          borrower_id: borrowerRecord.id,
           draw_number: drawNumber,
           amount_requested: parsedAmount,
           description: description || null,
-          status: "submitted",
+          status: "submitted" as any,
           submitted_at: new Date().toISOString(),
         })
         .select()

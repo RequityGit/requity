@@ -99,12 +99,21 @@ export default function InvestorAccountPage() {
           setOriginalPhone(pd.phone ?? "");
         }
 
-        // Load commitments
-        const { data: commitmentData } = await supabase
-          .from("investor_commitments")
-          .select("*, funds(name)")
-          .eq("investor_id", user.id)
-          .order("commitment_date", { ascending: false });
+        // Look up investor record ID from auth user
+        const { data: investorRecord } = await supabase
+          .from("investors")
+          .select("id")
+          .eq("user_id", user.id)
+          .maybeSingle();
+
+        // Load commitments using investor record ID
+        const { data: commitmentData } = investorRecord
+          ? await supabase
+              .from("investor_commitments")
+              .select("*, funds(name)")
+              .eq("investor_id", investorRecord.id)
+              .order("created_at", { ascending: false })
+          : { data: null };
 
         if (commitmentData) {
           setCommitments(

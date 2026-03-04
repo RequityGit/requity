@@ -3,7 +3,7 @@ import { StatusBadge } from "@/components/shared/status-badge";
 import { DataTable, type Column } from "@/components/shared/data-table";
 import { formatCurrencyDetailed, formatDate } from "@/lib/format";
 import { NewDrawForm } from "@/components/borrower/new-draw-form";
-import { getEffectiveAuth } from "@/lib/impersonation";
+import { getEffectiveAuth, getBorrowerId } from "@/lib/impersonation";
 
 interface DrawWithLoan {
   id: string;
@@ -26,19 +26,24 @@ interface DrawWithLoan {
 export default async function BorrowerDrawsPage() {
   const { supabase, userId, isImpersonating } = await getEffectiveAuth();
 
-  const { data: drawRequests } = await supabase
-    .from("draw_requests")
-    .select(
-      `
-      *,
-      loans (
-        property_address,
-        loan_number
-      )
-    `
-    )
-    .eq("borrower_id", userId)
-    .order("submitted_at", { ascending: false });
+  // Resolve auth user to borrowers.id
+  const borrowerId = await getBorrowerId(supabase, userId);
+
+  const { data: drawRequests } = borrowerId
+    ? await supabase
+        .from("draw_requests")
+        .select(
+          `
+          *,
+          loans (
+            property_address,
+            loan_number
+          )
+        `
+        )
+        .eq("borrower_id", borrowerId)
+        .order("submitted_at", { ascending: false })
+    : { data: null };
 
   const draws = (drawRequests ?? []) as unknown as DrawWithLoan[];
 

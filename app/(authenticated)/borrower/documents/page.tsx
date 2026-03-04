@@ -1,32 +1,41 @@
 import { PageHeader } from "@/components/shared/page-header";
 import { DocumentsTable } from "@/components/borrower/documents-table";
-import { getEffectiveAuth } from "@/lib/impersonation";
+import { getEffectiveAuth, getBorrowerId } from "@/lib/impersonation";
 
 export default async function BorrowerDocumentsPage() {
   const { supabase, userId } = await getEffectiveAuth();
 
-  // Fetch all documents owned by this user that are tied to a loan
-  const { data: documents } = await supabase
-    .from("documents")
-    .select(
-      `
-      *,
-      loans (
-        property_address,
-        loan_number
-      )
-    `
-    )
-    .eq("owner_id", userId)
-    .not("loan_id", "is", null)
-    .order("created_at", { ascending: false });
+  // Resolve auth user to borrowers.id
+  const borrowerId = await getBorrowerId(supabase, userId);
 
-  // Fetch borrower's loans for the filter dropdown
-  const { data: loans } = await supabase
-    .from("loans")
-    .select("id, property_address")
-    .eq("borrower_id", userId)
-    .order("property_address", { ascending: true });
+  // Fetch borrower's loans first
+  const { data: loans } = borrowerId
+    ? await supabase
+        .from("loans")
+        .select("id, property_address")
+        .eq("borrower_id", borrowerId)
+        .is("deleted_at", null)
+        .order("property_address", { ascending: true })
+    : { data: null };
+
+  const loanIds = (loans ?? []).map((l) => l.id);
+
+  // Fetch documents for borrower's loans
+  const { data: documents } = loanIds.length > 0
+    ? await supabase
+        .from("documents")
+        .select(
+          `
+          *,
+          loans (
+            property_address,
+            loan_number
+          )
+        `
+        )
+        .in("loan_id", loanIds)
+        .order("created_at", { ascending: false })
+    : { data: null };
 
   return (
     <div>
