@@ -88,7 +88,6 @@ export type Database = {
           author_id: string | null
           author_name: string | null
           comment: string
-          comment_type: string | null
           created_at: string | null
           edited_at: string | null
           id: string
@@ -102,7 +101,6 @@ export type Database = {
           author_id?: string | null
           author_name?: string | null
           comment: string
-          comment_type?: string | null
           created_at?: string | null
           edited_at?: string | null
           id?: string
@@ -116,7 +114,6 @@ export type Database = {
           author_id?: string | null
           author_name?: string | null
           comment?: string
-          comment_type?: string | null
           created_at?: string | null
           edited_at?: string | null
           id?: string
@@ -581,6 +578,60 @@ export type Database = {
             columns: ["borrower_id"]
             isOneToOne: false
             referencedRelation: "borrowers_safe"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      borrower_requests: {
+        Row: {
+          borrower_name: string
+          created_at: string | null
+          description: string
+          follow_up_count: number | null
+          id: string
+          last_follow_up_at: string | null
+          loan_id: string
+          requested_by: string
+          resolved_at: string | null
+          sent_at: string | null
+        }
+        Insert: {
+          borrower_name: string
+          created_at?: string | null
+          description: string
+          follow_up_count?: number | null
+          id?: string
+          last_follow_up_at?: string | null
+          loan_id: string
+          requested_by: string
+          resolved_at?: string | null
+          sent_at?: string | null
+        }
+        Update: {
+          borrower_name?: string
+          created_at?: string | null
+          description?: string
+          follow_up_count?: number | null
+          id?: string
+          last_follow_up_at?: string | null
+          loan_id?: string
+          requested_by?: string
+          resolved_at?: string | null
+          sent_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "borrower_requests_loan_id_fkey"
+            columns: ["loan_id"]
+            isOneToOne: false
+            referencedRelation: "loan_pipeline"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "borrower_requests_loan_id_fkey"
+            columns: ["loan_id"]
+            isOneToOne: false
+            referencedRelation: "loans"
             referencedColumns: ["id"]
           },
         ]
@@ -4310,6 +4361,60 @@ export type Database = {
           },
           {
             foreignKeyName: "crm_tasks_loan_id_fkey"
+            columns: ["loan_id"]
+            isOneToOne: false
+            referencedRelation: "loans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      dashboard_tasks: {
+        Row: {
+          category: string
+          completed_at: string | null
+          created_at: string | null
+          due_date: string
+          id: string
+          is_completed: boolean | null
+          loan_id: string | null
+          title: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          category: string
+          completed_at?: string | null
+          created_at?: string | null
+          due_date: string
+          id?: string
+          is_completed?: boolean | null
+          loan_id?: string | null
+          title: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          category?: string
+          completed_at?: string | null
+          created_at?: string | null
+          due_date?: string
+          id?: string
+          is_completed?: boolean | null
+          loan_id?: string | null
+          title?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dashboard_tasks_loan_id_fkey"
+            columns: ["loan_id"]
+            isOneToOne: false
+            referencedRelation: "loan_pipeline"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "dashboard_tasks_loan_id_fkey"
             columns: ["loan_id"]
             isOneToOne: false
             referencedRelation: "loans"
@@ -9242,11 +9347,9 @@ export type Database = {
           entity_type: string | null
           id: string
           is_archived: boolean
-          is_read: boolean
           notification_slug: string
           notification_type_id: string | null
           priority: string
-          read_at: string | null
           title: string
           user_id: string
         }
@@ -9263,11 +9366,9 @@ export type Database = {
           entity_type?: string | null
           id?: string
           is_archived?: boolean
-          is_read?: boolean
           notification_slug: string
           notification_type_id?: string | null
           priority?: string
-          read_at?: string | null
           title: string
           user_id: string
         }
@@ -9284,11 +9385,9 @@ export type Database = {
           entity_type?: string | null
           id?: string
           is_archived?: boolean
-          is_read?: boolean
           notification_slug?: string
           notification_type_id?: string | null
           priority?: string
-          read_at?: string | null
           title?: string
           user_id?: string
         }
@@ -9637,7 +9736,6 @@ export type Database = {
           author_id: string | null
           author_name: string | null
           comment: string
-          comment_type: string
           created_at: string | null
           edited_at: string | null
           id: string
@@ -9650,7 +9748,6 @@ export type Database = {
           author_id?: string | null
           author_name?: string | null
           comment: string
-          comment_type?: string
           created_at?: string | null
           edited_at?: string | null
           id?: string
@@ -9663,7 +9760,6 @@ export type Database = {
           author_id?: string | null
           author_name?: string | null
           comment?: string
-          comment_type?: string
           created_at?: string | null
           edited_at?: string | null
           id?: string
@@ -9891,7 +9987,6 @@ export type Database = {
           author_id: string | null
           author_name: string | null
           comment: string
-          comment_type: string
           created_at: string | null
           edited_at: string | null
           id: string
@@ -9905,7 +10000,6 @@ export type Database = {
           author_id?: string | null
           author_name?: string | null
           comment: string
-          comment_type?: string
           created_at?: string | null
           edited_at?: string | null
           id?: string
@@ -9919,7 +10013,6 @@ export type Database = {
           author_id?: string | null
           author_name?: string | null
           comment?: string
-          comment_type?: string
           created_at?: string | null
           edited_at?: string | null
           id?: string
@@ -12947,6 +13040,30 @@ export type Database = {
           },
         ]
       }
+      user_streaks: {
+        Row: {
+          best_streak: number | null
+          current_streak: number | null
+          last_completed_date: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          best_streak?: number | null
+          current_streak?: number | null
+          last_completed_date?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          best_streak?: number | null
+          current_streak?: number | null
+          last_completed_date?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       borrower_entities_safe: {
@@ -13030,6 +13147,40 @@ export type Database = {
             columns: ["borrower_id"]
             isOneToOne: false
             referencedRelation: "borrowers_safe"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      borrower_requests_view: {
+        Row: {
+          borrower_name: string | null
+          created_at: string | null
+          days_since_sent: number | null
+          description: string | null
+          follow_up_count: number | null
+          id: string | null
+          last_follow_up_at: string | null
+          loan_id: string | null
+          loan_name: string | null
+          loan_number: string | null
+          requested_by: string | null
+          resolved_at: string | null
+          sent_at: string | null
+          status: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "borrower_requests_loan_id_fkey"
+            columns: ["loan_id"]
+            isOneToOne: false
+            referencedRelation: "loan_pipeline"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "borrower_requests_loan_id_fkey"
+            columns: ["loan_id"]
+            isOneToOne: false
+            referencedRelation: "loans"
             referencedColumns: ["id"]
           },
         ]
@@ -13486,6 +13637,40 @@ export type Database = {
           urgency: string | null
         }
         Relationships: []
+      }
+      dashboard_tasks_view: {
+        Row: {
+          category: string | null
+          completed_at: string | null
+          created_at: string | null
+          days_overdue: number | null
+          due_date: string | null
+          id: string | null
+          is_completed: boolean | null
+          is_past_due: boolean | null
+          loan_id: string | null
+          loan_name: string | null
+          loan_number: string | null
+          title: string | null
+          updated_at: string | null
+          user_id: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dashboard_tasks_loan_id_fkey"
+            columns: ["loan_id"]
+            isOneToOne: false
+            referencedRelation: "loan_pipeline"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "dashboard_tasks_loan_id_fkey"
+            columns: ["loan_id"]
+            isOneToOne: false
+            referencedRelation: "loans"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       entity_investors_detail: {
         Row: {
@@ -14154,6 +14339,15 @@ export type Database = {
         }
         Relationships: []
       }
+      weekly_dashboard_summary: {
+        Row: {
+          period: string | null
+          tasks_completed: number | null
+          tasks_created: number | null
+          user_id: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       apply_payment: {
@@ -14178,6 +14372,11 @@ export type Database = {
           p_reviewer_id: string
         }
         Returns: Json
+      }
+      archive_all_notifications: { Args: never; Returns: undefined }
+      archive_notification: {
+        Args: { p_notification_id: string }
+        Returns: undefined
       }
       assign_role: {
         Args: {
@@ -14256,6 +14455,7 @@ export type Database = {
         Args: { p_loan_id: string; p_payoff_date: string }
         Returns: Json
       }
+      get_active_notification_count: { Args: never; Returns: number }
       get_borrower_deals_last_2_years: {
         Args: { p_borrower_id: string }
         Returns: number
@@ -14274,7 +14474,6 @@ export type Database = {
       }
       get_portal_context: { Args: never; Returns: Json }
       get_portfolio_draw_dashboard: { Args: never; Returns: Json }
-      get_unread_notification_count: { Args: never; Returns: number }
       grant_all_modules: {
         Args: { granter_id: string; target_user_id: string }
         Returns: undefined
@@ -14312,11 +14511,6 @@ export type Database = {
           profile_email: string
           profile_id: string
         }[]
-      }
-      mark_all_notifications_read: { Args: never; Returns: undefined }
-      mark_notifications_read: {
-        Args: { p_notification_ids: string[] }
-        Returns: undefined
       }
       match_email_to_entities: {
         Args: { lookup_email: string }
@@ -14431,6 +14625,11 @@ export type Database = {
       test_servicing_infrastructure: { Args: never; Returns: Json }
       text_soundex: { Args: { "": string }; Returns: string }
       unaccent: { Args: { "": string }; Returns: string }
+      unarchive_notification: {
+        Args: { p_notification_id: string }
+        Returns: undefined
+      }
+      update_user_streak: { Args: { p_user_id: string }; Returns: undefined }
       validate_budget_integrity: {
         Args: { p_budget_id: string }
         Returns: boolean
@@ -15314,92 +15513,3 @@ export const Constants = {
   },
 } as const
 
-export type Profile = Tables<'profiles'>
-export type Loan = Tables<'loans'>
-export type LoanPayment = Tables<'loan_payments'>
-export type LoanCondition = Tables<'loan_conditions'>
-export type LoanDocument = Tables<'loan_documents'>
-export type Document = Tables<'documents'>
-export type DrawRequest = Tables<'draw_requests'>
-export type CrmContact = Tables<'crm_contacts'>
-export type LoanConditionTemplate = Tables<'loan_condition_templates'>
-export type BorrowerEntity = Tables<'borrower_entities'>
-
-// Types for tables not yet migrated (used by components)
-export interface LenderQuote {
-  id: string
-  quote_name: string
-  lender_company_id: string | null
-  lender_contact_name: string | null
-  loan_amount: number | null
-  interest_rate: number | null
-  loan_term_months: number | null
-  interest_only_period_months: number | null
-  ltv: number | null
-  amortization_months: number | null
-  origination_fee: number | null
-  uw_processing_fee: number | null
-  requity_lending_fee: number | null
-  prepayment_penalty: string | null
-  ym_spread: number | null
-  ym_amount: number | null
-  term_sheet_url: string | null
-  description: string | null
-  status: string
-  status_changed_at: string | null
-  requested_at: string | null
-  received_at: string | null
-  accepted_at: string | null
-  declined_at: string | null
-  declined_reason: string | null
-  created_at: string
-}
-
-export interface PricingProgram {
-  id: string
-  program_id: string
-  program_name: string
-  version: string | null
-  interest_rate: number
-  loan_term_months: number
-  loan_type: string | null
-  rate_type: string | null
-  origination_points: number
-  min_origination_fee: number
-  min_credit_score: number
-  min_deals_24mo: number
-  max_ltv: number
-  max_ltc: number
-  max_ltp: number
-  citizenship: string | null
-  bpo_appraisal_cost: number
-  bpo_appraisal_note: string | null
-  legal_doc_fee: number
-  exit_points: number | null
-  points_note: string | null
-  term_note: string | null
-  ltv_note: string | null
-  ltc_note: string | null
-  effective_date: string | null
-  is_current: boolean | null
-}
-
-export interface LeverageAdjuster {
-  id: string
-  risk_factor: string
-  display_name: string
-  condition_description: string | null
-  ltv_adjustment: number
-  ltc_adjustment: number
-  is_active: boolean
-  sort_order: number | null
-  note: string | null
-}
-
-export interface PricingProgramVersion {
-  id?: string
-  program_id: string
-  version: string
-  change_description: string | null
-  changed_at: string
-}
