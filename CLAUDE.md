@@ -95,19 +95,20 @@ Server actions live in `actions.ts` files colocated with their page (e.g., `app/
 
 ## Design System
 
-**All UI/design decisions must follow [`DESIGN_SYSTEM.md`](./DESIGN_SYSTEM.md) (v2).** This is the single source of truth for colors, typography, component patterns, and layout specs.
+**All UI/design decisions must follow [`DESIGN_SYSTEM.md`](./DESIGN_SYSTEM.md) (v3).** This is the single source of truth for colors, typography, component patterns, and layout specs. The design system is built on **shadcn/ui** (new-york style, neutral base color).
 
 ### Critical Rules (quick reference)
 
-- **Font:** Inter for all UI, JetBrains Mono for numeric/data. No serif fonts, no Source Sans 3.
-- **Colors:** Monochrome base (charcoal/black in dark, white in light) with semantic color pops. No navy blue backgrounds. No gold glow/gradient effects.
-- **Dark mode:** First-class. Every screen must support light and dark via user toggle. Dark backgrounds are true black/charcoal (`#0C0C0C`), never navy.
-- **Components:** Follow the card, button, input, table, and stage pill specs in `DESIGN_SYSTEM.md`.
+- **shadcn/ui:** All UI components use shadcn primitives from `components/ui/`. Use shadcn's CSS variable tokens (`bg-background`, `text-foreground`, `bg-card`, `text-muted-foreground`, etc.) — never custom hex colors or v2 token names.
+- **Font:** Inter for all UI via `font-sans`. JetBrains Mono via `font-mono` for code/technical displays only. Financial numbers use the `.num` CSS class (tabular-nums on Inter). No serif fonts.
+- **Colors:** Monochrome neutral base with HSL CSS variables in `globals.css`. Semantic colors via Tailwind palette (green-500, blue-500, etc.) and shadcn tokens. No navy blue backgrounds. No gold glow/gradient effects.
+- **Dark mode:** First-class. Every screen must support light and dark via user toggle. Dark backgrounds are true black/charcoal (`--background: 0 0% 5%`), never navy. Theme toggled via `.dark` class.
+- **Components:** Use shadcn primitives (Button, Card, Badge, Table, Dialog, etc.). Shared components (KpiCard, StatusBadge, DataTable, PageHeader) in `components/shared/`.
 - **Icons:** Lucide React only, strokeWidth 1.5, no emoji.
-- **Charts:** Recharts with the specified token colors.
-- **Animations:** Subtle fadeUp/slideIn only. No bounce, no overshoot.
+- **Charts:** Recharts with `NumericTick` component for axis labels.
+- **Animations:** Subtle fade-up/scale-in only. No bounce, no overshoot.
 
-For full token values, component specs, sidebar nav structure, responsive breakpoints, and anti-patterns — see `DESIGN_SYSTEM.md`.
+For full CSS variable values, component specs, sidebar nav structure, responsive breakpoints, and anti-patterns — see `DESIGN_SYSTEM.md`.
 
 ## Database
 
