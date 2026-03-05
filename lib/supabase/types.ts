@@ -15510,3 +15510,28 @@ export const Constants = {
   },
 } as const
 
+
+// ---------------------------------------------------------------------------
+// Convenience type aliases used across the codebase
+// ---------------------------------------------------------------------------
+
+// Tables present in the generated schema
+export type BorrowerEntity = Tables<"borrower_entities">
+export type Loan = Tables<"loans">
+export type LoanCondition = Tables<"loan_conditions">
+export type LoanDocument = Tables<"loan_documents">
+export type LoanConditionTemplate = Tables<"loan_condition_templates">
+export type LoanPayment = Tables<"loan_payments">
+export type Document = Tables<"documents">
+export type CrmContact = Tables<"crm_contacts">
+
+// Tables that exist in the database but are not yet in the generated schema.
+// These use permissive record types to match existing `as any` query patterns.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export type LenderQuote = Record<string, any>
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export type PricingProgram = Record<string, any>
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export type LeverageAdjuster = Record<string, any>
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export type PricingProgramVersion = Record<string, any>

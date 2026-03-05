@@ -284,11 +284,11 @@ export function PricingCalculator({
     let leverage: CalculationResult["leverage"] = null;
 
     if (programId === "ff_balance") {
-      const adjResults = adjusters
+      const adjResults: (LeverageAdjuster & { applies: boolean })[] = adjusters
         .filter((a) => a.is_active)
         .map((a) => {
-          let applies = adjusterState[a.risk_factor] ?? autoDetectAdjuster(a, inputs, pp, rehab, holdMonths, program);
-          return { ...a, applies };
+          const applies = adjusterState[a.risk_factor] ?? autoDetectAdjuster(a, inputs, pp, rehab, holdMonths, program);
+          return { ...a, applies } as LeverageAdjuster & { applies: boolean };
         });
 
       adjResults.forEach((a) => {
