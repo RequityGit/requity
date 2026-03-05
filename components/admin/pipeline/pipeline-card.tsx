@@ -86,8 +86,8 @@ export function PipelineCard({ deal, index, isDragging }: PipelineCardProps) {
     };
   } else {
     daysBadgeStyle = {
-      color: "#9B9BA0",
-      backgroundColor: "rgba(0,0,0,0.03)",
+      color: "hsl(var(--muted-foreground))",
+      backgroundColor: "hsl(var(--muted))",
     };
   }
 
@@ -103,20 +103,18 @@ export function PipelineCard({ deal, index, isDragging }: PipelineCardProps) {
     <div
       className="group overflow-hidden transition-all duration-[180ms] ease-out"
       style={{
-        backgroundColor: "#FFFFFF",
-        border: "1px solid #E5E5E7",
+        backgroundColor: "hsl(var(--card))",
+        border: "1px solid hsl(var(--border))",
         borderRadius: "10px",
         boxShadow: "0 1px 2px rgba(0,0,0,0.03)",
         cursor: "pointer",
         opacity: isDragging ? 0.5 : 1,
       }}
       onMouseEnter={(e) => {
-        e.currentTarget.style.borderColor = "#D0D0D3";
-        e.currentTarget.style.boxShadow = "0 3px 12px rgba(0,0,0,0.06)";
+        e.currentTarget.style.boxShadow = "0 3px 12px rgba(0,0,0,0.1)";
         e.currentTarget.style.transform = "translateY(-1px)";
       }}
       onMouseLeave={(e) => {
-        e.currentTarget.style.borderColor = "#E5E5E7";
         e.currentTarget.style.boxShadow = "0 1px 2px rgba(0,0,0,0.03)";
         e.currentTarget.style.transform = "translateY(0)";
       }}
@@ -135,7 +133,7 @@ export function PipelineCard({ deal, index, isDragging }: PipelineCardProps) {
               fontSize: "17px",
               fontWeight: 700,
               letterSpacing: "-0.03em",
-              color: deal.amount ? "#1A1A1A" : "#9B9BA0",
+              color: deal.amount ? "hsl(var(--foreground))" : "hsl(var(--muted-foreground))",
             }}
           >
             {formatCompactCurrency(deal.amount)}
@@ -160,7 +158,7 @@ export function PipelineCard({ deal, index, isDragging }: PipelineCardProps) {
           style={{
             fontSize: "13px",
             fontWeight: 500,
-            color: "#1A1A1A",
+            color: "hsl(var(--foreground))",
             lineHeight: 1.35,
             marginBottom: "6px",
           }}
@@ -175,7 +173,7 @@ export function PipelineCard({ deal, index, isDragging }: PipelineCardProps) {
             style={{
               fontSize: "12px",
               fontWeight: 450,
-              color: "#6B6B6F",
+              color: "hsl(var(--muted-foreground))",
               marginBottom: "8px",
             }}
           >
@@ -210,7 +208,7 @@ export function PipelineCard({ deal, index, isDragging }: PipelineCardProps) {
               style={{
                 fontSize: "12px",
                 fontWeight: 450,
-                color: "#9B9BA0",
+                color: "hsl(var(--muted-foreground))",
               }}
             >
               {deal.assignedName}
@@ -223,8 +221,8 @@ export function PipelineCard({ deal, index, isDragging }: PipelineCardProps) {
       <div
         className="flex items-center justify-between"
         style={{
-          backgroundColor: "#F7F7F8",
-          borderTop: "1px solid #F0F0F1",
+          backgroundColor: "hsl(var(--muted))",
+          borderTop: "1px solid hsl(var(--border))",
           padding: "7px 14px 8px",
         }}
       >
@@ -235,7 +233,7 @@ export function PipelineCard({ deal, index, isDragging }: PipelineCardProps) {
             fontWeight: 600,
             letterSpacing: "0.05em",
             textTransform: "uppercase",
-            color: "#9B9BA0",
+            color: "hsl(var(--muted-foreground))",
           }}
         >
           {formatLoanType(deal.loanType) || "—"}
@@ -247,14 +245,14 @@ export function PipelineCard({ deal, index, isDragging }: PipelineCardProps) {
             <Paperclip
               size={11}
               strokeWidth={2}
-              style={{ color: docsComplete ? "#22A861" : "#9B9BA0" }}
+              style={{ color: docsComplete ? "#22A861" : "hsl(var(--muted-foreground))" }}
             />
             <div
               style={{
                 width: "40px",
                 height: "3px",
                 borderRadius: "2px",
-                backgroundColor: "#F0F0F1",
+                backgroundColor: "hsl(var(--border))",
                 overflow: "hidden",
               }}
             >
@@ -263,7 +261,7 @@ export function PipelineCard({ deal, index, isDragging }: PipelineCardProps) {
                   width: `${(deal.docsApproved / deal.docsTotal) * 100}%`,
                   height: "100%",
                   borderRadius: "2px",
-                  backgroundColor: docsComplete ? "#22A861" : "#1A1A1A",
+                  backgroundColor: docsComplete ? "#22A861" : "hsl(var(--foreground))",
                   transition: "width 0.3s ease",
                 }}
               />
@@ -273,7 +271,7 @@ export function PipelineCard({ deal, index, isDragging }: PipelineCardProps) {
               style={{
                 fontSize: "10px",
                 fontWeight: 500,
-                color: docsComplete ? "#22A861" : "#9B9BA0",
+                color: docsComplete ? "#22A861" : "hsl(var(--muted-foreground))",
               }}
             >
               {deal.docsApproved}/{deal.docsTotal}
@@ -281,10 +279,10 @@ export function PipelineCard({ deal, index, isDragging }: PipelineCardProps) {
           </div>
         ) : (
           <div className="flex items-center" style={{ gap: "4px" }}>
-            <Paperclip size={11} strokeWidth={2} style={{ color: "#9B9BA0" }} />
+            <Paperclip size={11} strokeWidth={2} style={{ color: "hsl(var(--muted-foreground))" }} />
             <span
               className="font-mono"
-              style={{ fontSize: "10px", fontWeight: 500, color: "#9B9BA0" }}
+              style={{ fontSize: "10px", fontWeight: 500, color: "hsl(var(--muted-foreground))" }}
             >
               —
             </span>
@@ -295,7 +293,7 @@ export function PipelineCard({ deal, index, isDragging }: PipelineCardProps) {
       {/* Hover action strip */}
       <div
         className="hidden group-hover:flex"
-        style={{ borderTop: "1px solid #F0F0F1" }}
+        style={{ borderTop: "1px solid hsl(var(--border))" }}
       >
         <button
           className="flex-1 flex items-center justify-center gap-1 transition-colors"
@@ -303,18 +301,18 @@ export function PipelineCard({ deal, index, isDragging }: PipelineCardProps) {
             padding: "7px 0",
             fontSize: "11px",
             fontWeight: 600,
-            color: "#9B9BA0",
+            color: "hsl(var(--muted-foreground))",
             background: "transparent",
             border: "none",
             cursor: "pointer",
           }}
           onMouseEnter={(e) => {
-            e.currentTarget.style.backgroundColor = "#F7F7F8";
-            e.currentTarget.style.color = "#1A1A1A";
+            e.currentTarget.style.backgroundColor = "hsl(var(--muted))";
+            e.currentTarget.style.color = "hsl(var(--foreground))";
           }}
           onMouseLeave={(e) => {
             e.currentTarget.style.backgroundColor = "transparent";
-            e.currentTarget.style.color = "#9B9BA0";
+            e.currentTarget.style.color = "hsl(var(--muted-foreground))";
           }}
           onClick={(e) => {
             e.stopPropagation();
@@ -324,25 +322,25 @@ export function PipelineCard({ deal, index, isDragging }: PipelineCardProps) {
           <ArrowUpRight size={12} strokeWidth={1.5} />
           Open
         </button>
-        <div style={{ width: "1px", backgroundColor: "#F0F0F1" }} />
+        <div style={{ width: "1px", backgroundColor: "hsl(var(--border))" }} />
         <button
           className="flex-1 flex items-center justify-center gap-1 transition-colors"
           style={{
             padding: "7px 0",
             fontSize: "11px",
             fontWeight: 600,
-            color: "#9B9BA0",
+            color: "hsl(var(--muted-foreground))",
             background: "transparent",
             border: "none",
             cursor: "pointer",
           }}
           onMouseEnter={(e) => {
-            e.currentTarget.style.backgroundColor = "#F7F7F8";
-            e.currentTarget.style.color = "#1A1A1A";
+            e.currentTarget.style.backgroundColor = "hsl(var(--muted))";
+            e.currentTarget.style.color = "hsl(var(--foreground))";
           }}
           onMouseLeave={(e) => {
             e.currentTarget.style.backgroundColor = "transparent";
-            e.currentTarget.style.color = "#9B9BA0";
+            e.currentTarget.style.color = "hsl(var(--muted-foreground))";
           }}
           onClick={(e) => {
             e.stopPropagation();
@@ -351,25 +349,25 @@ export function PipelineCard({ deal, index, isDragging }: PipelineCardProps) {
           <Mail size={12} strokeWidth={1.5} />
           Email
         </button>
-        <div style={{ width: "1px", backgroundColor: "#F0F0F1" }} />
+        <div style={{ width: "1px", backgroundColor: "hsl(var(--border))" }} />
         <button
           className="flex-1 flex items-center justify-center gap-1 transition-colors"
           style={{
             padding: "7px 0",
             fontSize: "11px",
             fontWeight: 600,
-            color: "#9B9BA0",
+            color: "hsl(var(--muted-foreground))",
             background: "transparent",
             border: "none",
             cursor: "pointer",
           }}
           onMouseEnter={(e) => {
-            e.currentTarget.style.backgroundColor = "#F7F7F8";
-            e.currentTarget.style.color = "#1A1A1A";
+            e.currentTarget.style.backgroundColor = "hsl(var(--muted))";
+            e.currentTarget.style.color = "hsl(var(--foreground))";
           }}
           onMouseLeave={(e) => {
             e.currentTarget.style.backgroundColor = "transparent";
-            e.currentTarget.style.color = "#9B9BA0";
+            e.currentTarget.style.color = "hsl(var(--muted-foreground))";
           }}
           onClick={(e) => {
             e.stopPropagation();
