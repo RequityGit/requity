@@ -1,7 +1,7 @@
 "use client";
 
-import { useMemo } from "react";
-import { Plus, Trash2 } from "lucide-react";
+import { useState, useMemo } from "react";
+import { Plus, Trash2, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { computeCommercialOutputs } from "@/lib/underwriting/commercial-calculator";
 import type {
@@ -11,6 +11,10 @@ import type {
   AncillaryItem,
 } from "@/lib/underwriting/commercial-types";
 import { PROPERTY_TYPES, PROPERTY_TYPE_DEFAULTS } from "@/lib/underwriting/commercial-types";
+import { UploadRentRollDialog } from "@/components/admin/commercial-uw/upload-rent-roll-dialog";
+import { UploadT12Dialog } from "@/components/admin/commercial-uw/upload-t12-dialog";
+import type { RentRollRow } from "@/lib/commercial-uw/types";
+import type { T12Data } from "@/lib/commercial-uw/types";
 
 interface CommercialFormProps {
   inputs: CommercialInputs;
@@ -20,6 +24,8 @@ interface CommercialFormProps {
 
 export function CommercialForm({ inputs, onChange, readOnly = false }: CommercialFormProps) {
   const outputs = useMemo(() => computeCommercialOutputs(inputs), [inputs]);
+  const [rentRollUploadOpen, setRentRollUploadOpen] = useState(false);
+  const [t12UploadOpen, setT12UploadOpen] = useState(false);
 
   const updateField = (field: keyof CommercialInputs, value: number | string | null) => {
     if (readOnly) return;
@@ -92,6 +98,41 @@ export function CommercialForm({ inputs, onChange, readOnly = false }: Commercia
     onChange({ ...inputs, rent_roll: inputs.rent_roll.filter((_, i) => i !== idx) });
   };
 
+  const handleRentRollImport = (rows: RentRollRow[]) => {
+    if (readOnly) return;
+    const converted: RentRollUnit[] = rows.map((row) => ({
+      unit_number: row.unit_number,
+      tenant_name: row.tenant_name,
+      sf: row.sf ?? null,
+      current_monthly_rent: row.current_monthly_rent ?? null,
+      market_rent: row.market_rent ?? null,
+      cam_nnn: row.cam_nnn ?? null,
+      other_income: row.other_income ?? null,
+      is_vacant: row.is_vacant,
+    }));
+    onChange({ ...inputs, rent_roll: converted });
+  };
+
+  const handleT12Import = (data: T12Data) => {
+    if (readOnly) return;
+    onChange({
+      ...inputs,
+      t12_gpi: data.gpi || null,
+      t12_vacancy_pct: data.vacancy_pct || null,
+      t12_bad_debt_pct: data.bad_debt_pct || null,
+      t12_mgmt_fee: data.mgmt_fee || null,
+      t12_taxes: data.taxes || null,
+      t12_insurance: data.insurance || null,
+      t12_utilities: data.utilities || null,
+      t12_repairs: data.repairs || null,
+      t12_contract_services: data.contract_services || null,
+      t12_payroll: data.payroll || null,
+      t12_marketing: data.marketing || null,
+      t12_ga: data.ga || null,
+      t12_replacement_reserve: data.replacement_reserve || null,
+    });
+  };
+
   // ── Ancillary Income Helpers ──
   const updateAncillary = (idx: number, field: keyof AncillaryItem, value: string | number | null) => {
     if (readOnly) return;
@@ -135,7 +176,14 @@ export function CommercialForm({ inputs, onChange, readOnly = false }: Commercia
       </FormSection>
 
       {/* ── Rent Roll ── */}
-      <FormSection title="Rent Roll">
+      <FormSection
+        title="Rent Roll"
+        action={!readOnly ? (
+          <Button variant="outline" size="sm" className="h-7 text-[11px]" onClick={() => setRentRollUploadOpen(true)}>
+            <Upload size={12} className="mr-1" strokeWidth={1.5} /> Upload
+          </Button>
+        ) : undefined}
+      >
         <div className="overflow-x-auto">
           <table className="w-full text-[12px]">
             <thead>
@@ -307,7 +355,14 @@ export function CommercialForm({ inputs, onChange, readOnly = false }: Commercia
       </FormSection>
 
       {/* ── T12 Historical Expenses ── */}
-      <FormSection title="T12 Historical Expenses">
+      <FormSection
+        title="T12 Historical Expenses"
+        action={!readOnly ? (
+          <Button variant="outline" size="sm" className="h-7 text-[11px]" onClick={() => setT12UploadOpen(true)}>
+            <Upload size={12} className="mr-1" strokeWidth={1.5} /> Upload
+          </Button>
+        ) : undefined}
+      >
         <div className="grid grid-cols-3 gap-3">
           <CurrencyField label="Gross Potential Income" value={inputs.t12_gpi} onChange={(v) => updateNum("t12_gpi", v)} readOnly={readOnly} />
           <PercentField label="Vacancy %" value={inputs.t12_vacancy_pct} onChange={(v) => updateNum("t12_vacancy_pct", v)} readOnly={readOnly} />
@@ -423,6 +478,18 @@ export function CommercialForm({ inputs, onChange, readOnly = false }: Commercia
 
       {/* ── Outputs ── */}
       <OutputsPanel outputs={outputs} />
+
+      {/* Upload Dialogs */}
+      <UploadRentRollDialog
+        open={rentRollUploadOpen}
+        onOpenChange={setRentRollUploadOpen}
+        onImport={(rows) => handleRentRollImport(rows)}
+      />
+      <UploadT12Dialog
+        open={t12UploadOpen}
+        onOpenChange={setT12UploadOpen}
+        onImport={(data) => handleT12Import(data)}
+      />
     </div>
   );
 }
@@ -587,10 +654,13 @@ function OutputMetric({ label, value, color }: { label: string; value: string; c
   );
 }
 
-function FormSection({ title, children }: { title: string; children: React.ReactNode }) {
+function FormSection({ title, action, children }: { title: string; action?: React.ReactNode; children: React.ReactNode }) {
   return (
     <div className="rounded-xl border border-border bg-card p-5">
-      <h3 className="text-sm font-semibold text-foreground mb-3">{title}</h3>
+      <div className="flex items-center justify-between mb-3">
+        <h3 className="text-sm font-semibold text-foreground">{title}</h3>
+        {action}
+      </div>
       {children}
     </div>
   );
