@@ -20,18 +20,6 @@ const PUBLIC_ROUTES = [
   "/login",
   "/auth/callback",
   "/auth/confirm",
-  // Public marketing pages (requitygroup)
-  "/",
-  "/about",
-  "/apply",
-  "/insights",
-  "/borrower-faq",
-  "/investor-faq",
-  "/lending",
-  "/invest",
-  "/income-fund",
-  "/portfolio",
-  "/request-access",
 ];
 
 export async function middleware(request: NextRequest) {
@@ -44,11 +32,19 @@ export async function middleware(request: NextRequest) {
   }
 
   // -----------------------------------------------------------------------
+  // Root path → redirect to /login (marketing site lives on a separate domain)
+  // -----------------------------------------------------------------------
+  if (pathname === "/") {
+    const url = request.nextUrl.clone();
+    url.pathname = "/login";
+    return NextResponse.redirect(url);
+  }
+
+  // -----------------------------------------------------------------------
   // Check if the current route is public
-  // "/" must be an exact match — startsWith("/") would match every path
   // -----------------------------------------------------------------------
   const isPublicRoute = PUBLIC_ROUTES.some((route) =>
-    route === "/" ? pathname === "/" : pathname.startsWith(route)
+    pathname.startsWith(route)
   );
 
   // -----------------------------------------------------------------------
