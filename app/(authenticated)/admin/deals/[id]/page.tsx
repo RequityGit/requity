@@ -145,7 +145,7 @@ export default async function DealDetailPage({ params }: PageProps) {
       loan_number: null,
       deal_name: opp.deal_name,
       stage: OPPORTUNITY_TO_STAGE[opp.stage] ?? opp.stage,
-      stage_updated_at: opp.stage_updated_at ?? opp.updated_at,
+      stage_updated_at: opp.stage_changed_at ?? opp.updated_at,
       priority: null,
       approval_status: opp.approval_status ?? null,
       type: opp.loan_type ?? null,
@@ -367,7 +367,7 @@ export default async function DealDetailPage({ params }: PageProps) {
     // Map UW versions with author names
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const uwRaw = (uwVersionsRaw ?? []) as any[];
-    const uwAuthorIds = [...new Set(uwRaw.map((v) => v.created_by).filter(Boolean))];
+    const uwAuthorIds = Array.from(new Set(uwRaw.map((v) => v.created_by).filter(Boolean)));
     const uwAuthorMap: Record<string, string> = {};
     if (uwAuthorIds.length > 0) {
       const { data: uwProfiles } = await supabase
