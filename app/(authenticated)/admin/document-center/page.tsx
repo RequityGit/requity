@@ -1,13 +1,11 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { PageHeader } from "@/components/shared/page-header";
-import { KpiCard } from "@/components/shared/kpi-card";
 import { DocumentUploadDialog } from "@/components/admin/document-center/document-upload-dialog";
 import {
   DocumentCenterTable,
   PortalDocumentRow,
 } from "@/components/admin/document-center/document-center-table";
-import { FileText, FolderOpen, Eye, Upload } from "lucide-react";
 
 export default async function DocumentCenterPage() {
   const supabase = createClient();
@@ -91,32 +89,6 @@ export default async function DocumentCenterPage() {
     };
   });
 
-  // Compute KPIs
-  const totalDocs = documentRows.length;
-  const categoryBreakdown = documentRows.reduce(
-    (acc, d) => {
-      acc[d.category] = (acc[d.category] || 0) + 1;
-      return acc;
-    },
-    {} as Record<string, number>
-  );
-  const portalVisibleCount = documentRows.filter(
-    (d) => d.visibility === "portal_visible"
-  ).length;
-  const thisMonthCount = documentRows.filter((d) => {
-    const date = new Date(d.created_at);
-    const now = new Date();
-    return (
-      date.getMonth() === now.getMonth() &&
-      date.getFullYear() === now.getFullYear()
-    );
-  }).length;
-
-  // Format top category
-  const topCategory = Object.entries(categoryBreakdown).sort(
-    (a, b) => b[1] - a[1]
-  )[0];
-
   // Fetch entity options for upload dialog
   const [loansResult, fundsResult, borrowersResult, investorsResult, companiesResult, contactsResult] =
     await Promise.all([
@@ -187,32 +159,6 @@ export default async function DocumentCenterPage() {
           />
         }
       />
-
-      {/* KPI Cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <KpiCard
-          title="Total Documents"
-          value={totalDocs}
-          icon={<FolderOpen className="h-4 w-4" strokeWidth={1.5} />}
-        />
-        <KpiCard
-          title="Uploaded This Month"
-          value={thisMonthCount}
-          icon={<Upload className="h-4 w-4" strokeWidth={1.5} />}
-        />
-        <KpiCard
-          title="Portal Visible"
-          value={portalVisibleCount}
-          description="Visible to borrowers/investors"
-          icon={<Eye className="h-4 w-4" strokeWidth={1.5} />}
-        />
-        <KpiCard
-          title="Top Category"
-          value={topCategory ? topCategory[0].replace(/_/g, " ") : "—"}
-          description={topCategory ? `${topCategory[1]} documents` : undefined}
-          icon={<FileText className="h-4 w-4" strokeWidth={1.5} />}
-        />
-      </div>
 
       {/* Document Table */}
       <DocumentCenterTable data={documentRows} />
