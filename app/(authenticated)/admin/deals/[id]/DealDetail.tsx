@@ -80,8 +80,7 @@ export function DealDetail({
 
   const handleSave = useCallback(
     async (field: string, value: string | number | null): Promise<boolean> => {
-      if (isOpportunity) return false;
-      const result = await updateDealField(deal.id, { [field]: value });
+      const result = await updateDealField(deal.id, { [field]: value }, isOpportunity);
       if (result.error) {
         console.error("Failed to update field:", result.error);
         return false;
@@ -100,7 +99,6 @@ export function DealDetail({
       field: string,
       value: string | number | null
     ): Promise<boolean> => {
-      if (isOpportunity) return false;
       const result = await updateRelatedField(table, id, field, value);
       if (result.error) {
         console.error("Failed to update related field:", result.error);
@@ -122,8 +120,8 @@ export function DealDetail({
     [isOpportunity, router]
   );
 
-  const onSave = isOpportunity ? undefined : handleSave;
-  const onSaveRelated = isOpportunity ? undefined : handleSaveRelated;
+  const onSave = handleSave;
+  const onSaveRelated = handleSaveRelated;
 
   const openConditions = conditions.filter(
     (c) =>
@@ -324,6 +322,7 @@ export function DealDetail({
             currentUserName={currentUserName}
             onSave={onSave}
             adminProfiles={adminProfiles}
+            isOpportunity={isOpportunity}
           />
         </div>
       </div>

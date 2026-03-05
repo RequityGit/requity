@@ -19,7 +19,6 @@ import {
   SectionCard,
   Av,
   fD,
-  getInitials,
   type DealData,
   type PipelineStage,
 } from "./components";
@@ -54,6 +53,7 @@ interface SidebarProps {
   currentUserName: string;
   onSave?: (field: string, value: string | number | null) => Promise<boolean>;
   adminProfiles?: TeamProfile[];
+  isOpportunity?: boolean;
 }
 
 export function Sidebar({
@@ -63,6 +63,7 @@ export function Sidebar({
   currentUserName,
   onSave,
   adminProfiles,
+  isOpportunity,
 }: SidebarProps) {
   const router = useRouter();
   const [advancing, setAdvancing] = useState(false);
@@ -217,7 +218,8 @@ export function Sidebar({
       const result = await assignTeamMember(
         deal.id,
         assigningRoleField,
-        selectedProfileId || null
+        selectedProfileId || null,
+        isOpportunity
       );
       if (result.error) {
         console.error("Assign team error:", result.error);

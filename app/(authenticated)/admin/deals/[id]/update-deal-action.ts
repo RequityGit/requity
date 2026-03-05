@@ -10,7 +10,8 @@ import { requireAdmin } from "@/lib/auth/require-admin";
 export async function updateDealField(
   dealId: string,
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  fields: Record<string, any>
+  fields: Record<string, any>,
+  isOpportunity?: boolean
 ) {
   try {
     const auth = await requireAdmin();
@@ -28,8 +29,11 @@ export async function updateDealField(
       return { error: "No fields to update" };
     }
 
-    const { error } = await admin
-      .from("loans")
+    const table = isOpportunity ? "opportunities" : "loans";
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { error } = await (admin as any)
+      .from(table)
       .update(fields)
       .eq("id", dealId);
 
@@ -131,7 +135,8 @@ export async function logQuickAction(
 export async function assignTeamMember(
   dealId: string,
   roleField: string,
-  profileId: string | null
+  profileId: string | null,
+  isOpportunity?: boolean
 ) {
   try {
     const auth = await requireAdmin();
@@ -144,8 +149,11 @@ export async function assignTeamMember(
       return { error: `Invalid role field: ${roleField}` };
     }
 
-    const { error } = await admin
-      .from("loans")
+    const table = isOpportunity ? "opportunities" : "loans";
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { error } = await (admin as any)
+      .from(table)
       .update({ [roleField]: profileId })
       .eq("id", dealId);
 
