@@ -60,10 +60,16 @@ const INITIAL_FORM = {
 interface AddTaskDialogProps {
   projects: OpsProject[];
   teamMembers: TeamMember[];
+  externalOpen?: boolean;
+  onExternalOpenChange?: (open: boolean) => void;
+  defaultProjectId?: string;
 }
 
-export function AddTaskDialog({ projects, teamMembers }: AddTaskDialogProps) {
-  const [open, setOpen] = useState(false);
+export function AddTaskDialog({ projects, teamMembers, externalOpen, onExternalOpenChange, defaultProjectId }: AddTaskDialogProps) {
+  const [internalOpen, setInternalOpen] = useState(false);
+  const isControlled = externalOpen !== undefined;
+  const open = isControlled ? externalOpen : internalOpen;
+  const setOpen = isControlled ? (v: boolean) => onExternalOpenChange?.(v) : setInternalOpen;
   const [loading, setLoading] = useState(false);
   const [form, setForm] = useState(INITIAL_FORM);
   const router = useRouter();
@@ -132,15 +138,20 @@ export function AddTaskDialog({ projects, teamMembers }: AddTaskDialogProps) {
       open={open}
       onOpenChange={(v) => {
         setOpen(v);
+        if (v && defaultProjectId) {
+          setForm((f) => ({ ...f, project_id: defaultProjectId }));
+        }
         if (!v) resetForm();
       }}
     >
-      <DialogTrigger asChild>
-        <Button size="sm" variant="outline" className="gap-2">
-          <PlusCircle className="h-4 w-4" />
-          New Task
-        </Button>
-      </DialogTrigger>
+      {!isControlled && (
+        <DialogTrigger asChild>
+          <Button size="sm" variant="outline" className="gap-2">
+            <PlusCircle className="h-4 w-4" />
+            New Task
+          </Button>
+        </DialogTrigger>
+      )}
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
           <DialogTitle>New Task</DialogTitle>

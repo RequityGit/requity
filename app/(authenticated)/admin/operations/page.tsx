@@ -19,11 +19,11 @@ export default async function OperationsPage() {
     supabase
       .from("ops_projects")
       .select("*")
-      .order("created_at", { ascending: false }),
+      .order("sort_order", { ascending: true }),
     supabase
       .from("ops_tasks")
       .select("*")
-      .order("created_at", { ascending: false }),
+      .order("sort_order", { ascending: true }),
     supabase
       .from("profiles")
       .select("id, full_name, email")

@@ -1,10 +1,26 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
 import { cn } from "@/lib/utils";
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+} from "@dnd-kit/core";
+import {
+  SortableContext,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 import {
   FolderKanban,
   ListChecks,
@@ -26,6 +42,7 @@ import {
   Pause,
   Clock,
   Trash2,
+  GripVertical,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -254,6 +271,7 @@ function TaskRow({
   onOpenTask,
   onStopRecurrence,
   onDeleteTask,
+  sortable = false,
 }: {
   task: OpsTask;
   isLast: boolean;
@@ -261,19 +279,49 @@ function TaskRow({
   onOpenTask: (task: OpsTask) => void;
   onStopRecurrence: (taskId: string) => void;
   onDeleteTask: (taskId: string) => void;
+  sortable?: boolean;
 }) {
   const st = STATUS_CFG[task.status] ?? STATUS_CFG["To Do"];
   const overdue = isOverdue(task.due_date, task.status);
   const isComplete = task.status === "Complete";
 
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: task.id, disabled: !sortable });
+
+  const style = sortable
+    ? {
+        transform: CSS.Transform.toString(transform),
+        transition,
+      }
+    : undefined;
+
   return (
     <div
+      ref={sortable ? setNodeRef : undefined}
+      style={style}
       className={cn(
-        "flex items-center gap-3.5 py-2.5 px-5 pl-[52px]",
+        "flex items-center gap-3.5 py-2.5 px-5 pl-[40px]",
         !isLast && "border-b border-muted",
-        isComplete && "bg-muted/50"
+        isComplete && "bg-muted/50",
+        isDragging && "opacity-50 bg-muted z-10 relative"
       )}
     >
+      {sortable && (
+        <button
+          type="button"
+          className="shrink-0 cursor-grab active:cursor-grabbing text-muted-foreground/50 hover:text-muted-foreground touch-none"
+          {...attributes}
+          {...listeners}
+        >
+          <GripVertical size={14} />
+        </button>
+      )}
       <button
         type="button"
         onClick={(e) => {
@@ -358,6 +406,7 @@ function ProjectRow({
   onDeleteProject,
   onOpenTask,
   onAddTask,
+  onReorderTasks,
 }: {
   project: OpsProject;
   tasks: OpsTask[];
@@ -369,6 +418,7 @@ function ProjectRow({
   onDeleteProject: (projectId: string) => void;
   onOpenTask: (task: OpsTask) => void;
   onAddTask: () => void;
+  onReorderTasks: (projectId: string, taskIds: string[]) => void;
 }) {
   const st = STATUS_CFG[project.status ?? "Not Started"] ?? STATUS_CFG["Not Started"];
   const pr = PRIORITY_CFG[project.priority ?? "Medium"] ?? PRIORITY_CFG["Medium"];
@@ -379,17 +429,62 @@ function ProjectRow({
   const overdue = isOverdue(project.due_date, project.status ?? "");
   const dLeft = daysUntil(project.due_date);
 
-  const sortedTasks = [...tasks].sort(
-    (a, b) => (priorityOrder[a.priority] ?? 99) - (priorityOrder[b.priority] ?? 99)
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: project.id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+  };
+
+  const taskSensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
   );
 
+  function handleTaskDragEnd(event: DragEndEvent) {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+    const oldIndex = tasks.findIndex((t) => t.id === active.id);
+    const newIndex = tasks.findIndex((t) => t.id === over.id);
+    if (oldIndex === -1 || newIndex === -1) return;
+    const reordered = [...tasks];
+    const [moved] = reordered.splice(oldIndex, 1);
+    reordered.splice(newIndex, 0, moved);
+    onReorderTasks(project.id, reordered.map((t) => t.id));
+  }
+
+  const taskIds = tasks.map((t) => t.id);
+
   return (
-    <div className="bg-card rounded-xl border border-border overflow-hidden transition-shadow">
+    <div
+      ref={setNodeRef}
+      style={style}
+      className={cn(
+        "bg-card rounded-xl border border-border overflow-hidden transition-shadow",
+        isDragging && "opacity-50 z-10 relative shadow-lg"
+      )}
+    >
       {/* Project Header */}
       <div
         onClick={onToggle}
         className="flex items-center gap-3.5 px-5 py-4 cursor-pointer select-none"
       >
+        <button
+          type="button"
+          className="shrink-0 cursor-grab active:cursor-grabbing text-muted-foreground/50 hover:text-muted-foreground touch-none"
+          onClick={(e) => e.stopPropagation()}
+          {...attributes}
+          {...listeners}
+        >
+          <GripVertical size={16} />
+        </button>
         <div
           className={cn(
             "shrink-0 text-muted-foreground transition-transform duration-150",
@@ -480,17 +575,26 @@ function ProjectRow({
               <span className="text-[13px] text-muted-foreground leading-relaxed">{project.description}</span>
             </div>
           )}
-          {sortedTasks.map((task, i) => (
-            <TaskRow
-              key={task.id}
-              task={task}
-              isLast={i === sortedTasks.length - 1}
-              onToggle={onToggleTask}
-              onOpenTask={onOpenTask}
-              onStopRecurrence={onStopRecurrence}
-              onDeleteTask={onDeleteTask}
-            />
-          ))}
+          <DndContext
+            sensors={taskSensors}
+            collisionDetection={closestCenter}
+            onDragEnd={handleTaskDragEnd}
+          >
+            <SortableContext items={taskIds} strategy={verticalListSortingStrategy}>
+              {tasks.map((task, i) => (
+                <TaskRow
+                  key={task.id}
+                  task={task}
+                  isLast={i === tasks.length - 1}
+                  onToggle={onToggleTask}
+                  onOpenTask={onOpenTask}
+                  onStopRecurrence={onStopRecurrence}
+                  onDeleteTask={onDeleteTask}
+                  sortable
+                />
+              ))}
+            </SortableContext>
+          </DndContext>
           <div className="px-5 py-2.5 pl-[52px]">
             <button
               type="button"
@@ -710,6 +814,7 @@ export function OperationsView({
   const [search, setSearch] = useState("");
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
   const [addTaskOpen, setAddTaskOpen] = useState(false);
+  const [addTaskProjectId, setAddTaskProjectId] = useState<string | undefined>(undefined);
 
   // Task detail drawer
   const [selectedTask, setSelectedTask] = useState<OpsTask | null>(null);
@@ -731,6 +836,10 @@ export function OperationsView({
     setCategoryFilter("all");
     setSearch("");
   }
+
+  // Local order state for optimistic reordering
+  const [projectOrder, setProjectOrder] = useState<string[] | null>(null);
+  const [taskOrderByProject, setTaskOrderByProject] = useState<Record<string, string[]>>({});
 
   // Normalize project statuses
   const projects = useMemo(() => rawProjects.map((p) => ({
@@ -754,8 +863,18 @@ export function OperationsView({
         map[t.project_id].push(t);
       }
     });
+    // Apply local task ordering if present
+    Object.keys(taskOrderByProject).forEach((projectId) => {
+      if (map[projectId]) {
+        const order = taskOrderByProject[projectId];
+        const taskMap = new Map(map[projectId].map((t) => [t.id, t]));
+        map[projectId] = order
+          .map((id) => taskMap.get(id))
+          .filter((t): t is OpsTask => !!t);
+      }
+    });
     return map;
-  }, [tasks]);
+  }, [tasks, taskOrderByProject]);
 
   // Unique filter options
   const ownerOptions = useMemo(() => {
@@ -793,14 +912,18 @@ export function OperationsView({
   // Filter projects
   const filteredProjects = useMemo(() => {
     let result = [...projects];
+    // Apply local project order if present
+    if (projectOrder) {
+      const orderMap = new Map(projectOrder.map((id, i) => [id, i]));
+      result.sort((a, b) => (orderMap.get(a.id) ?? 999) - (orderMap.get(b.id) ?? 999));
+    }
     if (statusFilter !== "all") result = result.filter((p) => p.status === statusFilter);
     if (ownerFilter !== "all") result = result.filter((p) => p.owner === ownerFilter);
     if (priorityFilter !== "all") result = result.filter((p) => p.priority === priorityFilter);
     if (categoryFilter !== "all") result = result.filter((p) => p.category === categoryFilter);
     if (search) result = result.filter((p) => p.project_name.toLowerCase().includes(search.toLowerCase()));
-    result.sort((a, b) => (priorityOrder[a.priority ?? ""] ?? 99) - (priorityOrder[b.priority ?? ""] ?? 99));
     return result;
-  }, [projects, statusFilter, ownerFilter, priorityFilter, categoryFilter, search]);
+  }, [projects, projectOrder, statusFilter, ownerFilter, priorityFilter, categoryFilter, search]);
 
   // Toggle task complete/incomplete
   async function handleToggleTask(taskId: string, complete: boolean) {
@@ -863,6 +986,46 @@ export function OperationsView({
     }
     toast({ title: "Recurrence stopped", description: "No further tasks will be generated." });
     router.refresh();
+  }
+
+  // DnD sensors for projects
+  const projectSensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
+  );
+
+  // Persist sort_order updates to Supabase
+  const persistProjectOrder = useCallback(async (orderedIds: string[]) => {
+    const updates = orderedIds.map((id, i) =>
+      supabase.from("ops_projects").update({ sort_order: i }).eq("id", id)
+    );
+    await Promise.all(updates);
+  }, [supabase]);
+
+  const persistTaskOrder = useCallback(async (taskIds: string[]) => {
+    const updates = taskIds.map((id, i) =>
+      supabase.from("ops_tasks").update({ sort_order: i }).eq("id", id)
+    );
+    await Promise.all(updates);
+  }, [supabase]);
+
+  function handleProjectDragEnd(event: DragEndEvent) {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+    const currentOrder = projectOrder ?? filteredProjects.map((p) => p.id);
+    const oldIndex = currentOrder.indexOf(active.id as string);
+    const newIndex = currentOrder.indexOf(over.id as string);
+    if (oldIndex === -1 || newIndex === -1) return;
+    const newOrder = [...currentOrder];
+    const [moved] = newOrder.splice(oldIndex, 1);
+    newOrder.splice(newIndex, 0, moved);
+    setProjectOrder(newOrder);
+    persistProjectOrder(newOrder);
+  }
+
+  function handleReorderTasks(projectId: string, taskIds: string[]) {
+    setTaskOrderByProject((prev) => ({ ...prev, [projectId]: taskIds }));
+    persistTaskOrder(taskIds);
   }
 
   // Status filter options depend on the active view
@@ -1035,31 +1198,43 @@ export function OperationsView({
 
       {/* Content */}
       {view === "projects" && (
-        <div className="flex flex-col gap-2">
-          {filteredProjects.length === 0 ? (
-            <div className="bg-card rounded-xl border border-border py-12 px-5 text-center">
-              <Inbox size={36} className="mx-auto text-muted-foreground" />
-              <div className="text-[15px] font-semibold text-foreground mt-3">No projects match filters</div>
-              <div className="text-[13px] text-muted-foreground mt-1">Try adjusting your filters or create a new project.</div>
+        <DndContext
+          sensors={projectSensors}
+          collisionDetection={closestCenter}
+          onDragEnd={handleProjectDragEnd}
+        >
+          <SortableContext
+            items={filteredProjects.map((p) => p.id)}
+            strategy={verticalListSortingStrategy}
+          >
+            <div className="flex flex-col gap-2">
+              {filteredProjects.length === 0 ? (
+                <div className="bg-card rounded-xl border border-border py-12 px-5 text-center">
+                  <Inbox size={36} className="mx-auto text-muted-foreground" />
+                  <div className="text-[15px] font-semibold text-foreground mt-3">No projects match filters</div>
+                  <div className="text-[13px] text-muted-foreground mt-1">Try adjusting your filters or create a new project.</div>
+                </div>
+              ) : (
+                filteredProjects.map((p) => (
+                  <ProjectRow
+                    key={p.id}
+                    project={p}
+                    tasks={tasksByProject[p.id] ?? []}
+                    expanded={!!expanded[p.id]}
+                    onToggle={() => toggleExpand(p.id)}
+                    onToggleTask={handleToggleTask}
+                    onStopRecurrence={handleStopRecurrence}
+                    onDeleteTask={handleDeleteTask}
+                    onDeleteProject={handleDeleteProject}
+                    onOpenTask={handleOpenTask}
+                    onAddTask={() => { setAddTaskProjectId(p.id); setAddTaskOpen(true); }}
+                    onReorderTasks={handleReorderTasks}
+                  />
+                ))
+              )}
             </div>
-          ) : (
-            filteredProjects.map((p) => (
-              <ProjectRow
-                key={p.id}
-                project={p}
-                tasks={tasksByProject[p.id] ?? []}
-                expanded={!!expanded[p.id]}
-                onToggle={() => toggleExpand(p.id)}
-                onToggleTask={handleToggleTask}
-                onStopRecurrence={handleStopRecurrence}
-                onDeleteTask={handleDeleteTask}
-                onDeleteProject={handleDeleteProject}
-                onOpenTask={handleOpenTask}
-                onAddTask={() => setAddTaskOpen(true)}
-              />
-            ))
-          )}
-        </div>
+          </SortableContext>
+        </DndContext>
       )}
 
       {view === "tasks" && (
@@ -1083,6 +1258,18 @@ export function OperationsView({
           onNavigateToApproval={(id) => router.push(`/admin/operations/approvals/${id}`)}
         />
       )}
+
+      {/* Inline Add Task Dialog (for project-level "Add Task" button) */}
+      <AddTaskDialog
+        projects={rawProjects}
+        teamMembers={teamMembers}
+        externalOpen={addTaskOpen}
+        onExternalOpenChange={(v) => {
+          setAddTaskOpen(v);
+          if (!v) setAddTaskProjectId(undefined);
+        }}
+        defaultProjectId={addTaskProjectId}
+      />
 
       {/* Task Detail Drawer */}
       <TaskDetailDrawer

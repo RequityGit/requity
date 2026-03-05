@@ -46,6 +46,7 @@ export interface OpsTask {
   recurrence_day_of_month: number | null;
   recurrence_day_of_week: number | null;
   created_by: string | null;
+  sort_order: number;
   updated_at: string | null;
   created_at: string | null;
 }
@@ -64,6 +65,7 @@ export interface OpsProject {
   created_by: string | null;
   started_at: string | null;
   completed_at: string | null;
+  sort_order: number;
   updated_at: string | null;
   created_at: string | null;
 }
