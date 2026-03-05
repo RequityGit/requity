@@ -388,6 +388,7 @@ export default async function DealDetailPage({ params }: PageProps) {
       created_by: v.created_by,
       label: v.label ?? null,
       notes: v.notes ?? null,
+      model_type: v.model_type || "rtl",
       calculator_inputs: v.calculator_inputs ?? {},
       calculator_outputs: v.calculator_outputs ?? {},
       status: v.status ?? "draft",
