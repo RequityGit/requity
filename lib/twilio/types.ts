@@ -22,4 +22,8 @@ export interface SoftphoneContextValue extends SoftphoneState {
   toggleMute: () => void;
   sendDigit: (digit: string) => void;
   retry: () => void;
+  onCallConnected?: (callSid: string) => void;
+  onCallDisconnected?: () => void;
+  setOnCallConnected: (cb: ((callSid: string) => void) | undefined) => void;
+  setOnCallDisconnected: (cb: (() => void) | undefined) => void;
 }

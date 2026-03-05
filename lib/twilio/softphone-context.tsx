@@ -48,6 +48,16 @@ export function SoftphoneProvider({ children }: { children: React.ReactNode }) {
   const deviceRef = useRef<Device | null>(null);
   const callRef = useRef<Call | null>(null);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const onCallConnectedRef = useRef<((callSid: string) => void) | undefined>();
+  const onCallDisconnectedRef = useRef<(() => void) | undefined>();
+
+  const setOnCallConnected = useCallback((cb: ((callSid: string) => void) | undefined) => {
+    onCallConnectedRef.current = cb;
+  }, []);
+
+  const setOnCallDisconnected = useCallback((cb: (() => void) | undefined) => {
+    onCallDisconnectedRef.current = cb;
+  }, []);
 
   const clearTimer = useCallback(() => {
     if (timerRef.current) {
@@ -63,6 +73,7 @@ export function SoftphoneProvider({ children }: { children: React.ReactNode }) {
     setCallDuration(0);
     setIsMuted(false);
     clearTimer();
+    onCallDisconnectedRef.current?.();
     if (deviceRef.current?.state === "registered") {
       setStatus("ready");
     } else {
@@ -158,6 +169,7 @@ export function SoftphoneProvider({ children }: { children: React.ReactNode }) {
     call.accept();
     setStatus("on-call");
     startTimer();
+    onCallConnectedRef.current?.(call.parameters.CallSid || "");
   }, [startTimer]);
 
   const rejectCall = useCallback(() => {
@@ -185,6 +197,7 @@ export function SoftphoneProvider({ children }: { children: React.ReactNode }) {
         call.on("accept", () => {
           setStatus("on-call");
           startTimer();
+          onCallConnectedRef.current?.(call.parameters?.CallSid || "");
         });
 
         call.on("disconnect", () => resetCallState());
@@ -242,6 +255,8 @@ export function SoftphoneProvider({ children }: { children: React.ReactNode }) {
     toggleMute,
     sendDigit,
     retry,
+    setOnCallConnected,
+    setOnCallDisconnected,
   };
 
   return (

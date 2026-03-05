@@ -4503,6 +4503,41 @@ export type Database = {
           },
         ]
       }
+      dialer_call_groups: {
+        Row: {
+          calls: Json
+          connected_contact_id: string | null
+          created_at: string | null
+          id: string
+          list_id: string | null
+          resolved: boolean | null
+        }
+        Insert: {
+          calls?: Json
+          connected_contact_id?: string | null
+          created_at?: string | null
+          id: string
+          list_id?: string | null
+          resolved?: boolean | null
+        }
+        Update: {
+          calls?: Json
+          connected_contact_id?: string | null
+          created_at?: string | null
+          id?: string
+          list_id?: string | null
+          resolved?: boolean | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dialer_call_groups_list_id_fkey"
+            columns: ["list_id"]
+            isOneToOne: false
+            referencedRelation: "dialer_lists"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       dialer_calls: {
         Row: {
           called_at: string | null
@@ -4602,6 +4637,180 @@ export type Database = {
           {
             foreignKeyName: "dialer_calls_performed_by_fkey"
             columns: ["performed_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      dialer_list_contacts: {
+        Row: {
+          attempts: number | null
+          contact_id: string
+          created_at: string
+          current_number_index: number | null
+          disposition: string | null
+          disposition_notes: string | null
+          id: string
+          last_attempted_at: string | null
+          last_call_id: string | null
+          list_id: string
+          phone_numbers: Json | null
+          position: number
+          scheduled_callback: string | null
+          status: string
+        }
+        Insert: {
+          attempts?: number | null
+          contact_id: string
+          created_at?: string
+          current_number_index?: number | null
+          disposition?: string | null
+          disposition_notes?: string | null
+          id?: string
+          last_attempted_at?: string | null
+          last_call_id?: string | null
+          list_id: string
+          phone_numbers?: Json | null
+          position: number
+          scheduled_callback?: string | null
+          status?: string
+        }
+        Update: {
+          attempts?: number | null
+          contact_id?: string
+          created_at?: string
+          current_number_index?: number | null
+          disposition?: string | null
+          disposition_notes?: string | null
+          id?: string
+          last_attempted_at?: string | null
+          last_call_id?: string | null
+          list_id?: string
+          phone_numbers?: Json | null
+          position?: number
+          scheduled_callback?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dialer_list_contacts_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "crm_contacts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "dialer_list_contacts_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "crm_contacts_active"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "dialer_list_contacts_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "crm_duplicate_candidates"
+            referencedColumns: ["contact_id"]
+          },
+          {
+            foreignKeyName: "dialer_list_contacts_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "crm_duplicate_candidates"
+            referencedColumns: ["potential_duplicate_id"]
+          },
+          {
+            foreignKeyName: "dialer_list_contacts_last_call_id_fkey"
+            columns: ["last_call_id"]
+            isOneToOne: false
+            referencedRelation: "dialer_calls"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "dialer_list_contacts_list_id_fkey"
+            columns: ["list_id"]
+            isOneToOne: false
+            referencedRelation: "dialer_lists"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      dialer_lists: {
+        Row: {
+          assigned_to: string | null
+          completed_at: string | null
+          completed_contacts: number | null
+          created_at: string
+          created_by: string | null
+          current_position: number | null
+          description: string | null
+          id: string
+          name: string
+          settings: Json | null
+          started_at: string | null
+          status: string
+          total_contacts: number | null
+          updated_at: string
+        }
+        Insert: {
+          assigned_to?: string | null
+          completed_at?: string | null
+          completed_contacts?: number | null
+          created_at?: string
+          created_by?: string | null
+          current_position?: number | null
+          description?: string | null
+          id?: string
+          name: string
+          settings?: Json | null
+          started_at?: string | null
+          status?: string
+          total_contacts?: number | null
+          updated_at?: string
+        }
+        Update: {
+          assigned_to?: string | null
+          completed_at?: string | null
+          completed_contacts?: number | null
+          created_at?: string
+          created_by?: string | null
+          current_position?: number | null
+          description?: string | null
+          id?: string
+          name?: string
+          settings?: Json | null
+          started_at?: string | null
+          status?: string
+          total_contacts?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dialer_lists_assigned_to_fkey"
+            columns: ["assigned_to"]
+            isOneToOne: false
+            referencedRelation: "equity_pipeline"
+            referencedColumns: ["assigned_to_profile_id"]
+          },
+          {
+            foreignKeyName: "dialer_lists_assigned_to_fkey"
+            columns: ["assigned_to"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "dialer_lists_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "equity_pipeline"
+            referencedColumns: ["assigned_to_profile_id"]
+          },
+          {
+            foreignKeyName: "dialer_lists_created_by_fkey"
+            columns: ["created_by"]
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
@@ -6246,7 +6455,7 @@ export type Database = {
           changed_at: string
           changed_by: string | null
           deal_id: string
-          duration_in_previous_stage: unknown
+          duration_in_previous_stage: string | null
           from_stage: Database["public"]["Enums"]["equity_deal_stage"]
           id: string
           notes: string | null
@@ -6256,7 +6465,7 @@ export type Database = {
           changed_at?: string
           changed_by?: string | null
           deal_id: string
-          duration_in_previous_stage?: unknown
+          duration_in_previous_stage?: string | null
           from_stage: Database["public"]["Enums"]["equity_deal_stage"]
           id?: string
           notes?: string | null
@@ -6266,7 +6475,7 @@ export type Database = {
           changed_at?: string
           changed_by?: string | null
           deal_id?: string
-          duration_in_previous_stage?: unknown
+          duration_in_previous_stage?: string | null
           from_stage?: Database["public"]["Enums"]["equity_deal_stage"]
           id?: string
           notes?: string | null
@@ -7979,7 +8188,7 @@ export type Database = {
         Row: {
           changed_at: string
           changed_by: string | null
-          duration_in_previous_stage: unknown
+          duration_in_previous_stage: string | null
           from_stage: string
           id: string
           loan_id: string
@@ -7989,7 +8198,7 @@ export type Database = {
         Insert: {
           changed_at?: string
           changed_by?: string | null
-          duration_in_previous_stage?: unknown
+          duration_in_previous_stage?: string | null
           from_stage: string
           id?: string
           loan_id: string
@@ -7999,7 +8208,7 @@ export type Database = {
         Update: {
           changed_at?: string
           changed_by?: string | null
-          duration_in_previous_stage?: unknown
+          duration_in_previous_stage?: string | null
           from_stage?: string
           id?: string
           loan_id?: string
@@ -9275,7 +9484,7 @@ export type Database = {
         Row: {
           changed_at: string
           changed_by: string | null
-          duration_in_previous_stage: unknown
+          duration_in_previous_stage: string | null
           from_stage: string
           id: string
           notes: string | null
@@ -9285,7 +9494,7 @@ export type Database = {
         Insert: {
           changed_at?: string
           changed_by?: string | null
-          duration_in_previous_stage?: unknown
+          duration_in_previous_stage?: string | null
           from_stage: string
           id?: string
           notes?: string | null
@@ -9295,7 +9504,7 @@ export type Database = {
         Update: {
           changed_at?: string
           changed_by?: string | null
-          duration_in_previous_stage?: unknown
+          duration_in_previous_stage?: string | null
           from_stage?: string
           id?: string
           notes?: string | null
@@ -9446,6 +9655,7 @@ export type Database = {
           owner: string
           priority: string
           project_name: string
+          sort_order: number
           started_at: string | null
           status: string
           updated_at: string | null
@@ -9463,6 +9673,7 @@ export type Database = {
           owner: string
           priority?: string
           project_name: string
+          sort_order?: number
           started_at?: string | null
           status?: string
           updated_at?: string | null
@@ -9480,6 +9691,7 @@ export type Database = {
           owner?: string
           priority?: string
           project_name?: string
+          sort_order?: number
           started_at?: string | null
           status?: string
           updated_at?: string | null
@@ -9604,6 +9816,7 @@ export type Database = {
           recurrence_end_date: string | null
           recurrence_pattern: string | null
           recurring_series_id: string | null
+          sort_order: number
           source_task_id: string | null
           status: string
           title: string
@@ -9633,6 +9846,7 @@ export type Database = {
           recurrence_end_date?: string | null
           recurrence_pattern?: string | null
           recurring_series_id?: string | null
+          sort_order?: number
           source_task_id?: string | null
           status?: string
           title: string
@@ -9662,6 +9876,7 @@ export type Database = {
           recurrence_end_date?: string | null
           recurrence_pattern?: string | null
           recurring_series_id?: string | null
+          sort_order?: number
           source_task_id?: string | null
           status?: string
           title?: string
@@ -9942,141 +10157,6 @@ export type Database = {
             columns: ["profile_id"]
             isOneToOne: false
             referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      portal_documents: {
-        Row: {
-          id: string
-          file_name: string
-          display_name: string | null
-          file_path: string
-          file_size: number | null
-          mime_type: string | null
-          document_type: string
-          category: string
-          loan_id: string | null
-          fund_id: string | null
-          borrower_id: string | null
-          investor_id: string | null
-          borrower_entity_id: string | null
-          investing_entity_id: string | null
-          company_id: string | null
-          crm_contact_id: string | null
-          visibility: string
-          uploaded_by: string | null
-          notes: string | null
-          tags: string[] | null
-          created_at: string
-          updated_at: string
-          deleted_at: string | null
-        }
-        Insert: {
-          id?: string
-          file_name: string
-          display_name?: string | null
-          file_path: string
-          file_size?: number | null
-          mime_type?: string | null
-          document_type?: string
-          category?: string
-          loan_id?: string | null
-          fund_id?: string | null
-          borrower_id?: string | null
-          investor_id?: string | null
-          borrower_entity_id?: string | null
-          investing_entity_id?: string | null
-          company_id?: string | null
-          crm_contact_id?: string | null
-          visibility?: string
-          uploaded_by?: string | null
-          notes?: string | null
-          tags?: string[] | null
-          created_at?: string
-          updated_at?: string
-          deleted_at?: string | null
-        }
-        Update: {
-          id?: string
-          file_name?: string
-          display_name?: string | null
-          file_path?: string
-          file_size?: number | null
-          mime_type?: string | null
-          document_type?: string
-          category?: string
-          loan_id?: string | null
-          fund_id?: string | null
-          borrower_id?: string | null
-          investor_id?: string | null
-          borrower_entity_id?: string | null
-          investing_entity_id?: string | null
-          company_id?: string | null
-          crm_contact_id?: string | null
-          visibility?: string
-          uploaded_by?: string | null
-          notes?: string | null
-          tags?: string[] | null
-          created_at?: string
-          updated_at?: string
-          deleted_at?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "portal_documents_loan_id_fkey"
-            columns: ["loan_id"]
-            isOneToOne: false
-            referencedRelation: "loans"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "portal_documents_fund_id_fkey"
-            columns: ["fund_id"]
-            isOneToOne: false
-            referencedRelation: "funds"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "portal_documents_borrower_id_fkey"
-            columns: ["borrower_id"]
-            isOneToOne: false
-            referencedRelation: "borrowers"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "portal_documents_investor_id_fkey"
-            columns: ["investor_id"]
-            isOneToOne: false
-            referencedRelation: "investors"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "portal_documents_borrower_entity_id_fkey"
-            columns: ["borrower_entity_id"]
-            isOneToOne: false
-            referencedRelation: "borrower_entities"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "portal_documents_investing_entity_id_fkey"
-            columns: ["investing_entity_id"]
-            isOneToOne: false
-            referencedRelation: "investing_entities"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "portal_documents_company_id_fkey"
-            columns: ["company_id"]
-            isOneToOne: false
-            referencedRelation: "companies"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "portal_documents_crm_contact_id_fkey"
-            columns: ["crm_contact_id"]
-            isOneToOne: false
-            referencedRelation: "crm_contacts"
             referencedColumns: ["id"]
           },
         ]
@@ -14856,7 +14936,7 @@ export const Constants = {
   },
 } as const
 
-// Custom type aliases for convenience
+// Convenience type aliases
 export type Profile = Tables<'profiles'>
 export type Loan = Tables<'loans'>
 export type LoanPayment = Tables<'loan_payments'>
@@ -14868,7 +14948,7 @@ export type CrmContact = Tables<'crm_contacts'>
 export type LoanConditionTemplate = Tables<'loan_condition_templates'>
 export type BorrowerEntity = Tables<'borrower_entities'>
 
-// pricing_programs — not yet in generated types (migration 20250311)
+// pricing_programs — not yet in generated types
 export interface PricingProgram {
   id: string
   program_id: string
@@ -14901,7 +14981,7 @@ export interface PricingProgram {
   created_by: string | null
 }
 
-// pricing_program_versions — not yet in generated types (migration 20250311)
+// pricing_program_versions — not yet in generated types
 export interface PricingProgramVersion {
   id: string
   program_id: string
@@ -14912,7 +14992,7 @@ export interface PricingProgramVersion {
   snapshot: Json
 }
 
-// leverage_adjusters — not yet in generated types (migration 20250311)
+// leverage_adjusters — not yet in generated types
 export interface LeverageAdjuster {
   id: string
   program_id: string
@@ -14926,7 +15006,7 @@ export interface LeverageAdjuster {
   sort_order: number
 }
 
-// lender_quotes — not yet in generated types (migration 20260302)
+// lender_quotes — not yet in generated types
 export interface LenderQuote {
   id: string
   created_at: string | null
