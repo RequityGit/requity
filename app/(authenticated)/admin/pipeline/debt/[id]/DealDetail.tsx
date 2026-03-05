@@ -196,8 +196,11 @@ export function DealDetail({
   const displayId = deal.loan_number || deal.id?.slice(0, 8);
 
   // Format currency for display
-  const fmtMetric = (n: number | null | undefined) =>
-    n != null ? "$" + n.toLocaleString("en-US") : "\u2014";
+  const fmtMetric = (n: unknown) => {
+    if (n == null || n === "") return "\u2014";
+    const v = Number(n);
+    return isNaN(v) ? "\u2014" : "$" + v.toLocaleString("en-US");
+  };
 
   return (
     <div style={{ minHeight: "100vh" }}>
@@ -262,7 +265,7 @@ export function DealDetail({
           />
           <EditableMetricCard
             label="DSCR"
-            value={deal.dscr_ratio != null ? deal.dscr_ratio.toFixed(2) : "\u2014"}
+            value={deal.dscr_ratio != null ? Number(deal.dscr_ratio).toFixed(2) : "\u2014"}
             fieldName="dscr_ratio"
             fieldType="number"
             rawValue={deal.dscr_ratio}
