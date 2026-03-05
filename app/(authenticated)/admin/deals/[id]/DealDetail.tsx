@@ -159,6 +159,7 @@ export function DealDetail({
             uwVersions={uwVersions}
             currentUserId={currentUserId}
             currentUserName={currentUserName}
+            isOpportunity={isOpportunity}
           />
         );
       case "conditions":

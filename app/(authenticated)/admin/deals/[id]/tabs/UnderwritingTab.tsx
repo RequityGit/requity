@@ -31,6 +31,7 @@ interface UnderwritingTabProps {
   uwVersions: UWVersion[];
   currentUserId: string;
   currentUserName: string;
+  isOpportunity?: boolean;
 }
 
 const MODEL_ICONS: Record<UWModelType, typeof Building2> = {
@@ -44,6 +45,7 @@ export function UnderwritingTab({
   dealType,
   uwVersions,
   currentUserId,
+  isOpportunity = false,
 }: UnderwritingTabProps) {
   const router = useRouter();
   const [creating, setCreating] = useState(false);
@@ -57,7 +59,7 @@ export function UnderwritingTab({
     if (creating) return;
     setCreating(true);
     try {
-      const result = await createUWVersion(dealId, currentUserId, defaultModel);
+      const result = await createUWVersion(dealId, currentUserId, defaultModel, undefined, isOpportunity);
       if (result.error) {
         console.error("Create version error:", result.error);
       } else {

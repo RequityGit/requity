@@ -18,16 +18,18 @@ export async function saveUWVersion(
   markActive: boolean,
   userId: string,
   userName: string,
-  versionNumber: number
+  versionNumber: number,
+  isOpportunity: boolean = false
 ) {
-  return _saveUWVersion(versionId, loanId, inputs, outputs, markActive, userId, userName, versionNumber);
+  return _saveUWVersion(versionId, loanId, inputs, outputs, markActive, userId, userName, versionNumber, isOpportunity);
 }
 
 export async function cloneUWVersion(
   loanId: string,
   sourceVersionId: string,
   userId: string,
-  modelType: string
+  modelType: string,
+  isOpportunity: boolean = false
 ): Promise<{ success?: boolean; error?: string; version?: UWVersionData }> {
   try {
     const auth = await requireAdmin();
@@ -46,30 +48,41 @@ export async function cloneUWVersion(
       return { error: srcErr?.message || "Source version not found" };
     }
 
-    // Get next version number
-    const { data: versions } = await admin
-      .from("loan_underwriting_versions")
-      .select("version_number")
-      .eq("loan_id", loanId)
-      .order("version_number", { ascending: false })
-      .limit(1);
+    // Get next version number — query by appropriate FK
+    const versionQuery = isOpportunity
+      ? admin
+          .from("loan_underwriting_versions")
+          .select("version_number")
+          .eq("opportunity_id", loanId)
+          .order("version_number", { ascending: false })
+          .limit(1)
+      : admin
+          .from("loan_underwriting_versions")
+          .select("version_number")
+          .eq("loan_id", loanId)
+          .order("version_number", { ascending: false })
+          .limit(1);
 
+    const { data: versions } = await versionQuery;
     const nextVersion = (versions?.[0]?.version_number || 0) + 1;
 
-    // Create clone
-    const { data: newVersion, error } = await admin
+    // Create clone with appropriate FK
+    const insertPayload = {
+      ...(isOpportunity ? { opportunity_id: loanId } : { loan_id: loanId }),
+      version_number: nextVersion,
+      is_active: false,
+      created_by: userId,
+      model_type: modelType,
+      calculator_inputs: source.calculator_inputs || {},
+      calculator_outputs: {},
+      status: "draft" as const,
+      label: `Cloned from v${source.version_number}`,
+    };
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data: newVersion, error } = await (admin as any)
       .from("loan_underwriting_versions")
-      .insert({
-        loan_id: loanId,
-        version_number: nextVersion,
-        is_active: false,
-        created_by: userId,
-        model_type: modelType,
-        calculator_inputs: source.calculator_inputs || {},
-        calculator_outputs: {},
-        status: "draft",
-        label: `Cloned from v${source.version_number}`,
-      })
+      .insert(insertPayload)
       .select()
       .single();
 
@@ -88,7 +101,8 @@ export async function cloneUWVersion(
 export async function createNewUWVersion(
   loanId: string,
   userId: string,
-  modelType: string
+  modelType: string,
+  isOpportunity: boolean = false
 ): Promise<{ success?: boolean; error?: string; version?: UWVersionData }> {
   try {
     const auth = await requireAdmin();
@@ -96,28 +110,39 @@ export async function createNewUWVersion(
 
     const admin = createAdminClient();
 
-    // Get next version number
-    const { data: versions } = await admin
-      .from("loan_underwriting_versions")
-      .select("version_number")
-      .eq("loan_id", loanId)
-      .order("version_number", { ascending: false })
-      .limit(1);
+    // Get next version number — query by appropriate FK
+    const versionQuery = isOpportunity
+      ? admin
+          .from("loan_underwriting_versions")
+          .select("version_number")
+          .eq("opportunity_id", loanId)
+          .order("version_number", { ascending: false })
+          .limit(1)
+      : admin
+          .from("loan_underwriting_versions")
+          .select("version_number")
+          .eq("loan_id", loanId)
+          .order("version_number", { ascending: false })
+          .limit(1);
 
+    const { data: versions } = await versionQuery;
     const nextVersion = (versions?.[0]?.version_number || 0) + 1;
 
-    const { data: newVersion, error } = await admin
+    const insertPayload = {
+      ...(isOpportunity ? { opportunity_id: loanId } : { loan_id: loanId }),
+      version_number: nextVersion,
+      is_active: false,
+      created_by: userId,
+      model_type: modelType,
+      calculator_inputs: {},
+      calculator_outputs: {},
+      status: "draft" as const,
+    };
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data: newVersion, error } = await (admin as any)
       .from("loan_underwriting_versions")
-      .insert({
-        loan_id: loanId,
-        version_number: nextVersion,
-        is_active: false,
-        created_by: userId,
-        model_type: modelType,
-        calculator_inputs: {},
-        calculator_outputs: {},
-        status: "draft",
-      })
+      .insert(insertPayload)
       .select()
       .single();
 

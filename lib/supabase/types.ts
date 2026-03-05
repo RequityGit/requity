@@ -82,6 +82,73 @@ export type Database = {
         }
         Relationships: []
       }
+      approval_comments: {
+        Row: {
+          approval_id: string
+          author_id: string | null
+          author_name: string | null
+          comment: string
+          comment_type: string | null
+          created_at: string | null
+          edited_at: string | null
+          id: string
+          is_edited: boolean | null
+          likes: string[] | null
+          mentions: string[] | null
+          updated_at: string | null
+        }
+        Insert: {
+          approval_id: string
+          author_id?: string | null
+          author_name?: string | null
+          comment: string
+          comment_type?: string | null
+          created_at?: string | null
+          edited_at?: string | null
+          id?: string
+          is_edited?: boolean | null
+          likes?: string[] | null
+          mentions?: string[] | null
+          updated_at?: string | null
+        }
+        Update: {
+          approval_id?: string
+          author_id?: string | null
+          author_name?: string | null
+          comment?: string
+          comment_type?: string | null
+          created_at?: string | null
+          edited_at?: string | null
+          id?: string
+          is_edited?: boolean | null
+          likes?: string[] | null
+          mentions?: string[] | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "approval_comments_approval_id_fkey"
+            columns: ["approval_id"]
+            isOneToOne: false
+            referencedRelation: "approval_requests"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "approval_comments_author_id_fkey"
+            columns: ["author_id"]
+            isOneToOne: false
+            referencedRelation: "equity_pipeline"
+            referencedColumns: ["assigned_to_profile_id"]
+          },
+          {
+            foreignKeyName: "approval_comments_author_id_fkey"
+            columns: ["author_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       approval_parameters: {
         Row: {
           created_at: string | null
@@ -8258,9 +8325,10 @@ export type Database = {
           id: string
           is_active: boolean
           label: string | null
-          loan_id: string
+          loan_id: string | null
           model_type: string
           notes: string | null
+          opportunity_id: string | null
           status: string
           version_number: number
         }
@@ -8272,9 +8340,10 @@ export type Database = {
           id?: string
           is_active?: boolean
           label?: string | null
-          loan_id: string
+          loan_id?: string | null
           model_type?: string
           notes?: string | null
+          opportunity_id?: string | null
           status?: string
           version_number?: number
         }
@@ -8286,9 +8355,10 @@ export type Database = {
           id?: string
           is_active?: boolean
           label?: string | null
-          loan_id?: string
+          loan_id?: string | null
           model_type?: string
           notes?: string | null
+          opportunity_id?: string | null
           status?: string
           version_number?: number
         }
@@ -8319,6 +8389,20 @@ export type Database = {
             columns: ["loan_id"]
             isOneToOne: false
             referencedRelation: "loans"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "loan_underwriting_versions_opportunity_id_fkey"
+            columns: ["opportunity_id"]
+            isOneToOne: false
+            referencedRelation: "opportunities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "loan_underwriting_versions_opportunity_id_fkey"
+            columns: ["opportunity_id"]
+            isOneToOne: false
+            referencedRelation: "opportunity_pipeline"
             referencedColumns: ["id"]
           },
         ]
@@ -9747,6 +9831,61 @@ export type Database = {
           },
         ]
       }
+      ops_task_attachments: {
+        Row: {
+          created_at: string | null
+          file_name: string
+          file_size_bytes: number | null
+          file_type: string | null
+          id: string
+          storage_path: string
+          task_id: string
+          uploaded_by: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          file_name: string
+          file_size_bytes?: number | null
+          file_type?: string | null
+          id?: string
+          storage_path: string
+          task_id: string
+          uploaded_by?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          file_name?: string
+          file_size_bytes?: number | null
+          file_type?: string | null
+          id?: string
+          storage_path?: string
+          task_id?: string
+          uploaded_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ops_task_attachments_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "ops_tasks"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ops_task_attachments_uploaded_by_fkey"
+            columns: ["uploaded_by"]
+            isOneToOne: false
+            referencedRelation: "equity_pipeline"
+            referencedColumns: ["assigned_to_profile_id"]
+          },
+          {
+            foreignKeyName: "ops_task_attachments_uploaded_by_fkey"
+            columns: ["uploaded_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ops_task_comments: {
         Row: {
           author_id: string | null
@@ -9757,6 +9896,7 @@ export type Database = {
           edited_at: string | null
           id: string
           is_edited: boolean
+          likes: string[] | null
           mentions: string[] | null
           task_id: string
           updated_at: string | null
@@ -9770,6 +9910,7 @@ export type Database = {
           edited_at?: string | null
           id?: string
           is_edited?: boolean
+          likes?: string[] | null
           mentions?: string[] | null
           task_id: string
           updated_at?: string | null
@@ -9783,6 +9924,7 @@ export type Database = {
           edited_at?: string | null
           id?: string
           is_edited?: boolean
+          likes?: string[] | null
           mentions?: string[] | null
           task_id?: string
           updated_at?: string | null
@@ -9833,8 +9975,12 @@ export type Database = {
           project_id: string | null
           recurrence_day_of_month: number | null
           recurrence_day_of_week: number | null
+          recurrence_days_of_week: number[] | null
           recurrence_end_date: string | null
+          recurrence_monthly_when: string | null
           recurrence_pattern: string | null
+          recurrence_repeat_interval: number | null
+          recurrence_start_date: string | null
           recurring_series_id: string | null
           sort_order: number
           source_task_id: string | null
@@ -9863,8 +10009,12 @@ export type Database = {
           project_id?: string | null
           recurrence_day_of_month?: number | null
           recurrence_day_of_week?: number | null
+          recurrence_days_of_week?: number[] | null
           recurrence_end_date?: string | null
+          recurrence_monthly_when?: string | null
           recurrence_pattern?: string | null
+          recurrence_repeat_interval?: number | null
+          recurrence_start_date?: string | null
           recurring_series_id?: string | null
           sort_order?: number
           source_task_id?: string | null
@@ -9893,8 +10043,12 @@ export type Database = {
           project_id?: string | null
           recurrence_day_of_month?: number | null
           recurrence_day_of_week?: number | null
+          recurrence_days_of_week?: number[] | null
           recurrence_end_date?: string | null
+          recurrence_monthly_when?: string | null
           recurrence_pattern?: string | null
+          recurrence_repeat_interval?: number | null
+          recurrence_start_date?: string | null
           recurring_series_id?: string | null
           sort_order?: number
           source_task_id?: string | null
@@ -15160,7 +15314,6 @@ export const Constants = {
   },
 } as const
 
-// Custom type aliases for convenience
 export type Profile = Tables<'profiles'>
 export type Loan = Tables<'loans'>
 export type LoanPayment = Tables<'loan_payments'>
@@ -15250,4 +15403,3 @@ export interface PricingProgramVersion {
   change_description: string | null
   changed_at: string
 }
-

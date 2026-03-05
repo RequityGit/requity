@@ -58,19 +58,23 @@ interface UWEditorClientProps {
     markActive: boolean,
     userId: string,
     userName: string,
-    versionNumber: number
+    versionNumber: number,
+    isOpportunity: boolean
   ) => Promise<{ success?: boolean; error?: string }>;
   cloneVersionAction: (
     loanId: string,
     sourceVersionId: string,
     userId: string,
-    modelType: string
+    modelType: string,
+    isOpportunity: boolean
   ) => Promise<{ success?: boolean; error?: string; version?: UWVersionData }>;
   createVersionAction: (
     loanId: string,
     userId: string,
-    modelType: string
+    modelType: string,
+    isOpportunity: boolean
   ) => Promise<{ success?: boolean; error?: string; version?: UWVersionData }>;
+  isOpportunity?: boolean;
 }
 
 const MODEL_ICONS: Record<UWModelType, typeof Building2> = {
@@ -90,6 +94,7 @@ export function UWEditorClient({
   saveVersionAction,
   cloneVersionAction,
   createVersionAction,
+  isOpportunity = false,
 }: UWEditorClientProps) {
   const router = useRouter();
   const { toast } = useToast();
@@ -128,7 +133,8 @@ export function UWEditorClient({
         markActive,
         currentUserId,
         currentUserName,
-        selectedVersion.version_number
+        selectedVersion.version_number,
+        isOpportunity
       );
       if (result.error) {
         toast({ title: "Error", description: result.error, variant: "destructive" });
@@ -142,7 +148,7 @@ export function UWEditorClient({
     } finally {
       setSaving(false);
     }
-  }, [selectedVersion, isEditable, inputs, dealId, currentUserId, currentUserName, saveVersionAction, toast, router]);
+  }, [selectedVersion, isEditable, inputs, dealId, currentUserId, currentUserName, saveVersionAction, isOpportunity, toast, router]);
 
   const handleClone = useCallback(async (sourceVersion: UWVersionData) => {
     setCloning(true);
@@ -151,7 +157,8 @@ export function UWEditorClient({
         dealId,
         sourceVersion.id,
         currentUserId,
-        modelType
+        modelType,
+        isOpportunity
       );
       if (result.error) {
         toast({ title: "Error", description: result.error, variant: "destructive" });
@@ -165,12 +172,12 @@ export function UWEditorClient({
     } finally {
       setCloning(false);
     }
-  }, [dealId, currentUserId, modelType, cloneVersionAction, toast, router]);
+  }, [dealId, currentUserId, modelType, cloneVersionAction, isOpportunity, toast, router]);
 
   const handleCreate = useCallback(async () => {
     setCreating(true);
     try {
-      const result = await createVersionAction(dealId, currentUserId, modelType);
+      const result = await createVersionAction(dealId, currentUserId, modelType, isOpportunity);
       if (result.error) {
         toast({ title: "Error", description: result.error, variant: "destructive" });
       } else {
@@ -180,7 +187,7 @@ export function UWEditorClient({
     } finally {
       setCreating(false);
     }
-  }, [dealId, currentUserId, modelType, createVersionAction, toast, router]);
+  }, [dealId, currentUserId, modelType, createVersionAction, isOpportunity, toast, router]);
 
   const ModelIcon = MODEL_ICONS[modelType];
 

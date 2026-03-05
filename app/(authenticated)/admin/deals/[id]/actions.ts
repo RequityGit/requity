@@ -60,7 +60,8 @@ export async function createUWVersion(
   userId: string,
   modelType: "commercial" | "rtl" | "dscr" = "rtl",
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  inputs?: Record<string, any>
+  inputs?: Record<string, any>,
+  isOpportunity: boolean = false
 ) {
   try {
     const auth = await requireAdmin();
@@ -68,29 +69,41 @@ export async function createUWVersion(
 
     const admin = createAdminClient();
 
-    // Get current max version
-    const { data: versions } = await admin
-      .from("loan_underwriting_versions")
-      .select("version_number, calculator_inputs")
-      .eq("loan_id", loanId)
-      .order("version_number", { ascending: false })
-      .limit(1);
+    // Get current max version — query by appropriate FK
+    const versionQuery = isOpportunity
+      ? admin
+          .from("loan_underwriting_versions")
+          .select("version_number, calculator_inputs")
+          .eq("opportunity_id", loanId)
+          .order("version_number", { ascending: false })
+          .limit(1)
+      : admin
+          .from("loan_underwriting_versions")
+          .select("version_number, calculator_inputs")
+          .eq("loan_id", loanId)
+          .order("version_number", { ascending: false })
+          .limit(1);
+
+    const { data: versions } = await versionQuery;
 
     const nextVersion = (versions?.[0]?.version_number || 0) + 1;
     const baseInputs = inputs || versions?.[0]?.calculator_inputs || {};
 
-    const { data: newVersion, error } = await admin
+    const insertPayload = {
+      ...(isOpportunity ? { opportunity_id: loanId } : { loan_id: loanId }),
+      version_number: nextVersion,
+      is_active: false,
+      created_by: userId,
+      model_type: modelType,
+      calculator_inputs: baseInputs,
+      calculator_outputs: {},
+      status: "draft" as const,
+    };
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data: newVersion, error } = await (admin as any)
       .from("loan_underwriting_versions")
-      .insert({
-        loan_id: loanId,
-        version_number: nextVersion,
-        is_active: false,
-        created_by: userId,
-        model_type: modelType,
-        calculator_inputs: baseInputs,
-        calculator_outputs: {},
-        status: "draft",
-      })
+      .insert(insertPayload)
       .select()
       .single();
 
@@ -116,7 +129,8 @@ export async function saveUWVersion(
   markActive: boolean,
   userId: string,
   userName: string,
-  versionNumber: number
+  versionNumber: number,
+  isOpportunity: boolean = false
 ) {
   try {
     const auth = await requireAdmin();
@@ -137,39 +151,50 @@ export async function saveUWVersion(
     if (vError) return { error: vError.message };
 
     if (markActive) {
-      // Deactivate all
-      await admin
-        .from("loan_underwriting_versions")
-        .update({ is_active: false })
-        .eq("loan_id", loanId);
+      // Deactivate all versions for this deal
+      const deactivateQuery = isOpportunity
+        ? admin
+            .from("loan_underwriting_versions")
+            .update({ is_active: false })
+            .eq("opportunity_id", loanId)
+        : admin
+            .from("loan_underwriting_versions")
+            .update({ is_active: false })
+            .eq("loan_id", loanId);
+      await deactivateQuery;
+
       // Activate this one
       await admin
         .from("loan_underwriting_versions")
         .update({ is_active: true })
         .eq("id", versionId);
 
-      // Sync key outputs to loans table
-      const loanUpdate: Record<string, unknown> = {};
-      if (outputs.rate != null) loanUpdate.interest_rate = outputs.rate;
-      if (outputs.dscr != null) loanUpdate.dscr_ratio = outputs.dscr;
-      if (outputs.ltv != null) loanUpdate.ltv = outputs.ltv;
-      if (outputs.loan_amount != null) loanUpdate.loan_amount = outputs.loan_amount;
-      if (outputs.points != null) loanUpdate.points = outputs.points;
-      if (outputs.monthly_pi != null) loanUpdate.monthly_payment = outputs.monthly_pi;
+      // Sync key outputs to loans table (only for actual loans, not opportunities)
+      if (!isOpportunity) {
+        const loanUpdate: Record<string, unknown> = {};
+        if (outputs.rate != null) loanUpdate.interest_rate = outputs.rate;
+        if (outputs.dscr != null) loanUpdate.dscr_ratio = outputs.dscr;
+        if (outputs.ltv != null) loanUpdate.ltv = outputs.ltv;
+        if (outputs.loan_amount != null) loanUpdate.loan_amount = outputs.loan_amount;
+        if (outputs.points != null) loanUpdate.points = outputs.points;
+        if (outputs.monthly_pi != null) loanUpdate.monthly_payment = outputs.monthly_pi;
 
-      if (Object.keys(loanUpdate).length > 0) {
-        await admin.from("loans").update(loanUpdate).eq("id", loanId);
+        if (Object.keys(loanUpdate).length > 0) {
+          await admin.from("loans").update(loanUpdate).eq("id", loanId);
+        }
       }
     }
 
-    // Log activity
-    await admin.from("loan_activity_log").insert({
-      loan_id: loanId,
-      action: "underwriting_saved",
-      description: `UW v${versionNumber} saved${markActive ? " and marked active" : ""}`,
-      performed_by: userId,
-      metadata: { version_id: versionId, outputs },
-    });
+    // Log activity (only for loans — loan_activity_log has FK to loans)
+    if (!isOpportunity) {
+      await admin.from("loan_activity_log").insert({
+        loan_id: loanId,
+        action: "underwriting_saved",
+        description: `UW v${versionNumber} saved${markActive ? " and marked active" : ""}`,
+        performed_by: userId,
+        metadata: { version_id: versionId, outputs },
+      });
+    }
 
     return { success: true };
   } catch (err: unknown) {
