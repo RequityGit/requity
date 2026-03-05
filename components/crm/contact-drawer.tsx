@@ -159,7 +159,7 @@ export function ContactDrawer({
             )}
           >
             <div className="text-[11px] text-muted-foreground">{s.l}</div>
-            <div className="font-mono text-sm font-semibold text-foreground mt-0.5">{s.v}</div>
+            <div className="num text-sm font-semibold text-foreground mt-0.5">{s.v}</div>
           </div>
         ))}
       </div>
@@ -203,7 +203,7 @@ export function ContactDrawer({
             )}
             <div className="flex items-center justify-between py-2.5 border-b">
               <span className="text-sm text-muted-foreground">Last Contacted</span>
-              <span className="font-mono text-sm text-foreground">
+              <span className="num text-sm text-foreground">
                 {contact.last_contacted_at ? formatDate(contact.last_contacted_at) : "—"}
               </span>
             </div>
@@ -222,7 +222,7 @@ export function ContactDrawer({
             {contact.next_follow_up_date && (
               <div className="flex items-center justify-between py-2.5 border-b">
                 <span className="text-sm text-muted-foreground">Next Follow-Up</span>
-                <span className="font-mono text-sm text-foreground">
+                <span className="num text-sm text-foreground">
                   {formatDate(contact.next_follow_up_date)}
                 </span>
               </div>
@@ -258,7 +258,7 @@ export function ContactDrawer({
                         <span className="text-[11px] text-muted-foreground">
                           {a.performed_by_name || "System"}
                         </span>
-                        <span className="text-[11px] text-muted-foreground font-mono">
+                        <span className="text-[11px] text-muted-foreground num">
                           {formatDate(a.created_at)}
                         </span>
                       </div>
@@ -301,7 +301,7 @@ export function ContactDrawer({
                       <p className="text-sm text-foreground">{a.description}</p>
                       <div className="flex items-center gap-2 mt-2">
                         <span className="text-[11px] text-muted-foreground">{a.performed_by_name || "—"}</span>
-                        <span className="text-[11px] text-muted-foreground font-mono">{formatDate(a.created_at)}</span>
+                        <span className="text-[11px] text-muted-foreground num">{formatDate(a.created_at)}</span>
                       </div>
                     </div>
                   ))}

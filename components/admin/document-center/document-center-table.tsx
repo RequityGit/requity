@@ -288,7 +288,7 @@ export function DocumentCenterTable({ data }: DocumentCenterTableProps) {
       key: "file_size",
       header: "Size",
       cell: (row) => (
-        <span className="text-sm font-mono text-muted-foreground whitespace-nowrap">
+        <span className="text-sm num text-muted-foreground whitespace-nowrap">
           {formatFileSize(row.file_size)}
         </span>
       ),

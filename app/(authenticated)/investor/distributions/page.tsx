@@ -169,7 +169,7 @@ export default async function DistributionsPage({
       key: "amount",
       header: "Amount",
       cell: (row) => (
-        <span className="font-medium text-green-700">
+        <span className="num font-medium text-green-700">
           {formatCurrency(row.amount)}
         </span>
       ),
@@ -264,7 +264,7 @@ export default async function DistributionsPage({
                 Total for Current View ({rows.length} distribution
                 {rows.length !== 1 ? "s" : ""})
               </span>
-              <span className="text-lg font-bold text-foreground">
+              <span className="num text-lg font-bold text-foreground">
                 {formatCurrency(totalDistributed)}
               </span>
             </div>

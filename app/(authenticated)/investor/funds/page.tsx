@@ -114,13 +114,13 @@ export default async function InvestorFundsPage() {
                         <p className="text-muted-foreground text-xs">
                           Committed
                         </p>
-                        <p className="font-medium">
+                        <p className="num font-medium">
                           {formatCurrency(commitment.commitment_amount)}
                         </p>
                       </div>
                       <div>
                         <p className="text-muted-foreground text-xs">Funded</p>
-                        <p className="font-medium">
+                        <p className="num font-medium">
                           {formatCurrency(commitment.funded_amount)}
                         </p>
                       </div>
@@ -128,7 +128,7 @@ export default async function InvestorFundsPage() {
                         <p className="text-muted-foreground text-xs">
                           Unfunded
                         </p>
-                        <p className="font-medium">
+                        <p className="num font-medium">
                           {formatCurrency(commitment.unfunded_amount)}
                         </p>
                       </div>
@@ -138,7 +138,7 @@ export default async function InvestorFundsPage() {
                     <div>
                       <div className="flex items-center justify-between text-xs text-muted-foreground mb-1">
                         <span>Funding Progress</span>
-                        <span>{pctFunded}%</span>
+                        <span className="num">{pctFunded}%</span>
                       </div>
                       <div className="w-full bg-muted rounded-full h-2">
                         <div
@@ -152,7 +152,7 @@ export default async function InvestorFundsPage() {
 
                     {fund.irr_target && (
                       <p className="text-xs text-muted-foreground mt-3">
-                        Target IRR: {formatPercent(fund.irr_target)}
+                        Target IRR: <span className="num">{formatPercent(fund.irr_target)}</span>
                       </p>
                     )}
                   </CardContent>

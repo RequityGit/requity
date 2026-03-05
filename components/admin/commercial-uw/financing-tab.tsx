@@ -208,13 +208,13 @@ export function FinancingTab({
             <div className="bg-slate-50 rounded-lg p-3 text-xs space-y-1">
               <div className="flex justify-between">
                 <span>IO Monthly Payment:</span>
-                <span className="font-mono font-medium">
+                <span className="num font-medium">
                   {formatCurrency(bridgeIOPayment)}
                 </span>
               </div>
               <div className="flex justify-between">
                 <span>Amortizing Monthly Payment:</span>
-                <span className="font-mono font-medium">
+                <span className="num font-medium">
                   {formatCurrency(bridgeAmortPayment)}
                 </span>
               </div>
@@ -281,13 +281,13 @@ export function FinancingTab({
             <div className="bg-slate-50 rounded-lg p-3 text-xs space-y-1">
               <div className="flex justify-between">
                 <span>Monthly Payment:</span>
-                <span className="font-mono font-medium">
+                <span className="num font-medium">
                   {formatCurrency(exitMonthlyPayment)}
                 </span>
               </div>
               <div className="flex justify-between">
                 <span>Annual Debt Service:</span>
-                <span className="font-mono font-medium">
+                <span className="num font-medium">
                   {formatCurrency(exitMonthlyPayment * 12)}
                 </span>
               </div>
@@ -367,29 +367,29 @@ export function FinancingTab({
             <div className="bg-slate-50 rounded-lg p-3 text-xs space-y-1">
               <div className="flex justify-between">
                 <span>Exit Value:</span>
-                <span className="font-mono font-medium">
+                <span className="num font-medium">
                   {formatCurrency(exitAnalysis.exit_value)}
                 </span>
               </div>
               <div className="flex justify-between">
                 <span>Disposition Costs:</span>
-                <span className="font-mono">
+                <span className="num">
                   ({formatCurrency(exitAnalysis.disposition_costs)})
                 </span>
               </div>
               <div className="flex justify-between">
                 <span>Exit Loan Balance:</span>
-                <span className="font-mono">
+                <span className="num">
                   ({formatCurrency(exitAnalysis.exit_loan_balance)})
                 </span>
               </div>
               <div className="flex justify-between border-t pt-1 mt-1 font-medium">
                 <span>Net Proceeds:</span>
-                <span className="font-mono">{formatCurrency(exitAnalysis.net_proceeds)}</span>
+                <span className="num">{formatCurrency(exitAnalysis.net_proceeds)}</span>
               </div>
               <div className="flex justify-between font-bold text-sm mt-2 border-t pt-1">
                 <span>Levered IRR:</span>
-                <span className="font-mono text-green-700">
+                <span className="num text-green-700">
                   {exitAnalysis.levered_irr !== 0
                     ? `${exitAnalysis.levered_irr.toFixed(1)}%`
                     : "—"}
@@ -431,7 +431,7 @@ export function FinancingTab({
                   {valuationTable.map((v) => (
                     <td
                       key={v.capRate}
-                      className={`p-2 text-right font-mono ${
+                      className={`p-2 text-right num ${
                         Math.abs(v.capRate - (goingInCapRate || computedGoingInCap)) < 0.1
                           ? "bg-blue-50 font-bold"
                           : ""
@@ -470,7 +470,7 @@ export function FinancingTab({
                   const baseRate = financing.bridge_rate || financing.exit_rate;
                   return (
                     <tr key={rOff} className="border-b">
-                      <td className="p-2 font-medium font-mono">
+                      <td className="p-2 font-medium num">
                         {(baseRate + rOff).toFixed(2)}%
                       </td>
                       {noiOffsets.map((nOff) => {
@@ -483,7 +483,7 @@ export function FinancingTab({
                         return (
                           <td
                             key={nOff}
-                            className={`p-2 text-center font-mono ${
+                            className={`p-2 text-center num ${
                               rOff === 0 && nOff === 0 ? "font-bold ring-2 ring-blue-400" : ""
                             } ${dscrCellColor(dscr)}`}
                           >

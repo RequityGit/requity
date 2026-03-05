@@ -409,7 +409,7 @@ function LlpaPanel({
                               ].map((col) => (
                                 <td
                                   key={col}
-                                  className={`text-right py-1.5 px-1 font-mono ${
+                                  className={`text-right py-1.5 px-1 num ${
                                     adj[col] != null && adj[col] < 0
                                       ? "text-red-600"
                                       : adj[col] != null && adj[col] > 0

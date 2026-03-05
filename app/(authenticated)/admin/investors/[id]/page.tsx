@@ -111,22 +111,22 @@ export default async function AdminInvestorDetailPage({ params }: PageProps) {
     {
       key: "commitment_amount",
       header: "Committed",
-      cell: (row) => formatCurrency(row.commitment_amount),
+      cell: (row) => <span className="num">{formatCurrency(row.commitment_amount)}</span>,
     },
     {
       key: "funded_amount",
       header: "Funded",
-      cell: (row) => formatCurrency(row.funded_amount),
+      cell: (row) => <span className="num">{formatCurrency(row.funded_amount)}</span>,
     },
     {
       key: "unfunded_amount",
       header: "Unfunded",
-      cell: (row) => formatCurrency(row.unfunded_amount),
+      cell: (row) => <span className="num">{formatCurrency(row.unfunded_amount)}</span>,
     },
     {
       key: "commitment_date",
       header: "Date",
-      cell: (row) => formatDate(row.commitment_date),
+      cell: (row) => <span className="num">{formatDate(row.commitment_date)}</span>,
     },
     {
       key: "status",
@@ -144,17 +144,17 @@ export default async function AdminInvestorDetailPage({ params }: PageProps) {
     {
       key: "call_amount",
       header: "Amount",
-      cell: (row) => formatCurrency(row.call_amount),
+      cell: (row) => <span className="num">{formatCurrency(row.call_amount)}</span>,
     },
     {
       key: "due_date",
       header: "Due Date",
-      cell: (row) => formatDate(row.due_date),
+      cell: (row) => <span className="num">{formatDate(row.due_date)}</span>,
     },
     {
       key: "paid_date",
       header: "Paid Date",
-      cell: (row) => formatDate(row.paid_date),
+      cell: (row) => <span className="num">{formatDate(row.paid_date)}</span>,
     },
     {
       key: "status",
@@ -181,12 +181,12 @@ export default async function AdminInvestorDetailPage({ params }: PageProps) {
     {
       key: "amount",
       header: "Amount",
-      cell: (row) => formatCurrency(row.amount),
+      cell: (row) => <span className="num">{formatCurrency(row.amount)}</span>,
     },
     {
       key: "distribution_date",
       header: "Date",
-      cell: (row) => formatDate(row.distribution_date),
+      cell: (row) => <span className="num">{formatDate(row.distribution_date)}</span>,
     },
     {
       key: "status",

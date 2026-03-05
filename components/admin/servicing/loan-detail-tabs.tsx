@@ -160,7 +160,7 @@ function AuditLogTab({ auditLog }: { auditLog: any[] }) {
             })
           : "—",
     },
-    { key: "action", header: "Action", cell: (r) => <span className="font-mono text-xs">{r.action}</span> },
+    { key: "action", header: "Action", cell: (r) => <span className="num text-xs">{r.action}</span> },
     { key: "field_changed", header: "Field", cell: (r) => r.field_changed ?? "—" },
     { key: "old_value", header: "Old Value", cell: (r) => <span className="text-xs">{r.old_value ?? "—"}</span> },
     { key: "new_value", header: "New Value", cell: (r) => <span className="text-xs font-medium">{r.new_value ?? "—"}</span> },

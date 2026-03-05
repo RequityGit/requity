@@ -153,13 +153,13 @@ export default async function BorrowerDashboardPage() {
                   <div className="grid grid-cols-3 gap-2 md:gap-4 text-sm">
                     <div>
                       <p className="text-muted-foreground text-xs">Amount</p>
-                      <p className="font-medium font-mono text-xs md:text-sm">
+                      <p className="font-medium num text-xs md:text-sm">
                         {formatCurrency(loan.loan_amount)}
                       </p>
                     </div>
                     <div>
                       <p className="text-muted-foreground text-xs">Rate</p>
-                      <p className="font-medium font-mono text-xs md:text-sm">
+                      <p className="font-medium num text-xs md:text-sm">
                         {formatPercent(loan.interest_rate)}
                       </p>
                     </div>

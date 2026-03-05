@@ -223,7 +223,7 @@ function MetricCard({ label, value, icon: Icon, accentClass }: { label: string; 
           <Icon size={16} />
         </div>
       </div>
-      <span className="font-mono text-[28px] font-semibold text-foreground leading-none">{value}</span>
+      <span className="num text-[28px] font-semibold text-foreground leading-none">{value}</span>
     </div>
   );
 }
@@ -358,7 +358,7 @@ function TaskRow({
       )}
       <span
         className={cn(
-          "font-mono text-[11px] min-w-[70px] text-right shrink-0",
+          "num text-[11px] min-w-[70px] text-right shrink-0",
           overdue ? "text-[#E5453D] font-semibold" : "text-muted-foreground"
         )}
       >
@@ -515,7 +515,7 @@ function ProjectRow({
             <div className="flex-1">
               <ProgressBar pct={progress} />
             </div>
-            <span className="font-mono text-[11px] text-muted-foreground min-w-[36px] text-right">
+            <span className="num text-[11px] text-muted-foreground min-w-[36px] text-right">
               {progress}%
             </span>
           </div>
@@ -525,7 +525,7 @@ function ProjectRow({
             </span>
             <span
               className={cn(
-                "font-mono text-[11px]",
+                "num text-[11px]",
                 (project.status ?? "") === "Complete"
                   ? "text-[#22A861]"
                   : overdue

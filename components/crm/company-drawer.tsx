@@ -53,7 +53,7 @@ export function CompanyDrawer({ company, onClose }: CompanyDrawerProps) {
             )}
           >
             <div className="text-[11px] text-muted-foreground">{s.l}</div>
-            <div className="font-mono text-sm font-semibold text-foreground mt-0.5">{s.v}</div>
+            <div className="num text-sm font-semibold text-foreground mt-0.5">{s.v}</div>
           </div>
         ))}
       </div>

@@ -409,7 +409,7 @@ export function CrmUnified({
             Contacts
             <span
               className={cn(
-                "font-mono text-xs px-1.5 py-0.5 rounded-md",
+                "num text-xs px-1.5 py-0.5 rounded-md",
                 activeView === "contacts"
                   ? "bg-primary-foreground/20 text-primary-foreground"
                   : "bg-muted text-muted-foreground"
@@ -431,7 +431,7 @@ export function CrmUnified({
             Companies
             <span
               className={cn(
-                "font-mono text-xs px-1.5 py-0.5 rounded-md",
+                "num text-xs px-1.5 py-0.5 rounded-md",
                 activeView === "companies"
                   ? "bg-primary-foreground/20 text-primary-foreground"
                   : "bg-muted text-muted-foreground"

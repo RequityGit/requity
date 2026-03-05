@@ -81,10 +81,10 @@ export function MaturityTable({ loans }: MaturityTableProps) {
                 </div>
               </div>
               <div className="text-right flex-shrink-0">
-                <div className="font-mono text-xs font-semibold text-foreground">
+                <div className="num text-xs font-semibold text-foreground">
                   {fmtShort(loan.amount)}
                 </div>
-                <div className={`font-mono text-[10px] font-semibold ${urgColor}`}>
+                <div className={`num text-[10px] font-semibold ${urgColor}`}>
                   {loan.daysLeft}d · {loan.maturityDate}
                 </div>
               </div>

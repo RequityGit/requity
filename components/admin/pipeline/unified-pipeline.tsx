@@ -302,7 +302,7 @@ export function UnifiedPipeline({
             Debt
             <span
               className={cn(
-                "font-mono text-xs px-1.5 py-0.5 rounded-md",
+                "num text-xs px-1.5 py-0.5 rounded-md",
                 activeTab === "debt"
                   ? "bg-primary-foreground/20 text-primary-foreground"
                   : "bg-muted text-muted-foreground"
@@ -324,7 +324,7 @@ export function UnifiedPipeline({
             Equity
             <span
               className={cn(
-                "font-mono text-xs px-1.5 py-0.5 rounded-md",
+                "num text-xs px-1.5 py-0.5 rounded-md",
                 activeTab === "equity"
                   ? "bg-primary-foreground/20 text-primary-foreground"
                   : "bg-muted text-muted-foreground"

@@ -160,7 +160,7 @@ export function SummaryTab({
                 <p className="text-[10px] text-muted-foreground">
                   {p.year === 0 ? "T-12" : p.year === 6 ? "Stab" : `Yr ${p.year}`}
                 </p>
-                <p className="text-xs font-mono font-medium">
+                <p className="text-xs num font-medium">
                   {formatCurrency(p.noi)}
                 </p>
               </div>

@@ -274,7 +274,7 @@ function CreateBudgetModal({
                     value={li.budgetAmount}
                     onChange={(e) => updateLineItem(idx, "budgetAmount", e.target.value)}
                     placeholder="0.00"
-                    className="h-8 text-sm font-mono"
+                    className="h-8 text-sm num"
                   />
                   <Button
                     type="button"
@@ -303,7 +303,7 @@ function CreateBudgetModal({
             </Button>
             <div className="text-right">
               <span className="text-xs text-muted-foreground">Total Budget: </span>
-              <span className="text-lg font-bold font-mono">
+              <span className="text-lg font-bold num">
                 {formatCurrency(totalBudget)}
               </span>
             </div>
@@ -464,7 +464,7 @@ function ActiveBudgetView({
               type="number"
               step="0.01"
               min="0"
-              className="h-7 w-28 text-sm font-mono"
+              className="h-7 w-28 text-sm num"
               defaultValue={row.budgeted_amount}
               onChange={(e) => {
                 setEditValues((prev) => ({
@@ -480,7 +480,7 @@ function ActiveBudgetView({
             />
           );
         }
-        return <span className="font-mono text-sm">{formatCurrency(row.budgeted_amount)}</span>;
+        return <span className="num text-sm">{formatCurrency(row.budgeted_amount)}</span>;
       },
     },
     {
@@ -488,7 +488,7 @@ function ActiveBudgetView({
       header: "% of Budget",
       cell: (row) => {
         const pct = totalBudget > 0 ? (row.budgeted_amount / totalBudget) * 100 : 0;
-        return <span className="font-mono text-sm">{pct.toFixed(1)}%</span>;
+        return <span className="num text-sm">{pct.toFixed(1)}%</span>;
       },
     },
     {
@@ -496,14 +496,14 @@ function ActiveBudgetView({
       header: "$/Unit",
       cell: (row) => {
         const perUnit = totalUnits > 0 ? row.budgeted_amount / totalUnits : 0;
-        return <span className="font-mono text-sm">{formatCurrency(perUnit)}</span>;
+        return <span className="num text-sm">{formatCurrency(perUnit)}</span>;
       },
     },
     {
       key: "drawn_amount",
       header: "Total Drawn",
       cell: (row) => (
-        <span className="font-mono text-sm">{formatCurrency(row.drawn_amount)}</span>
+        <span className="num text-sm">{formatCurrency(row.drawn_amount)}</span>
       ),
     },
     {
@@ -512,7 +512,7 @@ function ActiveBudgetView({
       cell: (row) => {
         const remaining = (row.revised_amount || row.budgeted_amount) - (row.drawn_amount || 0);
         return (
-          <span className={`font-mono text-sm ${remaining < 0 ? "text-red-600" : ""}`}>
+          <span className={`num text-sm ${remaining < 0 ? "text-red-600" : ""}`}>
             {formatCurrency(remaining)}
           </span>
         );
@@ -532,7 +532,7 @@ function ActiveBudgetView({
                 style={{ width: `${Math.min(pct, 100)}%` }}
               />
             </div>
-            <span className="font-mono text-xs text-muted-foreground">
+            <span className="num text-xs text-muted-foreground">
               {pct.toFixed(1)}%
             </span>
           </div>
@@ -625,19 +625,19 @@ function ActiveBudgetView({
           <div className="grid grid-cols-3 md:grid-cols-6 gap-4 text-sm">
             <div>
               <span className="text-xs text-muted-foreground">Total Budget</span>
-              <p className="font-mono font-bold">{formatCurrency(totalBudget)}</p>
+              <p className="num font-bold">{formatCurrency(totalBudget)}</p>
             </div>
             <div>
               <span className="text-xs text-muted-foreground">Total Drawn</span>
-              <p className="font-mono font-bold">{formatCurrency(totalDrawn)}</p>
+              <p className="num font-bold">{formatCurrency(totalDrawn)}</p>
             </div>
             <div>
               <span className="text-xs text-muted-foreground">Remaining</span>
-              <p className="font-mono font-bold">{formatCurrency(totalRemaining)}</p>
+              <p className="num font-bold">{formatCurrency(totalRemaining)}</p>
             </div>
             <div>
               <span className="text-xs text-muted-foreground">% Disbursed</span>
-              <p className="font-mono font-bold">{pctDisbursed.toFixed(1)}%</p>
+              <p className="num font-bold">{pctDisbursed.toFixed(1)}%</p>
             </div>
             <div>
               <span className="text-xs text-muted-foreground">Version</span>

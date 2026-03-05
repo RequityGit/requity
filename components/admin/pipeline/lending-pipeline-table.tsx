@@ -294,7 +294,7 @@ export function LendingPipelineTable({
           loans
         </span>
         <span className="text-muted-foreground">
-          <span className="font-semibold text-foreground font-mono">
+          <span className="font-semibold text-foreground num">
             {formatCurrency(pipelineStats.totalVolume)}
           </span>{" "}
           pipeline volume
@@ -505,7 +505,7 @@ export function LendingPipelineTable({
                     </TableCell>
 
                     {/* Amount */}
-                    <TableCell className="py-3 text-right font-mono text-[13px] font-medium">
+                    <TableCell className="py-3 text-right num text-[13px] font-medium">
                       {formatCurrency(row.loan_amount)}
                     </TableCell>
 
@@ -517,7 +517,7 @@ export function LendingPipelineTable({
                     {/* Days in Stage */}
                     <TableCell className="py-3 text-right">
                       <span
-                        className={`inline-flex items-center gap-1 text-xs font-medium font-mono ${getDaysInStageColor(days)}`}
+                        className={`inline-flex items-center gap-1 text-xs font-medium num ${getDaysInStageColor(days)}`}
                       >
                         <Clock className="h-3 w-3" strokeWidth={1.5} />
                         {days}d

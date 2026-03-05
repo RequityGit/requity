@@ -12,7 +12,7 @@ export function IncomingCallUI() {
         <p className="text-xs text-[#6B6B6B] dark:text-[#888888] mb-1">
           Incoming call from
         </p>
-        <p className="text-base font-semibold text-[#1A1A1A] dark:text-[#F0F0F0] font-mono">
+        <p className="text-base font-semibold text-[#1A1A1A] dark:text-[#F0F0F0] num">
           {incomingCallerNumber || "Unknown"}
         </p>
       </div>

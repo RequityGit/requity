@@ -122,13 +122,13 @@ export function Stepper({ deal, stageHistory }: StepperProps) {
                 </span>
                 {/* Days */}
                 {done && days != null && (
-                  <span className="text-[10px] text-[#8B8B8B] font-mono">
+                  <span className="text-[10px] text-[#8B8B8B] num">
                     {days}d
                   </span>
                 )}
                 {cur && days != null && (
                   <span
-                    className="text-[10px] font-semibold font-mono"
+                    className="text-[10px] font-semibold num"
                     style={{ color: velColor }}
                   >
                     {days}d

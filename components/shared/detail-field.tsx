@@ -44,7 +44,7 @@ export function DetailField({
         className={cn(
           "text-sm font-medium",
           capitalize && "capitalize",
-          isFinancial && "font-mono"
+          isFinancial && "num"
         )}
       >
         {value}
@@ -74,7 +74,7 @@ export function DateField({
   return (
     <div className={className}>
       <p className="text-[11px] md:text-xs text-muted-foreground">{label}</p>
-      <p className="text-sm font-medium font-mono">{formatted}</p>
+      <p className="text-sm font-medium num">{formatted}</p>
     </div>
   );
 }
@@ -110,7 +110,7 @@ export function FieldRow({
         className={cn(
           "text-sm text-right",
           danger ? "text-destructive" : "text-foreground",
-          mono ? "font-mono font-medium" : "font-medium"
+          mono ? "num font-medium" : "font-medium"
         )}
       >
         {value || "—"}

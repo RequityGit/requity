@@ -226,7 +226,7 @@ export function PayoffSettingsClient({
                     onChange={(e) =>
                       updateFee(fee.id, "default_amount", parseFloat(e.target.value) || 0)
                     }
-                    className="pl-7 font-mono text-sm"
+                    className="pl-7 num text-sm"
                   />
                 </div>
                 <div className="flex justify-center">

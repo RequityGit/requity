@@ -119,14 +119,14 @@ export default async function DSCRPipelinePage() {
                       <td className="p-3 capitalize">
                         {r.loan_purpose?.replace(/_/g, " ")}
                       </td>
-                      <td className="p-3 text-right">
+                      <td className="p-3 text-right num">
                         {formatCurrency(r.loan_amount)}
                       </td>
-                      <td className="p-3 text-right">
+                      <td className="p-3 text-right num">
                         {r.ltv ? `${r.ltv.toFixed(1)}%` : "—"}
                       </td>
-                      <td className="p-3 text-right">{r.fico_score}</td>
-                      <td className="p-3">
+                      <td className="p-3 text-right num">{r.fico_score}</td>
+                      <td className="p-3 num">
                         {r.best_execution_rate
                           ? `${r.best_execution_rate}%`
                           : "—"}

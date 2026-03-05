@@ -1,4 +1,5 @@
 import type { Config } from "tailwindcss";
+import plugin from "tailwindcss/plugin";
 
 const config = {
   darkMode: ["class"],
@@ -122,7 +123,18 @@ const config = {
       },
     },
   },
-  plugins: [require("tailwindcss-animate")],
+  plugins: [
+    require("tailwindcss-animate"),
+    plugin(function ({ addUtilities }) {
+      addUtilities({
+        ".tabular-nums": {
+          "font-variant-numeric": "tabular-nums",
+          "font-feature-settings": '"tnum"',
+          "letter-spacing": "-0.025em",
+        },
+      });
+    }),
+  ],
 } satisfies Config;
 
 export default config;

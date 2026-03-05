@@ -389,7 +389,7 @@ export function DebtKanban({
                     <td className="px-4 py-3 text-muted-foreground uppercase text-xs">
                       {item.loanType?.replace(/_/g, " ") || "—"}
                     </td>
-                    <td className="px-4 py-3 text-right font-mono text-foreground">
+                    <td className="px-4 py-3 text-right num text-foreground">
                       {formatCurrency(item.amount)}
                     </td>
                     <td className="px-4 py-3 text-muted-foreground truncate max-w-[150px]">
@@ -400,7 +400,7 @@ export function DebtKanban({
                     </td>
                     <td className="px-4 py-3 text-right">
                       <span
-                        className="font-mono"
+                        className="num"
                         style={{
                           fontSize: "10px",
                           fontWeight: 600,
@@ -499,7 +499,7 @@ export function DebtKanban({
                       {config.label}
                     </span>
                     <span
-                      className="font-mono"
+                      className="num"
                       style={{
                         fontSize: "11px",
                         fontWeight: 600,
@@ -514,7 +514,7 @@ export function DebtKanban({
                   </div>
                   {/* Row 2: dollar volume */}
                   <div
-                    className="font-mono"
+                    className="num"
                     style={{
                       fontSize: "13px",
                       fontWeight: 600,

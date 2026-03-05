@@ -398,7 +398,7 @@ export function ContactsView({
                           <span className="text-xs text-muted-foreground italic">—</span>
                         )}
                       </td>
-                      <td className="px-4 py-3 font-mono text-xs text-muted-foreground whitespace-nowrap">
+                      <td className="px-4 py-3 num text-xs text-muted-foreground whitespace-nowrap">
                         {c.last_contacted_at ? formatDate(c.last_contacted_at) : "—"}
                       </td>
                       {isSuperAdmin && (
@@ -420,7 +420,7 @@ export function ContactsView({
             <span className="text-xs text-muted-foreground">
               Showing {filteredContacts.length} of {contacts.length} contacts
             </span>
-            <span className="font-mono text-xs text-muted-foreground">
+            <span className="num text-xs text-muted-foreground">
               {filteredContacts.length} contact{filteredContacts.length !== 1 ? "s" : ""}
             </span>
           </div>

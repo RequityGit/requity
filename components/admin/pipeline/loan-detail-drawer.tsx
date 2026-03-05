@@ -87,7 +87,7 @@ function DetailRow({
         <span className="text-[12px] font-medium">{label}</span>
       </div>
       <span
-        className={`text-[13px] font-medium text-foreground text-right max-w-[55%] truncate ${mono ? "font-mono" : ""}`}
+        className={`text-[13px] font-medium text-foreground text-right max-w-[55%] truncate ${mono ? "num" : ""}`}
       >
         {value ?? "--"}
       </span>
@@ -137,7 +137,7 @@ export function LoanDetailDrawer({
           <div className="flex items-center gap-2 mt-3 flex-wrap">
             <StagePill stage={loan.stage} />
             <PriorityBadge priority={loan.priority} />
-            <span className="inline-flex items-center gap-1 text-[11px] font-mono font-medium text-muted-foreground">
+            <span className="inline-flex items-center gap-1 text-[11px] num font-medium text-muted-foreground">
               <Clock className="h-3 w-3" strokeWidth={1.5} />
               {days}d in stage
             </span>
@@ -151,7 +151,7 @@ export function LoanDetailDrawer({
             <p className="text-[11px] uppercase tracking-[0.05em] font-semibold text-muted-foreground mb-1">
               Loan Amount
             </p>
-            <p className="text-[28px] font-mono font-bold text-foreground tracking-[-0.04em]">
+            <p className="text-[28px] num font-bold text-foreground tracking-[-0.04em]">
               {formatCurrency(loan.loan_amount)}
             </p>
           </div>

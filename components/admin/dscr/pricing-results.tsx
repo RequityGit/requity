@@ -325,7 +325,7 @@ export function PricingResults({ results, pricingRunId, onBack }: PricingResults
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="font-mono text-sm space-y-1">
+              <div className="num text-sm space-y-1">
                 <div className="flex justify-between">
                   <span>Base Price ({quote.note_rate.toFixed(3)}%):</span>
                   <span className="font-semibold">{quote.base_price.toFixed(3)}</span>

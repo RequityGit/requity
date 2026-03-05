@@ -245,7 +245,7 @@ export function TermSheetSectionCard({
                           {field.label}
                         </span>
                         {field.format && field.format !== "text" && (
-                          <span className="text-[10px] font-mono px-1 py-0.5 rounded bg-slate-100 text-slate-500">
+                          <span className="text-[10px] num px-1 py-0.5 rounded bg-slate-100 text-slate-500">
                             {field.format}
                           </span>
                         )}
@@ -296,7 +296,7 @@ export function TermSheetSectionCard({
                   Preview (sample data)
                 </span>
               </div>
-              <div className="bg-card rounded border border-border p-3 font-mono text-xs space-y-1">
+              <div className="bg-card rounded border border-border p-3 num text-xs space-y-1">
                 <div className="font-bold text-foreground text-sm mb-2 border-b border-slate-100 pb-1">
                   {heading || section.label}
                 </div>

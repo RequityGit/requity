@@ -276,7 +276,7 @@ export function EquityKanbanBoard({
                     <td className="px-4 py-3 text-muted-foreground">
                       {deal.asset_type || "—"}
                     </td>
-                    <td className="px-4 py-3 text-right font-mono text-foreground">
+                    <td className="px-4 py-3 text-right num text-foreground">
                       {price ? formatCurrency(price) : "—"}
                     </td>
                     <td className="px-4 py-3 text-muted-foreground truncate max-w-[150px]">

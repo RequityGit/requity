@@ -365,7 +365,7 @@ function InfoRow({
   return (
     <div>
       <dt className="text-xs font-medium text-muted-foreground">{label}</dt>
-      <dd className="text-sm font-medium mt-0.5">{value ?? "—"}</dd>
+      <dd className="text-sm font-medium mt-0.5 num">{value ?? "—"}</dd>
     </div>
   );
 }

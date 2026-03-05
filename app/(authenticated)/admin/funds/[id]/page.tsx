@@ -171,22 +171,22 @@ export default async function AdminFundDetailPage({ params }: PageProps) {
     {
       key: "commitment_amount",
       header: "Committed",
-      cell: (row) => formatCurrency(row.commitment_amount),
+      cell: (row) => <span className="num">{formatCurrency(row.commitment_amount)}</span>,
     },
     {
       key: "funded_amount",
       header: "Funded",
-      cell: (row) => formatCurrency(row.funded_amount),
+      cell: (row) => <span className="num">{formatCurrency(row.funded_amount)}</span>,
     },
     {
       key: "unfunded_amount",
       header: "Unfunded",
-      cell: (row) => formatCurrency(row.unfunded_amount),
+      cell: (row) => <span className="num">{formatCurrency(row.unfunded_amount)}</span>,
     },
     {
       key: "commitment_date",
       header: "Date",
-      cell: (row) => formatDate(row.commitment_date),
+      cell: (row) => <span className="num">{formatDate(row.commitment_date)}</span>,
     },
     {
       key: "status",
@@ -209,7 +209,7 @@ export default async function AdminFundDetailPage({ params }: PageProps) {
     {
       key: "call_amount",
       header: "Amount",
-      cell: (row) => formatCurrency(row.call_amount),
+      cell: (row) => <span className="num">{formatCurrency(row.call_amount)}</span>,
     },
     {
       key: "due_date",
@@ -218,7 +218,7 @@ export default async function AdminFundDetailPage({ params }: PageProps) {
         const isOverdue =
           row.status === "pending" && new Date(row.due_date) < new Date();
         return (
-          <span className={isOverdue ? "text-red-600 font-medium" : ""}>
+          <span className={`num ${isOverdue ? "text-red-600 font-medium" : ""}`}>
             {formatDate(row.due_date)}
           </span>
         );
@@ -264,7 +264,7 @@ export default async function AdminFundDetailPage({ params }: PageProps) {
     {
       key: "amount",
       header: "Amount",
-      cell: (row) => formatCurrency(row.amount),
+      cell: (row) => <span className="num">{formatCurrency(row.amount)}</span>,
     },
     {
       key: "distribution_date",

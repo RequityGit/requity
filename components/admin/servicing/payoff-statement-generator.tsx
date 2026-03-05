@@ -293,7 +293,7 @@ export function PayoffStatementGenerator({ loanId, loan }: PayoffStatementGenera
       key: "total_payoff",
       header: "Total Payoff",
       cell: (r) => (
-        <span className="font-mono font-medium">
+        <span className="num font-medium">
           {formatCurrencyDetailed(r.total_payoff)}
         </span>
       ),
@@ -302,7 +302,7 @@ export function PayoffStatementGenerator({ loanId, loan }: PayoffStatementGenera
       key: "per_diem",
       header: "Per Diem",
       cell: (r) => (
-        <span className="font-mono text-sm">
+        <span className="num text-sm">
           {formatCurrencyDetailed(r.per_diem)}
         </span>
       ),
@@ -516,7 +516,7 @@ export function PayoffStatementGenerator({ loanId, loan }: PayoffStatementGenera
                 <div className="border-t border-[#E5E5E7] pt-2 mt-2">
                   <div className="flex justify-between items-center">
                     <span className="text-sm font-semibold text-[#1A1A1A]">Total Payoff</span>
-                    <span className="font-mono text-base font-bold text-[#1A1A1A]">
+                    <span className="num text-base font-bold text-[#1A1A1A]">
                       {formatCurrencyDetailed(totalPayoff)}
                     </span>
                   </div>
@@ -524,7 +524,7 @@ export function PayoffStatementGenerator({ loanId, loan }: PayoffStatementGenera
               </div>
 
               <p className="text-xs text-[#9B9B9B]">
-                Per diem: <span className="font-mono">{formatCurrencyDetailed(perDiem)}</span> /day
+                Per diem: <span className="num">{formatCurrencyDetailed(perDiem)}</span> /day
                 &mdash; Interest calculated on 30/360 basis
               </p>
             </div>
@@ -559,7 +559,7 @@ export function PayoffStatementGenerator({ loanId, loan }: PayoffStatementGenera
                             [fee.fee_name]: e.target.value,
                           }))
                         }
-                        className="font-mono"
+                        className="num"
                       />
                     </div>
                   ))}
@@ -571,7 +571,7 @@ export function PayoffStatementGenerator({ loanId, loan }: PayoffStatementGenera
                       placeholder="0.00"
                       value={otherFees}
                       onChange={(e) => setOtherFees(e.target.value)}
-                      className="font-mono"
+                      className="num"
                     />
                   </div>
                 </div>
@@ -629,7 +629,7 @@ function PreviewRow({ label, amount }: { label: string; amount: number }) {
   return (
     <div className="flex justify-between items-center text-sm">
       <span className="text-[#6B6B6B]">{label}</span>
-      <span className="font-mono font-medium text-[#1A1A1A]">
+      <span className="num font-medium text-[#1A1A1A]">
         {formatCurrencyDetailed(amount)}
       </span>
     </div>

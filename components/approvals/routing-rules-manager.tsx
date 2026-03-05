@@ -266,7 +266,7 @@ export function RoutingRulesManager({ rules, teamMembers }: RoutingRulesManagerP
                   onChange={(e) => setForm({ ...form, conditions: e.target.value })}
                   placeholder='{"loan_amount_gte": 1000000}'
                   rows={3}
-                  className="font-mono text-xs"
+                  className="num text-xs"
                 />
                 <p className="text-xs text-muted-foreground">
                   Empty {"{}"} = catch-all. Keys: loan_amount_gte, loan_amount_lte, asset_type_in, has_exception

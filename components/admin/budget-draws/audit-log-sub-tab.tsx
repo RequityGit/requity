@@ -194,7 +194,7 @@ export function AuditLogSubTab({
                       {entry.description}
                     </p>
                     {entry.previousAmount != null && entry.amount != null && (
-                      <p className="text-xs text-muted-foreground mt-0.5 font-mono">
+                      <p className="text-xs text-muted-foreground mt-0.5 num">
                         <span className="line-through">
                           {formatCurrency(entry.previousAmount)}
                         </span>{" "}

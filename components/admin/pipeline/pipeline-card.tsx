@@ -128,7 +128,7 @@ export function PipelineCard({ deal, index, isDragging }: PipelineCardProps) {
           style={{ marginBottom: "4px" }}
         >
           <span
-            className="font-mono"
+            className="num"
             style={{
               fontSize: "17px",
               fontWeight: 700,
@@ -139,7 +139,7 @@ export function PipelineCard({ deal, index, isDragging }: PipelineCardProps) {
             {formatCompactCurrency(deal.amount)}
           </span>
           <span
-            className="font-mono"
+            className="num"
             style={{
               fontSize: "10px",
               fontWeight: 600,
@@ -267,7 +267,7 @@ export function PipelineCard({ deal, index, isDragging }: PipelineCardProps) {
               />
             </div>
             <span
-              className="font-mono"
+              className="num"
               style={{
                 fontSize: "10px",
                 fontWeight: 500,
@@ -281,7 +281,7 @@ export function PipelineCard({ deal, index, isDragging }: PipelineCardProps) {
           <div className="flex items-center" style={{ gap: "4px" }}>
             <Paperclip size={11} strokeWidth={2} style={{ color: "hsl(var(--muted-foreground))" }} />
             <span
-              className="font-mono"
+              className="num"
               style={{ fontSize: "10px", fontWeight: 500, color: "hsl(var(--muted-foreground))" }}
             >
               —

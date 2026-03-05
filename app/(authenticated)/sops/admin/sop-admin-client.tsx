@@ -344,7 +344,7 @@ export function SOPAdminClient({
                           {v.slug}
                         </Link>
                       </td>
-                      <td className="px-4 py-3 text-right font-mono text-foreground">
+                      <td className="px-4 py-3 text-right num text-foreground">
                         {v.count}
                       </td>
                     </tr>

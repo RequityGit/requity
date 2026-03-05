@@ -175,7 +175,7 @@ export default async function InvestorFundDetailPage({ params }: PageProps) {
       key: "amount",
       header: "Amount",
       cell: (row) => (
-        <span className="font-medium font-mono">
+        <span className="font-medium num">
           {formatCurrency(row.amount)}
         </span>
       ),
@@ -227,7 +227,7 @@ export default async function InvestorFundDetailPage({ params }: PageProps) {
       key: "amount",
       header: "Amount",
       cell: (row) => (
-        <span className="font-medium font-mono">
+        <span className="font-medium num">
           {formatCurrency(row.amount)}
         </span>
       ),
@@ -417,8 +417,8 @@ export default async function InvestorFundDetailPage({ params }: PageProps) {
               />
             </div>
             <div className="flex items-center justify-between text-xs text-muted-foreground mt-1">
-              <span>{formatCurrency(commitment.funded_amount)} funded</span>
-              <span>
+              <span className="num">{formatCurrency(commitment.funded_amount)} funded</span>
+              <span className="num">
                 {formatCurrency(commitment.commitment_amount)} committed
               </span>
             </div>
@@ -504,7 +504,7 @@ function DetailField({
     <div>
       <p className="text-[11px] md:text-xs text-muted-foreground">{label}</p>
       <p
-        className={`text-sm font-medium capitalize ${isFinancial ? "font-mono" : ""}`}
+        className={`text-sm font-medium capitalize ${isFinancial ? "num" : ""}`}
       >
         {value}
       </p>

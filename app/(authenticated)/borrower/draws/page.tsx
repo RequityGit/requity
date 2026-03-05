@@ -65,25 +65,25 @@ export default async function BorrowerDrawsPage() {
     {
       key: "draw_number",
       header: "Draw #",
-      cell: (row) => <span className="font-medium">#{row.draw_number}</span>,
+      cell: (row) => <span className="num font-medium">#{row.draw_number}</span>,
     },
     {
       key: "amount_requested",
       header: "Amount Requested",
-      cell: (row) => formatCurrencyDetailed(row.amount_requested),
+      cell: (row) => <span className="num">{formatCurrencyDetailed(row.amount_requested)}</span>,
     },
     {
       key: "amount_approved",
       header: "Amount Approved",
       cell: (row) =>
         row.amount_approved != null
-          ? formatCurrencyDetailed(row.amount_approved)
+          ? <span className="num">{formatCurrencyDetailed(row.amount_approved)}</span>
           : "\u2014",
     },
     {
       key: "submitted_at",
       header: "Submitted",
-      cell: (row) => formatDate(row.submitted_at),
+      cell: (row) => <span className="num">{formatDate(row.submitted_at)}</span>,
     },
     {
       key: "status",
