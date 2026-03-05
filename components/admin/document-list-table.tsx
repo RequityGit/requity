@@ -29,6 +29,7 @@ interface DocumentRow {
 
 interface DocumentListTableProps {
   data: DocumentRow[];
+  action?: React.ReactNode;
 }
 
 function getDocTypeLabel(value: string): string {
@@ -38,7 +39,7 @@ function getDocTypeLabel(value: string): string {
   );
 }
 
-export function DocumentListTable({ data }: DocumentListTableProps) {
+export function DocumentListTable({ data, action }: DocumentListTableProps) {
   const [search, setSearch] = useState("");
   const [typeFilter, setTypeFilter] = useState("all");
 
@@ -102,7 +103,7 @@ export function DocumentListTable({ data }: DocumentListTableProps) {
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap gap-3">
+      <div className="flex flex-wrap items-center gap-3">
         <div className="relative flex-1 min-w-[200px] max-w-sm">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
@@ -125,6 +126,7 @@ export function DocumentListTable({ data }: DocumentListTableProps) {
             ))}
           </SelectContent>
         </Select>
+        {action && <><div className="flex-1" />{action}</>}
       </div>
 
       <DataTable<DocumentRow>

@@ -130,11 +130,11 @@ export default async function AdminFundsPage() {
       <PageHeader
         title="Investments"
         description="Manage all investments, contributions, and distributions."
-        action={<InvestmentForm />}
       />
 
       <Tabs defaultValue="investments">
-        <TabsList>
+        <div className="flex items-center gap-3">
+          <TabsList>
           <TabsTrigger value="investments">
             Investments ({fundRows.length})
           </TabsTrigger>
@@ -145,6 +145,9 @@ export default async function AdminFundsPage() {
             Distributions ({distRows.length})
           </TabsTrigger>
         </TabsList>
+          <div className="flex-1" />
+          <InvestmentForm />
+        </div>
 
         <TabsContent value="investments" className="mt-4">
           <FundListTable data={fundRows} />

@@ -52,6 +52,10 @@ export default async function AdminDocumentsPage() {
       <PageHeader
         title="Document Center"
         description="Manage all investor and borrower documents."
+      />
+
+      <DocumentListTable
+        data={documentRows}
         action={
           <DocumentUploadForm
             profiles={profilesResult.data ?? []}
@@ -60,8 +64,6 @@ export default async function AdminDocumentsPage() {
           />
         }
       />
-
-      <DocumentListTable data={documentRows} />
     </div>
   );
 }
