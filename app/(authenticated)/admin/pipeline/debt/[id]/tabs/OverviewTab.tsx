@@ -275,7 +275,7 @@ export function OverviewTab({ deal, onSave, onSaveRelated }: OverviewTabProps) {
           <EditableFieldRow
             label="Sq Ft"
             value={d._property_sqft}
-            displayValue={d._property_sqft ? d._property_sqft.toLocaleString() : null}
+            displayValue={d._property_sqft ? Number(d._property_sqft).toLocaleString() : null}
             fieldName="_property_sqft"
             fieldType="number"
             mono

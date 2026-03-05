@@ -47,14 +47,24 @@ export const TERMINAL_DEAL_STAGES = [
 ] as const;
 
 /* ── Helpers ── */
-export function fmt(n: number | null | undefined): string {
-  if (n == null) return "\u2014";
-  return "$" + n.toLocaleString("en-US");
+
+/** Safely coerce Supabase numeric (returned as string) to JS number */
+export function toNum(v: unknown): number | null {
+  if (v == null || v === "") return null;
+  const n = Number(v);
+  return isNaN(n) ? null : n;
 }
 
-export function fP(n: number | null | undefined): string {
-  if (n == null) return "\u2014";
-  return n.toFixed(1) + "%";
+export function fmt(n: unknown): string {
+  const v = toNum(n);
+  if (v == null) return "\u2014";
+  return "$" + v.toLocaleString("en-US");
+}
+
+export function fP(n: unknown): string {
+  const v = toNum(n);
+  if (v == null) return "\u2014";
+  return v.toFixed(1) + "%";
 }
 
 export function fD(d: string | null | undefined): string {
