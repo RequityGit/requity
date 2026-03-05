@@ -200,7 +200,7 @@ export function LoanChatter({
           <CardTitle className="text-sm">
             Loan Comments
           </CardTitle>
-          <Badge variant="secondary" className="text-xs">
+          <Badge variant="secondary" className="text-xs num">
             {comments.length}
           </Badge>
         </div>
@@ -218,7 +218,7 @@ export function LoanChatter({
             {topLevel.map((c) => (
               <div key={c.id}>
                 {editingId === c.id ? (
-                  <div className="space-y-2 border rounded-md p-2 bg-slate-50">
+                  <div className="space-y-2 border rounded-md p-2 bg-muted">
                     <MentionInput
                       value={editText}
                       onChange={setEditText}
@@ -266,7 +266,7 @@ export function LoanChatter({
                 )}
                 {/* Replies */}
                 {getReplies(c.id).length > 0 && (
-                  <div className="ml-4 mt-1 space-y-1 border-l-2 border-slate-200 pl-3">
+                  <div className="ml-4 mt-1 space-y-1 border-l-2 border-border pl-3">
                     {getReplies(c.id).map((r) => (
                       <CommentRenderer
                         key={r.id}
@@ -307,7 +307,7 @@ export function LoanChatter({
                     type="checkbox"
                     checked={isInternal}
                     onChange={(e) => setIsInternal(e.target.checked)}
-                    className="rounded border-gray-300 h-3 w-3"
+                    className="rounded border-border h-3 w-3"
                   />
                   <Lock className="h-3 w-3 text-amber-600" />
                   Internal only

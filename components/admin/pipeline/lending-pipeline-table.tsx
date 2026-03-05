@@ -288,7 +288,7 @@ export function LendingPipelineTable({
       {/* Pipeline summary bar */}
       <div className="flex items-center gap-4 text-sm">
         <span className="text-muted-foreground">
-          <span className="font-semibold text-foreground">
+          <span className="font-semibold text-foreground num">
             {pipelineStats.total}
           </span>{" "}
           loans

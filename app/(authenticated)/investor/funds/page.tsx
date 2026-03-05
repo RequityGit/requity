@@ -56,7 +56,7 @@ export default async function InvestorFundsPage() {
       {commitments.length === 0 ? (
         <Card>
           <CardContent className="py-12 text-center text-muted-foreground">
-            <Landmark className="h-12 w-12 mx-auto mb-3 text-slate-300" />
+            <Landmark className="h-12 w-12 mx-auto mb-3 text-muted-foreground/40" />
             <p className="text-lg font-medium text-foreground">
               No investment commitments found
             </p>

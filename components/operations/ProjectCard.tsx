@@ -208,7 +208,7 @@ export function ProjectCard({ project, tasks, onToggleTask, onStopRecurrence, on
                       type="checkbox"
                       checked={isComplete}
                       onChange={() => onToggleTask(task.id, !isComplete)}
-                      className="h-4 w-4 rounded border-slate-300 text-teal-600 focus:ring-teal-500"
+                      className="h-4 w-4 rounded border-border text-primary focus:ring-ring"
                     />
                     <button
                       type="button"

@@ -30,7 +30,7 @@ export function CommentRenderer({
     <div
       className={`rounded-md px-3 py-2 text-xs ${
         isInternal
-          ? "bg-amber-50 border border-amber-200"
+          ? "bg-muted border border-border"
           : isOwnComment
             ? "bg-primary/5 border border-primary/10 ml-4"
             : "bg-card border"
@@ -59,7 +59,7 @@ export function CommentRenderer({
           seg.type === "mention" ? (
             <span
               key={i}
-              className="inline-flex items-center font-semibold text-foreground bg-blue-50 border border-blue-200 rounded px-1 mx-0.5"
+              className="inline-flex items-center font-semibold text-foreground bg-muted border border-border rounded px-1 mx-0.5"
             >
               @{seg.value}
             </span>

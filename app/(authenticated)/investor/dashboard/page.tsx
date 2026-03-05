@@ -396,7 +396,7 @@ export default async function InvestorDashboardPage() {
             <CardContent className="flex items-center justify-between p-4">
               <div className="flex items-center gap-3">
                 <div className="rounded-full p-2 bg-muted">
-                  <FileText className="h-5 w-5 text-slate-600" />
+                  <FileText className="h-5 w-5 text-muted-foreground" />
                 </div>
                 <div>
                   <p className="text-sm font-medium text-foreground">

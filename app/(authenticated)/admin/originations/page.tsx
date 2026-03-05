@@ -6,7 +6,7 @@ import { KpiCard } from "@/components/shared/kpi-card";
 import { OriginationsTabs } from "@/components/admin/originations/originations-tabs";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { Home, ClipboardList, Calculator, Briefcase, Plus, Building2 } from "lucide-react";
+import { Home, ClipboardList, Calculator, Briefcase, Plus } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
@@ -363,7 +363,7 @@ export default async function AdminOriginationsPage() {
       />
 
       {/* KPI Row */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
         <KpiCard
           title="Active Deals"
           value={dealCount}
@@ -380,14 +380,10 @@ export default async function AdminOriginationsPage() {
           icon={<ClipboardList className="h-5 w-5" />}
         />
         <KpiCard
-          title="RTL Programs"
-          value={activePrograms}
+          title="Pricing Programs"
+          value={activePrograms + activeDscrProducts}
+          description={`${activePrograms} RTL · ${activeDscrProducts} DSCR`}
           icon={<Calculator className="h-5 w-5" />}
-        />
-        <KpiCard
-          title="DSCR Products"
-          value={activeDscrProducts}
-          icon={<Building2 className="h-5 w-5" />}
         />
       </div>
 

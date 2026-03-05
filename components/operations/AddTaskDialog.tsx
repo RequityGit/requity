@@ -315,7 +315,7 @@ export function AddTaskDialog({ projects, teamMembers, externalOpen, onExternalO
                       : "",
                   })
                 }
-                className="h-4 w-4 rounded border-slate-300 text-teal-600 focus:ring-teal-500"
+                className="h-4 w-4 rounded border-border text-primary focus:ring-ring"
               />
               <Label htmlFor="is_recurring" className="cursor-pointer">
                 Recurring task

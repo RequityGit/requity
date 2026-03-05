@@ -17,7 +17,6 @@ import {
   TrendingUp,
   PiggyBank,
   Wallet,
-  ArrowDownUp,
   ArrowLeft,
   FileText,
   Landmark,
@@ -161,7 +160,7 @@ export default async function InvestorFundDetailPage({ params }: PageProps) {
   const totalDistributed = distributionRows
     .filter((d) => d.status === "paid")
     .reduce((sum, d) => sum + (d.amount || 0), 0);
-  const netCashFlow = totalDistributed - totalContributed;
+
   const pctFunded =
     commitment.commitment_amount > 0
       ? Math.round(
@@ -189,7 +188,7 @@ export default async function InvestorFundDetailPage({ params }: PageProps) {
           row.due_date &&
           new Date(row.due_date) < new Date();
         return (
-          <span className={isOverdue ? "text-red-600 font-medium" : ""}>
+          <span className={isOverdue ? "text-destructive font-medium" : ""}>
             {formatDate(row.due_date)}
           </span>
         );
@@ -311,8 +310,8 @@ export default async function InvestorFundDetailPage({ params }: PageProps) {
         <StatusBadge status={fund.status ?? "open"} />
       </div>
 
-      {/* KPI Cards - 5 across like reference */}
-      <div className="grid grid-cols-2 gap-3 md:gap-4 lg:grid-cols-5">
+      {/* KPI Cards */}
+      <div className="grid grid-cols-2 gap-3 md:gap-4 lg:grid-cols-4">
         <KpiCard
           title="Investment Amount"
           value={formatCurrency(commitment.commitment_amount)}
@@ -336,13 +335,6 @@ export default async function InvestorFundDetailPage({ params }: PageProps) {
           value={formatCurrency(totalDistributed)}
           description={`${distributionRows.length} payment${distributionRows.length !== 1 ? "s" : ""}`}
           icon={<TrendingUp className="h-5 w-5" />}
-        />
-        <KpiCard
-          title="Net Cash Flow"
-          value={formatCurrency(netCashFlow)}
-          description={netCashFlow >= 0 ? "Net positive" : "Net invested"}
-          icon={<ArrowDownUp className="h-5 w-5" />}
-          className="col-span-2 lg:col-span-1"
         />
       </div>
 
@@ -408,7 +400,7 @@ export default async function InvestorFundDetailPage({ params }: PageProps) {
               <span className="text-muted-foreground">
                 My Funding Progress
               </span>
-              <span className="font-medium">{pctFunded}%</span>
+              <span className="font-medium num">{pctFunded}%</span>
             </div>
             <div className="w-full bg-muted rounded-full h-3">
               <div

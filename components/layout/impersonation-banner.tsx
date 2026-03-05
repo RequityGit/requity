@@ -26,7 +26,7 @@ export function ImpersonationBanner() {
           : targetRole ?? "Unknown";
 
   return (
-    <div className="sticky top-0 z-50 flex items-center justify-between gap-4 bg-amber-500 px-4 py-2 text-amber-950 shadow-sm">
+    <div className="sticky top-0 z-50 flex items-center justify-between gap-4 bg-amber-500 dark:bg-amber-600 px-4 py-2 text-amber-950 shadow-sm">
       <div className="flex items-center gap-3 min-w-0">
         <Eye className="h-4 w-4 flex-shrink-0" />
         <span className="text-sm font-medium truncate">

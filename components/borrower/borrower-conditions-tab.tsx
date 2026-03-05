@@ -93,19 +93,19 @@ export function BorrowerConditionsTab({
       {/* Summary row */}
       <div className="grid grid-cols-3 gap-3">
         <div className="bg-card rounded-lg border px-4 py-3 text-center">
-          <p className="text-2xl font-semibold text-foreground">
+          <p className="text-2xl font-semibold num text-foreground">
             {conditions.length}
           </p>
           <p className="text-xs text-muted-foreground mt-0.5">Total</p>
         </div>
         <div className="bg-card rounded-lg border px-4 py-3 text-center">
-          <p className="text-2xl font-semibold text-amber-600">
+          <p className="text-2xl font-semibold num text-amber-600 dark:text-amber-400">
             {outstanding.length}
           </p>
           <p className="text-xs text-muted-foreground mt-0.5">Outstanding</p>
         </div>
         <div className="bg-card rounded-lg border px-4 py-3 text-center">
-          <p className="text-2xl font-semibold text-green-600">
+          <p className="text-2xl font-semibold num text-green-600 dark:text-green-400">
             {complete.length}
           </p>
           <p className="text-xs text-muted-foreground mt-0.5">Complete</p>
@@ -132,7 +132,7 @@ export function BorrowerConditionsTab({
       {/* Completed conditions */}
       {complete.length > 0 && (
         <div className="space-y-2">
-          <h3 className="text-sm font-semibold text-green-700">
+          <h3 className="text-sm font-semibold text-green-700 dark:text-green-400">
             Complete ({complete.length})
           </h3>
           {complete.map((c) => (
@@ -282,17 +282,17 @@ function BorrowerConditionCard({
         onClick={handleToggle}
         className={`w-full flex items-start gap-3 p-4 text-left transition-colors ${
           isComplete
-            ? "bg-green-50/50 hover:bg-green-50"
+            ? "bg-green-50/50 dark:bg-green-950/20 hover:bg-green-50 dark:hover:bg-green-950/30"
             : isOverdue
-              ? "bg-red-50/50 hover:bg-red-50"
+              ? "bg-red-50/50 dark:bg-red-950/20 hover:bg-red-50 dark:hover:bg-red-950/30"
               : "bg-card hover:bg-muted"
         }`}
       >
         <div className="mt-0.5 flex-shrink-0">
           {isComplete ? (
-            <CheckCircle2 className="h-5 w-5 text-green-600" />
+            <CheckCircle2 className="h-5 w-5 text-green-600 dark:text-green-400" />
           ) : isOverdue ? (
-            <AlertTriangle className="h-5 w-5 text-red-500" />
+            <AlertTriangle className="h-5 w-5 text-destructive" />
           ) : (
             <Clock className="h-5 w-5 text-muted-foreground" />
           )}
@@ -304,7 +304,7 @@ function BorrowerConditionCard({
               {condition.condition_name}
             </span>
             {condition.critical_path_item && (
-              <Badge className="bg-red-100 text-red-700 border-red-200 text-[10px] px-1.5 py-0">
+              <Badge className="bg-red-100 dark:bg-red-950/40 text-red-700 dark:text-red-400 border-red-200 dark:border-red-800 text-[10px] px-1.5 py-0">
                 Required
               </Badge>
             )}
@@ -319,7 +319,7 @@ function BorrowerConditionCard({
 
           <div className="flex items-center gap-3 mt-1.5 text-[11px] text-muted-foreground">
             {condition.due_date && (
-              <span className={isOverdue ? "text-red-600 font-medium" : ""}>
+              <span className={isOverdue ? "text-destructive font-medium" : ""}>
                 Due: {formatDate(condition.due_date)}
               </span>
             )}
@@ -327,14 +327,14 @@ function BorrowerConditionCard({
               <span>Received: {formatDate(condition.received_date)}</span>
             )}
             {condition.approved_date && (
-              <span className="text-green-700">
+              <span className="text-green-700 dark:text-green-400">
                 Approved: {formatDate(condition.approved_date)}
               </span>
             )}
           </div>
 
           {condition.rejection_reason && (
-            <p className="text-xs text-red-600 mt-1.5 font-medium">
+            <p className="text-xs text-destructive mt-1.5 font-medium">
               Action needed: {condition.rejection_reason}
             </p>
           )}

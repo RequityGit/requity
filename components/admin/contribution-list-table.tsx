@@ -73,17 +73,17 @@ export function ContributionListTable({ data }: ContributionListTableProps) {
     {
       key: "call_amount",
       header: "Amount",
-      cell: (row) => formatCurrency(row.call_amount),
+      cell: (row) => <span className="num">{formatCurrency(row.call_amount)}</span>,
     },
     {
       key: "due_date",
       header: "Due Date",
-      cell: (row) => formatDate(row.due_date),
+      cell: (row) => <span className="num">{formatDate(row.due_date)}</span>,
     },
     {
       key: "paid_date",
       header: "Paid Date",
-      cell: (row) => formatDate(row.paid_date),
+      cell: (row) => <span className="num">{formatDate(row.paid_date)}</span>,
     },
     {
       key: "status",
@@ -99,7 +99,7 @@ export function ContributionListTable({ data }: ContributionListTableProps) {
           <Button
             variant="ghost"
             size="sm"
-            className="h-7 gap-1 text-green-700 hover:text-green-800"
+            className="h-7 gap-1 text-green-700 dark:text-green-400 hover:text-green-800 dark:hover:text-green-300"
             disabled={processing === row.id}
             onClick={(e) => {
               e.stopPropagation();

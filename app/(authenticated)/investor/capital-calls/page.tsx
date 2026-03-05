@@ -127,7 +127,7 @@ export default async function ContributionsPage({
           row.status === "pending" &&
           new Date(row.due_date) < new Date();
         return (
-          <span className={`num ${isOverdue ? "text-red-600 font-medium" : ""}`}>
+          <span className={`num ${isOverdue ? "text-destructive font-medium" : ""}`}>
             {formatDate(row.due_date)}
           </span>
         );

@@ -38,22 +38,22 @@ const roleConfig: Record<
   super_admin: {
     label: "Super Admin",
     icon: Crown,
-    badgeClass: "bg-amber-100 text-amber-800 hover:bg-amber-200 border-amber-300",
+    badgeClass: "bg-muted text-foreground hover:bg-muted/80 border-border",
   },
   admin: {
     label: "Admin",
     icon: Shield,
-    badgeClass: "bg-purple-100 text-purple-800 hover:bg-purple-200",
+    badgeClass: "bg-muted text-foreground hover:bg-muted/80",
   },
   investor: {
     label: "Investor",
     icon: Landmark,
-    badgeClass: "bg-teal-100 text-teal-800 hover:bg-teal-200",
+    badgeClass: "bg-muted text-foreground hover:bg-muted/80",
   },
   borrower: {
     label: "Borrower",
     icon: Building2,
-    badgeClass: "bg-blue-100 text-blue-800 hover:bg-blue-200",
+    badgeClass: "bg-muted text-foreground hover:bg-muted/80",
   },
 };
 

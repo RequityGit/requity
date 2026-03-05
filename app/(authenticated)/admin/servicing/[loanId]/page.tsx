@@ -15,7 +15,6 @@ import { ExportServicingButton } from "@/components/admin/servicing/export-servi
 import {
   DollarSign,
   Percent,
-  Banknote,
   Calculator,
   CalendarClock,
   ArrowLeft,
@@ -230,7 +229,7 @@ export default async function LoanDetailPage({
       </div>
 
       {/* KPI Row */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
         <KpiCard
           title="Current Balance"
           value={formatCurrency(loan.current_balance)}
@@ -246,12 +245,6 @@ export default async function LoanDetailPage({
           }
           description={loan.dutch_interest ? "Dutch Interest" : "Non-Dutch Interest"}
           icon={<Percent className="h-5 w-5" />}
-        />
-        <KpiCard
-          title="Total Loan Amount"
-          value={formatCurrency(loan.total_loan_amount)}
-          description={`${formatCurrency(loan.construction_holdback)} holdback`}
-          icon={<Banknote className="h-5 w-5" />}
         />
         <KpiCard
           title="Monthly Interest"

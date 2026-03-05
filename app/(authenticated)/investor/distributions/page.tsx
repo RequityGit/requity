@@ -169,7 +169,7 @@ export default async function DistributionsPage({
       key: "amount",
       header: "Amount",
       cell: (row) => (
-        <span className="num font-medium text-green-700">
+        <span className="num font-medium text-green-600 dark:text-green-400">
           {formatCurrency(row.amount)}
         </span>
       ),

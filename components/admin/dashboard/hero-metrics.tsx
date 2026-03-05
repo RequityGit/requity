@@ -38,7 +38,7 @@ export function HeroMetrics({ data }: HeroMetricsProps) {
             Total AUM
           </span>
           <div className="flex items-center gap-1.5">
-            <div className="w-[5px] h-[5px] rounded-full bg-[#22C55E]" />
+            <div className="w-[5px] h-[5px] rounded-full bg-green-500" />
             <span className="text-[9px] text-primary-foreground/60 num">LIVE</span>
           </div>
         </div>
@@ -47,7 +47,7 @@ export function HeroMetrics({ data }: HeroMetricsProps) {
             <CountUp end={aum.whole} decimals={aum.decimal} prefix="$" duration={900} delay={100} />
             <span className="text-[22px] text-primary-foreground/60">{aum.suffix}</span>
           </span>
-          <span className="num text-[10.5px] font-semibold px-1.5 py-0.5 rounded-[3px] bg-[rgba(34,197,94,0.12)] text-[#22C55E] inline-flex items-center gap-0.5">
+          <span className="num text-[10.5px] font-semibold px-1.5 py-0.5 rounded-[3px] bg-green-500/10 text-green-500 inline-flex items-center gap-0.5">
             <ArrowUpRight size={10} strokeWidth={2.5} />+12.3%
           </span>
         </div>

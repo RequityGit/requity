@@ -79,7 +79,7 @@ export default async function BillingPage() {
       />
 
       {/* KPI Row */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
         <KpiCard
           title="Latest Billing"
           value={formatCurrencyDetailed(totalBilledThisMonth)}
@@ -105,24 +105,14 @@ export default async function BillingPage() {
         <KpiCard
           title="Delinquent"
           value={delinquentLoans.length.toString()}
-          description={`${formatCurrency(totalPastDue)} past due`}
+          description={`${formatCurrencyDetailed(totalPastDue)} past due`}
           icon={
             delinquentLoans.length > 0 ? (
-              <AlertTriangle className="h-5 w-5 text-amber-500" />
+              <AlertTriangle className="h-5 w-5 text-amber-500 dark:text-amber-400" />
             ) : (
               <DollarSign className="h-5 w-5" />
             )
           }
-        />
-        <KpiCard
-          title="Total Past Due"
-          value={formatCurrencyDetailed(totalPastDue)}
-          description={
-            delinquentLoans.length > 0
-              ? `Across ${delinquentLoans.length} loans`
-              : "All current"
-          }
-          icon={<DollarSign className="h-5 w-5" />}
         />
       </div>
 

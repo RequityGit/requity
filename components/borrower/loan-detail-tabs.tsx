@@ -113,7 +113,7 @@ export function LoanDetailTabs({
           <ClipboardList className="h-4 w-4" />
           Conditions
           {outstandingCount > 0 && (
-            <span className="ml-1 rounded-full bg-amber-100 text-amber-700 text-[10px] font-semibold px-1.5 py-0.5">
+            <span className="ml-1 rounded-full bg-amber-100 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400 text-[10px] font-semibold px-1.5 py-0.5 num">
               {outstandingCount}
             </span>
           )}

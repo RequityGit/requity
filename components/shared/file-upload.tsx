@@ -134,7 +134,7 @@ export function FileUpload({
           )}
           <div className="flex-1 min-w-0">
             <p className="text-sm font-medium truncate">{selectedFile.name}</p>
-            <p className="text-xs text-muted-foreground">
+            <p className="text-xs text-muted-foreground num">
               {(selectedFile.size / 1024 / 1024).toFixed(2)} MB
             </p>
           </div>

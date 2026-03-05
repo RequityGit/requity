@@ -198,7 +198,7 @@ export function CommandSearch({ role }: CommandSearchProps) {
             : "border-border hover:border-muted-foreground/30"
         }`}
       >
-        <Search className="mr-2 h-4 w-4 shrink-0 text-slate-400" />
+        <Search className="mr-2 h-4 w-4 shrink-0 text-muted-foreground" />
         <input
           ref={inputRef}
           value={query}
@@ -208,10 +208,10 @@ export function CommandSearch({ role }: CommandSearchProps) {
           }}
           onFocus={() => setOpen(true)}
           placeholder="Search loans, borrowers, investors..."
-          className="flex h-7 w-full bg-transparent text-sm outline-none placeholder:text-slate-400"
+          className="flex h-7 w-full bg-transparent text-sm outline-none placeholder:text-muted-foreground"
         />
         {loading && (
-          <Loader2 className="ml-2 h-4 w-4 shrink-0 animate-spin text-slate-400" />
+          <Loader2 className="ml-2 h-4 w-4 shrink-0 animate-spin text-muted-foreground" />
         )}
         {hasQuery && !loading && (
           <button
@@ -220,7 +220,7 @@ export function CommandSearch({ role }: CommandSearchProps) {
               setQuery("");
               inputRef.current?.focus();
             }}
-            className="ml-1 rounded p-0.5 text-slate-400 hover:text-slate-600 transition-colors"
+            className="ml-1 rounded p-0.5 text-muted-foreground hover:text-foreground transition-colors"
           >
             <X className="h-3.5 w-3.5" />
           </button>
@@ -248,7 +248,7 @@ export function CommandSearch({ role }: CommandSearchProps) {
             {/* Empty state: no query — show recent searches */}
             {!hasQuery && recentSearches.length > 0 && (
               <div className="px-3 py-2">
-                <h3 className="px-1 pb-1.5 text-[10px] font-medium uppercase tracking-wider text-slate-400">
+                <h3 className="px-1 pb-1.5 text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
                   Recent Searches
                 </h3>
                 {recentSearches.map((search) => (
@@ -258,7 +258,7 @@ export function CommandSearch({ role }: CommandSearchProps) {
                     onClick={() => setQuery(search)}
                     className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm text-muted-foreground hover:bg-muted transition-colors"
                   >
-                    <Clock className="h-3.5 w-3.5 text-slate-400" />
+                    <Clock className="h-3.5 w-3.5 text-muted-foreground" />
                     <span className="truncate">{search}</span>
                   </button>
                 ))}
@@ -268,7 +268,7 @@ export function CommandSearch({ role }: CommandSearchProps) {
             {/* Empty state: no query and no recent searches */}
             {!hasQuery && recentSearches.length === 0 && (
               <div className="px-4 py-6 text-center">
-                <p className="text-sm text-slate-400">
+                <p className="text-sm text-muted-foreground">
                   Start typing to search across your portal
                 </p>
               </div>

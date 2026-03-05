@@ -86,7 +86,7 @@ export function MultiSelectFilter({
                       "flex h-4 w-4 items-center justify-center rounded border",
                       isSelected
                         ? "border-blue-600 bg-blue-600 text-white"
-                        : "border-slate-300"
+                        : "border-border"
                     )}
                   >
                     {isSelected && <Check className="h-3 w-3" />}

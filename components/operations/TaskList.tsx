@@ -71,7 +71,7 @@ export function TaskList({ tasks, projectNames, onToggleTask, onStopRecurrence, 
                     type="checkbox"
                     checked={isComplete}
                     onChange={() => onToggleTask(task.id, !isComplete)}
-                    className="h-4 w-4 rounded border-slate-300 text-teal-600 focus:ring-teal-500"
+                    className="h-4 w-4 rounded border-border text-primary focus:ring-ring"
                   />
                 </TableCell>
                 <TableCell>

@@ -7,7 +7,6 @@ import { AddServicingLoanDialog } from "@/components/admin/servicing/add-servici
 import { formatCurrency } from "@/lib/format";
 import {
   Banknote,
-  TrendingUp,
   AlertTriangle,
   CalendarClock,
   DollarSign,
@@ -92,17 +91,12 @@ export default async function AdminServicingPage() {
       />
 
       {/* KPI Row */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
         <KpiCard
           title="Active Loans"
           value={portfolio?.total_active_loans?.toString() ?? "0"}
           description={`${formatCurrency(portfolio?.total_outstanding_balance)} outstanding`}
           icon={<Banknote className="h-5 w-5" />}
-        />
-        <KpiCard
-          title="Avg Loan Size"
-          value={formatCurrency(portfolio?.average_loan_size)}
-          icon={<TrendingUp className="h-5 w-5" />}
         />
         <KpiCard
           title="RTL Active"
@@ -122,7 +116,7 @@ export default async function AdminServicingPage() {
           description="Matured or within 30 days"
           icon={
             maturityAlerts > 0 ? (
-              <AlertTriangle className="h-5 w-5 text-amber-500" />
+              <AlertTriangle className="h-5 w-5 text-amber-500 dark:text-amber-400" />
             ) : (
               <CalendarClock className="h-5 w-5" />
             )

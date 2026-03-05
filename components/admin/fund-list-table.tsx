@@ -43,22 +43,22 @@ export function FundListTable({ data }: FundListTableProps) {
     {
       key: "target_size",
       header: "Target Size",
-      cell: (row) => formatCurrency(row.target_size),
+      cell: (row) => <span className="num">{formatCurrency(row.target_size)}</span>,
     },
     {
       key: "current_aum",
       header: "Current AUM",
-      cell: (row) => formatCurrency(row.current_aum),
+      cell: (row) => <span className="num">{formatCurrency(row.current_aum)}</span>,
     },
     {
       key: "vintage_year",
       header: "Vintage",
-      cell: (row) => row.vintage_year ?? "—",
+      cell: (row) => <span className="num">{row.vintage_year ?? "—"}</span>,
     },
     {
       key: "irr_target",
       header: "IRR Target",
-      cell: (row) => formatPercent(row.irr_target),
+      cell: (row) => <span className="num">{formatPercent(row.irr_target)}</span>,
     },
     {
       key: "status",

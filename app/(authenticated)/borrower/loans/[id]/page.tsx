@@ -135,7 +135,7 @@ export default async function LoanDetailPage({ params }: LoanDetailPageProps) {
                 </div>
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Term</span>
-                  <span className="font-medium">
+                  <span className="font-medium num">
                     {loan.loan_term_months} months
                   </span>
                 </div>

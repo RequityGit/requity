@@ -91,17 +91,17 @@ export function TermSheetSectionCard({
             type="button"
             onClick={onMoveUp}
             disabled={index === 0}
-            className="text-slate-400 hover:text-slate-700 disabled:opacity-30 text-xs leading-none"
+            className="text-muted-foreground hover:text-foreground disabled:opacity-30 text-xs leading-none"
             aria-label="Move up"
           >
             ▲
           </button>
-          <GripVertical className="h-4 w-4 text-slate-300 mx-auto" />
+          <GripVertical className="h-4 w-4 text-muted-foreground/40 mx-auto" />
           <button
             type="button"
             onClick={onMoveDown}
             disabled={index === totalSections - 1}
-            className="text-slate-400 hover:text-slate-700 disabled:opacity-30 text-xs leading-none"
+            className="text-muted-foreground hover:text-foreground disabled:opacity-30 text-xs leading-none"
             aria-label="Move down"
           >
             ▼
@@ -116,7 +116,7 @@ export function TermSheetSectionCard({
             "shrink-0 rounded p-1.5 transition-colors",
             sectionVisible
               ? "text-emerald-600 hover:bg-emerald-50"
-              : "text-slate-400 hover:bg-muted"
+              : "text-muted-foreground hover:bg-muted"
           )}
           aria-label={sectionVisible ? "Hide section" : "Show section"}
         >
@@ -131,7 +131,7 @@ export function TermSheetSectionCard({
         <button
           type="button"
           onClick={() => setExpanded(!expanded)}
-          className="shrink-0 rounded p-1 text-slate-500 hover:text-slate-800 hover:bg-muted transition-colors"
+          className="shrink-0 rounded p-1 text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
           aria-label={expanded ? "Collapse" : "Expand"}
         >
           {expanded ? (
@@ -157,7 +157,7 @@ export function TermSheetSectionCard({
 
         {/* Field counter badge */}
         {totalFieldCount > 0 && (
-          <span className="shrink-0 text-xs font-medium rounded-full px-2 py-0.5 bg-slate-100 text-slate-600">
+          <span className="shrink-0 text-xs font-medium rounded-full px-2 py-0.5 bg-muted text-muted-foreground">
             {visibleFieldCount}/{totalFieldCount} fields
           </span>
         )}
@@ -186,11 +186,11 @@ export function TermSheetSectionCard({
       {/* Expanded content — field list + preview                           */}
       {/* ----------------------------------------------------------------- */}
       {expanded && (
-        <div className="border-t border-slate-100">
+        <div className="border-t border-border">
           {/* Field list */}
           {section.fields.length > 0 && (
             <div className="p-3 space-y-1">
-              <p className="text-xs font-medium text-slate-500 uppercase tracking-wider mb-2">
+              <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2">
                 Fields in this section
               </p>
               {section.fields.map((field) => {
@@ -241,11 +241,11 @@ export function TermSheetSectionCard({
                     {/* Field info */}
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-1.5">
-                        <span className="text-sm font-medium text-slate-800">
+                        <span className="text-sm font-medium text-foreground">
                           {field.label}
                         </span>
                         {field.format && field.format !== "text" && (
-                          <span className="text-[10px] num px-1 py-0.5 rounded bg-slate-100 text-slate-500">
+                          <span className="text-[10px] num px-1 py-0.5 rounded bg-muted text-muted-foreground">
                             {field.format}
                           </span>
                         )}
@@ -273,8 +273,8 @@ export function TermSheetSectionCard({
 
           {/* Custom text block */}
           {section.hasCustomText && onCustomTextChange && (
-            <div className="p-3 border-t border-slate-100">
-              <Label className="text-xs font-medium text-slate-500 uppercase tracking-wider mb-2 block">
+            <div className="p-3 border-t border-border">
+              <Label className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2 block">
                 Custom text for this section
               </Label>
               <Textarea
@@ -289,32 +289,32 @@ export function TermSheetSectionCard({
 
           {/* Mini preview */}
           {section.fields.length > 0 && (
-            <div className="p-3 border-t border-slate-100 bg-slate-50/50">
+            <div className="p-3 border-t border-border bg-muted/50">
               <div className="flex items-center gap-1.5 mb-2">
-                <Info className="h-3.5 w-3.5 text-slate-400" />
-                <span className="text-xs font-medium text-slate-500 uppercase tracking-wider">
+                <Info className="h-3.5 w-3.5 text-muted-foreground" />
+                <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
                   Preview (sample data)
                 </span>
               </div>
               <div className="bg-card rounded border border-border p-3 num text-xs space-y-1">
-                <div className="font-bold text-foreground text-sm mb-2 border-b border-slate-100 pb-1">
+                <div className="font-bold text-foreground text-sm mb-2 border-b border-border pb-1">
                   {heading || section.label}
                 </div>
                 {section.fields
                   .filter((f) => fieldVisibility[f.key] !== false)
                   .map((field) => (
                     <div key={field.key} className="flex gap-2">
-                      <span className="text-slate-500 w-40 shrink-0 text-right">
+                      <span className="text-muted-foreground w-40 shrink-0 text-right">
                         {fieldLabels[field.key] || field.label}:
                       </span>
-                      <span className="text-slate-800 font-medium">
+                      <span className="text-foreground font-medium">
                         {SAMPLE_DATA[field.key] ?? "—"}
                       </span>
                     </div>
                   ))}
                 {section.fields.filter((f) => fieldVisibility[f.key] !== false)
                   .length === 0 && (
-                  <span className="text-slate-400 italic">
+                  <span className="text-muted-foreground italic">
                     No fields visible
                   </span>
                 )}

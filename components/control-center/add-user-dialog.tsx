@@ -275,7 +275,7 @@ export function AddUserDialog({
                 </p>
               </div>
             )}
-            <div className="rounded-lg border bg-slate-50 p-4 space-y-2">
+            <div className="rounded-lg border bg-muted p-4 space-y-2">
               <div className="flex justify-between text-sm">
                 <span className="text-muted-foreground">Email</span>
                 <span className="font-medium">{email}</span>

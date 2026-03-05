@@ -223,22 +223,22 @@ export function ConditionsDashboard({
         <StatCard
           label="Outstanding"
           value={stats.outstanding}
-          color="text-amber-700"
+          color="text-amber-700 dark:text-amber-400"
         />
         <StatCard
           label="Overdue"
           value={stats.overdue}
-          color="text-red-700"
+          color="text-destructive"
         />
         <StatCard
           label="Critical Open"
           value={stats.criticalOutstanding}
-          color="text-red-700"
+          color="text-destructive"
         />
         <StatCard
           label="Approved"
           value={stats.approved}
-          color="text-green-700"
+          color="text-green-700 dark:text-green-400"
         />
       </div>
 
@@ -260,7 +260,7 @@ export function ConditionsDashboard({
                   onClick={() => setViewMode(mode.key)}
                   className={`px-3 py-1.5 text-xs font-medium transition-colors ${
                     viewMode === mode.key
-                      ? "bg-primary text-white"
+                      ? "bg-primary text-primary-foreground"
                       : "bg-card text-muted-foreground hover:bg-muted"
                   }`}
                 >
@@ -407,9 +407,9 @@ export function ConditionsDashboard({
                         key={condition.id}
                         className={`flex items-center gap-3 py-2 px-3 rounded-lg border cursor-pointer transition-colors ${
                           isComplete
-                            ? "bg-green-50/50 border-green-100 hover:bg-green-50"
+                            ? "bg-green-50/50 dark:bg-green-950/20 border-green-100 dark:border-green-900 hover:bg-green-50 dark:hover:bg-green-950/30"
                             : isOverdue
-                              ? "bg-red-50/50 border-red-100 hover:bg-red-100/50"
+                              ? "bg-red-50/50 dark:bg-red-950/20 border-red-100 dark:border-red-900 hover:bg-red-100/50 dark:hover:bg-red-950/30"
                               : "bg-card hover:bg-muted"
                         }`}
                         onClick={() =>
@@ -420,7 +420,7 @@ export function ConditionsDashboard({
                       >
                         <div className="flex-shrink-0">
                           {isComplete ? (
-                            <CheckCircle2 className="h-4 w-4 text-green-600" />
+                            <CheckCircle2 className="h-4 w-4 text-green-600 dark:text-green-400" />
                           ) : isOverdue ? (
                             <AlertTriangle className="h-4 w-4 text-red-500" />
                           ) : (
@@ -439,7 +439,7 @@ export function ConditionsDashboard({
                               {condition.category}
                             </Badge>
                             {condition.critical_path_item && (
-                              <Badge className="bg-red-100 text-red-700 border-red-200 text-[10px] px-1.5 py-0">
+                              <Badge className="bg-red-100 dark:bg-red-950/30 text-red-700 dark:text-red-400 border-red-200 dark:border-red-800 text-[10px] px-1.5 py-0">
                                 Critical
                               </Badge>
                             )}
@@ -456,7 +456,7 @@ export function ConditionsDashboard({
                               <span
                                 className={
                                   isOverdue
-                                    ? "text-red-600 font-medium"
+                                    ? "text-destructive font-medium"
                                     : ""
                                 }
                               >
@@ -503,7 +503,7 @@ export function ConditionsDashboard({
                             <Button
                               size="sm"
                               variant="outline"
-                              className="h-7 text-xs text-green-700"
+                              className="h-7 text-xs text-green-700 dark:text-green-400"
                               onClick={() =>
                                 quickStatusChange(
                                   condition.id,
@@ -551,7 +551,7 @@ function StatCard({
   return (
     <div className="bg-card rounded-lg border px-3 py-2">
       <p className="text-xs text-muted-foreground">{label}</p>
-      <p className={`text-lg font-semibold ${color || "text-foreground"}`}>
+      <p className={`text-lg font-semibold num ${color || "text-foreground"}`}>
         {value}
       </p>
     </div>

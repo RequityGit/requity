@@ -45,12 +45,12 @@ export function DistributionListTable({ data }: DistributionListTableProps) {
     {
       key: "amount",
       header: "Amount",
-      cell: (row) => formatCurrency(row.amount),
+      cell: (row) => <span className="num">{formatCurrency(row.amount)}</span>,
     },
     {
       key: "distribution_date",
       header: "Date",
-      cell: (row) => formatDate(row.distribution_date),
+      cell: (row) => <span className="num">{formatDate(row.distribution_date)}</span>,
     },
     {
       key: "description",

@@ -239,7 +239,7 @@ export function ProfilePhotoUpload({
       <div className="relative group">
         <Avatar
           className={cn(
-            "h-24 w-24 cursor-pointer ring-2 ring-slate-200 ring-offset-2 transition-all",
+            "h-24 w-24 cursor-pointer ring-2 ring-border ring-offset-2 transition-all",
             uploading && "opacity-50"
           )}
           onClick={() => !uploading && fileInputRef.current?.click()}
@@ -294,7 +294,7 @@ export function ProfilePhotoUpload({
               type="button"
               onClick={handleRemove}
               disabled={uploading}
-              className="text-xs text-red-600 hover:underline font-medium disabled:opacity-50 flex items-center gap-1"
+              className="text-xs text-destructive hover:underline font-medium disabled:opacity-50 flex items-center gap-1"
             >
               <Trash2 className="h-3 w-3" />
               Remove

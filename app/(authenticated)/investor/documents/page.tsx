@@ -51,7 +51,7 @@ const DOCUMENT_GROUPS: Record<
   },
   other: {
     label: "Other Documents",
-    icon: <File className="h-5 w-5 text-slate-600" />,
+    icon: <File className="h-5 w-5 text-muted-foreground" />,
     types: [],
   },
 };
@@ -238,7 +238,7 @@ export default async function DocumentsPage({
       {rows.length === 0 ? (
         <Card>
           <CardContent className="py-12 text-center text-muted-foreground">
-            <FileText className="h-12 w-12 mx-auto mb-3 text-slate-300" />
+            <FileText className="h-12 w-12 mx-auto mb-3 text-muted-foreground/40" />
             <p className="text-lg font-medium text-foreground">
               No documents found
             </p>

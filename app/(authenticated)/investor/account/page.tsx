@@ -277,7 +277,7 @@ export default function InvestorAccountPage() {
                     <Label htmlFor="email">
                       Email Address
                       {email !== originalEmail && (
-                        <span className="ml-2 text-xs text-amber-600 font-normal">
+                        <span className="ml-2 text-xs text-muted-foreground font-normal">
                           (requires verification)
                         </span>
                       )}
@@ -294,7 +294,7 @@ export default function InvestorAccountPage() {
                     <Label htmlFor="phone">
                       Phone Number
                       {phone !== originalPhone && (
-                        <span className="ml-2 text-xs text-amber-600 font-normal">
+                        <span className="ml-2 text-xs text-muted-foreground font-normal">
                           (requires verification)
                         </span>
                       )}
@@ -320,13 +320,13 @@ export default function InvestorAccountPage() {
 
                 {/* Sensitive change notice */}
                 {hasSensitiveChanges && !otpVerified && (
-                  <div className="mt-4 flex items-start gap-3 rounded-md border border-amber-200 bg-amber-50 p-3">
-                    <ShieldCheck className="h-5 w-5 text-amber-600 mt-0.5 flex-shrink-0" />
+                  <div className="mt-4 flex items-start gap-3 rounded-md border border-border bg-muted p-3">
+                    <ShieldCheck className="h-5 w-5 text-muted-foreground mt-0.5 flex-shrink-0" />
                     <div>
-                      <p className="text-sm font-medium text-amber-800">
+                      <p className="text-sm font-medium text-foreground">
                         Identity verification required
                       </p>
-                      <p className="text-xs text-amber-700 mt-0.5">
+                      <p className="text-xs text-muted-foreground mt-0.5">
                         Changing your email or phone number requires SMS verification
                         for security.
                       </p>
@@ -335,13 +335,13 @@ export default function InvestorAccountPage() {
                 )}
 
                 {hasSensitiveChanges && otpVerified && (
-                  <div className="mt-4 flex items-start gap-3 rounded-md border border-green-200 bg-green-50 p-3">
-                    <ShieldCheck className="h-5 w-5 text-green-600 mt-0.5 flex-shrink-0" />
+                  <div className="mt-4 flex items-start gap-3 rounded-md border border-border bg-muted p-3">
+                    <ShieldCheck className="h-5 w-5 text-green-600 dark:text-green-400 mt-0.5 flex-shrink-0" />
                     <div>
-                      <p className="text-sm font-medium text-green-800">
+                      <p className="text-sm font-medium text-foreground">
                         Identity verified
                       </p>
-                      <p className="text-xs text-green-700 mt-0.5">
+                      <p className="text-xs text-muted-foreground mt-0.5">
                         You can now save your changes.
                       </p>
                     </div>

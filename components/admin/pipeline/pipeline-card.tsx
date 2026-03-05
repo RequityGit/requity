@@ -245,7 +245,7 @@ export function PipelineCard({ deal, index, isDragging }: PipelineCardProps) {
             <Paperclip
               size={11}
               strokeWidth={2}
-              style={{ color: docsComplete ? "#22A861" : "hsl(var(--muted-foreground))" }}
+              style={{ color: docsComplete ? "hsl(var(--chart-2, 142 71% 45%))" : "hsl(var(--muted-foreground))" }}
             />
             <div
               style={{
@@ -261,7 +261,7 @@ export function PipelineCard({ deal, index, isDragging }: PipelineCardProps) {
                   width: `${(deal.docsApproved / deal.docsTotal) * 100}%`,
                   height: "100%",
                   borderRadius: "2px",
-                  backgroundColor: docsComplete ? "#22A861" : "hsl(var(--foreground))",
+                  backgroundColor: docsComplete ? "hsl(var(--chart-2, 142 71% 45%))" : "hsl(var(--foreground))",
                   transition: "width 0.3s ease",
                 }}
               />
@@ -271,7 +271,7 @@ export function PipelineCard({ deal, index, isDragging }: PipelineCardProps) {
               style={{
                 fontSize: "10px",
                 fontWeight: 500,
-                color: docsComplete ? "#22A861" : "hsl(var(--muted-foreground))",
+                color: docsComplete ? "hsl(var(--chart-2, 142 71% 45%))" : "hsl(var(--muted-foreground))",
               }}
             >
               {deal.docsApproved}/{deal.docsTotal}

@@ -183,22 +183,22 @@ export function LoanConditionsTab({
         <SummaryCard
           label="Approved"
           value={approvedCount}
-          color="text-green-700"
+          color="text-green-700 dark:text-green-400"
         />
         <SummaryCard
           label="Submitted"
           value={receivedCount}
-          color="text-indigo-700"
+          color="text-indigo-700 dark:text-indigo-400"
         />
         <SummaryCard
           label="Outstanding"
           value={outstandingCount}
-          color="text-amber-700"
+          color="text-amber-700 dark:text-amber-400"
         />
         <SummaryCard
           label="Overdue"
           value={overdueCount}
-          color="text-red-700"
+          color="text-destructive"
         />
       </div>
 
@@ -266,7 +266,7 @@ function SummaryCard({
   return (
     <div className="bg-card rounded-lg border px-3 py-2">
       <p className="text-xs text-muted-foreground">{label}</p>
-      <p className={`text-lg font-semibold ${color || "text-foreground"}`}>
+      <p className={`text-lg font-semibold num ${color || "text-foreground"}`}>
         {value}
       </p>
     </div>
@@ -291,13 +291,13 @@ function ProgressCard({
     <div className="bg-card rounded-lg border px-4 py-3">
       <div className="flex items-center justify-between mb-1">
         <span className="text-sm font-medium text-foreground">{label}</span>
-        <span className="text-xs text-muted-foreground">
+        <span className="text-xs text-muted-foreground num">
           {completed}/{total} ({pct}%)
         </span>
       </div>
-      <div className="w-full bg-slate-100 rounded-full h-2">
+      <div className="w-full bg-muted rounded-full h-2">
         <div
-          className="bg-green-600 h-2 rounded-full transition-all"
+          className="bg-green-600 dark:bg-green-500 h-2 rounded-full transition-all"
           style={{ width: `${pct}%` }}
         />
       </div>
@@ -558,7 +558,7 @@ function ConditionRow({
             <Button
               size="sm"
               variant="outline"
-              className="h-7 text-xs text-green-700"
+              className="h-7 text-xs text-green-700 dark:text-green-400"
               onClick={() => onStatusChange(condition.id, "approved")}
             >
               <CheckCircle2 className="h-3 w-3 mr-1" />
@@ -567,7 +567,7 @@ function ConditionRow({
             <Button
               size="sm"
               variant="outline"
-              className="h-7 text-xs text-red-700"
+              className="h-7 text-xs text-destructive"
               onClick={() => setRejectOpen(true)}
             >
               Reject
@@ -588,16 +588,16 @@ function ConditionRow({
         <div
           className={`flex items-start gap-3 p-3 ${
             isComplete
-              ? "bg-green-50/50"
+              ? "bg-green-50/50 dark:bg-green-950/20"
               : isOverdue
-                ? "bg-red-50/50"
+                ? "bg-red-50/50 dark:bg-red-950/20"
                 : "bg-card"
           }`}
         >
           {/* Status indicator */}
           <div className="mt-0.5">
             {isComplete ? (
-              <CheckCircle2 className="h-4 w-4 text-green-600" />
+              <CheckCircle2 className="h-4 w-4 text-green-600 dark:text-green-400" />
             ) : isOverdue ? (
               <AlertTriangle className="h-4 w-4 text-red-500" />
             ) : (
@@ -612,7 +612,7 @@ function ConditionRow({
                 {condition.condition_name}
               </span>
               {condition.critical_path_item && (
-                <Badge className="bg-red-100 text-red-700 border-red-200 text-[10px] px-1.5 py-0">
+                <Badge className="bg-red-100 dark:bg-red-950/30 text-red-700 dark:text-red-400 border-red-200 dark:border-red-800 text-[10px] px-1.5 py-0">
                   Critical
                 </Badge>
               )}
@@ -626,7 +626,7 @@ function ConditionRow({
             <div className="flex items-center gap-3 mt-1 text-[11px] text-muted-foreground">
               <span>{partyLabel}</span>
               {condition.due_date && (
-                <span className={isOverdue ? "text-red-600 font-medium" : ""}>
+                <span className={isOverdue ? "text-destructive font-medium" : ""}>
                   Due: {formatDate(condition.due_date)}
                 </span>
               )}
@@ -637,18 +637,18 @@ function ConditionRow({
                 <span>Received: {formatDate(condition.received_date)}</span>
               )}
               {condition.approved_date && (
-                <span className="text-green-700">
+                <span className="text-green-700 dark:text-green-400">
                   Approved: {formatDate(condition.approved_date)}
                 </span>
               )}
               {condition.reviewed_at && (
-                <span className="text-green-700">
+                <span className="text-green-700 dark:text-green-400">
                   Reviewed: {formatDate(condition.reviewed_at)}
                 </span>
               )}
             </div>
             {condition.rejection_reason && (
-              <p className="text-xs text-red-600 mt-1">
+              <p className="text-xs text-destructive mt-1">
                 Rejection reason: {condition.rejection_reason}
               </p>
             )}
@@ -703,7 +703,7 @@ function ConditionRow({
 
         {/* Comments & Documents Panel */}
         {panelOpen && (
-          <div className="border-t bg-slate-50/60 p-4 space-y-4">
+          <div className="border-t bg-muted/60 p-4 space-y-4">
             {/* Documents Section */}
             <div className="space-y-2">
               <div className="flex items-center justify-between">
@@ -848,9 +848,9 @@ function ConditionRow({
                       type="checkbox"
                       checked={isInternal}
                       onChange={(e) => setIsInternal(e.target.checked)}
-                      className="rounded border-gray-300 h-3 w-3"
+                      className="rounded border-border h-3 w-3"
                     />
-                    <Lock className="h-3 w-3 text-amber-600" />
+                    <Lock className="h-3 w-3 text-amber-600 dark:text-amber-400" />
                     Internal only
                   </label>
                 }
@@ -1000,7 +1000,7 @@ function AddConditionDialog({
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
             <Label>
-              Condition Name <span className="text-red-500">*</span>
+              Condition Name <span className="text-destructive">*</span>
             </Label>
             <Input
               value={form.condition_name}
@@ -1064,7 +1064,7 @@ function AddConditionDialog({
                   onChange={(e) =>
                     updateField("critical_path_item", e.target.checked)
                   }
-                  className="rounded border-gray-300"
+                  className="rounded border-border"
                 />
                 Critical path item
               </label>
