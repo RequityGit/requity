@@ -24,7 +24,6 @@ import {
   Calculator,
   MessageSquare,
   Columns3,
-  PhoneCall,
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useViewAs } from "@/contexts/view-as-context";
@@ -52,6 +51,8 @@ interface NavGroup {
   icon: React.ElementType;
   basePath: string;
   moduleName?: string;
+  /** Additional path prefixes that should expand/highlight this group */
+  activePaths?: string[];
   children: { label: string; href: string }[];
 }
 
@@ -86,9 +87,11 @@ const adminNav: NavEntry[] = [
     icon: Contact,
     basePath: "/admin/crm",
     moduleName: "crm",
+    activePaths: ["/admin/dialer"],
     children: [
       { label: "Contacts", href: "/admin/crm/contacts" },
       { label: "Companies", href: "/admin/crm/companies" },
+      { label: "Power Dialer", href: "/admin/dialer" },
     ],
   },
   {
@@ -129,12 +132,6 @@ const adminNav: NavEntry[] = [
     icon: Settings2,
     activePaths: ["/admin/operations/approvals"],
     moduleName: "operations",
-  },
-  {
-    label: "Power Dialer",
-    href: "/admin/dialer",
-    icon: PhoneCall,
-    moduleName: "dialer",
   },
 ];
 
@@ -365,7 +362,11 @@ function NavGroupItem({
   collapsed: boolean;
 }) {
   const isGroupActive =
-    pathname.startsWith(group.basePath + "/") || pathname === group.basePath;
+    pathname.startsWith(group.basePath + "/") ||
+    pathname === group.basePath ||
+    (group.activePaths?.some(
+      (p) => pathname === p || pathname.startsWith(p + "/")
+    ) ?? false);
   const [open, setOpen] = useState(isGroupActive);
 
   // Auto-expand when navigating into the group
