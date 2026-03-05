@@ -63,6 +63,29 @@ export function EquityPipelineView({
     <div className="space-y-6">
       {/* Toolbar: View Toggle + Search + Filter + New Deal */}
       <div className="flex items-center gap-2.5 flex-wrap">
+        <div className="relative flex-1 min-w-[200px] max-w-sm">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder="Search deals by name, address, or number..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pl-9 h-9"
+          />
+        </div>
+        <Select value={assignedFilter} onValueChange={setAssignedFilter}>
+          <SelectTrigger className="w-[180px] h-9 text-xs">
+            <SelectValue placeholder="Assigned To" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Team Members</SelectItem>
+            {teamMembers.map((m) => (
+              <SelectItem key={m.id} value={m.full_name}>
+                {m.full_name}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <div className="flex-1" />
         <div className="flex items-center gap-1 border rounded-md p-0.5">
           <button
             onClick={() => setView("board")}
@@ -89,29 +112,6 @@ export function EquityPipelineView({
             <List className="h-4 w-4" />
           </button>
         </div>
-        <div className="relative flex-1 min-w-[200px] max-w-sm">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Search deals by name, address, or number..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-9 h-9"
-          />
-        </div>
-        <Select value={assignedFilter} onValueChange={setAssignedFilter}>
-          <SelectTrigger className="w-[180px] h-9 text-xs">
-            <SelectValue placeholder="Assigned To" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Team Members</SelectItem>
-            {teamMembers.map((m) => (
-              <SelectItem key={m.id} value={m.full_name}>
-                {m.full_name}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-        <div className="flex-1" />
         <Link href="/admin/equity-pipeline/new">
           <Button size="sm" className="gap-1.5">
             <Plus className="h-4 w-4" />
