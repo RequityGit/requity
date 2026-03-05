@@ -1,15 +1,9 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { PageHeader } from "@/components/shared/page-header";
-import { KpiCard } from "@/components/shared/kpi-card";
 import { ServicingTabs } from "@/components/admin/servicing/servicing-tabs";
 import { AddServicingLoanDialog } from "@/components/admin/servicing/add-servicing-loan-dialog";
-import { formatCurrency } from "@/lib/format";
 import {
-  Banknote,
-  AlertTriangle,
-  CalendarClock,
-  DollarSign,
   Receipt,
 } from "lucide-react";
 import Link from "next/link";
@@ -67,11 +61,6 @@ export default async function AdminServicingPage() {
   const draws = drawsResult.data ?? [];
   const payments = paymentsResult.data ?? [];
 
-  const maturityAlerts = maturities.filter(
-    (m: any) =>
-      m.maturity_status === "MATURED" || m.maturity_status === "MATURING_30"
-  ).length;
-
   return (
     <div className="space-y-6">
       <PageHeader
@@ -89,40 +78,6 @@ export default async function AdminServicingPage() {
           </div>
         }
       />
-
-      {/* KPI Row */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
-        <KpiCard
-          title="Active Loans"
-          value={portfolio?.total_active_loans?.toString() ?? "0"}
-          description={`${formatCurrency(portfolio?.total_outstanding_balance)} outstanding`}
-          icon={<Banknote className="h-5 w-5" />}
-        />
-        <KpiCard
-          title="RTL Active"
-          value={portfolio?.rtl_active_count?.toString() ?? "0"}
-          description={formatCurrency(portfolio?.rtl_outstanding_balance)}
-          icon={<DollarSign className="h-5 w-5" />}
-        />
-        <KpiCard
-          title="Commercial Active"
-          value={portfolio?.commercial_active_count?.toString() ?? "0"}
-          description={formatCurrency(portfolio?.commercial_outstanding_balance)}
-          icon={<DollarSign className="h-5 w-5" />}
-        />
-        <KpiCard
-          title="Maturity Alerts"
-          value={maturityAlerts.toString()}
-          description="Matured or within 30 days"
-          icon={
-            maturityAlerts > 0 ? (
-              <AlertTriangle className="h-5 w-5 text-amber-500 dark:text-amber-400" />
-            ) : (
-              <CalendarClock className="h-5 w-5" />
-            )
-          }
-        />
-      </div>
 
       {/* Tabbed Content */}
       <ServicingTabs

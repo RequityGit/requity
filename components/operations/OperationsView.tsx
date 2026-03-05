@@ -31,9 +31,6 @@ import {
   CheckCircle2,
   Circle,
   Search,
-  CalendarDays,
-  AlertTriangle,
-  RefreshCw,
   ArrowRight,
   RotateCcw,
   Inbox,
@@ -208,22 +205,6 @@ function ProgressBar({ pct }: { pct: number }) {
   return (
     <div className="h-[5px] bg-muted rounded-full overflow-hidden w-full">
       <div className={cn("h-full rounded-full transition-all duration-400", colorClass)} style={{ width: `${pct}%` }} />
-    </div>
-  );
-}
-
-/* ── Metric Card ── */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function MetricCard({ label, value, icon: Icon, accentClass }: { label: string; value: number; icon: any; accentClass: string }) {
-  return (
-    <div className="flex-1 min-w-[160px] bg-card rounded-xl border border-border p-5 flex flex-col gap-3">
-      <div className="flex justify-between items-center">
-        <span className="text-[13px] font-medium text-muted-foreground">{label}</span>
-        <div className={cn("w-8 h-8 rounded-lg flex items-center justify-center", accentClass)}>
-          <Icon size={16} />
-        </div>
-      </div>
-      <span className="num text-[28px] font-semibold text-foreground leading-none">{value}</span>
     </div>
   );
 }
@@ -891,24 +872,6 @@ export function OperationsView({
     return Array.from(cats).sort();
   }, [projects, tasks]);
 
-  // Stats
-  const stats = useMemo(() => {
-    const now = new Date();
-    const endOfWeek = new Date(now);
-    endOfWeek.setDate(endOfWeek.getDate() + 7);
-
-    const activeProjects = projects.filter((p) => p.status !== "Complete").length;
-    const criticalTasks = tasks.filter((t) => t.priority === "Critical" && t.status !== "Complete").length;
-    const dueThisWeek = tasks.filter((t) => {
-      if (!t.due_date || t.status === "Complete") return false;
-      const d = new Date(t.due_date);
-      return d >= now && d <= endOfWeek;
-    }).length;
-    const inProgress = projects.filter((p) => p.status === "In Progress").length;
-
-    return { activeProjects, criticalTasks, dueThisWeek, inProgress };
-  }, [projects, tasks]);
-
   // Filter projects
   const filteredProjects = useMemo(() => {
     let result = [...projects];
@@ -1069,34 +1032,6 @@ export function OperationsView({
           <AddTaskDialog projects={rawProjects} teamMembers={teamMembers} />
           <AddProjectDialog teamMembers={teamMembers} />
         </div>
-      </div>
-
-      {/* Metric Cards */}
-      <div className="flex gap-3">
-        <MetricCard
-          label="Active Projects"
-          value={stats.activeProjects}
-          icon={FolderKanban}
-          accentClass="bg-[#3B82F6]/[0.08] text-[#3B82F6]"
-        />
-        <MetricCard
-          label="Critical Tasks"
-          value={stats.criticalTasks}
-          icon={AlertTriangle}
-          accentClass={stats.criticalTasks > 0 ? "bg-[#E5453D]/[0.08] text-[#E5453D]" : "bg-muted text-muted-foreground"}
-        />
-        <MetricCard
-          label="Due This Week"
-          value={stats.dueThisWeek}
-          icon={CalendarDays}
-          accentClass={stats.dueThisWeek > 0 ? "bg-[#E5930E]/[0.08] text-[#E5930E]" : "bg-muted text-muted-foreground"}
-        />
-        <MetricCard
-          label="In Progress"
-          value={stats.inProgress}
-          icon={RefreshCw}
-          accentClass="bg-[#22A861]/[0.08] text-[#22A861]"
-        />
       </div>
 
       {/* Toolbar */}
