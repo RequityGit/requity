@@ -58,6 +58,7 @@ export async function advanceStage(
 export async function createUWVersion(
   loanId: string,
   userId: string,
+  modelType: "commercial" | "rtl" | "dscr" = "rtl",
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   inputs?: Record<string, any>
 ) {
@@ -85,6 +86,7 @@ export async function createUWVersion(
         version_number: nextVersion,
         is_active: false,
         created_by: userId,
+        model_type: modelType,
         calculator_inputs: baseInputs,
         calculator_outputs: {},
         status: "draft",

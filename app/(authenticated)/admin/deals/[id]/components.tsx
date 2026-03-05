@@ -371,6 +371,8 @@ export interface PipelineStage {
   sla_days: number | null;
 }
 
+export type UWModelType = "commercial" | "rtl" | "dscr";
+
 export interface UWVersion {
   id: string;
   loan_id: string;
@@ -379,6 +381,7 @@ export interface UWVersion {
   created_by: string;
   label: string | null;
   notes: string | null;
+  model_type: UWModelType;
   calculator_inputs: Record<string, unknown>;
   calculator_outputs: Record<string, unknown>;
   status: string;
@@ -386,6 +389,27 @@ export interface UWVersion {
   _author_name?: string | null;
   _author_avatar?: string | null;
 }
+
+/** Map loan DB type to the appropriate underwriting model */
+export function getUWModelForLoanType(loanType: string | null | undefined): UWModelType {
+  switch (loanType) {
+    case "commercial":
+      return "commercial";
+    case "dscr":
+      return "dscr";
+    case "rtl":
+    case "guc":
+    case "transactional":
+    default:
+      return "rtl";
+  }
+}
+
+export const UW_MODEL_LABELS: Record<UWModelType, string> = {
+  commercial: "Commercial UW",
+  rtl: "Fix & Flip / RTL",
+  dscr: "DSCR Calculator",
+};
 
 export interface DealData {
   id: string;
