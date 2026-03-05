@@ -189,7 +189,11 @@ export async function fetchActionDashboardData(): Promise<
       data: {
         tasks: (tasks as DashboardTask[]) || [],
         borrowerRequests: (borrowerRequests as BorrowerRequest[]) || [],
-        streak: streakData || { current_streak: 0, best_streak: 0, last_completed_date: null },
+        streak: {
+          current_streak: streakData?.current_streak ?? 0,
+          best_streak: streakData?.best_streak ?? 0,
+          last_completed_date: streakData?.last_completed_date ?? null,
+        },
         pendingApprovals,
         dealLog,
         weeklySummary: weeklyData
