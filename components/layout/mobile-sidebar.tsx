@@ -18,7 +18,6 @@ import {
   Banknote,
   Cog,
   BookOpen,
-  Calculator,
   MessageSquare,
   Columns3,
   X,
@@ -75,13 +74,7 @@ const adminNav: NavItem[] = [
     activePaths: ["/admin/originations", "/admin/loans", "/admin/conditions", "/admin/pricing"],
     moduleName: "pipeline",
   },
-  {
-    label: "DSCR Pricing",
-    href: "/admin/dscr",
-    icon: Calculator,
-    moduleName: "dscr-pricing",
-  },
-  { label: "Models", href: "/admin/models", icon: FlaskConical, activePaths: ["/admin/models"], moduleName: "models" },
+  { label: "Models", href: "/admin/models", icon: FlaskConical, activePaths: ["/admin/models", "/admin/dscr"], moduleName: "models" },
   { label: "Servicing", href: "/admin/servicing", icon: Banknote, moduleName: "servicing" },
   {
     label: "Investments",

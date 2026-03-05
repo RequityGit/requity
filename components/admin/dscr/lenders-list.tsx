@@ -16,7 +16,7 @@ import {
 } from "@/components/ui/dialog";
 import { useToast } from "@/components/ui/use-toast";
 import { Plus, Building2 } from "lucide-react";
-import { addLenderAction, toggleLenderActiveAction } from "@/app/(authenticated)/admin/dscr/actions";
+import { addLenderAction, toggleLenderActiveAction } from "@/app/(authenticated)/admin/models/dscr/actions";
 import Link from "next/link";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
@@ -179,7 +179,7 @@ export function LendersList({ lenders }: { lenders: any[] }) {
                   >
                     {l.is_active ? "Deactivate" : "Activate"}
                   </Button>
-                  <Link href={`/admin/dscr/lenders/${l.id}`}>
+                  <Link href={`/admin/models/dscr/lenders/${l.id}`}>
                     <Button variant="outline" size="sm">
                       Manage
                     </Button>

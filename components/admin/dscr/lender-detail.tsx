@@ -21,7 +21,7 @@ import {
   addProductAction,
   toggleProductActiveAction,
   type ProductInput,
-} from "@/app/(authenticated)/admin/dscr/actions";
+} from "@/app/(authenticated)/admin/models/dscr/actions";
 import { formatDate, formatCurrency } from "@/lib/format";
 import { US_STATES } from "@/lib/constants";
 
@@ -328,7 +328,7 @@ export function LenderDetail({
             {uploads.length === 0 ? (
               <p className="text-muted-foreground text-sm">
                 No rate sheets uploaded yet.{" "}
-                <a href="/admin/dscr/rate-sheets" className="text-teal-600 hover:underline">
+                <a href="/admin/models/dscr?tab=rate-sheets" className="text-teal-600 hover:underline">
                   Upload a rate sheet
                 </a>
                 .

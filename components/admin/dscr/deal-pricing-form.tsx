@@ -15,7 +15,7 @@ import {
 } from "@/components/ui/select";
 import { useToast } from "@/components/ui/use-toast";
 import { Calculator, Loader2 } from "lucide-react";
-import { runPricingAction, type PricingRunInput } from "@/app/(authenticated)/admin/dscr/actions";
+import { runPricingAction, type PricingRunInput } from "@/app/(authenticated)/admin/models/dscr/actions";
 import {
   DSCR_PROPERTY_TYPES,
   DSCR_LOAN_PURPOSES,

@@ -21,7 +21,6 @@ import {
   Banknote,
   Cog,
   BookOpen,
-  Calculator,
   MessageSquare,
   Columns3,
   FlaskConical,
@@ -106,17 +105,11 @@ const adminNav: NavEntry[] = [
     ],
   },
   {
-    label: "DSCR Pricing",
-    href: "/admin/dscr",
-    icon: Calculator,
-    activePaths: ["/admin/dscr"],
-    moduleName: "dscr-pricing",
-  },
-  {
     label: "Models",
     icon: FlaskConical,
     basePath: "/admin/models",
     moduleName: "models",
+    activePaths: ["/admin/models", "/admin/dscr"],
     children: [
       { label: "Commercial", href: "/admin/models/commercial" },
       { label: "RTL", href: "/admin/models/rtl" },
