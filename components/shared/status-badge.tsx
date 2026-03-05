@@ -101,6 +101,14 @@ const statusColorMap: Record<string, DotColor> = {
   lost: "red",
   inactive: "gray",
   do_not_contact: "red",
+
+  // Equity deal stages
+  new_deals: "slate",
+  underwritten_needs_review: "blue",
+  offer_placed: "purple",
+  under_contract: "amber",
+  closed_won: "green",
+  closed_lost: "red",
 };
 
 interface StatusBadgeProps {
