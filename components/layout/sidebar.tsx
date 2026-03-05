@@ -12,6 +12,7 @@ import {
   CreditCard,
   ChevronLeft,
   ChevronRight,
+  ChevronDown,
   Landmark,
   FolderOpen,
   Hammer,
@@ -29,6 +30,11 @@ import { useViewAs } from "@/contexts/view-as-context";
 import { useUnreadCounts } from "@/hooks/useUnreadCounts";
 import { createClient } from "@/lib/supabase/client";
 import { Separator } from "@/components/ui/separator";
+import {
+  Collapsible,
+  CollapsibleTrigger,
+  CollapsibleContent,
+} from "@/components/ui/collapsible";
 
 interface NavItem {
   label: string;
@@ -38,6 +44,20 @@ interface NavItem {
   activePaths?: string[];
   /** Module name for access control filtering (admin nav only) */
   moduleName?: string;
+}
+
+interface NavGroup {
+  label: string;
+  icon: React.ElementType;
+  basePath: string;
+  moduleName?: string;
+  children: { label: string; href: string }[];
+}
+
+type NavEntry = NavItem | NavGroup;
+
+function isNavGroup(entry: NavEntry): entry is NavGroup {
+  return "children" in entry && "basePath" in entry;
 }
 
 const investorNav: NavItem[] = [
@@ -58,21 +78,27 @@ const borrowerNav: NavItem[] = [
   { label: "Documents", href: "/borrower/documents", icon: FileText },
 ];
 
-const adminNav: NavItem[] = [
+const adminNav: NavEntry[] = [
   { label: "Dashboard", href: "/admin/dashboard", icon: LayoutDashboard, moduleName: "dashboard" },
   {
     label: "CRM",
-    href: "/admin/crm",
     icon: Contact,
-    activePaths: ["/admin/investors", "/admin/borrowers"],
+    basePath: "/admin/crm",
     moduleName: "crm",
+    children: [
+      { label: "Contacts", href: "/admin/crm/contacts" },
+      { label: "Companies", href: "/admin/crm/companies" },
+    ],
   },
   {
     label: "Pipeline",
-    href: "/admin/pipeline",
     icon: Columns3,
-    activePaths: ["/admin/originations", "/admin/equity-pipeline", "/admin/loans", "/admin/conditions", "/admin/pricing"],
+    basePath: "/admin/pipeline",
     moduleName: "pipeline",
+    children: [
+      { label: "Debt", href: "/admin/pipeline/debt" },
+      { label: "Equity", href: "/admin/pipeline/equity" },
+    ],
   },
   {
     label: "DSCR Pricing",
@@ -105,7 +131,7 @@ const adminNav: NavItem[] = [
   },
 ];
 
-function getNavItems(role: string): NavItem[] {
+function getNavEntries(role: string): NavEntry[] {
   switch (role) {
     case "investor":
       return investorNav;
@@ -142,15 +168,18 @@ export function Sidebar({
 
   // Use view-as role for navigation when super admin is simulating
   const navRole = isViewingAs ? effectiveViewRole : role;
-  const allNavItems = getNavItems(navRole);
+  const allNavEntries = getNavEntries(navRole);
 
-  // Filter admin nav items by module access
-  const navItems =
+  // Filter admin nav entries by module access
+  const navEntries =
     navRole === "admin" && accessibleModules && accessibleModules.length > 0
-      ? allNavItems.filter(
-          (item) => !item.moduleName || accessibleModules.includes(item.moduleName)
+      ? allNavEntries.filter(
+          (entry) => {
+            const moduleName = isNavGroup(entry) ? entry.moduleName : entry.moduleName;
+            return !moduleName || accessibleModules.includes(moduleName);
+          }
         )
-      : allNavItems;
+      : allNavEntries;
 
   // Check if bottom nav items are accessible
   const showChatter =
@@ -206,7 +235,19 @@ export function Sidebar({
 
       {/* Main navigation */}
       <nav className="flex-1 py-3 space-y-0.5 px-2 overflow-y-auto">
-        {navItems.map((item) => {
+        {navEntries.map((entry) => {
+          if (isNavGroup(entry)) {
+            return (
+              <NavGroupItem
+                key={entry.basePath}
+                group={entry}
+                pathname={pathname}
+                collapsed={collapsed}
+              />
+            );
+          }
+
+          const item = entry;
           const isActive =
             pathname === item.href ||
             pathname.startsWith(item.href + "/") ||
@@ -304,5 +345,88 @@ export function Sidebar({
         )}
       </div>
     </aside>
+  );
+}
+
+function NavGroupItem({
+  group,
+  pathname,
+  collapsed,
+}: {
+  group: NavGroup;
+  pathname: string;
+  collapsed: boolean;
+}) {
+  const isGroupActive =
+    pathname.startsWith(group.basePath + "/") || pathname === group.basePath;
+  const [open, setOpen] = useState(isGroupActive);
+
+  // Auto-expand when navigating into the group
+  useEffect(() => {
+    if (isGroupActive) setOpen(true);
+  }, [isGroupActive]);
+
+  if (collapsed) {
+    return (
+      <Link
+        href={group.children[0]?.href ?? group.basePath}
+        className={cn(
+          "flex items-center gap-2.5 px-3 py-[9px] rounded-lg text-[13px] transition-colors",
+          isGroupActive
+            ? "bg-sidebar-active text-sidebar-foreground font-semibold"
+            : "text-sidebar-foreground/60 hover:bg-sidebar-hover hover:text-sidebar-foreground font-medium"
+        )}
+        title={group.label}
+      >
+        <group.icon className="h-[18px] w-[18px] flex-shrink-0" strokeWidth={1.5} />
+      </Link>
+    );
+  }
+
+  return (
+    <Collapsible open={open} onOpenChange={setOpen}>
+      <CollapsibleTrigger asChild>
+        <button
+          className={cn(
+            "flex items-center gap-2.5 px-3 py-[9px] rounded-lg text-[13px] transition-colors w-full",
+            isGroupActive
+              ? "text-sidebar-foreground font-semibold"
+              : "text-sidebar-foreground/60 hover:bg-sidebar-hover hover:text-sidebar-foreground font-medium"
+          )}
+        >
+          <group.icon className="h-[18px] w-[18px] flex-shrink-0" strokeWidth={1.5} />
+          <span className="flex-1 text-left">{group.label}</span>
+          <ChevronDown
+            className={cn(
+              "h-3.5 w-3.5 flex-shrink-0 transition-transform duration-200",
+              !open && "-rotate-90"
+            )}
+            strokeWidth={1.5}
+          />
+        </button>
+      </CollapsibleTrigger>
+      <CollapsibleContent>
+        <div className="space-y-0.5 mt-0.5">
+          {group.children.map((child) => {
+            const isChildActive =
+              pathname === child.href || pathname.startsWith(child.href + "/");
+            return (
+              <Link
+                key={child.href}
+                href={child.href}
+                className={cn(
+                  "flex items-center pl-7 pr-3 py-[7px] rounded-lg text-[12px] transition-colors",
+                  isChildActive
+                    ? "bg-sidebar-active text-sidebar-foreground font-semibold"
+                    : "text-sidebar-foreground/60 hover:bg-sidebar-hover hover:text-sidebar-foreground font-medium"
+                )}
+              >
+                {child.label}
+              </Link>
+            );
+          })}
+        </div>
+      </CollapsibleContent>
+    </Collapsible>
   );
 }
