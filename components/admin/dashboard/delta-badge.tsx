@@ -20,7 +20,7 @@ export function DeltaBadge({ value, up = true, delay = 0 }: DeltaBadgeProps) {
   return (
     <span
       className={`
-        font-mono text-[10.5px] font-semibold px-1.5 py-0.5 rounded-[3px]
+        num text-[10.5px] font-semibold px-1.5 py-0.5 rounded-[3px]
         inline-flex items-center gap-0.5
         transition-all duration-300
         ${up ? "bg-dash-success/[0.08] text-dash-success" : "bg-dash-danger/[0.06] text-dash-danger"}

@@ -147,7 +147,7 @@ export function Sidebar({ deal, stageHistory, onSave }: SidebarProps) {
                     {cap(v.stage)}
                   </span>
                   <span
-                    className="text-[11px] font-mono"
+                    className="text-[11px] num"
                     style={{
                       color: barColor,
                       fontWeight: v.isCurrent ? 600 : 400,
@@ -255,7 +255,7 @@ export function Sidebar({ deal, stageHistory, onSave }: SidebarProps) {
               <span className="text-[11px] text-[#8B8B8B] font-sans">
                 {x.l}
               </span>
-              <span className="text-[11px] text-[#6B6B6B] font-mono">
+              <span className="text-[11px] text-[#6B6B6B] num">
                 {x.v || "\u2014"}
               </span>
             </div>

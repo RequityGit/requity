@@ -41,7 +41,7 @@ export function TeamActivity({ entries }: TeamActivityProps) {
                 {e.detail}
               </div>
             </div>
-            <span className="text-[10px] text-dash-text-faint flex-shrink-0 font-mono">
+            <span className="text-[10px] text-dash-text-faint flex-shrink-0 num">
               {e.time}
             </span>
           </div>

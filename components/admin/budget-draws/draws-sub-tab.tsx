@@ -214,7 +214,7 @@ function DrawRequestsList({
       key: "draw_number",
       header: "Draw #",
       cell: (row) => (
-        <span className="font-mono font-medium">{row.draw_number}</span>
+        <span className="num font-medium">{row.draw_number}</span>
       ),
     },
     {
@@ -226,7 +226,7 @@ function DrawRequestsList({
       key: "amount_requested",
       header: "Amount Requested",
       cell: (row) => (
-        <span className="font-mono">{formatCurrency(row.amount_requested)}</span>
+        <span className="num">{formatCurrency(row.amount_requested)}</span>
       ),
     },
     {
@@ -234,7 +234,7 @@ function DrawRequestsList({
       header: "Amount Approved",
       cell: (row) =>
         row.amount_approved != null ? (
-          <span className="font-mono">{formatCurrency(row.amount_approved)}</span>
+          <span className="num">{formatCurrency(row.amount_approved)}</span>
         ) : (
           <span className="text-muted-foreground">—</span>
         ),
@@ -469,14 +469,14 @@ function CreateDrawSheet({
                     className="grid grid-cols-[1fr_90px_90px_90px_100px] gap-1 p-2 border-t items-center"
                   >
                     <span className="text-xs">{li.category}</span>
-                    <span className="text-xs font-mono">
+                    <span className="text-xs num">
                       {formatCurrency(li.revised_amount || li.budgeted_amount)}
                     </span>
-                    <span className="text-xs font-mono">
+                    <span className="text-xs num">
                       {formatCurrency(prevDrawn)}
                     </span>
                     <span
-                      className={`text-xs font-mono ${remaining < 0 ? "text-red-600" : ""}`}
+                      className={`text-xs num ${remaining < 0 ? "text-red-600" : ""}`}
                     >
                       {formatCurrency(remaining)}
                     </span>
@@ -493,7 +493,7 @@ function CreateDrawSheet({
                             [li.id]: e.target.value,
                           }))
                         }
-                        className={`h-7 text-xs font-mono ${
+                        className={`h-7 text-xs num ${
                           error
                             ? "border-red-400 focus-visible:ring-red-400"
                             : "border-amber-300 focus-visible:ring-amber-400"
@@ -513,7 +513,7 @@ function CreateDrawSheet({
           {/* Total */}
           <div className="flex items-center justify-end gap-2 pt-2 border-t">
             <span className="text-sm text-muted-foreground">Total Requested:</span>
-            <span className="text-lg font-bold font-mono">
+            <span className="text-lg font-bold num">
               {formatCurrency(totalRequested)}
             </span>
           </div>
@@ -595,13 +595,13 @@ function DrawDetailSheet({
               <div className="grid grid-cols-2 gap-3 text-sm">
                 <div>
                   <span className="text-xs text-muted-foreground">Requested</span>
-                  <p className="font-mono font-bold">
+                  <p className="num font-bold">
                     {formatCurrency(draw.amount_requested)}
                   </p>
                 </div>
                 <div>
                   <span className="text-xs text-muted-foreground">Approved</span>
-                  <p className="font-mono font-bold">
+                  <p className="num font-bold">
                     {draw.amount_approved != null
                       ? formatCurrency(draw.amount_approved)
                       : "—"}
@@ -658,10 +658,10 @@ function DrawDetailSheet({
                       className="grid grid-cols-[1fr_90px_90px_90px] gap-1 p-2 border-t items-center"
                     >
                       <span className="text-xs">{bli?.category ?? "—"}</span>
-                      <span className="text-xs font-mono">
+                      <span className="text-xs num">
                         {formatCurrency(dli.requested_amount)}
                       </span>
-                      <span className="text-xs font-mono">
+                      <span className="text-xs num">
                         {dli.approved_amount != null
                           ? formatCurrency(dli.approved_amount)
                           : "—"}
@@ -695,7 +695,7 @@ function DrawDetailSheet({
                   </div>
                   <div>
                     <span className="text-xs text-muted-foreground">Completion %</span>
-                    <p className="font-mono">
+                    <p className="num">
                       {draw.completion_pct != null
                         ? `${draw.completion_pct}%`
                         : "—"}
@@ -723,7 +723,7 @@ function DrawDetailSheet({
                   </div>
                   <div>
                     <span className="text-xs text-muted-foreground">Amount</span>
-                    <p className="font-mono">
+                    <p className="num">
                       {formatCurrency(draw.wire_amount)}
                     </p>
                   </div>
@@ -731,7 +731,7 @@ function DrawDetailSheet({
                     <span className="text-xs text-muted-foreground">
                       Confirmation #
                     </span>
-                    <p className="font-mono text-xs">
+                    <p className="num text-xs">
                       {draw.wire_confirmation_number || "—"}
                     </p>
                   </div>
@@ -984,7 +984,7 @@ function ApproveDrawDialog({
                   className="grid grid-cols-[1fr_100px_100px] gap-2 p-2 border-t items-center"
                 >
                   <span className="text-xs">{bli?.category ?? "—"}</span>
-                  <span className="text-xs font-mono">
+                  <span className="text-xs num">
                     {formatCurrency(dli.requested_amount)}
                   </span>
                   <Input
@@ -999,7 +999,7 @@ function ApproveDrawDialog({
                         [dli.id]: e.target.value,
                       }))
                     }
-                    className="h-7 text-xs font-mono border-green-300 focus-visible:ring-green-400"
+                    className="h-7 text-xs num border-green-300 focus-visible:ring-green-400"
                   />
                 </div>
               );
@@ -1008,7 +1008,7 @@ function ApproveDrawDialog({
 
           <div className="flex items-center justify-end gap-2">
             <span className="text-sm text-muted-foreground">Total Approved:</span>
-            <span className="text-lg font-bold font-mono">
+            <span className="text-lg font-bold num">
               {formatCurrency(totalApproved)}
             </span>
           </div>
@@ -1283,7 +1283,7 @@ function RecordWireDialog({
                 min="0"
                 value={wireAmount}
                 onChange={(e) => setWireAmount(e.target.value)}
-                className="font-mono"
+                className="num"
                 required
               />
             </div>
@@ -1294,7 +1294,7 @@ function RecordWireDialog({
               value={confirmationNumber}
               onChange={(e) => setConfirmationNumber(e.target.value)}
               placeholder="Wire confirmation #"
-              className="font-mono"
+              className="num"
             />
           </div>
         </div>

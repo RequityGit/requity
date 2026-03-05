@@ -192,7 +192,7 @@ export function MetricCard({
   return (
     <div className="min-w-[120px] flex-1">
       <div className="mb-1 text-xs text-[#8B8B8B] font-sans">{label}</div>
-      <div className="text-xl font-semibold text-[#1A1A1A] font-mono">
+      <div className="text-xl font-semibold text-[#1A1A1A] num">
         {value}
       </div>
     </div>
@@ -224,7 +224,7 @@ export function FieldRow({
       <span
         className={cn(
           "max-w-[60%] text-right text-[13px] font-medium",
-          mono ? "font-mono" : "font-sans",
+          mono ? "num" : "font-sans",
           link ? "text-[#3B82F6]" : "text-[#1A1A1A]"
         )}
       >

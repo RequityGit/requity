@@ -164,7 +164,7 @@ function ChangeOrdersList({
       key: "request_number",
       header: "CO #",
       cell: (row) => (
-        <span className="font-mono font-medium">
+        <span className="num font-medium">
           {row.request_number || `CO-${changeRequests.indexOf(row) + 1}`}
         </span>
       ),
@@ -188,7 +188,7 @@ function ChangeOrdersList({
       header: "Net Change",
       cell: (row) => (
         <span
-          className={`font-mono text-sm ${
+          className={`num text-sm ${
             row.net_budget_change > 0
               ? "text-red-600"
               : row.net_budget_change < 0
@@ -283,14 +283,14 @@ function ChangeOrdersList({
                       <span className="text-xs">
                         {bli?.category || li.category || "New Item"}
                       </span>
-                      <span className="text-xs font-mono">
+                      <span className="text-xs num">
                         {formatCurrency(li.current_amount)}
                       </span>
-                      <span className="text-xs font-mono">
+                      <span className="text-xs num">
                         {formatCurrency(li.proposed_amount)}
                       </span>
                       <span
-                        className={`text-xs font-mono ${
+                        className={`text-xs num ${
                           li.delta_amount > 0
                             ? "text-red-600"
                             : li.delta_amount < 0
@@ -560,7 +560,7 @@ function CreateChangeOrderDialog({
                     {li.lineItemId && li.changeAction !== "add" && (
                       <div className="text-xs text-muted-foreground">
                         Current:{" "}
-                        <span className="font-mono">
+                        <span className="num">
                           {formatCurrency(
                             budgetLineItems.find((b) => b.id === li.lineItemId)
                               ?.revised_amount || 0
@@ -577,7 +577,7 @@ function CreateChangeOrderDialog({
                         updateLineItem(idx, "proposedAmount", e.target.value)
                       }
                       placeholder="Proposed amount"
-                      className="w-36 h-8 text-sm font-mono"
+                      className="w-36 h-8 text-sm num"
                     />
                   </div>
                 )}
@@ -599,7 +599,7 @@ function CreateChangeOrderDialog({
           <div className="flex items-center justify-end gap-2 pt-2 border-t">
             <span className="text-sm text-muted-foreground">Net Budget Change:</span>
             <span
-              className={`text-lg font-bold font-mono ${
+              className={`text-lg font-bold num ${
                 netChange > 0 ? "text-red-600" : netChange < 0 ? "text-green-600" : ""
               }`}
             >
@@ -758,7 +758,7 @@ function ApproveChangeOrderDialog({
           <p className="text-sm text-muted-foreground">
             This will apply {coLineItems.length} line item change
             {coLineItems.length !== 1 ? "s" : ""} with a net budget change of{" "}
-            <span className="font-mono font-bold">
+            <span className="num font-bold">
               {co.net_budget_change > 0 ? "+" : ""}
               {formatCurrency(co.net_budget_change)}
             </span>

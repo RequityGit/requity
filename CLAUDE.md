@@ -375,3 +375,69 @@ echo "https://github.com/RequityGit/borrwerportal/compare/main...<branch-name>"
 - If `gh auth status` fails, provide the GitHub compare URL so the user can create the PR with one click
 - PR body should include a `## Summary` section with bullet points describing the changes
 - ALWAYS include either the PR URL or the compare URL in your response — never leave the user without a link
+
+## Typography
+
+### Font
+The app uses **Inter** exclusively — the shadcn default. Do not introduce additional font families. Inter is loaded globally and available via Tailwind's `font-sans`.
+
+### The `.num` Rule — Apply to ALL numeric values
+
+Any element rendering a **number, currency, percentage, date, or timestamp** must use the `num` CSS class (or Tailwind `tabular-nums` utility). This is non-negotiable for financial data.
+
+```css
+/* globals.css */
+.num {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum";
+  letter-spacing: -0.025em;
+}
+```
+
+**Why:** `tabular-nums` makes every digit equal-width so table columns align perfectly and numbers don't visually "jump" as values change.
+
+#### Apply `.num` to:
+| Context | Example |
+|---|---|
+| KPI / stat card values | `$464.7M`, `0.0%` |
+| Table cells with numbers | amounts, days, rates |
+| Currency anywhere | `$50,000` |
+| Percentages | `+0%`, `12.4%` |
+| Badge counts | `5`, `+0` |
+| Timestamps & dates | `3d ago`, `Mar 4` |
+| Chart axis ticks | custom `<NumericTick>` component |
+| Chart tooltips | value inside tooltip |
+
+#### Never apply `.num` to:
+- Labels, headings, prose, descriptions
+- Stage names (e.g. "Application", "Processing")
+- Borrower names or deal names
+
+### Font Weights on Dark Backgrounds
+
+Inter can appear lighter than expected on dark surfaces. Follow these weight guidelines:
+
+| Context | Weight | Class |
+|---|---|---|
+| Hero KPI numbers | 700 | `font-bold num tracking-tight` |
+| Table amounts | 500 | `font-medium num` |
+| Secondary numbers | 400 | `font-normal num` |
+| Timestamps | 400 | `font-normal num text-muted-foreground` |
+
+### Chart Typography
+
+All Recharts axis labels and tooltip values must use the shared `NumericTick` component:
+
+```tsx
+// components/ui/charts/numeric-tick.tsx
+import { NumericTick } from "@/components/ui/charts/numeric-tick"
+
+<XAxis tick={<NumericTick />} />
+<YAxis tick={<NumericTick anchor="end" />} />
+```
+
+### Scope
+
+These typography rules apply to **all internal app pages and components**.
+
+Do not apply to pages under the Requity Group external site (marketing/public pages) — those follow their own design system.

@@ -414,17 +414,17 @@ export function HistoricalsTab({
                       Effective Gross Income
                     </td>
                     {egiAmounts.map((amt, i) => (
-                      <td key={i} className="p-2 text-right font-mono">
+                      <td key={i} className="p-2 text-right num">
                         {formatAccounting(amt)}
                       </td>
                     ))}
-                    <td className="p-2 text-right font-mono bg-slate-100">
+                    <td className="p-2 text-right num bg-slate-100">
                       {formatAccounting(egiAnnual)}
                     </td>
-                    <td className="p-2 text-right font-mono bg-slate-100">
+                    <td className="p-2 text-right num bg-slate-100">
                       {formatPerUnit(egiAnnual)}
                     </td>
-                    <td className="p-2 text-right font-mono bg-slate-100">
+                    <td className="p-2 text-right num bg-slate-100">
                       100.0%
                     </td>
                     <td className="p-2 bg-amber-50" />
@@ -459,17 +459,17 @@ export function HistoricalsTab({
                       Total Operating Expenses
                     </td>
                     {totalExpenseAmounts.map((amt, i) => (
-                      <td key={i} className="p-2 text-right font-mono text-red-700">
+                      <td key={i} className="p-2 text-right num text-red-700">
                         {formatAccounting(amt)}
                       </td>
                     ))}
-                    <td className="p-2 text-right font-mono text-red-700 bg-slate-100">
+                    <td className="p-2 text-right num text-red-700 bg-slate-100">
                       {formatAccounting(totalExpenseAnnual)}
                     </td>
-                    <td className="p-2 text-right font-mono bg-slate-100">
+                    <td className="p-2 text-right num bg-slate-100">
                       {formatPerUnit(totalExpenseAnnual)}
                     </td>
-                    <td className="p-2 text-right font-mono bg-slate-100">
+                    <td className="p-2 text-right num bg-slate-100">
                       {formatPctEGI(totalExpenseAnnual)}
                     </td>
                     <td className="p-2 bg-amber-50" />
@@ -481,17 +481,17 @@ export function HistoricalsTab({
                       Net Operating Income
                     </td>
                     {noiAmounts.map((amt, i) => (
-                      <td key={i} className="p-2 text-right font-mono">
+                      <td key={i} className="p-2 text-right num">
                         {formatAccounting(amt)}
                       </td>
                     ))}
-                    <td className="p-2 text-right font-mono bg-blue-100">
+                    <td className="p-2 text-right num bg-blue-100">
                       {formatAccounting(noiAnnual)}
                     </td>
-                    <td className="p-2 text-right font-mono bg-blue-100">
+                    <td className="p-2 text-right num bg-blue-100">
                       {formatPerUnit(noiAnnual)}
                     </td>
-                    <td className="p-2 text-right font-mono bg-blue-100">
+                    <td className="p-2 text-right num bg-blue-100">
                       {formatPctEGI(noiAnnual)}
                     </td>
                     <td className="p-2 bg-amber-50" />
@@ -562,13 +562,13 @@ function CategoryRow({
           {data.label}
         </td>
         {Array.from({ length: 12 }, (_, i) => (
-          <td key={i} className="p-2 text-right font-mono text-muted-foreground">
+          <td key={i} className="p-2 text-right num text-muted-foreground">
             —
           </td>
         ))}
-        <td className="p-2 text-right font-mono bg-slate-50 text-muted-foreground">—</td>
-        <td className="p-2 text-right font-mono bg-slate-50 text-muted-foreground">—</td>
-        <td className="p-2 text-right font-mono bg-slate-50 text-muted-foreground">—</td>
+        <td className="p-2 text-right num bg-slate-50 text-muted-foreground">—</td>
+        <td className="p-2 text-right num bg-slate-50 text-muted-foreground">—</td>
+        <td className="p-2 text-right num bg-slate-50 text-muted-foreground">—</td>
         <td className="p-2 bg-amber-50">
           <Input
             type="number"
@@ -630,7 +630,7 @@ function CategoryRow({
         {data.amounts.map((amt, i) => (
           <td
             key={i}
-            className={`p-2 text-right font-mono ${
+            className={`p-2 text-right num ${
               isNegative && amt > 0 ? "text-red-600" : ""
             }`}
           >
@@ -638,16 +638,16 @@ function CategoryRow({
           </td>
         ))}
         <td
-          className={`p-2 text-right font-mono font-medium bg-slate-50 ${
+          className={`p-2 text-right num font-medium bg-slate-50 ${
             hasOverride ? "line-through text-muted-foreground" : ""
           } ${isNegative && data.annualTotal > 0 ? "text-red-600" : ""}`}
         >
           {formatAccounting(data.annualTotal)}
         </td>
-        <td className="p-2 text-right font-mono bg-slate-50">
+        <td className="p-2 text-right num bg-slate-50">
           {formatPerUnit(displayTotal)}
         </td>
-        <td className="p-2 text-right font-mono bg-slate-50">
+        <td className="p-2 text-right num bg-slate-50">
           {!data.isIncome ? formatPctEGI(displayTotal) : ""}
         </td>
         <td className="p-2 bg-amber-50">
@@ -685,7 +685,7 @@ function CategoryRow({
               {lineItem.original_row_label}
             </td>
             {Array.from({ length: 12 }, (_, m) => (
-              <td key={m} className="p-2 text-right font-mono text-xs">
+              <td key={m} className="p-2 text-right num text-xs">
                 {getLineItemMonthAmount(lineItem, m) !== 0
                   ? formatCurrency(
                       Math.abs(getLineItemMonthAmount(lineItem, m))
@@ -693,7 +693,7 @@ function CategoryRow({
                   : "—"}
               </td>
             ))}
-            <td className="p-2 text-right font-mono text-xs bg-slate-100/50">
+            <td className="p-2 text-right num text-xs bg-slate-100/50">
               {formatCurrency(Math.abs(lineItem.annual_total ?? 0))}
             </td>
             <td className="p-2 bg-slate-100/50" />

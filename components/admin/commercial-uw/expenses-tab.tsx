@@ -99,10 +99,10 @@ export function ExpensesTab({
                   return (
                     <tr key={cat} className="border-b">
                       <td className="p-2">{EXPENSE_CATEGORY_LABELS[cat]}</td>
-                      <td className="p-2 text-right font-mono">
+                      <td className="p-2 text-right num">
                         {def ? `$${def.per_unit_amount.toLocaleString()}` : "—"}
                       </td>
-                      <td className="p-2 text-right font-mono">
+                      <td className="p-2 text-right num">
                         {expenseDefaultAmounts[cat]
                           ? formatCurrency(expenseDefaultAmounts[cat])
                           : "—"}
@@ -147,10 +147,10 @@ export function ExpensesTab({
                 {/* Mgmt Fee */}
                 <tr className="border-b">
                   <td className="p-2">Management Fee (%)</td>
-                  <td className="p-2 text-right font-mono">
+                  <td className="p-2 text-right num">
                     {t12?.mgmt_fee ? formatCurrency(t12.mgmt_fee) : "—"}
                   </td>
-                  <td className="p-2 text-right font-mono">8%</td>
+                  <td className="p-2 text-right num">8%</td>
                   <td className="p-2">
                     <Input
                       type="number"
@@ -164,7 +164,7 @@ export function ExpensesTab({
                       className="h-7 text-xs w-20 text-right ml-auto bg-green-50 border-green-200"
                     />
                   </td>
-                  <td className="p-2 text-right font-mono font-medium">
+                  <td className="p-2 text-right num font-medium">
                     {formatCurrency(yr1Expenses.mgmt_fee ?? 0)}
                   </td>
                 </tr>
@@ -185,7 +185,7 @@ export function ExpensesTab({
                           className="h-7 text-xs w-24 text-right ml-auto"
                         />
                       </td>
-                      <td className="p-2 text-right font-mono">
+                      <td className="p-2 text-right num">
                         {formatCurrency(expenseDefaultAmounts[cat] ?? 0)}
                       </td>
                       <td className="p-2">
@@ -204,7 +204,7 @@ export function ExpensesTab({
                           className="h-7 text-xs w-24 text-right ml-auto bg-green-50 border-green-200"
                         />
                       </td>
-                      <td className="p-2 text-right font-mono font-medium">
+                      <td className="p-2 text-right num font-medium">
                         {formatCurrency(yr1Expenses[cat] ?? 0)}
                       </td>
                     </tr>
@@ -216,7 +216,7 @@ export function ExpensesTab({
                   <td className="p-2"></td>
                   <td className="p-2"></td>
                   <td className="p-2"></td>
-                  <td className="p-2 text-right font-mono">
+                  <td className="p-2 text-right num">
                     {formatCurrency(yr1Expenses.total_opex ?? 0)}
                   </td>
                 </tr>

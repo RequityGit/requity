@@ -123,13 +123,13 @@ export default async function LoanDetailPage({ params }: LoanDetailPageProps) {
               <div className="space-y-2 text-sm">
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Loan Amount</span>
-                  <span className="font-medium font-mono">
+                  <span className="font-medium num">
                     {formatCurrency(loan.loan_amount)}
                   </span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Interest Rate</span>
-                  <span className="font-medium font-mono">
+                  <span className="font-medium num">
                     {formatPercent(loan.interest_rate)}
                   </span>
                 </div>
@@ -142,7 +142,7 @@ export default async function LoanDetailPage({ params }: LoanDetailPageProps) {
                 {loan.ltv != null && (
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">LTV</span>
-                    <span className="font-medium font-mono">
+                    <span className="font-medium num">
                       {formatPercent(loan.ltv)}
                     </span>
                   </div>
@@ -167,7 +167,7 @@ export default async function LoanDetailPage({ params }: LoanDetailPageProps) {
                     <span className="text-muted-foreground">
                       Appraised Value
                     </span>
-                    <span className="font-medium font-mono">
+                    <span className="font-medium num">
                       {formatCurrency(loan.appraised_value)}
                     </span>
                   </div>

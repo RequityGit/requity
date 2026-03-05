@@ -28,10 +28,7 @@ export function KpiCard({
           </span>
           {icon && <div className="text-muted-foreground">{icon}</div>}
         </div>
-        <div className={cn(
-          "text-[22px] md:text-[26px] font-bold tracking-[-0.04em] text-foreground",
-          isFinancial && "font-mono"
-        )}>
+        <div className="num text-[22px] md:text-[26px] font-bold tracking-tight text-foreground">
           {value}
         </div>
         {description && (

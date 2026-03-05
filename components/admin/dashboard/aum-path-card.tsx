@@ -45,11 +45,11 @@ export function AumPathCard({
       <span className="text-[9px] font-bold uppercase tracking-[0.14em] text-primary-foreground relative">
         Path to $1B AUM
       </span>
-      <div className="font-mono text-[32px] font-bold text-primary-foreground mt-1.5 leading-none relative">
+      <div className="num text-[32px] font-bold text-primary-foreground mt-1.5 leading-none relative">
         {aumDisplay}
         <span className="text-[17px] text-primary-foreground/60 font-semibold">{aumSuffix}</span>
       </div>
-      <div className="text-[10px] text-primary-foreground/60 font-mono mt-0.5">
+      <div className="text-[10px] text-primary-foreground/60 num mt-0.5">
         {pct.toFixed(2)}% of target
       </div>
 
@@ -71,7 +71,7 @@ export function AumPathCard({
             <div className="text-[8px] font-bold uppercase tracking-[0.08em] text-primary-foreground/60">
               {m.label}
             </div>
-            <div className="font-mono text-[13px] font-bold text-primary-foreground mt-0.5">
+            <div className="num text-[13px] font-bold text-primary-foreground mt-0.5">
               {m.value}
             </div>
           </div>

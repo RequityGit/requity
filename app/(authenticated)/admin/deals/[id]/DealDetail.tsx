@@ -185,7 +185,7 @@ export function DealDetail({
                 {t.l}
                 {t.c != null && (
                   <span
-                    className="rounded-full px-[7px] py-px text-[11px] font-semibold font-mono"
+                    className="rounded-full px-[7px] py-px text-[11px] font-semibold num"
                     style={{
                       background: tab === t.k ? "#1A1A1A" : "#F0F0F2",
                       color: tab === t.k ? "#FFF" : "#6B6B6B",

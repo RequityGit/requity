@@ -152,7 +152,7 @@ export function ProFormaTab({
                       {row.label}
                     </td>
                     {proforma.map((p) => (
-                      <td key={p.year} className="p-2 text-right font-mono">
+                      <td key={p.year} className="p-2 text-right num">
                         {formatValue(
                           p[row.key] as number,
                           p.egi,
@@ -177,7 +177,7 @@ export function ProFormaTab({
                       return (
                         <td
                           key={p.year}
-                          className={`p-2 text-right font-mono ${
+                          className={`p-2 text-right num ${
                             mr.key === "dscr" ? dscrColor(val) : ""
                           }`}
                         >
@@ -205,7 +205,7 @@ export function ProFormaTab({
               const height = Math.max((p.noi / maxNOI) * 100, 2);
               return (
                 <div key={p.year} className="flex-1 flex flex-col items-center gap-1">
-                  <span className="text-[10px] font-mono">
+                  <span className="text-[10px] num">
                     {formatCurrency(p.noi)}
                   </span>
                   <div

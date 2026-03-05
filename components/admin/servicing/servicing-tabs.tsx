@@ -127,7 +127,7 @@ function LoanTapeTab({
       : loans.filter((l: any) => l.loan_status === filter);
 
   const columns: Column<any>[] = [
-    { key: "loan_id", header: "Loan ID", cell: (r) => <span className="font-mono font-medium text-blue-700">{r.loan_id}</span> },
+    { key: "loan_id", header: "Loan ID", cell: (r) => <span className="num font-medium text-blue-700">{r.loan_id}</span> },
     { key: "borrower_name", header: "Borrower", cell: (r) => r.borrower_name ?? "—" },
     { key: "entity_name", header: "Entity", cell: (r) => <span className="text-xs">{r.entity_name ?? "—"}</span>, className: "max-w-[200px] truncate" },
     { key: "loan_type", header: "Type", cell: (r) => r.loan_type ?? "—" },
@@ -185,7 +185,7 @@ function InterestCalculatorTab() {
   }
 
   const columns: Column<any>[] = [
-    { key: "loan_id", header: "Loan", cell: (r) => <span className="font-mono font-medium">{r.loan_id}</span> },
+    { key: "loan_id", header: "Loan", cell: (r) => <span className="num font-medium">{r.loan_id}</span> },
     { key: "entity_name", header: "Entity", cell: (r) => <span className="text-xs">{r.entity_name ?? "—"}</span>, className: "max-w-[180px] truncate" },
     { key: "dutch", header: "Type", cell: (r) => <StatusBadge status={r.dutch} /> },
     { key: "rate", header: "Rate", cell: (r) => r.rate != null ? formatPercent(r.rate * 100) : "—" },
@@ -193,7 +193,7 @@ function InterestCalculatorTab() {
     { key: "mid_month_draw", header: "Mid-Mo Draw", cell: (r) => r.mid_month_draw > 0 ? formatCurrency(r.mid_month_draw) : "—" },
     { key: "total_days", header: "Days", cell: (r) => r.total_days },
     { key: "interest_due", header: "Interest Due", cell: (r) => <span className="font-medium">{formatCurrencyDetailed(r.interest_due)}</span> },
-    { key: "audit_trail", header: "Audit", cell: (r) => <span className="text-[11px] font-mono text-muted-foreground">{r.audit_trail}</span> },
+    { key: "audit_trail", header: "Audit", cell: (r) => <span className="text-[11px] num text-muted-foreground">{r.audit_trail}</span> },
     { key: "check_status", header: "Check", cell: (r) => <span className={r.check_status?.includes("PASS") ? "text-green-600 font-medium" : "text-muted-foreground"}>{r.check_status}</span> },
   ];
 
@@ -241,7 +241,7 @@ function InterestCalculatorTab() {
 function DrawsTab({ draws }: { draws: any[] }) {
   const columns: Column<any>[] = [
     { key: "draw_number", header: "#", cell: (r) => r.draw_number },
-    { key: "loan_id", header: "Loan", cell: (r) => <span className="font-mono">{r.loan_id}</span> },
+    { key: "loan_id", header: "Loan", cell: (r) => <span className="num">{r.loan_id}</span> },
     { key: "entity_name", header: "Entity", cell: (r) => <span className="text-xs">{r.entity_name ?? "—"}</span>, className: "max-w-[200px] truncate" },
     { key: "line_item", header: "Description", cell: (r) => r.line_item },
     { key: "amount", header: "Amount", cell: (r) => formatCurrency(r.amount) },
@@ -258,7 +258,7 @@ function DrawsTab({ draws }: { draws: any[] }) {
 function PaymentsTab({ payments }: { payments: any[] }) {
   const columns: Column<any>[] = [
     { key: "date", header: "Date", cell: (r) => formatDate(r.date) },
-    { key: "loan_id", header: "Loan", cell: (r) => <span className="font-mono">{r.loan_id}</span> },
+    { key: "loan_id", header: "Loan", cell: (r) => <span className="num">{r.loan_id}</span> },
     { key: "borrower", header: "Borrower", cell: (r) => r.borrower ?? "—" },
     { key: "type", header: "Type", cell: (r) => r.type },
     { key: "amount_due", header: "Due", cell: (r) => formatCurrencyDetailed(r.amount_due) },
@@ -276,7 +276,7 @@ function PaymentsTab({ payments }: { payments: any[] }) {
 
 function MaturitiesTab({ maturities }: { maturities: any[] }) {
   const columns: Column<any>[] = [
-    { key: "loan_id", header: "Loan", cell: (r) => <span className="font-mono font-medium">{r.loan_id}</span> },
+    { key: "loan_id", header: "Loan", cell: (r) => <span className="num font-medium">{r.loan_id}</span> },
     { key: "borrower_name", header: "Borrower", cell: (r) => r.borrower_name ?? "—" },
     { key: "property_address", header: "Property", cell: (r) => <span className="text-xs">{r.property_address ?? "—"}</span>, className: "max-w-[250px] truncate" },
     { key: "maturity_date", header: "Maturity", cell: (r) => formatDate(r.maturity_date) },
@@ -337,7 +337,7 @@ function ReconciliationTab() {
   }
 
   const drawColumns: Column<any>[] = [
-    { key: "loan_id", header: "Loan", cell: (r) => <span className="font-mono">{r.loan_id}</span> },
+    { key: "loan_id", header: "Loan", cell: (r) => <span className="num">{r.loan_id}</span> },
     { key: "entity_name", header: "Entity", cell: (r) => <span className="text-xs">{r.entity_name ?? "—"}</span> },
     { key: "loan_funds_released", header: "Funds Released", cell: (r) => formatCurrency(r.loan_funds_released) },
     { key: "total_funded_draws", header: "Total Draws", cell: (r) => formatCurrency(r.total_funded_draws) },
@@ -346,7 +346,7 @@ function ReconciliationTab() {
   ];
 
   const interestColumns: Column<any>[] = [
-    { key: "loan_id", header: "Loan", cell: (r) => <span className="font-mono">{r.loan_id}</span> },
+    { key: "loan_id", header: "Loan", cell: (r) => <span className="num">{r.loan_id}</span> },
     { key: "entity_name", header: "Entity", cell: (r) => <span className="text-xs">{r.entity_name ?? "—"}</span> },
     { key: "calculated_interest", header: "Calculated", cell: (r) => formatCurrencyDetailed(r.calculated_interest) },
     { key: "payment_interest", header: "Payment", cell: (r) => formatCurrencyDetailed(r.payment_interest) },

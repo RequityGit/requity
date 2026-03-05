@@ -76,7 +76,7 @@ export function VersionHistory({
           <TableBody>
             {versions.map((v) => (
               <TableRow key={v.id}>
-                <TableCell className="font-mono text-sm">
+                <TableCell className="num text-sm">
                   v{v.version}
                 </TableCell>
                 <TableCell className="truncate max-w-[300px]">

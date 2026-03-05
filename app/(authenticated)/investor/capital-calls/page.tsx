@@ -116,7 +116,7 @@ export default async function ContributionsPage({
       key: "call_amount",
       header: "Contribution Amount",
       cell: (row) => (
-        <span className="font-medium">{formatCurrency(row.call_amount)}</span>
+        <span className="num font-medium">{formatCurrency(row.call_amount)}</span>
       ),
     },
     {
@@ -127,7 +127,7 @@ export default async function ContributionsPage({
           row.status === "pending" &&
           new Date(row.due_date) < new Date();
         return (
-          <span className={isOverdue ? "text-red-600 font-medium" : ""}>
+          <span className={`num ${isOverdue ? "text-red-600 font-medium" : ""}`}>
             {formatDate(row.due_date)}
           </span>
         );

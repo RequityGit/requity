@@ -266,7 +266,7 @@ function CreateBudgetModal({
                     value={li.budgetAmount}
                     onChange={(e) => updateLineItem(idx, "budgetAmount", e.target.value)}
                     placeholder="0.00"
-                    className="h-8 text-sm font-mono"
+                    className="h-8 text-sm num"
                   />
                   <Button
                     type="button"
@@ -295,7 +295,7 @@ function CreateBudgetModal({
             </Button>
             <div className="text-right">
               <span className="text-xs text-muted-foreground">Total Budget: </span>
-              <span className="text-lg font-bold font-mono">
+              <span className="text-lg font-bold num">
                 {formatCurrency(totalBudget)}
               </span>
             </div>
@@ -474,7 +474,7 @@ function ActiveBudgetView({
               type="number"
               step="0.01"
               min="0"
-              className="h-7 w-28 text-sm font-mono"
+              className="h-7 w-28 text-sm num"
               defaultValue={row.budgeted_amount}
               onChange={(e) => {
                 setEditValues((prev) => ({
@@ -489,7 +489,7 @@ function ActiveBudgetView({
             />
           );
         }
-        return <span className="font-mono text-sm">{formatCurrency(row.budgeted_amount)}</span>;
+        return <span className="num text-sm">{formatCurrency(row.budgeted_amount)}</span>;
       },
     },
     {
@@ -497,7 +497,7 @@ function ActiveBudgetView({
       header: "% of Budget",
       cell: (row) => {
         const pct = totalBudget > 0 ? (row.budgeted_amount / totalBudget) * 100 : 0;
-        return <span className="font-mono text-sm">{pct.toFixed(1)}%</span>;
+        return <span className="num text-sm">{pct.toFixed(1)}%</span>;
       },
     },
   ];
@@ -560,7 +560,7 @@ function ActiveBudgetView({
       {/* Footer total */}
       <div className="flex items-center justify-end gap-2 pt-2 border-t">
         <span className="text-sm text-muted-foreground">Total Budget:</span>
-        <span className="text-lg font-bold font-mono">{formatCurrency(totalBudget)}</span>
+        <span className="text-lg font-bold num">{formatCurrency(totalBudget)}</span>
       </div>
     </div>
   );

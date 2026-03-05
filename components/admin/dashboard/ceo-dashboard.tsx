@@ -210,7 +210,7 @@ function HeroMetricsSection({
           </div>
           <div className="flex items-baseline gap-2">
             <span
-              className="text-[28px] font-bold font-mono"
+              className="text-[28px] font-bold num"
               style={{ letterSpacing: "-0.04em" }}
             >
               {m.value}
@@ -288,7 +288,7 @@ function ChartsSection({
           >
             <TrendingUp size={13} strokeWidth={2} color={t.success} />
             <span
-              className="text-xs font-semibold font-mono"
+              className="text-xs font-semibold num"
               style={{ color: t.success }}
             >
               +{Math.abs(aumChangePercent)}%
@@ -548,7 +548,7 @@ function PipelineActivitySection({
                     {deal.borrower}
                   </td>
                   <td
-                    className="px-3 py-2.5 text-[13px] font-semibold font-mono"
+                    className="px-3 py-2.5 text-[13px] font-semibold num"
                     style={{ borderBottom: `1px solid ${t.borderLight}` }}
                   >
                     {fmtAmount(deal.amount)}
@@ -569,7 +569,7 @@ function PipelineActivitySection({
                     <CEOStagePill stage={deal.stage} t={t} />
                   </td>
                   <td
-                    className="px-3 py-2.5 text-xs font-mono"
+                    className="px-3 py-2.5 text-xs num"
                     style={{
                       color:
                         deal.daysInStage > 7 ? t.warning : t.textTertiary,
@@ -694,7 +694,7 @@ function ActivityFeed({
                 <div className="text-[13px] font-medium leading-snug">
                   {item.text}
                   {item.amount && (
-                    <span className="font-mono font-semibold ml-1">
+                    <span className="num font-semibold ml-1">
                       {item.amount}
                     </span>
                   )}
@@ -814,7 +814,7 @@ function PortfolioSection({
                   >
                     Units
                   </div>
-                  <div className="text-base font-bold font-mono mt-0.5">
+                  <div className="text-base font-bold num mt-0.5">
                     {prop.units}
                   </div>
                 </div>
@@ -829,7 +829,7 @@ function PortfolioSection({
                     Occ.
                   </div>
                   <div
-                    className="text-base font-bold font-mono mt-0.5"
+                    className="text-base font-bold num mt-0.5"
                     style={{ color: occColor }}
                   >
                     {prop.occupancy}%
@@ -845,7 +845,7 @@ function PortfolioSection({
                   >
                     NOI
                   </div>
-                  <div className="text-base font-bold font-mono mt-0.5">
+                  <div className="text-base font-bold num mt-0.5">
                     {prop.noi}
                   </div>
                 </div>

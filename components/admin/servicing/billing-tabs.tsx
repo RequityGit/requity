@@ -203,7 +203,7 @@ function BillingCyclesTab({ cycles }: { cycles: any[] }) {
       key: "billing_month",
       header: "Month",
       cell: (r) => (
-        <span className="font-mono font-medium">
+        <span className="num font-medium">
           {new Date(r.billing_month + "T00:00:00").toLocaleDateString("en-US", {
             year: "numeric",
             month: "short",
@@ -246,7 +246,7 @@ function BillingCyclesTab({ cycles }: { cycles: any[] }) {
     {
       key: "loan_id",
       header: "Loan",
-      cell: (r) => <span className="font-mono font-medium">{r.loan_id}</span>,
+      cell: (r) => <span className="num font-medium">{r.loan_id}</span>,
     },
     {
       key: "interest_method",
@@ -496,7 +496,7 @@ function BillingCyclesTab({ cycles }: { cycles: any[] }) {
                     Download .ach
                   </Button>
                 </div>
-                <pre className="p-3 bg-muted rounded-lg text-[11px] font-mono overflow-x-auto max-h-48 leading-relaxed">
+                <pre className="p-3 bg-muted rounded-lg text-[11px] num overflow-x-auto max-h-48 leading-relaxed">
                   {nachaContent.slice(0, 2000)}
                   {nachaContent.length > 2000 && "\n... (truncated)"}
                 </pre>
@@ -607,7 +607,7 @@ function GenerateBillingTab({ activeLoans }: { activeLoans: any[] }) {
                 key={loan.loan_id}
                 className="text-xs p-2 border rounded-md"
               >
-                <span className="font-mono font-medium">{loan.loan_id}</span>
+                <span className="num font-medium">{loan.loan_id}</span>
                 <span className="text-muted-foreground ml-1">
                   {loan.dutch_interest ? "D" : "ND"}
                 </span>
@@ -848,19 +848,19 @@ function PayoffQuoteTab({ activeLoans }: { activeLoans: any[] }) {
                   <p className="text-muted-foreground text-xs">
                     Principal Balance
                   </p>
-                  <p className="font-mono font-semibold text-lg">
+                  <p className="num font-semibold text-lg">
                     {formatCurrencyDetailed(quote.funded_balance)}
                   </p>
                 </div>
                 <div>
                   <p className="text-muted-foreground text-xs">Per Diem</p>
-                  <p className="font-mono font-medium">
+                  <p className="num font-medium">
                     ${Number(quote.per_diem_amount).toFixed(4)}/day
                   </p>
                 </div>
                 <div>
                   <p className="text-muted-foreground text-xs">Days Accrued</p>
-                  <p className="font-mono font-medium">
+                  <p className="num font-medium">
                     {quote.days_to_payoff} days
                   </p>
                 </div>
@@ -868,7 +868,7 @@ function PayoffQuoteTab({ activeLoans }: { activeLoans: any[] }) {
                   <p className="text-muted-foreground text-xs">
                     Accrued Interest
                   </p>
-                  <p className="font-mono font-medium">
+                  <p className="num font-medium">
                     {formatCurrencyDetailed(quote.accrued_interest)}
                   </p>
                 </div>
@@ -876,7 +876,7 @@ function PayoffQuoteTab({ activeLoans }: { activeLoans: any[] }) {
                   <p className="text-muted-foreground text-xs">
                     Unpaid Billed Interest
                   </p>
-                  <p className="font-mono font-medium">
+                  <p className="num font-medium">
                     {formatCurrencyDetailed(quote.unpaid_billed_interest)}
                   </p>
                 </div>
@@ -884,7 +884,7 @@ function PayoffQuoteTab({ activeLoans }: { activeLoans: any[] }) {
                   <p className="text-muted-foreground text-xs">
                     Outstanding Fees
                   </p>
-                  <p className="font-mono font-medium">
+                  <p className="num font-medium">
                     {formatCurrencyDetailed(quote.outstanding_fees)}
                   </p>
                 </div>
@@ -892,7 +892,7 @@ function PayoffQuoteTab({ activeLoans }: { activeLoans: any[] }) {
               <div className="border-t pt-3">
                 <div className="flex items-baseline justify-between">
                   <p className="text-sm font-medium">Total Payoff Amount</p>
-                  <p className="font-mono font-bold text-2xl">
+                  <p className="num font-bold text-2xl">
                     {formatCurrencyDetailed(quote.total_payoff_amount)}
                   </p>
                 </div>
@@ -935,7 +935,7 @@ function DelinquencyTab({ records }: { records: any[] }) {
     {
       key: "loan_id",
       header: "Loan",
-      cell: (r) => <span className="font-mono font-medium">{r.loan_id}</span>,
+      cell: (r) => <span className="num font-medium">{r.loan_id}</span>,
     },
     {
       key: "delinquency_status",

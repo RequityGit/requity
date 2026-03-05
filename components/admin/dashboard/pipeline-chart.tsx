@@ -62,12 +62,12 @@ export function PipelineChart({
                   className="h-full rounded-[3px] flex items-center pl-1.5 min-w-[34px] dash-bar-fill"
                   style={{ width: `${pct}%`, background: color }}
                 >
-                  <span className="font-mono text-[9.5px] font-bold text-white">
+                  <span className="num text-[9.5px] font-bold text-white">
                     {stage.count}
                   </span>
                 </div>
               </div>
-              <span className="font-mono text-[10.5px] font-semibold text-dash-text-sec w-11 text-right">
+              <span className="num text-[10.5px] font-semibold text-dash-text-sec w-11 text-right">
                 {fmtShort(stage.value)}
               </span>
             </div>
@@ -79,7 +79,7 @@ export function PipelineChart({
           <span className="text-[10.5px] font-semibold text-foreground">
             {new Date().toLocaleDateString("en-US", { month: "short" })} volume
           </span>
-          <span className="font-mono text-[13px] font-bold text-foreground">
+          <span className="num text-[13px] font-bold text-foreground">
             {fmtShort(monthVolume)}
           </span>
         </div>

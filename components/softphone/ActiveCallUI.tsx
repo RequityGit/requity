@@ -35,11 +35,11 @@ export function ActiveCallUI() {
         <p className="text-xs text-[#6B6B6B] dark:text-[#888888] mb-0.5">
           {isConnecting ? "Calling..." : "Connected"}
         </p>
-        <p className="text-sm font-medium text-[#1A1A1A] dark:text-[#F0F0F0] font-mono">
+        <p className="text-sm font-medium text-[#1A1A1A] dark:text-[#F0F0F0] num">
           {connectedNumber}
         </p>
         {!isConnecting && (
-          <p className="text-lg font-semibold text-[#1A1A1A] dark:text-[#F0F0F0] font-mono mt-1">
+          <p className="text-lg font-semibold text-[#1A1A1A] dark:text-[#F0F0F0] num mt-1">
             {formatDuration(callDuration)}
           </p>
         )}

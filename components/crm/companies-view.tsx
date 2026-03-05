@@ -218,10 +218,10 @@ export function CompaniesView({ companies }: CompaniesViewProps) {
                           {CRM_COMPANY_TYPES.find((t) => t.value === c.company_type)?.label ?? c.company_type}
                         </span>
                       </td>
-                      <td className="px-4 py-3 font-mono text-sm text-foreground text-right">
+                      <td className="px-4 py-3 num text-sm text-foreground text-right">
                         {c.contact_count}
                       </td>
-                      <td className="px-4 py-3 font-mono text-sm text-foreground text-right">
+                      <td className="px-4 py-3 num text-sm text-foreground text-right">
                         {c.file_count}
                       </td>
                       <td className="px-4 py-3 text-sm text-muted-foreground whitespace-nowrap">

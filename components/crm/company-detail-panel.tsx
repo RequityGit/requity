@@ -267,7 +267,7 @@ export function CompanyDetailPanel({
                 <Users className="h-3.5 w-3.5" />
                 <span className="text-xs">Contacts</span>
               </div>
-              <p className="text-xl font-mono font-semibold text-foreground">
+              <p className="text-xl num font-semibold text-foreground">
                 {company.contact_count}
               </p>
             </div>
@@ -276,7 +276,7 @@ export function CompanyDetailPanel({
                 <Briefcase className="h-3.5 w-3.5" />
                 <span className="text-xs">Active Deals</span>
               </div>
-              <p className="text-xl font-mono font-semibold text-foreground">
+              <p className="text-xl num font-semibold text-foreground">
                 {company.active_deals}
               </p>
             </div>
@@ -285,7 +285,7 @@ export function CompanyDetailPanel({
                 <FileText className="h-3.5 w-3.5" />
                 <span className="text-xs">Files</span>
               </div>
-              <p className="text-xl font-mono font-semibold text-foreground">
+              <p className="text-xl num font-semibold text-foreground">
                 {files.length}
               </p>
             </div>

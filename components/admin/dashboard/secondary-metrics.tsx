@@ -38,7 +38,7 @@ export function SecondaryMetrics({ data }: SecondaryMetricsProps) {
           >
             {m.label}
           </span>
-          <div className="font-mono text-[15px] font-bold text-foreground mt-0.5">
+          <div className="num text-[15px] font-bold text-foreground mt-0.5">
             {m.value}
           </div>
         </div>

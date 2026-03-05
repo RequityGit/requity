@@ -347,7 +347,7 @@ export function CrmV2Page({
               {v.label}
               <span
                 className={cn(
-                  "font-mono text-[11px] px-1.5 py-0.5 rounded-md",
+                  "num text-[11px] px-1.5 py-0.5 rounded-md",
                   activeView === v.key
                     ? "bg-primary-foreground/20 text-primary-foreground"
                     : "bg-muted text-muted-foreground"
@@ -602,7 +602,7 @@ export function CrmV2Page({
                             <span className="text-xs text-muted-foreground italic">—</span>
                           )}
                         </td>
-                        <td className="px-4 py-3 font-mono text-xs text-muted-foreground whitespace-nowrap">
+                        <td className="px-4 py-3 num text-xs text-muted-foreground whitespace-nowrap">
                           {c.last_contacted_at ? formatDate(c.last_contacted_at) : "—"}
                         </td>
                         {isSuperAdmin && (
@@ -625,7 +625,7 @@ export function CrmV2Page({
               <span className="text-xs text-muted-foreground">
                 Showing {filteredContacts.length} of {contacts.length} contacts
               </span>
-              <span className="font-mono text-xs text-muted-foreground">
+              <span className="num text-xs text-muted-foreground">
                 {filteredContacts.length} contact{filteredContacts.length !== 1 ? "s" : ""}
               </span>
             </div>
@@ -703,10 +703,10 @@ export function CrmV2Page({
                             {CRM_COMPANY_TYPES.find((t) => t.value === c.company_type)?.label ?? c.company_type}
                           </span>
                         </td>
-                        <td className="px-4 py-3 font-mono text-sm text-foreground text-right">
+                        <td className="px-4 py-3 num text-sm text-foreground text-right">
                           {c.contact_count}
                         </td>
-                        <td className="px-4 py-3 font-mono text-sm text-foreground text-right">
+                        <td className="px-4 py-3 num text-sm text-foreground text-right">
                           {c.file_count}
                         </td>
                         <td className="px-4 py-3 text-sm text-muted-foreground whitespace-nowrap">

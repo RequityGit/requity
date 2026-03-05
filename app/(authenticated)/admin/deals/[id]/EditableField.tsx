@@ -169,7 +169,7 @@ export function EditableFieldRow({
               onKeyDown={handleKeyDown}
               className={cn(
                 "h-7 max-w-[60%] rounded border border-[#E5E5E7] bg-white px-2 text-right text-[13px] font-medium text-[#1A1A1A] outline-none focus:border-[#3B82F6] focus:ring-1 focus:ring-[#3B82F6]",
-                mono ? "font-mono" : "font-sans"
+                mono ? "num" : "font-sans"
               )}
             />
           )}
@@ -217,7 +217,7 @@ export function EditableFieldRow({
         <span
           className={cn(
             "max-w-[60%] text-right text-[13px] font-medium",
-            mono ? "font-mono" : "font-sans",
+            mono ? "num" : "font-sans",
             link ? "text-[#3B82F6]" : "text-[#1A1A1A]"
           )}
         >
@@ -320,7 +320,7 @@ export function EditableMetricCard({
             value={editValue}
             onChange={(e) => setEditValue(e.target.value)}
             onKeyDown={handleKeyDown}
-            className="h-8 w-full rounded border border-[#E5E5E7] bg-white px-2 text-lg font-semibold text-[#1A1A1A] outline-none focus:border-[#3B82F6] focus:ring-1 focus:ring-[#3B82F6] font-mono"
+            className="h-8 w-full rounded border border-[#E5E5E7] bg-white px-2 text-lg font-semibold text-[#1A1A1A] outline-none focus:border-[#3B82F6] focus:ring-1 focus:ring-[#3B82F6] num"
           />
           {isSaving ? (
             <Loader2 size={14} className="shrink-0 animate-spin text-[#3B82F6]" />
@@ -362,7 +362,7 @@ export function EditableMetricCard({
           />
         )}
       </div>
-      <div className="text-xl font-semibold text-[#1A1A1A] font-mono">
+      <div className="text-xl font-semibold text-[#1A1A1A] num">
         {value}
       </div>
     </div>
@@ -604,7 +604,7 @@ export function EditableDateRow({
               if (e.key === "Enter") save();
               if (e.key === "Escape") cancel();
             }}
-            className="h-6 rounded border border-[#E5E5E7] bg-white px-1.5 text-xs font-mono text-[#1A1A1A] outline-none focus:border-[#3B82F6]"
+            className="h-6 rounded border border-[#E5E5E7] bg-white px-1.5 text-xs num text-[#1A1A1A] outline-none focus:border-[#3B82F6]"
           />
           {isSaving ? (
             <Loader2 size={12} className="animate-spin text-[#3B82F6]" />
@@ -640,7 +640,7 @@ export function EditableDateRow({
       <span className="text-xs text-[#8B8B8B] font-sans">{label}</span>
       <span className="flex items-center gap-1">
         <span
-          className="text-xs font-mono"
+          className="text-xs num"
           style={{ color: value ? "#1A1A1A" : "#8B8B8B" }}
         >
           {displayValue ?? "\u2014"}

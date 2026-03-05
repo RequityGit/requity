@@ -409,25 +409,25 @@ export default function InvestorAccountPage() {
                       <div className="grid gap-4 sm:grid-cols-4 text-sm">
                         <div>
                           <p className="text-muted-foreground">Committed</p>
-                          <p className="font-medium">
+                          <p className="num font-medium">
                             {formatCurrency(commitment.commitment_amount)}
                           </p>
                         </div>
                         <div>
                           <p className="text-muted-foreground">Funded</p>
-                          <p className="font-medium">
+                          <p className="num font-medium">
                             {formatCurrency(commitment.funded_amount)}
                           </p>
                         </div>
                         <div>
                           <p className="text-muted-foreground">Unfunded</p>
-                          <p className="font-medium">
+                          <p className="num font-medium">
                             {formatCurrency(commitment.unfunded_amount)}
                           </p>
                         </div>
                         <div>
                           <p className="text-muted-foreground">Commitment Date</p>
-                          <p className="font-medium">
+                          <p className="num font-medium">
                             {formatDate(commitment.commitment_date)}
                           </p>
                         </div>
@@ -436,7 +436,7 @@ export default function InvestorAccountPage() {
                       <div className="mt-3">
                         <div className="flex items-center justify-between text-xs text-muted-foreground mb-1">
                           <span>Funding Progress</span>
-                          <span>{pctFunded}%</span>
+                          <span className="num">{pctFunded}%</span>
                         </div>
                         <div className="w-full bg-card rounded-full h-2 border">
                           <div

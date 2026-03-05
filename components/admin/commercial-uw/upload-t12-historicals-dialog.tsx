@@ -553,7 +553,7 @@ export function UploadT12HistoricalsDialog({
                       <td className="p-2 text-sm truncate max-w-[250px]" title={row.label}>
                         {row.label}
                       </td>
-                      <td className="p-2 text-right font-mono text-sm">
+                      <td className="p-2 text-right num text-sm">
                         {formatCurrency(row.total)}
                       </td>
                       <td className="p-2">
@@ -676,7 +676,7 @@ export function UploadT12HistoricalsDialog({
                           <td className="p-2 font-medium">
                             {T12_CATEGORY_LABELS[cat]}
                           </td>
-                          <td className="p-2 text-right font-mono">
+                          <td className="p-2 text-right num">
                             {formatCurrency(data.total)}
                           </td>
                           <td className="p-2 text-muted-foreground">
@@ -719,7 +719,7 @@ export function UploadT12HistoricalsDialog({
                           <td className="p-2 font-medium">
                             {T12_CATEGORY_LABELS[cat]}
                           </td>
-                          <td className="p-2 text-right font-mono">
+                          <td className="p-2 text-right num">
                             {formatCurrency(data.total)}
                           </td>
                           <td className="p-2 text-muted-foreground">
@@ -757,7 +757,7 @@ export function UploadT12HistoricalsDialog({
                         .map(({ row, mapping }) => (
                           <tr key={row.label} className="border-b">
                             <td className="p-2">{row.label}</td>
-                            <td className="p-2 text-right font-mono">
+                            <td className="p-2 text-right num">
                               {formatCurrency(row.total)}
                             </td>
                             <td className="p-2 text-muted-foreground">

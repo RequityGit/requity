@@ -328,11 +328,11 @@ export default async function InvestorDashboardPage() {
                         <StatusBadge status={commitment.status} />
                       </div>
                       <div className="flex items-center justify-between text-sm text-muted-foreground mb-2">
-                        <span>
+                        <span className="num">
                           {formatCurrency(commitment.funded_amount)} of{" "}
                           {formatCurrency(commitment.commitment_amount)}
                         </span>
-                        <span>{pctFunded}% funded</span>
+                        <span className="num">{pctFunded}% funded</span>
                       </div>
                       <div className="w-full bg-muted rounded-full h-2">
                         <div

@@ -157,7 +157,7 @@ export function CompaniesTable({ companies }: CompaniesTableProps) {
         key: "contact_count",
         header: "Contacts",
         cell: (row) => (
-          <span className="text-sm font-mono text-center block">
+          <span className="text-sm num text-center block">
             {row.contact_count}
           </span>
         ),
@@ -169,7 +169,7 @@ export function CompaniesTable({ companies }: CompaniesTableProps) {
         cell: (row) => (
           <span
             className={cn(
-              "text-sm font-mono text-center block",
+              "text-sm num text-center block",
               row.active_deals > 0 ? "text-primary font-medium" : ""
             )}
           >
@@ -182,7 +182,7 @@ export function CompaniesTable({ companies }: CompaniesTableProps) {
         key: "file_count",
         header: "Files",
         cell: (row) => (
-          <div className="flex items-center justify-center gap-1 text-sm font-mono">
+          <div className="flex items-center justify-center gap-1 text-sm num">
             <Paperclip className="h-3 w-3 text-muted-foreground" />
             {row.file_count}
           </div>

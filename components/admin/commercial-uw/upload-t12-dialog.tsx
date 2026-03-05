@@ -319,7 +319,7 @@ export function UploadT12Dialog({ open, onOpenChange, onImport }: Props) {
                     return (
                       <tr key={key} className="border-b">
                         <td className="p-2 text-sm">{label}</td>
-                        <td className="p-2 text-right font-mono text-sm">
+                        <td className="p-2 text-right num text-sm">
                           {isPct ? `${val}%` : formatCurrency(val)}
                         </td>
                       </tr>

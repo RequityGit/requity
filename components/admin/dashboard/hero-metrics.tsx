@@ -39,28 +39,28 @@ export function HeroMetrics({ data }: HeroMetricsProps) {
           </span>
           <div className="flex items-center gap-1.5">
             <div className="w-[5px] h-[5px] rounded-full bg-[#22C55E]" />
-            <span className="text-[9px] text-primary-foreground/60 font-mono">LIVE</span>
+            <span className="text-[9px] text-primary-foreground/60 num">LIVE</span>
           </div>
         </div>
         <div className="flex items-baseline gap-2.5 mt-2">
-          <span className="font-mono text-[40px] font-bold text-primary-foreground leading-none tracking-tight">
+          <span className="num text-[40px] font-bold text-primary-foreground leading-none tracking-tight">
             <CountUp end={aum.whole} decimals={aum.decimal} prefix="$" duration={900} delay={100} />
             <span className="text-[22px] text-primary-foreground/60">{aum.suffix}</span>
           </span>
-          <span className="font-mono text-[10.5px] font-semibold px-1.5 py-0.5 rounded-[3px] bg-[rgba(34,197,94,0.12)] text-[#22C55E] inline-flex items-center gap-0.5">
+          <span className="num text-[10.5px] font-semibold px-1.5 py-0.5 rounded-[3px] bg-[rgba(34,197,94,0.12)] text-[#22C55E] inline-flex items-center gap-0.5">
             <ArrowUpRight size={10} strokeWidth={2.5} />+12.3%
           </span>
         </div>
         <div className="flex gap-5 mt-2.5">
           <span className="text-[11px] text-primary-foreground/60">
             Lending{" "}
-            <span className="font-mono text-primary-foreground/80 font-semibold">
+            <span className="num text-primary-foreground/80 font-semibold">
               {fmtShort(data.lendingAum)}
             </span>
           </span>
           <span className="text-[11px] text-primary-foreground/60">
             Investments{" "}
-            <span className="font-mono text-primary-foreground/80 font-semibold">
+            <span className="num text-primary-foreground/80 font-semibold">
               {fmtShort(data.investmentAum)}
             </span>
           </span>
@@ -73,7 +73,7 @@ export function HeroMetrics({ data }: HeroMetricsProps) {
           Active Loans
         </span>
         <div className="flex items-baseline gap-1.5 mt-1.5">
-          <span className="font-mono text-[26px] font-bold text-foreground leading-none">
+          <span className="num text-[26px] font-bold text-foreground leading-none">
             <CountUp end={data.activeLoansCount} duration={600} delay={200} />
           </span>
           <DeltaBadge value={`+${Math.max(1, Math.floor(data.activeLoansCount * 0.1))}`} delay={200} />
@@ -89,7 +89,7 @@ export function HeroMetrics({ data }: HeroMetricsProps) {
           Investor Capital
         </span>
         <div className="flex items-baseline gap-1.5 mt-1.5">
-          <span className="font-mono text-[26px] font-bold text-foreground leading-none">
+          <span className="num text-[26px] font-bold text-foreground leading-none">
             <CountUp
               end={data.investorCapital / 1e6}
               decimals={1}
@@ -112,7 +112,7 @@ export function HeroMetrics({ data }: HeroMetricsProps) {
           Properties
         </span>
         <div className="flex items-baseline gap-1.5 mt-1.5">
-          <span className="font-mono text-[26px] font-bold text-foreground leading-none">
+          <span className="num text-[26px] font-bold text-foreground leading-none">
             <CountUp end={data.propertiesCount} duration={600} delay={400} />
           </span>
           <DeltaBadge value="+2" delay={400} />
