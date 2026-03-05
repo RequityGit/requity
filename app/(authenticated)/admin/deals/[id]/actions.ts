@@ -2,6 +2,7 @@
 
 import { createAdminClient } from "@/lib/supabase/admin";
 import { requireAdmin } from "@/lib/auth/require-admin";
+import type { Database } from "@/lib/supabase/types";
 
 export async function advanceStage(
   loanId: string,
@@ -20,7 +21,7 @@ export async function advanceStage(
     const { error: updateError } = await admin
       .from("loans")
       .update({
-        stage: toStage,
+        stage: toStage as Database["public"]["Enums"]["loan_status"],
         stage_updated_at: new Date().toISOString(),
       })
       .eq("id", loanId);
