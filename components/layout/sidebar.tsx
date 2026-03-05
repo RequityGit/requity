@@ -24,6 +24,7 @@ import {
   Calculator,
   MessageSquare,
   Columns3,
+  FlaskConical,
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useViewAs } from "@/contexts/view-as-context";
@@ -110,6 +111,17 @@ const adminNav: NavEntry[] = [
     icon: Calculator,
     activePaths: ["/admin/dscr"],
     moduleName: "dscr-pricing",
+  },
+  {
+    label: "Models",
+    icon: FlaskConical,
+    basePath: "/admin/models",
+    moduleName: "models",
+    children: [
+      { label: "Commercial", href: "/admin/models/commercial" },
+      { label: "RTL", href: "/admin/models/rtl" },
+      { label: "DSCR", href: "/admin/models/dscr" },
+    ],
   },
   { label: "Servicing", href: "/admin/servicing", icon: Banknote, moduleName: "servicing" },
   {

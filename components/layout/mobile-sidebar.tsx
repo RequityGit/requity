@@ -23,6 +23,7 @@ import {
   Columns3,
   X,
   User,
+  FlaskConical,
 } from "lucide-react";
 import { useViewAs } from "@/contexts/view-as-context";
 import { useUnreadCounts } from "@/hooks/useUnreadCounts";
@@ -80,6 +81,7 @@ const adminNav: NavItem[] = [
     icon: Calculator,
     moduleName: "dscr-pricing",
   },
+  { label: "Models", href: "/admin/models", icon: FlaskConical, activePaths: ["/admin/models"], moduleName: "models" },
   { label: "Servicing", href: "/admin/servicing", icon: Banknote, moduleName: "servicing" },
   {
     label: "Investments",

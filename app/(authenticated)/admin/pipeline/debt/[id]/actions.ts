@@ -3,6 +3,9 @@
 import { createAdminClient } from "@/lib/supabase/admin";
 import { requireAdmin } from "@/lib/auth/require-admin";
 import type { Database } from "@/lib/supabase/types";
+import { analyzeDiagnostics } from "@/lib/underwriting/diagnostics";
+import { computeOutputs } from "@/lib/underwriting/calculator";
+import { DEFAULT_INPUTS, type UnderwritingInputs } from "@/lib/underwriting/types";
 
 export async function advanceStage(
   loanId: string,
@@ -138,6 +141,37 @@ export async function saveUWVersion(
 
     const admin = createAdminClient();
 
+    // Compute diagnostics for persistence
+    let computationStatus: string = "empty";
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    let inputCompleteness: any = {};
+    try {
+      // Get model_type from the version to determine which analyzer to use
+      const { data: versionRow } = await admin
+        .from("loan_underwriting_versions")
+        .select("model_type")
+        .eq("id", versionId)
+        .single();
+
+      const mt = versionRow?.model_type;
+      if (mt === "rtl" || mt === "dscr") {
+        const parsed = { ...DEFAULT_INPUTS, ...inputs } as UnderwritingInputs;
+        const computed = computeOutputs(parsed);
+        const diag = analyzeDiagnostics(parsed, computed, mt);
+        computationStatus = diag.overallStatus;
+        inputCompleteness = {
+          populated: diag.inputSummary.populated,
+          total: diag.inputSummary.total,
+          missing: diag.inputSummary.missing,
+        };
+      } else if (mt === "commercial") {
+        // Simplified for commercial
+        computationStatus = Object.keys(outputs).length > 0 ? "computed" : "empty";
+      }
+    } catch {
+      // Non-critical — don't fail the save if diagnostics fail
+    }
+
     // Update version
     const { error: vError } = await admin
       .from("loan_underwriting_versions")
@@ -145,6 +179,8 @@ export async function saveUWVersion(
         calculator_inputs: inputs,
         calculator_outputs: outputs,
         status: "submitted",
+        computation_status: computationStatus,
+        input_completeness: inputCompleteness,
       })
       .eq("id", versionId);
 

@@ -120,3 +120,36 @@ export const DEFAULT_INPUTS: UnderwritingInputs = {
 };
 
 export type UnderwritingVersionStatus = "draft" | "submitted" | "approved" | "rejected";
+
+/** Pre-populated inputs for sandbox mode with realistic sample values */
+export const SANDBOX_DEFAULT_INPUTS: UnderwritingInputs = {
+  loan_amount: 350000,
+  purchase_price: 400000,
+  appraised_value: 425000,
+  interest_rate: 12,
+  points: 2,
+  loan_term_months: 12,
+  loan_type: "rtl",
+  loan_purpose: "purchase",
+  property_type: "sfr",
+  property_address: null,
+  after_repair_value: 550000,
+  rehab_budget: 75000,
+  heated_sqft: 1800,
+  monthly_rent: 2500,
+  annual_property_tax: 4800,
+  annual_insurance: 1800,
+  monthly_hoa: 0,
+  monthly_utilities: 0,
+  operating_expenses: 0,
+  exit_strategy: "sale",
+  holding_period_months: 9,
+  projected_sale_price: 550000,
+  sales_disposition_pct: 6,
+  credit_score: 720,
+  experience_count: 3,
+  mobilization_draw: 0,
+  lender_fees_flat: 1500,
+  title_closing_escrow: 3500,
+  num_partners: 1,
+};

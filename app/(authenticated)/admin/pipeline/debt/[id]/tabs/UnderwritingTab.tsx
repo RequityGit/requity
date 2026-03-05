@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import {
   Calculator,
   Plus,
@@ -10,6 +10,10 @@ import {
   Home,
   TrendingUp,
   ExternalLink,
+  Check,
+  AlertTriangle,
+  Minus,
+  ChevronDown,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
@@ -24,6 +28,19 @@ import {
   type UWModelType,
 } from "../components";
 import { createUWVersion } from "../actions";
+import {
+  analyzeDiagnostics,
+  analyzeCommercialStatus,
+  type DiagnosticResult,
+  type DiagnosticStatus,
+} from "@/lib/underwriting/diagnostics";
+import { computeOutputs } from "@/lib/underwriting/calculator";
+import { DEFAULT_INPUTS, type UnderwritingInputs } from "@/lib/underwriting/types";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
 
 interface UnderwritingTabProps {
   dealId: string;
@@ -262,67 +279,198 @@ function UWVersionRow({
   isSelected: boolean;
   onClick: () => void;
 }) {
+  const [diagOpen, setDiagOpen] = useState(false);
   const modelType = version.model_type || "rtl";
   const ModelIcon = MODEL_ICONS[modelType];
   const metrics = getVersionRowMetrics(modelType, version.calculator_outputs);
 
+  const diagnostic = useMemo(() => {
+    if (modelType === "commercial") {
+      return { overallStatus: analyzeCommercialStatus(version.calculator_outputs) } as {
+        overallStatus: DiagnosticStatus;
+        result: null;
+      };
+    }
+    const raw = version.calculator_inputs || {};
+    const parsed: UnderwritingInputs = { ...DEFAULT_INPUTS, ...raw } as UnderwritingInputs;
+    const outputs = computeOutputs(parsed);
+    const result = analyzeDiagnostics(parsed, outputs, modelType as "rtl" | "dscr");
+    return { overallStatus: result.overallStatus, result };
+  }, [version.calculator_inputs, version.calculator_outputs, modelType]);
+
   return (
-    <div
-      onClick={onClick}
-      className="flex items-center gap-3 rounded-lg px-3.5 py-2.5 cursor-pointer transition-all duration-150"
-      style={{
-        backgroundColor: version.is_active ? T.accent.blueMuted : isSelected ? T.bg.hover : "transparent",
-        border: version.is_active ? `1px solid ${T.accent.blue}33` : "1px solid transparent",
-      }}
-    >
+    <Collapsible open={diagOpen} onOpenChange={setDiagOpen}>
       <div
-        className="flex h-7 w-7 items-center justify-center rounded-md text-xs font-semibold num"
+        onClick={onClick}
+        className="flex items-center gap-3 rounded-lg px-3.5 py-2.5 cursor-pointer transition-all duration-150"
         style={{
-          backgroundColor: version.is_active ? T.accent.blue + "22" : T.bg.elevated,
-          color: version.is_active ? T.accent.blue : T.text.muted,
+          backgroundColor: version.is_active ? T.accent.blueMuted : isSelected ? T.bg.hover : "transparent",
+          border: version.is_active ? `1px solid ${T.accent.blue}33` : "1px solid transparent",
+          borderBottomLeftRadius: diagOpen ? 0 : undefined,
+          borderBottomRightRadius: diagOpen ? 0 : undefined,
         }}
       >
-        v{version.version_number}
-      </div>
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-1.5">
-          <span className="text-[13px] font-medium" style={{ color: T.text.primary }}>
-            {version._author_name || "Unknown"}
-          </span>
-          <span
-            className="inline-flex items-center gap-1 rounded px-1.5 py-px text-[10px] font-medium uppercase"
-            style={{
-              backgroundColor: T.bg.elevated,
-              color: T.text.muted,
-              border: `1px solid ${T.bg.borderSubtle}`,
-            }}
-          >
-            <ModelIcon size={10} strokeWidth={1.5} />
-            {UW_MODEL_LABELS[modelType]}
-          </span>
-          {version.status === "draft" && (
-            <span
-              className="rounded px-1.5 py-px text-[10px] font-medium"
-              style={{ backgroundColor: T.accent.amberMuted, color: T.accent.amber }}
-            >
-              Draft
+        <div
+          className="flex h-7 w-7 items-center justify-center rounded-md text-xs font-semibold num"
+          style={{
+            backgroundColor: version.is_active ? T.accent.blue + "22" : T.bg.elevated,
+            color: version.is_active ? T.accent.blue : T.text.muted,
+          }}
+        >
+          v{version.version_number}
+        </div>
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-1.5">
+            <span className="text-[13px] font-medium" style={{ color: T.text.primary }}>
+              {version._author_name || "Unknown"}
             </span>
-          )}
+            <span
+              className="inline-flex items-center gap-1 rounded px-1.5 py-px text-[10px] font-medium uppercase"
+              style={{
+                backgroundColor: T.bg.elevated,
+                color: T.text.muted,
+                border: `1px solid ${T.bg.borderSubtle}`,
+              }}
+            >
+              <ModelIcon size={10} strokeWidth={1.5} />
+              {UW_MODEL_LABELS[modelType]}
+            </span>
+            {version.status === "draft" && (
+              <span
+                className="rounded px-1.5 py-px text-[10px] font-medium"
+                style={{ backgroundColor: T.accent.amberMuted, color: T.accent.amber }}
+              >
+                Draft
+              </span>
+            )}
+            <DiagnosticDot status={diagnostic.overallStatus} onClick={(e) => { e.stopPropagation(); setDiagOpen(!diagOpen); }} />
+          </div>
+          <div className="text-[11px] num" style={{ color: T.text.muted }}>
+            {fD(version.created_at)}
+            {version.label && <span> · {version.label}</span>}
+          </div>
         </div>
-        <div className="text-[11px] num" style={{ color: T.text.muted }}>
-          {fD(version.created_at)}
-          {version.label && <span> · {version.label}</span>}
+        <div className="flex gap-4 text-xs num" style={{ color: T.text.secondary }}>
+          {metrics.map((m) => (
+            <span key={m}>{m}</span>
+          ))}
         </div>
+        {version.is_active && (
+          <Badge color={T.accent.green} bg={T.accent.greenMuted}>Active</Badge>
+        )}
+        <CollapsibleTrigger asChild>
+          <button
+            onClick={(e) => { e.stopPropagation(); setDiagOpen(!diagOpen); }}
+            className="flex items-center justify-center rounded p-0.5 transition-colors hover:bg-white/5"
+            title="Toggle diagnostics"
+          >
+            <ChevronDown
+              size={14}
+              color={T.text.muted}
+              strokeWidth={1.5}
+              className={`transition-transform duration-200 ${diagOpen ? "rotate-180" : ""}`}
+            />
+          </button>
+        </CollapsibleTrigger>
       </div>
-      <div className="flex gap-4 text-xs num" style={{ color: T.text.secondary }}>
-        {metrics.map((m) => (
-          <span key={m}>{m}</span>
-        ))}
+      <CollapsibleContent>
+        <DiagnosticPanel diagnostic={diagnostic} modelType={modelType} />
+      </CollapsibleContent>
+    </Collapsible>
+  );
+}
+
+/* ── Diagnostic Status Dot ── */
+function DiagnosticDot({ status, onClick }: { status: DiagnosticStatus; onClick: (e: React.MouseEvent) => void }) {
+  const colors: Record<DiagnosticStatus, string> = {
+    computed: "bg-green-500",
+    incomplete: "bg-amber-500",
+    empty: "bg-muted-foreground/40",
+  };
+  const titles: Record<DiagnosticStatus, string> = {
+    computed: "All inputs populated",
+    incomplete: "Some inputs missing",
+    empty: "No inputs set",
+  };
+
+  return (
+    <button
+      onClick={onClick}
+      className={`h-2 w-2 rounded-full shrink-0 ${colors[status]} cursor-pointer`}
+      title={titles[status]}
+    />
+  );
+}
+
+/* ── Diagnostic Expansion Panel ── */
+function DiagnosticPanel({
+  diagnostic,
+  modelType,
+}: {
+  diagnostic: { overallStatus: DiagnosticStatus; result?: DiagnosticResult | null };
+  modelType: UWModelType;
+}) {
+  const result = diagnostic.result;
+
+  if (!result) {
+    // Commercial — simplified status
+    return (
+      <div
+        className="rounded-b-lg px-4 py-3 text-[12px]"
+        style={{ backgroundColor: T.bg.elevated, borderTop: `1px solid ${T.bg.borderSubtle}` }}
+      >
+        <span style={{ color: T.text.muted }}>
+          {diagnostic.overallStatus === "computed"
+            ? "Commercial model has computed outputs."
+            : diagnostic.overallStatus === "incomplete"
+              ? "Commercial model has partial outputs."
+              : "Commercial model has no outputs yet."}
+        </span>
       </div>
-      {version.is_active && (
-        <Badge color={T.accent.green} bg={T.accent.greenMuted}>Active</Badge>
-      )}
-      <Eye size={14} color={T.text.muted} strokeWidth={1.5} />
+    );
+  }
+
+  return (
+    <div
+      className="rounded-b-lg px-4 py-3 space-y-2.5"
+      style={{ backgroundColor: T.bg.elevated, borderTop: `1px solid ${T.bg.borderSubtle}` }}
+    >
+      {/* Input summary */}
+      <div className="flex items-center gap-2 text-[12px]" style={{ color: T.text.secondary }}>
+        <span className="font-medium" style={{ color: T.text.primary }}>
+          {result.inputSummary.populated} of {result.inputSummary.total}
+        </span>
+        <span>required inputs populated</span>
+      </div>
+
+      {/* Per-metric breakdown */}
+      <div className="grid grid-cols-1 gap-1">
+        {result.metrics.map((m) => {
+          const missingDeps = m.requiredInputs.filter((r) => !r.present);
+          return (
+            <div key={m.key} className="flex items-start gap-2 text-[11px] py-0.5">
+              {m.status === "computed" ? (
+                <Check size={12} className="text-green-500 mt-px shrink-0" strokeWidth={2} />
+              ) : m.status === "incomplete" ? (
+                <AlertTriangle size={12} className="text-amber-500 mt-px shrink-0" strokeWidth={2} />
+              ) : (
+                <Minus size={12} className="text-muted-foreground/50 mt-px shrink-0" strokeWidth={2} />
+              )}
+              <span className="font-medium" style={{ color: T.text.primary }}>{m.label}</span>
+              {m.status === "computed" && m.value != null && (
+                <span className="num" style={{ color: T.text.secondary }}>
+                  {typeof m.value === "number" ? m.value.toLocaleString("en-US", { maximumFractionDigits: 2 }) : m.value}
+                </span>
+              )}
+              {missingDeps.length > 0 && (
+                <span style={{ color: T.text.muted }}>
+                  needs: {missingDeps.map((d) => d.label).join(", ")}
+                </span>
+              )}
+            </div>
+          );
+        })}
+      </div>
     </div>
   );
 }

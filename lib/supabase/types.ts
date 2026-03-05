@@ -15519,3 +15519,29 @@ export const Constants = {
   },
 } as const
 
+// Convenience type aliases used across the codebase
+export type BorrowerEntity = Database["public"]["Tables"]["borrower_entities"]["Row"];
+export type CrmContact = Database["public"]["Tables"]["crm_contacts"]["Row"];
+export type Loan = Database["public"]["Tables"]["loans"]["Row"];
+export type LoanCondition = Database["public"]["Tables"]["loan_conditions"]["Row"];
+export type LoanConditionTemplate = Database["public"]["Tables"]["loan_condition_templates"]["Row"];
+export type LoanDocument = Database["public"]["Tables"]["loan_documents"]["Row"];
+export type LoanPayment = Database["public"]["Tables"]["loan_payments"]["Row"];
+export type Document = Database["public"]["Tables"]["documents"]["Row"];
+
+// Stub types for tables not yet migrated to the database
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export type LenderQuote = Record<string, any>;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export type PricingProgram = Record<string, any>;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export type PricingProgramVersion = Record<string, any>;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export type LeverageAdjuster = Record<string, any> & {
+  id: string;
+  risk_factor: string;
+  display_name: string;
+  is_active: boolean;
+  ltc_adjustment: number;
+  ltv_adjustment: number;
+};

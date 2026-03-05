@@ -15,11 +15,13 @@ import {
   Loader2,
   Eye,
   Lock,
+  FlaskConical,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/components/ui/use-toast";
 import { RTLDSCRForm } from "./rtl-dscr-form";
+import { ModelHealthPanel } from "./model-health-panel";
 import { computeOutputs } from "@/lib/underwriting/calculator";
 import type { UnderwritingInputs } from "@/lib/underwriting/types";
 import { DEFAULT_INPUTS } from "@/lib/underwriting/types";
@@ -75,6 +77,7 @@ interface UWEditorClientProps {
     isOpportunity: boolean
   ) => Promise<{ success?: boolean; error?: string; version?: UWVersionData }>;
   isOpportunity?: boolean;
+  isSandbox?: boolean;
 }
 
 const MODEL_ICONS: Record<UWModelType, typeof Building2> = {
@@ -95,6 +98,7 @@ export function UWEditorClient({
   cloneVersionAction,
   createVersionAction,
   isOpportunity = false,
+  isSandbox = false,
 }: UWEditorClientProps) {
   const router = useRouter();
   const { toast } = useToast();
@@ -112,8 +116,8 @@ export function UWEditorClient({
   const [cloning, setCloning] = useState(false);
   const [creating, setCreating] = useState(false);
 
-  // Determine if the selected version is editable (only draft versions you own)
-  const isEditable = selectedVersion?.status === "draft";
+  // Determine if the selected version is editable (draft versions or sandbox)
+  const isEditable = isSandbox || selectedVersion?.status === "draft";
 
   const handleSelectVersion = useCallback((version: UWVersionData) => {
     setSelectedVersion(version);
@@ -197,12 +201,21 @@ export function UWEditorClient({
       <div className="sticky top-0 z-10 border-b border-border bg-background/95 backdrop-blur-sm">
         <div className="flex items-center justify-between px-6 py-3">
           <div className="flex items-center gap-3">
-            <Link href={`/admin/pipeline/debt/${dealId}`}>
-              <Button variant="ghost" size="sm">
-                <ArrowLeft className="h-4 w-4 mr-1" />
-                Back to Deal
-              </Button>
-            </Link>
+            {isSandbox ? (
+              <Link href={`/admin/models/${modelType}`}>
+                <Button variant="ghost" size="sm">
+                  <ArrowLeft className="h-4 w-4 mr-1" />
+                  Back to Models
+                </Button>
+              </Link>
+            ) : (
+              <Link href={`/admin/pipeline/debt/${dealId}`}>
+                <Button variant="ghost" size="sm">
+                  <ArrowLeft className="h-4 w-4 mr-1" />
+                  Back to Deal
+                </Button>
+              </Link>
+            )}
             <div className="h-5 w-px bg-border" />
             <div className="flex items-center gap-2">
               <ModelIcon className="h-4 w-4 text-muted-foreground" strokeWidth={1.5} />
@@ -223,16 +236,18 @@ export function UWEditorClient({
                 disabled={saving}
               >
                 {saving ? <Loader2 className="h-3.5 w-3.5 mr-1 animate-spin" /> : <Save className="h-3.5 w-3.5 mr-1" />}
-                Save Draft
+                {isSandbox ? "Save" : "Save Draft"}
               </Button>
-              <Button
-                size="sm"
-                onClick={() => handleSave(true)}
-                disabled={saving}
-              >
-                {saving ? <Loader2 className="h-3.5 w-3.5 mr-1 animate-spin" /> : <CheckCircle2 className="h-3.5 w-3.5 mr-1" />}
-                Save & Activate
-              </Button>
+              {!isSandbox && (
+                <Button
+                  size="sm"
+                  onClick={() => handleSave(true)}
+                  disabled={saving}
+                >
+                  {saving ? <Loader2 className="h-3.5 w-3.5 mr-1 animate-spin" /> : <CheckCircle2 className="h-3.5 w-3.5 mr-1" />}
+                  Save & Activate
+                </Button>
+              )}
             </div>
           )}
           {!isEditable && selectedVersion && (
@@ -303,7 +318,15 @@ export function UWEditorClient({
               </div>
             ) : (
               <div className="max-w-4xl">
-                {!isEditable && (
+                {isSandbox && (
+                  <div className="mb-4 rounded-lg border border-amber-500/20 bg-amber-500/5 px-4 py-2.5 flex items-center gap-2">
+                    <FlaskConical className="h-4 w-4 text-amber-500 shrink-0" />
+                    <span className="text-sm text-amber-600 dark:text-amber-400">
+                      Sandbox Mode — Not linked to a deal. Use this to test model inputs and verify computations.
+                    </span>
+                  </div>
+                )}
+                {!isEditable && !isSandbox && (
                   <div className="mb-4 rounded-lg border border-amber-500/20 bg-amber-500/5 px-4 py-2.5 flex items-center gap-2">
                     <Eye className="h-4 w-4 text-amber-500 shrink-0" />
                     <span className="text-sm text-amber-600 dark:text-amber-400">
@@ -321,6 +344,14 @@ export function UWEditorClient({
                     </Button>
                   </div>
                 )}
+                <div className="mb-4">
+                  <ModelHealthPanel
+                    inputs={inputs}
+                    modelType={modelType as "rtl" | "dscr"}
+                    isSandbox={isSandbox}
+                    dealId={isSandbox ? undefined : dealId}
+                  />
+                </div>
                 <RTLDSCRForm
                   inputs={inputs}
                   onChange={setInputs}

@@ -19,6 +19,7 @@ const ROUTE_TO_MODULE: Record<string, string> = {
   "/admin/conditions": "pipeline",
   "/admin/pricing": "pipeline",
   "/admin/dscr": "dscr-pricing",
+  "/admin/models": "models",
   "/admin/servicing": "servicing",
   "/admin/funds": "investments",
   "/admin/capital-calls": "investments",
