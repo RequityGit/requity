@@ -32,8 +32,11 @@ import {
 import type {
   PricingProgram,
   LeverageAdjuster,
-  PricingProgramVersion,
 } from "@/lib/supabase/types";
+
+// PricingProgramVersion table may not exist yet — using any for compatibility
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type PricingProgramVersion = any;
 
 interface PricingProgramsManagerProps {
   programs: PricingProgram[];

@@ -211,9 +211,9 @@ export function LenderQuotesTab({
   const highlights = COMPARISON_ROWS.reduce(
     (acc, row) => {
       if (row.field === "prepayment_penalty") {
-        acc[row.field] = { bestId: null, worstId: null };
+        acc[row.field as string] = { bestId: null, worstId: null };
       } else {
-        acc[row.field] = findBestWorst(quotes, row.field, row.lowerIsBetter);
+        acc[row.field as string] = findBestWorst(quotes, row.field as keyof LenderQuote, row.lowerIsBetter);
       }
       return acc;
     },
@@ -377,12 +377,12 @@ export function LenderQuotesTab({
 
                 {/* Comparison rows */}
                 {COMPARISON_ROWS.map((row) => (
-                  <TableRow key={row.field}>
+                  <TableRow key={row.field as string}>
                     <TableCell className="font-medium text-xs text-muted-foreground sticky left-0 bg-card border-r">
                       {row.label}
                     </TableCell>
                     {quotes.map((q) => {
-                      const hl = highlights[row.field];
+                      const hl = highlights[row.field as string];
                       return (
                         <TableCell
                           key={q.id}

@@ -23,6 +23,7 @@ import {
   Calculator,
   MessageSquare,
   Columns3,
+  PhoneOutgoing,
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useViewAs } from "@/contexts/view-as-context";
@@ -101,6 +102,12 @@ const adminNav: NavItem[] = [
     icon: Settings2,
     activePaths: ["/admin/operations/approvals"],
     moduleName: "operations",
+  },
+  {
+    label: "Power Dialer",
+    href: "/admin/dialer",
+    icon: PhoneOutgoing,
+    moduleName: "dialer",
   },
 ];
 

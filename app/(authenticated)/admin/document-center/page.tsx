@@ -18,7 +18,7 @@ export default async function DocumentCenterPage() {
   if (!user) redirect("/login");
 
   // Fetch portal documents with joined entity names
-  const { data: documents } = await supabase
+  const { data: documents } = await (supabase as any)
     .from("portal_documents")
     .select(
       `
@@ -62,7 +62,7 @@ export default async function DocumentCenterPage() {
   }
 
   // Map documents to row format
-  const documentRows: PortalDocumentRow[] = (documents ?? []).map((doc) => {
+  const documentRows: PortalDocumentRow[] = (documents ?? []).map((doc: any) => {
     const profile = doc.profiles as { full_name?: string | null; email?: string | null } | null;
     const loan = doc.loans as { property_address?: string | null; loan_number?: string | null } | null;
     const fund = doc.funds as { name?: string | null } | null;

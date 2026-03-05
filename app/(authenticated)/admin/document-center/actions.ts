@@ -27,7 +27,7 @@ export async function createPortalDocumentAction(input: UploadDocumentInput) {
     if ("error" in auth) return { error: auth.error };
 
     const admin = createAdminClient();
-    const { data, error } = await admin
+    const { data, error } = await (admin as any)
       .from("portal_documents")
       .insert({
         file_name: input.file_name,
@@ -71,7 +71,7 @@ export async function deletePortalDocumentAction(documentId: string) {
     const admin = createAdminClient();
 
     // Get the document to find its storage path
-    const { data: doc, error: fetchError } = await admin
+    const { data: doc, error: fetchError } = await (admin as any)
       .from("portal_documents")
       .select("file_path")
       .eq("id", documentId)
@@ -83,7 +83,7 @@ export async function deletePortalDocumentAction(documentId: string) {
     }
 
     // Soft delete the record
-    const { error: deleteError } = await admin
+    const { error: deleteError } = await (admin as any)
       .from("portal_documents")
       .update({ deleted_at: new Date().toISOString() })
       .eq("id", documentId);
@@ -115,7 +115,7 @@ export async function updateDocumentVisibilityAction(
     if ("error" in auth) return { error: auth.error };
 
     const admin = createAdminClient();
-    const { error } = await admin
+    const { error } = await (admin as any)
       .from("portal_documents")
       .update({ visibility })
       .eq("id", documentId);
