@@ -1,125 +1,126 @@
 "use client";
 
-import { MapPin, Clock, CalendarDays, Building } from "lucide-react";
+import { Layers, Clock, CalendarDays } from "lucide-react";
 import {
-  DotPill,
-  OutlinePill,
+  T,
+  Badge,
   Av,
   IconAv,
-  STAGES,
-  PRIORITY_COLORS,
-  APPROVAL_COLORS,
   cap,
   fD,
   dBetween,
   type DealData,
-  type StageHistoryEntry,
+  type PipelineStage,
 } from "./components";
 
 interface HeaderProps {
   deal: DealData;
-  stageHistory: StageHistoryEntry[];
+  stages: PipelineStage[];
   isOpportunity: boolean;
 }
 
-export function Header({ deal, stageHistory, isOpportunity }: HeaderProps) {
-  const sc = STAGES.find((s) => s.k === deal.stage);
-  const stageColor = sc ? sc.c : "#8B8B8B";
+export function Header({ deal, stages, isOpportunity }: HeaderProps) {
+  const sc = stages.find((s) => s.stage_key === deal.stage);
+  const stageColor = sc?.color || T.accent.purple;
+  const stageLabel = sc?.label || cap(deal.stage);
 
-  // Calculate days in current stage from stage history
-  const currentStageEntry = stageHistory.find(
-    (h) => h.to_stage === deal.stage && !stageHistory.some((later) => later.from_stage === deal.stage)
-  );
-  const stageEnteredAt = currentStageEntry?.changed_at;
-  const days = stageEnteredAt ? dBetween(stageEnteredAt) : 0;
-  const isWarn = sc && sc.w > 0 && days >= sc.w && days < sc.a;
-  const isAlert = sc && sc.a > 0 && days >= sc.a;
-  const velColor = isAlert ? "#E5453D" : isWarn ? "#E5930E" : "#6B6B6B";
+  const daysInStage = deal.stage_updated_at
+    ? dBetween(deal.stage_updated_at)
+    : 0;
 
-  const address = deal.property_address
-    || [deal.property_address_line1, deal.property_city, deal.property_state, deal.property_zip]
+  const address =
+    deal.property_address ||
+    [deal.property_address_line1, deal.property_city, deal.property_state, deal.property_zip]
       .filter(Boolean)
       .join(", ");
 
-  const dealName = deal.deal_name
-    || `${address || "Untitled Deal"} \u2014 ${cap(deal.type || deal.loan_type)}`;
+  const dealName =
+    deal.deal_name ||
+    deal.property_address_line1 ||
+    address?.split(",")[0] ||
+    "Untitled Deal";
 
   const loanType = deal.type || deal.loan_type;
-  const loanPurpose = deal.purpose || deal.loan_purpose;
 
   return (
-    <div className="rounded-xl border border-[#E5E5E7] bg-white p-6">
-      <div className="flex gap-5">
-        <IconAv icon={Building} size={56} color={stageColor} />
-        <div className="min-w-0 flex-1">
-          <h1 className="m-0 text-[22px] font-bold text-[#1A1A1A] font-sans">
-            {dealName}
-          </h1>
-          <div className="mt-2.5 flex flex-wrap gap-2">
-            <DotPill label={cap(deal.stage)} color={stageColor} />
-            {deal.priority && (
-              <DotPill
-                label={cap(deal.priority)}
-                color={PRIORITY_COLORS[deal.priority] || "#8B8B8B"}
-              />
+    <div className="flex items-start justify-between gap-5">
+      <div className="flex gap-4 items-start">
+        <IconAv icon={Layers} size={48} color={T.accent.blue} />
+        <div>
+          <div className="flex items-center gap-2.5 mb-1">
+            <h1
+              className="m-0 text-[22px] font-bold tracking-tight"
+              style={{ color: T.text.primary, letterSpacing: "-0.02em" }}
+            >
+              {dealName}
+            </h1>
+            {loanType && (
+              <Badge color={T.accent.blue}>{loanType.toUpperCase()}</Badge>
             )}
-            {loanType && <OutlinePill label={cap(loanType)} />}
-            {loanPurpose && <OutlinePill label={cap(loanPurpose)} />}
-            {isOpportunity && <OutlinePill label="Opportunity" />}
-            {deal.approval_status && deal.approval_status !== "not_submitted" && (
-              <DotPill
-                label={"Approval: " + cap(deal.approval_status)}
-                color={APPROVAL_COLORS[deal.approval_status] || "#8B8B8B"}
-              />
+            <Badge color={stageColor} bg={stageColor + "22"}>
+              {stageLabel}
+            </Badge>
+            {isOpportunity && (
+              <Badge color={T.accent.purple}>Opportunity</Badge>
             )}
           </div>
-          <div className="mt-2.5 flex items-center gap-1.5 text-[13px] text-[#6B6B6B] font-sans">
-            <MapPin size={13} />
-            {address || "\u2014"}
-            {deal._borrower_name && (
-              <>
-                <span className="mx-1 text-[#E5E5E7]">&middot;</span>
-                <span className="cursor-pointer text-[#3B82F6]">
-                  {deal._borrower_name}
-                </span>
-              </>
-            )}
-          </div>
-        </div>
-
-        {/* Right column */}
-        <div className="flex shrink-0 flex-col items-end gap-2.5">
-          {deal._originator && (
-            <div className="flex items-center gap-2">
-              <div className="text-right">
-                <div className="text-[11px] text-[#8B8B8B] font-sans">
-                  Originator
-                </div>
-                <div className="text-[13px] font-medium font-sans">
-                  {deal._originator.full_name}
-                </div>
-              </div>
-              <Av text={deal._originator.initials} />
-            </div>
-          )}
           <div
-            className="flex items-center gap-1 text-xs font-sans"
-            style={{
-              color: velColor,
-              fontWeight: isWarn || isAlert ? 600 : 400,
-            }}
+            className="flex items-center gap-4 text-[13px]"
+            style={{ color: T.text.muted }}
           >
-            <Clock size={12} />
-            In {cap(deal.stage)} for {days} days
-          </div>
-          <div className="flex items-center gap-1 text-xs text-[#6B6B6B] font-sans">
-            <CalendarDays size={12} />
-            Close:{" "}
-            <span className="font-semibold text-[#1A1A1A]">
-              {fD(deal.expected_close_date)}
+            {address && <span>{address}</span>}
+            <span className="flex items-center gap-1">
+              <Clock size={12} strokeWidth={1.5} color={T.text.muted} />
+              <span className="num">{daysInStage}</span> days in stage
             </span>
+            {deal.expected_close_date && (
+              <span className="flex items-center gap-1">
+                <CalendarDays size={12} strokeWidth={1.5} color={T.text.muted} />
+                Close: <span className="num">{fD(deal.expected_close_date)}</span>
+              </span>
+            )}
           </div>
         </div>
+      </div>
+
+      {/* Team Avatars */}
+      <div className="flex items-center gap-2 shrink-0">
+        {deal._originator && (
+          <>
+            <div className="flex flex-col items-end gap-0.5">
+              <span
+                className="text-[10px] uppercase tracking-wider"
+                style={{ color: T.text.muted }}
+              >
+                Originator
+              </span>
+              <span className="text-xs" style={{ color: T.text.secondary }}>
+                {deal._originator.full_name}
+              </span>
+            </div>
+            <Av text={deal._originator.initials} color="#7c3aed" />
+          </>
+        )}
+        {deal._processor && (
+          <>
+            <div
+              className="mx-1"
+              style={{ width: 1, height: 24, backgroundColor: T.bg.border }}
+            />
+            <Av text={deal._processor.initials} color="#2563eb" />
+            <div className="flex flex-col gap-0.5">
+              <span
+                className="text-[10px] uppercase tracking-wider"
+                style={{ color: T.text.muted }}
+              >
+                Processor
+              </span>
+              <span className="text-xs" style={{ color: T.text.secondary }}>
+                {deal._processor.full_name}
+              </span>
+            </div>
+          </>
+        )}
       </div>
     </div>
   );

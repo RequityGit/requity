@@ -3,33 +3,38 @@
 import { cn } from "@/lib/utils";
 import type { LucideIcon } from "lucide-react";
 
-/* ── Design Tokens ── */
+/* ── Dark Design Tokens ── */
 export const T = {
-  bg: "#F7F7F8",
-  card: "#FFFFFF",
-  text: "#1A1A1A",
-  sub: "#6B6B6B",
-  muted: "#8B8B8B",
-  border: "#E5E5E7",
-  div: "#F0F0F2",
-  accent: "#1A1A1A",
-  ok: "#22A861",
-  warn: "#E5930E",
-  bad: "#E5453D",
-  info: "#3B82F6",
+  bg: {
+    base: "#0a0a0b",
+    surface: "#111113",
+    elevated: "#18181b",
+    hover: "#1e1e22",
+    input: "#131316",
+    border: "#27272a",
+    borderSubtle: "#1e1e22",
+  },
+  text: {
+    primary: "#fafafa",
+    secondary: "#a1a1aa",
+    muted: "#71717a",
+    inverse: "#09090b",
+  },
+  accent: {
+    blue: "#3b82f6",
+    blueMuted: "rgba(59,130,246,0.12)",
+    green: "#22c55e",
+    greenMuted: "rgba(34,197,94,0.12)",
+    amber: "#f59e0b",
+    amberMuted: "rgba(245,158,11,0.12)",
+    red: "#ef4444",
+    redMuted: "rgba(239,68,68,0.12)",
+    purple: "#a78bfa",
+    purpleMuted: "rgba(167,139,250,0.12)",
+  },
 } as const;
 
-/* ── Stage Config ── */
-export const STAGES = [
-  { k: "lead", l: "Lead", c: "#8B8B8B", w: 7, a: 14 },
-  { k: "application", l: "Application", c: "#3B82F6", w: 5, a: 10 },
-  { k: "processing", l: "Processing", c: "#3B82F6", w: 7, a: 14 },
-  { k: "underwriting", l: "Underwriting", c: "#E5930E", w: 10, a: 21 },
-  { k: "approved", l: "Approved", c: "#22A861", w: 5, a: 10 },
-  { k: "clear_to_close", l: "Clear to Close", c: "#22A861", w: 7, a: 14 },
-  { k: "funded", l: "Funded", c: "#22A861", w: 0, a: 0 },
-] as const;
-
+/* ── Terminal Stages ── */
 export const TERMINAL_DEAL_STAGES = [
   "servicing",
   "paid_off",
@@ -40,37 +45,6 @@ export const TERMINAL_DEAL_STAGES = [
   "default",
   "reo",
 ] as const;
-
-/* ── Priority / Approval Colors ── */
-export const PRIORITY_COLORS: Record<string, string> = {
-  hot: T.bad,
-  normal: T.info,
-  on_hold: T.muted,
-};
-
-export const APPROVAL_COLORS: Record<string, string> = {
-  pending: T.warn,
-  approved: T.ok,
-  denied: T.bad,
-  not_submitted: T.muted,
-};
-
-/* ── Activity Icon Mapping ── */
-export const ACTIVITY_ICON_MAP: Record<
-  string,
-  { color: string }
-> = {
-  stage_change: { color: T.info },
-  stage: { color: T.info },
-  document: { color: T.ok },
-  doc: { color: T.ok },
-  comment: { color: T.accent },
-  email: { color: T.info },
-  call: { color: T.warn },
-  system: { color: T.muted },
-  alert: { color: T.bad },
-  note: { color: T.accent },
-};
 
 /* ── Helpers ── */
 export function fmt(n: number | null | undefined): string {
@@ -107,15 +81,41 @@ export function dBetween(dateStr: string): number {
 }
 
 export function getDefaultTab(stage: string): string {
-  if (["lead", "application"].includes(stage)) return "overview";
-  if (
-    ["processing", "underwriting", "approved", "clear_to_close"].includes(stage)
-  )
+  if (["lead", "application", "awaiting_info", "quoting"].includes(stage)) return "overview";
+  if (["processing", "underwriting", "uw", "approved", "clear_to_close", "uw_approval"].includes(stage))
     return "conditions";
   return "activity";
 }
 
+export function getInitials(name: string): string {
+  return name
+    .split(" ")
+    .map((w) => w[0])
+    .join("")
+    .slice(0, 2)
+    .toUpperCase();
+}
+
 /* ── Primitives ── */
+
+export function Badge({
+  children,
+  color = T.text.secondary,
+  bg,
+}: {
+  children: React.ReactNode;
+  color?: string;
+  bg?: string;
+}) {
+  return (
+    <span
+      className="inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[11px] font-medium uppercase tracking-wider"
+      style={{ color, backgroundColor: bg || color + "14" }}
+    >
+      {children}
+    </span>
+  );
+}
 
 export function DotPill({
   label,
@@ -129,10 +129,10 @@ export function DotPill({
   return (
     <span
       className={cn(
-        "inline-flex items-center gap-1.5 rounded-full font-medium font-sans",
+        "inline-flex items-center gap-1.5 rounded-full font-medium",
         big ? "px-3.5 py-1 text-[13px]" : "px-2.5 py-0.5 text-xs"
       )}
-      style={{ background: color + "12", color }}
+      style={{ background: color + "14", color }}
     >
       <span
         className="inline-block h-[7px] w-[7px] shrink-0 rounded-full"
@@ -145,7 +145,13 @@ export function DotPill({
 
 export function OutlinePill({ label }: { label: string }) {
   return (
-    <span className="inline-flex items-center rounded-full border border-[#E5E5E7] px-2.5 py-0.5 text-xs font-medium text-[#6B6B6B] font-sans">
+    <span
+      className="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium"
+      style={{
+        border: `1px solid ${T.bg.border}`,
+        color: T.text.secondary,
+      }}
+    >
       {label}
     </span>
   );
@@ -165,19 +171,28 @@ export function SectionCard({
   right?: React.ReactNode;
 }) {
   return (
-    <div className="rounded-xl border border-[#E5E5E7] bg-white">
+    <div
+      className="overflow-hidden rounded-xl"
+      style={{
+        backgroundColor: T.bg.surface,
+        border: `1px solid ${T.bg.border}`,
+      }}
+    >
       {title && (
-        <div className="flex items-center justify-between border-b border-[#F0F0F2] px-5 py-3.5">
+        <div
+          className="flex items-center justify-between px-4 py-3"
+          style={{ borderBottom: `1px solid ${T.bg.borderSubtle}` }}
+        >
           <div className="flex items-center gap-2">
-            {Ic && <Ic size={16} className="text-[#6B6B6B]" />}
-            <span className="text-sm font-semibold text-[#1A1A1A] font-sans">
+            {Ic && <Ic size={15} color={T.text.muted} strokeWidth={1.5} />}
+            <span className="text-[13px] font-semibold" style={{ color: T.text.primary }}>
               {title}
             </span>
           </div>
           {right}
         </div>
       )}
-      <div className={noPad ? "" : "p-5"}>{children}</div>
+      <div className={noPad ? "" : "px-4 py-3.5"}>{children}</div>
     </div>
   );
 }
@@ -185,16 +200,37 @@ export function SectionCard({
 export function MetricCard({
   label,
   value,
+  sub,
 }: {
   label: string;
   value: string;
+  sub?: string;
 }) {
   return (
-    <div className="min-w-[120px] flex-1">
-      <div className="mb-1 text-xs text-[#8B8B8B] font-sans">{label}</div>
-      <div className="text-xl font-semibold text-[#1A1A1A] num">
+    <div
+      className="flex flex-1 flex-col gap-0.5 rounded-[10px] px-4 py-3.5"
+      style={{
+        backgroundColor: T.bg.surface,
+        border: `1px solid ${T.bg.border}`,
+      }}
+    >
+      <span
+        className="text-[11px] font-medium uppercase tracking-wider"
+        style={{ color: T.text.muted }}
+      >
+        {label}
+      </span>
+      <span
+        className="text-xl font-semibold num"
+        style={{ color: T.text.primary }}
+      >
         {value}
-      </div>
+      </span>
+      {sub && (
+        <span className="text-[11px]" style={{ color: T.text.muted }}>
+          {sub}
+        </span>
+      )}
     </div>
   );
 }
@@ -216,17 +252,20 @@ export function FieldRow({
   return (
     <div
       className={cn(
-        "flex items-baseline justify-between border-b border-[#F0F0F2] py-2",
-        half ? "w-[calc(50%-10px)]" : "w-full"
+        "flex items-baseline justify-between py-[7px]",
+        half ? "w-[calc(50%-16px)]" : "w-full"
       )}
+      style={{ borderBottom: `1px solid ${T.bg.borderSubtle}` }}
     >
-      <span className="text-[13px] text-[#8B8B8B] font-sans">{label}</span>
+      <span className="text-[13px]" style={{ color: T.text.muted }}>
+        {label}
+      </span>
       <span
         className={cn(
           "max-w-[60%] text-right text-[13px] font-medium",
-          mono ? "num" : "font-sans",
-          link ? "text-[#3B82F6]" : "text-[#1A1A1A]"
+          mono && "num"
         )}
+        style={{ color: link ? T.accent.blue : T.text.primary }}
       >
         {displayValue}
       </span>
@@ -234,47 +273,19 @@ export function FieldRow({
   );
 }
 
-export function Btn({
-  label,
-  icon: Ic,
-  primary,
-  small,
-  onClick,
-}: {
-  label: string;
-  icon?: LucideIcon;
-  primary?: boolean;
-  small?: boolean;
-  onClick?: () => void;
-}) {
-  return (
-    <button
-      onClick={onClick}
-      className={cn(
-        "inline-flex items-center gap-1.5 rounded-lg font-medium font-sans cursor-pointer",
-        small ? "px-2.5 py-1 text-xs" : "px-4 py-2 text-[13px]",
-        primary
-          ? "border-none bg-[#1A1A1A] text-white hover:bg-[#333]"
-          : "border border-[#E5E5E7] bg-transparent text-[#1A1A1A] hover:bg-[#F7F7F8]"
-      )}
-    >
-      {Ic && <Ic size={small ? 13 : 15} />}
-      {label}
-    </button>
-  );
-}
-
-export function Av({ text, size = 28 }: { text: string; size?: number }) {
+export function Av({ text, size = 28, color }: { text: string; size?: number; color?: string }) {
+  const c = color || T.accent.blue;
   return (
     <div
-      className="flex shrink-0 items-center justify-center font-semibold text-[#1A1A1A] font-sans"
+      className="flex shrink-0 items-center justify-center font-semibold"
       style={{
         width: size,
         height: size,
-        borderRadius: 7,
-        background: "#1A1A1A0F",
-        border: "1px solid #1A1A1A15",
-        fontSize: size * 0.36,
+        borderRadius: 8,
+        background: c + "22",
+        color: c,
+        fontSize: size * 0.375,
+        letterSpacing: "0.02em",
       }}
     >
       {text}
@@ -284,7 +295,7 @@ export function Av({ text, size = 28 }: { text: string; size?: number }) {
 
 export function IconAv({
   icon: Ic,
-  size = 56,
+  size = 48,
   color,
 }: {
   icon: LucideIcon;
@@ -297,35 +308,102 @@ export function IconAv({
       style={{
         width: size,
         height: size,
-        borderRadius: 10,
-        background: color + "0F",
-        border: `1.5px solid ${color}20`,
+        borderRadius: 12,
+        background: `linear-gradient(135deg, ${T.accent.blue}22, ${T.accent.purple}22)`,
+        border: `1px solid ${T.bg.border}`,
       }}
     >
-      <Ic size={size * 0.45} color={color} />
+      <Ic size={size * 0.45} color={color} strokeWidth={1.5} />
     </div>
   );
 }
 
+export function Btn({
+  label,
+  icon: Ic,
+  primary,
+  small,
+  onClick,
+  disabled,
+}: {
+  label: string;
+  icon?: LucideIcon;
+  primary?: boolean;
+  small?: boolean;
+  onClick?: () => void;
+  disabled?: boolean;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      disabled={disabled}
+      className={cn(
+        "inline-flex items-center gap-1.5 rounded-lg font-medium cursor-pointer transition-colors duration-150",
+        small ? "px-2.5 py-1 text-xs" : "px-4 py-2 text-[13px]",
+        disabled && "opacity-50 cursor-not-allowed"
+      )}
+      style={
+        primary
+          ? { backgroundColor: T.accent.blue, color: "#fff", border: "none" }
+          : {
+              borderColor: T.bg.border,
+              color: T.text.primary,
+              backgroundColor: T.bg.elevated,
+              border: `1px solid ${T.bg.border}`,
+            }
+      }
+    >
+      {Ic && <Ic size={small ? 13 : 15} strokeWidth={1.5} />}
+      {label}
+    </button>
+  );
+}
+
 /* ── Types ── */
+
+export interface PipelineStage {
+  id: string;
+  stage_key: string;
+  label: string;
+  color: string;
+  sort_order: number;
+  is_terminal: boolean;
+  sla_days: number | null;
+}
+
+export interface UWVersion {
+  id: string;
+  loan_id: string;
+  version_number: number;
+  is_active: boolean;
+  created_by: string;
+  label: string | null;
+  notes: string | null;
+  calculator_inputs: Record<string, unknown>;
+  calculator_outputs: Record<string, unknown>;
+  status: string;
+  created_at: string;
+  _author_name?: string | null;
+  _author_avatar?: string | null;
+}
+
 export interface DealData {
   id: string;
   opportunity_id?: string | null;
   loan_number?: string | null;
   deal_name?: string | null;
-  // Stage
   stage: string;
+  stage_updated_at?: string | null;
   priority?: string | null;
   approval_status?: string | null;
-  // Type/purpose
   type?: string | null;
   loan_type?: string | null;
   purpose?: string | null;
   loan_purpose?: string | null;
-  // Financials
   loan_amount?: number | null;
   interest_rate?: number | null;
   ltv?: number | null;
+  dscr_ratio?: number | null;
   loan_term_months?: number | null;
   term_months?: number | null;
   points?: number | null;
@@ -348,13 +426,11 @@ export interface DealData {
   cash_to_close?: number | null;
   liquidity?: number | null;
   net_worth?: number | null;
-  // Prepayment
   prepayment_type?: string | null;
   prepayment_pct?: number | null;
   prepayment_months?: number | null;
   extension_option?: string | null;
   extension_fee_pct?: number | null;
-  // Property
   property_address?: string | null;
   property_address_line1?: string | null;
   property_city?: string | null;
@@ -362,13 +438,13 @@ export interface DealData {
   property_zip?: string | null;
   property_type?: string | null;
   property_units?: number | null;
+  number_of_units?: number | null;
   str_flag?: boolean | null;
   flood_zone?: string | null;
   parcel_id?: string | null;
   occupancy_pct?: number | null;
   lease_type?: string | null;
   rental_status?: string | null;
-  // Dates
   application_date?: string | null;
   expected_close_date?: string | null;
   approval_date?: string | null;
@@ -378,21 +454,17 @@ export interface DealData {
   first_payment_date?: string | null;
   maturity_date?: string | null;
   payoff_date?: string | null;
-  // Borrower / Entity
   borrower_id?: string | null;
   borrower_entity_id?: string | null;
   co_borrower_id?: string | null;
   guarantor_ids?: string[] | null;
-  // Third parties
   title_company?: string | null;
   title_contact?: string | null;
   title_phone?: string | null;
   closing_attorney?: string | null;
   insurance_company?: string | null;
-  // Capital
   funding_source?: string | null;
   capital_partner?: string | null;
-  // Internal
   notes?: string | null;
   internal_notes?: string | null;
   strategy?: string | null;
@@ -403,17 +475,20 @@ export interface DealData {
   debt_tranche?: string | null;
   deal_programs?: string[] | null;
   sf_id?: string | null;
-  // Team IDs
   originator_id?: string | null;
   processor_id?: string | null;
   underwriter_id?: string | null;
   closer_id?: string | null;
-  // Timestamps
   created_at?: string | null;
   updated_at?: string | null;
-  // Resolved names
   _borrower_name?: string | null;
   _entity_name?: string | null;
+  _entity_type?: string | null;
+  _borrower_credit_score?: number | null;
+  _borrower_experience?: number | null;
+  _borrower_liquidity?: number | null;
+  _property_year_built?: number | null;
+  _property_sqft?: number | null;
   _originator?: { full_name: string; initials: string } | null;
   _processor?: { full_name: string; initials: string } | null;
   _underwriter?: { full_name: string; initials: string } | null;

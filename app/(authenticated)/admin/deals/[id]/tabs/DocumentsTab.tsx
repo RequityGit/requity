@@ -1,7 +1,7 @@
 "use client";
 
 import { Upload, FileText, Eye, Download } from "lucide-react";
-import { SectionCard, OutlinePill, cap, fD, type DocumentData } from "../components";
+import { T, SectionCard, OutlinePill, cap, fD, type DocumentData } from "../components";
 
 interface DocumentsTabProps {
   documents: DocumentData[];
@@ -18,24 +18,26 @@ export function DocumentsTab({ documents }: DocumentsTabProps) {
   return (
     <div className="flex flex-col gap-3">
       {/* Upload zone */}
-      <div className="cursor-pointer rounded-xl border-2 border-dashed border-[#E5E5E7] bg-white px-5 py-8 text-center">
-        <Upload size={28} className="mx-auto text-[#8B8B8B]" />
-        <div className="mt-2 text-sm font-medium text-[#1A1A1A] font-sans">
+      <div
+        className="cursor-pointer rounded-xl px-5 py-8 text-center"
+        style={{
+          border: `2px dashed ${T.bg.border}`,
+          backgroundColor: T.bg.surface,
+        }}
+      >
+        <Upload size={28} color={T.text.muted} className="mx-auto" strokeWidth={1.5} />
+        <div className="mt-2 text-sm font-medium" style={{ color: T.text.primary }}>
           Drop files here or click to upload
         </div>
-        <div className="mt-1 text-xs text-[#8B8B8B] font-sans">
+        <div className="mt-1 text-xs" style={{ color: T.text.muted }}>
           PDF, DOCX, XLSX up to 25MB
         </div>
       </div>
 
       {/* Document list */}
-      <SectionCard
-        title={`Documents (${documents.length})`}
-        icon={FileText}
-        noPad
-      >
+      <SectionCard title={`Documents (${documents.length})`} icon={FileText} noPad>
         {documents.length === 0 && (
-          <div className="px-5 py-8 text-center text-sm text-[#8B8B8B] font-sans">
+          <div className="px-5 py-8 text-center text-sm" style={{ color: T.text.muted }}>
             No documents uploaded yet.
           </div>
         )}
@@ -44,31 +46,24 @@ export function DocumentsTab({ documents }: DocumentsTabProps) {
             key={doc.id}
             className="flex items-center gap-3 px-5 py-3"
             style={{
-              borderBottom:
-                i < documents.length - 1
-                  ? "1px solid #F0F0F2"
-                  : "none",
+              borderBottom: i < documents.length - 1 ? `1px solid ${T.bg.borderSubtle}` : "none",
             }}
           >
-            <FileText size={16} className="shrink-0 text-[#6B6B6B]" />
+            <FileText size={16} color={T.text.muted} className="shrink-0" strokeWidth={1.5} />
             <div className="min-w-0 flex-1">
-              <div className="truncate text-[13px] font-medium text-[#1A1A1A] font-sans">
+              <div className="truncate text-[13px] font-medium" style={{ color: T.text.primary }}>
                 {doc.name || doc.file_name || "Untitled"}
               </div>
-              <div className="text-[11px] text-[#8B8B8B] font-sans">
-                {doc._uploaded_by_name || "\u2014"} &middot;{" "}
-                {fD(doc.created_at)} &middot;{" "}
-                {formatFileSize(doc.file_size)}
+              <div className="text-[11px] num" style={{ color: T.text.muted }}>
+                {doc._uploaded_by_name || "\u2014"} &middot; {fD(doc.created_at)} &middot; {formatFileSize(doc.file_size)}
               </div>
             </div>
-            {doc.document_type && (
-              <OutlinePill label={cap(doc.document_type)} />
-            )}
+            {doc.document_type && <OutlinePill label={cap(doc.document_type)} />}
             <button className="cursor-pointer border-none bg-transparent p-1">
-              <Eye size={14} className="text-[#6B6B6B]" />
+              <Eye size={14} color={T.text.muted} strokeWidth={1.5} />
             </button>
             <button className="cursor-pointer border-none bg-transparent p-1">
-              <Download size={14} className="text-[#6B6B6B]" />
+              <Download size={14} color={T.text.muted} strokeWidth={1.5} />
             </button>
           </div>
         ))}

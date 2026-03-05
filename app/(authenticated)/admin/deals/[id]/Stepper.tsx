@@ -1,63 +1,21 @@
 "use client";
 
-import { CheckCircle2 } from "lucide-react";
+import { Check } from "lucide-react";
 import {
-  STAGES,
+  T,
   TERMINAL_DEAL_STAGES,
   DotPill,
   cap,
-  dBetween,
   type DealData,
-  type StageHistoryEntry,
+  type PipelineStage,
 } from "./components";
 
 interface StepperProps {
   deal: DealData;
-  stageHistory: StageHistoryEntry[];
+  stages: PipelineStage[];
 }
 
-/**
- * Compute per-stage data from the stage history log.
- * The history stores transitions (from_stage -> to_stage).
- * We reconstruct how many days were spent in each stage.
- */
-function buildStageTimeline(
-  stageHistory: StageHistoryEntry[],
-  currentStage: string
-) {
-  const map: Record<string, { enteredAt: string | null; days: number | null }> = {};
-
-  // Sort by changed_at ascending
-  const sorted = [...stageHistory].sort(
-    (a, b) =>
-      new Date(a.changed_at || "").getTime() -
-      new Date(b.changed_at || "").getTime()
-  );
-
-  // Track when each stage was entered
-  for (const entry of sorted) {
-    if (entry.to_stage && entry.changed_at) {
-      map[entry.to_stage] = { enteredAt: entry.changed_at, days: null };
-    }
-    // If from_stage had an entry, calculate days
-    if (entry.from_stage && map[entry.from_stage] && entry.changed_at) {
-      const entered = new Date(map[entry.from_stage].enteredAt || "");
-      const exited = new Date(entry.changed_at);
-      map[entry.from_stage].days = Math.floor(
-        (exited.getTime() - entered.getTime()) / 86400000
-      );
-    }
-  }
-
-  // Current stage days = days since entered
-  if (map[currentStage]?.enteredAt) {
-    map[currentStage].days = dBetween(map[currentStage].enteredAt!);
-  }
-
-  return map;
-}
-
-export function Stepper({ deal, stageHistory }: StepperProps) {
+export function Stepper({ deal, stages }: StepperProps) {
   // Terminal stages => show as a single pill badge
   if (
     TERMINAL_DEAL_STAGES.includes(
@@ -66,89 +24,101 @@ export function Stepper({ deal, stageHistory }: StepperProps) {
   ) {
     const stageColor =
       deal.stage === "default" || deal.stage === "reo"
-        ? "#E5453D"
+        ? T.accent.red
         : deal.stage === "withdrawn" || deal.stage === "denied" || deal.stage === "closed_lost"
-          ? "#8B8B8B"
-          : "#22A861";
+          ? T.text.muted
+          : T.accent.green;
     return (
-      <div className="rounded-xl border border-[#E5E5E7] bg-white px-6 py-4">
+      <div
+        className="rounded-xl px-5 py-4"
+        style={{
+          backgroundColor: T.bg.surface,
+          border: `1px solid ${T.bg.border}`,
+        }}
+      >
         <DotPill label={cap(deal.stage)} color={stageColor} big />
       </div>
     );
   }
 
-  const ci = STAGES.findIndex((s) => s.k === deal.stage);
-  const timeline = buildStageTimeline(stageHistory, deal.stage);
+  // Filter to non-terminal stages for the tracker
+  const nonTerminal = stages.filter((s) => !s.is_terminal);
+  const ci = nonTerminal.findIndex((s) => s.stage_key === deal.stage);
 
   return (
-    <div className="overflow-x-auto rounded-xl border border-[#E5E5E7] bg-white px-6 py-[18px]">
-      <div className="flex min-w-[680px] items-start">
-        {STAGES.map((stg, i) => {
-          const done = i < ci;
-          const cur = i === ci;
-          const fut = i > ci;
-          const info = timeline[stg.k];
-          const days = info?.days ?? null;
-          const isWarn = cur && stg.w > 0 && days !== null && days >= stg.w && days < stg.a;
-          const isAlert = cur && stg.a > 0 && days !== null && days >= stg.a;
-          const velColor = isAlert ? "#E5453D" : isWarn ? "#E5930E" : "#6B6B6B";
+    <div
+      className="overflow-x-auto rounded-xl px-5 py-4"
+      style={{
+        backgroundColor: T.bg.surface,
+        border: `1px solid ${T.bg.border}`,
+      }}
+    >
+      <div className="flex items-center gap-0 min-w-[600px]">
+        {nonTerminal.map((stg, i) => {
+          const isComplete = i < ci;
+          const isCurrent = i === ci;
+          const isUpcoming = i > ci;
+          const dotColor = isComplete
+            ? T.accent.green
+            : isCurrent
+              ? stg.color
+              : T.bg.border;
 
           return (
-            <div key={stg.k} className="flex flex-1 items-start">
-              <div className="flex min-w-[75px] flex-col items-center gap-1.5">
+            <div key={stg.stage_key} className="flex flex-1 items-center">
+              <div className="flex flex-col items-center gap-1.5 min-w-0">
                 {/* Circle */}
                 <div
-                  className="flex h-7 w-7 items-center justify-center rounded-full"
+                  className="flex items-center justify-center rounded-full transition-all duration-200"
                   style={{
-                    background: done ? "#1A1A1A" : cur ? stg.c : "transparent",
-                    border: `2px solid ${done ? "#1A1A1A" : cur ? stg.c : "#E5E5E7"}`,
-                    boxShadow: cur ? `0 0 0 4px ${stg.c}20` : "none",
+                    width: isCurrent ? 28 : 20,
+                    height: isCurrent ? 28 : 20,
+                    backgroundColor: isComplete
+                      ? T.accent.green
+                      : isCurrent
+                        ? stg.color + "22"
+                        : "transparent",
+                    border: `2px solid ${dotColor}`,
+                    boxShadow: isCurrent ? `0 0 0 4px ${stg.color}18` : "none",
                   }}
                 >
-                  {done && <CheckCircle2 size={14} color="#FFF" />}
-                  {cur && (
-                    <div className="h-2 w-2 rounded-full bg-white" />
+                  {isComplete && <Check size={12} color="#fff" strokeWidth={2.5} />}
+                  {isCurrent && (
+                    <div
+                      className="rounded-full"
+                      style={{
+                        width: 8,
+                        height: 8,
+                        backgroundColor: stg.color,
+                      }}
+                    />
                   )}
                 </div>
                 {/* Label */}
                 <span
-                  className="text-center text-[11px] font-sans"
+                  className="text-[11px] text-center whitespace-nowrap"
                   style={{
-                    fontWeight: cur ? 600 : 500,
-                    color: fut ? "#8B8B8B" : "#1A1A1A",
+                    fontWeight: isCurrent ? 600 : 400,
+                    color: isUpcoming
+                      ? T.text.muted
+                      : isCurrent
+                        ? T.text.primary
+                        : T.text.secondary,
+                    letterSpacing: "0.02em",
                   }}
                 >
-                  {stg.l}
+                  {stg.label}
                 </span>
-                {/* Days */}
-                {done && days != null && (
-                  <span className="text-[10px] text-[#8B8B8B] num">
-                    {days}d
-                  </span>
-                )}
-                {cur && days != null && (
-                  <span
-                    className="text-[10px] font-semibold num"
-                    style={{ color: velColor }}
-                  >
-                    {days}d
-                  </span>
-                )}
               </div>
               {/* Connector */}
-              {i < STAGES.length - 1 && (
+              {i < nonTerminal.length - 1 && (
                 <div
-                  className="mx-1 mt-[14px] h-0.5 flex-1"
+                  className="flex-1 mx-2"
                   style={{
-                    background: i < ci ? "#1A1A1A" : "#E5E5E7",
-                    opacity: fut ? 0.4 : 1,
-                    ...(fut
-                      ? {
-                          backgroundImage:
-                            "repeating-linear-gradient(90deg, #E5E5E7, #E5E5E7 4px, transparent 4px, transparent 8px)",
-                          background: "none",
-                        }
-                      : {}),
+                    height: 2,
+                    marginBottom: 22,
+                    backgroundColor: i < ci ? T.accent.green : T.bg.border,
+                    borderRadius: 1,
                   }}
                 />
               )}

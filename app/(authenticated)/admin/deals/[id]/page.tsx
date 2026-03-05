@@ -10,6 +10,8 @@ import type {
   ActivityData,
   CommentData,
   ChatMessage,
+  PipelineStage,
+  UWVersion,
 } from "./components";
 
 export const dynamic = "force-dynamic";
@@ -37,8 +39,20 @@ export default async function DealDetailPage({ params }: PageProps) {
 
   const { id } = await params;
 
+  // ─── Fetch pipeline stages from config ───
+  let pipelineStages: PipelineStage[] = [];
+  try {
+    const { data: stages } = await supabase
+      .from("pipeline_stage_config")
+      .select("id, stage_key, label, color, sort_order, is_terminal, sla_days")
+      .eq("pipeline_type", "debt")
+      .order("sort_order");
+    pipelineStages = (stages ?? []) as PipelineStage[];
+  } catch {
+    // table may not exist, fallback handled in client
+  }
+
   // ─── Fetch primary deal record ───
-  // Try loans first, fallback to opportunities
   let isOpportunity = false;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let dealRaw: any = null;
@@ -68,7 +82,6 @@ export default async function DealDetailPage({ params }: PageProps) {
 
     isOpportunity = true;
 
-    // Fetch property data for opportunity
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     let propertyData: any = null;
     if (opp.property_id) {
@@ -80,7 +93,6 @@ export default async function DealDetailPage({ params }: PageProps) {
       propertyData = prop;
     }
 
-    // Fetch primary borrower
     let oppBorrowerName: string | null = null;
     const { data: oppBorrowers } = await admin
       .from("opportunity_borrowers")
@@ -115,14 +127,14 @@ export default async function DealDetailPage({ params }: PageProps) {
       }
     }
 
-    // Map opportunity -> deal format
     const OPPORTUNITY_TO_STAGE: Record<string, string> = {
-      awaiting_info: "lead",
-      quoting: "lead",
-      uw: "underwriting",
-      offer_placed: "approved",
+      awaiting_info: "awaiting_info",
+      quoting: "quoting",
+      uw: "uw",
+      uw_approval: "uw_approval",
+      offer_placed: "offer_placed",
       processing: "processing",
-      closed: "funded",
+      closed: "closed",
       onboarding: "servicing",
       closed_lost: "withdrawn",
     };
@@ -133,6 +145,7 @@ export default async function DealDetailPage({ params }: PageProps) {
       loan_number: null,
       deal_name: opp.deal_name,
       stage: OPPORTUNITY_TO_STAGE[opp.stage] ?? opp.stage,
+      stage_updated_at: opp.stage_updated_at ?? opp.updated_at,
       priority: null,
       approval_status: opp.approval_status ?? null,
       type: opp.loan_type ?? null,
@@ -174,44 +187,50 @@ export default async function DealDetailPage({ params }: PageProps) {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const d = dealRaw as any;
 
-  // ─── Fetch borrower name for loans ───
+  // ─── Fetch borrower data ───
   if (!isOpportunity && d.borrower_id && !d._borrower_name) {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { data: bRow } = await (supabase as any)
       .from("borrowers")
-      .select("crm_contact_id, first_name, last_name")
+      .select("crm_contact_id, first_name, last_name, credit_score, experience_count, verified_liquidity")
       .eq("id", d.borrower_id)
       .maybeSingle();
-    if (bRow?.crm_contact_id) {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { data: contact } = await (supabase as any)
-        .from("crm_contacts")
-        .select("first_name, last_name")
-        .eq("id", bRow.crm_contact_id)
-        .maybeSingle();
-      if (contact) {
-        d._borrower_name =
-          `${contact.first_name ?? ""} ${contact.last_name ?? ""}`.trim() || null;
+    if (bRow) {
+      d._borrower_credit_score = bRow.credit_score ?? null;
+      d._borrower_experience = bRow.experience_count ?? null;
+      d._borrower_liquidity = bRow.verified_liquidity ?? null;
+      if (bRow.crm_contact_id) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const { data: contact } = await (supabase as any)
+          .from("crm_contacts")
+          .select("first_name, last_name")
+          .eq("id", bRow.crm_contact_id)
+          .maybeSingle();
+        if (contact) {
+          d._borrower_name =
+            `${contact.first_name ?? ""} ${contact.last_name ?? ""}`.trim() || null;
+        }
       }
-    }
-    if (!d._borrower_name && bRow) {
-      d._borrower_name =
-        `${bRow.first_name ?? ""} ${bRow.last_name ?? ""}`.trim() || null;
+      if (!d._borrower_name) {
+        d._borrower_name =
+          `${bRow.first_name ?? ""} ${bRow.last_name ?? ""}`.trim() || null;
+      }
     }
   }
 
-  // ─── Fetch entity name ───
+  // ─── Fetch entity ───
   if (d.borrower_entity_id) {
     try {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const { data: entity } = await (supabase as any)
         .from("borrower_entities")
-        .select("name")
+        .select("name, entity_name, entity_type")
         .eq("id", d.borrower_entity_id)
         .maybeSingle();
-      d._entity_name = entity?.name ?? null;
+      d._entity_name = entity?.entity_name ?? entity?.name ?? null;
+      d._entity_type = entity?.entity_type ?? null;
     } catch {
-      /* table may not exist */
+      /* ok */
     }
   }
 
@@ -223,8 +242,7 @@ export default async function DealDetailPage({ params }: PageProps) {
     d.closer_id,
   ].filter((tid): tid is string => Boolean(tid));
 
-  const teamProfiles: Record<string, { full_name: string; initials: string }> =
-    {};
+  const teamProfiles: Record<string, { full_name: string; initials: string }> = {};
   if (teamIds.length > 0) {
     const { data: profiles } = await supabase
       .from("profiles")
@@ -244,6 +262,8 @@ export default async function DealDetailPage({ params }: PageProps) {
 
   // ─── Fetch current user profile ───
   let currentUserInitials = "??";
+  let currentUserName = "Unknown";
+  const currentUserId = user.id;
   {
     const { data: myProfile } = await supabase
       .from("profiles")
@@ -252,6 +272,7 @@ export default async function DealDetailPage({ params }: PageProps) {
       .single();
     if (myProfile?.full_name) {
       currentUserInitials = getInitials(myProfile.full_name);
+      currentUserName = myProfile.full_name;
     }
   }
 
@@ -270,10 +291,9 @@ export default async function DealDetailPage({ params }: PageProps) {
   let commentsData: any[] = [];
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let chatMessagesData: any[] = [];
+  let uwVersionsData: UWVersion[] = [];
 
   if (loanId) {
-    // Parallel fetch for loan-related data
-    // Use try/catch per query since Supabase PromiseLike doesn't support .catch()
     const fetchSafe = async <T,>(
       fn: () => PromiseLike<{ data: T | null }>
     ): Promise<T | null> => {
@@ -291,6 +311,7 @@ export default async function DealDetailPage({ params }: PageProps) {
       documentsRaw,
       activityRaw,
       commentsRaw,
+      uwVersionsRaw,
     ] = await Promise.all([
       fetchSafe(() =>
         supabase
@@ -328,6 +349,13 @@ export default async function DealDetailPage({ params }: PageProps) {
           .eq("loan_id", loanId)
           .order("created_at", { ascending: false })
       ),
+      fetchSafe(() =>
+        supabase
+          .from("loan_underwriting_versions")
+          .select("*")
+          .eq("loan_id", loanId)
+          .order("version_number", { ascending: false })
+      ),
     ]);
 
     stageHistoryData = stageHistoryRaw ?? [];
@@ -335,6 +363,37 @@ export default async function DealDetailPage({ params }: PageProps) {
     documentsData = documentsRaw ?? [];
     activityData = activityRaw ?? [];
     commentsData = commentsRaw ?? [];
+
+    // Map UW versions with author names
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const uwRaw = (uwVersionsRaw ?? []) as any[];
+    const uwAuthorIds = [...new Set(uwRaw.map((v) => v.created_by).filter(Boolean))];
+    const uwAuthorMap: Record<string, string> = {};
+    if (uwAuthorIds.length > 0) {
+      const { data: uwProfiles } = await supabase
+        .from("profiles")
+        .select("id, full_name")
+        .in("id", uwAuthorIds);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (uwProfiles ?? []).forEach((p: any) => {
+        uwAuthorMap[p.id] = p.full_name ?? "Unknown";
+      });
+    }
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    uwVersionsData = uwRaw.map((v: any) => ({
+      id: v.id,
+      loan_id: v.loan_id,
+      version_number: v.version_number,
+      is_active: v.is_active ?? false,
+      created_by: v.created_by,
+      label: v.label ?? null,
+      notes: v.notes ?? null,
+      calculator_inputs: v.calculator_inputs ?? {},
+      calculator_outputs: v.calculator_outputs ?? {},
+      status: v.status ?? "draft",
+      created_at: v.created_at,
+      _author_name: v.created_by ? uwAuthorMap[v.created_by] ?? null : null,
+    }));
 
     // Fetch chat messages
     try {
@@ -349,8 +408,7 @@ export default async function DealDetailPage({ params }: PageProps) {
     }
   }
 
-  // ─── Resolve names for conditions, activity, comments, chat ───
-  // Collect all user IDs referenced
+  // ─── Resolve names ───
   const userIdsSet = new Set<string>();
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   conditionsData.forEach((c: any) => {
@@ -388,107 +446,71 @@ export default async function DealDetailPage({ params }: PageProps) {
     });
   }
 
-  // Count documents per condition
   const condDocCounts: Record<string, number> = {};
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   documentsData.forEach((doc: any) => {
     if (doc.condition_id) {
-      condDocCounts[doc.condition_id] =
-        (condDocCounts[doc.condition_id] || 0) + 1;
+      condDocCounts[doc.condition_id] = (condDocCounts[doc.condition_id] || 0) + 1;
     }
   });
 
-  // ─── Map data to typed structures ───
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const conditions: ConditionData[] = conditionsData.map((c: any) => ({
-    id: c.id,
-    loan_id: c.loan_id,
+    id: c.id, loan_id: c.loan_id,
     name: c.name ?? c.condition_name ?? "Unnamed",
-    category: c.category ?? null,
-    status: c.status ?? "pending",
-    assigned_to: c.assigned_to ?? null,
-    due_date: c.due_date ?? null,
-    critical_path: c.critical_path ?? false,
-    notes: c.notes ?? null,
-    template_id: c.template_id ?? null,
-    cleared_at: c.cleared_at ?? null,
-    cleared_by: c.cleared_by ?? null,
-    created_at: c.created_at ?? null,
-    updated_at: c.updated_at ?? null,
-    _doc_count: condDocCounts[c.id] || 0,
+    category: c.category ?? null, status: c.status ?? "pending",
+    assigned_to: c.assigned_to ?? null, due_date: c.due_date ?? null,
+    critical_path: c.critical_path ?? false, notes: c.notes ?? null,
+    template_id: c.template_id ?? null, cleared_at: c.cleared_at ?? null,
+    cleared_by: c.cleared_by ?? null, created_at: c.created_at ?? null,
+    updated_at: c.updated_at ?? null, _doc_count: condDocCounts[c.id] || 0,
     _assigned_name: c.assigned_to ? nameMap[c.assigned_to] ?? null : null,
   }));
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const documents: DocumentData[] = documentsData.map((doc: any) => ({
-    id: doc.id,
-    loan_id: doc.loan_id,
-    condition_id: doc.condition_id ?? null,
-    name: doc.name ?? doc.file_name ?? null,
-    file_name: doc.file_name ?? null,
-    file_url: doc.file_url ?? doc.url ?? null,
-    file_type: doc.file_type ?? null,
-    file_size: doc.file_size ?? null,
-    document_type: doc.document_type ?? doc.type ?? null,
+    id: doc.id, loan_id: doc.loan_id, condition_id: doc.condition_id ?? null,
+    name: doc.name ?? doc.file_name ?? null, file_name: doc.file_name ?? null,
+    file_url: doc.file_url ?? doc.url ?? null, file_type: doc.file_type ?? null,
+    file_size: doc.file_size ?? null, document_type: doc.document_type ?? doc.type ?? null,
     uploaded_by: doc.uploaded_by ?? null,
-    _uploaded_by_name: doc.uploaded_by
-      ? nameMap[doc.uploaded_by] ?? null
-      : null,
+    _uploaded_by_name: doc.uploaded_by ? nameMap[doc.uploaded_by] ?? null : null,
     created_at: doc.created_at ?? null,
   }));
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const activity: ActivityData[] = activityData.map((a: any) => ({
-    id: a.id,
-    loan_id: a.loan_id,
-    action: a.action ?? null,
-    description: a.description ?? null,
-    performed_by: a.performed_by ?? null,
+    id: a.id, loan_id: a.loan_id, action: a.action ?? null,
+    description: a.description ?? null, performed_by: a.performed_by ?? null,
     _actor_name: a.performed_by ? nameMap[a.performed_by] ?? null : null,
-    metadata: a.metadata ?? null,
-    created_at: a.created_at ?? null,
+    metadata: a.metadata ?? null, created_at: a.created_at ?? null,
   }));
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const comments: CommentData[] = commentsData.map((c: any) => ({
-    id: c.id,
-    loan_id: c.loan_id,
-    author_id: c.author_id,
+    id: c.id, loan_id: c.loan_id, author_id: c.author_id,
     author_name: c.author_name ?? (c.author_id ? nameMap[c.author_id] ?? null : null),
-    comment: c.comment ?? c.body ?? "",
-    is_internal: c.is_internal ?? false,
-    is_edited: c.is_edited ?? false,
-    parent_comment_id: c.parent_comment_id ?? null,
-    mentions: c.mentions ?? [],
-    created_at: c.created_at ?? null,
-    updated_at: c.updated_at ?? null,
+    comment: c.comment ?? c.body ?? "", is_internal: c.is_internal ?? false,
+    is_edited: c.is_edited ?? false, parent_comment_id: c.parent_comment_id ?? null,
+    mentions: c.mentions ?? [], created_at: c.created_at ?? null, updated_at: c.updated_at ?? null,
   }));
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const stageHistory: StageHistoryEntry[] = stageHistoryData.map((h: any) => ({
-    id: h.id,
-    loan_id: h.loan_id,
-    from_stage: h.from_stage ?? null,
-    to_stage: h.to_stage ?? null,
-    changed_at: h.changed_at ?? null,
+    id: h.id, loan_id: h.loan_id, from_stage: h.from_stage ?? null,
+    to_stage: h.to_stage ?? null, changed_at: h.changed_at ?? null,
     changed_by: h.changed_by ?? null,
-    duration_in_previous_stage: h.duration_in_previous_stage ?? null,
-    notes: h.notes ?? null,
+    duration_in_previous_stage: h.duration_in_previous_stage ?? null, notes: h.notes ?? null,
   }));
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const chatMessages: ChatMessage[] = chatMessagesData.map((m: any) => {
     const senderName = m.sent_by ? nameMap[m.sent_by] ?? "Unknown" : "Unknown";
     return {
-      id: m.id,
-      channel_id: m.channel_id,
-      loan_id: m.loan_id,
-      sent_by: m.sent_by,
-      content: m.content ?? "",
-      message_type: m.message_type ?? "message",
-      created_at: m.created_at ?? null,
-      _sender_name: senderName,
-      _sender_initials: getInitials(senderName),
+      id: m.id, channel_id: m.channel_id, loan_id: m.loan_id,
+      sent_by: m.sent_by, content: m.content ?? "",
+      message_type: m.message_type ?? "message", created_at: m.created_at ?? null,
+      _sender_name: senderName, _sender_initials: getInitials(senderName),
     };
   });
 
@@ -496,6 +518,12 @@ export default async function DealDetailPage({ params }: PageProps) {
     ...d,
     _borrower_name: d._borrower_name ?? null,
     _entity_name: d._entity_name ?? null,
+    _entity_type: d._entity_type ?? null,
+    _borrower_credit_score: d._borrower_credit_score ?? null,
+    _borrower_experience: d._borrower_experience ?? null,
+    _borrower_liquidity: d._borrower_liquidity ?? null,
+    _property_year_built: d._property_year_built ?? null,
+    _property_sqft: d._property_sqft ?? null,
     _originator: d._originator ?? null,
     _processor: d._processor ?? null,
     _underwriter: d._underwriter ?? null,
@@ -506,12 +534,16 @@ export default async function DealDetailPage({ params }: PageProps) {
     <DealDetail
       deal={deal}
       stageHistory={stageHistory}
+      pipelineStages={pipelineStages}
+      uwVersions={uwVersionsData}
       conditions={conditions}
       documents={documents}
       activity={activity}
       comments={comments}
       chatMessages={chatMessages}
       isOpportunity={isOpportunity}
+      currentUserId={currentUserId}
+      currentUserName={currentUserName}
       currentUserInitials={currentUserInitials}
     />
   );

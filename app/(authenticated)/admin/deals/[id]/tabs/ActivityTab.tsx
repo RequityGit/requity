@@ -10,7 +10,7 @@ import {
   Zap,
   AlertTriangle,
 } from "lucide-react";
-import { SectionCard, cap, fD, type ActivityData } from "../components";
+import { T, SectionCard, cap, fD, type ActivityData } from "../components";
 import type { LucideIcon } from "lucide-react";
 
 interface ActivityTabProps {
@@ -18,28 +18,21 @@ interface ActivityTabProps {
 }
 
 const ICON_MAP: Record<string, { icon: LucideIcon; color: string }> = {
-  stage_change: { icon: GitBranch, color: "#3B82F6" },
-  stage: { icon: GitBranch, color: "#3B82F6" },
-  document: { icon: FileText, color: "#22A861" },
-  doc: { icon: FileText, color: "#22A861" },
-  document_upload: { icon: FileText, color: "#22A861" },
-  comment: { icon: MessageSquare, color: "#1A1A1A" },
-  note: { icon: MessageSquare, color: "#1A1A1A" },
-  email: { icon: Mail, color: "#3B82F6" },
-  call: { icon: Phone, color: "#E5930E" },
-  system: { icon: Zap, color: "#8B8B8B" },
-  alert: { icon: AlertTriangle, color: "#E5453D" },
+  stage_change: { icon: GitBranch, color: "#3b82f6" },
+  stage: { icon: GitBranch, color: "#3b82f6" },
+  document: { icon: FileText, color: "#22c55e" },
+  doc: { icon: FileText, color: "#22c55e" },
+  document_upload: { icon: FileText, color: "#22c55e" },
+  comment: { icon: MessageSquare, color: "#a1a1aa" },
+  note: { icon: MessageSquare, color: "#a1a1aa" },
+  email: { icon: Mail, color: "#3b82f6" },
+  call: { icon: Phone, color: "#f59e0b" },
+  system: { icon: Zap, color: "#71717a" },
+  alert: { icon: AlertTriangle, color: "#ef4444" },
+  underwriting_saved: { icon: Zap, color: "#a78bfa" },
 };
 
-const FILTER_TYPES = [
-  "all",
-  "stage_change",
-  "comment",
-  "document",
-  "email",
-  "call",
-  "system",
-] as const;
+const FILTER_TYPES = ["all", "stage_change", "comment", "document", "email", "call", "system"] as const;
 
 export function ActivityTab({ activity }: ActivityTabProps) {
   const [filter, setFilter] = useState("all");
@@ -49,19 +42,14 @@ export function ActivityTab({ activity }: ActivityTabProps) {
       ? activity
       : activity.filter((a) => {
           const action = a.action || "";
-          if (filter === "stage_change")
-            return action.includes("stage");
-          if (filter === "document")
-            return action.includes("doc") || action.includes("upload");
-          if (filter === "comment")
-            return action.includes("comment") || action.includes("note");
+          if (filter === "stage_change") return action.includes("stage");
+          if (filter === "document") return action.includes("doc") || action.includes("upload");
+          if (filter === "comment") return action.includes("comment") || action.includes("note");
           return action.includes(filter);
         });
 
   const sorted = [...filtered].sort(
-    (a, b) =>
-      new Date(b.created_at || "").getTime() -
-      new Date(a.created_at || "").getTime()
+    (a, b) => new Date(b.created_at || "").getTime() - new Date(a.created_at || "").getTime()
   );
 
   return (
@@ -72,11 +60,11 @@ export function ActivityTab({ activity }: ActivityTabProps) {
           <button
             key={x}
             onClick={() => setFilter(x)}
-            className="cursor-pointer rounded-lg border px-3 py-1 text-xs font-medium font-sans"
+            className="cursor-pointer rounded-lg border px-3 py-1 text-xs font-medium"
             style={{
-              color: filter === x ? "#FFF" : "#6B6B6B",
-              background: filter === x ? "#1A1A1A" : "#FFF",
-              borderColor: filter === x ? "#1A1A1A" : "#E5E5E7",
+              color: filter === x ? "#FFF" : T.text.muted,
+              background: filter === x ? T.accent.blue : T.bg.surface,
+              borderColor: filter === x ? T.accent.blue : T.bg.border,
             }}
           >
             {cap(x)}
@@ -87,7 +75,7 @@ export function ActivityTab({ activity }: ActivityTabProps) {
       {/* Timeline */}
       <SectionCard noPad>
         {sorted.length === 0 && (
-          <div className="px-5 py-8 text-center text-sm text-[#8B8B8B] font-sans">
+          <div className="px-5 py-8 text-center text-sm" style={{ color: T.text.muted }}>
             No activity recorded yet.
           </div>
         )}
@@ -100,28 +88,23 @@ export function ActivityTab({ activity }: ActivityTabProps) {
               key={item.id}
               className="flex gap-3.5 px-5 py-3.5"
               style={{
-                borderBottom:
-                  i < sorted.length - 1
-                    ? "1px solid #F0F0F2"
-                    : "none",
+                borderBottom: i < sorted.length - 1 ? `1px solid ${T.bg.borderSubtle}` : "none",
               }}
             >
               <div
                 className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg"
-                style={{ background: cfg.color + "10" }}
+                style={{ background: cfg.color + "14" }}
               >
-                <Ic size={15} color={cfg.color} />
+                <Ic size={15} color={cfg.color} strokeWidth={1.5} />
               </div>
               <div className="flex-1">
-                <div className="text-[13px] text-[#1A1A1A] font-sans">
+                <div className="text-[13px]" style={{ color: T.text.primary }}>
                   {item._actor_name && (
-                    <span className="font-semibold">
-                      {item._actor_name}
-                    </span>
+                    <span className="font-semibold">{item._actor_name}</span>
                   )}{" "}
                   {item.description || cap(item.action)}
                 </div>
-                <div className="mt-0.5 text-[11px] text-[#8B8B8B] font-sans">
+                <div className="mt-0.5 text-[11px] num" style={{ color: T.text.muted }}>
                   {fD(item.created_at)}
                 </div>
               </div>

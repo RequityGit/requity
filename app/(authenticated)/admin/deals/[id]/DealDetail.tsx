@@ -12,13 +12,18 @@ import { ConditionsTab } from "./tabs/ConditionsTab";
 import { DocumentsTab } from "./tabs/DocumentsTab";
 import { ActivityTab } from "./tabs/ActivityTab";
 import { CommentsTab } from "./tabs/CommentsTab";
-import { ChatTab } from "./tabs/ChatTab";
 import { UnderwritingTab } from "./tabs/UnderwritingTab";
 import { updateDealField } from "./update-deal-action";
 import {
+  T,
+  MetricCard,
+  fmt,
+  fP,
   getDefaultTab,
   type DealData,
   type StageHistoryEntry,
+  type PipelineStage,
+  type UWVersion,
   type ConditionData,
   type DocumentData,
   type ActivityData,
@@ -29,30 +34,38 @@ import {
 interface DealDetailProps {
   deal: DealData;
   stageHistory: StageHistoryEntry[];
+  pipelineStages: PipelineStage[];
+  uwVersions: UWVersion[];
   conditions: ConditionData[];
   documents: DocumentData[];
   activity: ActivityData[];
   comments: CommentData[];
   chatMessages: ChatMessage[];
   isOpportunity: boolean;
+  currentUserId: string;
+  currentUserName: string;
   currentUserInitials: string;
 }
 
 interface TabConfig {
-  k: string;
-  l: string;
-  c?: number;
+  key: string;
+  label: string;
+  count?: number;
 }
 
 export function DealDetail({
   deal: initialDeal,
   stageHistory,
+  pipelineStages,
+  uwVersions,
   conditions,
   documents,
   activity,
   comments,
   chatMessages,
   isOpportunity,
+  currentUserId,
+  currentUserName,
   currentUserInitials,
 }: DealDetailProps) {
   const [tab, setTab] = useState(getDefaultTab(initialDeal.stage));
@@ -61,29 +74,19 @@ export function DealDetail({
 
   const handleSave = useCallback(
     async (field: string, value: string | number | null): Promise<boolean> => {
-      if (isOpportunity) {
-        // Opportunity editing not supported yet
-        return false;
-      }
-
+      if (isOpportunity) return false;
       const result = await updateDealField(deal.id, { [field]: value });
-
       if (result.error) {
         console.error("Failed to update field:", result.error);
         return false;
       }
-
-      // Optimistic update: update the local deal state
       setDeal((prev) => ({ ...prev, [field]: value }));
-
-      // Refresh server data in the background
       router.refresh();
       return true;
     },
     [deal.id, isOpportunity, router]
   );
 
-  // Only pass onSave for loans, not opportunities
   const onSave = isOpportunity ? undefined : handleSave;
 
   const openConditions = conditions.filter(
@@ -94,19 +97,30 @@ export function DealDetail({
   ).length;
 
   const tabs: TabConfig[] = [
-    { k: "overview", l: "Overview" },
-    { k: "conditions", l: "Conditions", c: openConditions },
-    { k: "documents", l: "Documents", c: documents.length },
-    { k: "activity", l: "Activity", c: activity.length },
-    { k: "comments", l: "Comments", c: comments.length },
-    { k: "chat", l: "Chat", c: chatMessages.length > 0 ? chatMessages.length : undefined },
-    { k: "underwriting", l: "Underwriting" },
+    { key: "overview", label: "Overview" },
+    { key: "underwriting", label: "Underwriting" },
+    { key: "conditions", label: "Conditions", count: openConditions || undefined },
+    { key: "documents", label: "Documents", count: documents.length || undefined },
+    { key: "activity", label: "Activity" },
+    { key: "comments", label: "Comments", count: comments.length || undefined },
   ];
+
+  const termMonths = deal.loan_term_months || deal.term_months;
 
   const renderTab = () => {
     switch (tab) {
       case "overview":
         return <OverviewTab deal={deal} onSave={onSave} />;
+      case "underwriting":
+        return (
+          <UnderwritingTab
+            dealId={deal.id}
+            dealType={deal.type ?? null}
+            uwVersions={uwVersions}
+            currentUserId={currentUserId}
+            currentUserName={currentUserName}
+          />
+        );
       case "conditions":
         return <ConditionsTab conditions={conditions} />;
       case "documents":
@@ -117,18 +131,12 @@ export function DealDetail({
         return (
           <CommentsTab
             comments={comments}
+            loanId={deal.id}
+            currentUserId={currentUserId}
+            currentUserName={currentUserName}
             currentUserInitials={currentUserInitials}
           />
         );
-      case "chat":
-        return (
-          <ChatTab
-            messages={chatMessages}
-            currentUserInitials={currentUserInitials}
-          />
-        );
-      case "underwriting":
-        return <UnderwritingTab dealId={deal.id} dealType={deal.type ?? null} />;
       default:
         return null;
     }
@@ -137,71 +145,107 @@ export function DealDetail({
   const displayId = deal.loan_number || deal.id?.slice(0, 8);
 
   return (
-    <div className="font-sans">
+    <div style={{ minHeight: "100vh" }}>
       {/* Breadcrumb */}
-      <div className="mb-4 flex items-center gap-1.5 text-[13px] text-[#8B8B8B]">
+      <div
+        className="mb-3 flex items-center gap-1.5 text-[13px]"
+        style={{ color: T.text.muted }}
+      >
         <Link
           href="/admin/pipeline"
-          className="cursor-pointer text-[#3B82F6] no-underline hover:underline"
+          className="no-underline hover:underline"
+          style={{ color: T.accent.blue }}
         >
-          Deals
+          Pipeline
         </Link>
-        <ChevronRight size={14} />
-        <span>{displayId}</span>
+        <ChevronRight size={12} color={T.text.muted} />
+        <Link
+          href="/admin/pipeline/debt"
+          className="no-underline hover:underline"
+          style={{ color: T.accent.blue }}
+        >
+          Debt
+        </Link>
+        <ChevronRight size={12} color={T.text.muted} />
+        <span style={{ color: T.text.secondary }}>{displayId}</span>
       </div>
 
-      {/* Header */}
-      <Header
-        deal={deal}
-        stageHistory={stageHistory}
-        isOpportunity={isOpportunity}
-      />
+      <div className="max-w-[1280px] mx-auto">
+        {/* Header */}
+        <Header deal={deal} stages={pipelineStages} isOpportunity={isOpportunity} />
 
-      {/* Stage Stepper */}
-      <div className="mt-3">
-        <Stepper deal={deal} stageHistory={stageHistory} />
-      </div>
+        {/* Stage Tracker */}
+        <div className="mt-5">
+          <Stepper deal={deal} stages={pipelineStages} />
+        </div>
 
-      {/* Content + Sidebar */}
-      <div className="mt-4 flex gap-4">
-        <div className="min-w-0 flex-1">
-          {/* Tab Bar */}
-          <div className="mb-4 flex gap-5 overflow-x-auto border-b border-[#E5E5E7]">
+        {/* Loan Metrics */}
+        <div className="mt-5 flex gap-2.5">
+          <MetricCard label="Loan Amount" value={fmt(deal.loan_amount)} />
+          <MetricCard label="Rate" value={fP(deal.interest_rate)} />
+          <MetricCard label="LTV" value={fP(deal.ltv)} />
+          <MetricCard label="DSCR" value={deal.dscr_ratio != null ? deal.dscr_ratio.toFixed(2) : "\u2014"} />
+          <MetricCard
+            label="Term"
+            value={termMonths ? `${termMonths} mo` : "\u2014"}
+          />
+          <MetricCard label="Points" value={fP(deal.points ?? deal.points_pct)} />
+        </div>
+
+        {/* Tab Bar */}
+        <div className="mt-5 mb-5">
+          <div
+            className="inline-flex gap-0.5 rounded-[10px] p-[3px]"
+            style={{
+              backgroundColor: T.bg.surface,
+              border: `1px solid ${T.bg.border}`,
+            }}
+          >
             {tabs.map((t) => (
               <button
-                key={t.k}
-                onClick={() => setTab(t.k)}
-                className="flex cursor-pointer items-center gap-1.5 whitespace-nowrap border-b-2 bg-transparent px-1 py-2.5 text-[13px] font-sans"
+                key={t.key}
+                onClick={() => setTab(t.key)}
+                className="flex items-center gap-1.5 rounded-lg border-none px-3.5 py-[7px] text-[13px] cursor-pointer transition-all duration-150"
                 style={{
-                  fontWeight: tab === t.k ? 600 : 500,
-                  color: tab === t.k ? "#1A1A1A" : "#6B6B6B",
-                  borderBottomColor:
-                    tab === t.k ? "#1A1A1A" : "transparent",
-                  borderTop: "none",
-                  borderLeft: "none",
-                  borderRight: "none",
+                  backgroundColor: tab === t.key ? T.bg.elevated : "transparent",
+                  color: tab === t.key ? T.text.primary : T.text.muted,
+                  fontWeight: tab === t.key ? 550 : 400,
+                  boxShadow: tab === t.key ? "0 1px 3px rgba(0,0,0,0.3)" : "none",
                 }}
               >
-                {t.l}
-                {t.c != null && (
+                {t.label}
+                {t.count != null && (
                   <span
-                    className="rounded-full px-[7px] py-px text-[11px] font-semibold num"
+                    className="text-[10px] font-semibold rounded-[5px] px-[5px] py-px num"
                     style={{
-                      background: tab === t.k ? "#1A1A1A" : "#F0F0F2",
-                      color: tab === t.k ? "#FFF" : "#6B6B6B",
+                      backgroundColor: tab === t.key ? T.accent.blue + "22" : T.bg.border,
+                      color: tab === t.key ? T.accent.blue : T.text.muted,
                     }}
                   >
-                    {t.c}
+                    {t.count}
                   </span>
                 )}
               </button>
             ))}
           </div>
-          {renderTab()}
         </div>
 
-        {/* Right Sidebar */}
-        <Sidebar deal={deal} stageHistory={stageHistory} onSave={onSave} />
+        {/* Content Area */}
+        <div className="grid gap-4 items-start" style={{ gridTemplateColumns: "1fr 300px" }}>
+          {/* Left Column */}
+          <div className="flex flex-col gap-4 min-w-0">
+            {renderTab()}
+          </div>
+
+          {/* Right Sidebar */}
+          <Sidebar
+            deal={deal}
+            stages={pipelineStages}
+            currentUserId={currentUserId}
+            currentUserName={currentUserName}
+            onSave={onSave}
+          />
+        </div>
       </div>
     </div>
   );
