@@ -1334,6 +1334,25 @@ export const EQUITY_TASK_STATUSES = [
   { value: "waived", label: "Waived" },
 ] as const;
 
+/** Equity deal task categories */
+export const EQUITY_TASK_CATEGORIES = [
+  "Due Diligence",
+  "Legal",
+  "Financing",
+  "Operations",
+  "Closing",
+] as const;
+
+/** Equity deal task responsible parties */
+export const EQUITY_RESPONSIBLE_PARTIES = [
+  "Internal",
+  "Attorney",
+  "Vendor",
+  "Lender",
+  "Broker",
+  "Title Company",
+] as const;
+
 /** Equity deal loss reasons */
 export const EQUITY_LOSS_REASONS = [
   { value: "pricing", label: "Pricing Too High" },

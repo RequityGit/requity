@@ -24,40 +24,52 @@ export default async function EquityDealDetailPage({ params }: PageProps) {
   const admin = createAdminClient();
 
   // Fetch the deal with property info from the pipeline view
-  const [dealResult, propertyResult, tasksResult, stageHistoryResult] =
-    await Promise.all([
-      admin
-        .from("equity_deals")
-        .select("*")
-        .eq("id", id)
-        .is("deleted_at", null)
-        .single(),
-      admin
-        .from("equity_deals")
-        .select("property_id")
-        .eq("id", id)
-        .single()
-        .then(async (res) => {
-          if (res.data?.property_id) {
-            return admin
-              .from("properties")
-              .select("*")
-              .eq("id", res.data.property_id)
-              .single();
-          }
-          return { data: null, error: null };
-        }),
-      admin
-        .from("equity_deal_tasks")
-        .select("*")
-        .eq("deal_id", id)
-        .order("sort_order"),
-      admin
-        .from("equity_deal_stage_history")
-        .select("*")
-        .eq("deal_id", id)
-        .order("changed_at", { ascending: false }),
-    ]);
+  const [
+    dealResult,
+    propertyResult,
+    tasksResult,
+    stageHistoryResult,
+    profilesResult,
+  ] = await Promise.all([
+    admin
+      .from("equity_deals")
+      .select("*")
+      .eq("id", id)
+      .is("deleted_at", null)
+      .single(),
+    admin
+      .from("equity_deals")
+      .select("property_id")
+      .eq("id", id)
+      .single()
+      .then(async (res) => {
+        if (res.data?.property_id) {
+          return admin
+            .from("properties")
+            .select("*")
+            .eq("id", res.data.property_id)
+            .single();
+        }
+        return { data: null, error: null };
+      }),
+    admin
+      .from("equity_deal_tasks")
+      .select(
+        "*, assigned_to_profile:profiles!equity_deal_tasks_assigned_to_fkey(id, full_name, avatar_url)"
+      )
+      .eq("deal_id", id)
+      .order("sort_order"),
+    admin
+      .from("equity_deal_stage_history")
+      .select("*")
+      .eq("deal_id", id)
+      .order("changed_at", { ascending: false }),
+    admin
+      .from("profiles")
+      .select("id, full_name, avatar_url")
+      .not("full_name", "is", null)
+      .order("full_name"),
+  ]);
 
   if (dealResult.error || !dealResult.data) {
     notFound();
@@ -67,16 +79,17 @@ export default async function EquityDealDetailPage({ params }: PageProps) {
   const property = propertyResult?.data ?? null;
   const tasks = tasksResult.data ?? [];
   const stageHistory = stageHistoryResult.data ?? [];
+  const profiles = (profilesResult.data ?? []).map((p: any) => ({
+    id: p.id,
+    full_name: p.full_name ?? "",
+    avatar_url: p.avatar_url ?? null,
+  }));
 
   // Fetch assigned user profile
   let assignedToName: string | null = null;
   if (deal.assigned_to) {
-    const { data: profile } = await admin
-      .from("profiles")
-      .select("full_name")
-      .eq("id", deal.assigned_to)
-      .single();
-    assignedToName = profile?.full_name ?? null;
+    const match = profiles.find((p: any) => p.id === deal.assigned_to);
+    assignedToName = match?.full_name ?? null;
   }
 
   return (
@@ -86,6 +99,8 @@ export default async function EquityDealDetailPage({ params }: PageProps) {
       tasks={tasks}
       stageHistory={stageHistory}
       assignedToName={assignedToName}
+      profiles={profiles}
+      currentUserId={user.id}
     />
   );
 }

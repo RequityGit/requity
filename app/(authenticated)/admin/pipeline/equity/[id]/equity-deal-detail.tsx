@@ -7,6 +7,12 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "@/components/ui/tabs";
+import {
   ArrowLeft,
   Building2,
   MapPin,
@@ -15,7 +21,12 @@ import {
   User,
   FileText,
   Pencil,
+  ListTodo,
+  Clock,
+  StickyNote,
 } from "lucide-react";
+import { EquityDealTasksTab } from "./equity-deal-tasks-tab";
+import type { EquityDealTask, TaskProfile } from "./equity-deal-tasks-tab";
 import { formatCurrency, formatDate, formatPercent } from "@/lib/format";
 import {
   EQUITY_STAGE_LABELS,
@@ -38,9 +49,11 @@ import {
 interface EquityDealDetailProps {
   deal: any;
   property: any;
-  tasks: any[];
+  tasks: EquityDealTask[];
   stageHistory: any[];
   assignedToName: string | null;
+  profiles: TaskProfile[];
+  currentUserId: string;
 }
 
 function toOptions(arr: readonly { value: string; label: string }[]) {
@@ -70,6 +83,8 @@ export function EquityDealDetail({
   tasks,
   stageHistory,
   assignedToName,
+  profiles,
+  currentUserId,
 }: EquityDealDetailProps) {
   const router = useRouter();
   const [deal, setDeal] = useState(initialDeal);
@@ -534,139 +549,134 @@ export function EquityDealDetail({
         </Card>
       </div>
 
-      {/* Tasks */}
-      {tasks.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">
-              Tasks ({completedTasks}/{totalTasks} complete)
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="divide-y">
-              {tasks.map((task: any) => (
-                <div
-                  key={task.id}
-                  className="flex items-center justify-between py-2.5 first:pt-0 last:pb-0"
-                >
-                  <div className="flex items-center gap-3">
+      {/* Tabs: Tasks, Stage History, Notes */}
+      <Tabs defaultValue="tasks">
+        <TabsList>
+          <TabsTrigger value="tasks" className="gap-1.5">
+            <ListTodo className="h-3.5 w-3.5" strokeWidth={1.5} />
+            Tasks
+            <span className="ml-1 text-[10px] num text-muted-foreground">
+              {completedTasks}/{totalTasks}
+            </span>
+          </TabsTrigger>
+          <TabsTrigger value="history" className="gap-1.5">
+            <Clock className="h-3.5 w-3.5" strokeWidth={1.5} />
+            History
+            {stageHistory.length > 0 && (
+              <span className="ml-1 text-[10px] num text-muted-foreground">
+                {stageHistory.length}
+              </span>
+            )}
+          </TabsTrigger>
+          <TabsTrigger value="notes" className="gap-1.5">
+            <StickyNote className="h-3.5 w-3.5" strokeWidth={1.5} />
+            Notes
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="tasks" className="mt-4">
+          <EquityDealTasksTab
+            initialTasks={tasks}
+            dealId={deal.id}
+            dealStage={deal.stage}
+            profiles={profiles}
+            currentUserId={currentUserId}
+          />
+        </TabsContent>
+
+        <TabsContent value="history" className="mt-4">
+          {stageHistory.length > 0 ? (
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base flex items-center gap-2">
+                  <Calendar className="h-4 w-4" strokeWidth={1.5} />
+                  Stage History
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  {stageHistory.map((entry: any) => (
                     <div
-                      className={`h-2 w-2 rounded-full ${
-                        task.status === "completed"
-                          ? "bg-green-500"
-                          : task.status === "in_progress"
-                            ? "bg-blue-500"
-                            : task.status === "blocked"
-                              ? "bg-red-500"
-                              : "bg-slate-300"
-                      }`}
-                    />
-                    <span
-                      className={`text-sm ${
-                        task.status === "completed"
-                          ? "line-through text-muted-foreground"
-                          : ""
-                      }`}
+                      key={entry.id}
+                      className="flex items-center gap-3 text-sm"
                     >
-                      {task.task_name}
-                    </span>
-                    {task.is_critical_path && (
-                      <Badge variant="outline" className="text-xs">
-                        Critical
+                      <span className="num text-xs text-muted-foreground w-24 shrink-0">
+                        {formatDate(entry.changed_at)}
+                      </span>
+                      <Badge
+                        className={`text-xs ${
+                          EQUITY_STAGE_COLORS[entry.from_stage] ??
+                          "bg-slate-100 text-slate-800"
+                        }`}
+                      >
+                        {EQUITY_STAGE_LABELS[entry.from_stage] ??
+                          entry.from_stage}
                       </Badge>
-                    )}
-                  </div>
-                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                    {task.due_date && (
-                      <span className="num">{formatDate(task.due_date)}</span>
-                    )}
-                    <Badge variant="secondary" className="text-xs capitalize">
-                      {task.status.replace(/_/g, " ")}
-                    </Badge>
-                  </div>
+                      <span className="text-muted-foreground">→</span>
+                      <Badge
+                        className={`text-xs ${
+                          EQUITY_STAGE_COLORS[entry.to_stage] ??
+                          "bg-slate-100 text-slate-800"
+                        }`}
+                      >
+                        {EQUITY_STAGE_LABELS[entry.to_stage] ??
+                          entry.to_stage}
+                      </Badge>
+                      {entry.duration_in_previous_stage && (
+                        <span className="text-xs text-muted-foreground num">
+                          ({entry.duration_in_previous_stage})
+                        </span>
+                      )}
+                    </div>
+                  ))}
                 </div>
-              ))}
+              </CardContent>
+            </Card>
+          ) : (
+            <div className="rounded-lg border border-dashed border-border p-8 text-center">
+              <p className="text-sm text-muted-foreground">
+                No stage changes recorded yet.
+              </p>
             </div>
-          </CardContent>
-        </Card>
-      )}
+          )}
+        </TabsContent>
 
-      {/* Stage History */}
-      {stageHistory.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base flex items-center gap-2">
-              <Calendar className="h-4 w-4" strokeWidth={1.5} />
-              Stage History
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              {stageHistory.map((entry: any) => (
-                <div
-                  key={entry.id}
-                  className="flex items-center gap-3 text-sm"
-                >
-                  <span className="num text-xs text-muted-foreground w-24 shrink-0">
-                    {formatDate(entry.changed_at)}
-                  </span>
-                  <Badge
-                    className={`text-xs ${
-                      EQUITY_STAGE_COLORS[entry.from_stage] ??
-                      "bg-slate-100 text-slate-800"
-                    }`}
-                  >
-                    {EQUITY_STAGE_LABELS[entry.from_stage] ?? entry.from_stage}
-                  </Badge>
-                  <span className="text-muted-foreground">→</span>
-                  <Badge
-                    className={`text-xs ${
-                      EQUITY_STAGE_COLORS[entry.to_stage] ??
-                      "bg-slate-100 text-slate-800"
-                    }`}
-                  >
-                    {EQUITY_STAGE_LABELS[entry.to_stage] ?? entry.to_stage}
-                  </Badge>
-                  {entry.duration_in_previous_stage && (
-                    <span className="text-xs text-muted-foreground num">
-                      ({entry.duration_in_previous_stage})
-                    </span>
-                  )}
+        <TabsContent value="notes" className="mt-4">
+          <Card>
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-base">Notes</CardTitle>
+                <EditButton onClick={() => setEditNotesOpen(true)} />
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {deal.notes ? (
+                <div>
+                  <p className="text-xs text-muted-foreground mb-1">
+                    General Notes
+                  </p>
+                  <p className="text-sm whitespace-pre-wrap">{deal.notes}</p>
                 </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Notes */}
-      {(deal.notes || deal.internal_notes) && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">Notes</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {deal.notes && (
-              <div>
-                <p className="text-xs text-muted-foreground mb-1">
-                  General Notes
+              ) : null}
+              {deal.internal_notes ? (
+                <div>
+                  <p className="text-xs text-muted-foreground mb-1">
+                    Internal Notes
+                  </p>
+                  <p className="text-sm whitespace-pre-wrap">
+                    {deal.internal_notes}
+                  </p>
+                </div>
+              ) : null}
+              {!deal.notes && !deal.internal_notes && (
+                <p className="text-sm text-muted-foreground">
+                  No notes added yet.
                 </p>
-                <p className="text-sm whitespace-pre-wrap">{deal.notes}</p>
-              </div>
-            )}
-            {deal.internal_notes && (
-              <div>
-                <p className="text-xs text-muted-foreground mb-1">
-                  Internal Notes
-                </p>
-                <p className="text-sm whitespace-pre-wrap">
-                  {deal.internal_notes}
-                </p>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      )}
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
 
       {/* Edit Dialogs */}
       <EditSectionDialog

@@ -292,6 +292,8 @@ export default async function DealDetailPage({ params }: PageProps) {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let chatMessagesData: any[] = [];
   let uwVersionsData: UWVersion[] = [];
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let dealTasksData: any[] = [];
 
   if (loanId) {
     const fetchSafe = async <T,>(
@@ -312,6 +314,7 @@ export default async function DealDetailPage({ params }: PageProps) {
       activityRaw,
       commentsRaw,
       uwVersionsRaw,
+      dealTasksRaw,
     ] = await Promise.all([
       fetchSafe(() =>
         supabase
@@ -356,6 +359,14 @@ export default async function DealDetailPage({ params }: PageProps) {
           .eq("loan_id", loanId)
           .order("version_number", { ascending: false })
       ),
+      fetchSafe(() =>
+        supabase
+          .from("ops_tasks")
+          .select("*")
+          .eq("linked_entity_type", "loan")
+          .eq("linked_entity_id", loanId)
+          .order("sort_order")
+      ),
     ]);
 
     stageHistoryData = stageHistoryRaw ?? [];
@@ -363,6 +374,7 @@ export default async function DealDetailPage({ params }: PageProps) {
     documentsData = documentsRaw ?? [];
     activityData = activityRaw ?? [];
     commentsData = commentsRaw ?? [];
+    dealTasksData = (dealTasksRaw ?? []) as any[];
 
     // Map UW versions with author names
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -572,6 +584,7 @@ export default async function DealDetailPage({ params }: PageProps) {
       activity={activity}
       comments={comments}
       chatMessages={chatMessages}
+      dealTasks={dealTasksData}
       isOpportunity={isOpportunity}
       currentUserId={currentUserId}
       currentUserName={currentUserName}

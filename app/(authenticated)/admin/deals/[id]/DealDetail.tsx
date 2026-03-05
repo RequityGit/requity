@@ -13,6 +13,7 @@ import { DocumentsTab } from "./tabs/DocumentsTab";
 import { ActivityTab } from "./tabs/ActivityTab";
 import { CommentsTab } from "./tabs/CommentsTab";
 import { UnderwritingTab } from "./tabs/UnderwritingTab";
+import { TasksTab, type DealTask } from "./tabs/TasksTab";
 import { updateDealField, updateRelatedField } from "./update-deal-action";
 import { EditableMetricCard } from "./EditableMetricCard";
 import {
@@ -45,6 +46,7 @@ interface DealDetailProps {
   activity: ActivityData[];
   comments: CommentData[];
   chatMessages: ChatMessage[];
+  dealTasks: DealTask[];
   isOpportunity: boolean;
   currentUserId: string;
   currentUserName: string;
@@ -68,6 +70,7 @@ export function DealDetail({
   activity,
   comments,
   chatMessages,
+  dealTasks,
   isOpportunity,
   currentUserId,
   currentUserName,
@@ -130,11 +133,14 @@ export function DealDetail({
       c.status !== "waived"
   ).length;
 
+  const openTaskCount = dealTasks.filter((t) => t.status !== "Complete").length;
+
   const tabs: TabConfig[] = [
     { key: "overview", label: "Overview" },
     { key: "underwriting", label: "Underwriting" },
     { key: "conditions", label: "Conditions", count: openConditions || undefined },
     { key: "documents", label: "Documents", count: documents.length || undefined },
+    { key: "tasks", label: "Tasks", count: openTaskCount || undefined },
     { key: "activity", label: "Activity" },
     { key: "comments", label: "Comments", count: comments.length || undefined },
   ];
@@ -159,6 +165,15 @@ export function DealDetail({
         return <ConditionsTab conditions={conditions} />;
       case "documents":
         return <DocumentsTab documents={documents} />;
+      case "tasks":
+        return (
+          <TasksTab
+            tasks={dealTasks}
+            dealId={deal.id}
+            currentUserId={currentUserId}
+            adminProfiles={adminProfiles}
+          />
+        );
       case "activity":
         return <ActivityTab activity={activity} />;
       case "comments":
