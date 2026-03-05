@@ -8425,10 +8425,13 @@ export type Database = {
         Row: {
           calculator_inputs: Json
           calculator_outputs: Json
+          computation_status: string | null
           created_at: string
           created_by: string
           id: string
+          input_completeness: Json | null
           is_active: boolean
+          is_sandbox: boolean
           label: string | null
           loan_id: string | null
           model_type: string
@@ -8440,10 +8443,13 @@ export type Database = {
         Insert: {
           calculator_inputs?: Json
           calculator_outputs?: Json
+          computation_status?: string | null
           created_at?: string
           created_by: string
           id?: string
+          input_completeness?: Json | null
           is_active?: boolean
+          is_sandbox?: boolean
           label?: string | null
           loan_id?: string | null
           model_type?: string
@@ -8455,10 +8461,13 @@ export type Database = {
         Update: {
           calculator_inputs?: Json
           calculator_outputs?: Json
+          computation_status?: string | null
           created_at?: string
           created_by?: string
           id?: string
+          input_completeness?: Json | null
           is_active?: boolean
+          is_sandbox?: boolean
           label?: string | null
           loan_id?: string | null
           model_type?: string

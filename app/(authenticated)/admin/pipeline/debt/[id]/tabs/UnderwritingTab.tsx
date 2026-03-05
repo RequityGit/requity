@@ -203,10 +203,10 @@ function VersionSummary({
 
 /* ── Commercial Summary ── */
 function CommercialSummary({ outputs }: { outputs: Record<string, unknown> }) {
-  const noi = outputs.noi as number | undefined;
-  const dscr = outputs.dscr as number | undefined;
-  const capRate = outputs.cap_rate as number | undefined;
-  const egi = outputs.egi as number | undefined;
+  const noi = safeNum(outputs.noi);
+  const dscr = safeNum(outputs.dscr);
+  const capRate = safeNum(outputs.cap_rate);
+  const egi = safeNum(outputs.egi);
 
   return (
     <div className="grid grid-cols-4 gap-2.5">
@@ -220,10 +220,10 @@ function CommercialSummary({ outputs }: { outputs: Record<string, unknown> }) {
 
 /* ── RTL Summary ── */
 function RTLSummary({ outputs }: { outputs: Record<string, unknown> }) {
-  const ltv = outputs.ltv as number | undefined;
-  const ltarv = outputs.ltarv as number | undefined;
-  const netProfit = outputs.net_profit as number | undefined;
-  const roi = outputs.borrower_roi as number | undefined;
+  const ltv = safeNum(outputs.ltv);
+  const ltarv = safeNum(outputs.ltarv);
+  const netProfit = safeNum(outputs.net_profit);
+  const roi = safeNum(outputs.borrower_roi);
 
   return (
     <div className="grid grid-cols-4 gap-2.5">
@@ -237,10 +237,10 @@ function RTLSummary({ outputs }: { outputs: Record<string, unknown> }) {
 
 /* ── DSCR Summary ── */
 function DSCRSummary({ outputs }: { outputs: Record<string, unknown> }) {
-  const dscr = outputs.dscr as number | undefined;
-  const rate = outputs.rate as number | undefined;
-  const ltv = outputs.ltv as number | undefined;
-  const monthlyPi = outputs.monthly_pi as number | undefined;
+  const dscr = safeNum(outputs.dscr);
+  const rate = safeNum(outputs.rate);
+  const ltv = safeNum(outputs.ltv);
+  const monthlyPi = safeNum(outputs.monthly_pi);
 
   return (
     <div className="grid grid-cols-4 gap-2.5">
@@ -330,18 +330,18 @@ function UWVersionRow({
 function getVersionRowMetrics(modelType: UWModelType, outputs: Record<string, unknown>): string[] {
   const metrics: string[] = [];
   if (modelType === "commercial") {
-    const noi = outputs.noi as number | undefined;
-    const dscr = outputs.dscr as number | undefined;
+    const noi = safeNum(outputs.noi);
+    const dscr = safeNum(outputs.dscr);
     if (noi != null) metrics.push(`NOI ${fmtNum(noi)}`);
     if (dscr != null) metrics.push(`DSCR ${dscr.toFixed(2)}`);
   } else if (modelType === "dscr") {
-    const rate = outputs.rate as number | undefined;
-    const dscr = outputs.dscr as number | undefined;
+    const rate = safeNum(outputs.rate);
+    const dscr = safeNum(outputs.dscr);
     if (rate != null) metrics.push(`${rate.toFixed(2)}%`);
     if (dscr != null) metrics.push(`DSCR ${dscr.toFixed(2)}`);
   } else {
-    const ltv = outputs.ltv as number | undefined;
-    const roi = outputs.borrower_roi as number | undefined;
+    const ltv = safeNum(outputs.ltv);
+    const roi = safeNum(outputs.borrower_roi);
     if (ltv != null) metrics.push(`LTV ${ltv.toFixed(0)}%`);
     if (roi != null) metrics.push(`ROI ${roi.toFixed(1)}%`);
   }
@@ -374,7 +374,14 @@ function MiniMetric({ label, value, highlight }: { label: string; value: string;
   );
 }
 
-function fmtNum(n: number | undefined | null): string {
-  if (n == null) return "—";
-  return "$" + n.toLocaleString("en-US", { maximumFractionDigits: 0 });
+function safeNum(v: unknown): number | null {
+  if (v == null || v === "") return null;
+  const n = Number(v);
+  return isNaN(n) ? null : n;
+}
+
+function fmtNum(n: unknown): string {
+  const v = safeNum(n);
+  if (v == null) return "—";
+  return "$" + v.toLocaleString("en-US", { maximumFractionDigits: 0 });
 }
