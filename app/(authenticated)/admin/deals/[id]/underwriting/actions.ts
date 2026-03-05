@@ -2,15 +2,32 @@
 
 import { createAdminClient } from "@/lib/supabase/admin";
 import { requireAdmin } from "@/lib/auth/require-admin";
+import { saveUWVersion as _saveUWVersion } from "../actions";
+import type { UWModelType } from "../components";
+import type { UWVersionData } from "@/components/admin/underwriting/uw-editor-client";
 
-export { saveUWVersion } from "../actions";
+// Wrapper needed because "use server" files can only export async functions
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export async function saveUWVersion(
+  versionId: string,
+  loanId: string,
+  inputs: Record<string, any>,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  outputs: Record<string, any>,
+  markActive: boolean,
+  userId: string,
+  userName: string,
+  versionNumber: number
+) {
+  return _saveUWVersion(versionId, loanId, inputs, outputs, markActive, userId, userName, versionNumber);
+}
 
 export async function cloneUWVersion(
   loanId: string,
   sourceVersionId: string,
   userId: string,
   modelType: string
-) {
+): Promise<{ success?: boolean; error?: string; version?: UWVersionData }> {
   try {
     const auth = await requireAdmin();
     if ("error" in auth) return { error: auth.error };
@@ -60,7 +77,7 @@ export async function cloneUWVersion(
       return { error: error.message };
     }
 
-    return { success: true, version: newVersion };
+    return { success: true, version: { ...newVersion, model_type: modelType as UWModelType } as UWVersionData };
   } catch (err: unknown) {
     console.error("cloneUWVersion exception:", err);
     return { error: err instanceof Error ? err.message : "Unknown error" };
@@ -71,7 +88,7 @@ export async function createNewUWVersion(
   loanId: string,
   userId: string,
   modelType: string
-) {
+): Promise<{ success?: boolean; error?: string; version?: UWVersionData }> {
   try {
     const auth = await requireAdmin();
     if ("error" in auth) return { error: auth.error };
@@ -108,7 +125,7 @@ export async function createNewUWVersion(
       return { error: error.message };
     }
 
-    return { success: true, version: newVersion };
+    return { success: true, version: { ...newVersion, model_type: modelType as UWModelType } as UWVersionData };
   } catch (err: unknown) {
     console.error("createNewUWVersion exception:", err);
     return { error: err instanceof Error ? err.message : "Unknown error" };
