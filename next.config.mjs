@@ -22,6 +22,11 @@ const nextConfig = {
         destination: '/admin/pipeline?tab=equity',
         permanent: false,
       },
+      {
+        source: '/admin/equity-pipeline/:id',
+        destination: '/admin/pipeline/equity/:id',
+        permanent: false,
+      },
     ];
   },
 };
