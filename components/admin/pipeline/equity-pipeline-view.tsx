@@ -1,8 +1,10 @@
 "use client";
 
 import { useState, useMemo } from "react";
+import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { KpiCard } from "@/components/shared/kpi-card";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -19,6 +21,7 @@ import {
   Search,
   LayoutGrid,
   List,
+  Plus,
 } from "lucide-react";
 import type { EquityDealRow } from "./equity-kanban-board";
 import type { StageConfig } from "./unified-pipeline";
@@ -76,7 +79,7 @@ export function EquityPipelineView({
 
   return (
     <div className="space-y-6">
-      {/* View Toggle */}
+      {/* View Toggle + New Deal */}
       <div className="flex items-center justify-between flex-wrap gap-4">
         <div className="flex items-center gap-1 border rounded-md p-0.5">
           <button
@@ -104,6 +107,11 @@ export function EquityPipelineView({
             <List className="h-4 w-4" />
           </button>
         </div>
+        <Link href="/admin/equity-pipeline/new">
+          <Button size="sm">
+            <Plus className="h-4 w-4 mr-1" /> New Deal
+          </Button>
+        </Link>
       </div>
 
       {/* KPI Row */}
