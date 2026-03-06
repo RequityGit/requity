@@ -23,7 +23,9 @@ import {
 import { FileUpload } from "@/components/shared/file-upload";
 import { Plus, Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import type { Loan } from "@/lib/supabase/types";
+import type { Tables } from "@/lib/supabase/types";
+
+type Loan = Tables<"loans">;
 
 export function NewDrawForm() {
   const router = useRouter();

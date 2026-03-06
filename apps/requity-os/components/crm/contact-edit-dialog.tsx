@@ -43,7 +43,9 @@ import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/components/ui/use-toast";
 import { Pencil, X, Plus } from "lucide-react";
 import { DeleteContactButton } from "@/components/crm/delete-contact-button";
-import type { CrmContact } from "@/lib/supabase/types";
+import type { Tables } from "@/lib/supabase/types";
+
+type CrmContact = Tables<"crm_contacts">;
 
 interface TeamMember {
   id: string;

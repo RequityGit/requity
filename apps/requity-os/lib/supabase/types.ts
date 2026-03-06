@@ -15788,3 +15788,53 @@ export interface LenderQuote {
   created_by: string | null;
   updated_by: string | null;
 }
+
+export interface PricingProgram {
+  id: string;
+  program_id: string;
+  program_name: string;
+  loan_type: string | null;
+  version: number;
+  is_current: boolean;
+  interest_rate: number;
+  rate_type: string;
+  origination_points: number;
+  min_origination_fee: number;
+  points_note: string | null;
+  max_ltv: number;
+  max_ltc: number;
+  max_ltp: number;
+  ltv_note: string | null;
+  ltc_note: string | null;
+  loan_term_months: number;
+  term_note: string | null;
+  exit_points: number;
+  legal_doc_fee: number;
+  bpo_appraisal_cost: number;
+  bpo_appraisal_note: string | null;
+  min_credit_score: number;
+  min_deals_24mo: number;
+  citizenship: string;
+  effective_date: string;
+  created_at: string;
+}
+
+export interface LeverageAdjuster {
+  id: string;
+  risk_factor: string;
+  display_name: string;
+  condition_description: string | null;
+  ltc_adjustment: number;
+  ltv_adjustment: number;
+  sort_order: number;
+  is_active: boolean;
+  note: string | null;
+}
+
+export interface PricingProgramVersion {
+  id: string;
+  program_id: string;
+  version: number;
+  change_description: string | null;
+  changed_at: string;
+}

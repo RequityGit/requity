@@ -12,7 +12,11 @@ import { DocumentDownload } from "@/components/borrower/document-download";
 import { BorrowerConditionsTab } from "@/components/borrower/borrower-conditions-tab";
 import { formatCurrencyDetailed, formatDate } from "@/lib/format";
 import { DOCUMENT_TYPES } from "@/lib/constants";
-import type { LoanPayment, Document, LoanCondition } from "@/lib/supabase/types";
+import type { Tables } from "@/lib/supabase/types";
+
+type LoanPayment = Tables<"loan_payments">;
+type Document = Tables<"documents">;
+type LoanCondition = Tables<"loan_conditions">;
 import { FileText, CreditCard, ClipboardList, MessageCircle } from "lucide-react";
 import { LoanChatter } from "@/components/shared/loan-chatter";
 

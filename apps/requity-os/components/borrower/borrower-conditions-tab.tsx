@@ -28,7 +28,10 @@ import {
   uploadConditionDocument,
   addConditionComment,
 } from "@/app/(authenticated)/borrower/loans/[id]/actions";
-import type { LoanCondition, LoanDocument } from "@/lib/supabase/types";
+import type { Tables } from "@/lib/supabase/types";
+
+type LoanCondition = Tables<"loan_conditions">;
+type LoanDocument = Tables<"loan_documents">;
 
 // Local type — includes new mention/edit fields
 interface ConditionComment {
