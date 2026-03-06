@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect, useCallback } from "react";
+import { useRouter } from "next/navigation";
 import { useChatTheme } from "@/contexts/chat-theme-context";
 import { ChatAvatarV2 } from "./ChatPrimitives";
 import { formatMessageTime, formatDateSeparator, isSameDay, getInitials } from "@/lib/chat-utils";
@@ -27,7 +28,8 @@ interface DealRoomBarProps {
   loanId?: string | null;
 }
 
-export function DealRoomContextBar({ channel, loanType }: DealRoomBarProps) {
+export function DealRoomContextBar({ channel, loanType, loanId }: DealRoomBarProps) {
+  const router = useRouter();
   const { t } = useChatTheme();
   if (channel.channel_type !== "deal_room") return null;
 
@@ -64,6 +66,8 @@ export function DealRoomContextBar({ channel, loanType }: DealRoomBarProps) {
         </div>
       </div>
       <button
+        onClick={() => loanId && router.push(`/admin/pipeline/debt/${loanId}`)}
+        disabled={!loanId}
         style={{
           background: t.accentSoft,
           border: "none",

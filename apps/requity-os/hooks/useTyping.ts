@@ -12,11 +12,32 @@ export function useTyping(channelId: string | null, userId: string | undefined) 
   const lastTypingRef = useRef<number>(0);
   const stopTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  // Store latest channelId/userId in refs so timer callbacks always use
+  // the current values without creating stale closures.
+  const channelIdRef = useRef(channelId);
+  const userIdRef = useRef(userId);
+  useEffect(() => { channelIdRef.current = channelId; }, [channelId]);
+  useEffect(() => { userIdRef.current = userId; }, [userId]);
+
+  // Stop typing indicator — reads from refs so it's always fresh
+  const stopTyping = useCallback(async () => {
+    const cid = channelIdRef.current;
+    const uid = userIdRef.current;
+    if (!cid || !uid) return;
+    const supabase = supabaseRef.current;
+    await supabase
+      .from("chat_typing_indicators")
+      .delete()
+      .eq("channel_id", cid)
+      .eq("user_id", uid);
+    lastTypingRef.current = 0;
+  }, []); // no deps — intentionally stable via refs
+
   // Send typing indicator (debounced)
   const sendTyping = useCallback(async () => {
     if (!channelId || !userId) return;
     const now = Date.now();
-    if (now - lastTypingRef.current < 3000) return; // Don't spam
+    if (now - lastTypingRef.current < 3000) return;
     lastTypingRef.current = now;
 
     const supabase = supabaseRef.current;
@@ -29,22 +50,9 @@ export function useTyping(channelId: string | null, userId: string | undefined) 
       { onConflict: "channel_id,user_id" }
     );
 
-    // Auto-clear after timeout
     if (stopTimerRef.current) clearTimeout(stopTimerRef.current);
-    stopTimerRef.current = setTimeout(() => stopTyping(), TYPING_TIMEOUT);
-  }, [channelId, userId]);
-
-  // Stop typing indicator
-  const stopTyping = useCallback(async () => {
-    if (!channelId || !userId) return;
-    const supabase = supabaseRef.current;
-    await supabase
-      .from("chat_typing_indicators")
-      .delete()
-      .eq("channel_id", channelId)
-      .eq("user_id", userId);
-    lastTypingRef.current = 0;
-  }, [channelId, userId]);
+    stopTimerRef.current = setTimeout(() => { stopTyping(); }, TYPING_TIMEOUT);
+  }, [channelId, userId, stopTyping]);
 
   // Subscribe to typing indicators
   useEffect(() => {
