@@ -23,6 +23,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useToast } from "@/components/ui/use-toast";
+import { DatePicker } from "@/components/ui/date-picker";
 import { PlusCircle, Loader2 } from "lucide-react";
 import type { OpsProject } from "./ProjectCard";
 import type { TeamMember } from "./OperationsView";
@@ -278,11 +279,9 @@ export function AddTaskDialog({ projects, teamMembers, externalOpen, onExternalO
 
           <div className="space-y-2">
             <Label htmlFor="task_due_date">Due Date</Label>
-            <Input
-              id="task_due_date"
-              type="date"
+            <DatePicker
               value={form.due_date}
-              onChange={(e) => setForm({ ...form, due_date: e.target.value })}
+              onChange={(v) => setForm({ ...form, due_date: v })}
             />
           </div>
 

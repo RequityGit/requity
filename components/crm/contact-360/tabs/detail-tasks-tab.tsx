@@ -21,6 +21,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { useToast } from "@/components/ui/use-toast";
+import { DatePicker } from "@/components/ui/date-picker";
 import { Badge } from "@/components/ui/badge";
 import { Plus, Check, CheckCircle2, Loader2 } from "lucide-react";
 import { formatDate } from "@/lib/format";
@@ -207,11 +208,9 @@ export function DetailTasksTab({
             </div>
             <div>
               <label className="text-xs font-medium text-muted-foreground mb-1 block">Due Date</label>
-              <Input
-                type="date"
+              <DatePicker
                 value={form.due_date}
-                onChange={(e) => setForm((f) => ({ ...f, due_date: e.target.value }))}
-                className="rounded-lg border-border"
+                onChange={(v) => setForm((f) => ({ ...f, due_date: v }))}
               />
             </div>
             <div>

@@ -20,6 +20,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Trash2 } from "lucide-react";
+import { DatePicker } from "@/components/ui/date-picker";
 import {
   EQUITY_TASK_STATUSES,
   EQUITY_TASK_CATEGORIES,
@@ -244,10 +245,9 @@ export function EquityTaskFormModal({
               <Label className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
                 Due Date
               </Label>
-              <Input
-                type="date"
+              <DatePicker
                 value={dueDate}
-                onChange={(e) => setDueDate(e.target.value)}
+                onChange={setDueDate}
               />
             </div>
 

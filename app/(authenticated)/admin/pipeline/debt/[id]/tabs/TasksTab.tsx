@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
+import { DatePicker } from "@/components/ui/date-picker";
 import {
   Select,
   SelectContent,
@@ -704,10 +705,9 @@ function DealTaskFormModal({
               <Label className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
                 Due Date
               </Label>
-              <Input
-                type="date"
+              <DatePicker
                 value={dueDate}
-                onChange={(e) => setDueDate(e.target.value)}
+                onChange={setDueDate}
               />
             </div>
 
