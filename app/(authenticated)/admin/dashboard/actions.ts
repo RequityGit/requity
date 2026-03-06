@@ -12,7 +12,7 @@ export interface DashboardTask {
   loan_id: string | null;
   title: string;
   category: string;
-  due_date: string;
+  due_date: string | null;
   is_completed: boolean;
   completed_at: string | null;
   created_at: string;
@@ -21,6 +21,7 @@ export interface DashboardTask {
   loan_number: string | null;
   is_past_due: boolean;
   days_overdue: number | null;
+  source: "dashboard_task" | "ops_task";
 }
 
 export interface BorrowerRequest {
@@ -216,7 +217,8 @@ export async function fetchActionDashboardData(): Promise<
 
 export async function toggleTask(
   taskId: string,
-  isCompleted: boolean
+  isCompleted: boolean,
+  source: "dashboard_task" | "ops_task" = "dashboard_task"
 ): Promise<{ success: boolean } | { error: string }> {
   try {
     const auth = await requireAdmin();
@@ -224,17 +226,31 @@ export async function toggleTask(
 
     const admin = createAdminClient();
 
-    const { error } = await admin
-      .from("dashboard_tasks")
-      .update({
-        is_completed: isCompleted,
-        completed_at: isCompleted ? new Date().toISOString() : null,
-        updated_at: new Date().toISOString(),
-      })
-      .eq("id", taskId)
-      .eq("user_id", auth.user.id);
+    if (source === "ops_task") {
+      const { error } = await admin
+        .from("ops_tasks")
+        .update({
+          status: isCompleted ? "Complete" : "To Do",
+          completed_at: isCompleted ? new Date().toISOString() : null,
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", taskId)
+        .eq("assigned_to", auth.user.id);
 
-    if (error) return { error: error.message };
+      if (error) return { error: error.message };
+    } else {
+      const { error } = await admin
+        .from("dashboard_tasks")
+        .update({
+          is_completed: isCompleted,
+          completed_at: isCompleted ? new Date().toISOString() : null,
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", taskId)
+        .eq("user_id", auth.user.id);
+
+      if (error) return { error: error.message };
+    }
 
     // Update streak if completing
     if (isCompleted) {

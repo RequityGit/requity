@@ -43,8 +43,8 @@ export function ActionDashboard({ initialData }: ActionDashboardProps) {
         ),
       }));
 
-      // Server call
-      toggleTask(taskId, !task.is_completed).then((result) => {
+      // Server call — pass source so the right table is updated
+      toggleTask(taskId, !task.is_completed, task.source).then((result) => {
         if ("error" in result) {
           // Revert on error
           setData((prev) => ({
