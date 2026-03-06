@@ -6,9 +6,9 @@
     "build": "turbo run build",
     "lint": "turbo run lint",
     "test": "turbo run test",
-    "test:e2e": "PLAYWRIGHT_BROWSERS_PATH=/root/.cache/ms-playwright npx playwright test",
-    "test:e2e:ui": "PLAYWRIGHT_BROWSERS_PATH=/root/.cache/ms-playwright npx playwright test --ui",
-    "test:e2e:headed": "PLAYWRIGHT_BROWSERS_PATH=/root/.cache/ms-playwright xvfb-run --auto-servernum --server-args='-screen 0 1280x800x24' npx playwright test --headed",
+    "test:e2e": "npx playwright test",
+    "test:e2e:ui": "npx playwright test --ui",
+    "test:e2e:headed": "xvfb-run --auto-servernum --server-args='-screen 0 1280x800x24' npx playwright test --headed",
     "typecheck": "turbo run typecheck"
   },
   "devDependencies": {
