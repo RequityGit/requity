@@ -2,7 +2,7 @@
   base = "apps/requity-os"
   command = "pnpm run build"
   publish = ".next"
-  ignore = "git diff --quiet $CACHED_COMMIT_REF $COMMIT_REF -- apps/requity-os/ packages/ netlify.toml pnpm-lock.yaml turbo.json"
+  ignore = "cd ../.. && git diff --quiet $CACHED_COMMIT_REF $COMMIT_REF -- apps/requity-os/ packages/ netlify.toml pnpm-lock.yaml turbo.json"
 
 [[plugins]]
   package = "@netlify/plugin-nextjs"
