@@ -2,7 +2,7 @@
   "mcpServers": {
     "Sentry": {
       "type": "http",
-      "url": "https://mcp.sentry.dev/mcp"
+      "url": "https://mcp.sentry.io/mcp"
     },
     "supabase": {
       "type": "http",

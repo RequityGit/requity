@@ -15,7 +15,7 @@ jobs:
         run: npm install -g @anthropic-ai/claude-code
 
       - name: Configure Sentry MCP
-        run: claude mcp add --transport http Sentry "https://mcp.sentry.dev/mcp"
+        run: claude mcp add --scope project sentry "npx -y @sentry/mcp-server@latest"
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
 
@@ -23,6 +23,7 @@ jobs:
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+          SENTRY_ORG: ${{ secrets.SENTRY_ORG }}
         run: |
           claude --print "
             Using Sentry MCP, fetch the top 5 unresolved issues by user impact.
