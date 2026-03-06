@@ -13,7 +13,12 @@ jobs:
       
       - name: Install Claude Code
         run: npm install -g @anthropic-ai/claude-code
-        
+
+      - name: Configure Sentry MCP
+        run: claude mcp add --transport http Sentry "https://mcp.sentry.dev/mcp"
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+
       - name: Run Sentry fixes
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
