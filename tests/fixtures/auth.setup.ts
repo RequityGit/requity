@@ -37,6 +37,14 @@ async function authenticateViaSupabase(
     );
   }
 
+  // Validate the Supabase URL has a proper protocol
+  if (!/^https?:\/\//.test(supabaseUrl)) {
+    throw new Error(
+      `NEXT_PUBLIC_SUPABASE_URL has an invalid protocol: "${supabaseUrl}". ` +
+        `It must start with "https://". Check your .env.test or GitHub Actions secrets.`
+    );
+  }
+
   // Call the Supabase Auth REST API to get a session
   const response = await page.request.post(
     `${supabaseUrl}/auth/v1/token?grant_type=password`,
