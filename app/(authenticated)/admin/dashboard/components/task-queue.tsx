@@ -40,16 +40,17 @@ function TaskRow({
   dueColor?: string;
 }) {
   const today = new Date().toISOString().slice(0, 10);
-  const dueLabel =
-    task.due_date === today
+  const dueLabel = !task.due_date
+    ? "No date"
+    : task.due_date === today
       ? "Today"
       : task.due_date ===
-        new Date(Date.now() + 86400000).toISOString().slice(0, 10)
-      ? "Tomorrow"
-      : new Date(task.due_date).toLocaleDateString("en-US", {
-          month: "short",
-          day: "numeric",
-        });
+          new Date(Date.now() + 86400000).toISOString().slice(0, 10)
+        ? "Tomorrow"
+        : new Date(task.due_date).toLocaleDateString("en-US", {
+            month: "short",
+            day: "numeric",
+          });
 
   return (
     <div
@@ -109,7 +110,13 @@ export function TaskQueue({ tasks, onToggle }: TaskQueueProps) {
   );
   const upcomingTasks = tasks.filter(
     (t) => t.due_date !== today && !t.is_past_due
-  );
+  ).sort((a, b) => {
+    // Tasks with due dates first, then no-date tasks
+    if (a.due_date && !b.due_date) return -1;
+    if (!a.due_date && b.due_date) return 1;
+    if (a.due_date && b.due_date) return a.due_date.localeCompare(b.due_date);
+    return 0;
+  });
   const todayRemaining = todayTasks.filter((t) => !t.is_completed).length;
 
   return (
