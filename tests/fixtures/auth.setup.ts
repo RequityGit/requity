@@ -45,19 +45,64 @@ async function authenticateViaSupabase(
     );
   }
 
-  // Call the Supabase Auth REST API to get a session
-  const response = await page.request.post(
-    `${supabaseUrl}/auth/v1/token?grant_type=password`,
-    {
-      headers: {
-        apikey: supabaseAnonKey,
-        "Content-Type": "application/json",
-      },
-      data: { email, password },
-    }
-  );
+  // Call the Supabase Auth REST API to get a session (with retry for transient failures)
+  const authUrl = `${supabaseUrl}/auth/v1/token?grant_type=password`;
+  const maxRetries = 3;
+  let response: Awaited<ReturnType<typeof page.request.post>> | undefined;
+  let lastError: Error | undefined;
 
-  expect(response.ok()).toBeTruthy();
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      response = await page.request.post(authUrl, {
+        headers: {
+          apikey: supabaseAnonKey,
+          "Content-Type": "application/json",
+        },
+        data: { email, password },
+      });
+
+      if (response.ok()) break;
+
+      // Non-retryable client errors (400-499 except 429)
+      const status = response.status();
+      if (status >= 400 && status < 500 && status !== 429) {
+        const body = await response.text();
+        throw new Error(
+          `Supabase auth failed for ${email} (HTTP ${status}): ${body}. ` +
+            `Check that the test user exists and password auth is enabled.`
+        );
+      }
+
+      // Retryable error (5xx or 429) — wait before retrying
+      if (attempt < maxRetries) {
+        const delay = Math.pow(2, attempt) * 1000; // 2s, 4s
+        console.warn(
+          `Auth attempt ${attempt}/${maxRetries} failed (HTTP ${status}), retrying in ${delay}ms...`
+        );
+        await new Promise((r) => setTimeout(r, delay));
+      }
+    } catch (err) {
+      lastError = err instanceof Error ? err : new Error(String(err));
+      // If it's our formatted error, rethrow immediately
+      if (lastError.message.includes("Supabase auth failed")) throw lastError;
+      // Network error — retry
+      if (attempt < maxRetries) {
+        const delay = Math.pow(2, attempt) * 1000;
+        console.warn(
+          `Auth attempt ${attempt}/${maxRetries} threw ${lastError.message}, retrying in ${delay}ms...`
+        );
+        await new Promise((r) => setTimeout(r, delay));
+      }
+    }
+  }
+
+  if (!response || !response.ok()) {
+    const status = response?.status() ?? "no response";
+    const body = response ? await response.text() : lastError?.message ?? "unknown";
+    throw new Error(
+      `Supabase auth failed for ${email} after ${maxRetries} attempts (HTTP ${status}): ${body}`
+    );
+  }
 
   const session = await response.json();
   const accessToken = session.access_token;

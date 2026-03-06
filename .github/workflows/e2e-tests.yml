@@ -3,6 +3,8 @@ name: E2E Tests
 on:
   push:
     branches: [main]
+  pull_request:
+    branches: [main]
   schedule:
     # Run every 6 hours
     - cron: "0 */6 * * *"
@@ -34,6 +36,25 @@ jobs:
         with:
           node-version: 20
           cache: "pnpm"
+
+      - name: Validate required secrets
+        run: |
+          missing=""
+          [ -z "$BASE_URL" ] && missing="$missing E2E_BASE_URL"
+          [ -z "$BORROWER_EMAIL" ] && missing="$missing E2E_BORROWER_EMAIL"
+          [ -z "$BORROWER_PASSWORD" ] && missing="$missing E2E_BORROWER_PASSWORD"
+          [ -z "$INVESTOR_EMAIL" ] && missing="$missing E2E_INVESTOR_EMAIL"
+          [ -z "$INVESTOR_PASSWORD" ] && missing="$missing E2E_INVESTOR_PASSWORD"
+          [ -z "$ADMIN_EMAIL" ] && missing="$missing E2E_ADMIN_EMAIL"
+          [ -z "$ADMIN_PASSWORD" ] && missing="$missing E2E_ADMIN_PASSWORD"
+          [ -z "$NEXT_PUBLIC_SUPABASE_URL" ] && missing="$missing E2E_SUPABASE_URL"
+          [ -z "$NEXT_PUBLIC_SUPABASE_ANON_KEY" ] && missing="$missing E2E_SUPABASE_ANON_KEY"
+          if [ -n "$missing" ]; then
+            echo "::error::Missing required secrets:$missing"
+            echo "Configure these in Settings > Secrets and variables > Actions"
+            exit 1
+          fi
+          echo "All required E2E secrets are configured."
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
