@@ -16282,3 +16282,38 @@ export const Constants = {
   },
 } as const
 
+// Manual type for lender_quotes table (not yet in generated schema)
+export interface LenderQuote {
+  id: string;
+  created_at: string;
+  updated_at: string;
+  quote_name: string;
+  loan_id: string;
+  lender_company_id: string | null;
+  lender_contact_name: string | null;
+  loan_amount: number | null;
+  interest_rate: number | null;
+  loan_term_months: number | null;
+  interest_only_period_months: number | null;
+  ltv: number | null;
+  amortization_months: number | null;
+  origination_fee: number | null;
+  uw_processing_fee: number | null;
+  requity_lending_fee: number | null;
+  prepayment_penalty: string | null;
+  ym_spread: number | null;
+  ym_amount: number | null;
+  term_sheet_url: string | null;
+  description: string | null;
+  status: string;
+  declined_reason: string | null;
+  linked_property_id: string | null;
+  requested_at: string | null;
+  received_at: string | null;
+  accepted_at: string | null;
+  declined_at: string | null;
+  status_changed_at: string | null;
+  created_by: string | null;
+  updated_by: string | null;
+}
+
