@@ -2,7 +2,8 @@ import { defineConfig, devices } from "@playwright/test";
 import dotenv from "dotenv";
 import path from "path";
 
-// Load test environment variables
+// Load test environment variables — local overrides take precedence
+dotenv.config({ path: path.resolve(__dirname, ".env.test.local") });
 dotenv.config({ path: path.resolve(__dirname, ".env.test") });
 
 const BASE_URL = process.env.BASE_URL || "https://portal.requitygroup.com";
