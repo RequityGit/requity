@@ -6,6 +6,17 @@ import type { Database } from "@/lib/supabase/types";
 export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url);
   const code = searchParams.get("code");
+  const errorParam = searchParams.get("error");
+  const errorDescription = searchParams.get("error_description");
+
+  // Handle OAuth errors returned by Google (e.g., org_internal, access_denied)
+  if (errorParam) {
+    const isOrgBlocked =
+      errorDescription?.includes("org_internal") ||
+      errorDescription?.includes("restricted to users within");
+    const loginError = isOrgBlocked ? "google_blocked" : "auth_callback_failed";
+    return NextResponse.redirect(`${origin}/login?error=${loginError}`);
+  }
 
   if (code) {
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
