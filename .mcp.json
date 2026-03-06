@@ -1,11 +1,8 @@
 {
   "mcpServers": {
     "sentry": {
-      "command": "npx",
-      "args": ["-y", "@sentry/mcp-server@latest"],
-      "env": {
-        "SENTRY_ORG": "requity"
-      }
+      "type": "http",
+      "url": "https://mcp.sentry.dev/mcp"
     },
     "supabase": {
       "type": "http",
