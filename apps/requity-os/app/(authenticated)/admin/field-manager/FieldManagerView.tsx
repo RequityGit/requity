@@ -33,6 +33,10 @@ import {
   FileText,
   Building2,
   Shield,
+  Briefcase,
+  UserCircle,
+  TrendingUp,
+  Contact,
   Plus,
   Trash2,
   ChevronDown,
@@ -100,6 +104,10 @@ const MODULES = [
   { key: "loan_details", label: "Loan Details", icon: FileText },
   { key: "property", label: "Property", icon: Building2 },
   { key: "borrower_entity", label: "Borrower / Entity", icon: Shield },
+  { key: "company_info", label: "Company Information", icon: Briefcase },
+  { key: "borrower_profile", label: "Borrower Profile", icon: UserCircle },
+  { key: "investor_profile", label: "Investor Profile", icon: TrendingUp },
+  { key: "contact_profile", label: "Contact Profile", icon: Contact },
 ] as const;
 
 const FIELD_TYPES = [
@@ -118,12 +126,20 @@ const MODULE_LABELS: Record<string, string> = {
   loan_details: "Loan Details",
   property: "Property",
   borrower_entity: "Borrower / Entity",
+  company_info: "Company Information",
+  borrower_profile: "Borrower Profile",
+  investor_profile: "Investor Profile",
+  contact_profile: "Contact Profile",
 };
 
 const MODULE_TABLE_LABELS: Record<string, string> = {
   loan_details: "loans",
   property: "loans",
   borrower_entity: "loans",
+  company_info: "crm_companies",
+  borrower_profile: "borrowers",
+  investor_profile: "investors",
+  contact_profile: "crm_contacts",
 };
 
 const RESERVED_WORDS = new Set([
