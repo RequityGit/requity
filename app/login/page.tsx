@@ -26,11 +26,21 @@ function LoginContent() {
   const searchParams = useSearchParams();
   const supabaseRef = useRef<ReturnType<typeof createClient> | null>(null);
 
+  const errorParam = searchParams.get("error");
+
   useEffect(() => {
-    if (searchParams.get("error") === "no_access") {
+    if (errorParam === "no_access") {
       setNoAccess(true);
+    } else if (errorParam === "google_blocked") {
+      setError(
+        "Google sign-in is restricted to organization members. Please use a magic link instead."
+      );
+    } else if (errorParam === "auth_callback_failed") {
+      setError(
+        "Authentication failed. Please try again or use a magic link."
+      );
     }
-  }, [searchParams]);
+  }, [errorParam]);
 
   function getClient() {
     if (!supabaseRef.current) {
@@ -172,6 +182,10 @@ function LoginContent() {
                 )}
                 Continue with Google
               </button>
+
+              <p className="text-xs text-muted-foreground text-center -mt-2">
+                For organization members only. External users, use a magic link below.
+              </p>
 
               {/* Divider */}
               <div className="relative">
