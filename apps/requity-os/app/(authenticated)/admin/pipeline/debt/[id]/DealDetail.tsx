@@ -17,6 +17,7 @@ import { DealChatTab } from "@/components/deal/deal-chat-tab";
 import { TasksTab, type DealTask } from "./tabs/TasksTab";
 import { updateDealField, updateRelatedField } from "./update-deal-action";
 import { advanceStage, advanceOpportunityStage } from "./actions";
+import { useToast } from "@/components/ui/use-toast";
 import {
   T,
   getDefaultTab,
@@ -81,19 +82,25 @@ export function DealDetail({
   const [deal, setDeal] = useState<DealData>(initialDeal);
   const [updatingStage, setUpdatingStage] = useState(false);
   const router = useRouter();
+  const { toast } = useToast();
 
   const handleSave = useCallback(
     async (field: string, value: string | number | null): Promise<boolean> => {
       const result = await updateDealField(deal.id, { [field]: value }, isOpportunity);
       if (result.error) {
         console.error("Failed to update field:", result.error);
+        toast({
+          title: "Failed to save",
+          description: result.error,
+          variant: "destructive",
+        });
         return false;
       }
       setDeal((prev) => ({ ...prev, [field]: value }));
       router.refresh();
       return true;
     },
-    [deal.id, isOpportunity, router]
+    [deal.id, isOpportunity, router, toast]
   );
 
   const handleSaveRelated = useCallback(
@@ -106,6 +113,11 @@ export function DealDetail({
       const result = await updateRelatedField(table, id, field, value);
       if (result.error) {
         console.error("Failed to update related field:", result.error);
+        toast({
+          title: "Failed to save",
+          description: result.error,
+          variant: "destructive",
+        });
         return false;
       }
       // Update local state for computed display fields
@@ -121,7 +133,7 @@ export function DealDetail({
       router.refresh();
       return true;
     },
-    [isOpportunity, router]
+    [router, toast]
   );
 
   const handleStageClick = useCallback(
@@ -134,6 +146,11 @@ export function DealDetail({
           : await advanceStage(deal.id, deal.stage, toStage, currentUserId, currentUserName);
         if (result.error) {
           console.error("Stage change error:", result.error);
+          toast({
+            title: "Failed to change stage",
+            description: result.error,
+            variant: "destructive",
+          });
         } else {
           setDeal((prev) => ({ ...prev, stage: toStage }));
           router.refresh();

@@ -22,7 +22,7 @@ import {
   type DealData,
   type PipelineStage,
 } from "./components";
-import { advanceStage } from "./actions";
+import { advanceStage, advanceOpportunityStage } from "./actions";
 import { logQuickAction, assignTeamMember } from "./update-deal-action";
 import { EditableDateRow } from "./EditableField";
 import { useRouter } from "next/navigation";
@@ -44,6 +44,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { useToast } from "@/components/ui/use-toast";
 import type { TeamProfile } from "./DealDetail";
 
 interface SidebarProps {
@@ -66,6 +67,7 @@ export function Sidebar({
   isOpportunity,
 }: SidebarProps) {
   const router = useRouter();
+  const { toast } = useToast();
   const [advancing, setAdvancing] = useState(false);
 
   // Dialog states
@@ -117,15 +119,28 @@ export function Sidebar({
     if (!nextStage || advancing) return;
     setAdvancing(true);
     try {
-      const result = await advanceStage(
-        deal.id,
-        deal.stage,
-        nextStage.stage_key,
-        currentUserId,
-        currentUserName
-      );
+      const result = isOpportunity
+        ? await advanceOpportunityStage(
+            deal.id,
+            deal.stage,
+            nextStage.stage_key,
+            currentUserId,
+            currentUserName
+          )
+        : await advanceStage(
+            deal.id,
+            deal.stage,
+            nextStage.stage_key,
+            currentUserId,
+            currentUserName
+          );
       if (result.error) {
         console.error("Advance stage error:", result.error);
+        toast({
+          title: "Failed to advance stage",
+          description: result.error,
+          variant: "destructive",
+        });
       } else {
         router.refresh();
       }
@@ -223,6 +238,11 @@ export function Sidebar({
       );
       if (result.error) {
         console.error("Assign team error:", result.error);
+        toast({
+          title: "Failed to assign team member",
+          description: result.error,
+          variant: "destructive",
+        });
       } else {
         router.refresh();
       }
