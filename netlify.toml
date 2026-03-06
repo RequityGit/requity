@@ -2,6 +2,7 @@
   base = "apps/requity-os"
   command = "pnpm run build"
   publish = ".next"
+  ignore = "git diff --quiet HEAD~ HEAD -- . ':!.github'"
 
 [[plugins]]
   package = "@netlify/plugin-nextjs"
