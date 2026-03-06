@@ -16,10 +16,8 @@ import { UnderwritingTab } from "./tabs/UnderwritingTab";
 import { TasksTab, type DealTask } from "./tabs/TasksTab";
 import { updateDealField, updateRelatedField } from "./update-deal-action";
 import { advanceStage, advanceOpportunityStage } from "./actions";
-import { EditableMetricCard } from "./EditableMetricCard";
 import {
   T,
-  fP,
   getDefaultTab,
   type DealData,
   type StageHistoryEntry,
@@ -168,8 +166,6 @@ export function DealDetail({
     { key: "comments", label: "Comments", count: comments.length || undefined },
   ];
 
-  const termMonths = deal.loan_term_months || deal.term_months;
-
   const renderTab = () => {
     switch (tab) {
       case "overview":
@@ -218,13 +214,6 @@ export function DealDetail({
 
   const displayId = deal.loan_number || deal.id?.slice(0, 8);
 
-  // Format currency for display
-  const fmtMetric = (n: unknown) => {
-    if (n == null || n === "") return "\u2014";
-    const v = Number(n);
-    return isNaN(v) ? "\u2014" : "$" + v.toLocaleString("en-US");
-  };
-
   return (
     <div style={{ minHeight: "100vh" }}>
       {/* Breadcrumb */}
@@ -258,58 +247,6 @@ export function DealDetail({
         {/* Stage Tracker */}
         <div className="mt-5">
           <Stepper deal={deal} stages={pipelineStages} onStageClick={handleStageClick} updatingStage={updatingStage} />
-        </div>
-
-        {/* Loan Metrics - Editable */}
-        <div className="mt-5 flex gap-2.5">
-          <EditableMetricCard
-            label="Loan Amount"
-            value={fmtMetric(deal.loan_amount)}
-            fieldName="loan_amount"
-            fieldType="currency"
-            rawValue={deal.loan_amount}
-            onSave={onSave}
-          />
-          <EditableMetricCard
-            label="Rate"
-            value={fP(deal.interest_rate)}
-            fieldName="interest_rate"
-            fieldType="percent"
-            rawValue={deal.interest_rate}
-            onSave={onSave}
-          />
-          <EditableMetricCard
-            label="LTV"
-            value={fP(deal.ltv)}
-            fieldName="ltv"
-            fieldType="percent"
-            rawValue={deal.ltv}
-            onSave={onSave}
-          />
-          <EditableMetricCard
-            label="DSCR"
-            value={deal.dscr_ratio != null ? Number(deal.dscr_ratio).toFixed(2) : "\u2014"}
-            fieldName="dscr_ratio"
-            fieldType="number"
-            rawValue={deal.dscr_ratio}
-            onSave={onSave}
-          />
-          <EditableMetricCard
-            label="Term"
-            value={termMonths ? `${termMonths} mo` : "\u2014"}
-            fieldName="loan_term_months"
-            fieldType="number"
-            rawValue={termMonths}
-            onSave={onSave}
-          />
-          <EditableMetricCard
-            label="Points"
-            value={fP(deal.points ?? deal.points_pct)}
-            fieldName="points"
-            fieldType="percent"
-            rawValue={deal.points ?? deal.points_pct}
-            onSave={onSave}
-          />
         </div>
 
         {/* Tab Bar */}

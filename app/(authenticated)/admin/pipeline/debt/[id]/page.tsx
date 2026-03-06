@@ -174,7 +174,6 @@ export default async function DealDetailPage({ params }: PageProps) {
       notes: opp.internal_notes ?? null,
       internal_notes: null,
       investment_strategy: opp.investment_strategy ?? null,
-      deal_financing: opp.deal_financing ?? null,
       funding_channel: opp.funding_channel ?? null,
       created_at: opp.created_at,
       updated_at: opp.updated_at,

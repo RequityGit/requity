@@ -1113,14 +1113,6 @@ export const INVESTMENT_STRATEGIES = [
   { value: "secondaries", label: "Secondaries" },
 ] as const;
 
-export const DEAL_FINANCING_OPTIONS = [
-  { value: "all_cash", label: "All Cash" },
-  { value: "financed_by_buyer", label: "Financed by Buyer" },
-  { value: "financed_by_competitor", label: "Financed by Competitor" },
-  { value: "debt_assumed", label: "Debt Assumed" },
-  { value: "financed_by_requity", label: "Financed by Requity" },
-] as const;
-
 export const VALUE_METHODS = [
   { value: "underwritten_arv", label: "Underwritten ARV" },
   { value: "borrower_arv", label: "Borrower ARV" },
