@@ -82,6 +82,9 @@ interface UWEditorClientProps {
   ) => Promise<{ success?: boolean; error?: string; version?: UWVersionData }>;
   isOpportunity?: boolean;
   isSandbox?: boolean;
+  /** When provided as null, the scenario is not yet linked to a deal (shows warning instead of navigating). When undefined, falls back to dealId-based navigation. */
+  linkedDealId?: string | null;
+  linkedDealType?: "opportunity" | "loan" | null;
 }
 
 const MODEL_ICONS: Record<UWModelType, typeof Building2> = {
@@ -103,6 +106,8 @@ export function UWEditorClient({
   createVersionAction,
   isOpportunity = false,
   isSandbox = false,
+  linkedDealId,
+  linkedDealType,
 }: UWEditorClientProps) {
   const router = useRouter();
   const { toast } = useToast();
@@ -224,8 +229,31 @@ export function UWEditorClient({
                   Back to Models
                 </Button>
               </Link>
+            ) : linkedDealId === null ? (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() =>
+                  toast({
+                    title: "Not linked to a deal",
+                    description:
+                      'This model is not linked to a deal yet. Use the "Link to Deal" button in the header above to connect it.',
+                  })
+                }
+              >
+                <ArrowLeft className="h-4 w-4 mr-1" />
+                Back to Deal
+              </Button>
             ) : (
-              <Link href={`/admin/pipeline/debt/${dealId}`}>
+              <Link
+                href={
+                  linkedDealId !== undefined
+                    ? linkedDealType === "opportunity"
+                      ? `/admin/pipeline/equity/${linkedDealId}`
+                      : `/admin/pipeline/debt/${linkedDealId}`
+                    : `/admin/pipeline/debt/${dealId}`
+                }
+              >
                 <Button variant="ghost" size="sm">
                   <ArrowLeft className="h-4 w-4 mr-1" />
                   Back to Deal

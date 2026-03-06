@@ -185,6 +185,8 @@ export default async function ScenarioEditorPage({
         createVersionAction={createVersionAction}
         isOpportunity={false}
         isSandbox={false}
+        linkedDealId={linkedDealId}
+        linkedDealType={linkedDealType}
       />
     </div>
   );
