@@ -14632,6 +14632,10 @@ export type Database = {
         Args: { p_annual_rate: number; p_balance: number }
         Returns: number
       }
+      column_exists: {
+        Args: { p_column: string; p_table: string }
+        Returns: boolean
+      }
       create_construction_budget: {
         Args: { p_created_by: string; p_line_items: Json; p_loan_id: string }
         Returns: string
@@ -14654,6 +14658,7 @@ export type Database = {
       dmetaphone: { Args: { "": string }; Returns: string }
       dmetaphone_alt: { Args: { "": string }; Returns: string }
       evaluate_auto_approval: { Args: { p_loan_id: string }; Returns: string }
+      exec_ddl: { Args: { sql: string }; Returns: undefined }
       find_potential_duplicates: {
         Args: { target_contact_id: string }
         Returns: {
@@ -15745,23 +15750,3 @@ export const Constants = {
     },
   },
 } as const
-
-// Convenience type aliases used across the codebase
-export type BorrowerEntity = Tables<"borrower_entities">
-export type Loan = Tables<"loans">
-export type LoanCondition = Tables<"loan_conditions">
-export type LoanDocument = Tables<"loan_documents">
-export type LoanPayment = Tables<"loan_payments">
-export type LoanConditionTemplate = Tables<"loan_condition_templates">
-export type Document = Tables<"documents">
-export type CrmContact = Tables<"crm_contacts">
-// Tables not yet in generated types — use permissive type
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export type LenderQuote = Record<string, any>
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export type PricingProgram = Record<string, any>
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export type LeverageAdjuster = Record<string, any>
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export type PricingProgramVersion = Record<string, any>
-
