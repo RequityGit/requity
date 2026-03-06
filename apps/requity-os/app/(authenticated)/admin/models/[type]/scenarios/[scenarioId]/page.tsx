@@ -147,7 +147,7 @@ export default async function ScenarioEditorPage({
   }
 
   return (
-    <div className="min-h-screen">
+    <div>
       <ScenarioHeader
         scenario={{
           id: scenario.id,

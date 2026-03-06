@@ -59,7 +59,7 @@ export function CommercialUWShell({ dealId, dealName = "123 Test Deal" }: Commer
   };
 
   return (
-    <div className="min-h-screen bg-background font-sans text-foreground">
+    <div className="bg-background font-sans text-foreground">
       {/* Top Bar */}
       <div className="h-[52px] border-b flex items-center px-5 bg-card sticky top-0 z-50 justify-between">
         <div className="flex items-center gap-2.5">
@@ -100,7 +100,7 @@ export function CommercialUWShell({ dealId, dealName = "123 Test Deal" }: Commer
 
       <div className="flex">
         {/* Versions Sidebar */}
-        <div className="w-[190px] min-h-[calc(100vh-52px)] border-r px-3.5 py-[18px] bg-card shrink-0">
+        <div className="w-[190px] border-r px-3.5 py-[18px] bg-card shrink-0">
           <div className="flex justify-between items-center mb-3.5">
             <span className="text-[10px] font-semibold uppercase tracking-[0.06em] text-muted-foreground">
               Versions

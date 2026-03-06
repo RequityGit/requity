@@ -218,7 +218,7 @@ export function UWEditorClient({
   const ModelIcon = MODEL_ICONS[modelType];
 
   return (
-    <div className="min-h-screen">
+    <div>
       {/* Top bar */}
       <div className="sticky top-0 z-10 border-b border-border bg-background/95 backdrop-blur-sm">
         <div className="flex items-center justify-between px-6 py-3">
@@ -307,7 +307,7 @@ export function UWEditorClient({
       {/* Main content */}
       <div className="flex">
         {/* Version sidebar */}
-        <div className="w-[280px] shrink-0 border-r border-border bg-muted/30 overflow-y-auto" style={{ height: "calc(100vh - 57px)" }}>
+        <div className="w-[280px] shrink-0 border-r border-border bg-muted/30">
           <div className="p-4">
             <div className="flex items-center justify-between mb-3">
               <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
@@ -345,7 +345,7 @@ export function UWEditorClient({
         </div>
 
         {/* Editor area */}
-        <div className="flex-1 overflow-y-auto p-6" style={{ height: "calc(100vh - 57px)" }}>
+        <div className="flex-1 p-6">
           {selectedVersion ? (
             modelType === "commercial" ? (
               <div className="max-w-[1100px]">
