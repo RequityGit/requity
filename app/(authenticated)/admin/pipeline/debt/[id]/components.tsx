@@ -503,8 +503,6 @@ export interface DealData {
   internal_notes?: string | null;
   strategy?: string | null;
   investment_strategy?: string | null;
-  financing?: string | null;
-  deal_financing?: string | null;
   funding_channel?: string | null;
   debt_tranche?: string | null;
   deal_programs?: string[] | null;

@@ -23,7 +23,6 @@ import {
   LOAN_PURPOSES,
   FUNDING_CHANNELS,
   INVESTMENT_STRATEGIES,
-  DEAL_FINANCING_OPTIONS,
   DEBT_TRANCHES,
 } from "@/lib/constants";
 import { PROPERTY_TYPE_OPTIONS } from "@/lib/constants";
@@ -90,12 +89,17 @@ export function OverviewTab({ deal, onSave, onSaveRelated }: OverviewTabProps) {
   const loanFields: SectionField[] = [
     { label: "Loan Number", fieldName: "loan_number", fieldType: "readonly", value: d.loan_number },
     { label: "Type", fieldName: "type", fieldType: "select", options: toOptions(LOAN_DB_TYPES), value: d.type || d.loan_type },
+    { label: "Loan Amount", fieldName: "loan_amount", fieldType: "currency", value: d.loan_amount },
+    { label: "Rate", fieldName: "interest_rate", fieldType: "percent", value: d.interest_rate },
     { label: "Purpose", fieldName: "purpose", fieldType: "select", options: toOptions(LOAN_PURPOSES), value: d.purpose || d.loan_purpose },
     { label: "Channel", fieldName: "funding_channel", fieldType: "select", options: toOptions(FUNDING_CHANNELS), value: d.funding_channel },
     { label: "Strategy", fieldName: "strategy", fieldType: "select", options: toOptions(INVESTMENT_STRATEGIES), value: d.strategy || d.investment_strategy },
-    { label: "Financing", fieldName: "financing", fieldType: "select", options: toOptions(DEAL_FINANCING_OPTIONS), value: d.financing || d.deal_financing },
-    { label: "Tranche", fieldName: "debt_tranche", fieldType: "select", options: toOptions(DEBT_TRANCHES), value: d.debt_tranche },
     { label: "Programs", fieldName: "deal_programs", fieldType: "text", value: d.deal_programs?.join(", ") },
+    { label: "Tranche", fieldName: "debt_tranche", fieldType: "select", options: toOptions(DEBT_TRANCHES), value: d.debt_tranche },
+    { label: "LTV", fieldName: "ltv", fieldType: "percent", value: d.ltv },
+    { label: "DSCR", fieldName: "dscr_ratio", fieldType: "number", value: d.dscr_ratio },
+    { label: "Term", fieldName: "loan_term_months", fieldType: "number", value: d.loan_term_months || d.term_months },
+    { label: "Points", fieldName: "points", fieldType: "percent", value: d.points ?? d.points_pct },
   ];
 
   const propertyFields: SectionField[] = [
@@ -163,6 +167,24 @@ export function OverviewTab({ deal, onSave, onSaveRelated }: OverviewTabProps) {
             onSave={onSave}
           />
           <EditableFieldRow
+            label="Loan Amount"
+            value={d.loan_amount}
+            displayValue={fmt(d.loan_amount)}
+            fieldName="loan_amount"
+            fieldType="currency"
+            mono
+            onSave={onSave}
+          />
+          <EditableFieldRow
+            label="Rate"
+            value={d.interest_rate}
+            displayValue={fP(d.interest_rate)}
+            fieldName="interest_rate"
+            fieldType="percent"
+            mono
+            onSave={onSave}
+          />
+          <EditableFieldRow
             label="Purpose"
             value={d.purpose || d.loan_purpose}
             displayValue={cap(d.purpose || d.loan_purpose)}
@@ -190,12 +212,9 @@ export function OverviewTab({ deal, onSave, onSaveRelated }: OverviewTabProps) {
             onSave={onSave}
           />
           <EditableFieldRow
-            label="Financing"
-            value={d.financing || d.deal_financing}
-            displayValue={cap(d.financing || d.deal_financing)}
-            fieldName="financing"
-            fieldType="select"
-            options={toOptions(DEAL_FINANCING_OPTIONS)}
+            label="Programs"
+            value={d.deal_programs?.join(", ")}
+            fieldName="deal_programs"
             onSave={onSave}
           />
           <EditableFieldRow
@@ -208,9 +227,39 @@ export function OverviewTab({ deal, onSave, onSaveRelated }: OverviewTabProps) {
             onSave={onSave}
           />
           <EditableFieldRow
-            label="Programs"
-            value={d.deal_programs?.join(", ")}
-            fieldName="deal_programs"
+            label="LTV"
+            value={d.ltv}
+            displayValue={fP(d.ltv)}
+            fieldName="ltv"
+            fieldType="percent"
+            mono
+            onSave={onSave}
+          />
+          <EditableFieldRow
+            label="DSCR"
+            value={d.dscr_ratio}
+            displayValue={d.dscr_ratio != null ? Number(d.dscr_ratio).toFixed(2) : null}
+            fieldName="dscr_ratio"
+            fieldType="number"
+            mono
+            onSave={onSave}
+          />
+          <EditableFieldRow
+            label="Term"
+            value={d.loan_term_months || d.term_months}
+            displayValue={d.loan_term_months || d.term_months ? `${d.loan_term_months || d.term_months} mo` : null}
+            fieldName="loan_term_months"
+            fieldType="number"
+            mono
+            onSave={onSave}
+          />
+          <EditableFieldRow
+            label="Points"
+            value={d.points ?? d.points_pct}
+            displayValue={fP(d.points ?? d.points_pct)}
+            fieldName="points"
+            fieldType="percent"
+            mono
             onSave={onSave}
           />
         </div>
