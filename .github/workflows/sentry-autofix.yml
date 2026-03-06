@@ -1,0 +1,26 @@
+name: Sentry Auto-fix
+
+on:
+  schedule:
+    - cron: '0 9 * * 1-5'  # Runs weekdays at 9am
+  workflow_dispatch:         # Adds a manual "Run" button too
+
+jobs:
+  autofix:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Install Claude Code
+        run: npm install -g @anthropic-ai/claude-code
+        
+      - name: Run Sentry fixes
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+        run: |
+          claude --headless "
+            Using Sentry MCP, fetch the top 5 unresolved issues by user impact.
+            For each one: analyze the stack trace, fix the code, create a branch, and open a draft PR.
+            Do not touch anything you are not confident about — skip it instead.
+          "
