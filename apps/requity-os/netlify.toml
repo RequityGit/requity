@@ -1,5 +1,6 @@
 [build]
-  command = "npm run build"
+  base = "apps/requity-os"
+  command = "pnpm run build"
   publish = ".next"
 
 [[plugins]]
