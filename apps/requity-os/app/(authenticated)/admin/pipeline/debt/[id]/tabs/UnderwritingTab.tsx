@@ -14,6 +14,8 @@ import {
   AlertTriangle,
   Minus,
   ChevronDown,
+  HardHat,
+  Landmark,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
@@ -55,6 +57,8 @@ const MODEL_ICONS: Record<UWModelType, typeof Building2> = {
   commercial: Building2,
   rtl: Home,
   dscr: TrendingUp,
+  guc: HardHat,
+  equity: Landmark,
 };
 
 export function UnderwritingTab({
@@ -213,6 +217,8 @@ function VersionSummary({
         {modelType === "commercial" && <CommercialSummary outputs={outputs} />}
         {modelType === "rtl" && <RTLSummary outputs={outputs} />}
         {modelType === "dscr" && <DSCRSummary outputs={outputs} />}
+        {modelType === "guc" && <GUCSummary outputs={outputs} />}
+        {modelType === "equity" && <EquitySummary outputs={outputs} />}
       </div>
     </SectionCard>
   );
@@ -265,6 +271,40 @@ function DSCRSummary({ outputs }: { outputs: Record<string, unknown> }) {
       <MiniMetric label="Rate" value={rate != null ? `${rate.toFixed(2)}%` : "—"} />
       <MiniMetric label="LTV" value={ltv != null ? `${ltv.toFixed(1)}%` : "—"} />
       <MiniMetric label="Monthly P&I" value={fmtNum(monthlyPi)} />
+    </div>
+  );
+}
+
+/* ── GUC Summary ── */
+function GUCSummary({ outputs }: { outputs: Record<string, unknown> }) {
+  const ltc = safeNum(outputs.construction_ltc);
+  const irr = safeNum(outputs.projected_irr);
+  const profitOnCost = safeNum(outputs.profit_on_cost);
+  const yieldOnCost = safeNum(outputs.yield_on_cost);
+
+  return (
+    <div className="grid grid-cols-4 gap-2.5">
+      <MiniMetric label="LTC" value={ltc != null ? `${ltc.toFixed(1)}%` : "—"} />
+      <MiniMetric label="IRR" value={irr != null ? `${irr.toFixed(1)}%` : "—"} highlight={irr != null && irr >= 15} />
+      <MiniMetric label="Profit/Cost" value={profitOnCost != null ? `${profitOnCost.toFixed(1)}%` : "—"} />
+      <MiniMetric label="Yield/Cost" value={yieldOnCost != null ? `${yieldOnCost.toFixed(2)}%` : "—"} />
+    </div>
+  );
+}
+
+/* ── Equity Summary ── */
+function EquitySummary({ outputs }: { outputs: Record<string, unknown> }) {
+  const irr = safeNum(outputs.levered_irr);
+  const multiple = safeNum(outputs.equity_multiple);
+  const coc = safeNum(outputs.cash_on_cash);
+  const capRate = safeNum(outputs.going_in_cap_rate);
+
+  return (
+    <div className="grid grid-cols-4 gap-2.5">
+      <MiniMetric label="IRR" value={irr != null ? `${irr.toFixed(1)}%` : "—"} highlight={irr != null && irr >= 15} />
+      <MiniMetric label="Multiple" value={multiple != null ? `${multiple.toFixed(2)}x` : "—"} />
+      <MiniMetric label="Cash-on-Cash" value={coc != null ? `${coc.toFixed(1)}%` : "—"} />
+      <MiniMetric label="Cap Rate" value={capRate != null ? `${capRate.toFixed(2)}%` : "—"} />
     </div>
   );
 }
@@ -487,6 +527,16 @@ function getVersionRowMetrics(modelType: UWModelType, outputs: Record<string, un
     const dscr = safeNum(outputs.dscr);
     if (rate != null) metrics.push(`${rate.toFixed(2)}%`);
     if (dscr != null) metrics.push(`DSCR ${dscr.toFixed(2)}`);
+  } else if (modelType === "guc") {
+    const ltc = safeNum(outputs.construction_ltc);
+    const irr = safeNum(outputs.projected_irr);
+    if (ltc != null) metrics.push(`LTC ${ltc.toFixed(0)}%`);
+    if (irr != null) metrics.push(`IRR ${irr.toFixed(1)}%`);
+  } else if (modelType === "equity") {
+    const irr = safeNum(outputs.levered_irr);
+    const multiple = safeNum(outputs.equity_multiple);
+    if (irr != null) metrics.push(`IRR ${irr.toFixed(1)}%`);
+    if (multiple != null) metrics.push(`${multiple.toFixed(2)}x`);
   } else {
     const ltv = safeNum(outputs.ltv);
     const roi = safeNum(outputs.borrower_roi);

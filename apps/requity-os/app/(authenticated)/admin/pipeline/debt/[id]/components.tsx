@@ -381,7 +381,7 @@ export interface PipelineStage {
   sla_days: number | null;
 }
 
-export type UWModelType = "commercial" | "rtl" | "dscr";
+export type UWModelType = "commercial" | "rtl" | "dscr" | "guc" | "equity";
 
 export interface UWVersion {
   id: string;
@@ -407,8 +407,9 @@ export function getUWModelForLoanType(loanType: string | null | undefined): UWMo
       return "commercial";
     case "dscr":
       return "dscr";
-    case "rtl":
     case "guc":
+      return "guc";
+    case "rtl":
     case "transactional":
     default:
       return "rtl";
@@ -419,6 +420,8 @@ export const UW_MODEL_LABELS: Record<UWModelType, string> = {
   commercial: "Commercial UW",
   rtl: "Fix & Flip / RTL",
   dscr: "DSCR Calculator",
+  guc: "Ground-Up Construction",
+  equity: "Equity Investment",
 };
 
 export interface DealData {

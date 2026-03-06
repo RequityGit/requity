@@ -2135,6 +2135,7 @@ export type Database = {
           current_lease_income: number | null
           current_occupancy_revenue: number | null
           disposition_cost_pct: number | null
+          equity_deal_id: string | null
           equity_invested: number | null
           exit_amortization_years: number | null
           exit_cap_rate: number | null
@@ -2149,8 +2150,12 @@ export type Database = {
           expense_growth_yr5: number | null
           going_in_cap_rate: number | null
           id: string
-          loan_id: string
+          is_active: boolean
+          label: string | null
+          loan_id: string | null
+          notes: string | null
           operating_days_per_year: number | null
+          opportunity_id: string | null
           poh_expense_ratio: number | null
           poh_rental_income: number | null
           property_type: string
@@ -2161,6 +2166,7 @@ export type Database = {
           rent_growth_yr4: number | null
           rent_growth_yr5: number | null
           rent_roll_upload_id: string | null
+          scenario_id: string | null
           stabilized_ancillary_income: number | null
           stabilized_gpi: number | null
           stabilized_lease_income: number | null
@@ -2189,6 +2195,7 @@ export type Database = {
           vacancy_pct_yr3: number | null
           vacancy_pct_yr4: number | null
           vacancy_pct_yr5: number | null
+          version_number: number
           year_built: number | null
           yr1_contract_override: number | null
           yr1_ga_override: number | null
@@ -2216,6 +2223,7 @@ export type Database = {
           current_lease_income?: number | null
           current_occupancy_revenue?: number | null
           disposition_cost_pct?: number | null
+          equity_deal_id?: string | null
           equity_invested?: number | null
           exit_amortization_years?: number | null
           exit_cap_rate?: number | null
@@ -2230,8 +2238,12 @@ export type Database = {
           expense_growth_yr5?: number | null
           going_in_cap_rate?: number | null
           id?: string
-          loan_id: string
+          is_active?: boolean
+          label?: string | null
+          loan_id?: string | null
+          notes?: string | null
           operating_days_per_year?: number | null
+          opportunity_id?: string | null
           poh_expense_ratio?: number | null
           poh_rental_income?: number | null
           property_type: string
@@ -2242,6 +2254,7 @@ export type Database = {
           rent_growth_yr4?: number | null
           rent_growth_yr5?: number | null
           rent_roll_upload_id?: string | null
+          scenario_id?: string | null
           stabilized_ancillary_income?: number | null
           stabilized_gpi?: number | null
           stabilized_lease_income?: number | null
@@ -2270,6 +2283,7 @@ export type Database = {
           vacancy_pct_yr3?: number | null
           vacancy_pct_yr4?: number | null
           vacancy_pct_yr5?: number | null
+          version_number?: number
           year_built?: number | null
           yr1_contract_override?: number | null
           yr1_ga_override?: number | null
@@ -2297,6 +2311,7 @@ export type Database = {
           current_lease_income?: number | null
           current_occupancy_revenue?: number | null
           disposition_cost_pct?: number | null
+          equity_deal_id?: string | null
           equity_invested?: number | null
           exit_amortization_years?: number | null
           exit_cap_rate?: number | null
@@ -2311,8 +2326,12 @@ export type Database = {
           expense_growth_yr5?: number | null
           going_in_cap_rate?: number | null
           id?: string
-          loan_id?: string
+          is_active?: boolean
+          label?: string | null
+          loan_id?: string | null
+          notes?: string | null
           operating_days_per_year?: number | null
+          opportunity_id?: string | null
           poh_expense_ratio?: number | null
           poh_rental_income?: number | null
           property_type?: string
@@ -2323,6 +2342,7 @@ export type Database = {
           rent_growth_yr4?: number | null
           rent_growth_yr5?: number | null
           rent_roll_upload_id?: string | null
+          scenario_id?: string | null
           stabilized_ancillary_income?: number | null
           stabilized_gpi?: number | null
           stabilized_lease_income?: number | null
@@ -2351,6 +2371,7 @@ export type Database = {
           vacancy_pct_yr3?: number | null
           vacancy_pct_yr4?: number | null
           vacancy_pct_yr5?: number | null
+          version_number?: number
           year_built?: number | null
           yr1_contract_override?: number | null
           yr1_ga_override?: number | null
@@ -2365,17 +2386,52 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "commercial_underwriting_equity_deal_id_fkey"
+            columns: ["equity_deal_id"]
+            isOneToOne: false
+            referencedRelation: "equity_deals"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "commercial_underwriting_equity_deal_id_fkey"
+            columns: ["equity_deal_id"]
+            isOneToOne: false
+            referencedRelation: "equity_pipeline"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "commercial_underwriting_loan_id_fkey"
             columns: ["loan_id"]
-            isOneToOne: true
+            isOneToOne: false
             referencedRelation: "loan_pipeline"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "commercial_underwriting_loan_id_fkey"
             columns: ["loan_id"]
-            isOneToOne: true
+            isOneToOne: false
             referencedRelation: "loans"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "commercial_underwriting_opportunity_id_fkey"
+            columns: ["opportunity_id"]
+            isOneToOne: false
+            referencedRelation: "opportunities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "commercial_underwriting_opportunity_id_fkey"
+            columns: ["opportunity_id"]
+            isOneToOne: false
+            referencedRelation: "opportunity_pipeline"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "commercial_underwriting_scenario_id_fkey"
+            columns: ["scenario_id"]
+            isOneToOne: false
+            referencedRelation: "model_scenarios"
             referencedColumns: ["id"]
           },
         ]
@@ -5961,6 +6017,7 @@ export type Database = {
           monthly_rent: number
           monthly_taxes: number | null
           num_units: number | null
+          opportunity_id: string | null
           prepay_preference: string | null
           property_address: string | null
           property_city: string | null
@@ -6000,6 +6057,7 @@ export type Database = {
           monthly_rent: number
           monthly_taxes?: number | null
           num_units?: number | null
+          opportunity_id?: string | null
           prepay_preference?: string | null
           property_address?: string | null
           property_city?: string | null
@@ -6039,6 +6097,7 @@ export type Database = {
           monthly_rent?: number
           monthly_taxes?: number | null
           num_units?: number | null
+          opportunity_id?: string | null
           prepay_preference?: string | null
           property_address?: string | null
           property_city?: string | null
@@ -6052,7 +6111,22 @@ export type Database = {
           status?: string | null
           updated_at?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "dscr_pricing_runs_opportunity_id_fkey"
+            columns: ["opportunity_id"]
+            isOneToOne: false
+            referencedRelation: "opportunities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "dscr_pricing_runs_opportunity_id_fkey"
+            columns: ["opportunity_id"]
+            isOneToOne: false
+            referencedRelation: "opportunity_pipeline"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       dscr_pricing_versions: {
         Row: {
@@ -6233,6 +6307,207 @@ export type Database = {
             columns: ["product_id"]
             isOneToOne: false
             referencedRelation: "dscr_lender_products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      dscr_underwriting: {
+        Row: {
+          amortization_months: number | null
+          assumptions_json: Json | null
+          borrower_type: string | null
+          broker_comp: number | null
+          cash_on_cash: number | null
+          created_at: string | null
+          created_by: string | null
+          debt_yield: number | null
+          dscr_ratio: number | null
+          fico_score: number | null
+          id: string
+          income_doc_type: string | null
+          interest_rate: number | null
+          io_period_months: number | null
+          is_active: boolean
+          is_interest_only: boolean | null
+          is_short_term_rental: boolean | null
+          label: string | null
+          loan_amount: number | null
+          loan_id: string | null
+          loan_purpose: string | null
+          loan_term_months: number | null
+          lock_period_days: number | null
+          ltv: number | null
+          monthly_flood: number | null
+          monthly_hoa: number | null
+          monthly_insurance: number | null
+          monthly_pi: number | null
+          monthly_pitia: number | null
+          monthly_rent: number | null
+          monthly_taxes: number | null
+          notes: string | null
+          num_units: number | null
+          opportunity_id: string | null
+          prepayment_type: string | null
+          pricing_run_id: string | null
+          property_type: string | null
+          property_value: number | null
+          scenario_id: string | null
+          selected_lender: string | null
+          selected_price: number | null
+          selected_rate: number | null
+          status: string
+          updated_at: string | null
+          version_number: number
+        }
+        Insert: {
+          amortization_months?: number | null
+          assumptions_json?: Json | null
+          borrower_type?: string | null
+          broker_comp?: number | null
+          cash_on_cash?: number | null
+          created_at?: string | null
+          created_by?: string | null
+          debt_yield?: number | null
+          dscr_ratio?: number | null
+          fico_score?: number | null
+          id?: string
+          income_doc_type?: string | null
+          interest_rate?: number | null
+          io_period_months?: number | null
+          is_active?: boolean
+          is_interest_only?: boolean | null
+          is_short_term_rental?: boolean | null
+          label?: string | null
+          loan_amount?: number | null
+          loan_id?: string | null
+          loan_purpose?: string | null
+          loan_term_months?: number | null
+          lock_period_days?: number | null
+          ltv?: number | null
+          monthly_flood?: number | null
+          monthly_hoa?: number | null
+          monthly_insurance?: number | null
+          monthly_pi?: number | null
+          monthly_pitia?: number | null
+          monthly_rent?: number | null
+          monthly_taxes?: number | null
+          notes?: string | null
+          num_units?: number | null
+          opportunity_id?: string | null
+          prepayment_type?: string | null
+          pricing_run_id?: string | null
+          property_type?: string | null
+          property_value?: number | null
+          scenario_id?: string | null
+          selected_lender?: string | null
+          selected_price?: number | null
+          selected_rate?: number | null
+          status?: string
+          updated_at?: string | null
+          version_number?: number
+        }
+        Update: {
+          amortization_months?: number | null
+          assumptions_json?: Json | null
+          borrower_type?: string | null
+          broker_comp?: number | null
+          cash_on_cash?: number | null
+          created_at?: string | null
+          created_by?: string | null
+          debt_yield?: number | null
+          dscr_ratio?: number | null
+          fico_score?: number | null
+          id?: string
+          income_doc_type?: string | null
+          interest_rate?: number | null
+          io_period_months?: number | null
+          is_active?: boolean
+          is_interest_only?: boolean | null
+          is_short_term_rental?: boolean | null
+          label?: string | null
+          loan_amount?: number | null
+          loan_id?: string | null
+          loan_purpose?: string | null
+          loan_term_months?: number | null
+          lock_period_days?: number | null
+          ltv?: number | null
+          monthly_flood?: number | null
+          monthly_hoa?: number | null
+          monthly_insurance?: number | null
+          monthly_pi?: number | null
+          monthly_pitia?: number | null
+          monthly_rent?: number | null
+          monthly_taxes?: number | null
+          notes?: string | null
+          num_units?: number | null
+          opportunity_id?: string | null
+          prepayment_type?: string | null
+          pricing_run_id?: string | null
+          property_type?: string | null
+          property_value?: number | null
+          scenario_id?: string | null
+          selected_lender?: string | null
+          selected_price?: number | null
+          selected_rate?: number | null
+          status?: string
+          updated_at?: string | null
+          version_number?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dscr_underwriting_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "equity_pipeline"
+            referencedColumns: ["assigned_to_profile_id"]
+          },
+          {
+            foreignKeyName: "dscr_underwriting_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "dscr_underwriting_loan_id_fkey"
+            columns: ["loan_id"]
+            isOneToOne: false
+            referencedRelation: "loan_pipeline"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "dscr_underwriting_loan_id_fkey"
+            columns: ["loan_id"]
+            isOneToOne: false
+            referencedRelation: "loans"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "dscr_underwriting_opportunity_id_fkey"
+            columns: ["opportunity_id"]
+            isOneToOne: false
+            referencedRelation: "opportunities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "dscr_underwriting_opportunity_id_fkey"
+            columns: ["opportunity_id"]
+            isOneToOne: false
+            referencedRelation: "opportunity_pipeline"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "dscr_underwriting_pricing_run_id_fkey"
+            columns: ["pricing_run_id"]
+            isOneToOne: false
+            referencedRelation: "dscr_pricing_runs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "dscr_underwriting_scenario_id_fkey"
+            columns: ["scenario_id"]
+            isOneToOne: false
+            referencedRelation: "model_scenarios"
             referencedColumns: ["id"]
           },
         ]
@@ -6966,6 +7241,7 @@ export type Database = {
           capex_budget: number | null
           cash_on_cash: number | null
           created_at: string
+          created_by: string | null
           deal_id: string
           debt_amount: number | null
           debt_ltv: number | null
@@ -6977,23 +7253,28 @@ export type Database = {
           going_in_cap_rate: number | null
           hold_period_years: number | null
           id: string
+          is_active: boolean
+          label: string | null
           levered_irr: number | null
           management_fee_pct: number | null
           noi_stabilized: number | null
           noi_year1: number | null
           notes: string | null
           rent_growth_pct: number | null
+          scenario_id: string | null
           stabilized_cap_rate: number | null
           status: string
           total_project_cost: number | null
           unlevered_irr: number | null
           updated_at: string
           vacancy_rate_pct: number | null
+          version_number: number
         }
         Insert: {
           capex_budget?: number | null
           cash_on_cash?: number | null
           created_at?: string
+          created_by?: string | null
           deal_id: string
           debt_amount?: number | null
           debt_ltv?: number | null
@@ -7005,23 +7286,28 @@ export type Database = {
           going_in_cap_rate?: number | null
           hold_period_years?: number | null
           id?: string
+          is_active?: boolean
+          label?: string | null
           levered_irr?: number | null
           management_fee_pct?: number | null
           noi_stabilized?: number | null
           noi_year1?: number | null
           notes?: string | null
           rent_growth_pct?: number | null
+          scenario_id?: string | null
           stabilized_cap_rate?: number | null
           status?: string
           total_project_cost?: number | null
           unlevered_irr?: number | null
           updated_at?: string
           vacancy_rate_pct?: number | null
+          version_number?: number
         }
         Update: {
           capex_budget?: number | null
           cash_on_cash?: number | null
           created_at?: string
+          created_by?: string | null
           deal_id?: string
           debt_amount?: number | null
           debt_ltv?: number | null
@@ -7033,20 +7319,38 @@ export type Database = {
           going_in_cap_rate?: number | null
           hold_period_years?: number | null
           id?: string
+          is_active?: boolean
+          label?: string | null
           levered_irr?: number | null
           management_fee_pct?: number | null
           noi_stabilized?: number | null
           noi_year1?: number | null
           notes?: string | null
           rent_growth_pct?: number | null
+          scenario_id?: string | null
           stabilized_cap_rate?: number | null
           status?: string
           total_project_cost?: number | null
           unlevered_irr?: number | null
           updated_at?: string
           vacancy_rate_pct?: number | null
+          version_number?: number
         }
         Relationships: [
+          {
+            foreignKeyName: "equity_underwriting_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "equity_pipeline"
+            referencedColumns: ["assigned_to_profile_id"]
+          },
+          {
+            foreignKeyName: "equity_underwriting_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "equity_underwriting_deal_id_fkey"
             columns: ["deal_id"]
@@ -7059,6 +7363,13 @@ export type Database = {
             columns: ["deal_id"]
             isOneToOne: false
             referencedRelation: "equity_pipeline"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "equity_underwriting_scenario_id_fkey"
+            columns: ["scenario_id"]
+            isOneToOne: false
+            referencedRelation: "model_scenarios"
             referencedColumns: ["id"]
           },
         ]
@@ -7344,6 +7655,191 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      guc_underwriting: {
+        Row: {
+          assumptions_json: Json | null
+          construction_io: boolean | null
+          construction_loan_amount: number | null
+          construction_ltc: number | null
+          construction_rate: number | null
+          construction_term_months: number | null
+          construction_timeline_months: number | null
+          contingency_pct: number | null
+          created_at: string | null
+          created_by: string | null
+          draw_schedule_json: Json | null
+          dscr_at_stabilization: number | null
+          equity_multiple: number | null
+          exit_cap_rate: number | null
+          exit_loan_amount: number | null
+          exit_rate: number | null
+          exit_strategy: string | null
+          exit_term_months: number | null
+          hard_costs: number | null
+          id: string
+          is_active: boolean
+          label: string | null
+          land_acquisition_date: string | null
+          land_cost: number | null
+          loan_id: string | null
+          lot_size_acres: number | null
+          notes: string | null
+          opportunity_id: string | null
+          origination_fee_pct: number | null
+          profit_on_cost: number | null
+          projected_irr: number | null
+          scenario_id: string | null
+          soft_costs: number | null
+          stabilized_noi: number | null
+          stabilized_value: number | null
+          status: string
+          total_equity_required: number | null
+          total_project_cost: number | null
+          updated_at: string | null
+          version_number: number
+          yield_on_cost: number | null
+          zoning: string | null
+        }
+        Insert: {
+          assumptions_json?: Json | null
+          construction_io?: boolean | null
+          construction_loan_amount?: number | null
+          construction_ltc?: number | null
+          construction_rate?: number | null
+          construction_term_months?: number | null
+          construction_timeline_months?: number | null
+          contingency_pct?: number | null
+          created_at?: string | null
+          created_by?: string | null
+          draw_schedule_json?: Json | null
+          dscr_at_stabilization?: number | null
+          equity_multiple?: number | null
+          exit_cap_rate?: number | null
+          exit_loan_amount?: number | null
+          exit_rate?: number | null
+          exit_strategy?: string | null
+          exit_term_months?: number | null
+          hard_costs?: number | null
+          id?: string
+          is_active?: boolean
+          label?: string | null
+          land_acquisition_date?: string | null
+          land_cost?: number | null
+          loan_id?: string | null
+          lot_size_acres?: number | null
+          notes?: string | null
+          opportunity_id?: string | null
+          origination_fee_pct?: number | null
+          profit_on_cost?: number | null
+          projected_irr?: number | null
+          scenario_id?: string | null
+          soft_costs?: number | null
+          stabilized_noi?: number | null
+          stabilized_value?: number | null
+          status?: string
+          total_equity_required?: number | null
+          total_project_cost?: number | null
+          updated_at?: string | null
+          version_number?: number
+          yield_on_cost?: number | null
+          zoning?: string | null
+        }
+        Update: {
+          assumptions_json?: Json | null
+          construction_io?: boolean | null
+          construction_loan_amount?: number | null
+          construction_ltc?: number | null
+          construction_rate?: number | null
+          construction_term_months?: number | null
+          construction_timeline_months?: number | null
+          contingency_pct?: number | null
+          created_at?: string | null
+          created_by?: string | null
+          draw_schedule_json?: Json | null
+          dscr_at_stabilization?: number | null
+          equity_multiple?: number | null
+          exit_cap_rate?: number | null
+          exit_loan_amount?: number | null
+          exit_rate?: number | null
+          exit_strategy?: string | null
+          exit_term_months?: number | null
+          hard_costs?: number | null
+          id?: string
+          is_active?: boolean
+          label?: string | null
+          land_acquisition_date?: string | null
+          land_cost?: number | null
+          loan_id?: string | null
+          lot_size_acres?: number | null
+          notes?: string | null
+          opportunity_id?: string | null
+          origination_fee_pct?: number | null
+          profit_on_cost?: number | null
+          projected_irr?: number | null
+          scenario_id?: string | null
+          soft_costs?: number | null
+          stabilized_noi?: number | null
+          stabilized_value?: number | null
+          status?: string
+          total_equity_required?: number | null
+          total_project_cost?: number | null
+          updated_at?: string | null
+          version_number?: number
+          yield_on_cost?: number | null
+          zoning?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "guc_underwriting_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "equity_pipeline"
+            referencedColumns: ["assigned_to_profile_id"]
+          },
+          {
+            foreignKeyName: "guc_underwriting_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "guc_underwriting_loan_id_fkey"
+            columns: ["loan_id"]
+            isOneToOne: false
+            referencedRelation: "loan_pipeline"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "guc_underwriting_loan_id_fkey"
+            columns: ["loan_id"]
+            isOneToOne: false
+            referencedRelation: "loans"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "guc_underwriting_opportunity_id_fkey"
+            columns: ["opportunity_id"]
+            isOneToOne: false
+            referencedRelation: "opportunities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "guc_underwriting_opportunity_id_fkey"
+            columns: ["opportunity_id"]
+            isOneToOne: false
+            referencedRelation: "opportunity_pipeline"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "guc_underwriting_scenario_id_fkey"
+            columns: ["scenario_id"]
+            isOneToOne: false
+            referencedRelation: "model_scenarios"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       inspection_line_item_assessments: {
         Row: {
@@ -9217,6 +9713,7 @@ export type Database = {
           created_by: string
           deleted_at: string | null
           description: string | null
+          equity_deal_id: string | null
           id: string
           loan_id: string | null
           model_type: string
@@ -9231,6 +9728,7 @@ export type Database = {
           created_by: string
           deleted_at?: string | null
           description?: string | null
+          equity_deal_id?: string | null
           id?: string
           loan_id?: string | null
           model_type: string
@@ -9245,6 +9743,7 @@ export type Database = {
           created_by?: string
           deleted_at?: string | null
           description?: string | null
+          equity_deal_id?: string | null
           id?: string
           loan_id?: string | null
           model_type?: string
@@ -9273,6 +9772,20 @@ export type Database = {
             columns: ["created_by"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "model_scenarios_equity_deal_id_fkey"
+            columns: ["equity_deal_id"]
+            isOneToOne: false
+            referencedRelation: "equity_deals"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "model_scenarios_equity_deal_id_fkey"
+            columns: ["equity_deal_id"]
+            isOneToOne: false
+            referencedRelation: "equity_pipeline"
             referencedColumns: ["id"]
           },
           {
@@ -14572,6 +15085,24 @@ export type Database = {
         }
         Relationships: []
       }
+      underwriting_summary: {
+        Row: {
+          computation_status: string | null
+          created_at: string | null
+          equity_deal_id: string | null
+          is_active: boolean | null
+          label: string | null
+          loan_id: string | null
+          model_type: string | null
+          opportunity_id: string | null
+          scenario_id: string | null
+          scenario_name: string | null
+          status: string | null
+          version_id: string | null
+          version_number: number | null
+        }
+        Relationships: []
+      }
       weekly_dashboard_summary: {
         Row: {
           period: string | null
@@ -15751,90 +16282,3 @@ export const Constants = {
   },
 } as const
 
-/**
- * Manual type for the `lender_quotes` table which is not yet in the
- * auto-generated schema above.
- */
-export interface LenderQuote {
-  id: string;
-  created_at: string;
-  updated_at: string | null;
-  loan_id: string;
-  quote_name: string;
-  status: string;
-  lender_company_id: string | null;
-  lender_contact_name: string | null;
-  linked_property_id: string | null;
-  loan_amount: number | null;
-  interest_rate: number | null;
-  loan_term_months: number | null;
-  interest_only_period_months: number | null;
-  ltv: number | null;
-  amortization_months: number | null;
-  origination_fee: number | null;
-  uw_processing_fee: number | null;
-  requity_lending_fee: number | null;
-  prepayment_penalty: string | null;
-  ym_spread: number | null;
-  ym_amount: number | null;
-  term_sheet_url: string | null;
-  description: string | null;
-  requested_at: string | null;
-  received_at: string | null;
-  accepted_at: string | null;
-  declined_at: string | null;
-  declined_reason: string | null;
-  status_changed_at: string | null;
-  created_by: string | null;
-  updated_by: string | null;
-}
-
-export interface PricingProgram {
-  id: string;
-  program_id: string;
-  program_name: string;
-  loan_type: string | null;
-  version: number;
-  is_current: boolean;
-  interest_rate: number;
-  rate_type: string;
-  origination_points: number;
-  min_origination_fee: number;
-  points_note: string | null;
-  max_ltv: number;
-  max_ltc: number;
-  max_ltp: number;
-  ltv_note: string | null;
-  ltc_note: string | null;
-  loan_term_months: number;
-  term_note: string | null;
-  exit_points: number;
-  legal_doc_fee: number;
-  bpo_appraisal_cost: number;
-  bpo_appraisal_note: string | null;
-  min_credit_score: number;
-  min_deals_24mo: number;
-  citizenship: string;
-  effective_date: string;
-  created_at: string;
-}
-
-export interface LeverageAdjuster {
-  id: string;
-  risk_factor: string;
-  display_name: string;
-  condition_description: string | null;
-  ltc_adjustment: number;
-  ltv_adjustment: number;
-  sort_order: number;
-  is_active: boolean;
-  note: string | null;
-}
-
-export interface PricingProgramVersion {
-  id: string;
-  program_id: string;
-  version: number;
-  change_description: string | null;
-  changed_at: string;
-}

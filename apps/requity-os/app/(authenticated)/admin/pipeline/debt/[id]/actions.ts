@@ -107,7 +107,7 @@ export async function advanceOpportunityStage(
 export async function createUWVersion(
   loanId: string,
   userId: string,
-  modelType: "commercial" | "rtl" | "dscr" = "rtl",
+  modelType: "commercial" | "rtl" | "dscr" | "guc" = "rtl",
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   inputs?: Record<string, any>,
   isOpportunity: boolean = false
