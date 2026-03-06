@@ -10,7 +10,9 @@ import { Building2, Plus, Pencil, Trash2, MapPin } from "lucide-react";
 import { BorrowerEntityDialog } from "@/components/admin/borrower-entity-dialog";
 import { deleteEntityAction } from "@/app/(authenticated)/admin/borrowers/new/actions";
 import { useToast } from "@/components/ui/use-toast";
-import type { BorrowerEntity } from "@/lib/supabase/types";
+import type { Tables } from "@/lib/supabase/types";
+
+type BorrowerEntity = Tables<"borrower_entities">;
 import {
   AlertDialog,
   AlertDialogAction,
