@@ -1,5 +1,9 @@
 {
   "mcpServers": {
+    "Sentry": {
+      "type": "http",
+      "url": "https://mcp.sentry.dev/mcp"
+    },
     "supabase": {
       "type": "http",
       "url": "https://mcp.supabase.com/mcp?project_ref=edhlkknvlczhbowasjna"
