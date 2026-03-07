@@ -376,6 +376,8 @@ function EmptyState({ loading }: { loading: boolean }) {
   const { t } = useChatTheme();
   return (
     <div
+      data-empty
+      className="empty-state"
       style={{
         flex: 1,
         display: "flex",
@@ -407,7 +409,7 @@ function EmptyState({ loading }: { loading: boolean }) {
           fontFamily: "'Inter', sans-serif",
         }}
       >
-        Requity Chatter
+        No conversations yet
       </div>
       <div
         style={{

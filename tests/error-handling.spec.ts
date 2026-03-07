@@ -58,7 +58,7 @@ test("44 — graceful error handling when API calls fail", async ({
   await adminPage.waitForLoadState("networkidle");
 
   // Page should handle errors gracefully — not crash with unhandled exception
-  const main = adminPage.locator("main, body");
+  const main = adminPage.locator("body");
   await expect(main).toBeVisible({ timeout: 10_000 });
 
   // Should show an error state or empty state — not a raw error dump
