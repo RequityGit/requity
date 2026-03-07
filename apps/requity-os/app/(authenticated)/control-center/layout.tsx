@@ -1,7 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
-import { PageHeader } from "@/components/shared/page-header";
-import { ControlCenterTabs } from "@/components/control-center/control-center-tabs";
+import { ControlCenterSidebar } from "./_components/control-center-sidebar";
 
 export const dynamic = "force-dynamic";
 
@@ -18,7 +17,6 @@ export default async function ControlCenterLayout({
 
   if (!user) redirect("/login");
 
-  // Check super_admin role from user_roles table
   const { data: superAdminRole } = await supabase
     .from("user_roles")
     .select("id")
@@ -30,13 +28,9 @@ export default async function ControlCenterLayout({
   if (!superAdminRole) redirect("/admin/dashboard");
 
   return (
-    <div className="space-y-6">
-      <PageHeader
-        title="Control Center"
-        description="System configuration and administration"
-      />
-      <ControlCenterTabs />
-      <div>{children}</div>
+    <div className="-m-4 md:-m-6 lg:-m-8 flex h-[calc(100vh-64px)]">
+      <ControlCenterSidebar />
+      <main className="flex-1 overflow-y-auto p-6 lg:p-8">{children}</main>
     </div>
   );
 }
