@@ -161,7 +161,7 @@ export function ContactDetailClient({
   return (
     <div className="min-h-screen">
       {/* Breadcrumb */}
-      <div className="flex items-center gap-2 mb-3">
+      <div className="flex items-center gap-2 mb-2">
         <Link
           href="/admin/crm"
           className="text-muted-foreground hover:text-foreground transition-colors"
@@ -195,8 +195,8 @@ export function ContactDetailClient({
             contactTypes={contactTypes}
           />
 
-          {/* Tabs Card — shadcn underline pattern */}
-          <Tabs value={activeTab} onValueChange={handleTabChange}>
+          {/* Tabs — shadcn underline pattern */}
+          <Tabs value={activeTab} onValueChange={handleTabChange} className="mt-3">
             <TabsList className="bg-transparent h-auto p-0 gap-0 rounded-none flex justify-start min-w-max border-b border-border w-full">
               {tabs.map((t) => (
                 <TabsTrigger
@@ -217,7 +217,7 @@ export function ContactDetailClient({
               ))}
             </TabsList>
 
-            <TabsContent value="overview" className="mt-6">
+            <TabsContent value="overview" className="mt-4">
               <DetailOverviewTab
                 contact={contact}
                 borrower={borrower}
@@ -228,7 +228,7 @@ export function ContactDetailClient({
               />
             </TabsContent>
 
-            <TabsContent value="activity" className="mt-6">
+            <TabsContent value="activity" className="mt-4">
               <DetailActivityTab
                 contactId={contact.id}
                 activities={activities}
@@ -236,22 +236,22 @@ export function ContactDetailClient({
               />
             </TabsContent>
 
-            <TabsContent value="emails" className="mt-6">
+            <TabsContent value="emails" className="mt-4">
               <DetailEmailsTab emails={emails} />
             </TabsContent>
 
-            <TabsContent value="deals" className="mt-6">
+            <TabsContent value="deals" className="mt-4">
               <DetailDealsTab
                 loans={loans}
                 commitments={investorCommitments}
               />
             </TabsContent>
 
-            <TabsContent value="entities" className="mt-6">
+            <TabsContent value="entities" className="mt-4">
               <DetailEntitiesTab entities={entities} />
             </TabsContent>
 
-            <TabsContent value="tasks" className="mt-6">
+            <TabsContent value="tasks" className="mt-4">
               <DetailTasksTab
                 tasks={tasks}
                 contactId={contact.id}
@@ -260,7 +260,7 @@ export function ContactDetailClient({
               />
             </TabsContent>
 
-            <TabsContent value="notes" className="mt-6">
+            <TabsContent value="notes" className="mt-4">
               <DetailNotesTab
                 contactId={contact.id}
                 currentUserId={currentUserId}
@@ -272,7 +272,7 @@ export function ContactDetailClient({
         </div>
 
         {/* Right Sidebar */}
-        <div className="hidden lg:flex flex-col gap-4 w-[300px] min-w-[300px] max-w-[300px] pt-6 pl-6">
+        <div className="hidden lg:flex flex-col gap-4 w-[300px] min-w-[300px] max-w-[300px] pl-6">
           <ContactDetailSidebar
             contact={contact}
             relationships={relationships}

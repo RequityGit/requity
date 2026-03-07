@@ -59,7 +59,7 @@ export function ContactDetailHeader({
     new Date(contact.next_follow_up_date) < new Date();
 
   return (
-    <Card className="rounded-xl border-border bg-card mb-5">
+    <Card className="rounded-xl border-border bg-card">
       <CardContent className="p-6">
         <div className="flex gap-4 items-start">
           {/* Avatar */}
