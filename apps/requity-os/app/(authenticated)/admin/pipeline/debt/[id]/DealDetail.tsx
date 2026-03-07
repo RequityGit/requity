@@ -242,7 +242,7 @@ export function DealDetail({
   const displayId = deal.loan_number || deal.id?.slice(0, 8);
 
   return (
-    <div style={{ minHeight: "100vh" }}>
+    <div className="min-h-screen">
       {/* Breadcrumb */}
       <div
         className="mb-3 flex items-center gap-1.5 text-[13px]"
@@ -315,7 +315,7 @@ export function DealDetail({
         </div>
 
         {/* Content Area */}
-        <div className="grid gap-6 items-start" style={{ gridTemplateColumns: "1fr 320px" }}>
+        <div className="grid grid-cols-[1fr_320px] gap-6 items-start">
           {/* Left Column */}
           <div className="flex flex-col gap-5 min-w-0">
             {renderTab()}

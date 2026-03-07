@@ -112,7 +112,7 @@ export function CompanyDetailClient({
   }, [searchParams, tabs, activeTab]);
 
   return (
-    <div className="min-h-screen bg-muted">
+    <div className="min-h-screen bg-muted -m-4 md:-m-6 lg:-m-8 -mb-20 md:-mb-6 lg:-mb-8">
       {/* Breadcrumb */}
       <div className="bg-card border-b border-border px-6 lg:px-8 py-4 flex items-center gap-2">
         <Link

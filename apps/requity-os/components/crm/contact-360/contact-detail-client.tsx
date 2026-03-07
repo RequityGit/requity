@@ -151,9 +151,9 @@ export function ContactDetailClient({
   }, [searchParams, tabs, activeTab]);
 
   return (
-    <div className="min-h-screen bg-muted">
+    <div className="min-h-screen bg-muted -m-4 md:-m-6 lg:-m-8 -mb-20 md:-mb-6 lg:-mb-8">
       {/* Breadcrumb */}
-      <div className="bg-card border-b border-border px-6 lg:px-8 py-3.5 flex items-center gap-2">
+      <div className="bg-card border-b border-border px-6 lg:px-8 py-4 flex items-center gap-2">
         <Link
           href="/admin/crm"
           className="text-muted-foreground hover:text-foreground transition-colors"
@@ -259,7 +259,7 @@ export function ContactDetailClient({
         </div>
 
         {/* Right Sidebar */}
-        <div className="hidden lg:flex flex-col gap-4 w-[296px] min-w-[296px] max-w-[296px] py-6 pr-6 lg:pr-8">
+        <div className="hidden lg:flex flex-col gap-4 w-[300px] min-w-[300px] max-w-[300px] py-6 pr-6 lg:pr-8">
           <ContactDetailSidebar
             contact={contact}
             relationships={relationships}
