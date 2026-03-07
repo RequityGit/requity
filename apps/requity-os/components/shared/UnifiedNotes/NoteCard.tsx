@@ -5,6 +5,11 @@ import { Pin, PinOff, Pencil, Trash2, Lock, ThumbsUp } from "lucide-react";
 import { parseComment, relativeTime } from "@/lib/comment-utils";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { MentionInput } from "@/components/shared/mention-input";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import type { NoteData } from "./types";
 
 function getInitials(name: string): string {
@@ -154,25 +159,31 @@ export function NoteCard({
 
       {/* Like row */}
       <div className="pl-10 pt-1 flex items-center gap-2">
-        <button
-          type="button"
-          onClick={() => onToggleLike(note.id, isLiked)}
-          className={`flex items-center gap-1.5 px-2 py-1 rounded-lg text-xs font-medium transition-colors ${
-            isLiked
-              ? "bg-emerald-500/15 text-emerald-600 border border-emerald-500/30"
-              : "text-muted-foreground hover:text-foreground hover:bg-muted"
-          }`}
-        >
-          <ThumbsUp
-            size={12}
-            strokeWidth={1.5}
-            fill={isLiked ? "currentColor" : "none"}
-          />
-          {likeCount > 0 && <span className="num">{likeCount}</span>}
-        </button>
-        {likeCount > 0 && (
-          <span className="text-xs text-muted-foreground">{likeNames}</span>
-        )}
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <button
+              type="button"
+              onClick={() => onToggleLike(note.id, isLiked)}
+              className={`flex items-center gap-1.5 px-2 py-1 rounded-lg text-xs font-medium transition-colors ${
+                isLiked
+                  ? "bg-emerald-500/15 text-emerald-600 border border-emerald-500/30"
+                  : "text-muted-foreground hover:text-foreground hover:bg-muted"
+              }`}
+            >
+              <ThumbsUp
+                size={12}
+                strokeWidth={1.5}
+                fill={isLiked ? "currentColor" : "none"}
+              />
+              {likeCount > 0 && <span className="num">{likeCount}</span>}
+            </button>
+          </TooltipTrigger>
+          {likeCount > 0 && (
+            <TooltipContent side="top" className="text-xs">
+              {likeNames}
+            </TooltipContent>
+          )}
+        </Tooltip>
       </div>
 
       {/* Hover actions */}

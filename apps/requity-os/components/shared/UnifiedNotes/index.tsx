@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
 import { MessageSquare } from "lucide-react";
+import { TooltipProvider } from "@/components/ui/tooltip";
 import { extractMentionIds } from "@/lib/comment-utils";
 import { NoteComposer } from "./NoteComposer";
 import { NoteCard } from "./NoteCard";
@@ -64,7 +65,7 @@ export function UnifiedNotes({
     const supabase = createClient();
     let query = supabase
       .from("notes" as never)
-      .select("*, note_likes(user_id, profiles(full_name))" as never)
+      .select("*, note_likes(user_id, profiles!note_likes_user_id_profiles_fkey(full_name))" as never)
       .is("deleted_at" as never, null)
       .order("created_at" as never, { ascending: false });
 
@@ -366,6 +367,7 @@ export function UnifiedNotes({
   const maxHeight = isCompact ? "max-h-[300px]" : "";
 
   return (
+    <TooltipProvider delayDuration={300}>
     <div className={`flex flex-col gap-3 ${isCompact ? "" : ""}`}>
       {/* Composer */}
       {currentUserId && (
@@ -423,5 +425,6 @@ export function UnifiedNotes({
         </div>
       )}
     </div>
+    </TooltipProvider>
   );
 }
