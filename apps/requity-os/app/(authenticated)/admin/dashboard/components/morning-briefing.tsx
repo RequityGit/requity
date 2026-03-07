@@ -60,7 +60,10 @@ export function MorningBriefing({ tasks, approvals, dealLog }: MorningBriefingPr
     });
   }
 
-  const pastDueTasks = tasks.filter((t) => t.is_past_due && !t.is_completed).length;
+  const today = new Date().toISOString().slice(0, 10);
+  const pastDueTasks = tasks.filter(
+    (t) => t.due_date != null && t.due_date < today && t.status !== "Complete"
+  ).length;
   if (pastDueTasks > 0) {
     items.push({
       icon: AlertCircle,

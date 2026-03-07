@@ -1,8 +1,8 @@
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
-import { WorkflowTaskBoard } from "@/components/tasks/workflow-task-board";
-import type { WorkflowTask, TaskProfile } from "@/lib/workflow-tasks";
+import { TaskBoard } from "@/components/tasks/task-board";
+import type { OpsTask, Profile } from "@/lib/tasks";
 
 export const dynamic = "force-dynamic";
 
@@ -18,7 +18,7 @@ export default async function TasksPage() {
 
   const [tasksRes, profilesRes] = await Promise.all([
     admin
-      .from("tasks")
+      .from("ops_tasks")
       .select("*")
       .order("created_at", { ascending: false }),
     admin
@@ -28,8 +28,8 @@ export default async function TasksPage() {
       .order("full_name"),
   ]);
 
-  const tasks = (tasksRes.data ?? []) as unknown as WorkflowTask[];
-  const profiles: TaskProfile[] = (profilesRes.data ?? []).map(
+  const tasks = (tasksRes.data ?? []) as unknown as OpsTask[];
+  const profiles: Profile[] = (profilesRes.data ?? []).map(
     (p: {
       id: string;
       full_name: string | null;
@@ -43,7 +43,7 @@ export default async function TasksPage() {
   );
 
   return (
-    <WorkflowTaskBoard
+    <TaskBoard
       initialTasks={tasks}
       profiles={profiles}
       currentUserId={user.id}

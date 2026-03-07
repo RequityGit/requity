@@ -99,10 +99,10 @@ export default async function CompanyDetailPage({ params }: PageProps) {
       .order("uploaded_at", { ascending: false }),
     // Tasks
     admin
-      .from("crm_tasks")
+      .from("ops_tasks")
       .select("*")
-      .eq("company_id", id)
-      .is("deleted_at", null)
+      .eq("linked_entity_type", "company")
+      .eq("linked_entity_id", id)
       .order("created_at", { ascending: false }),
     // Notes (from unified notes table)
     admin
@@ -190,11 +190,11 @@ export default async function CompanyDetailPage({ params }: PageProps) {
   const tasks: CompanyTaskData[] = (tasksResult.data ?? []).map(
     (t: Record<string, unknown>) => ({
       id: t.id as string,
-      subject: t.subject as string,
+      subject: (t.title as string) || "",
       description: t.description as string | null,
-      task_type: (t.task_type as string) || "other",
-      priority: (t.priority as string) || "normal",
-      status: (t.status as string) || "not_started",
+      task_type: (t.category as string) || "other",
+      priority: (t.priority as string) || "Medium",
+      status: t.status === "Complete" ? "completed" : t.status === "In Progress" ? "in_progress" : "not_started",
       due_date: t.due_date as string | null,
       assigned_to: t.assigned_to as string | null,
       assigned_to_name: t.assigned_to

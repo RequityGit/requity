@@ -27,6 +27,8 @@ export function ActionDashboard({ initialData }: ActionDashboardProps) {
       const task = data.tasks.find((t) => t.id === taskId);
       if (!task) return;
 
+      const isCompleting = task.status !== "Complete";
+
       // Optimistic update
       setData((prev) => ({
         ...prev,
@@ -34,8 +36,8 @@ export function ActionDashboard({ initialData }: ActionDashboardProps) {
           t.id === taskId
             ? {
                 ...t,
-                is_completed: !t.is_completed,
-                completed_at: !t.is_completed
+                status: isCompleting ? "Complete" : "To Do",
+                completed_at: isCompleting
                   ? new Date().toISOString()
                   : null,
               }
@@ -43,8 +45,7 @@ export function ActionDashboard({ initialData }: ActionDashboardProps) {
         ),
       }));
 
-      // Server call — pass source so the right table is updated
-      toggleTask(taskId, !task.is_completed, task.source).then((result) => {
+      toggleTask(taskId, isCompleting).then((result) => {
         if ("error" in result) {
           // Revert on error
           setData((prev) => ({
@@ -53,7 +54,7 @@ export function ActionDashboard({ initialData }: ActionDashboardProps) {
               t.id === taskId
                 ? {
                     ...t,
-                    is_completed: task.is_completed,
+                    status: task.status,
                     completed_at: task.completed_at,
                   }
                 : t
@@ -105,12 +106,15 @@ export function ActionDashboard({ initialData }: ActionDashboardProps) {
 
   // Computed values
   const tasks = data.tasks;
+  const today = new Date().toISOString().slice(0, 10);
   const pastDueTasks = tasks.filter(
-    (t) => t.is_past_due && !t.is_completed
+    (t) => t.due_date != null && t.due_date < today && t.status !== "Complete"
   );
-  const activeTasks = tasks.filter((t) => !t.is_past_due);
+  const activeTasks = tasks.filter(
+    (t) => !(t.due_date != null && t.due_date < today && t.status !== "Complete")
+  );
   const totalTasks = tasks.length;
-  const doneCount = tasks.filter((t) => t.is_completed).length;
+  const doneCount = tasks.filter((t) => t.status === "Complete").length;
   const pct = totalTasks > 0 ? Math.round((doneCount / totalTasks) * 100) : 0;
 
   const now = new Date();

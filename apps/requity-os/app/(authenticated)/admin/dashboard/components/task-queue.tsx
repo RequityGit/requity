@@ -59,36 +59,35 @@ function TaskRow({
     <div
       onClick={() => onToggle(task.id)}
       className={`flex cursor-pointer items-center gap-3 rounded-md px-3 py-2.5 transition-all duration-500 hover:bg-dash-surface-alt ${
-        task.is_completed ? "opacity-40" : ""
+        task.status === "Complete" ? "opacity-40" : ""
       } ${fading ? "max-h-0 opacity-0 overflow-hidden py-0 my-0" : "max-h-24"}`}
     >
       <div
         className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-[5px] border-2 transition-all duration-150 ${
-          task.is_completed
+          task.status === "Complete"
             ? "border-[#1B7A44] bg-[#1B7A44]"
             : "border-dash-surface-hover bg-transparent"
         }`}
       >
-        {task.is_completed && (
+        {task.status === "Complete" && (
           <Check className="h-3 w-3 text-white" strokeWidth={3} />
         )}
       </div>
       <div className="min-w-0 flex-1">
         <div
           className={`text-[13px] font-medium ${
-            task.is_completed
+            task.status === "Complete"
               ? "text-dash-text-faint line-through"
               : "text-foreground"
           }`}
         >
           {task.title}
         </div>
-        <div className="mt-1 flex items-center gap-2">
-          <CatTag category={task.category} />
-          <span className="text-[11px] text-dash-text-faint">
-            {task.loan_name || "No loan"}
-          </span>
-        </div>
+        {task.category && (
+          <div className="mt-1 flex items-center gap-2">
+            <CatTag category={task.category} />
+          </div>
+        )}
       </div>
       <span
         className={`shrink-0 text-xs font-semibold num ${
@@ -116,7 +115,7 @@ export function TaskQueue({ tasks, onToggle }: TaskQueueProps) {
     const prev = prevTasksRef.current;
     const newlyCompleted = tasks.filter((t) => {
       const prevTask = prev.find((p) => p.id === t.id);
-      return t.is_completed && prevTask && !prevTask.is_completed;
+      return t.status === "Complete" && prevTask && prevTask.status !== "Complete";
     });
 
     if (newlyCompleted.length > 0) {
@@ -158,7 +157,7 @@ export function TaskQueue({ tasks, onToggle }: TaskQueueProps) {
   // If a task gets un-completed, bring it back
   useEffect(() => {
     const uncompleted = tasks.filter(
-      (t) => !t.is_completed && hiddenIds.has(t.id)
+      (t) => t.status !== "Complete" && hiddenIds.has(t.id)
     );
     if (uncompleted.length > 0) {
       setHiddenIds((h) => {
@@ -170,18 +169,20 @@ export function TaskQueue({ tasks, onToggle }: TaskQueueProps) {
   }, [tasks, hiddenIds]);
 
   const today = new Date().toISOString().slice(0, 10);
+  const isPastDue = (t: DashboardTask) =>
+    t.due_date != null && t.due_date < today && t.status !== "Complete";
   const todayTasks = tasks.filter(
-    (t) => t.due_date === today && !t.is_past_due && !hiddenIds.has(t.id)
+    (t) => t.due_date === today && !isPastDue(t) && !hiddenIds.has(t.id)
   );
   const upcomingTasks = tasks.filter(
-    (t) => t.due_date !== today && !t.is_past_due && !hiddenIds.has(t.id)
+    (t) => t.due_date !== today && !isPastDue(t) && !hiddenIds.has(t.id)
   ).sort((a, b) => {
     if (a.due_date && !b.due_date) return -1;
     if (!a.due_date && b.due_date) return 1;
     if (a.due_date && b.due_date) return a.due_date.localeCompare(b.due_date);
     return 0;
   });
-  const todayRemaining = todayTasks.filter((t) => !t.is_completed).length;
+  const todayRemaining = todayTasks.filter((t) => t.status !== "Complete").length;
 
   return (
     <Card className="mb-4 p-6">
@@ -214,7 +215,7 @@ export function TaskQueue({ tasks, onToggle }: TaskQueueProps) {
             key={tk.id}
             task={tk}
             onToggle={onToggle}
-            dueColor={!tk.is_completed ? "text-[#B8822A]" : undefined}
+            dueColor={tk.status !== "Complete" ? "text-[#B8822A]" : undefined}
             fading={fadingIds.has(tk.id)}
           />
         ))
