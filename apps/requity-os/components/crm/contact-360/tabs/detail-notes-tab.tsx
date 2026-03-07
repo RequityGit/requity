@@ -152,16 +152,16 @@ export function DetailNotesTab({
   }
 
   return (
-    <div className="flex flex-col gap-3">
+    <div className="flex flex-col gap-4">
       {/* Compose box */}
       <Card className="rounded-xl border-border">
-        <CardContent className="p-4">
+        <CardContent className="p-5">
         <Textarea
           value={content}
           onChange={(e) => setContent(e.target.value)}
           placeholder="Write a note... use @mention to tag team members"
           rows={3}
-          className="border-border rounded-lg resize-none mb-2.5 bg-muted/50 focus:border-foreground focus:ring-0"
+          className="border-border rounded-lg resize-none mb-3 bg-muted/50 focus:border-foreground focus:ring-0 p-4"
         />
         <div className="flex justify-end">
           <Button
@@ -184,7 +184,7 @@ export function DetailNotesTab({
           <div className="h-16 rounded-xl bg-muted animate-pulse" />
         </div>
       ) : notes.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-12 text-center">
+        <div className="flex flex-col items-center justify-center py-16 text-center">
           <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-muted mb-4">
             <MessageSquare className="h-6 w-6 text-muted-foreground" strokeWidth={1.5} />
           </div>
@@ -206,7 +206,7 @@ export function DetailNotesTab({
 
           return (
             <Card key={note.id} className="rounded-xl border-border">
-              <CardContent className="p-4 relative">
+              <CardContent className="p-5 relative">
               <div className="flex items-center gap-2 mb-2">
                 <Avatar className="h-6 w-6 rounded-md">
                   <AvatarFallback className="rounded-md bg-foreground/[0.06] text-foreground text-[10px] font-semibold">

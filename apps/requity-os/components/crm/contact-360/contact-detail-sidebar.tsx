@@ -120,7 +120,7 @@ export function ContactDetailSidebar({
     : null;
 
   return (
-    <div className="flex flex-col gap-3">
+    <div className="flex flex-col gap-4">
       {/* Quick Actions */}
       <Card className="rounded-xl border-border">
         <CardHeader className="px-5 py-4 pb-0">
@@ -138,7 +138,7 @@ export function ContactDetailSidebar({
                 size="sm"
                 onClick={onClick}
                 disabled={logging && label === "Log Call"}
-                className="justify-start gap-2 h-8 px-2.5 text-[13px] font-normal text-foreground hover:bg-muted rounded-lg w-full"
+                className="justify-start gap-3 h-9 px-2.5 text-[13px] font-normal text-foreground hover:bg-muted rounded-lg w-full"
               >
                 <Icon
                   size={14}
@@ -231,7 +231,7 @@ export function ContactDetailSidebar({
                 const colors = RELATIONSHIP_BADGE_COLORS[key];
                 return (
                   <div key={r.id}>
-                    <div className="flex justify-between items-center py-2">
+                    <div className="flex justify-between items-center py-2.5">
                       {colors ? (
                         <Badge
                           variant="outline"
@@ -334,7 +334,7 @@ export function ContactDetailSidebar({
               label="Updated"
               value={relTime(contact.updated_at)}
             />
-            <div className="flex justify-between items-center py-1.5">
+            <div className="flex justify-between items-center py-2.5">
               <Label className="text-[11px] text-muted-foreground font-normal">
                 Contact ID
               </Label>
@@ -370,7 +370,7 @@ function SidebarFieldRow({
   danger?: boolean;
 }) {
   return (
-    <div className="flex justify-between items-center py-1.5">
+    <div className="flex justify-between items-center py-2.5">
       <Label className="text-[11px] text-muted-foreground font-normal">{label}</Label>
       <span
         className={cn("text-[11px] font-medium text-foreground", danger && "text-[#E5453D]")}
