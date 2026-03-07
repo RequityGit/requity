@@ -24,33 +24,38 @@ interface DrawWithLoan {
 }
 
 export default async function BorrowerDrawsPage() {
-  const { supabase, userId, isImpersonating } = await getEffectiveAuth();
-
-  // Resolve auth user to borrowers.id
-  const borrowerId = await getBorrowerId(supabase, userId);
-
   let draws: DrawWithLoan[] = [];
+  let isImpersonating = false;
 
-  if (borrowerId) {
-    const { data: drawRequests, error } = await supabase
-      .from("draw_requests")
-      .select(
+  try {
+    const auth = await getEffectiveAuth();
+    isImpersonating = auth.isImpersonating;
+
+    const borrowerId = await getBorrowerId(auth.supabase, auth.userId);
+
+    if (borrowerId) {
+      const { data: drawRequests, error } = await auth.supabase
+        .from("draw_requests")
+        .select(
+          `
+          *,
+          loans (
+            property_address,
+            loan_number
+          )
         `
-        *,
-        loans (
-          property_address,
-          loan_number
         )
-      `
-      )
-      .eq("borrower_id", borrowerId)
-      .order("submitted_at", { ascending: false });
+        .eq("borrower_id", borrowerId)
+        .order("submitted_at", { ascending: false });
 
-    if (error) {
-      console.error("Failed to fetch draw requests:", error.message);
-    } else {
-      draws = (drawRequests ?? []) as unknown as DrawWithLoan[];
+      if (error) {
+        console.error("Failed to fetch draw requests:", error.message);
+      } else {
+        draws = (drawRequests ?? []) as unknown as DrawWithLoan[];
+      }
     }
+  } catch (err) {
+    console.error("Draws page failed to load data:", err);
   }
 
   const columns: Column<DrawWithLoan>[] = [
