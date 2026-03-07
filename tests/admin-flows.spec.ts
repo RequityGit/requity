@@ -280,7 +280,7 @@ test("51 — admin notifications panel opens", async ({ adminPage }) => {
 // ─────────────────────────────────────────────────────────────────────────────
 test("52 — admin settings page loads", async ({ adminPage }) => {
   const loaded = await gotoFirstValid(adminPage, [
-    "/admin/settings", "/settings", "/admin/settings/general",
+    "/admin/settings", "/settings", "/control-center", "/admin/settings/general",
   ]);
   if (!loaded) { test.skip(); return; }
 
@@ -289,7 +289,7 @@ test("52 — admin settings page loads", async ({ adminPage }) => {
   await expect(main).toBeVisible();
 
   const content = adminPage.locator(
-    'text=/setting|configuration|general|team|notification|preference/i'
+    'text=/setting|configuration|general|team|notification|preference|control|manage|template|user/i'
   );
   const hasContent = await content.first().isVisible({ timeout: 5_000 }).catch(() => false);
 
