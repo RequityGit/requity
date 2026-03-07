@@ -22,7 +22,6 @@ import {
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useViewAs } from "@/contexts/view-as-context";
-import { createClient } from "@/lib/supabase/client";
 import { Separator } from "@/components/ui/separator";
 import {
   Collapsible,
@@ -127,11 +126,9 @@ const adminNav: NavEntry[] = [
     icon: Settings2,
     basePath: "/admin/operations",
     moduleName: "operations",
-    activePaths: ["/admin/operations/tasks", "/admin/operations/approvals", "/admin/settings/workflow-builder"],
+    activePaths: ["/admin/operations/tasks"],
     children: [
       { label: "Tasks", href: "/admin/operations/tasks" },
-      { label: "Approvals", href: "/admin/operations/approvals" },
-      { label: "Workflow Builder", href: "/admin/settings/workflow-builder" },
     ],
   },
 ];
@@ -161,24 +158,6 @@ export function Sidebar({
   const pathname = usePathname();
   const [collapsed, setCollapsed] = useState(false);
   const { effectiveViewRole, isViewingAs } = useViewAs();
-  const [pendingApprovals, setPendingApprovals] = useState(0);
-
-  useEffect(() => {
-    const supabase = createClient();
-
-    // Fetch pending approvals count
-    Promise.resolve(
-      supabase
-        .from("approval_requests" as never)
-        .select("id", { count: "exact", head: true })
-        .eq("status" as never, "pending" as never)
-    ).then(({ count }) => {
-      setPendingApprovals(count ?? 0);
-    }).catch((err) => {
-      console.error("sidebar: failed to fetch pending approvals", err);
-    });
-  }, []);
-
   // Use view-as role for navigation when super admin is simulating
   const navRole = isViewingAs ? effectiveViewRole : role;
   const allNavEntries = getNavEntries(navRole);
@@ -194,20 +173,7 @@ export function Sidebar({
         )
       : allNavEntries;
 
-  // Inject pending approvals badge into Operations group
-  const navEntries = filteredEntries.map((entry) => {
-    if (isNavGroup(entry) && entry.basePath === "/admin/operations" && pendingApprovals > 0) {
-      return {
-        ...entry,
-        children: entry.children.map((child) =>
-          child.href === "/admin/operations/approvals"
-            ? { ...child, badge: pendingApprovals }
-            : child
-        ),
-      };
-    }
-    return entry;
-  });
+  const navEntries = filteredEntries;
 
   // Check if bottom nav items are accessible
   const showControlCenter =

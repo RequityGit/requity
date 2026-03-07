@@ -46,12 +46,21 @@ interface WorkflowTaskBoardProps {
   currentUserId: string;
 }
 
+type TypeFilter = "all" | "task" | "approval";
+
+const TYPE_TABS: { value: TypeFilter; label: string }[] = [
+  { value: "all", label: "All" },
+  { value: "task", label: "Tasks" },
+  { value: "approval", label: "Approvals" },
+];
+
 export function WorkflowTaskBoard({
   initialTasks,
   profiles,
   currentUserId,
 }: WorkflowTaskBoardProps) {
   const [tasks, setTasks] = useState<WorkflowTask[]>(initialTasks);
+  const [typeFilter, setTypeFilter] = useState<TypeFilter>("all");
   const [priorityFilter, setPriorityFilter] = useState("all");
   const [categoryFilter, setCategoryFilter] = useState("all");
   const { toast } = useToast();
@@ -107,11 +116,12 @@ export function WorkflowTaskBoard({
   // Filtered tasks
   const filteredTasks = useMemo(() => {
     return tasks.filter((t) => {
+      if (typeFilter !== "all" && t.type !== typeFilter) return false;
       if (priorityFilter !== "all" && t.priority !== priorityFilter) return false;
       if (categoryFilter !== "all" && t.category !== categoryFilter) return false;
       return true;
     });
-  }, [tasks, priorityFilter, categoryFilter]);
+  }, [tasks, typeFilter, priorityFilter, categoryFilter]);
 
   // Group by column
   const columnTasks = useMemo(() => {
@@ -213,13 +223,47 @@ export function WorkflowTaskBoard({
     // Future: open task detail sheet
   }, []);
 
-  return (
-    <div className="p-6 md:p-8">
-      <PageHeader
-        title="Tasks"
-        description="Track workflow tasks, approvals, and deal operations."
-      />
+  // Count per type for badge display
+  const typeCounts = useMemo(() => {
+    const counts = { all: tasks.length, task: 0, approval: 0 };
+    for (const t of tasks) {
+      if (t.type === "task") counts.task++;
+      else if (t.type === "approval") counts.approval++;
+    }
+    return counts;
+  }, [tasks]);
 
+  return (
+    <div>
+      <div className="border-b border-border px-6 md:px-8 pt-6">
+        <PageHeader
+          title="Tasks"
+          description="Track workflow tasks, approvals, and deal operations."
+        />
+        <div className="flex items-center gap-4">
+          {TYPE_TABS.map((tab) => (
+            <button
+              key={tab.value}
+              onClick={() => setTypeFilter(tab.value)}
+              className={cn(
+                "pb-2.5 text-[13px] font-medium border-b-2 transition-colors",
+                typeFilter === tab.value
+                  ? "border-foreground text-foreground"
+                  : "border-transparent text-muted-foreground hover:text-foreground"
+              )}
+            >
+              {tab.label}
+              {typeCounts[tab.value] > 0 && (
+                <span className="ml-1.5 text-[11px] text-muted-foreground num">
+                  {typeCounts[tab.value]}
+                </span>
+              )}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div className="p-6 md:p-8">
       {/* Filter bar */}
       <div className="flex items-center gap-3 mb-5">
         <Select value={priorityFilter} onValueChange={setPriorityFilter}>
@@ -346,6 +390,7 @@ export function WorkflowTaskBoard({
           </div>
         </DialogContent>
       </Dialog>
+      </div>
     </div>
   );
 }

@@ -127,6 +127,13 @@ export const NAV_GROUPS: NavGroup[] = [
     label: "Platform",
     items: [
       {
+        id: "workflow-builder",
+        label: "Workflow Builder",
+        desc: "Design and manage workflow automations and approval rules.",
+        href: "/control-center/workflow-builder",
+        icon: GitBranch,
+      },
+      {
         id: "field-manager",
         label: "Field Manager",
         desc: "Configure field visibility and ordering across deal detail modules.",
