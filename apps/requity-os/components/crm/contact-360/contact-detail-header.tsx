@@ -60,7 +60,7 @@ export function ContactDetailHeader({
 
   return (
     <Card className="rounded-xl border-border bg-card">
-      <CardContent className="p-6">
+      <CardContent className="p-6 pt-6">
         <div className="flex gap-4 items-start">
           {/* Avatar */}
           <Avatar className="h-11 w-11 rounded-lg shrink-0">
