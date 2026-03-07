@@ -159,16 +159,16 @@ export function ContactDetailClient({
   }, [searchParams, tabs, activeTab]);
 
   return (
-    <div className="min-h-full bg-muted -mx-4 -mt-4 -mb-20 md:-mx-6 md:-mt-6 md:-mb-6 lg:-mx-8 lg:-mt-8 lg:-mb-8">
+    <div className="min-h-screen">
       {/* Breadcrumb */}
-      <div className="bg-card border-b border-border px-4 md:px-6 lg:px-8 py-4 flex items-center gap-2">
+      <div className="flex items-center gap-2 mb-3">
         <Link
           href="/admin/crm"
           className="text-muted-foreground hover:text-foreground transition-colors"
         >
           <ArrowLeft size={16} strokeWidth={1.5} />
         </Link>
-        <Breadcrumb className="text-xs">
+        <Breadcrumb className="text-[13px]">
           <BreadcrumbList>
             <BreadcrumbItem>
               <BreadcrumbLink asChild>
@@ -185,7 +185,7 @@ export function ContactDetailClient({
 
       <div className="flex max-w-[1400px] mx-auto">
         {/* Main Content */}
-        <div className="flex-1 min-w-0 px-4 md:px-6 lg:px-8 py-6 pb-10">
+        <div className="flex-1 min-w-0">
           {/* Header Card */}
           <ContactDetailHeader
             contact={contact}
@@ -272,7 +272,7 @@ export function ContactDetailClient({
         </div>
 
         {/* Right Sidebar */}
-        <div className="hidden lg:flex flex-col gap-4 w-[300px] min-w-[300px] max-w-[300px] py-6 pr-4 md:pr-6 lg:pr-8">
+        <div className="hidden lg:flex flex-col gap-4 w-[300px] min-w-[300px] max-w-[300px] pt-6 pl-6">
           <ContactDetailSidebar
             contact={contact}
             relationships={relationships}
