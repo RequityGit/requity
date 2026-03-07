@@ -628,7 +628,6 @@ export function EquityDealDetail({
                 <OverviewTab
                   deal={deal}
                   property={property}
-                  propertyAddress={propertyAddress}
                   onEditDeal={() => setEditDealOpen(true)}
                   onEditProperty={() => setEditPropertyOpen(true)}
                   onEditNotes={() => setEditNotesOpen(true)}
@@ -870,7 +869,6 @@ function SidebarAction({
 function OverviewTab({
   deal,
   property,
-  propertyAddress,
   onEditDeal,
   onEditProperty,
   onEditNotes,
@@ -878,7 +876,6 @@ function OverviewTab({
 }: {
   deal: any;
   property: any;
-  propertyAddress: string | null;
   onEditDeal: () => void;
   onEditProperty: () => void;
   onEditNotes: () => void;
@@ -899,12 +896,28 @@ function OverviewTab({
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-2 gap-x-7">
+            <KVRow label="Deal Name" value={deal.deal_name} />
             <KVRow label="Deal Number" value={deal.deal_number} />
             <KVRow label="Source" value={cap(deal.source)} />
             <KVRow label="Assigned To" value={assignedToName ?? "Unassigned"} />
             <KVRow
+              label="Asking Price"
+              value={deal.asking_price ? formatCurrency(deal.asking_price) : "—"}
+              mono
+            />
+            <KVRow
+              label="Offer Price"
+              value={deal.offer_price ? formatCurrency(deal.offer_price) : "—"}
+              mono
+            />
+            <KVRow
               label="Purchase Price"
               value={deal.purchase_price ? formatCurrency(deal.purchase_price) : "—"}
+              mono
+            />
+            <KVRow
+              label="Target IRR"
+              value={deal.target_irr != null ? formatPercent(deal.target_irr) : "—"}
               mono
             />
             <KVRow label="Expected Close" value={formatDate(deal.expected_close_date)} mono />
@@ -942,40 +955,24 @@ function OverviewTab({
         </CardContent>
       </Card>
 
-      {/* Investment Thesis */}
+      {/* Notes & Strategy */}
       <Card>
         <CardHeader>
           <div className="flex items-center justify-between">
             <CardTitle className="text-sm flex items-center gap-2">
               <TrendingUp size={16} strokeWidth={1.5} className="text-muted-foreground" />
-              Investment Thesis
+              Notes & Strategy
             </CardTitle>
             <EditButton onClick={onEditNotes} />
           </div>
         </CardHeader>
         <CardContent>
-          {deal.investment_thesis ? (
-            <p className="text-sm whitespace-pre-wrap">{deal.investment_thesis}</p>
-          ) : (
-            <p className="text-sm text-muted-foreground">No thesis added.</p>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* Value-Add Strategy */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-sm flex items-center gap-2">
-            <DollarSign size={16} strokeWidth={1.5} className="text-muted-foreground" />
-            Value-Add Strategy
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          {deal.value_add_strategy ? (
-            <p className="text-sm whitespace-pre-wrap">{deal.value_add_strategy}</p>
-          ) : (
-            <p className="text-sm text-muted-foreground">No strategy added.</p>
-          )}
+          <div className="grid grid-cols-2 gap-x-7">
+            <KVRow label="Investment Thesis" value={deal.investment_thesis} />
+            <KVRow label="Value-Add Strategy" value={deal.value_add_strategy} />
+            <KVRow label="General Notes" value={deal.notes} />
+            <KVRow label="Internal Notes" value={deal.internal_notes} />
+          </div>
         </CardContent>
       </Card>
     </>

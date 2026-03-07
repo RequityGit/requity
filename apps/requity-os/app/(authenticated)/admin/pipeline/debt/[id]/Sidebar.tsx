@@ -24,7 +24,6 @@ import {
 } from "./components";
 import { advanceStage, advanceOpportunityStage } from "./actions";
 import { logQuickAction, assignTeamMember } from "./update-deal-action";
-import { EditableDateRow } from "./EditableField";
 import { useRouter } from "next/navigation";
 import {
   Dialog,
@@ -356,34 +355,23 @@ export function Sidebar({
       {/* Key Dates */}
       <SectionCard title="Key Dates" icon={CalendarDays}>
         <div className="flex flex-col">
-          {dates.map((d) =>
-            d.field ? (
-              <EditableDateRow
-                key={d.l}
-                label={d.l}
-                field={d.field}
-                value={d.d}
-                displayValue={fD(d.d)}
-                onSave={onSave}
-              />
-            ) : (
-              <div
-                key={d.l}
-                className="flex justify-between py-1.5"
-                style={{ borderBottom: `1px solid ${T.bg.borderSubtle}` }}
+          {dates.map((d) => (
+            <div
+              key={d.l}
+              className="flex justify-between py-1.5"
+              style={{ borderBottom: `1px solid ${T.bg.borderSubtle}` }}
+            >
+              <span className="text-xs" style={{ color: T.text.muted }}>
+                {d.l}
+              </span>
+              <span
+                className="text-xs num"
+                style={{ color: d.d ? T.text.primary : T.text.muted }}
               >
-                <span className="text-xs" style={{ color: T.text.muted }}>
-                  {d.l}
-                </span>
-                <span
-                  className="text-xs num"
-                  style={{ color: d.d ? T.text.primary : T.text.muted }}
-                >
-                  {fD(d.d)}
-                </span>
-              </div>
-            )
-          )}
+                {fD(d.d)}
+              </span>
+            </div>
+          ))}
         </div>
       </SectionCard>
 
