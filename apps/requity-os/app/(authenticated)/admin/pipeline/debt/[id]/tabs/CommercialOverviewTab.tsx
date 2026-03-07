@@ -127,6 +127,8 @@ export function CommercialOverviewTab({ data, dealId, currentUserId, propertyFin
   const [editLoanOpen, setEditLoanOpen] = useState(false);
   const [editRentRollOpen, setEditRentRollOpen] = useState(false);
   const [editT12Open, setEditT12Open] = useState(false);
+  const [editProFormaOpen, setEditProFormaOpen] = useState(false);
+  const [editScopeOpen, setEditScopeOpen] = useState(false);
   const [showAllUnits, setShowAllUnits] = useState(false);
   const [uploadRROpen, setUploadRROpen] = useState(false);
   const [uploadT12Open, setUploadT12Open] = useState(false);
@@ -620,8 +622,11 @@ export function CommercialOverviewTab({ data, dealId, currentUserId, propertyFin
 
           {/* Pro Forma Assumptions */}
           <div>
-            <div className="text-[11px] uppercase tracking-wider font-semibold mb-2.5" style={{ color: T.text.muted }}>
-              Pro Forma Assumptions
+            <div className="flex items-center justify-between mb-2.5">
+              <div className="text-[11px] uppercase tracking-wider font-semibold" style={{ color: T.text.muted }}>
+                Pro Forma Assumptions
+              </div>
+              <EditButton onClick={() => setEditProFormaOpen(true)} />
             </div>
             <div className="overflow-hidden rounded-lg" style={{ border: `1px solid ${T.bg.borderSubtle}` }}>
               <table className="w-full border-collapse">
@@ -710,6 +715,7 @@ export function CommercialOverviewTab({ data, dealId, currentUserId, propertyFin
               <div className="text-[11px] uppercase tracking-wider font-semibold" style={{ color: T.text.muted }}>
                 Scope of Work
               </div>
+              <EditButton onClick={() => setEditScopeOpen(true)} />
             </div>
             <div className="overflow-hidden rounded-lg" style={{ border: `1px solid ${T.bg.borderSubtle}` }}>
               <table className="w-full border-collapse">
@@ -838,6 +844,21 @@ export function CommercialOverviewTab({ data, dealId, currentUserId, propertyFin
         onOpenChange={setEditT12Open}
         incomeRows={incomeRows}
         expenseRows={expenseRows}
+        uwId={uw?.id}
+      />
+      <ProFormaEditDialog
+        open={editProFormaOpen}
+        onOpenChange={setEditProFormaOpen}
+        incomeRows={incomeRows}
+        expenseRows={expenseRows}
+        uw={uw}
+        uwId={uw?.id}
+        onSaveUW={handleSaveUW}
+      />
+      <ScopeOfWorkEditDialog
+        open={editScopeOpen}
+        onOpenChange={setEditScopeOpen}
+        scopeOfWork={scopeOfWork}
         uwId={uw?.id}
       />
     </div>
@@ -1513,6 +1534,403 @@ function T12EditDialog({
           <Button onClick={handleSubmit} disabled={saving}>
             {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
             Save Changes
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+// ── Pro Forma Edit Dialog ──
+
+function ProFormaEditDialog({
+  open,
+  onOpenChange,
+  incomeRows: initialIncome,
+  expenseRows: initialExpenses,
+  uw,
+  uwId,
+  onSaveUW,
+}: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  incomeRows: DealIncomeRow[];
+  expenseRows: DealExpenseRow[];
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  uw: any;
+  uwId: string | null;
+  onSaveUW: (fields: Record<string, unknown>) => Promise<void>;
+}) {
+  const [income, setIncome] = useState<{ line_item: string; year_1_amount: number; growth_rate: number; is_deduction: boolean; t12_amount: number; sort_order: number }[]>([]);
+  const [expenses, setExpenses] = useState<{ category: string; year_1_amount: number; growth_rate: number; is_percentage: boolean; t12_amount: number; sort_order: number }[]>([]);
+  const [exitFields, setExitFields] = useState({ exit_cap_rate: "", hold_period_years: "", sale_costs_pct: "", disposition_fee_pct: "" });
+  const [saving, setSaving] = useState(false);
+  const { toast } = useToast();
+  const router = useRouter();
+
+  const handleOpen = (isOpen: boolean) => {
+    if (isOpen) {
+      setIncome(initialIncome.map((r, i) => ({ line_item: r.line_item, year_1_amount: r.year_1_amount, growth_rate: r.growth_rate, is_deduction: r.is_deduction, t12_amount: r.t12_amount, sort_order: i })));
+      setExpenses(initialExpenses.map((r, i) => ({ category: r.category, year_1_amount: r.year_1_amount, growth_rate: r.growth_rate, is_percentage: r.is_percentage, t12_amount: r.t12_amount, sort_order: i })));
+      setExitFields({
+        exit_cap_rate: uw?.exit_cap_rate != null ? String(Number(uw.exit_cap_rate) * 100) : "",
+        hold_period_years: uw?.hold_period_years != null ? String(uw.hold_period_years) : "5",
+        sale_costs_pct: uw?.sale_costs_pct != null ? String(Number(uw.sale_costs_pct) * 100) : "",
+        disposition_fee_pct: uw?.disposition_fee_pct != null ? String(Number(uw.disposition_fee_pct) * 100) : "",
+      });
+    }
+    onOpenChange(isOpen);
+  };
+
+  const addIncomeRow = () => {
+    setIncome((prev) => [...prev, { line_item: "", t12_amount: 0, year_1_amount: 0, growth_rate: 0, is_deduction: false, sort_order: prev.length }]);
+  };
+
+  const addExpenseRow = () => {
+    setExpenses((prev) => [...prev, { category: "", t12_amount: 0, year_1_amount: 0, growth_rate: 0, is_percentage: false, sort_order: prev.length }]);
+  };
+
+  const updateIncome = (idx: number, field: string, value: unknown) => {
+    setIncome((prev) => prev.map((r, i) => (i === idx ? { ...r, [field]: value } : r)));
+  };
+
+  const updateExpense = (idx: number, field: string, value: unknown) => {
+    setExpenses((prev) => prev.map((r, i) => (i === idx ? { ...r, [field]: value } : r)));
+  };
+
+  const handleSubmit = async () => {
+    if (!uwId) return;
+    setSaving(true);
+    try {
+      const incResult = await upsertIncomeRows(
+        uwId,
+        income.map((r, i) => ({
+          line_item: r.line_item || "Untitled",
+          t12_amount: Number(r.t12_amount) || 0,
+          year_1_amount: Number(r.year_1_amount) || 0,
+          growth_rate: Number(r.growth_rate) || 0,
+          is_deduction: r.is_deduction,
+          sort_order: i,
+        }))
+      );
+      if (incResult.error) {
+        toast({ title: "Failed to save income rows", description: incResult.error, variant: "destructive" });
+        return;
+      }
+
+      const expResult = await upsertExpenseRows(
+        uwId,
+        expenses.map((r, i) => ({
+          category: r.category || "Untitled",
+          t12_amount: Number(r.t12_amount) || 0,
+          year_1_amount: Number(r.year_1_amount) || 0,
+          growth_rate: Number(r.growth_rate) || 0,
+          is_percentage: r.is_percentage,
+          sort_order: i,
+        }))
+      );
+      if (expResult.error) {
+        toast({ title: "Failed to save expense rows", description: expResult.error, variant: "destructive" });
+        return;
+      }
+
+      await onSaveUW({
+        exit_cap_rate: exitFields.exit_cap_rate ? Number(exitFields.exit_cap_rate) / 100 : null,
+        hold_period_years: exitFields.hold_period_years ? Number(exitFields.hold_period_years) : null,
+        sale_costs_pct: exitFields.sale_costs_pct ? Number(exitFields.sale_costs_pct) / 100 : null,
+        disposition_fee_pct: exitFields.disposition_fee_pct ? Number(exitFields.disposition_fee_pct) / 100 : null,
+      });
+
+      toast({ title: "Pro forma assumptions saved" });
+      router.refresh();
+      onOpenChange(false);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={handleOpen}>
+      <DialogContent className="sm:max-w-3xl max-h-[85vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>Edit Pro Forma Assumptions</DialogTitle>
+        </DialogHeader>
+
+        {/* Income */}
+        <div>
+          <div className="flex items-center justify-between mb-2">
+            <h3 className="text-sm font-semibold">Income</h3>
+            <Button variant="outline" size="sm" onClick={addIncomeRow}>
+              <Plus size={14} strokeWidth={1.5} className="mr-1" />
+              Add Row
+            </Button>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full border-collapse text-[13px]">
+              <thead>
+                <tr className="border-b">
+                  <th className="text-left px-2 py-1.5 font-medium text-muted-foreground">Line Item</th>
+                  <th className="text-left px-2 py-1.5 font-medium text-muted-foreground">Year 1 Amount</th>
+                  <th className="text-left px-2 py-1.5 font-medium text-muted-foreground">Growth %</th>
+                  <th className="text-left px-2 py-1.5 font-medium text-muted-foreground">Deduction</th>
+                  <th className="px-2 py-1.5" />
+                </tr>
+              </thead>
+              <tbody>
+                {income.map((row, i) => (
+                  <tr key={i} className="border-b">
+                    <td className="px-2 py-1">
+                      <Input className="h-8 w-40" value={row.line_item} onChange={(e) => updateIncome(i, "line_item", e.target.value)} />
+                    </td>
+                    <td className="px-2 py-1">
+                      <Input className="h-8 w-28" type="number" value={row.year_1_amount || ""} onChange={(e) => updateIncome(i, "year_1_amount", Number(e.target.value) || 0)} />
+                    </td>
+                    <td className="px-2 py-1">
+                      <Input className="h-8 w-20" type="number" step="any" value={row.growth_rate || ""} onChange={(e) => updateIncome(i, "growth_rate", Number(e.target.value) || 0)} />
+                    </td>
+                    <td className="px-2 py-1 text-center">
+                      <input type="checkbox" checked={row.is_deduction} onChange={(e) => updateIncome(i, "is_deduction", e.target.checked)} />
+                    </td>
+                    <td className="px-2 py-1">
+                      <button
+                        onClick={() => setIncome((prev) => prev.filter((_, idx) => idx !== i))}
+                        className="text-muted-foreground hover:text-destructive cursor-pointer border-0 bg-transparent p-1"
+                      >
+                        <Trash2 size={14} strokeWidth={1.5} />
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+                {income.length === 0 && (
+                  <tr>
+                    <td colSpan={5} className="text-center py-4 text-muted-foreground">
+                      No income rows. Click &quot;Add Row&quot; to start.
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        {/* Expenses */}
+        <div className="mt-4">
+          <div className="flex items-center justify-between mb-2">
+            <h3 className="text-sm font-semibold">Expenses</h3>
+            <Button variant="outline" size="sm" onClick={addExpenseRow}>
+              <Plus size={14} strokeWidth={1.5} className="mr-1" />
+              Add Row
+            </Button>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full border-collapse text-[13px]">
+              <thead>
+                <tr className="border-b">
+                  <th className="text-left px-2 py-1.5 font-medium text-muted-foreground">Category</th>
+                  <th className="text-left px-2 py-1.5 font-medium text-muted-foreground">Year 1 Amount</th>
+                  <th className="text-left px-2 py-1.5 font-medium text-muted-foreground">Growth %</th>
+                  <th className="text-left px-2 py-1.5 font-medium text-muted-foreground">% of EGI</th>
+                  <th className="px-2 py-1.5" />
+                </tr>
+              </thead>
+              <tbody>
+                {expenses.map((row, i) => (
+                  <tr key={i} className="border-b">
+                    <td className="px-2 py-1">
+                      <Input className="h-8 w-40" value={row.category} onChange={(e) => updateExpense(i, "category", e.target.value)} />
+                    </td>
+                    <td className="px-2 py-1">
+                      <Input className="h-8 w-28" type="number" value={row.year_1_amount || ""} onChange={(e) => updateExpense(i, "year_1_amount", Number(e.target.value) || 0)} />
+                    </td>
+                    <td className="px-2 py-1">
+                      <Input className="h-8 w-20" type="number" step="any" value={row.growth_rate || ""} onChange={(e) => updateExpense(i, "growth_rate", Number(e.target.value) || 0)} />
+                    </td>
+                    <td className="px-2 py-1 text-center">
+                      <input type="checkbox" checked={row.is_percentage} onChange={(e) => updateExpense(i, "is_percentage", e.target.checked)} />
+                    </td>
+                    <td className="px-2 py-1">
+                      <button
+                        onClick={() => setExpenses((prev) => prev.filter((_, idx) => idx !== i))}
+                        className="text-muted-foreground hover:text-destructive cursor-pointer border-0 bg-transparent p-1"
+                      >
+                        <Trash2 size={14} strokeWidth={1.5} />
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+                {expenses.length === 0 && (
+                  <tr>
+                    <td colSpan={5} className="text-center py-4 text-muted-foreground">
+                      No expense rows. Click &quot;Add Row&quot; to start.
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        {/* Exit / Return */}
+        <div className="mt-4">
+          <h3 className="text-sm font-semibold mb-2">Exit / Return</h3>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-4 items-center gap-3">
+              <label className="text-right text-sm text-muted-foreground col-span-2">Exit Cap Rate (%)</label>
+              <Input className="h-8 col-span-2" type="number" step="0.01" value={exitFields.exit_cap_rate} onChange={(e) => setExitFields((f) => ({ ...f, exit_cap_rate: e.target.value }))} />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-3">
+              <label className="text-right text-sm text-muted-foreground col-span-2">Hold Period (yr)</label>
+              <Input className="h-8 col-span-2" type="number" value={exitFields.hold_period_years} onChange={(e) => setExitFields((f) => ({ ...f, hold_period_years: e.target.value }))} />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-3">
+              <label className="text-right text-sm text-muted-foreground col-span-2">Sale Costs (%)</label>
+              <Input className="h-8 col-span-2" type="number" step="0.01" value={exitFields.sale_costs_pct} onChange={(e) => setExitFields((f) => ({ ...f, sale_costs_pct: e.target.value }))} />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-3">
+              <label className="text-right text-sm text-muted-foreground col-span-2">Disposition Fee (%)</label>
+              <Input className="h-8 col-span-2" type="number" step="0.01" value={exitFields.disposition_fee_pct} onChange={(e) => setExitFields((f) => ({ ...f, disposition_fee_pct: e.target.value }))} />
+            </div>
+          </div>
+        </div>
+
+        <DialogFooter>
+          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={saving}>Cancel</Button>
+          <Button onClick={handleSubmit} disabled={saving}>
+            {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            Save Pro Forma
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+// ── Scope of Work Edit Dialog ──
+
+function ScopeOfWorkEditDialog({
+  open,
+  onOpenChange,
+  scopeOfWork: initialScope,
+  uwId,
+}: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  scopeOfWork: any[];
+  uwId: string | null;
+}) {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const [rows, setRows] = useState<any[]>([]);
+  const [saving, setSaving] = useState(false);
+  const { toast } = useToast();
+  const router = useRouter();
+
+  const handleOpen = (isOpen: boolean) => {
+    if (isOpen) {
+      setRows(initialScope.map((r, i) => ({ ...r, sort_order: i })));
+    }
+    onOpenChange(isOpen);
+  };
+
+  const addRow = () => {
+    setRows((prev) => [...prev, { item_name: "", description: "", estimated_cost: 0, sort_order: prev.length }]);
+  };
+
+  const updateRow = (idx: number, field: string, value: unknown) => {
+    setRows((prev) => prev.map((r, i) => (i === idx ? { ...r, [field]: value } : r)));
+  };
+
+  const handleSubmit = async () => {
+    if (!uwId) return;
+    setSaving(true);
+    try {
+      const result = await upsertScopeOfWork(
+        uwId,
+        rows.map((r, i) => ({
+          item_name: r.item_name || "Untitled",
+          description: r.description || null,
+          estimated_cost: Number(r.estimated_cost) || 0,
+          sort_order: i,
+        }))
+      );
+      if (result.error) {
+        toast({ title: "Failed to save scope of work", description: result.error, variant: "destructive" });
+      } else {
+        toast({ title: "Scope of work saved" });
+        router.refresh();
+        onOpenChange(false);
+      }
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const total = rows.reduce((sum: number, r: { estimated_cost: number }) => sum + (Number(r.estimated_cost) || 0), 0);
+
+  return (
+    <Dialog open={open} onOpenChange={handleOpen}>
+      <DialogContent className="sm:max-w-2xl max-h-[85vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>Edit Scope of Work</DialogTitle>
+        </DialogHeader>
+        <div className="overflow-x-auto">
+          <table className="w-full border-collapse text-[13px]">
+            <thead>
+              <tr className="border-b">
+                <th className="text-left px-2 py-1.5 font-medium text-muted-foreground">Item</th>
+                <th className="text-left px-2 py-1.5 font-medium text-muted-foreground">Description</th>
+                <th className="text-left px-2 py-1.5 font-medium text-muted-foreground">Est. Cost</th>
+                <th className="px-2 py-1.5" />
+              </tr>
+            </thead>
+            <tbody>
+              {rows.map((row: { item_name: string; description: string; estimated_cost: number }, i: number) => (
+                <tr key={i} className="border-b">
+                  <td className="px-2 py-1">
+                    <Input className="h-8" value={row.item_name || ""} onChange={(e) => updateRow(i, "item_name", e.target.value)} />
+                  </td>
+                  <td className="px-2 py-1">
+                    <Input className="h-8" value={row.description || ""} onChange={(e) => updateRow(i, "description", e.target.value)} />
+                  </td>
+                  <td className="px-2 py-1">
+                    <Input className="h-8 w-28" type="number" value={row.estimated_cost ?? ""} onChange={(e) => updateRow(i, "estimated_cost", e.target.value)} />
+                  </td>
+                  <td className="px-2 py-1">
+                    <button
+                      onClick={() => setRows((prev) => prev.filter((_, j) => j !== i))}
+                      className="text-muted-foreground hover:text-destructive cursor-pointer border-0 bg-transparent p-1"
+                    >
+                      <Trash2 size={14} strokeWidth={1.5} />
+                    </button>
+                  </td>
+                </tr>
+              ))}
+              {rows.length === 0 && (
+                <tr>
+                  <td colSpan={4} className="text-center py-4 text-muted-foreground">
+                    No scope of work items yet. Click &quot;Add Item&quot; to start.
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+        <div className="flex items-center justify-between mt-2">
+          <Button variant="outline" size="sm" onClick={addRow} className="w-fit">
+            <Plus size={14} strokeWidth={1.5} className="mr-1" />
+            Add Item
+          </Button>
+          {rows.length > 0 && (
+            <span className="text-sm text-muted-foreground">
+              Total: <span className="font-semibold num">${total.toLocaleString("en-US", { maximumFractionDigits: 0 })}</span>
+            </span>
+          )}
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={saving}>Cancel</Button>
+          <Button onClick={handleSubmit} disabled={saving}>
+            {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            Save Scope of Work
           </Button>
         </DialogFooter>
       </DialogContent>
