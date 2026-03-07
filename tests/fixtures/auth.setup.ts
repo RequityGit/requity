@@ -116,7 +116,7 @@ async function authenticateViaSupabase(
   const projectRef = new URL(supabaseUrl).hostname.split(".")[0];
   const cookieName = `sb-${projectRef}-auth-token`;
 
-  // Supabase SSR stores the session as a base64-encoded JSON cookie
+  // Supabase SSR stores the session as a raw JSON cookie (chunked if large)
   const sessionPayload = JSON.stringify({
     access_token: accessToken,
     refresh_token: refreshToken,
@@ -126,12 +126,11 @@ async function authenticateViaSupabase(
     user: session.user,
   });
 
-  // Supabase SSR splits large cookies into chunks
-  const encoded = Buffer.from(sessionPayload).toString("base64");
+  // @supabase/ssr v0.5+ stores session as raw JSON, NOT base64
   const chunkSize = 3180; // Supabase default chunk size
   const chunks = [];
-  for (let i = 0; i < encoded.length; i += chunkSize) {
-    chunks.push(encoded.slice(i, i + chunkSize));
+  for (let i = 0; i < sessionPayload.length; i += chunkSize) {
+    chunks.push(sessionPayload.slice(i, i + chunkSize));
   }
 
   const cookies = chunks.map((chunk, index) => ({
