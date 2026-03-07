@@ -25,7 +25,6 @@ import { CommercialOverviewTab, type CommercialUWData } from "./tabs/CommercialO
 import { CommercialUnderwritingTab } from "./tabs/CommercialUnderwritingTab";
 import { updateDealField, updateRelatedField } from "./update-deal-action";
 import { advanceStage, advanceOpportunityStage } from "./actions";
-import { initCommercialUW } from "./commercial-uw-actions";
 import { useToast } from "@/components/ui/use-toast";
 import {
   T,
@@ -196,16 +195,6 @@ export function DealDetail({
 
   const isCommercial = deal.type === "commercial" || deal.loan_type === "commercial";
 
-  const handleInitUW = useCallback(async () => {
-    if (!isCommercial) return;
-    const result = await initCommercialUW(deal.id, currentUserId);
-    if (result.error) {
-      toast({ title: "Failed to initialize underwriting", description: result.error, variant: "destructive" });
-    } else {
-      router.refresh();
-    }
-  }, [deal.id, currentUserId, isCommercial, toast, router]);
-
   const renderTab = () => {
     switch (tab) {
       case "overview":
@@ -291,23 +280,6 @@ export function DealDetail({
         <div className="mt-6">
           <Stepper deal={deal} stages={pipelineStages} onStageClick={handleStageClick} updatingStage={updatingStage} />
         </div>
-
-        {/* Init Commercial UW (only when not yet initialized) */}
-        {isCommercial && !commercialUW && (
-          <div className="mt-4">
-            <button
-              onClick={handleInitUW}
-              className="inline-flex items-center gap-1.5 rounded-lg px-3 py-[7px] text-[13px] font-medium cursor-pointer transition-colors"
-              style={{
-                backgroundColor: T.accent.blue,
-                border: "none",
-                color: "#fff",
-              }}
-            >
-              Initialize Commercial UW
-            </button>
-          </div>
-        )}
 
         {/* Tab Bar */}
         <div className="mt-6 mb-6">

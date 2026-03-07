@@ -402,13 +402,23 @@ export default async function DealDetailPage({ params }: PageProps) {
   if (isCommercial) {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const admin = createAdminClient() as any;
-    const { data: uwRecord } = await admin
+    let { data: uwRecord } = await admin
       .from("deal_commercial_uw")
       .select("*")
       .eq("opportunity_id", d.id)
-      .order("version", { ascending: false })
-      .limit(1)
       .maybeSingle();
+
+    // Fallback: auto-create if trigger didn't fire (legacy deals)
+    if (!uwRecord) {
+      const { ensureCommercialUW } = await import("./commercial-uw-actions");
+      await ensureCommercialUW(d.id);
+      const { data: retryRecord } = await admin
+        .from("deal_commercial_uw")
+        .select("*")
+        .eq("opportunity_id", d.id)
+        .maybeSingle();
+      uwRecord = retryRecord;
+    }
 
     if (uwRecord) {
       const [incomeRes, expensesRes, rentRollRes, scopeRes, suRes, debtRes, waterfallRes] =
@@ -422,13 +432,6 @@ export default async function DealDetailPage({ params }: PageProps) {
           admin.from("deal_commercial_waterfall").select("*").eq("uw_id", uwRecord.id).order("tier_order"),
         ]);
 
-      // Also fetch all versions for version selector
-      const { data: allVersions } = await admin
-        .from("deal_commercial_uw")
-        .select("id, version, status, created_at, created_by")
-        .eq("opportunity_id", d.id)
-        .order("version", { ascending: false });
-
       commercialUWData = {
         uw: uwRecord,
         income: incomeRes.data ?? [],
@@ -438,7 +441,6 @@ export default async function DealDetailPage({ params }: PageProps) {
         sourcesUses: suRes.data ?? [],
         debt: debtRes.data ?? [],
         waterfall: waterfallRes.data ?? [],
-        allVersions: allVersions ?? [],
       };
     }
   }

@@ -23,30 +23,34 @@ const DEFAULT_EXPENSE_ROWS = [
   { category: "G&A / Other", is_percentage: false, sort_order: 5 },
 ];
 
-export async function initCommercialUW(
-  opportunityId: string,
-  userId: string
+const DEFAULT_WATERFALL_TIERS = [
+  { tier_order: 1, tier_name: "Return of Capital", hurdle_rate: null, sponsor_split: 0.0, investor_split: 1.0, is_catch_up: false, description: "All distributions until investors receive 1.0x return" },
+  { tier_order: 2, tier_name: "Preferred Return", hurdle_rate: 0.08, sponsor_split: 0.0, investor_split: 1.0, is_catch_up: false, description: "Accrued 8% annual preferred return" },
+  { tier_order: 3, tier_name: "Catch-Up", hurdle_rate: null, sponsor_split: 0.50, investor_split: 0.50, is_catch_up: true, description: "Until sponsor reaches 20% of total profit" },
+  { tier_order: 4, tier_name: "Remaining Profits", hurdle_rate: null, sponsor_split: 0.20, investor_split: 0.80, is_catch_up: false, description: "Standard 80/20 split" },
+];
+
+/**
+ * Ensures a commercial UW record exists for the given opportunity.
+ * Used as a fallback in the page loader for legacy deals created before
+ * the auto-init trigger was added.
+ */
+export async function ensureCommercialUW(
+  opportunityId: string
 ): Promise<{ data: { id: string } | null; error: string | null }> {
   const supabase = db();
 
-  // Check if one already exists
   const { data: existing } = await supabase
     .from("deal_commercial_uw")
     .select("id")
     .eq("opportunity_id", opportunityId)
-    .eq("version", 1)
     .maybeSingle();
 
   if (existing) return { data: { id: existing.id }, error: null };
 
   const { data: uw, error: uwError } = await supabase
     .from("deal_commercial_uw")
-    .insert({
-      opportunity_id: opportunityId,
-      version: 1,
-      status: "draft",
-      created_by: userId,
-    })
+    .insert({ opportunity_id: opportunityId })
     .select("id")
     .single();
 
@@ -54,25 +58,19 @@ export async function initCommercialUW(
     return { data: null, error: uwError?.message ?? "Failed to create UW record" };
   }
 
-  // Seed default income rows
+  // Seed default rows
   const incomeRows = DEFAULT_INCOME_ROWS.map((row) => ({
-    uw_id: uw.id,
-    ...row,
-    t12_amount: 0,
-    year_1_amount: 0,
-    growth_rate: 0,
+    uw_id: uw.id, ...row, t12_amount: 0, year_1_amount: 0, growth_rate: 0,
   }));
   await supabase.from("deal_commercial_income").insert(incomeRows);
 
-  // Seed default expense rows
   const expenseRows = DEFAULT_EXPENSE_ROWS.map((row) => ({
-    uw_id: uw.id,
-    ...row,
-    t12_amount: 0,
-    year_1_amount: 0,
-    growth_rate: 0,
+    uw_id: uw.id, ...row, t12_amount: 0, year_1_amount: 0, growth_rate: 0,
   }));
   await supabase.from("deal_commercial_expenses").insert(expenseRows);
+
+  const waterfallRows = DEFAULT_WATERFALL_TIERS.map((t) => ({ uw_id: uw.id, ...t }));
+  await supabase.from("deal_commercial_waterfall").insert(waterfallRows);
 
   revalidatePath(`/admin/pipeline/debt/${opportunityId}`);
   return { data: { id: uw.id }, error: null };
@@ -117,6 +115,9 @@ export async function upsertIncomeRows(
     if (error) return { error: error.message };
   }
 
+  // Touch parent to trigger snapshot
+  await supabase.from("deal_commercial_uw").update({ updated_at: new Date().toISOString() }).eq("id", uwId);
+
   return { error: null };
 }
 
@@ -142,6 +143,8 @@ export async function upsertExpenseRows(
       .insert(rows.map((r) => ({ uw_id: uwId, ...r })));
     if (error) return { error: error.message };
   }
+
+  await supabase.from("deal_commercial_uw").update({ updated_at: new Date().toISOString() }).eq("id", uwId);
 
   return { error: null };
 }
@@ -173,6 +176,8 @@ export async function upsertRentRoll(
     if (error) return { error: error.message };
   }
 
+  await supabase.from("deal_commercial_uw").update({ updated_at: new Date().toISOString() }).eq("id", uwId);
+
   return { error: null };
 }
 
@@ -195,6 +200,8 @@ export async function upsertScopeOfWork(
       .insert(rows.map((r) => ({ uw_id: uwId, ...r })));
     if (error) return { error: error.message };
   }
+
+  await supabase.from("deal_commercial_uw").update({ updated_at: new Date().toISOString() }).eq("id", uwId);
 
   return { error: null };
 }
@@ -219,6 +226,8 @@ export async function upsertSourcesUses(
       .insert(rows.map((r) => ({ uw_id: uwId, ...r })));
     if (error) return { error: error.message };
   }
+
+  await supabase.from("deal_commercial_uw").update({ updated_at: new Date().toISOString() }).eq("id", uwId);
 
   return { error: null };
 }
@@ -246,83 +255,7 @@ export async function upsertWaterfall(
     if (error) return { error: error.message };
   }
 
-  return { error: null };
-}
+  await supabase.from("deal_commercial_uw").update({ updated_at: new Date().toISOString() }).eq("id", uwId);
 
-export async function createNewVersion(
-  opportunityId: string,
-  userId: string
-): Promise<{ data: { id: string; version: number } | null; error: string | null }> {
-  const supabase = db();
-
-  // Get latest version number
-  const { data: latest } = await supabase
-    .from("deal_commercial_uw")
-    .select("version")
-    .eq("opportunity_id", opportunityId)
-    .order("version", { ascending: false })
-    .limit(1)
-    .maybeSingle();
-
-  const newVersion = (latest?.version ?? 0) + 1;
-
-  const { data: uw, error } = await supabase
-    .from("deal_commercial_uw")
-    .insert({
-      opportunity_id: opportunityId,
-      version: newVersion,
-      status: "draft",
-      created_by: userId,
-    })
-    .select("id, version")
-    .single();
-
-  if (error || !uw) {
-    return { data: null, error: error?.message ?? "Failed to create version" };
-  }
-
-  revalidatePath(`/admin/pipeline/debt/${opportunityId}`);
-  return { data: { id: uw.id, version: uw.version }, error: null };
-}
-
-export async function activateVersion(
-  uwId: string,
-  opportunityId: string
-): Promise<{ error: string | null }> {
-  const supabase = db();
-
-  // Archive all other versions for this opportunity
-  await supabase
-    .from("deal_commercial_uw")
-    .update({ status: "archived", updated_at: new Date().toISOString() })
-    .eq("opportunity_id", opportunityId)
-    .neq("id", uwId);
-
-  // Set this one as active
-  const { error } = await supabase
-    .from("deal_commercial_uw")
-    .update({ status: "active", updated_at: new Date().toISOString() })
-    .eq("id", uwId);
-
-  if (error) return { error: error.message };
-
-  revalidatePath(`/admin/pipeline/debt/${opportunityId}`);
-  return { error: null };
-}
-
-export async function saveDraft(
-  uwId: string,
-  opportunityId: string
-): Promise<{ error: string | null }> {
-  const supabase = db();
-
-  const { error } = await supabase
-    .from("deal_commercial_uw")
-    .update({ status: "draft", updated_at: new Date().toISOString() })
-    .eq("id", uwId);
-
-  if (error) return { error: error.message };
-
-  revalidatePath(`/admin/pipeline/debt/${opportunityId}`);
   return { error: null };
 }
