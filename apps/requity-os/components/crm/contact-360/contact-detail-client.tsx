@@ -258,16 +258,6 @@ export function ContactDetailClient({
               <DetailEntitiesTab entities={entities} />
             </TabsContent>
 
-            <TabsContent value="tasks" className="mt-4">
-              <DetailTasksTab
-                tasks={tasks}
-                contactId={contact.id}
-                contactName={fullName}
-                profiles={profiles}
-                currentUserId={currentUserId}
-              />
-            </TabsContent>
-
             <TabsContent value="emails" className="mt-4">
               <DetailEmailsTab emails={emails} />
             </TabsContent>
