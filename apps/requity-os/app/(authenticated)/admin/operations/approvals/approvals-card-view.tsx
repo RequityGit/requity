@@ -20,7 +20,7 @@ import {
 } from "lucide-react";
 import { ApprovalCard } from "./approval-card";
 import { ApprovalFormModal } from "./approval-form-modal";
-import { AssigneeFilter } from "../tasks/assignee-filter";
+import { AssigneeFilter } from "@/components/shared/assignee-filter";
 
 export interface Profile {
   id: string;
