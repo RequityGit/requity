@@ -1,5 +1,6 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { requireAdmin } from "@/lib/auth/require-admin";
 import { SANDBOX_DEFAULT_INPUTS } from "@/lib/underwriting/types";
@@ -49,6 +50,7 @@ export async function createSandboxVersion(
       return { error: error.message };
     }
 
+    revalidatePath("/admin/models");
     return { success: true, versionId: data.id };
   } catch (err) {
     console.error("createSandboxVersion exception:", err);
@@ -88,6 +90,7 @@ export async function saveSandboxVersion(
       return { error: error.message };
     }
 
+    revalidatePath("/admin/models");
     return { success: true };
   } catch (err) {
     console.error("saveSandboxVersion exception:", err);

@@ -1,5 +1,6 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { requireAdmin, requireSuperAdmin } from "@/lib/auth/require-admin";
 
@@ -20,6 +21,7 @@ export async function deleteCrmContactAction(contactId: string) {
       return { error: error.message };
     }
 
+    revalidatePath("/admin/crm");
     return { success: true };
   } catch (err: unknown) {
     console.error("deleteCrmContactAction error:", err);
@@ -57,6 +59,7 @@ export async function deleteContactFileAction(
       return { error: error.message };
     }
 
+    revalidatePath("/admin/crm");
     return { success: true };
   } catch (err: unknown) {
     console.error("deleteContactFileAction error:", err);

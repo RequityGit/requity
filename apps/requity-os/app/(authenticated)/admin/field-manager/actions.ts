@@ -1,5 +1,6 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
 import { requireSuperAdmin } from "@/lib/auth/require-admin";
 import { createAdminClient } from "@/lib/supabase/admin";
 
@@ -52,10 +53,11 @@ export async function publishFieldConfigurations(
       return { error: error.message };
     }
 
+    revalidatePath("/admin/field-manager");
     return { success: true };
   } catch (err: unknown) {
     console.error("publishFieldConfigurations error:", err);
-    return { error: err instanceof Error ? err.message : "Unknown error" };
+    return { error: err instanceof Error ? err.message : "An unexpected error occurred" };
   }
 }
 
@@ -76,10 +78,11 @@ export async function archiveField(fieldId: string) {
       return { error: error.message };
     }
 
+    revalidatePath("/admin/field-manager");
     return { success: true };
   } catch (err: unknown) {
     console.error("archiveField error:", err);
-    return { error: err instanceof Error ? err.message : "Unknown error" };
+    return { error: err instanceof Error ? err.message : "An unexpected error occurred" };
   }
 }
 
@@ -100,10 +103,11 @@ export async function restoreField(fieldId: string) {
       return { error: error.message };
     }
 
+    revalidatePath("/admin/field-manager");
     return { success: true };
   } catch (err: unknown) {
     console.error("restoreField error:", err);
-    return { error: err instanceof Error ? err.message : "Unknown error" };
+    return { error: err instanceof Error ? err.message : "An unexpected error occurred" };
   }
 }
 
@@ -127,7 +131,7 @@ export async function fetchFieldConfigurations(module: string) {
     return { data: data ?? [] };
   } catch (err: unknown) {
     console.error("fetchFieldConfigurations error:", err);
-    return { error: err instanceof Error ? err.message : "Unknown error" };
+    return { error: err instanceof Error ? err.message : "An unexpected error occurred" };
   }
 }
 
@@ -151,6 +155,6 @@ export async function fetchAllFieldConfigurations() {
     return { data: data ?? [] };
   } catch (err: unknown) {
     console.error("fetchAllFieldConfigurations error:", err);
-    return { error: err instanceof Error ? err.message : "Unknown error" };
+    return { error: err instanceof Error ? err.message : "An unexpected error occurred" };
   }
 }

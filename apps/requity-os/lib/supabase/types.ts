@@ -16282,7 +16282,6 @@ export const Constants = {
   },
 } as const
 
-// Manual type for lender_quotes table (not yet in generated schema)
 export interface LenderQuote {
   id: string;
   created_at: string;

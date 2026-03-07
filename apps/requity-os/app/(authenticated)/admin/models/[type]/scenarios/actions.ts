@@ -1,5 +1,6 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { requireAdmin } from "@/lib/auth/require-admin";
 import { SANDBOX_DEFAULT_INPUTS, DEFAULT_INPUTS } from "@/lib/underwriting/types";
@@ -76,6 +77,7 @@ export async function createScenario(
       return { error: vErr.message };
     }
 
+    revalidatePath("/admin/models");
     return { success: true, scenarioId: scenario.id };
   } catch (err) {
     console.error("createScenario exception:", err);
@@ -106,6 +108,7 @@ export async function updateScenario(
       .eq("id", scenarioId);
 
     if (error) return { error: error.message };
+    revalidatePath("/admin/models");
     return { success: true };
   } catch (err) {
     console.error("updateScenario exception:", err);
@@ -130,6 +133,7 @@ export async function deleteScenario(
       .eq("id", scenarioId);
 
     if (error) return { error: error.message };
+    revalidatePath("/admin/models");
     return { success: true };
   } catch (err) {
     console.error("deleteScenario exception:", err);
@@ -180,6 +184,7 @@ export async function linkScenarioToDeal(
       // Non-fatal — scenario is linked, versions will catch up
     }
 
+    revalidatePath("/admin/models");
     return { success: true };
   } catch (err) {
     console.error("linkScenarioToDeal exception:", err);
@@ -216,6 +221,7 @@ export async function unlinkScenarioFromDeal(
       console.error("unlinkScenarioFromDeal version update error:", vErr);
     }
 
+    revalidatePath("/admin/models");
     return { success: true };
   } catch (err) {
     console.error("unlinkScenarioFromDeal exception:", err);
@@ -316,6 +322,7 @@ export async function saveScenarioVersion(
       }
     }
 
+    revalidatePath("/admin/models");
     return { success: true };
   } catch (err) {
     console.error("saveScenarioVersion exception:", err);
@@ -377,6 +384,7 @@ export async function cloneScenarioVersion(
       });
 
     if (error) return { error: error.message };
+    revalidatePath("/admin/models");
     return { success: true };
   } catch (err) {
     console.error("cloneScenarioVersion exception:", err);
@@ -433,6 +441,7 @@ export async function createScenarioVersion(
       });
 
     if (error) return { error: error.message };
+    revalidatePath("/admin/models");
     return { success: true };
   } catch (err) {
     console.error("createScenarioVersion exception:", err);

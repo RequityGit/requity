@@ -1,5 +1,6 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { requireAdmin } from "@/lib/auth/require-admin";
 import { saveUWVersion as _saveUWVersion } from "../actions";
@@ -21,7 +22,9 @@ export async function saveUWVersion(
   versionNumber: number,
   isOpportunity: boolean = false
 ) {
-  return _saveUWVersion(versionId, loanId, inputs, outputs, markActive, userId, userName, versionNumber, isOpportunity);
+  const result = await _saveUWVersion(versionId, loanId, inputs, outputs, markActive, userId, userName, versionNumber, isOpportunity);
+  revalidatePath("/admin/pipeline");
+  return result;
 }
 
 export async function cloneUWVersion(
@@ -91,6 +94,7 @@ export async function cloneUWVersion(
       return { error: error.message };
     }
 
+    revalidatePath("/admin/pipeline");
     return { success: true, version: { ...newVersion, model_type: modelType as UWModelType } as UWVersionData };
   } catch (err: unknown) {
     console.error("cloneUWVersion exception:", err);
@@ -151,6 +155,7 @@ export async function createNewUWVersion(
       return { error: error.message };
     }
 
+    revalidatePath("/admin/pipeline");
     return { success: true, version: { ...newVersion, model_type: modelType as UWModelType } as UWVersionData };
   } catch (err: unknown) {
     console.error("createNewUWVersion exception:", err);

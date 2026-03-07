@@ -1,5 +1,6 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { requireAdmin } from "@/lib/auth/require-admin";
 
@@ -37,6 +38,7 @@ export async function updateEquityDealField(
       return { error: error.message };
     }
 
+    revalidatePath("/admin/pipeline/equity");
     return { success: true };
   } catch (err: unknown) {
     console.error("updateEquityDealField exception:", err);
@@ -76,6 +78,7 @@ export async function updatePropertyField(
       return { error: error.message };
     }
 
+    revalidatePath("/admin/pipeline/equity");
     return { success: true };
   } catch (err: unknown) {
     console.error("updatePropertyField exception:", err);
@@ -130,6 +133,7 @@ export async function advanceEquityStage(
       // Non-fatal — the stage was still updated
     }
 
+    revalidatePath("/admin/pipeline/equity");
     return { success: true };
   } catch (err: unknown) {
     console.error("advanceEquityStage exception:", err);
@@ -188,6 +192,7 @@ export async function markEquityDealLost(
         changed_at: now,
       });
 
+    revalidatePath("/admin/pipeline/equity");
     return { success: true };
   } catch (err: unknown) {
     console.error("markEquityDealLost exception:", err);
@@ -247,6 +252,7 @@ export async function saveCommercialUnderwriting(
       }
     }
 
+    revalidatePath("/admin/pipeline/equity");
     return { success: true };
   } catch (err: unknown) {
     console.error("saveCommercialUnderwriting exception:", err);

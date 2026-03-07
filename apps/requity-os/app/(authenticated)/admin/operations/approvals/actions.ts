@@ -1,5 +1,6 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { requireAdmin } from "@/lib/auth/require-admin";
@@ -331,6 +332,7 @@ export async function submitForApproval(input: {
       console.error("Error creating notification:", e);
     }
 
+    revalidatePath("/admin/operations/approvals");
     return { success: true, approvalId };
   } catch (err: any) {
     console.error("submitForApproval error:", err);
@@ -443,6 +445,7 @@ export async function approveRequest(approvalId: string, decisionNotes?: string)
       console.error("Error creating notification:", e);
     }
 
+    revalidatePath("/admin/operations/approvals");
     return { success: true };
   } catch (err: any) {
     console.error("approveRequest error:", err);
@@ -538,6 +541,7 @@ export async function requestChanges(approvalId: string, decisionNotes: string) 
       console.error("Error creating notification:", e);
     }
 
+    revalidatePath("/admin/operations/approvals");
     return { success: true };
   } catch (err: any) {
     console.error("requestChanges error:", err);
@@ -650,6 +654,7 @@ export async function declineRequest(approvalId: string, decisionNotes: string) 
       console.error("Error creating notification:", e);
     }
 
+    revalidatePath("/admin/operations/approvals");
     return { success: true };
   } catch (err: any) {
     console.error("declineRequest error:", err);
@@ -743,6 +748,7 @@ export async function resubmitApproval(input: {
       console.error("Error creating notification:", e);
     }
 
+    revalidatePath("/admin/operations/approvals");
     return { success: true };
   } catch (err: any) {
     console.error("resubmitApproval error:", err);
@@ -801,6 +807,7 @@ export async function cancelApproval(approvalId: string) {
       notes: "Approval cancelled",
     });
 
+    revalidatePath("/admin/operations/approvals");
     return { success: true };
   } catch (err: any) {
     console.error("cancelApproval error:", err);
@@ -1046,6 +1053,7 @@ export async function upsertRoutingRule(rule: {
       if (error) return { error: error.message };
     }
 
+    revalidatePath("/admin/operations/approvals");
     return { success: true };
   } catch (err: any) {
     return { error: err?.message || "An unexpected error occurred" };
@@ -1064,6 +1072,7 @@ export async function deleteRoutingRule(ruleId: string) {
       .eq("id", ruleId);
 
     if (error) return { error: error.message };
+    revalidatePath("/admin/operations/approvals");
     return { success: true };
   } catch (err: any) {
     return { error: err?.message || "An unexpected error occurred" };

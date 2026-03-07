@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useToast } from "@/components/ui/use-toast";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { DataTable, Column } from "@/components/shared/data-table";
 import { StatusBadge } from "@/components/shared/status-badge";
@@ -123,6 +124,7 @@ function BillingCyclesTab({ cycles }: { cycles: any[] }) {
   const [loading, setLoading] = useState<string | null>(null);
   const [reconResult, setReconResult] = useState<any>(null);
   const [nachaContent, setNachaContent] = useState<string | null>(null);
+  const { toast } = useToast();
 
   async function loadLineItems(cycleId: string) {
     setLoading("items");
@@ -150,7 +152,7 @@ function BillingCyclesTab({ cycles }: { cycles: any[] }) {
       window.location.reload();
     } else {
       setReconResult(result.reconciliation);
-      alert(result.error);
+      toast({ title: "Approval failed", description: result.error, variant: "destructive" });
     }
     setLoading(null);
   }
@@ -161,7 +163,7 @@ function BillingCyclesTab({ cycles }: { cycles: any[] }) {
     if (result.success) {
       window.location.reload();
     } else {
-      alert(result.error);
+      toast({ title: "Submit failed", description: result.error, variant: "destructive" });
     }
     setLoading(null);
   }
@@ -172,7 +174,7 @@ function BillingCyclesTab({ cycles }: { cycles: any[] }) {
     if (result.success) {
       window.location.reload();
     } else {
-      alert(result.error);
+      toast({ title: "Completion failed", description: result.error, variant: "destructive" });
     }
     setLoading(null);
   }
@@ -183,7 +185,7 @@ function BillingCyclesTab({ cycles }: { cycles: any[] }) {
     if (result.success) {
       setNachaContent(result.nachaContent);
     } else {
-      alert(result.error);
+      toast({ title: "NACHA generation failed", description: result.error, variant: "destructive" });
     }
     setLoading(null);
   }
@@ -772,6 +774,7 @@ function PayoffQuoteTab({ activeLoans }: { activeLoans: any[] }) {
   );
   const [loading, setLoading] = useState(false);
   const [quote, setQuote] = useState<any>(null);
+  const { toast } = useToast();
 
   async function handleGenerate() {
     if (!loanId) return;
@@ -781,7 +784,7 @@ function PayoffQuoteTab({ activeLoans }: { activeLoans: any[] }) {
     if (res.success) {
       setQuote(res.result);
     } else {
-      alert(res.error);
+      toast({ title: "Payoff quote failed", description: res.error, variant: "destructive" });
     }
     setLoading(false);
   }
@@ -910,6 +913,7 @@ function PayoffQuoteTab({ activeLoans }: { activeLoans: any[] }) {
 function DelinquencyTab({ records }: { records: any[] }) {
   const [loading, setLoading] = useState(false);
   const [refreshResult, setRefreshResult] = useState<any>(null);
+  const { toast } = useToast();
 
   async function handleRefresh() {
     setLoading(true);
@@ -918,7 +922,7 @@ function DelinquencyTab({ records }: { records: any[] }) {
       setRefreshResult(res.result);
       window.location.reload();
     } else {
-      alert(res.error);
+      toast({ title: "Delinquency refresh failed", description: res.error, variant: "destructive" });
     }
     setLoading(false);
   }

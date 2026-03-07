@@ -1,9 +1,8 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { requireAdmin } from "@/lib/auth/require-admin";
-// NOTE: Investor contact fields (first_name, last_name, email, phone, address)
-// now live on crm_contacts. This legacy action uses `any` casts until refactored.
 
 // ---------------------------------------------------------------------------
 // Add Investor
@@ -30,41 +29,55 @@ export async function addInvestorAction(input: AddInvestorInput) {
 
     const admin = createAdminClient();
 
-    // Legacy fields — these columns now live on crm_contacts; cast to any until refactored
-    const investorData: Record<string, unknown> = {
-      first_name: input.first_name,
-      last_name: input.last_name,
-      email: input.email,
-      phone: input.phone || null,
-      address_line1: input.address_line1 || null,
-      address_line2: input.address_line2 || null,
-      city: input.city || null,
-      state: input.state || null,
-      zip: input.zip || null,
-      country: input.country || "US",
-      notes: input.notes || null,
-      accreditation_status: "pending",
-    };
-
-    const { data, error } = await (admin as any)
-      .from("investors")
-      .insert(investorData)
+    // Step 1: Create a CRM contact for the investor
+    const { data: contact, error: contactError } = await (admin as any)
+      .from("crm_contacts")
+      .insert({
+        first_name: input.first_name,
+        last_name: input.last_name,
+        name: `${input.first_name} ${input.last_name}`.trim(),
+        email: input.email || null,
+        phone: input.phone || null,
+        contact_type: "investor",
+        contact_types: ["investor"],
+        status: "active",
+        address_line1: input.address_line1 || null,
+        address_line2: input.address_line2 || null,
+        city: input.city || null,
+        state: input.state || null,
+        zip: input.zip || null,
+        country: input.country || "US",
+      })
       .select("id")
       .single();
 
-    if (error) {
-      // Handle unique constraint on email
-      if (error.message.includes("duplicate") || error.message.includes("unique")) {
-        return { error: `An investor with email ${input.email} already exists.` };
+    if (contactError) {
+      if (contactError.message.includes("duplicate") || contactError.message.includes("unique")) {
+        return { error: `A contact with email ${input.email} already exists.` };
       }
-      return { error: error.message };
+      return { error: `Failed to create contact: ${contactError.message}` };
     }
 
-    if (!data) {
-      return { error: "Failed to create investor — no data returned" };
+    // Step 2: Create the investor record linked to the CRM contact
+    const { data: investor, error: investorError } = await admin
+      .from("investors")
+      .insert({
+        crm_contact_id: contact.id,
+        accreditation_status: "pending",
+        notes: input.notes || null,
+      })
+      .select("id")
+      .single();
+
+    if (investorError) {
+      // Clean up the orphaned contact
+      await (admin as any).from("crm_contacts").delete().eq("id", contact.id);
+      return { error: `Failed to create investor: ${investorError.message}` };
     }
 
-    return { success: true, investorId: data.id };
+    revalidatePath("/admin/investors");
+    revalidatePath("/admin/crm");
+    return { success: true, investorId: investor.id };
   } catch (err: unknown) {
     console.error("addInvestorAction error:", err);
     const message = err instanceof Error ? err.message : "An unexpected error occurred";

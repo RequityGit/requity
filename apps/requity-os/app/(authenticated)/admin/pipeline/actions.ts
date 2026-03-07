@@ -1,5 +1,6 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { requireAdmin } from "@/lib/auth/require-admin";
 import type { Database } from "@/lib/supabase/types";
@@ -70,6 +71,7 @@ export async function moveOpportunityStageAction(
       .eq("id", opportunityId);
 
     if (error) return { error: error.message };
+    revalidatePath("/admin/pipeline");
     return { success: true };
   } catch (err: any) {
     console.error("moveOpportunityStageAction error:", err);
@@ -121,6 +123,7 @@ export async function moveLoanStageAction(
       changed_at: now,
     });
 
+    revalidatePath("/admin/pipeline");
     return { success: true };
   } catch (err: any) {
     console.error("moveLoanStageAction error:", err);
@@ -174,6 +177,7 @@ export async function moveEquityStageAction(
       return { error: "Failed to update deal stage" };
     }
 
+    revalidatePath("/admin/pipeline");
     return { success: true };
   } catch (err) {
     console.error("moveEquityStageAction error:", err);

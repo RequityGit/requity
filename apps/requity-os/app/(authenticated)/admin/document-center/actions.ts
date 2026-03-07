@@ -1,5 +1,6 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { requireAdmin } from "@/lib/auth/require-admin";
 
@@ -55,6 +56,7 @@ export async function createPortalDocumentAction(input: UploadDocumentInput) {
       return { error: error.message };
     }
 
+    revalidatePath("/admin/document-center");
     return { success: true, documentId: data.id };
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : "An unexpected error occurred";
@@ -98,6 +100,7 @@ export async function deletePortalDocumentAction(documentId: string) {
       await admin.storage.from("portal-documents").remove([doc.file_path]);
     }
 
+    revalidatePath("/admin/document-center");
     return { success: true };
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : "An unexpected error occurred";
@@ -125,6 +128,7 @@ export async function updateDocumentVisibilityAction(
       return { error: error.message };
     }
 
+    revalidatePath("/admin/document-center");
     return { success: true };
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : "An unexpected error occurred";

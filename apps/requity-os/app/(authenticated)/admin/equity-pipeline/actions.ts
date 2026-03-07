@@ -1,5 +1,6 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { requireAdmin } from "@/lib/auth/require-admin";
 
@@ -51,6 +52,7 @@ export async function moveEquityStageAction(
       return { error: "Failed to update deal stage" };
     }
 
+    revalidatePath("/admin/equity-pipeline");
     return { success: true };
   } catch (err) {
     console.error("moveEquityStageAction error:", err);
@@ -136,6 +138,7 @@ export async function createEquityDealAction(input: CreateEquityDealInput) {
       return { error: "Failed to create deal" };
     }
 
+    revalidatePath("/admin/equity-pipeline");
     return { success: true, id: deal.id };
   } catch (err) {
     console.error("createEquityDealAction error:", err);

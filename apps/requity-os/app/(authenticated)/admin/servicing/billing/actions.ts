@@ -1,5 +1,6 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { requireAdmin } from "@/lib/auth/require-admin";
 
@@ -21,6 +22,8 @@ export async function generateBillingCycleAction(billingMonth: string) {
       return { error: error.message };
     }
 
+    revalidatePath("/admin/servicing/billing");
+    revalidatePath("/admin/servicing");
     return { success: true, billingCycleId: data };
   } catch (err: any) {
     console.error("Generate billing cycle error:", err);
@@ -43,6 +46,8 @@ export async function runReconciliationAction(billingCycleId: string) {
       return { error: error.message };
     }
 
+    revalidatePath("/admin/servicing/billing");
+    revalidatePath("/admin/servicing");
     return { success: true, result: data };
   } catch (err: any) {
     console.error("Reconciliation error:", err);
@@ -83,6 +88,8 @@ export async function approveBillingCycleAction(billingCycleId: string) {
       return { error: updateError.message };
     }
 
+    revalidatePath("/admin/servicing/billing");
+    revalidatePath("/admin/servicing");
     return { success: true, reconciliation: reconData };
   } catch (err: any) {
     console.error("Approve billing cycle error:", err);
@@ -105,6 +112,8 @@ export async function submitBillingCycleAction(billingCycleId: string) {
       return { error: error.message };
     }
 
+    revalidatePath("/admin/servicing/billing");
+    revalidatePath("/admin/servicing");
     return { success: true };
   } catch (err: any) {
     console.error("Submit billing cycle error:", err);
@@ -127,6 +136,8 @@ export async function completeBillingCycleAction(billingCycleId: string) {
       return { error: error.message };
     }
 
+    revalidatePath("/admin/servicing/billing");
+    revalidatePath("/admin/servicing");
     return { success: true };
   } catch (err: any) {
     console.error("Complete billing cycle error:", err);
@@ -149,6 +160,8 @@ export async function generateNachaAction(billingCycleId: string) {
       return { error: error.message };
     }
 
+    revalidatePath("/admin/servicing/billing");
+    revalidatePath("/admin/servicing");
     return { success: true, nachaContent: data };
   } catch (err: any) {
     console.error("NACHA generation error:", err);
@@ -180,6 +193,8 @@ export async function applyPaymentAction(
       return { error: error.message };
     }
 
+    revalidatePath("/admin/servicing/billing");
+    revalidatePath("/admin/servicing");
     return { success: true, result: data };
   } catch (err: any) {
     console.error("Apply payment error:", err);
@@ -206,6 +221,8 @@ export async function generatePayoffQuoteAction(
       return { error: error.message };
     }
 
+    revalidatePath("/admin/servicing/billing");
+    revalidatePath("/admin/servicing");
     return { success: true, result: data };
   } catch (err: any) {
     console.error("Payoff quote error:", err);
@@ -226,6 +243,8 @@ export async function refreshDelinquencyAction() {
       return { error: error.message };
     }
 
+    revalidatePath("/admin/servicing/billing");
+    revalidatePath("/admin/servicing");
     return { success: true, result: data };
   } catch (err: any) {
     console.error("Refresh delinquency error:", err);

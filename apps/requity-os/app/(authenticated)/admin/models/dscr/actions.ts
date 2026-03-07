@@ -67,9 +67,9 @@ export async function addLenderAction(input: LenderInput) {
     });
 
     return { success: true, lenderId };
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error("addLenderAction error:", err);
-    return { error: err?.message || "Unexpected error" };
+    return { error: err instanceof Error ? err.message : "Failed to add lender" };
   }
 }
 
@@ -97,9 +97,9 @@ export async function updateLenderAction(id: string, input: LenderInput) {
 
     if (error) return { error: error.message };
     return { success: true };
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error("updateLenderAction error:", err);
-    return { error: err?.message || "Unexpected error" };
+    return { error: err instanceof Error ? err.message : "An unexpected error occurred" };
   }
 }
 
@@ -116,9 +116,9 @@ export async function toggleLenderActiveAction(id: string, isActive: boolean) {
 
     if (error) return { error: error.message };
     return { success: true };
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error("toggleLenderActiveAction error:", err);
-    return { error: err?.message || "Unexpected error" };
+    return { error: err instanceof Error ? err.message : "An unexpected error occurred" };
   }
 }
 
@@ -206,9 +206,9 @@ export async function addProductAction(input: ProductInput) {
     }
 
     return { success: true, productId };
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error("addProductAction error:", err);
-    return { error: err?.message || "Unexpected error" };
+    return { error: err instanceof Error ? err.message : "An unexpected error occurred" };
   }
 }
 
@@ -245,9 +245,9 @@ export async function updateProductAction(id: string, input: Omit<ProductInput, 
 
     if (error) return { error: error.message };
     return { success: true };
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error("updateProductAction error:", err);
-    return { error: err?.message || "Unexpected error" };
+    return { error: err instanceof Error ? err.message : "An unexpected error occurred" };
   }
 }
 
@@ -286,9 +286,9 @@ export async function toggleProductActiveAction(id: string, isActive: boolean) {
     }
 
     return { success: true };
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error("toggleProductActiveAction error:", err);
-    return { error: err?.message || "Unexpected error" };
+    return { error: err instanceof Error ? err.message : "An unexpected error occurred" };
   }
 }
 
@@ -446,9 +446,9 @@ export async function commitRateSheetAction(input: CommitRateSheetInput) {
     }
 
     return { success: true };
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error("commitRateSheetAction error:", err);
-    return { error: err?.message || "Unexpected error" };
+    return { error: err instanceof Error ? err.message : "An unexpected error occurred" };
   }
 }
 
@@ -640,9 +640,9 @@ export async function runPricingAction(input: PricingRunInput) {
       pricingRunId: (run as any).id,
       result: pricingResult,
     };
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error("runPricingAction error:", err);
-    return { error: err?.message || "Unexpected error" };
+    return { error: err instanceof Error ? err.message : "An unexpected error occurred" };
   }
 }
 
@@ -848,9 +848,9 @@ Return ONLY valid JSON with this structure:
       .eq("id", uploadId);
 
     return { success: true, parsedData };
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error("parseRateSheetAction error:", err);
-    return { error: err?.message || "Unexpected error" };
+    return { error: err instanceof Error ? err.message : "An unexpected error occurred" };
   }
 }
 
@@ -885,9 +885,9 @@ export async function createRateSheetUploadAction(
 
     if (error) return { error: error.message };
     return { success: true, uploadId: (data as any).id };
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error("createRateSheetUploadAction error:", err);
-    return { error: err?.message || "Unexpected error" };
+    return { error: err instanceof Error ? err.message : "An unexpected error occurred" };
   }
 }
 
@@ -927,8 +927,8 @@ export async function saveQuoteAction(input: {
 
     if (error) return { error: error.message };
     return { success: true, quoteId: (data as any).id };
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error("saveQuoteAction error:", err);
-    return { error: err?.message || "Unexpected error" };
+    return { error: err instanceof Error ? err.message : "An unexpected error occurred" };
   }
 }

@@ -1,5 +1,6 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { requireAdmin } from "@/lib/auth/require-admin";
 import type { Database, Json } from "@/lib/supabase/types";
@@ -30,6 +31,7 @@ export async function createUnderwriting(loanId: string, propertyType: string) {
       console.error("Error creating underwriting:", error);
       return { error: error.message };
     }
+    revalidatePath("/admin/loans");
     return { success: true, id: data.id };
   } catch (err) {
     console.error("Error creating underwriting:", err);
@@ -55,6 +57,7 @@ export async function saveUnderwriting(
       console.error("Error saving underwriting:", error);
       return { error: error.message };
     }
+    revalidatePath("/admin/loans");
     return { success: true };
   } catch (err) {
     console.error("Error saving underwriting:", err);
@@ -88,6 +91,7 @@ export async function saveRentRoll(
         return { error: error.message };
       }
     }
+    revalidatePath("/admin/loans");
     return { success: true };
   } catch (err) {
     console.error("Error saving rent roll:", err);
@@ -123,6 +127,7 @@ export async function saveOccupancyRows(
         return { error: error.message };
       }
     }
+    revalidatePath("/admin/loans");
     return { success: true };
   } catch (err) {
     console.error("Error saving occupancy rows:", err);
@@ -158,6 +163,7 @@ export async function saveAncillaryRows(
         return { error: error.message };
       }
     }
+    revalidatePath("/admin/loans");
     return { success: true };
   } catch (err) {
     console.error("Error saving ancillary rows:", err);
@@ -192,6 +198,7 @@ export async function saveProFormaYears(
         return { error: error.message };
       }
     }
+    revalidatePath("/admin/loans");
     return { success: true };
   } catch (err) {
     console.error("Error saving proforma years:", err);
@@ -230,6 +237,7 @@ export async function saveUploadMapping(
       console.error("Error saving upload mapping:", error);
       return { error: error.message };
     }
+    revalidatePath("/admin/loans");
     return { success: true, id: data.id };
   } catch (err) {
     console.error("Error saving upload mapping:", err);
@@ -252,6 +260,7 @@ export async function updateUWStatus(uwId: string, status: string) {
       console.error("Error updating status:", error);
       return { error: error.message };
     }
+    revalidatePath("/admin/loans");
     return { success: true };
   } catch (err) {
     console.error("Error updating status:", err);

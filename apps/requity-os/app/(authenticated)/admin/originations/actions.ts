@@ -647,9 +647,9 @@ export async function getOrCreateOpportunityChatterChannel(opportunityId: string
 
     revalidatePath("/admin/originations");
     return { success: true, channel };
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error("getOrCreateOpportunityChatterChannel exception:", err);
-    return { error: err?.message || "Unknown error" };
+    return { error: err instanceof Error ? err.message : "An unexpected error occurred" };
   }
 }
 

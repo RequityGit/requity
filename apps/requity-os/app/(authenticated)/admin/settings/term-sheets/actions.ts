@@ -1,5 +1,6 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 
@@ -46,6 +47,7 @@ export async function updateTermSheetTemplate(
       return { error: error.message };
     }
 
+    revalidatePath("/admin/settings/term-sheets");
     return { success: true };
   } catch (err) {
     console.error("updateTermSheetTemplate error:", err);
