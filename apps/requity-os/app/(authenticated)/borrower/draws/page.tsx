@@ -29,23 +29,29 @@ export default async function BorrowerDrawsPage() {
   // Resolve auth user to borrowers.id
   const borrowerId = await getBorrowerId(supabase, userId);
 
-  const { data: drawRequests } = borrowerId
-    ? await supabase
-        .from("draw_requests")
-        .select(
-          `
-          *,
-          loans (
-            property_address,
-            loan_number
-          )
-        `
-        )
-        .eq("borrower_id", borrowerId)
-        .order("submitted_at", { ascending: false })
-    : { data: null };
+  let draws: DrawWithLoan[] = [];
 
-  const draws = (drawRequests ?? []) as unknown as DrawWithLoan[];
+  if (borrowerId) {
+    const { data: drawRequests, error } = await supabase
+      .from("draw_requests")
+      .select(
+        `
+        *,
+        loans (
+          property_address,
+          loan_number
+        )
+      `
+      )
+      .eq("borrower_id", borrowerId)
+      .order("submitted_at", { ascending: false });
+
+    if (error) {
+      console.error("Failed to fetch draw requests:", error.message);
+    } else {
+      draws = (drawRequests ?? []) as unknown as DrawWithLoan[];
+    }
+  }
 
   const columns: Column<DrawWithLoan>[] = [
     {

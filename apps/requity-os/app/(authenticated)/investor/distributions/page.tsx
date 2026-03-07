@@ -70,18 +70,27 @@ export default async function DistributionsPage({
       query = query.eq("distribution_type", searchParams.type);
     }
 
-    const { data: rawDistributions } = await query;
-    distributions =
-      (rawDistributions as unknown as DistributionJoined[]) ?? [];
+    const { data: rawDistributions, error } = await query;
+
+    if (error) {
+      console.error("Failed to fetch distributions:", error.message);
+    } else {
+      distributions =
+        (rawDistributions as unknown as DistributionJoined[]) ?? [];
+    }
   }
 
   // Get funds for the filter
-  const { data: commitments } = investorId
+  const { data: commitments, error: commitmentsError } = investorId
     ? await supabase
         .from("investor_commitments")
         .select("fund_id, funds(id, name)")
         .eq("investor_id", investorId)
-    : { data: null };
+    : { data: null, error: null };
+
+  if (commitmentsError) {
+    console.error("Failed to fetch commitments:", commitmentsError.message);
+  }
 
   const funds = (commitments ?? [])
     .map((c) => {
@@ -95,12 +104,16 @@ export default async function DistributionsPage({
   );
 
   // Get available years from distributions
-  const { data: rawAllDistributions } = investorId
+  const { data: rawAllDistributions, error: yearsError } = investorId
     ? await supabase
         .from("distributions")
         .select("distribution_date")
         .eq("investor_id", investorId)
-    : { data: null };
+    : { data: null, error: null };
+
+  if (yearsError) {
+    console.error("Failed to fetch distribution years:", yearsError.message);
+  }
 
   const allDistributions =
     (rawAllDistributions as unknown as Array<{ distribution_date: string }>) ?? [];
