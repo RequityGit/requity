@@ -70,7 +70,7 @@ export function SOPDetailClient({
   }
 
   return (
-    <div className="min-h-screen bg-background -m-4 md:-m-6 lg:-m-8 -mb-20 md:-mb-6 lg:-mb-8">
+    <div className="min-h-full bg-background -mx-4 -mt-4 -mb-20 md:-mx-6 md:-mt-6 md:-mb-6 lg:-mx-8 lg:-mt-8 lg:-mb-8">
       <div className="mx-auto max-w-6xl px-6 py-8">
         {/* Breadcrumb */}
         <nav className="mb-6 flex items-center gap-2 text-sm text-muted-foreground">
