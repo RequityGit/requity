@@ -273,6 +273,27 @@
   }
 }
 
+/* ============================
+   Spacing utility classes (8px grid)
+   ============================ */
+@layer components {
+  .rq-card {
+    @apply p-5; /* 20px minimum card padding */
+  }
+  .rq-panel {
+    @apply p-6; /* 24px standard panel padding */
+  }
+  .rq-tab-content {
+    @apply p-6; /* 24px tab content area padding */
+  }
+  .rq-sidebar-section {
+    @apply py-4 px-5; /* comfortable sidebar sections */
+  }
+  .rq-page-content {
+    @apply p-6 lg:p-8; /* 24px mobile, 32px desktop */
+  }
+}
+
 /* Numeric typography — tabular figures for financial data */
 .num {
   font-variant-numeric: tabular-nums;

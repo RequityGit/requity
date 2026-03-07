@@ -263,7 +263,7 @@ export function DetailTasksTab({
           return (
             <div
               key={t.id}
-              className="bg-card border border-border rounded-xl p-4 flex items-center gap-3.5"
+              className="bg-card border border-border rounded-xl p-5 flex items-center gap-3.5"
               style={{ opacity: isCompleted ? 0.6 : 1 }}
             >
               {/* Checkbox */}
