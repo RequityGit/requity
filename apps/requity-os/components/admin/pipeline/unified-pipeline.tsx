@@ -60,8 +60,7 @@ export interface LoanRow {
   created_at: string;
   priority: string;
   originator_name: string | null;
-  total_conditions: number;
-  approved_conditions: number;
+  comment_count: number;
 }
 
 interface UnifiedPipelineProps {

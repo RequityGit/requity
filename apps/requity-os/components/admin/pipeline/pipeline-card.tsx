@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { Paperclip, ArrowUpRight, Mail, MessageSquare } from "lucide-react";
+import { MessageSquare } from "lucide-react";
 import { formatCompactCurrency } from "@/lib/format";
 
 // Avatar background colors — cycle through by index
@@ -30,8 +30,7 @@ export interface PipelineDeal {
   rawStage: string;
   stageChangedAt: string | null;
   assignedName: string | null;
-  docsApproved: number;
-  docsTotal: number;
+  commentCount: number;
 }
 
 interface PipelineCardProps {
@@ -67,8 +66,7 @@ function formatLoanType(type: string | null): string {
 export function PipelineCard({ deal, index, isDragging }: PipelineCardProps) {
   const router = useRouter();
   const days = getDaysInStage(deal.stageChangedAt);
-  const docsComplete =
-    deal.docsTotal > 0 && deal.docsApproved >= deal.docsTotal;
+  const hasComments = deal.commentCount > 0;
 
   const detailUrl = `/admin/pipeline/debt/${deal.id}`;
 
@@ -239,144 +237,32 @@ export function PipelineCard({ deal, index, isDragging }: PipelineCardProps) {
           {formatLoanType(deal.loanType) || "—"}
         </span>
 
-        {/* Right: Doc progress */}
-        {deal.docsTotal > 0 ? (
-          <div className="flex items-center" style={{ gap: "4px" }}>
-            <Paperclip
-              size={11}
-              strokeWidth={2}
-              style={{ color: docsComplete ? "hsl(var(--chart-2, 142 71% 45%))" : "hsl(var(--muted-foreground))" }}
-            />
-            <div
-              style={{
-                width: "40px",
-                height: "3px",
-                borderRadius: "2px",
-                backgroundColor: "hsl(var(--border))",
-                overflow: "hidden",
-              }}
-            >
-              <div
-                style={{
-                  width: `${(deal.docsApproved / deal.docsTotal) * 100}%`,
-                  height: "100%",
-                  borderRadius: "2px",
-                  backgroundColor: docsComplete ? "hsl(var(--chart-2, 142 71% 45%))" : "hsl(var(--foreground))",
-                  transition: "width 0.3s ease",
-                }}
-              />
-            </div>
-            <span
-              className="num"
-              style={{
-                fontSize: "10px",
-                fontWeight: 500,
-                color: docsComplete ? "hsl(var(--chart-2, 142 71% 45%))" : "hsl(var(--muted-foreground))",
-              }}
-            >
-              {deal.docsApproved}/{deal.docsTotal}
-            </span>
-          </div>
-        ) : (
-          <div className="flex items-center" style={{ gap: "4px" }}>
-            <Paperclip size={11} strokeWidth={2} style={{ color: "hsl(var(--muted-foreground))" }} />
-            <span
-              className="num"
-              style={{ fontSize: "10px", fontWeight: 500, color: "hsl(var(--muted-foreground))" }}
-            >
-              —
-            </span>
-          </div>
-        )}
+        {/* Right: Comment count */}
+        <div className="flex items-center" style={{ gap: "4px" }}>
+          <MessageSquare
+            size={11}
+            strokeWidth={2}
+            style={{
+              color: hasComments
+                ? "hsl(var(--foreground))"
+                : "hsl(var(--muted-foreground))",
+            }}
+          />
+          <span
+            className="num"
+            style={{
+              fontSize: "10px",
+              fontWeight: 500,
+              color: hasComments
+                ? "hsl(var(--foreground))"
+                : "hsl(var(--muted-foreground))",
+            }}
+          >
+            {deal.commentCount}
+          </span>
+        </div>
       </div>
 
-      {/* Hover action strip */}
-      <div
-        className="hidden group-hover:flex"
-        style={{ borderTop: "1px solid hsl(var(--border))" }}
-      >
-        <button
-          className="flex-1 flex items-center justify-center gap-1 transition-colors"
-          style={{
-            padding: "7px 0",
-            fontSize: "11px",
-            fontWeight: 600,
-            color: "hsl(var(--muted-foreground))",
-            background: "transparent",
-            border: "none",
-            cursor: "pointer",
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.backgroundColor = "hsl(var(--muted))";
-            e.currentTarget.style.color = "hsl(var(--foreground))";
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.backgroundColor = "transparent";
-            e.currentTarget.style.color = "hsl(var(--muted-foreground))";
-          }}
-          onClick={(e) => {
-            e.stopPropagation();
-            router.push(detailUrl);
-          }}
-        >
-          <ArrowUpRight size={12} strokeWidth={1.5} />
-          Open
-        </button>
-        <div style={{ width: "1px", backgroundColor: "hsl(var(--border))" }} />
-        <button
-          className="flex-1 flex items-center justify-center gap-1 transition-colors"
-          style={{
-            padding: "7px 0",
-            fontSize: "11px",
-            fontWeight: 600,
-            color: "hsl(var(--muted-foreground))",
-            background: "transparent",
-            border: "none",
-            cursor: "pointer",
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.backgroundColor = "hsl(var(--muted))";
-            e.currentTarget.style.color = "hsl(var(--foreground))";
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.backgroundColor = "transparent";
-            e.currentTarget.style.color = "hsl(var(--muted-foreground))";
-          }}
-          onClick={(e) => {
-            e.stopPropagation();
-          }}
-        >
-          <Mail size={12} strokeWidth={1.5} />
-          Email
-        </button>
-        <div style={{ width: "1px", backgroundColor: "hsl(var(--border))" }} />
-        <button
-          className="flex-1 flex items-center justify-center gap-1 transition-colors"
-          style={{
-            padding: "7px 0",
-            fontSize: "11px",
-            fontWeight: 600,
-            color: "hsl(var(--muted-foreground))",
-            background: "transparent",
-            border: "none",
-            cursor: "pointer",
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.backgroundColor = "hsl(var(--muted))";
-            e.currentTarget.style.color = "hsl(var(--foreground))";
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.backgroundColor = "transparent";
-            e.currentTarget.style.color = "hsl(var(--muted-foreground))";
-          }}
-          onClick={(e) => {
-            e.stopPropagation();
-          }}
-        >
-          <MessageSquare size={12} strokeWidth={1.5} />
-          Note
-        </button>
-      </div>
     </div>
   );
 }

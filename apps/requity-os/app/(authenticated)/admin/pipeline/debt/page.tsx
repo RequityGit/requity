@@ -23,6 +23,7 @@ export default async function DebtPipelinePage() {
     opportunitiesResult,
     loansResult,
     teamResult,
+    commentsResult,
   ] = await Promise.all([
     admin
       .from("pipeline_stage_config")
@@ -41,12 +42,25 @@ export default async function DebtPipelinePage() {
       .select("id, full_name")
       .eq("role", "admin")
       .order("full_name"),
+    admin
+      .from("loan_comments")
+      .select("loan_id"),
   ]);
 
   const profiles: Record<string, string> = {};
   (teamResult.data ?? []).forEach(
     (t: { id: string; full_name: string | null }) => {
       profiles[t.id] = t.full_name ?? "Unknown";
+    }
+  );
+
+  // Build comment count per loan
+  const commentCounts: Record<string, number> = {};
+  (commentsResult.data ?? []).forEach(
+    (c: { loan_id: string | null }) => {
+      if (c.loan_id) {
+        commentCounts[c.loan_id] = (commentCounts[c.loan_id] ?? 0) + 1;
+      }
     }
   );
 
@@ -107,8 +121,7 @@ export default async function DebtPipelinePage() {
     created_at: l.created_at,
     priority: l.priority ?? "normal",
     originator_name: l.originator ?? null,
-    total_conditions: l.total_conditions ?? 0,
-    approved_conditions: l.approved_conditions ?? 0,
+    comment_count: commentCounts[l.id] ?? 0,
   }));
 
   return (

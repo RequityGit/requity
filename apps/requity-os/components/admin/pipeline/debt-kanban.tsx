@@ -135,8 +135,7 @@ export function DebtKanban({
         rawStage: o.stage,
         stageChangedAt: o.stage_changed_at,
         assignedName: o.originator_name,
-        docsApproved: 0,
-        docsTotal: 0,
+        commentCount: 0,
       }));
 
     const loanDeals: PipelineDeal[] = loanData
@@ -155,8 +154,7 @@ export function DebtKanban({
         rawStage: l.stage,
         stageChangedAt: l.stage_updated_at,
         assignedName: l.originator_name,
-        docsApproved: l.approved_conditions,
-        docsTotal: l.total_conditions,
+        commentCount: l.comment_count ?? 0,
       }));
 
     return [...oppDeals, ...loanDeals];
