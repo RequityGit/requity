@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { requireAdmin } from "@/lib/auth/require-admin";
+import { validateStageAdvancement } from "@/lib/pipeline/validate-stage-advancement";
 import type { Database } from "@/lib/supabase/types";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
@@ -28,30 +29,17 @@ export async function moveOpportunityStageAction(
 
     const { data: opp, error: fetchErr } = await admin
       .from("opportunities")
-      .select("stage, approval_status, funding_channel")
+      .select("*")
       .eq("id", opportunityId)
       .single();
 
     if (fetchErr || !opp) return { error: "Opportunity not found" };
 
-    // Validate stage advancement rules
+    // Config-driven stage advancement validation
     if (newStage !== "closed_lost") {
-      if (
-        opp.stage === "uw" &&
-        !["awaiting_info", "closed_lost"].includes(newStage)
-      ) {
-        if (
-          opp.approval_status !== "approved" &&
-          opp.approval_status !== "auto_approved"
-        ) {
-          return { error: "Approval is required before advancing from UW" };
-        }
-      }
-
-      if (newStage === "quoting" && opp.funding_channel !== "brokered") {
-        return {
-          error: "Quoting stage is only available for brokered deals",
-        };
+      const validation = await validateStageAdvancement(opp as Record<string, unknown>, newStage);
+      if (!validation.valid) {
+        return { error: validation.message };
       }
     }
 

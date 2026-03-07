@@ -19,7 +19,7 @@ import {
   LayoutGrid,
   List,
 } from "lucide-react";
-import type { OpportunityRow } from "./opportunity-kanban";
+import type { OpportunityRow, StageThreshold } from "./opportunity-kanban";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
@@ -46,6 +46,7 @@ interface OriginationsTabsProps {
   // Opportunity pipeline (new)
   opportunityRows: OpportunityRow[];
   opportunityCount: number;
+  stageThresholds?: StageThreshold[];
 }
 
 export function OriginationsTabs({
@@ -65,6 +66,7 @@ export function OriginationsTabs({
   pendingConditionsCount,
   opportunityRows,
   opportunityCount,
+  stageThresholds = [],
 }: OriginationsTabsProps) {
   const [dealView, setDealView] = useState<"board" | "list">("board");
 
@@ -132,7 +134,7 @@ export function OriginationsTabs({
           </div>
 
           {dealView === "board" ? (
-            <OpportunityKanban data={opportunityRows} />
+            <OpportunityKanban data={opportunityRows} stageThresholds={stageThresholds} />
           ) : (
             <OpportunityListView data={opportunityRows} />
           )}

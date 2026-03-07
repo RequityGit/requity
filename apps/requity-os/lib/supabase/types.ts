@@ -82,70 +82,6 @@ export type Database = {
         }
         Relationships: []
       }
-      approval_comments: {
-        Row: {
-          approval_id: string
-          author_id: string | null
-          author_name: string | null
-          comment: string
-          created_at: string | null
-          edited_at: string | null
-          id: string
-          is_edited: boolean | null
-          likes: string[] | null
-          mentions: string[] | null
-          updated_at: string | null
-        }
-        Insert: {
-          approval_id: string
-          author_id?: string | null
-          author_name?: string | null
-          comment: string
-          created_at?: string | null
-          edited_at?: string | null
-          id?: string
-          is_edited?: boolean | null
-          likes?: string[] | null
-          mentions?: string[] | null
-          updated_at?: string | null
-        }
-        Update: {
-          approval_id?: string
-          author_id?: string | null
-          author_name?: string | null
-          comment?: string
-          created_at?: string | null
-          edited_at?: string | null
-          id?: string
-          is_edited?: boolean | null
-          likes?: string[] | null
-          mentions?: string[] | null
-          updated_at?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "approval_comments_approval_id_fkey"
-            columns: ["approval_id"]
-            isOneToOne: false
-            referencedRelation: "approval_requests"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "approval_comments_author_id_fkey"
-            columns: ["author_id"]
-            isOneToOne: false
-            referencedRelation: "equity_pipeline"
-            referencedColumns: ["assigned_to_profile_id"]
-          },
-          {
-            foreignKeyName: "approval_comments_author_id_fkey"
-            columns: ["author_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       approval_parameters: {
         Row: {
           created_at: string | null
@@ -1217,61 +1153,6 @@ export type Database = {
             columns: ["issued_by"]
             isOneToOne: false
             referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      comment_mentions: {
-        Row: {
-          comment_id: string
-          comment_type: string
-          condition_id: string | null
-          created_at: string
-          id: string
-          loan_id: string
-          mentioned_user_id: string
-          notification_sent: boolean
-        }
-        Insert: {
-          comment_id: string
-          comment_type: string
-          condition_id?: string | null
-          created_at?: string
-          id?: string
-          loan_id: string
-          mentioned_user_id: string
-          notification_sent?: boolean
-        }
-        Update: {
-          comment_id?: string
-          comment_type?: string
-          condition_id?: string | null
-          created_at?: string
-          id?: string
-          loan_id?: string
-          mentioned_user_id?: string
-          notification_sent?: boolean
-        }
-        Relationships: [
-          {
-            foreignKeyName: "comment_mentions_condition_id_fkey"
-            columns: ["condition_id"]
-            isOneToOne: false
-            referencedRelation: "loan_conditions"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "comment_mentions_loan_id_fkey"
-            columns: ["loan_id"]
-            isOneToOne: false
-            referencedRelation: "loan_pipeline"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "comment_mentions_loan_id_fkey"
-            columns: ["loan_id"]
-            isOneToOne: false
-            referencedRelation: "loans"
             referencedColumns: ["id"]
           },
         ]
@@ -2765,191 +2646,6 @@ export type Database = {
           {
             foreignKeyName: "crm_activities_performed_by_fkey"
             columns: ["performed_by"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      crm_chatter_mentions: {
-        Row: {
-          created_at: string
-          id: string
-          mentioned_user_id: string
-          notification_sent: boolean | null
-          post_id: string
-        }
-        Insert: {
-          created_at?: string
-          id?: string
-          mentioned_user_id: string
-          notification_sent?: boolean | null
-          post_id: string
-        }
-        Update: {
-          created_at?: string
-          id?: string
-          mentioned_user_id?: string
-          notification_sent?: boolean | null
-          post_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "crm_chatter_mentions_mentioned_user_id_fkey"
-            columns: ["mentioned_user_id"]
-            isOneToOne: false
-            referencedRelation: "equity_pipeline"
-            referencedColumns: ["assigned_to_profile_id"]
-          },
-          {
-            foreignKeyName: "crm_chatter_mentions_mentioned_user_id_fkey"
-            columns: ["mentioned_user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "crm_chatter_mentions_post_id_fkey"
-            columns: ["post_id"]
-            isOneToOne: false
-            referencedRelation: "crm_chatter_posts"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      crm_chatter_posts: {
-        Row: {
-          author_id: string
-          body: string
-          company_id: string | null
-          contact_id: string | null
-          created_at: string
-          deleted_at: string | null
-          edited_at: string | null
-          id: string
-          is_edited: boolean | null
-          is_pinned: boolean | null
-          loan_id: string | null
-          parent_post_id: string | null
-          pinned_at: string | null
-          pinned_by: string | null
-          updated_at: string
-        }
-        Insert: {
-          author_id: string
-          body: string
-          company_id?: string | null
-          contact_id?: string | null
-          created_at?: string
-          deleted_at?: string | null
-          edited_at?: string | null
-          id?: string
-          is_edited?: boolean | null
-          is_pinned?: boolean | null
-          loan_id?: string | null
-          parent_post_id?: string | null
-          pinned_at?: string | null
-          pinned_by?: string | null
-          updated_at?: string
-        }
-        Update: {
-          author_id?: string
-          body?: string
-          company_id?: string | null
-          contact_id?: string | null
-          created_at?: string
-          deleted_at?: string | null
-          edited_at?: string | null
-          id?: string
-          is_edited?: boolean | null
-          is_pinned?: boolean | null
-          loan_id?: string | null
-          parent_post_id?: string | null
-          pinned_at?: string | null
-          pinned_by?: string | null
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "crm_chatter_posts_author_id_fkey"
-            columns: ["author_id"]
-            isOneToOne: false
-            referencedRelation: "equity_pipeline"
-            referencedColumns: ["assigned_to_profile_id"]
-          },
-          {
-            foreignKeyName: "crm_chatter_posts_author_id_fkey"
-            columns: ["author_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "crm_chatter_posts_company_id_fkey"
-            columns: ["company_id"]
-            isOneToOne: false
-            referencedRelation: "companies"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "crm_chatter_posts_contact_id_fkey"
-            columns: ["contact_id"]
-            isOneToOne: false
-            referencedRelation: "crm_contacts"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "crm_chatter_posts_contact_id_fkey"
-            columns: ["contact_id"]
-            isOneToOne: false
-            referencedRelation: "crm_contacts_active"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "crm_chatter_posts_contact_id_fkey"
-            columns: ["contact_id"]
-            isOneToOne: false
-            referencedRelation: "crm_duplicate_candidates"
-            referencedColumns: ["contact_id"]
-          },
-          {
-            foreignKeyName: "crm_chatter_posts_contact_id_fkey"
-            columns: ["contact_id"]
-            isOneToOne: false
-            referencedRelation: "crm_duplicate_candidates"
-            referencedColumns: ["potential_duplicate_id"]
-          },
-          {
-            foreignKeyName: "crm_chatter_posts_loan_id_fkey"
-            columns: ["loan_id"]
-            isOneToOne: false
-            referencedRelation: "loan_pipeline"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "crm_chatter_posts_loan_id_fkey"
-            columns: ["loan_id"]
-            isOneToOne: false
-            referencedRelation: "loans"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "crm_chatter_posts_parent_post_id_fkey"
-            columns: ["parent_post_id"]
-            isOneToOne: false
-            referencedRelation: "crm_chatter_posts"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "crm_chatter_posts_pinned_by_fkey"
-            columns: ["pinned_by"]
-            isOneToOne: false
-            referencedRelation: "equity_pipeline"
-            referencedColumns: ["assigned_to_profile_id"]
-          },
-          {
-            foreignKeyName: "crm_chatter_posts_pinned_by_fkey"
-            columns: ["pinned_by"]
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
@@ -7648,167 +7344,6 @@ export type Database = {
           },
         ]
       }
-      loan_comments: {
-        Row: {
-          author_id: string
-          author_name: string | null
-          comment: string
-          created_at: string
-          edited_at: string | null
-          id: string
-          is_edited: boolean
-          is_internal: boolean
-          loan_id: string | null
-          mentions: string[] | null
-          opportunity_id: string | null
-          parent_comment_id: string | null
-          updated_at: string
-        }
-        Insert: {
-          author_id: string
-          author_name?: string | null
-          comment: string
-          created_at?: string
-          edited_at?: string | null
-          id?: string
-          is_edited?: boolean
-          is_internal?: boolean
-          loan_id?: string | null
-          mentions?: string[] | null
-          opportunity_id?: string | null
-          parent_comment_id?: string | null
-          updated_at?: string
-        }
-        Update: {
-          author_id?: string
-          author_name?: string | null
-          comment?: string
-          created_at?: string
-          edited_at?: string | null
-          id?: string
-          is_edited?: boolean
-          is_internal?: boolean
-          loan_id?: string | null
-          mentions?: string[] | null
-          opportunity_id?: string | null
-          parent_comment_id?: string | null
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "loan_comments_loan_id_fkey"
-            columns: ["loan_id"]
-            isOneToOne: false
-            referencedRelation: "loan_pipeline"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "loan_comments_loan_id_fkey"
-            columns: ["loan_id"]
-            isOneToOne: false
-            referencedRelation: "loans"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "loan_comments_opportunity_id_fkey"
-            columns: ["opportunity_id"]
-            isOneToOne: false
-            referencedRelation: "opportunities"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "loan_comments_opportunity_id_fkey"
-            columns: ["opportunity_id"]
-            isOneToOne: false
-            referencedRelation: "opportunity_pipeline"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "loan_comments_parent_comment_id_fkey"
-            columns: ["parent_comment_id"]
-            isOneToOne: false
-            referencedRelation: "loan_comments"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      loan_condition_comments: {
-        Row: {
-          author_id: string | null
-          author_name: string | null
-          comment: string
-          condition_id: string
-          created_at: string
-          edited_at: string | null
-          id: string
-          is_edited: boolean
-          is_internal: boolean
-          loan_id: string
-          mentions: string[] | null
-          parent_comment_id: string | null
-          updated_at: string
-        }
-        Insert: {
-          author_id?: string | null
-          author_name?: string | null
-          comment: string
-          condition_id: string
-          created_at?: string
-          edited_at?: string | null
-          id?: string
-          is_edited?: boolean
-          is_internal?: boolean
-          loan_id: string
-          mentions?: string[] | null
-          parent_comment_id?: string | null
-          updated_at?: string
-        }
-        Update: {
-          author_id?: string | null
-          author_name?: string | null
-          comment?: string
-          condition_id?: string
-          created_at?: string
-          edited_at?: string | null
-          id?: string
-          is_edited?: boolean
-          is_internal?: boolean
-          loan_id?: string
-          mentions?: string[] | null
-          parent_comment_id?: string | null
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "loan_condition_comments_condition_id_fkey"
-            columns: ["condition_id"]
-            isOneToOne: false
-            referencedRelation: "loan_conditions"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "loan_condition_comments_loan_id_fkey"
-            columns: ["loan_id"]
-            isOneToOne: false
-            referencedRelation: "loan_pipeline"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "loan_condition_comments_loan_id_fkey"
-            columns: ["loan_id"]
-            isOneToOne: false
-            referencedRelation: "loans"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "loan_condition_comments_parent_comment_id_fkey"
-            columns: ["parent_comment_id"]
-            isOneToOne: false
-            referencedRelation: "loan_condition_comments"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       loan_condition_documents: {
         Row: {
           condition_id: string
@@ -9126,6 +8661,257 @@ export type Database = {
         }
         Relationships: []
       }
+      note_mentions: {
+        Row: {
+          created_at: string
+          id: string
+          mentioned_user_id: string
+          note_id: string
+          notification_sent: boolean | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          mentioned_user_id: string
+          note_id: string
+          notification_sent?: boolean | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          mentioned_user_id?: string
+          note_id?: string
+          notification_sent?: boolean | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "crm_chatter_mentions_mentioned_user_id_fkey"
+            columns: ["mentioned_user_id"]
+            isOneToOne: false
+            referencedRelation: "equity_pipeline"
+            referencedColumns: ["assigned_to_profile_id"]
+          },
+          {
+            foreignKeyName: "crm_chatter_mentions_mentioned_user_id_fkey"
+            columns: ["mentioned_user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "note_mentions_note_id_fkey"
+            columns: ["note_id"]
+            isOneToOne: false
+            referencedRelation: "notes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      notes: {
+        Row: {
+          approval_id: string | null
+          author_id: string
+          author_name: string | null
+          body: string
+          company_id: string | null
+          condition_id: string | null
+          contact_id: string | null
+          created_at: string
+          deleted_at: string | null
+          edited_at: string | null
+          id: string
+          is_edited: boolean | null
+          is_internal: boolean
+          is_pinned: boolean | null
+          loan_id: string | null
+          mentions: string[] | null
+          opportunity_id: string | null
+          parent_note_id: string | null
+          pinned_at: string | null
+          pinned_by: string | null
+          project_id: string | null
+          task_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          approval_id?: string | null
+          author_id: string
+          author_name?: string | null
+          body: string
+          company_id?: string | null
+          condition_id?: string | null
+          contact_id?: string | null
+          created_at?: string
+          deleted_at?: string | null
+          edited_at?: string | null
+          id?: string
+          is_edited?: boolean | null
+          is_internal?: boolean
+          is_pinned?: boolean | null
+          loan_id?: string | null
+          mentions?: string[] | null
+          opportunity_id?: string | null
+          parent_note_id?: string | null
+          pinned_at?: string | null
+          pinned_by?: string | null
+          project_id?: string | null
+          task_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          approval_id?: string | null
+          author_id?: string
+          author_name?: string | null
+          body?: string
+          company_id?: string | null
+          condition_id?: string | null
+          contact_id?: string | null
+          created_at?: string
+          deleted_at?: string | null
+          edited_at?: string | null
+          id?: string
+          is_edited?: boolean | null
+          is_internal?: boolean
+          is_pinned?: boolean | null
+          loan_id?: string | null
+          mentions?: string[] | null
+          opportunity_id?: string | null
+          parent_note_id?: string | null
+          pinned_at?: string | null
+          pinned_by?: string | null
+          project_id?: string | null
+          task_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "crm_chatter_posts_author_id_fkey"
+            columns: ["author_id"]
+            isOneToOne: false
+            referencedRelation: "equity_pipeline"
+            referencedColumns: ["assigned_to_profile_id"]
+          },
+          {
+            foreignKeyName: "crm_chatter_posts_author_id_fkey"
+            columns: ["author_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "crm_chatter_posts_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "crm_chatter_posts_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "crm_contacts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "crm_chatter_posts_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "crm_contacts_active"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "crm_chatter_posts_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "crm_duplicate_candidates"
+            referencedColumns: ["contact_id"]
+          },
+          {
+            foreignKeyName: "crm_chatter_posts_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "crm_duplicate_candidates"
+            referencedColumns: ["potential_duplicate_id"]
+          },
+          {
+            foreignKeyName: "crm_chatter_posts_loan_id_fkey"
+            columns: ["loan_id"]
+            isOneToOne: false
+            referencedRelation: "loan_pipeline"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "crm_chatter_posts_loan_id_fkey"
+            columns: ["loan_id"]
+            isOneToOne: false
+            referencedRelation: "loans"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "crm_chatter_posts_pinned_by_fkey"
+            columns: ["pinned_by"]
+            isOneToOne: false
+            referencedRelation: "equity_pipeline"
+            referencedColumns: ["assigned_to_profile_id"]
+          },
+          {
+            foreignKeyName: "crm_chatter_posts_pinned_by_fkey"
+            columns: ["pinned_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notes_approval_id_fkey"
+            columns: ["approval_id"]
+            isOneToOne: false
+            referencedRelation: "approval_requests"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notes_condition_id_fkey"
+            columns: ["condition_id"]
+            isOneToOne: false
+            referencedRelation: "loan_conditions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notes_opportunity_id_fkey"
+            columns: ["opportunity_id"]
+            isOneToOne: false
+            referencedRelation: "opportunities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notes_opportunity_id_fkey"
+            columns: ["opportunity_id"]
+            isOneToOne: false
+            referencedRelation: "opportunity_pipeline"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notes_parent_note_id_fkey"
+            columns: ["parent_note_id"]
+            isOneToOne: false
+            referencedRelation: "notes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notes_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "ops_projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notes_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "ops_tasks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       notification_dispatch_log: {
         Row: {
           channel: string
@@ -9672,116 +9458,6 @@ export type Database = {
           },
         ]
       }
-      ops_project_comments: {
-        Row: {
-          author_id: string | null
-          author_name: string | null
-          comment: string
-          created_at: string | null
-          edited_at: string | null
-          id: string
-          is_edited: boolean
-          mentions: string[] | null
-          project_id: string
-          updated_at: string | null
-        }
-        Insert: {
-          author_id?: string | null
-          author_name?: string | null
-          comment: string
-          created_at?: string | null
-          edited_at?: string | null
-          id?: string
-          is_edited?: boolean
-          mentions?: string[] | null
-          project_id: string
-          updated_at?: string | null
-        }
-        Update: {
-          author_id?: string | null
-          author_name?: string | null
-          comment?: string
-          created_at?: string | null
-          edited_at?: string | null
-          id?: string
-          is_edited?: boolean
-          mentions?: string[] | null
-          project_id?: string
-          updated_at?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "ops_project_comments_author_id_fkey"
-            columns: ["author_id"]
-            isOneToOne: false
-            referencedRelation: "equity_pipeline"
-            referencedColumns: ["assigned_to_profile_id"]
-          },
-          {
-            foreignKeyName: "ops_project_comments_author_id_fkey"
-            columns: ["author_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "ops_project_comments_project_id_fkey"
-            columns: ["project_id"]
-            isOneToOne: false
-            referencedRelation: "ops_projects"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      ops_project_notes: {
-        Row: {
-          author_id: string | null
-          author_name: string | null
-          created_at: string | null
-          id: string
-          note: string
-          project_id: string | null
-        }
-        Insert: {
-          author_id?: string | null
-          author_name?: string | null
-          created_at?: string | null
-          id?: string
-          note: string
-          project_id?: string | null
-        }
-        Update: {
-          author_id?: string | null
-          author_name?: string | null
-          created_at?: string | null
-          id?: string
-          note?: string
-          project_id?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "ops_project_notes_author_id_fkey"
-            columns: ["author_id"]
-            isOneToOne: false
-            referencedRelation: "equity_pipeline"
-            referencedColumns: ["assigned_to_profile_id"]
-          },
-          {
-            foreignKeyName: "ops_project_notes_author_id_fkey"
-            columns: ["author_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "project_notes_project_id_fkey"
-            columns: ["project_id"]
-            isOneToOne: false
-            referencedRelation: "ops_projects"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       ops_projects: {
         Row: {
           assigned_to: string | null
@@ -9919,70 +9595,6 @@ export type Database = {
             columns: ["uploaded_by"]
             isOneToOne: false
             referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      ops_task_comments: {
-        Row: {
-          author_id: string | null
-          author_name: string | null
-          comment: string
-          created_at: string | null
-          edited_at: string | null
-          id: string
-          is_edited: boolean
-          likes: string[] | null
-          mentions: string[] | null
-          task_id: string
-          updated_at: string | null
-        }
-        Insert: {
-          author_id?: string | null
-          author_name?: string | null
-          comment: string
-          created_at?: string | null
-          edited_at?: string | null
-          id?: string
-          is_edited?: boolean
-          likes?: string[] | null
-          mentions?: string[] | null
-          task_id: string
-          updated_at?: string | null
-        }
-        Update: {
-          author_id?: string | null
-          author_name?: string | null
-          comment?: string
-          created_at?: string | null
-          edited_at?: string | null
-          id?: string
-          is_edited?: boolean
-          likes?: string[] | null
-          mentions?: string[] | null
-          task_id?: string
-          updated_at?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "ops_task_comments_author_id_fkey"
-            columns: ["author_id"]
-            isOneToOne: false
-            referencedRelation: "equity_pipeline"
-            referencedColumns: ["assigned_to_profile_id"]
-          },
-          {
-            foreignKeyName: "ops_task_comments_author_id_fkey"
-            columns: ["author_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "ops_task_comments_task_id_fkey"
-            columns: ["task_id"]
-            isOneToOne: false
-            referencedRelation: "ops_tasks"
             referencedColumns: ["id"]
           },
         ]
@@ -10309,6 +9921,74 @@ export type Database = {
         }
         Relationships: []
       }
+      pipeline_stage_rules: {
+        Row: {
+          created_at: string | null
+          error_message: string | null
+          field_key: string
+          id: string
+          stage_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          error_message?: string | null
+          field_key: string
+          id?: string
+          stage_id: string
+        }
+        Update: {
+          created_at?: string | null
+          error_message?: string | null
+          field_key?: string
+          id?: string
+          stage_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pipeline_stage_rules_stage_id_fkey"
+            columns: ["stage_id"]
+            isOneToOne: false
+            referencedRelation: "pipeline_stages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pipeline_stages: {
+        Row: {
+          alert_days: number
+          color: string
+          created_at: string | null
+          id: string
+          name: string
+          stage_key: string
+          stage_order: number
+          updated_at: string | null
+          warn_days: number
+        }
+        Insert: {
+          alert_days?: number
+          color?: string
+          created_at?: string | null
+          id?: string
+          name: string
+          stage_key: string
+          stage_order: number
+          updated_at?: string | null
+          warn_days?: number
+        }
+        Update: {
+          alert_days?: number
+          color?: string
+          created_at?: string | null
+          id?: string
+          name?: string
+          stage_key?: string
+          stage_order?: number
+          updated_at?: string | null
+          warn_days?: number
+        }
+        Relationships: []
+      }
       portal_activity_log: {
         Row: {
           action_type: string
@@ -10577,6 +10257,20 @@ export type Database = {
             columns: ["loan_id"]
             isOneToOne: false
             referencedRelation: "loans"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "portal_documents_uploaded_by_profiles_fkey"
+            columns: ["uploaded_by"]
+            isOneToOne: false
+            referencedRelation: "equity_pipeline"
+            referencedColumns: ["assigned_to_profile_id"]
+          },
+          {
+            foreignKeyName: "portal_documents_uploaded_by_profiles_fkey"
+            columns: ["uploaded_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -14365,6 +14059,7 @@ export type Database = {
         Args: { p_column: string; p_table: string }
         Returns: boolean
       }
+      complete_recurring_task: { Args: { p_task_id: string }; Returns: Json }
       create_construction_budget: {
         Args: { p_created_by: string; p_line_items: Json; p_loan_id: string }
         Returns: string
@@ -14642,6 +14337,7 @@ export type Database = {
         | "lead_nurture"
         | "borrower_reengagement"
         | "broker_reengagement"
+      chat_channel_type:
         | "deal_room"
         | "team"
         | "direct"
@@ -14649,6 +14345,7 @@ export type Database = {
         | "investor_room"
         | "borrower_room"
         | "project_room"
+      chat_entity_type:
         | "loan"
         | "property"
         | "fund"
@@ -14658,6 +14355,8 @@ export type Database = {
         | "ops_project"
         | "crm_contact"
         | "opportunity"
+      chat_member_role: "owner" | "admin" | "member" | "guest" | "observer"
+      chat_message_type:
         | "text"
         | "system"
         | "file"
@@ -15123,6 +14822,36 @@ export const Constants = {
         "borrower_reengagement",
         "broker_reengagement",
       ],
+      chat_channel_type: [
+        "deal_room",
+        "team",
+        "direct",
+        "group",
+        "investor_room",
+        "borrower_room",
+        "project_room",
+      ],
+      chat_entity_type: [
+        "loan",
+        "property",
+        "fund",
+        "investor",
+        "borrower",
+        "borrower_entity",
+        "ops_project",
+        "crm_contact",
+        "opportunity",
+      ],
+      chat_member_role: ["owner", "admin", "member", "guest", "observer"],
+      chat_message_type: [
+        "text",
+        "system",
+        "file",
+        "ai_response",
+        "action_item",
+        "status_update",
+        "mention_link",
+      ],
       company_subtype_enum: [
         "bank",
         "agency_lender",
@@ -15440,96 +15169,3 @@ export const Constants = {
     },
   },
 } as const
-
-export interface LenderQuote {
-  id: string;
-  created_at: string;
-  updated_at: string;
-  quote_name: string;
-  loan_id: string;
-  lender_company_id: string | null;
-  lender_contact_name: string | null;
-  loan_amount: number | null;
-  interest_rate: number | null;
-  loan_term_months: number | null;
-  interest_only_period_months: number | null;
-  ltv: number | null;
-  amortization_months: number | null;
-  origination_fee: number | null;
-  uw_processing_fee: number | null;
-  requity_lending_fee: number | null;
-  prepayment_penalty: string | null;
-  ym_spread: number | null;
-  ym_amount: number | null;
-  term_sheet_url: string | null;
-  description: string | null;
-  status: string;
-  declined_reason: string | null;
-  linked_property_id: string | null;
-  requested_at: string | null;
-  received_at: string | null;
-  accepted_at: string | null;
-  declined_at: string | null;
-  status_changed_at: string | null;
-  created_by: string | null;
-  updated_by: string | null;
-}
-
-// ---------------------------------------------------------------------------
-// Pricing types (tables not yet in generated schema)
-// ---------------------------------------------------------------------------
-
-export interface PricingProgram {
-  id: string;
-  program_id: string;
-  program_name: string;
-  loan_type: string | null;
-  version: number;
-  is_current: boolean;
-  interest_rate: number;
-  rate_type: string;
-  origination_points: number;
-  min_origination_fee: number;
-  points_note: string | null;
-  max_ltv: number;
-  max_ltc: number;
-  max_ltp: number;
-  ltv_note: string | null;
-  ltc_note: string | null;
-  loan_term_months: number;
-  term_note: string | null;
-  exit_points: number;
-  legal_doc_fee: number;
-  bpo_appraisal_cost: number;
-  bpo_appraisal_note: string | null;
-  min_credit_score: number;
-  min_deals_24mo: number;
-  citizenship: string;
-  effective_date: string;
-  created_at: string;
-}
-
-export interface LeverageAdjuster {
-  id: string;
-  risk_factor: string;
-  display_name: string;
-  condition_description: string | null;
-  ltc_adjustment: number;
-  ltv_adjustment: number;
-  is_active: boolean;
-  sort_order: number;
-  note: string | null;
-  created_at: string;
-}
-
-export interface PricingProgramVersion {
-  id: string;
-  program_id: string;
-  version: number;
-  change_description: string | null;
-  changed_at: string;
-  changed_by: string | null;
-  snapshot: Record<string, unknown> | null;
-  created_at: string;
-}
-

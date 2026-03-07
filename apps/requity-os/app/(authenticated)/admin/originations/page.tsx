@@ -30,6 +30,7 @@ export default async function AdminOriginationsPage() {
     borrowersResult,
     documentsResult,
     opportunitiesResult,
+    stageConfigResult,
   ] = await Promise.all([
     // Legacy loan pipeline data
     supabase
@@ -55,6 +56,11 @@ export default async function AdminOriginationsPage() {
       .from("opportunity_pipeline")
       .select("*")
       .order("created_at", { ascending: false }),
+    // Pipeline stage thresholds for kanban coloring
+    admin
+      .from("pipeline_stages")
+      .select("stage_key, warn_days, alert_days")
+      .order("stage_order"),
   ]);
 
   if (borrowersResult.error) {
@@ -405,6 +411,7 @@ export default async function AdminOriginationsPage() {
         pendingConditionsCount={pendingConditionsCount}
         opportunityRows={opportunityRows}
         opportunityCount={dealCount}
+        stageThresholds={stageConfigResult.data ?? []}
       />
     </div>
   );

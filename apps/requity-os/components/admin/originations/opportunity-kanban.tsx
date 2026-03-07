@@ -66,11 +66,18 @@ export interface OpportunityRow {
   processor_name: string | null;
 }
 
-interface OpportunityKanbanProps {
-  data: OpportunityRow[];
+export interface StageThreshold {
+  stage_key: string;
+  warn_days: number;
+  alert_days: number;
 }
 
-export function OpportunityKanban({ data }: OpportunityKanbanProps) {
+interface OpportunityKanbanProps {
+  data: OpportunityRow[];
+  stageThresholds?: StageThreshold[];
+}
+
+export function OpportunityKanban({ data, stageThresholds = [] }: OpportunityKanbanProps) {
   const [opportunities, setOpportunities] = useState(data);
   const [draggedId, setDraggedId] = useState<string | null>(null);
   const [movingId, setMovingId] = useState<string | null>(null);
@@ -96,10 +103,14 @@ export function OpportunityKanban({ data }: OpportunityKanbanProps) {
     return Math.floor(diff / (1000 * 60 * 60 * 24));
   }
 
-  function getDaysColor(days: number): string {
-    if (days <= 3) return "bg-green-50 text-green-700";
-    if (days <= 7) return "bg-amber-50 text-amber-700";
-    return "bg-red-50 text-red-700";
+  function getDaysColor(days: number, stageKey?: string): string {
+    const threshold = stageThresholds.find((t) => t.stage_key === stageKey);
+    const warnAt = threshold?.warn_days ?? 3;
+    const alertAt = threshold?.alert_days ?? 7;
+
+    if (days >= alertAt) return "bg-red-50 text-red-700";
+    if (days >= warnAt) return "bg-amber-50 text-amber-700";
+    return "bg-green-50 text-green-700";
   }
 
   async function moveToStage(oppId: string, newStage: string) {
@@ -328,7 +339,7 @@ export function OpportunityKanban({ data }: OpportunityKanbanProps) {
                                 {/* Days in stage + approval */}
                                 <div className="flex items-center gap-2 mt-1.5">
                                   <span
-                                    className={`inline-flex items-center gap-0.5 text-[10px] font-medium px-1.5 py-0.5 rounded ${getDaysColor(days)}`}
+                                    className={`inline-flex items-center gap-0.5 text-[10px] font-medium px-1.5 py-0.5 rounded ${getDaysColor(days, opp.stage)}`}
                                   >
                                     <Clock className="h-2.5 w-2.5" />
                                     {days}d

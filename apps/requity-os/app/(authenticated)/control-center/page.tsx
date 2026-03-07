@@ -208,6 +208,21 @@ export default async function ControlCenterOverview() {
             </CardContent>
           </Card>
         </Link>
+        <Link href="/control-center/pipeline-stage-config" className="group">
+          <Card className="hover:border-teal-300 hover:shadow-md transition-all">
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-sm font-medium">
+                Pipeline Stage Config
+              </CardTitle>
+              <ArrowRight className="h-4 w-4 text-muted-foreground group-hover:text-teal-600 transition-colors" />
+            </CardHeader>
+            <CardContent>
+              <p className="text-xs text-muted-foreground">
+                Advancement rules and warn/alert thresholds per pipeline stage.
+              </p>
+            </CardContent>
+          </Card>
+        </Link>
       </div>
     </div>
   );

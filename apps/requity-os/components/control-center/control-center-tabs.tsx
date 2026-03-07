@@ -29,6 +29,7 @@ const TABS: TabConfig[] = [
   },
   { label: "Payoff Settings", href: "/control-center/payoff-settings" },
   { label: "Field Manager", href: "/control-center/field-manager" },
+  { label: "Pipeline Stages", href: "/control-center/pipeline-stage-config" },
   { label: "Pricing Engine", href: "/control-center/pricing", disabled: true },
   {
     label: "System Settings",
