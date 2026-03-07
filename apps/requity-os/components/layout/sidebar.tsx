@@ -13,7 +13,7 @@ import {
   Landmark,
   FolderOpen,
   Hammer,
-  Settings2,
+  ListChecks,
   Contact,
   Banknote,
   Cog,
@@ -132,14 +132,11 @@ const adminNav: NavEntry[] = [
     moduleName: "documents",
   },
   {
-    label: "Operations",
-    icon: Settings2,
-    basePath: "/admin/operations",
+    label: "Tasks",
+    href: "/admin/operations/tasks",
+    icon: ListChecks,
     moduleName: "operations",
-    activePaths: ["/admin/operations/tasks"],
-    children: [
-      { label: "Tasks", href: "/admin/operations/tasks" },
-    ],
+    activePaths: ["/admin/operations"],
   },
 ];
 
