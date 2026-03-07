@@ -161,7 +161,7 @@ export function ContactDetailClient({
   return (
     <div className="min-h-screen">
       {/* Breadcrumb */}
-      <div className="flex items-center gap-2 mb-2">
+      <div className="flex items-center gap-2 mb-3">
         <Link
           href="/admin/crm"
           className="text-muted-foreground hover:text-foreground transition-colors"
