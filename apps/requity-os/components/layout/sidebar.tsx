@@ -91,13 +91,10 @@ const adminNav: NavEntry[] = [
   },
   {
     label: "Pipeline",
+    href: "/admin/pipeline",
     icon: Columns3,
-    basePath: "/admin/pipeline",
+    activePaths: ["/admin/pipeline/debt", "/admin/pipeline/equity"],
     moduleName: "pipeline",
-    children: [
-      { label: "Debt", href: "/admin/pipeline/debt" },
-      { label: "Equity", href: "/admin/pipeline/equity" },
-    ],
   },
   {
     label: "Models",
