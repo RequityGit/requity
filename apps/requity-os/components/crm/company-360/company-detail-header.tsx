@@ -27,6 +27,7 @@ interface CompanyDetailHeaderProps {
     user_function: string | null;
   } | null;
   lastActivityAt: string | null;
+  action?: React.ReactNode;
 }
 
 function computeNdaStatus(company: CompanyDetailData) {
@@ -58,6 +59,7 @@ export function CompanyDetailHeader({
   company,
   primaryContact,
   lastActivityAt,
+  action,
 }: CompanyDetailHeaderProps) {
   const typeCfg = COMPANY_TYPE_CONFIG[company.company_type] ||
     COMPANY_TYPE_CONFIG.other;
@@ -225,8 +227,9 @@ export function CompanyDetailHeader({
           </div>
         </div>
 
-        {/* Right side — primary contact & timestamps */}
+        {/* Right side — action + primary contact & timestamps */}
         <div className="text-right shrink-0">
+          {action && <div className="mb-2 flex justify-end">{action}</div>}
           {pcName && (
             <>
               <div className="text-[11px] text-muted-foreground mb-0.5 uppercase tracking-wide font-medium">
