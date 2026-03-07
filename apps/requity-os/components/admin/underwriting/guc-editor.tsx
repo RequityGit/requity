@@ -2,6 +2,7 @@
 
 import { useState, useCallback, useMemo } from "react";
 import { Input } from "@/components/ui/input";
+import { DatePicker } from "@/components/ui/date-picker";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import {
@@ -158,10 +159,9 @@ export function GUCEditor({ initialData, onSave, readOnly = false }: GUCEditorPr
           <NumericField label="Land Cost" value={form.land_cost} onChange={(v) => updateField("land_cost", v)} prefix="$" readOnly={readOnly} />
           <div>
             <Label className="text-xs text-[#71717a]">Acquisition Date</Label>
-            <Input
-              type="date"
+            <DatePicker
               value={form.land_acquisition_date}
-              onChange={(e) => updateField("land_acquisition_date", e.target.value)}
+              onChange={(value) => updateField("land_acquisition_date", value)}
               disabled={readOnly}
               className="mt-1"
             />

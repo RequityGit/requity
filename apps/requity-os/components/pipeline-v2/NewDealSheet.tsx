@@ -9,6 +9,7 @@ import {
 } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { DatePicker } from "@/components/ui/date-picker";
 import { Label } from "@/components/ui/label";
 import {
   Select,
@@ -179,10 +180,9 @@ export function NewDealSheet({
 
                 <div className="space-y-1.5">
                   <Label>Expected Close Date</Label>
-                  <Input
-                    type="date"
+                  <DatePicker
                     value={expectedClose}
-                    onChange={(e) => setExpectedClose(e.target.value)}
+                    onChange={(value) => setExpectedClose(value)}
                   />
                 </div>
 

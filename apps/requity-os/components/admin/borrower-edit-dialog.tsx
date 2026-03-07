@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { DatePicker } from "@/components/ui/date-picker";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import {
@@ -183,11 +184,9 @@ export function BorrowerEditDialog({ borrower }: BorrowerEditDialogProps) {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="editDob">Date of Birth</Label>
-              <Input
-                id="editDob"
-                type="date"
+              <DatePicker
                 value={dateOfBirth}
-                onChange={(e) => setDateOfBirth(e.target.value)}
+                onChange={(value) => setDateOfBirth(value)}
               />
             </div>
             <div className="space-y-2">
@@ -292,11 +291,9 @@ export function BorrowerEditDialog({ borrower }: BorrowerEditDialogProps) {
               </div>
               <div className="space-y-2">
                 <Label htmlFor="editCreditDate">Credit Report Date</Label>
-                <Input
-                  id="editCreditDate"
-                  type="date"
+                <DatePicker
                   value={creditReportDate}
-                  onChange={(e) => setCreditReportDate(e.target.value)}
+                  onChange={(value) => setCreditReportDate(value)}
                 />
               </div>
               <div className="space-y-2">

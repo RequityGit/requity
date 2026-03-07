@@ -8,6 +8,7 @@ import { StatusBadge } from "@/components/shared/status-badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { DatePicker } from "@/components/ui/date-picker";
 import { Label } from "@/components/ui/label";
 import {
   formatCurrency,
@@ -207,10 +208,9 @@ function InterestCalculatorTab() {
           <div className="flex items-end gap-4">
             <div className="space-y-2">
               <Label>Billing Period Start</Label>
-              <Input
-                type="date"
+              <DatePicker
                 value={periodStart}
-                onChange={(e) => setPeriodStart(e.target.value)}
+                onChange={(value) => setPeriodStart(value)}
                 className="w-48"
               />
             </div>
@@ -384,10 +384,9 @@ function ReconciliationTab() {
           <div className="flex items-end gap-4">
             <div className="space-y-2">
               <Label>Period Start</Label>
-              <Input
-                type="date"
+              <DatePicker
                 value={periodStart}
-                onChange={(e) => setPeriodStart(e.target.value)}
+                onChange={(value) => setPeriodStart(value)}
                 className="w-48"
               />
             </div>

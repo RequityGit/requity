@@ -1,8 +1,15 @@
 "use client";
 
-import { useState, useRef, useEffect, useCallback } from "react";
+import { useState, useCallback } from "react";
+import { format, parse } from "date-fns";
 import { cn } from "@/lib/utils";
-import { Check, X, Pencil, Loader2 } from "lucide-react";
+import { Pencil, Loader2 } from "lucide-react";
+import { Calendar } from "@/components/ui/calendar";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import { T } from "./components";
 
 /* ── Field type definitions ── */
@@ -38,122 +45,86 @@ export function EditableDateRow({
   displayValue,
   onSave,
 }: EditableDateRowProps) {
-  const [isEditing, setIsEditing] = useState(false);
-  const [editValue, setEditValue] = useState("");
+  const [open, setOpen] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
-  const inputRef = useRef<HTMLInputElement>(null);
 
-  const startEditing = useCallback(() => {
-    if (!onSave) return;
-    if (value) {
-      const d = new Date(value);
-      const yyyy = d.getFullYear();
-      const mm = String(d.getMonth() + 1).padStart(2, "0");
-      const dd = String(d.getDate()).padStart(2, "0");
-      setEditValue(`${yyyy}-${mm}-${dd}`);
-    } else {
-      setEditValue("");
-    }
-    setIsEditing(true);
-  }, [onSave, value]);
+  const parsedDate = value
+    ? parse(
+        (() => {
+          const d = new Date(value);
+          const yyyy = d.getFullYear();
+          const mm = String(d.getMonth() + 1).padStart(2, "0");
+          const dd = String(d.getDate()).padStart(2, "0");
+          return `${yyyy}-${mm}-${dd}`;
+        })(),
+        "yyyy-MM-dd",
+        new Date()
+      )
+    : undefined;
 
-  useEffect(() => {
-    if (isEditing && inputRef.current) {
-      inputRef.current.focus();
-    }
-  }, [isEditing]);
+  const handleSelect = useCallback(
+    async (selected: Date | undefined) => {
+      if (!onSave) return;
+      const iso = selected ? format(selected, "yyyy-MM-dd") : null;
+      setIsSaving(true);
+      try {
+        const ok = await onSave(field, iso);
+        if (ok) setOpen(false);
+      } finally {
+        setIsSaving(false);
+      }
+    },
+    [onSave, field]
+  );
 
-  const cancel = useCallback(() => {
-    setIsEditing(false);
-    setEditValue("");
-  }, []);
-
-  const save = useCallback(async () => {
-    if (!onSave) return;
-    setIsSaving(true);
-    try {
-      const ok = await onSave(field, editValue || null);
-      if (ok) setIsEditing(false);
-    } finally {
-      setIsSaving(false);
-    }
-  }, [onSave, editValue, field]);
-
-  if (isEditing) {
-    return (
-      <div
-        className="flex items-center justify-between py-1"
-        style={{ borderBottom: `1px solid ${T.accent.blue}` }}
-      >
-        <span className="text-xs" style={{ color: T.text.muted }}>{label}</span>
-        <div className="flex items-center gap-1">
-          <input
-            ref={inputRef}
-            type="date"
-            value={editValue}
-            onChange={(e) => setEditValue(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter") save();
-              if (e.key === "Escape") cancel();
-            }}
-            className="h-6 rounded border px-1.5 text-xs num outline-none"
-            style={{
-              backgroundColor: T.bg.input,
-              borderColor: T.bg.border,
-              color: T.text.primary,
-            }}
-          />
-          {isSaving ? (
-            <Loader2 size={12} className="animate-spin" color={T.accent.blue} />
-          ) : (
-            <>
-              <button
-                onClick={save}
-                className="flex h-4 w-4 cursor-pointer items-center justify-center rounded border-none"
-                style={{ backgroundColor: T.accent.green, color: "#fff" }}
-              >
-                <Check size={10} />
-              </button>
-              <button
-                onClick={cancel}
-                className="flex h-4 w-4 cursor-pointer items-center justify-center rounded border-none"
-                style={{ backgroundColor: T.bg.border, color: T.text.muted }}
-              >
-                <X size={10} />
-              </button>
-            </>
-          )}
-        </div>
-      </div>
-    );
-  }
-
-  return (
+  const row = (
     <div
       className={cn(
         "group flex justify-between py-1.5 transition-colors rounded-sm",
         onSave && "cursor-pointer px-1 -mx-1"
       )}
       style={{ borderBottom: `1px solid ${T.bg.borderSubtle}` }}
-      onClick={onSave ? startEditing : undefined}
     >
       <span className="text-xs" style={{ color: T.text.muted }}>{label}</span>
       <span className="flex items-center gap-1">
-        <span
-          className="text-xs num"
-          style={{ color: value ? T.text.primary : T.text.muted }}
-        >
-          {displayValue ?? "\u2014"}
-        </span>
-        {onSave && (
-          <Pencil
-            size={9}
-            className="shrink-0 opacity-0 transition-opacity group-hover:opacity-100"
-            color={T.text.muted}
-            strokeWidth={1.5}
-          />
+        {isSaving ? (
+          <Loader2 size={12} className="animate-spin" color={T.accent.blue} />
+        ) : (
+          <>
+            <span
+              className="text-xs num"
+              style={{ color: value ? T.text.primary : T.text.muted }}
+            >
+              {displayValue ?? "\u2014"}
+            </span>
+            {onSave && (
+              <Pencil
+                size={9}
+                className="shrink-0 opacity-0 transition-opacity group-hover:opacity-100"
+                color={T.text.muted}
+                strokeWidth={1.5}
+              />
+            )}
+          </>
         )}
       </span>
     </div>
+  );
+
+  if (!onSave) return row;
+
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>{row}</PopoverTrigger>
+      <PopoverContent className="w-auto p-0" align="end">
+        <Calendar
+          mode="single"
+          selected={parsedDate}
+          onSelect={handleSelect}
+          defaultMonth={parsedDate}
+          initialFocus
+        />
+      </PopoverContent>
+    </Popover>
   );
 }

@@ -1,8 +1,8 @@
 "use client";
 
 import { cn } from "@/lib/utils";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { DatePicker } from "@/components/ui/date-picker";
 import {
   Select,
   SelectContent,
@@ -204,20 +204,18 @@ export function RecurrencePanel({
           <Label className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
             Start Date
           </Label>
-          <Input
-            type="date"
+          <DatePicker
             value={startDate}
-            onChange={(e) => onStartDateChange(e.target.value)}
+            onChange={(value) => onStartDateChange(value)}
           />
         </div>
         <div className="space-y-1.5">
           <Label className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
             End Date
           </Label>
-          <Input
-            type="date"
+          <DatePicker
             value={endDate}
-            onChange={(e) => onEndDateChange(e.target.value)}
+            onChange={(value) => onEndDateChange(value)}
           />
           <span className="text-[10px] text-muted-foreground/70">
             Leave blank for no end
