@@ -17,8 +17,15 @@ jobs:
       - name: Install Claude Code
         run: npm install -g @anthropic-ai/claude-code
 
-      - name: Debug MCP config
-        run: cat .mcp.json
+      - name: Verify Sentry token
+        run: |
+          if [ -z "$SENTRY_AUTH_TOKEN" ]; then
+            echo "::error::SENTRY_AUTH_TOKEN secret is not set. Add it in repo Settings > Secrets."
+            exit 1
+          fi
+          echo "Sentry auth token is configured."
+        env:
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
 
       - name: Run Sentry fixes
         env:
@@ -27,7 +34,7 @@ jobs:
           SENTRY_ORG: requity
         run: |
           claude --print "
-            Using Sentry MCP, fetch the top 5 unresolved issues by user impact.
+            Using the Sentry MCP tools, fetch the top 5 unresolved issues for the 'requity' org by user impact.
             For each one: analyze the stack trace, fix the code, create a branch, and open a draft PR.
             Do not touch anything you are not confident about — skip it instead.
           "
