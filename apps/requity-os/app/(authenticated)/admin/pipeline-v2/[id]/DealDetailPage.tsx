@@ -47,7 +47,7 @@ import {
   Loader2,
 } from "lucide-react";
 import { StageStepper } from "@/components/pipeline-v2/StageStepper";
-import { StageChecklist } from "@/components/pipeline-v2/StageChecklist";
+import { EditableOverview } from "@/components/pipeline-v2/EditableOverview";
 import { UnderwritingPanel } from "@/components/pipeline-v2/UnderwritingPanel";
 import { DocumentsTab } from "@/components/pipeline-v2/tabs/DocumentsTab";
 import { TasksTab } from "@/components/pipeline-v2/tabs/TasksTab";
@@ -345,8 +345,9 @@ function TabContent({
   switch (activeTab) {
     case "Overview":
       return (
-        <OverviewContent
-          deal={deal}
+        <EditableOverview
+          dealId={deal.id}
+          uwData={deal.uw_data}
           cardType={cardType}
           checklist={checklist}
         />
@@ -434,56 +435,6 @@ function TabContent({
     default:
       return null;
   }
-}
-
-// ─── Overview ───
-
-function OverviewContent({
-  deal,
-  cardType,
-  checklist,
-}: {
-  deal: UnifiedDeal;
-  cardType: UnifiedCardType;
-  checklist: ChecklistItem[];
-}) {
-  const uwFieldMap = new Map(cardType.uw_fields.map((f) => [f.key, f]));
-
-  return (
-    <div className="space-y-6">
-      {cardType.detail_field_groups.map((group) => (
-        <div key={group.label} className="rounded-xl border bg-card p-5">
-          <h4 className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-3">
-            {group.label}
-          </h4>
-          <div className="grid grid-cols-2 gap-x-8 gap-y-3">
-            {group.fields.map((fieldKey) => {
-              const fieldDef = uwFieldMap.get(fieldKey);
-              const value = deal.uw_data[fieldKey];
-              return (
-                <div key={fieldKey}>
-                  <p className="text-xs text-muted-foreground">
-                    {fieldDef?.label ?? fieldKey.replace(/_/g, " ")}
-                  </p>
-                  <p className="text-sm num mt-0.5">
-                    {formatFieldValue(value, fieldDef?.type)}
-                  </p>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      ))}
-
-      {/* Checklist */}
-      <div className="rounded-xl border bg-card p-5">
-        <h4 className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-3">
-          Stage Checklist
-        </h4>
-        <StageChecklist items={checklist} />
-      </div>
-    </div>
-  );
 }
 
 // ─── Activity ───
@@ -1103,14 +1054,3 @@ function QuickAction({
   );
 }
 
-// ─── Helpers ───
-
-function formatFieldValue(value: unknown, type?: string): string {
-  if (value == null || value === "") return "\u2014";
-  if (type === "currency" && typeof value === "number")
-    return formatCurrency(value);
-  if (type === "percent" && typeof value === "number")
-    return `${Number(value).toFixed(2)}%`;
-  if (type === "boolean") return value ? "Yes" : "No";
-  return String(value).replace(/_/g, " ");
-}

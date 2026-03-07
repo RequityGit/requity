@@ -280,8 +280,33 @@ export function computeUwOutput(
   }
   if (key === "cap_rate_stabilized") {
     const noi = val("noi_stabilized");
-    const price = val("offer_price");
+    const price = val("offer_price") ?? val("property_value");
     if (noi != null && price != null && price !== 0) return (noi / price) * 100;
+  }
+  if (key === "cap_rate_going_in") {
+    const noi = val("noi_current") ?? val("noi");
+    const price = val("property_value") ?? val("offer_price");
+    if (noi != null && price != null && price !== 0) return (noi / price) * 100;
+  }
+  if (key === "bridge_ltv") {
+    const bridgeLoan = val("bridge_loan_amount");
+    const propVal = val("property_value");
+    if (bridgeLoan != null && propVal != null && propVal !== 0) return (bridgeLoan / propVal) * 100;
+  }
+  if (key === "exit_dscr") {
+    const noi = val("noi_stabilized") ?? val("noi_current") ?? val("noi");
+    const exitLoan = val("exit_loan_amount");
+    const exitRate = val("exit_rate");
+    const exitAmort = val("exit_amortization_years");
+    if (noi != null && exitLoan != null && exitRate != null && exitAmort != null && exitAmort > 0) {
+      const monthlyRate = exitRate / 100 / 12;
+      const numPayments = exitAmort * 12;
+      const monthlyPayment = monthlyRate > 0
+        ? exitLoan * (monthlyRate * Math.pow(1 + monthlyRate, numPayments)) / (Math.pow(1 + monthlyRate, numPayments) - 1)
+        : exitLoan / numPayments;
+      const annualDebtService = monthlyPayment * 12;
+      if (annualDebtService > 0) return noi / annualDebtService;
+    }
   }
 
   // Fallback: try to parse simple "a / b * c" patterns
