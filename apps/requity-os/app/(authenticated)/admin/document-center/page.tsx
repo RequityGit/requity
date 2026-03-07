@@ -16,12 +16,12 @@ export default async function DocumentCenterPage() {
   if (!user) redirect("/login");
 
   // Fetch portal documents with joined entity names
-  const { data: documents } = await supabase
+  const { data: documents, error: documentsError } = await supabase
     .from("portal_documents")
     .select(
       `
       *,
-      profiles:uploaded_by(full_name, email),
+      profiles:uploaded_by!portal_documents_uploaded_by_profiles_fkey(full_name, email),
       loans!portal_documents_loan_id_fkey(property_address, loan_number),
       funds!portal_documents_fund_id_fkey(name),
       borrowers!portal_documents_borrower_id_fkey(id),
@@ -32,6 +32,10 @@ export default async function DocumentCenterPage() {
     )
     .is("deleted_at", null)
     .order("created_at", { ascending: false });
+
+  if (documentsError) {
+    console.error("Error fetching portal documents:", documentsError);
+  }
 
   // Fetch borrower names via CRM contacts for display
   const { data: borrowerProfiles } = await supabase
