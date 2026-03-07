@@ -1,5 +1,6 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { requireAdmin } from "@/lib/auth/require-admin";
 
@@ -125,6 +126,7 @@ export async function createOpportunityAction(input: CreateOpportunityInput) {
         console.error("Error adding borrowers:", borrowerError.message);
     }
 
+    revalidatePath("/admin/originations");
     return { success: true, opportunityId: oppData.id };
   } catch (err: any) {
     console.error("createOpportunityAction error:", err);
@@ -155,6 +157,7 @@ export async function updateOpportunityAction(input: UpdateOpportunityInput) {
       .eq("id", id);
 
     if (error) return { error: error.message };
+    revalidatePath("/admin/originations");
     return { success: true };
   } catch (err: any) {
     console.error("updateOpportunityAction error:", err);
@@ -230,6 +233,7 @@ export async function moveOpportunityStageAction(
       .eq("id", opportunityId);
 
     if (error) return { error: error.message };
+    revalidatePath("/admin/originations");
     return { success: true };
   } catch (err: any) {
     console.error("moveOpportunityStageAction error:", err);
@@ -312,6 +316,7 @@ export async function requestApprovalAction(opportunityId: string) {
       return { error: approvalError.message };
     }
 
+    revalidatePath("/admin/originations");
     return { success: true };
   } catch (err: any) {
     console.error("requestApprovalAction error:", err);
@@ -368,6 +373,7 @@ export async function decideApprovalAction(
         .eq("id", (existing[0] as any).id);
     }
 
+    revalidatePath("/admin/originations");
     return { success: true };
   } catch (err: any) {
     console.error("decideApprovalAction error:", err);
@@ -408,6 +414,7 @@ export async function addOpportunityBorrowerAction(
     });
 
     if (error) return { error: error.message };
+    revalidatePath("/admin/originations");
     return { success: true };
   } catch (err: any) {
     console.error("addOpportunityBorrowerAction error:", err);
@@ -436,6 +443,7 @@ export async function removeOpportunityBorrowerAction(
       .eq("borrower_id", borrowerId);
 
     if (error) return { error: error.message };
+    revalidatePath("/admin/originations");
     return { success: true };
   } catch (err: any) {
     console.error("removeOpportunityBorrowerAction error:", err);
@@ -526,6 +534,7 @@ export async function createSnapshotAction(input: CreateSnapshotInput) {
       .single();
 
     if (error) return { error: error.message };
+    revalidatePath("/admin/originations");
     return { success: true, snapshotId: data.id };
   } catch (err: any) {
     console.error("createSnapshotAction error:", err);
@@ -546,6 +555,7 @@ export async function deleteSnapshotAction(snapshotId: string) {
       .eq("id", snapshotId);
 
     if (error) return { error: error.message };
+    revalidatePath("/admin/originations");
     return { success: true };
   } catch (err: any) {
     console.error("deleteSnapshotAction error:", err);
@@ -573,6 +583,7 @@ export async function updatePropertyAction(
       .eq("id", propertyId);
 
     if (error) return { error: error.message };
+    revalidatePath("/admin/originations");
     return { success: true };
   } catch (err: any) {
     console.error("updatePropertyAction error:", err);
@@ -634,6 +645,7 @@ export async function getOrCreateOpportunityChatterChannel(opportunityId: string
     // Also create a chat_channels entry for the main Chatter page
     await ensureChatChannel(admin, opportunityId, channelName, auth.user.id);
 
+    revalidatePath("/admin/originations");
     return { success: true, channel };
   } catch (err: any) {
     console.error("getOrCreateOpportunityChatterChannel exception:", err);

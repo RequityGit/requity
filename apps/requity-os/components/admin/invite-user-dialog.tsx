@@ -81,10 +81,16 @@ export function InviteUserDialog({
         fetchInvestorsAction().then((result) => {
           if ("success" in result) setInvestors(result.investors);
           setLinkDataLoading(false);
+        }).catch((err) => {
+          console.error("invite-user: failed to fetch investors", err);
+          setLinkDataLoading(false);
         });
       } else {
         fetchBorrowersAction().then((result) => {
           if ("success" in result) setBorrowers(result.borrowers);
+          setLinkDataLoading(false);
+        }).catch((err) => {
+          console.error("invite-user: failed to fetch borrowers", err);
           setLinkDataLoading(false);
         });
       }

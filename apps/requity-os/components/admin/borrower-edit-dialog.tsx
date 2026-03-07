@@ -77,6 +77,7 @@ export function BorrowerEditDialog({ borrower }: BorrowerEditDialogProps) {
     try {
       const result = await updateBorrowerAction({
         id: borrower.id,
+        crm_contact_id: borrower.crm_contact_id ?? undefined,
         first_name: firstName.trim(),
         last_name: lastName.trim(),
         email: email.trim() || undefined,

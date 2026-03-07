@@ -39,15 +39,28 @@ export default async function AdminBorrowerDetailPage({ params }: PageProps) {
 
   const { data: borrowerRow } = await admin
     .from("borrowers")
-    .select("*")
+    .select("*, crm_contacts(*)")
     .eq("id", id)
     .single();
 
   if (!borrowerRow) notFound();
 
-  // Cast to any since borrower fields (name, email, phone, address) may come
-  // from crm_contacts in the new schema, but legacy code still references them
-  const borrower = borrowerRow as any;
+  // Merge crm_contact fields onto borrower for display.
+  // Contact fields (first_name, email, phone, address) live on crm_contacts.
+  const contact = (borrowerRow as any).crm_contacts ?? {};
+  const borrower = {
+    ...borrowerRow,
+    first_name: contact.first_name ?? null,
+    last_name: contact.last_name ?? null,
+    email: contact.email ?? null,
+    phone: contact.phone ?? null,
+    address_line1: contact.address_line1 ?? null,
+    address_line2: contact.address_line2 ?? null,
+    city: contact.city ?? null,
+    state: contact.state ?? null,
+    zip: contact.zip ?? null,
+    country: contact.country ?? null,
+  };
 
   // Fetch related data in parallel
   const [entitiesResult, loansResult, emailsResult, profileResult] = await Promise.all([
@@ -94,7 +107,7 @@ export default async function AdminBorrowerDetailPage({ params }: PageProps) {
   }));
   const currentUserName = profileResult.data?.full_name || user.email || "Unknown";
 
-  const fullName = `${(borrower as any).first_name ?? ""} ${(borrower as any).last_name ?? ""}`.trim() || "Unknown";
+  const fullName = `${borrower.first_name ?? ""} ${borrower.last_name ?? ""}`.trim() || "Unknown";
 
   return (
     <div className="space-y-6">

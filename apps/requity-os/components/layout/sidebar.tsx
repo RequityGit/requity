@@ -178,16 +178,21 @@ export function Sidebar({
     const supabase = createClient();
     supabase.auth.getUser().then(({ data: { user } }) => {
       if (user) setUserId(user.id);
+    }).catch((err) => {
+      console.error("sidebar: failed to get user", err);
     });
 
     // Fetch pending approvals count
-    supabase
-      .from("approval_requests" as never)
-      .select("id", { count: "exact", head: true })
-      .eq("status" as never, "pending" as never)
-      .then(({ count }) => {
-        setPendingApprovals(count ?? 0);
-      });
+    Promise.resolve(
+      supabase
+        .from("approval_requests" as never)
+        .select("id", { count: "exact", head: true })
+        .eq("status" as never, "pending" as never)
+    ).then(({ count }) => {
+      setPendingApprovals(count ?? 0);
+    }).catch((err) => {
+      console.error("sidebar: failed to fetch pending approvals", err);
+    });
   }, []);
 
   // Use view-as role for navigation when super admin is simulating

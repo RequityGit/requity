@@ -108,14 +108,17 @@ export function TaskFormModal({
   useEffect(() => {
     if (!task) return;
     const supabase = createClient();
-    supabase
-      .from("ops_task_attachments" as never)
-      .select("*" as never)
-      .eq("task_id" as never, task.id as never)
-      .order("created_at" as never)
-      .then(({ data }) => {
-        if (data) setAttachments(data as never);
-      });
+    Promise.resolve(
+      supabase
+        .from("ops_task_attachments" as never)
+        .select("*" as never)
+        .eq("task_id" as never, task.id as never)
+        .order("created_at" as never)
+    ).then(({ data }) => {
+      if (data) setAttachments(data as never);
+    }).catch((err) => {
+      console.error("task-form-modal: failed to load attachments", err);
+    });
   }, [task]);
 
   const handleLinkedEntityChange = useCallback(

@@ -1,5 +1,6 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { requireAdmin } from "@/lib/auth/require-admin";
@@ -231,6 +232,7 @@ export async function inviteUserAction(input: InviteUserInput): Promise<
             );
           }
 
+          revalidatePath("/admin/users");
           return { success: true, userId: existingAuthUser.id };
         }
       }
@@ -269,6 +271,7 @@ export async function inviteUserAction(input: InviteUserInput): Promise<
       );
     }
 
+    revalidatePath("/admin/users");
     return { success: true, userId: newUser.user.id };
   } catch (err: unknown) {
     console.error("inviteUserAction error:", err);
@@ -347,6 +350,7 @@ export async function addRoleAction(
       }
     }
 
+    revalidatePath("/admin/users");
     return { success: true };
   } catch (err: unknown) {
     console.error("addRoleAction error:", err);
@@ -404,6 +408,7 @@ export async function removeRoleAction(
       await admin.from("profiles").update(update).eq("id", userId);
     }
 
+    revalidatePath("/admin/users");
     return { success: true };
   } catch (err: unknown) {
     console.error("removeRoleAction error:", err);
@@ -433,6 +438,7 @@ export async function updateActivationStatusAction(
 
     if (error) return { error: error.message };
 
+    revalidatePath("/admin/users");
     return { success: true };
   } catch (err: unknown) {
     console.error("updateActivationStatusAction error:", err);
@@ -477,6 +483,7 @@ export async function resendInviteAction(
       .update({ activation_status: "link_sent" })
       .eq("id", userId);
 
+    revalidatePath("/admin/users");
     return { success: true };
   } catch (err: unknown) {
     console.error("resendInviteAction error:", err);

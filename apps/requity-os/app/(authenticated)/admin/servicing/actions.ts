@@ -1,5 +1,6 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { requireAdmin } from "@/lib/auth/require-admin";
 
@@ -132,6 +133,7 @@ export async function addLoanToServicingAction(formData: ServicingLoanFormData) 
       notes: `Loan boarded to servicing by ${auth.user.email}`,
     });
 
+    revalidatePath("/admin/servicing");
     return { success: true, loanId: newLoan.loan_id };
   } catch (err: unknown) {
     console.error("addLoanToServicingAction error:", err);
@@ -315,6 +317,7 @@ export async function moveToServicingAction(pipelineLoanId: string) {
       notes: `Loan migrated from pipeline (stage: ${loan.stage}) by ${auth.user.email}`,
     });
 
+    revalidatePath("/admin/servicing");
     return { success: true, loanId: newLoan.loan_id };
   } catch (err: unknown) {
     console.error("moveToServicingAction error:", err);

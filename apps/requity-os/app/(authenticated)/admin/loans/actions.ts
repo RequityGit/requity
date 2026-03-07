@@ -1,5 +1,6 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
 import { requireSuperAdmin } from "@/lib/auth/require-admin";
 import { createAdminClient } from "@/lib/supabase/admin";
 
@@ -32,6 +33,7 @@ export async function deleteLoanAction(loanId: string) {
       return { error: error.message };
     }
 
+    revalidatePath("/admin/loans");
     return { success: true };
   } catch (err: unknown) {
     console.error("deleteLoanAction error:", err);

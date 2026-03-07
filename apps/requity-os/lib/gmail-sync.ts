@@ -869,11 +869,11 @@ export async function syncAllConnectedUsers(): Promise<SyncResult[]> {
   const results: SyncResult[] = [];
   for (const token of tokens) {
     try {
-      console.log(`Syncing Gmail for user ${token.user_id} (${token.email})`);
+      console.error(`[Gmail Sync] Syncing Gmail for user ${token.user_id} (${token.email})`);
       const result = await syncUserGmail(token.user_id);
       results.push(result);
-      console.log(
-        `Synced ${result.messagesProcessed} messages for ${result.email} (${result.errors.length} errors)`
+      console.error(
+        `[Gmail Sync] Synced ${result.messagesProcessed} messages for ${result.email} (${result.errors.length} errors)`
       );
     } catch (err) {
       console.error(`Sync failed for user ${token.user_id}:`, err);

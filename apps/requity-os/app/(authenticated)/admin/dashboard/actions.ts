@@ -1,5 +1,6 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { requireAdmin } from "@/lib/auth/require-admin";
@@ -254,9 +255,13 @@ export async function toggleTask(
 
     // Update streak if completing
     if (isCompleted) {
-      await admin.rpc("update_user_streak", { p_user_id: auth.user.id });
+      const { error: streakErr } = await admin.rpc("update_user_streak", { p_user_id: auth.user.id });
+      if (streakErr) {
+        console.error("toggleTask: failed to update streak", streakErr);
+      }
     }
 
+    revalidatePath("/admin/dashboard");
     return { success: true };
   } catch (err) {
     console.error("toggleTask error:", err);
@@ -291,6 +296,7 @@ export async function createTask(input: {
       .single();
 
     if (error) return { error: error.message };
+    revalidatePath("/admin/dashboard");
     return { success: true, id: data.id };
   } catch (err) {
     console.error("createTask error:", err);
@@ -330,6 +336,7 @@ export async function followUpBorrowerRequest(
 
     if (error) return { error: error.message };
 
+    revalidatePath("/admin/dashboard");
     return { success: true };
   } catch (err) {
     console.error("followUpBorrowerRequest error:", err);
@@ -363,13 +370,18 @@ export async function approveRequest(
     if (error) return { error: error.message };
 
     // Log the approval in audit log
-    await admin.from("approval_audit_log").insert({
+    const { error: auditErr } = await (admin as any).from("approval_audit_log").insert({
       approval_id: approvalId,
       performed_by: auth.user.id,
       action: "approved",
       notes: notes || null,
     });
 
+    if (auditErr) {
+      console.error("approveRequest: failed to write audit log", auditErr);
+    }
+
+    revalidatePath("/admin/dashboard");
     return { success: true };
   } catch (err) {
     console.error("approveRequest error:", err);

@@ -29,7 +29,7 @@ export async function POST(request: NextRequest) {
 
   // Cron call: sync all users
   if (isCronCall) {
-    console.log("[Gmail Sync] Cron-triggered sync for all connected users");
+    console.error("[Gmail Sync] Cron-triggered sync for all connected users");
     const results = await syncAllConnectedUsers();
     const totalProcessed = results.reduce((sum, r) => sum + r.messagesProcessed, 0);
     const totalErrors = results.reduce((sum, r) => sum + r.errors.length, 0);
@@ -76,7 +76,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    console.log("[Gmail Sync] Admin-triggered sync for all connected users");
+    console.error("[Gmail Sync] Admin-triggered sync for all connected users");
     const results = await syncAllConnectedUsers();
     return NextResponse.json({
       success: true,
@@ -109,7 +109,7 @@ export async function POST(request: NextRequest) {
     }
   }
 
-  console.log(`[Gmail Sync] Manual sync for user ${body.userId}`);
+  console.error(`[Gmail Sync] Manual sync for user ${body.userId}`);
   const result = await syncUserGmail(body.userId);
 
   return NextResponse.json({

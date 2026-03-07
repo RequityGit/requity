@@ -1,5 +1,6 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { requireAdmin } from "@/lib/auth/require-admin";
 import {
@@ -57,7 +58,7 @@ export async function addLenderAction(input: LenderInput) {
 
     // Record version history
     const lenderId = (data as any).id;
-    await admin.from("dscr_pricing_versions" as any).insert({
+    const { error: versionErr } = await admin.from("dscr_pricing_versions" as any).insert({
       lender_id: lenderId,
       lender_name: input.short_name || input.name,
       version: 1,
@@ -66,6 +67,11 @@ export async function addLenderAction(input: LenderInput) {
       changed_by: auth.user.id,
     });
 
+    if (versionErr) {
+      console.error("addLenderAction: failed to record version history", versionErr);
+    }
+
+    revalidatePath("/admin/dscr");
     return { success: true, lenderId };
   } catch (err: any) {
     console.error("addLenderAction error:", err);
@@ -96,6 +102,7 @@ export async function updateLenderAction(id: string, input: LenderInput) {
       .eq("id", id);
 
     if (error) return { error: error.message };
+    revalidatePath("/admin/dscr");
     return { success: true };
   } catch (err: any) {
     console.error("updateLenderAction error:", err);
@@ -115,6 +122,7 @@ export async function toggleLenderActiveAction(id: string, isActive: boolean) {
       .eq("id", id);
 
     if (error) return { error: error.message };
+    revalidatePath("/admin/dscr");
     return { success: true };
   } catch (err: any) {
     console.error("toggleLenderActiveAction error:", err);
@@ -205,6 +213,7 @@ export async function addProductAction(input: ProductInput) {
       });
     }
 
+    revalidatePath("/admin/dscr");
     return { success: true, productId };
   } catch (err: any) {
     console.error("addProductAction error:", err);
@@ -244,6 +253,7 @@ export async function updateProductAction(id: string, input: Omit<ProductInput, 
       .eq("id", id);
 
     if (error) return { error: error.message };
+    revalidatePath("/admin/dscr");
     return { success: true };
   } catch (err: any) {
     console.error("updateProductAction error:", err);
@@ -285,6 +295,7 @@ export async function toggleProductActiveAction(id: string, isActive: boolean) {
       });
     }
 
+    revalidatePath("/admin/dscr");
     return { success: true };
   } catch (err: any) {
     console.error("toggleProductActiveAction error:", err);
@@ -335,10 +346,15 @@ export async function commitRateSheetAction(input: CommitRateSheetInput) {
 
     const admin = createAdminClient();
 
-    // Delete existing rate data for this product
-    await admin.from("dscr_base_rates" as any).delete().eq("product_id", input.product_id);
-    await admin.from("dscr_fico_ltv_adjustments" as any).delete().eq("product_id", input.product_id);
-    await admin.from("dscr_price_adjustments" as any).delete().eq("product_id", input.product_id);
+    // Delete existing rate data for this product — check each for errors
+    const { error: delRatesErr } = await admin.from("dscr_base_rates" as any).delete().eq("product_id", input.product_id);
+    if (delRatesErr) return { error: `Failed to clear base rates: ${delRatesErr.message}` };
+
+    const { error: delFicoErr } = await admin.from("dscr_fico_ltv_adjustments" as any).delete().eq("product_id", input.product_id);
+    if (delFicoErr) return { error: `Failed to clear FICO/LTV adjustments: ${delFicoErr.message}` };
+
+    const { error: delAdjErr } = await admin.from("dscr_price_adjustments" as any).delete().eq("product_id", input.product_id);
+    if (delAdjErr) return { error: `Failed to clear price adjustments: ${delAdjErr.message}` };
 
     // Insert base rates
     if (input.base_rates.length > 0) {
@@ -400,17 +416,25 @@ export async function commitRateSheetAction(input: CommitRateSheetInput) {
     }
 
     // Update product rate sheet date
-    await admin
+    const { error: prodUpdateErr } = await admin
       .from("dscr_lender_products" as any)
       .update({ rate_sheet_date: input.rate_sheet_date })
       .eq("id", input.product_id);
 
+    if (prodUpdateErr) {
+      console.error("commitRateSheetAction: failed to update product rate_sheet_date", prodUpdateErr);
+    }
+
     // Update upload record if provided
     if (input.upload_id) {
-      await admin
+      const { error: uploadUpdateErr } = await admin
         .from("dscr_rate_sheet_uploads" as any)
         .update({ parsing_status: "success", parsed_at: new Date().toISOString() })
         .eq("id", input.upload_id);
+
+      if (uploadUpdateErr) {
+        console.error("commitRateSheetAction: failed to update upload record", uploadUpdateErr);
+      }
     }
 
     // Record version history
@@ -445,6 +469,7 @@ export async function commitRateSheetAction(input: CommitRateSheetInput) {
       });
     }
 
+    revalidatePath("/admin/dscr");
     return { success: true };
   } catch (err: any) {
     console.error("commitRateSheetAction error:", err);
@@ -635,6 +660,7 @@ export async function runPricingAction(input: PricingRunInput) {
 
     if (runErr) return { error: runErr.message };
 
+    revalidatePath("/admin/dscr");
     return {
       success: true,
       pricingRunId: (run as any).id,
@@ -847,6 +873,7 @@ Return ONLY valid JSON with this structure:
       })
       .eq("id", uploadId);
 
+    revalidatePath("/admin/dscr");
     return { success: true, parsedData };
   } catch (err: any) {
     console.error("parseRateSheetAction error:", err);
@@ -884,6 +911,7 @@ export async function createRateSheetUploadAction(
       .single();
 
     if (error) return { error: error.message };
+    revalidatePath("/admin/dscr");
     return { success: true, uploadId: (data as any).id };
   } catch (err: any) {
     console.error("createRateSheetUploadAction error:", err);
@@ -926,6 +954,7 @@ export async function saveQuoteAction(input: {
       .single();
 
     if (error) return { error: error.message };
+    revalidatePath("/admin/dscr");
     return { success: true, quoteId: (data as any).id };
   } catch (err: any) {
     console.error("saveQuoteAction error:", err);

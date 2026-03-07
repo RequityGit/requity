@@ -1,5 +1,6 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { requireAdmin } from "@/lib/auth/require-admin";
 import type { Database } from "@/lib/supabase/types";
@@ -51,6 +52,7 @@ export async function advanceStage(
       metadata: { from: fromStage, to: toStage },
     });
 
+    revalidatePath("/admin/pipeline");
     return { success: true };
   } catch (err: unknown) {
     console.error("advanceStage exception:", err);
@@ -97,6 +99,7 @@ export async function advanceOpportunityStage(
       changed_by: userId,
     });
 
+    revalidatePath("/admin/pipeline");
     return { success: true };
   } catch (err: unknown) {
     console.error("advanceOpportunityStage exception:", err);
@@ -161,6 +164,7 @@ export async function createUWVersion(
       return { error: error.message };
     }
 
+    revalidatePath("/admin/pipeline");
     return { success: true, version: newVersion };
   } catch (err: unknown) {
     console.error("createUWVersion exception:", err);
@@ -278,6 +282,7 @@ export async function saveUWVersion(
       });
     }
 
+    revalidatePath("/admin/pipeline");
     return { success: true };
   } catch (err: unknown) {
     console.error("saveUWVersion exception:", err);
@@ -321,6 +326,7 @@ export async function postComment(
       });
     }
 
+    revalidatePath("/admin/pipeline");
     return { success: true, comment: data };
   } catch (err: unknown) {
     console.error("postComment exception:", err);

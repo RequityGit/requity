@@ -74,11 +74,17 @@ export function RoleManagementDialog({
       fetchInvestorsAction().then((result) => {
         if ("success" in result) setInvestors(result.investors);
         setEntityLoading(false);
+      }).catch((err) => {
+        console.error("role-management: failed to fetch investors", err);
+        setEntityLoading(false);
       });
     } else if (newRole === "borrower") {
       setEntityLoading(true);
       fetchBorrowersAction().then((result) => {
         if ("success" in result) setBorrowers(result.borrowers);
+        setEntityLoading(false);
+      }).catch((err) => {
+        console.error("role-management: failed to fetch borrowers", err);
         setEntityLoading(false);
       });
     }
