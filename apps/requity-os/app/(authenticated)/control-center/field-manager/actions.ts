@@ -53,7 +53,7 @@ export async function publishFieldConfigurations(
       return { error: error.message };
     }
 
-    revalidatePath("/admin/field-manager");
+    revalidatePath("/control-center/field-manager");
     return { success: true };
   } catch (err: unknown) {
     console.error("publishFieldConfigurations error:", err);
@@ -78,7 +78,7 @@ export async function archiveField(fieldId: string) {
       return { error: error.message };
     }
 
-    revalidatePath("/admin/field-manager");
+    revalidatePath("/control-center/field-manager");
     return { success: true };
   } catch (err: unknown) {
     console.error("archiveField error:", err);
@@ -103,7 +103,7 @@ export async function restoreField(fieldId: string) {
       return { error: error.message };
     }
 
-    revalidatePath("/admin/field-manager");
+    revalidatePath("/control-center/field-manager");
     return { success: true };
   } catch (err: unknown) {
     console.error("restoreField error:", err);

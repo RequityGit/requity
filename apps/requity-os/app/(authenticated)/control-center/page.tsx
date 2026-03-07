@@ -192,6 +192,22 @@ export default async function ControlCenterOverview() {
             </CardContent>
           </Card>
         </Link>
+        <Link href="/control-center/field-manager" className="group">
+          <Card className="hover:border-teal-300 hover:shadow-md transition-all">
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-sm font-medium">
+                Field Manager
+              </CardTitle>
+              <ArrowRight className="h-4 w-4 text-muted-foreground group-hover:text-teal-600 transition-colors" />
+            </CardHeader>
+            <CardContent>
+              <p className="text-xs text-muted-foreground">
+                Configure field visibility and ordering across deal detail
+                modules.
+              </p>
+            </CardContent>
+          </Card>
+        </Link>
       </div>
     </div>
   );

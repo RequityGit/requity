@@ -28,6 +28,7 @@ const TABS: TabConfig[] = [
     href: "/control-center/underwriting",
   },
   { label: "Payoff Settings", href: "/control-center/payoff-settings" },
+  { label: "Field Manager", href: "/control-center/field-manager" },
   { label: "Pricing Engine", href: "/control-center/pricing", disabled: true },
   {
     label: "System Settings",
