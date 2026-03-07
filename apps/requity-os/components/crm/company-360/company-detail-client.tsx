@@ -148,16 +148,12 @@ export function CompanyDetailClient({
         {/* Main Content */}
         <div className="flex-1 min-w-0 px-4 md:px-6 lg:px-8 py-6 pb-10">
           {/* Header Card */}
-          <div className="relative">
-            <CompanyDetailHeader
-              company={company}
-              primaryContact={primaryContact}
-              lastActivityAt={activities[0]?.created_at || null}
-            />
-            <div className="absolute top-4 right-4">
-              <CompanyEditDialog company={company} />
-            </div>
-          </div>
+          <CompanyDetailHeader
+            company={company}
+            primaryContact={primaryContact}
+            lastActivityAt={activities[0]?.created_at || null}
+            action={<CompanyEditDialog company={company} />}
+          />
 
           {/* Tab Bar */}
           <div className="border-b border-border mb-6 flex overflow-x-auto">

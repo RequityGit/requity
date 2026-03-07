@@ -233,9 +233,8 @@ export function CompanyEditDialog({
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline" className="gap-2">
-          <Pencil className="h-4 w-4" />
-          Edit
+        <Button variant="ghost" size="sm" className="gap-1 text-xs h-7 text-muted-foreground">
+          <Pencil size={12} strokeWidth={1.5} /> Edit
         </Button>
       </DialogTrigger>
       <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
