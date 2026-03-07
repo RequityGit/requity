@@ -51,6 +51,7 @@ export const TASK_PRIORITIES = ["High", "Medium", "Low"] as const;
 export type TaskPriority = (typeof TASK_PRIORITIES)[number];
 
 export const TASK_CATEGORIES = [
+  "Approval",
   "General",
   "Investments",
   "Investor Relations",
@@ -83,6 +84,10 @@ export const CATEGORY_COLORS: Record<string, { bg: string; text: string }> = {
   General: {
     bg: "bg-gray-100 dark:bg-gray-800/50",
     text: "text-gray-700 dark:text-gray-400",
+  },
+  Approval: {
+    bg: "bg-orange-100 dark:bg-orange-950/30",
+    text: "text-orange-700 dark:text-orange-400",
   },
 };
 

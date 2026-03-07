@@ -33,7 +33,8 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { Trash2, Paperclip, X, FileText, Repeat, Link2 } from "lucide-react";
+import { Trash2, Paperclip, X, FileText, Repeat, Link2, ExternalLink } from "lucide-react";
+import Link from "next/link";
 import { UnifiedNotes } from "@/components/shared/UnifiedNotes";
 import { RecurrencePanel } from "@/app/(authenticated)/admin/operations/tasks/recurrence-panel";
 import { LinkedEntitySelect } from "@/app/(authenticated)/admin/operations/tasks/linked-entity-select";
@@ -347,6 +348,17 @@ export function TaskSheet({
                 className="font-semibold"
               />
             </div>
+
+            {/* Approval link */}
+            {!isNew && task.linked_entity_type === "approval" && task.linked_entity_id && (
+              <Link
+                href={`/admin/operations/approvals/${task.linked_entity_id}`}
+                className="flex items-center gap-2 px-3 py-2.5 rounded-lg bg-orange-50 dark:bg-orange-950/20 border border-orange-200 dark:border-orange-900/40 text-orange-700 dark:text-orange-400 text-[13px] font-medium hover:bg-orange-100 dark:hover:bg-orange-950/30 transition-colors"
+              >
+                <ExternalLink className="h-3.5 w-3.5" strokeWidth={1.5} />
+                View Approval Details
+              </Link>
+            )}
 
             {/* Description */}
             <div className="space-y-1.5">
