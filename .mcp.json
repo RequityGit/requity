@@ -1,8 +1,11 @@
 {
   "mcpServers": {
     "sentry": {
-      "type": "http",
-      "url": "https://mcp.sentry.dev/mcp"
+      "command": "npx",
+      "args": ["-y", "@sentry/mcp-server"],
+      "env": {
+        "SENTRY_AUTH_TOKEN": "${SENTRY_AUTH_TOKEN}"
+      }
     },
     "supabase": {
       "type": "http",
