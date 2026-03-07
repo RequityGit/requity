@@ -218,7 +218,7 @@ export function LoanChatter({
             {topLevel.map((c) => (
               <div key={c.id}>
                 {editingId === c.id ? (
-                  <div className="space-y-2 border rounded-md p-2 bg-muted">
+                  <div className="space-y-2 border rounded-md p-3 bg-muted">
                     <MentionInput
                       value={editText}
                       onChange={setEditText}

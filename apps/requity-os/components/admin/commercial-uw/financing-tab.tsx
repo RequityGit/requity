@@ -113,7 +113,7 @@ export function FinancingTab({
         ].map((m) => (
           <div
             key={m.label}
-            className={`rounded-lg border p-3 text-center ${m.color ?? ""}`}
+            className={`rounded-lg border p-4 text-center ${m.color ?? ""}`}
           >
             <p className="text-xs text-muted-foreground">{m.label}</p>
             <p className="text-xl font-bold">{m.value}</p>

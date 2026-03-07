@@ -150,7 +150,7 @@ export function DetailActivityTab({
       {/* Log Activity Form */}
       {showForm && (
         <Card className="rounded-xl border-border mb-5">
-          <CardContent className="p-4">
+          <CardContent className="p-5">
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">

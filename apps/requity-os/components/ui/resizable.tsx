@@ -5,8 +5,6 @@ import {
   Group,
   Panel,
   Separator,
-  type GroupProps,
-  type SeparatorProps,
 } from "react-resizable-panels"
 
 import { cn } from "@/lib/utils"
@@ -14,7 +12,7 @@ import { cn } from "@/lib/utils"
 const ResizablePanelGroup = ({
   className,
   ...props
-}: GroupProps) => (
+}: React.ComponentProps<typeof Group>) => (
   <Group
     className={cn(
       "flex h-full w-full data-[panel-group-direction=vertical]:flex-col",
@@ -30,7 +28,7 @@ const ResizableHandle = ({
   withHandle,
   className,
   ...props
-}: SeparatorProps & {
+}: React.ComponentProps<typeof Separator> & {
   withHandle?: boolean
 }) => (
   <Separator

@@ -646,7 +646,7 @@ export function IncomeTab({
       </Card>
 
       {/* GPI Summary Bar */}
-      <div className="sticky bottom-0 z-10 bg-card border rounded-lg p-3 shadow-sm">
+      <div className="sticky bottom-0 z-10 bg-card border rounded-lg p-4 shadow-sm">
         <div className="grid grid-cols-3 gap-4 text-center">
           <div>
             <p className="text-xs text-muted-foreground">Current GPI</p>

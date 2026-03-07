@@ -41,7 +41,7 @@ export function RentRollVersionHistory({ versions, onRestore }: Props) {
   };
 
   return (
-    <div className="border rounded-lg p-3 bg-slate-50">
+    <div className="border rounded-lg p-4 bg-slate-50">
       <div className="flex items-center gap-2 mb-3">
         <History className="h-4 w-4 text-muted-foreground" />
         <h4 className="text-sm font-medium">Upload History</h4>

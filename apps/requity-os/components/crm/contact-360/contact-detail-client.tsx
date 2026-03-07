@@ -153,7 +153,7 @@ export function ContactDetailClient({
   return (
     <div className="min-h-screen bg-muted">
       {/* Breadcrumb */}
-      <div className="bg-card border-b border-border px-7 py-2.5 flex items-center gap-2">
+      <div className="bg-card border-b border-border px-6 lg:px-8 py-3.5 flex items-center gap-2">
         <Link
           href="/admin/crm"
           className="text-muted-foreground hover:text-foreground transition-colors"
@@ -172,7 +172,7 @@ export function ContactDetailClient({
 
       <div className="flex max-w-[1400px] mx-auto">
         {/* Main Content */}
-        <div className="flex-1 min-w-0 px-6 py-5 pb-10">
+        <div className="flex-1 min-w-0 px-6 lg:px-8 py-6 pb-10">
           {/* Header Card */}
           <ContactDetailHeader
             contact={contact}
@@ -189,7 +189,7 @@ export function ContactDetailClient({
                 <TabsTrigger
                   key={t.id}
                   value={t.id}
-                  className="rounded-none border-b-2 border-transparent data-[state=active]:border-foreground data-[state=active]:bg-transparent data-[state=active]:shadow-none text-muted-foreground data-[state=active]:text-foreground px-4 py-2.5 text-sm font-medium gap-1.5 whitespace-nowrap"
+                  className="rounded-none border-b-2 border-transparent data-[state=active]:border-foreground data-[state=active]:bg-transparent data-[state=active]:shadow-none text-muted-foreground data-[state=active]:text-foreground px-4 py-3 text-sm font-medium gap-1.5 whitespace-nowrap"
                 >
                   {t.label}
                   {t.count != null && (
@@ -204,7 +204,7 @@ export function ContactDetailClient({
               ))}
             </TabsList>
 
-            <TabsContent value="overview" className="mt-5">
+            <TabsContent value="overview" className="mt-6">
               <DetailOverviewTab
                 contact={contact}
                 borrower={borrower}
@@ -215,7 +215,7 @@ export function ContactDetailClient({
               />
             </TabsContent>
 
-            <TabsContent value="activity" className="mt-5">
+            <TabsContent value="activity" className="mt-6">
               <DetailActivityTab
                 contactId={contact.id}
                 activities={activities}
@@ -223,22 +223,22 @@ export function ContactDetailClient({
               />
             </TabsContent>
 
-            <TabsContent value="emails" className="mt-5">
+            <TabsContent value="emails" className="mt-6">
               <DetailEmailsTab emails={emails} />
             </TabsContent>
 
-            <TabsContent value="deals" className="mt-5">
+            <TabsContent value="deals" className="mt-6">
               <DetailDealsTab
                 loans={loans}
                 commitments={investorCommitments}
               />
             </TabsContent>
 
-            <TabsContent value="entities" className="mt-5">
+            <TabsContent value="entities" className="mt-6">
               <DetailEntitiesTab entities={entities} />
             </TabsContent>
 
-            <TabsContent value="tasks" className="mt-5">
+            <TabsContent value="tasks" className="mt-6">
               <DetailTasksTab
                 tasks={tasks}
                 contactId={contact.id}
@@ -247,7 +247,7 @@ export function ContactDetailClient({
               />
             </TabsContent>
 
-            <TabsContent value="notes" className="mt-5">
+            <TabsContent value="notes" className="mt-6">
               <DetailNotesTab
                 contactId={contact.id}
                 currentUserId={currentUserId}
@@ -259,16 +259,7 @@ export function ContactDetailClient({
         </div>
 
         {/* Right Sidebar */}
-        <div
-          className="hidden lg:flex py-5 pr-6"
-          style={{
-            width: 280,
-            minWidth: 280,
-            maxWidth: 280,
-            flexDirection: "column",
-            gap: 10,
-          }}
-        >
+        <div className="hidden lg:flex flex-col gap-4 w-[296px] min-w-[296px] max-w-[296px] py-6 pr-6 lg:pr-8">
           <ContactDetailSidebar
             contact={contact}
             relationships={relationships}

@@ -120,16 +120,16 @@ export function ContactDetailSidebar({
     : null;
 
   return (
-    <div className="flex flex-col gap-3">
+    <div className="flex flex-col gap-4">
       {/* Quick Actions */}
       <Card className="rounded-xl border-border">
-        <CardHeader className="px-4 py-3 pb-0">
+        <CardHeader className="px-5 py-4 pb-0">
           <CardTitle className="text-xs font-semibold text-foreground flex items-center gap-1.5">
             <Activity size={14} className="text-muted-foreground" strokeWidth={1.5} />
             Quick Actions
           </CardTitle>
         </CardHeader>
-        <CardContent className="px-4 py-3">
+        <CardContent className="px-5 py-4">
           <div className="flex flex-col gap-1.5">
             {quickActions.map(({ icon: Icon, label, onClick }) => (
               <Button
@@ -138,7 +138,7 @@ export function ContactDetailSidebar({
                 size="sm"
                 onClick={onClick}
                 disabled={logging && label === "Log Call"}
-                className="justify-start gap-2 h-8 px-2.5 text-[13px] font-normal text-foreground hover:bg-muted rounded-lg w-full"
+                className="justify-start gap-3 h-9 px-2.5 text-[13px] font-normal text-foreground hover:bg-muted rounded-lg w-full"
               >
                 <Icon
                   size={14}
@@ -154,7 +154,7 @@ export function ContactDetailSidebar({
 
       {/* Followers */}
       <Card className="rounded-xl border-border">
-        <CardHeader className="px-4 py-3 pb-0">
+        <CardHeader className="px-5 py-4 pb-0">
           <div className="flex items-center justify-between">
             <CardTitle className="text-xs font-semibold text-foreground flex items-center gap-1.5">
               <Bell size={14} className="text-muted-foreground" strokeWidth={1.5} />
@@ -169,7 +169,7 @@ export function ContactDetailSidebar({
             </Button>
           </div>
         </CardHeader>
-        <CardContent className="px-4 py-3">
+        <CardContent className="px-5 py-4">
           <div className="flex gap-2 flex-wrap">
             {assignedToName && (
               <HoverCard>
@@ -213,13 +213,13 @@ export function ContactDetailSidebar({
 
       {/* Relationships */}
       <Card className="rounded-xl border-border">
-        <CardHeader className="px-4 py-3 pb-0">
+        <CardHeader className="px-5 py-4 pb-0">
           <CardTitle className="text-xs font-semibold text-foreground flex items-center gap-1.5">
             <Users size={14} className="text-muted-foreground" strokeWidth={1.5} />
             Relationships
           </CardTitle>
         </CardHeader>
-        <CardContent className="px-4 py-3">
+        <CardContent className="px-5 py-4">
           {relationships.length === 0 ? (
             <p className="text-xs text-muted-foreground">
               No relationships defined.
@@ -231,7 +231,7 @@ export function ContactDetailSidebar({
                 const colors = RELATIONSHIP_BADGE_COLORS[key];
                 return (
                   <div key={r.id}>
-                    <div className="flex justify-between items-center py-2">
+                    <div className="flex justify-between items-center py-2.5">
                       {colors ? (
                         <Badge
                           variant="outline"
@@ -276,13 +276,13 @@ export function ContactDetailSidebar({
 
       {/* Communication */}
       <Card className="rounded-xl border-border">
-        <CardHeader className="px-4 py-3 pb-0">
+        <CardHeader className="px-5 py-4 pb-0">
           <CardTitle className="text-xs font-semibold text-foreground flex items-center gap-1.5">
             <Globe size={14} className="text-muted-foreground" strokeWidth={1.5} />
             Communication
           </CardTitle>
         </CardHeader>
-        <CardContent className="px-4 py-3">
+        <CardContent className="px-5 py-4">
           <div className="flex flex-col gap-1.5">
             <SidebarFieldRow
               label="Language"
@@ -318,13 +318,13 @@ export function ContactDetailSidebar({
 
       {/* System Info */}
       <Card className="rounded-xl border-border">
-        <CardHeader className="px-4 py-3 pb-0">
+        <CardHeader className="px-5 py-4 pb-0">
           <CardTitle className="text-xs font-semibold text-foreground flex items-center gap-1.5">
             <Hash size={14} className="text-muted-foreground" strokeWidth={1.5} />
             System Info
           </CardTitle>
         </CardHeader>
-        <CardContent className="px-4 py-3">
+        <CardContent className="px-5 py-4">
           <div className="flex flex-col gap-1.5">
             <SidebarFieldRow
               label="Created"
@@ -334,7 +334,7 @@ export function ContactDetailSidebar({
               label="Updated"
               value={relTime(contact.updated_at)}
             />
-            <div className="flex justify-between items-center py-1.5">
+            <div className="flex justify-between items-center py-2.5">
               <Label className="text-[11px] text-muted-foreground font-normal">
                 Contact ID
               </Label>
@@ -370,7 +370,7 @@ function SidebarFieldRow({
   danger?: boolean;
 }) {
   return (
-    <div className="flex justify-between items-center py-1.5">
+    <div className="flex justify-between items-center py-2.5">
       <Label className="text-[11px] text-muted-foreground font-normal">{label}</Label>
       <span
         className={cn("text-[11px] font-medium text-foreground", danger && "text-[#E5453D]")}

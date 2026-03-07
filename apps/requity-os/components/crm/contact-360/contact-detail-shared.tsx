@@ -328,7 +328,7 @@ export function TabBtn({
     <button
       onClick={onClick}
       className={cn(
-        "py-2.5 mr-6 bg-transparent border-none border-b-2 text-[13px] cursor-pointer transition-all duration-150 inline-flex items-center gap-1.5 whitespace-nowrap",
+        "py-3 mr-6 bg-transparent border-none border-b-2 text-[13px] cursor-pointer transition-all duration-150 inline-flex items-center gap-1.5 whitespace-nowrap",
         active
           ? "border-foreground text-foreground font-semibold"
           : "border-transparent text-muted-foreground font-medium hover:text-foreground/70"

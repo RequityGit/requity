@@ -386,7 +386,7 @@ export function DealChatTab({
       {/* Pinned messages */}
       {pinnedMessages.length > 0 && (
         <div className="px-4 pb-2 shrink-0">
-          <div className="rounded-md border bg-amber-50/50 dark:bg-amber-950/20 p-2 space-y-1">
+          <div className="rounded-md border bg-amber-50/50 dark:bg-amber-950/20 p-3 space-y-1">
             <p className="text-xs font-medium text-muted-foreground flex items-center gap-1">
               <Pin className="h-3 w-3" />
               Pinned Messages

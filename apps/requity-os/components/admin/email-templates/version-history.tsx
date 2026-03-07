@@ -135,7 +135,7 @@ export function VersionHistory({
                 <div className="text-xs font-medium text-muted-foreground mb-1">
                   Subject
                 </div>
-                <div className="text-sm border rounded-md p-2 bg-slate-50">
+                <div className="text-sm border rounded-md p-3 bg-slate-50">
                   {selected.subject_template || "No subject"}
                 </div>
               </div>

@@ -619,7 +619,7 @@ function GenerateBillingTab({ activeLoans }: { activeLoans: any[] }) {
               </div>
             ))}
             {activeLoans.length > 12 && (
-              <div className="text-xs p-2 border rounded-md flex items-center justify-center text-muted-foreground">
+              <div className="text-xs p-3 border rounded-md flex items-center justify-center text-muted-foreground">
                 +{activeLoans.length - 12} more
               </div>
             )}

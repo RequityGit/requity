@@ -43,7 +43,7 @@ function MetricCard({
   sub?: string;
 }) {
   return (
-    <div className="border rounded-lg p-3 text-center">
+    <div className="border rounded-lg p-4 text-center">
       <p className="text-xs text-muted-foreground">{label}</p>
       <p className="text-lg font-bold text-foreground">{value}</p>
       {sub && <p className="text-[10px] text-muted-foreground">{sub}</p>}
