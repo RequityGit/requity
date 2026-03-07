@@ -240,6 +240,7 @@ export function AddBorrowerForm({ borrower }: AddBorrowerFormProps) {
                   <DatePicker
                     value={dateOfBirth}
                     onChange={(value) => setDateOfBirth(value)}
+                    showYearNavigation
                   />
                 </div>
                 <div className="space-y-2">

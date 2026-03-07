@@ -56,6 +56,8 @@ function Calendar({
         range_middle:
           "aria-selected:bg-accent aria-selected:text-accent-foreground",
         hidden: "invisible",
+        dropdowns: "flex items-center gap-2",
+        dropdown: "appearance-none bg-transparent border border-border rounded-md px-2 py-1 text-sm font-medium cursor-pointer focus:outline-none focus:ring-1 focus:ring-ring",
         ...classNames,
       }}
       components={{

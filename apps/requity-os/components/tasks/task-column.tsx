@@ -4,6 +4,7 @@ import { useState } from "react";
 import { cn } from "@/lib/utils";
 import { ChevronDown } from "lucide-react";
 import { TaskCard } from "./task-card";
+import { ApprovalCard } from "./approval-card";
 import { CompletedTaskCard } from "./completed-task-card";
 import type { OpsTask, Profile } from "@/lib/tasks";
 import { sortTasksByColumn } from "@/lib/tasks";
@@ -99,16 +100,25 @@ export function TaskColumn({
                 onClick={onTaskClick}
               />
             ))
-          : visibleTasks.map((task) => (
-              <TaskCard
-                key={task.id}
-                task={task}
-                profiles={profiles}
-                onComplete={onComplete}
-                onClick={onTaskClick}
-                onDragStart={onDragStart}
-              />
-            ))}
+          : visibleTasks.map((task) =>
+              task.type === "approval" ? (
+                <ApprovalCard
+                  key={task.id}
+                  task={task}
+                  profiles={profiles}
+                  onClick={onTaskClick}
+                />
+              ) : (
+                <TaskCard
+                  key={task.id}
+                  task={task}
+                  profiles={profiles}
+                  onComplete={onComplete}
+                  onClick={onTaskClick}
+                  onDragStart={onDragStart}
+                />
+              )
+            )}
 
         {/* "View all completed" expander */}
         {isComplete && hiddenCount > 0 && !showAllCompleted && (

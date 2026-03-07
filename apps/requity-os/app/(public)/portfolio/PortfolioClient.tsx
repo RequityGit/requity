@@ -1,9 +1,27 @@
-// @ts-nocheck
 'use client';
 
 import { useState } from 'react';
 
-export default function PortfolioClient({ properties, propertyTypes }) {
+interface Property {
+  id: string;
+  name: string;
+  slug: string;
+  location: string;
+  imageUrl: string | null;
+  propertyType: string;
+  units: string;
+  status: string;
+  description: string;
+  acreage: string;
+  yearAcquired: string;
+}
+
+interface PortfolioClientProps {
+  properties: Property[];
+  propertyTypes: string[];
+}
+
+export default function PortfolioClient({ properties, propertyTypes }: PortfolioClientProps) {
   const [filter, setFilter] = useState('All');
   const filtered = filter === 'All' ? properties : properties.filter((p) => p.propertyType === filter);
 

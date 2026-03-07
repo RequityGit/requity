@@ -13,6 +13,36 @@ import {
 
 const FREQUENCIES = ["daily", "weekly", "monthly", "annually"] as const;
 const DAYS_OF_WEEK = ["Su", "M", "Tu", "W", "Th", "F", "Sa"];
+const DAY_NAMES_FULL = [
+  "Sunday",
+  "Monday",
+  "Tuesday",
+  "Wednesday",
+  "Thursday",
+  "Friday",
+  "Saturday",
+];
+const NTH_OPTIONS = [
+  { value: 1, label: "1st" },
+  { value: 2, label: "2nd" },
+  { value: 3, label: "3rd" },
+  { value: 4, label: "4th" },
+  { value: -1, label: "Last" },
+];
+const MONTH_NAMES = [
+  "January",
+  "February",
+  "March",
+  "April",
+  "May",
+  "June",
+  "July",
+  "August",
+  "September",
+  "October",
+  "November",
+  "December",
+];
 
 interface RecurrencePanelProps {
   pattern: string;
@@ -66,6 +96,17 @@ export function RecurrencePanel({
       onDaysOfWeekChange(daysOfWeek.filter((d) => d !== dayIndex));
     } else {
       onDaysOfWeekChange([...daysOfWeek, dayIndex].sort());
+    }
+  };
+
+  const handleMonthlyWhenChange = (v: string) => {
+    onMonthlyWhenChange(v);
+    if (v === "specific_day") {
+      onDayOfMonthChange(1);
+      onDaysOfWeekChange([]);
+    } else if (v === "nth_weekday") {
+      onDayOfMonthChange(1);
+      if (daysOfWeek.length === 0) onDaysOfWeekChange([1]);
     }
   };
 
@@ -160,23 +201,27 @@ export function RecurrencePanel({
         <>
           <div className="space-y-1.5">
             <Label className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-              When
+              On
             </Label>
-            <Select value={monthlyWhen} onValueChange={onMonthlyWhenChange}>
+            <Select value={monthlyWhen} onValueChange={handleMonthlyWhenChange}>
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="specific_day">Specific Day</SelectItem>
-                <SelectItem value="first_weekday">First Weekday</SelectItem>
-                <SelectItem value="last_day">Last Day</SelectItem>
+                <SelectItem value="specific_day">
+                  Specific day of month
+                </SelectItem>
+                <SelectItem value="nth_weekday">
+                  Nth weekday of month
+                </SelectItem>
               </SelectContent>
             </Select>
           </div>
+
           {monthlyWhen === "specific_day" && (
             <div className="space-y-1.5">
               <Label className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-                Day
+                Day of Month
               </Label>
               <Select
                 value={String(dayOfMonth)}
@@ -195,7 +240,98 @@ export function RecurrencePanel({
               </Select>
             </div>
           )}
+
+          {monthlyWhen === "nth_weekday" && (
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <Label className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                  Which
+                </Label>
+                <Select
+                  value={String(dayOfMonth)}
+                  onValueChange={(v) => onDayOfMonthChange(parseInt(v))}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {NTH_OPTIONS.map((o) => (
+                      <SelectItem key={o.value} value={String(o.value)}>
+                        {o.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                  Day
+                </Label>
+                <Select
+                  value={String(daysOfWeek[0] ?? 1)}
+                  onValueChange={(v) => onDaysOfWeekChange([parseInt(v)])}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {DAY_NAMES_FULL.map((name, i) => (
+                      <SelectItem key={i} value={String(i)}>
+                        {name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          )}
         </>
+      )}
+
+      {/* Annually: month + day */}
+      {pattern === "annually" && (
+        <div className="grid grid-cols-2 gap-3">
+          <div className="space-y-1.5">
+            <Label className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+              Month
+            </Label>
+            <Select
+              value={String(daysOfWeek[0] ?? 0)}
+              onValueChange={(v) => onDaysOfWeekChange([parseInt(v)])}
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {MONTH_NAMES.map((name, i) => (
+                  <SelectItem key={i} value={String(i)}>
+                    {name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-1.5">
+            <Label className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+              Day
+            </Label>
+            <Select
+              value={String(dayOfMonth)}
+              onValueChange={(v) => onDayOfMonthChange(parseInt(v))}
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {Array.from({ length: 31 }, (_, i) => (
+                  <SelectItem key={i + 1} value={String(i + 1)}>
+                    {i + 1}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
       )}
 
       {/* Start / End dates */}

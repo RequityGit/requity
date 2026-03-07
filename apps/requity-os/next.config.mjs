@@ -15,17 +15,27 @@ const nextConfig = {
       {
         source: '/admin/originations',
         destination: '/admin/pipeline?tab=debt',
-        permanent: false,
-      },
-      {
-        source: '/admin/equity-pipeline',
-        destination: '/admin/pipeline?tab=equity',
-        permanent: false,
+        permanent: true,
       },
       {
         source: '/admin/equity-pipeline/:id',
         destination: '/admin/pipeline/equity/:id',
-        permanent: false,
+        permanent: true,
+      },
+      {
+        source: '/admin/equity-pipeline',
+        destination: '/admin/pipeline/equity',
+        permanent: true,
+      },
+      {
+        source: '/admin/deals/:id',
+        destination: '/admin/pipeline/debt/:id',
+        permanent: true,
+      },
+      {
+        source: '/admin/dscr',
+        destination: '/admin/models/dscr',
+        permanent: true,
       },
     ];
   },

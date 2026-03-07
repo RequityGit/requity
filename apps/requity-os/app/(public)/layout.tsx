@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { LanguageProvider } from '@/components/public/LanguageContext';
 
 export const metadata = {

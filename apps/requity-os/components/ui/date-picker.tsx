@@ -21,6 +21,10 @@ interface DatePickerProps {
   placeholder?: string
   className?: string
   disabled?: boolean
+  /** Show month/year dropdown navigation (useful for date of birth, etc.) */
+  showYearNavigation?: boolean
+  fromYear?: number
+  toYear?: number
 }
 
 export function DatePicker({
@@ -29,6 +33,9 @@ export function DatePicker({
   placeholder = "Pick a date",
   className,
   disabled,
+  showYearNavigation,
+  fromYear = 1920,
+  toYear = new Date().getFullYear(),
 }: DatePickerProps) {
   const [open, setOpen] = React.useState(false)
 
@@ -72,6 +79,11 @@ export function DatePicker({
           onSelect={handleSelect}
           defaultMonth={date}
           initialFocus
+          {...(showYearNavigation && {
+            captionLayout: "dropdown" as const,
+            fromYear,
+            toYear,
+          })}
         />
       </PopoverContent>
     </Popover>

@@ -9,7 +9,8 @@ import { PageHeader } from "@/components/shared/page-header";
 import { TaskColumn } from "./task-column";
 import { TaskFilters } from "./task-filters";
 import { TaskSheet } from "./task-sheet";
-import type { OpsTask, Profile } from "@/lib/tasks";
+import { ApprovalDrawer } from "./approval-drawer";
+import type { OpsTask, Profile, TaskTypeFilter } from "@/lib/tasks";
 import {
   completeTask,
   completeRecurringTask,
@@ -36,11 +37,13 @@ export function TaskBoard({
   const [tasks, setTasks] = useState<OpsTask[]>(initialTasks);
   const [sheetOpen, setSheetOpen] = useState(false);
   const [editingTask, setEditingTask] = useState<OpsTask | null>(null);
+  const [approvalDrawerTask, setApprovalDrawerTask] = useState<OpsTask | null>(null);
 
   // Filters
   const [assigneeFilter, setAssigneeFilter] = useState("all");
   const [categoryFilter, setCategoryFilter] = useState("all");
   const [priorityFilter, setPriorityFilter] = useState("all");
+  const [typeFilter, setTypeFilter] = useState<TaskTypeFilter>("all");
 
   const { toast } = useToast();
 
@@ -60,12 +63,13 @@ export function TaskBoard({
               return [...prev, payload.new as OpsTask];
             });
           } else if (payload.eventType === "UPDATE") {
+            const updated = payload.new as OpsTask;
             setTasks((prev) =>
-              prev.map((t) =>
-                t.id === (payload.new as OpsTask).id
-                  ? (payload.new as OpsTask)
-                  : t
-              )
+              prev.map((t) => (t.id === updated.id ? updated : t))
+            );
+            // Update the approval drawer if it's viewing this task
+            setApprovalDrawerTask((prev) =>
+              prev?.id === updated.id ? updated : prev
             );
           } else if (payload.eventType === "DELETE") {
             setTasks((prev) =>
@@ -105,12 +109,13 @@ export function TaskBoard({
   // Filtered tasks
   const filteredTasks = useMemo(() => {
     return tasks.filter((t) => {
+      if (typeFilter !== "all" && t.type !== typeFilter) return false;
       if (assigneeFilter !== "all" && t.assigned_to !== assigneeFilter) return false;
       if (categoryFilter !== "all" && t.category !== categoryFilter) return false;
       if (priorityFilter !== "all" && t.priority !== priorityFilter) return false;
       return true;
     });
-  }, [tasks, assigneeFilter, categoryFilter, priorityFilter]);
+  }, [tasks, typeFilter, assigneeFilter, categoryFilter, priorityFilter]);
 
   // Complete handler
   const handleComplete = useCallback(
@@ -223,8 +228,12 @@ export function TaskBoard({
   }, []);
 
   const handleTaskClick = useCallback((task: OpsTask) => {
-    setEditingTask(task);
-    setSheetOpen(true);
+    if (task.type === "approval") {
+      setApprovalDrawerTask(task);
+    } else {
+      setEditingTask(task);
+      setSheetOpen(true);
+    }
   }, []);
 
   const handleNewTask = useCallback(() => {
@@ -235,6 +244,17 @@ export function TaskBoard({
   const handleSheetClose = useCallback(() => {
     setSheetOpen(false);
     setEditingTask(null);
+  }, []);
+
+  const handleApprovalDrawerClose = useCallback(() => {
+    setApprovalDrawerTask(null);
+  }, []);
+
+  const handleApprovalUpdated = useCallback((updatedTask: OpsTask) => {
+    setTasks((prev) =>
+      prev.map((t) => (t.id === updatedTask.id ? updatedTask : t))
+    );
+    setApprovalDrawerTask(updatedTask);
   }, []);
 
   return (
@@ -260,6 +280,8 @@ export function TaskBoard({
           onCategoryChange={setCategoryFilter}
           priorityFilter={priorityFilter}
           onPriorityChange={setPriorityFilter}
+          typeFilter={typeFilter}
+          onTypeFilterChange={setTypeFilter}
         />
       </div>
 
@@ -292,6 +314,15 @@ export function TaskBoard({
         onClose={handleSheetClose}
         onSaved={handleTaskSaved}
         onDeleted={handleTaskDeleted}
+      />
+
+      {/* Approval Drawer */}
+      <ApprovalDrawer
+        task={approvalDrawerTask}
+        currentUserId={currentUserId}
+        profiles={profiles}
+        onClose={handleApprovalDrawerClose}
+        onUpdated={handleApprovalUpdated}
       />
     </div>
   );

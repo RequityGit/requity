@@ -1,4 +1,3 @@
-// @ts-nocheck
 import Link from 'next/link';
 import { findCollectionByName, getField, getImageUrl } from '@/lib/webflow';
 import PortfolioClient from '@/app/(public)/portfolio/PortfolioClient';
@@ -34,16 +33,24 @@ async function getPortfolioData() {
   return { items: [], error: 'not_found' };
 }
 
-function normalizeItem(item) {
-  const fd = item.fieldData || {};
+interface WebflowPortfolioItem {
+  id?: string;
+  _id?: string;
+  slug?: string;
+  fieldData?: Record<string, unknown>;
+}
+
+function normalizeItem(item: WebflowPortfolioItem) {
+  const raw = item.fieldData || {};
+  const fd = raw as Record<string, string>;
   const name = fd.name || fd.title || fd['property-name'] || fd['project-name'] || 'Untitled Property';
   const slug = fd.slug || item.slug || '';
   const location = fd.location || fd.city || fd.address || fd['property-location'] || fd['city-state'] || '';
   const state = fd.state || '';
   const fullLocation = state && location && !location.includes(state) ? `${location}, ${state}` : location;
-  const imageField = fd['main-image'] || fd.image || fd['hero-image'] || fd.thumbnail ||
-    fd['featured-image'] || fd['cover-image'] || fd.photo || fd['main-photo'] || null;
-  const imageUrl = typeof imageField === 'string' ? imageField : imageField?.url || null;
+  const imageField = raw['main-image'] || raw.image || raw['hero-image'] || raw.thumbnail ||
+    raw['featured-image'] || raw['cover-image'] || raw.photo || raw['main-photo'] || null;
+  const imageUrl = typeof imageField === 'string' ? imageField : (imageField as { url?: string } | null)?.url || null;
   const propertyType = fd['property-type'] || fd.type || fd.category || fd['asset-class'] || '';
   const units = fd.units || fd['number-of-units'] || fd['unit-count'] || fd['total-units'] || '';
   const status = fd.status || fd['deal-status'] || fd['investment-status'] || '';
@@ -51,13 +58,13 @@ function normalizeItem(item) {
   const acreage = fd.acreage || fd.acres || fd['lot-size'] || '';
   const yearAcquired = fd['year-acquired'] || fd.year || fd['acquisition-year'] || fd['date-acquired'] || '';
 
-  return { id: item.id || item._id, name, slug, location: fullLocation, imageUrl, propertyType, units, status, description, acreage, yearAcquired };
+  return { id: item.id || item._id || '', name, slug, location: fullLocation, imageUrl, propertyType, units, status, description, acreage, yearAcquired };
 }
 
 export default async function PortfolioPage() {
   const { items, error } = await getPortfolioData();
   const properties = items.map(normalizeItem);
-  const propertyTypes = [...new Set(properties.map((p) => p.propertyType).filter(Boolean))];
+  const propertyTypes = Array.from(new Set(properties.map((p) => p.propertyType).filter(Boolean)));
 
   return (
     <>

@@ -23,6 +23,13 @@ const DEFAULT_EXPENSE_ROWS = [
   { category: "G&A / Other", is_percentage: false, sort_order: 5 },
 ];
 
+const DEFAULT_WATERFALL_TIERS = [
+  { tier_order: 1, tier_name: "Return of Capital", hurdle_rate: null, sponsor_split: 0.0, investor_split: 1.0, is_catch_up: false, description: "All distributions until investors receive 1.0x return" },
+  { tier_order: 2, tier_name: "Preferred Return", hurdle_rate: 0.08, sponsor_split: 0.0, investor_split: 1.0, is_catch_up: false, description: "Accrued 8% annual preferred return" },
+  { tier_order: 3, tier_name: "Catch-Up", hurdle_rate: null, sponsor_split: 0.50, investor_split: 0.50, is_catch_up: true, description: "Until sponsor reaches 20% of total profit" },
+  { tier_order: 4, tier_name: "Remaining Profits", hurdle_rate: null, sponsor_split: 0.20, investor_split: 0.80, is_catch_up: false, description: "Standard 80/20 split" },
+];
+
 export async function initCommercialUW(
   dealId: string,
   userId: string
@@ -53,25 +60,67 @@ export async function initCommercialUW(
     return { data: null, error: uwError?.message ?? "Failed to create UW record" };
   }
 
+  // Seed default rows
   const incomeRows = DEFAULT_INCOME_ROWS.map((row) => ({
-    uw_id: uw.id,
-    ...row,
-    t12_amount: 0,
-    year_1_amount: 0,
-    growth_rate: 0,
+    uw_id: uw.id, ...row, t12_amount: 0, year_1_amount: 0, growth_rate: 0,
   }));
   await supabase.from("deal_commercial_income").insert(incomeRows);
 
   const expenseRows = DEFAULT_EXPENSE_ROWS.map((row) => ({
-    uw_id: uw.id,
-    ...row,
-    t12_amount: 0,
-    year_1_amount: 0,
-    growth_rate: 0,
+    uw_id: uw.id, ...row, t12_amount: 0, year_1_amount: 0, growth_rate: 0,
   }));
   await supabase.from("deal_commercial_expenses").insert(expenseRows);
 
+  const waterfallRows = DEFAULT_WATERFALL_TIERS.map((t) => ({ uw_id: uw.id, ...t }));
+  await supabase.from("deal_commercial_waterfall").insert(waterfallRows);
+
   revalidatePath(`/admin/pipeline/${dealId}`);
+  return { data: { id: uw.id }, error: null };
+}
+
+/**
+ * Ensures a commercial UW record exists for the given opportunity.
+ * Used as a fallback in the page loader for legacy deals created before
+ * the auto-init trigger was added.
+ */
+export async function ensureCommercialUW(
+  opportunityId: string
+): Promise<{ data: { id: string } | null; error: string | null }> {
+  const supabase = db();
+
+  const { data: existing } = await supabase
+    .from("deal_commercial_uw")
+    .select("id")
+    .eq("opportunity_id", opportunityId)
+    .maybeSingle();
+
+  if (existing) return { data: { id: existing.id }, error: null };
+
+  const { data: uw, error: uwError } = await supabase
+    .from("deal_commercial_uw")
+    .insert({ opportunity_id: opportunityId })
+    .select("id")
+    .single();
+
+  if (uwError || !uw) {
+    return { data: null, error: uwError?.message ?? "Failed to create UW record" };
+  }
+
+  // Seed default rows
+  const incomeRows = DEFAULT_INCOME_ROWS.map((row) => ({
+    uw_id: uw.id, ...row, t12_amount: 0, year_1_amount: 0, growth_rate: 0,
+  }));
+  await supabase.from("deal_commercial_income").insert(incomeRows);
+
+  const expenseRows = DEFAULT_EXPENSE_ROWS.map((row) => ({
+    uw_id: uw.id, ...row, t12_amount: 0, year_1_amount: 0, growth_rate: 0,
+  }));
+  await supabase.from("deal_commercial_expenses").insert(expenseRows);
+
+  const waterfallRows = DEFAULT_WATERFALL_TIERS.map((t) => ({ uw_id: uw.id, ...t }));
+  await supabase.from("deal_commercial_waterfall").insert(waterfallRows);
+
+  revalidatePath(`/admin/pipeline/debt/${opportunityId}`);
   return { data: { id: uw.id }, error: null };
 }
 
@@ -112,6 +161,9 @@ export async function upsertIncomeRows(
     if (error) return { error: error.message };
   }
 
+  // Touch parent to trigger snapshot
+  await supabase.from("deal_commercial_uw").update({ updated_at: new Date().toISOString() }).eq("id", uwId);
+
   return { error: null };
 }
 
@@ -136,6 +188,8 @@ export async function upsertExpenseRows(
       .insert(rows.map((r) => ({ uw_id: uwId, ...r })));
     if (error) return { error: error.message };
   }
+
+  await supabase.from("deal_commercial_uw").update({ updated_at: new Date().toISOString() }).eq("id", uwId);
 
   return { error: null };
 }
@@ -166,6 +220,8 @@ export async function upsertRentRoll(
     if (error) return { error: error.message };
   }
 
+  await supabase.from("deal_commercial_uw").update({ updated_at: new Date().toISOString() }).eq("id", uwId);
+
   return { error: null };
 }
 
@@ -187,6 +243,8 @@ export async function upsertScopeOfWork(
       .insert(rows.map((r) => ({ uw_id: uwId, ...r })));
     if (error) return { error: error.message };
   }
+
+  await supabase.from("deal_commercial_uw").update({ updated_at: new Date().toISOString() }).eq("id", uwId);
 
   return { error: null };
 }
@@ -210,6 +268,8 @@ export async function upsertSourcesUses(
       .insert(rows.map((r) => ({ uw_id: uwId, ...r })));
     if (error) return { error: error.message };
   }
+
+  await supabase.from("deal_commercial_uw").update({ updated_at: new Date().toISOString() }).eq("id", uwId);
 
   return { error: null };
 }
@@ -235,6 +295,8 @@ export async function upsertWaterfall(
       .insert(tiers.map((t) => ({ uw_id: uwId, ...t })));
     if (error) return { error: error.message };
   }
+
+  await supabase.from("deal_commercial_uw").update({ updated_at: new Date().toISOString() }).eq("id", uwId);
 
   return { error: null };
 }

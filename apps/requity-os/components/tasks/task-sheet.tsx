@@ -33,7 +33,8 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { Trash2, Paperclip, X, FileText, Repeat, Link2 } from "lucide-react";
+import { Trash2, Paperclip, X, FileText, Repeat, Link2, ExternalLink } from "lucide-react";
+import Link from "next/link";
 import { UnifiedNotes } from "@/components/shared/UnifiedNotes";
 import { RecurrencePanel } from "@/app/(authenticated)/admin/operations/tasks/recurrence-panel";
 import { LinkedEntitySelect } from "@/app/(authenticated)/admin/operations/tasks/linked-entity-select";
@@ -44,6 +45,26 @@ import {
   TASK_CATEGORIES,
 } from "@/lib/tasks";
 import { ScrollArea } from "@/components/ui/scroll-area";
+
+function composeRecurrencePattern(
+  pattern: string,
+  monthlyWhen: string,
+  dayOfMonth: number,
+  daysOfWeek: number[]
+): string {
+  if (pattern === "monthly") {
+    if (monthlyWhen === "nth_weekday") {
+      return `monthly_nth:${dayOfMonth}:${daysOfWeek[0] ?? 1}`;
+    }
+    if (monthlyWhen === "specific_day") {
+      return `monthly_day:${dayOfMonth}`;
+    }
+  }
+  if (pattern === "annually" && daysOfWeek.length > 0) {
+    return `annually_date:${daysOfWeek[0]}:${dayOfMonth}`;
+  }
+  return pattern;
+}
 
 interface TaskSheetProps {
   open: boolean;
@@ -115,13 +136,35 @@ export function TaskSheet({
       setLinkedEntityId(task.linked_entity_id ?? "");
       setLinkedEntityLabel(task.linked_entity_label ?? "");
       setIsRecurring(task.is_recurring ?? false);
-      setRecurrencePattern(task.recurrence_pattern ?? "weekly");
-      setRecurrenceDaysOfWeek(task.recurrence_days_of_week ?? []);
-      setRecurrenceDayOfMonth(task.recurrence_day_of_month ?? 1);
       setRecurrenceRepeatInterval(task.recurrence_repeat_interval ?? 1);
-      setRecurrenceMonthlyWhen(task.recurrence_monthly_when ?? "specific_day");
       setRecurrenceStartDate(task.recurrence_start_date ?? "");
       setRecurrenceEndDate(task.recurrence_end_date ?? "");
+
+      // Parse composed pattern back into structured fields
+      const pat = task.recurrence_pattern ?? "";
+      if (pat.startsWith("monthly_nth:")) {
+        const parts = pat.split(":");
+        setRecurrencePattern("monthly");
+        setRecurrenceMonthlyWhen("nth_weekday");
+        setRecurrenceDayOfMonth(parseInt(parts[1], 10) || 1);
+        setRecurrenceDaysOfWeek([parseInt(parts[2], 10) || 1]);
+      } else if (pat.startsWith("monthly_day:")) {
+        setRecurrencePattern("monthly");
+        setRecurrenceMonthlyWhen("specific_day");
+        setRecurrenceDayOfMonth(parseInt(pat.split(":")[1], 10) || 1);
+        setRecurrenceDaysOfWeek(task.recurrence_days_of_week ?? []);
+      } else if (pat.startsWith("annually_date:")) {
+        const parts = pat.split(":");
+        setRecurrencePattern("annually");
+        setRecurrenceDaysOfWeek([parseInt(parts[1], 10) || 0]);
+        setRecurrenceDayOfMonth(parseInt(parts[2], 10) || 1);
+        setRecurrenceMonthlyWhen(task.recurrence_monthly_when ?? "specific_day");
+      } else {
+        setRecurrencePattern(pat || "weekly");
+        setRecurrenceDaysOfWeek(task.recurrence_days_of_week ?? []);
+        setRecurrenceDayOfMonth(task.recurrence_day_of_month ?? 1);
+        setRecurrenceMonthlyWhen(task.recurrence_monthly_when ?? "specific_day");
+      }
     } else {
       setTitle("");
       setDescription("");
@@ -236,6 +279,15 @@ export function TaskSheet({
     const supabase = createClient();
     const assigneeProfile = profiles.find((p) => p.id === assignedTo);
 
+    // Compose the recurrence_pattern string from structured fields
+    // so the RPC can parse it for next-occurrence calculation
+    const composedPattern = composeRecurrencePattern(
+      recurrencePattern,
+      recurrenceMonthlyWhen,
+      recurrenceDayOfMonth,
+      recurrenceDaysOfWeek
+    );
+
     const payload: Record<string, unknown> = {
       title: title.trim(),
       description: description.trim() || null,
@@ -249,7 +301,7 @@ export function TaskSheet({
       linked_entity_id: linkedEntityId || null,
       linked_entity_label: linkedEntityLabel || null,
       is_recurring: isRecurring,
-      recurrence_pattern: isRecurring ? recurrencePattern : null,
+      recurrence_pattern: isRecurring ? composedPattern : null,
       recurrence_days_of_week: isRecurring ? recurrenceDaysOfWeek : [],
       recurrence_day_of_month: isRecurring ? recurrenceDayOfMonth : null,
       recurrence_repeat_interval: isRecurring ? recurrenceRepeatInterval : null,
@@ -323,7 +375,7 @@ export function TaskSheet({
 
   return (
     <Dialog open={open} onOpenChange={() => onClose()}>
-      <DialogContent className="sm:max-w-[520px] p-0 flex flex-col">
+      <DialogContent className="sm:max-w-[600px] p-0 flex flex-col max-h-[95vh] md:max-h-[95vh]">
         <DialogHeader className="px-6 pt-6 pb-0">
           <DialogTitle className="text-sm font-bold tracking-tight">
             {isNew ? "New Task" : "Edit Task"}
@@ -334,7 +386,7 @@ export function TaskSheet({
         </DialogHeader>
 
         <ScrollArea className="flex-1 px-6">
-          <div className="space-y-4 pb-6 pt-4">
+          <div className="space-y-3 pb-6 pt-4">
             {/* Title */}
             <div className="space-y-1.5">
               <Label className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
@@ -347,6 +399,17 @@ export function TaskSheet({
                 className="font-semibold"
               />
             </div>
+
+            {/* Approval link */}
+            {!isNew && task.linked_entity_type === "approval" && task.linked_entity_id && (
+              <Link
+                href={`/admin/operations/approvals/${task.linked_entity_id}`}
+                className="flex items-center gap-2 px-3 py-2.5 rounded-lg bg-orange-50 dark:bg-orange-950/20 border border-orange-200 dark:border-orange-900/40 text-orange-700 dark:text-orange-400 text-[13px] font-medium hover:bg-orange-100 dark:hover:bg-orange-950/30 transition-colors"
+              >
+                <ExternalLink className="h-3.5 w-3.5" strokeWidth={1.5} />
+                View Approval Details
+              </Link>
+            )}
 
             {/* Description */}
             <div className="space-y-1.5">

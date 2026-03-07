@@ -1,4 +1,3 @@
-// @ts-nocheck
 'use client';
 
 import { useEffect, useState } from 'react';
@@ -112,7 +111,7 @@ const INVESTOR_FAQS = [
 ];
 
 export default function InvestPage() {
-  const [openItems, setOpenItems] = useState({});
+  const [openItems, setOpenItems] = useState<Record<string, boolean>>({});
 
   const { lang } = useLanguage();
   const t = translations.invest[lang];
@@ -141,7 +140,7 @@ export default function InvestPage() {
     return () => observer.disconnect();
   }, []);
 
-  const toggleItem = (key) => {
+  const toggleItem = (key: string) => {
     setOpenItems(prev => ({ ...prev, [key]: !prev[key] }));
   };
 

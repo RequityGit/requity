@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { findCollectionByName, getOptionMap } from '@/lib/webflow';
 import { getLoanIndexes } from '@/lib/loan-indexes';
 import LendingClient from '@/app/(public)/lending/LendingClient';
@@ -12,16 +11,26 @@ export const revalidate = 300;
 
 const BORROWER_COLLECTION_NAMES = ['borrower-testimonials', 'borrower testimonials'];
 
-function mapTestimonialItem(item, typeOptionMap) {
-  const fd = item.fieldData || {};
+interface TestimonialItem {
+  id?: string;
+  _id?: string;
+  isDraft?: boolean;
+  isArchived?: boolean;
+  fieldData?: Record<string, unknown>;
+}
 
-  // Resolve the type field — could be a readable string or an opaque option ID
+function mapTestimonialItem(item: TestimonialItem, typeOptionMap: Map<string, string>): MappedTestimonial {
+  const fd = (item.fieldData || {}) as Record<string, string>;
+
   const rawType = fd.type || fd['type-2'] || fd.category || fd['testimonial-type'] || '';
-  const rawTypeStr = typeof rawType === 'string' ? rawType : (rawType?.name || rawType?.slug || '');
+  const rawTypeObj = item.fieldData?.[
+    'type'] as { name?: string; slug?: string } | string | undefined;
+  const rawTypeStr = typeof rawType === 'string' ? rawType :
+    (typeof rawTypeObj === 'object' && rawTypeObj !== null ? (rawTypeObj.name || rawTypeObj.slug || '') : '');
   const resolvedType = typeOptionMap.get(rawTypeStr) || rawTypeStr.toLowerCase().trim();
 
   return {
-    id: item.id || item._id,
+    id: (item.id || item._id) ?? '',
     name: fd.name || fd.title || fd['borrower-name'] || fd['author-name'] || fd.author || '',
     quote: fd.quote || fd.testimonial || fd['quote-text'] || fd.text || fd.body || fd.content || '',
     role: fd.role || fd.company || fd.title_2 || fd['borrower-role'] || fd['loan-type'] || fd.subtitle || '',
@@ -29,11 +38,19 @@ function mapTestimonialItem(item, typeOptionMap) {
   };
 }
 
-function isBorrowerTestimonial(item) {
+function isBorrowerTestimonial(item: { type: string }) {
   return item.type.includes('borrower') || item.type.includes('lending');
 }
 
-async function getTestimonials() {
+interface MappedTestimonial {
+  id: string;
+  name: string;
+  quote: string;
+  role: string;
+  type: string;
+}
+
+async function getTestimonials(): Promise<MappedTestimonial[]> {
   if (!process.env.WEBFLOW_API_TOKEN || !process.env.WEBFLOW_SITE_ID) {
     return [];
   }

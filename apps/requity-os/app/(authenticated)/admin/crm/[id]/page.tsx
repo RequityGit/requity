@@ -201,6 +201,17 @@ export default async function CrmContactDetailPage({ params }: PageProps) {
       sort_order: (t.sort_order as number) ?? 0,
       updated_at: t.updated_at as string | null,
       created_at: t.created_at as string | null,
+      type: ((t.type as string) ?? "task") as "task" | "approval",
+      approval_status: t.approval_status as string | null,
+      active_party: t.active_party as string | null,
+      requestor_user_id: t.requestor_user_id as string | null,
+      requestor_name: t.requestor_name as string | null,
+      amount: t.amount as number | null,
+      decision_note: t.decision_note as string | null,
+      approved_at: t.approved_at as string | null,
+      rejected_at: t.rejected_at as string | null,
+      resubmitted_at: t.resubmitted_at as string | null,
+      revision_count: t.revision_count as number | null,
     })
   );
 

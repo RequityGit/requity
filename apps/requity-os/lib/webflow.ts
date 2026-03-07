@@ -1,5 +1,48 @@
-// @ts-nocheck
 const WEBFLOW_API = 'https://api.webflow.com/v2';
+
+/** A Webflow CMS collection descriptor returned by the API. */
+interface WebflowCollection {
+  id: string;
+  displayName: string;
+  slug: string;
+  [key: string]: unknown;
+}
+
+/** A Webflow CMS item returned by the API. */
+interface WebflowItem {
+  id: string;
+  isDraft?: boolean;
+  isArchived?: boolean;
+  fieldData?: Record<string, unknown>;
+  [key: string]: unknown;
+}
+
+/** A field definition within a Webflow collection schema. */
+interface WebflowField {
+  slug?: string;
+  displayName?: string;
+  validations?: {
+    options?: Array<{ id?: string; name?: string }>;
+    [key: string]: unknown;
+  };
+  [key: string]: unknown;
+}
+
+/** Shape returned by the collections endpoint. */
+interface WebflowCollectionsResponse {
+  collections?: WebflowCollection[];
+}
+
+/** Shape returned by the collection items endpoint. */
+interface WebflowItemsResponse {
+  items?: WebflowItem[];
+}
+
+/** Shape returned by a single collection (schema) endpoint. */
+interface WebflowCollectionSchema {
+  fields?: WebflowField[];
+  [key: string]: unknown;
+}
 
 function headers() {
   return {
@@ -8,7 +51,7 @@ function headers() {
   };
 }
 
-async function fetchWebflow(path) {
+async function fetchWebflow(path: string): Promise<Record<string, unknown> | null> {
   const res = await fetch(`${WEBFLOW_API}${path}`, {
     headers: headers(),
     next: { revalidate: 300 }, // cache for 5 minutes
@@ -21,28 +64,28 @@ async function fetchWebflow(path) {
 }
 
 /** List all CMS collections for the site */
-export async function getCollections() {
+export async function getCollections(): Promise<WebflowCollection[]> {
   const siteId = process.env.WEBFLOW_SITE_ID;
-  const data = await fetchWebflow(`/sites/${siteId}/collections`);
+  const data = await fetchWebflow(`/sites/${siteId}/collections`) as WebflowCollectionsResponse | null;
   return data?.collections || [];
 }
 
 /** Get a single collection by ID */
-export async function getCollection(collectionId) {
-  const data = await fetchWebflow(`/collections/${collectionId}`);
+export async function getCollection(collectionId: string): Promise<WebflowCollectionSchema | null> {
+  const data = await fetchWebflow(`/collections/${collectionId}`) as WebflowCollectionSchema | null;
   return data;
 }
 
 /** Get all items from a collection (handles pagination) */
-export async function getCollectionItems(collectionId, limit = 100) {
-  let allItems = [];
+export async function getCollectionItems(collectionId: string, limit = 100): Promise<WebflowItem[]> {
+  let allItems: WebflowItem[] = [];
   let offset = 0;
   let hasMore = true;
 
   while (hasMore) {
     const data = await fetchWebflow(
       `/collections/${collectionId}/items?limit=${Math.min(limit, 100)}&offset=${offset}`
-    );
+    ) as WebflowItemsResponse | null;
     if (!data || !data.items) break;
 
     allItems = allItems.concat(data.items);
@@ -57,10 +100,10 @@ export async function getCollectionItems(collectionId, limit = 100) {
  * Find a collection by name (case-insensitive partial match).
  * Returns { collection, items } or null.
  */
-export async function findCollectionByName(name) {
+export async function findCollectionByName(name: string) {
   const collections = await getCollections();
   const match = collections.find(
-    (c) => c.displayName?.toLowerCase().includes(name.toLowerCase()) ||
+    (c: WebflowCollection) => c.displayName?.toLowerCase().includes(name.toLowerCase()) ||
            c.slug?.toLowerCase().includes(name.toLowerCase())
   );
   if (!match) return null;
@@ -75,13 +118,13 @@ export async function findCollectionByName(name) {
  */
 export async function getAllCMSData() {
   const collections = await getCollections();
-  const results = {};
+  const results: Record<string, { collection: WebflowCollection; items: WebflowItem[] }> = {};
 
   for (const col of collections) {
     const items = await getCollectionItems(col.id);
     results[col.slug] = {
       collection: col,
-      items: items.filter((item) => !item.isDraft && !item.isArchived),
+      items: items.filter((item: WebflowItem) => !item.isDraft && !item.isArchived),
     };
   }
 
@@ -94,12 +137,12 @@ export async function getAllCMSData() {
  * schema holds the human-readable names.
  * Returns a Map<string, string> (lowercased names).
  */
-export async function getOptionMap(collectionId, fieldSlug) {
+export async function getOptionMap(collectionId: string, fieldSlug: string): Promise<Map<string, string>> {
   const schema = await getCollection(collectionId);
   if (!schema || !schema.fields) return new Map();
 
   // Find the field by slug (case-insensitive) — also check partial matches
-  const field = schema.fields.find((f) => {
+  const field = schema.fields.find((f: WebflowField) => {
     const s = (f.slug || '').toLowerCase();
     const d = (f.displayName || '').toLowerCase();
     const target = fieldSlug.toLowerCase();
@@ -108,7 +151,7 @@ export async function getOptionMap(collectionId, fieldSlug) {
 
   if (!field || !field.validations?.options) return new Map();
 
-  const map = new Map();
+  const map = new Map<string, string>();
   for (const opt of field.validations.options) {
     if (opt.id && opt.name) {
       map.set(opt.id, opt.name.toLowerCase().trim());
@@ -125,16 +168,19 @@ export async function getOptionMap(collectionId, fieldSlug) {
  * Extract a readable field value from a Webflow item.
  * Webflow CMS items store data in fieldData.
  */
-export function getField(item, fieldName) {
+export function getField(item: WebflowItem | null | undefined, fieldName: string): unknown {
   return item?.fieldData?.[fieldName] ?? null;
 }
 
 /**
  * Get image URL from a Webflow image field.
  */
-export function getImageUrl(item, fieldName) {
+export function getImageUrl(item: WebflowItem | null | undefined, fieldName: string): string | null {
   const field = getField(item, fieldName);
   if (!field) return null;
   if (typeof field === 'string') return field;
-  return field?.url || null;
+  if (typeof field === 'object' && field !== null && 'url' in field) {
+    return (field as { url: string }).url || null;
+  }
+  return null;
 }

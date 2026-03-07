@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * POST /api/sync-pricing
  *
@@ -19,7 +18,79 @@
  *   Authorization: Bearer <SYNC_PRICING_SECRET>
  */
 
-export async function POST(request) {
+import { NextRequest } from 'next/server';
+
+interface PricingRowData {
+  loan_type: string;
+  arv_label: string;
+  program_id: string;
+  program_name: string;
+  interest_rate: string;
+  rate_type: string;
+  origination_points: string;
+  points_note: string;
+  min_origination_fee: string;
+  max_ltv: string;
+  ltv_note: string;
+  max_ltc: string;
+  ltc_note: string;
+  max_ltp: string;
+  max_term: string;
+  term_note: string;
+  loan_term_months: string;
+  exit_points: string;
+  legal_doc_fee: string;
+  bpo_appraisal_cost: string;
+  bpo_appraisal_note: string;
+  min_credit_score: string;
+  min_deals_24mo: string;
+  citizenship: string;
+  highlight_1: string;
+  highlight_2: string;
+  highlight_3: string;
+  [key: string]: string;
+}
+
+interface PricingProgram {
+  id: string;
+  name: string;
+  interestRate: number;
+  rateType: string;
+  originationPoints: number;
+  pointsNote: string;
+  minOriginationFee: number;
+  maxLTV: number;
+  ltvNote: string;
+  maxLTC: number;
+  ltcNote: string;
+  maxLTP: number;
+  maxTerm: number;
+  termNote: string;
+  loanTermMonths: number;
+  exitPoints: number;
+  legalDocFee: number;
+  bpoAppraisalCost: number;
+  bpoAppraisalNote: string;
+  requirements: {
+    minCreditScore: number;
+    minDeals24Months: number;
+    citizenship: string;
+  };
+  highlights: string[];
+}
+
+interface LoanProgramEntry {
+  arvLabel: string;
+  programs: PricingProgram[];
+}
+
+interface PricingConfig {
+  lastSyncedAt: string;
+  source: string;
+  loanPrograms: Record<string, LoanProgramEntry>;
+}
+
+export async function POST(request: NextRequest) {
   try {
     // Verify API secret
     const authHeader = request.headers.get('authorization');
@@ -36,7 +107,7 @@ export async function POST(request) {
       return Response.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const body = await request.json();
+    const body = (await request.json()) as { rows?: string[][] };
 
     if (!body.rows || !Array.isArray(body.rows)) {
       return Response.json(
@@ -55,29 +126,29 @@ export async function POST(request) {
         programCount: data.programs.length,
       })),
     });
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Sync pricing error:', error);
     return Response.json(
-      { error: 'Failed to process pricing data: ' + error.message },
+      { error: 'Failed to process pricing data: ' + (error instanceof Error ? error.message : String(error)) },
       { status: 500 }
     );
   }
 }
 
-function transformSheetRows(rows) {
+function transformSheetRows(rows: string[][]): PricingConfig {
   if (rows.length < 2) {
     throw new Error('Must have a header row and at least one data row');
   }
 
-  const headers = rows[0].map((h) =>
+  const headers: string[] = rows[0].map((h: string) =>
     String(h).trim().toLowerCase().replace(/\s+/g, '_')
   );
   const dataRows = rows.slice(1);
-  const loanPrograms = {};
+  const loanPrograms: Record<string, LoanProgramEntry> = {};
 
   for (const row of dataRows) {
-    const r = {};
-    headers.forEach((header, i) => {
+    const r: PricingRowData = {} as PricingRowData;
+    headers.forEach((header: string, i: number) => {
       r[header] = row[i] !== undefined ? String(row[i]).trim() : '';
     });
 
