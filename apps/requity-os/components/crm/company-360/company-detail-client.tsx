@@ -114,7 +114,7 @@ export function CompanyDetailClient({
   return (
     <div className="min-h-screen bg-muted">
       {/* Breadcrumb */}
-      <div className="bg-card border-b border-border px-7 py-2.5 flex items-center gap-2">
+      <div className="bg-card border-b border-border px-6 lg:px-8 py-4 flex items-center gap-2">
         <Link
           href="/admin/crm?view=companies"
           className="text-muted-foreground hover:text-foreground transition-colors"
@@ -135,7 +135,7 @@ export function CompanyDetailClient({
 
       <div className="flex max-w-[1400px] mx-auto">
         {/* Main Content */}
-        <div className="flex-1 min-w-0 px-6 py-5 pb-10">
+        <div className="flex-1 min-w-0 px-6 lg:px-8 py-6 pb-10">
           {/* Header Card */}
           <div className="relative">
             <CompanyDetailHeader
@@ -149,7 +149,7 @@ export function CompanyDetailClient({
           </div>
 
           {/* Tab Bar */}
-          <div className="border-b border-border mb-5 flex overflow-x-auto">
+          <div className="border-b border-border mb-6 flex overflow-x-auto">
             {tabs.map((t) => (
               <TabBtn
                 key={t.id}
@@ -210,7 +210,7 @@ export function CompanyDetailClient({
         </div>
 
         {/* Right Sidebar */}
-        <div className="hidden lg:block w-80 shrink-0 py-5 pr-6">
+        <div className="hidden lg:block w-[320px] shrink-0 py-6 pr-6 lg:pr-8">
           <CompanyDetailSidebar
             company={company}
             contacts={contacts}

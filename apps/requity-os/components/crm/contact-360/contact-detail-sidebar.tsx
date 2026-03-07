@@ -123,13 +123,13 @@ export function ContactDetailSidebar({
     <div className="flex flex-col gap-3">
       {/* Quick Actions */}
       <Card className="rounded-xl border-border">
-        <CardHeader className="px-4 py-3 pb-0">
+        <CardHeader className="px-5 py-4 pb-0">
           <CardTitle className="text-xs font-semibold text-foreground flex items-center gap-1.5">
             <Activity size={14} className="text-muted-foreground" strokeWidth={1.5} />
             Quick Actions
           </CardTitle>
         </CardHeader>
-        <CardContent className="px-4 py-3">
+        <CardContent className="px-5 py-4">
           <div className="flex flex-col gap-1.5">
             {quickActions.map(({ icon: Icon, label, onClick }) => (
               <Button
@@ -154,7 +154,7 @@ export function ContactDetailSidebar({
 
       {/* Followers */}
       <Card className="rounded-xl border-border">
-        <CardHeader className="px-4 py-3 pb-0">
+        <CardHeader className="px-5 py-4 pb-0">
           <div className="flex items-center justify-between">
             <CardTitle className="text-xs font-semibold text-foreground flex items-center gap-1.5">
               <Bell size={14} className="text-muted-foreground" strokeWidth={1.5} />
@@ -169,7 +169,7 @@ export function ContactDetailSidebar({
             </Button>
           </div>
         </CardHeader>
-        <CardContent className="px-4 py-3">
+        <CardContent className="px-5 py-4">
           <div className="flex gap-2 flex-wrap">
             {assignedToName && (
               <HoverCard>
@@ -213,13 +213,13 @@ export function ContactDetailSidebar({
 
       {/* Relationships */}
       <Card className="rounded-xl border-border">
-        <CardHeader className="px-4 py-3 pb-0">
+        <CardHeader className="px-5 py-4 pb-0">
           <CardTitle className="text-xs font-semibold text-foreground flex items-center gap-1.5">
             <Users size={14} className="text-muted-foreground" strokeWidth={1.5} />
             Relationships
           </CardTitle>
         </CardHeader>
-        <CardContent className="px-4 py-3">
+        <CardContent className="px-5 py-4">
           {relationships.length === 0 ? (
             <p className="text-xs text-muted-foreground">
               No relationships defined.
@@ -276,13 +276,13 @@ export function ContactDetailSidebar({
 
       {/* Communication */}
       <Card className="rounded-xl border-border">
-        <CardHeader className="px-4 py-3 pb-0">
+        <CardHeader className="px-5 py-4 pb-0">
           <CardTitle className="text-xs font-semibold text-foreground flex items-center gap-1.5">
             <Globe size={14} className="text-muted-foreground" strokeWidth={1.5} />
             Communication
           </CardTitle>
         </CardHeader>
-        <CardContent className="px-4 py-3">
+        <CardContent className="px-5 py-4">
           <div className="flex flex-col gap-1.5">
             <SidebarFieldRow
               label="Language"
@@ -318,13 +318,13 @@ export function ContactDetailSidebar({
 
       {/* System Info */}
       <Card className="rounded-xl border-border">
-        <CardHeader className="px-4 py-3 pb-0">
+        <CardHeader className="px-5 py-4 pb-0">
           <CardTitle className="text-xs font-semibold text-foreground flex items-center gap-1.5">
             <Hash size={14} className="text-muted-foreground" strokeWidth={1.5} />
             System Info
           </CardTitle>
         </CardHeader>
-        <CardContent className="px-4 py-3">
+        <CardContent className="px-5 py-4">
           <div className="flex flex-col gap-1.5">
             <SidebarFieldRow
               label="Created"

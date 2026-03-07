@@ -153,7 +153,7 @@ export function ContactDetailClient({
   return (
     <div className="min-h-screen bg-muted">
       {/* Breadcrumb */}
-      <div className="bg-card border-b border-border px-7 py-2.5 flex items-center gap-2">
+      <div className="bg-card border-b border-border px-6 lg:px-8 py-4 flex items-center gap-2">
         <Link
           href="/admin/crm"
           className="text-muted-foreground hover:text-foreground transition-colors"
@@ -172,7 +172,7 @@ export function ContactDetailClient({
 
       <div className="flex max-w-[1400px] mx-auto">
         {/* Main Content */}
-        <div className="flex-1 min-w-0 px-6 py-5 pb-10">
+        <div className="flex-1 min-w-0 px-6 lg:px-8 py-6 pb-10">
           {/* Header Card */}
           <ContactDetailHeader
             contact={contact}
@@ -259,16 +259,7 @@ export function ContactDetailClient({
         </div>
 
         {/* Right Sidebar */}
-        <div
-          className="hidden lg:flex py-5 pr-6"
-          style={{
-            width: 280,
-            minWidth: 280,
-            maxWidth: 280,
-            flexDirection: "column",
-            gap: 10,
-          }}
-        >
+        <div className="hidden lg:flex flex-col gap-3 w-[300px] min-w-[300px] max-w-[300px] py-6 pr-6 lg:pr-8">
           <ContactDetailSidebar
             contact={contact}
             relationships={relationships}
