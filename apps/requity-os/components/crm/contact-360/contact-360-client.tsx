@@ -37,7 +37,7 @@ import { InvestmentsTab } from "./tabs/investments-tab";
 import { ServicingTab } from "./tabs/servicing-tab";
 import { ReferralsTab } from "./tabs/referrals-tab";
 import { DocumentsTab } from "./tabs/documents-tab";
-import { NotesTab } from "./tabs/notes-tab";
+import { UnifiedNotes } from "@/components/shared/UnifiedNotes";
 import { ActivityTab } from "./tabs/activity-tab";
 import { ContactDetailsSidebar } from "./sidebar/contact-details-sidebar";
 import { RecentEmailsSidebar } from "./sidebar/recent-emails-sidebar";
@@ -299,11 +299,9 @@ export function Contact360Client({
             )}
 
             <TabsContent value="notes" className="mt-4">
-              <NotesTab
-                contactId={contact.id}
-                currentUserId={currentUserId}
-                currentUserName={currentUserName}
-                teamMembers={teamMembers}
+              <UnifiedNotes
+                entityType="contact"
+                entityId={contact.id}
               />
             </TabsContent>
 

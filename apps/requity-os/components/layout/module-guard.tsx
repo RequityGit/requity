@@ -27,7 +27,6 @@ const ROUTE_TO_MODULE: Record<string, string> = {
   "/admin/document-center": "documents",
   "/admin/documents": "documents",
   "/admin/operations": "operations",
-  "/chat": "chatter",
   "/sops": "knowledge-base",
   "/control-center": "control-center",
 };

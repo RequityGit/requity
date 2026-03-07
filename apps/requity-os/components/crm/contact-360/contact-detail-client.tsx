@@ -22,7 +22,7 @@ import { DetailEmailsTab } from "./tabs/detail-emails-tab";
 import { DetailDealsTab } from "./tabs/detail-deals-tab";
 import { DetailEntitiesTab } from "./tabs/detail-entities-tab";
 import { DetailTasksTab } from "./tabs/detail-tasks-tab";
-import { DetailNotesTab } from "./tabs/detail-notes-tab";
+import { UnifiedNotes } from "@/components/shared/UnifiedNotes";
 import type {
   ContactData,
   RelationshipData,
@@ -261,11 +261,9 @@ export function ContactDetailClient({
             </TabsContent>
 
             <TabsContent value="notes" className="mt-4">
-              <DetailNotesTab
-                contactId={contact.id}
-                currentUserId={currentUserId}
-                currentUserName={currentUserName}
-                teamMembers={teamMembers}
+              <UnifiedNotes
+                entityType="contact"
+                entityId={contact.id}
               />
             </TabsContent>
           </Tabs>

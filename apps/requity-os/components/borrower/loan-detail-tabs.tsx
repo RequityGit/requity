@@ -18,7 +18,7 @@ type LoanPayment = Tables<"loan_payments">;
 type Document = Tables<"documents">;
 type LoanCondition = Tables<"loan_conditions">;
 import { FileText, CreditCard, ClipboardList, MessageCircle } from "lucide-react";
-import { LoanChatter } from "@/components/shared/loan-chatter";
+import { UnifiedNotes } from "@/components/shared/UnifiedNotes";
 
 interface LoanDetailTabsProps {
   payments: LoanPayment[];
@@ -161,10 +161,10 @@ export function LoanDetailTabs({
       </TabsContent>
 
       <TabsContent value="messages" className="mt-4">
-        <LoanChatter
+        <UnifiedNotes
+          entityType="deal"
+          entityId={loanId}
           loanId={loanId}
-          currentUserId={currentUserId}
-          isAdmin={false}
         />
       </TabsContent>
     </Tabs>

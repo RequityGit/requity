@@ -29,7 +29,7 @@ import {
   Repeat,
   Link2,
 } from "lucide-react";
-import { OpsCommentThread } from "@/components/operations/OpsCommentThread";
+import { UnifiedNotes } from "@/components/shared/UnifiedNotes";
 import { RecurrencePanel } from "./recurrence-panel";
 import { LinkedEntitySelect } from "./linked-entity-select";
 import type { OpsTask, Profile } from "./tasks-board";
@@ -466,11 +466,10 @@ export function TaskFormModal({
           {/* Comments (only for existing tasks) */}
           {task && (
             <div className="border-t border-border pt-4">
-              <OpsCommentThread
+              <UnifiedNotes
                 entityType="task"
                 entityId={task.id}
-                currentUserId={currentUserId}
-                isSuperAdmin={false}
+                compact
               />
             </div>
           )}

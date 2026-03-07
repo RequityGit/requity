@@ -9,7 +9,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Progress } from "@/components/ui/progress";
 import { StatusBadge } from "@/components/shared/status-badge";
 import { DocumentDownload } from "@/components/borrower/document-download";
@@ -45,38 +44,16 @@ import {
   ChevronDown,
   ChevronRight,
   MessageCircle,
-  Lock,
   Paperclip,
   Upload,
   X,
-  Send,
-  Pencil,
 } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
 import type { Tables } from "@/lib/supabase/types";
+import { UnifiedNotes } from "@/components/shared/UnifiedNotes";
 
 type LoanCondition = Tables<"loan_conditions">;
 type LoanDocument = Tables<"loan_documents">;
-import { MentionInput } from "@/components/shared/mention-input";
-import { CommentRenderer } from "@/components/shared/comment-renderer";
-import { extractMentionIds } from "@/lib/comment-utils";
-
-// ---------------------------------------------------------------------------
-// Local type for loan_condition_comments (not yet in generated types)
-// ---------------------------------------------------------------------------
-interface ConditionComment {
-  id: string;
-  condition_id: string;
-  loan_id: string;
-  author_id: string | null;
-  author_name: string | null;
-  comment: string;
-  mentions: string[] | null;
-  is_internal: boolean;
-  is_edited: boolean;
-  edited_at: string | null;
-  parent_comment_id: string | null;
-  created_at: string;
-}
 
 interface LoanConditionsTabProps {
   conditions: LoanCondition[];
@@ -383,14 +360,10 @@ function ConditionRow({
   const [rejectOpen, setRejectOpen] = useState(false);
   const [rejectReason, setRejectReason] = useState("");
 
-  // Comments & documents panel state
+  // Documents panel state
   const [panelOpen, setPanelOpen] = useState(false);
   const [panelLoaded, setPanelLoaded] = useState(false);
-  const [comments, setComments] = useState<ConditionComment[]>([]);
   const [documents, setDocuments] = useState<LoanDocument[]>([]);
-  const [commentText, setCommentText] = useState("");
-  const [isInternal, setIsInternal] = useState(true);
-  const [commentLoading, setCommentLoading] = useState(false);
   const [uploadFile, setUploadFile] = useState<File | null>(null);
   const [uploadLoading, setUploadLoading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -410,20 +383,12 @@ function ConditionRow({
 
   async function loadPanelData() {
     const supabase = createClient();
-    const [commentsRes, docsRes] = await Promise.all([
-      (supabase as any)
-        .from("loan_condition_comments")
-        .select("*")
-        .eq("condition_id", condition.id)
-        .order("created_at", { ascending: true }),
-      supabase
-        .from("loan_documents")
-        .select("*")
-        .eq("condition_id", condition.id)
-        .order("created_at", { ascending: false }),
-    ]);
-    setComments((commentsRes.data as ConditionComment[]) ?? []);
-    setDocuments(docsRes.data ?? []);
+    const { data: docsRes } = await supabase
+      .from("loan_documents")
+      .select("*")
+      .eq("condition_id", condition.id)
+      .order("created_at", { ascending: false });
+    setDocuments(docsRes ?? []);
     setPanelLoaded(true);
   }
 
@@ -432,48 +397,6 @@ function ConditionRow({
       await loadPanelData();
     }
     setPanelOpen((prev) => !prev);
-  }
-
-  async function handleAddComment(text: string, mentionIds: string[]) {
-    if (!text.trim()) return;
-    setCommentLoading(true);
-
-    const supabase = createClient();
-
-    // Fetch author name lazily
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("full_name")
-      .eq("id", currentUserId)
-      .single();
-    const authorName = profile?.full_name ?? "Admin";
-
-    const { data, error } = await (supabase as any)
-      .from("loan_condition_comments")
-      .insert({
-        condition_id: condition.id,
-        loan_id: loanId,
-        author_id: currentUserId,
-        author_name: authorName,
-        comment: text.trim(),
-        mentions: mentionIds.length > 0 ? mentionIds : [],
-        is_internal: isInternal,
-      })
-      .select()
-      .single();
-
-    if (error) {
-      toast({
-        title: "Error adding comment",
-        description: error.message,
-        variant: "destructive",
-      });
-    } else {
-      setComments((prev) => [...prev, data as ConditionComment]);
-      setCommentText("");
-      toast({ title: isInternal ? "Internal note added" : "Comment added" });
-    }
-    setCommentLoading(false);
   }
 
   async function handleUploadDocument() {
@@ -579,8 +502,6 @@ function ConditionRow({
     }
   }
 
-  const commentCount = comments.length;
-
   return (
     <>
       <div className="rounded-lg border overflow-hidden">
@@ -664,8 +585,8 @@ function ConditionRow({
             >
               <MessageCircle className="h-3 w-3" />
               {panelLoaded
-                ? `${commentCount} comment${commentCount !== 1 ? "s" : ""} · ${documents.length} doc${documents.length !== 1 ? "s" : ""}`
-                : "Comments & Documents"}
+                ? `Notes & ${documents.length} doc${documents.length !== 1 ? "s" : ""}`
+                : "Notes & Documents"}
               {panelOpen ? (
                 <ChevronDown className="h-3 w-3" />
               ) : (
@@ -791,69 +712,14 @@ function ConditionRow({
             {/* Divider */}
             <div className="border-t" />
 
-            {/* Comments Section */}
-            <div className="space-y-3">
-              <h4 className="text-xs font-semibold text-foreground flex items-center gap-1.5">
-                <MessageCircle className="h-3.5 w-3.5" />
-                Comments ({comments.length})
-              </h4>
-
-              {/* Comment thread */}
-              {comments.length === 0 ? (
-                <p className="text-xs text-muted-foreground italic">
-                  No comments yet.
-                </p>
-              ) : (
-                <div className="space-y-2">
-                  {comments.map((c) => (
-                    <CommentRenderer
-                      key={c.id}
-                      comment={c.comment}
-                      authorName={c.author_name}
-                      isInternal={c.is_internal}
-                      isEdited={c.is_edited}
-                      createdAt={c.created_at}
-                      isOwnComment={c.author_id === currentUserId}
-                      actions={
-                        c.author_id === currentUserId ? (
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setCommentText(c.comment);
-                            }}
-                            className="text-muted-foreground hover:text-foreground ml-1"
-                          >
-                            <Pencil className="h-3 w-3" />
-                          </button>
-                        ) : undefined
-                      }
-                    />
-                  ))}
-                </div>
-              )}
-
-              {/* Add comment form with @mention support */}
-              <MentionInput
-                value={commentText}
-                onChange={setCommentText}
-                onSubmit={handleAddComment}
-                placeholder="Add a comment... (type @ to mention)"
-                disabled={commentLoading}
-                submitLabel={commentLoading ? "Posting..." : "Post"}
-                submitIcon={<Send className="h-3 w-3" />}
-                rows={2}
-                extraControls={
-                  <div className="flex items-center gap-2 text-xs cursor-pointer select-none">
-                    <Checkbox
-                      checked={isInternal}
-                      onCheckedChange={(v) => setIsInternal(!!v)}
-                    />
-                    <Lock className="h-3 w-3 text-amber-600 dark:text-amber-400" />
-                    Internal only
-                  </div>
-                }
-              />
-            </div>
+            {/* Notes Section */}
+            <UnifiedNotes
+              entityType="condition"
+              entityId={condition.id}
+              loanId={loanId}
+              showInternalToggle
+              compact
+            />
           </div>
         )}
       </div>

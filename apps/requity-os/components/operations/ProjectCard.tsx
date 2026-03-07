@@ -20,7 +20,7 @@ import {
   DueDateLabel,
   RecurringBadge,
 } from "./badges";
-import { OpsCommentThread } from "./OpsCommentThread";
+import { UnifiedNotes } from "@/components/shared/UnifiedNotes";
 
 export interface OpsTask {
   id: string;
@@ -263,11 +263,9 @@ export function ProjectCard({ project, tasks, onToggleTask, onStopRecurrence, on
 
           <Separator className="my-4" />
 
-          <OpsCommentThread
+          <UnifiedNotes
             entityType="project"
             entityId={project.id}
-            currentUserId={currentUserId}
-            isSuperAdmin={isSuperAdmin}
           />
         </CardContent>
       )}

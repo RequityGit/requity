@@ -21,7 +21,7 @@ import { CompanyActivityTab } from "./tabs/activity-tab";
 import { CompanyDealsTab } from "./tabs/deals-tab";
 import { CompanyFilesTab } from "./tabs/files-tab";
 import { CompanyTasksTab } from "./tabs/tasks-tab";
-import { CompanyNotesTab } from "./tabs/notes-tab";
+import { UnifiedNotes } from "@/components/shared/UnifiedNotes";
 import type {
   CompanyDetailData,
   CompanyContactData,
@@ -205,11 +205,9 @@ export function CompanyDetailClient({
             />
           )}
           {activeTab === "notes" && (
-            <CompanyNotesTab
-              notes={notes}
-              companyId={company.id}
-              currentUserId={currentUserId}
-              currentUserName={currentUserName}
+            <UnifiedNotes
+              entityType="company"
+              entityId={company.id}
             />
           )}
         </div>

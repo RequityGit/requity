@@ -104,14 +104,14 @@ export default async function CompanyDetailPage({ params }: PageProps) {
       .eq("company_id", id)
       .is("deleted_at", null)
       .order("created_at", { ascending: false }),
-    // Notes (chatter posts)
+    // Notes (from unified notes table)
     admin
-      .from("crm_chatter_posts")
-      .select("*")
-      .eq("company_id", id)
-      .is("deleted_at", null)
-      .order("is_pinned", { ascending: false })
-      .order("created_at", { ascending: false }),
+      .from("notes" as never)
+      .select("*" as never)
+      .eq("company_id" as never, id as never)
+      .is("deleted_at" as never, null)
+      .order("is_pinned" as never, { ascending: false })
+      .order("created_at" as never, { ascending: false }),
     // Wire instructions
     admin
       .from("company_wire_instructions")

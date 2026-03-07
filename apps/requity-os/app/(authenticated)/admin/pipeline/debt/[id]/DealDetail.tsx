@@ -18,10 +18,9 @@ import { OverviewTab } from "./tabs/OverviewTab";
 import { ConditionsTab } from "./tabs/ConditionsTab";
 import { DocumentsTab } from "./tabs/DocumentsTab";
 import { ActivityTab } from "./tabs/ActivityTab";
-import { CommentsTab } from "./tabs/CommentsTab";
 import { UnderwritingTab } from "./tabs/UnderwritingTab";
-import { DealChatTab } from "@/components/deal/deal-chat-tab";
 import { TasksTab, type DealTask } from "./tabs/TasksTab";
+import { UnifiedNotes } from "@/components/shared/UnifiedNotes";
 import { updateDealField, updateRelatedField } from "./update-deal-action";
 import { advanceStage, advanceOpportunityStage } from "./actions";
 import { useToast } from "@/components/ui/use-toast";
@@ -35,8 +34,6 @@ import {
   type ConditionData,
   type DocumentData,
   type ActivityData,
-  type CommentData,
-  type ChatMessage,
 } from "./components";
 
 export interface TeamProfile {
@@ -52,8 +49,6 @@ interface DealDetailProps {
   conditions: ConditionData[];
   documents: DocumentData[];
   activity: ActivityData[];
-  comments: CommentData[];
-  chatMessages: ChatMessage[];
   dealTasks: DealTask[];
   isOpportunity: boolean;
   currentUserId: string;
@@ -76,8 +71,6 @@ export function DealDetail({
   conditions,
   documents,
   activity,
-  comments,
-  chatMessages,
   dealTasks,
   isOpportunity,
   currentUserId,
@@ -188,8 +181,7 @@ export function DealDetail({
     { key: "documents", label: "Documents", count: documents.length || undefined },
     { key: "tasks", label: "Tasks", count: openTaskCount || undefined },
     { key: "activity", label: "Activity" },
-    { key: "comments", label: "Comments", count: comments.length || undefined },
-    { key: "chat", label: "Chat" },
+    { key: "notes", label: "Notes" },
   ];
 
   const renderTab = () => {
@@ -222,23 +214,15 @@ export function DealDetail({
         );
       case "activity":
         return <ActivityTab activity={activity} />;
-      case "comments":
+      case "notes":
         return (
-          <CommentsTab
-            comments={comments}
-            loanId={deal.id}
-            currentUserId={currentUserId}
-            currentUserName={currentUserName}
-            currentUserInitials={currentUserInitials}
-            isOpportunity={isOpportunity}
-          />
-        );
-      case "chat":
-        return (
-          <DealChatTab
-            loanId={deal.id}
-            currentUserId={currentUserId}
-            currentUserName={currentUserName}
+          <UnifiedNotes
+            entityType="deal"
+            entityId={deal.id}
+            loanId={isOpportunity ? undefined : deal.id}
+            opportunityId={isOpportunity ? deal.id : (deal as DealData & { opportunity_id?: string }).opportunity_id}
+            showInternalToggle
+            showFilters
           />
         );
       default:

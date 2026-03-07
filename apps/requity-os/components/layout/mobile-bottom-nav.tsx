@@ -14,10 +14,8 @@ import {
   Contact,
   ListTodo,
   MoreHorizontal,
-  MessageSquare,
 } from "lucide-react";
 import { useViewAs } from "@/contexts/view-as-context";
-import { useUnreadCounts } from "@/hooks/useUnreadCounts";
 
 interface BottomNavItem {
   label: string;
@@ -35,7 +33,6 @@ const borrowerBottomNav: BottomNavItem[] = [
     activePaths: ["/borrower/loans"],
   },
   { label: "Documents", href: "/borrower/documents", icon: FileText },
-  { label: "Chatter", href: "/chat", icon: MessageSquare },
 ];
 
 const investorBottomNav: BottomNavItem[] = [
@@ -92,7 +89,6 @@ export function MobileBottomNav({
 }) {
   const pathname = usePathname();
   const { effectiveViewRole, isViewingAs } = useViewAs();
-  const { totalUnread } = useUnreadCounts(userId);
 
   const navRole = isViewingAs ? effectiveViewRole : role;
   const navItems = getBottomNavItems(navRole);
@@ -127,11 +123,6 @@ export function MobileBottomNav({
                   className="h-5 w-5"
                   strokeWidth={1.5}
                 />
-                {item.label === "Chatter" && totalUnread > 0 && (
-                  <span className="absolute -top-1.5 -right-2 h-4 min-w-[16px] px-0.5 flex items-center justify-center rounded-full bg-[#F0719B] text-white text-[9px] font-bold">
-                    {totalUnread > 99 ? "99+" : totalUnread}
-                  </span>
-                )}
               </div>
               <span className={cn(
                 "text-[10px] leading-tight",

@@ -1,10 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Textarea } from "@/components/ui/textarea";
 import { StatusBadge } from "@/components/shared/status-badge";
 import { FileUpload } from "@/components/shared/file-upload";
 import { DocumentDownload } from "@/components/borrower/document-download";
@@ -17,37 +15,18 @@ import {
   AlertTriangle,
   ChevronDown,
   ChevronRight,
-  MessageCircle,
   Paperclip,
-  Send,
   FileText,
   Upload,
 } from "lucide-react";
-import { CommentRenderer } from "@/components/shared/comment-renderer";
+import { UnifiedNotes } from "@/components/shared/UnifiedNotes";
 import {
   uploadConditionDocument,
-  addConditionComment,
 } from "@/app/(authenticated)/borrower/loans/[id]/actions";
 import type { Tables } from "@/lib/supabase/types";
 
 type LoanCondition = Tables<"loan_conditions">;
 type LoanDocument = Tables<"loan_documents">;
-
-// Local type — includes new mention/edit fields
-interface ConditionComment {
-  id: string;
-  condition_id: string;
-  loan_id: string;
-  author_id: string | null;
-  author_name: string | null;
-  comment: string;
-  mentions: string[] | null;
-  is_internal: boolean;
-  is_edited: boolean;
-  edited_at: string | null;
-  parent_comment_id: string | null;
-  created_at: string;
-}
 
 interface BorrowerConditionsTabProps {
   conditions: LoanCondition[];
@@ -56,15 +35,6 @@ interface BorrowerConditionsTabProps {
 }
 
 const COMPLETE_STATUSES = ["approved", "waived", "not_applicable"];
-const ACTIVE_STATUSES = [
-  "not_requested",
-  "requested",
-  "received",
-  "under_review",
-  "rejected",
-  "pending",
-  "submitted",
-];
 
 export function BorrowerConditionsTab({
   conditions,
@@ -166,10 +136,8 @@ function BorrowerConditionCard({
 }) {
   const [expanded, setExpanded] = useState(false);
   const [dataLoaded, setDataLoaded] = useState(false);
-  const [comments, setComments] = useState<ConditionComment[]>([]);
   const [documents, setDocuments] = useState<LoanDocument[]>([]);
 
-  const [commentText, setCommentText] = useState("");
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [showUpload, setShowUpload] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -185,20 +153,11 @@ function BorrowerConditionCard({
   async function loadData() {
     const { createClient } = await import("@/lib/supabase/client");
     const supabase = createClient();
-    const [commentsRes, docsRes] = await Promise.all([
-      (supabase as any)
-        .from("loan_condition_comments")
-        .select("*")
-        .eq("condition_id", condition.id)
-        .eq("is_internal", false)
-        .order("created_at", { ascending: true }),
-      supabase
-        .from("loan_documents")
-        .select("*")
-        .eq("condition_id", condition.id)
-        .order("created_at", { ascending: false }),
-    ]);
-    setComments((commentsRes.data as ConditionComment[]) ?? []);
+    const docsRes = await supabase
+      .from("loan_documents")
+      .select("*")
+      .eq("condition_id", condition.id)
+      .order("created_at", { ascending: false });
     setDocuments(docsRes.data ?? []);
     setDataLoaded(true);
   }
@@ -208,47 +167,6 @@ function BorrowerConditionCard({
       await loadData();
     }
     setExpanded((prev) => !prev);
-  }
-
-  async function handleSubmitComment() {
-    if (!commentText.trim()) return;
-    setLoading(true);
-    try {
-      const result = await addConditionComment(
-        condition.id,
-        loanId,
-        commentText.trim()
-      );
-      if (result.error) {
-        toast({
-          title: "Error posting comment",
-          description: result.error,
-          variant: "destructive",
-        });
-      } else {
-        setComments((prev) => [
-          ...prev,
-          {
-            id: crypto.randomUUID(),
-            condition_id: condition.id,
-            loan_id: loanId,
-            author_id: currentUserId,
-            author_name: "You",
-            comment: commentText.trim(),
-            mentions: [],
-            is_internal: false,
-            is_edited: false,
-            edited_at: null,
-            parent_comment_id: null,
-            created_at: new Date().toISOString(),
-          },
-        ]);
-        setCommentText("");
-        toast({ title: "Message sent" });
-      }
-    } finally {
-      setLoading(false);
-    }
   }
 
   async function handleUploadDocument() {
@@ -345,7 +263,6 @@ function BorrowerConditionCard({
           {/* Activity summary hint */}
           {dataLoaded && (
             <p className="text-[11px] text-muted-foreground mt-1.5">
-              {comments.length} message{comments.length !== 1 ? "s" : ""} ·{" "}
               {documents.length} file{documents.length !== 1 ? "s" : ""}
             </p>
           )}
@@ -445,61 +362,13 @@ function BorrowerConditionCard({
           {/* Divider */}
           <div className="border-t" />
 
-          {/* Messages / Comments */}
-          <div className="space-y-3">
-            <h4 className="text-xs font-semibold text-foreground flex items-center gap-1.5">
-              <MessageCircle className="h-3.5 w-3.5" />
-              Messages ({comments.length})
-            </h4>
-
-            {comments.length === 0 ? (
-              <p className="text-xs text-muted-foreground italic">
-                No messages yet. Use the box below to ask a question or provide
-                information.
-              </p>
-            ) : (
-              <div className="space-y-2">
-                {comments.map((c) => (
-                  <CommentRenderer
-                    key={c.id}
-                    comment={c.comment}
-                    authorName={c.author_name}
-                    isInternal={false}
-                    isEdited={c.is_edited}
-                    createdAt={c.created_at}
-                    isOwnComment={c.author_id === currentUserId}
-                  />
-                ))}
-              </div>
-            )}
-
-            {/* Comment input */}
-            <div className="space-y-2">
-              <Textarea
-                value={commentText}
-                onChange={(e) => setCommentText(e.target.value)}
-                placeholder="Ask a question or add a note for your loan team..."
-                rows={3}
-                className="text-sm resize-none"
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
-                    handleSubmitComment();
-                  }
-                }}
-              />
-              <div className="flex justify-end">
-                <Button
-                  size="sm"
-                  className="gap-1.5"
-                  onClick={handleSubmitComment}
-                  disabled={loading || !commentText.trim()}
-                >
-                  <Send className="h-3.5 w-3.5" />
-                  {loading ? "Sending..." : "Send Message"}
-                </Button>
-              </div>
-            </div>
-          </div>
+          {/* Notes */}
+          <UnifiedNotes
+            entityType="condition"
+            entityId={condition.id}
+            loanId={loanId}
+            compact
+          />
         </div>
       )}
     </div>

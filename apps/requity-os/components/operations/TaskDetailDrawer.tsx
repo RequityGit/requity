@@ -13,7 +13,7 @@ import {
   RecurringBadge,
   DueDateLabel,
 } from "./badges";
-import { OpsCommentThread } from "./OpsCommentThread";
+import { UnifiedNotes } from "@/components/shared/UnifiedNotes";
 import { Separator } from "@/components/ui/separator";
 import type { OpsTask } from "./ProjectCard";
 
@@ -97,11 +97,10 @@ export function TaskDetailDrawer({
 
         {/* Comments */}
         <div className="pt-4">
-          <OpsCommentThread
+          <UnifiedNotes
             entityType="task"
             entityId={task.id}
-            currentUserId={currentUserId}
-            isSuperAdmin={isSuperAdmin}
+            compact
           />
         </div>
       </SheetContent>

@@ -8,8 +8,6 @@ import type {
   ConditionData,
   DocumentData,
   ActivityData,
-  CommentData,
-  ChatMessage,
   PipelineStage,
   UWVersion,
 } from "./components";
@@ -286,10 +284,6 @@ export default async function DealDetailPage({ params }: PageProps) {
   let documentsData: any[] = [];
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let activityData: any[] = [];
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  let commentsData: any[] = [];
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  let chatMessagesData: any[] = [];
   let uwVersionsData: UWVersion[] = [];
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let dealTasksData: any[] = [];
@@ -311,7 +305,6 @@ export default async function DealDetailPage({ params }: PageProps) {
       conditionsRaw,
       documentsRaw,
       activityRaw,
-      commentsRaw,
       uwVersionsRaw,
       dealTasksRaw,
     ] = await Promise.all([
@@ -346,13 +339,6 @@ export default async function DealDetailPage({ params }: PageProps) {
       ),
       fetchSafe(() =>
         supabase
-          .from("loan_comments")
-          .select("*")
-          .eq("loan_id", loanId)
-          .order("created_at", { ascending: false })
-      ),
-      fetchSafe(() =>
-        supabase
           .from("loan_underwriting_versions")
           .select("*")
           .eq("loan_id", loanId)
@@ -372,7 +358,6 @@ export default async function DealDetailPage({ params }: PageProps) {
     conditionsData = conditionsRaw ?? [];
     documentsData = documentsRaw ?? [];
     activityData = activityRaw ?? [];
-    commentsData = commentsRaw ?? [];
     dealTasksData = (dealTasksRaw ?? []) as any[];
 
     // Map UW versions with author names
@@ -407,32 +392,6 @@ export default async function DealDetailPage({ params }: PageProps) {
       _author_name: v.created_by ? uwAuthorMap[v.created_by] ?? null : null,
     }));
 
-    // Fetch chat messages
-    try {
-      const { data: msgs } = await supabase
-        .from("deal_chat_messages")
-        .select("*")
-        .eq("loan_id", loanId)
-        .order("created_at", { ascending: true });
-      chatMessagesData = msgs ?? [];
-    } catch {
-      /* table may not exist */
-    }
-  }
-
-  // ─── Fetch comments for opportunities ───
-  if (isOpportunity) {
-    try {
-      const admin = createAdminClient();
-      const { data: oppComments } = await admin
-        .from("loan_comments")
-        .select("*")
-        .eq("opportunity_id", d.id)
-        .order("created_at", { ascending: false });
-      commentsData = oppComments ?? [];
-    } catch {
-      /* ok */
-    }
   }
 
   // ─── Resolve names ───
@@ -445,14 +404,6 @@ export default async function DealDetailPage({ params }: PageProps) {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   activityData.forEach((a: any) => {
     if (a.performed_by) userIdsSet.add(a.performed_by);
-  });
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  commentsData.forEach((c: any) => {
-    if (c.author_id) userIdsSet.add(c.author_id);
-  });
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  chatMessagesData.forEach((m: any) => {
-    if (m.sent_by) userIdsSet.add(m.sent_by);
   });
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   documentsData.forEach((doc: any) => {
@@ -514,32 +465,12 @@ export default async function DealDetailPage({ params }: PageProps) {
   }));
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const comments: CommentData[] = commentsData.map((c: any) => ({
-    id: c.id, loan_id: c.loan_id, author_id: c.author_id,
-    author_name: c.author_name ?? (c.author_id ? nameMap[c.author_id] ?? null : null),
-    comment: c.comment ?? c.body ?? "", is_internal: c.is_internal ?? false,
-    is_edited: c.is_edited ?? false, parent_comment_id: c.parent_comment_id ?? null,
-    mentions: c.mentions ?? [], created_at: c.created_at ?? null, updated_at: c.updated_at ?? null,
-  }));
-
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const stageHistory: StageHistoryEntry[] = stageHistoryData.map((h: any) => ({
     id: h.id, loan_id: h.loan_id, from_stage: h.from_stage ?? null,
     to_stage: h.to_stage ?? null, changed_at: h.changed_at ?? null,
     changed_by: h.changed_by ?? null,
     duration_in_previous_stage: h.duration_in_previous_stage ?? null, notes: h.notes ?? null,
   }));
-
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const chatMessages: ChatMessage[] = chatMessagesData.map((m: any) => {
-    const senderName = m.sent_by ? nameMap[m.sent_by] ?? "Unknown" : "Unknown";
-    return {
-      id: m.id, channel_id: m.channel_id, loan_id: m.loan_id,
-      sent_by: m.sent_by, content: m.content ?? "",
-      message_type: m.message_type ?? "message", created_at: m.created_at ?? null,
-      _sender_name: senderName, _sender_initials: getInitials(senderName),
-    };
-  });
 
   // ─── Fetch admin/team profiles for team assignment ───
   let adminProfiles: { id: string; full_name: string }[] = [];
@@ -581,8 +512,6 @@ export default async function DealDetailPage({ params }: PageProps) {
       conditions={conditions}
       documents={documents}
       activity={activity}
-      comments={comments}
-      chatMessages={chatMessages}
       dealTasks={dealTasksData}
       isOpportunity={isOpportunity}
       currentUserId={currentUserId}

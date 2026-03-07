@@ -15,7 +15,7 @@ export default async function OperationsPage() {
 
   const admin = createAdminClient();
 
-  const [projectsRes, tasksRes, membersRes, rolesRes, taskCommentCountsRes, projectCommentCountsRes, approvalsRes] = await Promise.all([
+  const [projectsRes, tasksRes, membersRes, rolesRes, taskNoteCountsRes, projectNoteCountsRes, approvalsRes] = await Promise.all([
     supabase
       .from("ops_projects")
       .select("*")
@@ -33,12 +33,16 @@ export default async function OperationsPage() {
       .from("user_roles")
       .select("role")
       .eq("user_id", user.id),
-    supabase
-      .from("ops_task_comments")
-      .select("task_id"),
-    supabase
-      .from("ops_project_comments")
-      .select("project_id"),
+    admin
+      .from("notes" as never)
+      .select("task_id" as never)
+      .not("task_id" as never, "is", null)
+      .is("deleted_at" as never, null),
+    admin
+      .from("notes" as never)
+      .select("project_id" as never)
+      .not("project_id" as never, "is", null)
+      .is("deleted_at" as never, null),
     admin
       .from("approval_requests" as never)
       .select("*")
@@ -57,14 +61,14 @@ export default async function OperationsPage() {
   const roles = (rolesRes.data ?? []).map((r: { role: string }) => r.role);
   const isSuperAdmin = roles.includes("super_admin");
 
-  // Build comment count maps
+  // Build note count maps from unified notes table
   const taskCommentCounts: Record<string, number> = {};
-  for (const row of taskCommentCountsRes.data ?? []) {
+  for (const row of (taskNoteCountsRes.data ?? []) as Array<{ task_id: string }>) {
     taskCommentCounts[row.task_id] = (taskCommentCounts[row.task_id] ?? 0) + 1;
   }
 
   const projectCommentCounts: Record<string, number> = {};
-  for (const row of projectCommentCountsRes.data ?? []) {
+  for (const row of (projectNoteCountsRes.data ?? []) as Array<{ project_id: string }>) {
     projectCommentCounts[row.project_id] = (projectCommentCounts[row.project_id] ?? 0) + 1;
   }
 

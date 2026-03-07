@@ -1,8 +1,6 @@
 "use client";
 
-import { useState, useCallback, useEffect } from "react";
-import { createClient } from "@/lib/supabase/client";
-import { useToast } from "@/components/ui/use-toast";
+import { useState } from "react";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -16,12 +14,8 @@ import {
   Landmark,
   FileText,
   Calendar,
-  MessageSquare,
-  ThumbsUp,
-  Send,
 } from "lucide-react";
-import { relativeTime, parseComment } from "@/lib/comment-utils";
-import { MentionInput } from "@/components/shared/mention-input";
+import { UnifiedNotes } from "@/components/shared/UnifiedNotes";
 import type { EnrichedApproval, Profile } from "./approvals-card-view";
 
 const STATUS_CONFIG: Record<
@@ -95,15 +89,6 @@ function formatContextKey(key: string): string {
     .join(" ");
 }
 
-interface ApprovalCommentData {
-  id: string;
-  author_id: string | null;
-  author_name: string | null;
-  comment: string;
-  likes: string[];
-  created_at: string;
-}
-
 interface ApprovalCardProps {
   approval: EnrichedApproval;
   profiles: Profile[];
@@ -120,138 +105,11 @@ export function ApprovalCard({
   onAction,
 }: ApprovalCardProps) {
   const [actionComment, setActionComment] = useState("");
-  const [comments, setComments] = useState<ApprovalCommentData[]>([]);
-  const [commentText, setCommentText] = useState("");
-  const [posting, setPosting] = useState(false);
-  const { toast } = useToast();
   const isPending = approval.status === "pending";
 
   const statusConfig = STATUS_CONFIG[approval.status] ?? STATUS_CONFIG.pending;
   const StatusIcon = statusConfig.icon;
   const entityConfig = ENTITY_ICONS[approval.entity_type];
-
-  // Load comments
-  useEffect(() => {
-    const supabase = createClient();
-    supabase
-      .from("approval_comments" as never)
-      .select("*" as never)
-      .eq("approval_id" as never, approval.id as never)
-      .order("created_at" as never, { ascending: true })
-      .then(({ data }) => {
-        if (data) setComments(data as unknown as ApprovalCommentData[]);
-      });
-  }, [approval.id]);
-
-  // Realtime for comments
-  useEffect(() => {
-    const supabase = createClient();
-    const channel = supabase
-      .channel(`approval-comments-${approval.id}`)
-      .on(
-        "postgres_changes",
-        {
-          event: "*",
-          schema: "public",
-          table: "approval_comments",
-          filter: `approval_id=eq.${approval.id}`,
-        },
-        (payload) => {
-          if (payload.eventType === "INSERT") {
-            setComments((prev) => {
-              if (prev.some((c) => c.id === (payload.new as ApprovalCommentData).id)) return prev;
-              return [...prev, payload.new as ApprovalCommentData];
-            });
-          } else if (payload.eventType === "UPDATE") {
-            setComments((prev) =>
-              prev.map((c) =>
-                c.id === (payload.new as ApprovalCommentData).id
-                  ? (payload.new as ApprovalCommentData)
-                  : c
-              )
-            );
-          } else if (payload.eventType === "DELETE") {
-            setComments((prev) =>
-              prev.filter((c) => c.id !== (payload.old as { id: string }).id)
-            );
-          }
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [approval.id]);
-
-  const handlePostComment = useCallback(
-    async (text: string, mentionIds: string[]) => {
-      if (!text.trim()) return;
-      setPosting(true);
-      const supabase = createClient();
-
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("full_name")
-        .eq("id", currentUserId)
-        .single();
-
-      const { data, error } = await supabase
-        .from("approval_comments" as never)
-        .insert({
-          approval_id: approval.id,
-          author_id: currentUserId,
-          author_name: profile?.full_name ?? "Team",
-          comment: text,
-          mentions: mentionIds.length > 0 ? mentionIds : [],
-          likes: [],
-        } as never)
-        .select()
-        .single();
-
-      if (error) {
-        toast({
-          title: "Failed to post comment",
-          description: error.message,
-          variant: "destructive",
-        });
-      } else if (data) {
-        setComments((prev) =>
-          prev.some((c) => c.id === (data as unknown as ApprovalCommentData).id)
-            ? prev
-            : [...prev, data as unknown as ApprovalCommentData]
-        );
-        setCommentText("");
-      }
-      setPosting(false);
-    },
-    [approval.id, currentUserId, toast]
-  );
-
-  const handleToggleLike = useCallback(
-    async (commentId: string) => {
-      const comment = comments.find((c) => c.id === commentId);
-      if (!comment) return;
-
-      const likes = comment.likes ?? [];
-      const newLikes = likes.includes(currentUserId)
-        ? likes.filter((l) => l !== currentUserId)
-        : [...likes, currentUserId];
-
-      setComments((prev) =>
-        prev.map((c) =>
-          c.id === commentId ? { ...c, likes: newLikes } : c
-        )
-      );
-
-      const supabase = createClient();
-      await supabase
-        .from("approval_comments" as never)
-        .update({ likes: newLikes } as never)
-        .eq("id" as never, commentId as never);
-    },
-    [comments, currentUserId]
-  );
 
   const snapshot = approval.deal_snapshot;
   const hasContext = snapshot && Object.keys(snapshot).length > 0;
@@ -360,93 +218,12 @@ export function ApprovalCard({
         </div>
       </div>
 
-      {/* Comment thread */}
+      {/* Notes */}
       <div className="px-4 md:px-5 py-3 border-t border-border">
-        <div className="flex items-center gap-1.5 mb-3">
-          <MessageSquare
-            className="h-3 w-3 text-muted-foreground"
-            strokeWidth={1.5}
-          />
-          <span className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
-            Activity ({comments.length})
-          </span>
-        </div>
-
-        {comments.length > 0 && (
-          <div className="border border-border rounded-md overflow-hidden mb-3 max-h-[300px] overflow-y-auto">
-            {comments.map((c, i) => {
-              const myLike = c.likes?.includes(currentUserId);
-              const likeCount = c.likes?.length ?? 0;
-              const segments = parseComment(c.comment);
-              return (
-                <div
-                  key={c.id}
-                  className={cn(
-                    "px-3.5 py-3 bg-secondary",
-                    i < comments.length - 1 && "border-b border-border"
-                  )}
-                >
-                  <div className="flex items-center gap-2 mb-1.5">
-                    <div className="w-[22px] h-[22px] rounded-md bg-primary text-primary-foreground flex items-center justify-center text-[8px] font-semibold">
-                      {getInitials(c.author_name ?? "?")}
-                    </div>
-                    <span className="text-[12px] font-semibold">
-                      {c.author_name}
-                    </span>
-                    <span className="text-[11px] text-muted-foreground/60 ml-auto num">
-                      {c.created_at ? relativeTime(c.created_at) : ""}
-                    </span>
-                  </div>
-                  <div className="text-[13px] leading-relaxed pl-[30px]">
-                    {segments.map((seg, idx) =>
-                      seg.type === "mention" ? (
-                        <span
-                          key={idx}
-                          className="inline-flex items-center font-semibold text-blue-400 bg-blue-400/10 border border-blue-400/20 rounded px-1 mx-0.5 text-[12px]"
-                        >
-                          @{seg.value}
-                        </span>
-                      ) : (
-                        <span key={idx}>{seg.value}</span>
-                      )
-                    )}
-                  </div>
-                  <div className="pl-[30px] mt-1.5">
-                    <button
-                      onClick={() => handleToggleLike(c.id)}
-                      className={cn(
-                        "inline-flex items-center gap-1 px-2 py-0.5 rounded border text-[11px] font-medium transition-colors",
-                        myLike
-                          ? "border-blue-400/30 bg-blue-400/10 text-blue-400"
-                          : "border-border text-muted-foreground hover:text-foreground"
-                      )}
-                    >
-                      <ThumbsUp
-                        className="h-3 w-3"
-                        strokeWidth={1.5}
-                        fill={myLike ? "currentColor" : "none"}
-                      />
-                      {likeCount > 0 && (
-                        <span className="num">{likeCount}</span>
-                      )}
-                    </button>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        )}
-
-        {/* New comment */}
-        <MentionInput
-          value={commentText}
-          onChange={setCommentText}
-          onSubmit={handlePostComment}
-          placeholder="Add a comment... (type @ to mention)"
-          disabled={posting}
-          submitLabel={posting ? "..." : "Post"}
-          submitIcon={<Send className="h-3 w-3" />}
-          rows={1}
+        <UnifiedNotes
+          entityType="approval"
+          entityId={approval.id}
+          compact
         />
       </div>
 

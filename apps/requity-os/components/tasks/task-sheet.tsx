@@ -34,7 +34,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Trash2, Paperclip, X, FileText, Repeat, Link2 } from "lucide-react";
-import { OpsCommentThread } from "@/components/operations/OpsCommentThread";
+import { UnifiedNotes } from "@/components/shared/UnifiedNotes";
 import { RecurrencePanel } from "@/app/(authenticated)/admin/operations/tasks/recurrence-panel";
 import { LinkedEntitySelect } from "@/app/(authenticated)/admin/operations/tasks/linked-entity-select";
 import type { OpsTask, Profile } from "@/lib/tasks";
@@ -561,11 +561,10 @@ export function TaskSheet({
             {/* Comments */}
             {task && (
               <div className="border-t border-border pt-4">
-                <OpsCommentThread
+                <UnifiedNotes
                   entityType="task"
                   entityId={task.id}
-                  currentUserId={currentUserId}
-                  isSuperAdmin={false}
+                  compact
                 />
               </div>
             )}
