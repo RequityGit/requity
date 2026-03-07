@@ -1,3 +1,4 @@
+import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 
 interface DashCardProps {
@@ -8,14 +9,14 @@ interface DashCardProps {
 
 export function DashCard({ children, className, hover = false }: DashCardProps) {
   return (
-    <div
+    <Card
       className={cn(
-        "bg-card rounded-lg p-[18px] border border-border shadow-sm",
+        "rounded-lg p-[18px] shadow-sm",
         hover && "dash-card-hover cursor-pointer",
         className
       )}
     >
       {children}
-    </div>
+    </Card>
   );
 }

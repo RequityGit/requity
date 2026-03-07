@@ -2,6 +2,7 @@
 
 import { cn } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
+import { Switch } from "@/components/ui/switch";
 import {
   Select,
   SelectContent,
@@ -98,25 +99,11 @@ export function DynamicField({
         style={rowStyle}
       >
         {labelEl}
-        <button
-          onClick={() => !disabled && onChange(!isChecked)}
+        <Switch
+          checked={isChecked}
+          onCheckedChange={(v) => onChange(v)}
           disabled={disabled}
-          className={cn(
-            "relative inline-flex h-5 w-9 shrink-0 cursor-pointer items-center rounded-full border-2 border-transparent transition-colors",
-            "focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50",
-            isChecked ? "bg-primary" : "bg-input"
-          )}
-          role="switch"
-          aria-checked={isChecked}
-          type="button"
-        >
-          <span
-            className={cn(
-              "pointer-events-none block h-4 w-4 rounded-full bg-background shadow-lg ring-0 transition-transform",
-              isChecked ? "translate-x-4" : "translate-x-0"
-            )}
-          />
-        </button>
+        />
       </div>
     );
   }

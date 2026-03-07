@@ -6,6 +6,7 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from "recharts";
+import { Card } from "@/components/ui/card";
 import type { CapitalMonth } from "@/lib/dashboard.server";
 
 function fmtShort(n: number): string {
@@ -41,7 +42,7 @@ export function AumPathCard({
   ];
 
   return (
-    <div className="rounded-lg p-4 relative overflow-hidden bg-primary text-primary-foreground shadow-md">
+    <Card className="rounded-lg p-4 relative overflow-hidden bg-primary text-primary-foreground shadow-md border-0">
       <span className="text-[9px] font-bold uppercase tracking-[0.14em] text-primary-foreground relative">
         Path to $1B AUM
       </span>
@@ -101,6 +102,6 @@ export function AumPathCard({
           </BarChart>
         </ResponsiveContainer>
       </div>
-    </div>
+    </Card>
   );
 }

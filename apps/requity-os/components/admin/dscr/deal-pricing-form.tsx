@@ -14,6 +14,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useToast } from "@/components/ui/use-toast";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Calculator, Loader2 } from "lucide-react";
 import { runPricingAction, type PricingRunInput } from "@/app/(authenticated)/admin/models/dscr/actions";
 import {
@@ -298,12 +299,10 @@ export function DealPricingForm() {
               </div>
               <div className="flex items-end gap-4">
                 <div className="flex items-center gap-2">
-                  <input
-                    type="checkbox"
+                  <Checkbox
                     id="str"
                     checked={form.is_short_term_rental || false}
-                    onChange={(e) => setField("is_short_term_rental", e.target.checked)}
-                    className="rounded"
+                    onCheckedChange={(v) => setField("is_short_term_rental", !!v)}
                   />
                   <Label htmlFor="str" className="cursor-pointer">
                     Short-Term Rental (STR)
@@ -394,22 +393,18 @@ export function DealPricingForm() {
               </div>
               <div className="flex items-end gap-4">
                 <div className="flex items-center gap-2">
-                  <input
-                    type="checkbox"
+                  <Checkbox
                     id="io"
                     checked={form.is_interest_only || false}
-                    onChange={(e) => setField("is_interest_only", e.target.checked)}
-                    className="rounded"
+                    onCheckedChange={(v) => setField("is_interest_only", !!v)}
                   />
                   <Label htmlFor="io" className="cursor-pointer">Interest Only</Label>
                 </div>
                 <div className="flex items-center gap-2">
-                  <input
-                    type="checkbox"
+                  <Checkbox
                     id="escrow"
                     checked={form.escrow_waiver || false}
-                    onChange={(e) => setField("escrow_waiver", e.target.checked)}
-                    className="rounded"
+                    onCheckedChange={(v) => setField("escrow_waiver", !!v)}
                   />
                   <Label htmlFor="escrow" className="cursor-pointer">Escrow Waiver</Label>
                 </div>

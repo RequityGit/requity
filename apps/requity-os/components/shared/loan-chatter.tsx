@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { MentionInput } from "@/components/shared/mention-input";
 import { CommentRenderer } from "@/components/shared/comment-renderer";
 import { useToast } from "@/components/ui/use-toast";
+import { Checkbox } from "@/components/ui/checkbox";
 import { MessageCircle, Send, Lock, Pencil } from "lucide-react";
 
 interface LoanComment {
@@ -302,16 +303,14 @@ export function LoanChatter({
             rows={2}
             extraControls={
               isAdmin ? (
-                <label className="flex items-center gap-2 text-xs cursor-pointer select-none">
-                  <input
-                    type="checkbox"
+                <div className="flex items-center gap-2 text-xs cursor-pointer select-none">
+                  <Checkbox
                     checked={isInternal}
-                    onChange={(e) => setIsInternal(e.target.checked)}
-                    className="rounded border-border h-3 w-3"
+                    onCheckedChange={(v) => setIsInternal(!!v)}
                   />
                   <Lock className="h-3 w-3 text-amber-600" />
                   Internal only
-                </label>
+                </div>
               ) : undefined
             }
           />

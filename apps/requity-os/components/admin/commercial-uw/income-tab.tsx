@@ -12,6 +12,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Plus, Trash2, Building2, Upload } from "lucide-react";
 import { formatCurrency } from "@/lib/format";
 import type {
@@ -349,11 +350,9 @@ export function IncomeTab({
                         />
                       </td>
                       <td className="p-1 text-center">
-                        <input
-                          type="checkbox"
+                        <Checkbox
                           checked={row.is_vacant}
-                          onChange={(e) => updateRentRow(idx, "is_vacant", e.target.checked)}
-                          className="rounded"
+                          onCheckedChange={(v) => updateRentRow(idx, "is_vacant", !!v)}
                         />
                       </td>
                       <td className="p-1">
