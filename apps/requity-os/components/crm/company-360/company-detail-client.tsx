@@ -13,7 +13,6 @@ import {
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
 import { TabBtn } from "@/components/crm/contact-360/contact-detail-shared";
-import { CompanyEditDialog } from "@/components/crm/company-edit-dialog";
 import { CompanyDetailHeader } from "./company-detail-header";
 import { CompanyDetailSidebar } from "./company-detail-sidebar";
 import { CompanyOverviewTab } from "./tabs/overview-tab";
@@ -152,7 +151,6 @@ export function CompanyDetailClient({
             company={company}
             primaryContact={primaryContact}
             lastActivityAt={activities[0]?.created_at || null}
-            action={<CompanyEditDialog company={company} />}
           />
 
           {/* Tab Bar */}

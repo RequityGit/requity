@@ -4,14 +4,12 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
 import { Landmark, TrendingUp, User, Shield, FileText, Pencil } from "lucide-react";
 import {
+  SectionCard,
   MetricCard,
   FieldRow,
-  EditableFieldRow,
   MonoValue,
 } from "../contact-detail-shared";
 import {
@@ -253,471 +251,220 @@ export function DetailOverviewTab({
     <div className="flex flex-col gap-5">
       {/* Borrower Summary */}
       {hasBorrower && loans.length > 0 && (
-        <Card className="rounded-xl border-border">
-          <CardHeader className="px-5 py-3.5 border-b border-border/60">
-            <CardTitle className="text-[13px] font-semibold text-foreground flex items-center gap-2">
-              <Landmark
-                size={16}
-                className="text-muted-foreground"
-                strokeWidth={1.5}
-              />
-              Borrower Summary
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="p-5">
-            <div className="flex gap-5 flex-wrap">
-              <MetricCard
-                label="Total Loans"
-                value={loans.length}
-                sub={`${activeLoans.length} active`}
-              />
-              <MetricCard
-                label="Loan Volume"
-                value={formatCurrency(totalVolume)}
-                mono
-              />
-              <MetricCard
-                label="Avg Rate"
-                value={avgRate > 0 ? formatPercent(avgRate) : "—"}
-                mono
-              />
-              <MetricCard label="Active Opps" value={activeLoans.length} />
-              <MetricCard
-                label="First Loan"
-                value={firstLoan ? formatDate(firstLoan.created_at) : "—"}
-              />
-            </div>
-          </CardContent>
-        </Card>
+        <SectionCard title="Borrower Summary" icon={Landmark}>
+          <div className="flex gap-5 flex-wrap">
+            <MetricCard
+              label="Total Loans"
+              value={loans.length}
+              sub={`${activeLoans.length} active`}
+            />
+            <MetricCard
+              label="Loan Volume"
+              value={formatCurrency(totalVolume)}
+              mono
+            />
+            <MetricCard
+              label="Avg Rate"
+              value={avgRate > 0 ? formatPercent(avgRate) : "—"}
+              mono
+            />
+            <MetricCard label="Active Opps" value={activeLoans.length} />
+            <MetricCard
+              label="First Loan"
+              value={firstLoan ? formatDate(firstLoan.created_at) : "—"}
+            />
+          </div>
+        </SectionCard>
       )}
 
       {/* Investor Summary */}
       {hasInvestor && commitments.length > 0 && (
-        <Card className="rounded-xl border-border">
-          <CardHeader className="px-5 py-3.5 border-b border-border/60">
-            <CardTitle className="text-[13px] font-semibold text-foreground flex items-center gap-2">
-              <TrendingUp
-                size={16}
-                className="text-muted-foreground"
-                strokeWidth={1.5}
-              />
-              Investor Summary
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="p-5">
-            <div className="flex gap-5 flex-wrap">
-              <MetricCard
-                label="Total Committed"
-                value={formatCurrency(totalCommitted)}
-                mono
-              />
-              <MetricCard
-                label="Funded"
-                value={formatCurrency(totalFunded)}
-                mono
-              />
-              <MetricCard
-                label="Unfunded"
-                value={formatCurrency(totalUnfunded)}
-                mono
-              />
-              <MetricCard label="Active Funds" value={activeFunds} />
-            </div>
-          </CardContent>
-        </Card>
+        <SectionCard title="Investor Summary" icon={TrendingUp}>
+          <div className="flex gap-5 flex-wrap">
+            <MetricCard
+              label="Total Committed"
+              value={formatCurrency(totalCommitted)}
+              mono
+            />
+            <MetricCard
+              label="Funded"
+              value={formatCurrency(totalFunded)}
+              mono
+            />
+            <MetricCard
+              label="Unfunded"
+              value={formatCurrency(totalUnfunded)}
+              mono
+            />
+            <MetricCard label="Active Funds" value={activeFunds} />
+          </div>
+        </SectionCard>
       )}
 
       {/* Borrower Profile */}
       {hasBorrower && (
-        <Card className="rounded-xl border-border">
-          <CardHeader className="px-5 py-3.5 border-b border-border/60">
-            <div className="flex items-center justify-between">
-              <CardTitle className="text-[13px] font-semibold text-foreground flex items-center gap-2">
-                <User
-                  size={16}
-                  className="text-muted-foreground"
-                  strokeWidth={1.5}
+        <SectionCard title="Borrower Profile" icon={User} action={<SectionEditButton onClick={() => setEditBorrowerOpen(true)} />}>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-10">
+            <FieldRow
+              label="Credit Score"
+              value={
+                borrower.credit_score != null ? (
+                  <span
+                    style={{
+                      color:
+                        borrower.credit_score >= 740
+                          ? "#22A861"
+                          : borrower.credit_score >= 680
+                          ? "#E5930E"
+                          : "#E5453D",
+                    }}
+                  >
+                    {borrower.credit_score}
+                  </span>
+                ) : undefined
+              }
+              mono
+            />
+            <FieldRow label="Credit Report Date" value={formatDate(borrower.credit_report_date)} />
+            <FieldRow
+              label="RE Experience"
+              value={
+                borrower.experience_count != null
+                  ? `${borrower.experience_count} transactions`
+                  : undefined
+              }
+            />
+            <FieldRow label="Date of Birth" value={formatDate(borrower.date_of_birth)} />
+            <FieldRow
+              label="US Citizen"
+              value={
+                borrower.is_us_citizen != null
+                  ? borrower.is_us_citizen
+                    ? "Yes"
+                    : "No"
+                  : undefined
+              }
+            />
+            <FieldRow label="Marital Status" value={borrower.marital_status} />
+            {isSuperAdmin && (
+              <>
+                <FieldRow
+                  label="SSN (last 4)"
+                  value={
+                    borrower.ssn_last_four ? (
+                      <MonoValue>{`●●●-●●-${borrower.ssn_last_four}`}</MonoValue>
+                    ) : (
+                      "—"
+                    )
+                  }
+                  mono
                 />
-                Borrower Profile
-              </CardTitle>
-              <SectionEditButton onClick={() => setEditBorrowerOpen(true)} />
-            </div>
-          </CardHeader>
-          <CardContent className="p-5">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-10">
-              <EditableFieldRow
-                label="Credit Score"
-                value={
-                  borrower.credit_score != null ? (
-                    <span
-                      style={{
-                        color:
-                          borrower.credit_score >= 740
-                            ? "#22A861"
-                            : borrower.credit_score >= 680
-                            ? "#E5930E"
-                            : "#E5453D",
-                      }}
-                    >
-                      {borrower.credit_score}
-                    </span>
-                  ) : null
-                }
-                rawValue={borrower.credit_score}
-                fieldType="number"
-                mono
-                onSave={(v) => updateBorrowerField("credit_score", v)}
-              />
-              <EditableFieldRow
-                label="Credit Report Date"
-                value={formatDate(borrower.credit_report_date)}
-                rawValue={borrower.credit_report_date}
-                fieldType="date"
-                onSave={(v) => updateBorrowerField("credit_report_date", v)}
-              />
-              <EditableFieldRow
-                label="RE Experience"
-                value={
-                  borrower.experience_count != null
-                    ? `${borrower.experience_count} transactions`
-                    : null
-                }
-                rawValue={borrower.experience_count}
-                fieldType="number"
-                onSave={(v) => updateBorrowerField("experience_count", v)}
-              />
-              <EditableFieldRow
-                label="Date of Birth"
-                value={formatDate(borrower.date_of_birth)}
-                rawValue={borrower.date_of_birth}
-                fieldType="date"
-                onSave={(v) => updateBorrowerField("date_of_birth", v)}
-              />
-              <EditableFieldRow
-                label="US Citizen"
-                value={
-                  borrower.is_us_citizen != null
-                    ? borrower.is_us_citizen
-                      ? "Yes"
-                      : "No"
-                    : null
-                }
-                rawValue={borrower.is_us_citizen}
-                fieldType="boolean"
-                onSave={(v) => updateBorrowerField("is_us_citizen", v)}
-              />
-              <EditableFieldRow
-                label="Marital Status"
-                value={borrower.marital_status}
-                rawValue={borrower.marital_status}
-                fieldType="select"
-                selectOptions={[
-                  { label: "Single", value: "single" },
-                  { label: "Married", value: "married" },
-                  { label: "Divorced", value: "divorced" },
-                  { label: "Widowed", value: "widowed" },
-                  { label: "Separated", value: "separated" },
-                ]}
-                onSave={(v) => updateBorrowerField("marital_status", v)}
-              />
-              {isSuperAdmin && (
-                <>
-                  <FieldRow
-                    label="SSN (last 4)"
-                    value={
-                      borrower.ssn_last_four ? (
-                        <MonoValue>{`●●●-●●-${borrower.ssn_last_four}`}</MonoValue>
-                      ) : (
-                        "—"
-                      )
-                    }
-                    mono
-                  />
-                  <div />
-                </>
-              )}
-              <EditableFieldRow
-                label="Stated Liquidity"
-                value={formatCurrency(borrower.stated_liquidity)}
-                rawValue={borrower.stated_liquidity}
-                fieldType="currency"
-                mono
-                onSave={(v) => updateBorrowerField("stated_liquidity", v)}
-              />
-              <EditableFieldRow
-                label="Verified Liquidity"
-                value={formatCurrency(borrower.verified_liquidity)}
-                rawValue={borrower.verified_liquidity}
-                fieldType="currency"
-                mono
-                onSave={(v) => updateBorrowerField("verified_liquidity", v)}
-              />
-              <EditableFieldRow
-                label="Stated Net Worth"
-                value={formatCurrency(borrower.stated_net_worth)}
-                rawValue={borrower.stated_net_worth}
-                fieldType="currency"
-                mono
-                onSave={(v) => updateBorrowerField("stated_net_worth", v)}
-              />
-              <EditableFieldRow
-                label="Verified Net Worth"
-                value={formatCurrency(borrower.verified_net_worth)}
-                rawValue={borrower.verified_net_worth}
-                fieldType="currency"
-                mono
-                onSave={(v) => updateBorrowerField("verified_net_worth", v)}
-              />
-            </div>
-          </CardContent>
-        </Card>
+                <div />
+              </>
+            )}
+            <FieldRow label="Stated Liquidity" value={formatCurrency(borrower.stated_liquidity)} mono />
+            <FieldRow label="Verified Liquidity" value={formatCurrency(borrower.verified_liquidity)} mono />
+            <FieldRow label="Stated Net Worth" value={formatCurrency(borrower.stated_net_worth)} mono />
+            <FieldRow label="Verified Net Worth" value={formatCurrency(borrower.verified_net_worth)} mono />
+          </div>
+        </SectionCard>
       )}
 
       {/* Investor Profile */}
       {hasInvestor && (
-        <Card className="rounded-xl border-border">
-          <CardHeader className="px-5 py-3.5 border-b border-border/60">
-            <div className="flex items-center justify-between">
-              <CardTitle className="text-[13px] font-semibold text-foreground flex items-center gap-2">
-                <Shield
-                  size={16}
-                  className="text-muted-foreground"
-                  strokeWidth={1.5}
-                />
-                Investor Profile
-              </CardTitle>
-              <SectionEditButton onClick={() => setEditInvestorOpen(true)} />
-            </div>
-          </CardHeader>
-          <CardContent className="p-5">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-10">
-              <EditableFieldRow
-                label="Accreditation"
-                value={
-                  investor.accreditation_status ? (
-                    <Badge
-                      variant="outline"
-                      className="text-[11px] gap-1"
+        <SectionCard title="Investor Profile" icon={Shield} action={<SectionEditButton onClick={() => setEditInvestorOpen(true)} />}>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-10">
+            <FieldRow
+              label="Accreditation"
+              value={
+                investor.accreditation_status ? (
+                  <Badge
+                    variant="outline"
+                    className="text-[11px] gap-1"
+                    style={{
+                      color:
+                        investor.accreditation_status === "verified"
+                          ? "#22A861"
+                          : "#E5930E",
+                      borderColor:
+                        investor.accreditation_status === "verified"
+                          ? "#22A86130"
+                          : "#E5930E30",
+                      backgroundColor:
+                        investor.accreditation_status === "verified"
+                          ? "#22A86108"
+                          : "#E5930E08",
+                    }}
+                  >
+                    <span
+                      className="h-1.5 w-1.5 rounded-full"
                       style={{
-                        color:
+                        backgroundColor:
                           investor.accreditation_status === "verified"
                             ? "#22A861"
                             : "#E5930E",
-                        borderColor:
-                          investor.accreditation_status === "verified"
-                            ? "#22A86130"
-                            : "#E5930E30",
-                        backgroundColor:
-                          investor.accreditation_status === "verified"
-                            ? "#22A86108"
-                            : "#E5930E08",
                       }}
-                    >
-                      <span
-                        className="h-1.5 w-1.5 rounded-full"
-                        style={{
-                          backgroundColor:
-                            investor.accreditation_status === "verified"
-                              ? "#22A861"
-                              : "#E5930E",
-                        }}
-                      />
-                      {investor.accreditation_status.charAt(0).toUpperCase() +
-                        investor.accreditation_status.slice(1)}
-                    </Badge>
-                  ) : null
-                }
-                rawValue={investor.accreditation_status}
-                fieldType="select"
-                selectOptions={[
-                  { label: "Pending", value: "pending" },
-                  { label: "Verified", value: "verified" },
-                  { label: "Expired", value: "expired" },
-                  { label: "Not Accredited", value: "not_accredited" },
-                ]}
-                onSave={(v) =>
-                  updateInvestorField("accreditation_status", v)
-                }
-              />
-              <EditableFieldRow
-                label="Verified At"
-                value={formatDate(investor.accreditation_verified_at)}
-                rawValue={investor.accreditation_verified_at}
-                fieldType="date"
-                onSave={(v) =>
-                  updateInvestorField("accreditation_verified_at", v)
-                }
-              />
-            </div>
-          </CardContent>
-        </Card>
+                    />
+                    {investor.accreditation_status.charAt(0).toUpperCase() +
+                      investor.accreditation_status.slice(1)}
+                  </Badge>
+                ) : undefined
+              }
+            />
+            <FieldRow label="Verified At" value={formatDate(investor.accreditation_verified_at)} />
+          </div>
+        </SectionCard>
       )}
 
       {/* Contact Profile */}
-      <Card className="rounded-xl border-border">
-        <CardHeader className="px-5 py-3.5 border-b border-border/60">
-          <div className="flex items-center justify-between">
-            <CardTitle className="text-[13px] font-semibold text-foreground flex items-center gap-2">
-              <FileText
-                size={16}
-                className="text-muted-foreground"
-                strokeWidth={1.5}
-              />
-              Contact Profile
-            </CardTitle>
-            <SectionEditButton onClick={() => setEditContactOpen(true)} />
-          </div>
-        </CardHeader>
-        <CardContent className="p-5">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-10">
-            <EditableFieldRow
-              label="First Name"
-              value={contact.first_name}
-              rawValue={contact.first_name}
-              fieldType="text"
-              onSave={(v) => updateContactField("first_name", v)}
-            />
-            <EditableFieldRow
-              label="Last Name"
-              value={contact.last_name}
-              rawValue={contact.last_name}
-              fieldType="text"
-              onSave={(v) => updateContactField("last_name", v)}
-            />
-            <EditableFieldRow
-              label="Email"
-              value={contact.email}
-              rawValue={contact.email}
-              fieldType="text"
-              onSave={(v) => updateContactField("email", v)}
-            />
-            <EditableFieldRow
-              label="Phone"
-              value={contact.phone}
-              rawValue={contact.phone}
-              fieldType="text"
-              onSave={(v) => updateContactField("phone", v)}
-            />
-            <EditableFieldRow
-              label="Address"
-              value={contact.address_line1}
-              rawValue={contact.address_line1}
-              fieldType="text"
-              onSave={(v) => updateContactField("address_line1", v)}
-            />
-            <EditableFieldRow
-              label="City"
-              value={contact.city}
-              rawValue={contact.city}
-              fieldType="text"
-              onSave={(v) => updateContactField("city", v)}
-            />
-            <EditableFieldRow
-              label="State"
-              value={contact.state}
-              rawValue={contact.state}
-              fieldType="text"
-              onSave={(v) => updateContactField("state", v)}
-            />
-            <EditableFieldRow
-              label="Zip"
-              value={contact.zip}
-              rawValue={contact.zip}
-              fieldType="text"
-              onSave={(v) => updateContactField("zip", v)}
-            />
-            <EditableFieldRow
-              label="Lifecycle Stage"
-              value={
-                contact.lifecycle_stage
-                  ? contact.lifecycle_stage.charAt(0).toUpperCase() +
-                    contact.lifecycle_stage.slice(1)
-                  : null
-              }
-              rawValue={contact.lifecycle_stage}
-              fieldType="select"
-              selectOptions={[
-                { label: "Uncontacted", value: "uncontacted" },
-                { label: "Prospect", value: "prospect" },
-                { label: "Active", value: "active" },
-                { label: "Past", value: "past" },
-              ]}
-              onSave={(v) => updateContactField("lifecycle_stage", v)}
-            />
-            <EditableFieldRow
-              label="Status"
-              value={
-                contact.status
-                  ? contact.status.charAt(0).toUpperCase() +
-                    contact.status.slice(1)
-                  : null
-              }
-              rawValue={contact.status}
-              fieldType="select"
-              selectOptions={[
-                { label: "Active", value: "active" },
-                { label: "Inactive", value: "inactive" },
-                { label: "Converted", value: "converted" },
-                { label: "Lost", value: "lost" },
-                { label: "Do Not Contact", value: "do_not_contact" },
-              ]}
-              onSave={(v) => updateContactField("status", v)}
-            />
-            <EditableFieldRow
-              label="Source"
-              value={
-                contact.source
-                  ? contact.source.charAt(0).toUpperCase() +
-                    contact.source.slice(1).replace(/_/g, " ")
-                  : null
-              }
-              rawValue={contact.source}
-              fieldType="select"
-              selectOptions={[
-                { label: "Website", value: "website" },
-                { label: "Referral", value: "referral" },
-                { label: "Cold Call", value: "cold_call" },
-                { label: "Email Campaign", value: "email_campaign" },
-                { label: "Social Media", value: "social_media" },
-                { label: "Event", value: "event" },
-                { label: "Paid Ad", value: "paid_ad" },
-                { label: "Organic", value: "organic" },
-                { label: "Broker", value: "broker" },
-                { label: "Repeat Client", value: "repeat_client" },
-                { label: "Other", value: "other" },
-              ]}
-              onSave={(v) => updateContactField("source", v)}
-            />
-            <EditableFieldRow
-              label="Company"
-              value={contact.company_name}
-              rawValue={contact.company_name}
-              fieldType="text"
-              onSave={(v) => updateContactField("company_name", v)}
-            />
-          </div>
-        </CardContent>
-      </Card>
+      <SectionCard title="Contact Profile" icon={FileText} action={<SectionEditButton onClick={() => setEditContactOpen(true)} />}>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-10">
+          <FieldRow label="First Name" value={contact.first_name} />
+          <FieldRow label="Last Name" value={contact.last_name} />
+          <FieldRow label="Email" value={contact.email} />
+          <FieldRow label="Phone" value={contact.phone} />
+          <FieldRow label="Address" value={contact.address_line1} />
+          <FieldRow label="City" value={contact.city} />
+          <FieldRow label="State" value={contact.state} />
+          <FieldRow label="Zip" value={contact.zip} />
+          <FieldRow
+            label="Lifecycle Stage"
+            value={
+              contact.lifecycle_stage
+                ? contact.lifecycle_stage.charAt(0).toUpperCase() +
+                  contact.lifecycle_stage.slice(1)
+                : undefined
+            }
+          />
+          <FieldRow
+            label="Status"
+            value={
+              contact.status
+                ? contact.status.charAt(0).toUpperCase() +
+                  contact.status.slice(1)
+                : undefined
+            }
+          />
+          <FieldRow
+            label="Source"
+            value={
+              contact.source
+                ? contact.source.charAt(0).toUpperCase() +
+                  contact.source.slice(1).replace(/_/g, " ")
+                : undefined
+            }
+          />
+          <FieldRow label="Company" value={contact.company_name} />
+        </div>
+      </SectionCard>
 
       {/* Internal Notes */}
       {contact.notes && (
-        <Card className="rounded-xl border-border">
-          <CardHeader className="px-5 py-3.5 border-b border-border/60">
-            <CardTitle className="text-[13px] font-semibold text-foreground flex items-center gap-2">
-              <FileText
-                size={16}
-                className="text-muted-foreground"
-                strokeWidth={1.5}
-              />
-              Internal Notes
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="p-5">
-            <p className="text-[13px] text-muted-foreground leading-relaxed whitespace-pre-wrap">
-              {contact.notes}
-            </p>
-          </CardContent>
-        </Card>
+        <SectionCard title="Internal Notes" icon={FileText}>
+          <p className="text-[13px] text-muted-foreground leading-relaxed whitespace-pre-wrap">
+            {contact.notes}
+          </p>
+        </SectionCard>
       )}
 
       {/* Section Edit Dialogs */}

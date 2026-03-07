@@ -19,7 +19,6 @@ import {
   SectionCard,
   MetricCard,
   FieldRow,
-  EditableFieldRow,
 } from "@/components/crm/contact-360/contact-detail-shared";
 import {
   CrmEditSectionDialog,
@@ -95,6 +94,7 @@ export function CompanyOverviewTab({
   const [editCompanyOpen, setEditCompanyOpen] = useState(false);
   const [editAddressOpen, setEditAddressOpen] = useState(false);
   const [editAgreementsOpen, setEditAgreementsOpen] = useState(false);
+  const [editNotesOpen, setEditNotesOpen] = useState(false);
   const isLender = company.company_type === "lender";
   const typeCfg =
     COMPANY_TYPE_CONFIG[company.company_type] || COMPANY_TYPE_CONFIG.other;
@@ -163,6 +163,10 @@ export function CompanyOverviewTab({
     { label: "Fee Agreement On File", fieldName: "fee_agreement_on_file", fieldType: "boolean", value: company.fee_agreement_on_file },
   ];
 
+  const notesFields: CrmSectionField[] = [
+    { label: "Notes", fieldName: "notes", fieldType: "textarea", value: company.notes },
+  ];
+
   function SectionEditButton({ onClick }: { onClick: () => void }) {
     return (
       <Button
@@ -195,26 +199,9 @@ export function CompanyOverviewTab({
       {/* Company Information */}
       <SectionCard title="Company Information" icon={Building2} action={<SectionEditButton onClick={() => setEditCompanyOpen(true)} />}>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-x-10">
-          <EditableFieldRow
-            label="Legal Name"
-            value={company.name}
-            rawValue={company.name}
-            onSave={(v) => saveField("name", v)}
-          />
-          <EditableFieldRow
-            label="DBA / Other Names"
-            value={company.other_names || "—"}
-            rawValue={company.other_names}
-            onSave={(v) => saveField("other_names", v)}
-          />
-          <EditableFieldRow
-            label="Company Type"
-            value={typeCfg.label}
-            rawValue={company.company_type}
-            fieldType="select"
-            selectOptions={COMPANY_TYPE_OPTIONS}
-            onSave={(v) => saveField("company_type", v)}
-          />
+          <FieldRow label="Legal Name" value={company.name} />
+          <FieldRow label="DBA / Other Names" value={company.other_names} />
+          <FieldRow label="Company Type" value={typeCfg.label} />
           {company.company_subtype && (
             <FieldRow
               label="Subtype"
@@ -224,91 +211,34 @@ export function CompanyOverviewTab({
               }
             />
           )}
-          <EditableFieldRow
+          <FieldRow
             label="Phone"
-            value={company.phone ? <ClickToCallNumber number={company.phone} showIcon={false} /> : "—"}
-            rawValue={company.phone}
-            onSave={(v) => saveField("phone", v)}
+            value={company.phone ? <ClickToCallNumber number={company.phone} showIcon={false} /> : undefined}
           />
-          <EditableFieldRow
-            label="Email"
-            value={company.email || "—"}
-            rawValue={company.email}
-            onSave={(v) => saveField("email", v)}
-          />
-          <EditableFieldRow
+          <FieldRow label="Email" value={company.email} />
+          <FieldRow
             label="Website"
             value={
               company.website
                 ? company.website.replace(/^https?:\/\//, "")
-                : "—"
+                : undefined
             }
-            rawValue={company.website}
-            onSave={(v) => saveField("website", v)}
           />
-          <EditableFieldRow
-            label="Source"
-            value={company.source || "—"}
-            rawValue={company.source}
-            onSave={(v) => saveField("source", v)}
-          />
-          <EditableFieldRow
-            label="Status"
-            value={company.is_active ? "Active" : "Inactive"}
-            rawValue={company.is_active ? "true" : "false"}
-            fieldType="boolean"
-            onSave={(v) => saveField("is_active", v)}
-          />
-          <EditableFieldRow
-            label="Title Co. Verified"
-            value={company.title_company_verified ? "Yes" : "No"}
-            rawValue={company.title_company_verified ? "true" : "false"}
-            fieldType="boolean"
-            onSave={(v) => saveField("title_company_verified", v)}
-          />
+          <FieldRow label="Source" value={company.source} />
+          <FieldRow label="Status" value={company.is_active ? "Active" : "Inactive"} />
+          <FieldRow label="Title Co. Verified" value={company.title_company_verified ? "Yes" : "No"} />
         </div>
       </SectionCard>
 
       {/* Address */}
       <SectionCard title="Address" icon={MapPin} action={<SectionEditButton onClick={() => setEditAddressOpen(true)} />}>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-x-10">
-          <EditableFieldRow
-            label="Address Line 1"
-            value={company.address_line1 || "—"}
-            rawValue={company.address_line1}
-            onSave={(v) => saveField("address_line1", v)}
-          />
-          <EditableFieldRow
-            label="Address Line 2"
-            value={company.address_line2 || "—"}
-            rawValue={company.address_line2}
-            onSave={(v) => saveField("address_line2", v)}
-          />
-          <EditableFieldRow
-            label="City"
-            value={company.city || "—"}
-            rawValue={company.city}
-            onSave={(v) => saveField("city", v)}
-          />
-          <EditableFieldRow
-            label="State"
-            value={company.state || "—"}
-            rawValue={company.state}
-            onSave={(v) => saveField("state", v)}
-          />
-          <EditableFieldRow
-            label="Zip"
-            value={company.zip || "—"}
-            rawValue={company.zip}
-            mono
-            onSave={(v) => saveField("zip", v)}
-          />
-          <EditableFieldRow
-            label="Country"
-            value={company.country || "US"}
-            rawValue={company.country || "US"}
-            onSave={(v) => saveField("country", v)}
-          />
+          <FieldRow label="Address Line 1" value={company.address_line1} />
+          <FieldRow label="Address Line 2" value={company.address_line2} />
+          <FieldRow label="City" value={company.city} />
+          <FieldRow label="State" value={company.state} />
+          <FieldRow label="Zip" value={company.zip} mono />
+          <FieldRow label="Country" value={company.country || "US"} />
         </div>
       </SectionCard>
 
@@ -439,30 +369,24 @@ export function CompanyOverviewTab({
               </span>
             }
           />
-          <EditableFieldRow
+          <FieldRow
             label="NDA Created"
             value={
               company.nda_created_date
                 ? formatDate(company.nda_created_date)
-                : "—"
+                : undefined
             }
-            rawValue={company.nda_created_date}
-            fieldType="date"
-            onSave={(v) => saveField("nda_created_date", v)}
           />
-          <EditableFieldRow
+          <FieldRow
             label="NDA Expiration"
             value={
               company.nda_expiration_date
                 ? formatDate(company.nda_expiration_date)
-                : "—"
+                : undefined
             }
-            rawValue={company.nda_expiration_date}
-            fieldType="date"
             danger={!!ndaExpDanger}
-            onSave={(v) => saveField("nda_expiration_date", v)}
           />
-          <EditableFieldRow
+          <FieldRow
             label="Fee Agreement"
             value={
               <span
@@ -477,9 +401,6 @@ export function CompanyOverviewTab({
                 {company.fee_agreement_on_file ? "On File" : "Missing"}
               </span>
             }
-            rawValue={company.fee_agreement_on_file ? "true" : "false"}
-            fieldType="boolean"
-            onSave={(v) => saveField("fee_agreement_on_file", v)}
           />
         </div>
       </SectionCard>
@@ -563,17 +484,10 @@ export function CompanyOverviewTab({
       </SectionCard>
 
       {/* Internal Notes */}
-      <SectionCard title="Internal Notes" icon={FileText}>
-        <EditableFieldRow
-          label=""
-          value={
-            <span className="text-[13px] text-muted-foreground leading-relaxed whitespace-pre-wrap">
-              {company.notes || "No notes."}
-            </span>
-          }
-          rawValue={company.notes}
-          onSave={(v) => saveField("notes", v)}
-        />
+      <SectionCard title="Internal Notes" icon={FileText} action={<SectionEditButton onClick={() => setEditNotesOpen(true)} />}>
+        <p className="text-[13px] text-muted-foreground leading-relaxed whitespace-pre-wrap">
+          {company.notes || "No notes."}
+        </p>
       </SectionCard>
 
       {/* Section Edit Dialogs */}
@@ -596,6 +510,13 @@ export function CompanyOverviewTab({
         onOpenChange={setEditAgreementsOpen}
         title="Agreements"
         fields={agreementFields}
+        onSave={saveField}
+      />
+      <CrmEditSectionDialog
+        open={editNotesOpen}
+        onOpenChange={setEditNotesOpen}
+        title="Internal Notes"
+        fields={notesFields}
         onSave={saveField}
       />
     </div>
