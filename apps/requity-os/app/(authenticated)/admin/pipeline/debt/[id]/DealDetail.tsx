@@ -14,12 +14,15 @@ import { useRouter } from "next/navigation";
 import { Header } from "./Header";
 import { Stepper } from "./Stepper";
 import { Sidebar } from "./Sidebar";
+import { DealKpiStrip } from "./DealKpiStrip";
 import { OverviewTab } from "./tabs/OverviewTab";
 import { ConditionsTab } from "./tabs/ConditionsTab";
 import { DocumentsTab } from "./tabs/DocumentsTab";
 import { ActivityTab } from "./tabs/ActivityTab";
 import { UnderwritingTab } from "./tabs/UnderwritingTab";
 import { TasksTab, type DealTask } from "./tabs/TasksTab";
+import { FinancialsTab } from "./tabs/FinancialsTab";
+import { BorrowerTab } from "./tabs/BorrowerTab";
 import { UnifiedNotes } from "@/components/shared/UnifiedNotes";
 import { CommercialOverviewTab, type CommercialUWData } from "./tabs/CommercialOverviewTab";
 import { CommercialUnderwritingTab } from "./tabs/CommercialUnderwritingTab";
@@ -130,7 +133,6 @@ export function DealDetail({
         });
         return false;
       }
-      // Update local state for computed display fields
       if (table === "borrower_entities") {
         if (field === "entity_name") setDeal((prev) => ({ ...prev, _entity_name: value as string }));
         if (field === "entity_type") setDeal((prev) => ({ ...prev, _entity_type: value as string }));
@@ -186,7 +188,9 @@ export function DealDetail({
 
   const tabs: TabConfig[] = [
     { key: "overview", label: "Overview" },
+    { key: "financials", label: "Financials" },
     { key: "underwriting", label: "Underwriting" },
+    { key: "borrower", label: "Borrower" },
     { key: "conditions", label: "Conditions", count: openConditions || undefined },
     { key: "documents", label: "Documents", count: documents.length || undefined },
     { key: "tasks", label: "Tasks", count: openTaskCount || undefined },
@@ -203,6 +207,14 @@ export function DealDetail({
           return <CommercialOverviewTab data={commercialUW} dealId={deal.id} currentUserId={currentUserId} propertyFinancials={propertyFinancials} propertyId={propertyId ?? null} />;
         }
         return <OverviewTab deal={deal} onSave={onSave} onSaveRelated={onSaveRelated} />;
+      case "financials":
+        return (
+          <FinancialsTab
+            commercialUW={commercialUW}
+            propertyFinancials={propertyFinancials}
+            deal={deal}
+          />
+        );
       case "underwriting":
         if (isCommercial && commercialUW) {
           return <CommercialUnderwritingTab data={commercialUW} />;
@@ -217,6 +229,8 @@ export function DealDetail({
             isOpportunity={isOpportunity}
           />
         );
+      case "borrower":
+        return <BorrowerTab deal={deal} />;
       case "conditions":
         return <ConditionsTab conditions={conditions} />;
       case "documents":
@@ -291,8 +305,20 @@ export function DealDetail({
           />
         </div>
 
+        {/* KPI Strip */}
+        <div className="mt-5">
+          <DealKpiStrip
+            loanAmount={deal.loan_amount}
+            ltv={deal.ltv}
+            currentDSCR={deal.dscr_ratio}
+            proFormaDSCR={null}
+            interestRate={deal.interest_rate}
+            termMonths={deal.loan_term_months ?? deal.term_months}
+          />
+        </div>
+
         {/* Tab Bar */}
-        <div className="mt-6 mb-6">
+        <div className="mt-5 mb-5">
           <div
             className="inline-flex gap-0.5 rounded-[10px] p-[3px]"
             style={{

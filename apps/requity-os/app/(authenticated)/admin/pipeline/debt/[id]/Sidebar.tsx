@@ -360,6 +360,43 @@ export function Sidebar({
         </div>
       </SectionCard>
 
+      {/* Borrower Summary */}
+      {deal._borrower_name && (
+        <SectionCard title="Borrower" icon={Shield}>
+          <div className="flex flex-col gap-2">
+            <div className="text-[13px] font-semibold" style={{ color: T.text.primary }}>
+              {deal._entity_name || deal._borrower_name}
+            </div>
+            {deal._entity_type && (
+              <div className="text-[11px]" style={{ color: T.text.muted }}>
+                {deal._entity_type.replace(/_/g, ' ').replace(/\w/g, (c: string) => c.toUpperCase())}
+                {deal.property_state ? ` · ${deal.property_state}` : ''}
+              </div>
+            )}
+            {deal._borrower_name && deal._entity_name && (
+              <div className="flex items-center gap-2 mt-1">
+                <Av text={deal._borrower_name.split(' ').map((w: string) => w[0]).join('').slice(0, 2).toUpperCase()} size={24} color="#7c3aed" />
+                <div>
+                  <div className="text-xs font-medium" style={{ color: T.text.primary }}>
+                    {deal._borrower_name}
+                  </div>
+                  {deal._borrower_credit_score && (
+                    <div className="text-[10px] num" style={{ color: T.text.muted }}>
+                      FICO: {deal._borrower_credit_score}
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+            {deal._borrower_experience != null && (
+              <div className="text-[11px]" style={{ color: T.text.secondary }}>
+                {deal._borrower_experience} prior transactions
+              </div>
+            )}
+          </div>
+        </SectionCard>
+      )}
+
       {/* Key Dates */}
       <SectionCard title="Key Dates" icon={CalendarDays}>
         <div className="flex flex-col">
