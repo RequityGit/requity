@@ -152,9 +152,27 @@ export function CommercialUnderwritingTab({ data }: CommercialUnderwritingTabPro
         className="rounded-lg px-4 py-2.5 flex flex-wrap items-center gap-x-4 gap-y-1"
         style={{ backgroundColor: T.bg.elevated, border: `1px solid ${T.bg.borderSubtle}` }}
       >
-        <span className="text-[12px] font-medium" style={{ color: T.text.secondary }}>
-          Using: Lender assumptions (v{uw?.version ?? 1} {uw?.status ?? "draft"})
-        </span>
+        <div className="flex items-center gap-2">
+          <span className="text-[12px] font-semibold" style={{ color: T.text.primary }}>
+            v{uw?.version ?? 1}
+          </span>
+          {uw?.status === "active" && (
+            <span
+              className="rounded px-1.5 py-px text-[10px] font-medium"
+              style={{ backgroundColor: "rgba(34,197,94,0.12)", color: "#22c55e" }}
+            >
+              Active
+            </span>
+          )}
+          {uw?.status === "draft" && (
+            <span
+              className="rounded px-1.5 py-px text-[10px] font-medium"
+              style={{ backgroundColor: "rgba(245,158,11,0.12)", color: "#f59e0b" }}
+            >
+              Draft
+            </span>
+          )}
+        </div>
         <span className="text-[12px]" style={{ color: T.text.muted }}>
           Rent growth {(avgIncGr * 100).toFixed(1)}%
           {" · "}Expense growth {(avgExpGr * 100).toFixed(1)}% avg

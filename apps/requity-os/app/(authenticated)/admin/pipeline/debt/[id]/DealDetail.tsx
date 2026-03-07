@@ -25,7 +25,7 @@ import { CommercialOverviewTab, type CommercialUWData } from "./tabs/CommercialO
 import { CommercialUnderwritingTab } from "./tabs/CommercialUnderwritingTab";
 import { updateDealField, updateRelatedField } from "./update-deal-action";
 import { advanceStage, advanceOpportunityStage } from "./actions";
-import { initCommercialUW, createNewVersion, activateVersion, saveDraft } from "./commercial-uw-actions";
+import { initCommercialUW } from "./commercial-uw-actions";
 import { useToast } from "@/components/ui/use-toast";
 import {
   T,
@@ -201,40 +201,11 @@ export function DealDetail({
     }
   }, [deal.id, currentUserId, isCommercial, toast, router]);
 
-  const handleNewVersion = useCallback(async () => {
-    const result = await createNewVersion(deal.id, currentUserId);
-    if (result.error) {
-      toast({ title: "Failed to create version", description: result.error, variant: "destructive" });
-    } else {
-      router.refresh();
-    }
-  }, [deal.id, currentUserId, toast, router]);
-
-  const handleActivateVersion = useCallback(async () => {
-    if (!commercialUW?.uw?.id) return;
-    const result = await activateVersion(commercialUW.uw.id, deal.id);
-    if (result.error) {
-      toast({ title: "Failed to activate", description: result.error, variant: "destructive" });
-    } else {
-      router.refresh();
-    }
-  }, [commercialUW?.uw?.id, deal.id, toast, router]);
-
-  const handleSaveDraft = useCallback(async () => {
-    if (!commercialUW?.uw?.id) return;
-    const result = await saveDraft(commercialUW.uw.id, deal.id);
-    if (result.error) {
-      toast({ title: "Failed to save draft", description: result.error, variant: "destructive" });
-    } else {
-      toast({ title: "Draft saved" });
-    }
-  }, [commercialUW?.uw?.id, deal.id, toast]);
-
   const renderTab = () => {
     switch (tab) {
       case "overview":
         if (isCommercial && commercialUW) {
-          return <CommercialOverviewTab data={commercialUW} dealId={deal.id} />;
+          return <CommercialOverviewTab data={commercialUW} dealId={deal.id} currentUserId={currentUserId} />;
         }
         return <OverviewTab deal={deal} onSave={onSave} onSaveRelated={onSaveRelated} />;
       case "underwriting":
@@ -316,68 +287,20 @@ export function DealDetail({
           <Stepper deal={deal} stages={pipelineStages} onStageClick={handleStageClick} updatingStage={updatingStage} />
         </div>
 
-        {/* Version Controls (commercial deals) */}
-        {isCommercial && (
-          <div className="mt-4 flex items-center gap-2 flex-wrap">
-            {commercialUW ? (
-              <>
-                <span
-                  className="inline-flex items-center gap-1.5 rounded-lg px-3 py-[7px] text-[13px] font-medium"
-                  style={{
-                    backgroundColor: T.bg.elevated,
-                    border: `1px solid ${T.bg.border}`,
-                    color: T.text.primary,
-                  }}
-                >
-                  Version: v{commercialUW.uw.version} {commercialUW.uw.status}
-                </span>
-                <button
-                  onClick={handleNewVersion}
-                  className="inline-flex items-center gap-1.5 rounded-lg px-3 py-[7px] text-[13px] font-medium cursor-pointer transition-colors"
-                  style={{
-                    backgroundColor: T.bg.elevated,
-                    border: `1px solid ${T.bg.border}`,
-                    color: T.text.primary,
-                  }}
-                >
-                  + New Version
-                </button>
-                <button
-                  onClick={handleSaveDraft}
-                  className="inline-flex items-center gap-1.5 rounded-lg px-3 py-[7px] text-[13px] font-medium cursor-pointer transition-colors"
-                  style={{
-                    backgroundColor: T.bg.elevated,
-                    border: `1px solid ${T.bg.border}`,
-                    color: T.text.primary,
-                  }}
-                >
-                  Save Draft
-                </button>
-                <button
-                  onClick={handleActivateVersion}
-                  className="inline-flex items-center gap-1.5 rounded-lg px-3 py-[7px] text-[13px] font-medium cursor-pointer transition-colors"
-                  style={{
-                    backgroundColor: T.accent.blue,
-                    border: "none",
-                    color: "#fff",
-                  }}
-                >
-                  Save & Activate
-                </button>
-              </>
-            ) : (
-              <button
-                onClick={handleInitUW}
-                className="inline-flex items-center gap-1.5 rounded-lg px-3 py-[7px] text-[13px] font-medium cursor-pointer transition-colors"
-                style={{
-                  backgroundColor: T.accent.blue,
-                  border: "none",
-                  color: "#fff",
-                }}
-              >
-                Initialize Commercial UW
-              </button>
-            )}
+        {/* Init Commercial UW (only when not yet initialized) */}
+        {isCommercial && !commercialUW && (
+          <div className="mt-4">
+            <button
+              onClick={handleInitUW}
+              className="inline-flex items-center gap-1.5 rounded-lg px-3 py-[7px] text-[13px] font-medium cursor-pointer transition-colors"
+              style={{
+                backgroundColor: T.accent.blue,
+                border: "none",
+                color: "#fff",
+              }}
+            >
+              Initialize Commercial UW
+            </button>
           </div>
         )}
 

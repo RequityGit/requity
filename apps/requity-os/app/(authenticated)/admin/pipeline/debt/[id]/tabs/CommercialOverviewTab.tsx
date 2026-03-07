@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo, useCallback } from "react";
-import { Building2, Landmark, Pencil, Plus, ChevronDown, Trash2, Loader2 } from "lucide-react";
+import { Building2, Landmark, Pencil, Plus, ChevronDown, Trash2, Loader2, Clock, Check } from "lucide-react";
 import { T, SectionCard, FieldRow, fmt } from "../components";
 import {
   Dialog,
@@ -20,6 +20,8 @@ import {
   upsertExpenseRows,
   upsertRentRoll,
   upsertScopeOfWork,
+  createNewVersion,
+  activateVersion,
 } from "../commercial-uw-actions";
 import { computeAnnualDebtService, computeT12NetRevenue, computeT12TotalExpenses, computeT12NOI } from "@/lib/commercial-uw/deal-computations";
 import type { DealIncomeRow, DealExpenseRow, DealUWRecord } from "@/lib/commercial-uw/deal-computations";
@@ -50,6 +52,7 @@ export interface CommercialUWData {
 interface CommercialOverviewTabProps {
   data: CommercialUWData;
   dealId: string;
+  currentUserId: string;
 }
 
 // ── Helpers ──
@@ -93,8 +96,8 @@ function EditButton({ onClick }: { onClick: () => void }) {
 
 // ── Main Component ──
 
-export function CommercialOverviewTab({ data, dealId }: CommercialOverviewTabProps) {
-  const { uw, income, expenses, rentRoll, scopeOfWork } = data;
+export function CommercialOverviewTab({ data, dealId, currentUserId }: CommercialOverviewTabProps) {
+  const { uw, income, expenses, rentRoll, scopeOfWork, allVersions } = data;
   const { toast } = useToast();
   const router = useRouter();
 
@@ -102,6 +105,8 @@ export function CommercialOverviewTab({ data, dealId }: CommercialOverviewTabPro
   const [editLoanOpen, setEditLoanOpen] = useState(false);
   const [editRentRollOpen, setEditRentRollOpen] = useState(false);
   const [showAllUnits, setShowAllUnits] = useState(false);
+  const [creatingVersion, setCreatingVersion] = useState(false);
+  const [activatingId, setActivatingId] = useState<string | null>(null);
 
   // Computed values
   const incomeRows: DealIncomeRow[] = useMemo(() =>
@@ -147,6 +152,36 @@ export function CommercialOverviewTab({ data, dealId }: CommercialOverviewTabPro
   const totalMarketRent = useMemo(() => rentRoll.reduce((sum: number, r: { market_rent: number }) => sum + n(r.market_rent), 0), [rentRoll]);
   const occupiedCount = useMemo(() => rentRoll.filter((r: { status: string }) => r.status === "occupied").length, [rentRoll]);
 
+  const handleNewVersion = useCallback(async () => {
+    setCreatingVersion(true);
+    try {
+      const result = await createNewVersion(dealId, currentUserId);
+      if (result.error) {
+        toast({ title: "Failed to create version", description: result.error, variant: "destructive" });
+      } else {
+        toast({ title: `Version ${result.data?.version} created` });
+        router.refresh();
+      }
+    } finally {
+      setCreatingVersion(false);
+    }
+  }, [dealId, currentUserId, toast, router]);
+
+  const handleActivate = useCallback(async (versionId: string) => {
+    setActivatingId(versionId);
+    try {
+      const result = await activateVersion(versionId, dealId);
+      if (result.error) {
+        toast({ title: "Failed to activate", description: result.error, variant: "destructive" });
+      } else {
+        toast({ title: "Version activated" });
+        router.refresh();
+      }
+    } finally {
+      setActivatingId(null);
+    }
+  }, [dealId, toast, router]);
+
   const handleSaveUW = useCallback(async (fields: Record<string, unknown>) => {
     if (!uw?.id) return;
     const result = await updateCommercialUW(uw.id, fields);
@@ -164,6 +199,135 @@ export function CommercialOverviewTab({ data, dealId }: CommercialOverviewTabPro
 
   return (
     <div className="flex flex-col gap-5">
+      {/* ━━━ VERSION HISTORY CARD ━━━ */}
+      <div
+        className="rounded-xl overflow-hidden"
+        style={{ border: `1px solid ${T.bg.border}`, backgroundColor: T.bg.surface }}
+      >
+        <div
+          className="flex items-center justify-between px-5 py-3.5"
+          style={{ borderBottom: `1px solid ${T.bg.borderSubtle}` }}
+        >
+          <div className="flex items-center gap-2">
+            <Clock size={16} color={T.text.muted} strokeWidth={1.5} />
+            <span className="text-sm font-semibold" style={{ color: T.text.primary }}>
+              Version History
+            </span>
+            <span className="text-[11px] num ml-1" style={{ color: T.text.muted }}>
+              {allVersions.length} version{allVersions.length !== 1 ? "s" : ""}
+            </span>
+          </div>
+          <button
+            onClick={handleNewVersion}
+            disabled={creatingVersion}
+            className="inline-flex items-center gap-1 rounded-md px-2.5 py-1.5 text-[12px] font-medium transition-colors cursor-pointer border-0 disabled:opacity-50"
+            style={{ backgroundColor: T.bg.elevated, color: T.text.secondary, border: `1px solid ${T.bg.border}` }}
+          >
+            {creatingVersion ? <Loader2 size={11} className="animate-spin" /> : <Plus size={11} />}
+            New Version
+          </button>
+        </div>
+
+        {allVersions.length === 0 ? (
+          <div className="px-5 py-4 text-[13px]" style={{ color: T.text.muted }}>
+            No versions yet. Initialize underwriting to get started.
+          </div>
+        ) : (
+          <div>
+            {allVersions.map((v: { id: string; version: number; status: string; created_at: string }) => {
+              const isCurrent = v.id === uw?.id;
+              const isActive = v.status === "active";
+              const isActivating = activatingId === v.id;
+              return (
+                <div
+                  key={v.id}
+                  className="flex items-center gap-3 px-5 py-3"
+                  style={{
+                    borderBottom: `1px solid ${T.bg.borderSubtle}`,
+                    backgroundColor: isCurrent ? T.bg.hover : "transparent",
+                  }}
+                >
+                  {/* Version badge */}
+                  <div
+                    className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-[11px] font-semibold num"
+                    style={{
+                      backgroundColor: isActive ? "rgba(59,130,246,0.12)" : T.bg.elevated,
+                      color: isActive ? T.accent.blue : T.text.muted,
+                      border: `1px solid ${isActive ? "rgba(59,130,246,0.25)" : T.bg.border}`,
+                    }}
+                  >
+                    v{v.version}
+                  </div>
+
+                  {/* Info */}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2">
+                      <span className="text-[13px] font-medium" style={{ color: T.text.primary }}>
+                        Version {v.version}
+                      </span>
+                      {v.status === "active" && (
+                        <span
+                          className="rounded px-1.5 py-px text-[10px] font-medium"
+                          style={{ backgroundColor: "rgba(34,197,94,0.12)", color: "#22c55e" }}
+                        >
+                          Active
+                        </span>
+                      )}
+                      {v.status === "draft" && (
+                        <span
+                          className="rounded px-1.5 py-px text-[10px] font-medium"
+                          style={{ backgroundColor: "rgba(245,158,11,0.12)", color: "#f59e0b" }}
+                        >
+                          Draft
+                        </span>
+                      )}
+                      {v.status === "archived" && (
+                        <span
+                          className="rounded px-1.5 py-px text-[10px] font-medium"
+                          style={{ backgroundColor: T.bg.elevated, color: T.text.muted }}
+                        >
+                          Archived
+                        </span>
+                      )}
+                      {isCurrent && (
+                        <span className="text-[10px]" style={{ color: T.text.muted }}>
+                          · viewing
+                        </span>
+                      )}
+                    </div>
+                    <div className="text-[11px] num" style={{ color: T.text.muted }}>
+                      {new Date(v.created_at).toLocaleDateString("en-US", {
+                        month: "short",
+                        day: "numeric",
+                        year: "numeric",
+                      })}
+                    </div>
+                  </div>
+
+                  {/* Actions */}
+                  <div className="flex items-center gap-2 shrink-0">
+                    {isActive && (
+                      <Check size={14} strokeWidth={2} style={{ color: T.accent.blue }} />
+                    )}
+                    {v.status === "draft" && (
+                      <button
+                        onClick={() => handleActivate(v.id)}
+                        disabled={isActivating}
+                        className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-[11px] font-medium transition-colors cursor-pointer border-0 disabled:opacity-50"
+                        style={{ backgroundColor: "rgba(59,130,246,0.12)", color: T.accent.blue }}
+                      >
+                        {isActivating ? <Loader2 size={10} className="animate-spin" /> : null}
+                        Activate
+                      </button>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+
       {/* ━━━ PROPERTY SECTION ━━━ */}
       <div
         className="rounded-xl overflow-hidden"
