@@ -40,7 +40,7 @@ export function ControlCenterSidebar() {
     : null;
 
   return (
-    <aside className="w-[260px] shrink-0 border-r border-border bg-background flex flex-col">
+    <aside className="hidden md:flex w-[260px] shrink-0 border-r border-border bg-background flex-col">
       {/* Header */}
       <div className="px-4 pt-5 pb-4 border-b border-border space-y-3">
         <div>
