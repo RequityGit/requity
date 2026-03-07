@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { DatePicker } from "@/components/ui/date-picker";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
@@ -914,10 +915,9 @@ function AddConditionDialog({
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label>Due Date</Label>
-              <Input
-                type="date"
+              <DatePicker
                 value={form.due_date}
-                onChange={(e) => updateField("due_date", e.target.value)}
+                onChange={(value) => updateField("due_date", value)}
               />
             </div>
             <div className="flex items-end pb-2">

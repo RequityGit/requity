@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { Input } from "@/components/ui/input";
+import { DatePicker } from "@/components/ui/date-picker";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import {
@@ -224,11 +225,12 @@ function UwField({
       return (
         <div className="space-y-1.5">
           <Label className="text-xs">{field.label}</Label>
-          <Input
-            type="date"
+          <DatePicker
             value={value != null ? String(value) : ""}
-            onChange={(e) => onChange(e.target.value || null)}
-            onBlur={onBlur}
+            onChange={(val) => {
+              onChange(val || null);
+              setTimeout(onBlur, 0);
+            }}
             disabled={disabled}
           />
         </div>

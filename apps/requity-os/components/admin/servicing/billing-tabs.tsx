@@ -16,6 +16,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { DatePicker } from "@/components/ui/date-picker";
 import {
   formatCurrency,
   formatCurrencyDetailed,
@@ -554,10 +555,9 @@ function GenerateBillingTab({ activeLoans }: { activeLoans: any[] }) {
         <div className="flex items-end gap-4">
           <div className="space-y-2">
             <Label>Billing Month (first of month)</Label>
-            <Input
-              type="date"
+            <DatePicker
               value={billingMonth}
-              onChange={(e) => setBillingMonth(e.target.value)}
+              onChange={(value) => setBillingMonth(value)}
               className="w-48"
             />
           </div>
@@ -684,10 +684,9 @@ function ApplyPaymentTab({ activeLoans }: { activeLoans: any[] }) {
           </div>
           <div className="space-y-2">
             <Label>Payment Date</Label>
-            <Input
-              type="date"
+            <DatePicker
               value={paymentDate}
-              onChange={(e) => setPaymentDate(e.target.value)}
+              onChange={(value) => setPaymentDate(value)}
             />
           </div>
           <div className="space-y-2">
@@ -817,10 +816,9 @@ function PayoffQuoteTab({ activeLoans }: { activeLoans: any[] }) {
           </div>
           <div className="space-y-2">
             <Label>Payoff Date</Label>
-            <Input
-              type="date"
+            <DatePicker
               value={payoffDate}
-              onChange={(e) => setPayoffDate(e.target.value)}
+              onChange={(value) => setPayoffDate(value)}
               className="w-48"
             />
           </div>

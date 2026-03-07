@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { DatePicker } from "@/components/ui/date-picker";
 import { Textarea } from "@/components/ui/textarea";
 import {
   Dialog,
@@ -235,11 +236,9 @@ export function DistributionForm({ funds }: DistributionFormProps) {
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label>Distribution Date *</Label>
-              <Input
-                type="date"
+              <DatePicker
                 value={distributionDate}
-                onChange={(e) => setDistributionDate(e.target.value)}
-                required
+                onChange={(value) => setDistributionDate(value)}
               />
             </div>
           </div>

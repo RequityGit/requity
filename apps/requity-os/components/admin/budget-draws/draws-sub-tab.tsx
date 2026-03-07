@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { DatePicker } from "@/components/ui/date-picker";
 import { Textarea } from "@/components/ui/textarea";
 import { DataTable, Column } from "@/components/shared/data-table";
 import { StatusBadge } from "@/components/shared/status-badge";
@@ -1185,10 +1186,9 @@ function OrderInspectionDialog({
           </div>
           <div className="space-y-2">
             <Label>Inspection Date</Label>
-            <Input
-              type="date"
+            <DatePicker
               value={inspectionDate}
-              onChange={(e) => setInspectionDate(e.target.value)}
+              onChange={(value) => setInspectionDate(value)}
             />
           </div>
         </div>
@@ -1268,11 +1268,9 @@ function RecordWireDialog({
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label>Wire Date</Label>
-              <Input
-                type="date"
+              <DatePicker
                 value={wireDate}
-                onChange={(e) => setWireDate(e.target.value)}
-                required
+                onChange={(value) => setWireDate(value)}
               />
             </div>
             <div className="space-y-2">

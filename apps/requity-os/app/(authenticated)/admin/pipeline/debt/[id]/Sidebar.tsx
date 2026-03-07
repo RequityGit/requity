@@ -34,6 +34,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { DatePicker } from "@/components/ui/date-picker";
 import { Button } from "@/components/ui/button";
 import {
   Select,
@@ -504,10 +505,9 @@ export function Sidebar({
           <div className="flex flex-col gap-3 py-2">
             <div>
               <label className="text-sm font-medium mb-1 block">Closing Date</label>
-              <Input
-                type="date"
+              <DatePicker
                 value={closingDate}
-                onChange={(e) => setClosingDate(e.target.value)}
+                onChange={(value) => setClosingDate(value)}
               />
             </div>
             <div>

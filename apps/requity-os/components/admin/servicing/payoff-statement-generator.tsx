@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { DatePicker } from "@/components/ui/date-picker";
 import { Label } from "@/components/ui/label";
 import { DataTable, Column } from "@/components/shared/data-table";
 import { formatCurrencyDetailed, formatDate } from "@/lib/format";
@@ -464,12 +465,9 @@ export function PayoffStatementGenerator({ loanId, loan }: PayoffStatementGenera
                 <CalendarDays className="h-4 w-4" />
                 Payoff Good Through Date
               </Label>
-              <Input
-                id="good-through-date"
-                type="date"
-                min={getTodayString()}
+              <DatePicker
                 value={goodThroughDateStr}
-                onChange={(e) => setGoodThroughDateStr(e.target.value)}
+                onChange={(value) => setGoodThroughDateStr(value)}
                 className="w-full md:w-[220px]"
               />
               <p className="text-xs text-muted-foreground">

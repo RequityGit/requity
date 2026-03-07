@@ -7,6 +7,7 @@ import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { DatePicker } from "@/components/ui/date-picker";
 import { Textarea } from "@/components/ui/textarea";
 import {
   Dialog,
@@ -428,10 +429,9 @@ export function CreateLoanDialog({
             </div>
             <div className="space-y-2">
               <Label>Expected Close Date</Label>
-              <Input
-                type="date"
+              <DatePicker
                 value={form.expected_close_date}
-                onChange={(e) => updateField("expected_close_date", e.target.value)}
+                onChange={(value) => updateField("expected_close_date", value)}
               />
             </div>
           </div>

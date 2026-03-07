@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { DatePicker } from "@/components/ui/date-picker";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
@@ -514,11 +515,10 @@ export function ContactEditDialog({
               </div>
               <div className="space-y-2">
                 <Label>Next Follow-Up</Label>
-                <Input
-                  type="date"
+                <DatePicker
                   value={form.next_follow_up_date}
-                  onChange={(e) =>
-                    updateField("next_follow_up_date", e.target.value)
+                  onChange={(value) =>
+                    updateField("next_follow_up_date", value)
                   }
                 />
               </div>

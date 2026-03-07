@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { DatePicker } from "@/components/ui/date-picker";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import {
@@ -225,11 +226,9 @@ export function AddProjectDialog({ teamMembers }: AddProjectDialogProps) {
 
           <div className="space-y-2">
             <Label htmlFor="due_date">Due Date</Label>
-            <Input
-              id="due_date"
-              type="date"
+            <DatePicker
               value={form.due_date}
-              onChange={(e) => setForm({ ...form, due_date: e.target.value })}
+              onChange={(value) => setForm({ ...form, due_date: value })}
             />
           </div>
 

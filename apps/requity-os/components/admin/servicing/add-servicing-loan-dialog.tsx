@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { DatePicker } from "@/components/ui/date-picker";
 import { Textarea } from "@/components/ui/textarea";
 import {
   Dialog,
@@ -455,19 +456,17 @@ export function AddServicingLoanDialog({
             <div className="grid grid-cols-3 gap-4">
               <div className="space-y-2">
                 <LockedLabel locked={financialLocked}>Origination Date</LockedLabel>
-                <Input
-                  type="date"
+                <DatePicker
                   value={form.origination_date}
-                  onChange={(e) => updateField("origination_date", e.target.value)}
+                  onChange={(value) => updateField("origination_date", value)}
                   disabled={financialLocked}
                 />
               </div>
               <div className="space-y-2">
                 <LockedLabel locked={financialLocked}>Maturity Date</LockedLabel>
-                <Input
-                  type="date"
+                <DatePicker
                   value={form.maturity_date}
-                  onChange={(e) => updateField("maturity_date", e.target.value)}
+                  onChange={(value) => updateField("maturity_date", value)}
                   disabled={financialLocked}
                 />
               </div>
