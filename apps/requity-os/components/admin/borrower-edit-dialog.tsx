@@ -187,6 +187,7 @@ export function BorrowerEditDialog({ borrower }: BorrowerEditDialogProps) {
               <DatePicker
                 value={dateOfBirth}
                 onChange={(value) => setDateOfBirth(value)}
+                showYearNavigation
               />
             </div>
             <div className="space-y-2">
