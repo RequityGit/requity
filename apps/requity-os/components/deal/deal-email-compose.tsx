@@ -4,13 +4,7 @@ import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-  SheetDescription,
-} from "@/components/ui/sheet";
+import { EmailComposerShell } from "@/components/email/email-composer-shell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -98,6 +92,11 @@ export function DealEmailCompose({
     body: "",
   });
   const [attachments, setAttachments] = useState<Attachment[]>([]);
+
+  const isDirty =
+    form.subject.trim() !== "" ||
+    form.body.trim() !== "" ||
+    attachments.length > 0;
 
   // Check Gmail OAuth and load templates
   useEffect(() => {
@@ -192,6 +191,19 @@ export function DealEmailCompose({
       .map((e) => e.trim())
       .filter((e) => e.length > 0)
       .map((email) => ({ email }));
+  }
+
+  function handleDiscard() {
+    setForm({
+      to_email: defaultToEmail,
+      to_name: defaultToName,
+      cc: "",
+      bcc: "",
+      subject: "",
+      body: "",
+    });
+    setAttachments([]);
+    onOpenChange(false);
   }
 
   async function handleSend(asDraft = false) {
@@ -373,198 +385,68 @@ export function DealEmailCompose({
     }
   }
 
+  const senderEmail = gmailEmail ?? "info@requitylending.com";
+
   return (
-    <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="right" className="w-full sm:max-w-xl flex flex-col">
-        <SheetHeader>
-          <SheetTitle>
-            {replyTo ? "Reply to Email" : "Compose Deal Email"}
-          </SheetTitle>
-          <SheetDescription>
-            Send from {gmailEmail ?? "info@requitylending.com"}
-          </SheetDescription>
-        </SheetHeader>
-
-        <div className="flex flex-col flex-1 gap-4 mt-4 overflow-y-auto">
-          {/* Template selector */}
-          {templates.length > 0 && !replyTo && (
-            <div className="space-y-1.5">
-              <Label>Template</Label>
-              <Select onValueChange={handleTemplateSelect}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select a template..." />
-                </SelectTrigger>
-                <SelectContent>
-                  {templates.map((t) => (
-                    <SelectItem key={t.id} value={t.id}>
-                      <div className="flex items-center gap-2">
-                        <FileText className="h-3.5 w-3.5 text-muted-foreground" />
-                        {t.display_name}
-                      </div>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          )}
-
-          {/* To */}
-          <div className="space-y-1.5">
-            <Label htmlFor="to_email">To</Label>
-            <div className="flex gap-2">
-              <Input
-                id="to_email"
-                type="email"
-                placeholder="recipient@example.com"
-                value={form.to_email}
-                onChange={(e) => updateField("to_email", e.target.value)}
-                className="flex-1"
-              />
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                className="text-xs shrink-0"
-                onClick={() => setShowCcBcc(!showCcBcc)}
-              >
-                CC/BCC
-                {showCcBcc ? (
-                  <ChevronUp className="h-3 w-3 ml-1" />
-                ) : (
-                  <ChevronDown className="h-3 w-3 ml-1" />
-                )}
-              </Button>
-            </div>
-          </div>
-
-          {/* CC / BCC */}
-          {showCcBcc && (
-            <>
-              <div className="space-y-1.5">
-                <Label htmlFor="cc">CC</Label>
-                <Input
-                  id="cc"
-                  type="text"
-                  placeholder="cc1@example.com, cc2@example.com"
-                  value={form.cc}
-                  onChange={(e) => updateField("cc", e.target.value)}
-                />
-              </div>
-              <div className="space-y-1.5">
-                <Label htmlFor="bcc">BCC</Label>
-                <Input
-                  id="bcc"
-                  type="text"
-                  placeholder="bcc@example.com"
-                  value={form.bcc}
-                  onChange={(e) => updateField("bcc", e.target.value)}
-                />
-              </div>
-            </>
-          )}
-
-          {/* Subject */}
-          <div className="space-y-1.5">
-            <Label htmlFor="subject">Subject</Label>
-            <Input
-              id="subject"
-              placeholder="Email subject"
-              value={form.subject}
-              onChange={(e) => updateField("subject", e.target.value)}
-            />
-          </div>
-
-          {/* Body */}
-          <div className="space-y-1.5 flex-1">
-            <Label htmlFor="body">Message</Label>
-            <Textarea
-              id="body"
-              placeholder="Write your message..."
-              value={form.body}
-              onChange={(e) => updateField("body", e.target.value)}
-              className="min-h-[200px] resize-none"
-            />
-          </div>
-
-          {/* Attachments */}
-          <div className="space-y-2">
-            <input
-              ref={fileInputRef}
-              type="file"
-              multiple
-              onChange={handleFileSelect}
-              className="hidden"
-            />
+    <EmailComposerShell
+      open={open}
+      onClose={() => onOpenChange(false)}
+      title={replyTo ? "Reply" : "New Email"}
+      subtitle={`from ${senderEmail}`}
+      isDirty={isDirty}
+      footer={
+        <>
+          <div className="flex items-center gap-1.5">
             <Button
               type="button"
-              variant="outline"
+              variant="ghost"
               size="sm"
               className="gap-1.5"
               onClick={() => fileInputRef.current?.click()}
             >
               <Paperclip className="h-3.5 w-3.5" />
-              Attach Files
+              Attach
             </Button>
-
-            {attachments.length > 0 && (
-              <div className="space-y-1.5">
-                {attachments.map((att) => (
-                  <div
-                    key={att.id}
-                    className="flex items-center gap-2 rounded-md border px-2.5 py-1.5 text-sm bg-muted"
-                  >
-                    <File className="h-3.5 w-3.5 text-blue-600 shrink-0" />
-                    <span className="truncate flex-1">{att.file.name}</span>
-                    <Badge variant="outline" className="text-xs shrink-0">
-                      {(att.file.size / 1024).toFixed(0)} KB
-                    </Badge>
-                    <button
-                      type="button"
-                      onClick={() => removeAttachment(att.id)}
-                      className="text-muted-foreground hover:text-foreground"
-                    >
-                      <X className="h-3.5 w-3.5" />
-                    </button>
-                  </div>
-                ))}
-              </div>
+            {templates.length > 0 && !replyTo && (
+              <Select onValueChange={handleTemplateSelect}>
+                <SelectTrigger className="h-8 w-auto gap-1.5 text-xs border-0 shadow-none">
+                  <FileText className="h-3.5 w-3.5" />
+                  <SelectValue placeholder="Template" />
+                </SelectTrigger>
+                <SelectContent>
+                  {templates.map((t) => (
+                    <SelectItem key={t.id} value={t.id}>
+                      {t.display_name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             )}
           </div>
-
-          {/* Reply context */}
-          {replyTo && (
-            <div className="rounded-md bg-muted p-3 text-xs border-l-2 border-muted-foreground/20">
-              <p className="font-medium text-muted-foreground mb-1">
-                Replying to: {replyTo.subject}
-              </p>
-              <p className="text-muted-foreground truncate">
-                {replyTo.body_text?.slice(0, 200)}
-              </p>
-            </div>
-          )}
-
-          {/* Actions */}
-          <div className="flex justify-end gap-2 pt-2 border-t">
+          <div className="flex items-center gap-1.5">
             <Button
               type="button"
-              variant="outline"
-              onClick={() => onOpenChange(false)}
+              variant="ghost"
+              size="sm"
+              onClick={handleDiscard}
               disabled={sending || savingDraft}
             >
-              Cancel
+              Discard
             </Button>
             <Button
               type="button"
               variant="outline"
+              size="sm"
               disabled={sending || savingDraft}
               className="gap-1.5"
               onClick={() => handleSend(true)}
             >
               <Save className="h-3.5 w-3.5" />
-              {savingDraft ? "Saving..." : "Save Draft"}
+              {savingDraft ? "Saving..." : "Draft"}
             </Button>
             <Button
               type="button"
+              size="sm"
               disabled={sending || savingDraft}
               className="gap-1.5"
               onClick={() => handleSend(false)}
@@ -573,9 +455,131 @@ export function DealEmailCompose({
               {sending ? "Sending..." : "Send"}
             </Button>
           </div>
+        </>
+      }
+    >
+      {/* To */}
+      <div className="space-y-1.5">
+        <Label htmlFor="to_email">To</Label>
+        <div className="flex gap-2">
+          <Input
+            id="to_email"
+            type="email"
+            placeholder="recipient@example.com"
+            value={form.to_email}
+            onChange={(e) => updateField("to_email", e.target.value)}
+            className="flex-1"
+          />
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            className="text-xs shrink-0"
+            onClick={() => setShowCcBcc(!showCcBcc)}
+          >
+            CC/BCC
+            {showCcBcc ? (
+              <ChevronUp className="h-3 w-3 ml-1" />
+            ) : (
+              <ChevronDown className="h-3 w-3 ml-1" />
+            )}
+          </Button>
         </div>
-      </SheetContent>
-    </Sheet>
+      </div>
+
+      {/* CC / BCC */}
+      {showCcBcc && (
+        <>
+          <div className="space-y-1.5">
+            <Label htmlFor="cc">CC</Label>
+            <Input
+              id="cc"
+              type="text"
+              placeholder="cc1@example.com, cc2@example.com"
+              value={form.cc}
+              onChange={(e) => updateField("cc", e.target.value)}
+            />
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="bcc">BCC</Label>
+            <Input
+              id="bcc"
+              type="text"
+              placeholder="bcc@example.com"
+              value={form.bcc}
+              onChange={(e) => updateField("bcc", e.target.value)}
+            />
+          </div>
+        </>
+      )}
+
+      {/* Subject */}
+      <div className="space-y-1.5">
+        <Label htmlFor="subject">Subject</Label>
+        <Input
+          id="subject"
+          placeholder="Email subject"
+          value={form.subject}
+          onChange={(e) => updateField("subject", e.target.value)}
+        />
+      </div>
+
+      {/* Body */}
+      <div className="space-y-1.5">
+        <Label htmlFor="body">Message</Label>
+        <Textarea
+          id="body"
+          placeholder="Write your message..."
+          value={form.body}
+          onChange={(e) => updateField("body", e.target.value)}
+          className="min-h-[200px] resize-none"
+        />
+      </div>
+
+      {/* Attachments */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        multiple
+        onChange={handleFileSelect}
+        className="hidden"
+      />
+      {attachments.length > 0 && (
+        <div className="space-y-1.5">
+          {attachments.map((att) => (
+            <div
+              key={att.id}
+              className="flex items-center gap-2 rounded-md border px-2.5 py-1.5 text-sm bg-muted"
+            >
+              <File className="h-3.5 w-3.5 text-blue-600 shrink-0" />
+              <span className="truncate flex-1">{att.file.name}</span>
+              <Badge variant="outline" className="text-xs shrink-0">
+                {(att.file.size / 1024).toFixed(0)} KB
+              </Badge>
+              <button
+                type="button"
+                onClick={() => removeAttachment(att.id)}
+                className="text-muted-foreground hover:text-foreground"
+              >
+                <X className="h-3.5 w-3.5" />
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Reply context */}
+      {replyTo && (
+        <div className="rounded-md bg-muted p-3 text-xs border-l-2 border-muted-foreground/20">
+          <p className="font-medium text-muted-foreground mb-1">
+            Replying to: {replyTo.subject}
+          </p>
+          <p className="text-muted-foreground truncate">
+            {replyTo.body_text?.slice(0, 200)}
+          </p>
+        </div>
+      )}
+    </EmailComposerShell>
   );
 }
 

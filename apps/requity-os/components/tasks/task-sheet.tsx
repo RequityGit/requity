@@ -4,12 +4,12 @@ import { useState, useRef, useCallback, useEffect } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
 import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-  SheetDescription,
-} from "@/components/ui/sheet";
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -322,19 +322,16 @@ export function TaskSheet({
   };
 
   return (
-    <Sheet open={open} onOpenChange={() => onClose()}>
-      <SheetContent
-        side="right"
-        className="w-full sm:max-w-[540px] p-0 flex flex-col"
-      >
-        <SheetHeader className="px-6 pt-6 pb-0">
-          <SheetTitle className="text-sm font-bold tracking-tight">
+    <Dialog open={open} onOpenChange={() => onClose()}>
+      <DialogContent className="sm:max-w-[520px] p-0 flex flex-col">
+        <DialogHeader className="px-6 pt-6 pb-0">
+          <DialogTitle className="text-sm font-bold tracking-tight">
             {isNew ? "New Task" : "Edit Task"}
-          </SheetTitle>
-          <SheetDescription className="sr-only">
+          </DialogTitle>
+          <DialogDescription className="sr-only">
             {isNew ? "Create a new task" : "Edit task details"}
-          </SheetDescription>
-        </SheetHeader>
+          </DialogDescription>
+        </DialogHeader>
 
         <ScrollArea className="flex-1 px-6">
           <div className="space-y-4 pb-6 pt-4">
@@ -620,7 +617,7 @@ export function TaskSheet({
             </Button>
           </div>
         </div>
-      </SheetContent>
-    </Sheet>
+      </DialogContent>
+    </Dialog>
   );
 }
