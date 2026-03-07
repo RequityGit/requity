@@ -172,7 +172,7 @@ export function ContactDetailClient({
 
       <div className="flex max-w-[1400px] mx-auto">
         {/* Main Content */}
-        <div className="flex-1 min-w-0 px-6 py-6 pb-10">
+        <div className="flex-1 min-w-0 px-6 lg:px-8 py-6 pb-10">
           {/* Header Card */}
           <ContactDetailHeader
             contact={contact}
@@ -259,16 +259,7 @@ export function ContactDetailClient({
         </div>
 
         {/* Right Sidebar */}
-        <div
-          className="hidden lg:flex py-6 pr-6"
-          style={{
-            width: 296,
-            minWidth: 296,
-            maxWidth: 296,
-            flexDirection: "column",
-            gap: 16,
-          }}
-        >
+        <div className="hidden lg:flex flex-col gap-4 w-[296px] min-w-[296px] max-w-[296px] py-6 pr-6 lg:pr-8">
           <ContactDetailSidebar
             contact={contact}
             relationships={relationships}

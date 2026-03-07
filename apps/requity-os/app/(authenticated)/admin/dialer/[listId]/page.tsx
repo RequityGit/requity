@@ -76,19 +76,19 @@ export default async function DialerListDetailPage({
 
       {/* Summary cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <div className="rounded-xl border border-border bg-card p-3">
+        <div className="rounded-xl border border-border bg-card p-4">
           <p className="text-xs text-muted-foreground">Total</p>
           <p className="text-lg font-semibold font-mono text-foreground">{typedList.total_contacts}</p>
         </div>
-        <div className="rounded-xl border border-border bg-card p-3">
+        <div className="rounded-xl border border-border bg-card p-4">
           <p className="text-xs text-muted-foreground">Completed</p>
           <p className="text-lg font-semibold font-mono text-foreground">{typedList.completed_contacts}</p>
         </div>
-        <div className="rounded-xl border border-border bg-card p-3">
+        <div className="rounded-xl border border-border bg-card p-4">
           <p className="text-xs text-muted-foreground">Status</p>
           <p className="text-lg font-semibold text-foreground capitalize">{typedList.status}</p>
         </div>
-        <div className="rounded-xl border border-border bg-card p-3">
+        <div className="rounded-xl border border-border bg-card p-4">
           <p className="text-xs text-muted-foreground">Position</p>
           <p className="text-lg font-semibold font-mono text-foreground">{typedList.current_position}</p>
         </div>

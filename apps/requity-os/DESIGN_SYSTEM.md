@@ -279,12 +279,33 @@ Every content page follows: **PageHeader → Toolbar → Data view**. The data v
 - **Dashboard only.** Do not add KPI cards to content pages (data tables, kanban boards, detail views).
 - KPI cards belong on overview/dashboard pages where aggregate metrics are the primary content.
 
-### Spacing
+### Spacing Standards (8px grid)
 
-- Gap between PageHeader and content: `space-y-6`
-- Gap between toolbar and data view: `space-y-4`
-- Internal card padding: `p-6` (desktop), `p-4` (mobile)
-- Section spacing within detail pages: `space-y-8`
+All spacing follows an 8px grid. These are the minimum padding values:
+
+| Component | Minimum Padding | Tailwind Class |
+|-----------|----------------|----------------|
+| Main content area (`<main>`) | 16px mobile, 24px tablet, 32px desktop | `p-4 md:p-6 lg:p-8` |
+| Card / Panel (standard) | 24px desktop, 16px mobile | `p-4 md:p-6` (via CardHeader/CardContent) |
+| Card / Panel (compact/sidebar) | 20px | `p-5` |
+| Tab content gap | 16px | `mt-4` (TabsContent default) |
+| Textarea inner padding | 12px vert, 16px horiz | `px-4 py-3` |
+| Sidebar card header/content | 20px | `px-5 py-4` |
+| Breadcrumb bar | Match page padding | `px-6 lg:px-8 py-4` |
+| Detail page sidebar | 300-320px width | `w-[300px]` or `w-[320px]` |
+| Empty state | 48px vertical | `py-12` |
+| Between form fields | 16px | `space-y-4` |
+| Label to input | 8px | `space-y-2` |
+| KPI card grid | 12px mobile, 16px desktop | `gap-3 md:gap-4` |
+| Section spacing (detail pages) | 24-32px | `space-y-6` or `space-y-8` |
+| PageHeader to content | 24px | `space-y-6` |
+| Toolbar to data view | 16px | `space-y-4` |
+
+#### Rules
+- **Never use `p-0`, `p-1`, or `p-2` on any card, panel, or content container.** Minimum is `p-3` for bordered content boxes, `p-5` for cards.
+- **Bordered content containers** (edit forms, info boxes, pinned messages) must use at least `p-3`.
+- **Segmented controls / toggle groups** may use `p-1` for their outer wrapper.
+- **Use Tailwind classes, not inline styles**, for widths and spacing on layout containers.
 
 ---
 

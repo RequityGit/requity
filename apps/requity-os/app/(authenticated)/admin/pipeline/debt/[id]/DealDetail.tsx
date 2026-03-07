@@ -272,12 +272,12 @@ export function DealDetail({
         <Header deal={deal} stages={pipelineStages} isOpportunity={isOpportunity} />
 
         {/* Stage Tracker */}
-        <div className="mt-5">
+        <div className="mt-6">
           <Stepper deal={deal} stages={pipelineStages} onStageClick={handleStageClick} updatingStage={updatingStage} />
         </div>
 
         {/* Tab Bar */}
-        <div className="mt-5 mb-5">
+        <div className="mt-6 mb-6">
           <div
             className="inline-flex gap-0.5 rounded-[10px] p-[3px]"
             style={{
@@ -315,9 +315,9 @@ export function DealDetail({
         </div>
 
         {/* Content Area */}
-        <div className="grid gap-4 items-start" style={{ gridTemplateColumns: "1fr 300px" }}>
+        <div className="grid gap-6 items-start" style={{ gridTemplateColumns: "1fr 320px" }}>
           {/* Left Column */}
-          <div className="flex flex-col gap-4 min-w-0">
+          <div className="flex flex-col gap-5 min-w-0">
             {renderTab()}
           </div>
 

@@ -537,7 +537,7 @@ export function EquityDealDetail({
         </Card>
 
         {/* ─── KPI Row ─── */}
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-2.5 mb-5">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 md:gap-4 mb-6">
           <KpiCard
             title="Asking Price"
             value={deal.asking_price ? formatCurrency(deal.asking_price) : "TBD"}
