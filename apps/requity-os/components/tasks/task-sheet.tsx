@@ -323,7 +323,7 @@ export function TaskSheet({
 
   return (
     <Dialog open={open} onOpenChange={() => onClose()}>
-      <DialogContent className="sm:max-w-[520px] p-0 flex flex-col">
+      <DialogContent className="sm:max-w-[600px] p-0 flex flex-col max-h-[95vh] md:max-h-[95vh]">
         <DialogHeader className="px-6 pt-6 pb-0">
           <DialogTitle className="text-sm font-bold tracking-tight">
             {isNew ? "New Task" : "Edit Task"}
@@ -334,7 +334,7 @@ export function TaskSheet({
         </DialogHeader>
 
         <ScrollArea className="flex-1 px-6">
-          <div className="space-y-4 pb-6 pt-4">
+          <div className="space-y-3 pb-6 pt-4">
             {/* Title */}
             <div className="space-y-1.5">
               <Label className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
