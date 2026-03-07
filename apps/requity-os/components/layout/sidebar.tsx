@@ -19,6 +19,7 @@ import {
   Cog,
   Columns3,
   FlaskConical,
+  Layers,
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useViewAs } from "@/contexts/view-as-context";
@@ -90,9 +91,18 @@ const adminNav: NavEntry[] = [
   },
   {
     label: "Pipeline",
-    href: "/admin/pipeline",
     icon: Columns3,
-    activePaths: ["/admin/pipeline/debt", "/admin/pipeline/equity"],
+    basePath: "/admin/pipeline",
+    moduleName: "pipeline",
+    children: [
+      { label: "Debt", href: "/admin/pipeline/debt" },
+      { label: "Equity", href: "/admin/pipeline/equity" },
+    ],
+  },
+  {
+    label: "Pipeline v2",
+    href: "/admin/pipeline-v2",
+    icon: Layers,
     moduleName: "pipeline",
   },
   {
