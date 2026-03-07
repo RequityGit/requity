@@ -1,4 +1,3 @@
-// @ts-nocheck
 'use client';
 
 import { useEffect } from 'react';
@@ -121,7 +120,30 @@ const LOAN_PROGRAMS = [
   },
 ];
 
-export default function LendingClient({ testimonials = [], loanIndexes = null }) {
+interface Testimonial {
+  id: string;
+  name: string;
+  quote: string;
+  role: string;
+  type: string;
+}
+
+interface IndexRate {
+  value: number;
+  date: string | null;
+}
+
+interface LendingClientProps {
+  testimonials?: Testimonial[];
+  loanIndexes?: {
+    treasury5yr: IndexRate | null;
+    treasury10yr: IndexRate | null;
+    sofr30day: IndexRate | null;
+    prime: IndexRate | null;
+  } | null;
+}
+
+export default function LendingClient({ testimonials = [], loanIndexes = null }: LendingClientProps) {
   useEffect(() => {
     const reveals = document.querySelectorAll('.reveal');
     const observer = new IntersectionObserver(
@@ -237,17 +259,19 @@ export default function LendingClient({ testimonials = [], loanIndexes = null })
               <p className="section-desc">{t.programsDesc}</p>
             </div>
             <div className="ld-programs-grid">
-              {LOAN_PROGRAMS.map((program, i) => (
+              {LOAN_PROGRAMS.map((program, i) => {
+                const lpData = (lp as Record<string, { name: string; desc: string; features: string[] }>)[program.id];
+                return (
                 <Link
                   key={program.id}
                   href={`/apply?type=${encodeURIComponent(program.name)}`}
                   className={`ld-program-card card reveal ${i < 3 ? `reveal-delay-${i + 1}` : ''}`}
                 >
                   <div className="ld-program-icon">{program.icon}</div>
-                  <h3>{lp[program.id]?.name || program.name}</h3>
-                  <p>{lp[program.id]?.desc || program.desc}</p>
+                  <h3>{lpData?.name || program.name}</h3>
+                  <p>{lpData?.desc || program.desc}</p>
                   <ul className="ld-program-features">
-                    {(lp[program.id]?.features || program.features).map((feat) => (
+                    {(lpData?.features || program.features).map((feat: string) => (
                       <li key={feat}>
                         <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 8l3 3 5-5" /></svg>
                         {feat}
@@ -258,7 +282,8 @@ export default function LendingClient({ testimonials = [], loanIndexes = null })
                     {t.applyNow} <ArrowIcon />
                   </div>
                 </Link>
-              ))}
+                );
+              })}
             </div>
           </section>
 

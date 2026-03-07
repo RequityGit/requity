@@ -1,4 +1,3 @@
-// @ts-nocheck
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -24,7 +23,7 @@ export default function RequestAccessPage() {
   const nav = translations.nav[lang];
   const f = translations.footer[lang];
   // Step: 'form' → 'profile' → 'complete'
-  const [step, setStep] = useState('form');
+  const [step, setStep] = useState<'form' | 'profile' | 'complete'>('form');
 
   // Step 1: Basic contact info
   const [form, setForm] = useState({
@@ -39,7 +38,7 @@ export default function RequestAccessPage() {
     accreditedStatus: '',
     targetInvestment: '',
     privateOfferExperience: '',
-    investmentInterests: [],
+    investmentInterests: [] as string[],
     state: '',
     investmentTimeline: '',
     entityType: '',
@@ -72,17 +71,17 @@ export default function RequestAccessPage() {
     return () => observer.disconnect();
   }, []);
 
-  const set = (field) => (e) => {
+  const set = (field: string) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     setForm(prev => ({ ...prev, [field]: e.target.value }));
     if (error) setError('');
   };
 
-  const setProf = (field) => (e) => {
+  const setProf = (field: string) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     setProfile(prev => ({ ...prev, [field]: e.target.value }));
     if (error) setError('');
   };
 
-  function toggleInterest(value) {
+  function toggleInterest(value: string) {
     setProfile(prev => ({
       ...prev,
       investmentInterests: prev.investmentInterests.includes(value)
@@ -92,14 +91,14 @@ export default function RequestAccessPage() {
     if (error) setError('');
   }
 
-  function formatPhone(value) {
+  function formatPhone(value: string) {
     const digits = value.replace(/\D/g, '');
     if (digits.length <= 3) return digits;
     if (digits.length <= 6) return `(${digits.slice(0, 3)}) ${digits.slice(3)}`;
     return `(${digits.slice(0, 3)}) ${digits.slice(3, 6)}-${digits.slice(6, 10)}`;
   }
 
-  function handlePhoneChange(e) {
+  function handlePhoneChange(e: React.ChangeEvent<HTMLInputElement>) {
     const formatted = formatPhone(e.target.value);
     setForm(prev => ({ ...prev, phone: formatted }));
     if (error) setError('');
@@ -115,7 +114,7 @@ export default function RequestAccessPage() {
     return null;
   }
 
-  async function handleFormSubmit(e) {
+  async function handleFormSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setError('');
     const validationError = validateForm();
@@ -133,13 +132,13 @@ export default function RequestAccessPage() {
       setStep('profile');
       window.scrollTo({ top: 0, behavior: 'smooth' });
     } catch (err) {
-      setError(err.message || 'Something went wrong. Please try again.');
+      setError(err instanceof Error ? err.message : String(err));
     } finally {
       setSubmitting(false);
     }
   }
 
-  async function handleProfileSubmit(e) {
+  async function handleProfileSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setError('');
     setSubmitting(true);
@@ -160,7 +159,7 @@ export default function RequestAccessPage() {
       setStep('complete');
       window.scrollTo({ top: 0, behavior: 'smooth' });
     } catch (err) {
-      setError(err.message || 'Something went wrong. Please try again.');
+      setError(err instanceof Error ? err.message : String(err));
     } finally {
       setSubmitting(false);
     }

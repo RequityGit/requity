@@ -1,5 +1,25 @@
-// @ts-nocheck
 import { getAllCMSData } from '@/lib/webflow';
+
+interface WebflowCollection {
+  id: string;
+  displayName: string;
+  slug: string;
+}
+
+interface WebflowItem {
+  isDraft: boolean;
+  isArchived: boolean;
+  fieldData?: Record<string, unknown>;
+}
+
+interface CollectionSummary {
+  id: string;
+  displayName: string;
+  slug: string;
+  itemCount: number;
+  sampleFields: string[];
+  sampleItem: Record<string, unknown> | null;
+}
 
 export async function GET() {
   try {
@@ -10,10 +30,10 @@ export async function GET() {
       );
     }
 
-    const data = await getAllCMSData();
+    const data = await getAllCMSData() as Record<string, { collection: WebflowCollection; items: WebflowItem[] }>;
 
     // Return a summary for each collection
-    const summary = {};
+    const summary: Record<string, CollectionSummary> = {};
     for (const [slug, { collection, items }] of Object.entries(data)) {
       summary[slug] = {
         id: collection.id,
@@ -26,8 +46,11 @@ export async function GET() {
     }
 
     return Response.json({ collections: summary });
-  } catch (err) {
+  } catch (err: unknown) {
     console.error('Webflow collections error:', err);
-    return Response.json({ error: err.message }, { status: 500 });
+    return Response.json(
+      { error: err instanceof Error ? err.message : String(err) },
+      { status: 500 }
+    );
   }
 }

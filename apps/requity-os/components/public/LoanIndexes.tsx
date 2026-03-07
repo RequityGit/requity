@@ -1,7 +1,20 @@
-// @ts-nocheck
 'use client';
 
-export function LoanIndexes({ indexes }) {
+interface IndexData {
+  value: number;
+  date: string | null;
+}
+
+interface LoanIndexesProps {
+  indexes: {
+    treasury5yr: IndexData | null;
+    treasury10yr: IndexData | null;
+    sofr30day: IndexData | null;
+    prime: IndexData | null;
+  } | null;
+}
+
+export function LoanIndexes({ indexes }: LoanIndexesProps) {
   if (!indexes) return null;
 
   const { treasury5yr, treasury10yr, sofr30day, prime } = indexes;
@@ -20,7 +33,7 @@ export function LoanIndexes({ indexes }) {
   const hasAny = items.some((item) => item.value != null);
   if (!hasAny) return null;
 
-  const formatDate = (dateStr) => {
+  const formatDate = (dateStr: string) => {
     if (!dateStr) return '';
     const date = new Date(dateStr + 'T00:00:00');
     return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });

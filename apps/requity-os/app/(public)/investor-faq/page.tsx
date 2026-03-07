@@ -1,4 +1,3 @@
-// @ts-nocheck
 'use client';
 
 import { useEffect, useState } from 'react';
@@ -116,7 +115,7 @@ export default function InvestorFaqPage() {
   const t = translations.investorFaq[lang];
   const nav = translations.nav[lang];
   const f = translations.footer[lang];
-  const [openItems, setOpenItems] = useState({});
+  const [openItems, setOpenItems] = useState<Record<string, boolean>>({});
   const [activeCategory, setActiveCategory] = useState('all');
 
   useEffect(() => {
@@ -141,7 +140,7 @@ export default function InvestorFaqPage() {
     return () => observer.disconnect();
   }, []);
 
-  const toggleItem = (key) => {
+  const toggleItem = (key: string) => {
     setOpenItems(prev => ({ ...prev, [key]: !prev[key] }));
   };
 
