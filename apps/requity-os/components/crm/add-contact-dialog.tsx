@@ -267,7 +267,7 @@ export function AddContactDialog({
       toast({ title: "Contact added successfully" });
       setOpen(false);
       resetForm();
-      router.refresh();
+      router.push(`/admin/crm/${newContact.id}`);
     } catch (err: any) {
       toast({
         title: "Error adding contact",

@@ -121,7 +121,7 @@ export function AddCompanyDialog({ trigger }: AddCompanyDialogProps) {
         toast({ title: "Company added successfully" });
         setOpen(false);
         resetForm();
-        router.refresh();
+        router.push(`/admin/crm/companies/${result.id}`);
       }
     } catch (err: unknown) {
       toast({
