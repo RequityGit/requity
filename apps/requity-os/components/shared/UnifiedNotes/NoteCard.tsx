@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Pin, PinOff, Pencil, Trash2, Lock } from "lucide-react";
+import { Pin, PinOff, Pencil, Trash2, Lock, ThumbsUp } from "lucide-react";
 import { parseComment, relativeTime } from "@/lib/comment-utils";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { MentionInput } from "@/components/shared/mention-input";
@@ -24,6 +24,7 @@ interface NoteCardProps {
   onPin: (noteId: string, isPinned: boolean) => void;
   onEdit: (noteId: string, body: string, mentionIds: string[]) => void;
   onDelete: (noteId: string) => void;
+  onToggleLike: (noteId: string, isLiked: boolean) => void;
 }
 
 export function NoteCard({
@@ -34,6 +35,7 @@ export function NoteCard({
   onPin,
   onEdit,
   onDelete,
+  onToggleLike,
 }: NoteCardProps) {
   const [showActions, setShowActions] = useState(false);
   const [editing, setEditing] = useState(false);
@@ -45,6 +47,11 @@ export function NoteCard({
     Date.now() - new Date(note.created_at).getTime() < 15 * 60 * 1000;
   const segments = parseComment(note.body);
   const initials = note.author_name ? getInitials(note.author_name) : "??";
+
+  const likes = note.note_likes ?? [];
+  const isLiked = likes.some((l) => l.user_id === currentUserId);
+  const likeCount = likes.length;
+  const likeNames = likes.map((l) => l.profiles?.full_name ?? "Unknown").join(", ");
 
   const pad = compact ? "p-3" : "p-4";
   const avatarSize = compact ? "h-6 w-6" : "h-8 w-8";
@@ -143,6 +150,29 @@ export function NoteCard({
             )}
           </div>
         </div>
+      </div>
+
+      {/* Like row */}
+      <div className="pl-10 pt-1 flex items-center gap-2">
+        <button
+          type="button"
+          onClick={() => onToggleLike(note.id, isLiked)}
+          className={`flex items-center gap-1.5 px-2 py-1 rounded-lg text-xs font-medium transition-colors ${
+            isLiked
+              ? "bg-emerald-500/15 text-emerald-600 border border-emerald-500/30"
+              : "text-muted-foreground hover:text-foreground hover:bg-muted"
+          }`}
+        >
+          <ThumbsUp
+            size={12}
+            strokeWidth={1.5}
+            fill={isLiked ? "currentColor" : "none"}
+          />
+          {likeCount > 0 && <span className="num">{likeCount}</span>}
+        </button>
+        {likeCount > 0 && (
+          <span className="text-xs text-muted-foreground">{likeNames}</span>
+        )}
       </div>
 
       {/* Hover actions */}

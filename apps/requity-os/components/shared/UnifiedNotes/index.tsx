@@ -64,7 +64,7 @@ export function UnifiedNotes({
     const supabase = createClient();
     let query = supabase
       .from("notes" as never)
-      .select("*" as never)
+      .select("*, note_likes(user_id, profiles(full_name))" as never)
       .is("deleted_at" as never, null)
       .order("created_at" as never, { ascending: false });
 
@@ -192,9 +192,10 @@ export function UnifiedNotes({
       return;
     }
 
-    // Optimistic: prepend new note
+    // Optimistic: prepend new note with empty likes
     if (data) {
-      setNotes((prev) => [data as unknown as NoteData, ...prev]);
+      const newNote = { ...(data as unknown as NoteData), note_likes: [] };
+      setNotes((prev) => [newNote, ...prev]);
     }
 
     // Insert note_mentions
@@ -309,6 +310,51 @@ export function UnifiedNotes({
     toast({ title: "Note deleted" });
   }
 
+  // Like/unlike
+  async function handleToggleLike(noteId: string, isCurrentlyLiked: boolean) {
+    if (!currentUserId) return;
+    const supabase = createClient();
+
+    if (isCurrentlyLiked) {
+      // Optimistic: remove like
+      setNotes((prev) =>
+        prev.map((n) =>
+          n.id === noteId
+            ? { ...n, note_likes: n.note_likes.filter((l) => l.user_id !== currentUserId) }
+            : n
+        )
+      );
+      const { error } = await supabase
+        .from("note_likes" as never)
+        .delete()
+        .eq("note_id" as never, noteId as never)
+        .eq("user_id" as never, currentUserId as never);
+
+      if (error) {
+        console.error("Failed to unlike note:", error);
+        fetchNotes();
+      }
+    } else {
+      // Optimistic: add like
+      const newLike = { user_id: currentUserId, profiles: { full_name: currentUserName } };
+      setNotes((prev) =>
+        prev.map((n) =>
+          n.id === noteId
+            ? { ...n, note_likes: [...n.note_likes, newLike] }
+            : n
+        )
+      );
+      const { error } = await supabase
+        .from("note_likes" as never)
+        .insert({ note_id: noteId, user_id: currentUserId } as never);
+
+      if (error) {
+        console.error("Failed to like note:", error);
+        fetchNotes();
+      }
+    }
+  }
+
   // Filter notes client-side
   const filteredNotes =
     filter === "internal"
@@ -371,6 +417,7 @@ export function UnifiedNotes({
               onPin={handlePin}
               onEdit={handleEdit}
               onDelete={handleDelete}
+              onToggleLike={handleToggleLike}
             />
           ))}
         </div>

@@ -18,6 +18,11 @@ export interface UnifiedNotesProps {
   compact?: boolean;
 }
 
+export interface NoteLike {
+  user_id: string;
+  profiles: { full_name: string | null };
+}
+
 export interface NoteData {
   id: string;
   created_at: string;
@@ -34,6 +39,7 @@ export interface NoteData {
   is_edited: boolean;
   edited_at: string | null;
   deleted_at: string | null;
+  note_likes: NoteLike[];
 }
 
 export type NoteFilter = "all" | "internal" | "external";
