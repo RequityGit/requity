@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/select";
 import { useToast } from "@/components/ui/use-toast";
 import { Plus } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
 import { cn } from "@/lib/utils";
 import { CONDITION_CATEGORIES, CONDITION_STAGES } from "@/lib/constants";
 import { ConditionCategorySection } from "./condition-category-section";
@@ -359,15 +360,13 @@ export function ConditionsClient({ templates }: ConditionsClientProps) {
             </SelectContent>
           </Select>
 
-          <label className="flex items-center gap-1.5 text-xs cursor-pointer">
-            <input
-              type="checkbox"
+          <div className="flex items-center gap-1.5 text-xs cursor-pointer">
+            <Checkbox
               checked={showInactive}
-              onChange={(e) => setShowInactive(e.target.checked)}
-              className="rounded border-gray-300"
+              onCheckedChange={(v) => setShowInactive(!!v)}
             />
-            Show inactive
-          </label>
+            <span>Show inactive</span>
+          </div>
         </div>
       </div>
 

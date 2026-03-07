@@ -11,6 +11,7 @@ import {
   Phone,
   Loader2,
 } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
 import { cn } from "@/lib/utils";
 import { createDialerList } from "@/lib/dialer/dialer-api";
 import { DEFAULT_DIALER_SETTINGS } from "@/lib/dialer/types";
@@ -209,28 +210,24 @@ export function DialerListBuilder({ contacts, teamMembers, currentUserId }: Prop
             />
           </div>
           <div className="flex items-end gap-3">
-            <label className="flex items-center gap-2 text-sm text-foreground cursor-pointer">
-              <input
-                type="checkbox"
+            <div className="flex items-center gap-2 text-sm text-foreground cursor-pointer">
+              <Checkbox
                 checked={settings.auto_advance}
-                onChange={(e) =>
-                  setSettings({ ...settings, auto_advance: e.target.checked })
+                onCheckedChange={(v) =>
+                  setSettings({ ...settings, auto_advance: !!v })
                 }
-                className="rounded border-border"
               />
-              Auto-Advance
-            </label>
-            <label className="flex items-center gap-2 text-sm text-foreground cursor-pointer">
-              <input
-                type="checkbox"
+              <span>Auto-Advance</span>
+            </div>
+            <div className="flex items-center gap-2 text-sm text-foreground cursor-pointer">
+              <Checkbox
                 checked={settings.amd_enabled}
-                onChange={(e) =>
-                  setSettings({ ...settings, amd_enabled: e.target.checked })
+                onCheckedChange={(v) =>
+                  setSettings({ ...settings, amd_enabled: !!v })
                 }
-                className="rounded border-border"
               />
-              AMD
-            </label>
+              <span>AMD</span>
+            </div>
           </div>
         </div>
       </div>

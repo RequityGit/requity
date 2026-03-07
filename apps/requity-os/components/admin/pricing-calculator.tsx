@@ -13,6 +13,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Separator } from "@/components/ui/separator";
 import { formatCurrency, formatPercent } from "@/lib/format";
 import { cn } from "@/lib/utils";
@@ -805,7 +806,7 @@ export function PricingCalculator({
                       );
                       const isOn = adjusterState[adj.risk_factor] ?? autoApplies;
                       return (
-                        <label
+                        <div
                           key={adj.id}
                           className={cn(
                             "flex items-center gap-2 px-2 py-1.5 rounded text-xs cursor-pointer transition-colors",
@@ -814,16 +815,14 @@ export function PricingCalculator({
                               : "hover:bg-muted/50"
                           )}
                         >
-                          <input
-                            type="checkbox"
+                          <Checkbox
                             checked={isOn}
-                            onChange={(e) =>
+                            onCheckedChange={(v) =>
                               setAdjusterState((prev) => ({
                                 ...prev,
-                                [adj.risk_factor]: e.target.checked,
+                                [adj.risk_factor]: !!v,
                               }))
                             }
-                            className="rounded"
                           />
                           <span className="flex-1">
                             {adj.display_name}
@@ -831,7 +830,7 @@ export function PricingCalculator({
                               ({adj.ltc_adjustment}% LTC, {adj.ltv_adjustment}% LTV)
                             </span>
                           </span>
-                        </label>
+                        </div>
                       );
                     })}
                 </div>

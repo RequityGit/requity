@@ -10,6 +10,7 @@ import {
   DropdownMenuItem,
 } from "@/components/ui/dropdown-menu";
 import { Separator } from "@/components/ui/separator";
+import { Checkbox } from "@/components/ui/checkbox";
 import { cn } from "@/lib/utils";
 import {
   PriorityBadge,
@@ -204,11 +205,9 @@ export function ProjectCard({ project, tasks, onToggleTask, onStopRecurrence, on
                     key={task.id}
                     className="flex items-center gap-3 py-1.5 px-2 rounded hover:bg-muted"
                   >
-                    <input
-                      type="checkbox"
+                    <Checkbox
                       checked={isComplete}
-                      onChange={() => onToggleTask(task.id, !isComplete)}
-                      className="h-4 w-4 rounded border-border text-primary focus:ring-ring"
+                      onCheckedChange={() => onToggleTask(task.id, !isComplete)}
                     />
                     <button
                       type="button"

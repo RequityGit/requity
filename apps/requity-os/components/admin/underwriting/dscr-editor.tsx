@@ -11,6 +11,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Save, Link2, Calculator } from "lucide-react";
 
 interface DSCREditorProps {
@@ -199,16 +200,14 @@ export function DSCREditor({ initialData, onSave, readOnly = false }: DSCREditor
           <NumericField label="Units" value={form.num_units} onChange={(v) => updateField("num_units", v ?? 1)} readOnly={readOnly} />
           <NumericField label="FICO Score" value={form.fico_score} onChange={(v) => updateField("fico_score", v)} readOnly={readOnly} />
           <div className="flex items-end gap-2 pb-1">
-            <label className="flex items-center gap-2 text-xs text-[#a1a1aa] cursor-pointer">
-              <input
-                type="checkbox"
+            <div className="flex items-center gap-2 text-xs text-[#a1a1aa] cursor-pointer">
+              <Checkbox
                 checked={form.is_short_term_rental}
-                onChange={(e) => updateField("is_short_term_rental", e.target.checked)}
+                onCheckedChange={(v) => updateField("is_short_term_rental", !!v)}
                 disabled={readOnly}
-                className="rounded"
               />
-              Short-Term Rental
-            </label>
+              <span>Short-Term Rental</span>
+            </div>
           </div>
         </div>
       </FormSection>
@@ -243,16 +242,14 @@ export function DSCREditor({ initialData, onSave, readOnly = false }: DSCREditor
         </div>
         <div className="grid grid-cols-3 gap-4 mt-3">
           <div className="flex items-end gap-2 pb-1">
-            <label className="flex items-center gap-2 text-xs text-[#a1a1aa] cursor-pointer">
-              <input
-                type="checkbox"
+            <div className="flex items-center gap-2 text-xs text-[#a1a1aa] cursor-pointer">
+              <Checkbox
                 checked={form.is_interest_only}
-                onChange={(e) => updateField("is_interest_only", e.target.checked)}
+                onCheckedChange={(v) => updateField("is_interest_only", !!v)}
                 disabled={readOnly}
-                className="rounded"
               />
-              Interest Only
-            </label>
+              <span>Interest Only</span>
+            </div>
           </div>
           {form.is_interest_only && (
             <NumericField label="IO Period (months)" value={form.io_period_months} onChange={(v) => updateField("io_period_months", v)} readOnly={readOnly} />

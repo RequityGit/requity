@@ -1,6 +1,7 @@
 "use client";
 
 import { Upload, Plus, Trash2 } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
 import { useCommercialUWStore } from "../store";
 import { UWCard } from "../uw-card";
 import { UWInput } from "../uw-input";
@@ -157,11 +158,9 @@ export function IncomeTab() {
                     </td>
                   ))}
                   <td className="px-[14px] h-[42px] border-b text-center">
-                    <input
-                      type="checkbox"
+                    <Checkbox
                       checked={r.isVacant}
-                      onChange={(e) => updateRentRollUnit(r.id, "isVacant", e.target.checked)}
-                      className="w-3.5 h-3.5 cursor-pointer accent-primary"
+                      onCheckedChange={(v) => updateRentRollUnit(r.id, "isVacant", !!v)}
                     />
                   </td>
                   <td className="px-[14px] h-[42px] border-b text-center">

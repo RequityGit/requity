@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/button";
 import { ChatAvatar } from "./ChatAvatar";
 import { createClient } from "@/lib/supabase/client";
 import type { ChatChannelType } from "@/lib/chat-types";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Search, X, Users, MessageCircle, Loader2 } from "lucide-react";
 
 interface ChannelCreateModalProps {
@@ -290,15 +291,13 @@ export function ChannelCreateModal({
                 className="w-full px-3 py-2 text-sm bg-card border border-border rounded-md text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary"
               />
             </div>
-            <label className="flex items-center gap-2 text-sm">
-              <input
-                type="checkbox"
+            <div className="flex items-center gap-2 text-sm">
+              <Checkbox
                 checked={isPrivate}
-                onChange={(e) => setIsPrivate(e.target.checked)}
-                className="rounded border-border bg-card"
+                onCheckedChange={(v) => setIsPrivate(!!v)}
               />
               <span className="text-muted-foreground">Make private</span>
-            </label>
+            </div>
           </div>
         )}
 

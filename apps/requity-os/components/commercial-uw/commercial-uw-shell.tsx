@@ -17,6 +17,7 @@ import {
   User,
   Briefcase,
 } from "lucide-react";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
 import { useCommercialUWStore } from "./store";
 import { useCommercialUWCalcs } from "./use-calcs";
@@ -137,39 +138,31 @@ export function CommercialUWShell({ dealId, dealName = "123 Test Deal" }: Commer
         </div>
 
         {/* Main Content */}
-        <div className="flex-1 min-w-0 flex flex-col">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 min-w-0 flex flex-col">
           {/* Tab Navigation */}
-          <div className="border-b bg-card px-6 flex gap-0 sticky top-[52px] z-40 overflow-x-auto">
-            {TABS.map((tab) => {
-              const active = activeTab === tab.id;
-              return (
-                <button
-                  key={tab.id}
-                  onClick={() => setActiveTab(tab.id)}
-                  className={cn(
-                    "flex items-center gap-[7px] px-3.5 py-3 text-xs font-medium border-b-2 -mb-px transition-all whitespace-nowrap shrink-0 cursor-pointer bg-transparent",
-                    active
-                      ? "font-semibold text-foreground border-foreground"
-                      : "text-muted-foreground border-transparent hover:text-foreground"
-                  )}
-                >
-                  <tab.Icon className="w-[15px] h-[15px]" strokeWidth={1.5} />
-                  {tab.label}
-                </button>
-              );
-            })}
-          </div>
+          <TabsList className="border-b bg-card px-6 h-auto rounded-none justify-start gap-0 sticky top-[52px] z-40 overflow-x-auto">
+            {TABS.map((tab) => (
+              <TabsTrigger
+                key={tab.id}
+                value={tab.id}
+                className="flex items-center gap-[7px] px-3.5 py-3 text-xs font-medium rounded-none border-b-2 border-transparent -mb-px transition-all whitespace-nowrap data-[state=active]:font-semibold data-[state=active]:text-foreground data-[state=active]:border-foreground data-[state=active]:shadow-none data-[state=inactive]:text-muted-foreground"
+              >
+                <tab.Icon className="w-[15px] h-[15px]" strokeWidth={1.5} />
+                {tab.label}
+              </TabsTrigger>
+            ))}
+          </TabsList>
 
           {/* Tab Content */}
           <div className="px-7 py-6 pb-[60px] max-w-[1100px] mx-auto w-full">
-            {activeTab === "overview" && <DealOverviewTab />}
-            {activeTab === "income" && <IncomeTab />}
-            {activeTab === "expenses" && <ExpensesTab />}
-            {activeTab === "sourcesuses" && <SourcesUsesTab />}
-            {activeTab === "proforma" && <ProFormaTab />}
-            {activeTab === "waterfall" && <WaterfallTab />}
+            <TabsContent value="overview" className="mt-0"><DealOverviewTab /></TabsContent>
+            <TabsContent value="income" className="mt-0"><IncomeTab /></TabsContent>
+            <TabsContent value="expenses" className="mt-0"><ExpensesTab /></TabsContent>
+            <TabsContent value="sourcesuses" className="mt-0"><SourcesUsesTab /></TabsContent>
+            <TabsContent value="proforma" className="mt-0"><ProFormaTab /></TabsContent>
+            <TabsContent value="waterfall" className="mt-0"><WaterfallTab /></TabsContent>
           </div>
-        </div>
+        </Tabs>
       </div>
     </div>
   );

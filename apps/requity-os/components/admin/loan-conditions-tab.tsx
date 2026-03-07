@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
 import { StatusBadge } from "@/components/shared/status-badge";
 import { DocumentDownload } from "@/components/borrower/document-download";
 import {
@@ -846,16 +847,14 @@ function ConditionRow({
                 submitIcon={<Send className="h-3 w-3" />}
                 rows={2}
                 extraControls={
-                  <label className="flex items-center gap-2 text-xs cursor-pointer select-none">
-                    <input
-                      type="checkbox"
+                  <div className="flex items-center gap-2 text-xs cursor-pointer select-none">
+                    <Checkbox
                       checked={isInternal}
-                      onChange={(e) => setIsInternal(e.target.checked)}
-                      className="rounded border-border h-3 w-3"
+                      onCheckedChange={(v) => setIsInternal(!!v)}
                     />
                     <Lock className="h-3 w-3 text-amber-600 dark:text-amber-400" />
                     Internal only
-                  </label>
+                  </div>
                 }
               />
             </div>
@@ -1060,17 +1059,15 @@ function AddConditionDialog({
               />
             </div>
             <div className="flex items-end pb-2">
-              <label className="flex items-center gap-2 text-sm cursor-pointer">
-                <input
-                  type="checkbox"
+              <div className="flex items-center gap-2 text-sm cursor-pointer">
+                <Checkbox
                   checked={form.critical_path_item}
-                  onChange={(e) =>
-                    updateField("critical_path_item", e.target.checked)
+                  onCheckedChange={(v) =>
+                    updateField("critical_path_item", !!v)
                   }
-                  className="rounded border-border"
                 />
                 Critical path item
-              </label>
+              </div>
             </div>
           </div>
           <div className="space-y-2">

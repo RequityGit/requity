@@ -6,6 +6,7 @@ import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Textarea } from "@/components/ui/textarea";
 import {
   Dialog,
@@ -301,20 +302,18 @@ export function AddTaskDialog({ projects, teamMembers, externalOpen, onExternalO
           {/* Recurring toggle */}
           <div className="space-y-3">
             <div className="flex items-center gap-2">
-              <input
+              <Checkbox
                 id="is_recurring"
-                type="checkbox"
                 checked={form.is_recurring}
-                onChange={(e) =>
+                onCheckedChange={(v) =>
                   setForm({
                     ...form,
-                    is_recurring: e.target.checked,
-                    recurrence_pattern: e.target.checked
+                    is_recurring: !!v,
+                    recurrence_pattern: v
                       ? form.recurrence_pattern
                       : "",
                   })
                 }
-                className="h-4 w-4 rounded border-border text-primary focus:ring-ring"
               />
               <Label htmlFor="is_recurring" className="cursor-pointer">
                 Recurring task

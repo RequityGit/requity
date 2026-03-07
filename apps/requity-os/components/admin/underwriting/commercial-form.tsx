@@ -11,6 +11,7 @@ import type {
   AncillaryItem,
 } from "@/lib/underwriting/commercial-types";
 import { PROPERTY_TYPES, PROPERTY_TYPE_DEFAULTS } from "@/lib/underwriting/commercial-types";
+import { Checkbox } from "@/components/ui/checkbox";
 import { UploadRentRollDialog } from "@/components/admin/commercial-uw/upload-rent-roll-dialog";
 import { UploadT12Dialog } from "@/components/admin/commercial-uw/upload-t12-dialog";
 import type { RentRollRow } from "@/lib/commercial-uw/types";
@@ -259,12 +260,10 @@ export function CommercialForm({ inputs, onChange, readOnly = false }: Commercia
                     />
                   </td>
                   <td className="py-1.5 pr-2 text-center">
-                    <input
-                      type="checkbox"
+                    <Checkbox
                       checked={unit.is_vacant}
-                      onChange={(e) => updateRentRollUnit(idx, "is_vacant", e.target.checked)}
+                      onCheckedChange={(v) => updateRentRollUnit(idx, "is_vacant", !!v)}
                       disabled={readOnly}
-                      className="h-3.5 w-3.5 rounded border-input accent-primary"
                     />
                   </td>
                   <td className="py-1.5">

@@ -8,6 +8,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -67,11 +68,9 @@ export function TaskList({ tasks, projectNames, onToggleTask, onStopRecurrence, 
             return (
               <TableRow key={task.id}>
                 <TableCell>
-                  <input
-                    type="checkbox"
+                  <Checkbox
                     checked={isComplete}
-                    onChange={() => onToggleTask(task.id, !isComplete)}
-                    className="h-4 w-4 rounded border-border text-primary focus:ring-ring"
+                    onCheckedChange={() => onToggleTask(task.id, !isComplete)}
                   />
                 </TableCell>
                 <TableCell>

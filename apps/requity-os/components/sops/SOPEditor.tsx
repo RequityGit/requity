@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { Save, Eye, Send, ArrowLeft } from "lucide-react";
 import { sopClient } from "@/lib/sops/client";
 import Link from "next/link";
+import { Checkbox } from "@/components/ui/checkbox";
 import type { SOP, SOPCategory } from "@/lib/sops/types";
 
 const MDEditor = dynamic(() => import("@uiw/react-md-editor"), { ssr: false });
@@ -283,12 +284,11 @@ export function SOPEditor({ sop, categories, userId }: SOPEditorProps) {
             {visibility === "role" && (
               <div className="mt-3 flex flex-wrap gap-2">
                 {["admin", "borrower", "investor"].map((r) => (
-                  <label key={r} className="flex items-center gap-1.5 cursor-pointer">
-                    <input
-                      type="checkbox"
+                  <div key={r} className="flex items-center gap-1.5 cursor-pointer">
+                    <Checkbox
                       checked={visibleToRoles.includes(r)}
-                      onChange={(e) => {
-                        if (e.target.checked) {
+                      onCheckedChange={(checked) => {
+                        if (checked) {
                           setVisibleToRoles((prev) => [...prev, r]);
                         } else {
                           setVisibleToRoles((prev) =>
@@ -296,12 +296,11 @@ export function SOPEditor({ sop, categories, userId }: SOPEditorProps) {
                           );
                         }
                       }}
-                      className="accent-primary"
                     />
                     <span className="text-sm text-muted-foreground capitalize">
                       {r}
                     </span>
-                  </label>
+                  </div>
                 ))}
               </div>
             )}

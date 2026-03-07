@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import {
@@ -20,6 +21,7 @@ import {
   SheetDescription,
 } from "@/components/ui/sheet";
 import { CONDITION_CATEGORIES, CONDITION_STAGES, RESPONSIBLE_PARTIES } from "@/lib/constants";
+import { Switch } from "@/components/ui/switch";
 import type { ConditionFormData } from "@/app/(authenticated)/control-center/conditions/actions";
 
 interface ConditionTemplate {
@@ -302,23 +304,21 @@ export function ConditionSlideOver({
                   label: "Transactional",
                 },
               ].map(({ key, label }) => (
-                <label
+                <div
                   key={key}
                   className="flex items-center gap-1.5 text-sm cursor-pointer"
                 >
-                  <input
-                    type="checkbox"
+                  <Checkbox
                     checked={formData[key]}
-                    onChange={(e) =>
+                    onCheckedChange={(v) =>
                       setFormData((prev) => ({
                         ...prev,
-                        [key]: e.target.checked,
+                        [key]: !!v,
                       }))
                     }
-                    className="rounded border-gray-300"
                   />
                   {label}
-                </label>
+                </div>
               ))}
             </div>
             {errors.applies_to && (
@@ -394,28 +394,15 @@ export function ConditionSlideOver({
                 Blocks loan stage progression when not fulfilled
               </p>
             </div>
-            <button
-              type="button"
-              role="switch"
-              aria-checked={formData.critical_path_item}
-              onClick={() =>
+            <Switch
+              checked={formData.critical_path_item}
+              onCheckedChange={(v) =>
                 setFormData((prev) => ({
                   ...prev,
-                  critical_path_item: !prev.critical_path_item,
+                  critical_path_item: v,
                 }))
               }
-              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                formData.critical_path_item ? "bg-teal-600" : "bg-gray-200"
-              }`}
-            >
-              <span
-                className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                  formData.critical_path_item
-                    ? "translate-x-6"
-                    : "translate-x-1"
-                }`}
-              />
-            </button>
+            />
           </div>
 
           {/* Sort Order */}
@@ -443,26 +430,15 @@ export function ConditionSlideOver({
                 Inactive templates won&apos;t appear on new loans
               </p>
             </div>
-            <button
-              type="button"
-              role="switch"
-              aria-checked={formData.is_active}
-              onClick={() =>
+            <Switch
+              checked={formData.is_active}
+              onCheckedChange={(v) =>
                 setFormData((prev) => ({
                   ...prev,
-                  is_active: !prev.is_active,
+                  is_active: v,
                 }))
               }
-              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                formData.is_active ? "bg-teal-600" : "bg-gray-200"
-              }`}
-            >
-              <span
-                className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                  formData.is_active ? "translate-x-6" : "translate-x-1"
-                }`}
-              />
-            </button>
+            />
           </div>
         </div>
 

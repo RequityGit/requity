@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/components/ui/use-toast";
 import { updateTermSheetTemplate } from "@/app/(authenticated)/admin/settings/term-sheets/actions";
 import { Save, Loader2, Settings, PanelRightOpen, PanelRightClose } from "lucide-react";
@@ -509,27 +510,10 @@ export function TermSheetTemplateEditor({ templates: initial }: Props) {
 
                   <div className="flex items-center gap-4">
                     <Label className="text-sm font-medium">Active</Label>
-                    <button
-                      type="button"
-                      role="switch"
-                      aria-checked={current.is_active}
-                      onClick={() =>
-                        updateField("is_active", !current.is_active)
-                      }
-                      className={cn(
-                        "relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
-                        current.is_active ? "bg-primary" : "bg-slate-200"
-                      )}
-                    >
-                      <span
-                        className={cn(
-                          "inline-block h-4 w-4 rounded-full bg-white transition-transform",
-                          current.is_active
-                            ? "translate-x-6"
-                            : "translate-x-1"
-                        )}
-                      />
-                    </button>
+                    <Switch
+                      checked={current.is_active}
+                      onCheckedChange={(v) => updateField("is_active", v)}
+                    />
                     <Badge
                       variant={current.is_active ? "default" : "secondary"}
                       className={

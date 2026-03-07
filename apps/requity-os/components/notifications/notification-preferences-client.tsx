@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useNotificationPreferences } from "@/hooks/use-notification-preferences";
 import { NotificationPreferenceRow } from "./notification-preference-row";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Switch } from "@/components/ui/switch";
 import { ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/components/ui/use-toast";
@@ -24,23 +25,12 @@ function CategoryToggle({
   onChange: (value: boolean) => void;
 }) {
   return (
-    <button
-      role="switch"
-      aria-checked={enabled}
+    <Switch
+      checked={enabled}
+      onCheckedChange={onChange}
       aria-label={`${label} all`}
-      onClick={() => onChange(!enabled)}
-      className={cn(
-        "relative inline-flex h-4 w-7 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2",
-        enabled ? "bg-blue-600" : "bg-gray-200"
-      )}
-    >
-      <span
-        className={cn(
-          "pointer-events-none inline-block h-3 w-3 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out",
-          enabled ? "translate-x-3" : "translate-x-0"
-        )}
-      />
-    </button>
+      className="h-4 w-7 [&>span]:h-3 [&>span]:w-3 data-[state=checked]:[&>span]:translate-x-3"
+    />
   );
 }
 

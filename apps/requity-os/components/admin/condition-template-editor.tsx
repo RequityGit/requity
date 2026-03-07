@@ -30,6 +30,7 @@ import {
   RESPONSIBLE_PARTIES,
   LOAN_DB_TYPES,
 } from "@/lib/constants";
+import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/components/ui/use-toast";
 import {
   PlusCircle,
@@ -548,17 +549,15 @@ function AddTemplateDialog({
               </Select>
             </div>
             <div className="flex items-end pb-2">
-              <label className="flex items-center gap-2 text-sm cursor-pointer">
-                <input
-                  type="checkbox"
+              <div className="flex items-center gap-2 text-sm cursor-pointer">
+                <Checkbox
                   checked={form.critical_path_item}
-                  onChange={(e) =>
-                    updateField("critical_path_item", e.target.checked)
+                  onCheckedChange={(v) =>
+                    updateField("critical_path_item", !!v)
                   }
-                  className="rounded border-gray-300"
                 />
                 Critical path item
-              </label>
+              </div>
             </div>
           </div>
           <div className="space-y-2">
@@ -571,18 +570,16 @@ function AddTemplateDialog({
                 { field: "applies_to_commercial", label: "Commercial" },
                 { field: "applies_to_transactional", label: "Transactional" },
               ].map((lt) => (
-                <label
+                <div
                   key={lt.field}
                   className="flex items-center gap-1.5 text-sm cursor-pointer"
                 >
-                  <input
-                    type="checkbox"
+                  <Checkbox
                     checked={form[lt.field as keyof typeof form] as boolean}
-                    onChange={(e) => updateField(lt.field, e.target.checked)}
-                    className="rounded border-gray-300"
+                    onCheckedChange={(v) => updateField(lt.field, !!v)}
                   />
                   {lt.label}
-                </label>
+                </div>
               ))}
             </div>
           </div>

@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 import {
   saveWireInstructions,
   updatePayoffFeeDefaults,
@@ -230,21 +231,10 @@ export function PayoffSettingsClient({
                   />
                 </div>
                 <div className="flex justify-center">
-                  <button
-                    type="button"
-                    role="switch"
-                    aria-checked={fee.is_active}
-                    onClick={() => updateFee(fee.id, "is_active", !fee.is_active)}
-                    className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ${
-                      fee.is_active ? "bg-[#1A1A1A]" : "bg-gray-200"
-                    }`}
-                  >
-                    <span
-                      className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                        fee.is_active ? "translate-x-[18px]" : "translate-x-[2px]"
-                      }`}
-                    />
-                  </button>
+                  <Switch
+                    checked={fee.is_active}
+                    onCheckedChange={(v) => updateFee(fee.id, "is_active", v)}
+                  />
                 </div>
               </div>
             ))}
