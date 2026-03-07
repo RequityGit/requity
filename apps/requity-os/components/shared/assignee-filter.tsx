@@ -3,7 +3,6 @@
 import { useState, useRef, useEffect } from "react";
 import { Check, ChevronsUpDown } from "lucide-react";
 import { cn } from "@/lib/utils";
-import type { Profile } from "./tasks-board";
 
 function getInitials(name: string): string {
   return name
@@ -18,7 +17,7 @@ interface AssigneeFilterProps {
   options: { value: string; label: string }[];
   selected: string[];
   onChange: (selected: string[]) => void;
-  profiles: Profile[];
+  profiles: { id: string; full_name: string; avatar_url: string | null }[];
   label?: string;
 }
 
@@ -26,7 +25,6 @@ export function AssigneeFilter({
   options,
   selected,
   onChange,
-  profiles,
   label = "Assignee",
 }: AssigneeFilterProps) {
   const [open, setOpen] = useState(false);
@@ -81,7 +79,6 @@ export function AssigneeFilter({
       </button>
       {open && (
         <div className="absolute top-full mt-1 left-0 bg-popover border border-border rounded-md shadow-md z-50 min-w-[220px] max-h-[280px] overflow-auto animate-in fade-in-0 zoom-in-95 duration-100">
-          {/* All option */}
           <button
             onClick={() => onChange([])}
             className={cn(

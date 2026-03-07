@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useEffect, useRef } from "react";
 import {
   Check,
   Plus,
@@ -34,10 +35,12 @@ function TaskRow({
   task,
   onToggle,
   dueColor,
+  fading,
 }: {
   task: DashboardTask;
   onToggle: (id: string) => void;
   dueColor?: string;
+  fading?: boolean;
 }) {
   const today = new Date().toISOString().slice(0, 10);
   const dueLabel = !task.due_date
@@ -55,9 +58,9 @@ function TaskRow({
   return (
     <div
       onClick={() => onToggle(task.id)}
-      className={`flex cursor-pointer items-center gap-3 rounded-md px-3 py-2.5 transition-colors duration-150 hover:bg-dash-surface-alt ${
+      className={`flex cursor-pointer items-center gap-3 rounded-md px-3 py-2.5 transition-all duration-500 hover:bg-dash-surface-alt ${
         task.is_completed ? "opacity-40" : ""
-      }`}
+      } ${fading ? "max-h-0 opacity-0 overflow-hidden py-0 my-0" : "max-h-24"}`}
     >
       <div
         className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-[5px] border-2 transition-all duration-150 ${
@@ -104,14 +107,75 @@ interface TaskQueueProps {
 }
 
 export function TaskQueue({ tasks, onToggle }: TaskQueueProps) {
+  const [fadingIds, setFadingIds] = useState<Set<string>>(new Set());
+  const [hiddenIds, setHiddenIds] = useState<Set<string>>(new Set());
+  const prevTasksRef = useRef<DashboardTask[]>(tasks);
+
+  // Detect newly completed tasks and schedule fade-out
+  useEffect(() => {
+    const prev = prevTasksRef.current;
+    const newlyCompleted = tasks.filter((t) => {
+      const prevTask = prev.find((p) => p.id === t.id);
+      return t.is_completed && prevTask && !prevTask.is_completed;
+    });
+
+    if (newlyCompleted.length > 0) {
+      const idList = newlyCompleted.map((t) => t.id);
+      // Start fading after a brief pause to show the checkmark
+      const fadeTimer = setTimeout(() => {
+        setFadingIds((f) => {
+          const next = new Set(Array.from(f));
+          idList.forEach((id) => next.add(id));
+          return next;
+        });
+      }, 1200);
+      // Remove from DOM after the fade animation completes
+      const hideTimer = setTimeout(() => {
+        setFadingIds((f) => {
+          const next = new Set(Array.from(f));
+          idList.forEach((id) => next.delete(id));
+          return next;
+        });
+        setHiddenIds((h) => {
+          const next = new Set(Array.from(h));
+          idList.forEach((id) => next.add(id));
+          return next;
+        });
+      }, 1800);
+
+      return () => {
+        clearTimeout(fadeTimer);
+        clearTimeout(hideTimer);
+      };
+    }
+  }, [tasks]);
+
+  // Keep ref in sync
+  useEffect(() => {
+    prevTasksRef.current = tasks;
+  }, [tasks]);
+
+  // If a task gets un-completed, bring it back
+  useEffect(() => {
+    const uncompleted = tasks.filter(
+      (t) => !t.is_completed && hiddenIds.has(t.id)
+    );
+    if (uncompleted.length > 0) {
+      setHiddenIds((h) => {
+        const next = new Set(h);
+        uncompleted.forEach((t) => next.delete(t.id));
+        return next;
+      });
+    }
+  }, [tasks, hiddenIds]);
+
   const today = new Date().toISOString().slice(0, 10);
   const todayTasks = tasks.filter(
-    (t) => t.due_date === today && !t.is_past_due
+    (t) => t.due_date === today && !t.is_past_due && !hiddenIds.has(t.id)
   );
   const upcomingTasks = tasks.filter(
-    (t) => t.due_date !== today && !t.is_past_due
+    (t) => t.due_date !== today && !t.is_past_due && !hiddenIds.has(t.id)
   ).sort((a, b) => {
-    // Tasks with due dates first, then no-date tasks
     if (a.due_date && !b.due_date) return -1;
     if (!a.due_date && b.due_date) return 1;
     if (a.due_date && b.due_date) return a.due_date.localeCompare(b.due_date);
@@ -151,6 +215,7 @@ export function TaskQueue({ tasks, onToggle }: TaskQueueProps) {
             task={tk}
             onToggle={onToggle}
             dueColor={!tk.is_completed ? "text-[#B8822A]" : undefined}
+            fading={fadingIds.has(tk.id)}
           />
         ))
       )}
@@ -167,7 +232,12 @@ export function TaskQueue({ tasks, onToggle }: TaskQueueProps) {
         </div>
       ) : (
         upcomingTasks.map((tk) => (
-          <TaskRow key={tk.id} task={tk} onToggle={onToggle} />
+          <TaskRow
+            key={tk.id}
+            task={tk}
+            onToggle={onToggle}
+            fading={fadingIds.has(tk.id)}
+          />
         ))
       )}
     </Card>
