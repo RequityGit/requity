@@ -24,6 +24,7 @@ import {
 } from "./components";
 import { advanceStage, advanceOpportunityStage } from "./actions";
 import { logQuickAction, assignTeamMember } from "./update-deal-action";
+import { SubmitForApprovalDialog } from "@/components/approvals/submit-for-approval-dialog";
 import { useRouter } from "next/navigation";
 import {
   Dialog,
@@ -73,7 +74,6 @@ export function Sidebar({
   // Dialog states
   const [logCallOpen, setLogCallOpen] = useState(false);
   const [sendEmailOpen, setSendEmailOpen] = useState(false);
-  const [requestApprovalOpen, setRequestApprovalOpen] = useState(false);
   const [scheduleClosingOpen, setScheduleClosingOpen] = useState(false);
   const [teamAssignOpen, setTeamAssignOpen] = useState(false);
   const [assigningRole, setAssigningRole] = useState<string | null>(null);
@@ -84,7 +84,6 @@ export function Sidebar({
   const [callContact, setCallContact] = useState("");
   const [emailSubject, setEmailSubject] = useState("");
   const [emailNotes, setEmailNotes] = useState("");
-  const [approvalNotes, setApprovalNotes] = useState("");
   const [closingDate, setClosingDate] = useState("");
   const [closingNotes, setClosingNotes] = useState("");
   const [selectedProfileId, setSelectedProfileId] = useState("");
@@ -183,26 +182,23 @@ export function Sidebar({
     }
   }, [deal.id, currentUserId, emailSubject, emailNotes, router]);
 
-  const handleRequestApproval = useCallback(async () => {
-    setActionLoading(true);
-    try {
-      if (onSave) {
-        await onSave("approval_status", "pending");
-      }
-      await logQuickAction(
-        deal.id,
-        "approval_requested",
-        `Approval requested${approvalNotes ? `: ${approvalNotes}` : ""}`,
-        currentUserId,
-        { notes: approvalNotes }
-      );
-      setRequestApprovalOpen(false);
-      setApprovalNotes("");
-      router.refresh();
-    } finally {
-      setActionLoading(false);
-    }
-  }, [deal.id, currentUserId, approvalNotes, onSave, router]);
+  // Build deal snapshot for the approval dialog
+  const dealSnapshot: Record<string, any> = {
+    borrower_name: deal._borrower_name || "Unknown",
+    loan_amount: deal.loan_amount,
+    property_type: deal.property_type,
+    property_address: deal.property_address,
+    property_city: deal.property_city,
+    property_state: deal.property_state,
+    loan_type: deal.loan_type || deal.type,
+    stage: deal.stage,
+    ltv: deal.ltv,
+    interest_rate: deal.interest_rate,
+    type: deal.type,
+  };
+
+  // Build entity data for checklist validation
+  const entityData: Record<string, any> = { ...deal };
 
   const handleScheduleClosing = useCallback(async () => {
     setActionLoading(true);
@@ -296,11 +292,22 @@ export function Sidebar({
             label="Send Email"
             onClick={() => setSendEmailOpen(true)}
           />
-          <QuickAction
-            icon={Shield}
-            label="Request Approval"
-            accent={T.accent.amber}
-            onClick={() => setRequestApprovalOpen(true)}
+          <SubmitForApprovalDialog
+            entityType={isOpportunity ? "opportunity" : "loan"}
+            entityId={deal.id}
+            entityData={entityData}
+            dealSnapshot={dealSnapshot}
+            trigger={
+              <button
+                className="flex w-full items-center gap-2.5 rounded-lg border-none px-2.5 py-2 text-left text-[13px] font-medium cursor-pointer transition-colors duration-150 bg-transparent"
+                style={{ color: T.accent.amber }}
+                onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = T.bg.hover; }}
+                onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = "transparent"; }}
+              >
+                <Shield size={15} color={T.accent.amber} strokeWidth={1.5} />
+                Request Approval
+              </button>
+            }
           />
           <QuickAction
             icon={Calendar}
@@ -453,41 +460,6 @@ export function Sidebar({
             <Button onClick={handleSendEmail} disabled={actionLoading}>
               {actionLoading && <Loader2 size={14} className="animate-spin mr-1.5" />}
               Log Email
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* Request Approval Dialog */}
-      <Dialog open={requestApprovalOpen} onOpenChange={setRequestApprovalOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Request Approval</DialogTitle>
-            <DialogDescription>
-              Submit this deal for approval review.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="flex flex-col gap-3 py-2">
-            <div>
-              <label className="text-sm font-medium mb-1 block">Notes</label>
-              <Textarea
-                value={approvalNotes}
-                onChange={(e) => setApprovalNotes(e.target.value)}
-                placeholder="Approval notes or justification..."
-                rows={3}
-              />
-            </div>
-          </div>
-          <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => setRequestApprovalOpen(false)}
-            >
-              Cancel
-            </Button>
-            <Button onClick={handleRequestApproval} disabled={actionLoading}>
-              {actionLoading && <Loader2 size={14} className="animate-spin mr-1.5" />}
-              Request Approval
             </Button>
           </DialogFooter>
         </DialogContent>
