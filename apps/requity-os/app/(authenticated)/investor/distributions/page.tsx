@@ -42,14 +42,15 @@ export default async function DistributionsPage({
     funds: { name: string } | null;
   };
 
+  // Auth calls outside try/catch so Next.js redirect() can propagate
+  const { supabase, userId } = await getEffectiveAuth();
+  const investorId = await getInvestorId(supabase, userId);
+
   let distributions: DistributionJoined[] = [];
   let uniqueFunds: { id: string; name: string }[] = [];
   let years: string[] = [];
 
   try {
-    const { supabase, userId } = await getEffectiveAuth();
-    const investorId = await getInvestorId(supabase, userId);
-
     if (investorId) {
       // Build query
       let query = supabase
@@ -124,10 +125,6 @@ export default async function DistributionsPage({
       ).sort((a, b) => Number(b) - Number(a));
     }
   } catch (err) {
-    // Re-throw Next.js navigation errors (redirect/notFound) so the framework handles them
-    if (err instanceof Error && (err as { digest?: string }).digest?.startsWith("NEXT_")) {
-      throw err;
-    }
     console.error("Distributions page failed to load data:", err);
   }
 
