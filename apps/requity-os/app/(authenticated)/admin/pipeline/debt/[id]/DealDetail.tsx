@@ -21,8 +21,11 @@ import { ActivityTab } from "./tabs/ActivityTab";
 import { UnderwritingTab } from "./tabs/UnderwritingTab";
 import { TasksTab, type DealTask } from "./tabs/TasksTab";
 import { UnifiedNotes } from "@/components/shared/UnifiedNotes";
+import { CommercialOverviewTab, type CommercialUWData } from "./tabs/CommercialOverviewTab";
+import { CommercialUnderwritingTab } from "./tabs/CommercialUnderwritingTab";
 import { updateDealField, updateRelatedField } from "./update-deal-action";
 import { advanceStage, advanceOpportunityStage } from "./actions";
+import { initCommercialUW, createNewVersion, activateVersion, saveDraft } from "./commercial-uw-actions";
 import { useToast } from "@/components/ui/use-toast";
 import {
   T,
@@ -55,6 +58,7 @@ interface DealDetailProps {
   currentUserName: string;
   currentUserInitials: string;
   adminProfiles?: TeamProfile[];
+  commercialUW?: CommercialUWData | null;
 }
 
 interface TabConfig {
@@ -77,6 +81,7 @@ export function DealDetail({
   currentUserName,
   currentUserInitials,
   adminProfiles,
+  commercialUW,
 }: DealDetailProps) {
   const [tab, setTab] = useState(getDefaultTab(initialDeal.stage));
   const [deal, setDeal] = useState<DealData>(initialDeal);
@@ -184,11 +189,58 @@ export function DealDetail({
     { key: "notes", label: "Notes" },
   ];
 
+  const isCommercial = deal.type === "commercial" || deal.loan_type === "commercial";
+
+  const handleInitUW = useCallback(async () => {
+    if (!isCommercial) return;
+    const result = await initCommercialUW(deal.id, currentUserId);
+    if (result.error) {
+      toast({ title: "Failed to initialize underwriting", description: result.error, variant: "destructive" });
+    } else {
+      router.refresh();
+    }
+  }, [deal.id, currentUserId, isCommercial, toast, router]);
+
+  const handleNewVersion = useCallback(async () => {
+    const result = await createNewVersion(deal.id, currentUserId);
+    if (result.error) {
+      toast({ title: "Failed to create version", description: result.error, variant: "destructive" });
+    } else {
+      router.refresh();
+    }
+  }, [deal.id, currentUserId, toast, router]);
+
+  const handleActivateVersion = useCallback(async () => {
+    if (!commercialUW?.uw?.id) return;
+    const result = await activateVersion(commercialUW.uw.id, deal.id);
+    if (result.error) {
+      toast({ title: "Failed to activate", description: result.error, variant: "destructive" });
+    } else {
+      router.refresh();
+    }
+  }, [commercialUW?.uw?.id, deal.id, toast, router]);
+
+  const handleSaveDraft = useCallback(async () => {
+    if (!commercialUW?.uw?.id) return;
+    const result = await saveDraft(commercialUW.uw.id, deal.id);
+    if (result.error) {
+      toast({ title: "Failed to save draft", description: result.error, variant: "destructive" });
+    } else {
+      toast({ title: "Draft saved" });
+    }
+  }, [commercialUW?.uw?.id, deal.id, toast]);
+
   const renderTab = () => {
     switch (tab) {
       case "overview":
+        if (isCommercial && commercialUW) {
+          return <CommercialOverviewTab data={commercialUW} dealId={deal.id} />;
+        }
         return <OverviewTab deal={deal} onSave={onSave} onSaveRelated={onSaveRelated} />;
       case "underwriting":
+        if (isCommercial && commercialUW) {
+          return <CommercialUnderwritingTab data={commercialUW} />;
+        }
         return (
           <UnderwritingTab
             dealId={deal.id}
@@ -263,6 +315,71 @@ export function DealDetail({
         <div className="mt-6">
           <Stepper deal={deal} stages={pipelineStages} onStageClick={handleStageClick} updatingStage={updatingStage} />
         </div>
+
+        {/* Version Controls (commercial deals) */}
+        {isCommercial && (
+          <div className="mt-4 flex items-center gap-2 flex-wrap">
+            {commercialUW ? (
+              <>
+                <span
+                  className="inline-flex items-center gap-1.5 rounded-lg px-3 py-[7px] text-[13px] font-medium"
+                  style={{
+                    backgroundColor: T.bg.elevated,
+                    border: `1px solid ${T.bg.border}`,
+                    color: T.text.primary,
+                  }}
+                >
+                  Version: v{commercialUW.uw.version} {commercialUW.uw.status}
+                </span>
+                <button
+                  onClick={handleNewVersion}
+                  className="inline-flex items-center gap-1.5 rounded-lg px-3 py-[7px] text-[13px] font-medium cursor-pointer transition-colors"
+                  style={{
+                    backgroundColor: T.bg.elevated,
+                    border: `1px solid ${T.bg.border}`,
+                    color: T.text.primary,
+                  }}
+                >
+                  + New Version
+                </button>
+                <button
+                  onClick={handleSaveDraft}
+                  className="inline-flex items-center gap-1.5 rounded-lg px-3 py-[7px] text-[13px] font-medium cursor-pointer transition-colors"
+                  style={{
+                    backgroundColor: T.bg.elevated,
+                    border: `1px solid ${T.bg.border}`,
+                    color: T.text.primary,
+                  }}
+                >
+                  Save Draft
+                </button>
+                <button
+                  onClick={handleActivateVersion}
+                  className="inline-flex items-center gap-1.5 rounded-lg px-3 py-[7px] text-[13px] font-medium cursor-pointer transition-colors"
+                  style={{
+                    backgroundColor: T.accent.blue,
+                    border: "none",
+                    color: "#fff",
+                  }}
+                >
+                  Save & Activate
+                </button>
+              </>
+            ) : (
+              <button
+                onClick={handleInitUW}
+                className="inline-flex items-center gap-1.5 rounded-lg px-3 py-[7px] text-[13px] font-medium cursor-pointer transition-colors"
+                style={{
+                  backgroundColor: T.accent.blue,
+                  border: "none",
+                  color: "#fff",
+                }}
+              >
+                Initialize Commercial UW
+              </button>
+            )}
+          </div>
+        )}
 
         {/* Tab Bar */}
         <div className="mt-6 mb-6">

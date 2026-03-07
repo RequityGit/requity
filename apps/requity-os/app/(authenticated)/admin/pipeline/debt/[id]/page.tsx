@@ -394,6 +394,54 @@ export default async function DealDetailPage({ params }: PageProps) {
 
   }
 
+  // ─── Fetch commercial UW data (for commercial opportunities) ───
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let commercialUWData: any = null;
+  const isCommercial = (d.type === "commercial" || d.loan_type === "commercial");
+  if (isCommercial) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const admin = createAdminClient() as any;
+    const { data: uwRecord } = await admin
+      .from("deal_commercial_uw")
+      .select("*")
+      .eq("opportunity_id", d.id)
+      .order("version", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (uwRecord) {
+      const [incomeRes, expensesRes, rentRollRes, scopeRes, suRes, debtRes, waterfallRes] =
+        await Promise.all([
+          admin.from("deal_commercial_income").select("*").eq("uw_id", uwRecord.id).order("sort_order"),
+          admin.from("deal_commercial_expenses").select("*").eq("uw_id", uwRecord.id).order("sort_order"),
+          admin.from("deal_commercial_rent_roll").select("*").eq("uw_id", uwRecord.id).order("sort_order"),
+          admin.from("deal_commercial_scope_of_work").select("*").eq("uw_id", uwRecord.id).order("sort_order"),
+          admin.from("deal_commercial_sources_uses").select("*").eq("uw_id", uwRecord.id).order("sort_order"),
+          admin.from("deal_commercial_debt").select("*").eq("uw_id", uwRecord.id).order("sort_order"),
+          admin.from("deal_commercial_waterfall").select("*").eq("uw_id", uwRecord.id).order("tier_order"),
+        ]);
+
+      // Also fetch all versions for version selector
+      const { data: allVersions } = await admin
+        .from("deal_commercial_uw")
+        .select("id, version, status, created_at, created_by")
+        .eq("opportunity_id", d.id)
+        .order("version", { ascending: false });
+
+      commercialUWData = {
+        uw: uwRecord,
+        income: incomeRes.data ?? [],
+        expenses: expensesRes.data ?? [],
+        rentRoll: rentRollRes.data ?? [],
+        scopeOfWork: scopeRes.data ?? [],
+        sourcesUses: suRes.data ?? [],
+        debt: debtRes.data ?? [],
+        waterfall: waterfallRes.data ?? [],
+        allVersions: allVersions ?? [],
+      };
+    }
+  }
+
   // ─── Resolve names ───
   const userIdsSet = new Set<string>();
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -518,6 +566,7 @@ export default async function DealDetailPage({ params }: PageProps) {
       currentUserName={currentUserName}
       currentUserInitials={currentUserInitials}
       adminProfiles={adminProfiles}
+      commercialUW={commercialUWData}
     />
   );
 }
