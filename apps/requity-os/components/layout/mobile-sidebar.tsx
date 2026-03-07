@@ -18,14 +18,12 @@ import {
   Banknote,
   Cog,
   BookOpen,
-  MessageSquare,
   Columns3,
   X,
   User,
   FlaskConical,
 } from "lucide-react";
 import { useViewAs } from "@/contexts/view-as-context";
-import { useUnreadCounts } from "@/hooks/useUnreadCounts";
 import { useEffect } from "react";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { Separator } from "@/components/ui/separator";
@@ -125,7 +123,6 @@ export function MobileSidebar({
 }: MobileSidebarProps) {
   const pathname = usePathname();
   const { effectiveViewRole, isViewingAs } = useViewAs();
-  const { totalUnread } = useUnreadCounts(userId);
 
   const navRole = isViewingAs ? effectiveViewRole : role;
   const allNavItems = getNavItems(navRole);
@@ -138,11 +135,6 @@ export function MobileSidebar({
         )
       : allNavItems;
 
-  const showChatter =
-    !accessibleModules ||
-    accessibleModules.length === 0 ||
-    accessibleModules.includes("chatter") ||
-    navRole !== "admin";
   const showKnowledgeBase =
     !accessibleModules ||
     accessibleModules.length === 0 ||
@@ -206,27 +198,6 @@ export function MobileSidebar({
 
         {/* Bottom links */}
         <div className="px-2 pb-2 space-y-0.5">
-          {showChatter && (
-            <Link
-              href="/chat"
-              className={cn(
-                "flex items-center gap-2.5 px-3 py-3 rounded-lg text-[13px] transition-colors min-h-[44px] relative",
-                pathname.startsWith("/chat")
-                  ? "bg-accent text-foreground font-semibold"
-                  : "text-muted-foreground hover:bg-accent hover:text-foreground font-medium"
-              )}
-            >
-              <div className="relative flex-shrink-0">
-                <MessageSquare className="h-[18px] w-[18px]" strokeWidth={1.5} />
-              </div>
-              <span>Chatter</span>
-              {totalUnread > 0 && (
-                <span className="ml-auto h-[17px] min-w-[20px] px-[7px] flex items-center justify-center rounded-full bg-[#F0719B] text-white text-[10px] font-bold">
-                  {totalUnread > 99 ? "99+" : totalUnread}
-                </span>
-              )}
-            </Link>
-          )}
           {showKnowledgeBase && (
             <Link
               href="/sops"

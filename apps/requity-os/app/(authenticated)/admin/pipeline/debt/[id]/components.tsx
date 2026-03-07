@@ -602,21 +602,3 @@ export interface CommentData {
   updated_at?: string | null;
 }
 
-export interface ChatChannel {
-  id: string;
-  loan_id: string;
-  channel_name: string;
-  channel_type?: string | null;
-}
-
-export interface ChatMessage {
-  id: string;
-  channel_id: string;
-  loan_id: string;
-  sent_by: string;
-  content: string;
-  message_type?: string | null;
-  created_at?: string | null;
-  _sender_name?: string | null;
-  _sender_initials?: string | null;
-}

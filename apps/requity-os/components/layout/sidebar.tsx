@@ -21,14 +21,12 @@ import {
   Banknote,
   Cog,
   BookOpen,
-  MessageSquare,
   Columns3,
   FlaskConical,
   SlidersHorizontal,
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useViewAs } from "@/contexts/view-as-context";
-import { useUnreadCounts } from "@/hooks/useUnreadCounts";
 import { createClient } from "@/lib/supabase/client";
 import { Separator } from "@/components/ui/separator";
 import {
@@ -170,17 +168,10 @@ export function Sidebar({
   const pathname = usePathname();
   const [collapsed, setCollapsed] = useState(false);
   const { effectiveViewRole, isViewingAs } = useViewAs();
-  const [userId, setUserId] = useState<string | undefined>();
-  const { totalUnread } = useUnreadCounts(userId);
   const [pendingApprovals, setPendingApprovals] = useState(0);
 
   useEffect(() => {
     const supabase = createClient();
-    supabase.auth.getUser().then(({ data: { user } }) => {
-      if (user) setUserId(user.id);
-    }).catch((err) => {
-      console.error("sidebar: failed to get user", err);
-    });
 
     // Fetch pending approvals count
     Promise.resolve(
@@ -226,11 +217,6 @@ export function Sidebar({
   });
 
   // Check if bottom nav items are accessible
-  const showChatter =
-    !accessibleModules ||
-    accessibleModules.length === 0 ||
-    accessibleModules.includes("chatter") ||
-    navRole !== "admin";
   const showKnowledgeBase =
     !accessibleModules ||
     accessibleModules.length === 0 ||
@@ -319,33 +305,6 @@ export function Sidebar({
 
       {/* Bottom nav items */}
       <div className="px-2 pb-2 space-y-0.5">
-        {showChatter && (
-          <Link
-            href="/chat"
-            className={cn(
-              "flex items-center gap-2.5 px-3 py-[9px] rounded-lg text-[13px] transition-colors relative",
-              pathname.startsWith("/chat")
-                ? "bg-sidebar-active text-sidebar-foreground font-semibold"
-                : "text-sidebar-foreground/60 hover:bg-sidebar-hover hover:text-sidebar-foreground font-medium"
-            )}
-            title={collapsed ? "Chatter" : undefined}
-          >
-            <div className="relative flex-shrink-0">
-              <MessageSquare className="h-[18px] w-[18px]" strokeWidth={1.5} />
-              {collapsed && totalUnread > 0 && (
-                <span className="absolute -top-1.5 -right-1.5 h-[17px] min-w-[20px] px-[7px] flex items-center justify-center rounded-full bg-[#F0719B] text-white text-[10px] font-bold">
-                  {totalUnread > 99 ? "99+" : totalUnread}
-                </span>
-              )}
-            </div>
-            {!collapsed && <span>Chatter</span>}
-            {!collapsed && totalUnread > 0 && (
-              <span className="ml-auto h-[17px] min-w-[20px] px-[7px] flex items-center justify-center rounded-full bg-[#F0719B] text-white text-[10px] font-bold">
-                {totalUnread > 99 ? "99+" : totalUnread}
-              </span>
-            )}
-          </Link>
-        )}
         {showKnowledgeBase && (
           <Link
             href="/sops"

@@ -9,7 +9,6 @@ import type {
   DocumentData,
   ActivityData,
   CommentData,
-  ChatMessage,
   PipelineStage,
   UWVersion,
 } from "./components";
@@ -288,8 +287,6 @@ export default async function DealDetailPage({ params }: PageProps) {
   let activityData: any[] = [];
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let commentsData: any[] = [];
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  let chatMessagesData: any[] = [];
   let uwVersionsData: UWVersion[] = [];
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let dealTasksData: any[] = [];
@@ -407,17 +404,6 @@ export default async function DealDetailPage({ params }: PageProps) {
       _author_name: v.created_by ? uwAuthorMap[v.created_by] ?? null : null,
     }));
 
-    // Fetch chat messages
-    try {
-      const { data: msgs } = await supabase
-        .from("deal_chat_messages")
-        .select("*")
-        .eq("loan_id", loanId)
-        .order("created_at", { ascending: true });
-      chatMessagesData = msgs ?? [];
-    } catch {
-      /* table may not exist */
-    }
   }
 
   // ─── Fetch comments for opportunities ───
@@ -449,10 +435,6 @@ export default async function DealDetailPage({ params }: PageProps) {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   commentsData.forEach((c: any) => {
     if (c.author_id) userIdsSet.add(c.author_id);
-  });
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  chatMessagesData.forEach((m: any) => {
-    if (m.sent_by) userIdsSet.add(m.sent_by);
   });
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   documentsData.forEach((doc: any) => {
@@ -530,17 +512,6 @@ export default async function DealDetailPage({ params }: PageProps) {
     duration_in_previous_stage: h.duration_in_previous_stage ?? null, notes: h.notes ?? null,
   }));
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const chatMessages: ChatMessage[] = chatMessagesData.map((m: any) => {
-    const senderName = m.sent_by ? nameMap[m.sent_by] ?? "Unknown" : "Unknown";
-    return {
-      id: m.id, channel_id: m.channel_id, loan_id: m.loan_id,
-      sent_by: m.sent_by, content: m.content ?? "",
-      message_type: m.message_type ?? "message", created_at: m.created_at ?? null,
-      _sender_name: senderName, _sender_initials: getInitials(senderName),
-    };
-  });
-
   // ─── Fetch admin/team profiles for team assignment ───
   let adminProfiles: { id: string; full_name: string }[] = [];
   try {
@@ -582,7 +553,6 @@ export default async function DealDetailPage({ params }: PageProps) {
       documents={documents}
       activity={activity}
       comments={comments}
-      chatMessages={chatMessages}
       dealTasks={dealTasksData}
       isOpportunity={isOpportunity}
       currentUserId={currentUserId}
