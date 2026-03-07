@@ -6,6 +6,11 @@ import { requireAdmin } from "@/lib/auth/require-admin";
 
 const REVALIDATE_PATH = "/admin/pipeline-v2";
 
+function revalidatePipeline(dealId?: string) {
+  revalidatePath(REVALIDATE_PATH);
+  if (dealId) revalidatePath(`/admin/pipeline-v2/${dealId}`);
+}
+
 // ─── Create Deal ───
 
 export async function createUnifiedDealAction(data: {
@@ -45,7 +50,7 @@ export async function createUnifiedDealAction(data: {
       return { error: error.message };
     }
 
-    revalidatePath(REVALIDATE_PATH);
+    revalidatePipeline((deal as { id: string }).id);
     return { success: true, deal };
   } catch (err: unknown) {
     console.error("createUnifiedDealAction error:", err);
@@ -75,7 +80,7 @@ export async function updateUnifiedDealAction(
       return { error: error.message };
     }
 
-    revalidatePath(REVALIDATE_PATH);
+    revalidatePipeline(dealId);
     return { success: true };
   } catch (err: unknown) {
     console.error("updateUnifiedDealAction error:", err);
@@ -107,7 +112,7 @@ export async function advanceStageAction(
       return { error: error.message };
     }
 
-    revalidatePath(REVALIDATE_PATH);
+    revalidatePipeline(dealId);
     return { success: true };
   } catch (err: unknown) {
     console.error("advanceStageAction error:", err);
@@ -141,7 +146,7 @@ export async function toggleChecklistItemAction(
       return { error: error.message };
     }
 
-    revalidatePath(REVALIDATE_PATH);
+    revalidatePipeline();
     return { success: true };
   } catch (err: unknown) {
     console.error("toggleChecklistItemAction error:", err);
@@ -193,7 +198,7 @@ export async function updateUwDataAction(
       created_by: auth.user.id,
     } as never);
 
-    revalidatePath(REVALIDATE_PATH);
+    revalidatePipeline(dealId);
     return { success: true };
   } catch (err: unknown) {
     console.error("updateUwDataAction error:", err);
@@ -223,7 +228,7 @@ export async function addDealNoteAction(dealId: string, content: string) {
       return { error: error.message };
     }
 
-    revalidatePath(REVALIDATE_PATH);
+    revalidatePipeline(dealId);
     return { success: true };
   } catch (err: unknown) {
     console.error("addDealNoteAction error:", err);
@@ -271,7 +276,7 @@ export async function updateDealStatusAction(
       created_by: auth.user.id,
     } as never);
 
-    revalidatePath(REVALIDATE_PATH);
+    revalidatePipeline(dealId);
     return { success: true };
   } catch (err: unknown) {
     console.error("updateDealStatusAction error:", err);

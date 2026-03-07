@@ -1,10 +1,10 @@
 "use client";
 
 import { useState, useMemo, useCallback } from "react";
+import { useRouter } from "next/navigation";
 import { DealFilters, type FilterState } from "./DealFilters";
 import { PipelineKanban } from "./PipelineKanban";
 import { PipelineTable } from "./PipelineTable";
-import { DealDrawer } from "./DealDrawer";
 import { NewDealSheet } from "./NewDealSheet";
 import type {
   UnifiedDeal,
@@ -33,6 +33,7 @@ export function PipelineView({
   relationshipDealIds,
   teamMembers,
 }: PipelineViewProps) {
+  const router = useRouter();
   const [filters, setFilters] = useState<FilterState>({
     search: "",
     capitalSide: "all",
@@ -40,8 +41,6 @@ export function PipelineView({
     assetClass: "all",
     view: "kanban",
   });
-  const [selectedDeal, setSelectedDeal] = useState<UnifiedDeal | null>(null);
-  const [drawerOpen, setDrawerOpen] = useState(false);
   const [newDealOpen, setNewDealOpen] = useState(false);
 
   const cardTypeMap = useMemo(
@@ -82,23 +81,10 @@ export function PipelineView({
 
   const handleDealClick = useCallback(
     (deal: UnifiedDeal) => {
-      setSelectedDeal(deal);
-      setDrawerOpen(true);
+      router.push(`/admin/pipeline-v2/${deal.id}`);
     },
-    []
+    [router]
   );
-
-  const selectedCardType = selectedDeal
-    ? cardTypeMap.get(selectedDeal.card_type_id) ?? null
-    : null;
-
-  const dealChecklist = selectedDeal
-    ? checklistItems.filter((c) => c.deal_id === selectedDeal.id)
-    : [];
-
-  const dealActivities = selectedDeal
-    ? activities.filter((a) => a.deal_id === selectedDeal.id)
-    : [];
 
   return (
     <div className="space-y-4">
@@ -125,15 +111,6 @@ export function PipelineView({
           onDealClick={handleDealClick}
         />
       )}
-
-      <DealDrawer
-        deal={selectedDeal}
-        cardType={selectedCardType}
-        checklist={dealChecklist}
-        activities={dealActivities}
-        open={drawerOpen}
-        onOpenChange={setDrawerOpen}
-      />
 
       <NewDealSheet
         open={newDealOpen}
