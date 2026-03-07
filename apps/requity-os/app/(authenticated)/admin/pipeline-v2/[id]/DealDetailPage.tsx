@@ -67,10 +67,10 @@ import {
   advanceStageAction,
   addDealNoteAction,
 } from "@/app/(authenticated)/admin/pipeline-v2/actions";
-import {
-  logQuickActionV2,
-  assignTeamMemberV2,
-} from "./actions";
+import { logQuickActionV2, assignTeamMemberV2 } from "./actions";
+import { SubmitForApprovalDialog } from "@/components/approvals/submit-for-approval-dialog";
+import { LoanApprovalSection } from "@/components/approvals/loan-approval-section";
+import type { ApprovalEntityType } from "@/lib/approvals/types";
 
 // ─── Props ───
 
@@ -104,6 +104,11 @@ export function DealDetailPage({
   const displayId = deal.deal_number ?? deal.id.slice(0, 8);
   const days = deal.days_in_stage ?? daysInStage(deal.stage_entered_at);
   const shortLabel = CARD_TYPE_SHORT_LABELS[cardType.slug] ?? cardType.label;
+
+  // Derive borrower name for approval section
+  const borrowerName = deal.primary_contact
+    ? `${deal.primary_contact.first_name} ${deal.primary_contact.last_name}`.trim()
+    : deal.company?.name ?? deal.name;
 
   return (
     <div className="min-h-screen">
@@ -142,6 +147,23 @@ export function DealDetailPage({
         {/* Stage Stepper */}
         <div className="mt-6 rounded-xl border bg-card px-5 py-4">
           <StageStepper currentStage={deal.stage} />
+        </div>
+
+        {/* Inline Approval Status */}
+        <div className="mt-4">
+          <LoanApprovalSection
+            loanId={deal.id}
+            loanData={{
+              loan_amount: deal.amount,
+              property_type: (deal.property_data as Record<string, unknown>)?.property_type,
+              loan_type: (deal.uw_data as Record<string, unknown>)?.loan_type,
+              type: cardType.slug,
+              ltv: (deal.uw_data as Record<string, unknown>)?.ltv,
+              interest_rate: (deal.uw_data as Record<string, unknown>)?.interest_rate,
+              borrower_id: deal.primary_contact_id,
+            }}
+            borrowerName={borrowerName}
+          />
         </div>
 
         {/* Tab Bar */}
@@ -519,7 +541,6 @@ function DealSidebar({
   // Quick action dialogs
   const [logCallOpen, setLogCallOpen] = useState(false);
   const [sendEmailOpen, setSendEmailOpen] = useState(false);
-  const [requestApprovalOpen, setRequestApprovalOpen] = useState(false);
   const [scheduleClosingOpen, setScheduleClosingOpen] = useState(false);
   const [teamAssignOpen, setTeamAssignOpen] = useState(false);
 
@@ -528,7 +549,6 @@ function DealSidebar({
   const [callNotes, setCallNotes] = useState("");
   const [emailSubject, setEmailSubject] = useState("");
   const [emailNotes, setEmailNotes] = useState("");
-  const [approvalNotes, setApprovalNotes] = useState("");
   const [closingDate, setClosingDate] = useState("");
   const [closingNotes, setClosingNotes] = useState("");
   const [selectedProfileId, setSelectedProfileId] = useState(
@@ -589,24 +609,6 @@ function DealSidebar({
     }
   }, [deal.id, emailSubject, emailNotes, router]);
 
-  const handleRequestApproval = useCallback(async () => {
-    setActionLoading(true);
-    try {
-      await logQuickActionV2(
-        deal.id,
-        "approval_requested",
-        `Approval requested${approvalNotes ? `: ${approvalNotes}` : ""}`,
-        { notes: approvalNotes }
-      );
-      setRequestApprovalOpen(false);
-      setApprovalNotes("");
-      toast.success("Approval requested");
-      router.refresh();
-    } finally {
-      setActionLoading(false);
-    }
-  }, [deal.id, approvalNotes, router]);
-
   const handleScheduleClosing = useCallback(async () => {
     setActionLoading(true);
     try {
@@ -655,6 +657,31 @@ function DealSidebar({
     { label: "Actual Close", value: deal.actual_close_date },
   ];
 
+  // Approval dialog data
+  const approvalBorrowerName = deal.primary_contact
+    ? `${deal.primary_contact.first_name} ${deal.primary_contact.last_name}`.trim()
+    : deal.company?.name ?? deal.name;
+
+  const approvalEntityType: ApprovalEntityType = "loan";
+
+  const dealSnapshot: Record<string, unknown> = {
+    borrower_name: approvalBorrowerName,
+    loan_amount: deal.amount,
+    property_type: (deal.property_data as Record<string, unknown>)?.property_type,
+    loan_type: (deal.uw_data as Record<string, unknown>)?.loan_type,
+    type: cardType.slug,
+    stage: deal.stage,
+    ltv: (deal.uw_data as Record<string, unknown>)?.ltv,
+    interest_rate: (deal.uw_data as Record<string, unknown>)?.interest_rate,
+  };
+
+  const entityData: Record<string, unknown> = {
+    ...deal.uw_data,
+    ...deal.property_data,
+    loan_amount: deal.amount,
+    borrower_name: approvalBorrowerName,
+  };
+
   return (
     <div className="flex w-full flex-col gap-4 sticky top-5">
       {/* Quick Actions */}
@@ -679,10 +706,19 @@ function DealSidebar({
             label="Send Email"
             onClick={() => setSendEmailOpen(true)}
           />
-          <QuickAction
-            icon={Shield}
-            label="Request Approval"
-            onClick={() => setRequestApprovalOpen(true)}
+          <SubmitForApprovalDialog
+            entityType={approvalEntityType}
+            entityId={deal.id}
+            entityData={entityData}
+            dealSnapshot={dealSnapshot}
+            trigger={
+              <button
+                className="flex w-full items-center gap-2.5 rounded-lg border-none px-2.5 py-2 text-left text-[13px] font-medium cursor-pointer transition-colors duration-150 bg-transparent text-muted-foreground hover:bg-muted hover:text-foreground"
+              >
+                <Shield className="h-4 w-4" />
+                Request Approval
+              </button>
+            }
           />
           <QuickAction
             icon={Calendar}
@@ -844,46 +880,6 @@ function DealSidebar({
                 <Loader2 className="h-3.5 w-3.5 animate-spin mr-1.5" />
               )}
               Log Email
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* Request Approval */}
-      <Dialog
-        open={requestApprovalOpen}
-        onOpenChange={setRequestApprovalOpen}
-      >
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Request Approval</DialogTitle>
-            <DialogDescription>
-              Submit this deal for approval review.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="flex flex-col gap-3 py-2">
-            <div>
-              <label className="text-sm font-medium mb-1 block">Notes</label>
-              <Textarea
-                value={approvalNotes}
-                onChange={(e) => setApprovalNotes(e.target.value)}
-                placeholder="Approval notes or justification..."
-                rows={3}
-              />
-            </div>
-          </div>
-          <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => setRequestApprovalOpen(false)}
-            >
-              Cancel
-            </Button>
-            <Button onClick={handleRequestApproval} disabled={actionLoading}>
-              {actionLoading && (
-                <Loader2 className="h-3.5 w-3.5 animate-spin mr-1.5" />
-              )}
-              Request Approval
             </Button>
           </DialogFooter>
         </DialogContent>

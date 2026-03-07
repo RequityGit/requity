@@ -24,6 +24,7 @@ import { UnifiedNotes } from "@/components/shared/UnifiedNotes";
 import { CommercialOverviewTab, type CommercialUWData } from "./tabs/CommercialOverviewTab";
 import { CommercialUnderwritingTab } from "./tabs/CommercialUnderwritingTab";
 import { updateDealField, updateRelatedField } from "./update-deal-action";
+import { LoanApprovalSection } from "@/components/approvals/loan-approval-section";
 import { advanceStage, advanceOpportunityStage } from "./actions";
 import { useToast } from "@/components/ui/use-toast";
 import {
@@ -279,6 +280,15 @@ export function DealDetail({
         {/* Stage Tracker */}
         <div className="mt-6">
           <Stepper deal={deal} stages={pipelineStages} onStageClick={handleStageClick} updatingStage={updatingStage} />
+        </div>
+
+        {/* Inline Approval Status */}
+        <div className="mt-4">
+          <LoanApprovalSection
+            loanId={deal.id}
+            loanData={deal}
+            borrowerName={deal._borrower_name || "Unknown"}
+          />
         </div>
 
         {/* Tab Bar */}
