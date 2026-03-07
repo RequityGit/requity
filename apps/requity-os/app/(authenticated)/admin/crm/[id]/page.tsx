@@ -15,8 +15,8 @@ import type {
   BorrowerData,
   InvestorProfileData,
   EntityData,
-  TaskData,
 } from "@/components/crm/contact-360/types";
+import type { OpsTask, Profile } from "@/lib/tasks";
 
 interface PageProps {
   params: { id: string };
@@ -91,10 +91,10 @@ export default async function CrmContactDetailPage({ params }: PageProps) {
           .single()
       : Promise.resolve({ data: null }),
     admin
-      .from("crm_tasks")
+      .from("ops_tasks")
       .select("*")
-      .eq("contact_id", id)
-      .is("deleted_at", null)
+      .eq("linked_entity_type", "contact")
+      .eq("linked_entity_id", id)
       .order("created_at", { ascending: false }),
   ]);
 
@@ -167,20 +167,49 @@ export default async function CrmContactDetailPage({ params }: PageProps) {
     created_at: r.created_at as string,
   }));
 
-  // Map tasks
-  const tasks: TaskData[] = (tasksResult.data ?? []).map(
+  // Map tasks (from ops_tasks)
+  const tasks: OpsTask[] = (tasksResult.data ?? []).map(
     (t: Record<string, unknown>) => ({
       id: t.id as string,
-      subject: t.subject as string,
+      title: t.title as string,
       description: t.description as string | null,
-      task_type: t.task_type as string,
-      priority: t.priority as string,
       status: t.status as string,
+      priority: t.priority as string,
+      assigned_to: t.assigned_to as string | null,
+      assigned_to_name: t.assigned_to_name as string | null,
+      project_id: t.project_id as string | null,
       due_date: t.due_date as string | null,
-      assigned_to_name: t.assigned_to
-        ? profileLookup[t.assigned_to as string] || null
-        : null,
       completed_at: t.completed_at as string | null,
+      category: t.category as string | null,
+      linked_entity_type: t.linked_entity_type as string | null,
+      linked_entity_id: t.linked_entity_id as string | null,
+      linked_entity_label: t.linked_entity_label as string | null,
+      is_recurring: t.is_recurring as boolean | null,
+      is_active_recurrence: t.is_active_recurrence as boolean | null,
+      recurrence_pattern: t.recurrence_pattern as string | null,
+      recurrence_repeat_interval: t.recurrence_repeat_interval as number | null,
+      recurrence_days_of_week: t.recurrence_days_of_week as number[] | null,
+      recurrence_day_of_month: t.recurrence_day_of_month as number | null,
+      recurrence_monthly_when: t.recurrence_monthly_when as string | null,
+      recurrence_start_date: t.recurrence_start_date as string | null,
+      recurrence_end_date: t.recurrence_end_date as string | null,
+      next_recurrence_date: t.next_recurrence_date as string | null,
+      recurring_series_id: t.recurring_series_id as string | null,
+      source_task_id: t.source_task_id as string | null,
+      parent_task_id: t.parent_task_id as string | null,
+      created_by: t.created_by as string | null,
+      sort_order: (t.sort_order as number) ?? 0,
+      updated_at: t.updated_at as string | null,
+      created_at: t.created_at as string | null,
+    })
+  );
+
+  // Build profiles list for TaskSheet
+  const profiles: Profile[] = (teamResult.data ?? []).map(
+    (t: { id: string; full_name: string | null; email: string | null }) => ({
+      id: t.id,
+      full_name: t.full_name || t.email || "Unknown",
+      avatar_url: null,
     })
   );
 
@@ -410,6 +439,7 @@ export default async function CrmContactDetailPage({ params }: PageProps) {
       loans={borrowerLoans}
       investorCommitments={investorCommitments}
       teamMembers={teamMembers}
+      profiles={profiles}
       company={company}
       borrower={borrowerData}
       investor={investorProfile}
