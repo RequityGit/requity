@@ -3406,239 +3406,6 @@ export type Database = {
           },
         ]
       }
-      crm_tasks: {
-        Row: {
-          assigned_by: string | null
-          assigned_to: string | null
-          company_id: string | null
-          completed_at: string | null
-          completed_by: string | null
-          contact_id: string | null
-          created_at: string
-          deleted_at: string | null
-          description: string | null
-          due_date: string | null
-          due_datetime: string | null
-          google_sync_status:
-            | Database["public"]["Enums"]["google_sync_status"]
-            | null
-          google_synced_at: string | null
-          google_task_id: string | null
-          id: string
-          is_recurring: boolean | null
-          loan_id: string | null
-          priority: Database["public"]["Enums"]["crm_task_priority"]
-          recurrence_rule: string | null
-          reminder_at: string | null
-          status: Database["public"]["Enums"]["crm_task_status"]
-          subject: string
-          task_type: Database["public"]["Enums"]["crm_task_type"]
-          updated_at: string
-        }
-        Insert: {
-          assigned_by?: string | null
-          assigned_to?: string | null
-          company_id?: string | null
-          completed_at?: string | null
-          completed_by?: string | null
-          contact_id?: string | null
-          created_at?: string
-          deleted_at?: string | null
-          description?: string | null
-          due_date?: string | null
-          due_datetime?: string | null
-          google_sync_status?:
-            | Database["public"]["Enums"]["google_sync_status"]
-            | null
-          google_synced_at?: string | null
-          google_task_id?: string | null
-          id?: string
-          is_recurring?: boolean | null
-          loan_id?: string | null
-          priority?: Database["public"]["Enums"]["crm_task_priority"]
-          recurrence_rule?: string | null
-          reminder_at?: string | null
-          status?: Database["public"]["Enums"]["crm_task_status"]
-          subject: string
-          task_type?: Database["public"]["Enums"]["crm_task_type"]
-          updated_at?: string
-        }
-        Update: {
-          assigned_by?: string | null
-          assigned_to?: string | null
-          company_id?: string | null
-          completed_at?: string | null
-          completed_by?: string | null
-          contact_id?: string | null
-          created_at?: string
-          deleted_at?: string | null
-          description?: string | null
-          due_date?: string | null
-          due_datetime?: string | null
-          google_sync_status?:
-            | Database["public"]["Enums"]["google_sync_status"]
-            | null
-          google_synced_at?: string | null
-          google_task_id?: string | null
-          id?: string
-          is_recurring?: boolean | null
-          loan_id?: string | null
-          priority?: Database["public"]["Enums"]["crm_task_priority"]
-          recurrence_rule?: string | null
-          reminder_at?: string | null
-          status?: Database["public"]["Enums"]["crm_task_status"]
-          subject?: string
-          task_type?: Database["public"]["Enums"]["crm_task_type"]
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "crm_tasks_assigned_by_fkey"
-            columns: ["assigned_by"]
-            isOneToOne: false
-            referencedRelation: "equity_pipeline"
-            referencedColumns: ["assigned_to_profile_id"]
-          },
-          {
-            foreignKeyName: "crm_tasks_assigned_by_fkey"
-            columns: ["assigned_by"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "crm_tasks_assigned_to_fkey"
-            columns: ["assigned_to"]
-            isOneToOne: false
-            referencedRelation: "equity_pipeline"
-            referencedColumns: ["assigned_to_profile_id"]
-          },
-          {
-            foreignKeyName: "crm_tasks_assigned_to_fkey"
-            columns: ["assigned_to"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "crm_tasks_company_id_fkey"
-            columns: ["company_id"]
-            isOneToOne: false
-            referencedRelation: "companies"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "crm_tasks_completed_by_fkey"
-            columns: ["completed_by"]
-            isOneToOne: false
-            referencedRelation: "equity_pipeline"
-            referencedColumns: ["assigned_to_profile_id"]
-          },
-          {
-            foreignKeyName: "crm_tasks_completed_by_fkey"
-            columns: ["completed_by"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "crm_tasks_contact_id_fkey"
-            columns: ["contact_id"]
-            isOneToOne: false
-            referencedRelation: "crm_contacts"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "crm_tasks_contact_id_fkey"
-            columns: ["contact_id"]
-            isOneToOne: false
-            referencedRelation: "crm_contacts_active"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "crm_tasks_contact_id_fkey"
-            columns: ["contact_id"]
-            isOneToOne: false
-            referencedRelation: "crm_duplicate_candidates"
-            referencedColumns: ["contact_id"]
-          },
-          {
-            foreignKeyName: "crm_tasks_contact_id_fkey"
-            columns: ["contact_id"]
-            isOneToOne: false
-            referencedRelation: "crm_duplicate_candidates"
-            referencedColumns: ["potential_duplicate_id"]
-          },
-          {
-            foreignKeyName: "crm_tasks_loan_id_fkey"
-            columns: ["loan_id"]
-            isOneToOne: false
-            referencedRelation: "loan_pipeline"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "crm_tasks_loan_id_fkey"
-            columns: ["loan_id"]
-            isOneToOne: false
-            referencedRelation: "loans"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      dashboard_tasks: {
-        Row: {
-          category: string
-          completed_at: string | null
-          created_at: string | null
-          due_date: string
-          id: string
-          is_completed: boolean | null
-          loan_id: string | null
-          title: string
-          updated_at: string | null
-          user_id: string
-        }
-        Insert: {
-          category: string
-          completed_at?: string | null
-          created_at?: string | null
-          due_date: string
-          id?: string
-          is_completed?: boolean | null
-          loan_id?: string | null
-          title: string
-          updated_at?: string | null
-          user_id: string
-        }
-        Update: {
-          category?: string
-          completed_at?: string | null
-          created_at?: string | null
-          due_date?: string
-          id?: string
-          is_completed?: boolean | null
-          loan_id?: string | null
-          title?: string
-          updated_at?: string | null
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "dashboard_tasks_loan_id_fkey"
-            columns: ["loan_id"]
-            isOneToOne: false
-            referencedRelation: "loan_pipeline"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "dashboard_tasks_loan_id_fkey"
-            columns: ["loan_id"]
-            isOneToOne: false
-            referencedRelation: "loans"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       deal_commercial_debt: {
         Row: {
           amortization_years: number | null
@@ -12733,200 +12500,6 @@ export type Database = {
           },
         ]
       }
-      task_comments: {
-        Row: {
-          body: string
-          created_at: string | null
-          id: string
-          is_internal: boolean | null
-          task_id: string | null
-          user_id: string | null
-        }
-        Insert: {
-          body: string
-          created_at?: string | null
-          id?: string
-          is_internal?: boolean | null
-          task_id?: string | null
-          user_id?: string | null
-        }
-        Update: {
-          body?: string
-          created_at?: string | null
-          id?: string
-          is_internal?: boolean | null
-          task_id?: string | null
-          user_id?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "task_comments_task_id_fkey"
-            columns: ["task_id"]
-            isOneToOne: false
-            referencedRelation: "tasks"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      task_documents: {
-        Row: {
-          created_at: string | null
-          file_name: string
-          file_size: number | null
-          id: string
-          is_current: boolean | null
-          mime_type: string | null
-          storage_path: string
-          task_id: string | null
-          uploaded_by: string | null
-          version: number | null
-        }
-        Insert: {
-          created_at?: string | null
-          file_name: string
-          file_size?: number | null
-          id?: string
-          is_current?: boolean | null
-          mime_type?: string | null
-          storage_path: string
-          task_id?: string | null
-          uploaded_by?: string | null
-          version?: number | null
-        }
-        Update: {
-          created_at?: string | null
-          file_name?: string
-          file_size?: number | null
-          id?: string
-          is_current?: boolean | null
-          mime_type?: string | null
-          storage_path?: string
-          task_id?: string | null
-          uploaded_by?: string | null
-          version?: number | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "task_documents_task_id_fkey"
-            columns: ["task_id"]
-            isOneToOne: false
-            referencedRelation: "tasks"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      tasks: {
-        Row: {
-          active_party: string | null
-          amount: number | null
-          amount_currency: string | null
-          approved_at: string | null
-          assignee_role: string | null
-          assignee_user_id: string | null
-          category: string | null
-          completed_at: string | null
-          created_at: string | null
-          decision_note: string | null
-          description: string | null
-          due_date: string | null
-          entity_id: string | null
-          entity_type: string | null
-          id: string
-          parent_task_id: string | null
-          priority: string | null
-          rejected_at: string | null
-          requestor_user_id: string | null
-          resubmitted_at: string | null
-          revision_count: number | null
-          status: string
-          title: string
-          type: string
-          updated_at: string | null
-          workflow_instance_id: string | null
-          workflow_rule_id: string | null
-        }
-        Insert: {
-          active_party?: string | null
-          amount?: number | null
-          amount_currency?: string | null
-          approved_at?: string | null
-          assignee_role?: string | null
-          assignee_user_id?: string | null
-          category?: string | null
-          completed_at?: string | null
-          created_at?: string | null
-          decision_note?: string | null
-          description?: string | null
-          due_date?: string | null
-          entity_id?: string | null
-          entity_type?: string | null
-          id?: string
-          parent_task_id?: string | null
-          priority?: string | null
-          rejected_at?: string | null
-          requestor_user_id?: string | null
-          resubmitted_at?: string | null
-          revision_count?: number | null
-          status?: string
-          title: string
-          type?: string
-          updated_at?: string | null
-          workflow_instance_id?: string | null
-          workflow_rule_id?: string | null
-        }
-        Update: {
-          active_party?: string | null
-          amount?: number | null
-          amount_currency?: string | null
-          approved_at?: string | null
-          assignee_role?: string | null
-          assignee_user_id?: string | null
-          category?: string | null
-          completed_at?: string | null
-          created_at?: string | null
-          decision_note?: string | null
-          description?: string | null
-          due_date?: string | null
-          entity_id?: string | null
-          entity_type?: string | null
-          id?: string
-          parent_task_id?: string | null
-          priority?: string | null
-          rejected_at?: string | null
-          requestor_user_id?: string | null
-          resubmitted_at?: string | null
-          revision_count?: number | null
-          status?: string
-          title?: string
-          type?: string
-          updated_at?: string | null
-          workflow_instance_id?: string | null
-          workflow_rule_id?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "tasks_parent_task_id_fkey"
-            columns: ["parent_task_id"]
-            isOneToOne: false
-            referencedRelation: "tasks"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "tasks_workflow_instance_id_fkey"
-            columns: ["workflow_instance_id"]
-            isOneToOne: false
-            referencedRelation: "workflow_instances"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "tasks_workflow_rule_id_fkey"
-            columns: ["workflow_rule_id"]
-            isOneToOne: false
-            referencedRelation: "workflow_rules"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       term_sheet_generations: {
         Row: {
           created_at: string
@@ -13483,65 +13056,6 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "unified_deal_stage_history_deal_id_fkey"
-            columns: ["deal_id"]
-            isOneToOne: false
-            referencedRelation: "unified_deals"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      unified_deal_tasks: {
-        Row: {
-          assigned_to: string | null
-          completed_at: string | null
-          completed_by: string | null
-          created_at: string
-          deal_id: string
-          description: string | null
-          due_date: string | null
-          id: string
-          priority: string | null
-          sort_order: number | null
-          stage_trigger: string | null
-          status: string
-          title: string
-          updated_at: string
-        }
-        Insert: {
-          assigned_to?: string | null
-          completed_at?: string | null
-          completed_by?: string | null
-          created_at?: string
-          deal_id: string
-          description?: string | null
-          due_date?: string | null
-          id?: string
-          priority?: string | null
-          sort_order?: number | null
-          stage_trigger?: string | null
-          status?: string
-          title: string
-          updated_at?: string
-        }
-        Update: {
-          assigned_to?: string | null
-          completed_at?: string | null
-          completed_by?: string | null
-          created_at?: string
-          deal_id?: string
-          description?: string | null
-          due_date?: string | null
-          id?: string
-          priority?: string | null
-          sort_order?: number | null
-          stage_trigger?: string | null
-          status?: string
-          title?: string
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "unified_deal_tasks_deal_id_fkey"
             columns: ["deal_id"]
             isOneToOne: false
             referencedRelation: "unified_deals"
@@ -14543,9 +14057,9 @@ export type Database = {
           item_type: string | null
           metadata: Json | null
           occurred_at: string | null
-          priority: Database["public"]["Enums"]["crm_task_priority"] | null
+          priority: string | null
           sub_type: string | null
-          task_status: Database["public"]["Enums"]["crm_task_status"] | null
+          task_status: string | null
           title: string | null
         }
         Relationships: []
@@ -14788,31 +14302,11 @@ export type Database = {
           due_at: string | null
           id: string | null
           item_type: string | null
-          priority: Database["public"]["Enums"]["crm_task_priority"] | null
+          priority: string | null
           sub_type: string | null
-          task_status: Database["public"]["Enums"]["crm_task_status"] | null
+          task_status: string | null
           title: string | null
           urgency: string | null
-        }
-        Relationships: []
-      }
-      dashboard_tasks_view: {
-        Row: {
-          category: string | null
-          completed_at: string | null
-          created_at: string | null
-          days_overdue: number | null
-          due_date: string | null
-          id: string | null
-          is_completed: boolean | null
-          is_past_due: boolean | null
-          loan_id: string | null
-          loan_name: string | null
-          loan_number: string | null
-          source: string | null
-          title: string | null
-          updated_at: string | null
-          user_id: string | null
         }
         Relationships: []
       }
@@ -15508,7 +15002,22 @@ export type Database = {
           tasks_created: number | null
           user_id: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "ops_tasks_assigned_to_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "equity_pipeline"
+            referencedColumns: ["assigned_to_profile_id"]
+          },
+          {
+            foreignKeyName: "ops_tasks_assigned_to_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Functions: {
@@ -16017,24 +15526,6 @@ export type Database = {
         | "conference"
         | "lunch"
         | "other"
-      crm_task_priority: "low" | "normal" | "high" | "urgent"
-      crm_task_status:
-        | "not_started"
-        | "in_progress"
-        | "waiting"
-        | "completed"
-        | "deferred"
-      crm_task_type:
-        | "call"
-        | "email"
-        | "send_document"
-        | "review"
-        | "follow_up"
-        | "meeting"
-        | "site_visit"
-        | "appraisal"
-        | "closing"
-        | "other"
       delinquency_bucket: "current" | "1-30" | "31-60" | "61-90" | "90+"
       draw_document_type:
         | "photo"
@@ -16515,26 +16006,6 @@ export const Constants = {
         "lunch",
         "other",
       ],
-      crm_task_priority: ["low", "normal", "high", "urgent"],
-      crm_task_status: [
-        "not_started",
-        "in_progress",
-        "waiting",
-        "completed",
-        "deferred",
-      ],
-      crm_task_type: [
-        "call",
-        "email",
-        "send_document",
-        "review",
-        "follow_up",
-        "meeting",
-        "site_visit",
-        "appraisal",
-        "closing",
-        "other",
-      ],
       delinquency_bucket: ["current", "1-30", "31-60", "61-90", "90+"],
       draw_document_type: [
         "photo",
@@ -16714,6 +16185,7 @@ export const Constants = {
     },
   },
 } as const
+
 // Custom types for tables not yet in generated schema
 
 export interface PricingProgram {

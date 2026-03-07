@@ -33,19 +33,13 @@ export function CompanyTasksTab({
       const supabase = createClient();
       const newStatus =
         task.status === "completed" ? "not_started" : "completed";
-      const updates: Record<string, unknown> = {
-        status: newStatus,
-      };
-      if (newStatus === "completed") {
-        updates.completed_at = new Date().toISOString();
-        updates.completed_by = currentUserId;
-      } else {
-        updates.completed_at = null;
-        updates.completed_by = null;
-      }
       const { error } = await supabase
-        .from("crm_tasks")
-        .update(updates)
+        .from("ops_tasks")
+        .update({
+          status: newStatus === "completed" ? "Complete" : "To Do",
+          completed_at: newStatus === "completed" ? new Date().toISOString() : null,
+          updated_at: new Date().toISOString(),
+        })
         .eq("id", task.id);
       if (error) throw error;
       toast({
