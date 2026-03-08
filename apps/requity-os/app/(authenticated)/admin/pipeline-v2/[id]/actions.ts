@@ -467,20 +467,38 @@ async function triggerDocumentReviewEdgeFunction(
 
   const url = `${supabaseUrl}/functions/v1/review-document`;
 
-  const res = await fetch(url, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${serviceRoleKey}`,
-    },
-    body: JSON.stringify({ document_id: documentId, deal_id: dealId }),
-  });
+  // Use a short timeout — we only need to confirm the edge function accepted
+  // the request. It processes independently and handles its own error states.
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 5000);
 
-  if (!res.ok) {
-    const body = await res.text().catch(() => "");
-    throw new Error(
-      `Document review trigger failed (${res.status}): ${body || res.statusText}`
-    );
+  try {
+    const res = await fetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${serviceRoleKey}`,
+      },
+      body: JSON.stringify({ document_id: documentId, deal_id: dealId }),
+      signal: controller.signal,
+    });
+
+    clearTimeout(timeoutId);
+
+    if (!res.ok) {
+      const body = await res.text().catch(() => "");
+      throw new Error(
+        `Document review trigger failed (${res.status}): ${body || res.statusText}`
+      );
+    }
+  } catch (err) {
+    clearTimeout(timeoutId);
+    // AbortError means we timed out waiting for the response — the request
+    // was sent and the edge function is processing independently.
+    if (err instanceof Error && err.name === "AbortError") {
+      return;
+    }
+    throw err;
   }
 }
 

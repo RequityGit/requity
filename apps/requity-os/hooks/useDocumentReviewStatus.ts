@@ -1,11 +1,19 @@
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 
-export function useDocumentReviewStatus(dealId: string) {
+const POLL_INTERVAL_MS = 8000;
+const MAX_POLL_DURATION_MS = 5 * 60 * 1000; // Stop polling after 5 minutes
+
+export function useDocumentReviewStatus(
+  dealId: string,
+  documentStatuses?: (string | null)[]
+) {
   const router = useRouter();
   const supabase = createClient();
+  const pollStartRef = useRef<number | null>(null);
 
+  // Realtime subscription
   useEffect(() => {
     if (!dealId) return;
 
@@ -20,7 +28,6 @@ export function useDocumentReviewStatus(dealId: string) {
           filter: `deal_id=eq.${dealId}`,
         },
         () => {
-          // When any review status changes for this deal, refresh the page data
           router.refresh();
         }
       )
@@ -30,4 +37,33 @@ export function useDocumentReviewStatus(dealId: string) {
       supabase.removeChannel(channel);
     };
   }, [dealId, supabase, router]);
+
+  // Polling fallback for in-flight documents
+  useEffect(() => {
+    const hasInFlight = documentStatuses?.some(
+      (s) => s === "pending" || s === "processing"
+    );
+
+    if (!hasInFlight) {
+      pollStartRef.current = null;
+      return;
+    }
+
+    if (!pollStartRef.current) {
+      pollStartRef.current = Date.now();
+    }
+
+    const interval = setInterval(() => {
+      if (
+        pollStartRef.current &&
+        Date.now() - pollStartRef.current > MAX_POLL_DURATION_MS
+      ) {
+        clearInterval(interval);
+        return;
+      }
+      router.refresh();
+    }, POLL_INTERVAL_MS);
+
+    return () => clearInterval(interval);
+  }, [documentStatuses, router]);
 }

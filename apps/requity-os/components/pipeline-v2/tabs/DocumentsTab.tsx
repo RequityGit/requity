@@ -62,8 +62,11 @@ export function DocumentsTab({ documents, dealId }: DocumentsTabProps) {
 
   const [downloadingId, setDownloadingId] = useState<string | null>(null);
 
-  // Subscribe to realtime review status updates
-  useDocumentReviewStatus(dealId);
+  // Subscribe to realtime review status updates + polling fallback
+  useDocumentReviewStatus(
+    dealId,
+    documents.map((d) => d.review_status)
+  );
 
   async function handleViewOrDownload(doc: DealDocument, download: boolean) {
     if (!doc.storage_path) {

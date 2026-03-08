@@ -3,6 +3,7 @@
 // Called from uploadDealDocumentV2 server action after successful upload.
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { encode as encodeBase64 } from "https://deno.land/std@0.224.0/encoding/base64.ts";
 import { detectTypeFromFilename, type DocumentType } from "./detect-type.ts";
 import { CLASSIFICATION_PROMPT, EXTRACTION_PROMPTS } from "./prompts.ts";
 import { FIELD_MAPPINGS } from "./field-mapping.ts";
@@ -67,6 +68,25 @@ Deno.serve(async (req) => {
       return jsonResponse({ queued: true }, 202);
     }
 
+    // Clean up reviews stuck in "processing" for > 10 minutes
+    const tenMinutesAgo = new Date(Date.now() - 10 * 60 * 1000).toISOString();
+    const { data: stuckReviews } = await supabase
+      .from("document_reviews")
+      .select("id, document_id")
+      .eq("status", "processing")
+      .lt("created_at", tenMinutesAgo);
+
+    if (stuckReviews && stuckReviews.length > 0) {
+      await supabase
+        .from("document_reviews")
+        .update({ status: "error", error_message: "Processing timed out" })
+        .in("id", stuckReviews.map((r: { id: string }) => r.id));
+      await supabase
+        .from("unified_deal_documents")
+        .update({ review_status: "error" })
+        .in("id", stuckReviews.map((r: { document_id: string }) => r.document_id));
+    }
+
     // Fetch document record
     const { data: doc, error: docError } = await supabase
       .from("unified_deal_documents")
@@ -128,14 +148,10 @@ Deno.serve(async (req) => {
       return jsonResponse({ error: "File too large" }, 400);
     }
 
-    // Convert to base64
+    // Convert to base64 (using Deno std — O(n) vs the old byte-by-byte O(n²))
     const arrayBuffer = await fileData.arrayBuffer();
     const bytes = new Uint8Array(arrayBuffer);
-    let binary = "";
-    for (let i = 0; i < bytes.length; i++) {
-      binary += String.fromCharCode(bytes[i]);
-    }
-    const base64 = btoa(binary);
+    const base64 = encodeBase64(bytes);
 
     // Determine media type for Claude API
     const mediaType = resolveMediaType(mimeType, documentName);
