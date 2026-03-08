@@ -87,6 +87,25 @@ interface Props {
   onSuccess: () => void;
 }
 
+/**
+ * Extracts a Google Drive file ID from a full URL or returns the input as-is
+ * if it's already a bare file ID.
+ */
+function extractGdriveFileId(input: string): string {
+  const trimmed = input.trim();
+  if (!trimmed) return trimmed;
+
+  // Match /d/FILE_ID pattern (covers docs.google.com/document/d/... and drive.google.com/file/d/...)
+  const pathMatch = trimmed.match(/\/d\/([a-zA-Z0-9_-]+)/);
+  if (pathMatch) return pathMatch[1];
+
+  // Match ?id=FILE_ID pattern (covers drive.google.com/open?id=...)
+  const queryMatch = trimmed.match(/[?&]id=([a-zA-Z0-9_-]+)/);
+  if (queryMatch) return queryMatch[1];
+
+  return trimmed;
+}
+
 const EMPTY_FIELD: MergeField = {
   key: "",
   label: "",
@@ -204,7 +223,7 @@ export function TemplateSheet({ open, onOpenChange, template, onSuccess }: Props
       template_type: templateType,
       record_type: recordType,
       description: description.trim(),
-      gdrive_file_id: gdriveFileId.trim(),
+      gdrive_file_id: extractGdriveFileId(gdriveFileId),
       gdrive_folder_id: gdriveFolderId.trim() || undefined,
       requires_signature: requiresSignature,
       merge_fields: mergeFields.filter((f) => f.key && f.column),
@@ -327,6 +346,14 @@ export function TemplateSheet({ open, onOpenChange, template, onSuccess }: Props
                   id="gdrive_file_id"
                   value={gdriveFileId}
                   onChange={(e) => setGdriveFileId(e.target.value)}
+                  onPaste={(e) => {
+                    e.preventDefault();
+                    const pasted = e.clipboardData.getData("text");
+                    setGdriveFileId(extractGdriveFileId(pasted));
+                  }}
+                  onBlur={(e) =>
+                    setGdriveFileId(extractGdriveFileId(e.target.value))
+                  }
                   placeholder="1a2b3c4d5e6f..."
                   className="font-mono text-xs"
                 />

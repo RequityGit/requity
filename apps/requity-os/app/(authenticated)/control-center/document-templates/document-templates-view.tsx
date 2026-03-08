@@ -324,6 +324,7 @@ export function DocumentTemplatesView({ templates }: Props) {
 
       {/* Edit/Create Sheet */}
       <TemplateSheet
+        key={editingTemplate?.id ?? "new"}
         open={sheetOpen}
         onOpenChange={setSheetOpen}
         template={editingTemplate}

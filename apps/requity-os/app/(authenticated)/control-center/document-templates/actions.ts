@@ -7,6 +7,17 @@ import type { Database } from "@/lib/supabase/types";
 type TemplateTypeEnum = Database["public"]["Enums"]["template_type_enum"];
 type RecordTypeEnum = Database["public"]["Enums"]["record_type_enum"];
 
+/** Extracts bare file ID from a Google Drive URL, or returns input as-is. */
+function extractGdriveFileId(input: string): string {
+  const trimmed = input.trim();
+  if (!trimmed) return trimmed;
+  const pathMatch = trimmed.match(/\/d\/([a-zA-Z0-9_-]+)/);
+  if (pathMatch) return pathMatch[1];
+  const queryMatch = trimmed.match(/[?&]id=([a-zA-Z0-9_-]+)/);
+  if (queryMatch) return queryMatch[1];
+  return trimmed;
+}
+
 export type MergeField = {
   key: string;
   label: string;
@@ -47,7 +58,7 @@ export async function createTemplate(data: TemplateFormData) {
     template_type: data.template_type as TemplateTypeEnum,
     record_type: data.record_type as RecordTypeEnum,
     description: data.description || null,
-    gdrive_file_id: data.gdrive_file_id,
+    gdrive_file_id: extractGdriveFileId(data.gdrive_file_id),
     gdrive_folder_id: data.gdrive_folder_id || null,
     requires_signature: data.requires_signature,
     merge_fields: data.merge_fields,
@@ -79,7 +90,7 @@ export async function updateTemplate(id: string, data: TemplateFormData) {
       template_type: data.template_type as TemplateTypeEnum,
       record_type: data.record_type as RecordTypeEnum,
       description: data.description || null,
-      gdrive_file_id: data.gdrive_file_id,
+      gdrive_file_id: extractGdriveFileId(data.gdrive_file_id),
       gdrive_folder_id: data.gdrive_folder_id || null,
       requires_signature: data.requires_signature,
       merge_fields: data.merge_fields,
