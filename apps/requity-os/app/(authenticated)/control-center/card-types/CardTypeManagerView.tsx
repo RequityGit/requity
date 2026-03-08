@@ -23,7 +23,7 @@ import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
-import { ScrollArea } from "@/components/ui/scroll-area";
+
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Select,
@@ -54,6 +54,7 @@ import type {
   UnifiedCardType,
   CardMetricDef,
   UwFieldDef,
+  UwFieldObject,
   UwOutputDef,
   FieldGroupDef,
   CapitalSide,
@@ -92,6 +93,12 @@ const FIELD_TYPES = [
   "select",
   "date",
 ] as const;
+
+const UW_OBJECT_OPTIONS: { value: UwFieldObject; label: string }[] = [
+  { value: "deal", label: "Deal" },
+  { value: "property", label: "Property" },
+  { value: "borrower", label: "Borrower" },
+];
 
 const OUTPUT_TYPES = ["currency", "percent", "ratio"] as const;
 
@@ -967,92 +974,109 @@ function UwFieldsEditor({
         />
       </div>
 
-      <ScrollArea className="h-[400px]">
-        <div className="space-y-1.5">
-          {filtered.map((f, idx) => {
-            const realIdx = fields.indexOf(f);
-            return (
-              <div
-                key={realIdx}
-                className="flex items-center gap-2 rounded-lg border p-2.5"
-              >
-                <div className="flex flex-col gap-0.5">
-                  <button
-                    onClick={() => moveField(realIdx, -1)}
-                    disabled={realIdx === 0}
-                    className="p-0.5 hover:bg-accent rounded disabled:opacity-30"
-                  >
-                    <ArrowUp className="h-3 w-3" />
-                  </button>
-                  <button
-                    onClick={() => moveField(realIdx, 1)}
-                    disabled={realIdx === fields.length - 1}
-                    className="p-0.5 hover:bg-accent rounded disabled:opacity-30"
-                  >
-                    <ArrowDown className="h-3 w-3" />
-                  </button>
-                </div>
-
-                <div className="flex-1 grid grid-cols-4 gap-2">
-                  <Input
-                    value={f.key}
-                    onChange={(e) =>
-                      updateField(realIdx, { key: e.target.value })
-                    }
-                    placeholder="key"
-                    className="text-xs font-mono"
-                  />
-                  <Input
-                    value={f.label}
-                    onChange={(e) =>
-                      updateField(realIdx, { label: e.target.value })
-                    }
-                    placeholder="Label"
-                    className="text-xs"
-                  />
-                  <Select
-                    value={f.type}
-                    onValueChange={(v) =>
-                      updateField(realIdx, {
-                        type: v as UwFieldDef["type"],
-                      })
-                    }
-                  >
-                    <SelectTrigger className="text-xs">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {FIELD_TYPES.map((t) => (
-                        <SelectItem key={t} value={t}>
-                          {t}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <div className="flex items-center gap-2">
-                    <Switch
-                      checked={f.required ?? false}
-                      onCheckedChange={(v) =>
-                        updateField(realIdx, { required: v })
-                      }
-                    />
-                    <span className="text-[10px] text-muted-foreground">
-                      Req
-                    </span>
-                  </div>
-                </div>
-
+      <div className="space-y-1.5">
+        {filtered.map((f, idx) => {
+          const realIdx = fields.indexOf(f);
+          return (
+            <div
+              key={realIdx}
+              className="flex items-center gap-2 rounded-lg border p-2.5"
+            >
+              <div className="flex flex-col gap-0.5">
                 <button
-                  onClick={() => removeField(realIdx)}
-                  className="p-1 rounded hover:bg-destructive/10"
+                  onClick={() => moveField(realIdx, -1)}
+                  disabled={realIdx === 0}
+                  className="p-0.5 hover:bg-accent rounded disabled:opacity-30"
                 >
-                  <X className="h-3.5 w-3.5 text-destructive" />
+                  <ArrowUp className="h-3 w-3" />
+                </button>
+                <button
+                  onClick={() => moveField(realIdx, 1)}
+                  disabled={realIdx === fields.length - 1}
+                  className="p-0.5 hover:bg-accent rounded disabled:opacity-30"
+                >
+                  <ArrowDown className="h-3 w-3" />
                 </button>
               </div>
-            );
-          })}
-        </div>
-      </ScrollArea>
+
+              <div className="flex-1 grid grid-cols-[1fr_1fr_auto_auto_auto] gap-2 items-center">
+                <Input
+                  value={f.key}
+                  onChange={(e) =>
+                    updateField(realIdx, { key: e.target.value })
+                  }
+                  placeholder="key"
+                  className="text-xs font-mono"
+                />
+                <Input
+                  value={f.label}
+                  onChange={(e) =>
+                    updateField(realIdx, { label: e.target.value })
+                  }
+                  placeholder="Label"
+                  className="text-xs"
+                />
+                <Select
+                  value={f.type}
+                  onValueChange={(v) =>
+                    updateField(realIdx, {
+                      type: v as UwFieldDef["type"],
+                    })
+                  }
+                >
+                  <SelectTrigger className="text-xs w-[100px]">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {FIELD_TYPES.map((t) => (
+                      <SelectItem key={t} value={t}>
+                        {t}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Select
+                  value={f.object ?? "deal"}
+                  onValueChange={(v) =>
+                    updateField(realIdx, {
+                      object: v as UwFieldObject,
+                    })
+                  }
+                >
+                  <SelectTrigger className="text-xs w-[100px]">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {UW_OBJECT_OPTIONS.map((opt) => (
+                      <SelectItem key={opt.value} value={opt.value}>
+                        {opt.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <div className="flex items-center gap-2">
+                  <Switch
+                    checked={f.required ?? false}
+                    onCheckedChange={(v) =>
+                      updateField(realIdx, { required: v })
+                    }
+                  />
+                  <span className="text-[10px] text-muted-foreground">
+                    Req
+                  </span>
+                </div>
+              </div>
+
+              <button
+                onClick={() => removeField(realIdx)}
+                className="p-1 rounded hover:bg-destructive/10"
+              >
+                <X className="h-3.5 w-3.5 text-destructive" />
+              </button>
+            </div>
+          );
+        })}
+      </div>
 
       <Button variant="outline" size="sm" onClick={addField}>
         <Plus className="h-3.5 w-3.5 mr-1.5" />
