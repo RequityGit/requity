@@ -336,6 +336,63 @@ export async function createNewVersion(
   return { data: { id: uw.id, version: uw.version }, error: null };
 }
 
+export async function fetchAssumptionDefaults(
+  propertyType: string
+): Promise<{ data: Record<string, unknown> | null; error: string | null }> {
+  const supabase = db();
+  const { data, error } = await supabase
+    .from("commercial_uw_assumptions")
+    .select("*")
+    .eq("property_type", propertyType)
+    .maybeSingle();
+
+  if (error) return { data: null, error: error.message };
+  return { data: data as Record<string, unknown> | null, error: null };
+}
+
+export async function fetchExpenseDefaults(
+  propertyType: string
+): Promise<{ data: Record<string, unknown>[]; error: string | null }> {
+  const supabase = db();
+  const { data, error } = await supabase
+    .from("commercial_expense_defaults")
+    .select("*")
+    .eq("property_type", propertyType)
+    .order("expense_category");
+
+  if (error) return { data: [], error: error.message };
+  return { data: (data ?? []) as Record<string, unknown>[], error: null };
+}
+
+export async function upsertDebtTranches(
+  uwId: string,
+  tranches: {
+    tranche_name: string;
+    loan_type?: string | null;
+    loan_amount: number;
+    interest_rate: number;
+    term_years?: number | null;
+    amortization_years?: number | null;
+    io_period_months?: number | null;
+    origination_fee_pct?: number | null;
+    lender_name?: string | null;
+    sort_order: number;
+  }[]
+): Promise<{ error: string | null }> {
+  const supabase = db();
+  await supabase.from("deal_commercial_debt").delete().eq("uw_id", uwId);
+
+  if (tranches.length > 0) {
+    const { error } = await supabase
+      .from("deal_commercial_debt")
+      .insert(tranches.map((t) => ({ uw_id: uwId, ...t })));
+    if (error) return { error: error.message };
+  }
+
+  await supabase.from("deal_commercial_uw").update({ updated_at: new Date().toISOString() }).eq("id", uwId);
+  return { error: null };
+}
+
 export async function activateVersion(
   uwId: string,
   dealId: string

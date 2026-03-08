@@ -17,6 +17,8 @@ interface FieldUpdate {
   is_admin_created?: boolean;
   is_archived?: boolean;
   dropdown_options?: string[] | null;
+  formula_expression?: string | null;
+  formula_source_fields?: string[] | null;
 }
 
 export async function publishFieldConfigurations(
@@ -44,6 +46,8 @@ export async function publishFieldConfigurations(
         is_admin_created: f.is_admin_created ?? false,
         is_archived: f.is_archived ?? false,
         dropdown_options: f.dropdown_options ?? null,
+        formula_expression: f.formula_expression ?? null,
+        formula_source_fields: f.formula_source_fields ?? null,
       })),
       { onConflict: "module,field_key" }
     );

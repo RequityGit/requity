@@ -50,7 +50,7 @@ import { StageStepper } from "@/components/pipeline-v2/StageStepper";
 import { EditableOverview } from "@/components/pipeline-v2/EditableOverview";
 import { UnderwritingPanel } from "@/components/pipeline-v2/UnderwritingPanel";
 import { DocumentsTab } from "@/components/pipeline-v2/tabs/DocumentsTab";
-import { TasksTab } from "@/components/pipeline-v2/tabs/TasksTab";
+import { DealTasks } from "@/components/tasks/deal-tasks";
 import { ConditionsTab } from "@/components/pipeline-v2/tabs/ConditionsTab";
 import { FinancialsTab, type CommercialUWData as FinancialsUWData } from "@/components/pipeline-v2/tabs/FinancialsTab";
 import { CommercialUnderwritingTab, type CommercialUWData } from "@/components/pipeline-v2/tabs/CommercialUnderwritingTab";
@@ -70,12 +70,13 @@ import {
 } from "@/components/pipeline-v2/pipeline-types";
 import {
   advanceStageAction,
-  addDealNoteAction,
 } from "@/app/(authenticated)/admin/pipeline-v2/actions";
+import { UnifiedNotes } from "@/components/shared/UnifiedNotes";
 import { logQuickActionV2, assignTeamMemberV2 } from "./actions";
 import { SubmitForApprovalDialog } from "@/components/approvals/submit-for-approval-dialog";
 import { LoanApprovalSection } from "@/components/approvals/loan-approval-section";
 import type { ApprovalEntityType } from "@/lib/approvals/types";
+import type { OpsTask, Profile } from "@/lib/tasks";
 
 // ─── Props ───
 
@@ -85,11 +86,11 @@ interface DealDetailPageProps {
   stageConfigs: StageConfig[];
   checklist: ChecklistItem[];
   activities: DealActivity[];
-  teamMembers: { id: string; full_name: string }[];
+  teamMembers: Profile[];
   currentUserId: string;
   currentUserName: string;
   documents: Record<string, unknown>[];
-  tasks: Record<string, unknown>[];
+  tasks: OpsTask[];
   commercialUWData: CommercialUWData | null;
 }
 
@@ -336,8 +337,8 @@ function TabContent({
   activities: DealActivity[];
   currentUserId: string;
   documents: Record<string, unknown>[];
-  tasks: Record<string, unknown>[];
-  teamMembers: { id: string; full_name: string }[];
+  tasks: OpsTask[];
+  teamMembers: Profile[];
   commercialUWData: CommercialUWData | null;
 }) {
   const isCommercial = cardType.slug === "comm_debt";
@@ -363,9 +364,11 @@ function TabContent({
         );
       }
       return (
-        <p className="text-sm text-muted-foreground py-4">
-          No commercial underwriting data available. Initialize from the Financials tab.
-        </p>
+        <div className="rounded-xl border border-dashed p-8 text-center">
+          <p className="text-sm text-muted-foreground">
+            Financial data is loading. Refresh the page to continue.
+          </p>
+        </div>
       );
     case "Underwriting":
       if (isCommercial && commercialUWData) {
@@ -387,18 +390,24 @@ function TabContent({
       return <ActivityContent activities={activities} />;
     case "Notes":
       return (
-        <NotesContent
-          dealId={deal.id}
-          activities={activities}
+        <UnifiedNotes
+          entityType="deal"
+          entityId={deal.id}
+          opportunityId={deal.id}
+          showInternalToggle={true}
+          showFilters={true}
+          showPinning={true}
         />
       );
     case "Tasks":
       return (
-        <TasksTab
-          tasks={tasks as unknown as import("@/components/pipeline-v2/tabs/TasksTab").DealTask[]}
+        <DealTasks
           dealId={deal.id}
+          dealLabel={deal.deal_number ?? deal.name}
+          dealEntityType="deal"
+          tasks={tasks}
+          profiles={teamMembers}
           currentUserId={currentUserId}
-          teamMembers={teamMembers}
         />
       );
     case "Documents":
@@ -468,64 +477,6 @@ function ActivityContent({ activities }: { activities: DealActivity[] }) {
   );
 }
 
-// ─── Notes ───
-
-function NotesContent({
-  dealId,
-  activities,
-}: {
-  dealId: string;
-  activities: DealActivity[];
-}) {
-  const [noteText, setNoteText] = useState("");
-  const [addingNote, startAddNote] = useTransition();
-
-  function handleAddNote() {
-    if (!noteText.trim()) return;
-    startAddNote(async () => {
-      const result = await addDealNoteAction(dealId, noteText.trim());
-      if (result.error) {
-        toast.error(`Failed to add note: ${result.error}`);
-      } else {
-        setNoteText("");
-        toast.success("Note added");
-      }
-    });
-  }
-
-  const notes = activities.filter((a) => a.activity_type === "note");
-
-  return (
-    <div className="space-y-4">
-      <div className="space-y-2">
-        <Textarea
-          value={noteText}
-          onChange={(e) => setNoteText(e.target.value)}
-          placeholder="Add a note..."
-          rows={3}
-        />
-        <div className="flex justify-end">
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={handleAddNote}
-            disabled={!noteText.trim() || addingNote}
-          >
-            {addingNote ? "Adding..." : "Add Note"}
-          </Button>
-        </div>
-      </div>
-      {notes.map((a) => (
-        <div key={a.id} className="rounded-md border p-3 text-sm">
-          <p>{a.description}</p>
-          <p className="text-xs text-muted-foreground mt-2 num">
-            {new Date(a.created_at).toLocaleDateString()}
-          </p>
-        </div>
-      ))}
-    </div>
-  );
-}
 
 // ─── Sidebar ───
 
@@ -540,7 +491,7 @@ function DealSidebar({
   deal: UnifiedDeal;
   cardType: UnifiedCardType;
   stageConfigs: StageConfig[];
-  teamMembers: { id: string; full_name: string }[];
+  teamMembers: Profile[];
   currentUserId: string;
   currentUserName: string;
 }) {

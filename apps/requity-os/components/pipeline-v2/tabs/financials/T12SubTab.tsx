@@ -2,7 +2,16 @@
 
 import { useState, useMemo, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { Upload, Pencil, Plus, Loader2 } from "lucide-react";
+import {
+  Upload,
+  Pencil,
+  Plus,
+  Loader2,
+  TrendingUp,
+  DollarSign,
+  FileUp,
+  Zap,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -28,7 +37,7 @@ import type {
   DealIncomeRow,
   DealExpenseRow,
 } from "@/lib/commercial-uw/deal-computations";
-import { TableShell, TH, SubLabel, n, fmtCurrency } from "./shared";
+import { PillNav, MetricBar, SectionCard, n, fmtCurrency } from "./shared";
 
 interface T12SubTabProps {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -36,12 +45,17 @@ interface T12SubTabProps {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   expenses: any[];
   uwId: string | null;
+  purchasePrice?: number;
+  numUnits?: number;
 }
 
-export function T12SubTab({ income, expenses, uwId }: T12SubTabProps) {
+type Mode = "manual" | "upload";
+
+export function T12SubTab({ income, expenses, uwId, purchasePrice = 0, numUnits = 0 }: T12SubTabProps) {
   const [uploadOpen, setUploadOpen] = useState(false);
   const [editIncomeOpen, setEditIncomeOpen] = useState(false);
   const [editExpenseOpen, setEditExpenseOpen] = useState(false);
+  const [mode, setMode] = useState<Mode>("manual");
   const router = useRouter();
 
   const incomeRows: DealIncomeRow[] = useMemo(
@@ -66,45 +80,21 @@ export function T12SubTab({ income, expenses, uwId }: T12SubTabProps) {
     [expenses]
   );
 
-  const netRevenue = useMemo(
-    () => computeT12NetRevenue(incomeRows),
-    [incomeRows]
-  );
-  const totalExpenses = useMemo(
-    () => computeT12TotalExpenses(expenseRows),
-    [expenseRows]
-  );
+  const netRevenue = useMemo(() => computeT12NetRevenue(incomeRows), [incomeRows]);
+  const totalExpenses = useMemo(() => computeT12TotalExpenses(expenseRows), [expenseRows]);
   const noi = netRevenue - totalExpenses;
+  const capRate = purchasePrice > 0 ? (noi / purchasePrice) * 100 : 0;
+  const expenseRatio = netRevenue > 0 ? (totalExpenses / netRevenue) * 100 : 0;
+  const noiPerUnit = numUnits > 0 ? Math.round(noi / numUnits) : 0;
 
   const handleT12Import = useCallback(
     async (data: T12Data) => {
       if (!uwId) return;
 
       const newIncome = [
-        {
-          line_item: "Gross Potential Income",
-          t12_amount: data.gpi,
-          year_1_amount: data.gpi,
-          growth_rate: 0,
-          is_deduction: false,
-          sort_order: 0,
-        },
-        {
-          line_item: "Vacancy Loss",
-          t12_amount: data.gpi * (data.vacancy_pct / 100),
-          year_1_amount: data.gpi * (data.vacancy_pct / 100),
-          growth_rate: 0,
-          is_deduction: true,
-          sort_order: 1,
-        },
-        {
-          line_item: "Bad Debt",
-          t12_amount: data.gpi * (data.bad_debt_pct / 100),
-          year_1_amount: data.gpi * (data.bad_debt_pct / 100),
-          growth_rate: 0,
-          is_deduction: true,
-          sort_order: 2,
-        },
+        { line_item: "Gross Potential Rent", t12_amount: data.gpi, year_1_amount: data.gpi, growth_rate: 0, is_deduction: false, sort_order: 0 },
+        { line_item: "Vacancy Loss", t12_amount: data.gpi * (data.vacancy_pct / 100), year_1_amount: data.gpi * (data.vacancy_pct / 100), growth_rate: 0, is_deduction: true, sort_order: 1 },
+        { line_item: "Bad Debt", t12_amount: data.gpi * (data.bad_debt_pct / 100), year_1_amount: data.gpi * (data.bad_debt_pct / 100), growth_rate: 0, is_deduction: true, sort_order: 2 },
       ];
 
       const newExpenses = [
@@ -126,11 +116,10 @@ export function T12SubTab({ income, expenses, uwId }: T12SubTabProps) {
       ]);
 
       if (incRes.error || expRes.error) {
-        toast.error(
-          `Failed to import T12: ${incRes.error || expRes.error}`
-        );
+        toast.error(`Failed to import T12: ${incRes.error || expRes.error}`);
       } else {
         toast.success("T12 data imported successfully");
+        setMode("manual");
         router.refresh();
       }
     },
@@ -139,222 +128,123 @@ export function T12SubTab({ income, expenses, uwId }: T12SubTabProps) {
 
   const hasData = incomeRows.length > 0 || expenseRows.length > 0;
 
+  const MODE_TABS = [
+    { key: "manual" as const, label: "Manual Entry", icon: Pencil },
+    { key: "upload" as const, label: "Upload & Map", icon: FileUp },
+  ];
+
   return (
-    <div className="flex flex-col gap-5">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <SubLabel>Trailing 12-Month Operating Statement</SubLabel>
-        <div className="flex items-center gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            className="h-7 gap-1 text-xs"
-            onClick={() => setUploadOpen(true)}
-          >
-            <Upload className="h-3 w-3" />
-            Upload T12
-          </Button>
-        </div>
-      </div>
+    <div className="flex flex-col gap-4">
+      <PillNav tabs={MODE_TABS} active={mode} onChange={setMode} />
 
-      {/* NOI Summary */}
-      {hasData && (
-        <div className="grid grid-cols-3 gap-3">
-          <KPI label="Net Revenue" value={fmtCurrency(netRevenue)} />
-          <KPI label="Total Expenses" value={fmtCurrency(totalExpenses)} />
-          <KPI
-            label="NOI"
-            value={fmtCurrency(noi)}
-            accent={noi > 0 ? "green" : noi < 0 ? "red" : undefined}
-          />
-        </div>
-      )}
-
-      {!hasData ? (
-        <div className="rounded-xl border border-dashed p-8 text-center">
-          <p className="text-sm text-muted-foreground mb-3">
-            No T12 data yet. Upload an operating statement or enter data
-            manually.
-          </p>
-          <div className="flex items-center gap-2 justify-center">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setUploadOpen(true)}
-            >
-              <Upload className="h-3.5 w-3.5 mr-1.5" />
-              Upload T12
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setEditIncomeOpen(true)}
-            >
-              <Plus className="h-3.5 w-3.5 mr-1.5" />
-              Enter Manually
-            </Button>
-          </div>
-        </div>
-      ) : (
-        <>
-          {/* Income Table */}
-          <div>
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                Income
-              </span>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-6 gap-1 text-[11px] text-muted-foreground"
-                onClick={() => setEditIncomeOpen(true)}
-              >
-                <Pencil className="h-2.5 w-2.5" />
-                Edit
+      {mode === "manual" ? (
+        !hasData ? (
+          <div className="rounded-xl border border-dashed p-8 text-center">
+            <p className="text-sm text-muted-foreground mb-3">
+              No T12 data yet. Upload an operating statement or enter data manually.
+            </p>
+            <div className="flex items-center gap-2 justify-center">
+              <Button variant="outline" size="sm" onClick={() => setMode("upload")}>
+                <Upload className="h-3.5 w-3.5 mr-1.5" />
+                Upload T12
+              </Button>
+              <Button variant="outline" size="sm" onClick={() => setEditIncomeOpen(true)}>
+                <Plus className="h-3.5 w-3.5 mr-1.5" />
+                Enter Manually
               </Button>
             </div>
-            <TableShell>
-              <thead>
-                <tr>
-                  <TH>Line Item</TH>
-                  <TH align="right">T12 Amount</TH>
-                </tr>
-              </thead>
-              <tbody>
+          </div>
+        ) : (
+          <>
+            {/* Two-column layout: Income + Expenses */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <SectionCard
+                title="Income"
+                icon={TrendingUp}
+                actions={
+                  <Button variant="ghost" size="sm" className="h-6 gap-1 text-[11px] text-muted-foreground" onClick={() => setEditIncomeOpen(true)}>
+                    <Pencil className="h-2.5 w-2.5" /> Edit
+                  </Button>
+                }
+              >
                 {incomeRows.map((row, i) => (
-                  <tr key={row.id || i} className="border-b">
-                    <td className="text-[13px] px-3 py-2">{row.line_item}</td>
-                    <td
-                      className={cn(
-                        "text-right text-[13px] num px-3 py-2",
-                        row.is_deduction && "text-red-500"
-                      )}
-                    >
-                      {row.is_deduction
-                        ? `(${fmtCurrency(Math.abs(row.t12_amount))})`
-                        : fmtCurrency(row.t12_amount)}
-                    </td>
-                  </tr>
+                  <div key={row.id || i} className={cn("flex justify-between items-center py-2.5", i < incomeRows.length - 1 && "border-b")}>
+                    <span className={cn("text-[13px]", row.is_deduction ? "text-muted-foreground" : "")}>
+                      {row.is_deduction ? "Less: " : ""}{row.line_item}
+                    </span>
+                    <span className={cn("text-[13px] font-medium num min-w-[80px] text-right", row.is_deduction && "text-red-500")}>
+                      {row.is_deduction ? `(${fmtCurrency(Math.abs(row.t12_amount))})` : fmtCurrency(row.t12_amount)}
+                    </span>
+                  </div>
                 ))}
-              </tbody>
-              <tfoot>
-                <tr className="bg-muted/50 border-t">
-                  <td className="text-[13px] font-semibold px-3 py-2">
-                    Net Revenue
-                  </td>
-                  <td className="text-right text-[13px] font-semibold num px-3 py-2">
-                    {fmtCurrency(netRevenue)}
-                  </td>
-                </tr>
-              </tfoot>
-            </TableShell>
-          </div>
+                <div className="flex justify-between pt-3 mt-2 border-t-2">
+                  <span className="text-sm font-bold">Effective Gross Income</span>
+                  <span className="text-sm font-bold num">{fmtCurrency(netRevenue)}</span>
+                </div>
+              </SectionCard>
 
-          {/* Expense Table */}
-          <div>
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                Expenses
-              </span>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-6 gap-1 text-[11px] text-muted-foreground"
-                onClick={() => setEditExpenseOpen(true)}
+              <SectionCard
+                title="Operating Expenses"
+                icon={DollarSign}
+                actions={
+                  <Button variant="ghost" size="sm" className="h-6 gap-1 text-[11px] text-muted-foreground" onClick={() => setEditExpenseOpen(true)}>
+                    <Pencil className="h-2.5 w-2.5" /> Edit
+                  </Button>
+                }
               >
-                <Pencil className="h-2.5 w-2.5" />
-                Edit
-              </Button>
-            </div>
-            <TableShell>
-              <thead>
-                <tr>
-                  <TH>Category</TH>
-                  <TH align="right">T12 Amount</TH>
-                </tr>
-              </thead>
-              <tbody>
                 {expenseRows.map((row, i) => (
-                  <tr key={row.id || i} className="border-b">
-                    <td className="text-[13px] px-3 py-2">{row.category}</td>
-                    <td className="text-right text-[13px] num px-3 py-2">
-                      {fmtCurrency(row.t12_amount)}
-                    </td>
-                  </tr>
+                  <div key={row.id || i} className={cn("flex justify-between items-center py-2.5", i < expenseRows.length - 1 && "border-b")}>
+                    <span className="text-[13px]">{row.category}</span>
+                    <div className="flex items-center gap-3">
+                      <span className="text-[11px] text-muted-foreground num">
+                        {netRevenue > 0 ? `${((row.t12_amount / netRevenue) * 100).toFixed(1)}%` : "\u2014"}
+                      </span>
+                      <span className="text-[13px] font-medium num min-w-[80px] text-right">{fmtCurrency(row.t12_amount)}</span>
+                    </div>
+                  </div>
                 ))}
-              </tbody>
-              <tfoot>
-                <tr className="bg-muted/50 border-t">
-                  <td className="text-[13px] font-semibold px-3 py-2">
-                    Total Expenses
-                  </td>
-                  <td className="text-right text-[13px] font-semibold num px-3 py-2">
-                    {fmtCurrency(totalExpenses)}
-                  </td>
-                </tr>
-                <tr className="bg-muted/50 border-t-2">
-                  <td className="text-[13px] font-semibold px-3 py-2">
-                    Net Operating Income
-                  </td>
-                  <td className="text-right text-[13px] font-semibold num px-3 py-2">
-                    {fmtCurrency(noi)}
-                  </td>
-                </tr>
-              </tfoot>
-            </TableShell>
+                <div className="flex justify-between pt-3 mt-2 border-t-2">
+                  <span className="text-sm font-bold">Total OpEx</span>
+                  <span className="text-sm font-bold num">{fmtCurrency(totalExpenses)}</span>
+                </div>
+              </SectionCard>
+            </div>
+
+            {/* Bottom metrics */}
+            <MetricBar
+              items={[
+                { label: "Net Operating Income", value: fmtCurrency(noi), accent: noi > 0 ? "text-green-500" : "text-red-500" },
+                { label: "NOI / Unit", value: noiPerUnit > 0 ? fmtCurrency(noiPerUnit) : "\u2014", sub: "/year" },
+                { label: "Cap Rate", value: capRate > 0 ? `${capRate.toFixed(1)}%` : "\u2014", sub: purchasePrice > 0 ? `@ ${fmtCurrency(purchasePrice)} PP` : undefined },
+                { label: "Expense Ratio", value: expenseRatio > 0 ? `${expenseRatio.toFixed(1)}%` : "\u2014" },
+              ]}
+            />
+          </>
+        )
+      ) : (
+        /* Upload mode */
+        <SectionCard title="Upload T12 / P&L" icon={Upload}>
+          <div
+            onClick={() => setUploadOpen(true)}
+            className="border-2 border-dashed rounded-xl p-12 flex flex-col items-center gap-3 cursor-pointer hover:border-foreground/20 transition-colors"
+          >
+            <div className="w-12 h-12 rounded-xl bg-purple-500/10 flex items-center justify-center">
+              <Zap className="h-5 w-5 text-purple-400" strokeWidth={1.5} />
+            </div>
+            <div className="text-sm font-semibold">Upload borrower P&L for categorization</div>
+            <div className="text-xs text-muted-foreground">Handles any format — QuickBooks, Rent Manager, custom spreadsheets</div>
           </div>
-        </>
+        </SectionCard>
       )}
 
       {/* Upload Dialog */}
-      <UploadT12Dialog
-        open={uploadOpen}
-        onOpenChange={setUploadOpen}
-        onImport={handleT12Import}
-      />
+      <UploadT12Dialog open={uploadOpen} onOpenChange={setUploadOpen} onImport={handleT12Import} />
 
       {/* Edit Income Dialog */}
-      <EditIncomeDialog
-        open={editIncomeOpen}
-        onOpenChange={setEditIncomeOpen}
-        incomeRows={incomeRows}
-        uwId={uwId}
-      />
+      <EditIncomeDialog open={editIncomeOpen} onOpenChange={setEditIncomeOpen} incomeRows={incomeRows} uwId={uwId} />
 
       {/* Edit Expense Dialog */}
-      <EditExpenseDialog
-        open={editExpenseOpen}
-        onOpenChange={setEditExpenseOpen}
-        expenseRows={expenseRows}
-        uwId={uwId}
-      />
-    </div>
-  );
-}
-
-function KPI({
-  label,
-  value,
-  accent,
-}: {
-  label: string;
-  value: string;
-  accent?: "green" | "red";
-}) {
-  return (
-    <div className="rounded-lg border bg-card px-3 py-2.5">
-      <p className="text-[11px] text-muted-foreground uppercase tracking-wider">
-        {label}
-      </p>
-      <p
-        className={cn(
-          "text-sm font-semibold num mt-0.5",
-          accent === "green" && "text-green-600",
-          accent === "red" && "text-red-500"
-        )}
-      >
-        {value}
-      </p>
+      <EditExpenseDialog open={editExpenseOpen} onOpenChange={setEditExpenseOpen} expenseRows={expenseRows} uwId={uwId} />
     </div>
   );
 }
@@ -370,16 +260,7 @@ function EditIncomeDialog({
   incomeRows: DealIncomeRow[];
   uwId: string | null;
 }) {
-  const [rows, setRows] = useState<
-    {
-      line_item: string;
-      t12_amount: number;
-      year_1_amount: number;
-      growth_rate: number;
-      is_deduction: boolean;
-      sort_order: number;
-    }[]
-  >([]);
+  const [rows, setRows] = useState<{ line_item: string; t12_amount: number; year_1_amount: number; growth_rate: number; is_deduction: boolean; sort_order: number }[]>([]);
   const [saving, setSaving] = useState(false);
   const router = useRouter();
 
@@ -387,14 +268,7 @@ function EditIncomeDialog({
     if (isOpen) {
       setRows(
         incomeRows.length > 0
-          ? incomeRows.map((r, i) => ({
-              line_item: r.line_item,
-              t12_amount: r.t12_amount,
-              year_1_amount: r.year_1_amount,
-              growth_rate: r.growth_rate,
-              is_deduction: r.is_deduction,
-              sort_order: i,
-            }))
+          ? incomeRows.map((r, i) => ({ line_item: r.line_item, t12_amount: r.t12_amount, year_1_amount: r.year_1_amount, growth_rate: r.growth_rate, is_deduction: r.is_deduction, sort_order: i }))
           : [
               { line_item: "Gross Potential Rent", t12_amount: 0, year_1_amount: 0, growth_rate: 0, is_deduction: false, sort_order: 0 },
               { line_item: "Vacancy Loss", t12_amount: 0, year_1_amount: 0, growth_rate: 0, is_deduction: true, sort_order: 1 },
@@ -405,28 +279,11 @@ function EditIncomeDialog({
     onOpenChange(isOpen);
   };
 
-  const addRow = () => {
-    setRows((prev) => [
-      ...prev,
-      {
-        line_item: "",
-        t12_amount: 0,
-        year_1_amount: 0,
-        growth_rate: 0,
-        is_deduction: false,
-        sort_order: prev.length,
-      },
-    ]);
-  };
-
   const handleSubmit = async () => {
     if (!uwId) return;
     setSaving(true);
     try {
-      const result = await upsertIncomeRows(
-        uwId,
-        rows.map((r, i) => ({ ...r, sort_order: i }))
-      );
+      const result = await upsertIncomeRows(uwId, rows.map((r, i) => ({ ...r, sort_order: i })));
       if (result.error) {
         toast.error(`Failed to save income: ${result.error}`);
       } else {
@@ -449,15 +306,9 @@ function EditIncomeDialog({
           <table className="w-full border-collapse text-[13px]">
             <thead>
               <tr className="border-b">
-                <th className="text-left px-2 py-1.5 font-medium text-muted-foreground">
-                  Line Item
-                </th>
-                <th className="text-left px-2 py-1.5 font-medium text-muted-foreground">
-                  T12 Amount
-                </th>
-                <th className="text-left px-2 py-1.5 font-medium text-muted-foreground">
-                  Deduction?
-                </th>
+                <th className="text-left px-2 py-1.5 font-medium text-muted-foreground">Line Item</th>
+                <th className="text-left px-2 py-1.5 font-medium text-muted-foreground">T12 Amount</th>
+                <th className="text-left px-2 py-1.5 font-medium text-muted-foreground">Deduction?</th>
                 <th className="px-2 py-1.5" />
               </tr>
             </thead>
@@ -465,65 +316,17 @@ function EditIncomeDialog({
               {rows.map((row, i) => (
                 <tr key={i} className="border-b">
                   <td className="px-2 py-1">
-                    <Input
-                      className="h-8"
-                      value={row.line_item}
-                      onChange={(e) =>
-                        setRows((prev) =>
-                          prev.map((r, j) =>
-                            j === i
-                              ? { ...r, line_item: e.target.value }
-                              : r
-                          )
-                        )
-                      }
-                    />
+                    <Input className="h-8" value={row.line_item} onChange={(e) => setRows((prev) => prev.map((r, j) => j === i ? { ...r, line_item: e.target.value } : r))} />
                   </td>
                   <td className="px-2 py-1">
-                    <Input
-                      className="h-8 w-28"
-                      type="number"
-                      value={row.t12_amount || ""}
-                      onChange={(e) =>
-                        setRows((prev) =>
-                          prev.map((r, j) =>
-                            j === i
-                              ? {
-                                  ...r,
-                                  t12_amount: Number(e.target.value) || 0,
-                                  year_1_amount: Number(e.target.value) || 0,
-                                }
-                              : r
-                          )
-                        )
-                      }
-                    />
+                    <Input className="h-8 w-28" type="number" value={row.t12_amount || ""} onChange={(e) => setRows((prev) => prev.map((r, j) => j === i ? { ...r, t12_amount: Number(e.target.value) || 0, year_1_amount: Number(e.target.value) || 0 } : r))} />
                   </td>
                   <td className="px-2 py-1 text-center">
-                    <input
-                      type="checkbox"
-                      checked={row.is_deduction}
-                      onChange={(e) =>
-                        setRows((prev) =>
-                          prev.map((r, j) =>
-                            j === i
-                              ? { ...r, is_deduction: e.target.checked }
-                              : r
-                          )
-                        )
-                      }
-                    />
+                    <input type="checkbox" checked={row.is_deduction} onChange={(e) => setRows((prev) => prev.map((r, j) => j === i ? { ...r, is_deduction: e.target.checked } : r))} />
                   </td>
                   <td className="px-2 py-1">
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-7 w-7"
-                      onClick={() =>
-                        setRows((prev) => prev.filter((_, j) => j !== i))
-                      }
-                    >
-                      <span className="text-muted-foreground text-xs">×</span>
+                    <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setRows((prev) => prev.filter((_, j) => j !== i))}>
+                      <span className="text-muted-foreground text-xs">&times;</span>
                     </Button>
                   </td>
                 </tr>
@@ -531,23 +334,11 @@ function EditIncomeDialog({
             </tbody>
           </table>
         </div>
-        <Button
-          variant="outline"
-          size="sm"
-          className="w-fit gap-1"
-          onClick={addRow}
-        >
-          <Plus className="h-3 w-3" />
-          Add Line Item
+        <Button variant="outline" size="sm" className="w-fit gap-1" onClick={() => setRows((prev) => [...prev, { line_item: "", t12_amount: 0, year_1_amount: 0, growth_rate: 0, is_deduction: false, sort_order: prev.length }])}>
+          <Plus className="h-3 w-3" /> Add Line Item
         </Button>
         <DialogFooter>
-          <Button
-            variant="outline"
-            onClick={() => onOpenChange(false)}
-            disabled={saving}
-          >
-            Cancel
-          </Button>
+          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={saving}>Cancel</Button>
           <Button onClick={handleSubmit} disabled={saving}>
             {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
             Save Income
@@ -569,16 +360,7 @@ function EditExpenseDialog({
   expenseRows: DealExpenseRow[];
   uwId: string | null;
 }) {
-  const [rows, setRows] = useState<
-    {
-      category: string;
-      t12_amount: number;
-      year_1_amount: number;
-      growth_rate: number;
-      is_percentage: boolean;
-      sort_order: number;
-    }[]
-  >([]);
+  const [rows, setRows] = useState<{ category: string; t12_amount: number; year_1_amount: number; growth_rate: number; is_percentage: boolean; sort_order: number }[]>([]);
   const [saving, setSaving] = useState(false);
   const router = useRouter();
 
@@ -586,14 +368,7 @@ function EditExpenseDialog({
     if (isOpen) {
       setRows(
         expenseRows.length > 0
-          ? expenseRows.map((r, i) => ({
-              category: r.category,
-              t12_amount: r.t12_amount,
-              year_1_amount: r.year_1_amount,
-              growth_rate: r.growth_rate,
-              is_percentage: r.is_percentage,
-              sort_order: i,
-            }))
+          ? expenseRows.map((r, i) => ({ category: r.category, t12_amount: r.t12_amount, year_1_amount: r.year_1_amount, growth_rate: r.growth_rate, is_percentage: r.is_percentage, sort_order: i }))
           : [
               { category: "Property Taxes", t12_amount: 0, year_1_amount: 0, growth_rate: 0, is_percentage: false, sort_order: 0 },
               { category: "Insurance", t12_amount: 0, year_1_amount: 0, growth_rate: 0, is_percentage: false, sort_order: 1 },
@@ -607,28 +382,11 @@ function EditExpenseDialog({
     onOpenChange(isOpen);
   };
 
-  const addRow = () => {
-    setRows((prev) => [
-      ...prev,
-      {
-        category: "",
-        t12_amount: 0,
-        year_1_amount: 0,
-        growth_rate: 0,
-        is_percentage: false,
-        sort_order: prev.length,
-      },
-    ]);
-  };
-
   const handleSubmit = async () => {
     if (!uwId) return;
     setSaving(true);
     try {
-      const result = await upsertExpenseRows(
-        uwId,
-        rows.map((r, i) => ({ ...r, sort_order: i }))
-      );
+      const result = await upsertExpenseRows(uwId, rows.map((r, i) => ({ ...r, sort_order: i })));
       if (result.error) {
         toast.error(`Failed to save expenses: ${result.error}`);
       } else {
@@ -651,12 +409,8 @@ function EditExpenseDialog({
           <table className="w-full border-collapse text-[13px]">
             <thead>
               <tr className="border-b">
-                <th className="text-left px-2 py-1.5 font-medium text-muted-foreground">
-                  Category
-                </th>
-                <th className="text-left px-2 py-1.5 font-medium text-muted-foreground">
-                  T12 Amount
-                </th>
+                <th className="text-left px-2 py-1.5 font-medium text-muted-foreground">Category</th>
+                <th className="text-left px-2 py-1.5 font-medium text-muted-foreground">T12 Amount</th>
                 <th className="px-2 py-1.5" />
               </tr>
             </thead>
@@ -664,50 +418,14 @@ function EditExpenseDialog({
               {rows.map((row, i) => (
                 <tr key={i} className="border-b">
                   <td className="px-2 py-1">
-                    <Input
-                      className="h-8"
-                      value={row.category}
-                      onChange={(e) =>
-                        setRows((prev) =>
-                          prev.map((r, j) =>
-                            j === i
-                              ? { ...r, category: e.target.value }
-                              : r
-                          )
-                        )
-                      }
-                    />
+                    <Input className="h-8" value={row.category} onChange={(e) => setRows((prev) => prev.map((r, j) => j === i ? { ...r, category: e.target.value } : r))} />
                   </td>
                   <td className="px-2 py-1">
-                    <Input
-                      className="h-8 w-28"
-                      type="number"
-                      value={row.t12_amount || ""}
-                      onChange={(e) =>
-                        setRows((prev) =>
-                          prev.map((r, j) =>
-                            j === i
-                              ? {
-                                  ...r,
-                                  t12_amount: Number(e.target.value) || 0,
-                                  year_1_amount: Number(e.target.value) || 0,
-                                }
-                              : r
-                          )
-                        )
-                      }
-                    />
+                    <Input className="h-8 w-28" type="number" value={row.t12_amount || ""} onChange={(e) => setRows((prev) => prev.map((r, j) => j === i ? { ...r, t12_amount: Number(e.target.value) || 0, year_1_amount: Number(e.target.value) || 0 } : r))} />
                   </td>
                   <td className="px-2 py-1">
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-7 w-7"
-                      onClick={() =>
-                        setRows((prev) => prev.filter((_, j) => j !== i))
-                      }
-                    >
-                      <span className="text-muted-foreground text-xs">×</span>
+                    <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setRows((prev) => prev.filter((_, j) => j !== i))}>
+                      <span className="text-muted-foreground text-xs">&times;</span>
                     </Button>
                   </td>
                 </tr>
@@ -715,23 +433,11 @@ function EditExpenseDialog({
             </tbody>
           </table>
         </div>
-        <Button
-          variant="outline"
-          size="sm"
-          className="w-fit gap-1"
-          onClick={addRow}
-        >
-          <Plus className="h-3 w-3" />
-          Add Expense
+        <Button variant="outline" size="sm" className="w-fit gap-1" onClick={() => setRows((prev) => [...prev, { category: "", t12_amount: 0, year_1_amount: 0, growth_rate: 0, is_percentage: false, sort_order: prev.length }])}>
+          <Plus className="h-3 w-3" /> Add Expense
         </Button>
         <DialogFooter>
-          <Button
-            variant="outline"
-            onClick={() => onOpenChange(false)}
-            disabled={saving}
-          >
-            Cancel
-          </Button>
+          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={saving}>Cancel</Button>
           <Button onClick={handleSubmit} disabled={saving}>
             {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
             Save Expenses

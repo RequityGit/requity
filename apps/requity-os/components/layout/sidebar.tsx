@@ -19,6 +19,8 @@ import {
   Cog,
   FlaskConical,
   Layers,
+  Building2,
+  Wrench,
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useViewAs } from "@/contexts/view-as-context";
@@ -76,16 +78,18 @@ const borrowerNav: NavItem[] = [
 const adminNav: NavEntry[] = [
   { label: "Dashboard", href: "/admin/dashboard", icon: LayoutDashboard, moduleName: "dashboard" },
   {
-    label: "CRM",
+    label: "Contacts",
+    href: "/admin/crm/contacts",
     icon: Contact,
-    basePath: "/admin/crm",
     moduleName: "crm",
-    activePaths: ["/admin/dialer"],
-    children: [
-      { label: "Contacts", href: "/admin/crm/contacts" },
-      { label: "Companies", href: "/admin/crm/companies" },
-      { label: "Power Dialer", href: "/admin/dialer" },
-    ],
+    activePaths: ["/admin/crm/contacts"],
+  },
+  {
+    label: "Companies",
+    href: "/admin/crm/companies",
+    icon: Building2,
+    moduleName: "crm",
+    activePaths: ["/admin/crm/companies"],
   },
   {
     label: "Pipeline",
@@ -94,38 +98,35 @@ const adminNav: NavEntry[] = [
     moduleName: "pipeline",
   },
   {
-    label: "Models",
-    icon: FlaskConical,
-    basePath: "/admin/models",
-    moduleName: "models",
-    activePaths: ["/admin/models", "/admin/dscr"],
-    children: [
-      { label: "Commercial", href: "/admin/models/commercial" },
-      { label: "RTL", href: "/admin/models/rtl" },
-      { label: "DSCR", href: "/admin/models/dscr" },
-    ],
-  },
-  { label: "Servicing", href: "/admin/servicing", icon: Banknote, moduleName: "servicing" },
-  {
-    label: "Investments",
-    href: "/admin/funds",
-    icon: Landmark,
-    activePaths: ["/admin/capital-calls", "/admin/distributions"],
-    moduleName: "investments",
-  },
-  {
-    label: "Documents",
-    href: "/admin/documents",
-    icon: FolderOpen,
-    activePaths: ["/admin/documents"],
-    moduleName: "documents",
-  },
-  {
     label: "Tasks",
     href: "/admin/operations/tasks",
     icon: ListChecks,
     moduleName: "operations",
     activePaths: ["/admin/operations"],
+  },
+  {
+    label: "Toolbox",
+    icon: Wrench,
+    basePath: "/admin/toolbox",
+    activePaths: [
+      "/admin/documents",
+      "/admin/servicing",
+      "/admin/funds",
+      "/admin/capital-calls",
+      "/admin/distributions",
+      "/admin/models",
+      "/admin/dscr",
+      "/admin/dialer",
+    ],
+    children: [
+      { label: "Documents", href: "/admin/documents" },
+      { label: "Servicing", href: "/admin/servicing" },
+      { label: "Investments", href: "/admin/funds" },
+      { label: "Comm Model", href: "/admin/models/commercial" },
+      { label: "RTL Model", href: "/admin/models/rtl" },
+      { label: "DSCR Model", href: "/admin/models/dscr" },
+      { label: "Power Dialer", href: "/admin/dialer" },
+    ],
   },
 ];
 
