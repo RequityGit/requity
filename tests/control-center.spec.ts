@@ -2,7 +2,7 @@ import { test, expect, waitForAppShell } from "./fixtures/test-fixtures";
 
 // =============================================================================
 // CONTROL CENTER FLOWS
-// Field Manager, Page Layouts, and other super-admin configuration tools
+// Field Manager and other super-admin configuration tools
 // =============================================================================
 
 // Helper: navigate to a control-center page; skip the test if the user is not
@@ -126,57 +126,6 @@ test("CC-4 — field manager search filters fields", async ({ adminPage }) => {
     await searchInput.first().clear();
     await adminPage.waitForTimeout(300);
     await expect(main).toBeVisible();
-  }
-});
-
-// ─────────────────────────────────────────────────────────────────────────────
-// CC-5. Page Layouts manager loads
-// ─────────────────────────────────────────────────────────────────────────────
-test("CC-5 — page layout manager loads", async ({ adminPage }) => {
-  const onCC = await gotoControlCenter(adminPage, "/control-center/page-layouts");
-  if (!onCC) { test.skip(); return; }
-
-  const main = adminPage.locator("main");
-  await expect(main).toBeVisible();
-
-  // Should show page layout heading or layout-related content
-  const heading = adminPage.locator('text=/page layout|layout manager|layout/i');
-  const content = adminPage.locator('h1, h2');
-  const hasHeading = await heading.first().isVisible({ timeout: 5_000 }).catch(() => false);
-  const hasContent = await content.first().isVisible({ timeout: 3_000 }).catch(() => false);
-
-  expect(hasHeading || hasContent).toBeTruthy();
-});
-
-// ─────────────────────────────────────────────────────────────────────────────
-// CC-6. Page Layouts has object type tabs
-// ─────────────────────────────────────────────────────────────────────────────
-test("CC-6 — page layout manager has object type tabs", async ({ adminPage }) => {
-  const onCC = await gotoControlCenter(adminPage, "/control-center/page-layouts");
-  if (!onCC) { test.skip(); return; }
-
-  const main = adminPage.locator("main");
-  await expect(main).toBeVisible();
-
-  // Should have object type tabs (Contact, Company, Opportunity, Loan, Property, Investment)
-  const objectTypes = adminPage.locator(
-    'text=/contact|company|opportunity|loan|property|investment/i'
-  );
-  const objectTypeCount = await objectTypes.count();
-  expect(objectTypeCount).toBeGreaterThan(0);
-
-  // Clicking tabs should not crash
-  const tabs = adminPage.locator(
-    '[role="tablist"] [role="tab"], button[class*="tab"]'
-  );
-  const tabCount = await tabs.count();
-
-  if (tabCount > 0) {
-    for (let i = 0; i < Math.min(tabCount, 3); i++) {
-      await tabs.nth(i).click();
-      await adminPage.waitForTimeout(500);
-      await expect(main).toBeVisible();
-    }
   }
 });
 

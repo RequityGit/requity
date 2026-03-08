@@ -9895,245 +9895,6 @@ export type Database = {
           },
         ]
       }
-      page_layout_fields: {
-        Row: {
-          column_position: number | null
-          created_at: string | null
-          display_format: string | null
-          field_key: string
-          help_text: string | null
-          id: string
-          is_read_only: boolean | null
-          is_visible: boolean | null
-          label_override: string | null
-          placeholder: string | null
-          section_id: string
-          sort_order: number
-          span: number | null
-          updated_at: string | null
-        }
-        Insert: {
-          column_position?: number | null
-          created_at?: string | null
-          display_format?: string | null
-          field_key: string
-          help_text?: string | null
-          id?: string
-          is_read_only?: boolean | null
-          is_visible?: boolean | null
-          label_override?: string | null
-          placeholder?: string | null
-          section_id: string
-          sort_order?: number
-          span?: number | null
-          updated_at?: string | null
-        }
-        Update: {
-          column_position?: number | null
-          created_at?: string | null
-          display_format?: string | null
-          field_key?: string
-          help_text?: string | null
-          id?: string
-          is_read_only?: boolean | null
-          is_visible?: boolean | null
-          label_override?: string | null
-          placeholder?: string | null
-          section_id?: string
-          sort_order?: number
-          span?: number | null
-          updated_at?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "page_layout_fields_section_id_fkey"
-            columns: ["section_id"]
-            isOneToOne: false
-            referencedRelation: "page_layout_sections"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      page_layout_history: {
-        Row: {
-          change_detail: Json | null
-          change_type: string
-          changed_by: string | null
-          created_at: string | null
-          id: string
-          layout_id: string
-        }
-        Insert: {
-          change_detail?: Json | null
-          change_type: string
-          changed_by?: string | null
-          created_at?: string | null
-          id?: string
-          layout_id: string
-        }
-        Update: {
-          change_detail?: Json | null
-          change_type?: string
-          changed_by?: string | null
-          created_at?: string | null
-          id?: string
-          layout_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "page_layout_history_layout_id_fkey"
-            columns: ["layout_id"]
-            isOneToOne: false
-            referencedRelation: "page_layouts"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      page_layout_sections: {
-        Row: {
-          column_layout: string | null
-          created_at: string | null
-          icon: string | null
-          id: string
-          is_collapsed_default: boolean | null
-          is_collapsible: boolean | null
-          is_visible: boolean | null
-          layout_id: string
-          section_key: string
-          sort_order: number
-          span: string | null
-          subtitle: string | null
-          tab_group: string | null
-          title: string
-          updated_at: string | null
-        }
-        Insert: {
-          column_layout?: string | null
-          created_at?: string | null
-          icon?: string | null
-          id?: string
-          is_collapsed_default?: boolean | null
-          is_collapsible?: boolean | null
-          is_visible?: boolean | null
-          layout_id: string
-          section_key: string
-          sort_order?: number
-          span?: string | null
-          subtitle?: string | null
-          tab_group?: string | null
-          title: string
-          updated_at?: string | null
-        }
-        Update: {
-          column_layout?: string | null
-          created_at?: string | null
-          icon?: string | null
-          id?: string
-          is_collapsed_default?: boolean | null
-          is_collapsible?: boolean | null
-          is_visible?: boolean | null
-          layout_id?: string
-          section_key?: string
-          sort_order?: number
-          span?: string | null
-          subtitle?: string | null
-          tab_group?: string | null
-          title?: string
-          updated_at?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "page_layout_sections_layout_id_fkey"
-            columns: ["layout_id"]
-            isOneToOne: false
-            referencedRelation: "page_layouts"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      page_layout_tabs: {
-        Row: {
-          badge_field: string | null
-          created_at: string | null
-          icon: string | null
-          id: string
-          is_visible: boolean | null
-          layout_id: string
-          sort_order: number
-          tab_key: string
-          title: string
-          updated_at: string | null
-        }
-        Insert: {
-          badge_field?: string | null
-          created_at?: string | null
-          icon?: string | null
-          id?: string
-          is_visible?: boolean | null
-          layout_id: string
-          sort_order?: number
-          tab_key: string
-          title: string
-          updated_at?: string | null
-        }
-        Update: {
-          badge_field?: string | null
-          created_at?: string | null
-          icon?: string | null
-          id?: string
-          is_visible?: boolean | null
-          layout_id?: string
-          sort_order?: number
-          tab_key?: string
-          title?: string
-          updated_at?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "page_layout_tabs_layout_id_fkey"
-            columns: ["layout_id"]
-            isOneToOne: false
-            referencedRelation: "page_layouts"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      page_layouts: {
-        Row: {
-          created_at: string | null
-          created_by: string | null
-          description: string | null
-          id: string
-          is_active: boolean | null
-          name: string
-          object_type: Database["public"]["Enums"]["page_object_type"]
-          role: Database["public"]["Enums"]["app_role"] | null
-          updated_at: string | null
-        }
-        Insert: {
-          created_at?: string | null
-          created_by?: string | null
-          description?: string | null
-          id?: string
-          is_active?: boolean | null
-          name: string
-          object_type: Database["public"]["Enums"]["page_object_type"]
-          role?: Database["public"]["Enums"]["app_role"] | null
-          updated_at?: string | null
-        }
-        Update: {
-          created_at?: string | null
-          created_by?: string | null
-          description?: string | null
-          id?: string
-          is_active?: boolean | null
-          name?: string
-          object_type?: Database["public"]["Enums"]["page_object_type"]
-          role?: Database["public"]["Enums"]["app_role"] | null
-          updated_at?: string | null
-        }
-        Relationships: []
-      }
       payoff_fee_defaults: {
         Row: {
           created_at: string
@@ -15541,13 +15302,6 @@ export type Database = {
           role: string
         }[]
       }
-      get_page_layout: {
-        Args: {
-          p_object_type: Database["public"]["Enums"]["page_object_type"]
-          p_role?: Database["public"]["Enums"]["app_role"]
-        }
-        Returns: Json
-      }
       get_portal_context: { Args: never; Returns: Json }
       get_portfolio_draw_dashboard: { Args: never; Returns: Json }
       grant_all_modules: {
@@ -15998,15 +15752,6 @@ export type Database = {
         | "onboarding"
         | "closed_lost"
       loan_type: "commercial" | "dscr" | "guc" | "rtl" | "transactional"
-      page_object_type:
-        | "contact"
-        | "company"
-        | "opportunity"
-        | "loan"
-        | "property"
-        | "investment"
-        | "borrower_profile"
-        | "investor_profile"
       payment_structure_type: "interest_only" | "principal_and_interest"
       property_type:
         | "sfr"
@@ -16499,16 +16244,6 @@ export const Constants = {
         "closed_lost",
       ],
       loan_type: ["commercial", "dscr", "guc", "rtl", "transactional"],
-      page_object_type: [
-        "contact",
-        "company",
-        "opportunity",
-        "loan",
-        "property",
-        "investment",
-        "borrower_profile",
-        "investor_profile",
-      ],
       payment_structure_type: ["interest_only", "principal_and_interest"],
       property_type: [
         "sfr",
@@ -16562,6 +16297,11 @@ export const Constants = {
     },
   },
 } as const
+
+// ---------------------------------------------------------------------------
+// Custom types (manually added, not auto-generated)
+// ---------------------------------------------------------------------------
+
 export interface PricingProgram {
   id: string;
   created_at: string;
