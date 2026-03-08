@@ -67,7 +67,7 @@ function resolveSystemField(column: string): string {
     case "requity_title":
       return "CEO";
     case "dylan_email":
-      return "dylan@requitygroup.com";
+      return process.env.INVESTOR_CONTACT_EMAIL || "";
     default:
       return "";
   }
