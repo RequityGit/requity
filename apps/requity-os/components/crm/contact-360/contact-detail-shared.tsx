@@ -2,6 +2,7 @@
 
 import { cn } from "@/lib/utils";
 import type { LucideIcon } from "lucide-react";
+import { Pencil } from "lucide-react";
 
 // ── DotPill: Pill with colored dot prefix ──
 export function DotPill({
@@ -80,6 +81,19 @@ export function SectionCard({
       )}
       {noPad ? children : <div className="p-5">{children}</div>}
     </div>
+  );
+}
+
+// ── SectionEditButton: Pencil + "Edit" for section headers ──
+export function SectionEditButton({ onClick }: { onClick: () => void }) {
+  return (
+    <button
+      onClick={onClick}
+      className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs font-medium transition-colors cursor-pointer border-0 text-muted-foreground bg-transparent hover:bg-muted hover:text-foreground"
+    >
+      <Pencil size={12} strokeWidth={1.5} />
+      Edit
+    </button>
   );
 }
 

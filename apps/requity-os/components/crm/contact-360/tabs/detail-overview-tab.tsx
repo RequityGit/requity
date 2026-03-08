@@ -5,9 +5,10 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
 import { Badge } from "@/components/ui/badge";
-import { Landmark, TrendingUp, User, Shield, FileText, Pencil } from "lucide-react";
+import { Landmark, TrendingUp, User, Shield, FileText } from "lucide-react";
 import {
   SectionCard,
+  SectionEditButton,
   MetricCard,
   FieldRow,
   MonoValue,
@@ -32,18 +33,6 @@ interface DetailOverviewTabProps {
   loans: LoanData[];
   commitments: InvestorCommitmentData[];
   isSuperAdmin: boolean;
-}
-
-function SectionEditButton({ onClick }: { onClick: () => void }) {
-  return (
-    <button
-      onClick={onClick}
-      className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs font-medium transition-colors cursor-pointer border-0 text-muted-foreground bg-transparent hover:bg-muted hover:text-foreground"
-    >
-      <Pencil size={12} strokeWidth={1.5} />
-      Edit
-    </button>
-  );
 }
 
 export function DetailOverviewTab({
