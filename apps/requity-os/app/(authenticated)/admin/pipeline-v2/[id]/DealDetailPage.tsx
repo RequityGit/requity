@@ -53,6 +53,7 @@ import { DocumentsTab } from "@/components/pipeline-v2/tabs/DocumentsTab";
 import { DealTasks } from "@/components/tasks/deal-tasks";
 import { ConditionsTab } from "@/components/pipeline-v2/tabs/ConditionsTab";
 import { PropertyTab } from "@/components/pipeline-v2/tabs/PropertyTab";
+import { ContactsTab } from "@/components/pipeline-v2/tabs/ContactsTab";
 import { FinancialsTab, type CommercialUWData as FinancialsUWData } from "@/components/pipeline-v2/tabs/FinancialsTab";
 import { CommercialUnderwritingTab, type CommercialUWData } from "@/components/pipeline-v2/tabs/CommercialUnderwritingTab";
 import {
@@ -114,8 +115,21 @@ export function DealDetailPage({
   commercialUWData,
 }: DealDetailPageProps) {
   const router = useRouter();
-  const tabs = cardType.detail_tabs;
-  const [activeTab, setActiveTab] = useState(tabs[0] ?? "Overview");
+  // Universal 10-tab layout — same for ALL card types
+  const UNIVERSAL_TABS = [
+    "Overview",
+    "Property",
+    "Financials",
+    "Underwriting",
+    "Contacts",
+    "Conditions",
+    "Documents",
+    "Tasks",
+    "Activity",
+    "Notes",
+  ] as const;
+  const tabs = UNIVERSAL_TABS;
+  const [activeTab, setActiveTab] = useState<string>(tabs[0]);
 
   const displayId = deal.deal_number ?? deal.id.slice(0, 8);
   const days = deal.days_in_stage ?? daysInStage(deal.stage_entered_at);
@@ -381,7 +395,8 @@ function TabContent({
       return (
         <div className="rounded-xl border border-dashed p-8 text-center">
           <p className="text-sm text-muted-foreground">
-            Financial data is loading. Refresh the page to continue.
+            Financial modeling is available for commercial deals. Use the
+            Underwriting tab for standard deal metrics.
           </p>
         </div>
       );
@@ -401,17 +416,17 @@ function TabContent({
           uwData={deal.uw_data}
         />
       );
-    case "Activity":
-      return <ActivityContent activities={activities} />;
-    case "Notes":
+    case "Contacts":
+      return <ContactsTab deal={deal} />;
+    case "Conditions":
       return (
-        <UnifiedNotes
-          entityType="deal"
-          entityId={deal.id}
-          opportunityId={deal.id}
-          showInternalToggle={true}
-          showFilters={true}
-          showPinning={true}
+        <ConditionsTab conditions={conditions} dealId={deal.id} />
+      );
+    case "Documents":
+      return (
+        <DocumentsTab
+          documents={documents as unknown as { id: string; deal_id: string; document_name: string; file_url: string; file_size_bytes: number | null; mime_type: string | null; category: string | null; uploaded_by: string | null; created_at: string; review_status: string | null; storage_path: string | null; _uploaded_by_name?: string | null }[]}
+          dealId={deal.id}
         />
       );
     case "Tasks":
@@ -425,34 +440,18 @@ function TabContent({
           currentUserId={currentUserId}
         />
       );
-    case "Documents":
+    case "Activity":
+      return <ActivityContent activities={activities} />;
+    case "Notes":
       return (
-        <DocumentsTab
-          documents={documents as unknown as { id: string; deal_id: string; document_name: string; file_url: string; file_size_bytes: number | null; mime_type: string | null; category: string | null; uploaded_by: string | null; created_at: string; review_status: string | null; storage_path: string | null; _uploaded_by_name?: string | null }[]}
-          dealId={deal.id}
+        <UnifiedNotes
+          entityType="deal"
+          entityId={deal.id}
+          opportunityId={deal.id}
+          showInternalToggle={true}
+          showFilters={true}
+          showPinning={true}
         />
-      );
-    case "Conditions":
-      return (
-        <ConditionsTab conditions={conditions} dealId={deal.id} />
-      );
-    case "Due Diligence":
-      return (
-        <p className="text-sm text-muted-foreground py-4">
-          Due diligence tracking coming soon.
-        </p>
-      );
-    case "Investors":
-      return (
-        <p className="text-sm text-muted-foreground py-4">
-          Investor allocation coming soon.
-        </p>
-      );
-    case "Draw Schedule":
-      return (
-        <p className="text-sm text-muted-foreground py-4">
-          Draw schedule coming soon.
-        </p>
       );
     default:
       return null;

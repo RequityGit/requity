@@ -29,12 +29,6 @@ const FLOOD_ENV_KEYS = [
   "flood_zone_type",
 ];
 
-const ALL_PROPERTY_KEYS = new Set([
-  ...PROPERTY_DETAIL_KEYS,
-  ...BUILDING_INFO_KEYS,
-  ...FLOOD_ENV_KEYS,
-]);
-
 interface PropertyTabProps {
   dealId: string;
   uwData: Record<string, unknown>;
