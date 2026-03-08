@@ -119,6 +119,21 @@ function ConfidenceIndicator({ item }: { item: IntakeQueueItem }) {
 export function IntakeQueue({ activeItems, recentItems, cardTypes }: IntakeQueueProps) {
   const [selectedItem, setSelectedItem] = useState<IntakeQueueItem | null>(null);
   const [showRecent, setShowRecent] = useState(false);
+  const [syncing, setSyncing] = useState(false);
+
+  const handleSyncNow = async () => {
+    setSyncing(true);
+    try {
+      await fetch("/api/gmail/sync", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({}),
+      });
+      window.location.reload();
+    } catch {
+      setSyncing(false);
+    }
+  };
 
   const handleRetrigger = async (itemId: string) => {
     try {
@@ -138,15 +153,45 @@ export function IntakeQueue({ activeItems, recentItems, cardTypes }: IntakeQueue
       <div className="flex flex-col items-center justify-center py-16 text-center">
         <Mail className="h-10 w-10 text-muted-foreground/40 mb-3" />
         <h3 className="text-sm font-medium text-foreground mb-1">No intake items</h3>
-        <p className="text-xs text-muted-foreground max-w-sm">
+        <p className="text-xs text-muted-foreground max-w-sm mb-4">
           Forward emails with documents to intake@requitygroup.com and they will appear here for review.
         </p>
+        <Button
+          variant="outline"
+          size="sm"
+          className="text-xs"
+          onClick={handleSyncNow}
+          disabled={syncing}
+        >
+          {syncing ? (
+            <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" />
+          ) : (
+            <RefreshCw className="h-3.5 w-3.5 mr-1.5" />
+          )}
+          {syncing ? "Syncing..." : "Sync Now"}
+        </Button>
       </div>
     );
   }
 
   return (
     <>
+      <div className="flex justify-end mb-2">
+        <Button
+          variant="outline"
+          size="sm"
+          className="text-xs"
+          onClick={handleSyncNow}
+          disabled={syncing}
+        >
+          {syncing ? (
+            <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" />
+          ) : (
+            <RefreshCw className="h-3.5 w-3.5 mr-1.5" />
+          )}
+          {syncing ? "Syncing..." : "Sync Now"}
+        </Button>
+      </div>
       <div className="space-y-2">
         {activeItems.map((item) => (
           <button
