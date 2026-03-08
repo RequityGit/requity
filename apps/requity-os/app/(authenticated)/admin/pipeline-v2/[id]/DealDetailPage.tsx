@@ -52,6 +52,7 @@ import { UnderwritingPanel } from "@/components/pipeline-v2/UnderwritingPanel";
 import { DocumentsTab } from "@/components/pipeline-v2/tabs/DocumentsTab";
 import { DealTasks } from "@/components/tasks/deal-tasks";
 import { ConditionsTab } from "@/components/pipeline-v2/tabs/ConditionsTab";
+import { PropertyTab } from "@/components/pipeline-v2/tabs/PropertyTab";
 import { FinancialsTab, type CommercialUWData as FinancialsUWData } from "@/components/pipeline-v2/tabs/FinancialsTab";
 import { CommercialUnderwritingTab, type CommercialUWData } from "@/components/pipeline-v2/tabs/CommercialUnderwritingTab";
 import {
@@ -357,6 +358,14 @@ function TabContent({
           uwData={deal.uw_data}
           cardType={cardType}
           checklist={checklist}
+        />
+      );
+    case "Property":
+      return (
+        <PropertyTab
+          dealId={deal.id}
+          uwData={deal.uw_data}
+          cardType={cardType}
         />
       );
     case "Financials":
