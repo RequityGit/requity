@@ -314,6 +314,19 @@ export async function triggerDocumentAnalysis(
     return { error: null };
   } catch (err: unknown) {
     console.error("triggerDocumentAnalysis error:", err);
+
+    // Mark the document as errored so the UI shows "Error" instead of stuck "Queued"
+    try {
+      const admin = createAdminClient();
+      await admin
+        .from("unified_deal_documents" as never)
+        .update({ review_status: "error" } as never)
+        .eq("id" as never, documentId as never);
+      revalidateDeal(dealId);
+    } catch (updateErr) {
+      console.error("Failed to mark document as errored:", updateErr);
+    }
+
     return { error: err instanceof Error ? err.message : "Failed to trigger analysis" };
   }
 }
@@ -443,18 +456,16 @@ async function triggerDocumentReviewEdgeFunction(
   dealId: string
 ) {
   const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.URL;
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 
   if (!serviceRoleKey) {
-    console.error("triggerDocumentReview: SUPABASE_SERVICE_ROLE_KEY not set");
-    return;
+    throw new Error("SUPABASE_SERVICE_ROLE_KEY is not configured");
   }
-  if (!appUrl) {
-    console.error("triggerDocumentReview: NEXT_PUBLIC_APP_URL and URL not set");
-    return;
+  if (!supabaseUrl) {
+    throw new Error("NEXT_PUBLIC_SUPABASE_URL is not configured");
   }
 
-  const url = `${appUrl}/api/deals/${dealId}/review-document`;
+  const url = `${supabaseUrl}/functions/v1/review-document`;
 
   const res = await fetch(url, {
     method: "POST",
@@ -462,14 +473,13 @@ async function triggerDocumentReviewEdgeFunction(
       "Content-Type": "application/json",
       Authorization: `Bearer ${serviceRoleKey}`,
     },
-    body: JSON.stringify({ document_id: documentId }),
+    body: JSON.stringify({ document_id: documentId, deal_id: dealId }),
   });
 
   if (!res.ok) {
     const body = await res.text().catch(() => "");
-    console.error(
-      `triggerDocumentReview failed: ${res.status} ${res.statusText}`,
-      body
+    throw new Error(
+      `Document review trigger failed (${res.status}): ${body || res.statusText}`
     );
   }
 }

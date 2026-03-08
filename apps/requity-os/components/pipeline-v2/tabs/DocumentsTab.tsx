@@ -132,8 +132,12 @@ export function DocumentsTab({ documents, dealId }: DocumentsTabProps) {
             // it gets its own request lifecycle (avoids serverless
             // early-termination that killed the old fire-and-forget).
             if (saveResult.documentId) {
-              triggerDocumentAnalysis(saveResult.documentId, dealId).catch(
-                (err) => console.error("Failed to trigger document analysis:", err)
+              triggerDocumentAnalysis(saveResult.documentId, dealId).then(
+                (result) => {
+                  if (result.error) {
+                    toast.error(`AI review failed for ${file.name}: ${result.error}`);
+                  }
+                }
               );
             }
           }
