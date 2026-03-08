@@ -688,7 +688,7 @@ function DealSidebar({
             onClick={() => setSendEmailOpen(true)}
           />
           <GenerateDocumentDialog
-            recordType="loan"
+            recordType="deal"
             recordId={deal.id}
             recordLabel={deal.name}
             trigger={

@@ -76,12 +76,21 @@ function resolveSystemField(column: string): string {
 export async function fetchTemplatesForRecord(recordType: "loan" | "contact" | "deal" | "company") {
   const supabase = await createClient();
 
-  const { data, error } = await supabase
+  // Deals can use both deal-specific and loan templates since unified_deals
+  // contains lending data (uw_data) that maps to loan template fields.
+  const query = supabase
     .from("document_templates")
     .select("id, name, template_type, record_type, description, merge_fields, version, requires_signature")
-    .eq("record_type", recordType)
     .eq("is_active", true)
     .order("name");
+
+  if (recordType === "deal") {
+    query.in("record_type", ["deal", "loan"]);
+  } else {
+    query.eq("record_type", recordType);
+  }
+
+  const { data, error } = await query;
 
   if (error) {
     console.error("Failed to fetch templates:", error);
@@ -120,15 +129,39 @@ export async function resolveTemplateData(
   if (template.record_type === "loan") {
     const { data: loan } = await supabase.from("loans").select("*").eq("id", recordId).single();
     if (loan) {
-      sourceData["loans"] = loan;
+      sourceData["loans"] = loan as Record<string, unknown>;
       if ((loan as Record<string, unknown>).borrower_contact_id) {
         const { data: contact } = await supabase.from("crm_contacts").select("*").eq("id", (loan as Record<string, unknown>).borrower_contact_id as string).single();
         if (contact) {
-          sourceData["crm_contacts"] = contact;
+          sourceData["crm_contacts"] = contact as Record<string, unknown>;
           if ((contact as Record<string, unknown>).company_id) {
             const { data: company } = await supabase.from("companies").select("*").eq("id", (contact as Record<string, unknown>).company_id as string).single();
-            if (company) sourceData["companies"] = company;
+            if (company) sourceData["companies"] = company as Record<string, unknown>;
           }
+        }
+      }
+    } else {
+      // Fallback: record may be a unified_deals ID (loan template used from deal page)
+      const { data: deal } = await supabase.from("unified_deals" as never).select("*").eq("id" as never, recordId as never).single();
+      if (deal) {
+        const dealRecord = deal as Record<string, unknown>;
+        sourceData["unified_deals"] = dealRecord;
+        const uwData = (dealRecord.uw_data ?? {}) as Record<string, unknown>;
+        const propertyData = (dealRecord.property_data ?? {}) as Record<string, unknown>;
+        sourceData["loans"] = { ...dealRecord, ...uwData, ...propertyData };
+        if (dealRecord.primary_contact_id) {
+          const { data: contact } = await supabase.from("crm_contacts").select("*").eq("id", dealRecord.primary_contact_id as string).single();
+          if (contact) {
+            sourceData["crm_contacts"] = contact as Record<string, unknown>;
+            if ((contact as Record<string, unknown>).company_id) {
+              const { data: company } = await supabase.from("companies").select("*").eq("id", (contact as Record<string, unknown>).company_id as string).single();
+              if (company) sourceData["companies"] = company as Record<string, unknown>;
+            }
+          }
+        }
+        if (dealRecord.company_id && !sourceData["companies"]) {
+          const { data: company } = await supabase.from("companies").select("*").eq("id", dealRecord.company_id as string).single();
+          if (company) sourceData["companies"] = company as Record<string, unknown>;
         }
       }
     }
@@ -142,8 +175,33 @@ export async function resolveTemplateData(
       }
     }
   } else if (template.record_type === "deal") {
-    const { data: deal } = await supabase.from("equity_deals").select("*").eq("id", recordId).single();
-    if (deal) sourceData["equity_deals"] = deal;
+    const { data: deal } = await supabase.from("unified_deals" as never).select("*").eq("id" as never, recordId as never).single();
+    if (deal) {
+      const dealRecord = deal as Record<string, unknown>;
+      sourceData["unified_deals"] = dealRecord;
+      // Flatten uw_data and property_data so merge fields can access nested values
+      const uwData = (dealRecord.uw_data ?? {}) as Record<string, unknown>;
+      const propertyData = (dealRecord.property_data ?? {}) as Record<string, unknown>;
+      const flatDeal = { ...dealRecord, ...uwData, ...propertyData };
+      // Also store under "loans" alias for backwards compat with loan templates
+      sourceData["loans"] = flatDeal;
+      // Resolve related contact
+      if (dealRecord.primary_contact_id) {
+        const { data: contact } = await supabase.from("crm_contacts").select("*").eq("id", dealRecord.primary_contact_id as string).single();
+        if (contact) {
+          sourceData["crm_contacts"] = contact as Record<string, unknown>;
+          if ((contact as Record<string, unknown>).company_id) {
+            const { data: company } = await supabase.from("companies").select("*").eq("id", (contact as Record<string, unknown>).company_id as string).single();
+            if (company) sourceData["companies"] = company as Record<string, unknown>;
+          }
+        }
+      }
+      // Also resolve company directly from deal
+      if (dealRecord.company_id && !sourceData["companies"]) {
+        const { data: company } = await supabase.from("companies").select("*").eq("id", dealRecord.company_id as string).single();
+        if (company) sourceData["companies"] = company as Record<string, unknown>;
+      }
+    }
   } else if (template.record_type === "company") {
     const { data: company } = await supabase.from("companies").select("*").eq("id", recordId).single();
     if (company) sourceData["companies"] = company;
@@ -162,8 +220,9 @@ export async function resolveTemplateData(
       crm_contacts: ["crm_contacts"],
       crm_companies: ["companies", "crm_companies"],
       companies: ["companies", "crm_companies"],
-      loans: ["loans"],
-      equity_deals: ["equity_deals"],
+      loans: ["loans", "unified_deals"],
+      equity_deals: ["unified_deals", "equity_deals"],
+      unified_deals: ["unified_deals", "loans"],
     };
 
     const tables = tableAliases[field.source] ?? [field.source];
@@ -257,20 +316,20 @@ export async function searchRecords(
 
   if (recordType === "deal") {
     const { data } = await supabase
-      .from("equity_deals")
-      .select("id, deal_name")
+      .from("unified_deals" as never)
+      .select("id, name" as never)
       .or(
         q
-          ? `deal_name.ilike.%${q}%`
+          ? `name.ilike.%${q}%`
           : "id.neq.00000000-0000-0000-0000-000000000000"
       )
-      .order("created_at", { ascending: false })
+      .order("created_at" as never, { ascending: false })
       .limit(20);
 
     return {
-      records: (data ?? []).map((r) => ({
+      records: ((data ?? []) as Array<{ id: string; name: string }>).map((r) => ({
         id: r.id,
-        label: r.deal_name || r.id,
+        label: r.name || r.id,
       })),
     };
   }

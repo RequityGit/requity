@@ -312,31 +312,72 @@ Deno.serve(async (req: Request) => {
         .select("*")
         .eq("id", record_id)
         .single();
-      if (!loan) {
-        return new Response(
-          JSON.stringify({ error: "Loan record not found" }),
-          { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
-      }
-      sourceData["loans"] = loan;
 
-      // Resolve related contact
-      if (loan.borrower_contact_id) {
-        const { data: contact } = await supabaseAdmin
-          .from("crm_contacts")
-          .select("*")
-          .eq("id", loan.borrower_contact_id)
-          .single();
-        if (contact) {
-          sourceData["crm_contacts"] = contact;
-          if (contact.company_id) {
-            const { data: company } = await supabaseAdmin
-              .from("companies")
-              .select("*")
-              .eq("id", contact.company_id)
-              .single();
-            if (company) sourceData["companies"] = company;
+      if (loan) {
+        sourceData["loans"] = loan;
+        // Resolve related contact
+        if (loan.borrower_contact_id) {
+          const { data: contact } = await supabaseAdmin
+            .from("crm_contacts")
+            .select("*")
+            .eq("id", loan.borrower_contact_id)
+            .single();
+          if (contact) {
+            sourceData["crm_contacts"] = contact;
+            if (contact.company_id) {
+              const { data: company } = await supabaseAdmin
+                .from("companies")
+                .select("*")
+                .eq("id", contact.company_id)
+                .single();
+              if (company) sourceData["companies"] = company;
+            }
           }
+        }
+      } else {
+        // Fallback: record may be a unified_deals ID (loan template used from deal page)
+        const { data: deal } = await supabaseAdmin
+          .from("unified_deals")
+          .select("*")
+          .eq("id", record_id)
+          .single();
+        if (!deal) {
+          return new Response(
+            JSON.stringify({ error: "Loan or deal record not found" }),
+            { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
+        }
+        const dealRecord = deal as Record<string, unknown>;
+        sourceData["unified_deals"] = dealRecord;
+        const uwData = (dealRecord.uw_data ?? {}) as Record<string, unknown>;
+        const propertyData = (dealRecord.property_data ?? {}) as Record<string, unknown>;
+        sourceData["loans"] = { ...dealRecord, ...uwData, ...propertyData };
+        // Resolve related contact
+        if (dealRecord.primary_contact_id) {
+          const { data: contact } = await supabaseAdmin
+            .from("crm_contacts")
+            .select("*")
+            .eq("id", dealRecord.primary_contact_id as string)
+            .single();
+          if (contact) {
+            sourceData["crm_contacts"] = contact as Record<string, unknown>;
+            if ((contact as Record<string, unknown>).company_id) {
+              const { data: company } = await supabaseAdmin
+                .from("companies")
+                .select("*")
+                .eq("id", (contact as Record<string, unknown>).company_id as string)
+                .single();
+              if (company) sourceData["companies"] = company as Record<string, unknown>;
+            }
+          }
+        }
+        if (dealRecord.company_id && !sourceData["companies"]) {
+          const { data: company } = await supabaseAdmin
+            .from("companies")
+            .select("*")
+            .eq("id", dealRecord.company_id as string)
+            .single();
+          if (company) sourceData["companies"] = company as Record<string, unknown>;
         }
       }
     } else if (template.record_type === "contact") {
@@ -362,7 +403,7 @@ Deno.serve(async (req: Request) => {
       }
     } else if (template.record_type === "deal") {
       const { data: deal } = await supabaseAdmin
-        .from("equity_deals")
+        .from("unified_deals")
         .select("*")
         .eq("id", record_id)
         .single();
@@ -372,7 +413,42 @@ Deno.serve(async (req: Request) => {
           { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
-      sourceData["equity_deals"] = deal;
+      const dealRecord = deal as Record<string, unknown>;
+      sourceData["unified_deals"] = dealRecord;
+      // Flatten uw_data and property_data so merge fields can access nested values
+      const uwData = (dealRecord.uw_data ?? {}) as Record<string, unknown>;
+      const propertyData = (dealRecord.property_data ?? {}) as Record<string, unknown>;
+      const flatDeal = { ...dealRecord, ...uwData, ...propertyData };
+      // Also store under "loans" alias for backwards compat with loan templates
+      sourceData["loans"] = flatDeal;
+      // Resolve related contact
+      if (dealRecord.primary_contact_id) {
+        const { data: contact } = await supabaseAdmin
+          .from("crm_contacts")
+          .select("*")
+          .eq("id", dealRecord.primary_contact_id as string)
+          .single();
+        if (contact) {
+          sourceData["crm_contacts"] = contact as Record<string, unknown>;
+          if ((contact as Record<string, unknown>).company_id) {
+            const { data: company } = await supabaseAdmin
+              .from("companies")
+              .select("*")
+              .eq("id", (contact as Record<string, unknown>).company_id as string)
+              .single();
+            if (company) sourceData["companies"] = company as Record<string, unknown>;
+          }
+        }
+      }
+      // Also resolve company directly from deal
+      if (dealRecord.company_id && !sourceData["companies"]) {
+        const { data: company } = await supabaseAdmin
+          .from("companies")
+          .select("*")
+          .eq("id", dealRecord.company_id as string)
+          .single();
+        if (company) sourceData["companies"] = company as Record<string, unknown>;
+      }
     } else if (template.record_type === "company") {
       const { data: company } = await supabaseAdmin
         .from("companies")
@@ -413,8 +489,9 @@ Deno.serve(async (req: Request) => {
           crm_contacts: ["crm_contacts"],
           crm_companies: ["companies", "crm_companies"],
           companies: ["companies", "crm_companies"],
-          loans: ["loans"],
-          equity_deals: ["equity_deals"],
+          loans: ["loans", "unified_deals"],
+          equity_deals: ["unified_deals", "equity_deals"],
+          unified_deals: ["unified_deals", "loans"],
         };
 
         const tables = tableAliases[field.source] ?? [field.source];
@@ -498,6 +575,7 @@ Deno.serve(async (req: Request) => {
       "document";
     const loanNumber =
       (sourceData["loans"]?.loan_number as string) ??
+      (sourceData["unified_deals"]?.deal_number as string) ??
       new Date().toISOString().split("T")[0];
     const fileName = `${template.template_type}_${contactName}_${loanNumber}.${fileFormat}`;
 
