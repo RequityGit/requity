@@ -347,18 +347,28 @@ async function triggerDocumentReviewEdgeFunction(
   documentId: string,
   dealId: string
 ) {
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  if (!supabaseUrl || !serviceRoleKey) return;
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.URL;
+  if (!serviceRoleKey) return;
 
-  await fetch(`${supabaseUrl}/functions/v1/review-document`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${serviceRoleKey}`,
-    },
-    body: JSON.stringify({ document_id: documentId, deal_id: dealId }),
-  });
+  // Use internal Next.js API route instead of Supabase edge function
+  // to avoid Supabase WORKER_LIMIT exhaustion from other functions.
+  const url = appUrl
+    ? `${appUrl}/api/deals/${dealId}/review-document`
+    : `/api/deals/${dealId}/review-document`;
+
+  try {
+    await fetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${serviceRoleKey}`,
+      },
+      body: JSON.stringify({ document_id: documentId }),
+    });
+  } catch (err) {
+    console.error("triggerDocumentReview failed:", err);
+  }
 }
 
 export async function getDocumentReview(documentId: string) {
