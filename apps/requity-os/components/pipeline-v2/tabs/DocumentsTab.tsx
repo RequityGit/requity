@@ -9,6 +9,7 @@ import {
   uploadDealDocumentV2,
   deleteDealDocumentV2,
   retriggerDocumentReview,
+  getDocumentSignedUrl,
 } from "@/app/(authenticated)/admin/pipeline-v2/[id]/actions";
 import { ReviewStatusBadge } from "@/components/pipeline-v2/ReviewStatusBadge";
 import { DocumentReviewPanel } from "@/components/pipeline-v2/DocumentReviewPanel";
@@ -57,15 +58,38 @@ export function DocumentsTab({ documents, dealId }: DocumentsTabProps) {
   const [reviewPanelOpen, setReviewPanelOpen] = useState(false);
   const [selectedDoc, setSelectedDoc] = useState<DealDocument | null>(null);
 
+  const [downloadingId, setDownloadingId] = useState<string | null>(null);
+
   // Subscribe to realtime review status updates
   useDocumentReviewStatus(dealId);
 
-  function handleFileSelect(e: React.ChangeEvent<HTMLInputElement>) {
-    const files = e.target.files;
-    if (!files || files.length === 0) return;
+  async function handleViewOrDownload(doc: DealDocument, download: boolean) {
+    if (!doc.storage_path) {
+      toast.error("No storage path for this document");
+      return;
+    }
+    setDownloadingId(doc.id);
+    const result = await getDocumentSignedUrl(doc.storage_path);
+    setDownloadingId(null);
+    if (result.error || !result.url) {
+      toast.error(`Failed to get download link: ${result.error ?? "Unknown error"}`);
+      return;
+    }
+    if (download) {
+      const a = document.createElement("a");
+      a.href = result.url;
+      a.download = doc.document_name;
+      a.click();
+    } else {
+      window.open(result.url, "_blank");
+    }
+  }
+
+  function uploadFiles(files: File[]) {
+    if (files.length === 0) return;
 
     startUpload(async () => {
-      for (const file of Array.from(files)) {
+      for (const file of files) {
         const formData = new FormData();
         formData.append("file", file);
         formData.append("dealId", dealId);
@@ -84,8 +108,25 @@ export function DocumentsTab({ documents, dealId }: DocumentsTabProps) {
         }
       }
     });
+  }
 
+  function handleFileSelect(e: React.ChangeEvent<HTMLInputElement>) {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+    uploadFiles(Array.from(files));
     if (fileInputRef.current) fileInputRef.current.value = "";
+  }
+
+  function handleDrop(e: React.DragEvent<HTMLButtonElement>) {
+    e.preventDefault();
+    e.stopPropagation();
+    const files = Array.from(e.dataTransfer.files);
+    if (files.length > 0) uploadFiles(files);
+  }
+
+  function handleDragOver(e: React.DragEvent<HTMLButtonElement>) {
+    e.preventDefault();
+    e.stopPropagation();
   }
 
   async function handleDelete(docId: string, docName: string) {
@@ -118,6 +159,8 @@ export function DocumentsTab({ documents, dealId }: DocumentsTabProps) {
       {/* Upload zone */}
       <button
         onClick={() => fileInputRef.current?.click()}
+        onDrop={handleDrop}
+        onDragOver={handleDragOver}
         disabled={uploading}
         className="cursor-pointer rounded-xl border-2 border-dashed border-border bg-card px-5 py-8 text-center transition-colors hover:bg-muted/50"
       >
@@ -193,24 +236,27 @@ export function DocumentsTab({ documents, dealId }: DocumentsTabProps) {
                 }
               }}
             />
-            {doc.file_url && (
-              <a
-                href={doc.file_url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="p-1 text-muted-foreground hover:text-foreground transition-colors"
+            {doc.storage_path && (
+              <button
+                onClick={() => handleViewOrDownload(doc, false)}
+                disabled={downloadingId === doc.id}
+                className="p-1 text-muted-foreground hover:text-foreground transition-colors cursor-pointer bg-transparent border-0"
               >
-                <Eye className="h-3.5 w-3.5" strokeWidth={1.5} />
-              </a>
+                {downloadingId === doc.id ? (
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                ) : (
+                  <Eye className="h-3.5 w-3.5" strokeWidth={1.5} />
+                )}
+              </button>
             )}
-            {doc.file_url && (
-              <a
-                href={doc.file_url}
-                download
-                className="p-1 text-muted-foreground hover:text-foreground transition-colors"
+            {doc.storage_path && (
+              <button
+                onClick={() => handleViewOrDownload(doc, true)}
+                disabled={downloadingId === doc.id}
+                className="p-1 text-muted-foreground hover:text-foreground transition-colors cursor-pointer bg-transparent border-0"
               >
                 <Download className="h-3.5 w-3.5" strokeWidth={1.5} />
-              </a>
+              </button>
             )}
             <button
               onClick={() => handleDelete(doc.id, doc.document_name)}

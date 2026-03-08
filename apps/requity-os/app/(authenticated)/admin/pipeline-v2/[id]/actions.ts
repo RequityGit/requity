@@ -113,31 +113,43 @@ export async function uploadDealDocumentV2(
 
     if (!file || !dealId) return { error: "Missing file or dealId" };
 
+    // Convert File to Buffer for reliable server-side upload
+    // (File objects from server action FormData may not be compatible
+    // with Supabase storage in all Node.js/serverless environments)
+    const arrayBuffer = await file.arrayBuffer();
+    const buffer = Buffer.from(arrayBuffer);
+
     const admin = createAdminClient();
     const fileName = `${Date.now()}-${file.name.replace(/[^a-zA-Z0-9._-]/g, "_")}`;
     const storagePath = `deals/${dealId}/${fileName}`;
 
     const { error: uploadError } = await admin.storage
       .from("loan-documents")
-      .upload(storagePath, file, { contentType: file.type, upsert: false });
+      .upload(storagePath, buffer, {
+        contentType: file.type || "application/octet-stream",
+        upsert: false,
+      });
 
     if (uploadError) {
       console.error("uploadDealDocumentV2 storage error:", uploadError);
       return { error: uploadError.message };
     }
 
-    const { data: urlData } = admin.storage
+    // Generate a signed URL (bucket is private, getPublicUrl won't work)
+    const { data: signedUrlData, error: signedUrlError } = await admin.storage
       .from("loan-documents")
-      .getPublicUrl(storagePath);
+      .createSignedUrl(storagePath, 60 * 60 * 24 * 365);
+
+    const fileUrl = signedUrlError ? storagePath : signedUrlData.signedUrl;
 
     const { data: docRecord, error: dbError } = await admin
       .from("unified_deal_documents" as never)
       .insert({
         deal_id: dealId,
         document_name: file.name,
-        file_url: urlData.publicUrl,
+        file_url: fileUrl,
         file_size_bytes: file.size,
-        mime_type: file.type,
+        mime_type: file.type || "application/octet-stream",
         uploaded_by: auth.user.id,
         storage_path: storagePath,
         review_status: "pending",
@@ -349,6 +361,35 @@ export async function retriggerDocumentReview(documentId: string) {
     return {
       error:
         err instanceof Error ? err.message : "Failed to retrigger review",
+    };
+  }
+}
+
+// ─── Get Signed Download URL ───
+
+export async function getDocumentSignedUrl(
+  storagePath: string
+): Promise<{ url: string | null; error: string | null }> {
+  try {
+    const auth = await requireAdmin();
+    if ("error" in auth) return { url: null, error: auth.error ?? "Unauthorized" };
+
+    const admin = createAdminClient();
+    const { data, error } = await admin.storage
+      .from("loan-documents")
+      .createSignedUrl(storagePath, 60 * 60); // 1 hour
+
+    if (error) {
+      console.error("getDocumentSignedUrl error:", error);
+      return { url: null, error: error.message };
+    }
+
+    return { url: data.signedUrl, error: null };
+  } catch (err: unknown) {
+    console.error("getDocumentSignedUrl error:", err);
+    return {
+      url: null,
+      error: err instanceof Error ? err.message : "Failed to generate URL",
     };
   }
 }
