@@ -81,8 +81,8 @@ export function DatePicker({
           initialFocus
           {...(showYearNavigation && {
             captionLayout: "dropdown" as const,
-            fromYear,
-            toYear,
+            startMonth: new Date(fromYear, 0),
+            endMonth: new Date(toYear, 11),
           })}
         />
       </PopoverContent>

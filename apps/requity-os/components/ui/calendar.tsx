@@ -2,7 +2,7 @@
 
 import * as React from "react"
 import { DayPicker } from "react-day-picker"
-import { ChevronLeft, ChevronRight } from "lucide-react"
+import { ChevronDown, ChevronLeft, ChevronRight } from "lucide-react"
 
 import { cn } from "@/lib/utils"
 import { buttonVariants } from "@/components/ui/button"
@@ -57,11 +57,15 @@ function Calendar({
           "aria-selected:bg-accent aria-selected:text-accent-foreground",
         hidden: "invisible",
         dropdowns: "flex items-center gap-2",
-        dropdown: "appearance-none bg-transparent border border-border rounded-md px-2 py-1 text-sm font-medium cursor-pointer focus:outline-none focus:ring-1 focus:ring-ring",
+        dropdown_root: "relative inline-flex items-center",
+        dropdown: "absolute inset-0 w-full opacity-0 cursor-pointer z-10",
+        months_dropdown: "relative inline-flex items-center",
+        years_dropdown: "relative inline-flex items-center",
         ...classNames,
       }}
       components={{
         Chevron: ({ orientation }) => {
+          if (orientation === "down") return <ChevronDown className="h-4 w-4" />
           const Icon = orientation === "left" ? ChevronLeft : ChevronRight
           return <Icon className="h-4 w-4" />
         },
