@@ -3,7 +3,7 @@
 // Called from uploadDealDocumentV2 server action after successful upload.
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { encode as encodeBase64 } from "https://deno.land/std@0.224.0/encoding/base64.ts";
+import { encodeBase64 } from "jsr:@std/encoding@1/base64";
 
 // ─── Document Type Detection (inlined from detect-type.ts) ───
 
