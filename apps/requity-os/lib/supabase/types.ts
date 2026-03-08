@@ -4344,6 +4344,174 @@ export type Database = {
           },
         ]
       }
+      document_review_items: {
+        Row: {
+          approved_at: string | null
+          approved_by: string | null
+          confidence: number
+          created_at: string
+          current_value: string | null
+          extraction_source: string | null
+          field_label: string
+          id: string
+          proposed_value: string
+          review_id: string
+          status: string
+          target_column: string
+          target_json_path: string | null
+          target_record_id: string | null
+          target_table: string
+        }
+        Insert: {
+          approved_at?: string | null
+          approved_by?: string | null
+          confidence?: number
+          created_at?: string
+          current_value?: string | null
+          extraction_source?: string | null
+          field_label: string
+          id?: string
+          proposed_value: string
+          review_id: string
+          status?: string
+          target_column: string
+          target_json_path?: string | null
+          target_record_id?: string | null
+          target_table: string
+        }
+        Update: {
+          approved_at?: string | null
+          approved_by?: string | null
+          confidence?: number
+          created_at?: string
+          current_value?: string | null
+          extraction_source?: string | null
+          field_label?: string
+          id?: string
+          proposed_value?: string
+          review_id?: string
+          status?: string
+          target_column?: string
+          target_json_path?: string | null
+          target_record_id?: string | null
+          target_table?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "document_review_items_approved_by_fkey"
+            columns: ["approved_by"]
+            isOneToOne: false
+            referencedRelation: "equity_pipeline"
+            referencedColumns: ["assigned_to_profile_id"]
+          },
+          {
+            foreignKeyName: "document_review_items_approved_by_fkey"
+            columns: ["approved_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "document_review_items_review_id_fkey"
+            columns: ["review_id"]
+            isOneToOne: false
+            referencedRelation: "document_reviews"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      document_reviews: {
+        Row: {
+          created_at: string
+          deal_id: string
+          document_id: string
+          document_type: string
+          document_type_confidence: number | null
+          error_message: string | null
+          flags: string[] | null
+          id: string
+          model_used: string | null
+          notes_draft: string | null
+          processing_time_ms: number | null
+          raw_extraction: Json | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          status: string
+          summary: string | null
+          tokens_used: number | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          deal_id: string
+          document_id: string
+          document_type?: string
+          document_type_confidence?: number | null
+          error_message?: string | null
+          flags?: string[] | null
+          id?: string
+          model_used?: string | null
+          notes_draft?: string | null
+          processing_time_ms?: number | null
+          raw_extraction?: Json | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          summary?: string | null
+          tokens_used?: number | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          deal_id?: string
+          document_id?: string
+          document_type?: string
+          document_type_confidence?: number | null
+          error_message?: string | null
+          flags?: string[] | null
+          id?: string
+          model_used?: string | null
+          notes_draft?: string | null
+          processing_time_ms?: number | null
+          raw_extraction?: Json | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          summary?: string | null
+          tokens_used?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "document_reviews_deal_id_fkey"
+            columns: ["deal_id"]
+            isOneToOne: false
+            referencedRelation: "unified_deals"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "document_reviews_document_id_fkey"
+            columns: ["document_id"]
+            isOneToOne: false
+            referencedRelation: "unified_deal_documents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "document_reviews_reviewed_by_fkey"
+            columns: ["reviewed_by"]
+            isOneToOne: false
+            referencedRelation: "equity_pipeline"
+            referencedColumns: ["assigned_to_profile_id"]
+          },
+          {
+            foreignKeyName: "document_reviews_reviewed_by_fkey"
+            columns: ["reviewed_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       documents: {
         Row: {
           created_at: string
@@ -9612,6 +9780,245 @@ export type Database = {
           },
         ]
       }
+      page_layout_fields: {
+        Row: {
+          column_position: number | null
+          created_at: string | null
+          display_format: string | null
+          field_key: string
+          help_text: string | null
+          id: string
+          is_read_only: boolean | null
+          is_visible: boolean | null
+          label_override: string | null
+          placeholder: string | null
+          section_id: string
+          sort_order: number
+          span: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          column_position?: number | null
+          created_at?: string | null
+          display_format?: string | null
+          field_key: string
+          help_text?: string | null
+          id?: string
+          is_read_only?: boolean | null
+          is_visible?: boolean | null
+          label_override?: string | null
+          placeholder?: string | null
+          section_id: string
+          sort_order?: number
+          span?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          column_position?: number | null
+          created_at?: string | null
+          display_format?: string | null
+          field_key?: string
+          help_text?: string | null
+          id?: string
+          is_read_only?: boolean | null
+          is_visible?: boolean | null
+          label_override?: string | null
+          placeholder?: string | null
+          section_id?: string
+          sort_order?: number
+          span?: number | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "page_layout_fields_section_id_fkey"
+            columns: ["section_id"]
+            isOneToOne: false
+            referencedRelation: "page_layout_sections"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      page_layout_history: {
+        Row: {
+          change_detail: Json | null
+          change_type: string
+          changed_by: string | null
+          created_at: string | null
+          id: string
+          layout_id: string
+        }
+        Insert: {
+          change_detail?: Json | null
+          change_type: string
+          changed_by?: string | null
+          created_at?: string | null
+          id?: string
+          layout_id: string
+        }
+        Update: {
+          change_detail?: Json | null
+          change_type?: string
+          changed_by?: string | null
+          created_at?: string | null
+          id?: string
+          layout_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "page_layout_history_layout_id_fkey"
+            columns: ["layout_id"]
+            isOneToOne: false
+            referencedRelation: "page_layouts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      page_layout_sections: {
+        Row: {
+          column_layout: string | null
+          created_at: string | null
+          icon: string | null
+          id: string
+          is_collapsed_default: boolean | null
+          is_collapsible: boolean | null
+          is_visible: boolean | null
+          layout_id: string
+          section_key: string
+          sort_order: number
+          span: string | null
+          subtitle: string | null
+          tab_group: string | null
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          column_layout?: string | null
+          created_at?: string | null
+          icon?: string | null
+          id?: string
+          is_collapsed_default?: boolean | null
+          is_collapsible?: boolean | null
+          is_visible?: boolean | null
+          layout_id: string
+          section_key: string
+          sort_order?: number
+          span?: string | null
+          subtitle?: string | null
+          tab_group?: string | null
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          column_layout?: string | null
+          created_at?: string | null
+          icon?: string | null
+          id?: string
+          is_collapsed_default?: boolean | null
+          is_collapsible?: boolean | null
+          is_visible?: boolean | null
+          layout_id?: string
+          section_key?: string
+          sort_order?: number
+          span?: string | null
+          subtitle?: string | null
+          tab_group?: string | null
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "page_layout_sections_layout_id_fkey"
+            columns: ["layout_id"]
+            isOneToOne: false
+            referencedRelation: "page_layouts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      page_layout_tabs: {
+        Row: {
+          badge_field: string | null
+          created_at: string | null
+          icon: string | null
+          id: string
+          is_visible: boolean | null
+          layout_id: string
+          sort_order: number
+          tab_key: string
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          badge_field?: string | null
+          created_at?: string | null
+          icon?: string | null
+          id?: string
+          is_visible?: boolean | null
+          layout_id: string
+          sort_order?: number
+          tab_key: string
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          badge_field?: string | null
+          created_at?: string | null
+          icon?: string | null
+          id?: string
+          is_visible?: boolean | null
+          layout_id?: string
+          sort_order?: number
+          tab_key?: string
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "page_layout_tabs_layout_id_fkey"
+            columns: ["layout_id"]
+            isOneToOne: false
+            referencedRelation: "page_layouts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      page_layouts: {
+        Row: {
+          created_at: string | null
+          created_by: string | null
+          description: string | null
+          id: string
+          is_active: boolean | null
+          name: string
+          object_type: Database["public"]["Enums"]["page_object_type"]
+          role: Database["public"]["Enums"]["app_role"] | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          name: string
+          object_type: Database["public"]["Enums"]["page_object_type"]
+          role?: Database["public"]["Enums"]["app_role"] | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          object_type?: Database["public"]["Enums"]["page_object_type"]
+          role?: Database["public"]["Enums"]["app_role"] | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       payoff_fee_defaults: {
         Row: {
           created_at: string
@@ -12703,6 +13110,8 @@ export type Database = {
           file_url: string
           id: string
           mime_type: string | null
+          review_status: string | null
+          storage_path: string | null
           uploaded_by: string | null
         }
         Insert: {
@@ -12714,6 +13123,8 @@ export type Database = {
           file_url: string
           id?: string
           mime_type?: string | null
+          review_status?: string | null
+          storage_path?: string | null
           uploaded_by?: string | null
         }
         Update: {
@@ -12725,6 +13136,8 @@ export type Database = {
           file_url?: string
           id?: string
           mime_type?: string | null
+          review_status?: string | null
+          storage_path?: string | null
           uploaded_by?: string | null
         }
         Relationships: [
@@ -14649,6 +15062,15 @@ export type Database = {
         }
         Returns: Json
       }
+      apply_document_review: {
+        Args: {
+          p_approved_items?: string[]
+          p_note_text?: string
+          p_rejected_items?: string[]
+          p_review_id: string
+        }
+        Returns: Json
+      }
       apply_payment: {
         Args: {
           p_amount_received: number
@@ -14787,6 +15209,13 @@ export type Database = {
           is_active: boolean
           role: string
         }[]
+      }
+      get_page_layout: {
+        Args: {
+          p_object_type: Database["public"]["Enums"]["page_object_type"]
+          p_role?: Database["public"]["Enums"]["app_role"]
+        }
+        Returns: Json
       }
       get_portal_context: { Args: never; Returns: Json }
       get_portfolio_draw_dashboard: { Args: never; Returns: Json }
@@ -15238,6 +15667,15 @@ export type Database = {
         | "onboarding"
         | "closed_lost"
       loan_type: "commercial" | "dscr" | "guc" | "rtl" | "transactional"
+      page_object_type:
+        | "contact"
+        | "company"
+        | "opportunity"
+        | "loan"
+        | "property"
+        | "investment"
+        | "borrower_profile"
+        | "investor_profile"
       payment_structure_type: "interest_only" | "principal_and_interest"
       property_type:
         | "sfr"
@@ -15730,6 +16168,16 @@ export const Constants = {
         "closed_lost",
       ],
       loan_type: ["commercial", "dscr", "guc", "rtl", "transactional"],
+      page_object_type: [
+        "contact",
+        "company",
+        "opportunity",
+        "loan",
+        "property",
+        "investment",
+        "borrower_profile",
+        "investor_profile",
+      ],
       payment_structure_type: ["interest_only", "principal_and_interest"],
       property_type: [
         "sfr",

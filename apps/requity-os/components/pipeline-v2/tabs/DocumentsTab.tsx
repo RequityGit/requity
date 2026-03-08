@@ -2,14 +2,17 @@
 
 import { useState, useRef, useTransition } from "react";
 import { Upload, FileText, Eye, Download, Trash2, Loader2 } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import {
   uploadDealDocumentV2,
   deleteDealDocumentV2,
+  retriggerDocumentReview,
 } from "@/app/(authenticated)/admin/pipeline-v2/[id]/actions";
+import { ReviewStatusBadge } from "@/components/pipeline-v2/ReviewStatusBadge";
+import { DocumentReviewPanel } from "@/components/pipeline-v2/DocumentReviewPanel";
+import { useDocumentReviewStatus } from "@/hooks/useDocumentReviewStatus";
 
 interface DealDocument {
   id: string;
@@ -21,6 +24,8 @@ interface DealDocument {
   category: string | null;
   uploaded_by: string | null;
   created_at: string;
+  review_status: string | null;
+  storage_path: string | null;
   _uploaded_by_name?: string | null;
 }
 
@@ -49,6 +54,11 @@ export function DocumentsTab({ documents, dealId }: DocumentsTabProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploading, startUpload] = useTransition();
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [reviewPanelOpen, setReviewPanelOpen] = useState(false);
+  const [selectedDoc, setSelectedDoc] = useState<DealDocument | null>(null);
+
+  // Subscribe to realtime review status updates
+  useDocumentReviewStatus(dealId);
 
   function handleFileSelect(e: React.ChangeEvent<HTMLInputElement>) {
     const files = e.target.files;
@@ -81,6 +91,20 @@ export function DocumentsTab({ documents, dealId }: DocumentsTabProps) {
       toast.success(`Deleted ${docName}`);
     }
     setDeletingId(null);
+  }
+
+  function openReviewPanel(doc: DealDocument) {
+    setSelectedDoc(doc);
+    setReviewPanelOpen(true);
+  }
+
+  async function handleRetryReview(docId: string) {
+    const result = await retriggerDocumentReview(docId);
+    if ("error" in result && result.error) {
+      toast.error(`Failed to retry: ${result.error}`);
+    } else {
+      toast.success("Review retriggered");
+    }
   }
 
   return (
@@ -149,6 +173,20 @@ export function DocumentsTab({ documents, dealId }: DocumentsTabProps) {
                 {doc.category}
               </Badge>
             )}
+            {/* AI Review Status Badge */}
+            <ReviewStatusBadge
+              status={doc.review_status as "pending" | "processing" | "ready" | "applied" | "partially_applied" | "rejected" | "error" | null}
+              onClick={() => {
+                if (doc.review_status === "error") {
+                  handleRetryReview(doc.id);
+                } else if (
+                  doc.review_status &&
+                  !["pending", "processing"].includes(doc.review_status)
+                ) {
+                  openReviewPanel(doc);
+                }
+              }}
+            />
             {doc.file_url && (
               <a
                 href={doc.file_url}
@@ -182,6 +220,17 @@ export function DocumentsTab({ documents, dealId }: DocumentsTabProps) {
           </div>
         ))}
       </div>
+
+      {/* Review Panel */}
+      <DocumentReviewPanel
+        open={reviewPanelOpen}
+        onOpenChange={setReviewPanelOpen}
+        documentId={selectedDoc?.id ?? null}
+        documentName={selectedDoc?.document_name ?? ""}
+        onApplied={() => {
+          // Page will revalidate via server action
+        }}
+      />
     </div>
   );
 }

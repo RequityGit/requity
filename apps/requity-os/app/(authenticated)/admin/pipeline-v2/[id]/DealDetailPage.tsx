@@ -413,7 +413,7 @@ function TabContent({
     case "Documents":
       return (
         <DocumentsTab
-          documents={documents as unknown as { id: string; deal_id: string; document_name: string; file_url: string; file_size_bytes: number | null; mime_type: string | null; category: string | null; uploaded_by: string | null; created_at: string }[]}
+          documents={documents as unknown as { id: string; deal_id: string; document_name: string; file_url: string; file_size_bytes: number | null; mime_type: string | null; category: string | null; uploaded_by: string | null; created_at: string; review_status: string | null; storage_path: string | null; _uploaded_by_name?: string | null }[]}
           dealId={deal.id}
         />
       );

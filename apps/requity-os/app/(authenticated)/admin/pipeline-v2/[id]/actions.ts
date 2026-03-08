@@ -130,7 +130,7 @@ export async function uploadDealDocumentV2(
       .from("loan-documents")
       .getPublicUrl(storagePath);
 
-    const { error: dbError } = await admin
+    const { data: docRecord, error: dbError } = await admin
       .from("unified_deal_documents" as never)
       .insert({
         deal_id: dealId,
@@ -139,12 +139,24 @@ export async function uploadDealDocumentV2(
         file_size_bytes: file.size,
         mime_type: file.type,
         uploaded_by: auth.user.id,
-      } as never);
+        storage_path: storagePath,
+        review_status: "pending",
+      } as never)
+      .select("id" as never)
+      .single();
 
     if (dbError) {
       console.error("uploadDealDocumentV2 db error:", dbError);
       await admin.storage.from("loan-documents").remove([storagePath]);
       return { error: dbError.message };
+    }
+
+    // Fire AI document review (non-blocking)
+    const documentId = (docRecord as { id: string })?.id;
+    if (documentId) {
+      triggerDocumentReviewEdgeFunction(documentId, dealId).catch((err) =>
+        console.error("Failed to trigger document review:", err)
+      );
     }
 
     revalidateDeal(dealId);
@@ -187,6 +199,157 @@ export async function deleteDealDocumentV2(
   } catch (err: unknown) {
     console.error("deleteDealDocumentV2 error:", err);
     return { error: err instanceof Error ? err.message : "Delete failed" };
+  }
+}
+
+// ─── AI Document Review Actions ───
+
+async function triggerDocumentReviewEdgeFunction(
+  documentId: string,
+  dealId: string
+) {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!supabaseUrl || !serviceRoleKey) return;
+
+  await fetch(`${supabaseUrl}/functions/v1/review-document`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${serviceRoleKey}`,
+    },
+    body: JSON.stringify({ document_id: documentId, deal_id: dealId }),
+  });
+}
+
+export async function getDocumentReview(documentId: string) {
+  try {
+    const auth = await requireAdmin();
+    if ("error" in auth) return { error: auth.error ?? "Unauthorized" };
+
+    const admin = createAdminClient();
+
+    const { data: review, error: reviewError } = await admin
+      .from("document_reviews" as never)
+      .select("*" as never)
+      .eq("document_id" as never, documentId as never)
+      .single();
+
+    if (reviewError || !review) {
+      return { error: reviewError?.message ?? "Review not found" };
+    }
+
+    const reviewId = (review as { id: string }).id;
+
+    const { data: items, error: itemsError } = await admin
+      .from("document_review_items" as never)
+      .select("*" as never)
+      .eq("review_id" as never, reviewId as never)
+      .order("confidence" as never, { ascending: false });
+
+    if (itemsError) {
+      return { error: itemsError.message };
+    }
+
+    return { review, items: items ?? [] };
+  } catch (err: unknown) {
+    console.error("getDocumentReview error:", err);
+    return {
+      error: err instanceof Error ? err.message : "Failed to load review",
+    };
+  }
+}
+
+export async function submitDocumentReview(
+  reviewId: string,
+  approvedItems: string[],
+  rejectedItems: string[],
+  noteText: string | null
+) {
+  try {
+    const auth = await requireAdmin();
+    if ("error" in auth) return { error: auth.error ?? "Unauthorized" };
+
+    const admin = createAdminClient();
+
+    const { data, error } = await admin.rpc(
+      "apply_document_review" as never,
+      {
+        p_review_id: reviewId,
+        p_approved_items: approvedItems,
+        p_rejected_items: rejectedItems,
+        p_note_text: noteText,
+      } as never
+    );
+
+    if (error) {
+      console.error("submitDocumentReview error:", error);
+      return { error: error.message };
+    }
+
+    // Get the deal_id from the review to revalidate
+    const { data: review } = await admin
+      .from("document_reviews" as never)
+      .select("deal_id" as never)
+      .eq("id" as never, reviewId as never)
+      .single();
+
+    if (review) {
+      revalidateDeal((review as { deal_id: string }).deal_id);
+    }
+
+    return { data: data as Record<string, unknown> };
+  } catch (err: unknown) {
+    console.error("submitDocumentReview error:", err);
+    return {
+      error: err instanceof Error ? err.message : "Failed to submit review",
+    };
+  }
+}
+
+export async function retriggerDocumentReview(documentId: string) {
+  try {
+    const auth = await requireAdmin();
+    if ("error" in auth) return { error: auth.error ?? "Unauthorized" };
+
+    const admin = createAdminClient();
+
+    // Get document to find deal_id
+    const { data: doc, error: docError } = await admin
+      .from("unified_deal_documents" as never)
+      .select("deal_id" as never)
+      .eq("id" as never, documentId as never)
+      .single();
+
+    if (docError || !doc) {
+      return { error: "Document not found" };
+    }
+
+    const dealId = (doc as { deal_id: string }).deal_id;
+
+    // Delete existing review if any
+    await admin
+      .from("document_reviews" as never)
+      .delete()
+      .eq("document_id" as never, documentId as never);
+
+    // Reset document review status
+    await admin
+      .from("unified_deal_documents" as never)
+      .update({ review_status: "pending" } as never)
+      .eq("id" as never, documentId as never);
+
+    // Trigger edge function
+    await triggerDocumentReviewEdgeFunction(documentId, dealId);
+
+    revalidateDeal(dealId);
+    return { success: true };
+  } catch (err: unknown) {
+    console.error("retriggerDocumentReview error:", err);
+    return {
+      error:
+        err instanceof Error ? err.message : "Failed to retrigger review",
+    };
   }
 }
 
