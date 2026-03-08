@@ -11,6 +11,7 @@ import {
   type ChecklistItem,
   type DealActivity,
 } from "@/components/pipeline-v2/pipeline-types";
+import type { OpsTask, Profile } from "@/lib/tasks";
 
 export const dynamic = "force-dynamic";
 
@@ -79,7 +80,7 @@ export default async function DealDetailRoute({ params }: PageProps) {
       .limit(200),
     supabase
       .from("profiles")
-      .select("id, full_name")
+      .select("id, full_name, avatar_url")
       .eq("role", "admin")
       .order("full_name"),
     supabase
@@ -92,11 +93,11 @@ export default async function DealDetailRoute({ params }: PageProps) {
       .select("*")
       .eq("deal_id" as never, id as never)
       .order("created_at" as never, { ascending: false }),
-    admin
-      .from("unified_deal_tasks" as never)
+    supabase
+      .from("ops_tasks")
       .select("*")
-      .eq("deal_id" as never, id as never)
-      .order("created_at" as never, { ascending: false }),
+      .eq("linked_entity_id", id)
+      .order("created_at", { ascending: false }),
   ]);
 
   const cardTypeResult = cardTypeRaw as unknown as {
@@ -110,7 +111,7 @@ export default async function DealDetailRoute({ params }: PageProps) {
   const checklistItems = ((checklistRaw as unknown as { data: ChecklistItem[] | null }).data ?? []);
   const activities = ((activitiesRaw as unknown as { data: DealActivity[] | null }).data ?? []);
   const documents = ((documentsRaw as unknown as { data: Record<string, unknown>[] | null }).data ?? []);
-  const tasks = ((tasksRaw as unknown as { data: Record<string, unknown>[] | null }).data ?? []);
+  const tasks = ((tasksRaw as unknown as { data: OpsTask[] | null }).data ?? []);
 
   // ─── Fetch commercial UW data (for commercial deals) ───
   let commercialUWData: {
@@ -176,10 +177,11 @@ export default async function DealDetailRoute({ params }: PageProps) {
     checklist_completed: checklistItems.filter((c) => c.completed).length,
   };
 
-  const teamMembers = (teamResult.data ?? []).map(
-    (t: { id: string; full_name: string | null }) => ({
+  const teamMembers: Profile[] = (teamResult.data ?? []).map(
+    (t: { id: string; full_name: string | null; avatar_url: string | null }) => ({
       id: t.id,
       full_name: t.full_name ?? "Unknown",
+      avatar_url: t.avatar_url ?? null,
     })
   );
 

@@ -50,7 +50,7 @@ import { StageStepper } from "@/components/pipeline-v2/StageStepper";
 import { EditableOverview } from "@/components/pipeline-v2/EditableOverview";
 import { UnderwritingPanel } from "@/components/pipeline-v2/UnderwritingPanel";
 import { DocumentsTab } from "@/components/pipeline-v2/tabs/DocumentsTab";
-import { TasksTab } from "@/components/pipeline-v2/tabs/TasksTab";
+import { DealTasks } from "@/components/tasks/deal-tasks";
 import { ConditionsTab } from "@/components/pipeline-v2/tabs/ConditionsTab";
 import { FinancialsTab, type CommercialUWData as FinancialsUWData } from "@/components/pipeline-v2/tabs/FinancialsTab";
 import { CommercialUnderwritingTab, type CommercialUWData } from "@/components/pipeline-v2/tabs/CommercialUnderwritingTab";
@@ -76,6 +76,7 @@ import { logQuickActionV2, assignTeamMemberV2 } from "./actions";
 import { SubmitForApprovalDialog } from "@/components/approvals/submit-for-approval-dialog";
 import { LoanApprovalSection } from "@/components/approvals/loan-approval-section";
 import type { ApprovalEntityType } from "@/lib/approvals/types";
+import type { OpsTask, Profile } from "@/lib/tasks";
 
 // ─── Props ───
 
@@ -85,11 +86,11 @@ interface DealDetailPageProps {
   stageConfigs: StageConfig[];
   checklist: ChecklistItem[];
   activities: DealActivity[];
-  teamMembers: { id: string; full_name: string }[];
+  teamMembers: Profile[];
   currentUserId: string;
   currentUserName: string;
   documents: Record<string, unknown>[];
-  tasks: Record<string, unknown>[];
+  tasks: OpsTask[];
   commercialUWData: CommercialUWData | null;
 }
 
@@ -336,8 +337,8 @@ function TabContent({
   activities: DealActivity[];
   currentUserId: string;
   documents: Record<string, unknown>[];
-  tasks: Record<string, unknown>[];
-  teamMembers: { id: string; full_name: string }[];
+  tasks: OpsTask[];
+  teamMembers: Profile[];
   commercialUWData: CommercialUWData | null;
 }) {
   const isCommercial = cardType.slug === "comm_debt";
@@ -394,11 +395,13 @@ function TabContent({
       );
     case "Tasks":
       return (
-        <TasksTab
-          tasks={tasks as unknown as import("@/components/pipeline-v2/tabs/TasksTab").DealTask[]}
+        <DealTasks
           dealId={deal.id}
+          dealLabel={deal.deal_number ?? deal.name}
+          dealEntityType="deal"
+          tasks={tasks}
+          profiles={teamMembers}
           currentUserId={currentUserId}
-          teamMembers={teamMembers}
         />
       );
     case "Documents":
@@ -540,7 +543,7 @@ function DealSidebar({
   deal: UnifiedDeal;
   cardType: UnifiedCardType;
   stageConfigs: StageConfig[];
-  teamMembers: { id: string; full_name: string }[];
+  teamMembers: Profile[];
   currentUserId: string;
   currentUserName: string;
 }) {
