@@ -14,6 +14,11 @@ import {
   type DealCondition,
 } from "@/components/pipeline-v2/pipeline-types";
 import type { OpsTask, Profile } from "@/lib/tasks";
+import {
+  mergeUwData,
+  getPropertySelectColumns,
+  getBorrowerSelectColumns,
+} from "@/lib/pipeline/resolve-uw-data";
 
 export const dynamic = "force-dynamic";
 
@@ -195,11 +200,39 @@ export default async function DealDetailRoute({ params }: PageProps) {
     }
   }
 
+  // Resolve UW data from real tables (properties, borrowers) and merge with JSONB
+  type Row = Record<string, unknown>;
+
+  const [propRes, borrowerRes] = await Promise.all([
+    deal.property_id
+      ? admin
+          .from("properties" as never)
+          .select(getPropertySelectColumns() as never)
+          .eq("id" as never, deal.property_id as never)
+          .single()
+      : Promise.resolve({ data: null }),
+    deal.primary_contact_id
+      ? admin
+          .from("borrowers" as never)
+          .select(getBorrowerSelectColumns() as never)
+          .eq("crm_contact_id" as never, deal.primary_contact_id as never)
+          .limit(1)
+          .single()
+      : Promise.resolve({ data: null }),
+  ]);
+
+  const resolvedUw = mergeUwData(
+    deal.uw_data,
+    (propRes.data as unknown as Row) ?? null,
+    (borrowerRes.data as unknown as Row) ?? null
+  );
+
   // Compute stage metrics
   const days = daysInStage(deal.stage_entered_at);
   const stageConfigMap = new Map(stageConfigs.map((sc) => [sc.stage, sc]));
   const enrichedDeal: UnifiedDeal = {
     ...deal,
+    uw_data: resolvedUw,
     days_in_stage: days,
     alert_level: getAlertLevel(days, stageConfigMap.get(deal.stage)),
     checklist_total: checklistItems.length,

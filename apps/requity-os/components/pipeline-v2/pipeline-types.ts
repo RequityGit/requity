@@ -86,6 +86,7 @@ export interface UnifiedDeal {
   stage_entered_at: string;
   primary_contact_id: string | null;
   company_id: string | null;
+  property_id: string | null;
   assigned_to: string | null;
   amount: number | null;
   probability: number;

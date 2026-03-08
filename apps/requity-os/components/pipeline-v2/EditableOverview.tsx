@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState, useTransition, useMemo } from "react";
 import { updateUwDataAction } from "@/app/(authenticated)/admin/pipeline-v2/actions";
 import {
   type UnifiedCardType,
@@ -30,7 +30,13 @@ export function EditableOverview({
   const [localData, setLocalData] = useState<Record<string, unknown>>(uwData);
   const [pending, startTransition] = useTransition();
 
-  const uwFieldMap = new Map(cardType.uw_fields.map((f) => [f.key, f]));
+  // Build a combined field map including property and contact fields
+  const uwFieldMap = useMemo(() => {
+    const map = new Map(cardType.uw_fields.map((f) => [f.key, f]));
+    for (const f of cardType.property_fields ?? []) map.set(f.key, f);
+    for (const f of cardType.contact_fields ?? []) map.set(f.key, f);
+    return map;
+  }, [cardType.uw_fields, cardType.property_fields, cardType.contact_fields]);
 
   function handleFieldChange(key: string, value: unknown) {
     setLocalData((prev) => ({ ...prev, [key]: value }));

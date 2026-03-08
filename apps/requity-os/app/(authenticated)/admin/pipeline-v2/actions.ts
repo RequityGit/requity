@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { requireAdmin } from "@/lib/auth/require-admin";
 import type { Database, Json } from "@/lib/supabase/types";
+import { FIELD_MAPPING_MAP } from "@/lib/pipeline/uw-field-mappings";
 
 type UnifiedDealInsert = Database["public"]["Tables"]["unified_deals"]["Insert"];
 type UnifiedDealUpdate = Database["public"]["Tables"]["unified_deals"]["Update"];
@@ -185,27 +186,92 @@ export async function updateUwDataAction(
     if ("error" in auth) return { error: auth.error };
 
     const admin = createAdminClient();
+    const mapping = FIELD_MAPPING_MAP.get(key);
 
-    // Get current uw_data
-    const { data: deal, error: fetchErr } = await admin
-      .from("unified_deals")
-      .select("uw_data")
-      .eq("id", dealId)
-      .single();
+    if (mapping?.source === "property") {
+      // Route write to the properties table
+      const { data: deal, error: fetchErr } = await admin
+        .from("unified_deals")
+        .select("property_id")
+        .eq("id", dealId)
+        .single();
 
-    if (fetchErr || !deal) return { error: "Deal not found" };
+      if (fetchErr || !deal) return { error: "Deal not found" };
 
-    const currentData = (deal.uw_data as Record<string, unknown>) || {};
-    const updatedData = { ...currentData, [key]: value };
+      if (!deal.property_id) {
+        // No linked property — create one and link it
+        const { data: newProp, error: createErr } = await admin
+          .from("properties")
+          .insert({ [mapping.column]: value })
+          .select("id")
+          .single();
 
-    const { error } = await admin
-      .from("unified_deals")
-      .update({ uw_data: updatedData as Json })
-      .eq("id", dealId);
+        if (createErr || !newProp) {
+          console.error("Failed to create property:", createErr);
+          return { error: "Failed to create property record" };
+        }
 
-    if (error) {
-      console.error("updateUwDataAction error:", error);
-      return { error: error.message };
+        const { error: linkErr } = await admin
+          .from("unified_deals")
+          .update({ property_id: newProp.id })
+          .eq("id", dealId);
+
+        if (linkErr) {
+          console.error("Failed to link property:", linkErr);
+          return { error: "Failed to link property to deal" };
+        }
+      } else {
+        // Update existing property
+        const { error: updateErr } = await admin
+          .from("properties")
+          .update({ [mapping.column]: value })
+          .eq("id", deal.property_id);
+
+        if (updateErr) {
+          console.error("updateUwDataAction property error:", updateErr);
+          return { error: updateErr.message };
+        }
+      }
+    } else if (mapping?.source === "borrower") {
+      // Route write to the borrowers table via primary_contact_id
+      const { data: deal, error: fetchErr } = await admin
+        .from("unified_deals")
+        .select("primary_contact_id")
+        .eq("id", dealId)
+        .single();
+
+      if (fetchErr || !deal) return { error: "Deal not found" };
+
+      if (!deal.primary_contact_id) {
+        // No linked contact — fall back to uw_data JSONB
+        return await updateUwDataJsonb(admin, dealId, key, value, auth.user.id);
+      }
+
+      // Find borrower by crm_contact_id
+      const { data: borrower } = await admin
+        .from("borrowers")
+        .select("id")
+        .eq("crm_contact_id", deal.primary_contact_id)
+        .limit(1)
+        .single();
+
+      if (!borrower) {
+        // No borrower record — fall back to uw_data JSONB
+        return await updateUwDataJsonb(admin, dealId, key, value, auth.user.id);
+      }
+
+      const { error: updateErr } = await admin
+        .from("borrowers")
+        .update({ [mapping.column]: value })
+        .eq("id", borrower.id);
+
+      if (updateErr) {
+        console.error("updateUwDataAction borrower error:", updateErr);
+        return { error: updateErr.message };
+      }
+    } else {
+      // Default: write to uw_data JSONB on unified_deals
+      return await updateUwDataJsonb(admin, dealId, key, value, auth.user.id);
     }
 
     // Log field update activity
@@ -213,7 +279,11 @@ export async function updateUwDataAction(
       deal_id: dealId,
       activity_type: "field_updated",
       title: `Updated ${key}`,
-      metadata: { field: key, value } as unknown as Json,
+      metadata: {
+        field: key,
+        value,
+        source: mapping?.source ?? "deal",
+      } as unknown as Json,
       created_by: auth.user.id,
     });
 
@@ -227,6 +297,52 @@ export async function updateUwDataAction(
     console.error("updateUwDataAction error:", err);
     return { error: err instanceof Error ? err.message : "Failed to update underwriting data" };
   }
+}
+
+/** Write a field value to the uw_data JSONB column on unified_deals */
+async function updateUwDataJsonb(
+  admin: ReturnType<typeof createAdminClient>,
+  dealId: string,
+  key: string,
+  value: unknown,
+  userId: string
+) {
+  const { data: deal, error: fetchErr } = await admin
+    .from("unified_deals")
+    .select("uw_data")
+    .eq("id", dealId)
+    .single();
+
+  if (fetchErr || !deal) return { error: "Deal not found" };
+
+  const currentData = (deal.uw_data as Record<string, unknown>) || {};
+  const updatedData = { ...currentData, [key]: value };
+
+  const { error } = await admin
+    .from("unified_deals")
+    .update({ uw_data: updatedData as Json })
+    .eq("id", dealId);
+
+  if (error) {
+    console.error("updateUwDataJsonb error:", error);
+    return { error: error.message };
+  }
+
+  // Log field update activity
+  const { error: activityErr } = await admin.from("unified_deal_activity").insert({
+    deal_id: dealId,
+    activity_type: "field_updated",
+    title: `Updated ${key}`,
+    metadata: { field: key, value, source: "deal" } as unknown as Json,
+    created_by: userId,
+  });
+
+  if (activityErr) {
+    console.error("Failed to log activity:", activityErr);
+  }
+
+  revalidatePipeline(dealId);
+  return { success: true };
 }
 
 // ─── Update Property Data ───

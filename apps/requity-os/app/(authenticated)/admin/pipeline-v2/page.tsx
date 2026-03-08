@@ -12,6 +12,11 @@ import {
   type ChecklistItem,
   type DealActivity,
 } from "@/components/pipeline-v2/pipeline-types";
+import {
+  mergeUwData,
+  getPropertySelectColumns,
+  getBorrowerSelectColumns,
+} from "@/lib/pipeline/resolve-uw-data";
 
 export const dynamic = "force-dynamic";
 
@@ -95,21 +100,64 @@ export default async function PipelineV2Page() {
   // Compute stage config map for alert levels
   const stageConfigMap = new Map(stageConfigs.map((sc) => [sc.stage, sc]));
 
-  // Enrich deals with computed fields
-  const deals: UnifiedDeal[] = ((dealsResult.data ?? []) as unknown as UnifiedDeal[]).map(
-    (deal) => {
-      const counts = checklistCounts.get(deal.id);
-      const days = daysInStage(deal.stage_entered_at);
-      const config = stageConfigMap.get(deal.stage);
-      return {
-        ...deal,
-        checklist_total: counts?.total ?? 0,
-        checklist_completed: counts?.completed ?? 0,
-        days_in_stage: days,
-        alert_level: getAlertLevel(days, config),
-      };
-    }
-  );
+  // Resolve UW data from real tables (properties, borrowers) and merge with JSONB
+  const rawDeals = (dealsResult.data ?? []) as unknown as UnifiedDeal[];
+
+  // Collect unique property/contact IDs for bulk fetch
+  const propertyIdSet = new Set<string>();
+  const contactIdSet = new Set<string>();
+  for (const d of rawDeals) {
+    if (d.property_id) propertyIdSet.add(d.property_id);
+    if (d.primary_contact_id) contactIdSet.add(d.primary_contact_id);
+  }
+  const propertyIds = Array.from(propertyIdSet);
+  const contactIds = Array.from(contactIdSet);
+
+  type Row = Record<string, unknown>;
+
+  // Bulk fetch linked properties and borrowers
+  const [propertiesRes, borrowersRes] = await Promise.all([
+    propertyIds.length > 0
+      ? admin
+          .from("properties" as never)
+          .select(getPropertySelectColumns() as never)
+          .in("id" as never, propertyIds as never)
+      : Promise.resolve({ data: [] }),
+    contactIds.length > 0
+      ? admin
+          .from("borrowers" as never)
+          .select(getBorrowerSelectColumns() as never)
+          .in("crm_contact_id" as never, contactIds as never)
+      : Promise.resolve({ data: [] }),
+  ]);
+
+  const propertyMap = new Map<string, Row>();
+  for (const p of ((propertiesRes.data ?? []) as unknown as Row[])) {
+    propertyMap.set(p.id as string, p);
+  }
+
+  const borrowerMap = new Map<string, Row>();
+  for (const b of ((borrowersRes.data ?? []) as unknown as Row[])) {
+    borrowerMap.set(b.crm_contact_id as string, b);
+  }
+
+  // Enrich deals with computed fields + resolved UW data
+  const deals: UnifiedDeal[] = rawDeals.map((deal) => {
+    const counts = checklistCounts.get(deal.id);
+    const days = daysInStage(deal.stage_entered_at);
+    const config = stageConfigMap.get(deal.stage);
+    const property = deal.property_id ? propertyMap.get(deal.property_id) ?? null : null;
+    const borrower = deal.primary_contact_id ? borrowerMap.get(deal.primary_contact_id) ?? null : null;
+
+    return {
+      ...deal,
+      uw_data: mergeUwData(deal.uw_data, property, borrower),
+      checklist_total: counts?.total ?? 0,
+      checklist_completed: counts?.completed ?? 0,
+      days_in_stage: days,
+      alert_level: getAlertLevel(days, config),
+    };
+  });
 
   const teamMembers = (teamResult.data ?? []).map(
     (t: { id: string; full_name: string | null }) => ({
