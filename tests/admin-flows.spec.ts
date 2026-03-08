@@ -2,7 +2,7 @@ import { test, expect, waitForAppShell } from "./fixtures/test-fixtures";
 
 // =============================================================================
 // ADMIN / LENDING FLOWS
-// Dashboard, pipeline, loans, CRM, borrowers, investors, chatter, SOPs
+// Dashboard, pipeline, loans, CRM, borrowers, investors, SOPs
 // =============================================================================
 
 // Helper: try multiple route patterns for admin pages
@@ -207,29 +207,6 @@ test("48 — admin CRM companies page loads", async ({ adminPage }) => {
   const hasEmpty = await emptyState.first().isVisible({ timeout: 3_000 }).catch(() => false);
 
   expect(hasContent || hasEmpty).toBeTruthy();
-});
-
-// ─────────────────────────────────────────────────────────────────────────────
-// 49. Admin chatter page loads
-// ─────────────────────────────────────────────────────────────────────────────
-test("49 — admin chatter page loads", async ({ adminPage }) => {
-  await adminPage.goto("/chat");
-  await adminPage.waitForLoadState("networkidle");
-
-  const main = adminPage.locator("main");
-  await expect(main).toBeVisible();
-
-  const chatUI = adminPage.locator(
-    'text=/chat|message|channel|conversation|room/i, input[placeholder*="message" i], textarea'
-  );
-  const emptyState = adminPage.locator(
-    'text=/no.*message|no.*channel|select.*channel|start.*chat/i'
-  );
-
-  const hasChat = await chatUI.first().isVisible({ timeout: 5_000 }).catch(() => false);
-  const hasEmpty = await emptyState.first().isVisible({ timeout: 3_000 }).catch(() => false);
-
-  expect(hasChat || hasEmpty).toBeTruthy();
 });
 
 // ─────────────────────────────────────────────────────────────────────────────

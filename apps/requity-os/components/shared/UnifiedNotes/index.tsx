@@ -17,6 +17,7 @@ import {
 export function UnifiedNotes({
   entityType,
   entityId,
+  dealId,
   loanId,
   opportunityId,
   showInternalToggle,
@@ -70,6 +71,7 @@ export function UnifiedNotes({
 
     if (entityType === "deal") {
       const conditions: string[] = [];
+      if (dealId) conditions.push(`deal_id.eq.${dealId}`);
       if (loanId) conditions.push(`loan_id.eq.${loanId}`);
       if (opportunityId) conditions.push(`opportunity_id.eq.${opportunityId}`);
       if (conditions.length > 0) {
@@ -125,7 +127,7 @@ export function UnifiedNotes({
       setNotes(fetchedNotes);
     }
     setLoading(false);
-  }, [entityType, entityId, loanId, opportunityId]);
+  }, [entityType, entityId, dealId, loanId, opportunityId]);
 
   useEffect(() => {
     fetchNotes();
@@ -135,13 +137,15 @@ export function UnifiedNotes({
   useEffect(() => {
     const col =
       entityType === "deal"
-        ? loanId
-          ? "loan_id"
-          : "opportunity_id"
+        ? dealId
+          ? "deal_id"
+          : loanId
+            ? "loan_id"
+            : "opportunity_id"
         : getEntityColumn(entityType);
     const id =
       entityType === "deal"
-        ? loanId || opportunityId
+        ? dealId || loanId || opportunityId
         : entityId;
 
     if (!id) return;
@@ -166,7 +170,7 @@ export function UnifiedNotes({
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [entityType, entityId, loanId, opportunityId, fetchNotes]);
+  }, [entityType, entityId, dealId, loanId, opportunityId, fetchNotes]);
 
   // Post a new note
   async function handlePost(
@@ -192,6 +196,7 @@ export function UnifiedNotes({
         row.company_id = entityId;
         break;
       case "deal":
+        if (dealId) row.deal_id = dealId;
         if (loanId) row.loan_id = loanId;
         if (opportunityId) row.opportunity_id = opportunityId;
         break;
@@ -201,6 +206,7 @@ export function UnifiedNotes({
         break;
       case "unified_condition":
         row.unified_condition_id = entityId;
+        if (dealId) row.deal_id = dealId;
         if (loanId) row.loan_id = loanId;
         break;
       case "task":

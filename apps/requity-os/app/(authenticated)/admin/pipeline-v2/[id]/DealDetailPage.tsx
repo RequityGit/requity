@@ -447,7 +447,7 @@ function TabContent({
         <UnifiedNotes
           entityType="deal"
           entityId={deal.id}
-          opportunityId={deal.id}
+          dealId={deal.id}
           showInternalToggle={true}
           showFilters={true}
           showPinning={true}
