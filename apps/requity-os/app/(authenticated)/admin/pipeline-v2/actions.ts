@@ -3,6 +3,10 @@
 import { revalidatePath } from "next/cache";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { requireAdmin } from "@/lib/auth/require-admin";
+import type { Database, Json } from "@/lib/supabase/types";
+
+type UnifiedDealInsert = Database["public"]["Tables"]["unified_deals"]["Insert"];
+type UnifiedDealUpdate = Database["public"]["Tables"]["unified_deals"]["Update"];
 
 function revalidatePipeline(dealId?: string) {
   revalidatePath("/admin/pipeline-v2");
@@ -18,6 +22,7 @@ function revalidatePipeline(dealId?: string) {
 export async function createUnifiedDealAction(data: {
   name: string;
   card_type_id: string;
+  capital_side?: string;
   asset_class?: string;
   amount?: number;
   primary_contact_id?: string;
@@ -31,19 +36,22 @@ export async function createUnifiedDealAction(data: {
 
     const admin = createAdminClient();
 
+    const insertData: UnifiedDealInsert = {
+      name: data.name,
+      card_type_id: data.card_type_id,
+      capital_side: data.capital_side || "debt",
+      asset_class: data.asset_class || null,
+      amount: data.amount || null,
+      primary_contact_id: data.primary_contact_id || null,
+      company_id: data.company_id || null,
+      expected_close_date: data.expected_close_date || null,
+      assigned_to: data.assigned_to || null,
+      created_by: auth.user.id,
+    };
+
     const { data: deal, error } = await admin
-      .from("unified_deals" as never)
-      .insert({
-        name: data.name,
-        card_type_id: data.card_type_id,
-        asset_class: data.asset_class || null,
-        amount: data.amount || null,
-        primary_contact_id: data.primary_contact_id || null,
-        company_id: data.company_id || null,
-        expected_close_date: data.expected_close_date || null,
-        assigned_to: data.assigned_to || null,
-        created_by: auth.user.id,
-      } as never)
+      .from("unified_deals")
+      .insert(insertData)
       .select("id, deal_number")
       .single();
 
@@ -52,11 +60,11 @@ export async function createUnifiedDealAction(data: {
       return { error: error.message };
     }
 
-    revalidatePipeline((deal as { id: string }).id);
+    revalidatePipeline(deal.id);
     return { success: true, deal };
   } catch (err: unknown) {
     console.error("createUnifiedDealAction error:", err);
-    return { error: err instanceof Error ? err.message : "An unexpected error occurred" };
+    return { error: err instanceof Error ? err.message : "Failed to create deal" };
   }
 }
 
@@ -73,9 +81,9 @@ export async function updateUnifiedDealAction(
     const admin = createAdminClient();
 
     const { error } = await admin
-      .from("unified_deals" as never)
-      .update(updates as never)
-      .eq("id" as never, dealId as never);
+      .from("unified_deals")
+      .update(updates as UnifiedDealUpdate)
+      .eq("id", dealId);
 
     if (error) {
       console.error("updateUnifiedDealAction error:", error);
@@ -86,7 +94,7 @@ export async function updateUnifiedDealAction(
     return { success: true };
   } catch (err: unknown) {
     console.error("updateUnifiedDealAction error:", err);
-    return { error: err instanceof Error ? err.message : "An unexpected error occurred" };
+    return { error: err instanceof Error ? err.message : "Failed to update deal" };
   }
 }
 
@@ -103,11 +111,11 @@ export async function advanceStageAction(
 
     const admin = createAdminClient();
 
-    const { error } = await admin.rpc("unified_advance_stage" as never, {
+    const { error } = await admin.rpc("unified_advance_stage", {
       p_deal_id: dealId,
       p_new_stage: newStage,
-      p_notes: notes || null,
-    } as never);
+      p_notes: notes,
+    });
 
     if (error) {
       console.error("advanceStageAction error:", error);
@@ -118,7 +126,7 @@ export async function advanceStageAction(
     return { success: true };
   } catch (err: unknown) {
     console.error("advanceStageAction error:", err);
-    return { error: err instanceof Error ? err.message : "An unexpected error occurred" };
+    return { error: err instanceof Error ? err.message : "Failed to advance stage" };
   }
 }
 
@@ -135,13 +143,13 @@ export async function toggleChecklistItemAction(
     const admin = createAdminClient();
 
     const { error } = await admin
-      .from("unified_deal_checklist" as never)
+      .from("unified_deal_checklist")
       .update({
         completed,
         completed_by: completed ? auth.user.id : null,
         completed_at: completed ? new Date().toISOString() : null,
-      } as never)
-      .eq("id" as never, itemId as never);
+      })
+      .eq("id", itemId);
 
     if (error) {
       console.error("toggleChecklistItemAction error:", error);
@@ -152,7 +160,7 @@ export async function toggleChecklistItemAction(
     return { success: true };
   } catch (err: unknown) {
     console.error("toggleChecklistItemAction error:", err);
-    return { error: err instanceof Error ? err.message : "An unexpected error occurred" };
+    return { error: err instanceof Error ? err.message : "Failed to toggle checklist item" };
   }
 }
 
@@ -171,20 +179,20 @@ export async function updateUwDataAction(
 
     // Get current uw_data
     const { data: deal, error: fetchErr } = await admin
-      .from("unified_deals" as never)
-      .select("uw_data" as never)
-      .eq("id" as never, dealId as never)
+      .from("unified_deals")
+      .select("uw_data")
+      .eq("id", dealId)
       .single();
 
     if (fetchErr || !deal) return { error: "Deal not found" };
 
-    const currentData = (deal as { uw_data: Record<string, unknown> }).uw_data || {};
+    const currentData = (deal.uw_data as Record<string, unknown>) || {};
     const updatedData = { ...currentData, [key]: value };
 
     const { error } = await admin
-      .from("unified_deals" as never)
-      .update({ uw_data: updatedData } as never)
-      .eq("id" as never, dealId as never);
+      .from("unified_deals")
+      .update({ uw_data: updatedData as Json })
+      .eq("id", dealId);
 
     if (error) {
       console.error("updateUwDataAction error:", error);
@@ -192,19 +200,23 @@ export async function updateUwDataAction(
     }
 
     // Log field update activity
-    await admin.from("unified_deal_activity" as never).insert({
+    const { error: activityErr } = await admin.from("unified_deal_activity").insert({
       deal_id: dealId,
       activity_type: "field_updated",
       title: `Updated ${key}`,
-      metadata: { field: key, value },
+      metadata: { field: key, value } as unknown as Json,
       created_by: auth.user.id,
-    } as never);
+    });
+
+    if (activityErr) {
+      console.error("Failed to log activity:", activityErr);
+    }
 
     revalidatePipeline(dealId);
     return { success: true };
   } catch (err: unknown) {
     console.error("updateUwDataAction error:", err);
-    return { error: err instanceof Error ? err.message : "An unexpected error occurred" };
+    return { error: err instanceof Error ? err.message : "Failed to update underwriting data" };
   }
 }
 
@@ -217,13 +229,13 @@ export async function addDealNoteAction(dealId: string, content: string) {
 
     const admin = createAdminClient();
 
-    const { error } = await admin.from("unified_deal_activity" as never).insert({
+    const { error } = await admin.from("unified_deal_activity").insert({
       deal_id: dealId,
       activity_type: "note",
       title: "Note added",
       description: content,
       created_by: auth.user.id,
-    } as never);
+    });
 
     if (error) {
       console.error("addDealNoteAction error:", error);
@@ -234,7 +246,7 @@ export async function addDealNoteAction(dealId: string, content: string) {
     return { success: true };
   } catch (err: unknown) {
     console.error("addDealNoteAction error:", err);
-    return { error: err instanceof Error ? err.message : "An unexpected error occurred" };
+    return { error: err instanceof Error ? err.message : "Failed to add note" };
   }
 }
 
@@ -255,14 +267,14 @@ export async function updateDealStatusAction(
 
     const admin = createAdminClient();
 
-    const updates: Record<string, unknown> = { status };
+    const updates: UnifiedDealUpdate = { status };
     if (lossReason) updates.loss_reason = lossReason;
     if (status === "won") updates.actual_close_date = new Date().toISOString().split("T")[0];
 
     const { error } = await admin
-      .from("unified_deals" as never)
-      .update(updates as never)
-      .eq("id" as never, dealId as never);
+      .from("unified_deals")
+      .update(updates)
+      .eq("id", dealId);
 
     if (error) {
       console.error("updateDealStatusAction error:", error);
@@ -270,18 +282,22 @@ export async function updateDealStatusAction(
     }
 
     // Log status change
-    await admin.from("unified_deal_activity" as never).insert({
+    const { error: activityErr } = await admin.from("unified_deal_activity").insert({
       deal_id: dealId,
       activity_type: "status_change",
       title: `Status changed to ${status}`,
-      metadata: { status, loss_reason: lossReason },
+      metadata: { status, loss_reason: lossReason } as unknown as Json,
       created_by: auth.user.id,
-    } as never);
+    });
+
+    if (activityErr) {
+      console.error("Failed to log status change activity:", activityErr);
+    }
 
     revalidatePipeline(dealId);
     return { success: true };
   } catch (err: unknown) {
     console.error("updateDealStatusAction error:", err);
-    return { error: err instanceof Error ? err.message : "An unexpected error occurred" };
+    return { error: err instanceof Error ? err.message : "Failed to update deal status" };
   }
 }

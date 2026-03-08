@@ -119,7 +119,7 @@ export function ContactFileUpload({
 
       setProgress(70);
 
-      const { error: dbError } = await (supabase as any)
+      const { error: dbError } = await supabase
         .from("contact_files")
         .insert({
           contact_id: contactId,

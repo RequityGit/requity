@@ -39,7 +39,7 @@ export async function addBorrowerAction(input: AddBorrowerInput) {
     const admin = createAdminClient();
 
     // Step 1: Create a CRM contact for the borrower
-    const { data: contact, error: contactError } = await (admin as any)
+    const { data: contact, error: contactError } = await admin
       .from("crm_contacts")
       .insert({
         first_name: input.first_name,
@@ -84,15 +84,19 @@ export async function addBorrowerAction(input: AddBorrowerInput) {
     if (borrowerError) {
       console.error("addBorrowerAction: failed to create borrower", borrowerError);
       // Clean up the orphaned contact
-      await (admin as any).from("crm_contacts").delete().eq("id", contact.id);
+      await admin.from("crm_contacts").delete().eq("id", contact.id);
       return { error: `Failed to create borrower: ${borrowerError.message}` };
     }
 
     // Step 3: Link the contact back to the borrower
-    await (admin as any)
+    const { error: linkErr } = await admin
       .from("crm_contacts")
       .update({ borrower_id: borrower.id })
       .eq("id", contact.id);
+
+    if (linkErr) {
+      console.error("addBorrowerAction: failed to link contact to borrower", linkErr);
+    }
 
     revalidatePath("/admin/borrowers");
     revalidatePath("/admin/crm");
@@ -148,7 +152,7 @@ export async function updateBorrowerAction(input: UpdateBorrowerInput) {
     }
 
     if (contactId) {
-      const { error: contactError } = await (admin as any)
+      const { error: contactError } = await admin
         .from("crm_contacts")
         .update({
           first_name: input.first_name,

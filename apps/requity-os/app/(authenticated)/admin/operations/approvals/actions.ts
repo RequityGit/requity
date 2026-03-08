@@ -13,8 +13,7 @@ import type {
 } from "@/lib/approvals/types";
 import { SLA_HOURS } from "@/lib/approvals/types";
 import { nq } from "@/lib/notifications";
-
-/* eslint-disable @typescript-eslint/no-explicit-any */
+import type { Json } from "@/lib/supabase/types";
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -43,27 +42,31 @@ async function requireAuth() {
 
 export async function determineApprover(
   entityType: ApprovalEntityType,
-  entityData: Record<string, any>
+  entityData: Record<string, unknown>
 ): Promise<RoutingResult> {
   const admin = createAdminClient();
 
-  const { data: rules } = await admin
-    .from("approval_routing_rules" as any)
+  const { data: rules, error: rulesErr } = await admin
+    .from("approval_routing_rules")
     .select("*")
     .eq("is_active", true)
     .eq("entity_type", entityType)
     .order("priority_order", { ascending: true });
 
+  if (rulesErr) {
+    console.error("Failed to fetch routing rules:", rulesErr);
+  }
+
   if (rules && rules.length > 0) {
     for (const rule of rules) {
-      const conditions = (rule as any).conditions as Record<string, any>;
+      const conditions = rule.conditions as Record<string, unknown>;
       if (evaluateConditions(conditions, entityData)) {
         return {
-          approver_id: (rule as any).approver_id,
-          fallback_approver_id: (rule as any).fallback_approver_id,
-          sla_hours: (rule as any).sla_hours,
-          auto_priority: (rule as any).auto_priority as ApprovalPriority,
-          rule_name: (rule as any).name,
+          approver_id: rule.approver_id,
+          fallback_approver_id: rule.fallback_approver_id,
+          sla_hours: rule.sla_hours,
+          auto_priority: rule.auto_priority as ApprovalPriority,
+          rule_name: rule.name,
         };
       }
     }
@@ -90,8 +93,8 @@ export async function determineApprover(
 }
 
 function evaluateConditions(
-  conditions: Record<string, any>,
-  entityData: Record<string, any>
+  conditions: Record<string, unknown>,
+  entityData: Record<string, unknown>
 ): boolean {
   // Empty conditions = catch-all, always matches
   if (!conditions || Object.keys(conditions).length === 0) return true;
@@ -123,23 +126,27 @@ function evaluateConditions(
 
 export async function validateChecklist(
   entityType: ApprovalEntityType,
-  entityData: Record<string, any>
+  entityData: Record<string, unknown>
 ): Promise<{ passed: boolean; results: ChecklistResult[] }> {
   const admin = createAdminClient();
 
-  const { data: checklists } = await admin
-    .from("approval_checklists" as any)
+  const { data: checklists, error: checklistErr } = await admin
+    .from("approval_checklists")
     .select("*")
     .eq("entity_type", entityType)
     .eq("is_active", true)
     .limit(1);
+
+  if (checklistErr) {
+    console.error("Failed to fetch approval checklists:", checklistErr);
+  }
 
   const checklist = checklists?.[0];
   if (!checklist) {
     return { passed: true, results: [] };
   }
 
-  const items = (checklist as any).items as ChecklistItem[];
+  const items = checklist.items as unknown as ChecklistItem[];
   const results: ChecklistResult[] = [];
 
   for (const item of items) {
@@ -155,7 +162,7 @@ export async function validateChecklist(
 
 function evaluateChecklistItem(
   item: ChecklistItem,
-  data: Record<string, any>
+  data: Record<string, unknown>
 ): ChecklistResult {
   const value = data[item.field];
 
@@ -216,7 +223,7 @@ export async function submitForApproval(input: {
   entityType: ApprovalEntityType;
   entityId: string;
   submissionNotes?: string;
-  dealSnapshot: Record<string, any>;
+  dealSnapshot: Record<string, unknown>;
   checklistResults: ChecklistResult[];
 }) {
   try {
@@ -227,7 +234,7 @@ export async function submitForApproval(input: {
 
     // Check if there's already a pending approval for this entity
     const { data: existing } = await admin
-      .from("approval_requests" as any)
+      .from("approval_requests")
       .select("id, status")
       .eq("entity_type", input.entityType)
       .eq("entity_id", input.entityId)
@@ -247,7 +254,7 @@ export async function submitForApproval(input: {
 
     // Create approval request
     const { data: approval, error: approvalError } = await admin
-      .from("approval_requests" as any)
+      .from("approval_requests")
       .insert({
         entity_type: input.entityType,
         entity_id: input.entityId,
@@ -256,26 +263,27 @@ export async function submitForApproval(input: {
         status: "pending",
         priority: routing.auto_priority,
         sla_deadline: slaDeadline,
-        deal_snapshot: input.dealSnapshot,
+        deal_snapshot: input.dealSnapshot as unknown as Json,
         submission_notes: input.submissionNotes || null,
-        checklist_results: input.checklistResults,
+        checklist_results: input.checklistResults as unknown as Json,
       })
       .select("id")
       .single();
 
     if (approvalError) {
-      console.error("Error creating approval request:", approvalError);
+      console.error("Failed to submit approval request:", approvalError);
       return { error: approvalError.message };
     }
 
-    const approvalId = (approval as any).id;
+    const approvalId = approval.id;
 
     // Build task title from snapshot
-    const borrowerName = input.dealSnapshot.borrower_name || "Unknown";
-    const amount = input.dealSnapshot.loan_amount
-      ? `$${Number(input.dealSnapshot.loan_amount).toLocaleString()}`
+    const snapshot = input.dealSnapshot;
+    const borrowerName = (snapshot.borrower_name as string) || "Unknown";
+    const amount = snapshot.loan_amount
+      ? `$${Number(snapshot.loan_amount).toLocaleString()}`
       : "";
-    const assetType = input.dealSnapshot.property_type || input.dealSnapshot.type || "";
+    const assetType = (snapshot.property_type as string) || (snapshot.type as string) || "";
     const taskTitle = `Approve: ${borrowerName} - ${amount} ${assetType}`.trim();
 
     // Create linked task in ops_tasks
@@ -297,23 +305,35 @@ export async function submitForApproval(input: {
       .select("id")
       .single();
 
+    if (taskError) {
+      console.error("Failed to create linked task for approval:", taskError);
+    }
+
     if (!taskError && task) {
       // Update approval with task_id
-      await admin
-        .from("approval_requests" as any)
+      const { error: linkErr } = await admin
+        .from("approval_requests")
         .update({ task_id: task.id })
         .eq("id", approvalId);
+
+      if (linkErr) {
+        console.error("Failed to link task to approval:", linkErr);
+      }
     }
 
     // Insert audit log entry
-    await admin.from("approval_audit_log" as any).insert({
+    const { error: auditErr } = await admin.from("approval_audit_log").insert({
       approval_id: approvalId,
       action: "submitted",
       performed_by: auth.user.id,
       notes: input.submissionNotes || null,
       metadata: { routing_rule: routing.rule_name },
-      deal_snapshot: input.dealSnapshot,
+      deal_snapshot: input.dealSnapshot as unknown as Json,
     });
+
+    if (auditErr) {
+      console.error("Failed to insert audit log for submission:", auditErr);
+    }
 
     // Create in-app notification for the approver
     try {
@@ -334,9 +354,10 @@ export async function submitForApproval(input: {
 
     revalidatePath("/admin/operations/approvals");
     return { success: true, approvalId };
-  } catch (err: any) {
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : "Failed to submit approval";
     console.error("submitForApproval error:", err);
-    return { error: err?.message || "An unexpected error occurred" };
+    return { error: message };
   }
 }
 
@@ -353,23 +374,22 @@ export async function approveRequest(approvalId: string, decisionNotes?: string)
 
     // Fetch the approval
     const { data: approval, error: fetchError } = await admin
-      .from("approval_requests" as any)
+      .from("approval_requests")
       .select("*")
       .eq("id", approvalId)
       .single();
 
     if (fetchError || !approval) return { error: "Approval not found" };
-    const appr = approval as any;
 
-    if (appr.status !== "pending") {
-      return { error: `Cannot approve a request with status: ${appr.status}` };
+    if (approval.status !== "pending") {
+      return { error: `Cannot approve a request with status: ${approval.status}` };
     }
 
     const now = new Date().toISOString();
 
     // Update approval
     const { error: updateError } = await admin
-      .from("approval_requests" as any)
+      .from("approval_requests")
       .update({
         status: "approved",
         decision_at: now,
@@ -380,36 +400,48 @@ export async function approveRequest(approvalId: string, decisionNotes?: string)
     if (updateError) return { error: updateError.message };
 
     // Complete the linked task
-    if (appr.task_id) {
-      await admin
+    if (approval.task_id) {
+      const { error: taskErr } = await admin
         .from("ops_tasks")
         .update({ status: "Complete", completed_at: now })
-        .eq("id", appr.task_id);
+        .eq("id", approval.task_id);
+
+      if (taskErr) {
+        console.error("Failed to complete linked task on approval:", taskErr);
+      }
     }
 
     // Update loan stage if entity_type is loan
-    if (appr.entity_type === "loan") {
-      await admin
+    if (approval.entity_type === "loan") {
+      const { error: loanErr } = await admin
         .from("loans")
         .update({
           stage: "approved",
           stage_updated_at: now,
           updated_at: now,
         })
-        .eq("id", appr.entity_id);
+        .eq("id", approval.entity_id);
+
+      if (loanErr) {
+        console.error("Failed to update loan stage on approval:", loanErr);
+      }
 
       // Log activity
-      await admin.from("loan_activity_log").insert({
-        loan_id: appr.entity_id,
+      const { error: logErr } = await admin.from("loan_activity_log").insert({
+        loan_id: approval.entity_id,
         performed_by: auth.user.id,
         action: "stage_change",
         description: `Approval granted by Admin`,
       });
+
+      if (logErr) {
+        console.error("Failed to insert loan activity log:", logErr);
+      }
     }
 
     // Sync approval status back to opportunities table if entity_type is opportunity
-    if (appr.entity_type === "opportunity") {
-      await admin
+    if (approval.entity_type === "opportunity") {
+      const { error: oppErr } = await admin
         .from("opportunities")
         .update({
           approval_status: "approved",
@@ -417,25 +449,37 @@ export async function approveRequest(approvalId: string, decisionNotes?: string)
           approval_decided_by: auth.user.id,
           approval_notes: decisionNotes || null,
         })
-        .eq("id", appr.entity_id);
+        .eq("id", approval.entity_id);
+
+      if (oppErr) {
+        console.error("Failed to sync approval status to opportunity:", oppErr);
+      }
     }
 
     // Audit log
-    await admin.from("approval_audit_log" as any).insert({
+    const dealSnapshot = approval.deal_snapshot as Record<string, unknown> | null;
+    const { error: auditErr } = await admin.from("approval_audit_log").insert({
       approval_id: approvalId,
       action: "approved",
       performed_by: auth.user.id,
       notes: decisionNotes || null,
-      deal_snapshot: appr.deal_snapshot,
+      deal_snapshot: dealSnapshot as unknown as Json,
     });
+
+    if (auditErr) {
+      console.error("Failed to insert audit log for approval:", auditErr);
+    }
 
     // Notify submitter
     try {
+      const borrowerName = dealSnapshot && typeof dealSnapshot === "object"
+        ? (dealSnapshot.borrower_name as string) || "Deal"
+        : "Deal";
       await nq(admin).notifications().insert({
-        user_id: appr.submitted_by,
+        user_id: approval.submitted_by,
         notification_slug: "approval-decided",
-        title: `Approved: ${appr.deal_snapshot?.borrower_name || "Deal"} approved`,
-        body: `An approver approved your ${appr.entity_type} request.${decisionNotes ? ` Notes: ${decisionNotes}` : ""}`,
+        title: `Approved: ${borrowerName} approved`,
+        body: `An approver approved your ${approval.entity_type} request.${decisionNotes ? ` Notes: ${decisionNotes}` : ""}`,
         priority: "normal",
         entity_type: "task",
         entity_id: approvalId,
@@ -447,9 +491,10 @@ export async function approveRequest(approvalId: string, decisionNotes?: string)
 
     revalidatePath("/admin/operations/approvals");
     return { success: true };
-  } catch (err: any) {
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : "Failed to approve request";
     console.error("approveRequest error:", err);
-    return { error: err?.message || "An unexpected error occurred" };
+    return { error: message };
   }
 }
 
@@ -469,23 +514,26 @@ export async function requestChanges(approvalId: string, decisionNotes: string) 
     const admin = createAdminClient();
 
     const { data: approval, error: fetchError } = await admin
-      .from("approval_requests" as any)
+      .from("approval_requests")
       .select("*")
       .eq("id", approvalId)
       .single();
 
     if (fetchError || !approval) return { error: "Approval not found" };
-    const appr = approval as any;
 
-    if (appr.status !== "pending") {
-      return { error: `Cannot request changes on a request with status: ${appr.status}` };
+    if (approval.status !== "pending") {
+      return { error: `Cannot request changes on a request with status: ${approval.status}` };
     }
 
     const now = new Date().toISOString();
+    const dealSnapshot = approval.deal_snapshot as Record<string, unknown> | null;
+    const dealName = dealSnapshot && typeof dealSnapshot === "object"
+      ? (dealSnapshot.borrower_name as string) || "Deal"
+      : "Deal";
 
     // Update approval
-    await admin
-      .from("approval_requests" as any)
+    const { error: updateErr } = await admin
+      .from("approval_requests")
       .update({
         status: "changes_requested",
         decision_at: now,
@@ -493,22 +541,30 @@ export async function requestChanges(approvalId: string, decisionNotes: string) 
       })
       .eq("id", approvalId);
 
+    if (updateErr) {
+      console.error("Failed to update approval for changes requested:", updateErr);
+      return { error: updateErr.message };
+    }
+
     // Update linked task to on_hold
-    if (appr.task_id) {
-      await admin
+    if (approval.task_id) {
+      const { error: taskErr } = await admin
         .from("ops_tasks")
         .update({ status: "Blocked" })
-        .eq("id", appr.task_id);
+        .eq("id", approval.task_id);
+
+      if (taskErr) {
+        console.error("Failed to update linked task to Blocked:", taskErr);
+      }
     }
 
     // Create a follow-up task for the submitter
-    const dealName = appr.deal_snapshot?.borrower_name || "Deal";
-    await admin.from("ops_tasks").insert({
+    const { error: followupErr } = await admin.from("ops_tasks").insert({
       title: `Changes Requested: ${dealName}`,
       description: decisionNotes,
       status: "To Do",
       priority: "High",
-      assigned_to: appr.submitted_by,
+      assigned_to: approval.submitted_by,
       created_by: auth.user.id,
       category: "Approval",
       linked_entity_type: "approval",
@@ -516,19 +572,27 @@ export async function requestChanges(approvalId: string, decisionNotes: string) 
       linked_entity_label: `Changes requested on ${dealName}`,
     });
 
+    if (followupErr) {
+      console.error("Failed to create follow-up task for changes requested:", followupErr);
+    }
+
     // Audit log
-    await admin.from("approval_audit_log" as any).insert({
+    const { error: auditErr } = await admin.from("approval_audit_log").insert({
       approval_id: approvalId,
       action: "changes_requested",
       performed_by: auth.user.id,
       notes: decisionNotes,
-      deal_snapshot: appr.deal_snapshot,
+      deal_snapshot: dealSnapshot as unknown as Json,
     });
+
+    if (auditErr) {
+      console.error("Failed to insert audit log for changes requested:", auditErr);
+    }
 
     // Notify submitter
     try {
       await nq(admin).notifications().insert({
-        user_id: appr.submitted_by,
+        user_id: approval.submitted_by,
         notification_slug: "approval-changes-requested",
         title: `Changes requested: ${dealName}`,
         body: `An approver requested changes: ${decisionNotes.substring(0, 100)}`,
@@ -543,9 +607,10 @@ export async function requestChanges(approvalId: string, decisionNotes: string) 
 
     revalidatePath("/admin/operations/approvals");
     return { success: true };
-  } catch (err: any) {
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : "Failed to request changes";
     console.error("requestChanges error:", err);
-    return { error: err?.message || "An unexpected error occurred" };
+    return { error: message };
   }
 }
 
@@ -565,23 +630,23 @@ export async function declineRequest(approvalId: string, decisionNotes: string) 
     const admin = createAdminClient();
 
     const { data: approval, error: fetchError } = await admin
-      .from("approval_requests" as any)
+      .from("approval_requests")
       .select("*")
       .eq("id", approvalId)
       .single();
 
     if (fetchError || !approval) return { error: "Approval not found" };
-    const appr = approval as any;
 
-    if (appr.status !== "pending") {
-      return { error: `Cannot decline a request with status: ${appr.status}` };
+    if (approval.status !== "pending") {
+      return { error: `Cannot decline a request with status: ${approval.status}` };
     }
 
     const now = new Date().toISOString();
+    const dealSnapshot = approval.deal_snapshot as Record<string, unknown> | null;
 
     // Update approval
-    await admin
-      .from("approval_requests" as any)
+    const { error: updateErr } = await admin
+      .from("approval_requests")
       .update({
         status: "declined",
         decision_at: now,
@@ -589,36 +654,53 @@ export async function declineRequest(approvalId: string, decisionNotes: string) 
       })
       .eq("id", approvalId);
 
+    if (updateErr) {
+      console.error("Failed to update approval to declined:", updateErr);
+      return { error: updateErr.message };
+    }
+
     // Complete the linked task
-    if (appr.task_id) {
-      await admin
+    if (approval.task_id) {
+      const { error: taskErr } = await admin
         .from("ops_tasks")
         .update({ status: "Complete", completed_at: now })
-        .eq("id", appr.task_id);
+        .eq("id", approval.task_id);
+
+      if (taskErr) {
+        console.error("Failed to complete linked task on decline:", taskErr);
+      }
     }
 
     // Update loan stage if entity_type is loan
-    if (appr.entity_type === "loan") {
-      await admin
+    if (approval.entity_type === "loan") {
+      const { error: loanErr } = await admin
         .from("loans")
         .update({
           stage: "denied",
           stage_updated_at: now,
           updated_at: now,
         })
-        .eq("id", appr.entity_id);
+        .eq("id", approval.entity_id);
 
-      await admin.from("loan_activity_log").insert({
-        loan_id: appr.entity_id,
+      if (loanErr) {
+        console.error("Failed to update loan stage on decline:", loanErr);
+      }
+
+      const { error: logErr } = await admin.from("loan_activity_log").insert({
+        loan_id: approval.entity_id,
         performed_by: auth.user.id,
         action: "stage_change",
         description: `Declined by Admin: ${decisionNotes}`,
       });
+
+      if (logErr) {
+        console.error("Failed to insert loan activity log on decline:", logErr);
+      }
     }
 
     // Sync approval status back to opportunities table if entity_type is opportunity
-    if (appr.entity_type === "opportunity") {
-      await admin
+    if (approval.entity_type === "opportunity") {
+      const { error: oppErr } = await admin
         .from("opportunities")
         .update({
           approval_status: "denied",
@@ -626,25 +708,36 @@ export async function declineRequest(approvalId: string, decisionNotes: string) 
           approval_decided_by: auth.user.id,
           approval_notes: decisionNotes,
         })
-        .eq("id", appr.entity_id);
+        .eq("id", approval.entity_id);
+
+      if (oppErr) {
+        console.error("Failed to sync decline status to opportunity:", oppErr);
+      }
     }
 
     // Audit log
-    await admin.from("approval_audit_log" as any).insert({
+    const { error: auditErr } = await admin.from("approval_audit_log").insert({
       approval_id: approvalId,
       action: "declined",
       performed_by: auth.user.id,
       notes: decisionNotes,
-      deal_snapshot: appr.deal_snapshot,
+      deal_snapshot: dealSnapshot as unknown as Json,
     });
+
+    if (auditErr) {
+      console.error("Failed to insert audit log for decline:", auditErr);
+    }
 
     // Notify submitter
     try {
+      const borrowerName = dealSnapshot && typeof dealSnapshot === "object"
+        ? (dealSnapshot.borrower_name as string) || "Deal"
+        : "Deal";
       await nq(admin).notifications().insert({
-        user_id: appr.submitted_by,
+        user_id: approval.submitted_by,
         notification_slug: "approval-decided",
-        title: `Declined: ${appr.deal_snapshot?.borrower_name || "Deal"}`,
-        body: `An approver declined your ${appr.entity_type}: ${decisionNotes.substring(0, 100)}`,
+        title: `Declined: ${borrowerName}`,
+        body: `An approver declined your ${approval.entity_type}: ${decisionNotes.substring(0, 100)}`,
         priority: "high",
         entity_type: "task",
         entity_id: approvalId,
@@ -656,9 +749,10 @@ export async function declineRequest(approvalId: string, decisionNotes: string) 
 
     revalidatePath("/admin/operations/approvals");
     return { success: true };
-  } catch (err: any) {
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : "Failed to decline request";
     console.error("declineRequest error:", err);
-    return { error: err?.message || "An unexpected error occurred" };
+    return { error: message };
   }
 }
 
@@ -668,7 +762,7 @@ export async function declineRequest(approvalId: string, decisionNotes: string) 
 
 export async function resubmitApproval(input: {
   approvalId: string;
-  dealSnapshot: Record<string, any>;
+  dealSnapshot: Record<string, unknown>;
   checklistResults: ChecklistResult[];
   submissionNotes?: string;
 }) {
@@ -679,31 +773,30 @@ export async function resubmitApproval(input: {
     const admin = createAdminClient();
 
     const { data: approval, error: fetchError } = await admin
-      .from("approval_requests" as any)
+      .from("approval_requests")
       .select("*")
       .eq("id", input.approvalId)
       .single();
 
     if (fetchError || !approval) return { error: "Approval not found" };
-    const appr = approval as any;
 
-    if (appr.status !== "changes_requested") {
+    if (approval.status !== "changes_requested") {
       return { error: "Can only resubmit approvals with status: changes_requested" };
     }
 
     // Recalculate SLA
-    const routing = await determineApprover(appr.entity_type, input.dealSnapshot);
+    const routing = await determineApprover(approval.entity_type as ApprovalEntityType, input.dealSnapshot);
     const slaHours = routing.sla_hours || SLA_HOURS[routing.auto_priority as ApprovalPriority] || 24;
     const slaDeadline = new Date(Date.now() + slaHours * 60 * 60 * 1000).toISOString();
 
     // Update approval
-    await admin
-      .from("approval_requests" as any)
+    const { error: updateErr } = await admin
+      .from("approval_requests")
       .update({
         status: "pending",
-        deal_snapshot: input.dealSnapshot,
-        checklist_results: input.checklistResults,
-        submission_notes: input.submissionNotes || appr.submission_notes,
+        deal_snapshot: input.dealSnapshot as unknown as Json,
+        checklist_results: input.checklistResults as unknown as Json,
+        submission_notes: input.submissionNotes || approval.submission_notes,
         sla_deadline: slaDeadline,
         sla_breached: false,
         decision_at: null,
@@ -711,33 +804,50 @@ export async function resubmitApproval(input: {
       })
       .eq("id", input.approvalId);
 
+    if (updateErr) {
+      console.error("Failed to resubmit approval:", updateErr);
+      return { error: updateErr.message };
+    }
+
     // Reopen linked task
-    if (appr.task_id) {
-      await admin
+    if (approval.task_id) {
+      const { error: taskErr } = await admin
         .from("ops_tasks")
         .update({
           status: "To Do",
           completed_at: null,
           due_date: slaDeadline.split("T")[0],
         })
-        .eq("id", appr.task_id);
+        .eq("id", approval.task_id);
+
+      if (taskErr) {
+        console.error("Failed to reopen linked task on resubmit:", taskErr);
+      }
     }
 
     // Audit log
-    await admin.from("approval_audit_log" as any).insert({
+    const { error: auditErr } = await admin.from("approval_audit_log").insert({
       approval_id: input.approvalId,
       action: "resubmitted",
       performed_by: auth.user.id,
       notes: input.submissionNotes || "Resubmitted after changes",
-      deal_snapshot: input.dealSnapshot,
+      deal_snapshot: input.dealSnapshot as unknown as Json,
     });
+
+    if (auditErr) {
+      console.error("Failed to insert audit log for resubmission:", auditErr);
+    }
 
     // Notify approver
     try {
+      const dealSnapshot = approval.deal_snapshot as Record<string, unknown> | null;
+      const borrowerName = dealSnapshot && typeof dealSnapshot === "object"
+        ? (dealSnapshot.borrower_name as string) || "Deal"
+        : "Deal";
       await nq(admin).notifications().insert({
-        user_id: appr.assigned_to,
+        user_id: approval.assigned_to,
         notification_slug: "approval-submitted",
-        title: `Resubmitted: ${appr.deal_snapshot?.borrower_name || "Deal"}`,
+        title: `Resubmitted: ${borrowerName}`,
         body: `${auth.profile?.full_name || "Someone"} resubmitted after addressing changes.`,
         priority: "high",
         entity_type: "task",
@@ -750,9 +860,10 @@ export async function resubmitApproval(input: {
 
     revalidatePath("/admin/operations/approvals");
     return { success: true };
-  } catch (err: any) {
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : "Failed to resubmit approval";
     console.error("resubmitApproval error:", err);
-    return { error: err?.message || "An unexpected error occurred" };
+    return { error: message };
   }
 }
 
@@ -768,50 +879,63 @@ export async function cancelApproval(approvalId: string) {
     const admin = createAdminClient();
 
     const { data: approval, error: fetchError } = await admin
-      .from("approval_requests" as any)
+      .from("approval_requests")
       .select("*")
       .eq("id", approvalId)
       .single();
 
     if (fetchError || !approval) return { error: "Approval not found" };
-    const appr = approval as any;
 
     // Only the submitter or admin can cancel
-    if (appr.submitted_by !== auth.user.id) {
+    if (approval.submitted_by !== auth.user.id) {
       const adminCheck = await requireAdmin();
       if ("error" in adminCheck) return { error: "Only the submitter or an admin can cancel." };
     }
 
-    if (appr.status !== "pending" && appr.status !== "changes_requested") {
+    if (approval.status !== "pending" && approval.status !== "changes_requested") {
       return { error: "Cannot cancel an approval that is already decided." };
     }
 
     const now = new Date().toISOString();
 
-    await admin
-      .from("approval_requests" as any)
+    const { error: updateErr } = await admin
+      .from("approval_requests")
       .update({ status: "cancelled", decision_at: now })
       .eq("id", approvalId);
 
-    if (appr.task_id) {
-      await admin
-        .from("ops_tasks")
-        .update({ status: "Complete", completed_at: now })
-        .eq("id", appr.task_id);
+    if (updateErr) {
+      console.error("Failed to cancel approval:", updateErr);
+      return { error: updateErr.message };
     }
 
-    await admin.from("approval_audit_log" as any).insert({
+    if (approval.task_id) {
+      const { error: taskErr } = await admin
+        .from("ops_tasks")
+        .update({ status: "Complete", completed_at: now })
+        .eq("id", approval.task_id);
+
+      if (taskErr) {
+        console.error("Failed to complete linked task on cancel:", taskErr);
+      }
+    }
+
+    const { error: auditErr } = await admin.from("approval_audit_log").insert({
       approval_id: approvalId,
       action: "cancelled",
       performed_by: auth.user.id,
       notes: "Approval cancelled",
     });
 
+    if (auditErr) {
+      console.error("Failed to insert audit log for cancellation:", auditErr);
+    }
+
     revalidatePath("/admin/operations/approvals");
     return { success: true };
-  } catch (err: any) {
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : "Failed to cancel approval";
     console.error("cancelApproval error:", err);
-    return { error: err?.message || "An unexpected error occurred" };
+    return { error: message };
   }
 }
 
@@ -827,7 +951,7 @@ export async function getApprovalById(approvalId: string) {
     const admin = createAdminClient();
 
     const { data: approval, error } = await admin
-      .from("approval_requests" as any)
+      .from("approval_requests")
       .select("*")
       .eq("id", approvalId)
       .single();
@@ -835,39 +959,44 @@ export async function getApprovalById(approvalId: string) {
     if (error || !approval) return { error: "Approval not found" };
 
     // Get profiles for submitter and approver
-    const appr = approval as any;
     const [submitterRes, approverRes] = await Promise.all([
-      admin.from("profiles").select("full_name, email").eq("id", appr.submitted_by).single(),
-      admin.from("profiles").select("full_name, email").eq("id", appr.assigned_to).single(),
+      admin.from("profiles").select("full_name, email").eq("id", approval.submitted_by).single(),
+      admin.from("profiles").select("full_name, email").eq("id", approval.assigned_to).single(),
     ]);
 
     // Get audit log
-    const { data: auditLog } = await admin
-      .from("approval_audit_log" as any)
+    const { data: auditLog, error: auditErr } = await admin
+      .from("approval_audit_log")
       .select("*")
       .eq("approval_id", approvalId)
       .order("created_at", { ascending: true });
 
+    if (auditErr) {
+      console.error("Failed to fetch audit log:", auditErr);
+    }
+
     // Get performer names for audit entries
-    const performerIds = Array.from(new Set((auditLog ?? []).map((e: any) => e.performed_by)));
+    const performerIds = Array.from(
+      new Set((auditLog ?? []).map((e) => e.performed_by))
+    );
     const { data: performers } = await admin
       .from("profiles")
       .select("id, full_name")
       .in("id", performerIds);
 
     const performerMap: Record<string, string> = {};
-    (performers ?? []).forEach((p: any) => {
+    (performers ?? []).forEach((p) => {
       performerMap[p.id] = p.full_name || "Unknown";
     });
 
-    const enrichedAuditLog = (auditLog ?? []).map((entry: any) => ({
+    const enrichedAuditLog = (auditLog ?? []).map((entry) => ({
       ...entry,
       performer_name: performerMap[entry.performed_by] || "Unknown",
     }));
 
     return {
       approval: {
-        ...appr,
+        ...approval,
         submitter_name: submitterRes.data?.full_name || null,
         submitter_email: submitterRes.data?.email || null,
         approver_name: approverRes.data?.full_name || null,
@@ -875,9 +1004,10 @@ export async function getApprovalById(approvalId: string) {
       },
       auditLog: enrichedAuditLog,
     };
-  } catch (err: any) {
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : "Failed to fetch approval details";
     console.error("getApprovalById error:", err);
-    return { error: err?.message || "An unexpected error occurred" };
+    return { error: message };
   }
 }
 
@@ -893,7 +1023,7 @@ export async function getApprovals(filters?: {
     const admin = createAdminClient();
 
     let query = admin
-      .from("approval_requests" as any)
+      .from("approval_requests")
       .select("*")
       .order("created_at", { ascending: false });
 
@@ -914,7 +1044,7 @@ export async function getApprovals(filters?: {
 
     // Get all unique user IDs
     const userIds = new Set<string>();
-    (approvals ?? []).forEach((a: any) => {
+    (approvals ?? []).forEach((a) => {
       userIds.add(a.submitted_by);
       userIds.add(a.assigned_to);
     });
@@ -925,11 +1055,11 @@ export async function getApprovals(filters?: {
       .in("id", Array.from(userIds));
 
     const profileMap: Record<string, { full_name: string | null; email: string | null }> = {};
-    (profiles ?? []).forEach((p: any) => {
+    (profiles ?? []).forEach((p) => {
       profileMap[p.id] = { full_name: p.full_name, email: p.email };
     });
 
-    const enriched = (approvals ?? []).map((a: any) => ({
+    const enriched = (approvals ?? []).map((a) => ({
       ...a,
       submitter_name: profileMap[a.submitted_by]?.full_name || null,
       submitter_email: profileMap[a.submitted_by]?.email || null,
@@ -938,9 +1068,10 @@ export async function getApprovals(filters?: {
     }));
 
     return { approvals: enriched };
-  } catch (err: any) {
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : "Failed to fetch approvals";
     console.error("getApprovals error:", err);
-    return { error: err?.message || "An unexpected error occurred" };
+    return { error: message };
   }
 }
 
@@ -961,7 +1092,7 @@ export async function getPendingApprovalsCount() {
     const isSuperAdmin = (roles ?? []).some((r: { role: string }) => r.role === "super_admin");
 
     let query = admin
-      .from("approval_requests" as any)
+      .from("approval_requests")
       .select("id", { count: "exact", head: true })
       .eq("status", "pending");
 
@@ -989,14 +1120,15 @@ export async function getRoutingRules() {
 
     const admin = createAdminClient();
     const { data, error } = await admin
-      .from("approval_routing_rules" as any)
+      .from("approval_routing_rules")
       .select("*")
       .order("priority_order", { ascending: true });
 
     if (error) return { error: error.message };
     return { rules: data ?? [] };
-  } catch (err: any) {
-    return { error: err?.message || "An unexpected error occurred" };
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : "Failed to fetch routing rules";
+    return { error: message };
   }
 }
 
@@ -1005,7 +1137,7 @@ export async function upsertRoutingRule(rule: {
   name: string;
   entity_type: string;
   priority_order: number;
-  conditions: Record<string, any>;
+  conditions: Json;
   approver_id: string;
   fallback_approver_id?: string | null;
   sla_hours: number;
@@ -1020,7 +1152,7 @@ export async function upsertRoutingRule(rule: {
 
     if (rule.id) {
       const { error } = await admin
-        .from("approval_routing_rules" as any)
+        .from("approval_routing_rules")
         .update({
           name: rule.name,
           entity_type: rule.entity_type,
@@ -1037,7 +1169,7 @@ export async function upsertRoutingRule(rule: {
       if (error) return { error: error.message };
     } else {
       const { error } = await admin
-        .from("approval_routing_rules" as any)
+        .from("approval_routing_rules")
         .insert({
           name: rule.name,
           entity_type: rule.entity_type,
@@ -1055,8 +1187,9 @@ export async function upsertRoutingRule(rule: {
 
     revalidatePath("/admin/operations/approvals");
     return { success: true };
-  } catch (err: any) {
-    return { error: err?.message || "An unexpected error occurred" };
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : "Failed to save routing rule";
+    return { error: message };
   }
 }
 
@@ -1067,14 +1200,15 @@ export async function deleteRoutingRule(ruleId: string) {
 
     const admin = createAdminClient();
     const { error } = await admin
-      .from("approval_routing_rules" as any)
+      .from("approval_routing_rules")
       .delete()
       .eq("id", ruleId);
 
     if (error) return { error: error.message };
     revalidatePath("/admin/operations/approvals");
     return { success: true };
-  } catch (err: any) {
-    return { error: err?.message || "An unexpected error occurred" };
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : "Failed to delete routing rule";
+    return { error: message };
   }
 }

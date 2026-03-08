@@ -4,13 +4,11 @@ import { revalidatePath } from "next/cache";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { requireAdmin } from "@/lib/auth/require-admin";
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
 export async function generateBillingCycleAction(billingMonth: string) {
   try {
     const auth = await requireAdmin();
     if ("error" in auth) return { error: auth.error };
-    const admin = createAdminClient() as any;
+    const admin = createAdminClient();
 
     const { data, error } = await admin.rpc("generate_billing_cycle", {
       p_billing_month: billingMonth,
@@ -25,9 +23,9 @@ export async function generateBillingCycleAction(billingMonth: string) {
     revalidatePath("/admin/servicing/billing");
     revalidatePath("/admin/servicing");
     return { success: true, billingCycleId: data };
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error("Generate billing cycle error:", err);
-    return { error: err.message };
+    return { error: err instanceof Error ? err.message : "An unexpected error occurred" };
   }
 }
 
@@ -35,7 +33,7 @@ export async function runReconciliationAction(billingCycleId: string) {
   try {
     const auth = await requireAdmin();
     if ("error" in auth) return { error: auth.error };
-    const admin = createAdminClient() as any;
+    const admin = createAdminClient();
 
     const { data, error } = await admin.rpc("run_reconciliation_checks", {
       p_billing_cycle_id: billingCycleId,
@@ -49,9 +47,9 @@ export async function runReconciliationAction(billingCycleId: string) {
     revalidatePath("/admin/servicing/billing");
     revalidatePath("/admin/servicing");
     return { success: true, result: data };
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error("Reconciliation error:", err);
-    return { error: err.message };
+    return { error: err instanceof Error ? err.message : "An unexpected error occurred" };
   }
 }
 
@@ -59,7 +57,7 @@ export async function approveBillingCycleAction(billingCycleId: string) {
   try {
     const auth = await requireAdmin();
     if ("error" in auth) return { error: auth.error };
-    const admin = createAdminClient() as any;
+    const admin = createAdminClient();
 
     // First run reconciliation checks
     const { data: reconData, error: reconError } = await admin.rpc(
@@ -71,10 +69,11 @@ export async function approveBillingCycleAction(billingCycleId: string) {
       return { error: "Reconciliation failed: " + reconError.message };
     }
 
-    if (reconData && !reconData.passed) {
+    const reconResult = reconData as { passed?: boolean } | null;
+    if (reconResult && !reconResult.passed) {
       return {
         error: "Reconciliation checks failed. Fix errors before approving.",
-        reconciliation: reconData,
+        reconciliation: reconResult,
       };
     }
 
@@ -91,9 +90,9 @@ export async function approveBillingCycleAction(billingCycleId: string) {
     revalidatePath("/admin/servicing/billing");
     revalidatePath("/admin/servicing");
     return { success: true, reconciliation: reconData };
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error("Approve billing cycle error:", err);
-    return { error: err.message };
+    return { error: err instanceof Error ? err.message : "An unexpected error occurred" };
   }
 }
 
@@ -101,7 +100,7 @@ export async function submitBillingCycleAction(billingCycleId: string) {
   try {
     const auth = await requireAdmin();
     if ("error" in auth) return { error: auth.error };
-    const admin = createAdminClient() as any;
+    const admin = createAdminClient();
 
     const { error } = await admin
       .from("billing_cycles")
@@ -115,9 +114,9 @@ export async function submitBillingCycleAction(billingCycleId: string) {
     revalidatePath("/admin/servicing/billing");
     revalidatePath("/admin/servicing");
     return { success: true };
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error("Submit billing cycle error:", err);
-    return { error: err.message };
+    return { error: err instanceof Error ? err.message : "An unexpected error occurred" };
   }
 }
 
@@ -125,7 +124,7 @@ export async function completeBillingCycleAction(billingCycleId: string) {
   try {
     const auth = await requireAdmin();
     if ("error" in auth) return { error: auth.error };
-    const admin = createAdminClient() as any;
+    const admin = createAdminClient();
 
     const { error } = await admin
       .from("billing_cycles")
@@ -136,12 +135,27 @@ export async function completeBillingCycleAction(billingCycleId: string) {
       return { error: error.message };
     }
 
+    // Log to servicing audit
+    const { error: auditError } = await admin.from("servicing_audit_log").insert({
+      action: "BILLING_CYCLE_COMPLETED",
+      loan_id: billingCycleId,
+      field_changed: "status",
+      new_value: "complete",
+      entry_type: "System",
+      user_email: auth.user.email ?? "unknown",
+      notes: `Billing cycle marked complete by ${auth.user.email}`,
+    });
+
+    if (auditError) {
+      console.error("completeBillingCycleAction audit log error:", auditError);
+    }
+
     revalidatePath("/admin/servicing/billing");
     revalidatePath("/admin/servicing");
     return { success: true };
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error("Complete billing cycle error:", err);
-    return { error: err.message };
+    return { error: err instanceof Error ? err.message : "An unexpected error occurred" };
   }
 }
 
@@ -149,7 +163,7 @@ export async function generateNachaAction(billingCycleId: string) {
   try {
     const auth = await requireAdmin();
     if ("error" in auth) return { error: auth.error };
-    const admin = createAdminClient() as any;
+    const admin = createAdminClient();
 
     const { data, error } = await admin.rpc("generate_nacha_file", {
       p_billing_cycle_id: billingCycleId,
@@ -163,9 +177,9 @@ export async function generateNachaAction(billingCycleId: string) {
     revalidatePath("/admin/servicing/billing");
     revalidatePath("/admin/servicing");
     return { success: true, nachaContent: data };
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error("NACHA generation error:", err);
-    return { error: err.message };
+    return { error: err instanceof Error ? err.message : "An unexpected error occurred" };
   }
 }
 
@@ -178,7 +192,7 @@ export async function applyPaymentAction(
   try {
     const auth = await requireAdmin();
     if ("error" in auth) return { error: auth.error };
-    const admin = createAdminClient() as any;
+    const admin = createAdminClient();
 
     const { data, error } = await admin.rpc("apply_payment", {
       p_loan_id: loanId,
@@ -196,9 +210,9 @@ export async function applyPaymentAction(
     revalidatePath("/admin/servicing/billing");
     revalidatePath("/admin/servicing");
     return { success: true, result: data };
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error("Apply payment error:", err);
-    return { error: err.message };
+    return { error: err instanceof Error ? err.message : "An unexpected error occurred" };
   }
 }
 
@@ -209,7 +223,7 @@ export async function generatePayoffQuoteAction(
   try {
     const auth = await requireAdmin();
     if ("error" in auth) return { error: auth.error };
-    const admin = createAdminClient() as any;
+    const admin = createAdminClient();
 
     const { data, error } = await admin.rpc("generate_payoff_quote", {
       p_loan_id: loanId,
@@ -224,9 +238,9 @@ export async function generatePayoffQuoteAction(
     revalidatePath("/admin/servicing/billing");
     revalidatePath("/admin/servicing");
     return { success: true, result: data };
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error("Payoff quote error:", err);
-    return { error: err.message };
+    return { error: err instanceof Error ? err.message : "An unexpected error occurred" };
   }
 }
 
@@ -234,7 +248,7 @@ export async function refreshDelinquencyAction() {
   try {
     const auth = await requireAdmin();
     if ("error" in auth) return { error: auth.error };
-    const admin = createAdminClient() as any;
+    const admin = createAdminClient();
 
     const { data, error } = await admin.rpc("refresh_delinquency_records");
 
@@ -246,9 +260,9 @@ export async function refreshDelinquencyAction() {
     revalidatePath("/admin/servicing/billing");
     revalidatePath("/admin/servicing");
     return { success: true, result: data };
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error("Refresh delinquency error:", err);
-    return { error: err.message };
+    return { error: err instanceof Error ? err.message : "An unexpected error occurred" };
   }
 }
 
@@ -256,7 +270,7 @@ export async function fetchBillingLineItemsAction(billingCycleId: string) {
   try {
     const auth = await requireAdmin();
     if ("error" in auth) return { error: auth.error };
-    const admin = createAdminClient() as any;
+    const admin = createAdminClient();
 
     const { data, error } = await admin
       .from("billing_line_items")
@@ -269,9 +283,9 @@ export async function fetchBillingLineItemsAction(billingCycleId: string) {
     }
 
     return { success: true, items: data ?? [] };
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error("Fetch billing line items error:", err);
-    return { error: err.message };
+    return { error: err instanceof Error ? err.message : "An unexpected error occurred" };
   }
 }
 
@@ -279,7 +293,7 @@ export async function fetchLoanEventsAction(loanId: string) {
   try {
     const auth = await requireAdmin();
     if ("error" in auth) return { error: auth.error };
-    const admin = createAdminClient() as any;
+    const admin = createAdminClient();
 
     const { data, error } = await admin
       .from("loan_events")
@@ -293,8 +307,8 @@ export async function fetchLoanEventsAction(loanId: string) {
     }
 
     return { success: true, events: data ?? [] };
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error("Fetch loan events error:", err);
-    return { error: err.message };
+    return { error: err instanceof Error ? err.message : "An unexpected error occurred" };
   }
 }

@@ -4,8 +4,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { revalidatePath } from "next/cache";
 import type { RentRollRow } from "@/lib/commercial-uw/types";
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function db(): any {
+function db() {
   return createAdminClient();
 }
 

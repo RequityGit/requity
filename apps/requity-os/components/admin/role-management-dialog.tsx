@@ -28,6 +28,9 @@ import {
   fetchBorrowersAction,
   type UserRow,
 } from "@/app/(authenticated)/admin/users/actions";
+import type { Database } from "@/lib/supabase/types";
+
+type AppRole = Database["public"]["Enums"]["app_role"];
 
 const ROLE_COLORS: Record<string, string> = {
   super_admin: "bg-red-100 text-red-800 border-red-200",
@@ -52,7 +55,7 @@ export function RoleManagementDialog({
   onSuccess,
 }: RoleManagementDialogProps) {
   const [loading, setLoading] = useState(false);
-  const [newRole, setNewRole] = useState<string>("");
+  const [newRole, setNewRole] = useState<AppRole | "">("");
   const [selectedInvestorId, setSelectedInvestorId] = useState<string>("");
   const [selectedBorrowerId, setSelectedBorrowerId] = useState<string>("");
   const [investors, setInvestors] = useState<
@@ -100,15 +103,15 @@ export function RoleManagementDialog({
   }, [open]);
 
   // Get current active roles
-  const currentRoles = new Set<string>();
-  if (user.role) currentRoles.add(user.role);
-  user.allowed_roles.forEach((r) => { if (r) currentRoles.add(r); });
+  const currentRoles = new Set<AppRole>();
+  if (user.role) currentRoles.add(user.role as AppRole);
+  user.allowed_roles.forEach((r) => { if (r) currentRoles.add(r as AppRole); });
   user.user_roles.forEach((r) => {
-    if (r.is_active) currentRoles.add(r.role);
+    if (r.is_active) currentRoles.add(r.role as AppRole);
   });
 
   // Roles that can be added
-  const addableRoles = AVAILABLE_ROLES.filter((r) => !currentRoles.has(r));
+  const addableRoles = AVAILABLE_ROLES.filter((r) => !currentRoles.has(r as AppRole));
 
   const handleAddRole = async () => {
     if (!newRole) return;
@@ -138,7 +141,7 @@ export function RoleManagementDialog({
     setLoading(false);
   };
 
-  const handleRemoveRole = async (role: string) => {
+  const handleRemoveRole = async (role: AppRole) => {
     if (currentRoles.size <= 1) {
       toast({
         title: "Cannot remove last role",
@@ -215,7 +218,7 @@ export function RoleManagementDialog({
                 Add Role
               </label>
               <div className="flex items-center gap-2">
-                <Select value={newRole} onValueChange={setNewRole}>
+                <Select value={newRole} onValueChange={(v) => setNewRole(v as AppRole)}>
                   <SelectTrigger className="flex-1">
                     <SelectValue placeholder="Select a role" />
                   </SelectTrigger>
