@@ -170,22 +170,22 @@ export async function POST(
       .eq("id", review.id);
 
     // Extract data using Claude
-    const extraction = await extractDocumentData(
-      base64,
-      mediaType,
-      documentType
-    );
+    let extraction: Record<string, unknown> | null = null;
+    let extractionError: string | null = null;
+
+    try {
+      extraction = await extractDocumentData(base64, mediaType, documentType);
+    } catch (err) {
+      extractionError =
+        err instanceof Error ? err.message : "Unknown extraction error";
+      console.error("[review-document] Extraction threw:", extractionError);
+    }
+
     if (!extraction) {
-      await markError(
-        supabase,
-        review.id,
-        documentId,
-        "Failed to extract data from document"
-      );
-      return NextResponse.json(
-        { error: "Extraction failed" },
-        { status: 500 }
-      );
+      const errorMsg =
+        extractionError || "Failed to extract data from document";
+      await markError(supabase, review.id, documentId, errorMsg);
+      return NextResponse.json({ error: errorMsg }, { status: 500 });
     }
 
     // Build notes draft
@@ -312,8 +312,18 @@ async function classifyDocument(
       }),
     });
     const data = await response.json();
+
+    if (!response.ok) {
+      const apiError = data?.error?.message || data?.error?.type || `HTTP ${response.status}`;
+      console.error(`[classifyDocument] Claude API error: ${apiError}`);
+      throw new Error(`Claude API error: ${apiError}`);
+    }
+
     const text = data.content?.[0]?.text;
-    if (!text) return null;
+    if (!text) {
+      console.error("[classifyDocument] No text in response:", JSON.stringify(data).slice(0, 500));
+      return null;
+    }
     return JSON.parse(text.replace(/```json|```/g, "").trim());
   } catch {
     return null;
@@ -363,13 +373,29 @@ async function extractDocumentData(
       }),
     });
     const data = await response.json();
+
+    if (!response.ok) {
+      const apiError = data?.error?.message || data?.error?.type || `HTTP ${response.status}`;
+      console.error(`[extractDocumentData] Claude API error: ${apiError}`);
+      throw new Error(`Claude API error (${response.status}): ${apiError}`);
+    }
+
     const text = data.content?.[0]?.text;
-    if (!text) return null;
+    if (!text) {
+      console.error("[extractDocumentData] No text in response:", JSON.stringify(data).slice(0, 500));
+      return null;
+    }
     const parsed = JSON.parse(text.replace(/```json|```/g, "").trim());
     parsed._tokens_used =
       (data.usage?.input_tokens || 0) + (data.usage?.output_tokens || 0);
     return parsed;
-  } catch {
+  } catch (err) {
+    const errMsg = err instanceof Error ? err.message : String(err);
+    console.error("[extractDocumentData] Failed:", errMsg);
+    // Re-throw API errors so caller gets the real message
+    if (errMsg.startsWith("Claude API error")) {
+      throw err;
+    }
     return null;
   }
 }

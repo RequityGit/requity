@@ -763,10 +763,21 @@ Deno.serve(async (req) => {
       .eq("id", review.id);
 
     // Run extraction
-    const extraction = await extractDocumentData(base64, mediaType, documentType);
+    let extraction: Record<string, unknown> | null = null;
+    let extractionError: string | null = null;
+
+    try {
+      extraction = await extractDocumentData(base64, mediaType, documentType);
+    } catch (err) {
+      extractionError =
+        err instanceof Error ? err.message : "Unknown extraction error";
+      console.error("[review-document] Extraction threw:", extractionError);
+    }
+
     if (!extraction) {
-      await markError(supabase, review.id, documentId, "Failed to extract data from document");
-      return jsonResponse({ error: "Extraction failed" }, 500);
+      const errorMsg = extractionError || "Failed to extract data from document";
+      await markError(supabase, review.id, documentId, errorMsg);
+      return jsonResponse({ error: errorMsg }, 500);
     }
 
     // Fetch current deal values for comparison
@@ -908,6 +919,7 @@ async function classifyDocument(
         "Content-Type": "application/json",
         "x-api-key": ANTHROPIC_API_KEY,
         "anthropic-version": "2023-06-01",
+        "anthropic-beta": "pdfs-2024-09-25",
       },
       body: JSON.stringify({
         model: "claude-sonnet-4-20250514",
@@ -928,8 +940,18 @@ async function classifyDocument(
     });
 
     const data = await response.json();
+
+    if (!response.ok) {
+      const apiError = data?.error?.message || data?.error?.type || `HTTP ${response.status}`;
+      console.error(`[classifyDocument] Claude API error: ${apiError}`);
+      throw new Error(`Claude API error: ${apiError}`);
+    }
+
     const text = data.content?.[0]?.text;
-    if (!text) return null;
+    if (!text) {
+      console.error("[classifyDocument] No text in response:", JSON.stringify(data).slice(0, 500));
+      return null;
+    }
 
     return JSON.parse(text.replace(/```json|```/g, "").trim());
   } catch {
@@ -944,34 +966,62 @@ async function extractDocumentData(
 ): Promise<Record<string, unknown> | null> {
   const prompt = EXTRACTION_PROMPTS[docType] || EXTRACTION_PROMPTS.other;
 
+  const headers = {
+    "Content-Type": "application/json",
+    "x-api-key": ANTHROPIC_API_KEY,
+    "anthropic-version": "2023-06-01",
+    "anthropic-beta": "pdfs-2024-09-25",
+  };
+
+  const documentContent = [
+    {
+      type: "document",
+      source: { type: "base64", media_type: mediaType, data: base64 },
+    },
+    { type: "text", text: prompt },
+  ];
+
+  // Helper to check API response and throw on errors
+  function checkResponse(
+    response: Response,
+    data: Record<string, unknown>,
+    attempt: number
+  ): string {
+    if (!response.ok) {
+      const apiError =
+        (data?.error as Record<string, unknown>)?.message ||
+        (data?.error as Record<string, unknown>)?.type ||
+        `HTTP ${response.status}`;
+      console.error(
+        `[extractDocumentData] Claude API error (attempt ${attempt}): ${apiError}`
+      );
+      throw new Error(`Claude API error (${response.status}): ${apiError}`);
+    }
+
+    const text = (data.content as { text?: string }[])?.[0]?.text;
+    if (!text) {
+      console.error(
+        `[extractDocumentData] No text in response (attempt ${attempt}):`,
+        JSON.stringify(data).slice(0, 500)
+      );
+    }
+    return text || "";
+  }
+
+  // Attempt 1
   try {
     const response = await fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "x-api-key": ANTHROPIC_API_KEY,
-        "anthropic-version": "2023-06-01",
-      },
+      headers,
       body: JSON.stringify({
         model: "claude-sonnet-4-20250514",
         max_tokens: 4096,
-        messages: [
-          {
-            role: "user",
-            content: [
-              {
-                type: "document",
-                source: { type: "base64", media_type: mediaType, data: base64 },
-              },
-              { type: "text", text: prompt },
-            ],
-          },
-        ],
+        messages: [{ role: "user", content: documentContent }],
       }),
     });
 
     const data = await response.json();
-    const text = data.content?.[0]?.text;
+    const text = checkResponse(response, data, 1);
     if (!text) return null;
 
     const parsed = JSON.parse(text.replace(/```json|```/g, "").trim());
@@ -979,52 +1029,54 @@ async function extractDocumentData(
       (data.usage?.input_tokens || 0) + (data.usage?.output_tokens || 0);
     return parsed;
   } catch (firstError) {
-    // Retry once with explicit JSON-only instruction
+    const errMsg =
+      firstError instanceof Error ? firstError.message : String(firstError);
+    console.error("[extractDocumentData] Attempt 1 failed:", errMsg);
+
+    // API errors (4xx/5xx) won't succeed on retry with the same payload — re-throw
+    if (errMsg.startsWith("Claude API error")) {
+      throw firstError;
+    }
+
+    // JSON parse errors → retry with stricter instructions
     try {
-      const retryResponse = await fetch("https://api.anthropic.com/v1/messages", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "x-api-key": ANTHROPIC_API_KEY,
-          "anthropic-version": "2023-06-01",
-        },
-        body: JSON.stringify({
-          model: "claude-sonnet-4-20250514",
-          max_tokens: 4096,
-          system:
-            "You MUST respond with ONLY valid JSON. No markdown, no backticks, no explanation.",
-          messages: [
-            {
-              role: "user",
-              content: [
-                {
-                  type: "document",
-                  source: {
-                    type: "base64",
-                    media_type: mediaType,
-                    data: base64,
-                  },
-                },
-                { type: "text", text: prompt },
-              ],
-            },
-          ],
-        }),
-      });
+      const retryResponse = await fetch(
+        "https://api.anthropic.com/v1/messages",
+        {
+          method: "POST",
+          headers,
+          body: JSON.stringify({
+            model: "claude-sonnet-4-20250514",
+            max_tokens: 4096,
+            system:
+              "You MUST respond with ONLY valid JSON. No markdown, no backticks, no explanation.",
+            messages: [{ role: "user", content: documentContent }],
+          }),
+        }
+      );
 
       const retryData = await retryResponse.json();
-      const retryText = retryData.content?.[0]?.text;
-      if (retryText) {
-        const parsed = JSON.parse(retryText.replace(/```json|```/g, "").trim());
-        parsed._tokens_used =
-          (retryData.usage?.input_tokens || 0) +
-          (retryData.usage?.output_tokens || 0);
-        return parsed;
+      const retryText = checkResponse(retryResponse, retryData, 2);
+      if (!retryText) return null;
+
+      const parsed = JSON.parse(
+        retryText.replace(/```json|```/g, "").trim()
+      );
+      parsed._tokens_used =
+        (retryData.usage?.input_tokens || 0) +
+        (retryData.usage?.output_tokens || 0);
+      return parsed;
+    } catch (secondError) {
+      const secondMsg =
+        secondError instanceof Error
+          ? secondError.message
+          : String(secondError);
+      console.error("[extractDocumentData] Attempt 2 failed:", secondMsg);
+      if (secondMsg.startsWith("Claude API error")) {
+        throw secondError;
       }
-    } catch {
-      /* second attempt failed */
+      return null;
     }
-    return null;
   }
 }
 
