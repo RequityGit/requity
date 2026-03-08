@@ -39,6 +39,16 @@ import { UserPlus, X, Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { formatPhoneInput } from "@/lib/format";
 import { z } from "zod";
+import type { Database } from "@/lib/supabase/types";
+
+type CompanyType = Database["public"]["Enums"]["company_type_enum"];
+type CrmContactType = Database["public"]["Enums"]["crm_contact_type"];
+type CrmContactSource = Database["public"]["Enums"]["crm_contact_source"];
+type CrmContactStatus = Database["public"]["Enums"]["crm_contact_status"];
+type LifecycleStage = Database["public"]["Enums"]["lifecycle_stage_enum"];
+type RelationshipType = Database["public"]["Enums"]["relationship_type_enum"];
+type LenderDirection = Database["public"]["Enums"]["lender_direction_enum"];
+type VendorTypeEnum = Database["public"]["Enums"]["vendor_type_enum"];
 
 interface TeamMember {
   id: string;
@@ -237,7 +247,7 @@ export function AddContactDialog({
           .from("companies")
           .insert({
             name: newCompanyName.trim(),
-            company_type: newCompanyType as any,
+            company_type: newCompanyType as CompanyType,
           })
           .select("id")
           .single();
@@ -255,11 +265,11 @@ export function AddContactDialog({
           phone: form.phone.trim() || null,
           company_id: companyId,
           company_name: form.company_name || null,
-          contact_type: "other" as any, // legacy default
+          contact_type: "other" as CrmContactType,
           contact_types: selectedRelationships.length > 0 ? selectedRelationships : ["other"],
-          source: (form.source || null) as any,
-          status: "active" as any, // legacy default
-          lifecycle_stage: form.lifecycle_stage as any,
+          source: (form.source || null) as CrmContactSource | null,
+          status: "active" as CrmContactStatus,
+          lifecycle_stage: form.lifecycle_stage as LifecycleStage,
           assigned_to: form.assigned_to || null,
           address_line1: form.address_line1 || null,
           city: form.city || null,
@@ -276,11 +286,11 @@ export function AddContactDialog({
       // Insert relationship types
       const relationshipInserts = selectedRelationships.map((rt) => ({
         contact_id: newContact.id,
-        relationship_type: rt as any,
+        relationship_type: rt as RelationshipType,
         lender_direction:
-          rt === "lender" && lenderDirection ? (lenderDirection as any) : null,
+          rt === "lender" && lenderDirection ? (lenderDirection as LenderDirection) : null,
         vendor_type:
-          rt === "vendor" && vendorType ? (vendorType as any) : null,
+          rt === "vendor" && vendorType ? (vendorType as VendorTypeEnum) : null,
         is_active: true,
       }));
 
@@ -299,10 +309,10 @@ export function AddContactDialog({
       } else {
         router.push(`/admin/crm/${newContact.id}`);
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       toast({
         title: "Error adding contact",
-        description: err.message,
+        description: err instanceof Error ? err.message : "An unexpected error occurred",
         variant: "destructive",
       });
     } finally {

@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { timeAgo, getMonthLabel } from "@/lib/format";
 
 // ─── Types ────────────────────────────────────────────────────
 export interface HeroMetrics {
@@ -86,19 +87,6 @@ export interface DashboardData {
 }
 
 // ─── Helpers ──────────────────────────────────────────────────
-function timeAgo(dateStr: string): string {
-  const diff = Date.now() - new Date(dateStr).getTime();
-  const hours = Math.floor(diff / (1000 * 60 * 60));
-  if (hours < 1) return "Just now";
-  if (hours < 24) return `${hours}h ago`;
-  const days = Math.floor(hours / 24);
-  if (days === 1) return "Yesterday";
-  return `${days}d ago`;
-}
-
-function getMonthLabel(date: Date): string {
-  return date.toLocaleDateString("en-US", { month: "short" });
-}
 
 function getQuarterStart(): string {
   const now = new Date();
