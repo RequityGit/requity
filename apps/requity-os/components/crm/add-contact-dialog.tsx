@@ -38,7 +38,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { UserPlus, X, Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { formatPhoneInput } from "@/lib/format";
-import { z } from "zod";
+import { buildContactSchema } from "@/lib/schemas/contact";
 
 interface TeamMember {
   id: string;
@@ -108,16 +108,11 @@ export function AddContactDialog({
   // Validation
   const [errors, setErrors] = useState<Record<string, string>>({});
 
-  const contactSchema = z.object({
-    first_name: z.string().min(1, "Required"),
-    last_name: z.string().min(1, "Required"),
-  }).refine(
-    () => selectedRelationships.length > 0,
-    { message: "At least one relationship type is required", path: ["relationships"] }
-  ).refine(
-    () => form.email.trim() !== "" || form.phone.trim() !== "",
-    { message: "At least one contact method (email or phone) is required", path: ["contact_method"] }
-  );
+  const contactSchema = buildContactSchema({
+    selectedRelationships,
+    email: form.email,
+    phone: form.phone,
+  });
 
   function updateField(field: string, value: string) {
     setForm((prev) => ({ ...prev, [field]: value }));

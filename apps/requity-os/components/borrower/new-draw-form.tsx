@@ -24,17 +24,9 @@ import { FileUpload } from "@/components/shared/file-upload";
 import { Plus, Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import type { Tables } from "@/lib/supabase/types";
-import { z } from "zod";
+import { drawFormSchema } from "@/lib/schemas/draw";
 
 type Loan = Tables<"loans">;
-
-const drawFormSchema = z.object({
-  selectedLoanId: z.string().min(1, "Please select a loan."),
-  amount: z.string().refine(
-    (val) => { const n = parseFloat(val); return !isNaN(n) && n > 0; },
-    { message: "Please enter a valid amount." }
-  ),
-});
 
 export function NewDrawForm() {
   const router = useRouter();

@@ -398,7 +398,7 @@ These rules exist to prevent multi-round debugging cycles. Follow them strictly.
 
 ### Change Small, Verify Often
 4. **One logical change at a time.** Don't modify 8 files in a batch. Change one file (or a tightly coupled pair), then run `pnpm build` or `pnpm typecheck` to catch errors immediately — before moving to the next file.
-5. **Run `pnpm build` after every meaningful change.** Not at the end. Not after 5 files. After each one. Catching a type error in 1 file is fast; untangling type errors across 8 files is slow and error-prone.
+5. **Run `pnpm --filter <app> typecheck` after every file edit.** This is a HARD GATE — do not proceed to the next file until the current file typechecks cleanly. Use the app-specific filter (e.g., `pnpm --filter @repo/requity-os typecheck`) for speed. Full `pnpm build` after completing a logical unit of work (2-3 files).
 6. **If a build/type error appears, fix it before continuing.** Never pile more changes on top of a broken build. Stop, fix, verify, then resume.
 
 ### No Guessing

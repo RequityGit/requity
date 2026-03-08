@@ -9,12 +9,29 @@
     "test:e2e": "npx playwright test",
     "test:e2e:ui": "npx playwright test --ui",
     "test:e2e:headed": "xvfb-run --auto-servernum --server-args='-screen 0 1280x800x24' npx playwright test --headed",
-    "typecheck": "turbo run typecheck"
+    "typecheck": "turbo run typecheck",
+    "prepare": "husky"
   },
   "devDependencies": {
     "@playwright/test": "1.56.1",
     "dotenv": "^16.4.7",
+    "husky": "^9.1.7",
+    "lint-staged": "^16.3.2",
     "turbo": "^2.5.4"
   },
-  "packageManager": "pnpm@9.15.4"
+  "packageManager": "pnpm@9.15.4",
+  "lint-staged": {
+    "apps/requity-os/**/*.{ts,tsx}": [
+      "bash -c 'pnpm --filter @repo/requity-os typecheck'",
+      "bash -c 'pnpm --filter @repo/requity-os lint'"
+    ],
+    "apps/requity-group/**/*.{ts,tsx}": [
+      "bash -c 'pnpm --filter @repo/requity-group typecheck'",
+      "bash -c 'pnpm --filter @repo/requity-group lint'"
+    ],
+    "apps/trg-living/**/*.{ts,tsx}": [
+      "bash -c 'pnpm --filter @repo/trg-living typecheck'",
+      "bash -c 'pnpm --filter @repo/trg-living lint'"
+    ]
+  }
 }
