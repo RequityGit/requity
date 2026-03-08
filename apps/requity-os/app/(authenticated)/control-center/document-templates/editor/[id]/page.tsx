@@ -45,7 +45,6 @@ export default async function TemplateEditorPage({ params }: PageProps) {
         isActive={template.is_active}
         initialContent={template.content ?? ""}
         mergeFields={mergeFields}
-        gdriveFileId={template.gdrive_file_id}
       />
     </div>
   );
