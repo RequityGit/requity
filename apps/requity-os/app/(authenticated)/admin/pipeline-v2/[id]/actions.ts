@@ -101,6 +101,129 @@ export async function assignTeamMemberV2(
 
 // ─── Document Actions ───
 
+/**
+ * Creates a signed upload URL so the client can upload directly to Supabase
+ * storage, bypassing serverless function body-size limits (Netlify ~6 MB).
+ */
+export async function createDealDocumentUploadUrl(
+  dealId: string,
+  fileName: string
+): Promise<{
+  signedUrl: string | null;
+  token: string | null;
+  storagePath: string | null;
+  error: string | null;
+}> {
+  try {
+    const auth = await requireAdmin();
+    if ("error" in auth)
+      return { signedUrl: null, token: null, storagePath: null, error: auth.error ?? "Unauthorized" };
+
+    if (!dealId || !fileName)
+      return { signedUrl: null, token: null, storagePath: null, error: "Missing dealId or fileName" };
+
+    const admin = createAdminClient();
+    const safeName = `${Date.now()}-${fileName.replace(/[^a-zA-Z0-9._-]/g, "_")}`;
+    const storagePath = `deals/${dealId}/${safeName}`;
+
+    const { data, error } = await admin.storage
+      .from("loan-documents")
+      .createSignedUploadUrl(storagePath);
+
+    if (error || !data) {
+      console.error("createDealDocumentUploadUrl error:", error);
+      return {
+        signedUrl: null,
+        token: null,
+        storagePath: null,
+        error: error?.message ?? "Failed to create upload URL",
+      };
+    }
+
+    return {
+      signedUrl: data.signedUrl,
+      token: data.token,
+      storagePath,
+      error: null,
+    };
+  } catch (err: unknown) {
+    console.error("createDealDocumentUploadUrl error:", err);
+    return {
+      signedUrl: null,
+      token: null,
+      storagePath: null,
+      error: err instanceof Error ? err.message : "Failed to create upload URL",
+    };
+  }
+}
+
+/**
+ * Saves the document record in the database after the client has uploaded the
+ * file directly to Supabase storage via a signed URL.
+ */
+export async function saveDealDocumentRecord(params: {
+  dealId: string;
+  storagePath: string;
+  documentName: string;
+  fileSizeBytes: number;
+  mimeType: string;
+}): Promise<{ error: string | null }> {
+  try {
+    const auth = await requireAdmin();
+    if ("error" in auth) return { error: auth.error ?? "Unauthorized" };
+
+    const admin = createAdminClient();
+
+    // Generate a signed URL for the stored file
+    const signedUrlResult = await admin.storage
+      .from("loan-documents")
+      .createSignedUrl(params.storagePath, 60 * 60 * 24 * 365);
+
+    const fileUrl =
+      signedUrlResult?.error || !signedUrlResult?.data
+        ? params.storagePath
+        : signedUrlResult.data.signedUrl;
+
+    const insertResult = await admin
+      .from("unified_deal_documents" as never)
+      .insert({
+        deal_id: params.dealId,
+        document_name: params.documentName,
+        file_url: fileUrl,
+        file_size_bytes: params.fileSizeBytes,
+        mime_type: params.mimeType || "application/octet-stream",
+        uploaded_by: auth.user.id,
+        storage_path: params.storagePath,
+        review_status: "pending",
+      } as never)
+      .select("id" as never)
+      .single();
+
+    if (!insertResult || insertResult.error) {
+      const dbError = insertResult?.error;
+      console.error("saveDealDocumentRecord db error:", dbError);
+      // Clean up the uploaded file since DB insert failed
+      await admin.storage.from("loan-documents").remove([params.storagePath]);
+      return { error: dbError?.message ?? "Failed to save document record" };
+    }
+
+    // Fire AI document review (non-blocking)
+    const documentId = (insertResult.data as { id: string } | null)?.id;
+    if (documentId) {
+      triggerDocumentReviewEdgeFunction(documentId, params.dealId).catch((err) =>
+        console.error("Failed to trigger document review:", err)
+      );
+    }
+
+    revalidateDeal(params.dealId);
+    return { error: null };
+  } catch (err: unknown) {
+    console.error("saveDealDocumentRecord error:", err);
+    return { error: err instanceof Error ? err.message : "Failed to save document record" };
+  }
+}
+
+/** @deprecated Use createDealDocumentUploadUrl + saveDealDocumentRecord instead */
 export async function uploadDealDocumentV2(
   formData: FormData
 ): Promise<{ error: string | null }> {
@@ -113,9 +236,6 @@ export async function uploadDealDocumentV2(
 
     if (!file || !dealId) return { error: "Missing file or dealId" };
 
-    // Convert File to Buffer for reliable server-side upload
-    // (File objects from server action FormData may not be compatible
-    // with Supabase storage in all Node.js/serverless environments)
     const arrayBuffer = await file.arrayBuffer();
     const buffer = Buffer.from(arrayBuffer);
 
@@ -140,7 +260,6 @@ export async function uploadDealDocumentV2(
       return { error: uploadResult.error.message };
     }
 
-    // Generate a signed URL (bucket is private, getPublicUrl won't work)
     const signedUrlResult = await admin.storage
       .from("loan-documents")
       .createSignedUrl(storagePath, 60 * 60 * 24 * 365);
@@ -172,7 +291,6 @@ export async function uploadDealDocumentV2(
       return { error: dbError?.message ?? "Failed to save document record" };
     }
 
-    // Fire AI document review (non-blocking)
     const documentId = (insertResult.data as { id: string } | null)?.id;
     if (documentId) {
       triggerDocumentReviewEdgeFunction(documentId, dealId).catch((err) =>

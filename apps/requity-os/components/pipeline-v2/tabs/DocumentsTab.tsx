@@ -6,7 +6,8 @@ import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import {
-  uploadDealDocumentV2,
+  createDealDocumentUploadUrl,
+  saveDealDocumentRecord,
   deleteDealDocumentV2,
   retriggerDocumentReview,
   getDocumentSignedUrl,
@@ -90,16 +91,40 @@ export function DocumentsTab({ documents, dealId }: DocumentsTabProps) {
 
     startUpload(async () => {
       for (const file of files) {
-        const formData = new FormData();
-        formData.append("file", file);
-        formData.append("dealId", dealId);
-
         try {
-          const result = await uploadDealDocumentV2(formData);
-          if (!result) {
-            toast.error(`Failed to upload ${file.name}: No response from server`);
-          } else if (result.error) {
-            toast.error(`Failed to upload ${file.name}: ${result.error}`);
+          // 1. Get a signed upload URL from the server
+          const urlResult = await createDealDocumentUploadUrl(dealId, file.name);
+          if (urlResult.error || !urlResult.signedUrl || !urlResult.storagePath || !urlResult.token) {
+            toast.error(`Failed to upload ${file.name}: ${urlResult.error ?? "Could not create upload URL"}`);
+            continue;
+          }
+
+          // 2. Upload file directly to Supabase storage (bypasses server action body limit)
+          const uploadRes = await fetch(urlResult.signedUrl, {
+            method: "PUT",
+            headers: {
+              "Content-Type": file.type || "application/octet-stream",
+            },
+            body: file,
+          });
+
+          if (!uploadRes.ok) {
+            const errorText = await uploadRes.text().catch(() => "Unknown error");
+            toast.error(`Failed to upload ${file.name}: ${errorText}`);
+            continue;
+          }
+
+          // 3. Save the document record in the database
+          const saveResult = await saveDealDocumentRecord({
+            dealId,
+            storagePath: urlResult.storagePath,
+            documentName: file.name,
+            fileSizeBytes: file.size,
+            mimeType: file.type || "application/octet-stream",
+          });
+
+          if (saveResult.error) {
+            toast.error(`Failed to save ${file.name}: ${saveResult.error}`);
           } else {
             toast.success(`Uploaded ${file.name}`);
           }
