@@ -52,6 +52,7 @@ interface CompanyDetailClientProps {
   counts: TabBadgeCounts;
   currentUserId: string;
   currentUserName: string;
+  teamMembers: { id: string; full_name: string }[];
 }
 
 export function CompanyDetailClient({
@@ -67,6 +68,7 @@ export function CompanyDetailClient({
   counts,
   currentUserId,
   currentUserName,
+  teamMembers,
 }: CompanyDetailClientProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -178,7 +180,10 @@ export function CompanyDetailClient({
             <CompanyContactsTab
               contacts={contacts}
               companyId={company.id}
+              companyName={company.name}
               primaryContactId={company.primary_contact_id}
+              teamMembers={teamMembers}
+              currentUserId={currentUserId}
             />
           )}
           {activeTab === "notes" && (

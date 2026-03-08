@@ -50,9 +50,12 @@ export default async function CompanyDetailPage({ params }: PageProps) {
     .order("full_name");
 
   const profileLookup: Record<string, string> = {};
+  const teamMembers: { id: string; full_name: string }[] = [];
   (profiles ?? []).forEach(
     (t: { id: string; full_name: string | null; email: string | null }) => {
-      profileLookup[t.id] = t.full_name || t.email || "Unknown";
+      const displayName = t.full_name || t.email || "Unknown";
+      profileLookup[t.id] = displayName;
+      teamMembers.push({ id: t.id, full_name: displayName });
     }
   );
 
@@ -301,6 +304,7 @@ export default async function CompanyDetailPage({ params }: PageProps) {
       counts={counts}
       currentUserId={user.id}
       currentUserName={currentUserName}
+      teamMembers={teamMembers}
     />
   );
 }
