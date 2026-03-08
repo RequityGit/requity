@@ -79,6 +79,8 @@ const FIELDS_TABLE = "page_layout_fields" as never;
 function revalidate() {
   revalidatePath("/control-center/page-manager/contacts");
   revalidatePath("/control-center/page-manager/companies");
+  // Revalidate detail pages so section order changes take effect
+  revalidatePath("/admin/crm", "layout");
 }
 
 // ---------------------------------------------------------------------------
