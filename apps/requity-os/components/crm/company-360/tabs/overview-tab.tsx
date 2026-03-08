@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useMemo, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import {
   TrendingUp,
@@ -24,6 +24,10 @@ import {
   CrmEditSectionDialog,
   type CrmSectionField,
 } from "@/components/crm/crm-edit-section-dialog";
+import {
+  renderDynamicFields,
+  buildEditFields,
+} from "@/components/crm/shared-field-renderer";
 import { useToast } from "@/components/ui/use-toast";
 import { formatDate, formatPhoneInput } from "@/lib/format";
 import { ClickToCallNumber } from "@/components/ui/ClickToCallNumber";
@@ -40,17 +44,35 @@ import {
   ASSET_LABELS,
   CAPABILITY_LABELS,
 } from "../types";
+import type {
+  SectionLayout,
+  FieldLayout,
+} from "@/components/crm/contact-360/types";
 
 interface OverviewTabProps {
   company: CompanyDetailData;
   wireInstructions: CompanyWireData | null;
   files: CompanyFileData[];
   onEditLenderDetails?: () => void;
+  sectionOrder: SectionLayout[];
+  sectionFields: Record<string, FieldLayout[]>;
 }
 
 const COMPANY_TYPE_OPTIONS = Object.entries(COMPANY_TYPE_CONFIG).map(
   ([value, { label }]) => ({ value, label })
 );
+
+// Default section order used when no layout data exists in the database
+const DEFAULT_SECTION_ORDER: SectionLayout[] = [
+  { section_key: "lender_performance", display_order: 0, is_visible: true, visibility_rule: "is_lender" },
+  { section_key: "company_information", display_order: 1, is_visible: true, visibility_rule: null },
+  { section_key: "address", display_order: 2, is_visible: true, visibility_rule: null },
+  { section_key: "lender_details", display_order: 3, is_visible: true, visibility_rule: "is_lender" },
+  { section_key: "capabilities_coverage", display_order: 4, is_visible: true, visibility_rule: "not_lender" },
+  { section_key: "agreements", display_order: 5, is_visible: true, visibility_rule: null },
+  { section_key: "wire_instructions", display_order: 6, is_visible: true, visibility_rule: null },
+  { section_key: "description", display_order: 7, is_visible: true, visibility_rule: null },
+];
 
 function ChipGroup({
   items,
@@ -87,6 +109,8 @@ export function CompanyOverviewTab({
   wireInstructions,
   files,
   onEditLenderDetails,
+  sectionOrder,
+  sectionFields,
 }: OverviewTabProps) {
   const router = useRouter();
   const { toast } = useToast();
@@ -131,9 +155,12 @@ export function CompanyOverviewTab({
     [company.id, router, toast]
   );
 
-  // --- Section field definitions for edit dialogs ---
+  // Data object for dynamic field rendering
+  const companyData = company as unknown as Record<string, unknown>;
 
-  const companyInfoFields: CrmSectionField[] = [
+  // --- Hardcoded fallback field definitions for edit dialogs ---
+
+  const companyInfoFieldsFallback: CrmSectionField[] = [
     { label: "Legal Name", fieldName: "name", fieldType: "text", value: company.name },
     { label: "DBA / Other Names", fieldName: "other_names", fieldType: "text", value: company.other_names },
     {
@@ -148,7 +175,7 @@ export function CompanyOverviewTab({
     { label: "Title Co. Verified", fieldName: "title_company_verified", fieldType: "boolean", value: company.title_company_verified },
   ];
 
-  const addressFields: CrmSectionField[] = [
+  const addressFieldsFallback: CrmSectionField[] = [
     { label: "Address Line 1", fieldName: "address_line1", fieldType: "text", value: company.address_line1 },
     { label: "Address Line 2", fieldName: "address_line2", fieldType: "text", value: company.address_line2 },
     { label: "City", fieldName: "city", fieldType: "text", value: company.city },
@@ -157,7 +184,7 @@ export function CompanyOverviewTab({
     { label: "Country", fieldName: "country", fieldType: "text", value: company.country || "US" },
   ];
 
-  const agreementFields: CrmSectionField[] = [
+  const agreementFieldsFallback: CrmSectionField[] = [
     { label: "NDA Created", fieldName: "nda_created_date", fieldType: "date", value: company.nda_created_date },
     { label: "NDA Expiration", fieldName: "nda_expiration_date", fieldType: "date", value: company.nda_expiration_date },
     { label: "Fee Agreement On File", fieldName: "fee_agreement_on_file", fieldType: "boolean", value: company.fee_agreement_on_file },
@@ -166,6 +193,57 @@ export function CompanyOverviewTab({
   const notesFields: CrmSectionField[] = [
     { label: "Description", fieldName: "notes", fieldType: "textarea", value: company.notes },
   ];
+
+  // Use dynamic edit fields when layout data exists, otherwise fall back to hardcoded
+  const companyInfoEditFields = useMemo(
+    () => sectionFields.company_information?.length
+      ? buildEditFields(sectionFields.company_information, companyData, false)
+      : companyInfoFieldsFallback,
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [sectionFields, company]
+  );
+
+  const addressEditFields = useMemo(
+    () => sectionFields.address?.length
+      ? buildEditFields(sectionFields.address, companyData, false)
+      : addressFieldsFallback,
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [sectionFields, company]
+  );
+
+  const agreementEditFields = useMemo(
+    () => sectionFields.agreements?.length
+      ? buildEditFields(sectionFields.agreements, companyData, false)
+      : agreementFieldsFallback,
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [sectionFields, company]
+  );
+
+  // Has non-lender capabilities/coverage data
+  const hasCapabilitiesCoverage = !isLender &&
+    ((company.company_capabilities ?? []).length > 0 ||
+      (company.asset_types ?? []).length > 0 ||
+      (company.geographies ?? []).length > 0);
+
+  // Resolve section ordering
+  const resolvedSections = useMemo(() => {
+    const layout = sectionOrder.length > 0 ? sectionOrder : DEFAULT_SECTION_ORDER;
+
+    const visibilityContext: Record<string, boolean> = {
+      is_lender: isLender,
+      not_lender: !isLender,
+      has_wire: !!wireInstructions,
+    };
+
+    return layout
+      .filter((s) => s.is_visible)
+      .filter((s) => {
+        if (!s.visibility_rule) return true;
+        return visibilityContext[s.visibility_rule] ?? true;
+      })
+      .sort((a, b) => a.display_order - b.display_order)
+      .map((s) => s.section_key);
+  }, [sectionOrder, isLender, wireInstructions]);
 
   function SectionEditButton({ onClick }: { onClick: () => void }) {
     return (
@@ -180,235 +258,261 @@ export function CompanyOverviewTab({
     );
   }
 
-  return (
-    <div className="flex flex-col gap-5">
-      {/* Lender Performance Metrics - placeholder for future data */}
-      {isLender && (
-        <SectionCard title="Lender Performance" icon={TrendingUp}>
-          <div className="flex gap-5 flex-wrap">
-            <MetricCard label="Deals Submitted" value="—" />
-            <MetricCard label="Deals Funded" value="—" />
-            <MetricCard label="Hit Rate" value="—" mono />
-            <MetricCard label="Funded Volume" value="—" mono />
-            <MetricCard label="Avg Rate" value="—" mono />
-            <MetricCard label="Avg Close Time" value="—" mono />
-          </div>
-        </SectionCard>
-      )}
-
-      {/* Company Information */}
-      <SectionCard title="Company Information" icon={Building2} action={<SectionEditButton onClick={() => setEditCompanyOpen(true)} />}>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-10">
-          <FieldRow label="Legal Name" value={company.name} />
-          <FieldRow label="DBA / Other Names" value={company.other_names} />
-          <FieldRow label="Company Type" value={typeCfg.label} />
-          {company.company_subtype && (
-            <FieldRow
-              label="Subtype"
-              value={
-                SUBTYPE_LABELS[company.company_subtype] ||
-                company.company_subtype
-              }
-            />
-          )}
+  // Hardcoded fallback rendering for Company Information
+  function renderCompanyInfoFallback() {
+    return (
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-x-10">
+        <FieldRow label="Legal Name" value={company.name} />
+        <FieldRow label="DBA / Other Names" value={company.other_names} />
+        <FieldRow label="Company Type" value={typeCfg.label} />
+        {company.company_subtype && (
           <FieldRow
-            label="Phone"
-            value={company.phone ? <ClickToCallNumber number={company.phone} showIcon={false} /> : undefined}
-          />
-          <FieldRow label="Email" value={company.email} />
-          <FieldRow
-            label="Website"
+            label="Subtype"
             value={
-              company.website
-                ? company.website.replace(/^https?:\/\//, "")
-                : undefined
+              SUBTYPE_LABELS[company.company_subtype] ||
+              company.company_subtype
             }
           />
-          <FieldRow label="Source" value={company.source} />
-          <FieldRow label="Status" value={company.is_active ? "Active" : "Inactive"} />
-          <FieldRow label="Title Co. Verified" value={company.title_company_verified ? "Yes" : "No"} />
-        </div>
-      </SectionCard>
-
-      {/* Address */}
-      <SectionCard title="Address" icon={MapPin} action={<SectionEditButton onClick={() => setEditAddressOpen(true)} />}>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-10">
-          <FieldRow label="Address Line 1" value={company.address_line1} />
-          <FieldRow label="Address Line 2" value={company.address_line2} />
-          <FieldRow label="City" value={company.city} />
-          <FieldRow label="State" value={company.state} />
-          <FieldRow label="Zip" value={company.zip} mono />
-          <FieldRow label="Country" value={company.country || "US"} />
-        </div>
-      </SectionCard>
-
-      {/* Lender Details */}
-      {isLender && (
-        <SectionCard
-          title="Lender Details"
-          icon={Landmark}
-          action={
-            onEditLenderDetails ? (
-              <Button
-                variant="ghost"
-                size="sm"
-                className="gap-1 text-xs h-7 text-muted-foreground"
-                onClick={onEditLenderDetails}
-              >
-                <Pencil size={12} strokeWidth={1.5} /> Edit
-              </Button>
-            ) : undefined
+        )}
+        <FieldRow
+          label="Phone"
+          value={company.phone ? <ClickToCallNumber number={company.phone} showIcon={false} /> : undefined}
+        />
+        <FieldRow label="Email" value={company.email} />
+        <FieldRow
+          label="Website"
+          value={
+            company.website
+              ? company.website.replace(/^https?:\/\//, "")
+              : undefined
           }
-        >
-          <div className="flex flex-col gap-5">
-            <div>
-              <div className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-2">
-                Programs
-              </div>
-              <ChipGroup
-                items={company.lender_programs ?? []}
-                labelMap={PROGRAM_LABELS}
-                color="#3B82F6"
-              />
+        />
+        <FieldRow label="Source" value={company.source} />
+        <FieldRow label="Status" value={company.is_active ? "Active" : "Inactive"} />
+        <FieldRow label="Title Co. Verified" value={company.title_company_verified ? "Yes" : "No"} />
+      </div>
+    );
+  }
+
+  // Hardcoded fallback rendering for Address
+  function renderAddressFallback() {
+    return (
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-x-10">
+        <FieldRow label="Address Line 1" value={company.address_line1} />
+        <FieldRow label="Address Line 2" value={company.address_line2} />
+        <FieldRow label="City" value={company.city} />
+        <FieldRow label="State" value={company.state} />
+        <FieldRow label="Zip" value={company.zip} mono />
+        <FieldRow label="Country" value={company.country || "US"} />
+      </div>
+    );
+  }
+
+  // Hardcoded fallback rendering for Agreements
+  function renderAgreementsFallback() {
+    return (
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-x-10">
+        <FieldRow
+          label="NDA Status"
+          value={
+            <span
+              className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium"
+              style={{
+                backgroundColor: `${ndaStatusPill.color}14`,
+                color: ndaStatusPill.color,
+              }}
+            >
+              {ndaStatusPill.label}
+            </span>
+          }
+        />
+        <FieldRow
+          label="NDA Created"
+          value={
+            company.nda_created_date
+              ? formatDate(company.nda_created_date)
+              : undefined
+          }
+        />
+        <FieldRow
+          label="NDA Expiration"
+          value={
+            company.nda_expiration_date
+              ? formatDate(company.nda_expiration_date)
+              : undefined
+          }
+          danger={!!ndaExpDanger}
+        />
+        <FieldRow
+          label="Fee Agreement"
+          value={
+            <span
+              className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium"
+              style={{
+                backgroundColor: company.fee_agreement_on_file
+                  ? "#22A86114"
+                  : "#E5453D14",
+                color: company.fee_agreement_on_file ? "#22A861" : "#E5453D",
+              }}
+            >
+              {company.fee_agreement_on_file ? "On File" : "Missing"}
+            </span>
+          }
+        />
+      </div>
+    );
+  }
+
+  // Build section content map: section_key -> JSX
+  const sectionContent: Record<string, ReactNode> = {
+    lender_performance: isLender ? (
+      <SectionCard title="Lender Performance" icon={TrendingUp} key="lender_performance">
+        <div className="flex gap-5 flex-wrap">
+          <MetricCard label="Deals Submitted" value="—" />
+          <MetricCard label="Deals Funded" value="—" />
+          <MetricCard label="Hit Rate" value="—" mono />
+          <MetricCard label="Funded Volume" value="—" mono />
+          <MetricCard label="Avg Rate" value="—" mono />
+          <MetricCard label="Avg Close Time" value="—" mono />
+        </div>
+      </SectionCard>
+    ) : null,
+
+    company_information: (
+      <SectionCard title="Company Information" icon={Building2} action={<SectionEditButton onClick={() => setEditCompanyOpen(true)} />} key="company_information">
+        {sectionFields.company_information?.length
+          ? renderDynamicFields(sectionFields.company_information, companyData, false)
+          : renderCompanyInfoFallback()}
+      </SectionCard>
+    ),
+
+    address: (
+      <SectionCard title="Address" icon={MapPin} action={<SectionEditButton onClick={() => setEditAddressOpen(true)} />} key="address">
+        {sectionFields.address?.length
+          ? renderDynamicFields(sectionFields.address, companyData, false)
+          : renderAddressFallback()}
+      </SectionCard>
+    ),
+
+    lender_details: isLender ? (
+      <SectionCard
+        title="Lender Details"
+        icon={Landmark}
+        key="lender_details"
+        action={
+          onEditLenderDetails ? (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="gap-1 text-xs h-7 text-muted-foreground"
+              onClick={onEditLenderDetails}
+            >
+              <Pencil size={12} strokeWidth={1.5} /> Edit
+            </Button>
+          ) : undefined
+        }
+      >
+        <div className="flex flex-col gap-5">
+          <div>
+            <div className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-2">
+              Programs
             </div>
-            <div>
-              <div className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-2">
-                Asset Types
-              </div>
-              <ChipGroup
-                items={company.asset_types ?? []}
-                labelMap={ASSET_LABELS}
-                color="#E5930E"
-              />
+            <ChipGroup
+              items={company.lender_programs ?? []}
+              labelMap={PROGRAM_LABELS}
+              color="#3B82F6"
+            />
+          </div>
+          <div>
+            <div className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-2">
+              Asset Types
             </div>
-            <div>
-              <div className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-2">
-                Geographies
-              </div>
-              <ChipGroup
-                items={company.geographies ?? []}
-                labelMap={{}}
-                color="#22A861"
-              />
+            <ChipGroup
+              items={company.asset_types ?? []}
+              labelMap={ASSET_LABELS}
+              color="#E5930E"
+            />
+          </div>
+          <div>
+            <div className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-2">
+              Geographies
             </div>
+            <ChipGroup
+              items={company.geographies ?? []}
+              labelMap={{}}
+              color="#22A861"
+            />
+          </div>
+          <div>
+            <div className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-2">
+              Capabilities
+            </div>
+            <ChipGroup
+              items={company.company_capabilities ?? []}
+              labelMap={CAPABILITY_LABELS}
+              color="#8B5CF6"
+            />
+          </div>
+        </div>
+      </SectionCard>
+    ) : null,
+
+    capabilities_coverage: hasCapabilitiesCoverage ? (
+      <SectionCard title="Capabilities & Coverage" icon={Target} key="capabilities_coverage">
+        <div className="flex flex-col gap-4">
+          {(company.company_capabilities ?? []).length > 0 && (
             <div>
               <div className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-2">
                 Capabilities
               </div>
               <ChipGroup
-                items={company.company_capabilities ?? []}
+                items={company.company_capabilities!}
                 labelMap={CAPABILITY_LABELS}
                 color="#8B5CF6"
               />
             </div>
-          </div>
-        </SectionCard>
-      )}
-
-      {/* Non-lender: capabilities/asset_types/geographies if populated */}
-      {!isLender &&
-        ((company.company_capabilities ?? []).length > 0 ||
-          (company.asset_types ?? []).length > 0 ||
-          (company.geographies ?? []).length > 0) && (
-          <SectionCard title="Capabilities & Coverage" icon={Target}>
-            <div className="flex flex-col gap-4">
-              {(company.company_capabilities ?? []).length > 0 && (
-                <div>
-                  <div className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-2">
-                    Capabilities
-                  </div>
-                  <ChipGroup
-                    items={company.company_capabilities!}
-                    labelMap={CAPABILITY_LABELS}
-                    color="#8B5CF6"
-                  />
-                </div>
-              )}
-              {(company.asset_types ?? []).length > 0 && (
-                <div>
-                  <div className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-2">
-                    Asset Types
-                  </div>
-                  <ChipGroup
-                    items={company.asset_types!}
-                    labelMap={ASSET_LABELS}
-                    color="#E5930E"
-                  />
-                </div>
-              )}
-              {(company.geographies ?? []).length > 0 && (
-                <div>
-                  <div className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-2">
-                    Geographies
-                  </div>
-                  <ChipGroup
-                    items={company.geographies!}
-                    labelMap={{}}
-                    color="#22A861"
-                  />
-                </div>
-              )}
+          )}
+          {(company.asset_types ?? []).length > 0 && (
+            <div>
+              <div className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-2">
+                Asset Types
+              </div>
+              <ChipGroup
+                items={company.asset_types!}
+                labelMap={ASSET_LABELS}
+                color="#E5930E"
+              />
             </div>
-          </SectionCard>
-        )}
-
-      {/* Agreements */}
-      <SectionCard title="Agreements" icon={FileText} action={<SectionEditButton onClick={() => setEditAgreementsOpen(true)} />}>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-10">
-          <FieldRow
-            label="NDA Status"
-            value={
-              <span
-                className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium"
-                style={{
-                  backgroundColor: `${ndaStatusPill.color}14`,
-                  color: ndaStatusPill.color,
-                }}
-              >
-                {ndaStatusPill.label}
-              </span>
-            }
-          />
-          <FieldRow
-            label="NDA Created"
-            value={
-              company.nda_created_date
-                ? formatDate(company.nda_created_date)
-                : undefined
-            }
-          />
-          <FieldRow
-            label="NDA Expiration"
-            value={
-              company.nda_expiration_date
-                ? formatDate(company.nda_expiration_date)
-                : undefined
-            }
-            danger={!!ndaExpDanger}
-          />
-          <FieldRow
-            label="Fee Agreement"
-            value={
-              <span
-                className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium"
-                style={{
-                  backgroundColor: company.fee_agreement_on_file
-                    ? "#22A86114"
-                    : "#E5453D14",
-                  color: company.fee_agreement_on_file ? "#22A861" : "#E5453D",
-                }}
-              >
-                {company.fee_agreement_on_file ? "On File" : "Missing"}
-              </span>
-            }
-          />
+          )}
+          {(company.geographies ?? []).length > 0 && (
+            <div>
+              <div className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-2">
+                Geographies
+              </div>
+              <ChipGroup
+                items={company.geographies!}
+                labelMap={{}}
+                color="#22A861"
+              />
+            </div>
+          )}
         </div>
       </SectionCard>
+    ) : null,
 
-      {/* Wire Instructions */}
+    agreements: (
+      <SectionCard title="Agreements" icon={FileText} action={<SectionEditButton onClick={() => setEditAgreementsOpen(true)} />} key="agreements">
+        {sectionFields.agreements?.length
+          ? renderDynamicFields(sectionFields.agreements, companyData, false)
+          : renderAgreementsFallback()}
+      </SectionCard>
+    ),
+
+    wire_instructions: (
       <SectionCard
         title="Wire Instructions"
         icon={Banknote}
+        key="wire_instructions"
         action={
           wireInstructions ? (
             <Button
@@ -482,34 +586,41 @@ export function CompanyOverviewTab({
           </span>
         )}
       </SectionCard>
+    ),
 
-      {/* Description */}
-      <SectionCard title="Description" icon={FileText} action={<SectionEditButton onClick={() => setEditNotesOpen(true)} />}>
+    description: (
+      <SectionCard title="Description" icon={FileText} action={<SectionEditButton onClick={() => setEditNotesOpen(true)} />} key="description">
         <p className="text-[13px] text-muted-foreground leading-relaxed whitespace-pre-wrap">
           {company.notes || "No notes."}
         </p>
       </SectionCard>
+    ),
+  };
+
+  return (
+    <div className="flex flex-col gap-5">
+      {resolvedSections.map((key) => sectionContent[key])}
 
       {/* Section Edit Dialogs */}
       <CrmEditSectionDialog
         open={editCompanyOpen}
         onOpenChange={setEditCompanyOpen}
         title="Company Information"
-        fields={companyInfoFields}
+        fields={companyInfoEditFields}
         onSave={saveField}
       />
       <CrmEditSectionDialog
         open={editAddressOpen}
         onOpenChange={setEditAddressOpen}
         title="Address"
-        fields={addressFields}
+        fields={addressEditFields}
         onSave={saveField}
       />
       <CrmEditSectionDialog
         open={editAgreementsOpen}
         onOpenChange={setEditAgreementsOpen}
         title="Agreements"
-        fields={agreementFields}
+        fields={agreementEditFields}
         onSave={saveField}
       />
       <CrmEditSectionDialog

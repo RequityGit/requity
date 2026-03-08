@@ -15,6 +15,10 @@ import type {
   CompanyQuoteData,
   TabBadgeCounts,
 } from "@/components/crm/company-360/types";
+import type {
+  SectionLayout,
+  FieldLayout,
+} from "@/components/crm/contact-360/types";
 
 interface PageProps {
   params: { id: string };
@@ -244,6 +248,94 @@ export default async function CompanyDetailPage({ params }: PageProps) {
     })
   );
 
+  // Fetch page layout section order for company_detail
+  const { data: sectionRows } = await admin
+    .from("page_layout_sections" as never)
+    .select("id, section_key, display_order, is_visible, visibility_rule" as never)
+    .eq("page_type" as never, "company_detail" as never)
+    .eq("sidebar" as never, false as never)
+    .order("display_order" as never, { ascending: true });
+
+  const sectionOrder: SectionLayout[] = (sectionRows ?? []).map(
+    (r: Record<string, unknown>) => ({
+      section_key: r.section_key as string,
+      display_order: r.display_order as number,
+      is_visible: r.is_visible as boolean,
+      visibility_rule: r.visibility_rule as string | null,
+    })
+  );
+
+  // Build section_id → section_key lookup for sections that have field-level layout
+  const fieldSectionKeys = ["company_information", "address", "agreements", "wire_instructions"];
+  const sectionIdToKey: Record<string, string> = {};
+  const sectionIds: string[] = [];
+  for (const row of (sectionRows ?? []) as Record<string, unknown>[]) {
+    if (fieldSectionKeys.includes(row.section_key as string)) {
+      sectionIdToKey[row.id as string] = row.section_key as string;
+      sectionIds.push(row.id as string);
+    }
+  }
+
+  // Fetch page_layout_fields with field_configurations for relevant sections
+  const sectionFields: Record<string, FieldLayout[]> = {};
+  if (sectionIds.length > 0) {
+    const { data: fieldRows } = await admin
+      .from("page_layout_fields" as never)
+      .select("field_key, display_order, column_position, is_visible, section_id, field_config_id" as never)
+      .in("section_id" as never, sectionIds as never)
+      .order("display_order" as never, { ascending: true });
+
+    // Collect field_config_ids to fetch labels/types
+    const fcIds = ((fieldRows ?? []) as Record<string, unknown>[])
+      .map((r) => r.field_config_id as string)
+      .filter(Boolean);
+
+    let fcLookup: Record<string, { field_label: string; field_type: string; dropdown_options: unknown }> = {};
+    if (fcIds.length > 0) {
+      const { data: fcRows } = await admin
+        .from("field_configurations" as never)
+        .select("id, field_label, field_type, dropdown_options" as never)
+        .in("id" as never, fcIds as never);
+
+      for (const fc of (fcRows ?? []) as Record<string, unknown>[]) {
+        fcLookup[fc.id as string] = {
+          field_label: fc.field_label as string,
+          field_type: fc.field_type as string,
+          dropdown_options: fc.dropdown_options,
+        };
+      }
+    }
+
+    // Group by section_key
+    for (const row of (fieldRows ?? []) as Record<string, unknown>[]) {
+      const sectionKey = sectionIdToKey[row.section_id as string];
+      if (!sectionKey) continue;
+      const fc = fcLookup[row.field_config_id as string];
+      if (!fc) continue;
+
+      const rawOpts = fc.dropdown_options;
+      let dropdownOptions: { label: string; value: string }[] | null = null;
+      if (Array.isArray(rawOpts)) {
+        dropdownOptions = rawOpts.map((v: unknown) =>
+          typeof v === "string"
+            ? { label: v.charAt(0).toUpperCase() + v.slice(1).replace(/_/g, " "), value: v }
+            : (v as { label: string; value: string })
+        );
+      }
+
+      if (!sectionFields[sectionKey]) sectionFields[sectionKey] = [];
+      sectionFields[sectionKey].push({
+        field_key: row.field_key as string,
+        field_label: fc.field_label,
+        field_type: fc.field_type,
+        column_position: row.column_position as string,
+        display_order: row.display_order as number,
+        is_visible: row.is_visible as boolean,
+        dropdown_options: dropdownOptions,
+      });
+    }
+  }
+
   // Compute tab badge counts
   const openTasks = tasks.filter((t) => t.status !== "completed").length;
   const counts: TabBadgeCounts = {
@@ -305,6 +397,8 @@ export default async function CompanyDetailPage({ params }: PageProps) {
       currentUserId={user.id}
       currentUserName={currentUserName}
       teamMembers={teamMembers}
+      sectionOrder={sectionOrder}
+      sectionFields={sectionFields}
     />
   );
 }
