@@ -151,7 +151,7 @@ export async function fetchAvailableFields(modules: string[]): Promise<{
       .in("module", modules)
       .eq("is_archived", false)
       .order("module")
-      .order("display_order", { ascending: true });
+      .order("field_label", { ascending: true });
 
     if (error) {
       console.error("fetchAvailableFields error:", error);
