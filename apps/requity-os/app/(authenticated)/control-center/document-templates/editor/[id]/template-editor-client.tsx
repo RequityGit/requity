@@ -21,7 +21,6 @@ interface Props {
     column: string;
     format?: string | null;
   }>;
-  gdriveFileId: string;
 }
 
 export function TemplateEditorClient({
@@ -33,7 +32,6 @@ export function TemplateEditorClient({
   isActive,
   initialContent,
   mergeFields,
-  gdriveFileId,
 }: Props) {
   const router = useRouter();
 
@@ -58,7 +56,6 @@ export function TemplateEditorClient({
         version,
         recordLabel: `${templateType} · ${recordType}`,
         status: isActive ? "Active" : "Inactive",
-        gdriveFileId,
       }}
       onSave={handleSave}
       onClose={() => router.push("/control-center/document-templates")}

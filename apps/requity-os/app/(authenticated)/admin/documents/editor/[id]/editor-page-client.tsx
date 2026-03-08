@@ -19,7 +19,6 @@ interface Props {
     column: string;
     format?: string | null;
   }>;
-  gdriveFileId?: string;
   generatedBy: string;
   generatedAt: string;
 }
@@ -34,7 +33,6 @@ export function EditorPageClient({
   recordType,
   recordId,
   mergeFields,
-  gdriveFileId,
   generatedBy,
   generatedAt,
 }: Props) {
@@ -53,7 +51,6 @@ export function EditorPageClient({
         generatedBy,
         generatedAt,
         status,
-        gdriveFileId,
       }}
       onClose={() => router.push("/admin/documents")}
     />

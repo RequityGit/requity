@@ -56,7 +56,6 @@ export default async function DocumentEditorPage({ params }: PageProps) {
             format?: string | null;
           }>) ?? []
         }
-        gdriveFileId={doc.gdrive_file_id ?? undefined}
         generatedBy={profile?.full_name ?? "Unknown"}
         generatedAt={doc.generated_at}
       />

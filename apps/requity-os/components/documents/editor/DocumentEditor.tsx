@@ -15,7 +15,6 @@ import { TableCell } from "@tiptap/extension-table-cell";
 import { TableHeader } from "@tiptap/extension-table-header";
 import {
   FileText,
-  ExternalLink,
   Download,
   X,
 } from "lucide-react";
@@ -51,7 +50,6 @@ export interface DocumentEditorProps {
     generatedBy?: string;
     generatedAt?: string;
     status?: string;
-    gdriveFileId?: string;
   };
   onSave?: (content: string) => void;
   onClose?: () => void;
@@ -105,7 +103,7 @@ export function DocumentEditor({
     content: initialContent,
     editorProps: {
       attributes: {
-        class: "outline-none min-h-[800px] prose prose-sm max-w-none",
+        class: "outline-none min-h-[800px]",
       },
     },
     onUpdate: ({ editor: e }) => {
@@ -198,22 +196,6 @@ export function DocumentEditor({
         </div>
 
         <div className="flex items-center gap-2 shrink-0">
-          {documentInfo?.gdriveFileId && (
-            <Button
-              variant="outline"
-              size="sm"
-              className="h-7 text-xs"
-              onClick={() =>
-                window.open(
-                  `https://docs.google.com/document/d/${documentInfo.gdriveFileId}`,
-                  "_blank"
-                )
-              }
-            >
-              <ExternalLink size={12} className="mr-1" />
-              Open in Drive
-            </Button>
-          )}
           <Button
             variant="outline"
             size="sm"
