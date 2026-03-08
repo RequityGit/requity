@@ -35,6 +35,7 @@ import type {
   BorrowerData,
   InvestorProfileData,
   EntityData,
+  SectionLayout,
 } from "./types";
 import type { OpsTask, Profile } from "@/lib/tasks";
 
@@ -57,6 +58,7 @@ interface ContactDetailClientProps {
   assignedToName: string | null;
   sourceLabel: string | null;
   isSuperAdmin: boolean;
+  sectionOrder: SectionLayout[];
 }
 
 export function ContactDetailClient({
@@ -78,6 +80,7 @@ export function ContactDetailClient({
   assignedToName,
   sourceLabel,
   isSuperAdmin,
+  sectionOrder,
 }: ContactDetailClientProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -227,6 +230,7 @@ export function ContactDetailClient({
                 loans={loans}
                 commitments={investorCommitments}
                 isSuperAdmin={isSuperAdmin}
+                sectionOrder={sectionOrder}
               />
             </TabsContent>
 

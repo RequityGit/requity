@@ -15,6 +15,7 @@ import type {
   BorrowerData,
   InvestorProfileData,
   EntityData,
+  SectionLayout,
 } from "@/components/crm/contact-360/types";
 import type { OpsTask, Profile } from "@/lib/tasks";
 
@@ -389,6 +390,23 @@ export default async function CrmContactDetailPage({ params }: PageProps) {
 
   const allEntities = [...borrowerEntities, ...investingEntities];
 
+  // Fetch page layout section order for contact_detail
+  const { data: sectionRows } = await admin
+    .from("page_layout_sections" as never)
+    .select("section_key, display_order, is_visible, visibility_rule" as never)
+    .eq("page_type" as never, "contact_detail" as never)
+    .eq("sidebar" as never, false as never)
+    .order("display_order" as never, { ascending: true });
+
+  const sectionOrder: SectionLayout[] = (sectionRows ?? []).map(
+    (r: Record<string, unknown>) => ({
+      section_key: r.section_key as string,
+      display_order: r.display_order as number,
+      is_visible: r.is_visible as boolean,
+      visibility_rule: r.visibility_rule as string | null,
+    })
+  );
+
   const company: CompanyData | null = companyResult.data
     ? {
         id: companyResult.data.id,
@@ -464,6 +482,7 @@ export default async function CrmContactDetailPage({ params }: PageProps) {
       assignedToName={assignedToName}
       sourceLabel={sourceLabel}
       isSuperAdmin={isSuperAdmin}
+      sectionOrder={sectionOrder}
     />
   );
 }
