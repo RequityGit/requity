@@ -73,7 +73,6 @@ interface CreateFieldPayload {
   field_key: string;
   field_label: string;
   field_type: string;
-  column_position: "left" | "right";
   dropdown_options: string[] | null;
   formula_expression: string | null;
   formula_source_fields: string[] | null;
@@ -135,12 +134,12 @@ Deno.serve(async (req: Request) => {
 
     // Parse body
     const body: CreateFieldPayload = await req.json();
-    const { module, field_key, field_label, field_type, column_position, dropdown_options, formula_expression, formula_source_fields } = body;
+    const { module, field_key, field_label, field_type, dropdown_options, formula_expression, formula_source_fields } = body;
 
     // Validate required fields
-    if (!module || !field_key || !field_label || !field_type || !column_position) {
+    if (!module || !field_key || !field_label || !field_type) {
       return new Response(
-        JSON.stringify({ error: "module, field_key, field_label, field_type, and column_position are required" }),
+        JSON.stringify({ error: "module, field_key, field_label, and field_type are required" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
@@ -227,18 +226,6 @@ Deno.serve(async (req: Request) => {
       );
     }
 
-    // Get the next display_order for this module
-    const { data: maxOrderRows } = await adminClient
-      .from("field_configurations")
-      .select("display_order")
-      .eq("module", module)
-      .order("display_order", { ascending: false })
-      .limit(1);
-
-    const nextOrder = maxOrderRows && maxOrderRows.length > 0
-      ? maxOrderRows[0].display_order + 1
-      : 0;
-
     // For non-formula fields, execute ALTER TABLE to add the column
     // Formula fields are calculated client-side, no DB column needed
     if (!isFormula && pgType) {
@@ -262,8 +249,6 @@ Deno.serve(async (req: Request) => {
         field_key,
         field_label,
         field_type,
-        column_position,
-        display_order: nextOrder,
         is_visible: true,
         is_locked: false,
         is_admin_created: true,

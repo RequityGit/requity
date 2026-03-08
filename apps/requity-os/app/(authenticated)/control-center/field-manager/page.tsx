@@ -10,7 +10,7 @@ export default async function FieldManagerPage() {
     .from("field_configurations")
     .select("*")
     .order("module")
-    .order("display_order", { ascending: true });
+    .order("field_label", { ascending: true });
 
   return <FieldManagerView initialConfigs={fieldConfigs ?? []} />;
 }

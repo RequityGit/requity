@@ -3,30 +3,9 @@
 import { useState, useCallback, useMemo } from "react";
 import { cn } from "@/lib/utils";
 import {
-  DndContext,
-  closestCenter,
-  KeyboardSensor,
-  PointerSensor,
-  useSensor,
-  useSensors,
-  type DragEndEvent,
-  type DragStartEvent,
-  DragOverlay,
-} from "@dnd-kit/core";
-import {
-  SortableContext,
-  sortableKeyboardCoordinates,
-  useSortable,
-  verticalListSortingStrategy,
-} from "@dnd-kit/sortable";
-import { CSS } from "@dnd-kit/utilities";
-import {
-  GripVertical,
   Eye,
   EyeOff,
   Lock,
-  ArrowRight,
-  ArrowLeft,
   Check,
   Search,
   Loader2,
@@ -105,8 +84,6 @@ interface FieldEntry {
   field_key: string;
   field_label: string;
   field_type: string;
-  column_position: "left" | "right";
-  display_order: number;
   is_visible: boolean;
   is_locked: boolean;
   is_admin_created: boolean;
@@ -267,8 +244,6 @@ function mapRow(row: FieldConfigRow): FieldEntry {
     field_key: row.field_key,
     field_label: row.field_label,
     field_type: row.field_type,
-    column_position: row.column_position as "left" | "right",
-    display_order: row.display_order,
     is_visible: row.is_visible,
     is_locked: row.is_locked,
     is_admin_created: row.is_admin_created ?? false,
@@ -292,8 +267,7 @@ export function FieldManagerView({ initialConfigs }: FieldManagerViewProps) {
     for (const mod of MODULES) {
       grouped[mod.key] = initialConfigs
         .filter((c) => c.module === mod.key)
-        .map(mapRow)
-        .sort((a, b) => a.display_order - b.display_order);
+        .map(mapRow);
     }
     return grouped;
   });
@@ -302,15 +276,14 @@ export function FieldManagerView({ initialConfigs }: FieldManagerViewProps) {
     for (const mod of MODULES) {
       grouped[mod.key] = initialConfigs
         .filter((c) => c.module === mod.key)
-        .map(mapRow)
-        .sort((a, b) => a.display_order - b.display_order);
+        .map(mapRow);
     }
     return grouped;
   });
   const [search, setSearch] = useState("");
+  const [typeFilter, setTypeFilter] = useState<string>("all");
   const [isSaving, setIsSaving] = useState(false);
   const [savedAt, setSavedAt] = useState<number | null>(null);
-  const [activeId, setActiveId] = useState<string | null>(null);
   const [addFieldOpen, setAddFieldOpen] = useState(false);
   const [archivedOpen, setArchivedOpen] = useState(false);
   const { toast } = useToast();
@@ -323,20 +296,15 @@ export function FieldManagerView({ initialConfigs }: FieldManagerViewProps) {
     return JSON.stringify(fields) !== JSON.stringify(originalFields);
   }, [fields, originalFields]);
 
-  const filteredLeft = activeFields.filter(
-    (f) =>
-      f.column_position === "left" &&
-      (search === "" ||
-        f.field_label.toLowerCase().includes(search.toLowerCase()) ||
-        f.field_key.toLowerCase().includes(search.toLowerCase()))
-  );
-  const filteredRight = activeFields.filter(
-    (f) =>
-      f.column_position === "right" &&
-      (search === "" ||
-        f.field_label.toLowerCase().includes(search.toLowerCase()) ||
-        f.field_key.toLowerCase().includes(search.toLowerCase()))
-  );
+  const filteredFields = activeFields
+    .filter(
+      (f) =>
+        (typeFilter === "all" || f.field_type === typeFilter) &&
+        (search === "" ||
+          f.field_label.toLowerCase().includes(search.toLowerCase()) ||
+          f.field_key.toLowerCase().includes(search.toLowerCase()))
+    )
+    .sort((a, b) => a.field_label.localeCompare(b.field_label));
 
   const stats = useMemo(() => {
     const total = activeFields.length;
@@ -344,11 +312,6 @@ export function FieldManagerView({ initialConfigs }: FieldManagerViewProps) {
     const hidden = total - visible;
     return { total, visible, hidden };
   }, [activeFields]);
-
-  const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
-    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
-  );
 
   const updateModuleFields = useCallback(
     (updater: (prev: FieldEntry[]) => FieldEntry[]) => {
@@ -360,70 +323,11 @@ export function FieldManagerView({ initialConfigs }: FieldManagerViewProps) {
     [activeModule]
   );
 
-  const handleDragStart = useCallback((event: DragStartEvent) => {
-    setActiveId(event.active.id as string);
-  }, []);
-
-  const handleDragEnd = useCallback(
-    (event: DragEndEvent) => {
-      setActiveId(null);
-      const { active, over } = event;
-      if (!over || active.id === over.id) return;
-
-      updateModuleFields((prev) => {
-        const activeField = prev.find((f) => f.id === active.id);
-        const overField = prev.find((f) => f.id === over.id);
-        if (!activeField || !overField) return prev;
-
-        if (activeField.column_position !== overField.column_position) return prev;
-
-        const column = activeField.column_position;
-        const columnFields = prev
-          .filter((f) => f.column_position === column && !f.is_archived)
-          .sort((a, b) => a.display_order - b.display_order);
-
-        const oldIndex = columnFields.findIndex((f) => f.id === active.id);
-        const newIndex = columnFields.findIndex((f) => f.id === over.id);
-
-        if (oldIndex === -1 || newIndex === -1) return prev;
-
-        const reordered = [...columnFields];
-        const [moved] = reordered.splice(oldIndex, 1);
-        reordered.splice(newIndex, 0, moved);
-
-        const otherColumn = prev.filter((f) => f.column_position !== column);
-        const updated = [
-          ...otherColumn,
-          ...reordered.map((f, i) => ({ ...f, display_order: i * 2 + (column === "right" ? 1 : 0) })),
-        ];
-
-        return updated;
-      });
-    },
-    [updateModuleFields]
-  );
-
   const toggleVisibility = useCallback(
     (fieldId: string) => {
       updateModuleFields((prev) =>
         prev.map((f) => (f.id === fieldId && !f.is_locked ? { ...f, is_visible: !f.is_visible } : f))
       );
-    },
-    [updateModuleFields]
-  );
-
-  const swapColumn = useCallback(
-    (fieldId: string) => {
-      updateModuleFields((prev) => {
-        const field = prev.find((f) => f.id === fieldId);
-        if (!field) return prev;
-        const newColumn = field.column_position === "left" ? "right" : "left";
-        const targetFields = prev.filter((f) => f.column_position === newColumn && !f.is_archived);
-        const maxOrder = targetFields.length > 0 ? Math.max(...targetFields.map((f) => f.display_order)) + 1 : 0;
-        return prev.map((f) =>
-          f.id === fieldId ? { ...f, column_position: newColumn as "left" | "right", display_order: maxOrder } : f
-        );
-      });
     },
     [updateModuleFields]
   );
@@ -513,8 +417,6 @@ export function FieldManagerView({ initialConfigs }: FieldManagerViewProps) {
     [activeModule, toast]
   );
 
-  const draggedField = activeId ? activeFields.find((f) => f.id === activeId) : null;
-
   return (
     <div className="flex gap-6">
       {/* Module sidebar */}
@@ -533,6 +435,7 @@ export function FieldManagerView({ initialConfigs }: FieldManagerViewProps) {
               onClick={() => {
                 setActiveModule(mod.key);
                 setSearch("");
+                setTypeFilter("all");
               }}
             >
               <mod.icon className="h-4 w-4 shrink-0" strokeWidth={1.5} />
@@ -558,6 +461,19 @@ export function FieldManagerView({ initialConfigs }: FieldManagerViewProps) {
               className="pl-9 h-9 text-[13px]"
             />
           </div>
+          <Select value={typeFilter} onValueChange={setTypeFilter}>
+            <SelectTrigger className="h-9 w-[160px] text-[13px]">
+              <SelectValue placeholder="All Types" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all" className="text-[13px]">All Types</SelectItem>
+              {FIELD_TYPES.map((t) => (
+                <SelectItem key={t.value} value={t.value} className="text-[13px]">
+                  {t.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
           <div className="flex items-center gap-2 text-[12px] text-muted-foreground">
             <span className="num">{stats.total}</span> total
             <span className="text-border">|</span>
@@ -598,33 +514,22 @@ export function FieldManagerView({ initialConfigs }: FieldManagerViewProps) {
           </Button>
         </div>
 
-        {/* Two-column grid */}
-        <DndContext
-          sensors={sensors}
-          collisionDetection={closestCenter}
-          onDragStart={handleDragStart}
-          onDragEnd={handleDragEnd}
-        >
-          <div className="grid grid-cols-2 gap-4">
-            <FieldColumn
-              label="Left Column"
-              fields={filteredLeft}
+        {/* Field list */}
+        <div className="space-y-1.5 min-h-[60px]">
+          {filteredFields.map((field) => (
+            <FieldCard
+              key={field.id}
+              field={field}
               onToggleVisibility={toggleVisibility}
-              onSwapColumn={swapColumn}
               onArchive={handleArchive}
             />
-            <FieldColumn
-              label="Right Column"
-              fields={filteredRight}
-              onToggleVisibility={toggleVisibility}
-              onSwapColumn={swapColumn}
-              onArchive={handleArchive}
-            />
-          </div>
-          <DragOverlay>
-            {draggedField ? <FieldCardOverlay field={draggedField} /> : null}
-          </DragOverlay>
-        </DndContext>
+          ))}
+          {filteredFields.length === 0 && (
+            <div className="rounded-lg border border-dashed border-border bg-muted/30 px-4 py-6 text-center text-[12px] text-muted-foreground">
+              No fields match your search
+            </div>
+          )}
+        </div>
 
         {/* Archived Fields Section */}
         {archivedFields.length > 0 && (
@@ -668,92 +573,25 @@ export function FieldManagerView({ initialConfigs }: FieldManagerViewProps) {
   );
 }
 
-function FieldColumn({
-  label,
-  fields,
-  onToggleVisibility,
-  onSwapColumn,
-  onArchive,
-}: {
-  label: string;
-  fields: FieldEntry[];
-  onToggleVisibility: (id: string) => void;
-  onSwapColumn: (id: string) => void;
-  onArchive: (id: string, label: string) => void;
-}) {
-  return (
-    <div className="space-y-2">
-      <div className="text-[11px] uppercase tracking-[0.05em] font-semibold text-muted-foreground px-1">
-        {label}
-      </div>
-      <SortableContext items={fields.map((f) => f.id)} strategy={verticalListSortingStrategy}>
-        <div className="space-y-1.5 min-h-[60px]">
-          {fields.map((field) => (
-            <SortableFieldCard
-              key={field.id}
-              field={field}
-              onToggleVisibility={onToggleVisibility}
-              onSwapColumn={onSwapColumn}
-              onArchive={onArchive}
-            />
-          ))}
-          {fields.length === 0 && (
-            <div className="rounded-lg border border-dashed border-border bg-muted/30 px-4 py-6 text-center text-[12px] text-muted-foreground">
-              No fields in this column
-            </div>
-          )}
-        </div>
-      </SortableContext>
-    </div>
-  );
-}
-
-function SortableFieldCard({
+function FieldCard({
   field,
   onToggleVisibility,
-  onSwapColumn,
   onArchive,
 }: {
   field: FieldEntry;
   onToggleVisibility: (id: string) => void;
-  onSwapColumn: (id: string) => void;
   onArchive: (id: string, label: string) => void;
 }) {
   const [archiveDialogOpen, setArchiveDialogOpen] = useState(false);
-  const {
-    attributes,
-    listeners,
-    setNodeRef,
-    transform,
-    transition,
-    isDragging,
-  } = useSortable({ id: field.id });
-
-  const style = {
-    transform: CSS.Transform.toString(transform),
-    transition,
-  };
 
   return (
     <>
       <div
-        ref={setNodeRef}
-        style={style}
         className={cn(
           "flex items-center gap-2 rounded-lg border border-border bg-card px-3 py-2.5 transition-colors",
-          isDragging && "opacity-30",
           !field.is_visible && "opacity-50"
         )}
       >
-        <button
-          {...attributes}
-          {...listeners}
-          className="shrink-0 cursor-grab text-muted-foreground hover:text-foreground transition-colors touch-none"
-          aria-label="Drag to reorder"
-        >
-          <GripVertical className="h-4 w-4" strokeWidth={1.5} />
-        </button>
-
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
             <span className="text-[13px] font-medium text-foreground truncate">
@@ -787,20 +625,6 @@ function SortableFieldCard({
         >
           {field.field_type}
         </Badge>
-
-        <Button
-          variant="ghost"
-          size="sm"
-          className="h-7 w-7 p-0 shrink-0"
-          onClick={() => onSwapColumn(field.id)}
-          aria-label={`Move to ${field.column_position === "left" ? "right" : "left"} column`}
-        >
-          {field.column_position === "left" ? (
-            <ArrowRight className="h-3.5 w-3.5" strokeWidth={1.5} />
-          ) : (
-            <ArrowLeft className="h-3.5 w-3.5" strokeWidth={1.5} />
-          )}
-        </Button>
 
         <Button
           variant="ghost"
@@ -905,33 +729,6 @@ function ArchivedFieldCard({
   );
 }
 
-function FieldCardOverlay({ field }: { field: FieldEntry }) {
-  return (
-    <div className="flex items-center gap-2 rounded-lg border border-border bg-card px-3 py-2.5 shadow-lg">
-      <GripVertical className="h-4 w-4 shrink-0 text-muted-foreground" strokeWidth={1.5} />
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-2">
-          <span className="text-[13px] font-medium text-foreground truncate">
-            {field.field_label}
-          </span>
-        </div>
-        <span className="text-[11px] font-mono text-muted-foreground">
-          {field.field_key}
-        </span>
-      </div>
-      <Badge
-        variant="outline"
-        className={cn(
-          "shrink-0 text-[10px] px-1.5 py-0 h-5 font-medium",
-          TYPE_COLORS[field.field_type] ?? "bg-secondary text-secondary-foreground"
-        )}
-      >
-        {field.field_type}
-      </Badge>
-    </div>
-  );
-}
-
 // ── Add Field Modal ──────────────────────────────────────────────────────────
 
 interface AddFieldModalProps {
@@ -945,7 +742,6 @@ function AddFieldModal({ open, onOpenChange, defaultModule, onCreated }: AddFiel
   const [label, setLabel] = useState("");
   const [fieldType, setFieldType] = useState("");
   const [module, setModule] = useState(defaultModule);
-  const [columnPosition, setColumnPosition] = useState<"left" | "right">("left");
   const [dropdownOptionsText, setDropdownOptionsText] = useState("");
   const [formulaExpression, setFormulaExpression] = useState("");
   const [formulaSourceFieldsText, setFormulaSourceFieldsText] = useState("");
@@ -971,7 +767,6 @@ function AddFieldModal({ open, onOpenChange, defaultModule, onCreated }: AddFiel
     keyError === null &&
     fieldType !== "" &&
     module !== "" &&
-    columnPosition !== undefined &&
     (fieldType !== "dropdown" || dropdownOptions.length >= 2) &&
     (fieldType !== "formula" || (formulaExpression.trim().length > 0 && formulaSourceFields.length > 0));
 
@@ -1002,7 +797,6 @@ function AddFieldModal({ open, onOpenChange, defaultModule, onCreated }: AddFiel
           field_key: fieldKey,
           field_label: label.trim(),
           field_type: fieldType,
-          column_position: columnPosition,
           dropdown_options: fieldType === "dropdown" ? dropdownOptions : null,
           formula_expression: fieldType === "formula" ? formulaExpression.trim() : null,
           formula_source_fields: fieldType === "formula" ? formulaSourceFields : null,
@@ -1029,7 +823,6 @@ function AddFieldModal({ open, onOpenChange, defaultModule, onCreated }: AddFiel
       setLabel("");
       setFieldType("");
       setModule(defaultModule);
-      setColumnPosition("left");
       setDropdownOptionsText("");
       setFormulaExpression("");
       setFormulaSourceFieldsText("");
@@ -1161,20 +954,6 @@ function AddFieldModal({ open, onOpenChange, defaultModule, onCreated }: AddFiel
                       {m.label}
                     </SelectItem>
                   ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            {/* Column */}
-            <div className="space-y-1.5">
-              <Label htmlFor="field-column" className="text-[13px]">Column <span className="text-destructive">*</span></Label>
-              <Select value={columnPosition} onValueChange={(v) => setColumnPosition(v as "left" | "right")}>
-                <SelectTrigger id="field-column" className="h-9 text-[13px]">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="left" className="text-[13px]">Left</SelectItem>
-                  <SelectItem value="right" className="text-[13px]">Right</SelectItem>
                 </SelectContent>
               </Select>
             </div>

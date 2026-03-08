@@ -6548,9 +6548,7 @@ export type Database = {
       }
       field_configurations: {
         Row: {
-          column_position: string
           created_at: string | null
-          display_order: number
           dropdown_options: Json | null
           field_key: string
           field_label: string
@@ -6566,9 +6564,7 @@ export type Database = {
           updated_at: string | null
         }
         Insert: {
-          column_position?: string
           created_at?: string | null
-          display_order?: number
           dropdown_options?: Json | null
           field_key: string
           field_label: string
@@ -6584,9 +6580,7 @@ export type Database = {
           updated_at?: string | null
         }
         Update: {
-          column_position?: string
           created_at?: string | null
-          display_order?: number
           dropdown_options?: Json | null
           field_key?: string
           field_label?: string
@@ -9894,6 +9888,99 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      page_layout_fields: {
+        Row: {
+          column_position: string
+          created_at: string
+          display_order: number
+          field_config_id: string | null
+          field_key: string
+          id: string
+          is_visible: boolean
+          section_id: string
+        }
+        Insert: {
+          column_position?: string
+          created_at?: string
+          display_order?: number
+          field_config_id?: string | null
+          field_key: string
+          id?: string
+          is_visible?: boolean
+          section_id: string
+        }
+        Update: {
+          column_position?: string
+          created_at?: string
+          display_order?: number
+          field_config_id?: string | null
+          field_key?: string
+          id?: string
+          is_visible?: boolean
+          section_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "page_layout_fields_field_config_id_fkey"
+            columns: ["field_config_id"]
+            isOneToOne: false
+            referencedRelation: "field_configurations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "page_layout_fields_section_id_fkey"
+            columns: ["section_id"]
+            isOneToOne: false
+            referencedRelation: "page_layout_sections"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      page_layout_sections: {
+        Row: {
+          created_at: string
+          display_order: number
+          id: string
+          is_locked: boolean
+          is_visible: boolean
+          page_type: string
+          section_icon: string
+          section_key: string
+          section_label: string
+          sidebar: boolean
+          updated_at: string
+          visibility_rule: string | null
+        }
+        Insert: {
+          created_at?: string
+          display_order?: number
+          id?: string
+          is_locked?: boolean
+          is_visible?: boolean
+          page_type: string
+          section_icon?: string
+          section_key: string
+          section_label: string
+          sidebar?: boolean
+          updated_at?: string
+          visibility_rule?: string | null
+        }
+        Update: {
+          created_at?: string
+          display_order?: number
+          id?: string
+          is_locked?: boolean
+          is_visible?: boolean
+          page_type?: string
+          section_icon?: string
+          section_key?: string
+          section_label?: string
+          sidebar?: boolean
+          updated_at?: string
+          visibility_rule?: string | null
+        }
+        Relationships: []
       }
       payoff_fee_defaults: {
         Row: {

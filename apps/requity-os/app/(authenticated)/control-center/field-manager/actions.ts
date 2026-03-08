@@ -10,8 +10,6 @@ interface FieldUpdate {
   field_key: string;
   field_label: string;
   field_type: string;
-  column_position: string;
-  display_order: number;
   is_visible: boolean;
   is_locked: boolean;
   is_admin_created?: boolean;
@@ -39,8 +37,6 @@ export async function publishFieldConfigurations(
         field_key: f.field_key,
         field_label: f.field_label,
         field_type: f.field_type,
-        column_position: f.column_position,
-        display_order: f.display_order,
         is_visible: f.is_visible,
         is_locked: f.is_locked,
         is_admin_created: f.is_admin_created ?? false,
@@ -125,7 +121,7 @@ export async function fetchFieldConfigurations(module: string) {
       .from("field_configurations")
       .select("*")
       .eq("module", module)
-      .order("display_order", { ascending: true });
+      .order("field_label", { ascending: true });
 
     if (error) {
       console.error("fetchFieldConfigurations error:", error);
@@ -149,7 +145,7 @@ export async function fetchAllFieldConfigurations() {
       .from("field_configurations")
       .select("*")
       .order("module")
-      .order("display_order", { ascending: true });
+      .order("field_label", { ascending: true });
 
     if (error) {
       console.error("fetchAllFieldConfigurations error:", error);
