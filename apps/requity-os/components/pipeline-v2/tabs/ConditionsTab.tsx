@@ -31,7 +31,8 @@ import { toast } from "sonner";
 import { type DealCondition } from "@/components/pipeline-v2/pipeline-types";
 import { updateConditionStatusAction } from "@/app/(authenticated)/admin/pipeline-v2/actions";
 import {
-  uploadConditionDocumentV2,
+  createDealDocumentUploadUrl,
+  saveDealDocumentRecord,
   deleteDealDocumentV2,
   getDocumentSignedUrl,
 } from "@/app/(authenticated)/admin/pipeline-v2/[id]/actions";
@@ -486,20 +487,53 @@ function ConditionDocuments({
     if (!file) return;
 
     setUploading(true);
-    const formData = new FormData();
-    formData.set("file", file);
-    formData.set("dealId", dealId);
-    formData.set("conditionId", conditionId);
+    try {
+      // 1. Get a signed upload URL from the server
+      const urlResult = await createDealDocumentUploadUrl(dealId, file.name, conditionId);
+      if (urlResult.error || !urlResult.signedUrl || !urlResult.storagePath || !urlResult.token) {
+        toast.error(`Upload failed: ${urlResult.error ?? "Could not create upload URL"}`);
+        return;
+      }
 
-    const result = await uploadConditionDocumentV2(formData);
-    if (result.error) {
-      toast.error(`Upload failed: ${result.error}`);
-    } else {
-      toast.success(`${file.name} uploaded`);
-      fetchDocs();
+      // 2. Upload file directly to Supabase storage (bypasses Netlify 6MB limit)
+      const uploadRes = await fetch(urlResult.signedUrl, {
+        method: "PUT",
+        headers: {
+          "Content-Type": file.type || "application/octet-stream",
+        },
+        body: file,
+      });
+
+      if (!uploadRes.ok) {
+        const errorText = await uploadRes.text().catch(() => "Unknown error");
+        toast.error(`Upload failed: ${errorText}`);
+        return;
+      }
+
+      // 3. Save the document record in the database
+      const saveResult = await saveDealDocumentRecord({
+        dealId,
+        storagePath: urlResult.storagePath,
+        documentName: file.name,
+        fileSizeBytes: file.size,
+        mimeType: file.type || "application/octet-stream",
+        conditionId,
+      });
+
+      if (saveResult.error) {
+        toast.error(`Upload failed: ${saveResult.error}`);
+      } else {
+        toast.success(`${file.name} uploaded`);
+        fetchDocs();
+      }
+    } catch (err) {
+      toast.error(
+        `Upload failed: ${err instanceof Error ? err.message : "Upload failed"}`
+      );
+    } finally {
+      setUploading(false);
+      e.target.value = "";
     }
-    setUploading(false);
-    e.target.value = "";
   }
 
   async function handleDownload(doc: ConditionDocument) {

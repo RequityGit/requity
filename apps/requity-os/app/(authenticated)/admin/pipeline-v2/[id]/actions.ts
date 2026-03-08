@@ -101,6 +101,7 @@ export async function assignTeamMemberV2(
 
 // ─── Condition Document Upload ───
 
+/** @deprecated Use createDealDocumentUploadUrl + saveDealDocumentRecord instead */
 export async function uploadConditionDocumentV2(
   formData: FormData
 ): Promise<{ error: string | null }> {
@@ -181,7 +182,8 @@ export async function uploadConditionDocumentV2(
  */
 export async function createDealDocumentUploadUrl(
   dealId: string,
-  fileName: string
+  fileName: string,
+  conditionId?: string
 ): Promise<{
   signedUrl: string | null;
   token: string | null;
@@ -198,7 +200,9 @@ export async function createDealDocumentUploadUrl(
 
     const admin = createAdminClient();
     const safeName = `${Date.now()}-${fileName.replace(/[^a-zA-Z0-9._-]/g, "_")}`;
-    const storagePath = `deals/${dealId}/${safeName}`;
+    const storagePath = conditionId
+      ? `deals/${dealId}/conditions/${conditionId}/${safeName}`
+      : `deals/${dealId}/${safeName}`;
 
     const { data, error } = await admin.storage
       .from("loan-documents")
@@ -241,6 +245,7 @@ export async function saveDealDocumentRecord(params: {
   documentName: string;
   fileSizeBytes: number;
   mimeType: string;
+  conditionId?: string;
 }): Promise<{ error: string | null }> {
   try {
     const auth = await requireAdmin();
@@ -262,6 +267,7 @@ export async function saveDealDocumentRecord(params: {
       .from("unified_deal_documents" as never)
       .insert({
         deal_id: params.dealId,
+        ...(params.conditionId ? { condition_id: params.conditionId } : {}),
         document_name: params.documentName,
         file_url: fileUrl,
         file_size_bytes: params.fileSizeBytes,
