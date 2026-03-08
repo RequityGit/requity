@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
@@ -24,6 +24,7 @@ import type {
   InvestorProfileData,
   LoanData,
   InvestorCommitmentData,
+  SectionLayout,
 } from "../types";
 
 interface DetailOverviewTabProps {
@@ -33,8 +34,18 @@ interface DetailOverviewTabProps {
   loans: LoanData[];
   commitments: InvestorCommitmentData[];
   isSuperAdmin: boolean;
+  sectionOrder: SectionLayout[];
 }
 
+// Default section order used when no layout data exists in the database
+const DEFAULT_SECTION_ORDER: SectionLayout[] = [
+  { section_key: "borrower_summary", display_order: 0, is_visible: true, visibility_rule: "has_borrower" },
+  { section_key: "investor_summary", display_order: 1, is_visible: true, visibility_rule: "has_investor" },
+  { section_key: "borrower_profile", display_order: 2, is_visible: true, visibility_rule: "has_borrower" },
+  { section_key: "investor_profile", display_order: 3, is_visible: true, visibility_rule: "has_investor" },
+  { section_key: "contact_profile", display_order: 4, is_visible: true, visibility_rule: null },
+  { section_key: "description", display_order: 5, is_visible: true, visibility_rule: null },
+];
 export function DetailOverviewTab({
   contact,
   borrower,
@@ -42,6 +53,7 @@ export function DetailOverviewTab({
   loans,
   commitments,
   isSuperAdmin,
+  sectionOrder,
 }: DetailOverviewTabProps) {
   const router = useRouter();
   const { toast } = useToast();
@@ -149,6 +161,25 @@ export function DetailOverviewTab({
   const hasBorrower = !!borrower;
   const hasInvestor = !!investor;
 
+  // Resolve which sections to render and in what order
+  const resolvedSections = useMemo(() => {
+    const layout = sectionOrder.length > 0 ? sectionOrder : DEFAULT_SECTION_ORDER;
+
+    const visibilityContext: Record<string, boolean> = {
+      has_borrower: hasBorrower,
+      has_investor: hasInvestor,
+    };
+
+    return layout
+      .filter((s) => s.is_visible)
+      .filter((s) => {
+        if (!s.visibility_rule) return true;
+        return visibilityContext[s.visibility_rule] ?? true;
+      })
+      .sort((a, b) => a.display_order - b.display_order)
+      .map((s) => s.section_key);
+  }, [sectionOrder, hasBorrower, hasInvestor]);
+
   // --- Section field definitions for edit dialogs ---
 
   const contactFields: CrmSectionField[] = [
@@ -215,10 +246,10 @@ export function DetailOverviewTab({
             { label: "Separated", value: "separated" },
           ],
         },
-        { label: "Stated Liquidity", fieldName: "stated_liquidity", fieldType: "currency", value: borrower.stated_liquidity },
         { label: "Verified Liquidity", fieldName: "verified_liquidity", fieldType: "currency", value: borrower.verified_liquidity },
-        { label: "Stated Net Worth", fieldName: "stated_net_worth", fieldType: "currency", value: borrower.stated_net_worth },
+        { label: "Stated Liquidity", fieldName: "stated_liquidity", fieldType: "currency", value: borrower.stated_liquidity },
         { label: "Verified Net Worth", fieldName: "verified_net_worth", fieldType: "currency", value: borrower.verified_net_worth },
+        { label: "Stated Net Worth", fieldName: "stated_net_worth", fieldType: "currency", value: borrower.stated_net_worth },
       ]
     : [];
 
@@ -237,11 +268,11 @@ export function DetailOverviewTab({
       ]
     : [];
 
-  return (
-    <div className="flex flex-col gap-5">
-      {/* Borrower Summary */}
-      {hasBorrower && loans.length > 0 && (
-        <SectionCard title="Borrower Summary" icon={Landmark}>
+  // Build section content map: section_key -> JSX (with additional data guards)
+  const sectionContent: Record<string, ReactNode> = {
+    borrower_summary:
+      hasBorrower && loans.length > 0 ? (
+        <SectionCard title="Borrower Summary" icon={Landmark} key="borrower_summary">
           <div className="flex gap-5 flex-wrap">
             <MetricCard
               label="Total Loans"
@@ -265,11 +296,11 @@ export function DetailOverviewTab({
             />
           </div>
         </SectionCard>
-      )}
+      ) : null,
 
-      {/* Investor Summary */}
-      {hasInvestor && commitments.length > 0 && (
-        <SectionCard title="Investor Summary" icon={TrendingUp}>
+    investor_summary:
+      hasInvestor && commitments.length > 0 ? (
+        <SectionCard title="Investor Summary" icon={TrendingUp} key="investor_summary">
           <div className="flex gap-5 flex-wrap">
             <MetricCard
               label="Total Committed"
@@ -289,125 +320,123 @@ export function DetailOverviewTab({
             <MetricCard label="Active Funds" value={activeFunds} />
           </div>
         </SectionCard>
-      )}
+      ) : null,
 
-      {/* Borrower Profile */}
-      {hasBorrower && (
-        <SectionCard title="Borrower Profile" icon={User} action={<SectionEditButton onClick={() => setEditBorrowerOpen(true)} />}>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-10">
-            <FieldRow
-              label="Credit Score"
-              value={
-                borrower.credit_score != null ? (
+    borrower_profile: hasBorrower ? (
+      <SectionCard title="Borrower Profile" icon={User} action={<SectionEditButton onClick={() => setEditBorrowerOpen(true)} />} key="borrower_profile">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-10">
+          <FieldRow
+            label="Credit Score"
+            value={
+              borrower.credit_score != null ? (
+                <span
+                  style={{
+                    color:
+                      borrower.credit_score >= 740
+                        ? "#22A861"
+                        : borrower.credit_score >= 680
+                        ? "#E5930E"
+                        : "#E5453D",
+                  }}
+                >
+                  {borrower.credit_score}
+                </span>
+              ) : undefined
+            }
+            mono
+          />
+          <FieldRow label="Credit Report Date" value={formatDate(borrower.credit_report_date)} />
+          <FieldRow
+            label="RE Experience"
+            value={
+              borrower.experience_count != null
+                ? `${borrower.experience_count} transactions`
+                : undefined
+            }
+          />
+          <FieldRow label="Date of Birth" value={formatDate(borrower.date_of_birth)} />
+          <FieldRow
+            label="US Citizen"
+            value={
+              borrower.is_us_citizen != null
+                ? borrower.is_us_citizen
+                  ? "Yes"
+                  : "No"
+                : undefined
+            }
+          />
+          <FieldRow label="Marital Status" value={borrower.marital_status} />
+          {isSuperAdmin && (
+            <>
+              <FieldRow
+                label="SSN (last 4)"
+                value={
+                  borrower.ssn_last_four ? (
+                    <MonoValue>{`●●●-●●-${borrower.ssn_last_four}`}</MonoValue>
+                  ) : (
+                    "—"
+                  )
+                }
+                mono
+              />
+              <div />
+            </>
+          )}
+          <FieldRow label="Verified Liquidity" value={formatCurrency(borrower.verified_liquidity)} mono />
+          <FieldRow label="Stated Liquidity" value={formatCurrency(borrower.stated_liquidity)} mono />
+          <FieldRow label="Verified Net Worth" value={formatCurrency(borrower.verified_net_worth)} mono />
+          <FieldRow label="Stated Net Worth" value={formatCurrency(borrower.stated_net_worth)} mono />
+        </div>
+      </SectionCard>
+    ) : null,
+
+    investor_profile: hasInvestor ? (
+      <SectionCard title="Investor Profile" icon={Shield} action={<SectionEditButton onClick={() => setEditInvestorOpen(true)} />} key="investor_profile">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-10">
+          <FieldRow
+            label="Accreditation"
+            value={
+              investor.accreditation_status ? (
+                <Badge
+                  variant="outline"
+                  className="text-[11px] gap-1"
+                  style={{
+                    color:
+                      investor.accreditation_status === "verified"
+                        ? "#22A861"
+                        : "#E5930E",
+                    borderColor:
+                      investor.accreditation_status === "verified"
+                        ? "#22A86130"
+                        : "#E5930E30",
+                    backgroundColor:
+                      investor.accreditation_status === "verified"
+                        ? "#22A86108"
+                        : "#E5930E08",
+                  }}
+                >
                   <span
+                    className="h-1.5 w-1.5 rounded-full"
                     style={{
-                      color:
-                        borrower.credit_score >= 740
-                          ? "#22A861"
-                          : borrower.credit_score >= 680
-                          ? "#E5930E"
-                          : "#E5453D",
-                    }}
-                  >
-                    {borrower.credit_score}
-                  </span>
-                ) : undefined
-              }
-              mono
-            />
-            <FieldRow label="Credit Report Date" value={formatDate(borrower.credit_report_date)} />
-            <FieldRow
-              label="RE Experience"
-              value={
-                borrower.experience_count != null
-                  ? `${borrower.experience_count} transactions`
-                  : undefined
-              }
-            />
-            <FieldRow label="Date of Birth" value={formatDate(borrower.date_of_birth)} />
-            <FieldRow
-              label="US Citizen"
-              value={
-                borrower.is_us_citizen != null
-                  ? borrower.is_us_citizen
-                    ? "Yes"
-                    : "No"
-                  : undefined
-              }
-            />
-            <FieldRow label="Marital Status" value={borrower.marital_status} />
-            {isSuperAdmin && (
-              <>
-                <FieldRow
-                  label="SSN (last 4)"
-                  value={
-                    borrower.ssn_last_four ? (
-                      <MonoValue>{`●●●-●●-${borrower.ssn_last_four}`}</MonoValue>
-                    ) : (
-                      "—"
-                    )
-                  }
-                  mono
-                />
-                <div />
-              </>
-            )}
-            <FieldRow label="Stated Liquidity" value={formatCurrency(borrower.stated_liquidity)} mono />
-            <FieldRow label="Verified Liquidity" value={formatCurrency(borrower.verified_liquidity)} mono />
-            <FieldRow label="Stated Net Worth" value={formatCurrency(borrower.stated_net_worth)} mono />
-            <FieldRow label="Verified Net Worth" value={formatCurrency(borrower.verified_net_worth)} mono />
-          </div>
-        </SectionCard>
-      )}
-
-      {/* Investor Profile */}
-      {hasInvestor && (
-        <SectionCard title="Investor Profile" icon={Shield} action={<SectionEditButton onClick={() => setEditInvestorOpen(true)} />}>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-10">
-            <FieldRow
-              label="Accreditation"
-              value={
-                investor.accreditation_status ? (
-                  <Badge
-                    variant="outline"
-                    className="text-[11px] gap-1"
-                    style={{
-                      color:
+                      backgroundColor:
                         investor.accreditation_status === "verified"
                           ? "#22A861"
                           : "#E5930E",
-                      borderColor:
-                        investor.accreditation_status === "verified"
-                          ? "#22A86130"
-                          : "#E5930E30",
-                      backgroundColor:
-                        investor.accreditation_status === "verified"
-                          ? "#22A86108"
-                          : "#E5930E08",
                     }}
-                  >
-                    <span
-                      className="h-1.5 w-1.5 rounded-full"
-                      style={{
-                        backgroundColor:
-                          investor.accreditation_status === "verified"
-                            ? "#22A861"
-                            : "#E5930E",
-                      }}
-                    />
-                    {investor.accreditation_status.charAt(0).toUpperCase() +
-                      investor.accreditation_status.slice(1)}
-                  </Badge>
-                ) : undefined
-              }
-            />
-            <FieldRow label="Verified At" value={formatDate(investor.accreditation_verified_at)} />
-          </div>
-        </SectionCard>
-      )}
+                  />
+                  {investor.accreditation_status.charAt(0).toUpperCase() +
+                    investor.accreditation_status.slice(1)}
+                </Badge>
+              ) : undefined
+            }
+          />
+          <FieldRow label="Verified At" value={formatDate(investor.accreditation_verified_at)} />
+        </div>
+      </SectionCard>
+    ) : null,
 
-      {/* Contact Profile */}
-      <SectionCard title="Contact Profile" icon={FileText} action={<SectionEditButton onClick={() => setEditContactOpen(true)} />}>
+    contact_profile: (
+      <SectionCard title="Contact Profile" icon={FileText} action={<SectionEditButton onClick={() => setEditContactOpen(true)} />} key="contact_profile">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-x-10">
           <FieldRow label="First Name" value={contact.first_name} />
           <FieldRow label="Last Name" value={contact.last_name} />
@@ -447,13 +476,20 @@ export function DetailOverviewTab({
           <FieldRow label="Company" value={contact.company_name} />
         </div>
       </SectionCard>
+    ),
 
-      {/* Description */}
-      <SectionCard title="Description" icon={FileText} action={<SectionEditButton onClick={() => setEditDescriptionOpen(true)} />}>
+    description: (
+      <SectionCard title="Description" icon={FileText} action={<SectionEditButton onClick={() => setEditDescriptionOpen(true)} />} key="description">
         <p className="text-[13px] text-muted-foreground leading-relaxed whitespace-pre-wrap">
           {contact.notes || "No description."}
         </p>
       </SectionCard>
+    ),
+  };
+
+  return (
+    <div className="flex flex-col gap-5">
+      {resolvedSections.map((key) => sectionContent[key])}
 
       {/* Section Edit Dialogs */}
       <CrmEditSectionDialog
