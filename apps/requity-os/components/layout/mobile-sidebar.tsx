@@ -80,7 +80,7 @@ const adminNav: NavItem[] = [
     activePaths: ["/admin/capital-calls", "/admin/distributions"],
     moduleName: "investments",
   },
-  { label: "Documents", href: "/admin/document-center", icon: FolderOpen, activePaths: ["/admin/documents"], moduleName: "documents" },
+  { label: "Documents", href: "/admin/documents", icon: FolderOpen, activePaths: ["/admin/documents"], moduleName: "documents" },
   {
     label: "Operations",
     href: "/admin/operations",

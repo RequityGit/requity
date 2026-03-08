@@ -24,7 +24,6 @@ const ROUTE_TO_MODULE: Record<string, string> = {
   "/admin/funds": "investments",
   "/admin/capital-calls": "investments",
   "/admin/distributions": "investments",
-  "/admin/document-center": "documents",
   "/admin/documents": "documents",
   "/admin/operations": "operations",
   "/sops": "knowledge-base",

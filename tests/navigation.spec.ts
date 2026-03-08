@@ -25,7 +25,7 @@ const adminSidebarLinks = [
   { label: "Equity", path: "/admin/pipeline/equity" },
   { label: "Servicing", path: "/admin/servicing" },
   { label: "Investments", path: "/admin/funds" },
-  { label: "Documents", path: "/admin/document-center" },
+  { label: "Documents", path: "/admin/documents" },
   { label: "Tasks", path: "/admin/operations/tasks" },
   { label: "Approvals", path: "/admin/operations/approvals" },
 ];

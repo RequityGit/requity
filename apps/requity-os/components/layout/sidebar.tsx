@@ -115,7 +115,7 @@ const adminNav: NavEntry[] = [
   },
   {
     label: "Documents",
-    href: "/admin/document-center",
+    href: "/admin/documents",
     icon: FolderOpen,
     activePaths: ["/admin/documents"],
     moduleName: "documents",
