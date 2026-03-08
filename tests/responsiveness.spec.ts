@@ -39,7 +39,7 @@ test("R2 — borrower sidebar adapts to mobile viewport", async ({ borrowerPage 
     }
   } else {
     const menuBtn = borrowerPage.locator(
-      'button[aria-label*="menu" i], button[aria-label*="sidebar" i], button:has-text("Menu"), [class*="hamburger"]'
+      'button[aria-label*="menu" i], button[aria-label*="sidebar" i], button[aria-label*="navigation" i], button:has-text("Menu"), [class*="hamburger"]'
     );
     const hasMenu = await menuBtn.first().isVisible({ timeout: 3_000 }).catch(() => false);
     expect(hasMenu).toBeTruthy();
