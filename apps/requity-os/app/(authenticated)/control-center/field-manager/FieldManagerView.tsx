@@ -117,35 +117,31 @@ interface FieldEntry {
 }
 
 const MODULES = [
-  // Original modules
-  { key: "loan_details", label: "Loan Details", icon: FileText, tier: 0 },
-  { key: "property", label: "Property", icon: Building2, tier: 0 },
-  { key: "borrower_entity", label: "Borrower / Entity", icon: Shield, tier: 0 },
-  { key: "equity_deal", label: "Equity Deal Details", icon: TrendingUp, tier: 0 },
-  { key: "equity_property", label: "Equity Property", icon: Building2, tier: 0 },
-  { key: "equity_notes", label: "Equity Notes & Strategy", icon: FileText, tier: 0 },
-  { key: "company_info", label: "Company Information", icon: Briefcase, tier: 0 },
-  { key: "borrower_profile", label: "Borrower Profile", icon: UserCircle, tier: 0 },
-  { key: "investor_profile", label: "Investor Profile", icon: TrendingUp, tier: 0 },
-  { key: "contact_profile", label: "Contact Profile", icon: Contact, tier: 0 },
-  // Tier 1: High Priority
-  { key: "loans_extended", label: "Loans (Extended)", icon: Layers, tier: 1 },
-  { key: "servicing_loan", label: "Servicing Loan", icon: Landmark, tier: 1 },
-  { key: "fund_details", label: "Fund Details", icon: PiggyBank, tier: 1 },
-  { key: "opportunity", label: "Opportunity", icon: DollarSign, tier: 1 },
-  { key: "standalone_property", label: "Standalone Property", icon: MapPin, tier: 1 },
-  // Tier 2: Medium Priority
-  { key: "borrower_entity_detail", label: "Borrower Entity", icon: Shield, tier: 2 },
-  { key: "investing_entity", label: "Investing Entity", icon: Wallet, tier: 2 },
-  { key: "investor_commitment", label: "Investor Commitment", icon: Banknote, tier: 2 },
-  { key: "capital_call", label: "Capital Call", icon: ArrowUpDown, tier: 2 },
-  { key: "distribution", label: "Distribution", icon: ArrowUpDown, tier: 2 },
-  // Tier 3: Lower Priority
-  { key: "draw_request", label: "Draw Request", icon: Hammer, tier: 3 },
-  { key: "payoff_statement", label: "Payoff Statement", icon: Receipt, tier: 3 },
-  { key: "wire_instructions", label: "Wire Instructions", icon: CreditCard, tier: 3 },
-  { key: "crm_activity", label: "CRM Activity", icon: Activity, tier: 3 },
-  { key: "equity_underwriting", label: "Equity Underwriting", icon: BarChart3, tier: 3 },
+  { key: "loan_details", label: "Loan Details", icon: FileText },
+  { key: "property", label: "Property", icon: Building2 },
+  { key: "borrower_entity", label: "Borrower / Entity", icon: Shield },
+  { key: "equity_deal", label: "Equity Deal Details", icon: TrendingUp },
+  { key: "equity_property", label: "Equity Property", icon: Building2 },
+  { key: "equity_notes", label: "Equity Notes & Strategy", icon: FileText },
+  { key: "company_info", label: "Company Information", icon: Briefcase },
+  { key: "borrower_profile", label: "Borrower Profile", icon: UserCircle },
+  { key: "investor_profile", label: "Investor Profile", icon: TrendingUp },
+  { key: "contact_profile", label: "Contact Profile", icon: Contact },
+  { key: "loans_extended", label: "Loans (Extended)", icon: Layers },
+  { key: "servicing_loan", label: "Servicing Loan", icon: Landmark },
+  { key: "fund_details", label: "Fund Details", icon: PiggyBank },
+  { key: "opportunity", label: "Opportunity", icon: DollarSign },
+  { key: "standalone_property", label: "Standalone Property", icon: MapPin },
+  { key: "borrower_entity_detail", label: "Borrower Entity", icon: Shield },
+  { key: "investing_entity", label: "Investing Entity", icon: Wallet },
+  { key: "investor_commitment", label: "Investor Commitment", icon: Banknote },
+  { key: "capital_call", label: "Capital Call", icon: ArrowUpDown },
+  { key: "distribution", label: "Distribution", icon: ArrowUpDown },
+  { key: "draw_request", label: "Draw Request", icon: Hammer },
+  { key: "payoff_statement", label: "Payoff Statement", icon: Receipt },
+  { key: "wire_instructions", label: "Wire Instructions", icon: CreditCard },
+  { key: "crm_activity", label: "CRM Activity", icon: Activity },
+  { key: "equity_underwriting", label: "Equity Underwriting", icon: BarChart3 },
 ] as const;
 
 const FIELD_TYPES = [
@@ -523,46 +519,28 @@ export function FieldManagerView({ initialConfigs }: FieldManagerViewProps) {
     <div className="flex gap-6">
       {/* Module sidebar */}
       <div className="w-[220px] shrink-0 space-y-1 max-h-[calc(100vh-200px)] overflow-y-auto">
-        {[
-          { tier: 0, label: null },
-          { tier: 1, label: "Tier 1" },
-          { tier: 2, label: "Tier 2" },
-          { tier: 3, label: "Tier 3" },
-        ].map(({ tier, label }) => {
-          const tierModules = MODULES.filter((m) => m.tier === tier);
-          if (tierModules.length === 0) return null;
+        {MODULES.map((mod) => {
+          const isActive = activeModule === mod.key;
+          const count = (fields[mod.key] ?? []).filter((f) => !f.is_archived).length;
           return (
-            <div key={tier}>
-              {label && (
-                <div className="text-[10px] uppercase tracking-[0.06em] font-semibold text-muted-foreground px-2 pt-3 pb-1">
-                  {label}
-                </div>
+            <Button
+              key={mod.key}
+              variant="ghost"
+              className={cn(
+                "w-full justify-start gap-2.5 text-[13px] font-medium h-9",
+                isActive && "bg-sidebar-active text-foreground font-semibold"
               )}
-              {tierModules.map((mod) => {
-                const isActive = activeModule === mod.key;
-                const count = (fields[mod.key] ?? []).filter((f) => !f.is_archived).length;
-                return (
-                  <Button
-                    key={mod.key}
-                    variant="ghost"
-                    className={cn(
-                      "w-full justify-start gap-2.5 text-[13px] font-medium h-9",
-                      isActive && "bg-sidebar-active text-foreground font-semibold"
-                    )}
-                    onClick={() => {
-                      setActiveModule(mod.key);
-                      setSearch("");
-                    }}
-                  >
-                    <mod.icon className="h-4 w-4 shrink-0" strokeWidth={1.5} />
-                    <span className="flex-1 text-left truncate">{mod.label}</span>
-                    <Badge variant="outline" className="h-5 min-w-[22px] px-1.5 text-[10px] num">
-                      {count}
-                    </Badge>
-                  </Button>
-                );
-              })}
-            </div>
+              onClick={() => {
+                setActiveModule(mod.key);
+                setSearch("");
+              }}
+            >
+              <mod.icon className="h-4 w-4 shrink-0" strokeWidth={1.5} />
+              <span className="flex-1 text-left truncate">{mod.label}</span>
+              <Badge variant="outline" className="h-5 min-w-[22px] px-1.5 text-[10px] num">
+                {count}
+              </Badge>
+            </Button>
           );
         })}
       </div>
