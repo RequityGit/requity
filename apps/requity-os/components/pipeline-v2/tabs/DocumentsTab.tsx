@@ -70,11 +70,17 @@ export function DocumentsTab({ documents, dealId }: DocumentsTabProps) {
         formData.append("file", file);
         formData.append("dealId", dealId);
 
-        const result = await uploadDealDocumentV2(formData);
-        if (result.error) {
-          toast.error(`Failed to upload ${file.name}: ${result.error}`);
-        } else {
-          toast.success(`Uploaded ${file.name}`);
+        try {
+          const result = await uploadDealDocumentV2(formData);
+          if (result.error) {
+            toast.error(`Failed to upload ${file.name}: ${result.error}`);
+          } else {
+            toast.success(`Uploaded ${file.name}`);
+          }
+        } catch (err) {
+          toast.error(
+            `Failed to upload ${file.name}: ${err instanceof Error ? err.message : "Upload failed"}`
+          );
         }
       }
     });
