@@ -2,6 +2,8 @@
 // Unified Pipeline — Types, Constants, Formatters
 // ═══════════════════════════════════════════════════════════
 
+import { evaluateFormula } from "@/lib/formula-engine";
+
 export type CapitalSide = "debt" | "equity";
 export type UnifiedStage = "lead" | "analysis" | "negotiation" | "execution" | "closed";
 export type CardTypeStatus = "active" | "draft" | "planned" | "archived";
@@ -269,91 +271,7 @@ export function computeUwOutput(
   const def = outputs.find((o) => o.key === key);
   if (!def?.formula) return null;
 
-  const formula = def.formula;
-  const val = (k: string) => {
-    const v = uwData[k];
-    return typeof v === "number" ? v : null;
-  };
-
-  // Simple formula evaluation for common patterns
-  if (key === "ltv" || key === "ltv_as_is") {
-    const num = val("loan_amount");
-    const den = key === "ltv_as_is" ? val("as_is_value") : val("property_value");
-    if (num != null && den != null && den !== 0) return (num / den) * 100;
-  }
-  if (key === "dscr") {
-    const rent = val("monthly_rent");
-    const exp = val("monthly_expenses");
-    if (rent != null && exp != null && exp !== 0) return rent / exp;
-  }
-  if (key === "cap_rate_in") {
-    const noi = val("noi_current");
-    const price = val("offer_price");
-    if (noi != null && price != null && price !== 0) return (noi / price) * 100;
-  }
-  if (key === "ltc") {
-    const total = val("total_loan");
-    const pp = val("purchase_price");
-    const rehab = val("rehab_budget");
-    if (total != null && pp != null && rehab != null && pp + rehab !== 0)
-      return (total / (pp + rehab)) * 100;
-  }
-  if (key === "ltv_arv") {
-    const total = val("total_loan");
-    const arv = val("arv");
-    if (total != null && arv != null && arv !== 0) return (total / arv) * 100;
-  }
-  if (key === "debt_yield") {
-    const noi = val("noi") ?? val("noi_current");
-    const loan = val("loan_amount");
-    if (noi != null && loan != null && loan !== 0) return (noi / loan) * 100;
-  }
-  if (key === "price_per_unit") {
-    const price = val("offer_price") ?? val("property_value");
-    const units = val("units_lots_sites");
-    if (price != null && units != null && units !== 0) return price / units;
-  }
-  if (key === "cap_rate_stabilized") {
-    const noi = val("noi_stabilized");
-    const price = val("offer_price") ?? val("property_value");
-    if (noi != null && price != null && price !== 0) return (noi / price) * 100;
-  }
-  if (key === "cap_rate_going_in") {
-    const noi = val("noi_current") ?? val("noi");
-    const price = val("property_value") ?? val("offer_price");
-    if (noi != null && price != null && price !== 0) return (noi / price) * 100;
-  }
-  if (key === "bridge_ltv") {
-    const bridgeLoan = val("bridge_loan_amount");
-    const propVal = val("property_value");
-    if (bridgeLoan != null && propVal != null && propVal !== 0) return (bridgeLoan / propVal) * 100;
-  }
-  if (key === "exit_dscr") {
-    const noi = val("noi_stabilized") ?? val("noi_current") ?? val("noi");
-    const exitLoan = val("exit_loan_amount");
-    const exitRate = val("exit_rate");
-    const exitAmort = val("exit_amortization_years");
-    if (noi != null && exitLoan != null && exitRate != null && exitAmort != null && exitAmort > 0) {
-      const monthlyRate = exitRate / 100 / 12;
-      const numPayments = exitAmort * 12;
-      const monthlyPayment = monthlyRate > 0
-        ? exitLoan * (monthlyRate * Math.pow(1 + monthlyRate, numPayments)) / (Math.pow(1 + monthlyRate, numPayments) - 1)
-        : exitLoan / numPayments;
-      const annualDebtService = monthlyPayment * 12;
-      if (annualDebtService > 0) return noi / annualDebtService;
-    }
-  }
-
-  // Fallback: try to parse simple "a / b * c" patterns
-  const parts = formula.split(/\s*([/*+-])\s*/);
-  if (parts.length === 5 && parts[1] === "/" && parts[3] === "*") {
-    const a = val(parts[0]);
-    const b = val(parts[2]);
-    const c = Number(parts[4]);
-    if (a != null && b != null && b !== 0 && !isNaN(c)) return (a / b) * c;
-  }
-
-  return null;
+  return evaluateFormula(def.formula, uwData);
 }
 
 export function getCardMetricValue(

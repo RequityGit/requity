@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useMemo } from "react";
 import { cn } from "@/lib/utils";
+import { validateFormula as validateFormulaStr } from "@/lib/formula-engine";
 import {
   Plus,
   Copy,
@@ -438,6 +439,7 @@ export function CardTypeManagerView({
               <TabsContent value="outputs" className="mt-4">
                 <UwOutputsEditor
                   outputs={edits.uw_outputs}
+                  uwFields={edits.uw_fields}
                   onChange={(o) => setEdits({ ...edits, uw_outputs: o })}
                 />
               </TabsContent>
@@ -1088,14 +1090,118 @@ function UwFieldsEditor({
 }
 
 // ---------------------------------------------------------------------------
-// Computed Outputs Editor
+// Computed Outputs Editor (with formula engine validation)
 // ---------------------------------------------------------------------------
+
+function FormulaInput({
+  value,
+  onChange,
+  uwFields,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+  uwFields?: UwFieldDef[];
+}) {
+  const [showRef, setShowRef] = useState(false);
+  const validation = useMemo(() => {
+    if (!value) return null;
+    return validateFormulaStr(value);
+  }, [value]);
+
+  return (
+    <div className="space-y-1">
+      <div className="relative">
+        <Input
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          placeholder="e.g. loan_amount / property_value * 100"
+          className={cn(
+            "text-xs font-mono pr-16",
+            validation && !validation.valid && "border-red-400 focus-visible:ring-red-400"
+          )}
+        />
+        <div className="absolute right-1 top-1 flex items-center gap-1">
+          {validation && (
+            <span
+              className={cn(
+                "h-2 w-2 rounded-full",
+                validation.valid ? "bg-green-500" : "bg-red-500"
+              )}
+              title={validation.valid ? "Valid formula" : validation.error}
+            />
+          )}
+          <button
+            type="button"
+            onClick={() => setShowRef(!showRef)}
+            className="text-[10px] text-muted-foreground hover:text-foreground px-1"
+            title="Function reference"
+          >
+            fx
+          </button>
+        </div>
+      </div>
+      {validation && !validation.valid && (
+        <p className="text-[10px] text-red-500 truncate" title={validation.error}>
+          {validation.error}
+        </p>
+      )}
+      {showRef && (
+        <div className="border rounded-md p-2 bg-muted/50 space-y-2 max-h-[200px] overflow-y-auto">
+          {uwFields && uwFields.length > 0 && (
+            <div>
+              <p className="text-[10px] font-medium text-muted-foreground mb-1">VARIABLES</p>
+              <div className="flex flex-wrap gap-1">
+                {uwFields.map((f) => (
+                  <button
+                    key={f.key}
+                    type="button"
+                    onClick={() => onChange(value ? `${value} ${f.key}` : f.key)}
+                    className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-background border hover:bg-accent"
+                  >
+                    {f.key}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+          <div>
+            <p className="text-[10px] font-medium text-muted-foreground mb-1">FUNCTIONS</p>
+            <div className="grid grid-cols-1 gap-0.5">
+              {FORMULA_FUNCTION_REF.map((fn) => (
+                <div key={fn.name} className="text-[10px] flex gap-2">
+                  <code className="font-mono text-primary shrink-0">{fn.signature}</code>
+                  <span className="text-muted-foreground truncate">{fn.description}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+const FORMULA_FUNCTION_REF = [
+  { name: "PMT", signature: "PMT(rate, nper, pv)", description: "Loan payment" },
+  { name: "IRR", signature: "IRR(cf0, cf1, ...)", description: "Internal rate of return" },
+  { name: "NPV", signature: "NPV(rate, cf1, ...)", description: "Net present value" },
+  { name: "IF", signature: "IF(cond, t, f)", description: "Conditional" },
+  { name: "IFERROR", signature: "IFERROR(val, fb)", description: "Fallback if error" },
+  { name: "COALESCE", signature: "COALESCE(a, b, ...)", description: "First non-null" },
+  { name: "CLAMP", signature: "CLAMP(val, min, max)", description: "Constrain to range" },
+  { name: "min", signature: "min(a, b)", description: "Minimum" },
+  { name: "max", signature: "max(a, b)", description: "Maximum" },
+  { name: "round", signature: "round(x, n)", description: "Round to n decimals" },
+  { name: "abs", signature: "abs(x)", description: "Absolute value" },
+];
 
 function UwOutputsEditor({
   outputs,
+  uwFields,
   onChange,
 }: {
   outputs: UwOutputDef[];
+  uwFields?: UwFieldDef[];
   onChange: (outputs: UwOutputDef[]) => void;
 }) {
   const addOutput = () => {
@@ -1114,64 +1220,64 @@ function UwOutputsEditor({
   return (
     <div className="space-y-4">
       <p className="text-sm text-muted-foreground">
-        Computed metrics calculated from UW field values. Used in the
-        underwriting summary and available as card metrics.
+        Computed metrics calculated from UW field values using the formula engine.
+        Formulas support Excel-like syntax: arithmetic, PMT, IRR, IF, min/max, and more.
       </p>
 
       <div className="space-y-2">
         {outputs.map((o, idx) => (
           <div
             key={idx}
-            className="flex items-center gap-2 rounded-lg border p-3"
+            className="rounded-lg border p-3 space-y-2"
           >
-            <div className="flex-1 grid grid-cols-4 gap-2">
-              <Input
-                value={o.key}
-                onChange={(e) => updateOutput(idx, { key: e.target.value })}
-                placeholder="key"
-                className="text-xs font-mono"
-              />
-              <Input
-                value={o.label}
-                onChange={(e) => updateOutput(idx, { label: e.target.value })}
-                placeholder="Label"
-                className="text-xs"
-              />
-              <Select
-                value={o.type}
-                onValueChange={(v) =>
-                  updateOutput(idx, {
-                    type: v as UwOutputDef["type"],
-                  })
-                }
+            <div className="flex items-center gap-2">
+              <div className="flex-1 grid grid-cols-3 gap-2">
+                <Input
+                  value={o.key}
+                  onChange={(e) => updateOutput(idx, { key: e.target.value })}
+                  placeholder="key"
+                  className="text-xs font-mono"
+                />
+                <Input
+                  value={o.label}
+                  onChange={(e) => updateOutput(idx, { label: e.target.value })}
+                  placeholder="Label"
+                  className="text-xs"
+                />
+                <Select
+                  value={o.type}
+                  onValueChange={(v) =>
+                    updateOutput(idx, {
+                      type: v as UwOutputDef["type"],
+                    })
+                  }
+                >
+                  <SelectTrigger className="text-xs">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {OUTPUT_TYPES.map((t) => (
+                      <SelectItem key={t} value={t}>
+                        {t}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <button
+                onClick={() => removeOutput(idx)}
+                className="p-1 rounded hover:bg-destructive/10"
               >
-                <SelectTrigger className="text-xs">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {OUTPUT_TYPES.map((t) => (
-                    <SelectItem key={t} value={t}>
-                      {t}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <Input
-                value={o.formula ?? ""}
-                onChange={(e) =>
-                  updateOutput(idx, { formula: e.target.value })
-                }
-                placeholder="formula (e.g. noi / price * 100)"
-                className="text-xs font-mono"
-              />
+                <X className="h-3.5 w-3.5 text-destructive" />
+              </button>
             </div>
 
-            <button
-              onClick={() => removeOutput(idx)}
-              className="p-1 rounded hover:bg-destructive/10"
-            >
-              <X className="h-3.5 w-3.5 text-destructive" />
-            </button>
+            <FormulaInput
+              value={o.formula ?? ""}
+              onChange={(v) => updateOutput(idx, { formula: v })}
+              uwFields={uwFields}
+            />
           </div>
         ))}
       </div>
