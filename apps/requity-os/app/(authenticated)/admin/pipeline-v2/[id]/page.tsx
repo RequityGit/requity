@@ -137,11 +137,18 @@ export default async function DealDetailRoute({ params }: PageProps) {
       .limit(1)
       .maybeSingle();
 
-    let uwRecord = (uwRaw as unknown as { data: Record<string, unknown> | null }).data;
+    const uwRawTyped = uwRaw as unknown as { data: Record<string, unknown> | null; error: { message: string } | null };
+    if (uwRawTyped.error) {
+      console.error("[CommercialUW] Failed to fetch UW record:", uwRawTyped.error.message);
+    }
+    let uwRecord = uwRawTyped.data;
 
     // Auto-initialize UW record for commercial deals that don't have one yet
     if (!uwRecord) {
-      await ensureCommercialUW(id);
+      const ensureResult = await ensureCommercialUW(id);
+      if (ensureResult.error) {
+        console.error("[CommercialUW] Failed to auto-init UW:", ensureResult.error);
+      }
       const retryRaw = await admin
         .from("deal_commercial_uw" as never)
         .select("*")
