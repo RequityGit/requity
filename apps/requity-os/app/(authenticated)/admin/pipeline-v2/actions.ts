@@ -323,6 +323,66 @@ export async function updateConditionStatusAction(
 
     const admin = createAdminClient();
 
+    // If approving, check if condition requires approval workflow
+    if (newStatus === "approved") {
+      const { data: condition } = await admin
+        .from("unified_deal_conditions" as never)
+        .select("requires_approval, condition_name, category, deal_id" as never)
+        .eq("id" as never, conditionId as never)
+        .single();
+
+      const cond = condition as { requires_approval: boolean; condition_name: string; category: string; deal_id: string } | null;
+
+      if (cond?.requires_approval) {
+        // Get deal name for snapshot
+        const { data: deal } = await admin
+          .from("unified_deals" as never)
+          .select("name, deal_number" as never)
+          .eq("id" as never, cond.deal_id as never)
+          .single();
+
+        const dealInfo = deal as { name: string; deal_number: string } | null;
+
+        // Set to under_review instead of approved
+        const { error: updateErr } = await admin
+          .from("unified_deal_conditions" as never)
+          .update({ status: "under_review" } as never)
+          .eq("id" as never, conditionId as never);
+
+        if (updateErr) {
+          console.error("updateConditionStatusAction error:", updateErr);
+          return { error: updateErr.message };
+        }
+
+        // Submit for approval
+        const { submitForApproval } = await import(
+          "@/app/(authenticated)/admin/operations/approvals/actions"
+        );
+
+        const approvalResult = await submitForApproval({
+          entityType: "condition",
+          entityId: conditionId,
+          dealSnapshot: {
+            condition_name: cond.condition_name,
+            category: cond.category,
+            deal_id: cond.deal_id,
+            borrower_name: dealInfo?.name ?? "Unknown Deal",
+            deal_number: dealInfo?.deal_number ?? "",
+          },
+          checklistResults: [],
+        });
+
+        if (approvalResult.error) {
+          console.error("Failed to submit condition for approval:", approvalResult.error);
+          return { error: approvalResult.error };
+        }
+
+        revalidatePipeline(cond.deal_id);
+        return { success: true, message: "Condition sent for approval" };
+      }
+    }
+
+    // Normal status update (no approval required)
     const updates: Record<string, unknown> = { status: newStatus };
     if (newStatus === "submitted") updates.submitted_at = new Date().toISOString();
     if (newStatus === "approved" || newStatus === "rejected") {

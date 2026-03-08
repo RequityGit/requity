@@ -41,6 +41,7 @@ interface ConditionTemplate {
   borrower_description: string | null;
   responsible_party: string | null;
   critical_path_item: boolean | null;
+  requires_approval: boolean | null;
   sort_order: number | null;
   is_active: boolean | null;
   created_at: string;

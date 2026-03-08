@@ -5,7 +5,8 @@ export type NoteEntityType =
   | "task"
   | "project"
   | "approval"
-  | "condition";
+  | "condition"
+  | "unified_condition";
 
 export interface UnifiedNotesProps {
   entityType: NoteEntityType;
@@ -40,6 +41,8 @@ export interface NoteData {
   edited_at: string | null;
   deleted_at: string | null;
   note_likes: NoteLike[];
+  unified_condition_id?: string | null;
+  condition_name?: string | null;
 }
 
 export type NoteFilter = "all" | "internal" | "external";
@@ -53,6 +56,7 @@ export function getEntityColumn(entityType: NoteEntityType): string {
     project: "project_id",
     approval: "approval_id",
     condition: "condition_id",
+    unified_condition: "unified_condition_id",
   };
   return map[entityType];
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState, useTransition, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import {
   CheckCircle2,
@@ -12,6 +12,10 @@ import {
   ChevronRight,
   Ban,
   Upload,
+  Shield,
+  Loader2,
+  Download,
+  Trash2,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -26,6 +30,13 @@ import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { type DealCondition } from "@/components/pipeline-v2/pipeline-types";
 import { updateConditionStatusAction } from "@/app/(authenticated)/admin/pipeline-v2/actions";
+import {
+  uploadConditionDocumentV2,
+  deleteDealDocumentV2,
+  getDocumentSignedUrl,
+} from "@/app/(authenticated)/admin/pipeline-v2/[id]/actions";
+import { UnifiedNotes } from "@/components/shared/UnifiedNotes";
+import { createClient } from "@/lib/supabase/client";
 
 // ─── Category grouping ───
 
@@ -111,6 +122,7 @@ export function ConditionsTab({ conditions, dealId }: ConditionsTabProps) {
   const [groupFilter, setGroupFilter] = useState<string>("all");
   const [cpOnly, setCpOnly] = useState(false);
   const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set());
+  const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
 
   const filtered = conditions.filter((c) => {
     if (groupFilter !== "all" && getCategoryGroup(c.category) !== groupFilter) return false;
@@ -137,6 +149,15 @@ export function ConditionsTab({ conditions, dealId }: ConditionsTabProps) {
       const next = new Set(prev);
       if (next.has(cat)) next.delete(cat);
       else next.add(cat);
+      return next;
+    });
+  }
+
+  function toggleRow(id: string) {
+    setExpandedRows((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
       return next;
     });
   }
@@ -239,7 +260,13 @@ export function ConditionsTab({ conditions, dealId }: ConditionsTabProps) {
             {isExpanded && (
               <div className="border-t divide-y">
                 {items.map((c) => (
-                  <ConditionRow key={c.id} condition={c} />
+                  <ConditionRow
+                    key={c.id}
+                    condition={c}
+                    dealId={dealId}
+                    isExpanded={expandedRows.has(c.id)}
+                    onToggleExpand={() => toggleRow(c.id)}
+                  />
                 ))}
               </div>
             )}
@@ -252,7 +279,26 @@ export function ConditionsTab({ conditions, dealId }: ConditionsTabProps) {
 
 // ─── Condition Row ───
 
-function ConditionRow({ condition: c }: { condition: DealCondition }) {
+interface ConditionDocument {
+  id: string;
+  document_name: string;
+  file_url: string;
+  storage_path: string | null;
+  file_size_bytes: number | null;
+  created_at: string;
+}
+
+function ConditionRow({
+  condition: c,
+  dealId,
+  isExpanded,
+  onToggleExpand,
+}: {
+  condition: DealCondition;
+  dealId: string;
+  isExpanded: boolean;
+  onToggleExpand: () => void;
+}) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const statusCfg = STATUS_CONFIG[c.status] ?? STATUS_CONFIG.pending;
@@ -265,94 +311,301 @@ function ConditionRow({ condition: c }: { condition: DealCondition }) {
       if (result.error) {
         toast.error(`Failed to update: ${result.error}`);
       } else {
-        toast.success(`Condition ${newStatus === "approved" ? "approved" : "updated"}`);
+        const msg = (result as { message?: string }).message;
+        toast.success(msg ?? `Condition ${newStatus === "approved" ? "approved" : "updated"}`);
         router.refresh();
       }
     });
   }
 
   return (
-    <div className="flex items-center gap-3.5 px-5 py-3">
-      {/* Status icon */}
-      <div className="shrink-0">
-        <StatusIcon
-          className={cn(
-            "h-[18px] w-[18px]",
-            c.status === "approved" && "text-green-500",
-            c.status === "waived" && "text-slate-400",
-            c.status === "rejected" && "text-red-500",
-            c.status === "submitted" && "text-blue-500",
-            c.status === "under_review" && "text-amber-500",
-            c.status === "pending" && "text-muted-foreground",
-            c.status === "not_applicable" && "text-slate-400"
+    <div>
+      <div
+        className="flex items-center gap-3.5 px-5 py-3 cursor-pointer hover:bg-muted/30 transition-colors"
+        onClick={onToggleExpand}
+      >
+        {/* Expand toggle */}
+        <div className="shrink-0">
+          {isExpanded ? (
+            <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />
+          ) : (
+            <ChevronRight className="h-3.5 w-3.5 text-muted-foreground" />
           )}
-          strokeWidth={1.5}
-        />
-      </div>
+        </div>
 
-      {/* Content */}
-      <div className="min-w-0 flex-1">
-        <div className="flex flex-wrap items-center gap-2">
-          <span
+        {/* Status icon */}
+        <div className="shrink-0">
+          <StatusIcon
             className={cn(
-              "text-sm font-medium",
-              (c.status === "approved" || c.status === "waived" || c.status === "not_applicable") &&
-                "line-through opacity-60"
+              "h-[18px] w-[18px]",
+              c.status === "approved" && "text-green-500",
+              c.status === "waived" && "text-slate-400",
+              c.status === "rejected" && "text-red-500",
+              c.status === "submitted" && "text-blue-500",
+              c.status === "under_review" && "text-amber-500",
+              c.status === "pending" && "text-muted-foreground",
+              c.status === "not_applicable" && "text-slate-400"
             )}
-          >
-            {c.condition_name}
-          </span>
-          {c.critical_path_item && (
-            <Badge variant="destructive" className="text-[10px]">
-              Critical
-            </Badge>
-          )}
-          {c.responsible_party && (
-            <span className="text-[10px] text-muted-foreground uppercase">
-              {c.responsible_party}
-            </span>
-          )}
+            strokeWidth={1.5}
+          />
         </div>
-        <div className="mt-1 flex gap-4 text-xs text-muted-foreground">
-          <span className="capitalize">{c.required_stage.replace(/_/g, " ")}</span>
-          {c.due_date && (
+
+        {/* Content */}
+        <div className="min-w-0 flex-1">
+          <div className="flex flex-wrap items-center gap-2">
             <span
-              className={cn("num", isOverdue && "text-red-500 font-medium")}
+              className={cn(
+                "text-sm font-medium",
+                (c.status === "approved" || c.status === "waived" || c.status === "not_applicable") &&
+                  "line-through opacity-60"
+              )}
             >
-              Due: {formatDate(c.due_date)}
-              {isOverdue ? " (OVERDUE)" : ""}
+              {c.condition_name}
             </span>
-          )}
-          {(c.document_urls?.length ?? 0) > 0 && (
-            <span className="flex items-center gap-0.5 num">
-              <FileText className="h-3 w-3" strokeWidth={1.5} /> {c.document_urls!.length}
-            </span>
-          )}
+            {c.critical_path_item && (
+              <Badge variant="destructive" className="text-[10px]">
+                Critical
+              </Badge>
+            )}
+            {c.requires_approval && (
+              <span className="inline-flex items-center gap-1 text-[10px] font-medium text-violet-600 bg-violet-500/10 border border-violet-500/20 rounded-full px-1.5 py-px">
+                <Shield className="h-2.5 w-2.5" strokeWidth={2} />
+                Approval Required
+              </span>
+            )}
+            {c.status === "under_review" && c.requires_approval && (
+              <span className="inline-flex items-center gap-1 text-[10px] font-medium text-amber-600 bg-amber-500/10 border border-amber-500/20 rounded-full px-1.5 py-px">
+                <Clock className="h-2.5 w-2.5" strokeWidth={2} />
+                Awaiting Approval
+              </span>
+            )}
+            {c.responsible_party && (
+              <span className="text-[10px] text-muted-foreground uppercase">
+                {c.responsible_party}
+              </span>
+            )}
+          </div>
+          <div className="mt-1 flex gap-4 text-xs text-muted-foreground">
+            <span className="capitalize">{c.required_stage.replace(/_/g, " ")}</span>
+            {c.due_date && (
+              <span
+                className={cn("num", isOverdue && "text-red-500 font-medium")}
+              >
+                Due: {formatDate(c.due_date)}
+                {isOverdue ? " (OVERDUE)" : ""}
+              </span>
+            )}
+          </div>
+        </div>
+
+        {/* Actions */}
+        <div className="flex shrink-0 items-center gap-2" onClick={(e) => e.stopPropagation()}>
+          <Badge className={cn("text-[10px] border-0", statusCfg.color)}>
+            {statusCfg.label}
+          </Badge>
+          <Select
+            value={c.status}
+            onValueChange={handleStatusChange}
+            disabled={isPending}
+          >
+            <SelectTrigger className="h-7 w-[130px] text-xs">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {STATUS_OPTIONS.map((s) => (
+                <SelectItem key={s} value={s} className="text-xs">
+                  {STATUS_CONFIG[s]?.label ?? s}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
       </div>
 
-      {/* Actions */}
-      <div className="flex shrink-0 items-center gap-2">
-        <Badge className={cn("text-[10px] border-0", statusCfg.color)}>
-          {statusCfg.label}
-        </Badge>
-        <Select
-          value={c.status}
-          onValueChange={handleStatusChange}
-          disabled={isPending}
-        >
-          <SelectTrigger className="h-7 w-[130px] text-xs">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {STATUS_OPTIONS.map((s) => (
-              <SelectItem key={s} value={s} className="text-xs">
-                {STATUS_CONFIG[s]?.label ?? s}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+      {/* Expanded section: Documents + Notes */}
+      {isExpanded && (
+        <div className="border-t bg-muted/20 px-5 py-4">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Documents */}
+            <ConditionDocuments conditionId={c.id} dealId={dealId} />
+
+            {/* Notes */}
+            <div>
+              <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-3">
+                Notes
+              </h4>
+              <UnifiedNotes
+                entityType="unified_condition"
+                entityId={c.id}
+                loanId={dealId}
+                compact
+              />
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── Condition Documents ───
+
+function ConditionDocuments({
+  conditionId,
+  dealId,
+}: {
+  conditionId: string;
+  dealId: string;
+}) {
+  const [docs, setDocs] = useState<ConditionDocument[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [uploading, setUploading] = useState(false);
+
+  const fetchDocs = useCallback(async () => {
+    const supabase = createClient();
+    const { data, error } = await supabase
+      .from("unified_deal_documents" as never)
+      .select("id, document_name, file_url, storage_path, file_size_bytes, created_at" as never)
+      .eq("condition_id" as never, conditionId as never)
+      .order("created_at" as never, { ascending: false });
+
+    if (error) {
+      console.error("Error fetching condition documents:", error);
+    } else {
+      setDocs((data as unknown as ConditionDocument[]) ?? []);
+    }
+    setLoading(false);
+  }, [conditionId]);
+
+  useEffect(() => {
+    fetchDocs();
+  }, [fetchDocs]);
+
+  async function handleUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setUploading(true);
+    const formData = new FormData();
+    formData.set("file", file);
+    formData.set("dealId", dealId);
+    formData.set("conditionId", conditionId);
+
+    const result = await uploadConditionDocumentV2(formData);
+    if (result.error) {
+      toast.error(`Upload failed: ${result.error}`);
+    } else {
+      toast.success(`${file.name} uploaded`);
+      fetchDocs();
+    }
+    setUploading(false);
+    e.target.value = "";
+  }
+
+  async function handleDownload(doc: ConditionDocument) {
+    if (!doc.storage_path) {
+      window.open(doc.file_url, "_blank");
+      return;
+    }
+    const result = await getDocumentSignedUrl(doc.storage_path);
+    if (result.url) {
+      window.open(result.url, "_blank");
+    } else {
+      toast.error("Failed to generate download link");
+    }
+  }
+
+  async function handleDelete(docId: string) {
+    const result = await deleteDealDocumentV2(docId);
+    if (result.error) {
+      toast.error(`Delete failed: ${result.error}`);
+    } else {
+      toast.success("Document deleted");
+      setDocs((prev) => prev.filter((d) => d.id !== docId));
+    }
+  }
+
+  function formatBytes(bytes: number | null): string {
+    if (!bytes) return "";
+    if (bytes < 1024) return `${bytes} B`;
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+  }
+
+  return (
+    <div>
+      <div className="flex items-center justify-between mb-3">
+        <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+          Documents
+        </h4>
+        <label>
+          <input
+            type="file"
+            className="hidden"
+            onChange={handleUpload}
+            disabled={uploading}
+          />
+          <Button
+            variant="outline"
+            size="sm"
+            className="h-7 text-xs gap-1.5"
+            disabled={uploading}
+            asChild
+          >
+            <span>
+              {uploading ? (
+                <Loader2 className="h-3 w-3 animate-spin" />
+              ) : (
+                <Upload className="h-3 w-3" />
+              )}
+              {uploading ? "Uploading..." : "Upload"}
+            </span>
+          </Button>
+        </label>
       </div>
+
+      {loading ? (
+        <div className="h-10 rounded-lg bg-muted animate-pulse" />
+      ) : docs.length === 0 ? (
+        <p className="text-xs text-muted-foreground py-3">No documents attached.</p>
+      ) : (
+        <div className="space-y-1.5">
+          {docs.map((doc) => (
+            <div
+              key={doc.id}
+              className="flex items-center justify-between gap-2 rounded-lg border bg-card px-3 py-2"
+            >
+              <div className="flex items-center gap-2 min-w-0">
+                <FileText className="h-3.5 w-3.5 text-muted-foreground shrink-0" strokeWidth={1.5} />
+                <span className="text-xs font-medium truncate">{doc.document_name}</span>
+                {doc.file_size_bytes && (
+                  <span className="text-[10px] text-muted-foreground num shrink-0">
+                    {formatBytes(doc.file_size_bytes)}
+                  </span>
+                )}
+              </div>
+              <div className="flex items-center gap-1 shrink-0">
+                <button
+                  type="button"
+                  onClick={() => handleDownload(doc)}
+                  className="p-1 rounded hover:bg-muted text-muted-foreground hover:text-foreground"
+                  title="Download"
+                >
+                  <Download className="h-3 w-3" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleDelete(doc.id)}
+                  className="p-1 rounded hover:bg-red-50 text-muted-foreground hover:text-red-600"
+                  title="Delete"
+                >
+                  <Trash2 className="h-3 w-3" />
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

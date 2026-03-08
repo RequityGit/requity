@@ -148,6 +148,7 @@ export interface DealCondition {
   borrower_description: string | null;
   responsible_party: string | null;
   critical_path_item: boolean;
+  requires_approval: boolean;
   is_required: boolean;
   sort_order: number;
   notes: string | null;

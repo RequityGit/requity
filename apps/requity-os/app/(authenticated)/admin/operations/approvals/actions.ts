@@ -439,6 +439,24 @@ export async function approveRequest(approvalId: string, decisionNotes?: string)
       }
     }
 
+    // Update condition status if entity_type is condition
+    if (approval.entity_type === "condition") {
+      const { error: condErr } = await admin
+        .from("unified_deal_conditions" as never)
+        .update({
+          status: "approved",
+          reviewed_at: now,
+          reviewed_by: auth.user.id,
+        } as never)
+        .eq("id" as never, approval.entity_id as never);
+
+      if (condErr) {
+        console.error("Failed to update condition status on approval:", condErr);
+      }
+
+      revalidatePath("/admin/pipeline-v2");
+    }
+
     // Sync approval status back to opportunities table if entity_type is opportunity
     if (approval.entity_type === "opportunity") {
       const { error: oppErr } = await admin
@@ -544,6 +562,20 @@ export async function requestChanges(approvalId: string, decisionNotes: string) 
     if (updateErr) {
       console.error("Failed to update approval for changes requested:", updateErr);
       return { error: updateErr.message };
+    }
+
+    // Revert condition status to pending if entity_type is condition
+    if (approval.entity_type === "condition") {
+      const { error: condErr } = await admin
+        .from("unified_deal_conditions" as never)
+        .update({ status: "pending" } as never)
+        .eq("id" as never, approval.entity_id as never);
+
+      if (condErr) {
+        console.error("Failed to revert condition status on changes requested:", condErr);
+      }
+
+      revalidatePath("/admin/pipeline-v2");
     }
 
     // Update linked task to on_hold
@@ -696,6 +728,20 @@ export async function declineRequest(approvalId: string, decisionNotes: string) 
       if (logErr) {
         console.error("Failed to insert loan activity log on decline:", logErr);
       }
+    }
+
+    // Revert condition status if entity_type is condition
+    if (approval.entity_type === "condition") {
+      const { error: condErr } = await admin
+        .from("unified_deal_conditions" as never)
+        .update({ status: "rejected" } as never)
+        .eq("id" as never, approval.entity_id as never);
+
+      if (condErr) {
+        console.error("Failed to update condition status on decline:", condErr);
+      }
+
+      revalidatePath("/admin/pipeline-v2");
     }
 
     // Sync approval status back to opportunities table if entity_type is opportunity

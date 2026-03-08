@@ -99,6 +99,80 @@ export async function assignTeamMemberV2(
   }
 }
 
+// ─── Condition Document Upload ───
+
+export async function uploadConditionDocumentV2(
+  formData: FormData
+): Promise<{ error: string | null }> {
+  try {
+    const auth = await requireAdmin();
+    if ("error" in auth) return { error: auth.error ?? "Unauthorized" };
+
+    const file = formData.get("file") as File;
+    const dealId = formData.get("dealId") as string;
+    const conditionId = formData.get("conditionId") as string;
+
+    if (!file || !dealId || !conditionId) return { error: "Missing file, dealId, or conditionId" };
+
+    const arrayBuffer = await file.arrayBuffer();
+    const buffer = Buffer.from(arrayBuffer);
+
+    const admin = createAdminClient();
+    const fileName = `${Date.now()}-${file.name.replace(/[^a-zA-Z0-9._-]/g, "_")}`;
+    const storagePath = `deals/${dealId}/conditions/${conditionId}/${fileName}`;
+
+    const uploadResult = await admin.storage
+      .from("loan-documents")
+      .upload(storagePath, buffer, {
+        contentType: file.type || "application/octet-stream",
+        upsert: false,
+      });
+
+    if (!uploadResult || uploadResult.error) {
+      console.error("uploadConditionDocumentV2 storage error:", uploadResult?.error);
+      return { error: uploadResult?.error?.message ?? "Storage upload failed" };
+    }
+
+    const signedUrlResult = await admin.storage
+      .from("loan-documents")
+      .createSignedUrl(storagePath, 60 * 60 * 24 * 365);
+
+    const fileUrl =
+      signedUrlResult?.error || !signedUrlResult?.data
+        ? storagePath
+        : signedUrlResult.data.signedUrl;
+
+    const insertResult = await admin
+      .from("unified_deal_documents" as never)
+      .insert({
+        deal_id: dealId,
+        condition_id: conditionId,
+        document_name: file.name,
+        file_url: fileUrl,
+        file_size_bytes: file.size,
+        mime_type: file.type || "application/octet-stream",
+        uploaded_by: auth.user.id,
+        storage_path: storagePath,
+        review_status: "pending",
+      } as never)
+      .select("id" as never)
+      .single();
+
+    if (!insertResult || insertResult.error) {
+      const dbError = insertResult?.error;
+      console.error("uploadConditionDocumentV2 db error:", dbError);
+      await admin.storage.from("loan-documents").remove([storagePath]);
+      return { error: dbError?.message ?? "Failed to save document record" };
+    }
+
+    revalidateDeal(dealId);
+    return { error: null };
+  } catch (err: unknown) {
+    console.error("uploadConditionDocumentV2 error:", err);
+    return { error: err instanceof Error ? err.message : "Upload failed" };
+  }
+}
+
 // ─── Document Actions ───
 
 /**

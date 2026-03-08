@@ -2,7 +2,7 @@
 
 export type ApprovalStatus = "pending" | "approved" | "changes_requested" | "declined" | "cancelled";
 export type ApprovalPriority = "low" | "normal" | "high" | "urgent";
-export type ApprovalEntityType = "loan" | "draw_request" | "payoff" | "exception" | "investor_distribution" | "opportunity";
+export type ApprovalEntityType = "loan" | "draw_request" | "payoff" | "exception" | "investor_distribution" | "opportunity" | "condition";
 export type ApprovalAuditAction =
   | "submitted"
   | "approved"
@@ -145,4 +145,5 @@ export const ENTITY_TYPE_LABELS: Record<ApprovalEntityType, string> = {
   exception: "Exception",
   investor_distribution: "Investor Distribution",
   opportunity: "Deal",
+  condition: "Condition",
 };

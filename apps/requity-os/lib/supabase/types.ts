@@ -7447,6 +7447,7 @@ export type Database = {
           internal_description: string | null
           is_active: boolean | null
           required_stage: Database["public"]["Enums"]["condition_stage"]
+          requires_approval: boolean | null
           responsible_party: string | null
           sort_order: number | null
           updated_at: string
@@ -7466,6 +7467,7 @@ export type Database = {
           internal_description?: string | null
           is_active?: boolean | null
           required_stage?: Database["public"]["Enums"]["condition_stage"]
+          requires_approval?: boolean | null
           responsible_party?: string | null
           sort_order?: number | null
           updated_at?: string
@@ -7485,6 +7487,7 @@ export type Database = {
           internal_description?: string | null
           is_active?: boolean | null
           required_stage?: Database["public"]["Enums"]["condition_stage"]
+          requires_approval?: boolean | null
           responsible_party?: string | null
           sort_order?: number | null
           updated_at?: string
@@ -8777,6 +8780,7 @@ export type Database = {
           pinned_by: string | null
           project_id: string | null
           task_id: string | null
+          unified_condition_id: string | null
           updated_at: string
         }
         Insert: {
@@ -8802,6 +8806,7 @@ export type Database = {
           pinned_by?: string | null
           project_id?: string | null
           task_id?: string | null
+          unified_condition_id?: string | null
           updated_at?: string
         }
         Update: {
@@ -8827,6 +8832,7 @@ export type Database = {
           pinned_by?: string | null
           project_id?: string | null
           task_id?: string | null
+          unified_condition_id?: string | null
           updated_at?: string
         }
         Relationships: [
@@ -8954,6 +8960,13 @@ export type Database = {
             columns: ["task_id"]
             isOneToOne: false
             referencedRelation: "ops_tasks"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notes_unified_condition_id_fkey"
+            columns: ["unified_condition_id"]
+            isOneToOne: false
+            referencedRelation: "unified_deal_conditions"
             referencedColumns: ["id"]
           },
         ]
@@ -13309,6 +13322,7 @@ export type Database = {
           is_required: boolean | null
           notes: string | null
           required_stage: string
+          requires_approval: boolean | null
           responsible_party: string | null
           reviewed_at: string | null
           reviewed_by: string | null
@@ -13333,6 +13347,7 @@ export type Database = {
           is_required?: boolean | null
           notes?: string | null
           required_stage?: string
+          requires_approval?: boolean | null
           responsible_party?: string | null
           reviewed_at?: string | null
           reviewed_by?: string | null
@@ -13357,6 +13372,7 @@ export type Database = {
           is_required?: boolean | null
           notes?: string | null
           required_stage?: string
+          requires_approval?: boolean | null
           responsible_party?: string | null
           reviewed_at?: string | null
           reviewed_by?: string | null
@@ -13386,6 +13402,7 @@ export type Database = {
       unified_deal_documents: {
         Row: {
           category: string | null
+          condition_id: string | null
           created_at: string
           deal_id: string
           document_name: string
@@ -13399,6 +13416,7 @@ export type Database = {
         }
         Insert: {
           category?: string | null
+          condition_id?: string | null
           created_at?: string
           deal_id: string
           document_name: string
@@ -13412,6 +13430,7 @@ export type Database = {
         }
         Update: {
           category?: string | null
+          condition_id?: string | null
           created_at?: string
           deal_id?: string
           document_name?: string
@@ -13424,6 +13443,13 @@ export type Database = {
           uploaded_by?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "unified_deal_documents_condition_id_fkey"
+            columns: ["condition_id"]
+            isOneToOne: false
+            referencedRelation: "unified_deal_conditions"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "unified_deal_documents_deal_id_fkey"
             columns: ["deal_id"]
@@ -16529,6 +16555,7 @@ export const Constants = {
     },
   },
 } as const
+
 
 // ---------------------------------------------------------------------------
 // Custom types (manually added, not auto-generated)
