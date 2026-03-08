@@ -214,7 +214,7 @@ export function DetailOverviewTab({
         { label: "Credit Score", fieldName: "credit_score", fieldType: "number", value: borrower.credit_score },
         { label: "Credit Report Date", fieldName: "credit_report_date", fieldType: "date", value: borrower.credit_report_date },
         { label: "RE Experience", fieldName: "experience_count", fieldType: "number", value: borrower.experience_count },
-        { label: "Date of Birth", fieldName: "date_of_birth", fieldType: "date", value: borrower.date_of_birth },
+        { label: "Date of Birth", fieldName: "date_of_birth", fieldType: "date", value: borrower.date_of_birth, showYearNavigation: true },
         { label: "US Citizen", fieldName: "is_us_citizen", fieldType: "boolean", value: borrower.is_us_citizen },
         {
           label: "Marital Status", fieldName: "marital_status", fieldType: "select", value: borrower.marital_status,
