@@ -38,6 +38,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { UserPlus, X, Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { formatPhoneInput } from "@/lib/format";
+import { z } from "zod";
 
 interface TeamMember {
   id: string;
@@ -98,6 +99,17 @@ export function AddContactDialog({
 
   // Validation
   const [errors, setErrors] = useState<Record<string, string>>({});
+
+  const contactSchema = z.object({
+    first_name: z.string().min(1, "Required"),
+    last_name: z.string().min(1, "Required"),
+  }).refine(
+    () => selectedRelationships.length > 0,
+    { message: "At least one relationship type is required", path: ["relationships"] }
+  ).refine(
+    () => form.email.trim() !== "" || form.phone.trim() !== "",
+    { message: "At least one contact method (email or phone) is required", path: ["contact_method"] }
+  );
 
   function updateField(field: string, value: string) {
     setForm((prev) => ({ ...prev, [field]: value }));
@@ -183,18 +195,23 @@ export function AddContactDialog({
   }
 
   function validate(): boolean {
-    const newErrors: Record<string, string> = {};
-    if (!form.first_name.trim()) newErrors.first_name = "Required";
-    if (!form.last_name.trim()) newErrors.last_name = "Required";
-    if (selectedRelationships.length === 0) {
-      newErrors.relationships = "At least one relationship type is required";
+    const result = contactSchema.safeParse({
+      first_name: form.first_name.trim(),
+      last_name: form.last_name.trim(),
+    });
+    if (!result.success) {
+      const fieldErrors: Record<string, string> = {};
+      for (const issue of result.error.issues) {
+        const key = issue.path[0]?.toString();
+        if (key && !fieldErrors[key]) {
+          fieldErrors[key] = issue.message;
+        }
+      }
+      setErrors(fieldErrors);
+      return false;
     }
-    if (!form.email.trim() && !form.phone.trim()) {
-      newErrors.contact_method =
-        "At least one contact method (email or phone) is required";
-    }
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
+    setErrors({});
+    return true;
   }
 
   async function handleSubmit(e: React.FormEvent) {

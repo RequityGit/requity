@@ -27,6 +27,7 @@ import {
 import { LOAN_PRIORITIES, LOAN_DB_TYPES, LOAN_PURPOSES } from "@/lib/constants";
 import { useToast } from "@/components/ui/use-toast";
 import { PlusCircle, Search, Check, X, UserPlus } from "lucide-react";
+import { z } from "zod";
 
 interface TeamMember {
   id: string;
@@ -49,6 +50,16 @@ interface CreateLoanDialogProps {
   /** Pre-select a borrower by ID */
   initialBorrowerId?: string;
 }
+
+const createLoanSchema = z.object({
+  borrower_id: z.string().min(1, "Borrower is required"),
+  type: z.string().min(1, "Loan type is required"),
+  purpose: z.string().min(1, "Loan purpose is required"),
+  loan_amount: z.string().refine(
+    (val) => { const n = parseFloat(val); return !isNaN(n) && n > 0; },
+    { message: "Loan amount must be a positive number" }
+  ),
+});
 
 const US_STATES = [
   "AL","AK","AZ","AR","CA","CO","CT","DE","FL","GA","HI","ID","IL","IN","IA",
@@ -201,9 +212,29 @@ export function CreateLoanDialog({
     setBorrowerDropdownOpen(false);
   }
 
+  const [formErrors, setFormErrors] = useState<Record<string, string>>({});
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!form.borrower_id || !form.loan_amount || !form.type || !form.purpose) return;
+
+    const validation = createLoanSchema.safeParse({
+      borrower_id: form.borrower_id,
+      type: form.type,
+      purpose: form.purpose,
+      loan_amount: form.loan_amount,
+    });
+    if (!validation.success) {
+      const fieldErrors: Record<string, string> = {};
+      for (const issue of validation.error.issues) {
+        const key = issue.path[0]?.toString();
+        if (key && !fieldErrors[key]) {
+          fieldErrors[key] = issue.message;
+        }
+      }
+      setFormErrors(fieldErrors);
+      return;
+    }
+    setFormErrors({});
 
     setLoading(true);
     try {
@@ -245,12 +276,15 @@ export function CreateLoanDialog({
       if (loanError) throw loanError;
 
       // 2. Log the loan creation in activity log
-      await supabase.from("loan_activity_log").insert({
+      const { error: logError } = await supabase.from("loan_activity_log").insert({
         loan_id: newLoan.id,
         performed_by: currentUserId,
         action: "loan_created",
         description: `Loan created for ${form.property_address || "new property"}`,
       });
+      if (logError) {
+        console.error("Failed to log loan creation activity:", logError);
+      }
 
       toast({ title: "Loan created successfully" });
       setOpen(false);
@@ -385,6 +419,9 @@ export function CreateLoanDialog({
                   document.body
                 )}
             </div>
+            {formErrors.borrower_id && (
+              <p className="text-xs text-red-500">{formErrors.borrower_id}</p>
+            )}
           </div>
 
           {/* Loan Type & Priority */}
@@ -408,6 +445,9 @@ export function CreateLoanDialog({
                   ))}
                 </SelectContent>
               </Select>
+              {formErrors.type && (
+                <p className="text-xs text-red-500">{formErrors.type}</p>
+              )}
             </div>
             <div className="space-y-2">
               <Label>Priority</Label>
@@ -513,6 +553,9 @@ export function CreateLoanDialog({
                     ))}
                   </SelectContent>
                 </Select>
+                {formErrors.purpose && (
+                  <p className="text-xs text-red-500">{formErrors.purpose}</p>
+                )}
               </div>
               <div className="space-y-2">
                 <Label>
@@ -527,6 +570,9 @@ export function CreateLoanDialog({
                   placeholder="500000"
                   required
                 />
+                {formErrors.loan_amount && (
+                  <p className="text-xs text-red-500">{formErrors.loan_amount}</p>
+                )}
               </div>
               <div className="space-y-2">
                 <Label>Purchase Price ($)</Label>
@@ -667,7 +713,7 @@ export function CreateLoanDialog({
             >
               Cancel
             </Button>
-            <Button type="submit" disabled={loading || !form.borrower_id || !form.loan_amount || !form.type || !form.purpose}>
+            <Button type="submit" disabled={loading}>
               {loading ? "Creating..." : "Create Loan"}
             </Button>
           </DialogFooter>

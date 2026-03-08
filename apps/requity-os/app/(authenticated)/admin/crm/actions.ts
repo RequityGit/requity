@@ -56,7 +56,7 @@ export async function deleteCrmCompanyAction(companyId: string) {
 
 export async function deleteContactFileAction(
   fileId: string,
-  storagePath: string
+  _storagePath: string
 ) {
   try {
     const auth = await requireAdmin();
@@ -64,10 +64,25 @@ export async function deleteContactFileAction(
 
     const admin = createAdminClient();
 
-    // Delete from storage
+    // Look up the actual storage path from the database instead of trusting client input
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data: fileRecord, error: lookupError } = await (admin as any)
+      .from("contact_files")
+      .select("storage_path")
+      .eq("id", fileId)
+      .single();
+
+    if (lookupError || !fileRecord) {
+      console.error("deleteContactFileAction lookup error:", lookupError);
+      return { error: "File not found" };
+    }
+
+    const verifiedPath = (fileRecord as { storage_path: string }).storage_path;
+
+    // Delete from storage using the verified path
     const { error: storageError } = await admin.storage
       .from("contact-files")
-      .remove([storagePath]);
+      .remove([verifiedPath]);
 
     if (storageError) {
       console.error("deleteContactFileAction storage error:", storageError);

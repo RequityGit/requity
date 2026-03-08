@@ -165,10 +165,14 @@ export function useUnderwritingScenarios({
       }
 
       // 3. Set active_version_id on scenario
-      await supabase
+      const { error: linkError } = await supabase
         .from("model_scenarios")
         .update({ active_version_id: versionId })
         .eq("id", scenario.id);
+
+      if (linkError) {
+        console.error("Failed to set active version on scenario:", linkError);
+      }
 
       return scenario;
     },

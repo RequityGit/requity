@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useMemo, useCallback, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
 import { cn } from "@/lib/utils";
@@ -74,6 +75,7 @@ export function ApprovalsCardView({
   const [statusFilter, setStatusFilter] = useState<string[]>(["pending"]);
   const [showNewModal, setShowNewModal] = useState(false);
   const { toast } = useToast();
+  const router = useRouter();
 
   // Realtime subscription
   useEffect(() => {
@@ -85,7 +87,7 @@ export function ApprovalsCardView({
         { event: "*", schema: "public", table: "approval_requests" },
         () => {
           // Refetch on any change since we need profile enrichment
-          window.location.reload();
+          router.refresh();
         }
       )
       .subscribe();
