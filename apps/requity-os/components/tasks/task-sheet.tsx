@@ -348,7 +348,7 @@ export function TaskSheet({
 
   return (
     <Dialog open={open} onOpenChange={() => onClose()}>
-      <DialogContent className="sm:max-w-[540px] p-0 flex flex-col max-h-[85vh] md:max-h-[85vh] overflow-hidden">
+      <DialogContent className="sm:max-w-[540px] p-0 md:p-0 gap-0 flex flex-col max-h-[85vh] md:max-h-[85vh] overflow-hidden">
         <DialogHeader className="px-6 pt-5 pb-3 border-b border-border shrink-0">
           <DialogTitle className="text-base font-bold tracking-tight">
             {isNew ? "New Task" : "Edit Task"}

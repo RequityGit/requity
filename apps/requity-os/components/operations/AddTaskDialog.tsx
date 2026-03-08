@@ -176,7 +176,7 @@ export function AddTaskDialog({ projects, teamMembers, externalOpen, onExternalO
           </Button>
         </DialogTrigger>
       )}
-      <DialogContent className="sm:max-w-[500px] p-0 flex flex-col max-h-[90vh] md:max-h-[85vh] overflow-hidden">
+      <DialogContent className="sm:max-w-[500px] p-0 md:p-0 gap-0 flex flex-col max-h-[90vh] md:max-h-[85vh] overflow-hidden">
         <DialogHeader className="px-4 md:px-6 pt-4 md:pt-6 shrink-0">
           <DialogTitle>New Task</DialogTitle>
         </DialogHeader>
