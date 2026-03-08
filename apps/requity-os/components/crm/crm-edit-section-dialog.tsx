@@ -38,6 +38,8 @@ export interface CrmSectionField {
   fieldType?: CrmFieldType;
   options?: { label: string; value: string }[];
   value: string | number | boolean | null | undefined;
+  /** Pass through to DatePicker for date fields (e.g. date of birth) */
+  showYearNavigation?: boolean;
 }
 
 interface CrmEditSectionDialogProps {
@@ -199,6 +201,7 @@ export function CrmEditSectionDialog({
                       value={values[f.fieldName] || ""}
                       onChange={(val) => handleChange(f.fieldName, val)}
                       placeholder={f.label}
+                      showYearNavigation={f.showYearNavigation}
                     />
                   </div>
                 </div>
