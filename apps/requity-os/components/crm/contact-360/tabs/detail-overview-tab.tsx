@@ -144,69 +144,102 @@ const FIELD_RENDERERS: Record<string, FieldRenderer> = {
   phone: (v) => formatPhoneNumber(v as string | null),
 };
 
+// --- Render a single field, returning null to skip ---
+function renderField(
+  f: FieldLayout,
+  dataObj: Record<string, unknown>,
+  isSuperAdmin: boolean,
+): ReactNode {
+  const propKey = FIELD_KEY_TO_PROP[f.field_key] ?? f.field_key;
+  const rawValue = dataObj[propKey];
+
+  // Check for custom renderer
+  const customRender = FIELD_RENDERERS[f.field_key];
+  if (customRender) {
+    const rendered = customRender(rawValue, isSuperAdmin);
+    if (rendered === null) return null; // skip field
+    return (
+      <FieldRow
+        key={f.field_key}
+        label={f.field_label}
+        value={rendered}
+        mono={f.field_type === "currency"}
+      />
+    );
+  }
+
+  // Standard rendering by field_type
+  let displayValue: ReactNode;
+  switch (f.field_type) {
+    case "currency":
+      displayValue = formatCurrency(rawValue as number | null);
+      break;
+    case "date":
+      displayValue = formatDate(rawValue as string | null);
+      break;
+    case "boolean":
+      displayValue = rawValue != null ? (rawValue ? "Yes" : "No") : undefined;
+      break;
+    case "dropdown":
+      displayValue = rawValue
+        ? String(rawValue).charAt(0).toUpperCase() + String(rawValue).slice(1).replace(/_/g, " ")
+        : undefined;
+      break;
+    default:
+      displayValue = rawValue != null ? String(rawValue) : undefined;
+  }
+
+  return (
+    <FieldRow
+      key={f.field_key}
+      label={f.field_label}
+      value={displayValue}
+      mono={f.field_type === "currency"}
+    />
+  );
+}
+
 // --- Dynamic field rendering helper ---
 function renderDynamicFields(
   fields: FieldLayout[],
   dataObj: Record<string, unknown>,
   isSuperAdmin: boolean,
 ): ReactNode {
-  const visible = fields
-    .filter((f) => f.is_visible)
+  const visible = fields.filter((f) => f.is_visible);
+
+  // Split into left/right columns and sort each by display_order
+  const leftFields = visible
+    .filter((f) => f.column_position === "left")
+    .sort((a, b) => a.display_order - b.display_order);
+  const rightFields = visible
+    .filter((f) => f.column_position === "right")
     .sort((a, b) => a.display_order - b.display_order);
 
-  return (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-x-10">
-      {visible.map((f) => {
-        const propKey = FIELD_KEY_TO_PROP[f.field_key] ?? f.field_key;
-        const rawValue = dataObj[propKey];
+  // If no column_position data, fall back to sequential auto-flow
+  if (leftFields.length === 0 && rightFields.length === 0) {
+    const sorted = visible.sort((a, b) => a.display_order - b.display_order);
+    return (
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-x-10">
+        {sorted.map((f) => renderField(f, dataObj, isSuperAdmin))}
+      </div>
+    );
+  }
 
-        // Check for custom renderer
-        const customRender = FIELD_RENDERERS[f.field_key];
-        if (customRender) {
-          const rendered = customRender(rawValue, isSuperAdmin);
-          if (rendered === null) return null; // skip field
-          return (
-            <FieldRow
-              key={f.field_key}
-              label={f.field_label}
-              value={rendered}
-              mono={f.field_type === "currency"}
-            />
-          );
-        }
+  // Pair left[i] with right[i] row by row
+  const rowCount = Math.max(leftFields.length, rightFields.length);
+  const rows: ReactNode[] = [];
+  for (let i = 0; i < rowCount; i++) {
+    const left = leftFields[i];
+    const right = rightFields[i];
+    rows.push(
+      <div key={`row-${i}`} className="grid grid-cols-1 md:grid-cols-2 gap-x-10">
+        {left ? renderField(left, dataObj, isSuperAdmin) : <div />}
+        {right ? renderField(right, dataObj, isSuperAdmin) : <div />}
+      </div>
+    );
+  }
 
-        // Standard rendering by field_type
-        let displayValue: ReactNode;
-        switch (f.field_type) {
-          case "currency":
-            displayValue = formatCurrency(rawValue as number | null);
-            break;
-          case "date":
-            displayValue = formatDate(rawValue as string | null);
-            break;
-          case "boolean":
-            displayValue = rawValue != null ? (rawValue ? "Yes" : "No") : undefined;
-            break;
-          case "dropdown":
-            displayValue = rawValue
-              ? String(rawValue).charAt(0).toUpperCase() + String(rawValue).slice(1).replace(/_/g, " ")
-              : undefined;
-            break;
-          default:
-            displayValue = rawValue != null ? String(rawValue) : undefined;
-        }
-
-        return (
-          <FieldRow
-            key={f.field_key}
-            label={f.field_label}
-            value={displayValue}
-            mono={f.field_type === "currency"}
-          />
-        );
-      })}
-    </div>
-  );
+  return <div>{rows}</div>;
 }
 
 // --- Build edit dialog fields from layout data ---
