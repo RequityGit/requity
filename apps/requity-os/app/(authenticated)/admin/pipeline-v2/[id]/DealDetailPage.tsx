@@ -45,7 +45,9 @@ import {
   CalendarDays,
   Plus,
   Loader2,
+  FileText,
 } from "lucide-react";
+import { GenerateDocumentDialog } from "@/components/documents/GenerateDocumentDialog";
 import { StageStepper } from "@/components/pipeline-v2/StageStepper";
 import { EditableOverview } from "@/components/pipeline-v2/EditableOverview";
 import { UnderwritingPanel } from "@/components/pipeline-v2/UnderwritingPanel";
@@ -684,6 +686,22 @@ function DealSidebar({
             icon={Mail}
             label="Send Email"
             onClick={() => setSendEmailOpen(true)}
+          />
+          <GenerateDocumentDialog
+            recordType="loan"
+            recordId={deal.id}
+            recordLabel={deal.name}
+            trigger={
+              <button
+                className={cn(
+                  "flex w-full items-center gap-2.5 rounded-lg border-none px-2.5 py-2 text-left text-[13px] font-medium cursor-pointer transition-colors duration-150 bg-transparent",
+                  "text-muted-foreground hover:bg-muted hover:text-foreground"
+                )}
+              >
+                <FileText className="h-4 w-4" />
+                Generate Document
+              </button>
+            }
           />
           <SubmitForApprovalDialog
             entityType={approvalEntityType}

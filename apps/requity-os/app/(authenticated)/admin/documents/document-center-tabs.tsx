@@ -23,12 +23,14 @@ interface Props {
   uploadedDocuments: UploadedDocRow[];
   generatedDocuments: GeneratedDocRow[];
   uploadAction: React.ReactNode;
+  createAction?: React.ReactNode;
 }
 
 export function DocumentCenterTabs({
   uploadedDocuments,
   generatedDocuments,
   uploadAction,
+  createAction,
 }: Props) {
   return (
     <Tabs defaultValue="uploaded" className="space-y-4">
@@ -56,7 +58,7 @@ export function DocumentCenterTabs({
       </TabsContent>
 
       <TabsContent value="generated">
-        <GeneratedDocumentsTable data={generatedDocuments} />
+        <GeneratedDocumentsTable data={generatedDocuments} action={createAction} />
       </TabsContent>
     </Tabs>
   );

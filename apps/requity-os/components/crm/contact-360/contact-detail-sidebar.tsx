@@ -27,7 +27,9 @@ import {
   Plus,
   Copy,
   Check,
+  FileText,
 } from "lucide-react";
+import { GenerateDocumentDialog } from "@/components/documents/GenerateDocumentDialog";
 import { cn } from "@/lib/utils";
 import { MonoValue, relTime } from "./contact-detail-shared";
 import { formatDate } from "@/lib/format";
@@ -141,6 +143,25 @@ export function ContactDetailSidebar({
                 {label}
               </Button>
             ))}
+            <GenerateDocumentDialog
+              recordType="contact"
+              recordId={contact.id}
+              recordLabel={[contact.first_name, contact.last_name].filter(Boolean).join(" ")}
+              trigger={
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="justify-start gap-3 h-9 px-2.5 text-[13px] font-normal text-foreground hover:bg-muted rounded-lg w-full"
+                >
+                  <FileText
+                    size={14}
+                    className="text-muted-foreground"
+                    strokeWidth={1.5}
+                  />
+                  Generate Document
+                </Button>
+              }
+            />
           </div>
         </CardContent>
       </Card>

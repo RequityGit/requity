@@ -185,3 +185,95 @@ export async function resolveTemplateData(
 
   return { fields: resolved };
 }
+
+export type RecordOption = { id: string; label: string };
+
+export async function searchRecords(
+  recordType: "loan" | "contact" | "deal" | "company",
+  query: string
+): Promise<{ records: RecordOption[] }> {
+  const supabase = await createClient();
+  const q = query.trim();
+
+  if (recordType === "loan") {
+    const { data } = await supabase
+      .from("loans")
+      .select("id, property_address")
+      .or(
+        q
+          ? `property_address.ilike.%${q}%`
+          : "id.neq.00000000-0000-0000-0000-000000000000"
+      )
+      .order("created_at", { ascending: false })
+      .limit(20);
+
+    return {
+      records: (data ?? []).map((r) => ({
+        id: r.id,
+        label: r.property_address || r.id,
+      })),
+    };
+  }
+
+  if (recordType === "contact") {
+    const { data } = await supabase
+      .from("crm_contacts")
+      .select("id, first_name, last_name, email")
+      .or(
+        q
+          ? `first_name.ilike.%${q}%,last_name.ilike.%${q}%,email.ilike.%${q}%`
+          : "id.neq.00000000-0000-0000-0000-000000000000"
+      )
+      .order("created_at", { ascending: false })
+      .limit(20);
+
+    return {
+      records: (data ?? []).map((r) => ({
+        id: r.id,
+        label: [r.first_name, r.last_name].filter(Boolean).join(" ") || r.email || r.id,
+      })),
+    };
+  }
+
+  if (recordType === "company") {
+    const { data } = await supabase
+      .from("companies")
+      .select("id, name")
+      .or(
+        q
+          ? `name.ilike.%${q}%`
+          : "id.neq.00000000-0000-0000-0000-000000000000"
+      )
+      .order("name")
+      .limit(20);
+
+    return {
+      records: (data ?? []).map((r) => ({
+        id: r.id,
+        label: r.name || r.id,
+      })),
+    };
+  }
+
+  if (recordType === "deal") {
+    const { data } = await supabase
+      .from("equity_deals")
+      .select("id, deal_name")
+      .or(
+        q
+          ? `deal_name.ilike.%${q}%`
+          : "id.neq.00000000-0000-0000-0000-000000000000"
+      )
+      .order("created_at", { ascending: false })
+      .limit(20);
+
+    return {
+      records: (data ?? []).map((r) => ({
+        id: r.id,
+        label: r.deal_name || r.id,
+      })),
+    };
+  }
+
+  return { records: [] };
+}

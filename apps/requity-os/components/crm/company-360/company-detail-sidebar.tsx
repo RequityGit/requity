@@ -20,7 +20,9 @@ import {
   Check,
   X,
   AlertCircle,
+  FileText,
 } from "lucide-react";
+import { GenerateDocumentDialog } from "@/components/documents/GenerateDocumentDialog";
 import {
   SectionCard,
   FieldRow,
@@ -142,6 +144,19 @@ export function CompanyDetailSidebar({
               {label}
             </button>
           ))}
+          <GenerateDocumentDialog
+            recordType="company"
+            recordId={company.id}
+            recordLabel={company.name}
+            trigger={
+              <button
+                className="flex items-center gap-2.5 px-3 py-2 rounded-lg border border-border/60 bg-muted/50 cursor-pointer text-[13px] text-foreground font-normal transition-all duration-150 hover:bg-muted"
+              >
+                <FileText size={14} className="text-muted-foreground" strokeWidth={1.5} />
+                Generate Document
+              </button>
+            }
+          />
         </div>
       </SectionCard>
 

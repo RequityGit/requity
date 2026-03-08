@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { PageHeader } from "@/components/shared/page-header";
 import { DocumentUploadForm } from "@/components/admin/document-upload-form";
 import { DocumentListTable } from "@/components/admin/document-list-table";
+import { CreateDocumentDialog } from "@/components/documents/CreateDocumentDialog";
 import { DocumentCenterTabs } from "./document-center-tabs";
 
 export default async function AdminDocumentsPage() {
@@ -105,6 +106,7 @@ export default async function AdminDocumentsPage() {
             loans={loansResult.data ?? []}
           />
         }
+        createAction={<CreateDocumentDialog />}
       />
     </div>
   );
