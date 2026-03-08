@@ -258,10 +258,10 @@ export function DetailOverviewTab({
             { label: "Separated", value: "separated" },
           ],
         },
-        { label: "Stated Liquidity", fieldName: "stated_liquidity", fieldType: "currency", value: borrower.stated_liquidity },
         { label: "Verified Liquidity", fieldName: "verified_liquidity", fieldType: "currency", value: borrower.verified_liquidity },
-        { label: "Stated Net Worth", fieldName: "stated_net_worth", fieldType: "currency", value: borrower.stated_net_worth },
+        { label: "Stated Liquidity", fieldName: "stated_liquidity", fieldType: "currency", value: borrower.stated_liquidity },
         { label: "Verified Net Worth", fieldName: "verified_net_worth", fieldType: "currency", value: borrower.verified_net_worth },
+        { label: "Stated Net Worth", fieldName: "stated_net_worth", fieldType: "currency", value: borrower.stated_net_worth },
       ]
     : [];
 
@@ -394,10 +394,10 @@ export function DetailOverviewTab({
               <div />
             </>
           )}
-          <FieldRow label="Stated Liquidity" value={formatCurrency(borrower.stated_liquidity)} mono />
           <FieldRow label="Verified Liquidity" value={formatCurrency(borrower.verified_liquidity)} mono />
-          <FieldRow label="Stated Net Worth" value={formatCurrency(borrower.stated_net_worth)} mono />
+          <FieldRow label="Stated Liquidity" value={formatCurrency(borrower.stated_liquidity)} mono />
           <FieldRow label="Verified Net Worth" value={formatCurrency(borrower.verified_net_worth)} mono />
+          <FieldRow label="Stated Net Worth" value={formatCurrency(borrower.stated_net_worth)} mono />
         </div>
       </SectionCard>
     ) : null,
