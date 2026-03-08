@@ -169,6 +169,11 @@ export function CardTypeManagerView({
       uw_outputs: edits.uw_outputs,
       detail_field_groups: edits.detail_field_groups,
       detail_tabs: edits.detail_tabs,
+      property_fields: edits.property_fields,
+      property_field_groups: edits.property_field_groups,
+      contact_fields: edits.contact_fields,
+      contact_field_groups: edits.contact_field_groups,
+      contact_roles: edits.contact_roles,
       applicable_asset_classes: edits.applicable_asset_classes,
       status: edits.status,
       uw_model_key: edits.uw_model_key,
@@ -398,9 +403,11 @@ export function CardTypeManagerView({
             <Tabs defaultValue="metrics">
               <TabsList>
                 <TabsTrigger value="metrics">Card Metrics</TabsTrigger>
+                <TabsTrigger value="overview">Overview Tab</TabsTrigger>
+                <TabsTrigger value="property">Property Tab</TabsTrigger>
+                <TabsTrigger value="contacts">Contacts Tab</TabsTrigger>
                 <TabsTrigger value="uw-fields">UW Fields</TabsTrigger>
                 <TabsTrigger value="outputs">Computed Outputs</TabsTrigger>
-                <TabsTrigger value="detail">Detail Layout</TabsTrigger>
                 <TabsTrigger value="settings">Settings</TabsTrigger>
               </TabsList>
 
@@ -427,7 +434,7 @@ export function CardTypeManagerView({
                 />
               </TabsContent>
 
-              <TabsContent value="detail" className="mt-4">
+              <TabsContent value="overview" className="mt-4">
                 <DetailGroupsEditor
                   groups={edits.detail_field_groups}
                   uwFields={edits.uw_fields}
@@ -435,6 +442,42 @@ export function CardTypeManagerView({
                     setEdits({ ...edits, detail_field_groups: g })
                   }
                 />
+              </TabsContent>
+
+              <TabsContent value="property" className="mt-4">
+                <FieldsAndGroupsEditor
+                  description="Define property-related fields for this card type. These appear in the Property tab on deal details."
+                  fields={edits.property_fields}
+                  fieldGroups={edits.property_field_groups}
+                  onFieldsChange={(f) =>
+                    setEdits({ ...edits, property_fields: f })
+                  }
+                  onGroupsChange={(g) =>
+                    setEdits({ ...edits, property_field_groups: g })
+                  }
+                />
+              </TabsContent>
+
+              <TabsContent value="contacts" className="mt-4">
+                <div className="space-y-6">
+                  <ContactRolesEditor
+                    roles={edits.contact_roles}
+                    onChange={(r) =>
+                      setEdits({ ...edits, contact_roles: r })
+                    }
+                  />
+                  <FieldsAndGroupsEditor
+                    description="Define contact-related financial fields (e.g., borrower net worth, liquidity). These appear in the Contacts tab alongside linked contacts."
+                    fields={edits.contact_fields}
+                    fieldGroups={edits.contact_field_groups}
+                    onFieldsChange={(f) =>
+                      setEdits({ ...edits, contact_fields: f })
+                    }
+                    onGroupsChange={(g) =>
+                      setEdits({ ...edits, contact_field_groups: g })
+                    }
+                  />
+                </div>
               </TabsContent>
 
               <TabsContent value="settings" className="mt-4">
@@ -1412,6 +1455,360 @@ function SettingsEditor({
           <Trash2 className="h-3.5 w-3.5 mr-1.5" />
           Delete Card Type
         </Button>
+      </div>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Fields & Groups Editor (reusable for Property Tab and Contacts Tab)
+// ---------------------------------------------------------------------------
+
+function FieldsAndGroupsEditor({
+  description,
+  fields,
+  fieldGroups,
+  onFieldsChange,
+  onGroupsChange,
+}: {
+  description: string;
+  fields: UwFieldDef[];
+  fieldGroups: FieldGroupDef[];
+  onFieldsChange: (fields: UwFieldDef[]) => void;
+  onGroupsChange: (groups: FieldGroupDef[]) => void;
+}) {
+  const [search, setSearch] = useState("");
+  const [expandedGroup, setExpandedGroup] = useState<number | null>(null);
+
+  const filtered = search
+    ? fields.filter(
+        (f) =>
+          f.key.includes(search.toLowerCase()) ||
+          f.label.toLowerCase().includes(search.toLowerCase())
+      )
+    : fields;
+
+  const addField = () => {
+    onFieldsChange([...fields, { key: "", label: "", type: "text" }]);
+  };
+
+  const updateField = (idx: number, updates: Partial<UwFieldDef>) => {
+    const next = fields.map((f, i) => (i === idx ? { ...f, ...updates } : f));
+    onFieldsChange(next);
+  };
+
+  const removeField = (idx: number) => {
+    onFieldsChange(fields.filter((_, i) => i !== idx));
+  };
+
+  const moveField = (idx: number, dir: -1 | 1) => {
+    const next = [...fields];
+    const target = idx + dir;
+    if (target < 0 || target >= next.length) return;
+    [next[idx], next[target]] = [next[target], next[idx]];
+    onFieldsChange(next);
+  };
+
+  const addGroup = () => {
+    onGroupsChange([...fieldGroups, { label: "", fields: [] }]);
+  };
+
+  const updateGroup = (idx: number, updates: Partial<FieldGroupDef>) => {
+    const next = fieldGroups.map((g, i) =>
+      i === idx ? { ...g, ...updates } : g
+    );
+    onGroupsChange(next);
+  };
+
+  const removeGroup = (idx: number) => {
+    onGroupsChange(fieldGroups.filter((_, i) => i !== idx));
+  };
+
+  const moveGroup = (idx: number, dir: -1 | 1) => {
+    const next = [...fieldGroups];
+    const target = idx + dir;
+    if (target < 0 || target >= next.length) return;
+    [next[idx], next[target]] = [next[target], next[idx]];
+    onGroupsChange(next);
+  };
+
+  const toggleField = (groupIdx: number, fieldKey: string) => {
+    const group = fieldGroups[groupIdx];
+    const hasField = group.fields.includes(fieldKey);
+    const updatedFields = hasField
+      ? group.fields.filter((f) => f !== fieldKey)
+      : [...group.fields, fieldKey];
+    updateGroup(groupIdx, { fields: updatedFields });
+  };
+
+  return (
+    <div className="space-y-6">
+      <p className="text-sm text-muted-foreground">{description}</p>
+
+      {/* Fields Section */}
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
+          <h4 className="text-sm font-medium">Fields</h4>
+          <span className="text-xs text-muted-foreground">
+            {fields.length} fields
+          </span>
+        </div>
+
+        <div className="relative">
+          <Search className="absolute left-2.5 top-2.5 h-3.5 w-3.5 text-muted-foreground" />
+          <Input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search fields..."
+            className="pl-8 text-sm"
+          />
+        </div>
+
+        <ScrollArea className={fields.length > 6 ? "h-[300px]" : ""}>
+          <div className="space-y-1.5">
+            {filtered.map((f, idx) => {
+              const realIdx = fields.indexOf(f);
+              return (
+                <div
+                  key={realIdx}
+                  className="flex items-center gap-2 rounded-lg border p-2.5"
+                >
+                  <div className="flex flex-col gap-0.5">
+                    <button
+                      onClick={() => moveField(realIdx, -1)}
+                      disabled={realIdx === 0}
+                      className="p-0.5 hover:bg-accent rounded disabled:opacity-30"
+                    >
+                      <ArrowUp className="h-3 w-3" />
+                    </button>
+                    <button
+                      onClick={() => moveField(realIdx, 1)}
+                      disabled={realIdx === fields.length - 1}
+                      className="p-0.5 hover:bg-accent rounded disabled:opacity-30"
+                    >
+                      <ArrowDown className="h-3 w-3" />
+                    </button>
+                  </div>
+
+                  <div className="flex-1 grid grid-cols-4 gap-2">
+                    <Input
+                      value={f.key}
+                      onChange={(e) =>
+                        updateField(realIdx, { key: e.target.value })
+                      }
+                      placeholder="key"
+                      className="text-xs font-mono"
+                    />
+                    <Input
+                      value={f.label}
+                      onChange={(e) =>
+                        updateField(realIdx, { label: e.target.value })
+                      }
+                      placeholder="Label"
+                      className="text-xs"
+                    />
+                    <Select
+                      value={f.type}
+                      onValueChange={(v) =>
+                        updateField(realIdx, {
+                          type: v as UwFieldDef["type"],
+                        })
+                      }
+                    >
+                      <SelectTrigger className="text-xs">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {FIELD_TYPES.map((t) => (
+                          <SelectItem key={t} value={t}>
+                            {t}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <div className="flex items-center gap-2">
+                      <Switch
+                        checked={f.required ?? false}
+                        onCheckedChange={(v) =>
+                          updateField(realIdx, { required: v })
+                        }
+                      />
+                      <span className="text-[10px] text-muted-foreground">
+                        Req
+                      </span>
+                    </div>
+                  </div>
+
+                  <button
+                    onClick={() => removeField(realIdx)}
+                    className="p-1 rounded hover:bg-destructive/10"
+                  >
+                    <X className="h-3.5 w-3.5 text-destructive" />
+                  </button>
+                </div>
+              );
+            })}
+          </div>
+        </ScrollArea>
+
+        <Button variant="outline" size="sm" onClick={addField}>
+          <Plus className="h-3.5 w-3.5 mr-1.5" />
+          Add Field
+        </Button>
+      </div>
+
+      {/* Groups Section */}
+      <div className="space-y-4 border-t pt-4">
+        <h4 className="text-sm font-medium">Field Groups</h4>
+        <p className="text-sm text-muted-foreground">
+          Organize fields into labeled sections for display.
+        </p>
+
+        <div className="space-y-2">
+          {fieldGroups.map((g, idx) => (
+            <div key={idx} className="rounded-lg border">
+              <div className="flex items-center gap-2 p-3">
+                <div className="flex flex-col gap-0.5">
+                  <button
+                    onClick={() => moveGroup(idx, -1)}
+                    disabled={idx === 0}
+                    className="p-0.5 hover:bg-accent rounded disabled:opacity-30"
+                  >
+                    <ArrowUp className="h-3 w-3" />
+                  </button>
+                  <button
+                    onClick={() => moveGroup(idx, 1)}
+                    disabled={idx === fieldGroups.length - 1}
+                    className="p-0.5 hover:bg-accent rounded disabled:opacity-30"
+                  >
+                    <ArrowDown className="h-3 w-3" />
+                  </button>
+                </div>
+
+                <Input
+                  value={g.label}
+                  onChange={(e) => updateGroup(idx, { label: e.target.value })}
+                  placeholder="Group label"
+                  className="text-sm flex-1"
+                />
+
+                <span className="text-xs text-muted-foreground whitespace-nowrap">
+                  {g.fields.length} fields
+                </span>
+
+                <button
+                  onClick={() =>
+                    setExpandedGroup(expandedGroup === idx ? null : idx)
+                  }
+                  className="p-1 rounded hover:bg-accent"
+                >
+                  {expandedGroup === idx ? (
+                    <ChevronUp className="h-3.5 w-3.5" />
+                  ) : (
+                    <ChevronDown className="h-3.5 w-3.5" />
+                  )}
+                </button>
+
+                <button
+                  onClick={() => removeGroup(idx)}
+                  className="p-1 rounded hover:bg-destructive/10"
+                >
+                  <X className="h-3.5 w-3.5 text-destructive" />
+                </button>
+              </div>
+
+              {expandedGroup === idx && (
+                <div className="border-t px-3 py-2">
+                  <div className="grid grid-cols-3 gap-1">
+                    {fields.map((f) => {
+                      const selected = g.fields.includes(f.key);
+                      return (
+                        <button
+                          key={f.key}
+                          onClick={() => toggleField(idx, f.key)}
+                          className={cn(
+                            "text-left text-xs px-2 py-1 rounded transition-colors",
+                            selected
+                              ? "bg-primary/10 text-primary font-medium"
+                              : "text-muted-foreground hover:bg-accent"
+                          )}
+                        >
+                          {f.label || f.key}
+                        </button>
+                      );
+                    })}
+                  </div>
+                  {fields.length === 0 && (
+                    <p className="text-xs text-muted-foreground py-2">
+                      Add fields above first, then assign them to groups.
+                    </p>
+                  )}
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+
+        <Button variant="outline" size="sm" onClick={addGroup}>
+          <Plus className="h-3.5 w-3.5 mr-1.5" />
+          Add Group
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Contact Roles Editor
+// ---------------------------------------------------------------------------
+
+const CONTACT_ROLE_OPTIONS = [
+  { value: "borrower", label: "Borrower" },
+  { value: "guarantor", label: "Guarantor" },
+  { value: "sponsor", label: "Sponsor" },
+  { value: "attorney", label: "Attorney" },
+  { value: "broker", label: "Broker" },
+  { value: "property_manager", label: "Property Manager" },
+];
+
+function ContactRolesEditor({
+  roles,
+  onChange,
+}: {
+  roles: string[];
+  onChange: (roles: string[]) => void;
+}) {
+  return (
+    <div className="space-y-3">
+      <div>
+        <h4 className="text-sm font-medium">Contact Roles</h4>
+        <p className="text-sm text-muted-foreground mt-1">
+          Select which contact roles are relevant for this card type.
+        </p>
+      </div>
+      <div className="flex flex-wrap gap-1.5">
+        {CONTACT_ROLE_OPTIONS.map((role) => {
+          const selected = roles.includes(role.value);
+          return (
+            <button
+              key={role.value}
+              onClick={() => {
+                const next = selected
+                  ? roles.filter((r) => r !== role.value)
+                  : [...roles, role.value];
+                onChange(next.length > 0 ? next : roles);
+              }}
+              className={cn(
+                "text-xs px-2 py-1 rounded-full border transition-colors",
+                selected
+                  ? "bg-primary/10 border-primary text-primary"
+                  : "border-border text-muted-foreground hover:border-foreground/20"
+              )}
+            >
+              {role.label}
+            </button>
+          );
+        })}
       </div>
     </div>
   );

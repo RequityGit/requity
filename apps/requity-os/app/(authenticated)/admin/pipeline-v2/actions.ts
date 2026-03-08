@@ -229,6 +229,62 @@ export async function updateUwDataAction(
   }
 }
 
+// ─── Update Property Data ───
+
+export async function updatePropertyDataAction(
+  dealId: string,
+  key: string,
+  value: unknown
+) {
+  try {
+    const auth = await requireAdmin();
+    if ("error" in auth) return { error: auth.error };
+
+    const admin = createAdminClient();
+
+    // Get current property_data
+    const { data: deal, error: fetchErr } = await admin
+      .from("unified_deals")
+      .select("property_data")
+      .eq("id", dealId)
+      .single();
+
+    if (fetchErr || !deal) return { error: "Deal not found" };
+
+    const currentData = (deal.property_data as Record<string, unknown>) || {};
+    const updatedData = { ...currentData, [key]: value };
+
+    const { error } = await admin
+      .from("unified_deals")
+      .update({ property_data: updatedData as Json })
+      .eq("id", dealId);
+
+    if (error) {
+      console.error("updatePropertyDataAction error:", error);
+      return { error: error.message };
+    }
+
+    // Log field update activity
+    const { error: activityErr } = await admin.from("unified_deal_activity").insert({
+      deal_id: dealId,
+      activity_type: "field_updated",
+      title: `Updated property ${key}`,
+      metadata: { field: key, value, section: "property" } as unknown as Json,
+      created_by: auth.user.id,
+    });
+
+    if (activityErr) {
+      console.error("Failed to log activity:", activityErr);
+    }
+
+    revalidatePipeline(dealId);
+    return { success: true };
+  } catch (err: unknown) {
+    console.error("updatePropertyDataAction error:", err);
+    return { error: err instanceof Error ? err.message : "Failed to update property data" };
+  }
+}
+
 // ─── Add Activity Note ───
 
 export async function addDealNoteAction(dealId: string, content: string) {

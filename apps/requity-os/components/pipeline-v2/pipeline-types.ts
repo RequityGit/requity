@@ -62,6 +62,11 @@ export interface UnifiedCardType {
   card_icon: string;
   detail_tabs: string[];
   detail_field_groups: FieldGroupDef[];
+  property_fields: UwFieldDef[];
+  property_field_groups: FieldGroupDef[];
+  contact_fields: UwFieldDef[];
+  contact_field_groups: FieldGroupDef[];
+  contact_roles: string[];
   applicable_asset_classes: string[] | null;
   status: CardTypeStatus;
   sort_order: number;

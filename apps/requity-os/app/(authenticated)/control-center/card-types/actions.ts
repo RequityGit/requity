@@ -123,6 +123,11 @@ export async function createCardType(input: {
       card_icon: template?.card_icon ?? "building-2",
       detail_tabs: template?.detail_tabs ?? ["overview", "financials", "documents", "conditions"],
       detail_field_groups: template?.detail_field_groups ?? [],
+      property_fields: template?.property_fields ?? [],
+      property_field_groups: template?.property_field_groups ?? [],
+      contact_fields: template?.contact_fields ?? [],
+      contact_field_groups: template?.contact_field_groups ?? [],
+      contact_roles: template?.contact_roles ?? ["borrower"],
       applicable_asset_classes: template?.applicable_asset_classes ?? null,
       status: "draft" as CardTypeStatus,
       sort_order: nextOrder,
@@ -198,6 +203,11 @@ export async function duplicateCardType(
       card_icon: src.card_icon,
       detail_tabs: src.detail_tabs,
       detail_field_groups: src.detail_field_groups,
+      property_fields: src.property_fields,
+      property_field_groups: src.property_field_groups,
+      contact_fields: src.contact_fields,
+      contact_field_groups: src.contact_field_groups,
+      contact_roles: src.contact_roles,
       applicable_asset_classes: src.applicable_asset_classes,
       status: "draft" as CardTypeStatus,
       sort_order: nextOrder,
@@ -244,6 +254,11 @@ export async function saveCardType(
       | "uw_outputs"
       | "detail_field_groups"
       | "detail_tabs"
+      | "property_fields"
+      | "property_field_groups"
+      | "contact_fields"
+      | "contact_field_groups"
+      | "contact_roles"
       | "applicable_asset_classes"
       | "status"
       | "uw_model_key"

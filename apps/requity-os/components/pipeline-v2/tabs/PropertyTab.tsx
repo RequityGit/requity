@@ -1,45 +1,22 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { updateUwDataAction } from "@/app/(authenticated)/admin/pipeline-v2/actions";
+import { updatePropertyDataAction } from "@/app/(authenticated)/admin/pipeline-v2/actions";
 import type { UnifiedCardType, UwFieldDef } from "../pipeline-types";
 import { UwField } from "../UwField";
 import { toast } from "sonner";
 
-// Property-related field keys, grouped by section
-const PROPERTY_DETAIL_KEYS = [
-  "property_type",
-  "property_address",
-  "property_city",
-  "property_state",
-  "property_zip",
-  "property_county",
-  "parcel_id",
-];
-
-const BUILDING_INFO_KEYS = [
-  "number_of_units",
-  "total_sf",
-  "year_built",
-  "is_short_term_rental",
-];
-
-const FLOOD_ENV_KEYS = [
-  "is_in_flood_zone",
-  "flood_zone_type",
-];
-
 interface PropertyTabProps {
   dealId: string;
-  uwData: Record<string, unknown>;
+  propertyData: Record<string, unknown>;
   cardType: UnifiedCardType;
 }
 
-export function PropertyTab({ dealId, uwData, cardType }: PropertyTabProps) {
-  const [localData, setLocalData] = useState<Record<string, unknown>>(uwData);
+export function PropertyTab({ dealId, propertyData, cardType }: PropertyTabProps) {
+  const [localData, setLocalData] = useState<Record<string, unknown>>(propertyData);
   const [pending, startTransition] = useTransition();
 
-  const uwFieldMap = new Map(cardType.uw_fields.map((f) => [f.key, f]));
+  const fieldMap = new Map(cardType.property_fields.map((f) => [f.key, f]));
 
   function handleFieldChange(key: string, value: unknown) {
     setLocalData((prev) => ({ ...prev, [key]: value }));
@@ -47,11 +24,11 @@ export function PropertyTab({ dealId, uwData, cardType }: PropertyTabProps) {
 
   function handleFieldBlur(key: string) {
     const currentVal = localData[key];
-    const prevVal = uwData[key];
+    const prevVal = propertyData[key];
     if (currentVal === prevVal) return;
 
     startTransition(async () => {
-      const result = await updateUwDataAction(dealId, key, currentVal);
+      const result = await updatePropertyDataAction(dealId, key, currentVal);
       if (result.error) {
         toast.error(`Failed to save ${key}: ${result.error}`);
         setLocalData((prev) => ({ ...prev, [key]: prevVal }));
@@ -61,7 +38,7 @@ export function PropertyTab({ dealId, uwData, cardType }: PropertyTabProps) {
 
   function renderSection(title: string, fieldKeys: string[]) {
     const fields = fieldKeys
-      .map((key) => uwFieldMap.get(key))
+      .map((key) => fieldMap.get(key))
       .filter((f): f is UwFieldDef => f != null);
 
     if (fields.length === 0) return null;
@@ -87,11 +64,33 @@ export function PropertyTab({ dealId, uwData, cardType }: PropertyTabProps) {
     );
   }
 
+  // If no field groups configured, show all fields in a single section
+  if (cardType.property_field_groups.length === 0) {
+    if (cardType.property_fields.length === 0) {
+      return (
+        <div className="rounded-xl border border-dashed p-8 text-center">
+          <p className="text-sm text-muted-foreground">
+            No property fields configured for this card type.
+          </p>
+        </div>
+      );
+    }
+
+    return (
+      <div className="space-y-6">
+        {renderSection(
+          "Property Details",
+          cardType.property_fields.map((f) => f.key)
+        )}
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
-      {renderSection("Property Details", PROPERTY_DETAIL_KEYS)}
-      {renderSection("Building Info", BUILDING_INFO_KEYS)}
-      {renderSection("Flood & Environmental", FLOOD_ENV_KEYS)}
+      {cardType.property_field_groups.map((group) =>
+        renderSection(group.label, group.fields)
+      )}
     </div>
   );
 }

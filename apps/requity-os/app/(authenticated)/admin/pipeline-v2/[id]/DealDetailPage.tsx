@@ -378,7 +378,7 @@ function TabContent({
       return (
         <PropertyTab
           dealId={deal.id}
-          uwData={deal.uw_data}
+          propertyData={(deal.property_data as Record<string, unknown>) ?? {}}
           cardType={cardType}
         />
       );
@@ -417,7 +417,14 @@ function TabContent({
         />
       );
     case "Contacts":
-      return <ContactsTab deal={deal} />;
+      return (
+        <ContactsTab
+          deal={deal}
+          dealId={deal.id}
+          uwData={(deal.uw_data as Record<string, unknown>) ?? {}}
+          cardType={cardType}
+        />
+      );
     case "Conditions":
       return (
         <ConditionsTab conditions={conditions} dealId={deal.id} />
