@@ -42,6 +42,20 @@ import {
   ChevronDown,
   ChevronRight,
   RotateCcw,
+  Calculator,
+  Landmark,
+  DollarSign,
+  Layers,
+  MapPin,
+  Wallet,
+  Banknote,
+  PiggyBank,
+  ArrowUpDown,
+  Hammer,
+  Receipt,
+  CreditCard,
+  Activity,
+  BarChart3,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -98,19 +112,40 @@ interface FieldEntry {
   is_admin_created: boolean;
   dropdown_options: string[] | null;
   is_archived: boolean;
+  formula_expression: string | null;
+  formula_source_fields: string[] | null;
 }
 
 const MODULES = [
-  { key: "loan_details", label: "Loan Details", icon: FileText },
-  { key: "property", label: "Property", icon: Building2 },
-  { key: "borrower_entity", label: "Borrower / Entity", icon: Shield },
-  { key: "equity_deal", label: "Equity Deal Details", icon: TrendingUp },
-  { key: "equity_property", label: "Equity Property", icon: Building2 },
-  { key: "equity_notes", label: "Equity Notes & Strategy", icon: FileText },
-  { key: "company_info", label: "Company Information", icon: Briefcase },
-  { key: "borrower_profile", label: "Borrower Profile", icon: UserCircle },
-  { key: "investor_profile", label: "Investor Profile", icon: TrendingUp },
-  { key: "contact_profile", label: "Contact Profile", icon: Contact },
+  // Original modules
+  { key: "loan_details", label: "Loan Details", icon: FileText, tier: 0 },
+  { key: "property", label: "Property", icon: Building2, tier: 0 },
+  { key: "borrower_entity", label: "Borrower / Entity", icon: Shield, tier: 0 },
+  { key: "equity_deal", label: "Equity Deal Details", icon: TrendingUp, tier: 0 },
+  { key: "equity_property", label: "Equity Property", icon: Building2, tier: 0 },
+  { key: "equity_notes", label: "Equity Notes & Strategy", icon: FileText, tier: 0 },
+  { key: "company_info", label: "Company Information", icon: Briefcase, tier: 0 },
+  { key: "borrower_profile", label: "Borrower Profile", icon: UserCircle, tier: 0 },
+  { key: "investor_profile", label: "Investor Profile", icon: TrendingUp, tier: 0 },
+  { key: "contact_profile", label: "Contact Profile", icon: Contact, tier: 0 },
+  // Tier 1: High Priority
+  { key: "loans_extended", label: "Loans (Extended)", icon: Layers, tier: 1 },
+  { key: "servicing_loan", label: "Servicing Loan", icon: Landmark, tier: 1 },
+  { key: "fund_details", label: "Fund Details", icon: PiggyBank, tier: 1 },
+  { key: "opportunity", label: "Opportunity", icon: DollarSign, tier: 1 },
+  { key: "standalone_property", label: "Standalone Property", icon: MapPin, tier: 1 },
+  // Tier 2: Medium Priority
+  { key: "borrower_entity_detail", label: "Borrower Entity", icon: Shield, tier: 2 },
+  { key: "investing_entity", label: "Investing Entity", icon: Wallet, tier: 2 },
+  { key: "investor_commitment", label: "Investor Commitment", icon: Banknote, tier: 2 },
+  { key: "capital_call", label: "Capital Call", icon: ArrowUpDown, tier: 2 },
+  { key: "distribution", label: "Distribution", icon: ArrowUpDown, tier: 2 },
+  // Tier 3: Lower Priority
+  { key: "draw_request", label: "Draw Request", icon: Hammer, tier: 3 },
+  { key: "payoff_statement", label: "Payoff Statement", icon: Receipt, tier: 3 },
+  { key: "wire_instructions", label: "Wire Instructions", icon: CreditCard, tier: 3 },
+  { key: "crm_activity", label: "CRM Activity", icon: Activity, tier: 3 },
+  { key: "equity_underwriting", label: "Equity Underwriting", icon: BarChart3, tier: 3 },
 ] as const;
 
 const FIELD_TYPES = [
@@ -123,6 +158,7 @@ const FIELD_TYPES = [
   { value: "boolean", label: "Yes / No" },
   { value: "email", label: "Email" },
   { value: "phone", label: "Phone" },
+  { value: "formula", label: "Formula (Calculated)" },
 ] as const;
 
 const MODULE_LABELS: Record<string, string> = {
@@ -136,6 +172,21 @@ const MODULE_LABELS: Record<string, string> = {
   borrower_profile: "Borrower Profile",
   investor_profile: "Investor Profile",
   contact_profile: "Contact Profile",
+  loans_extended: "Loans (Extended)",
+  servicing_loan: "Servicing Loan",
+  fund_details: "Fund Details",
+  opportunity: "Opportunity",
+  standalone_property: "Standalone Property",
+  borrower_entity_detail: "Borrower Entity",
+  investing_entity: "Investing Entity",
+  investor_commitment: "Investor Commitment",
+  capital_call: "Capital Call",
+  distribution: "Distribution",
+  draw_request: "Draw Request",
+  payoff_statement: "Payoff Statement",
+  wire_instructions: "Wire Instructions",
+  crm_activity: "CRM Activity",
+  equity_underwriting: "Equity Underwriting",
 };
 
 const MODULE_TABLE_LABELS: Record<string, string> = {
@@ -149,6 +200,21 @@ const MODULE_TABLE_LABELS: Record<string, string> = {
   borrower_profile: "borrowers",
   investor_profile: "investors",
   contact_profile: "crm_contacts",
+  loans_extended: "loans",
+  servicing_loan: "servicing_loans",
+  fund_details: "funds",
+  opportunity: "opportunities",
+  standalone_property: "properties",
+  borrower_entity_detail: "borrower_entities",
+  investing_entity: "investing_entities",
+  investor_commitment: "investor_commitments",
+  capital_call: "capital_calls",
+  distribution: "distributions",
+  draw_request: "draw_requests",
+  payoff_statement: "payoff_statements",
+  wire_instructions: "company_wire_instructions",
+  crm_activity: "crm_activities",
+  equity_underwriting: "equity_underwriting",
 };
 
 const RESERVED_WORDS = new Set([
@@ -177,6 +243,7 @@ const TYPE_COLORS: Record<string, string> = {
   phone: "bg-indigo-500/10 text-indigo-500 border-indigo-500/20",
   date: "bg-orange-500/10 text-orange-500 border-orange-500/20",
   boolean: "bg-teal-500/10 text-teal-500 border-teal-500/20",
+  formula: "bg-rose-500/10 text-rose-500 border-rose-500/20",
 };
 
 function generateFieldKey(label: string): string {
@@ -211,6 +278,10 @@ function mapRow(row: FieldConfigRow): FieldEntry {
     is_admin_created: row.is_admin_created ?? false,
     dropdown_options: Array.isArray(row.dropdown_options) ? (row.dropdown_options as string[]) : null,
     is_archived: row.is_archived ?? false,
+    formula_expression: (row as Record<string, unknown>).formula_expression as string | null ?? null,
+    formula_source_fields: Array.isArray((row as Record<string, unknown>).formula_source_fields)
+      ? ((row as Record<string, unknown>).formula_source_fields as string[])
+      : null,
   };
 }
 
@@ -451,29 +522,47 @@ export function FieldManagerView({ initialConfigs }: FieldManagerViewProps) {
   return (
     <div className="flex gap-6">
       {/* Module sidebar */}
-      <div className="w-[200px] shrink-0 space-y-1">
-        {MODULES.map((mod) => {
-          const isActive = activeModule === mod.key;
-          const count = (fields[mod.key] ?? []).filter((f) => !f.is_archived).length;
+      <div className="w-[220px] shrink-0 space-y-1 max-h-[calc(100vh-200px)] overflow-y-auto">
+        {[
+          { tier: 0, label: null },
+          { tier: 1, label: "Tier 1" },
+          { tier: 2, label: "Tier 2" },
+          { tier: 3, label: "Tier 3" },
+        ].map(({ tier, label }) => {
+          const tierModules = MODULES.filter((m) => m.tier === tier);
+          if (tierModules.length === 0) return null;
           return (
-            <Button
-              key={mod.key}
-              variant="ghost"
-              className={cn(
-                "w-full justify-start gap-2.5 text-[13px] font-medium h-9",
-                isActive && "bg-sidebar-active text-foreground font-semibold"
+            <div key={tier}>
+              {label && (
+                <div className="text-[10px] uppercase tracking-[0.06em] font-semibold text-muted-foreground px-2 pt-3 pb-1">
+                  {label}
+                </div>
               )}
-              onClick={() => {
-                setActiveModule(mod.key);
-                setSearch("");
-              }}
-            >
-              <mod.icon className="h-4 w-4 shrink-0" strokeWidth={1.5} />
-              <span className="flex-1 text-left">{mod.label}</span>
-              <Badge variant="outline" className="h-5 min-w-[22px] px-1.5 text-[10px] num">
-                {count}
-              </Badge>
-            </Button>
+              {tierModules.map((mod) => {
+                const isActive = activeModule === mod.key;
+                const count = (fields[mod.key] ?? []).filter((f) => !f.is_archived).length;
+                return (
+                  <Button
+                    key={mod.key}
+                    variant="ghost"
+                    className={cn(
+                      "w-full justify-start gap-2.5 text-[13px] font-medium h-9",
+                      isActive && "bg-sidebar-active text-foreground font-semibold"
+                    )}
+                    onClick={() => {
+                      setActiveModule(mod.key);
+                      setSearch("");
+                    }}
+                  >
+                    <mod.icon className="h-4 w-4 shrink-0" strokeWidth={1.5} />
+                    <span className="flex-1 text-left truncate">{mod.label}</span>
+                    <Badge variant="outline" className="h-5 min-w-[22px] px-1.5 text-[10px] num">
+                      {count}
+                    </Badge>
+                  </Button>
+                );
+              })}
+            </div>
           );
         })}
       </div>
@@ -695,6 +784,11 @@ function SortableFieldCard({
             {field.is_locked && (
               <Lock className="h-3 w-3 shrink-0 text-muted-foreground" strokeWidth={1.5} />
             )}
+            {field.field_type === "formula" && (
+              <Badge variant="outline" className="h-4 px-1 text-[9px] bg-rose-500/10 text-rose-500 border-rose-500/20">
+                <Calculator className="h-2.5 w-2.5 mr-0.5" strokeWidth={1.5} />fx
+              </Badge>
+            )}
             {field.is_admin_created && (
               <Badge variant="outline" className="h-4 px-1 text-[9px] bg-violet-500/10 text-violet-500 border-violet-500/20">
                 custom
@@ -875,6 +969,8 @@ function AddFieldModal({ open, onOpenChange, defaultModule, onCreated }: AddFiel
   const [module, setModule] = useState(defaultModule);
   const [columnPosition, setColumnPosition] = useState<"left" | "right">("left");
   const [dropdownOptionsText, setDropdownOptionsText] = useState("");
+  const [formulaExpression, setFormulaExpression] = useState("");
+  const [formulaSourceFieldsText, setFormulaSourceFieldsText] = useState("");
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
   const { toast } = useToast();
@@ -887,13 +983,19 @@ function AddFieldModal({ open, onOpenChange, defaultModule, onCreated }: AddFiel
     .map((l) => l.trim())
     .filter(Boolean);
 
+  const formulaSourceFields = formulaSourceFieldsText
+    .split("\n")
+    .map((l) => l.trim())
+    .filter(Boolean);
+
   const isValid =
     label.trim().length > 0 &&
     keyError === null &&
     fieldType !== "" &&
     module !== "" &&
     columnPosition !== undefined &&
-    (fieldType !== "dropdown" || dropdownOptions.length >= 2);
+    (fieldType !== "dropdown" || dropdownOptions.length >= 2) &&
+    (fieldType !== "formula" || (formulaExpression.trim().length > 0 && formulaSourceFields.length > 0));
 
   const handleSubmit = () => {
     if (!isValid) return;
@@ -924,6 +1026,8 @@ function AddFieldModal({ open, onOpenChange, defaultModule, onCreated }: AddFiel
           field_type: fieldType,
           column_position: columnPosition,
           dropdown_options: fieldType === "dropdown" ? dropdownOptions : null,
+          formula_expression: fieldType === "formula" ? formulaExpression.trim() : null,
+          formula_source_fields: fieldType === "formula" ? formulaSourceFields : null,
         }),
       });
 
@@ -949,6 +1053,8 @@ function AddFieldModal({ open, onOpenChange, defaultModule, onCreated }: AddFiel
       setModule(defaultModule);
       setColumnPosition("left");
       setDropdownOptionsText("");
+      setFormulaExpression("");
+      setFormulaSourceFieldsText("");
     } finally {
       setIsCreating(false);
     }
@@ -1025,6 +1131,45 @@ function AddFieldModal({ open, onOpenChange, defaultModule, onCreated }: AddFiel
               </div>
             )}
 
+            {/* Formula Configuration (conditional) */}
+            {fieldType === "formula" && (
+              <>
+                <div className="space-y-1.5">
+                  <Label htmlFor="formula-expression" className="text-[13px]">
+                    Formula Expression <span className="text-destructive">*</span>
+                  </Label>
+                  <Textarea
+                    id="formula-expression"
+                    placeholder={"{loan_amount} * {interest_rate} / 100"}
+                    value={formulaExpression}
+                    onChange={(e) => setFormulaExpression(e.target.value)}
+                    className="text-[13px] min-h-[80px] resize-none font-mono"
+                  />
+                  <p className="text-[11px] text-muted-foreground">
+                    Use <code className="bg-muted px-1 rounded text-[10px]">{"{field_key}"}</code> to reference other fields. Supports +, -, *, /, and parentheses.
+                  </p>
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="formula-source-fields" className="text-[13px]">
+                    Source Fields <span className="text-destructive">*</span>
+                  </Label>
+                  <Textarea
+                    id="formula-source-fields"
+                    placeholder={"loan_amount\ninterest_rate"}
+                    value={formulaSourceFieldsText}
+                    onChange={(e) => setFormulaSourceFieldsText(e.target.value)}
+                    className="text-[13px] min-h-[80px] resize-none font-mono"
+                  />
+                  <p className="text-[11px] text-muted-foreground">
+                    Enter one field_key per line. These are the fields this formula reads from.
+                  </p>
+                  {formulaSourceFieldsText && formulaSourceFields.length === 0 && (
+                    <p className="text-[11px] text-destructive">At least 1 source field required</p>
+                  )}
+                </div>
+              </>
+            )}
+
             {/* Module */}
             <div className="space-y-1.5">
               <Label htmlFor="field-module" className="text-[13px]">Module <span className="text-destructive">*</span></Label>
@@ -1098,8 +1243,22 @@ function AddFieldModal({ open, onOpenChange, defaultModule, onCreated }: AddFiel
                 <code className="font-mono text-[12px] text-foreground">{tableLabel}</code>
               </div>
             </div>
+            {fieldType === "formula" && (
+              <div className="rounded-md border border-border bg-muted/50 p-3 space-y-1.5">
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Expression</span>
+                  <code className="font-mono text-[12px] text-foreground max-w-[200px] truncate">{formulaExpression}</code>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Reads from</span>
+                  <span className="font-mono text-[12px] text-foreground">{formulaSourceFields.join(", ")}</span>
+                </div>
+              </div>
+            )}
             <p className="text-muted-foreground text-[12px]">
-              This will add a new column to the <strong className="text-foreground">{tableLabel}</strong> table. This action cannot be undone from this interface.
+              {fieldType === "formula"
+                ? "This creates a calculated field. No database column will be added -- the value is computed from other fields at render time."
+                : <>This will add a new column to the <strong className="text-foreground">{tableLabel}</strong> table. This action cannot be undone from this interface.</>}
             </p>
           </div>
           <AlertDialogFooter>
