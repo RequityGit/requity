@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { cn } from "@/lib/utils";
 import { Label } from "@/components/ui/label";
 import { DatePicker } from "@/components/ui/date-picker";
@@ -10,6 +11,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { ChevronDown, ChevronUp } from "lucide-react";
+import { getNthWeekdayInfo } from "@/lib/recurrence-utils";
 
 const FREQUENCIES = ["daily", "weekly", "monthly", "annually"] as const;
 const DAYS_OF_WEEK = ["Su", "M", "Tu", "W", "Th", "F", "Sa"];
@@ -59,6 +62,7 @@ interface RecurrencePanelProps {
   onStartDateChange: (v: string) => void;
   endDate: string;
   onEndDateChange: (v: string) => void;
+  dueDate?: string;
 }
 
 export function RecurrencePanel({
@@ -76,7 +80,10 @@ export function RecurrencePanel({
   onStartDateChange,
   endDate,
   onEndDateChange,
+  dueDate,
 }: RecurrencePanelProps) {
+  const [showAdvanced, setShowAdvanced] = useState(false);
+
   const unitLabel: Record<string, string> = {
     daily: "Day",
     weekly: "Week",
@@ -99,14 +106,20 @@ export function RecurrencePanel({
     }
   };
 
-  const handleMonthlyWhenChange = (v: string) => {
-    onMonthlyWhenChange(v);
-    if (v === "specific_day") {
-      onDayOfMonthChange(1);
+  // Compute contextual monthly options from due date
+  const refDate = dueDate ? new Date(dueDate + "T12:00:00") : new Date();
+  const refDay = refDate.getDate();
+  const nthInfo = getNthWeekdayInfo(refDate);
+
+  const handleMonthlyQuickSelect = (value: string) => {
+    if (value === "specific_day") {
+      onMonthlyWhenChange("specific_day");
+      onDayOfMonthChange(refDay);
       onDaysOfWeekChange([]);
-    } else if (v === "nth_weekday") {
-      onDayOfMonthChange(1);
-      if (daysOfWeek.length === 0) onDaysOfWeekChange([1]);
+    } else if (value === "nth_weekday") {
+      onMonthlyWhenChange("nth_weekday");
+      onDayOfMonthChange(nthInfo.nth);
+      onDaysOfWeekChange([nthInfo.dayOfWeek]);
     }
   };
 
@@ -118,52 +131,52 @@ export function RecurrencePanel({
   }));
 
   return (
-    <div className="bg-secondary rounded-lg p-4 border border-border space-y-4">
-      {/* Frequency tabs */}
-      <div className="space-y-1.5">
-        <Label className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-          Frequency
-        </Label>
-        <div className="flex rounded-md overflow-hidden border border-border">
-          {FREQUENCIES.map((f, i) => (
-            <button
-              key={f}
-              type="button"
-              onClick={() => onPatternChange(f)}
-              className={cn(
-                "flex-1 py-2 text-[12px] font-semibold capitalize transition-colors",
-                pattern === f
-                  ? "bg-primary text-primary-foreground"
-                  : "bg-transparent text-muted-foreground hover:bg-accent",
-                i < FREQUENCIES.length - 1 && "border-r border-border"
-              )}
-            >
-              {f}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* Repeat interval */}
-      <div className="space-y-1.5">
-        <Label className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-          Repeat
-        </Label>
-        <Select
-          value={String(repeatInterval)}
-          onValueChange={(v) => onRepeatIntervalChange(parseInt(v))}
-        >
-          <SelectTrigger>
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {repeatOptions.map((o) => (
-              <SelectItem key={o.value} value={String(o.value)}>
-                {o.label}
-              </SelectItem>
+    <div className="bg-secondary rounded-lg p-3 border border-border space-y-3">
+      {/* Frequency tabs + Repeat interval in one row */}
+      <div className="grid grid-cols-[1fr_auto] gap-2.5 items-end">
+        <div className="space-y-1.5">
+          <Label className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+            Frequency
+          </Label>
+          <div className="flex rounded-md overflow-hidden border border-border">
+            {FREQUENCIES.map((f, i) => (
+              <button
+                key={f}
+                type="button"
+                onClick={() => onPatternChange(f)}
+                className={cn(
+                  "flex-1 py-1.5 text-[11px] font-semibold capitalize transition-colors",
+                  pattern === f
+                    ? "bg-primary text-primary-foreground"
+                    : "bg-transparent text-muted-foreground hover:bg-accent",
+                  i < FREQUENCIES.length - 1 && "border-r border-border"
+                )}
+              >
+                {f}
+              </button>
             ))}
-          </SelectContent>
-        </Select>
+          </div>
+        </div>
+        <div className="space-y-1.5">
+          <Label className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+            Repeat
+          </Label>
+          <Select
+            value={String(repeatInterval)}
+            onValueChange={(v) => onRepeatIntervalChange(parseInt(v))}
+          >
+            <SelectTrigger className="w-[140px]">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {repeatOptions.map((o) => (
+                <SelectItem key={o.value} value={String(o.value)}>
+                  {o.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
       </div>
 
       {/* Weekly: day picker */}
@@ -181,7 +194,7 @@ export function RecurrencePanel({
                   type="button"
                   onClick={() => toggleDay(i)}
                   className={cn(
-                    "flex-1 py-2 text-[12px] font-semibold transition-colors",
+                    "flex-1 py-1.5 text-[11px] font-semibold transition-colors",
                     active
                       ? "bg-primary text-primary-foreground"
                       : "bg-transparent text-muted-foreground hover:bg-accent",
@@ -196,101 +209,126 @@ export function RecurrencePanel({
         </div>
       )}
 
-      {/* Monthly options */}
+      {/* Monthly: Google Calendar-style contextual dropdown */}
       {pattern === "monthly" && (
-        <>
+        <div className="space-y-2.5">
           <div className="space-y-1.5">
             <Label className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
               On
             </Label>
-            <Select value={monthlyWhen} onValueChange={handleMonthlyWhenChange}>
+            <Select
+              value={monthlyWhen}
+              onValueChange={handleMonthlyQuickSelect}
+            >
               <SelectTrigger>
-                <SelectValue />
+                <SelectValue>
+                  {monthlyWhen === "specific_day"
+                    ? `Monthly on day ${dayOfMonth}`
+                    : `Monthly on the ${nthInfo.nthLabel} ${DAY_NAMES_FULL[daysOfWeek[0] ?? nthInfo.dayOfWeek]}`}
+                </SelectValue>
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="specific_day">
-                  Specific day of month
+                  Monthly on day {refDay}
                 </SelectItem>
                 <SelectItem value="nth_weekday">
-                  Nth weekday of month
+                  Monthly on the {nthInfo.nthLabel} {nthInfo.dayName}
                 </SelectItem>
               </SelectContent>
             </Select>
           </div>
 
-          {monthlyWhen === "specific_day" && (
-            <div className="space-y-1.5">
-              <Label className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-                Day of Month
-              </Label>
-              <Select
-                value={String(dayOfMonth)}
-                onValueChange={(v) => onDayOfMonthChange(parseInt(v))}
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {Array.from({ length: 31 }, (_, i) => (
-                    <SelectItem key={i + 1} value={String(i + 1)}>
-                      {i + 1}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          )}
+          {/* Customize controls — collapsed by default */}
+          <button
+            type="button"
+            onClick={() => setShowAdvanced(!showAdvanced)}
+            className="flex items-center gap-1 text-[11px] font-medium text-muted-foreground hover:text-foreground transition-colors"
+          >
+            {showAdvanced ? (
+              <ChevronUp className="h-3 w-3" strokeWidth={1.5} />
+            ) : (
+              <ChevronDown className="h-3 w-3" strokeWidth={1.5} />
+            )}
+            Customize
+          </button>
 
-          {monthlyWhen === "nth_weekday" && (
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-1.5">
-                <Label className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-                  Which
-                </Label>
-                <Select
-                  value={String(dayOfMonth)}
-                  onValueChange={(v) => onDayOfMonthChange(parseInt(v))}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {NTH_OPTIONS.map((o) => (
-                      <SelectItem key={o.value} value={String(o.value)}>
-                        {o.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-1.5">
-                <Label className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-                  Day
-                </Label>
-                <Select
-                  value={String(daysOfWeek[0] ?? 1)}
-                  onValueChange={(v) => onDaysOfWeekChange([parseInt(v)])}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {DAY_NAMES_FULL.map((name, i) => (
-                      <SelectItem key={i} value={String(i)}>
-                        {name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
+          {showAdvanced && (
+            <>
+              {monthlyWhen === "specific_day" && (
+                <div className="space-y-1.5">
+                  <Label className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                    Day of Month
+                  </Label>
+                  <Select
+                    value={String(dayOfMonth)}
+                    onValueChange={(v) => onDayOfMonthChange(parseInt(v))}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {Array.from({ length: 31 }, (_, i) => (
+                        <SelectItem key={i + 1} value={String(i + 1)}>
+                          {i + 1}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+
+              {monthlyWhen === "nth_weekday" && (
+                <div className="grid grid-cols-2 gap-2.5">
+                  <div className="space-y-1.5">
+                    <Label className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                      Which
+                    </Label>
+                    <Select
+                      value={String(dayOfMonth)}
+                      onValueChange={(v) => onDayOfMonthChange(parseInt(v))}
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {NTH_OPTIONS.map((o) => (
+                          <SelectItem key={o.value} value={String(o.value)}>
+                            {o.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                      Day
+                    </Label>
+                    <Select
+                      value={String(daysOfWeek[0] ?? 1)}
+                      onValueChange={(v) => onDaysOfWeekChange([parseInt(v)])}
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {DAY_NAMES_FULL.map((name, i) => (
+                          <SelectItem key={i} value={String(i)}>
+                            {name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+              )}
+            </>
           )}
-        </>
+        </div>
       )}
 
       {/* Annually: month + day */}
       {pattern === "annually" && (
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-2 gap-2.5">
           <div className="space-y-1.5">
             <Label className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
               Month
@@ -334,30 +372,50 @@ export function RecurrencePanel({
         </div>
       )}
 
-      {/* Start / End dates */}
-      <div className="grid grid-cols-2 gap-3">
-        <div className="space-y-1.5">
-          <Label className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-            Start Date
-          </Label>
-          <DatePicker
-            value={startDate}
-            onChange={(value) => onStartDateChange(value)}
-          />
+      {/* Advanced: Start / End dates — behind toggle */}
+      <button
+        type="button"
+        onClick={() => {
+          if (pattern !== "monthly") setShowAdvanced(!showAdvanced);
+        }}
+        className={cn(
+          "flex items-center gap-1 text-[11px] font-medium text-muted-foreground hover:text-foreground transition-colors",
+          pattern === "monthly" && "hidden"
+        )}
+      >
+        {showAdvanced ? (
+          <ChevronUp className="h-3 w-3" strokeWidth={1.5} />
+        ) : (
+          <ChevronDown className="h-3 w-3" strokeWidth={1.5} />
+        )}
+        Date range
+      </button>
+
+      {showAdvanced && (
+        <div className="grid grid-cols-2 gap-2.5">
+          <div className="space-y-1.5">
+            <Label className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+              Start Date
+            </Label>
+            <DatePicker
+              value={startDate}
+              onChange={(value) => onStartDateChange(value)}
+            />
+          </div>
+          <div className="space-y-1.5">
+            <Label className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+              End Date
+            </Label>
+            <DatePicker
+              value={endDate}
+              onChange={(value) => onEndDateChange(value)}
+            />
+            <span className="text-[10px] text-muted-foreground/70">
+              Leave blank for no end
+            </span>
+          </div>
         </div>
-        <div className="space-y-1.5">
-          <Label className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-            End Date
-          </Label>
-          <DatePicker
-            value={endDate}
-            onChange={(value) => onEndDateChange(value)}
-          />
-          <span className="text-[10px] text-muted-foreground/70">
-            Leave blank for no end
-          </span>
-        </div>
-      </div>
+      )}
     </div>
   );
 }
