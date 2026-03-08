@@ -6487,6 +6487,8 @@ export type Database = {
           field_key: string
           field_label: string
           field_type: string
+          formula_expression: string | null
+          formula_source_fields: string[] | null
           id: string
           is_admin_created: boolean
           is_archived: boolean
@@ -6503,6 +6505,8 @@ export type Database = {
           field_key: string
           field_label: string
           field_type: string
+          formula_expression?: string | null
+          formula_source_fields?: string[] | null
           id?: string
           is_admin_created?: boolean
           is_archived?: boolean
@@ -6519,6 +6523,8 @@ export type Database = {
           field_key?: string
           field_label?: string
           field_type?: string
+          formula_expression?: string | null
+          formula_source_fields?: string[] | null
           id?: string
           is_admin_created?: boolean
           is_archived?: boolean
@@ -16361,11 +16367,6 @@ export const Constants = {
     },
   },
 } as const
-
-
-// ---------------------------------------------------------------------------
-// Custom types (manually added, not auto-generated)
-// ---------------------------------------------------------------------------
 
 export interface PricingProgram {
   id: string;
