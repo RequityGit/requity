@@ -182,7 +182,6 @@ Only include fields that you can actually find data for in the document. Do not 
         "Content-Type": "application/json",
         "x-api-key": ANTHROPIC_API_KEY,
         "anthropic-version": "2023-06-01",
-        "anthropic-beta": "pdfs-2024-09-25",
       },
       body: JSON.stringify({
         model: "claude-sonnet-4-20250514",
@@ -213,7 +212,12 @@ Only include fields that you can actually find data for in the document. Do not 
         const errorData = JSON.parse(errorText);
         apiMessage = errorData?.error?.message ?? apiMessage;
       } catch {
-        if (errorText) apiMessage = errorText.slice(0, 200);
+        // Detect HTML error pages (e.g. Cloudflare) and show a friendly message
+        if (errorText && errorText.trimStart().startsWith("<!")) {
+          apiMessage = "AI service temporarily unavailable — please try again";
+        } else if (errorText) {
+          apiMessage = errorText.slice(0, 200);
+        }
       }
       console.error("Anthropic API error:", response.status, apiMessage);
 
