@@ -1,10 +1,8 @@
 "use client";
 
 import { useState, useMemo, useEffect } from "react";
-import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
 import {
   Select,
   SelectContent,
@@ -36,9 +34,9 @@ import {
   TrendingUp,
   CheckCircle2,
   DollarSign,
-  Briefcase,
 } from "lucide-react";
 import { CrmAvatar, RelPill, StageDot, CompanyStatusDot } from "./crm-primitives";
+import { DeleteCompanyButton } from "./delete-company-button";
 import { ClickToCallNumber } from "@/components/ui/ClickToCallNumber";
 
 // ── Types ────────────────────────────────────────────────────────────────
@@ -667,13 +665,15 @@ export function CrmV2Page({
                     <SortHeader label="Files" sortKey="file_count" currentSort={companySortKey} currentDir={companySortDir} onSort={handleCompanySort} className="text-right" />
                     <th className="text-xs font-medium text-muted-foreground text-left px-4 py-2.5">Location</th>
                     <SortHeader label="Status" sortKey="is_active" currentSort={companySortKey} currentDir={companySortDir} onSort={handleCompanySort} />
-                    <th className="text-xs font-medium text-muted-foreground text-center px-4 py-2.5 w-12" />
+                    {isSuperAdmin && (
+                      <th className="text-xs font-medium text-muted-foreground text-center px-4 py-2.5 w-12" />
+                    )}
                   </tr>
                 </thead>
                 <tbody>
                   {filteredCompanies.length === 0 ? (
                     <tr>
-                      <td colSpan={7} className="text-center py-16">
+                      <td colSpan={isSuperAdmin ? 8 : 7} className="text-center py-16">
                         <Building2 className="h-8 w-8 text-muted-foreground/40 mx-auto mb-2" />
                         <p className="text-sm font-medium text-muted-foreground">No companies found</p>
                       </td>
@@ -715,13 +715,15 @@ export function CrmV2Page({
                         <td className="px-4 py-3">
                           <CompanyStatusDot isActive={c.is_active} />
                         </td>
-                        <td className="px-4 py-3 text-center" onClick={(e) => e.stopPropagation()}>
-                          <Link href={`/admin/crm/companies/${c.id}`}>
-                            <Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-muted-foreground hover:text-foreground">
-                              <Briefcase className="h-3.5 w-3.5" />
-                            </Button>
-                          </Link>
-                        </td>
+                        {isSuperAdmin && (
+                          <td className="px-4 py-3 text-center" onClick={(e) => e.stopPropagation()}>
+                            <DeleteCompanyButton
+                              companyId={c.id}
+                              companyName={c.name}
+                              variant="icon"
+                            />
+                          </td>
+                        )}
                       </tr>
                     ))
                   )}

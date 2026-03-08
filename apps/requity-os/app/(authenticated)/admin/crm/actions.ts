@@ -29,6 +29,31 @@ export async function deleteCrmContactAction(contactId: string) {
   }
 }
 
+export async function deleteCrmCompanyAction(companyId: string) {
+  try {
+    const auth = await requireSuperAdmin();
+    if ("error" in auth) return { error: auth.error };
+
+    const admin = createAdminClient();
+
+    const { error } = await admin
+      .from("companies")
+      .update({ deleted_at: new Date().toISOString() })
+      .eq("id", companyId);
+
+    if (error) {
+      console.error("deleteCrmCompanyAction error:", error);
+      return { error: error.message };
+    }
+
+    revalidatePath("/admin/crm");
+    return { success: true };
+  } catch (err: unknown) {
+    console.error("deleteCrmCompanyAction error:", err);
+    return { error: err instanceof Error ? err.message : "An unexpected error occurred" };
+  }
+}
+
 export async function deleteContactFileAction(
   fileId: string,
   storagePath: string

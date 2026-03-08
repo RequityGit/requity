@@ -1788,6 +1788,7 @@ export type Database = {
           company_type: Database["public"]["Enums"]["company_type_enum"]
           country: string | null
           created_at: string
+          deleted_at: string | null
           email: string | null
           fee_agreement_on_file: boolean | null
           geographies: string[] | null
@@ -1821,6 +1822,7 @@ export type Database = {
           company_type: Database["public"]["Enums"]["company_type_enum"]
           country?: string | null
           created_at?: string
+          deleted_at?: string | null
           email?: string | null
           fee_agreement_on_file?: boolean | null
           geographies?: string[] | null
@@ -1854,6 +1856,7 @@ export type Database = {
           company_type?: Database["public"]["Enums"]["company_type_enum"]
           country?: string | null
           created_at?: string
+          deleted_at?: string | null
           email?: string | null
           fee_agreement_on_file?: boolean | null
           geographies?: string[] | null

@@ -17,6 +17,17 @@ export default async function CompaniesPage() {
 
   if (!user) redirect("/login");
 
+  // Check if user is super admin
+  let isSuperAdmin = false;
+  const { data: superAdminRole } = await supabase
+    .from("user_roles")
+    .select("id")
+    .eq("user_id", user.id)
+    .eq("role", "super_admin")
+    .eq("is_active", true)
+    .maybeSingle();
+  isSuperAdmin = !!superAdminRole;
+
   const admin = createAdminClient();
 
   // Fetch companies-related data in parallel
@@ -33,6 +44,7 @@ export default async function CompaniesPage() {
       .from("companies")
       .select("*")
       .eq("is_active", true)
+      .is("deleted_at", null)
       .order("updated_at", { ascending: false }),
     (admin as any).from("company_files").select("company_id"),
   ]);
@@ -84,7 +96,7 @@ export default async function CompaniesPage() {
         title="Companies"
         description="Manage companies and partnerships."
       />
-      <CompaniesView companies={companyRows} />
+      <CompaniesView companies={companyRows} isSuperAdmin={isSuperAdmin} />
     </div>
   );
 }
