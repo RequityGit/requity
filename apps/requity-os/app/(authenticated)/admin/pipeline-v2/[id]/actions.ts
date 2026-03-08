@@ -246,10 +246,10 @@ export async function saveDealDocumentRecord(params: {
   fileSizeBytes: number;
   mimeType: string;
   conditionId?: string;
-}): Promise<{ error: string | null }> {
+}): Promise<{ error: string | null; documentId: string | null }> {
   try {
     const auth = await requireAdmin();
-    if ("error" in auth) return { error: auth.error ?? "Unauthorized" };
+    if ("error" in auth) return { error: auth.error ?? "Unauthorized", documentId: null };
 
     const admin = createAdminClient();
 
@@ -284,22 +284,37 @@ export async function saveDealDocumentRecord(params: {
       console.error("saveDealDocumentRecord db error:", dbError);
       // Clean up the uploaded file since DB insert failed
       await admin.storage.from("loan-documents").remove([params.storagePath]);
-      return { error: dbError?.message ?? "Failed to save document record" };
+      return { error: dbError?.message ?? "Failed to save document record", documentId: null };
     }
 
-    // Fire AI document review (non-blocking)
-    const documentId = (insertResult.data as { id: string } | null)?.id;
-    if (documentId) {
-      triggerDocumentReviewEdgeFunction(documentId, params.dealId).catch((err) =>
-        console.error("Failed to trigger document review:", err)
-      );
-    }
+    const documentId = (insertResult.data as { id: string } | null)?.id ?? null;
 
     revalidateDeal(params.dealId);
-    return { error: null };
+    return { error: null, documentId };
   } catch (err: unknown) {
     console.error("saveDealDocumentRecord error:", err);
-    return { error: err instanceof Error ? err.message : "Failed to save document record" };
+    return { error: err instanceof Error ? err.message : "Failed to save document record", documentId: null };
+  }
+}
+
+/**
+ * Trigger AI document analysis for a newly uploaded document.
+ * Called from the client after saveDealDocumentRecord succeeds, so it runs
+ * in its own server-action request context (avoiding serverless early-termination).
+ */
+export async function triggerDocumentAnalysis(
+  documentId: string,
+  dealId: string
+): Promise<{ error: string | null }> {
+  try {
+    const auth = await requireAdmin();
+    if ("error" in auth) return { error: auth.error ?? "Unauthorized" };
+
+    await triggerDocumentReviewEdgeFunction(documentId, dealId);
+    return { error: null };
+  } catch (err: unknown) {
+    console.error("triggerDocumentAnalysis error:", err);
+    return { error: err instanceof Error ? err.message : "Failed to trigger analysis" };
   }
 }
 
@@ -429,25 +444,33 @@ async function triggerDocumentReviewEdgeFunction(
 ) {
   const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
   const appUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.URL;
-  if (!serviceRoleKey) return;
 
-  // Use internal Next.js API route instead of Supabase edge function
-  // to avoid Supabase WORKER_LIMIT exhaustion from other functions.
-  const url = appUrl
-    ? `${appUrl}/api/deals/${dealId}/review-document`
-    : `/api/deals/${dealId}/review-document`;
+  if (!serviceRoleKey) {
+    console.error("triggerDocumentReview: SUPABASE_SERVICE_ROLE_KEY not set");
+    return;
+  }
+  if (!appUrl) {
+    console.error("triggerDocumentReview: NEXT_PUBLIC_APP_URL and URL not set");
+    return;
+  }
 
-  try {
-    await fetch(url, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${serviceRoleKey}`,
-      },
-      body: JSON.stringify({ document_id: documentId }),
-    });
-  } catch (err) {
-    console.error("triggerDocumentReview failed:", err);
+  const url = `${appUrl}/api/deals/${dealId}/review-document`;
+
+  const res = await fetch(url, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${serviceRoleKey}`,
+    },
+    body: JSON.stringify({ document_id: documentId }),
+  });
+
+  if (!res.ok) {
+    const body = await res.text().catch(() => "");
+    console.error(
+      `triggerDocumentReview failed: ${res.status} ${res.statusText}`,
+      body
+    );
   }
 }
 

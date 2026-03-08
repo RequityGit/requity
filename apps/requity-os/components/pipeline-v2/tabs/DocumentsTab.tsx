@@ -10,6 +10,7 @@ import {
   saveDealDocumentRecord,
   deleteDealDocumentV2,
   retriggerDocumentReview,
+  triggerDocumentAnalysis,
   getDocumentSignedUrl,
 } from "@/app/(authenticated)/admin/pipeline-v2/[id]/actions";
 import { ReviewStatusBadge } from "@/components/pipeline-v2/ReviewStatusBadge";
@@ -127,6 +128,14 @@ export function DocumentsTab({ documents, dealId }: DocumentsTabProps) {
             toast.error(`Failed to save ${file.name}: ${saveResult.error}`);
           } else {
             toast.success(`Uploaded ${file.name}`);
+            // Trigger AI analysis in a separate server-action call so
+            // it gets its own request lifecycle (avoids serverless
+            // early-termination that killed the old fire-and-forget).
+            if (saveResult.documentId) {
+              triggerDocumentAnalysis(saveResult.documentId, dealId).catch(
+                (err) => console.error("Failed to trigger document analysis:", err)
+              );
+            }
           }
         } catch (err) {
           toast.error(
