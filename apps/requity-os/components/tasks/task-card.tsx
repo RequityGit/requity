@@ -2,7 +2,7 @@
 
 import { useState, useCallback } from "react";
 import { cn } from "@/lib/utils";
-import { Calendar, Repeat, Check } from "lucide-react";
+import { Calendar, Repeat2, Check, AlertTriangle } from "lucide-react";
 import { PriorityDot } from "./priority-dot";
 import { CategoryPill } from "./category-pill";
 import { AnimatedTask } from "./animated-task";
@@ -90,13 +90,28 @@ export function TaskCard({
               >
                 {task.title}
               </span>
-              {task.is_recurring && (
-                <Repeat
+              {(task.is_recurring || task.recurring_template_id) && (
+                <Repeat2
                   className="h-3.5 w-3.5 text-blue-400 flex-shrink-0 mt-0.5"
                   strokeWidth={1.5}
                 />
               )}
             </div>
+
+            {/* Recurrence period label */}
+            {task.recurrence_period && (
+              <p className="text-[11px] text-muted-foreground ml-3.5 mt-0.5">
+                {task.recurrence_period}
+              </p>
+            )}
+
+            {/* Previous period incomplete badge */}
+            {task.previous_incomplete && (
+              <div className="inline-flex items-center gap-1 text-[10px] font-semibold bg-amber-500/15 text-amber-500 dark:text-amber-400 px-2 py-0.5 rounded ml-3.5 mt-1">
+                <AlertTriangle className="h-2.5 w-2.5" strokeWidth={2} />
+                Prior period incomplete
+              </div>
+            )}
 
             {/* Meta row */}
             <div className="flex items-center gap-2 mt-1.5 flex-wrap">

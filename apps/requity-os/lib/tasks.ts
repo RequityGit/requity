@@ -27,6 +27,9 @@ export interface OpsTask {
   recurrence_start_date: string | null;
   recurrence_end_date: string | null;
   next_recurrence_date: string | null;
+  recurring_template_id: string | null;
+  recurrence_period: string | null;
+  previous_incomplete: boolean | null;
   recurring_series_id: string | null;
   source_task_id: string | null;
   parent_task_id: string | null;
@@ -63,7 +66,10 @@ export type TaskPriority = (typeof TASK_PRIORITIES)[number];
 
 export const TASK_CATEGORIES = [
   "Approval",
+  "Asset Mgmt",
+  "Finance",
   "General",
+  "HR",
   "Investments",
   "Investor Relations",
   "Lending Ops",
@@ -133,6 +139,18 @@ export const CATEGORY_COLORS: Record<string, { bg: string; text: string }> = {
   Approval: {
     bg: "bg-orange-100 dark:bg-orange-950/30",
     text: "text-orange-700 dark:text-orange-400",
+  },
+  Finance: {
+    bg: "bg-green-100 dark:bg-green-950/30",
+    text: "text-green-700 dark:text-green-400",
+  },
+  "Asset Mgmt": {
+    bg: "bg-purple-100 dark:bg-purple-950/30",
+    text: "text-purple-700 dark:text-purple-400",
+  },
+  HR: {
+    bg: "bg-rose-100 dark:bg-rose-950/30",
+    text: "text-rose-700 dark:text-rose-400",
   },
 };
 

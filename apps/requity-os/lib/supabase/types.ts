@@ -3599,8 +3599,10 @@ export type Database = {
           property_zip: string | null
           purchase_price: number | null
           sale_costs_pct: number | null
+          status: string
           total_sf: number | null
           updated_at: string | null
+          version: number
           working_capital: number | null
           year_built: number | null
           zoning: string | null
@@ -3635,8 +3637,10 @@ export type Database = {
           property_zip?: string | null
           purchase_price?: number | null
           sale_costs_pct?: number | null
+          status?: string
           total_sf?: number | null
           updated_at?: string | null
+          version?: number
           working_capital?: number | null
           year_built?: number | null
           zoning?: string | null
@@ -3671,8 +3675,10 @@ export type Database = {
           property_zip?: string | null
           purchase_price?: number | null
           sale_costs_pct?: number | null
+          status?: string
           total_sf?: number | null
           updated_at?: string | null
+          version?: number
           working_capital?: number | null
           year_built?: number | null
           zoning?: string | null
@@ -3682,14 +3688,7 @@ export type Database = {
             foreignKeyName: "deal_commercial_uw_opportunity_id_fkey"
             columns: ["opportunity_id"]
             isOneToOne: true
-            referencedRelation: "opportunities"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "deal_commercial_uw_opportunity_id_fkey"
-            columns: ["opportunity_id"]
-            isOneToOne: true
-            referencedRelation: "opportunity_pipeline"
+            referencedRelation: "unified_deals"
             referencedColumns: ["id"]
           },
         ]
@@ -9598,6 +9597,7 @@ export type Database = {
           linked_entity_type: string | null
           next_recurrence_date: string | null
           parent_task_id: string | null
+          previous_incomplete: boolean | null
           priority: string
           project_id: string | null
           recurrence_day_of_month: number | null
@@ -9606,9 +9606,11 @@ export type Database = {
           recurrence_end_date: string | null
           recurrence_monthly_when: string | null
           recurrence_pattern: string | null
+          recurrence_period: string | null
           recurrence_repeat_interval: number | null
           recurrence_start_date: string | null
           recurring_series_id: string | null
+          recurring_template_id: string | null
           rejected_at: string | null
           requestor_name: string | null
           requestor_user_id: string | null
@@ -9645,6 +9647,7 @@ export type Database = {
           linked_entity_type?: string | null
           next_recurrence_date?: string | null
           parent_task_id?: string | null
+          previous_incomplete?: boolean | null
           priority?: string
           project_id?: string | null
           recurrence_day_of_month?: number | null
@@ -9653,9 +9656,11 @@ export type Database = {
           recurrence_end_date?: string | null
           recurrence_monthly_when?: string | null
           recurrence_pattern?: string | null
+          recurrence_period?: string | null
           recurrence_repeat_interval?: number | null
           recurrence_start_date?: string | null
           recurring_series_id?: string | null
+          recurring_template_id?: string | null
           rejected_at?: string | null
           requestor_name?: string | null
           requestor_user_id?: string | null
@@ -9692,6 +9697,7 @@ export type Database = {
           linked_entity_type?: string | null
           next_recurrence_date?: string | null
           parent_task_id?: string | null
+          previous_incomplete?: boolean | null
           priority?: string
           project_id?: string | null
           recurrence_day_of_month?: number | null
@@ -9700,9 +9706,11 @@ export type Database = {
           recurrence_end_date?: string | null
           recurrence_monthly_when?: string | null
           recurrence_pattern?: string | null
+          recurrence_period?: string | null
           recurrence_repeat_interval?: number | null
           recurrence_start_date?: string | null
           recurring_series_id?: string | null
+          recurring_template_id?: string | null
           rejected_at?: string | null
           requestor_name?: string | null
           requestor_user_id?: string | null
@@ -9758,6 +9766,13 @@ export type Database = {
             columns: ["project_id"]
             isOneToOne: false
             referencedRelation: "ops_projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ops_tasks_recurring_template_id_fkey"
+            columns: ["recurring_template_id"]
+            isOneToOne: false
+            referencedRelation: "recurring_task_templates"
             referencedColumns: ["id"]
           },
           {
@@ -11100,6 +11115,104 @@ export type Database = {
             columns: ["property_id"]
             isOneToOne: false
             referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      recurring_task_templates: {
+        Row: {
+          anchor_day: number | null
+          anchor_month: number | null
+          assigned_to: string | null
+          category: string
+          created_at: string
+          created_by: string
+          description: string | null
+          every_x_months: number | null
+          id: string
+          is_active: boolean
+          lead_days: number
+          monthly_mode: string | null
+          next_due_date: string
+          next_generation_date: string
+          nth_occurrence: number | null
+          nth_weekday: number | null
+          priority: string
+          recurrence_type: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          anchor_day?: number | null
+          anchor_month?: number | null
+          assigned_to?: string | null
+          category: string
+          created_at?: string
+          created_by: string
+          description?: string | null
+          every_x_months?: number | null
+          id?: string
+          is_active?: boolean
+          lead_days?: number
+          monthly_mode?: string | null
+          next_due_date: string
+          next_generation_date: string
+          nth_occurrence?: number | null
+          nth_weekday?: number | null
+          priority: string
+          recurrence_type: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          anchor_day?: number | null
+          anchor_month?: number | null
+          assigned_to?: string | null
+          category?: string
+          created_at?: string
+          created_by?: string
+          description?: string | null
+          every_x_months?: number | null
+          id?: string
+          is_active?: boolean
+          lead_days?: number
+          monthly_mode?: string | null
+          next_due_date?: string
+          next_generation_date?: string
+          nth_occurrence?: number | null
+          nth_weekday?: number | null
+          priority?: string
+          recurrence_type?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "recurring_task_templates_assigned_to_fkey"
+            columns: ["assigned_to"]
+            isOneToOne: false
+            referencedRelation: "equity_pipeline"
+            referencedColumns: ["assigned_to_profile_id"]
+          },
+          {
+            foreignKeyName: "recurring_task_templates_assigned_to_fkey"
+            columns: ["assigned_to"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "recurring_task_templates_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "equity_pipeline"
+            referencedColumns: ["assigned_to_profile_id"]
+          },
+          {
+            foreignKeyName: "recurring_task_templates_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -15119,6 +15232,19 @@ export type Database = {
         Args: { p_billing_month: string; p_loan_id: string }
         Returns: Json
       }
+      calculate_next_due_date: {
+        Args: {
+          p_anchor_day: number
+          p_anchor_month: number
+          p_current_due: string
+          p_every_x_months: number
+          p_monthly_mode: string
+          p_nth_occurrence: number
+          p_nth_weekday: number
+          p_recurrence_type: string
+        }
+        Returns: string
+      }
       calculate_per_diem: {
         Args: { p_annual_rate: number; p_balance: number }
         Returns: number
@@ -15196,6 +15322,7 @@ export type Database = {
         Args: { p_loan_id: string; p_payoff_date: string }
         Returns: Json
       }
+      generate_recurring_tasks: { Args: never; Returns: undefined }
       get_active_notification_count: { Args: never; Returns: number }
       get_borrower_deals_last_2_years: {
         Args: { p_borrower_id: string }
