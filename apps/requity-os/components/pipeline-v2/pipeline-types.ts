@@ -19,12 +19,15 @@ export type AssetClass =
   | "mixed_use"
   | "land";
 
+export type UwFieldObject = "deal" | "property" | "borrower";
+
 export interface UwFieldDef {
   key: string;
   label: string;
   type: "currency" | "percent" | "number" | "text" | "boolean" | "select" | "date";
   required?: boolean;
   options?: string[];
+  object?: UwFieldObject;
 }
 
 export interface UwOutputDef {
