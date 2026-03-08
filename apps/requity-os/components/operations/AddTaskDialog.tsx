@@ -33,18 +33,12 @@ import {
   OPS_TASK_PRIORITIES,
   OPS_TASK_CATEGORIES,
 } from "@/lib/constants/db-enums";
+import { RecurrencePanel } from "@/app/(authenticated)/admin/operations/tasks/recurrence-panel";
+import { composeRecurrencePattern } from "@/lib/recurrence-utils";
 
 const STATUSES = OPS_TASK_STATUSES;
 const PRIORITIES = OPS_TASK_PRIORITIES;
 const CATEGORIES = OPS_TASK_CATEGORIES;
-const RECURRENCE_PATTERNS = [
-  { value: "daily", label: "Daily" },
-  { value: "weekly", label: "Weekly" },
-  { value: "biweekly", label: "Biweekly" },
-  { value: "monthly", label: "Monthly" },
-  { value: "quarterly", label: "Quarterly" },
-  { value: "annually", label: "Annually" },
-];
 
 const INITIAL_FORM = {
   title: "",
@@ -56,7 +50,6 @@ const INITIAL_FORM = {
   due_date: "",
   category: "",
   is_recurring: false,
-  recurrence_pattern: "",
 };
 
 interface AddTaskDialogProps {
@@ -77,8 +70,24 @@ export function AddTaskDialog({ projects, teamMembers, externalOpen, onExternalO
   const router = useRouter();
   const { toast } = useToast();
 
+  // Recurrence state
+  const [recurrencePattern, setRecurrencePattern] = useState("weekly");
+  const [recurrenceDaysOfWeek, setRecurrenceDaysOfWeek] = useState<number[]>([]);
+  const [recurrenceDayOfMonth, setRecurrenceDayOfMonth] = useState(1);
+  const [recurrenceRepeatInterval, setRecurrenceRepeatInterval] = useState(1);
+  const [recurrenceMonthlyWhen, setRecurrenceMonthlyWhen] = useState("specific_day");
+  const [recurrenceStartDate, setRecurrenceStartDate] = useState("");
+  const [recurrenceEndDate, setRecurrenceEndDate] = useState("");
+
   function resetForm() {
     setForm(INITIAL_FORM);
+    setRecurrencePattern("weekly");
+    setRecurrenceDaysOfWeek([]);
+    setRecurrenceDayOfMonth(1);
+    setRecurrenceRepeatInterval(1);
+    setRecurrenceMonthlyWhen("specific_day");
+    setRecurrenceStartDate("");
+    setRecurrenceEndDate("");
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -101,6 +110,13 @@ export function AddTaskDialog({ projects, teamMembers, externalOpen, onExternalO
         return;
       }
 
+      const composedPattern = composeRecurrencePattern(
+        recurrencePattern,
+        recurrenceMonthlyWhen,
+        recurrenceDayOfMonth,
+        recurrenceDaysOfWeek
+      );
+
       const { error } = await supabase.from("ops_tasks").insert({
         title: form.title.trim(),
         description: form.description.trim() || null,
@@ -111,7 +127,13 @@ export function AddTaskDialog({ projects, teamMembers, externalOpen, onExternalO
         due_date: form.due_date || null,
         category: form.category.trim() || null,
         is_recurring: form.is_recurring,
-        recurrence_pattern: form.is_recurring ? form.recurrence_pattern || null : null,
+        recurrence_pattern: form.is_recurring ? composedPattern : null,
+        recurrence_days_of_week: form.is_recurring ? recurrenceDaysOfWeek : [],
+        recurrence_day_of_month: form.is_recurring ? recurrenceDayOfMonth : null,
+        recurrence_repeat_interval: form.is_recurring ? recurrenceRepeatInterval : null,
+        recurrence_monthly_when: form.is_recurring ? recurrenceMonthlyWhen : null,
+        recurrence_start_date: form.is_recurring && recurrenceStartDate ? recurrenceStartDate : null,
+        recurrence_end_date: form.is_recurring && recurrenceEndDate ? recurrenceEndDate : null,
         created_by: user.id,
       });
 
@@ -158,8 +180,8 @@ export function AddTaskDialog({ projects, teamMembers, externalOpen, onExternalO
         <DialogHeader>
           <DialogTitle>New Task</DialogTitle>
         </DialogHeader>
-        <form onSubmit={handleSubmit} className="space-y-4 py-2">
-          <div className="space-y-2">
+        <form onSubmit={handleSubmit} className="space-y-3 py-2">
+          <div className="space-y-1.5">
             <Label htmlFor="title">Title *</Label>
             <Input
               id="title"
@@ -170,8 +192,8 @@ export function AddTaskDialog({ projects, teamMembers, externalOpen, onExternalO
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1.5">
               <Label htmlFor="task_status">Status</Label>
               <Select
                 value={form.status}
@@ -190,7 +212,7 @@ export function AddTaskDialog({ projects, teamMembers, externalOpen, onExternalO
               </Select>
             </div>
 
-            <div className="space-y-2">
+            <div className="space-y-1.5">
               <Label htmlFor="task_priority">Priority</Label>
               <Select
                 value={form.priority}
@@ -210,7 +232,7 @@ export function AddTaskDialog({ projects, teamMembers, externalOpen, onExternalO
             </div>
           </div>
 
-          <div className="space-y-2">
+          <div className="space-y-1.5">
             <Label htmlFor="project">Project</Label>
             <Select
               value={form.project_id}
@@ -232,8 +254,8 @@ export function AddTaskDialog({ projects, teamMembers, externalOpen, onExternalO
             </Select>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1.5">
               <Label htmlFor="assigned_to_name">Assignee</Label>
               <Select
                 value={form.assigned_to_name || "none"}
@@ -255,7 +277,7 @@ export function AddTaskDialog({ projects, teamMembers, externalOpen, onExternalO
               </Select>
             </div>
 
-            <div className="space-y-2">
+            <div className="space-y-1.5">
               <Label htmlFor="task_category">Category</Label>
               <Select
                 value={form.category || "none"}
@@ -278,7 +300,7 @@ export function AddTaskDialog({ projects, teamMembers, externalOpen, onExternalO
             </div>
           </div>
 
-          <div className="space-y-2">
+          <div className="space-y-1.5">
             <Label htmlFor="task_due_date">Due Date</Label>
             <DatePicker
               value={form.due_date}
@@ -286,7 +308,7 @@ export function AddTaskDialog({ projects, teamMembers, externalOpen, onExternalO
             />
           </div>
 
-          <div className="space-y-2">
+          <div className="space-y-1.5">
             <Label htmlFor="task_description">Description</Label>
             <Textarea
               id="task_description"
@@ -295,12 +317,12 @@ export function AddTaskDialog({ projects, teamMembers, externalOpen, onExternalO
               onChange={(e) =>
                 setForm({ ...form, description: e.target.value })
               }
-              rows={3}
+              rows={2}
             />
           </div>
 
           {/* Recurring toggle */}
-          <div className="space-y-3">
+          <div className="space-y-2.5">
             <div className="flex items-center gap-2">
               <Checkbox
                 id="is_recurring"
@@ -309,9 +331,6 @@ export function AddTaskDialog({ projects, teamMembers, externalOpen, onExternalO
                   setForm({
                     ...form,
                     is_recurring: !!v,
-                    recurrence_pattern: v
-                      ? form.recurrence_pattern
-                      : "",
                   })
                 }
               />
@@ -321,26 +340,23 @@ export function AddTaskDialog({ projects, teamMembers, externalOpen, onExternalO
             </div>
 
             {form.is_recurring && (
-              <div className="space-y-2">
-                <Label htmlFor="recurrence_pattern">Recurrence Pattern</Label>
-                <Select
-                  value={form.recurrence_pattern}
-                  onValueChange={(v) =>
-                    setForm({ ...form, recurrence_pattern: v })
-                  }
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select pattern" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {RECURRENCE_PATTERNS.map((rp) => (
-                      <SelectItem key={rp.value} value={rp.value}>
-                        {rp.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+              <RecurrencePanel
+                pattern={recurrencePattern}
+                onPatternChange={setRecurrencePattern}
+                daysOfWeek={recurrenceDaysOfWeek}
+                onDaysOfWeekChange={setRecurrenceDaysOfWeek}
+                dayOfMonth={recurrenceDayOfMonth}
+                onDayOfMonthChange={setRecurrenceDayOfMonth}
+                repeatInterval={recurrenceRepeatInterval}
+                onRepeatIntervalChange={setRecurrenceRepeatInterval}
+                monthlyWhen={recurrenceMonthlyWhen}
+                onMonthlyWhenChange={setRecurrenceMonthlyWhen}
+                startDate={recurrenceStartDate}
+                onStartDateChange={setRecurrenceStartDate}
+                endDate={recurrenceEndDate}
+                onEndDateChange={setRecurrenceEndDate}
+                dueDate={form.due_date}
+              />
             )}
           </div>
 

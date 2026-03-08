@@ -33,7 +33,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { Trash2, Paperclip, X, FileText, Repeat, Link2, ExternalLink } from "lucide-react";
+import { Trash2, Paperclip, X, FileText, Repeat, Link2, ExternalLink, MessageSquare, ChevronDown, ChevronUp } from "lucide-react";
 import Link from "next/link";
 import { UnifiedNotes } from "@/components/shared/UnifiedNotes";
 import { RecurrencePanel } from "@/app/(authenticated)/admin/operations/tasks/recurrence-panel";
@@ -45,26 +45,10 @@ import {
   TASK_CATEGORIES,
 } from "@/lib/tasks";
 import { ScrollArea } from "@/components/ui/scroll-area";
-
-function composeRecurrencePattern(
-  pattern: string,
-  monthlyWhen: string,
-  dayOfMonth: number,
-  daysOfWeek: number[]
-): string {
-  if (pattern === "monthly") {
-    if (monthlyWhen === "nth_weekday") {
-      return `monthly_nth:${dayOfMonth}:${daysOfWeek[0] ?? 1}`;
-    }
-    if (monthlyWhen === "specific_day") {
-      return `monthly_day:${dayOfMonth}`;
-    }
-  }
-  if (pattern === "annually" && daysOfWeek.length > 0) {
-    return `annually_date:${daysOfWeek[0]}:${dayOfMonth}`;
-  }
-  return pattern;
-}
+import {
+  composeRecurrencePattern,
+  parseRecurrencePattern,
+} from "@/lib/recurrence-utils";
 
 interface TaskSheetProps {
   open: boolean;
@@ -95,6 +79,7 @@ export function TaskSheet({
   const { toast } = useToast();
   const fileRef = useRef<HTMLInputElement>(null);
   const [saving, setSaving] = useState(false);
+  const [commentsOpen, setCommentsOpen] = useState(false);
 
   // Form state
   const [title, setTitle] = useState("");
@@ -141,29 +126,18 @@ export function TaskSheet({
       setRecurrenceEndDate(task.recurrence_end_date ?? "");
 
       // Parse composed pattern back into structured fields
-      const pat = task.recurrence_pattern ?? "";
-      if (pat.startsWith("monthly_nth:")) {
-        const parts = pat.split(":");
-        setRecurrencePattern("monthly");
-        setRecurrenceMonthlyWhen("nth_weekday");
-        setRecurrenceDayOfMonth(parseInt(parts[1], 10) || 1);
-        setRecurrenceDaysOfWeek([parseInt(parts[2], 10) || 1]);
-      } else if (pat.startsWith("monthly_day:")) {
-        setRecurrencePattern("monthly");
-        setRecurrenceMonthlyWhen("specific_day");
-        setRecurrenceDayOfMonth(parseInt(pat.split(":")[1], 10) || 1);
-        setRecurrenceDaysOfWeek(task.recurrence_days_of_week ?? []);
-      } else if (pat.startsWith("annually_date:")) {
-        const parts = pat.split(":");
-        setRecurrencePattern("annually");
-        setRecurrenceDaysOfWeek([parseInt(parts[1], 10) || 0]);
-        setRecurrenceDayOfMonth(parseInt(parts[2], 10) || 1);
-        setRecurrenceMonthlyWhen(task.recurrence_monthly_when ?? "specific_day");
-      } else {
-        setRecurrencePattern(pat || "weekly");
-        setRecurrenceDaysOfWeek(task.recurrence_days_of_week ?? []);
-        setRecurrenceDayOfMonth(task.recurrence_day_of_month ?? 1);
-        setRecurrenceMonthlyWhen(task.recurrence_monthly_when ?? "specific_day");
+      const parsed = parseRecurrencePattern(task.recurrence_pattern ?? "");
+      setRecurrencePattern(parsed.base);
+      setRecurrenceMonthlyWhen(parsed.monthlyWhen);
+      setRecurrenceDayOfMonth(parsed.dayOfMonth);
+      setRecurrenceDaysOfWeek(
+        parsed.daysOfWeek.length > 0
+          ? parsed.daysOfWeek
+          : task.recurrence_days_of_week ?? []
+      );
+      if (parsed.base !== "monthly" && parsed.base !== "annually") {
+        setRecurrenceDayOfMonth(task.recurrence_day_of_month ?? parsed.dayOfMonth);
+        setRecurrenceMonthlyWhen(task.recurrence_monthly_when ?? parsed.monthlyWhen);
       }
     } else {
       setTitle("");
@@ -186,6 +160,7 @@ export function TaskSheet({
       setRecurrenceEndDate("");
     }
     setAttachments([]);
+    setCommentsOpen(false);
   }, [task, defaultLinkedEntity]);
 
   // Load existing attachments
@@ -279,8 +254,6 @@ export function TaskSheet({
     const supabase = createClient();
     const assigneeProfile = profiles.find((p) => p.id === assignedTo);
 
-    // Compose the recurrence_pattern string from structured fields
-    // so the RPC can parse it for next-occurrence calculation
     const composedPattern = composeRecurrencePattern(
       recurrencePattern,
       recurrenceMonthlyWhen,
@@ -375,8 +348,8 @@ export function TaskSheet({
 
   return (
     <Dialog open={open} onOpenChange={() => onClose()}>
-      <DialogContent className="sm:max-w-[600px] p-0 flex flex-col max-h-[95vh] md:max-h-[95vh]">
-        <DialogHeader className="px-6 pt-6 pb-0">
+      <DialogContent className="sm:max-w-[600px] p-0 flex flex-col max-h-[90vh] md:max-h-[90vh]">
+        <DialogHeader className="px-6 pt-4 pb-0">
           <DialogTitle className="text-sm font-bold tracking-tight">
             {isNew ? "New Task" : "Edit Task"}
           </DialogTitle>
@@ -386,9 +359,9 @@ export function TaskSheet({
         </DialogHeader>
 
         <ScrollArea className="flex-1 px-6">
-          <div className="space-y-3 pb-6 pt-4">
+          <div className="space-y-2.5 pb-4 pt-3">
             {/* Title */}
-            <div className="space-y-1.5">
+            <div className="space-y-1">
               <Label className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
                 Title
               </Label>
@@ -404,7 +377,7 @@ export function TaskSheet({
             {!isNew && task.linked_entity_type === "approval" && task.linked_entity_id && (
               <Link
                 href={`/admin/operations/approvals/${task.linked_entity_id}`}
-                className="flex items-center gap-2 px-3 py-2.5 rounded-lg bg-orange-50 dark:bg-orange-950/20 border border-orange-200 dark:border-orange-900/40 text-orange-700 dark:text-orange-400 text-[13px] font-medium hover:bg-orange-100 dark:hover:bg-orange-950/30 transition-colors"
+                className="flex items-center gap-2 px-3 py-2 rounded-lg bg-orange-50 dark:bg-orange-950/20 border border-orange-200 dark:border-orange-900/40 text-orange-700 dark:text-orange-400 text-[12px] font-medium hover:bg-orange-100 dark:hover:bg-orange-950/30 transition-colors"
               >
                 <ExternalLink className="h-3.5 w-3.5" strokeWidth={1.5} />
                 View Approval Details
@@ -412,7 +385,7 @@ export function TaskSheet({
             )}
 
             {/* Description */}
-            <div className="space-y-1.5">
+            <div className="space-y-1">
               <Label className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
                 Description
               </Label>
@@ -420,14 +393,14 @@ export function TaskSheet({
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 placeholder="Add details..."
-                rows={3}
+                rows={2}
                 className="resize-y"
               />
             </div>
 
             {/* 2x2 grid */}
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-1.5">
+            <div className="grid grid-cols-2 gap-2.5">
+              <div className="space-y-1">
                 <Label className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
                   Status
                 </Label>
@@ -445,7 +418,7 @@ export function TaskSheet({
                 </Select>
               </div>
 
-              <div className="space-y-1.5">
+              <div className="space-y-1">
                 <Label className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
                   Priority
                 </Label>
@@ -463,7 +436,7 @@ export function TaskSheet({
                 </Select>
               </div>
 
-              <div className="space-y-1.5">
+              <div className="space-y-1">
                 <Label className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
                   Assignee
                 </Label>
@@ -482,7 +455,7 @@ export function TaskSheet({
                 </Select>
               </div>
 
-              <div className="space-y-1.5">
+              <div className="space-y-1">
                 <Label className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
                   Due Date
                 </Label>
@@ -491,8 +464,8 @@ export function TaskSheet({
             </div>
 
             {/* Category + Linked */}
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-1.5">
+            <div className="grid grid-cols-2 gap-2.5">
+              <div className="space-y-1">
                 <Label className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
                   Category
                 </Label>
@@ -511,7 +484,7 @@ export function TaskSheet({
                 </Select>
               </div>
 
-              <div className="space-y-1.5">
+              <div className="space-y-1">
                 <Label className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-1">
                   <Link2 className="h-[11px] w-[11px]" strokeWidth={1.5} />
                   Linked
@@ -541,7 +514,7 @@ export function TaskSheet({
                 Create Recurring Series
               </label>
               {isRecurring && (
-                <div className="mt-3">
+                <div className="mt-2.5">
                   <RecurrencePanel
                     pattern={recurrencePattern}
                     onPatternChange={setRecurrencePattern}
@@ -557,82 +530,94 @@ export function TaskSheet({
                     onStartDateChange={setRecurrenceStartDate}
                     endDate={recurrenceEndDate}
                     onEndDateChange={setRecurrenceEndDate}
+                    dueDate={dueDate}
                   />
                 </div>
               )}
             </div>
 
-            {/* Attachments */}
-            <div className="space-y-2">
-              <Label className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-                Attachments
-              </Label>
-              <input
-                ref={fileRef}
-                type="file"
-                accept="image/*,.pdf,.doc,.docx,.xls,.xlsx"
-                multiple
-                onChange={handleFileUpload}
-                className="hidden"
-                disabled={isNew}
-              />
-              <button
-                type="button"
-                onClick={() => fileRef.current?.click()}
-                disabled={isNew}
-                className="flex items-center gap-1.5 justify-center w-full py-2 rounded-md border border-dashed border-border text-[12px] font-medium text-muted-foreground hover:border-ring/50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                <Paperclip className="h-[13px] w-[13px]" strokeWidth={1.5} />
-                {uploading
-                  ? "Uploading..."
-                  : isNew
-                    ? "Save first to attach files"
-                    : "Add files"}
-              </button>
-              {attachments.length > 0 && (
-                <div className="space-y-1.5">
-                  {attachments.map((att) => (
-                    <div
-                      key={att.id}
-                      className="flex items-center gap-2.5 px-2.5 py-2 bg-secondary rounded-md border border-border"
-                    >
-                      <div className="w-8 h-8 rounded bg-muted flex items-center justify-center flex-shrink-0">
+            {/* Attachments — only for existing tasks */}
+            {!isNew && (
+              <div className="space-y-1.5">
+                <Label className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                  Attachments
+                </Label>
+                <input
+                  ref={fileRef}
+                  type="file"
+                  accept="image/*,.pdf,.doc,.docx,.xls,.xlsx"
+                  multiple
+                  onChange={handleFileUpload}
+                  className="hidden"
+                />
+                <button
+                  type="button"
+                  onClick={() => fileRef.current?.click()}
+                  className="flex items-center gap-1.5 justify-center w-full py-1.5 rounded-md border border-dashed border-border text-[12px] font-medium text-muted-foreground hover:border-ring/50 transition-colors"
+                >
+                  <Paperclip className="h-[13px] w-[13px]" strokeWidth={1.5} />
+                  {uploading ? "Uploading..." : "Add files"}
+                </button>
+                {attachments.length > 0 && (
+                  <div className="space-y-1">
+                    {attachments.map((att) => (
+                      <div
+                        key={att.id}
+                        className="flex items-center gap-2 px-2 py-1.5 bg-secondary rounded-md border border-border"
+                      >
                         <FileText
-                          className="h-4 w-4 text-muted-foreground"
+                          className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0"
                           strokeWidth={1.5}
                         />
+                        <span className="text-[12px] font-medium flex-1 truncate">
+                          {att.file_name}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveAttachment(att.id)}
+                          className="text-muted-foreground hover:text-foreground p-0.5"
+                        >
+                          <X className="h-3.5 w-3.5" strokeWidth={1.5} />
+                        </button>
                       </div>
-                      <span className="text-[12px] font-medium flex-1 truncate">
-                        {att.file_name}
-                      </span>
-                      <button
-                        type="button"
-                        onClick={() => handleRemoveAttachment(att.id)}
-                        className="text-muted-foreground hover:text-foreground p-0.5"
-                      >
-                        <X className="h-3.5 w-3.5" strokeWidth={1.5} />
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
 
-            {/* Comments */}
+            {/* Comments — collapsible, closed by default */}
             {task && (
-              <div className="border-t border-border pt-4">
-                <UnifiedNotes
-                  entityType="task"
-                  entityId={task.id}
-                  compact
-                />
+              <div className="border-t border-border pt-2.5">
+                <button
+                  type="button"
+                  onClick={() => setCommentsOpen(!commentsOpen)}
+                  className="flex items-center gap-1.5 text-[12px] font-medium text-muted-foreground hover:text-foreground transition-colors w-full"
+                >
+                  <MessageSquare className="h-3.5 w-3.5" strokeWidth={1.5} />
+                  Comments
+                  {commentsOpen ? (
+                    <ChevronUp className="h-3 w-3 ml-auto" strokeWidth={1.5} />
+                  ) : (
+                    <ChevronDown className="h-3 w-3 ml-auto" strokeWidth={1.5} />
+                  )}
+                </button>
+                {commentsOpen && (
+                  <div className="mt-2.5">
+                    <UnifiedNotes
+                      entityType="task"
+                      entityId={task.id}
+                      compact
+                    />
+                  </div>
+                )}
               </div>
             )}
           </div>
         </ScrollArea>
 
         {/* Footer */}
-        <div className="flex items-center justify-between border-t border-border px-6 py-4">
+        <div className="flex items-center justify-between border-t border-border px-6 py-3">
           {!isNew ? (
             <AlertDialog>
               <AlertDialogTrigger asChild>
