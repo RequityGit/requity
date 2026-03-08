@@ -11,6 +11,7 @@ import type {
   FieldGroupDef,
   CapitalSide,
   CardTypeStatus,
+  GridTemplateDef,
 } from "@/components/pipeline-v2/pipeline-types";
 
 // ---------------------------------------------------------------------------
@@ -25,6 +26,7 @@ export type {
   FieldGroupDef,
   CapitalSide,
   CardTypeStatus,
+  GridTemplateDef,
 };
 
 // ---------------------------------------------------------------------------
@@ -129,6 +131,7 @@ export async function createCardType(input: {
       contact_field_groups: template?.contact_field_groups ?? [],
       contact_roles: template?.contact_roles ?? ["borrower"],
       applicable_asset_classes: template?.applicable_asset_classes ?? null,
+      uw_grid: template?.uw_grid ?? null,
       status: "draft" as CardTypeStatus,
       sort_order: nextOrder,
     };
@@ -209,6 +212,7 @@ export async function duplicateCardType(
       contact_field_groups: src.contact_field_groups,
       contact_roles: src.contact_roles,
       applicable_asset_classes: src.applicable_asset_classes,
+      uw_grid: src.uw_grid ?? null,
       status: "draft" as CardTypeStatus,
       sort_order: nextOrder,
     };
@@ -262,6 +266,7 @@ export async function saveCardType(
       | "applicable_asset_classes"
       | "status"
       | "uw_model_key"
+      | "uw_grid"
     >
   >
 ): Promise<{ success?: boolean; error?: string }> {

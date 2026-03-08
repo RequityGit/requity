@@ -39,6 +39,70 @@ export interface UwOutputDef {
   formula?: string;
 }
 
+// ---------------------------------------------------------------------------
+// Grid Pro Forma types
+// ---------------------------------------------------------------------------
+
+export const GRID_PERIODS = [
+  "t12",
+  "yr1",
+  "yr2",
+  "yr3",
+  "yr4",
+  "yr5",
+  "stabilized",
+] as const;
+
+export type GridPeriod = (typeof GRID_PERIODS)[number];
+
+export const GRID_PERIOD_LABELS: Record<GridPeriod, string> = {
+  t12: "T-12",
+  yr1: "Year 1",
+  yr2: "Year 2",
+  yr3: "Year 3",
+  yr4: "Year 4",
+  yr5: "Year 5",
+  stabilized: "Stabilized",
+};
+
+/** Maps period to a numeric index (used as `t` variable in formulas). */
+export const GRID_PERIOD_INDEX: Record<GridPeriod, number> = {
+  t12: 0,
+  yr1: 1,
+  yr2: 2,
+  yr3: 3,
+  yr4: 4,
+  yr5: 5,
+  stabilized: 6,
+};
+
+export type GridRowType = "currency" | "percent" | "ratio" | "number";
+
+export interface GridRowDef {
+  key: string;
+  label: string;
+  type: GridRowType;
+  formula: string;
+  section?: string;
+  bold?: boolean;
+  sort_order: number;
+}
+
+export interface GridTemplateDef {
+  rows: GridRowDef[];
+}
+
+/** Per-cell override on a deal. Key format: `{row_key}:{period}` */
+export interface GridCellOverride {
+  value?: number;
+  formula?: string;
+}
+
+export type GridOverrides = Record<string, GridCellOverride>;
+
+/** Evaluated grid result: row key -> period -> value */
+export type GridResult = Record<string, Record<GridPeriod, number | null>>;
+
 export interface CardMetricDef {
   key: string;
   label?: string;
@@ -75,6 +139,7 @@ export interface UnifiedCardType {
   applicable_asset_classes: string[] | null;
   status: CardTypeStatus;
   sort_order: number;
+  uw_grid?: GridTemplateDef | null;
 }
 
 export interface UnifiedDeal {
@@ -98,6 +163,7 @@ export interface UnifiedDeal {
   loss_reason: string | null;
   source: string | null;
   uw_data: Record<string, unknown>;
+  uw_grid_overrides: GridOverrides;
   property_data: Record<string, unknown>;
   notes: string | null;
   tags: string[];

@@ -61,7 +61,11 @@ import type {
   FieldGroupDef,
   CapitalSide,
   CardTypeStatus,
+  GridTemplateDef,
+  GridRowDef,
+  GridRowType,
 } from "@/components/pipeline-v2/pipeline-types";
+import { GRID_PERIODS, GRID_PERIOD_LABELS } from "@/components/pipeline-v2/pipeline-types";
 import {
   createCardType,
   duplicateCardType,
@@ -186,6 +190,7 @@ export function CardTypeManagerView({
       applicable_asset_classes: edits.applicable_asset_classes,
       status: edits.status,
       uw_model_key: edits.uw_model_key,
+      uw_grid: edits.uw_grid ?? null,
     });
     setSaving(false);
 
@@ -417,6 +422,7 @@ export function CardTypeManagerView({
                 <TabsTrigger value="contacts">Contacts Tab</TabsTrigger>
                 <TabsTrigger value="uw-fields">UW Fields</TabsTrigger>
                 <TabsTrigger value="outputs">Computed Outputs</TabsTrigger>
+                <TabsTrigger value="grid">Grid Pro Forma</TabsTrigger>
                 <TabsTrigger value="settings">Settings</TabsTrigger>
               </TabsList>
 
@@ -441,6 +447,14 @@ export function CardTypeManagerView({
                   outputs={edits.uw_outputs}
                   uwFields={edits.uw_fields}
                   onChange={(o) => setEdits({ ...edits, uw_outputs: o })}
+                />
+              </TabsContent>
+
+              <TabsContent value="grid" className="mt-4">
+                <GridTemplateEditor
+                  grid={edits.uw_grid ?? null}
+                  uwFields={edits.uw_fields}
+                  onChange={(g) => setEdits({ ...edits, uw_grid: g })}
                 />
               </TabsContent>
 
@@ -1286,6 +1300,263 @@ function UwOutputsEditor({
         <Plus className="h-3.5 w-3.5 mr-1.5" />
         Add Output
       </Button>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Grid Pro Forma Template Editor
+// ---------------------------------------------------------------------------
+
+const GRID_ROW_TYPES: GridRowType[] = ["currency", "percent", "ratio", "number"];
+
+const SECTION_PRESETS = [
+  "Income",
+  "Expenses",
+  "Debt Service",
+  "Returns",
+  "Cash Flow",
+];
+
+function GridTemplateEditor({
+  grid,
+  uwFields,
+  onChange,
+}: {
+  grid: GridTemplateDef | null;
+  uwFields?: UwFieldDef[];
+  onChange: (grid: GridTemplateDef | null) => void;
+}) {
+  const rows = grid?.rows ?? [];
+
+  const updateRow = (idx: number, updates: Partial<GridRowDef>) => {
+    const next = rows.map((r, i) => (i === idx ? { ...r, ...updates } : r));
+    onChange({ rows: next });
+  };
+
+  const addRow = () => {
+    const maxOrder = rows.length > 0 ? Math.max(...rows.map((r) => r.sort_order)) : -1;
+    onChange({
+      rows: [
+        ...rows,
+        {
+          key: "",
+          label: "",
+          type: "currency" as GridRowType,
+          formula: "",
+          section: "",
+          bold: false,
+          sort_order: maxOrder + 1,
+        },
+      ],
+    });
+  };
+
+  const removeRow = (idx: number) => {
+    onChange({ rows: rows.filter((_, i) => i !== idx) });
+  };
+
+  const moveRow = (idx: number, dir: -1 | 1) => {
+    const target = idx + dir;
+    if (target < 0 || target >= rows.length) return;
+    const next = [...rows];
+    [next[idx], next[target]] = [next[target], next[idx]];
+    // Update sort_order to match new positions
+    const reordered = next.map((r, i) => ({ ...r, sort_order: i }));
+    onChange({ rows: reordered });
+  };
+
+  // Group rows by section for preview
+  const sections = useMemo(() => {
+    const grouped: { section: string; rows: GridRowDef[] }[] = [];
+    let currentSection = "";
+    for (const row of [...rows].sort((a, b) => a.sort_order - b.sort_order)) {
+      if (row.section && row.section !== currentSection) {
+        currentSection = row.section;
+        grouped.push({ section: currentSection, rows: [] });
+      } else if (!grouped.length) {
+        grouped.push({ section: "", rows: [] });
+      }
+      grouped[grouped.length - 1].rows.push(row);
+    }
+    return grouped;
+  }, [rows]);
+
+  return (
+    <div className="space-y-4">
+      <p className="text-sm text-muted-foreground">
+        Define a multi-year grid pro forma. Each row has a formula that evaluates across
+        T-12, Year 1-5, and Stabilized periods. Formulas can reference UW fields and other
+        row keys. Use <code className="text-xs bg-muted px-1 rounded">t</code> for the period
+        index (0=T12, 1-5=Year, 6=Stabilized).
+      </p>
+
+      {/* Row Editor */}
+      <div className="space-y-2">
+        {rows.map((row, idx) => (
+          <div key={idx} className="rounded-lg border p-3 space-y-2">
+            <div className="flex items-center gap-2">
+              <div className="flex flex-col gap-0.5">
+                <button
+                  type="button"
+                  onClick={() => moveRow(idx, -1)}
+                  disabled={idx === 0}
+                  className="p-0.5 rounded hover:bg-accent disabled:opacity-30"
+                >
+                  <ArrowUp className="h-3 w-3" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => moveRow(idx, 1)}
+                  disabled={idx === rows.length - 1}
+                  className="p-0.5 rounded hover:bg-accent disabled:opacity-30"
+                >
+                  <ArrowDown className="h-3 w-3" />
+                </button>
+              </div>
+
+              <div className="flex-1 grid grid-cols-4 gap-2">
+                <Input
+                  value={row.key}
+                  onChange={(e) => updateRow(idx, { key: e.target.value })}
+                  placeholder="key (e.g. noi)"
+                  className="text-xs font-mono"
+                />
+                <Input
+                  value={row.label}
+                  onChange={(e) => updateRow(idx, { label: e.target.value })}
+                  placeholder="Label"
+                  className="text-xs"
+                />
+                <Select
+                  value={row.type}
+                  onValueChange={(v) => updateRow(idx, { type: v as GridRowType })}
+                >
+                  <SelectTrigger className="text-xs">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {GRID_ROW_TYPES.map((t) => (
+                      <SelectItem key={t} value={t}>{t}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Select
+                  value={row.section ?? ""}
+                  onValueChange={(v) => updateRow(idx, { section: v || undefined })}
+                >
+                  <SelectTrigger className="text-xs">
+                    <SelectValue placeholder="Section..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="">No section</SelectItem>
+                    {SECTION_PRESETS.map((s) => (
+                      <SelectItem key={s} value={s}>{s}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="flex items-center gap-1">
+                <Label htmlFor={`bold-${idx}`} className="text-[10px] text-muted-foreground">Bold</Label>
+                <Switch
+                  id={`bold-${idx}`}
+                  checked={row.bold ?? false}
+                  onCheckedChange={(v) => updateRow(idx, { bold: v })}
+                  className="scale-75"
+                />
+              </div>
+
+              <button
+                onClick={() => removeRow(idx)}
+                className="p-1 rounded hover:bg-destructive/10"
+              >
+                <X className="h-3.5 w-3.5 text-destructive" />
+              </button>
+            </div>
+
+            <FormulaInput
+              value={row.formula}
+              onChange={(v) => updateRow(idx, { formula: v })}
+              uwFields={uwFields}
+            />
+          </div>
+        ))}
+      </div>
+
+      <Button variant="outline" size="sm" onClick={addRow}>
+        <Plus className="h-3.5 w-3.5 mr-1.5" />
+        Add Row
+      </Button>
+
+      {/* Grid Preview */}
+      {rows.length > 0 && (
+        <div className="mt-6">
+          <p className="text-xs font-medium text-muted-foreground mb-2 uppercase tracking-wide">
+            Grid Preview
+          </p>
+          <div className="overflow-x-auto border rounded-lg">
+            <table className="w-full border-collapse text-xs">
+              <thead>
+                <tr className="bg-accent/50">
+                  <th className="text-left p-2 pl-3 border-b-2 font-semibold text-[10px] uppercase tracking-wider text-muted-foreground w-[20%]">
+                    Metric
+                  </th>
+                  {GRID_PERIODS.map((p) => (
+                    <th
+                      key={p}
+                      className={cn(
+                        "text-right p-2 border-b-2 font-semibold text-[10px] uppercase tracking-wider text-muted-foreground",
+                        p === "t12" && "border-r"
+                      )}
+                    >
+                      {GRID_PERIOD_LABELS[p]}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {sections.map((sec, si) => (
+                  <>{/* Fragment for sections */}
+                    {sec.section && (
+                      <tr key={`sec-${si}`}>
+                        <td
+                          colSpan={GRID_PERIODS.length + 1}
+                          className="px-3 pt-3 pb-1 text-[10px] font-bold uppercase tracking-[0.08em] text-muted-foreground border-b bg-foreground/[0.01]"
+                        >
+                          {sec.section}
+                        </td>
+                      </tr>
+                    )}
+                    {sec.rows.map((row) => (
+                      <tr key={row.key || row.sort_order} className="hover:bg-foreground/[0.02]">
+                        <td className={cn(
+                          "p-2 pl-3 border-b",
+                          row.bold ? "font-bold" : "font-normal",
+                          row.section ? "pl-6" : "pl-3"
+                        )}>
+                          {row.label || <span className="text-muted-foreground italic">untitled</span>}
+                        </td>
+                        {GRID_PERIODS.map((p) => (
+                          <td
+                            key={p}
+                            className={cn(
+                              "text-right p-2 border-b text-muted-foreground/50 tabular-nums",
+                              p === "t12" && "border-r"
+                            )}
+                          >
+                            {row.formula ? "fx" : "--"}
+                          </td>
+                        ))}
+                      </tr>
+                    ))}
+                  </>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

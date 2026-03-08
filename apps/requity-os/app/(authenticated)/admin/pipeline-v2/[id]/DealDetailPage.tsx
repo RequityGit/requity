@@ -58,6 +58,7 @@ import { PropertyTab } from "@/components/pipeline-v2/tabs/PropertyTab";
 import { ContactsTab } from "@/components/pipeline-v2/tabs/ContactsTab";
 import { FinancialsTab, type CommercialUWData as FinancialsUWData } from "@/components/pipeline-v2/tabs/FinancialsTab";
 import { CommercialUnderwritingTab, type CommercialUWData } from "@/components/pipeline-v2/tabs/CommercialUnderwritingTab";
+import { GridProForma } from "@/components/pipeline-v2/GridProForma";
 import {
   type UnifiedDeal,
   type UnifiedCardType,
@@ -77,7 +78,7 @@ import {
   advanceStageAction,
 } from "@/app/(authenticated)/admin/pipeline-v2/actions";
 import { UnifiedNotes } from "@/components/shared/UnifiedNotes";
-import { logQuickActionV2, assignTeamMemberV2 } from "./actions";
+import { logQuickActionV2, assignTeamMemberV2, saveGridOverrides } from "./actions";
 import { SubmitForApprovalDialog } from "@/components/approvals/submit-for-approval-dialog";
 import { LoanApprovalSection } from "@/components/approvals/loan-approval-section";
 import type { ApprovalEntityType } from "@/lib/approvals/types";
@@ -392,6 +393,29 @@ function TabContent({
             dealId={deal.id}
             currentUserId={currentUserId}
           />
+        );
+      }
+      if (cardType.uw_grid?.rows?.length) {
+        return (
+          <div className="space-y-4">
+            <div>
+              <h3 className="text-sm font-medium mb-1">Grid Pro Forma</h3>
+              <p className="text-xs text-muted-foreground">
+                Click any cell to override its value or formula.
+              </p>
+            </div>
+            <GridProForma
+              template={cardType.uw_grid}
+              uwData={deal.uw_data}
+              overrides={deal.uw_grid_overrides ?? {}}
+              onOverridesChange={async (overrides) => {
+                const result = await saveGridOverrides(deal.id, overrides);
+                if (result.error) {
+                  toast.error(result.error);
+                }
+              }}
+            />
+          </div>
         );
       }
       return (

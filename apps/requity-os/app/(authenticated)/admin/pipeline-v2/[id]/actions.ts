@@ -536,3 +536,35 @@ export async function updateDealFieldV2(
     };
   }
 }
+
+// ─── Save Grid Pro Forma Overrides ───
+
+export async function saveGridOverrides(
+  dealId: string,
+  overrides: Record<string, { value?: number; formula?: string }>
+): Promise<{ success?: boolean; error?: string }> {
+  try {
+    const auth = await requireAdmin();
+    if ("error" in auth) return { error: auth.error ?? "Unauthorized" };
+
+    const admin = createAdminClient();
+
+    const { error } = await admin
+      .from("unified_deals" as never)
+      .update({ uw_grid_overrides: overrides } as never)
+      .eq("id" as never, dealId as never);
+
+    if (error) {
+      console.error("saveGridOverrides error:", error);
+      return { error: error.message };
+    }
+
+    revalidateDeal(dealId);
+    return { success: true };
+  } catch (err: unknown) {
+    console.error("saveGridOverrides error:", err);
+    return {
+      error: err instanceof Error ? err.message : "An unexpected error occurred",
+    };
+  }
+}
