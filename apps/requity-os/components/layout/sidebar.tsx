@@ -98,7 +98,7 @@ const adminNav: NavEntry[] = [
     moduleName: "pipeline",
   },
   {
-    label: "Tasks",
+    label: "Operations",
     href: "/admin/operations/tasks",
     icon: ListChecks,
     moduleName: "operations",

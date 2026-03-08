@@ -260,8 +260,8 @@ export function TaskBoard({
   return (
     <div className="p-6 md:p-8">
       <PageHeader
-        title="Tasks"
-        description="Track work across deals, draws, and operations."
+        title="Operations"
+        description="Tasks & approvals to keep the business running."
         action={
           <Button onClick={handleNewTask} size="sm">
             <Plus className="h-4 w-4 mr-1" strokeWidth={1.5} />
