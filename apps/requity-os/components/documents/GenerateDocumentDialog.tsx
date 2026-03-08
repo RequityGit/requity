@@ -140,12 +140,14 @@ export function GenerateDocumentDialog({
       }
 
       const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+      const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
       const res = await fetch(
         `${supabaseUrl}/functions/v1/generate-document`,
         {
           method: "POST",
           headers: {
             Authorization: `Bearer ${session.access_token}`,
+            apikey: supabaseAnonKey ?? "",
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
@@ -157,8 +159,20 @@ export function GenerateDocumentDialog({
       );
 
       if (!res.ok) {
-        const err = await res.json().catch(() => ({ error: "Generation failed" }));
-        toast.error(err.error || "Failed to generate document");
+        const err = await res.json().catch(() => null);
+        const status = res.status;
+        const detail = err?.error || err?.message || res.statusText;
+        const message =
+          status === 401
+            ? `Authentication failed (${status}): session may have expired. Please reload and try again.`
+            : status === 403
+              ? `Access denied (${status}): admin role required to generate documents.`
+              : status === 404
+                ? `Not found (${status}): ${detail || "template or record not found"}`
+                : status === 502
+                  ? `Google Drive error (${status}): ${detail || "could not download or upload file"}`
+                  : `Generation failed (${status}): ${detail || "unknown error"}`;
+        toast.error(message);
         setGenerating(false);
         return;
       }
@@ -174,7 +188,11 @@ export function GenerateDocumentDialog({
       toast.success(`Document generated: ${fileName}`);
     } catch (err) {
       console.error("Generate document error:", err);
-      toast.error("Failed to generate document");
+      const message =
+        err instanceof TypeError && err.message.includes("fetch")
+          ? "Network error: could not reach the document generation service. Check your connection."
+          : `Failed to generate document: ${err instanceof Error ? err.message : "unknown error"}`;
+      toast.error(message);
     }
 
     setGenerating(false);
