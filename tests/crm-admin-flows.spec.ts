@@ -118,17 +118,17 @@ test("28 — CRM company detail page loads with tabs", async ({ adminPage }) => 
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
-// 29. Deal/opportunity detail loads all tabs, stage stepper renders
+// 29. Unified deal detail loads all tabs, stage stepper renders
 // ─────────────────────────────────────────────────────────────────────────────
-test("29 — deal detail page loads with tabs and stage stepper", async ({
+test("29 — unified deal detail loads with tabs and stage stepper", async ({
   adminPage,
 }) => {
-  await adminPage.goto("/admin/pipeline/debt");
+  await adminPage.goto("/admin/pipeline");
   await adminPage.waitForLoadState("networkidle");
 
-  // Look for a deal card or link on the pipeline/kanban view
+  // Look for a deal card or link on the unified pipeline view
   const dealCard = adminPage.locator(
-    '[class*="card"] a, [class*="Card"] a, table tbody tr a, [draggable] a, a[href*="/deals/"], a[href*="/pipeline/debt/"]'
+    '[class*="card"] a, [class*="Card"] a, table tbody tr a, [draggable] a, a[href*="/deals/"], a[href*="/pipeline/"]'
   );
 
   const hasDeals = await dealCard.first().isVisible({ timeout: 5_000 }).catch(() => false);
@@ -165,16 +165,16 @@ test("29 — deal detail page loads with tabs and stage stepper", async ({
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
-// 30. Pipeline view — kanban board renders with deals in correct stages
+// 30. Unified pipeline view — kanban board renders
 // ─────────────────────────────────────────────────────────────────────────────
-test("30 — pipeline kanban board renders", async ({ adminPage }) => {
-  await adminPage.goto("/admin/pipeline/debt");
+test("30 — unified pipeline kanban board renders", async ({ adminPage }) => {
+  await adminPage.goto("/admin/pipeline");
   await adminPage.waitForLoadState("networkidle");
 
   const main = adminPage.locator("main");
   await expect(main).toBeVisible();
 
-  // Kanban board should have columns or a board-like layout
+  // Unified pipeline should have columns or a board-like layout
   const boardContent = adminPage.locator(
     '[class*="kanban"], [class*="column"], [class*="board"], [class*="pipeline"], [draggable], [class*="stage"]'
   );

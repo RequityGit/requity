@@ -21,13 +21,15 @@ const adminSidebarLinks = [
   { label: "Dashboard", path: "/admin/dashboard" },
   { label: "Contacts", path: "/admin/crm/contacts" },
   { label: "Companies", path: "/admin/crm/companies" },
-  { label: "Debt", path: "/admin/pipeline/debt" },
-  { label: "Equity", path: "/admin/pipeline/equity" },
+  { label: "Pipeline", path: "/admin/pipeline" },
+  { label: "Operations", path: "/admin/operations/tasks" },
+  // Toolbox group items
+  { label: "Documents", path: "/admin/documents" },
   { label: "Servicing", path: "/admin/servicing" },
   { label: "Investments", path: "/admin/funds" },
-  { label: "Documents", path: "/admin/documents" },
-  { label: "Tasks", path: "/admin/operations/tasks" },
-  { label: "Approvals", path: "/admin/operations/approvals" },
+  { label: "Comm Model", path: "/admin/models/commercial" },
+  { label: "RTL Model", path: "/admin/models/rtl" },
+  { label: "DSCR Model", path: "/admin/models/dscr" },
 ];
 
 test.describe("9 — Borrower sidebar links", () => {
@@ -182,7 +184,7 @@ test.skip("12 — back/forward navigation preserves state", async ({ adminPage }
 test.describe("13 — Deep linking", () => {
   const deepLinks = [
     { page: "adminPage" as const, path: "/admin/crm/contacts", name: "CRM contacts" },
-    { page: "adminPage" as const, path: "/admin/pipeline/debt", name: "Debt pipeline" },
+    { page: "adminPage" as const, path: "/admin/pipeline", name: "Unified pipeline" },
     { page: "adminPage" as const, path: "/admin/operations/tasks", name: "Operations tasks" },
     { page: "borrowerPage" as const, path: "/borrower/payments", name: "Borrower payments" },
     { page: "investorPage" as const, path: "/investor/documents", name: "Investor documents" },

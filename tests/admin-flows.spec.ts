@@ -74,22 +74,18 @@ test("42 — admin sidebar links all resolve without 500", async ({ adminPage })
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
-// 43. Loan pipeline page loads
+// 43. Unified pipeline page loads
 // ─────────────────────────────────────────────────────────────────────────────
-test("43 — admin loan pipeline loads", async ({ adminPage }) => {
-  const loaded = await gotoFirstValid(adminPage, [
-    "/lending/pipeline", "/admin/pipeline", "/pipeline",
-  ]);
-  if (!loaded) { test.skip(); return; }
-
+test("43 — admin unified pipeline loads", async ({ adminPage }) => {
+  await adminPage.goto("/admin/pipeline");
   await adminPage.waitForLoadState("networkidle");
   const main = adminPage.locator("main");
   await expect(main).toBeVisible();
 
   const pipelineUI = adminPage.locator(
-    'table, [role="table"], [class*="kanban"], [class*="pipeline"], [class*="stage"], [class*="column"]'
+    'table, [role="table"], [class*="kanban"], [class*="pipeline"], [class*="stage"], [class*="column"], [draggable]'
   );
-  const content = adminPage.locator('text=/pipeline|loan|opportunity|deal|stage/i');
+  const content = adminPage.locator('text=/pipeline|deal|stage|unified/i');
 
   const hasUI = await pipelineUI.first().isVisible({ timeout: 5_000 }).catch(() => false);
   const hasContent = await content.first().isVisible({ timeout: 5_000 }).catch(() => false);
@@ -396,4 +392,223 @@ test("56 — admin loan detail page loads", async ({ adminPage }) => {
     const errorHeading = adminPage.locator('text="Failed to load this page"');
     await expect(errorHeading).not.toBeVisible({ timeout: 2_000 });
   }
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 57. Unified pipeline deal detail loads with tabs and stage stepper
+// ─────────────────────────────────────────────────────────────────────────────
+test("57 — pipeline deal detail loads with tabs and stepper", async ({ adminPage }) => {
+  await adminPage.goto("/admin/pipeline");
+  await adminPage.waitForLoadState("networkidle");
+
+  // Find a deal card/link in the pipeline view
+  const dealLink = adminPage.locator(
+    'a[href*="/pipeline/"], [class*="card"] a, [draggable] a'
+  );
+
+  const hasDeals = await dealLink.first().isVisible({ timeout: 5_000 }).catch(() => false);
+
+  if (hasDeals) {
+    await dealLink.first().click();
+    await adminPage.waitForLoadState("networkidle");
+
+    const main = adminPage.locator("main");
+    await expect(main).toBeVisible();
+
+    // Check for stage stepper
+    const stepper = adminPage.locator(
+      '[class*="stepper"], [class*="stage"], [class*="Step"]'
+    );
+    const hasStepper = await stepper.first().isVisible({ timeout: 5_000 }).catch(() => false);
+
+    // Check for tabs (Overview, Documents, Conditions, etc.)
+    const tabs = adminPage.locator('[role="tablist"] [role="tab"]');
+    const tabCount = await tabs.count();
+
+    // Deal detail should have at least tabs or stepper
+    expect(hasStepper || tabCount > 0).toBeTruthy();
+
+    // Click through available tabs — verify no crashes
+    if (tabCount > 0) {
+      for (let i = 0; i < tabCount; i++) {
+        await tabs.nth(i).click();
+        await adminPage.waitForTimeout(500);
+        await expect(main).toBeVisible();
+      }
+    }
+
+    // No error boundary
+    const errorHeading = adminPage.locator('text="Failed to load this page"');
+    await expect(errorHeading).not.toBeVisible({ timeout: 2_000 });
+  } else {
+    // No deals — pipeline page itself rendered fine
+    await expect(adminPage.locator("main")).toBeVisible();
+  }
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 58. Pipeline drag-and-drop columns render
+// ─────────────────────────────────────────────────────────────────────────────
+test("58 — pipeline kanban renders draggable deal cards", async ({ adminPage }) => {
+  await adminPage.goto("/admin/pipeline");
+  await adminPage.waitForLoadState("networkidle");
+
+  const main = adminPage.locator("main");
+  await expect(main).toBeVisible();
+
+  // Unified pipeline should show kanban columns with stage names
+  const pipelineContent = adminPage.locator(
+    '[class*="kanban"], [class*="column"], [class*="pipeline"], [draggable], [class*="stage"]'
+  );
+  const tableView = adminPage.locator('table, [role="table"]');
+  const emptyState = adminPage.locator('text=/no.*deal|empty|no data/i');
+
+  const hasBoard = await pipelineContent.first().isVisible({ timeout: 5_000 }).catch(() => false);
+  const hasTable = await tableView.first().isVisible({ timeout: 3_000 }).catch(() => false);
+  const hasEmpty = await emptyState.first().isVisible({ timeout: 3_000 }).catch(() => false);
+
+  expect(hasBoard || hasTable || hasEmpty).toBeTruthy();
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 59. Old pipeline routes redirect to unified pipeline
+// ─────────────────────────────────────────────────────────────────────────────
+test("59 — old pipeline routes redirect to unified pipeline", async ({ adminPage }) => {
+  // /admin/pipeline/debt should redirect to /admin/pipeline
+  await adminPage.goto("/admin/pipeline/debt");
+  await adminPage.waitForLoadState("networkidle");
+  expect(adminPage.url()).toContain("/admin/pipeline");
+
+  // /admin/pipeline/equity should redirect to /admin/pipeline
+  await adminPage.goto("/admin/pipeline/equity");
+  await adminPage.waitForLoadState("networkidle");
+  expect(adminPage.url()).toContain("/admin/pipeline");
+
+  // Main content visible after redirect
+  await expect(adminPage.locator("main")).toBeVisible();
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 60. Document center loads
+// ─────────────────────────────────────────────────────────────────────────────
+test("60 — admin document center loads", async ({ adminPage }) => {
+  await adminPage.goto("/admin/documents");
+  await adminPage.waitForLoadState("networkidle");
+
+  const main = adminPage.locator("main");
+  await expect(main).toBeVisible();
+
+  const content = adminPage.locator('text=/document|upload|file/i');
+  const hasContent = await content.first().isVisible({ timeout: 5_000 }).catch(() => false);
+
+  // Should show document table or upload form
+  const table = adminPage.locator('table, [role="table"]');
+  const hasTable = await table.first().isVisible({ timeout: 5_000 }).catch(() => false);
+
+  expect(hasContent || hasTable).toBeTruthy();
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 61. Operations page loads with tasks tab
+// ─────────────────────────────────────────────────────────────────────────────
+test("61 — operations tasks page loads", async ({ adminPage }) => {
+  await adminPage.goto("/admin/operations/tasks");
+  await adminPage.waitForLoadState("networkidle");
+
+  const main = adminPage.locator("main");
+  await expect(main).toBeVisible();
+
+  const content = adminPage.locator('text=/task|operation|assignment|to.?do/i');
+  const emptyState = adminPage.locator('text=/no.*task|empty/i');
+
+  const hasContent = await content.first().isVisible({ timeout: 5_000 }).catch(() => false);
+  const hasEmpty = await emptyState.first().isVisible({ timeout: 3_000 }).catch(() => false);
+
+  expect(hasContent || hasEmpty).toBeTruthy();
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 62. Operations approvals page loads
+// ─────────────────────────────────────────────────────────────────────────────
+test("62 — operations approvals page loads", async ({ adminPage }) => {
+  await adminPage.goto("/admin/operations/approvals");
+  await adminPage.waitForLoadState("networkidle");
+
+  const main = adminPage.locator("main");
+  await expect(main).toBeVisible();
+
+  const content = adminPage.locator('text=/approval|pending|review/i');
+  const emptyState = adminPage.locator('text=/no.*approval|empty/i');
+
+  const hasContent = await content.first().isVisible({ timeout: 5_000 }).catch(() => false);
+  const hasEmpty = await emptyState.first().isVisible({ timeout: 3_000 }).catch(() => false);
+
+  expect(hasContent || hasEmpty).toBeTruthy();
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 63. Toolbox — Servicing page loads
+// ─────────────────────────────────────────────────────────────────────────────
+test("63 — admin servicing page loads", async ({ adminPage }) => {
+  await adminPage.goto("/admin/servicing");
+  await adminPage.waitForLoadState("networkidle");
+
+  const main = adminPage.locator("main");
+  await expect(main).toBeVisible();
+
+  const content = adminPage.locator('text=/servicing|loan|payment|draw/i');
+  const hasContent = await content.first().isVisible({ timeout: 5_000 }).catch(() => false);
+
+  expect(hasContent).toBeTruthy();
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 64. Toolbox — Commercial model page loads
+// ─────────────────────────────────────────────────────────────────────────────
+test("64 — admin commercial model page loads", async ({ adminPage }) => {
+  const loaded = await gotoFirstValid(adminPage, [
+    "/admin/models/commercial", "/admin/models",
+  ]);
+  if (!loaded) { test.skip(); return; }
+
+  await adminPage.waitForLoadState("networkidle");
+  const main = adminPage.locator("main");
+  await expect(main).toBeVisible();
+
+  const content = adminPage.locator('text=/model|commercial|scenario|underwriting/i');
+  const hasContent = await content.first().isVisible({ timeout: 5_000 }).catch(() => false);
+
+  expect(hasContent).toBeTruthy();
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 65. Toolbox — RTL model page loads
+// ─────────────────────────────────────────────────────────────────────────────
+test("65 — admin RTL model page loads", async ({ adminPage }) => {
+  await adminPage.goto("/admin/models/rtl");
+  await adminPage.waitForLoadState("networkidle");
+
+  const main = adminPage.locator("main");
+  await expect(main).toBeVisible();
+
+  const content = adminPage.locator('text=/model|rtl|scenario|underwriting/i');
+  const hasContent = await content.first().isVisible({ timeout: 5_000 }).catch(() => false);
+
+  expect(hasContent).toBeTruthy();
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 66. Toolbox — DSCR model page loads
+// ─────────────────────────────────────────────────────────────────────────────
+test("66 — admin DSCR model page loads", async ({ adminPage }) => {
+  await adminPage.goto("/admin/models/dscr");
+  await adminPage.waitForLoadState("networkidle");
+
+  const main = adminPage.locator("main");
+  await expect(main).toBeVisible();
+
+  const content = adminPage.locator('text=/dscr|model|debt.*service|coverage/i');
+  const hasContent = await content.first().isVisible({ timeout: 5_000 }).catch(() => false);
+
+  expect(hasContent).toBeTruthy();
 });
