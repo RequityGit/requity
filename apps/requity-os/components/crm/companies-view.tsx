@@ -3,7 +3,27 @@
 import { useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 import { AddCompanyDialog } from "@/components/crm/add-company-dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { deleteCrmCompanyAction } from "@/app/(authenticated)/admin/crm/actions";
+import { useToast } from "@/components/ui/use-toast";
 import {
   CRM_COMPANY_TYPES,
 } from "@/lib/constants";
@@ -15,9 +35,11 @@ import {
   ArrowUpDown,
   ArrowUp,
   ArrowDown,
+  MoreHorizontal,
+  Eye,
+  Trash2,
 } from "lucide-react";
 import { CompanyStatusDot } from "./crm-primitives";
-import { DeleteCompanyButton } from "./delete-company-button";
 import type { CompanyRowV2 } from "./crm-v2-page";
 
 interface CompaniesViewProps {
@@ -27,10 +49,32 @@ interface CompaniesViewProps {
 
 export function CompaniesView({ companies, isSuperAdmin = false }: CompaniesViewProps) {
   const router = useRouter();
+  const { toast } = useToast();
 
   const [companySearch, setCompanySearch] = useState("");
   const [companySortKey, setCompanySortKey] = useState<string>("name");
   const [companySortDir, setCompanySortDir] = useState<"asc" | "desc">("asc");
+  const [deleteTarget, setDeleteTarget] = useState<{ id: string; name: string } | null>(null);
+  const [deleting, setDeleting] = useState(false);
+
+  async function handleDelete() {
+    if (!deleteTarget) return;
+    setDeleting(true);
+    try {
+      const result = await deleteCrmCompanyAction(deleteTarget.id);
+      if (result.error) {
+        toast({ title: "Error deleting company", description: result.error, variant: "destructive" });
+      } else {
+        toast({ title: "Company deleted" });
+        router.refresh();
+      }
+    } catch {
+      toast({ title: "Error deleting company", description: "An unexpected error occurred", variant: "destructive" });
+    } finally {
+      setDeleting(false);
+      setDeleteTarget(null);
+    }
+  }
 
   const filteredCompanies = useMemo(() => {
     let result = [...companies];
@@ -143,15 +187,13 @@ export function CompaniesView({ companies, isSuperAdmin = false }: CompaniesView
                   <SortHeader label="Files" sortKey="file_count" className="text-right" />
                   <th className="text-xs font-medium text-muted-foreground text-left px-4 py-2.5">Location</th>
                   <SortHeader label="Status" sortKey="is_active" />
-                  {isSuperAdmin && (
-                    <th className="text-xs font-medium text-muted-foreground text-center px-4 py-2.5 w-12" />
-                  )}
+                  <th className="text-xs font-medium text-muted-foreground text-center px-4 py-2.5 w-12" />
                 </tr>
               </thead>
               <tbody>
                 {filteredCompanies.length === 0 ? (
                   <tr>
-                    <td colSpan={isSuperAdmin ? 8 : 7} className="text-center py-16">
+                    <td colSpan={7} className="text-center py-16">
                       <Building2 className="h-8 w-8 text-muted-foreground/40 mx-auto mb-2" />
                       <p className="text-sm font-medium text-muted-foreground">No companies found</p>
                     </td>
@@ -193,15 +235,40 @@ export function CompaniesView({ companies, isSuperAdmin = false }: CompaniesView
                       <td className="px-4 py-3">
                         <CompanyStatusDot isActive={c.is_active} />
                       </td>
-                      {isSuperAdmin && (
-                        <td className="px-4 py-3 text-center" onClick={(e) => e.stopPropagation()}>
-                          <DeleteCompanyButton
-                            companyId={c.id}
-                            companyName={c.name}
-                            variant="icon"
-                          />
-                        </td>
-                      )}
+                      <td className="px-4 py-3 text-center" onClick={(e) => e.stopPropagation()}>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-7 w-7 p-0 text-muted-foreground hover:text-foreground"
+                            >
+                              <MoreHorizontal className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end" className="w-40">
+                            <DropdownMenuItem
+                              onClick={() => router.push(`/admin/crm/companies/${c.id}`)}
+                              className="gap-2 text-xs"
+                            >
+                              <Eye className="h-3.5 w-3.5" />
+                              View / Edit
+                            </DropdownMenuItem>
+                            {isSuperAdmin && (
+                              <>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem
+                                  onClick={() => setDeleteTarget({ id: c.id, name: c.name })}
+                                  className="gap-2 text-xs text-red-600 focus:text-red-600"
+                                >
+                                  <Trash2 className="h-3.5 w-3.5" />
+                                  Delete
+                                </DropdownMenuItem>
+                              </>
+                            )}
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </td>
                     </tr>
                   ))
                 )}
@@ -214,6 +281,29 @@ export function CompaniesView({ companies, isSuperAdmin = false }: CompaniesView
             </span>
           </div>
         </div>
+
+      {/* Delete confirmation dialog */}
+      <AlertDialog open={!!deleteTarget} onOpenChange={(open) => { if (!open) setDeleteTarget(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Company</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete &quot;{deleteTarget?.name}&quot;? This
+              company will be removed from the CRM. This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDelete}
+              disabled={deleting}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              {deleting ? "Deleting..." : "Delete"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

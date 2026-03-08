@@ -7,4 +7,5 @@ export {
   formatCompactCurrency,
   formatPhoneNumber,
   formatPhoneInput,
+  smartDate,
 } from "./format";

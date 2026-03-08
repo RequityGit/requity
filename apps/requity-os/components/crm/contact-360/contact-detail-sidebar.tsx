@@ -198,7 +198,7 @@ export function ContactDetailSidebar({
               </HoverCard>
             )}
             {!assignedToName && (
-              <p className="text-xs text-muted-foreground">No followers yet.</p>
+              <p className="text-xs text-muted-foreground">No followers yet. Assign an owner to add followers.</p>
             )}
           </div>
         </CardContent>
@@ -215,44 +215,52 @@ export function ContactDetailSidebar({
         <CardContent className="px-5 py-4">
           {relationships.length === 0 ? (
             <p className="text-xs text-muted-foreground">
-              No relationships defined.
+              No relationships defined. Edit the contact to add relationship types.
             </p>
           ) : (
             <div className="flex flex-col">
               {relationships.map((r, i) => {
                 const key = r.relationship_type.toLowerCase();
                 const colors = RELATIONSHIP_BADGE_COLORS[key];
+                const typeLabel =
+                  r.relationship_type.charAt(0).toUpperCase() +
+                  r.relationship_type.slice(1);
                 return (
                   <div key={r.id}>
                     <div className="flex justify-between items-center py-2.5">
-                      {colors ? (
-                        <Badge
-                          variant="outline"
-                          className="text-[11px] gap-1"
-                          style={{
-                            color: colors.text,
-                            borderColor: `${colors.text}30`,
-                            backgroundColor: colors.bg,
-                          }}
-                        >
-                          <span
-                            className="h-1.5 w-1.5 rounded-full"
+                      <div className="flex items-center gap-1.5 min-w-0">
+                        {colors ? (
+                          <Badge
+                            variant="outline"
+                            className="text-[11px] gap-1 shrink-0"
                             style={{
-                              backgroundColor: r.is_active
-                                ? colors.dot
-                                : "hsl(var(--muted-foreground))",
+                              color: colors.text,
+                              borderColor: `${colors.text}30`,
+                              backgroundColor: colors.bg,
                             }}
-                          />
-                          {r.relationship_type.charAt(0).toUpperCase() +
-                            r.relationship_type.slice(1)}
-                        </Badge>
-                      ) : (
-                        <Badge variant="secondary" className="text-[11px]">
-                          {r.relationship_type.charAt(0).toUpperCase() +
-                            r.relationship_type.slice(1)}
-                        </Badge>
-                      )}
-                      <span className="text-[10px] text-muted-foreground">
+                          >
+                            <span
+                              className="h-1.5 w-1.5 rounded-full"
+                              style={{
+                                backgroundColor: r.is_active
+                                  ? colors.dot
+                                  : "hsl(var(--muted-foreground))",
+                              }}
+                            />
+                            {typeLabel}
+                          </Badge>
+                        ) : (
+                          <Badge variant="secondary" className="text-[11px] shrink-0">
+                            {typeLabel}
+                          </Badge>
+                        )}
+                        {contact.company_name && (
+                          <span className="text-[10px] text-muted-foreground truncate">
+                            @ {contact.company_name}
+                          </span>
+                        )}
+                      </div>
+                      <span className="text-[10px] text-muted-foreground shrink-0 ml-2">
                         Since {formatDate(r.started_at)}
                       </span>
                     </div>

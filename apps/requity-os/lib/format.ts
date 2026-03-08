@@ -58,6 +58,35 @@ export function formatPhoneInput(value: string): string {
   return `(${digits.slice(0, 3)}) ${digits.slice(3, 6)}-${digits.slice(6)}`;
 }
 
+/**
+ * Returns a relative time string for recent dates (< 7 days) or absolute date for older ones.
+ * Use the returned `title` property as a hover tooltip to always show the absolute date.
+ */
+export function smartDate(date: string | null | undefined): { text: string; title: string } {
+  if (!date) return { text: "—", title: "" };
+  const d = new Date(date);
+  const now = new Date();
+  const diffMs = now.getTime() - d.getTime();
+  const diffDays = Math.floor(diffMs / 86400000);
+  const absolute = d.toLocaleDateString("en-US", {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+  });
+
+  if (diffMs < 0) return { text: absolute, title: absolute };
+  if (diffDays === 0) {
+    const diffHours = Math.floor(diffMs / 3600000);
+    if (diffHours === 0) {
+      const diffMins = Math.floor(diffMs / 60000);
+      return { text: diffMins <= 1 ? "just now" : `${diffMins}m ago`, title: absolute };
+    }
+    return { text: `${diffHours}h ago`, title: absolute };
+  }
+  if (diffDays < 7) return { text: `${diffDays}d ago`, title: absolute };
+  return { text: absolute, title: absolute };
+}
+
 export function timeAgo(dateStr: string): string {
   const diff = Date.now() - new Date(dateStr).getTime();
   const hours = Math.floor(diff / (1000 * 60 * 60));

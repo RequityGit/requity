@@ -76,7 +76,7 @@ function DealTaskRow({ task, profiles, onComplete, onClick }: DealTaskRowProps) 
 
         <span
           className={cn(
-            "text-sm font-medium flex-1 truncate",
+            "text-sm font-medium flex-1 line-clamp-2",
             isCompleting && "line-through opacity-60"
           )}
         >
@@ -296,7 +296,7 @@ export function DealTasks({
                           strokeWidth={3}
                         />
                       </div>
-                      <span className="text-sm text-muted-foreground line-through flex-1 truncate">
+                      <span className="text-sm text-muted-foreground line-through flex-1 line-clamp-2">
                         {task.title}
                       </span>
                       {task.completed_at && (
