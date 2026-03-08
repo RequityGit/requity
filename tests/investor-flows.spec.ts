@@ -240,29 +240,3 @@ test("39 — investor is redirected away from borrower routes", async ({ investo
   }
 });
 
-// ─────────────────────────────────────────────────────────────────────────────
-// 40. Investor chatter page loads
-// ─────────────────────────────────────────────────────────────────────────────
-test("40 — investor chatter page loads", async ({ investorPage }) => {
-  await investorPage.goto("/chat");
-  await investorPage.waitForLoadState("networkidle");
-
-  const main = investorPage.locator("main");
-  await expect(main).toBeVisible();
-
-  const chatUI = investorPage.locator(
-    'text=/chat|message|conversation|room|chatter/i, input[placeholder*="message" i], textarea'
-  );
-  const emptyState = investorPage.locator(
-    'text=/no.*message|no.*conversation|start.*chat|no.*room|no conversations yet|select a channel|loading channels/i'
-  );
-  const loadingIndicator = investorPage.locator(
-    '[class*="spinner"], [class*="loading"], svg[class*="animate"], [class*="Loader"], [class*="loader"], svg.lucide'
-  );
-
-  const hasChat = await chatUI.first().isVisible({ timeout: 5_000 }).catch(() => false);
-  const hasEmpty = await emptyState.first().isVisible({ timeout: 5_000 }).catch(() => false);
-  const hasLoading = await loadingIndicator.first().isVisible({ timeout: 3_000 }).catch(() => false);
-
-  expect(hasChat || hasEmpty || hasLoading).toBeTruthy();
-});

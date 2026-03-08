@@ -438,7 +438,7 @@ function ConditionRow({
               <UnifiedNotes
                 entityType="unified_condition"
                 entityId={c.id}
-                loanId={dealId}
+                dealId={dealId}
                 compact
               />
             </div>

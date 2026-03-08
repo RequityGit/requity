@@ -11,6 +11,7 @@ export type NoteEntityType =
 export interface UnifiedNotesProps {
   entityType: NoteEntityType;
   entityId: string;
+  dealId?: string;
   loanId?: string;
   opportunityId?: string;
   showInternalToggle?: boolean;

@@ -3281,7 +3281,6 @@ export type Database = {
           created_at: string
           id: string
           notify_on_activity: boolean | null
-          notify_on_chatter: boolean | null
           notify_on_task: boolean | null
           user_id: string
         }
@@ -3291,7 +3290,6 @@ export type Database = {
           created_at?: string
           id?: string
           notify_on_activity?: boolean | null
-          notify_on_chatter?: boolean | null
           notify_on_task?: boolean | null
           user_id: string
         }
@@ -3301,7 +3299,6 @@ export type Database = {
           created_at?: string
           id?: string
           notify_on_activity?: boolean | null
-          notify_on_chatter?: boolean | null
           notify_on_task?: boolean | null
           user_id?: string
         }
@@ -8734,14 +8731,14 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "crm_chatter_mentions_mentioned_user_id_fkey"
+            foreignKeyName: "note_mentions_mentioned_user_id_fkey"
             columns: ["mentioned_user_id"]
             isOneToOne: false
             referencedRelation: "equity_pipeline"
             referencedColumns: ["assigned_to_profile_id"]
           },
           {
-            foreignKeyName: "crm_chatter_mentions_mentioned_user_id_fkey"
+            foreignKeyName: "note_mentions_mentioned_user_id_fkey"
             columns: ["mentioned_user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
@@ -8766,6 +8763,7 @@ export type Database = {
           condition_id: string | null
           contact_id: string | null
           created_at: string
+          deal_id: string | null
           deleted_at: string | null
           edited_at: string | null
           id: string
@@ -8792,6 +8790,7 @@ export type Database = {
           condition_id?: string | null
           contact_id?: string | null
           created_at?: string
+          deal_id?: string | null
           deleted_at?: string | null
           edited_at?: string | null
           id?: string
@@ -8818,6 +8817,7 @@ export type Database = {
           condition_id?: string | null
           contact_id?: string | null
           created_at?: string
+          deal_id?: string | null
           deleted_at?: string | null
           edited_at?: string | null
           id?: string
@@ -8837,83 +8837,6 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "crm_chatter_posts_author_id_fkey"
-            columns: ["author_id"]
-            isOneToOne: false
-            referencedRelation: "equity_pipeline"
-            referencedColumns: ["assigned_to_profile_id"]
-          },
-          {
-            foreignKeyName: "crm_chatter_posts_author_id_fkey"
-            columns: ["author_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "crm_chatter_posts_company_id_fkey"
-            columns: ["company_id"]
-            isOneToOne: false
-            referencedRelation: "companies"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "crm_chatter_posts_contact_id_fkey"
-            columns: ["contact_id"]
-            isOneToOne: false
-            referencedRelation: "crm_contacts"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "crm_chatter_posts_contact_id_fkey"
-            columns: ["contact_id"]
-            isOneToOne: false
-            referencedRelation: "crm_contacts_active"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "crm_chatter_posts_contact_id_fkey"
-            columns: ["contact_id"]
-            isOneToOne: false
-            referencedRelation: "crm_duplicate_candidates"
-            referencedColumns: ["contact_id"]
-          },
-          {
-            foreignKeyName: "crm_chatter_posts_contact_id_fkey"
-            columns: ["contact_id"]
-            isOneToOne: false
-            referencedRelation: "crm_duplicate_candidates"
-            referencedColumns: ["potential_duplicate_id"]
-          },
-          {
-            foreignKeyName: "crm_chatter_posts_loan_id_fkey"
-            columns: ["loan_id"]
-            isOneToOne: false
-            referencedRelation: "loan_pipeline"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "crm_chatter_posts_loan_id_fkey"
-            columns: ["loan_id"]
-            isOneToOne: false
-            referencedRelation: "loans"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "crm_chatter_posts_pinned_by_fkey"
-            columns: ["pinned_by"]
-            isOneToOne: false
-            referencedRelation: "equity_pipeline"
-            referencedColumns: ["assigned_to_profile_id"]
-          },
-          {
-            foreignKeyName: "crm_chatter_posts_pinned_by_fkey"
-            columns: ["pinned_by"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
             foreignKeyName: "notes_approval_id_fkey"
             columns: ["approval_id"]
             isOneToOne: false
@@ -8921,10 +8844,80 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "notes_author_id_fkey"
+            columns: ["author_id"]
+            isOneToOne: false
+            referencedRelation: "equity_pipeline"
+            referencedColumns: ["assigned_to_profile_id"]
+          },
+          {
+            foreignKeyName: "notes_author_id_fkey"
+            columns: ["author_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notes_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "notes_condition_id_fkey"
             columns: ["condition_id"]
             isOneToOne: false
             referencedRelation: "loan_conditions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notes_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "crm_contacts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notes_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "crm_contacts_active"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notes_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "crm_duplicate_candidates"
+            referencedColumns: ["contact_id"]
+          },
+          {
+            foreignKeyName: "notes_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "crm_duplicate_candidates"
+            referencedColumns: ["potential_duplicate_id"]
+          },
+          {
+            foreignKeyName: "notes_deal_id_fkey"
+            columns: ["deal_id"]
+            isOneToOne: false
+            referencedRelation: "unified_deals"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notes_loan_id_fkey"
+            columns: ["loan_id"]
+            isOneToOne: false
+            referencedRelation: "loan_pipeline"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notes_loan_id_fkey"
+            columns: ["loan_id"]
+            isOneToOne: false
+            referencedRelation: "loans"
             referencedColumns: ["id"]
           },
           {
@@ -8946,6 +8939,20 @@ export type Database = {
             columns: ["parent_note_id"]
             isOneToOne: false
             referencedRelation: "notes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notes_pinned_by_fkey"
+            columns: ["pinned_by"]
+            isOneToOne: false
+            referencedRelation: "equity_pipeline"
+            referencedColumns: ["assigned_to_profile_id"]
+          },
+          {
+            foreignKeyName: "notes_pinned_by_fkey"
+            columns: ["pinned_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
           {
@@ -16555,12 +16562,6 @@ export const Constants = {
     },
   },
 } as const
-
-
-// ---------------------------------------------------------------------------
-// Custom types (manually added, not auto-generated)
-// ---------------------------------------------------------------------------
-
 export interface PricingProgram {
   id: string;
   created_at: string;
