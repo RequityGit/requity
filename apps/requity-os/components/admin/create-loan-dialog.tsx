@@ -27,7 +27,7 @@ import {
 import { LOAN_PRIORITIES, LOAN_DB_TYPES, LOAN_PURPOSES } from "@/lib/constants";
 import { useToast } from "@/components/ui/use-toast";
 import { PlusCircle, Search, Check, X, UserPlus } from "lucide-react";
-import { z } from "zod";
+import { createLoanSchema } from "@/lib/schemas/loan";
 
 interface TeamMember {
   id: string;
@@ -50,16 +50,6 @@ interface CreateLoanDialogProps {
   /** Pre-select a borrower by ID */
   initialBorrowerId?: string;
 }
-
-const createLoanSchema = z.object({
-  borrower_id: z.string().min(1, "Borrower is required"),
-  type: z.string().min(1, "Loan type is required"),
-  purpose: z.string().min(1, "Loan purpose is required"),
-  loan_amount: z.string().refine(
-    (val) => { const n = parseFloat(val); return !isNaN(n) && n > 0; },
-    { message: "Loan amount must be a positive number" }
-  ),
-});
 
 const US_STATES = [
   "AL","AK","AZ","AR","CA","CO","CT","DE","FL","GA","HI","ID","IL","IN","IA",
