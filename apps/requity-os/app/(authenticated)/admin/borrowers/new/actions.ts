@@ -89,10 +89,14 @@ export async function addBorrowerAction(input: AddBorrowerInput) {
     }
 
     // Step 3: Link the contact back to the borrower
-    await (admin as any)
+    const { error: linkError } = await (admin as any)
       .from("crm_contacts")
       .update({ borrower_id: borrower.id })
       .eq("id", contact.id);
+
+    if (linkError) {
+      console.error("addBorrowerAction: failed to link contact to borrower", linkError);
+    }
 
     revalidatePath("/admin/borrowers");
     revalidatePath("/admin/crm");

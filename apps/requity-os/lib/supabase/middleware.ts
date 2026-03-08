@@ -11,7 +11,14 @@ export async function updateSession(request: NextRequest) {
   const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
   if (!supabaseUrl || !supabaseAnonKey) {
-    // If Supabase is not configured, let the request through without auth
+    console.error("CRITICAL: Supabase environment variables not configured");
+    if (process.env.NODE_ENV === "production") {
+      return {
+        supabase: null,
+        user: null,
+        supabaseResponse: new NextResponse("Service unavailable", { status: 503 }),
+      };
+    }
     return { supabase: null, user: null, supabaseResponse };
   }
 
