@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { redirect, notFound } from "next/navigation";
 import { DealDetailPage } from "./DealDetailPage";
+import { ensureCommercialUW } from "./commercial-uw-actions";
 import {
   daysInStage,
   getAlertLevel,
@@ -136,7 +137,20 @@ export default async function DealDetailRoute({ params }: PageProps) {
       .limit(1)
       .maybeSingle();
 
-    const uwRecord = (uwRaw as unknown as { data: Record<string, unknown> | null }).data;
+    let uwRecord = (uwRaw as unknown as { data: Record<string, unknown> | null }).data;
+
+    // Auto-initialize UW record for commercial deals that don't have one yet
+    if (!uwRecord) {
+      await ensureCommercialUW(id);
+      const retryRaw = await admin
+        .from("deal_commercial_uw" as never)
+        .select("*")
+        .eq("opportunity_id" as never, id as never)
+        .order("version" as never, { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      uwRecord = (retryRaw as unknown as { data: Record<string, unknown> | null }).data;
+    }
 
     if (uwRecord) {
       const uwId = uwRecord.id as string;

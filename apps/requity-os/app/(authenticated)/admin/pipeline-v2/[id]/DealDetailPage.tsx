@@ -364,9 +364,11 @@ function TabContent({
         );
       }
       return (
-        <p className="text-sm text-muted-foreground py-4">
-          No commercial underwriting data available. Initialize from the Financials tab.
-        </p>
+        <div className="rounded-xl border border-dashed p-8 text-center">
+          <p className="text-sm text-muted-foreground">
+            Financial data is loading. Refresh the page to continue.
+          </p>
+        </div>
       );
     case "Underwriting":
       if (isCommercial && commercialUWData) {

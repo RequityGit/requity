@@ -9,6 +9,11 @@ import {
   ChevronDown,
   Pencil,
   Loader2,
+  Building2,
+  Table2,
+  FileUp,
+  Download,
+  MoreHorizontal,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -24,7 +29,7 @@ import { cn } from "@/lib/utils";
 import { upsertRentRoll } from "@/app/(authenticated)/admin/pipeline-v2/[id]/commercial-uw-actions";
 import { UploadRentRollDialog } from "@/components/admin/commercial-uw/upload-rent-roll-dialog";
 import type { RentRollRow } from "@/lib/commercial-uw/types";
-import { TableShell, TH, StatusDot, SubLabel, n, fmtCurrency } from "./shared";
+import { PillNav, MetricBar, SectionCard, StatusDot, n, fmtCurrency } from "./shared";
 
 interface RentRollSubTabProps {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -32,10 +37,13 @@ interface RentRollSubTabProps {
   uwId: string | null;
 }
 
+type Mode = "manual" | "upload";
+
 export function RentRollSubTab({ rentRoll, uwId }: RentRollSubTabProps) {
   const [showAllUnits, setShowAllUnits] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
   const [uploadOpen, setUploadOpen] = useState(false);
+  const [mode, setMode] = useState<Mode>("manual");
   const router = useRouter();
 
   const INITIAL_UNITS = 10;
@@ -44,36 +52,19 @@ export function RentRollSubTab({ rentRoll, uwId }: RentRollSubTabProps) {
     : rentRoll.slice(0, INITIAL_UNITS);
   const hiddenCount = rentRoll.length - INITIAL_UNITS;
 
-  const totalCurrentRent = useMemo(
-    () =>
-      rentRoll.reduce(
-        (sum: number, r: { current_rent: number }) => sum + n(r.current_rent),
-        0
-      ),
+  const occupied = useMemo(
+    () => rentRoll.filter((r: { status: string }) => r.status === "occupied"),
     [rentRoll]
+  );
+  const totalCurrentRent = useMemo(
+    () => occupied.reduce((sum: number, r: { current_rent: number }) => sum + n(r.current_rent), 0),
+    [occupied]
   );
   const totalMarketRent = useMemo(
-    () =>
-      rentRoll.reduce(
-        (sum: number, r: { market_rent: number }) => sum + n(r.market_rent),
-        0
-      ),
+    () => rentRoll.reduce((sum: number, r: { market_rent: number }) => sum + n(r.market_rent), 0),
     [rentRoll]
   );
-  const occupiedCount = useMemo(
-    () =>
-      rentRoll.filter((r: { status: string }) => r.status === "occupied")
-        .length,
-    [rentRoll]
-  );
-  const totalSF = useMemo(
-    () =>
-      rentRoll.reduce(
-        (sum: number, r: { sq_ft: number }) => sum + n(r.sq_ft),
-        0
-      ),
-    [rentRoll]
-  );
+  const lossToLease = totalMarketRent - totalCurrentRent;
 
   const handleImport = useCallback(
     async (rows: RentRollRow[]) => {
@@ -98,156 +89,185 @@ export function RentRollSubTab({ rentRoll, uwId }: RentRollSubTabProps) {
         toast.error(`Failed to import rent roll: ${result.error}`);
       } else {
         toast.success(`Imported ${rows.length} units from rent roll`);
+        setMode("manual");
         router.refresh();
       }
     },
     [uwId, router]
   );
 
+  const MODE_TABS = [
+    { key: "manual" as const, label: "Manual Entry", icon: Table2 },
+    { key: "upload" as const, label: "Upload & Map", icon: FileUp },
+  ];
+
   return (
-    <div className="flex flex-col gap-5">
-      {/* Header actions */}
+    <div className="flex flex-col gap-4">
+      {/* Mode toggle + actions */}
       <div className="flex items-center justify-between">
-        <SubLabel>
-          Rent Roll{" "}
-          {rentRoll.length > 0 && (
-            <span className="normal-case font-normal">
-              — {rentRoll.length} units
-            </span>
-          )}
-        </SubLabel>
-        <div className="flex items-center gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            className="h-7 gap-1 text-xs"
-            onClick={() => setUploadOpen(true)}
-          >
-            <Upload className="h-3 w-3" />
-            Upload
-          </Button>
+        <PillNav tabs={MODE_TABS} active={mode} onChange={setMode} />
+        {mode === "manual" && (
           <Button
             variant="outline"
             size="sm"
             className="h-7 gap-1 text-xs"
             onClick={() => setEditOpen(true)}
           >
-            <Pencil className="h-3 w-3" />
-            {rentRoll.length > 0 ? "Edit" : "Add Manually"}
+            <Plus className="h-3 w-3" />
+            {rentRoll.length > 0 ? "Edit Units" : "Add Units"}
           </Button>
-        </div>
+        )}
       </div>
 
-      {/* Summary KPIs */}
-      {rentRoll.length > 0 && (
-        <div className="grid grid-cols-4 gap-3">
-          <KPI label="Total Units" value={String(rentRoll.length)} />
-          <KPI
-            label="Occupancy"
-            value={`${((occupiedCount / rentRoll.length) * 100).toFixed(0)}%`}
-          />
-          <KPI label="Current Rent" value={`${fmtCurrency(totalCurrentRent)}/mo`} />
-          <KPI label="Total SF" value={totalSF > 0 ? totalSF.toLocaleString() : "—"} />
-        </div>
-      )}
+      {mode === "manual" ? (
+        <>
+          {/* Rent Roll Table */}
+          {rentRoll.length === 0 ? (
+            <div className="rounded-xl border border-dashed p-8 text-center">
+              <p className="text-sm text-muted-foreground mb-3">
+                No rent roll data yet. Upload a spreadsheet or enter units manually.
+              </p>
+              <div className="flex items-center gap-2 justify-center">
+                <Button variant="outline" size="sm" onClick={() => setMode("upload")}>
+                  <Upload className="h-3.5 w-3.5 mr-1.5" />
+                  Upload Rent Roll
+                </Button>
+                <Button variant="outline" size="sm" onClick={() => setEditOpen(true)}>
+                  <Plus className="h-3.5 w-3.5 mr-1.5" />
+                  Add Manually
+                </Button>
+              </div>
+            </div>
+          ) : (
+            <>
+              <SectionCard
+                title="Rent Roll"
+                icon={Building2}
+                noPad
+                actions={
+                  <Button variant="outline" size="sm" className="h-7 gap-1 text-xs">
+                    <Download className="h-3 w-3" />
+                    Export
+                  </Button>
+                }
+              >
+                <div className="overflow-x-auto">
+                  <table className="w-full border-collapse text-[13px]">
+                    <thead>
+                      <tr className="border-b">
+                        {["Unit", "Tenant", "Beds", "Baths", "SF", "Status", "Lease Start", "Lease End", "Current Rent"].map(h => (
+                          <th key={h} className={cn(
+                            "px-3 py-2.5 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground",
+                            ["SF", "Current Rent"].includes(h) ? "text-right" : "text-left"
+                          )}>{h}</th>
+                        ))}
+                        <th className="px-3 py-2.5 text-[11px] font-semibold uppercase tracking-wider text-right text-purple-400">
+                          Market Rent
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+                      {visibleUnits.map((unit: any, i: number) => (
+                        <tr key={unit.id || i} className="border-b hover:bg-muted/30">
+                          <td className="px-3 py-2.5 font-semibold">{unit.unit_number}</td>
+                          <td className="px-3 py-2.5 text-muted-foreground truncate max-w-[140px]">
+                            {unit.tenant_name || "\u2014"}
+                          </td>
+                          <td className="px-3 py-2.5 text-muted-foreground">{unit.bedrooms ?? "\u2014"}</td>
+                          <td className="px-3 py-2.5 text-muted-foreground">{unit.bathrooms ?? "\u2014"}</td>
+                          <td className="px-3 py-2.5 text-right num text-muted-foreground">
+                            {unit.sq_ft ? Number(unit.sq_ft).toLocaleString() : "\u2014"}
+                          </td>
+                          <td className="px-3 py-2.5">
+                            <StatusDot status={unit.status} />
+                          </td>
+                          <td className="px-3 py-2.5 text-muted-foreground text-xs">
+                            {unit.lease_start || "\u2014"}
+                          </td>
+                          <td className="px-3 py-2.5 text-muted-foreground text-xs">
+                            {unit.lease_end || "\u2014"}
+                          </td>
+                          <td className="px-3 py-2.5 text-right num font-medium">
+                            {n(unit.current_rent) > 0 ? fmtCurrency(unit.current_rent) : "\u2014"}
+                          </td>
+                          <td className="px-3 py-2.5 text-right num font-medium text-purple-400">
+                            {fmtCurrency(unit.market_rent)}
+                          </td>
+                        </tr>
+                      ))}
+                      {!showAllUnits && hiddenCount > 0 && (
+                        <tr>
+                          <td colSpan={10} className="text-center py-2">
+                            <button
+                              onClick={() => setShowAllUnits(true)}
+                              className="text-[13px] font-medium cursor-pointer border-0 bg-transparent flex items-center gap-1 mx-auto text-primary"
+                            >
+                              <ChevronDown className="h-3.5 w-3.5" strokeWidth={1.5} />
+                              Show {hiddenCount} more units
+                            </button>
+                          </td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </SectionCard>
 
-      {/* Table */}
-      {rentRoll.length === 0 ? (
-        <div className="rounded-xl border border-dashed p-8 text-center">
-          <p className="text-sm text-muted-foreground mb-3">
-            No rent roll data yet. Upload a spreadsheet or enter units manually.
-          </p>
-          <div className="flex items-center gap-2 justify-center">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setUploadOpen(true)}
-            >
-              <Upload className="h-3.5 w-3.5 mr-1.5" />
-              Upload Rent Roll
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setEditOpen(true)}
-            >
-              <Plus className="h-3.5 w-3.5 mr-1.5" />
-              Add Manually
-            </Button>
-          </div>
-        </div>
+              {/* Summary Metrics */}
+              <MetricBar
+                items={[
+                  { label: "Total Units", value: String(rentRoll.length) },
+                  {
+                    label: "Occupied",
+                    value: String(occupied.length),
+                    sub: `${((occupied.length / rentRoll.length) * 100).toFixed(0)}% occupancy`,
+                    accent: "text-green-500",
+                  },
+                  {
+                    label: "Vacant",
+                    value: String(rentRoll.length - occupied.length),
+                    accent: rentRoll.length - occupied.length > 0 ? "text-red-500" : undefined,
+                  },
+                  {
+                    label: "Monthly Rent",
+                    value: fmtCurrency(totalCurrentRent),
+                    sub: `${fmtCurrency(totalCurrentRent * 12)}/yr`,
+                  },
+                  {
+                    label: "Avg Rent/Unit",
+                    value: occupied.length > 0 ? fmtCurrency(Math.round(totalCurrentRent / occupied.length)) : "\u2014",
+                  },
+                  {
+                    label: "Loss-to-Lease",
+                    value: fmtCurrency(lossToLease),
+                    sub: totalMarketRent > 0 ? `${((lossToLease / totalMarketRent) * 100).toFixed(1)}%` : undefined,
+                    accent: "text-amber-500",
+                  },
+                ]}
+              />
+            </>
+          )}
+        </>
       ) : (
-        <TableShell>
-          <thead>
-            <tr>
-              <TH>Unit</TH>
-              <TH>Tenant</TH>
-              <TH>BD/BA</TH>
-              <TH align="right">SF</TH>
-              <TH align="right">Current Rent</TH>
-              <TH align="right">Market Rent</TH>
-              <TH>Status</TH>
-            </tr>
-          </thead>
-          <tbody>
-            {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-            {visibleUnits.map((unit: any, i: number) => (
-              <tr key={unit.id || i} className="border-b">
-                <td className="text-[13px] px-3 py-2 font-medium">
-                  {unit.unit_number}
-                </td>
-                <td className="text-[13px] px-3 py-2 text-muted-foreground truncate max-w-[140px]">
-                  {unit.tenant_name || "—"}
-                </td>
-                <td className="text-[13px] px-3 py-2 text-muted-foreground">
-                  {unit.bedrooms != null
-                    ? `${unit.bedrooms}/${unit.bathrooms ?? 1}`
-                    : "—"}
-                </td>
-                <td className="text-right text-[13px] num px-3 py-2 text-muted-foreground">
-                  {unit.sq_ft ? Number(unit.sq_ft).toLocaleString() : "—"}
-                </td>
-                <td className="text-right text-[13px] num px-3 py-2">
-                  {fmtCurrency(unit.current_rent)}
-                </td>
-                <td className="text-right text-[13px] num px-3 py-2">
-                  {fmtCurrency(unit.market_rent)}
-                </td>
-                <td className="text-[13px] px-3 py-2">
-                  <StatusDot status={unit.status} />
-                </td>
-              </tr>
-            ))}
-            {!showAllUnits && hiddenCount > 0 && (
-              <tr>
-                <td colSpan={7} className="text-center py-2">
-                  <button
-                    onClick={() => setShowAllUnits(true)}
-                    className="text-[13px] font-medium cursor-pointer border-0 bg-transparent flex items-center gap-1 mx-auto text-primary"
-                  >
-                    <ChevronDown className="h-3.5 w-3.5" strokeWidth={1.5} />
-                    Show {hiddenCount} more units
-                  </button>
-                </td>
-              </tr>
-            )}
-          </tbody>
-          <tfoot>
-            <tr className="bg-muted/50 border-t">
-              <td colSpan={4} className="text-[13px] font-semibold px-3 py-2">
-                Total ({occupiedCount}/{rentRoll.length} occupied ·{" "}
-                {((occupiedCount / rentRoll.length) * 100).toFixed(0)}%)
-              </td>
-              <td className="text-right text-[13px] font-semibold num px-3 py-2">
-                {fmtCurrency(totalCurrentRent)}/mo
-              </td>
-              <td className="text-right text-[13px] font-semibold num px-3 py-2">
-                {fmtCurrency(totalMarketRent)}/mo
-              </td>
-              <td />
-            </tr>
-          </tfoot>
-        </TableShell>
+        /* Upload mode */
+        <SectionCard title="Upload Rent Roll" icon={Upload}>
+          <div
+            onClick={() => setUploadOpen(true)}
+            className="border-2 border-dashed rounded-xl p-12 flex flex-col items-center gap-3 cursor-pointer hover:border-foreground/20 transition-colors"
+          >
+            <div className="w-12 h-12 rounded-xl bg-blue-500/10 flex items-center justify-center">
+              <Upload className="h-5 w-5 text-blue-500" strokeWidth={1.5} />
+            </div>
+            <div className="text-sm font-semibold">Drop rent roll file here or click to browse</div>
+            <div className="text-xs text-muted-foreground">CSV, XLSX, XLS — Headers auto-detected (rows 1-30)</div>
+          </div>
+          <div className="mt-4 px-4 py-3 bg-blue-500/10 rounded-lg flex gap-2.5 items-start">
+            <span className="text-xs text-blue-500 leading-relaxed">
+              Smart header detection scans rows 1-30. Works with Rent Manager, AppFolio, Buildium exports and custom spreadsheets.
+            </span>
+          </div>
+        </SectionCard>
       )}
 
       {/* Upload Dialog */}
@@ -264,17 +284,6 @@ export function RentRollSubTab({ rentRoll, uwId }: RentRollSubTabProps) {
         rentRoll={rentRoll}
         uwId={uwId}
       />
-    </div>
-  );
-}
-
-function KPI({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="rounded-lg border bg-card px-3 py-2.5">
-      <p className="text-[11px] text-muted-foreground uppercase tracking-wider">
-        {label}
-      </p>
-      <p className="text-sm font-semibold num mt-0.5">{value}</p>
     </div>
   );
 }
@@ -392,30 +401,9 @@ function RentRollEditDialog({
           <table className="w-full border-collapse text-[13px]">
             <thead>
               <tr className="border-b">
-                <th className="text-left px-2 py-1.5 font-medium text-muted-foreground">
-                  Unit
-                </th>
-                <th className="text-left px-2 py-1.5 font-medium text-muted-foreground">
-                  Tenant
-                </th>
-                <th className="text-left px-2 py-1.5 font-medium text-muted-foreground">
-                  BD
-                </th>
-                <th className="text-left px-2 py-1.5 font-medium text-muted-foreground">
-                  BA
-                </th>
-                <th className="text-left px-2 py-1.5 font-medium text-muted-foreground">
-                  SF
-                </th>
-                <th className="text-left px-2 py-1.5 font-medium text-muted-foreground">
-                  Current Rent
-                </th>
-                <th className="text-left px-2 py-1.5 font-medium text-muted-foreground">
-                  Market Rent
-                </th>
-                <th className="text-left px-2 py-1.5 font-medium text-muted-foreground">
-                  Status
-                </th>
+                {["Unit", "Tenant", "BD", "BA", "SF", "Current Rent", "Market Rent", "Status"].map(h => (
+                  <th key={h} className="text-left px-2 py-1.5 font-medium text-muted-foreground">{h}</th>
+                ))}
                 <th className="px-2 py-1.5" />
               </tr>
             </thead>
@@ -423,71 +411,25 @@ function RentRollEditDialog({
               {rows.map((row, i) => (
                 <tr key={i} className="border-b">
                   <td className="px-2 py-1">
-                    <Input
-                      className="h-8 w-14"
-                      value={row.unit_number || ""}
-                      onChange={(e) =>
-                        updateRow(i, "unit_number", e.target.value)
-                      }
-                    />
+                    <Input className="h-8 w-14" value={row.unit_number || ""} onChange={(e) => updateRow(i, "unit_number", e.target.value)} />
                   </td>
                   <td className="px-2 py-1">
-                    <Input
-                      className="h-8 w-28"
-                      value={row.tenant_name || ""}
-                      onChange={(e) =>
-                        updateRow(i, "tenant_name", e.target.value)
-                      }
-                    />
+                    <Input className="h-8 w-28" value={row.tenant_name || ""} onChange={(e) => updateRow(i, "tenant_name", e.target.value)} />
                   </td>
                   <td className="px-2 py-1">
-                    <Input
-                      className="h-8 w-14"
-                      type="number"
-                      value={row.bedrooms ?? ""}
-                      onChange={(e) =>
-                        updateRow(i, "bedrooms", e.target.value)
-                      }
-                    />
+                    <Input className="h-8 w-14" type="number" value={row.bedrooms ?? ""} onChange={(e) => updateRow(i, "bedrooms", e.target.value)} />
                   </td>
                   <td className="px-2 py-1">
-                    <Input
-                      className="h-8 w-14"
-                      type="number"
-                      step="0.5"
-                      value={row.bathrooms ?? ""}
-                      onChange={(e) =>
-                        updateRow(i, "bathrooms", e.target.value)
-                      }
-                    />
+                    <Input className="h-8 w-14" type="number" step="0.5" value={row.bathrooms ?? ""} onChange={(e) => updateRow(i, "bathrooms", e.target.value)} />
                   </td>
                   <td className="px-2 py-1">
-                    <Input
-                      className="h-8 w-20"
-                      type="number"
-                      value={row.sq_ft ?? ""}
-                      onChange={(e) => updateRow(i, "sq_ft", e.target.value)}
-                    />
+                    <Input className="h-8 w-20" type="number" value={row.sq_ft ?? ""} onChange={(e) => updateRow(i, "sq_ft", e.target.value)} />
                   </td>
                   <td className="px-2 py-1">
-                    <Input
-                      className="h-8 w-24"
-                      type="number"
-                      value={row.current_rent ?? ""}
-                      onChange={(e) =>
-                        updateRow(i, "current_rent", e.target.value)
-                      }
-                    />
+                    <Input className="h-8 w-24" type="number" value={row.current_rent ?? ""} onChange={(e) => updateRow(i, "current_rent", e.target.value)} />
                   </td>
                   <td className="px-2 py-1">
-                    <Input
-                      className="h-8 w-24"
-                      type="number"
-                      value={row.market_rent ?? ""}
-                      onChange={(e) =>
-                        updateRow(i, "market_rent", e.target.value)
-                      }
-                    />
+                    <Input className="h-8 w-24" type="number" value={row.market_rent ?? ""} onChange={(e) => updateRow(i, "market_rent", e.target.value)} />
                   </td>
                   <td className="px-2 py-1">
                     <select
@@ -502,12 +444,7 @@ function RentRollEditDialog({
                     </select>
                   </td>
                   <td className="px-2 py-1">
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-7 w-7"
-                      onClick={() => removeUnit(i)}
-                    >
+                    <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => removeUnit(i)}>
                       <Trash2 className="h-3 w-3 text-muted-foreground" />
                     </Button>
                   </td>
@@ -516,23 +453,12 @@ function RentRollEditDialog({
             </tbody>
           </table>
         </div>
-        <Button
-          variant="outline"
-          size="sm"
-          className="w-fit gap-1"
-          onClick={addUnit}
-        >
+        <Button variant="outline" size="sm" className="w-fit gap-1" onClick={addUnit}>
           <Plus className="h-3 w-3" />
           Add Unit
         </Button>
         <DialogFooter>
-          <Button
-            variant="outline"
-            onClick={() => onOpenChange(false)}
-            disabled={saving}
-          >
-            Cancel
-          </Button>
+          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={saving}>Cancel</Button>
           <Button onClick={handleSubmit} disabled={saving}>
             {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
             Save Rent Roll

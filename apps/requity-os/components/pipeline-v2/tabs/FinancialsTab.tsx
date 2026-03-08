@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useCallback } from "react";
+import { useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import {
   Clock,
@@ -8,9 +8,10 @@ import {
   Check,
   Loader2,
   FileSpreadsheet,
-  BarChart3,
-  Landmark,
   Building2,
+  Settings,
+  Receipt,
+  Hammer,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -20,10 +21,12 @@ import {
   createNewVersion,
   activateVersion,
 } from "@/app/(authenticated)/admin/pipeline-v2/[id]/commercial-uw-actions";
+import { PillNav } from "./financials/shared";
 import { RentRollSubTab } from "./financials/RentRollSubTab";
 import { T12SubTab } from "./financials/T12SubTab";
-import { BorrowerProFormaSubTab } from "./financials/BorrowerProFormaSubTab";
-import { LenderProFormaSubTab } from "./financials/LenderProFormaSubTab";
+import { AssumptionsSubTab } from "./financials/AssumptionsSubTab";
+import { ClosingCostsSubTab } from "./financials/ClosingCostsSubTab";
+import { ScopeOfWorkSubTab } from "./financials/ScopeOfWorkSubTab";
 
 // ── Types ──
 
@@ -55,11 +58,12 @@ interface FinancialsTabProps {
 }
 
 const SUB_TABS = [
-  { key: "rent-roll", label: "Rent Roll", icon: Building2 },
-  { key: "t12", label: "T12", icon: FileSpreadsheet },
-  { key: "borrower-proforma", label: "Borrower Pro Forma", icon: BarChart3 },
-  { key: "lender-proforma", label: "Lender Pro Forma", icon: Landmark },
-] as const;
+  { key: "rent-roll" as const, label: "Rent Roll", icon: Building2 },
+  { key: "t12" as const, label: "T12 / Historical", icon: FileSpreadsheet },
+  { key: "assumptions" as const, label: "Assumptions", icon: Settings },
+  { key: "closing-costs" as const, label: "Closing Costs", icon: Receipt },
+  { key: "scope" as const, label: "Scope of Work", icon: Hammer },
+];
 
 type SubTabKey = (typeof SUB_TABS)[number]["key"];
 
@@ -70,7 +74,7 @@ export function FinancialsTab({
   dealId,
   currentUserId,
 }: FinancialsTabProps) {
-  const { uw, income, expenses, rentRoll, allVersions } = data;
+  const { uw, income, expenses, rentRoll, sourcesUses, scopeOfWork, allVersions } = data;
   const router = useRouter();
   const [activeSubTab, setActiveSubTab] = useState<SubTabKey>("rent-roll");
   const [creatingVersion, setCreatingVersion] = useState(false);
@@ -109,12 +113,17 @@ export function FinancialsTab({
     [dealId, router]
   );
 
+  const uwId = uw?.id ?? null;
+  const propertyType = (uw?.property_type as string) ?? "";
+  const purchasePrice = Number(uw?.purchase_price) || 0;
+  const numUnits = Number(uw?.num_units) || 0;
+
   return (
     <div className="flex flex-col gap-5">
       {/* Version History */}
       <VersionHistoryCard
         allVersions={allVersions}
-        currentUwId={uw?.id}
+        currentUwId={uwId}
         creatingVersion={creatingVersion}
         activatingId={activatingId}
         onNewVersion={handleNewVersion}
@@ -122,56 +131,43 @@ export function FinancialsTab({
       />
 
       {/* Sub-tab Navigation */}
-      <div className="inline-flex gap-0.5 rounded-lg p-[3px] bg-muted/50 border">
-        {SUB_TABS.map((tab) => {
-          const Icon = tab.icon;
-          return (
-            <button
-              key={tab.key}
-              onClick={() => setActiveSubTab(tab.key)}
-              className={cn(
-                "flex items-center gap-1.5 rounded-md border-none px-3 py-[6px] text-[12px] cursor-pointer transition-all duration-150",
-                activeSubTab === tab.key
-                  ? "bg-background text-foreground font-medium shadow-sm"
-                  : "bg-transparent text-muted-foreground hover:text-foreground"
-              )}
-            >
-              <Icon className="h-3.5 w-3.5" strokeWidth={1.5} />
-              {tab.label}
-            </button>
-          );
-        })}
-      </div>
+      <PillNav tabs={SUB_TABS} active={activeSubTab} onChange={setActiveSubTab} />
 
       {/* Sub-tab Content */}
-      <div className="rounded-xl border bg-card p-5">
-        {activeSubTab === "rent-roll" && (
-          <RentRollSubTab rentRoll={rentRoll} uwId={uw?.id ?? null} />
-        )}
-        {activeSubTab === "t12" && (
-          <T12SubTab
-            income={income}
-            expenses={expenses}
-            uwId={uw?.id ?? null}
-          />
-        )}
-        {activeSubTab === "borrower-proforma" && (
-          <BorrowerProFormaSubTab
-            income={income}
-            expenses={expenses}
-            uw={uw}
-            uwId={uw?.id ?? null}
-          />
-        )}
-        {activeSubTab === "lender-proforma" && (
-          <LenderProFormaSubTab
-            income={income}
-            expenses={expenses}
-            uw={uw}
-            uwId={uw?.id ?? null}
-          />
-        )}
-      </div>
+      {activeSubTab === "rent-roll" && (
+        <RentRollSubTab rentRoll={rentRoll} uwId={uwId} />
+      )}
+      {activeSubTab === "t12" && (
+        <T12SubTab
+          income={income}
+          expenses={expenses}
+          uwId={uwId}
+          purchasePrice={purchasePrice}
+          numUnits={numUnits}
+        />
+      )}
+      {activeSubTab === "assumptions" && (
+        <AssumptionsSubTab
+          uw={uw}
+          uwId={uwId}
+          propertyType={propertyType}
+        />
+      )}
+      {activeSubTab === "closing-costs" && (
+        <ClosingCostsSubTab
+          sourcesUses={sourcesUses}
+          uwId={uwId}
+          loanAmount={Number(uw?.loan_amount) || 0}
+          purchasePrice={purchasePrice}
+        />
+      )}
+      {activeSubTab === "scope" && (
+        <ScopeOfWorkSubTab
+          scopeOfWork={scopeOfWork}
+          uwId={uwId}
+          numUnits={numUnits}
+        />
+      )}
     </div>
   );
 }
