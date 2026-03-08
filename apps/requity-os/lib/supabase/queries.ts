@@ -109,19 +109,17 @@ export async function resolveBorrowerName(
   client: Client,
   borrowerId: string
 ): Promise<string> {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data: borrower } = await (client as any)
+  const { data: borrower } = await client
     .from("borrowers")
-    .select("crm_contact_id, first_name, last_name")
+    .select("crm_contact_id")
     .eq("id", borrowerId)
     .maybeSingle();
 
   if (!borrower) return "Unknown";
 
-  // Try CRM contact first
+  // Resolve via CRM contact
   if (borrower.crm_contact_id) {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { data: contact } = await (client as any)
+    const { data: contact } = await client
       .from("crm_contacts")
       .select("first_name, last_name")
       .eq("id", borrower.crm_contact_id)
@@ -134,10 +132,7 @@ export async function resolveBorrowerName(
     }
   }
 
-  // Fall back to borrower's own name
-  const name =
-    `${borrower.first_name ?? ""} ${borrower.last_name ?? ""}`.trim();
-  return name || "Unknown";
+  return "Unknown";
 }
 
 // ---------------------------------------------------------------------------
@@ -147,22 +142,17 @@ export async function resolveBorrowerName(
 export async function buildBorrowerNameMap(
   client: Client
 ): Promise<Map<string, string>> {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data: borrowers } = await (client as any)
+  const { data: borrowers } = await client
     .from("borrowers")
-    .select("id, crm_contact_id, first_name, last_name, crm_contacts(name, first_name, last_name)")
-    .order("last_name");
+    .select("id, crm_contact_id, crm_contacts(name, first_name, last_name)");
 
   const map = new Map<string, string>();
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  for (const b of (borrowers ?? []) as any[]) {
+  for (const b of borrowers ?? []) {
     const crmName = resolveCrmContactName(b.crm_contacts);
     if (crmName !== "Unknown") {
       map.set(b.id, crmName);
     } else {
-      const name =
-        `${b.first_name ?? ""} ${b.last_name ?? ""}`.trim() || "Unknown";
-      map.set(b.id, name);
+      map.set(b.id, "Unknown");
     }
   }
   return map;
@@ -176,17 +166,14 @@ export async function buildInvestorNameMap(
   client: Client,
   profileNamesFallback?: boolean
 ): Promise<Map<string, string>> {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data: investors } = await (client as any)
+  const { data: investors } = await client
     .from("investors")
-    .select("id, user_id, crm_contact_id, crm_contacts(name, first_name, last_name)")
-    .order("id");
+    .select("id, user_id, crm_contact_id, crm_contacts(name, first_name, last_name)");
 
   const map = new Map<string, string>();
   const userIdsNeedingLookup = new Set<string>();
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  for (const inv of (investors ?? []) as any[]) {
+  for (const inv of investors ?? []) {
     const crmName = resolveCrmContactName(inv.crm_contacts);
     if (crmName !== "Unknown") {
       map.set(inv.id, crmName);
@@ -201,8 +188,7 @@ export async function buildInvestorNameMap(
       client,
       Array.from(userIdsNeedingLookup)
     );
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    for (const inv of (investors ?? []) as any[]) {
+    for (const inv of investors ?? []) {
       if (!map.has(inv.id) && inv.user_id && profileNames[inv.user_id]) {
         map.set(inv.id, profileNames[inv.user_id]);
       }
@@ -210,8 +196,7 @@ export async function buildInvestorNameMap(
   }
 
   // Fill remaining with "Unknown"
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  for (const inv of (investors ?? []) as any[]) {
+  for (const inv of investors ?? []) {
     if (!map.has(inv.id)) {
       map.set(inv.id, "Unknown");
     }

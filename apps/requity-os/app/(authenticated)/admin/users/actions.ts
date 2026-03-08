@@ -4,6 +4,9 @@ import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { requireAdmin } from "@/lib/auth/require-admin";
+import type { Database } from "@/lib/supabase/types";
+
+type AppRole = Database["public"]["Enums"]["app_role"];
 
 // ---------------------------------------------------------------------------
 // Types
@@ -74,16 +77,8 @@ export async function fetchUsersAction(): Promise<
     // Try to query user_roles directly
     try {
       const { data: rawRoles } = await admin
-        .from("user_roles" as never)
-        .select("user_id, role, is_active, investor_id, borrower_id" as never) as {
-        data: {
-          user_id: string;
-          role: string;
-          is_active: boolean;
-          investor_id: string | null;
-          borrower_id: string | null;
-        }[] | null;
-      };
+        .from("user_roles")
+        .select("user_id, role, is_active, investor_id, borrower_id");
 
       if (rawRoles) {
         for (const r of rawRoles) {
@@ -287,17 +282,20 @@ export async function inviteUserAction(input: InviteUserInput): Promise<
 async function grantRoleForUser(
   admin: ReturnType<typeof createAdminClient>,
   userId: string,
-  role: string,
+  role: AppRole,
   investorId?: string,
   borrowerId?: string
 ) {
   try {
-    await admin.rpc("grant_role" as never, {
+    const { error } = await admin.rpc("grant_role", {
       _user_id: userId,
       _role: role,
-      _investor_id: investorId || null,
-      _borrower_id: borrowerId || null,
-    } as never);
+      _investor_id: investorId || undefined,
+      _borrower_id: borrowerId || undefined,
+    });
+    if (error) {
+      console.error("grant_role RPC error:", error);
+    }
   } catch (err) {
     console.error("grant_role RPC error:", err);
     // Non-fatal — the role may still be tracked in profiles.allowed_roles
@@ -310,7 +308,7 @@ async function grantRoleForUser(
 
 export async function addRoleAction(
   userId: string,
-  role: string,
+  role: AppRole,
   investorId?: string,
   borrowerId?: string
 ): Promise<{ success: true } | { error: string }> {
@@ -323,12 +321,12 @@ export async function addRoleAction(
     const userClient = await createClient();
     const admin = createAdminClient();
 
-    const { error: rpcError } = await userClient.rpc("grant_role" as never, {
+    const { error: rpcError } = await userClient.rpc("grant_role", {
       _user_id: userId,
       _role: role,
-      _investor_id: investorId || null,
-      _borrower_id: borrowerId || null,
-    } as never);
+      _investor_id: investorId || undefined,
+      _borrower_id: borrowerId || undefined,
+    });
 
     if (rpcError) return { error: rpcError.message };
 
@@ -341,12 +339,15 @@ export async function addRoleAction(
 
     if (profile) {
       const currentRoles = profile.allowed_roles ?? [];
-      if (!currentRoles.includes(role as "admin" | "borrower" | "investor")) {
-        const newRoles = [...currentRoles, role as "admin" | "borrower" | "investor"];
-        await admin
+      if (!currentRoles.includes(role)) {
+        const newRoles = [...currentRoles, role];
+        const { error: updateErr } = await admin
           .from("profiles")
           .update({ allowed_roles: newRoles })
           .eq("id", userId);
+        if (updateErr) {
+          console.error("Failed to update allowed_roles:", updateErr);
+        }
       }
     }
 
@@ -365,7 +366,7 @@ export async function addRoleAction(
 
 export async function removeRoleAction(
   userId: string,
-  role: string,
+  role: AppRole,
   investorId?: string,
   borrowerId?: string
 ): Promise<{ success: true } | { error: string }> {
@@ -378,12 +379,12 @@ export async function removeRoleAction(
     const userClient = await createClient();
     const admin = createAdminClient();
 
-    const { error: rpcError } = await userClient.rpc("revoke_role" as never, {
+    const { error: rpcError } = await userClient.rpc("revoke_role", {
       _user_id: userId,
       _role: role,
-      _investor_id: investorId || null,
-      _borrower_id: borrowerId || null,
-    } as never);
+      _investor_id: investorId || undefined,
+      _borrower_id: borrowerId || undefined,
+    });
 
     if (rpcError) return { error: rpcError.message };
 
@@ -405,7 +406,10 @@ export async function removeRoleAction(
         update.role = newRoles[0];
       }
 
-      await admin.from("profiles").update(update).eq("id", userId);
+      const { error: updateErr } = await admin.from("profiles").update(update).eq("id", userId);
+      if (updateErr) {
+        console.error("Failed to update profile roles:", updateErr);
+      }
     }
 
     revalidatePath("/admin/users");
@@ -478,10 +482,14 @@ export async function resendInviteAction(
     if (linkError) return { error: linkError.message };
 
     // Update status
-    await admin
+    const { error: statusErr } = await admin
       .from("profiles")
       .update({ activation_status: "link_sent" })
       .eq("id", userId);
+
+    if (statusErr) {
+      console.error("Failed to update activation status:", statusErr);
+    }
 
     revalidatePath("/admin/users");
     return { success: true };
@@ -504,17 +512,23 @@ export async function fetchInvestorsAction(): Promise<
     if (auth.error) return { error: auth.error };
 
     const admin = createAdminClient();
-    const { data, error } = await (admin as any)
+    const { data, error } = await admin
       .from("investors")
-      .select("id, first_name, last_name, email")
-      .order("last_name");
+      .select("id, crm_contacts(first_name, last_name, email)");
 
     if (error) return { error: error.message };
 
-    return { success: true, investors: (data ?? []) as any[] };
+    const investors = (data ?? []).map((inv) => ({
+      id: inv.id,
+      first_name: inv.crm_contacts?.first_name ?? "",
+      last_name: inv.crm_contacts?.last_name ?? "",
+      email: inv.crm_contacts?.email ?? null,
+    }));
+
+    return { success: true, investors };
   } catch (err: unknown) {
     console.error("fetchInvestorsAction error:", err);
-    const message = err instanceof Error ? err.message : "An unexpected error occurred";
+    const message = err instanceof Error ? err.message : "Failed to fetch investors";
     return { error: message };
   }
 }
@@ -527,17 +541,23 @@ export async function fetchBorrowersAction(): Promise<
     if (auth.error) return { error: auth.error };
 
     const admin = createAdminClient();
-    const { data, error } = await (admin as any)
+    const { data, error } = await admin
       .from("borrowers")
-      .select("id, first_name, last_name, email")
-      .order("last_name");
+      .select("id, crm_contacts(first_name, last_name, email)");
 
     if (error) return { error: error.message };
 
-    return { success: true, borrowers: (data ?? []) as any[] };
+    const borrowers = (data ?? []).map((b) => ({
+      id: b.id,
+      first_name: b.crm_contacts?.first_name ?? "",
+      last_name: b.crm_contacts?.last_name ?? "",
+      email: b.crm_contacts?.email ?? null,
+    }));
+
+    return { success: true, borrowers };
   } catch (err: unknown) {
     console.error("fetchBorrowersAction error:", err);
-    const message = err instanceof Error ? err.message : "An unexpected error occurred";
+    const message = err instanceof Error ? err.message : "Failed to fetch borrowers";
     return { error: message };
   }
 }

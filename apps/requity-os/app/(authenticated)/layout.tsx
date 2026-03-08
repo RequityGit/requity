@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { Sidebar } from "@/components/layout/sidebar";
 import { Topbar } from "@/components/layout/topbar";
 import { Toaster } from "@/components/ui/toaster";
+import { Toaster as SonnerToaster } from "@/components/ui/sonner";
 import { ViewAsProvider } from "@/contexts/view-as-context";
 import { ImpersonationProvider } from "@/components/layout/impersonation-context";
 import { ImpersonationBanner } from "@/components/layout/impersonation-banner";
@@ -138,6 +139,7 @@ export default async function AuthenticatedLayout({
                     </div>
                   </div>
                   <Toaster />
+                  <SonnerToaster richColors closeButton />
                 </div>
               );
               return isAdmin ? (

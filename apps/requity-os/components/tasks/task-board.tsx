@@ -3,19 +3,23 @@
 import { useState, useCallback, useMemo, useEffect } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
-import { Plus } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { Plus, Repeat2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/components/shared/page-header";
 import { TaskColumn } from "./task-column";
 import { TaskFilters } from "./task-filters";
 import { TaskSheet } from "./task-sheet";
 import { ApprovalDrawer } from "./approval-drawer";
+import { RecurringTemplatesTable } from "./recurring-templates-table";
+import { TemplateSheet } from "./template-sheet";
 import type { OpsTask, Profile, TaskTypeFilter } from "@/lib/tasks";
 import {
   completeTask,
   completeRecurringTask,
   updateTaskStatus,
 } from "@/lib/tasks";
+import type { RecurringTaskTemplate } from "@/lib/recurring-templates";
 
 const COLUMNS = [
   { id: "To Do", label: "To Do" },
@@ -23,21 +27,31 @@ const COLUMNS = [
   { id: "Complete", label: "Complete" },
 ] as const;
 
+type ViewTab = "kanban" | "recurring";
+
 interface TaskBoardProps {
   initialTasks: OpsTask[];
+  initialTemplates: RecurringTaskTemplate[];
   profiles: Profile[];
   currentUserId: string;
 }
 
 export function TaskBoard({
   initialTasks,
+  initialTemplates,
   profiles,
   currentUserId,
 }: TaskBoardProps) {
   const [tasks, setTasks] = useState<OpsTask[]>(initialTasks);
+  const [templates, setTemplates] = useState<RecurringTaskTemplate[]>(initialTemplates);
   const [sheetOpen, setSheetOpen] = useState(false);
   const [editingTask, setEditingTask] = useState<OpsTask | null>(null);
   const [approvalDrawerTask, setApprovalDrawerTask] = useState<OpsTask | null>(null);
+  const [activeView, setActiveView] = useState<ViewTab>("kanban");
+
+  // Template sheet state
+  const [templateSheetOpen, setTemplateSheetOpen] = useState(false);
+  const [editingTemplate, setEditingTemplate] = useState<RecurringTaskTemplate | null>(null);
 
   // Filters
   const [assigneeFilter, setAssigneeFilter] = useState("all");
@@ -67,7 +81,6 @@ export function TaskBoard({
             setTasks((prev) =>
               prev.map((t) => (t.id === updated.id ? updated : t))
             );
-            // Update the approval drawer if it's viewing this task
             setApprovalDrawerTask((prev) =>
               prev?.id === updated.id ? updated : prev
             );
@@ -123,7 +136,6 @@ export function TaskBoard({
       const task = tasks.find((t) => t.id === taskId);
       if (!task) return;
 
-      // Optimistic update
       setTasks((prev) =>
         prev.map((t) =>
           t.id === taskId
@@ -137,11 +149,9 @@ export function TaskBoard({
         )
       );
 
-      // Server call
       if (task.is_active_recurrence) {
         const result = await completeRecurringTask(taskId);
         if (result.error) {
-          // Rollback
           setTasks((prev) => prev.map((t) => (t.id === taskId ? task : t)));
           toast({
             title: "Failed to complete task",
@@ -182,10 +192,8 @@ export function TaskBoard({
       const task = tasks.find((t) => t.id === taskId);
       if (!task || task.status === columnId) return;
 
-      // Don't allow drag into Complete — use checkbox instead
       if (columnId === "Complete") return;
 
-      // Optimistic update
       setTasks((prev) =>
         prev.map((t) =>
           t.id === taskId
@@ -257,53 +265,134 @@ export function TaskBoard({
     setApprovalDrawerTask(updatedTask);
   }, []);
 
+  // Template handlers
+  const handleNewTemplate = useCallback(() => {
+    setEditingTemplate(null);
+    setTemplateSheetOpen(true);
+  }, []);
+
+  const handleEditTemplate = useCallback((t: RecurringTaskTemplate) => {
+    setEditingTemplate(t);
+    setTemplateSheetOpen(true);
+  }, []);
+
+  const handleTemplateSheetClose = useCallback(() => {
+    setTemplateSheetOpen(false);
+    setEditingTemplate(null);
+  }, []);
+
+  const handleTemplateSaved = useCallback((saved: RecurringTaskTemplate) => {
+    setTemplates((prev) => {
+      const existing = prev.find((t) => t.id === saved.id);
+      if (existing) {
+        return prev.map((t) => (t.id === saved.id ? saved : t));
+      }
+      return [...prev, saved];
+    });
+  }, []);
+
+  const activeTemplateCount = templates.filter((t) => t.is_active).length;
+
   return (
     <div className="p-6 md:p-8">
       <PageHeader
         title="Operations"
         description="Tasks & approvals to keep the business running."
         action={
-          <Button onClick={handleNewTask} size="sm">
+          <Button
+            onClick={activeView === "recurring" ? handleNewTemplate : handleNewTask}
+            size="sm"
+          >
             <Plus className="h-4 w-4 mr-1" strokeWidth={1.5} />
-            New task
+            {activeView === "recurring" ? "New template" : "New task"}
           </Button>
         }
       />
 
-      {/* Filter bar */}
-      <div className="mb-5">
-        <TaskFilters
-          assigneeOptions={assigneeOptions}
-          assigneeFilter={assigneeFilter}
-          onAssigneeChange={setAssigneeFilter}
-          categoryFilter={categoryFilter}
-          onCategoryChange={setCategoryFilter}
-          priorityFilter={priorityFilter}
-          onPriorityChange={setPriorityFilter}
-          typeFilter={typeFilter}
-          onTypeFilterChange={setTypeFilter}
-        />
+      {/* Tab bar + Filters */}
+      <div className="flex items-center gap-4 mb-5 flex-wrap">
+        {/* View tabs: Kanban vs Recurring */}
+        <div className="flex items-center gap-1">
+          <button
+            type="button"
+            onClick={() => setActiveView("kanban")}
+            className={cn(
+              "px-3.5 py-1.5 rounded-md text-[13px] font-medium transition-colors",
+              activeView === "kanban"
+                ? "bg-primary text-primary-foreground"
+                : "text-muted-foreground hover:bg-accent"
+            )}
+          >
+            Tasks
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveView("recurring")}
+            className={cn(
+              "px-3.5 py-1.5 rounded-md text-[13px] font-medium transition-colors flex items-center gap-1.5",
+              activeView === "recurring"
+                ? "bg-primary text-primary-foreground"
+                : "text-muted-foreground hover:bg-accent"
+            )}
+          >
+            <Repeat2 className="h-3.5 w-3.5" strokeWidth={1.5} />
+            Recurring
+            <span
+              className={cn(
+                "text-[10px] font-semibold px-1.5 py-0.5 rounded-full num",
+                activeView === "recurring"
+                  ? "bg-primary-foreground/10 text-primary-foreground"
+                  : "bg-muted text-muted-foreground"
+              )}
+            >
+              {activeTemplateCount}
+            </span>
+          </button>
+        </div>
+
+        {activeView === "kanban" && (
+          <TaskFilters
+            assigneeOptions={assigneeOptions}
+            assigneeFilter={assigneeFilter}
+            onAssigneeChange={setAssigneeFilter}
+            categoryFilter={categoryFilter}
+            onCategoryChange={setCategoryFilter}
+            priorityFilter={priorityFilter}
+            onPriorityChange={setPriorityFilter}
+            typeFilter={typeFilter}
+            onTypeFilterChange={setTypeFilter}
+          />
+        )}
       </div>
 
-      {/* Kanban columns */}
-      <div className="flex gap-4 overflow-x-auto pb-6">
-        {COLUMNS.map((col) => {
-          const colTasks = filteredTasks.filter((t) => t.status === col.id);
-          return (
-            <TaskColumn
-              key={col.id}
-              status={col.id}
-              label={col.label}
-              tasks={colTasks}
-              profiles={profiles}
-              onComplete={handleComplete}
-              onTaskClick={handleTaskClick}
-              onDragStart={handleDragStart}
-              onDrop={handleDrop}
-            />
-          );
-        })}
-      </div>
+      {/* Content */}
+      {activeView === "recurring" ? (
+        <RecurringTemplatesTable
+          templates={templates}
+          profiles={profiles}
+          onEdit={handleEditTemplate}
+          onTemplatesChange={setTemplates}
+        />
+      ) : (
+        <div className="flex gap-4 overflow-x-auto pb-6">
+          {COLUMNS.map((col) => {
+            const colTasks = filteredTasks.filter((t) => t.status === col.id);
+            return (
+              <TaskColumn
+                key={col.id}
+                status={col.id}
+                label={col.label}
+                tasks={colTasks}
+                profiles={profiles}
+                onComplete={handleComplete}
+                onTaskClick={handleTaskClick}
+                onDragStart={handleDragStart}
+                onDrop={handleDrop}
+              />
+            );
+          })}
+        </div>
+      )}
 
       {/* Task Sheet */}
       <TaskSheet
@@ -314,6 +403,16 @@ export function TaskBoard({
         onClose={handleSheetClose}
         onSaved={handleTaskSaved}
         onDeleted={handleTaskDeleted}
+      />
+
+      {/* Template Sheet */}
+      <TemplateSheet
+        open={templateSheetOpen}
+        template={editingTemplate}
+        profiles={profiles}
+        currentUserId={currentUserId}
+        onClose={handleTemplateSheetClose}
+        onSaved={handleTemplateSaved}
       />
 
       {/* Approval Drawer */}

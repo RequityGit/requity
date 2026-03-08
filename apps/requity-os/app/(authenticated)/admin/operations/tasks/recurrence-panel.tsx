@@ -131,11 +131,11 @@ export function RecurrencePanel({
   }));
 
   return (
-    <div className="bg-secondary rounded-lg p-3 border border-border space-y-3">
+    <div className="bg-card rounded-lg p-4 border border-border space-y-4">
       {/* Frequency tabs + Repeat interval in one row */}
-      <div className="grid grid-cols-[1fr_auto] gap-2.5 items-end">
-        <div className="space-y-1.5">
-          <Label className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+      <div className="grid grid-cols-[1fr_auto] gap-3 items-end">
+        <div className="space-y-2">
+          <Label className="text-xs font-semibold text-foreground">
             Frequency
           </Label>
           <div className="flex rounded-md overflow-hidden border border-border">
@@ -145,7 +145,7 @@ export function RecurrencePanel({
                 type="button"
                 onClick={() => onPatternChange(f)}
                 className={cn(
-                  "flex-1 py-1.5 text-[11px] font-semibold capitalize transition-colors",
+                  "flex-1 py-2 text-xs font-semibold capitalize transition-colors",
                   pattern === f
                     ? "bg-primary text-primary-foreground"
                     : "bg-transparent text-muted-foreground hover:bg-accent",
@@ -157,8 +157,8 @@ export function RecurrencePanel({
             ))}
           </div>
         </div>
-        <div className="space-y-1.5">
-          <Label className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+        <div className="space-y-2">
+          <Label className="text-xs font-semibold text-foreground">
             Repeat
           </Label>
           <Select
@@ -181,8 +181,8 @@ export function RecurrencePanel({
 
       {/* Weekly: day picker */}
       {pattern === "weekly" && (
-        <div className="space-y-1.5">
-          <Label className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+        <div className="space-y-2">
+          <Label className="text-xs font-semibold text-foreground">
             Repeat On
           </Label>
           <div className="flex rounded-md overflow-hidden border border-border">
@@ -194,7 +194,7 @@ export function RecurrencePanel({
                   type="button"
                   onClick={() => toggleDay(i)}
                   className={cn(
-                    "flex-1 py-1.5 text-[11px] font-semibold transition-colors",
+                    "flex-1 py-2 text-xs font-semibold transition-colors",
                     active
                       ? "bg-primary text-primary-foreground"
                       : "bg-transparent text-muted-foreground hover:bg-accent",
@@ -212,8 +212,8 @@ export function RecurrencePanel({
       {/* Monthly: Google Calendar-style contextual dropdown */}
       {pattern === "monthly" && (
         <div className="space-y-2.5">
-          <div className="space-y-1.5">
-            <Label className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+          <div className="space-y-2">
+            <Label className="text-xs font-semibold text-foreground">
               On
             </Label>
             <Select
@@ -242,7 +242,7 @@ export function RecurrencePanel({
           <button
             type="button"
             onClick={() => setShowAdvanced(!showAdvanced)}
-            className="flex items-center gap-1 text-[11px] font-medium text-muted-foreground hover:text-foreground transition-colors"
+            className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors"
           >
             {showAdvanced ? (
               <ChevronUp className="h-3 w-3" strokeWidth={1.5} />
@@ -255,8 +255,8 @@ export function RecurrencePanel({
           {showAdvanced && (
             <>
               {monthlyWhen === "specific_day" && (
-                <div className="space-y-1.5">
-                  <Label className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                <div className="space-y-2">
+                  <Label className="text-xs font-semibold text-foreground">
                     Day of Month
                   </Label>
                   <Select
@@ -278,9 +278,9 @@ export function RecurrencePanel({
               )}
 
               {monthlyWhen === "nth_weekday" && (
-                <div className="grid grid-cols-2 gap-2.5">
-                  <div className="space-y-1.5">
-                    <Label className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-2">
+                    <Label className="text-xs font-semibold text-foreground">
                       Which
                     </Label>
                     <Select
@@ -299,8 +299,8 @@ export function RecurrencePanel({
                       </SelectContent>
                     </Select>
                   </div>
-                  <div className="space-y-1.5">
-                    <Label className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                  <div className="space-y-2">
+                    <Label className="text-xs font-semibold text-foreground">
                       Day
                     </Label>
                     <Select
@@ -328,9 +328,9 @@ export function RecurrencePanel({
 
       {/* Annually: month + day */}
       {pattern === "annually" && (
-        <div className="grid grid-cols-2 gap-2.5">
-          <div className="space-y-1.5">
-            <Label className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+        <div className="grid grid-cols-2 gap-3">
+          <div className="space-y-2">
+            <Label className="text-xs font-semibold text-foreground">
               Month
             </Label>
             <Select
@@ -349,8 +349,8 @@ export function RecurrencePanel({
               </SelectContent>
             </Select>
           </div>
-          <div className="space-y-1.5">
-            <Label className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+          <div className="space-y-2">
+            <Label className="text-xs font-semibold text-foreground">
               Day
             </Label>
             <Select
@@ -379,7 +379,7 @@ export function RecurrencePanel({
           if (pattern !== "monthly") setShowAdvanced(!showAdvanced);
         }}
         className={cn(
-          "flex items-center gap-1 text-[11px] font-medium text-muted-foreground hover:text-foreground transition-colors",
+          "flex items-center gap-1.5 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors",
           pattern === "monthly" && "hidden"
         )}
       >
@@ -392,9 +392,9 @@ export function RecurrencePanel({
       </button>
 
       {showAdvanced && (
-        <div className="grid grid-cols-2 gap-2.5">
-          <div className="space-y-1.5">
-            <Label className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+        <div className="grid grid-cols-2 gap-3">
+          <div className="space-y-2">
+            <Label className="text-xs font-semibold text-foreground">
               Start Date
             </Label>
             <DatePicker
@@ -402,8 +402,8 @@ export function RecurrencePanel({
               onChange={(value) => onStartDateChange(value)}
             />
           </div>
-          <div className="space-y-1.5">
-            <Label className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+          <div className="space-y-2">
+            <Label className="text-xs font-semibold text-foreground">
               End Date
             </Label>
             <DatePicker

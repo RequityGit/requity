@@ -16,7 +16,7 @@ interface ContactFile {
   storage_path: string;
   file_size: number | null;
   mime_type: string | null;
-  uploaded_at: string;
+  uploaded_at: string | null;
   notes: string | null;
 }
 

@@ -16529,6 +16529,11 @@ export const Constants = {
     },
   },
 } as const
+
+// ---------------------------------------------------------------------------
+// Custom types (manually added, not auto-generated)
+// ---------------------------------------------------------------------------
+
 export interface PricingProgram {
   id: string;
   created_at: string;

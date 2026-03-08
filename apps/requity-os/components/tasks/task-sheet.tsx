@@ -33,6 +33,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Trash2, Paperclip, X, FileText, Repeat, Link2, ExternalLink, MessageSquare, ChevronDown, ChevronUp } from "lucide-react";
 import Link from "next/link";
 import { UnifiedNotes } from "@/components/shared/UnifiedNotes";
@@ -348,9 +349,9 @@ export function TaskSheet({
 
   return (
     <Dialog open={open} onOpenChange={() => onClose()}>
-      <DialogContent className="sm:max-w-[600px] p-0 flex flex-col max-h-[90vh] md:max-h-[90vh]">
-        <DialogHeader className="px-6 pt-4 pb-0">
-          <DialogTitle className="text-sm font-bold tracking-tight">
+      <DialogContent className="sm:max-w-[540px] p-0 flex flex-col max-h-[85vh] md:max-h-[85vh]">
+        <DialogHeader className="px-6 pt-5 pb-3 border-b border-border">
+          <DialogTitle className="text-base font-bold tracking-tight">
             {isNew ? "New Task" : "Edit Task"}
           </DialogTitle>
           <DialogDescription className="sr-only">
@@ -359,17 +360,16 @@ export function TaskSheet({
         </DialogHeader>
 
         <ScrollArea className="flex-1 px-6">
-          <div className="space-y-2.5 pb-4 pt-3">
+          <div className="space-y-4 py-5">
             {/* Title */}
-            <div className="space-y-1">
-              <Label className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+            <div className="space-y-2">
+              <Label className="text-xs font-semibold text-foreground">
                 Title
               </Label>
               <Input
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
                 placeholder="What needs to be done?"
-                className="font-semibold"
               />
             </div>
 
@@ -385,23 +385,23 @@ export function TaskSheet({
             )}
 
             {/* Description */}
-            <div className="space-y-1">
-              <Label className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+            <div className="space-y-2">
+              <Label className="text-xs font-semibold text-foreground">
                 Description
               </Label>
               <Textarea
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 placeholder="Add details..."
-                rows={2}
+                rows={3}
                 className="resize-y"
               />
             </div>
 
             {/* 2x2 grid */}
-            <div className="grid grid-cols-2 gap-2.5">
-              <div className="space-y-1">
-                <Label className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label className="text-xs font-semibold text-foreground">
                   Status
                 </Label>
                 <Select value={status} onValueChange={setStatus}>
@@ -418,8 +418,8 @@ export function TaskSheet({
                 </Select>
               </div>
 
-              <div className="space-y-1">
-                <Label className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+              <div className="space-y-2">
+                <Label className="text-xs font-semibold text-foreground">
                   Priority
                 </Label>
                 <Select value={priority} onValueChange={setPriority}>
@@ -436,8 +436,8 @@ export function TaskSheet({
                 </Select>
               </div>
 
-              <div className="space-y-1">
-                <Label className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+              <div className="space-y-2">
+                <Label className="text-xs font-semibold text-foreground">
                   Assignee
                 </Label>
                 <Select value={assignedTo} onValueChange={setAssignedTo}>
@@ -455,8 +455,8 @@ export function TaskSheet({
                 </Select>
               </div>
 
-              <div className="space-y-1">
-                <Label className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+              <div className="space-y-2">
+                <Label className="text-xs font-semibold text-foreground">
                   Due Date
                 </Label>
                 <DatePicker value={dueDate} onChange={setDueDate} />
@@ -464,9 +464,9 @@ export function TaskSheet({
             </div>
 
             {/* Category + Linked */}
-            <div className="grid grid-cols-2 gap-2.5">
-              <div className="space-y-1">
-                <Label className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label className="text-xs font-semibold text-foreground">
                   Category
                 </Label>
                 <Select value={category || "none"} onValueChange={(v) => setCategory(v === "none" ? "" : v)}>
@@ -484,9 +484,9 @@ export function TaskSheet({
                 </Select>
               </div>
 
-              <div className="space-y-1">
-                <Label className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-1">
-                  <Link2 className="h-[11px] w-[11px]" strokeWidth={1.5} />
+              <div className="space-y-2">
+                <Label className="text-xs font-semibold text-foreground flex items-center gap-1">
+                  <Link2 className="h-3 w-3" strokeWidth={1.5} />
                   Linked
                 </Label>
                 <LinkedEntitySelect
@@ -499,22 +499,20 @@ export function TaskSheet({
             </div>
 
             {/* Recurring */}
-            <div>
-              <label className="flex items-center gap-2 cursor-pointer text-[13px] font-medium">
-                <input
-                  type="checkbox"
+            <div className="pt-1">
+              <label className="flex items-center gap-2.5 cursor-pointer">
+                <Checkbox
                   checked={isRecurring}
-                  onChange={(e) => setIsRecurring(e.target.checked)}
-                  className="h-4 w-4 rounded accent-primary"
+                  onCheckedChange={(checked) => setIsRecurring(checked === true)}
                 />
                 <Repeat
                   className="h-3.5 w-3.5 text-muted-foreground"
                   strokeWidth={1.5}
                 />
-                Create Recurring Series
+                <span className="text-sm font-medium text-foreground">Create Recurring Series</span>
               </label>
               {isRecurring && (
-                <div className="mt-2.5">
+                <div className="mt-3">
                   <RecurrencePanel
                     pattern={recurrencePattern}
                     onPatternChange={setRecurrencePattern}
@@ -538,8 +536,8 @@ export function TaskSheet({
 
             {/* Attachments — only for existing tasks */}
             {!isNew && (
-              <div className="space-y-1.5">
-                <Label className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+              <div className="space-y-2">
+                <Label className="text-xs font-semibold text-foreground">
                   Attachments
                 </Label>
                 <input
@@ -588,22 +586,22 @@ export function TaskSheet({
 
             {/* Comments — collapsible, closed by default */}
             {task && (
-              <div className="border-t border-border pt-2.5">
+              <div className="border-t border-border pt-4">
                 <button
                   type="button"
                   onClick={() => setCommentsOpen(!commentsOpen)}
-                  className="flex items-center gap-1.5 text-[12px] font-medium text-muted-foreground hover:text-foreground transition-colors w-full"
+                  className="flex items-center gap-2 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors w-full"
                 >
-                  <MessageSquare className="h-3.5 w-3.5" strokeWidth={1.5} />
+                  <MessageSquare className="h-4 w-4" strokeWidth={1.5} />
                   Comments
                   {commentsOpen ? (
-                    <ChevronUp className="h-3 w-3 ml-auto" strokeWidth={1.5} />
+                    <ChevronUp className="h-3.5 w-3.5 ml-auto" strokeWidth={1.5} />
                   ) : (
-                    <ChevronDown className="h-3 w-3 ml-auto" strokeWidth={1.5} />
+                    <ChevronDown className="h-3.5 w-3.5 ml-auto" strokeWidth={1.5} />
                   )}
                 </button>
                 {commentsOpen && (
-                  <div className="mt-2.5">
+                  <div className="mt-3">
                     <UnifiedNotes
                       entityType="task"
                       entityId={task.id}
@@ -617,7 +615,7 @@ export function TaskSheet({
         </ScrollArea>
 
         {/* Footer */}
-        <div className="flex items-center justify-between border-t border-border px-6 py-3">
+        <div className="flex items-center justify-between border-t border-border px-6 py-4">
           {!isNew ? (
             <AlertDialog>
               <AlertDialogTrigger asChild>

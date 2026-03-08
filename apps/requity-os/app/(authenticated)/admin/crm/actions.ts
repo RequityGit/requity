@@ -74,7 +74,7 @@ export async function deleteContactFileAction(
     }
 
     // Delete from database
-    const { error } = await (admin as any)
+    const { error } = await admin
       .from("contact_files")
       .delete()
       .eq("id", fileId);
