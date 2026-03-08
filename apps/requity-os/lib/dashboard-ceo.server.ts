@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { timeAgo, getMonthLabel } from "@/lib/format";
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 export interface CEOMetrics {
@@ -50,15 +51,6 @@ export interface CEODashboardData {
 }
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
-function timeAgo(dateStr: string): string {
-  const diff = Date.now() - new Date(dateStr).getTime();
-  const hours = Math.floor(diff / (1000 * 60 * 60));
-  if (hours < 1) return "Just now";
-  if (hours < 24) return `${hours}h ago`;
-  const days = Math.floor(hours / 24);
-  if (days === 1) return "Yesterday";
-  return `${days}d ago`;
-}
 
 function getYearStart(): string {
   return new Date(new Date().getFullYear(), 0, 1).toISOString().split("T")[0];
@@ -68,10 +60,6 @@ function formatCompact(n: number): string {
   if (n >= 1e6) return `$${(n / 1e6).toFixed(0)}M`;
   if (n >= 1e3) return `$${Math.round(n / 1e3)}K`;
   return `$${n.toFixed(0)}`;
-}
-
-function getMonthLabel(date: Date): string {
-  return date.toLocaleDateString("en-US", { month: "short" });
 }
 
 // ─── Main Data Fetch ────────────────────────────────────────────────────────

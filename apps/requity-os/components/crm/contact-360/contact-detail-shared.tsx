@@ -136,14 +136,19 @@ export function FieldRow({
   mono?: boolean;
   danger?: boolean;
 }) {
+  const isEmpty = !value || value === "—";
   return (
     <div className="flex justify-between items-center py-2 border-b border-border/40">
       <span className="text-xs text-muted-foreground">{label}</span>
       <span
         className={cn(
           "text-[13px] text-right",
-          danger ? "text-red-500" : "text-foreground",
-          mono ? "font-medium num font-mono" : "font-normal"
+          isEmpty
+            ? "text-muted-foreground/50"
+            : danger
+              ? "text-red-500"
+              : "text-foreground",
+          mono && !isEmpty ? "font-medium num font-mono" : "font-normal"
         )}
       >
         {value || "—"}
@@ -193,14 +198,17 @@ export function TabBtn({
 export function MonoValue({
   children,
   className,
+  title,
 }: {
   children: React.ReactNode;
   className?: string;
+  title?: string;
 }) {
   return (
     <span
       className={cn("tabular-nums", className)}
       style={{ fontFamily: "'JetBrains Mono', monospace" }}
+      title={title}
     >
       {children}
     </span>

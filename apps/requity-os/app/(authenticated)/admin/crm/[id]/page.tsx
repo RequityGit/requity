@@ -73,7 +73,6 @@ export default async function CrmContactDetailPage({ params }: PageProps) {
     supabase
       .from("profiles")
       .select("id, full_name, email")
-      .eq("role", "admin")
       .order("full_name"),
     admin
       .from("crm_emails")

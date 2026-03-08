@@ -4582,6 +4582,60 @@ export type Database = {
           },
         ]
       }
+      document_templates: {
+        Row: {
+          created_at: string
+          created_by: string
+          description: string | null
+          gdrive_file_id: string
+          gdrive_folder_id: string | null
+          id: string
+          is_active: boolean
+          merge_fields: Json
+          name: string
+          record_type: Database["public"]["Enums"]["record_type_enum"]
+          requires_signature: boolean
+          signature_roles: Json | null
+          template_type: Database["public"]["Enums"]["template_type_enum"]
+          updated_at: string
+          version: number
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          description?: string | null
+          gdrive_file_id: string
+          gdrive_folder_id?: string | null
+          id?: string
+          is_active?: boolean
+          merge_fields?: Json
+          name: string
+          record_type: Database["public"]["Enums"]["record_type_enum"]
+          requires_signature?: boolean
+          signature_roles?: Json | null
+          template_type: Database["public"]["Enums"]["template_type_enum"]
+          updated_at?: string
+          version?: number
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          description?: string | null
+          gdrive_file_id?: string
+          gdrive_folder_id?: string | null
+          id?: string
+          is_active?: boolean
+          merge_fields?: Json
+          name?: string
+          record_type?: Database["public"]["Enums"]["record_type_enum"]
+          requires_signature?: boolean
+          signature_roles?: Json | null
+          template_type?: Database["public"]["Enums"]["template_type_enum"]
+          updated_at?: string
+          version?: number
+        }
+        Relationships: []
+      }
       documents: {
         Row: {
           created_at: string
@@ -6701,6 +6755,74 @@ export type Database = {
             columns: ["created_by"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      generated_documents: {
+        Row: {
+          expires_at: string | null
+          file_format: Database["public"]["Enums"]["doc_format_enum"]
+          file_name: string
+          gdrive_file_id: string | null
+          generated_at: string
+          generated_by: string
+          id: string
+          merge_data_snapshot: Json
+          record_id: string
+          record_type: Database["public"]["Enums"]["record_type_enum"]
+          signature_details: Json | null
+          signature_request_id: string | null
+          signed_at: string | null
+          signed_file_gdrive_id: string | null
+          status: Database["public"]["Enums"]["doc_status_enum"]
+          template_id: string
+          template_version: number
+        }
+        Insert: {
+          expires_at?: string | null
+          file_format: Database["public"]["Enums"]["doc_format_enum"]
+          file_name: string
+          gdrive_file_id?: string | null
+          generated_at?: string
+          generated_by: string
+          id?: string
+          merge_data_snapshot?: Json
+          record_id: string
+          record_type: Database["public"]["Enums"]["record_type_enum"]
+          signature_details?: Json | null
+          signature_request_id?: string | null
+          signed_at?: string | null
+          signed_file_gdrive_id?: string | null
+          status?: Database["public"]["Enums"]["doc_status_enum"]
+          template_id: string
+          template_version: number
+        }
+        Update: {
+          expires_at?: string | null
+          file_format?: Database["public"]["Enums"]["doc_format_enum"]
+          file_name?: string
+          gdrive_file_id?: string | null
+          generated_at?: string
+          generated_by?: string
+          id?: string
+          merge_data_snapshot?: Json
+          record_id?: string
+          record_type?: Database["public"]["Enums"]["record_type_enum"]
+          signature_details?: Json | null
+          signature_request_id?: string | null
+          signed_at?: string | null
+          signed_file_gdrive_id?: string | null
+          status?: Database["public"]["Enums"]["doc_status_enum"]
+          template_id?: string
+          template_version?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "generated_documents_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "document_templates"
             referencedColumns: ["id"]
           },
         ]
@@ -15773,6 +15895,15 @@ export type Database = {
         | "lunch"
         | "other"
       delinquency_bucket: "current" | "1-30" | "31-60" | "61-90" | "90+"
+      doc_format_enum: "docx" | "pdf"
+      doc_status_enum:
+        | "draft"
+        | "sent_for_signature"
+        | "viewed"
+        | "signed"
+        | "declined"
+        | "expired"
+        | "voided"
       draw_document_type:
         | "photo"
         | "invoice"
@@ -15906,6 +16037,7 @@ export type Database = {
         | "self_storage"
         | "hotel_hospitality"
         | "healthcare"
+      record_type_enum: "loan" | "contact" | "deal" | "company"
       relationship_type_enum:
         | "borrower"
         | "investor"
@@ -15922,6 +16054,13 @@ export type Database = {
         | "paid_off"
         | "charged_off"
       servicing_payment_type: "regular" | "payoff" | "partial" | "returned"
+      template_type_enum:
+        | "nda"
+        | "broker_agreement"
+        | "term_sheet"
+        | "loan_agreement"
+        | "investor_agreement"
+        | "other"
       vendor_type_enum:
         | "title_company"
         | "law_firm"
@@ -16253,6 +16392,16 @@ export const Constants = {
         "other",
       ],
       delinquency_bucket: ["current", "1-30", "31-60", "61-90", "90+"],
+      doc_format_enum: ["docx", "pdf"],
+      doc_status_enum: [
+        "draft",
+        "sent_for_signature",
+        "viewed",
+        "signed",
+        "declined",
+        "expired",
+        "voided",
+      ],
       draw_document_type: [
         "photo",
         "invoice",
@@ -16399,6 +16548,7 @@ export const Constants = {
         "hotel_hospitality",
         "healthcare",
       ],
+      record_type_enum: ["loan", "contact", "deal", "company"],
       relationship_type_enum: [
         "borrower",
         "investor",
@@ -16417,6 +16567,14 @@ export const Constants = {
         "charged_off",
       ],
       servicing_payment_type: ["regular", "payoff", "partial", "returned"],
+      template_type_enum: [
+        "nda",
+        "broker_agreement",
+        "term_sheet",
+        "loan_agreement",
+        "investor_agreement",
+        "other",
+      ],
       vendor_type_enum: [
         "title_company",
         "law_firm",
@@ -16431,10 +16589,6 @@ export const Constants = {
     },
   },
 } as const
-
-// ---------------------------------------------------------------------------
-// Custom types (manually added, not auto-generated)
-// ---------------------------------------------------------------------------
 
 export interface PricingProgram {
   id: string;

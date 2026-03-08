@@ -25,10 +25,11 @@ import {
   CheckCircle2,
   PhoneCall,
   Plus,
+  Copy,
+  Check,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { MonoValue, relTime } from "./contact-detail-shared";
-import { EmailComposeSheet } from "@/components/crm/email-compose-sheet";
 import { formatDate } from "@/lib/format";
 import type { ContactData, RelationshipData } from "./types";
 import { RELATIONSHIP_BADGE_COLORS } from "./types";
@@ -40,6 +41,7 @@ interface ContactDetailSidebarProps {
   sourceLabel: string | null;
   currentUserId: string;
   currentUserName: string;
+  onComposeEmail?: () => void;
 }
 
 export function ContactDetailSidebar({
@@ -49,15 +51,12 @@ export function ContactDetailSidebar({
   sourceLabel,
   currentUserId,
   currentUserName,
+  onComposeEmail,
 }: ContactDetailSidebarProps) {
   const router = useRouter();
   const { toast } = useToast();
-  const [emailOpen, setEmailOpen] = useState(false);
   const [logging, setLogging] = useState(false);
-
-  const fullName =
-    [contact.first_name, contact.last_name].filter(Boolean).join(" ") ||
-    "Unnamed";
+  const [copied, setCopied] = useState(false);
 
   async function handleLogCall() {
     setLogging(true);
@@ -86,7 +85,7 @@ export function ContactDetailSidebar({
     {
       icon: Mail,
       label: "Send Email",
-      onClick: () => setEmailOpen(true),
+      onClick: () => onComposeEmail?.(),
     },
     {
       icon: CheckCircle2,
@@ -332,23 +331,27 @@ export function ContactDetailSidebar({
               <Label className="text-[11px] text-muted-foreground font-normal">
                 Contact ID
               </Label>
-              <MonoValue className="text-[11px] text-foreground">
-                {contact.id.slice(0, 8)}...
-              </MonoValue>
+              <div className="flex items-center gap-1">
+                <MonoValue className="text-[11px] text-foreground" title={contact.id}>
+                  {contact.id.slice(0, 8)}...
+                </MonoValue>
+                <button
+                  onClick={() => {
+                    navigator.clipboard.writeText(contact.id);
+                    setCopied(true);
+                    setTimeout(() => setCopied(false), 2000);
+                  }}
+                  className="p-0.5 rounded hover:bg-muted transition-colors text-muted-foreground hover:text-foreground"
+                  title="Copy full ID"
+                >
+                  {copied ? <Check size={11} className="text-[#22A861]" /> : <Copy size={11} />}
+                </button>
+              </div>
             </div>
           </div>
         </CardContent>
       </Card>
 
-      <EmailComposeSheet
-        open={emailOpen}
-        onOpenChange={setEmailOpen}
-        toEmail={contact.email || ""}
-        toName={fullName}
-        linkedContactId={contact.id}
-        currentUserId={currentUserId}
-        currentUserName={currentUserName}
-      />
     </div>
   );
 }

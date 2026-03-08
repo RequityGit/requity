@@ -1,16 +1,56 @@
 "use client";
 
-import { Send, Mail, Eye } from "lucide-react";
+import { Send, Mail, Eye, Plus } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { relTime } from "../contact-detail-shared";
 import type { EmailData } from "../types";
 
-interface DetailEmailsTabProps {
-  emails: EmailData[];
+function resolveEmailStatus(e: EmailData): { label: string; color: string } {
+  if (e.opened_at) return { label: "Opened", color: "#3B82F6" };
+  if (e.delivered_at) return { label: "Delivered", color: "#22A861" };
+
+  const status = e.postmark_status?.toLowerCase();
+  if (status === "sent") return { label: "Sent", color: "#22A861" };
+  if (status === "bounced" || status === "bounce")
+    return { label: "Bounced", color: "#E5453D" };
+  if (status === "failed" || status === "error")
+    return { label: "Failed", color: "#E5453D" };
+  if (status === "spam" || status === "spamcomplaint")
+    return { label: "Spam", color: "#E5453D" };
+  if (status === "queued") return { label: "Queued", color: "#E5930E" };
+
+  return { label: "Pending", color: "#E5930E" };
 }
 
-export function DetailEmailsTab({ emails }: DetailEmailsTabProps) {
+function EmailStatusBadge({ email }: { email: EmailData }) {
+  const { label, color } = resolveEmailStatus(email);
+  return (
+    <Badge
+      variant="outline"
+      className="text-[10px] gap-1 px-1.5 py-0 h-5"
+      style={{
+        color,
+        borderColor: `${color}30`,
+        backgroundColor: `${color}08`,
+      }}
+    >
+      <span
+        className="h-1.5 w-1.5 rounded-full"
+        style={{ backgroundColor: color }}
+      />
+      {label}
+    </Badge>
+  );
+}
+
+interface DetailEmailsTabProps {
+  emails: EmailData[];
+  onCompose?: () => void;
+}
+
+export function DetailEmailsTab({ emails, onCompose }: DetailEmailsTabProps) {
   if (emails.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-12 text-center">
@@ -20,9 +60,20 @@ export function DetailEmailsTab({ emails }: DetailEmailsTabProps) {
         <h3 className="text-sm font-semibold text-foreground mb-1">
           No emails
         </h3>
-        <p className="text-sm text-muted-foreground">
+        <p className="text-sm text-muted-foreground mb-3">
           No email history for this contact.
         </p>
+        {onCompose && (
+          <Button
+            variant="outline"
+            size="sm"
+            className="gap-1.5 rounded-lg border-border text-xs"
+            onClick={onCompose}
+          >
+            <Plus className="h-3.5 w-3.5" strokeWidth={1.5} />
+            Compose Email
+          </Button>
+        )}
       </div>
     );
   }
@@ -64,29 +115,7 @@ export function DetailEmailsTab({ emails }: DetailEmailsTabProps) {
                       strokeWidth={1.5}
                     />
                   )}
-                  <Badge
-                    variant="outline"
-                    className="text-[10px] gap-1 px-1.5 py-0 h-5"
-                    style={{
-                      color: e.delivered_at ? "#22A861" : "#E5930E",
-                      borderColor: e.delivered_at
-                        ? "#22A86130"
-                        : "#E5930E30",
-                      backgroundColor: e.delivered_at
-                        ? "#22A86108"
-                        : "#E5930E08",
-                    }}
-                  >
-                    <span
-                      className="h-1.5 w-1.5 rounded-full"
-                      style={{
-                        backgroundColor: e.delivered_at
-                          ? "#22A861"
-                          : "#E5930E",
-                      }}
-                    />
-                    {e.delivered_at ? "Delivered" : "Pending"}
-                  </Badge>
+                  <EmailStatusBadge email={e} />
                 </div>
               </div>
               <div className="flex items-center gap-2 text-xs text-muted-foreground">

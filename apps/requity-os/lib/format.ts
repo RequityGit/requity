@@ -1,5 +1,5 @@
 export function formatCurrency(amount: number | null | undefined): string {
-  if (amount == null) return "$0.00";
+  if (amount == null) return "—";
   return new Intl.NumberFormat("en-US", {
     style: "currency",
     currency: "USD",
@@ -11,7 +11,7 @@ export function formatCurrency(amount: number | null | undefined): string {
 export function formatCurrencyDetailed(
   amount: number | null | undefined
 ): string {
-  if (amount == null) return "$0.00";
+  if (amount == null) return "—";
   return new Intl.NumberFormat("en-US", {
     style: "currency",
     currency: "USD",
@@ -56,4 +56,18 @@ export function formatPhoneInput(value: string): string {
   if (digits.length <= 6)
     return `(${digits.slice(0, 3)}) ${digits.slice(3)}`;
   return `(${digits.slice(0, 3)}) ${digits.slice(3, 6)}-${digits.slice(6)}`;
+}
+
+export function timeAgo(dateStr: string): string {
+  const diff = Date.now() - new Date(dateStr).getTime();
+  const hours = Math.floor(diff / (1000 * 60 * 60));
+  if (hours < 1) return "Just now";
+  if (hours < 24) return `${hours}h ago`;
+  const days = Math.floor(hours / 24);
+  if (days === 1) return "Yesterday";
+  return `${days}d ago`;
+}
+
+export function getMonthLabel(date: Date): string {
+  return date.toLocaleDateString("en-US", { month: "short" });
 }

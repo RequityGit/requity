@@ -16,6 +16,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { ContactDetailHeader } from "./contact-detail-header";
 import { ContactDetailSidebar } from "./contact-detail-sidebar";
+import { EmailComposeSheet } from "@/components/crm/email-compose-sheet";
 import { DetailOverviewTab } from "./tabs/detail-overview-tab";
 import { DetailActivityTab } from "./tabs/detail-activity-tab";
 import { DetailEmailsTab } from "./tabs/detail-emails-tab";
@@ -141,6 +142,7 @@ export function ContactDetailClient({
   const isValidTab = tabs.some((t) => t.id === tabParam);
   const initialTab = isValidTab ? tabParam! : "overview";
   const [activeTab, setActiveTab] = useState(initialTab);
+  const [emailComposeOpen, setEmailComposeOpen] = useState(false);
 
   const handleTabChange = useCallback(
     (value: string) => {
@@ -267,7 +269,7 @@ export function ContactDetailClient({
             </TabsContent>
 
             <TabsContent value="emails" className="mt-4">
-              <DetailEmailsTab emails={emails} />
+              <DetailEmailsTab emails={emails} onCompose={() => setEmailComposeOpen(true)} />
             </TabsContent>
 
             <TabsContent value="activity" className="mt-4">
@@ -289,9 +291,20 @@ export function ContactDetailClient({
             sourceLabel={sourceLabel}
             currentUserId={currentUserId}
             currentUserName={currentUserName}
+            onComposeEmail={() => setEmailComposeOpen(true)}
           />
         </div>
       </div>
+
+      <EmailComposeSheet
+        open={emailComposeOpen}
+        onOpenChange={setEmailComposeOpen}
+        toEmail={contact.email || ""}
+        toName={fullName}
+        linkedContactId={contact.id}
+        currentUserId={currentUserId}
+        currentUserName={currentUserName}
+      />
     </div>
   );
 }

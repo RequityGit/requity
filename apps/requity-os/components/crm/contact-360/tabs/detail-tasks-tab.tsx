@@ -123,9 +123,18 @@ export function DetailTasksTab({
             <CheckCircle2 className="h-6 w-6 text-muted-foreground" strokeWidth={1.5} />
           </div>
           <h3 className="text-sm font-semibold text-foreground mb-1">No tasks</h3>
-          <p className="text-sm text-muted-foreground">
+          <p className="text-sm text-muted-foreground mb-3">
             Create a task to track to-dos for this contact.
           </p>
+          <Button
+            variant="outline"
+            size="sm"
+            className="gap-1.5 rounded-lg border-border text-xs"
+            onClick={handleNewTask}
+          >
+            <Plus className="h-3.5 w-3.5" strokeWidth={1.5} />
+            New Task
+          </Button>
         </div>
       ) : (
         tasks.map((t) => {

@@ -87,6 +87,13 @@ export const NAV_GROUPS: NavGroup[] = [
         icon: FileText,
       },
       {
+        id: "document-templates",
+        label: "Document Templates",
+        desc: "Manage document templates for agreements, term sheets, and generated documents.",
+        href: "/control-center/document-templates",
+        icon: FileText,
+      },
+      {
         id: "underwriting",
         label: "Underwriting Assumptions",
         desc: "Manage default underwriting assumptions and parameters.",
