@@ -1,23 +1,33 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Plus, Mail, Phone, ChevronRight } from "lucide-react";
 import { DotPill, relTime } from "@/components/crm/contact-360/contact-detail-shared";
 import { ClickToCallNumber } from "@/components/ui/ClickToCallNumber";
+import { AddContactDialog } from "@/components/crm/add-contact-dialog";
 import type { CompanyContactData } from "../types";
 
 interface ContactsTabProps {
   contacts: CompanyContactData[];
   companyId: string;
+  companyName: string;
   primaryContactId: string | null;
+  teamMembers: { id: string; full_name: string }[];
+  currentUserId: string;
 }
 
 export function CompanyContactsTab({
   contacts,
+  companyId,
+  companyName,
   primaryContactId,
+  teamMembers,
+  currentUserId,
 }: ContactsTabProps) {
+  const router = useRouter();
   // Sort: primary first, then alphabetical
   const sorted = [...contacts].sort((a, b) => {
     if (a.id === primaryContactId) return -1;
@@ -33,14 +43,23 @@ export function CompanyContactsTab({
         <span className="text-[13px] text-muted-foreground">
           {contacts.length} contact{contacts.length !== 1 ? "s" : ""}
         </span>
-        <Button
-          variant="outline"
-          size="sm"
-          className="gap-1.5 rounded-lg border-border text-xs"
-        >
-          <Plus className="h-3.5 w-3.5" strokeWidth={1.5} />
-          Add Contact
-        </Button>
+        <AddContactDialog
+          teamMembers={teamMembers}
+          currentUserId={currentUserId}
+          preselectedCompanyId={companyId}
+          preselectedCompanyName={companyName}
+          trigger={
+            <Button
+              variant="outline"
+              size="sm"
+              className="gap-1.5 rounded-lg border-border text-xs"
+            >
+              <Plus className="h-3.5 w-3.5" strokeWidth={1.5} />
+              Add Contact
+            </Button>
+          }
+          onSuccess={() => router.refresh()}
+        />
       </div>
 
       {contacts.length === 0 ? (

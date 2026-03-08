@@ -53,11 +53,19 @@ interface CompanyOption {
 interface AddContactDialogProps {
   teamMembers: TeamMember[];
   currentUserId: string;
+  preselectedCompanyId?: string;
+  preselectedCompanyName?: string;
+  trigger?: React.ReactNode;
+  onSuccess?: (contactId: string) => void;
 }
 
 export function AddContactDialog({
   teamMembers,
   currentUserId,
+  preselectedCompanyId,
+  preselectedCompanyName,
+  trigger,
+  onSuccess,
 }: AddContactDialogProps) {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -77,8 +85,8 @@ export function AddContactDialog({
     last_name: "",
     email: "",
     phone: "",
-    company_id: "" as string,
-    company_name: "",
+    company_id: (preselectedCompanyId ?? "") as string,
+    company_name: preselectedCompanyName ?? "",
     source: "",
     lifecycle_stage: "uncontacted",
     assigned_to: "",
@@ -172,8 +180,8 @@ export function AddContactDialog({
       last_name: "",
       email: "",
       phone: "",
-      company_id: "",
-      company_name: "",
+      company_id: preselectedCompanyId ?? "",
+      company_name: preselectedCompanyName ?? "",
       source: "",
       lifecycle_stage: "uncontacted",
       assigned_to: "",
@@ -286,7 +294,11 @@ export function AddContactDialog({
       toast({ title: "Contact added successfully" });
       setOpen(false);
       resetForm();
-      router.push(`/admin/crm/${newContact.id}`);
+      if (onSuccess) {
+        onSuccess(newContact.id);
+      } else {
+        router.push(`/admin/crm/${newContact.id}`);
+      }
     } catch (err: any) {
       toast({
         title: "Error adding contact",
@@ -307,10 +319,12 @@ export function AddContactDialog({
       }}
     >
       <DialogTrigger asChild>
-        <Button className="gap-2">
-          <UserPlus className="h-4 w-4" />
-          Add Contact
-        </Button>
+        {trigger ?? (
+          <Button className="gap-2">
+            <UserPlus className="h-4 w-4" />
+            Add Contact
+          </Button>
+        )}
       </DialogTrigger>
       <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
         <DialogHeader>
