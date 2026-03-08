@@ -1,6 +1,5 @@
 import {
   Users,
-  Shield,
   FileCheck,
   FileText,
   Calculator,
@@ -44,13 +43,6 @@ export const NAV_GROUPS: NavGroup[] = [
         desc: "View all portal users, grant or revoke roles, and manage activation status.",
         href: "/control-center/users",
         icon: Users,
-      },
-      {
-        id: "module-access",
-        label: "Module Access",
-        desc: "Configure which modules each role can access.",
-        href: "/control-center/module-access",
-        icon: Shield,
       },
     ],
   },
