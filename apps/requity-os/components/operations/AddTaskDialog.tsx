@@ -26,7 +26,6 @@ import {
 import { useToast } from "@/components/ui/use-toast";
 import { DatePicker } from "@/components/ui/date-picker";
 import { PlusCircle, Loader2 } from "lucide-react";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import type { OpsProject } from "./ProjectCard";
 import type { TeamMember } from "./OperationsView";
 import {
@@ -177,12 +176,12 @@ export function AddTaskDialog({ projects, teamMembers, externalOpen, onExternalO
           </Button>
         </DialogTrigger>
       )}
-      <DialogContent className="sm:max-w-[500px] p-0 flex flex-col max-h-[90vh] md:max-h-[85vh] overflow-hidden">
+      <DialogContent className="sm:max-w-[500px] p-0 md:p-0 gap-0 flex flex-col max-h-[90vh] md:max-h-[85vh] overflow-hidden">
         <DialogHeader className="px-4 md:px-6 pt-4 md:pt-6 shrink-0">
           <DialogTitle>New Task</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="flex flex-col flex-1 min-h-0">
-        <ScrollArea className="flex-1 min-h-0 px-4 md:px-6">
+        <div className="flex-1 min-h-0 overflow-y-auto px-4 md:px-6">
           <div className="space-y-3 py-2">
           <div className="space-y-1.5">
             <Label htmlFor="title">Title *</Label>
@@ -363,7 +362,7 @@ export function AddTaskDialog({ projects, teamMembers, externalOpen, onExternalO
             )}
           </div>
           </div>
-          </ScrollArea>
+          </div>
           <DialogFooter className="px-4 md:px-6 pb-4 md:pb-6 pt-3 border-t shrink-0">
             <Button
               type="button"
