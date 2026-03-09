@@ -1,6 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
-import { ControlCenterSidebar } from "./_components/control-center-sidebar";
+import { ControlCenterBreadcrumb } from "./_components/control-center-breadcrumb";
 
 export const dynamic = "force-dynamic";
 
@@ -28,9 +28,9 @@ export default async function ControlCenterLayout({
   if (!superAdminRole) redirect("/admin/dashboard");
 
   return (
-    <div className="-m-4 md:-m-6 lg:-m-8 flex h-[calc(100vh-64px)]">
-      <ControlCenterSidebar />
-      <main className="flex-1 overflow-y-auto p-6 lg:p-8">{children}</main>
+    <div>
+      <ControlCenterBreadcrumb />
+      {children}
     </div>
   );
 }

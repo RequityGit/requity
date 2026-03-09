@@ -66,6 +66,13 @@ export const NAV_GROUPS: NavGroup[] = [
         href: "/control-center/page-manager/companies",
         icon: Building2,
       },
+      {
+        id: "card-types",
+        label: "Card Types",
+        desc: "Configure pipeline card types, metrics, and underwriting fields.",
+        href: "/control-center/card-types",
+        icon: Layers,
+      },
     ],
   },
   {
@@ -113,13 +120,6 @@ export const NAV_GROUPS: NavGroup[] = [
         desc: "Advancement rules and warn/alert thresholds per pipeline stage.",
         href: "/control-center/pipeline-stage-config",
         icon: GitBranch,
-      },
-      {
-        id: "card-types",
-        label: "Card Types",
-        desc: "Configure pipeline card types, metrics, and underwriting fields.",
-        href: "/control-center/card-types",
-        icon: Layers,
       },
       {
         id: "pricing-engine",
