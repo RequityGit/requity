@@ -39,6 +39,14 @@ function LoginContent() {
       setError(
         "Authentication failed. Please try again or use a magic link."
       );
+    } else if (errorParam === "link_expired") {
+      setError(
+        "Your magic link has expired. Please request a new one below."
+      );
+    } else if (errorParam === "verification_failed") {
+      setError(
+        "Magic link verification failed. Please request a new link and click it only once."
+      );
     }
   }, [errorParam]);
 
