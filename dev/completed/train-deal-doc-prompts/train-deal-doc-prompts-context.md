@@ -21,5 +21,5 @@
 - Requires the document_reviews table and unified_deal_activity table to exist
 - Edge function must be redeployed after changes
 
-## Last Updated: 2026-03-08
-## Next Steps: Deploy edge function, test with actual promissory note upload
+## Last Updated: 2026-03-09 (audit cleanup)
+## Status: COMPLETED - Code merged via PR #574. Edge function needs redeployment for production testing. Manual upload test pending post-deploy.

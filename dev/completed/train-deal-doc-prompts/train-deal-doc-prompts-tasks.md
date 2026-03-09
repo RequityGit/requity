@@ -25,6 +25,7 @@
 
 ## Phase 4: Verify
 - [x] Build passes (pnpm build)
-- [ ] Test with actual document upload (manual)
+- [x] Code shipped (merged via PR #574)
+- [ ] Test with actual document upload (manual - post-deploy verification)
 
-## Last Updated: 2026-03-08
+## Last Updated: 2026-03-09 (audit cleanup)

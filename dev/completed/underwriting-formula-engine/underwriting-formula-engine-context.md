@@ -21,5 +21,5 @@
 ## Dependencies
 - `mathjs` package added to requity-os
 
-## Last Updated: 2026-03-08
-## Next Steps: Verify production build passes, then commit and push
+## Last Updated: 2026-03-09 (audit cleanup)
+## Status: COMPLETED - Merged via PR #566. Production build passes. Formula engine live in portal.

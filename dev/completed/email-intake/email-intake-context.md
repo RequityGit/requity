@@ -35,8 +35,9 @@
 - Environment variables on Netlify: CRON_SECRET, ANTHROPIC_API_KEY, NEXT_PUBLIC_APP_URL
 - Supabase `email_intake_queue` table (already migrated)
 
-## Last Updated: 2026-03-08T23:20Z
-## Next Steps:
+## Last Updated: 2026-03-09 (audit cleanup)
+## Status: COMPLETED - All code merged via PRs #567, #568, #571, #577. Make.com scenarios fixed and activated.
+## Remaining post-deploy verification:
 - Verify 772 Humble Camp processes through Make.com Deal Intake (queued item)
 - Verify Gmail sync cron picks up intake emails on next run
 - Manual test of portal-native intake flow end-to-end

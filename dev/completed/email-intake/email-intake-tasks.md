@@ -34,6 +34,7 @@
 
 ## Phase 6: Verification
 - [x] Build passes
+- [x] Code shipped (merged via PRs #567, #568, #571, #577)
 - [ ] Manual test flow (pending: Gmail sync cron must run to pick up intake emails)
 
 ## Phase 7: Make.com Fixes (added 2026-03-08)
@@ -45,6 +46,6 @@
 - [x] Diagnose Inbox Machine scenario (4579661) failures
 - [x] Fix JSON parsing in Inbox Machine module 9
 - [x] Activate Inbox Machine scenario
-- [ ] Verify 772 Humble Camp deal processes through Deal Intake
+- [ ] Verify 772 Humble Camp deal processes through Deal Intake (post-deploy)
 
-## Last Updated: 2026-03-08T23:20Z
+## Last Updated: 2026-03-09 (audit cleanup)
