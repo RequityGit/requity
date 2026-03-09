@@ -720,6 +720,9 @@ function DealSidebar({
     ...deal.property_data,
     loan_amount: deal.amount,
     borrower_name: approvalBorrowerName,
+    // Map opportunity fields to the names the loan approval checklist expects
+    type: (deal.uw_data as Record<string, unknown>)?.loan_type ?? null,
+    borrower_id: deal.primary_contact_id ?? null,
   };
 
   return (
