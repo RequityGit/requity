@@ -113,7 +113,7 @@ export function GenerateDocumentDialog({
     setStep("preview");
     setLoadingFields(true);
 
-    const { fields } = await resolveTemplateData(template.id, recordId);
+    const { fields } = await resolveTemplateData(template.id, recordId, recordType);
     setResolvedFields(fields);
     setLoadingFields(false);
 
@@ -154,6 +154,7 @@ export function GenerateDocumentDialog({
             template_id: selectedTemplate.id,
             record_id: recordId,
             format: fileFormat,
+            page_record_type: recordType,
           }),
         }
       );

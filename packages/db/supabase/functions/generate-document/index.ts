@@ -279,7 +279,7 @@ Deno.serve(async (req: Request) => {
     }
 
     // Parse request body
-    const { template_id, record_id, format = "docx" } = await req.json();
+    const { template_id, record_id, format = "docx", page_record_type } = await req.json();
 
     if (!template_id || !record_id) {
       return new Response(
@@ -303,10 +303,12 @@ Deno.serve(async (req: Request) => {
       );
     }
 
-    // Fetch source record data based on record_type
+    // Fetch source record data based on the page context (what entity the user is viewing),
+    // falling back to the template's record_type for backward compatibility.
+    const resolveType = page_record_type ?? template.record_type;
     const sourceData: Record<string, Record<string, unknown>> = {};
 
-    if (template.record_type === "loan") {
+    if (resolveType === "loan") {
       const { data: loan } = await supabaseAdmin
         .from("loans")
         .select("*")
@@ -380,7 +382,7 @@ Deno.serve(async (req: Request) => {
           if (company) sourceData["companies"] = company as Record<string, unknown>;
         }
       }
-    } else if (template.record_type === "contact") {
+    } else if (resolveType === "contact") {
       const { data: contact } = await supabaseAdmin
         .from("crm_contacts")
         .select("*")
@@ -401,7 +403,7 @@ Deno.serve(async (req: Request) => {
           .single();
         if (company) sourceData["companies"] = company;
       }
-    } else if (template.record_type === "deal") {
+    } else if (resolveType === "deal") {
       const { data: deal } = await supabaseAdmin
         .from("unified_deals")
         .select("*")
@@ -449,7 +451,7 @@ Deno.serve(async (req: Request) => {
           .single();
         if (company) sourceData["companies"] = company as Record<string, unknown>;
       }
-    } else if (template.record_type === "company") {
+    } else if (resolveType === "company") {
       const { data: company } = await supabaseAdmin
         .from("companies")
         .select("*")

@@ -86,6 +86,8 @@ export async function fetchTemplatesForRecord(recordType: "loan" | "contact" | "
 
   if (recordType === "deal") {
     query.in("record_type", ["deal", "loan"]);
+  } else if (recordType === "contact" || recordType === "company") {
+    // All templates apply to contacts and companies — no record_type filter
   } else {
     query.eq("record_type", recordType);
   }
@@ -102,7 +104,8 @@ export async function fetchTemplatesForRecord(recordType: "loan" | "contact" | "
 
 export async function resolveTemplateData(
   templateId: string,
-  recordId: string
+  recordId: string,
+  pageRecordType?: "loan" | "contact" | "deal" | "company"
 ): Promise<{ fields: ResolvedField[]; error?: string }> {
   const supabase = await createClient();
 
@@ -123,10 +126,12 @@ export async function resolveTemplateData(
     format?: string | null;
   }>) ?? [];
 
-  // Fetch source records
+  // Fetch source records based on the page context (what entity the user is viewing),
+  // falling back to the template's record_type for backward compatibility.
+  const resolveType = pageRecordType ?? template.record_type;
   const sourceData: Record<string, Record<string, unknown>> = {};
 
-  if (template.record_type === "loan") {
+  if (resolveType === "loan") {
     const { data: loan } = await supabase.from("loans").select("*").eq("id", recordId).single();
     if (loan) {
       sourceData["loans"] = loan as Record<string, unknown>;
@@ -165,7 +170,7 @@ export async function resolveTemplateData(
         }
       }
     }
-  } else if (template.record_type === "contact") {
+  } else if (resolveType === "contact") {
     const { data: contact } = await supabase.from("crm_contacts").select("*").eq("id", recordId).single();
     if (contact) {
       sourceData["crm_contacts"] = contact;
@@ -174,7 +179,7 @@ export async function resolveTemplateData(
         if (company) sourceData["companies"] = company;
       }
     }
-  } else if (template.record_type === "deal") {
+  } else if (resolveType === "deal") {
     const { data: deal } = await supabase.from("unified_deals" as never).select("*").eq("id" as never, recordId as never).single();
     if (deal) {
       const dealRecord = deal as Record<string, unknown>;
@@ -202,7 +207,7 @@ export async function resolveTemplateData(
         if (company) sourceData["companies"] = company as Record<string, unknown>;
       }
     }
-  } else if (template.record_type === "company") {
+  } else if (resolveType === "company") {
     const { data: company } = await supabase.from("companies").select("*").eq("id", recordId).single();
     if (company) sourceData["companies"] = company;
   }
