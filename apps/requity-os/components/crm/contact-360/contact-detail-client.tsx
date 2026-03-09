@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useMemo, useCallback, useEffect } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useState, useMemo, useCallback } from "react";
+import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import {
@@ -12,7 +12,7 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { ContactDetailHeader } from "./contact-detail-header";
 import { ContactDetailSidebar } from "./contact-detail-sidebar";
@@ -86,7 +86,6 @@ export function ContactDetailClient({
   sectionOrder,
   sectionFields,
 }: ContactDetailClientProps) {
-  const router = useRouter();
   const searchParams = useSearchParams();
 
   const fullName =
@@ -144,29 +143,32 @@ export function ContactDetailClient({
   const [activeTab, setActiveTab] = useState(initialTab);
   const [emailComposeOpen, setEmailComposeOpen] = useState(false);
 
+  // Track which tabs have been visited so we can keep them mounted
+  const [loadedTabs, setLoadedTabs] = useState<Set<string>>(
+    () => new Set([initialTab])
+  );
+
   const handleTabChange = useCallback(
     (value: string) => {
       setActiveTab(value);
-      const params = new URLSearchParams(searchParams.toString());
+      setLoadedTabs((prev) => {
+        if (prev.has(value)) return prev;
+        return new Set(prev).add(value);
+      });
+      // Use history.replaceState to update URL without triggering Next.js navigation
+      const params = new URLSearchParams(window.location.search);
       if (value === "overview") {
         params.delete("tab");
       } else {
         params.set("tab", value);
       }
       const newUrl = params.toString()
-        ? `?${params.toString()}`
+        ? `${window.location.pathname}?${params.toString()}`
         : window.location.pathname;
-      router.replace(newUrl, { scroll: false });
+      window.history.replaceState(null, "", newUrl);
     },
-    [router, searchParams]
+    []
   );
-
-  useEffect(() => {
-    const newTab = searchParams.get("tab") || "overview";
-    if (tabs.some((t) => t.id === newTab) && newTab !== activeTab) {
-      setActiveTab(newTab);
-    }
-  }, [searchParams, tabs, activeTab]);
 
   return (
     <div className="min-h-screen">
@@ -227,59 +229,78 @@ export function ContactDetailClient({
               ))}
             </TabsList>
 
-            <TabsContent value="overview" className="mt-4">
-              <DetailOverviewTab
-                contact={contact}
-                borrower={borrower}
-                investor={investor}
-                loans={loans}
-                commitments={investorCommitments}
-                isSuperAdmin={isSuperAdmin}
-                sectionOrder={sectionOrder}
-                sectionFields={sectionFields}
-              />
-            </TabsContent>
-
-            <TabsContent value="notes" className="mt-4">
-              <UnifiedNotes
-                entityType="contact"
-                entityId={contact.id}
-              />
-            </TabsContent>
-
-            <TabsContent value="tasks" className="mt-4">
-              <DetailTasksTab
-                tasks={tasks}
-                contactId={contact.id}
-                contactName={fullName}
-                profiles={profiles}
-                currentUserId={currentUserId}
-              />
-            </TabsContent>
-
-            <TabsContent value="deals" className="mt-4">
-              <DetailDealsTab
-                loans={loans}
-                commitments={investorCommitments}
-              />
-            </TabsContent>
-
-            <TabsContent value="entities" className="mt-4">
-              <DetailEntitiesTab entities={entities} />
-            </TabsContent>
-
-            <TabsContent value="emails" className="mt-4">
-              <DetailEmailsTab emails={emails} onCompose={() => setEmailComposeOpen(true)} />
-            </TabsContent>
-
-            <TabsContent value="activity" className="mt-4">
-              <DetailActivityTab
-                contactId={contact.id}
-                activities={activities}
-                currentUserId={currentUserId}
-              />
-            </TabsContent>
           </Tabs>
+
+          {/* Tab content rendered outside Tabs to avoid unmount/remount.
+              Visited tabs stay mounted (hidden) to preserve state & subscriptions. */}
+          <div className="mt-4">
+            {loadedTabs.has("overview") && (
+              <div className={activeTab !== "overview" ? "hidden" : undefined}>
+                <DetailOverviewTab
+                  contact={contact}
+                  borrower={borrower}
+                  investor={investor}
+                  loans={loans}
+                  commitments={investorCommitments}
+                  isSuperAdmin={isSuperAdmin}
+                  sectionOrder={sectionOrder}
+                  sectionFields={sectionFields}
+                />
+              </div>
+            )}
+
+            {loadedTabs.has("notes") && (
+              <div className={activeTab !== "notes" ? "hidden" : undefined}>
+                <UnifiedNotes
+                  entityType="contact"
+                  entityId={contact.id}
+                />
+              </div>
+            )}
+
+            {loadedTabs.has("tasks") && (
+              <div className={activeTab !== "tasks" ? "hidden" : undefined}>
+                <DetailTasksTab
+                  tasks={tasks}
+                  contactId={contact.id}
+                  contactName={fullName}
+                  profiles={profiles}
+                  currentUserId={currentUserId}
+                />
+              </div>
+            )}
+
+            {loadedTabs.has("deals") && (
+              <div className={activeTab !== "deals" ? "hidden" : undefined}>
+                <DetailDealsTab
+                  loans={loans}
+                  commitments={investorCommitments}
+                />
+              </div>
+            )}
+
+            {loadedTabs.has("entities") && (
+              <div className={activeTab !== "entities" ? "hidden" : undefined}>
+                <DetailEntitiesTab entities={entities} />
+              </div>
+            )}
+
+            {loadedTabs.has("emails") && (
+              <div className={activeTab !== "emails" ? "hidden" : undefined}>
+                <DetailEmailsTab emails={emails} onCompose={() => setEmailComposeOpen(true)} />
+              </div>
+            )}
+
+            {loadedTabs.has("activity") && (
+              <div className={activeTab !== "activity" ? "hidden" : undefined}>
+                <DetailActivityTab
+                  contactId={contact.id}
+                  activities={activities}
+                  currentUserId={currentUserId}
+                />
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Right Sidebar */}
