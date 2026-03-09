@@ -109,12 +109,12 @@ function LoginContent() {
           {/* Logo / Header */}
           <div className="text-center mb-8">
             <img
-              src="https://edhlkknvlczhbowasjna.supabase.co/storage/v1/object/public/brand-assets/Requity%20Logo%20White.svg?v=2"
+              src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/brand-assets/Requity%20Logo%20White.svg?v=2`}
               alt="Requity Group"
               className="h-12 mx-auto mb-4 hidden dark:block"
             />
             <img
-              src="https://edhlkknvlczhbowasjna.supabase.co/storage/v1/object/public/brand-assets/Requity%20Logo%20Color.svg"
+              src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/brand-assets/Requity%20Logo%20Color.svg`}
               alt="Requity Group"
               className="h-12 mx-auto mb-4 dark:hidden"
             />
