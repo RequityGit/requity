@@ -31,6 +31,7 @@ import {
   type SignatureRole,
   type TemplateFormData,
 } from "./actions";
+import { TERM_SHEET_SECTIONS } from "@/lib/term-sheet-fields";
 
 const TEMPLATE_TYPES = [
   { value: "nda", label: "NDA" },
@@ -73,8 +74,6 @@ interface Template {
   template_type: string;
   record_type: string;
   description: string | null;
-  gdrive_file_id: string;
-  gdrive_folder_id: string | null;
   merge_fields: MergeField[];
   requires_signature: boolean;
   signature_roles: SignatureRole[] | null;
@@ -87,23 +86,23 @@ interface Props {
   onSuccess: () => void;
 }
 
-/**
- * Extracts a Google Drive file ID from a full URL or returns the input as-is
- * if it's already a bare file ID.
- */
-function extractGdriveFileId(input: string): string {
-  const trimmed = input.trim();
-  if (!trimmed) return trimmed;
-
-  // Match /d/FILE_ID pattern (covers docs.google.com/document/d/... and drive.google.com/file/d/...)
-  const pathMatch = trimmed.match(/\/d\/([a-zA-Z0-9_-]+)/);
-  if (pathMatch) return pathMatch[1];
-
-  // Match ?id=FILE_ID pattern (covers drive.google.com/open?id=...)
-  const queryMatch = trimmed.match(/[?&]id=([a-zA-Z0-9_-]+)/);
-  if (queryMatch) return queryMatch[1];
-
-  return trimmed;
+/** Build default merge fields from TERM_SHEET_SECTIONS for loan-type templates */
+function getDefaultMergeFields(recordType: string): MergeField[] {
+  if (recordType !== "loan") return [];
+  const fields: MergeField[] = [];
+  for (const section of TERM_SHEET_SECTIONS) {
+    for (const f of section.fields) {
+      if (!f.defaultVisible) continue;
+      fields.push({
+        key: f.key,
+        label: f.label,
+        source: "loans",
+        column: f.key,
+        format: f.format === "currency" ? "currency" : f.format === "percent" ? "percentage" : f.format === "date" ? "date" : null,
+      });
+    }
+  }
+  return fields;
 }
 
 const EMPTY_FIELD: MergeField = {
@@ -134,17 +133,11 @@ export function TemplateSheet({ open, onOpenChange, template, onSuccess }: Props
   const [description, setDescription] = useState(
     template?.description ?? ""
   );
-  const [gdriveFileId, setGdriveFileId] = useState(
-    template?.gdrive_file_id ?? ""
-  );
-  const [gdriveFolderId, setGdriveFolderId] = useState(
-    template?.gdrive_folder_id ?? ""
-  );
   const [requiresSignature, setRequiresSignature] = useState(
     template?.requires_signature ?? false
   );
   const [mergeFields, setMergeFields] = useState<MergeField[]>(
-    template?.merge_fields ?? []
+    template?.merge_fields ?? getDefaultMergeFields(template?.record_type ?? "loan")
   );
   const [signatureRoles, setSignatureRoles] = useState<SignatureRole[]>(
     template?.signature_roles ?? []
@@ -153,14 +146,15 @@ export function TemplateSheet({ open, onOpenChange, template, onSuccess }: Props
 
   // Reset form when template changes
   function resetForm() {
+    const rt = template?.record_type ?? "loan";
     setName(template?.name ?? "");
     setTemplateType(template?.template_type ?? "term_sheet");
-    setRecordType(template?.record_type ?? "loan");
+    setRecordType(rt);
     setDescription(template?.description ?? "");
-    setGdriveFileId(template?.gdrive_file_id ?? "");
-    setGdriveFolderId(template?.gdrive_folder_id ?? "");
     setRequiresSignature(template?.requires_signature ?? false);
-    setMergeFields(template?.merge_fields ?? []);
+    setMergeFields(
+      template?.merge_fields ?? getDefaultMergeFields(rt)
+    );
     setSignatureRoles(template?.signature_roles ?? []);
   }
 
@@ -205,10 +199,6 @@ export function TemplateSheet({ open, onOpenChange, template, onSuccess }: Props
       toast.error("Template name is required");
       return;
     }
-    if (!gdriveFileId.trim()) {
-      toast.error("Google Drive file ID is required");
-      return;
-    }
 
     // Check for duplicate merge field keys
     const keys = mergeFields.map((f) => f.key).filter(Boolean);
@@ -223,8 +213,6 @@ export function TemplateSheet({ open, onOpenChange, template, onSuccess }: Props
       template_type: templateType,
       record_type: recordType,
       description: description.trim(),
-      gdrive_file_id: extractGdriveFileId(gdriveFileId),
-      gdrive_folder_id: gdriveFolderId.trim() || undefined,
       requires_signature: requiresSignature,
       merge_fields: mergeFields.filter((f) => f.key && f.column),
       signature_roles: signatureRoles.filter((r) => r.role),
@@ -327,52 +315,6 @@ export function TemplateSheet({ open, onOpenChange, template, onSuccess }: Props
                   onCheckedChange={setRequiresSignature}
                 />
                 <Label>Requires Signature</Label>
-              </div>
-            </section>
-
-            <Separator />
-
-            {/* Template File */}
-            <section className="space-y-4">
-              <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-[0.08em]">
-                Template File
-              </h3>
-
-              <div className="space-y-2">
-                <Label htmlFor="gdrive_file_id">
-                  Google Drive File ID
-                </Label>
-                <Input
-                  id="gdrive_file_id"
-                  value={gdriveFileId}
-                  onChange={(e) => setGdriveFileId(e.target.value)}
-                  onPaste={(e) => {
-                    e.preventDefault();
-                    const pasted = e.clipboardData.getData("text");
-                    setGdriveFileId(extractGdriveFileId(pasted));
-                  }}
-                  onBlur={(e) =>
-                    setGdriveFileId(extractGdriveFileId(e.target.value))
-                  }
-                  placeholder="1a2b3c4d5e6f..."
-                  className="font-mono text-xs"
-                />
-                <p className="text-[11px] text-muted-foreground">
-                  The file ID from the Google Drive URL of your .docx template.
-                </p>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="gdrive_folder_id">
-                  Output Folder ID (optional)
-                </Label>
-                <Input
-                  id="gdrive_folder_id"
-                  value={gdriveFolderId}
-                  onChange={(e) => setGdriveFolderId(e.target.value)}
-                  placeholder="1a2b3c4d5e6f..."
-                  className="font-mono text-xs"
-                />
               </div>
             </section>
 

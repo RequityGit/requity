@@ -76,8 +76,6 @@ interface Template {
   template_type: string;
   record_type: string;
   description: string | null;
-  gdrive_file_id: string;
-  gdrive_folder_id: string | null;
   merge_fields: Array<{
     key: string;
     label: string;

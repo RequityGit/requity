@@ -4588,7 +4588,7 @@ export type Database = {
           created_at: string
           created_by: string
           description: string | null
-          gdrive_file_id: string
+          gdrive_file_id: string | null
           gdrive_folder_id: string | null
           id: string
           is_active: boolean
@@ -4606,7 +4606,7 @@ export type Database = {
           created_at?: string
           created_by: string
           description?: string | null
-          gdrive_file_id: string
+          gdrive_file_id?: string | null
           gdrive_folder_id?: string | null
           id?: string
           is_active?: boolean
@@ -4624,7 +4624,7 @@ export type Database = {
           created_at?: string
           created_by?: string
           description?: string | null
-          gdrive_file_id?: string
+          gdrive_file_id?: string | null
           gdrive_folder_id?: string | null
           id?: string
           is_active?: boolean
