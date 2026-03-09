@@ -157,6 +157,53 @@ export function CardTypeManagerView({
   const activeTypes = cardTypes.filter((ct) => ct.status !== "archived");
   const archivedTypes = cardTypes.filter((ct) => ct.status === "archived");
 
+  // Resolve field labels from field_configurations on card type selection
+  const [fieldConfigs, setFieldConfigs] = useState<UwFieldConfigRecord[]>([]);
+
+  useEffect(() => {
+    fetchUwFieldConfigs().then((result) => {
+      if (result.data) setFieldConfigs(result.data);
+    });
+  }, []);
+
+  // When field configs load or card type changes, resolve uw_fields labels
+  useEffect(() => {
+    if (!edits || fieldConfigs.length === 0) return;
+
+    const resolvedUwFields = edits.uw_fields.map((f) => {
+      // Determine module from object binding
+      const mod =
+        f.object === "property"
+          ? "uw_property"
+          : f.object === "borrower"
+            ? "uw_borrower"
+            : "uw_deal";
+      const fc = fieldConfigs.find(
+        (c) => c.module === mod && c.field_key === f.key
+      );
+      if (!fc) return f;
+      const fcTypeMap: Record<string, UwFieldDef["type"]> = {
+        percentage: "percent",
+        dropdown: "select",
+      };
+      return {
+        ...f,
+        label: fc.field_label,
+        type: (fcTypeMap[fc.field_type] ?? fc.field_type) as UwFieldDef["type"],
+        options: fc.dropdown_options ?? f.options,
+      };
+    });
+
+    // Only update if labels actually changed
+    const labelsChanged = resolvedUwFields.some(
+      (rf, i) => rf.label !== edits.uw_fields[i]?.label
+    );
+    if (labelsChanged) {
+      setEdits((prev) => (prev ? { ...prev, uw_fields: resolvedUwFields } : prev));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [fieldConfigs, selectedId]);
+
   // Select a card type and load its edits
   const selectCardType = useCallback(
     (id: string) => {
@@ -483,17 +530,28 @@ export function CardTypeManagerView({
               </TabsContent>
 
               <TabsContent value="property" className="mt-4">
-                <FieldsAndGroupsEditor
-                  description="Define property-related fields for this card type. These appear in the Property tab on deal details."
-                  fields={edits.property_fields}
-                  fieldGroups={edits.property_field_groups}
-                  onFieldsChange={(f) =>
-                    setEdits({ ...edits, property_fields: f })
-                  }
-                  onGroupsChange={(g) =>
-                    setEdits({ ...edits, property_field_groups: g })
-                  }
-                />
+                <div className="space-y-6">
+                  <UwFieldPickerEditor
+                    fieldRefs={edits.property_field_refs ?? []}
+                    inlineFields={edits.property_fields}
+                    moduleFilter={["uw_property"]}
+                    defaultObject="property"
+                    onChange={(refs, inlineFields) =>
+                      setEdits({
+                        ...edits,
+                        property_field_refs: refs,
+                        property_fields: inlineFields,
+                      })
+                    }
+                  />
+                  <FieldGroupsOnlyEditor
+                    groups={edits.property_field_groups}
+                    fields={edits.property_fields}
+                    onChange={(g) =>
+                      setEdits({ ...edits, property_field_groups: g })
+                    }
+                  />
+                </div>
               </TabsContent>
 
               <TabsContent value="contacts" className="mt-4">
@@ -504,14 +562,23 @@ export function CardTypeManagerView({
                       setEdits({ ...edits, contact_roles: r })
                     }
                   />
-                  <FieldsAndGroupsEditor
-                    description="Define contact-related financial fields (e.g., borrower net worth, liquidity). These appear in the Contacts tab alongside linked contacts."
-                    fields={edits.contact_fields}
-                    fieldGroups={edits.contact_field_groups}
-                    onFieldsChange={(f) =>
-                      setEdits({ ...edits, contact_fields: f })
+                  <UwFieldPickerEditor
+                    fieldRefs={edits.contact_field_refs ?? []}
+                    inlineFields={edits.contact_fields}
+                    moduleFilter={["uw_borrower"]}
+                    defaultObject="borrower"
+                    onChange={(refs, inlineFields) =>
+                      setEdits({
+                        ...edits,
+                        contact_field_refs: refs,
+                        contact_fields: inlineFields,
+                      })
                     }
-                    onGroupsChange={(g) =>
+                  />
+                  <FieldGroupsOnlyEditor
+                    groups={edits.contact_field_groups}
+                    fields={edits.contact_fields}
+                    onChange={(g) =>
                       setEdits({ ...edits, contact_field_groups: g })
                     }
                   />
@@ -987,10 +1054,16 @@ function UwFieldPickerEditor({
   fieldRefs,
   inlineFields,
   onChange,
+  moduleFilter,
+  defaultObject,
 }: {
   fieldRefs: CardTypeFieldRef[];
   inlineFields: UwFieldDef[];
   onChange: (refs: CardTypeFieldRef[], inlineFields: UwFieldDef[]) => void;
+  /** If set, only show fields from these modules */
+  moduleFilter?: string[];
+  /** Default object binding for new fields (e.g. "property" for property tab) */
+  defaultObject?: UwFieldObject;
 }) {
   const [availableFields, setAvailableFields] = useState<UwFieldConfigRecord[]>([]);
   const [loading, setLoading] = useState(true);
@@ -1000,9 +1073,15 @@ function UwFieldPickerEditor({
   // Fetch available field configs on mount
   useEffect(() => {
     fetchUwFieldConfigs().then((result) => {
-      if (result.data) setAvailableFields(result.data);
+      if (result.data) {
+        const data = moduleFilter
+          ? result.data.filter((f) => moduleFilter.includes(f.module))
+          : result.data;
+        setAvailableFields(data);
+      }
       setLoading(false);
     });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Build sets of selected field keys for quick lookup
@@ -1065,7 +1144,7 @@ function UwFieldPickerEditor({
         (r) => !(r.module === fc.module && r.field_key === fc.field_key)
       );
     } else {
-      const obj = OBJECT_FOR_MODULE[fc.module] ?? "deal";
+      const obj = defaultObject ?? OBJECT_FOR_MODULE[fc.module] ?? "deal";
       nextRefs = [
         ...fieldRefs,
         {
@@ -2159,6 +2238,150 @@ function SettingsEditor({
 
 // ---------------------------------------------------------------------------
 // Fields & Groups Editor (reusable for Property Tab and Contacts Tab)
+// ---------------------------------------------------------------------------
+
+// ---------------------------------------------------------------------------
+// Field Groups Only Editor (used with UwFieldPickerEditor for property/contacts)
+// ---------------------------------------------------------------------------
+
+function FieldGroupsOnlyEditor({
+  groups,
+  fields,
+  onChange,
+}: {
+  groups: FieldGroupDef[];
+  fields: UwFieldDef[];
+  onChange: (groups: FieldGroupDef[]) => void;
+}) {
+  const [expandedGroup, setExpandedGroup] = useState<number | null>(null);
+
+  const addGroup = () => {
+    onChange([...groups, { label: "", fields: [] }]);
+  };
+
+  const updateGroup = (idx: number, updates: Partial<FieldGroupDef>) => {
+    const next = groups.map((g, i) => (i === idx ? { ...g, ...updates } : g));
+    onChange(next);
+  };
+
+  const removeGroup = (idx: number) => {
+    onChange(groups.filter((_, i) => i !== idx));
+  };
+
+  const moveGroup = (idx: number, dir: -1 | 1) => {
+    const next = [...groups];
+    const target = idx + dir;
+    if (target < 0 || target >= next.length) return;
+    [next[idx], next[target]] = [next[target], next[idx]];
+    onChange(next);
+  };
+
+  const toggleField = (groupIdx: number, fieldKey: string) => {
+    const group = groups[groupIdx];
+    const hasField = group.fields.includes(fieldKey);
+    const updatedFields = hasField
+      ? group.fields.filter((f) => f !== fieldKey)
+      : [...group.fields, fieldKey];
+    updateGroup(groupIdx, { fields: updatedFields });
+  };
+
+  return (
+    <div className="space-y-4 border-t pt-4">
+      <h4 className="text-sm font-medium">Field Groups</h4>
+      <p className="text-sm text-muted-foreground">
+        Organize fields into labeled sections for display.
+      </p>
+
+      <div className="space-y-2">
+        {groups.map((g, idx) => (
+          <div key={idx} className="rounded-lg border">
+            <div className="flex items-center gap-2 p-3">
+              <div className="flex flex-col gap-0.5">
+                <button
+                  onClick={() => moveGroup(idx, -1)}
+                  disabled={idx === 0}
+                  className="p-0.5 hover:bg-accent rounded disabled:opacity-30"
+                >
+                  <ArrowUp className="h-3 w-3" />
+                </button>
+                <button
+                  onClick={() => moveGroup(idx, 1)}
+                  disabled={idx === groups.length - 1}
+                  className="p-0.5 hover:bg-accent rounded disabled:opacity-30"
+                >
+                  <ArrowDown className="h-3 w-3" />
+                </button>
+              </div>
+
+              <Input
+                value={g.label}
+                onChange={(e) => updateGroup(idx, { label: e.target.value })}
+                placeholder="Group label"
+                className="text-sm flex-1"
+              />
+
+              <span className="text-xs text-muted-foreground whitespace-nowrap">
+                {g.fields.length} fields
+              </span>
+
+              <button
+                onClick={() =>
+                  setExpandedGroup(expandedGroup === idx ? null : idx)
+                }
+                className="p-1 rounded hover:bg-accent"
+              >
+                {expandedGroup === idx ? (
+                  <ChevronUp className="h-3.5 w-3.5" />
+                ) : (
+                  <ChevronDown className="h-3.5 w-3.5" />
+                )}
+              </button>
+
+              <button
+                onClick={() => removeGroup(idx)}
+                className="p-1 rounded hover:bg-destructive/10"
+              >
+                <X className="h-3.5 w-3.5 text-destructive" />
+              </button>
+            </div>
+
+            {expandedGroup === idx && (
+              <div className="border-t px-3 py-2">
+                <div className="grid grid-cols-3 gap-1">
+                  {fields.map((f) => {
+                    const selected = g.fields.includes(f.key);
+                    return (
+                      <button
+                        key={f.key}
+                        onClick={() => toggleField(idx, f.key)}
+                        className={cn(
+                          "text-left text-xs px-2 py-1 rounded transition-colors",
+                          selected
+                            ? "bg-primary/10 text-primary font-medium"
+                            : "text-muted-foreground hover:bg-accent"
+                        )}
+                      >
+                        {f.label || f.key}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
+
+      <Button variant="outline" size="sm" onClick={addGroup}>
+        <Plus className="h-3.5 w-3.5 mr-1.5" />
+        Add Group
+      </Button>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Fields and Groups Editor (legacy -- used as fallback)
 // ---------------------------------------------------------------------------
 
 function FieldsAndGroupsEditor({

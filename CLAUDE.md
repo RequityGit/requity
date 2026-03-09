@@ -39,6 +39,7 @@ pnpm test:watch             # Watch mode
 8. **No em dashes in any generated documents or content.** Use commas, periods, or semicolons.
 9. **Chatter (deal room messaging) was deleted.** Do not reference it or build on it.
 10. **This is Remix, not Next.js.** The lending site (requitylending.com) is Next.js. Do not confuse them.
+11. **Field Manager is the single source of truth for ALL field definitions.** The `field_configurations` table (managed at `/control-center/field-manager`) defines every field's label, type, and options. All page layouts, card type editors, and detail pages MUST pull field metadata from `field_configurations` via `useFieldConfigurations(module)` or `useResolvedCardType()`. Never define field labels, types, or dropdown options inline in components, JSONB columns, or constants. Card types store `*_field_refs` (references by `field_key` + `module`) with per-card-type overrides (`required`, `object`, `sort_order`) only. The modules `uw_deal`, `uw_property`, `uw_borrower` cover pipeline underwriting fields. See `/control-center/field-manager` for the admin UI and `hooks/useFieldConfigurations.ts` + `hooks/useResolvedCardType.ts` for consumption patterns.
 
 ---
 
@@ -237,6 +238,27 @@ Before considering any implementation complete, verify:
 | `documents` | Document metadata | Google Drive is file storage layer |
 | `project_tracker` | Internal project tracking | Update when working on Requity projects |
 | `project_notes` | Project note log | Include timestamps |
+| `field_configurations` | **Master field registry** | Single source of truth for ALL field labels, types, options |
+| `unified_card_types` | Pipeline card type definitions | Uses `uw_field_refs` to reference `field_configurations` |
+| `unified_deals` | Pipeline deals | `uw_data` JSONB stores field values keyed by `field_key` |
+
+### Field Configuration Architecture
+```
+field_configurations (master registry)
+  -> useFieldConfigurations(module)     # CRM, loan detail, servicing pages
+  -> useResolvedCardType(cardType)      # Pipeline deal pages (resolves uw_field_refs)
+  -> Field Manager UI                   # Admin edits labels, types, options
+  -> Page Layout editors                # Admin assigns fields to page sections
+
+Modules: uw_deal, uw_property, uw_borrower (pipeline UW)
+         loan_details, property, borrower_entity (servicing)
+         company_info, contact_profile, borrower_profile, investor_profile (CRM)
+         + 15 more (see Field Manager sidebar)
+
+Card types store REFERENCES only:
+  uw_field_refs: [{field_key, module, required?, object?, sort_order}]
+  NOT inline definitions like {key, label, type} -- those are resolved at runtime
+```
 
 ### Auth Pattern
 ```typescript
