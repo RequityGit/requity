@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useCallback, useMemo } from "react";
+import React, { useState, useCallback, useMemo, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { validateFormula as validateFormulaStr } from "@/lib/formula-engine";
 import {
@@ -72,7 +72,11 @@ import {
   saveCardType,
   archiveCardType,
   deleteCardType,
+  fetchUwFieldConfigs,
+  createUwFieldConfig,
+  type UwFieldConfigRecord,
 } from "./actions";
+import type { CardTypeFieldRef } from "@/components/pipeline-v2/pipeline-types";
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -191,6 +195,9 @@ export function CardTypeManagerView({
       status: edits.status,
       uw_model_key: edits.uw_model_key,
       uw_grid: edits.uw_grid ?? null,
+      uw_field_refs: edits.uw_field_refs ?? [],
+      property_field_refs: edits.property_field_refs ?? [],
+      contact_field_refs: edits.contact_field_refs ?? [],
     });
     setSaving(false);
 
@@ -436,9 +443,16 @@ export function CardTypeManagerView({
               </TabsContent>
 
               <TabsContent value="uw-fields" className="mt-4">
-                <UwFieldsEditor
-                  fields={edits.uw_fields}
-                  onChange={(f) => setEdits({ ...edits, uw_fields: f })}
+                <UwFieldPickerEditor
+                  fieldRefs={edits.uw_field_refs ?? []}
+                  inlineFields={edits.uw_fields}
+                  onChange={(refs, inlineFields) =>
+                    setEdits({
+                      ...edits,
+                      uw_field_refs: refs,
+                      uw_fields: inlineFields,
+                    })
+                  }
                 />
               </TabsContent>
 
@@ -926,180 +940,461 @@ function CardMetricsEditor({
 }
 
 // ---------------------------------------------------------------------------
-// UW Fields Editor
+// UW Field Picker Editor (unified with field_configurations)
 // ---------------------------------------------------------------------------
 
-function UwFieldsEditor({
-  fields,
+const FC_TYPE_TO_UW_TYPE: Record<string, UwFieldDef["type"]> = {
+  percentage: "percent",
+  dropdown: "select",
+  currency: "currency",
+  number: "number",
+  text: "text",
+  boolean: "boolean",
+  date: "date",
+  email: "text",
+  phone: "text",
+};
+
+const UW_TYPE_TO_FC_TYPE: Record<string, string> = {
+  percent: "percentage",
+  select: "dropdown",
+  currency: "currency",
+  number: "number",
+  text: "text",
+  boolean: "boolean",
+  date: "date",
+};
+
+const MODULE_LABELS: Record<string, string> = {
+  uw_deal: "Deal",
+  uw_property: "Property",
+  uw_borrower: "Borrower",
+};
+
+const MODULE_FOR_OBJECT: Record<string, string> = {
+  deal: "uw_deal",
+  property: "uw_property",
+  borrower: "uw_borrower",
+};
+
+const OBJECT_FOR_MODULE: Record<string, UwFieldObject> = {
+  uw_deal: "deal",
+  uw_property: "property",
+  uw_borrower: "borrower",
+};
+
+function UwFieldPickerEditor({
+  fieldRefs,
+  inlineFields,
   onChange,
 }: {
-  fields: UwFieldDef[];
-  onChange: (fields: UwFieldDef[]) => void;
+  fieldRefs: CardTypeFieldRef[];
+  inlineFields: UwFieldDef[];
+  onChange: (refs: CardTypeFieldRef[], inlineFields: UwFieldDef[]) => void;
 }) {
+  const [availableFields, setAvailableFields] = useState<UwFieldConfigRecord[]>([]);
+  const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
+  const [showCreateDialog, setShowCreateDialog] = useState(false);
 
-  const filtered = search
-    ? fields.filter(
-        (f) =>
-          f.key.includes(search.toLowerCase()) ||
-          f.label.toLowerCase().includes(search.toLowerCase())
-      )
-    : fields;
+  // Fetch available field configs on mount
+  useEffect(() => {
+    fetchUwFieldConfigs().then((result) => {
+      if (result.data) setAvailableFields(result.data);
+      setLoading(false);
+    });
+  }, []);
 
-  const addField = () => {
-    onChange([
-      ...fields,
-      { key: "", label: "", type: "text" },
-    ]);
-  };
+  // Build sets of selected field keys for quick lookup
+  const selectedKeys = useMemo(
+    () => new Set(fieldRefs.map((r) => `${r.module}:${r.field_key}`)),
+    [fieldRefs]
+  );
 
-  const updateField = (idx: number, updates: Partial<UwFieldDef>) => {
-    const next = fields.map((f, i) => (i === idx ? { ...f, ...updates } : f));
-    onChange(next);
-  };
+  // Filter available fields by search
+  const filteredAvailable = useMemo(() => {
+    if (!search) return availableFields;
+    const q = search.toLowerCase();
+    return availableFields.filter(
+      (f) =>
+        f.field_key.includes(q) ||
+        f.field_label.toLowerCase().includes(q) ||
+        (MODULE_LABELS[f.module] ?? "").toLowerCase().includes(q)
+    );
+  }, [availableFields, search]);
 
-  const removeField = (idx: number) => {
-    onChange(fields.filter((_, i) => i !== idx));
-  };
+  // Group filtered available by module
+  const groupedAvailable = useMemo(() => {
+    const groups: Record<string, UwFieldConfigRecord[]> = {};
+    for (const f of filteredAvailable) {
+      if (!groups[f.module]) groups[f.module] = [];
+      groups[f.module].push(f);
+    }
+    return groups;
+  }, [filteredAvailable]);
 
-  const moveField = (idx: number, dir: -1 | 1) => {
-    const next = [...fields];
+  // Build the inline UwFieldDef[] from refs + available fields
+  function refsToInlineFields(refs: CardTypeFieldRef[]): UwFieldDef[] {
+    return refs.map((ref) => {
+      const fc = availableFields.find(
+        (f) => f.module === ref.module && f.field_key === ref.field_key
+      );
+      if (fc) {
+        return {
+          key: ref.field_key,
+          label: fc.field_label,
+          type: FC_TYPE_TO_UW_TYPE[fc.field_type] ?? "text",
+          required: ref.required,
+          object: ref.object,
+          options: fc.dropdown_options ?? undefined,
+        } as UwFieldDef;
+      }
+      // Fallback: find in existing inline fields
+      const existing = inlineFields.find((f) => f.key === ref.field_key);
+      return existing ?? { key: ref.field_key, label: ref.field_key, type: "text" as const };
+    });
+  }
+
+  // Toggle a field on/off
+  function toggleField(fc: UwFieldConfigRecord) {
+    const compositeKey = `${fc.module}:${fc.field_key}`;
+    let nextRefs: CardTypeFieldRef[];
+
+    if (selectedKeys.has(compositeKey)) {
+      nextRefs = fieldRefs.filter(
+        (r) => !(r.module === fc.module && r.field_key === fc.field_key)
+      );
+    } else {
+      const obj = OBJECT_FOR_MODULE[fc.module] ?? "deal";
+      nextRefs = [
+        ...fieldRefs,
+        {
+          field_key: fc.field_key,
+          module: fc.module,
+          required: false,
+          object: obj,
+          sort_order: fieldRefs.length,
+        },
+      ];
+    }
+    // Re-number sort orders
+    nextRefs = nextRefs.map((r, i) => ({ ...r, sort_order: i }));
+    onChange(nextRefs, refsToInlineFields(nextRefs));
+  }
+
+  // Update per-card-type metadata on a ref
+  function updateRef(idx: number, updates: Partial<CardTypeFieldRef>) {
+    const nextRefs = fieldRefs.map((r, i) =>
+      i === idx ? { ...r, ...updates } : r
+    );
+    onChange(nextRefs, refsToInlineFields(nextRefs));
+  }
+
+  // Remove a field
+  function removeRef(idx: number) {
+    const nextRefs = fieldRefs
+      .filter((_, i) => i !== idx)
+      .map((r, i) => ({ ...r, sort_order: i }));
+    onChange(nextRefs, refsToInlineFields(nextRefs));
+  }
+
+  // Move a field up/down
+  function moveRef(idx: number, dir: -1 | 1) {
     const target = idx + dir;
-    if (target < 0 || target >= next.length) return;
-    [next[idx], next[target]] = [next[target], next[idx]];
-    onChange(next);
-  };
+    if (target < 0 || target >= fieldRefs.length) return;
+    const nextRefs = [...fieldRefs];
+    [nextRefs[idx], nextRefs[target]] = [nextRefs[target], nextRefs[idx]];
+    const reindexed = nextRefs.map((r, i) => ({ ...r, sort_order: i }));
+    onChange(reindexed, refsToInlineFields(reindexed));
+  }
+
+  // Handle new field creation
+  async function handleCreateField(input: {
+    module: string;
+    field_key: string;
+    field_label: string;
+    field_type: string;
+    dropdown_options?: string[];
+  }) {
+    const result = await createUwFieldConfig(input);
+    if (result.data) {
+      setAvailableFields((prev) => [...prev, result.data!]);
+      setShowCreateDialog(false);
+    }
+  }
+
+  if (loading) {
+    return <p className="text-sm text-muted-foreground">Loading field configurations...</p>;
+  }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
+      {/* Header */}
       <div className="flex items-center justify-between">
         <p className="text-sm text-muted-foreground">
-          Underwriting fields stored in the deal&apos;s uw_data JSONB column.
+          Select underwriting fields from the Field Configuration registry. Changes to labels
+          and types are managed in the Field Manager.
         </p>
         <span className="text-xs text-muted-foreground">
-          {fields.length} fields
+          {fieldRefs.length} selected
         </span>
       </div>
 
-      <div className="relative">
-        <Search className="absolute left-2.5 top-2.5 h-3.5 w-3.5 text-muted-foreground" />
-        <Input
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          placeholder="Search fields..."
-          className="pl-8 text-sm"
-        />
-      </div>
-
-      <div className="space-y-1.5">
-        {filtered.map((f, idx) => {
-          const realIdx = fields.indexOf(f);
-          return (
-            <div
-              key={realIdx}
-              className="flex items-center gap-2 rounded-lg border p-2.5"
-            >
-              <div className="flex flex-col gap-0.5">
-                <button
-                  onClick={() => moveField(realIdx, -1)}
-                  disabled={realIdx === 0}
-                  className="p-0.5 hover:bg-accent rounded disabled:opacity-30"
-                >
-                  <ArrowUp className="h-3 w-3" />
-                </button>
-                <button
-                  onClick={() => moveField(realIdx, 1)}
-                  disabled={realIdx === fields.length - 1}
-                  className="p-0.5 hover:bg-accent rounded disabled:opacity-30"
-                >
-                  <ArrowDown className="h-3 w-3" />
-                </button>
+      <div className="grid grid-cols-[1fr_1fr] gap-6">
+        {/* Left: Available fields (picker) */}
+        <div className="space-y-3">
+          <h4 className="text-sm font-medium">Available Fields</h4>
+          <div className="relative">
+            <Search className="absolute left-2.5 top-2.5 h-3.5 w-3.5 text-muted-foreground" />
+            <Input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search fields..."
+              className="pl-8 text-sm"
+            />
+          </div>
+          <ScrollArea className="h-[400px] border rounded-lg p-2">
+            {Object.entries(groupedAvailable).map(([mod, fields]) => (
+              <div key={mod} className="mb-3">
+                <p className="text-[10px] font-semibold uppercase text-muted-foreground mb-1 px-1">
+                  {MODULE_LABELS[mod] ?? mod}
+                </p>
+                {fields.map((fc) => {
+                  const isSelected = selectedKeys.has(`${fc.module}:${fc.field_key}`);
+                  return (
+                    <button
+                      key={fc.id}
+                      onClick={() => toggleField(fc)}
+                      className={cn(
+                        "w-full text-left px-2 py-1 rounded text-xs flex items-center justify-between hover:bg-accent",
+                        isSelected && "bg-primary/10 font-medium"
+                      )}
+                    >
+                      <span>{fc.field_label}</span>
+                      <span className="text-[10px] text-muted-foreground font-mono">
+                        {fc.field_key}
+                      </span>
+                    </button>
+                  );
+                })}
               </div>
+            ))}
+            {filteredAvailable.length === 0 && (
+              <p className="text-xs text-muted-foreground px-2 py-4">
+                No fields match your search.
+              </p>
+            )}
+          </ScrollArea>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setShowCreateDialog(true)}
+          >
+            <Plus className="h-3.5 w-3.5 mr-1.5" />
+            Create New Field
+          </Button>
+        </div>
 
-              <div className="flex-1 grid grid-cols-[1fr_1fr_auto_auto_auto] gap-2 items-center">
-                <Input
-                  value={f.key}
-                  onChange={(e) =>
-                    updateField(realIdx, { key: e.target.value })
-                  }
-                  placeholder="key"
-                  className="text-xs font-mono"
-                />
-                <Input
-                  value={f.label}
-                  onChange={(e) =>
-                    updateField(realIdx, { label: e.target.value })
-                  }
-                  placeholder="Label"
-                  className="text-xs"
-                />
-                <Select
-                  value={f.type}
-                  onValueChange={(v) =>
-                    updateField(realIdx, {
-                      type: v as UwFieldDef["type"],
-                    })
-                  }
-                >
-                  <SelectTrigger className="text-xs w-[100px]">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {FIELD_TYPES.map((t) => (
-                      <SelectItem key={t} value={t}>
-                        {t}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <Select
-                  value={f.object ?? "deal"}
-                  onValueChange={(v) =>
-                    updateField(realIdx, {
-                      object: v as UwFieldObject,
-                    })
-                  }
-                >
-                  <SelectTrigger className="text-xs w-[100px]">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {UW_OBJECT_OPTIONS.map((opt) => (
-                      <SelectItem key={opt.value} value={opt.value}>
-                        {opt.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <div className="flex items-center gap-2">
-                  <Switch
-                    checked={f.required ?? false}
-                    onCheckedChange={(v) =>
-                      updateField(realIdx, { required: v })
-                    }
-                  />
-                  <span className="text-[10px] text-muted-foreground">
-                    Req
-                  </span>
-                </div>
-              </div>
+        {/* Right: Selected fields (reorderable list) */}
+        <div className="space-y-3">
+          <h4 className="text-sm font-medium">Selected Fields (order matters)</h4>
+          <ScrollArea className="h-[460px] border rounded-lg p-2">
+            <div className="space-y-1">
+              {fieldRefs.map((ref, idx) => {
+                const fc = availableFields.find(
+                  (f) => f.module === ref.module && f.field_key === ref.field_key
+                );
+                const label = fc?.field_label ?? ref.field_key;
+                return (
+                  <div
+                    key={`${ref.module}:${ref.field_key}`}
+                    className="flex items-center gap-1.5 rounded-md border p-1.5"
+                  >
+                    <div className="flex flex-col gap-0.5">
+                      <button
+                        onClick={() => moveRef(idx, -1)}
+                        disabled={idx === 0}
+                        className="p-0.5 hover:bg-accent rounded disabled:opacity-30"
+                      >
+                        <ArrowUp className="h-3 w-3" />
+                      </button>
+                      <button
+                        onClick={() => moveRef(idx, 1)}
+                        disabled={idx === fieldRefs.length - 1}
+                        className="p-0.5 hover:bg-accent rounded disabled:opacity-30"
+                      >
+                        <ArrowDown className="h-3 w-3" />
+                      </button>
+                    </div>
 
-              <button
-                onClick={() => removeField(realIdx)}
-                className="p-1 rounded hover:bg-destructive/10"
-              >
-                <X className="h-3.5 w-3.5 text-destructive" />
-              </button>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs font-medium truncate">{label}</p>
+                      <p className="text-[10px] text-muted-foreground font-mono">
+                        {ref.field_key}
+                      </p>
+                    </div>
+
+                    <Badge variant="outline" className="text-[10px] shrink-0">
+                      {MODULE_LABELS[ref.module] ?? ref.module}
+                    </Badge>
+
+                    <div className="flex items-center gap-1 shrink-0">
+                      <Switch
+                        checked={ref.required ?? false}
+                        onCheckedChange={(v) => updateRef(idx, { required: v })}
+                      />
+                      <span className="text-[10px] text-muted-foreground">Req</span>
+                    </div>
+
+                    <button
+                      onClick={() => removeRef(idx)}
+                      className="p-1 rounded hover:bg-destructive/10 shrink-0"
+                    >
+                      <X className="h-3 w-3 text-destructive" />
+                    </button>
+                  </div>
+                );
+              })}
+              {fieldRefs.length === 0 && (
+                <p className="text-xs text-muted-foreground px-2 py-4">
+                  No fields selected. Pick fields from the left panel.
+                </p>
+              )}
             </div>
-          );
-        })}
+          </ScrollArea>
+        </div>
       </div>
 
-      <Button variant="outline" size="sm" onClick={addField}>
-        <Plus className="h-3.5 w-3.5 mr-1.5" />
-        Add Field
-      </Button>
+      {/* Create Field Dialog */}
+      <CreateUwFieldDialog
+        open={showCreateDialog}
+        onClose={() => setShowCreateDialog(false)}
+        onSubmit={handleCreateField}
+      />
     </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Create UW Field Dialog
+// ---------------------------------------------------------------------------
+
+function CreateUwFieldDialog({
+  open,
+  onClose,
+  onSubmit,
+}: {
+  open: boolean;
+  onClose: () => void;
+  onSubmit: (input: {
+    module: string;
+    field_key: string;
+    field_label: string;
+    field_type: string;
+    dropdown_options?: string[];
+  }) => Promise<void>;
+}) {
+  const [module, setModule] = useState("uw_deal");
+  const [fieldLabel, setFieldLabel] = useState("");
+  const [fieldType, setFieldType] = useState("text");
+  const [dropdownOpts, setDropdownOpts] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+
+  const fieldKey = fieldLabel
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "_")
+    .replace(/^_|_$/g, "");
+
+  const handleSubmit = async () => {
+    if (!fieldLabel || !fieldKey) return;
+    setSubmitting(true);
+    await onSubmit({
+      module,
+      field_key: fieldKey,
+      field_label: fieldLabel,
+      field_type: fieldType,
+      dropdown_options: fieldType === "dropdown" && dropdownOpts
+        ? dropdownOpts.split(",").map((s) => s.trim()).filter(Boolean)
+        : undefined,
+    });
+    setSubmitting(false);
+    setFieldLabel("");
+    setFieldType("text");
+    setDropdownOpts("");
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Create New UW Field</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-4">
+          <div className="space-y-1.5">
+            <Label className="text-xs">Module</Label>
+            <Select value={module} onValueChange={setModule}>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="uw_deal">Deal</SelectItem>
+                <SelectItem value="uw_property">Property</SelectItem>
+                <SelectItem value="uw_borrower">Borrower</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-1.5">
+            <Label className="text-xs">Field Label</Label>
+            <Input
+              value={fieldLabel}
+              onChange={(e) => setFieldLabel(e.target.value)}
+              placeholder="e.g., Loan Amount"
+            />
+            {fieldKey && (
+              <p className="text-[10px] text-muted-foreground font-mono">
+                key: {fieldKey}
+              </p>
+            )}
+          </div>
+          <div className="space-y-1.5">
+            <Label className="text-xs">Field Type</Label>
+            <Select value={fieldType} onValueChange={setFieldType}>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="text">Text</SelectItem>
+                <SelectItem value="number">Number</SelectItem>
+                <SelectItem value="currency">Currency</SelectItem>
+                <SelectItem value="percentage">Percentage</SelectItem>
+                <SelectItem value="dropdown">Dropdown</SelectItem>
+                <SelectItem value="boolean">Boolean</SelectItem>
+                <SelectItem value="date">Date</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          {fieldType === "dropdown" && (
+            <div className="space-y-1.5">
+              <Label className="text-xs">Dropdown Options (comma-separated)</Label>
+              <Input
+                value={dropdownOpts}
+                onChange={(e) => setDropdownOpts(e.target.value)}
+                placeholder="option_1, option_2, option_3"
+              />
+            </div>
+          )}
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={onClose}>
+            Cancel
+          </Button>
+          <Button onClick={handleSubmit} disabled={submitting || !fieldLabel}>
+            {submitting && <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" />}
+            Create Field
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }
 

@@ -11,6 +11,7 @@ import {
   formatRatio,
 } from "./pipeline-types";
 import { UwField } from "./UwField";
+import { useResolvedCardType } from "@/hooks/useResolvedCardType";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 
@@ -28,11 +29,14 @@ interface UnderwritingPanelProps {
 }
 
 export function UnderwritingPanel({
-  cardType,
+  cardType: rawCardType,
   dealId,
   uwData,
   readOnly,
 }: UnderwritingPanelProps) {
+  // Resolve field refs from field_configurations (falls back to inline fields)
+  const cardType = useResolvedCardType(rawCardType);
+
   const [localData, setLocalData] = useState<Record<string, unknown>>(uwData);
   const [pending, startTransition] = useTransition();
 

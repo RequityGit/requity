@@ -12,6 +12,7 @@ import {
   formatPercent,
   formatRatio,
 } from "./pipeline-types";
+import { useResolvedCardType } from "@/hooks/useResolvedCardType";
 import { StageChecklist } from "./StageChecklist";
 import { toast } from "sonner";
 import {
@@ -107,11 +108,14 @@ interface EditableOverviewProps {
 export function EditableOverview({
   dealId,
   uwData,
-  cardType,
+  cardType: rawCardType,
   checklist,
 }: EditableOverviewProps) {
   const router = useRouter();
   const [editingSection, setEditingSection] = useState<string | null>(null);
+
+  // Resolve field refs from field_configurations (falls back to inline fields)
+  const cardType = useResolvedCardType(rawCardType);
 
   // Build a combined field map including property and contact fields
   const uwFieldMap = useMemo(() => {

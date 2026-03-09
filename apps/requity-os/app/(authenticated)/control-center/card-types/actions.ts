@@ -9,6 +9,7 @@ import type {
   UwFieldDef,
   UwOutputDef,
   FieldGroupDef,
+  CardTypeFieldRef,
   CapitalSide,
   CardTypeStatus,
   GridTemplateDef,
@@ -24,6 +25,7 @@ export type {
   UwFieldDef,
   UwOutputDef,
   FieldGroupDef,
+  CardTypeFieldRef,
   CapitalSide,
   CardTypeStatus,
   GridTemplateDef,
@@ -132,6 +134,9 @@ export async function createCardType(input: {
       contact_roles: template?.contact_roles ?? ["borrower"],
       applicable_asset_classes: template?.applicable_asset_classes ?? null,
       uw_grid: template?.uw_grid ?? null,
+      uw_field_refs: template?.uw_field_refs ?? [],
+      property_field_refs: template?.property_field_refs ?? [],
+      contact_field_refs: template?.contact_field_refs ?? [],
       status: "draft" as CardTypeStatus,
       sort_order: nextOrder,
     };
@@ -213,6 +218,9 @@ export async function duplicateCardType(
       contact_roles: src.contact_roles,
       applicable_asset_classes: src.applicable_asset_classes,
       uw_grid: src.uw_grid ?? null,
+      uw_field_refs: src.uw_field_refs ?? [],
+      property_field_refs: src.property_field_refs ?? [],
+      contact_field_refs: src.contact_field_refs ?? [],
       status: "draft" as CardTypeStatus,
       sort_order: nextOrder,
     };
@@ -267,6 +275,9 @@ export async function saveCardType(
       | "status"
       | "uw_model_key"
       | "uw_grid"
+      | "uw_field_refs"
+      | "property_field_refs"
+      | "contact_field_refs"
     >
   >
 ): Promise<{ success?: boolean; error?: string }> {
@@ -416,6 +427,98 @@ export async function reorderCardTypes(
     return { success: true };
   } catch (err: unknown) {
     console.error("reorderCardTypes error:", err);
+    return {
+      error: err instanceof Error ? err.message : "An unexpected error occurred",
+    };
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Fetch UW field configurations (for the field picker in card type editor)
+// ---------------------------------------------------------------------------
+
+export interface UwFieldConfigRecord {
+  id: string;
+  module: string;
+  field_key: string;
+  field_label: string;
+  field_type: string;
+  is_visible: boolean;
+  is_archived: boolean;
+  dropdown_options: string[] | null;
+}
+
+const UW_MODULES = ["uw_deal", "uw_property", "uw_borrower"];
+
+export async function fetchUwFieldConfigs(): Promise<{
+  data?: UwFieldConfigRecord[];
+  error?: string;
+}> {
+  try {
+    const auth = await requireAdmin();
+    if ("error" in auth) return { error: auth.error };
+
+    const admin = createAdminClient();
+    const { data, error } = await admin
+      .from("field_configurations")
+      .select("id, module, field_key, field_label, field_type, is_visible, is_archived, dropdown_options")
+      .in("module", UW_MODULES)
+      .eq("is_archived", false)
+      .order("field_label", { ascending: true });
+
+    if (error) {
+      console.error("fetchUwFieldConfigs error:", error);
+      return { error: error.message };
+    }
+
+    return { data: (data ?? []) as unknown as UwFieldConfigRecord[] };
+  } catch (err: unknown) {
+    console.error("fetchUwFieldConfigs error:", err);
+    return {
+      error: err instanceof Error ? err.message : "An unexpected error occurred",
+    };
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Create a new UW field configuration
+// ---------------------------------------------------------------------------
+
+export async function createUwFieldConfig(input: {
+  module: string;
+  field_key: string;
+  field_label: string;
+  field_type: string;
+  dropdown_options?: string[];
+}): Promise<{ data?: UwFieldConfigRecord; error?: string }> {
+  try {
+    const auth = await requireAdmin();
+    if ("error" in auth) return { error: auth.error };
+
+    const admin = createAdminClient();
+    const { data, error } = await admin
+      .from("field_configurations")
+      .insert({
+        module: input.module,
+        field_key: input.field_key,
+        field_label: input.field_label,
+        field_type: input.field_type,
+        is_visible: true,
+        is_locked: false,
+        is_admin_created: true,
+        dropdown_options: input.dropdown_options ?? null,
+      } as never)
+      .select("id, module, field_key, field_label, field_type, is_visible, is_archived, dropdown_options")
+      .single();
+
+    if (error) {
+      console.error("createUwFieldConfig error:", error);
+      return { error: error.message };
+    }
+
+    return { data: data as unknown as UwFieldConfigRecord };
+  } catch (err: unknown) {
+    console.error("createUwFieldConfig error:", err);
     return {
       error: err instanceof Error ? err.message : "An unexpected error occurred",
     };

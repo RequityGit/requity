@@ -94,6 +94,11 @@ interface FieldEntry {
 }
 
 const MODULES = [
+  // Pipeline UW (unified with card types)
+  { key: "uw_deal", label: "UW: Deal Fields", icon: BarChart3 },
+  { key: "uw_property", label: "UW: Property Fields", icon: Building2 },
+  { key: "uw_borrower", label: "UW: Borrower Fields", icon: UserCircle },
+  // Lending
   { key: "loan_details", label: "Loan Details", icon: FileText },
   { key: "property", label: "Property", icon: Building2 },
   { key: "borrower_entity", label: "Borrower / Entity", icon: Shield },
@@ -135,6 +140,9 @@ const FIELD_TYPES = [
 ] as const;
 
 const MODULE_LABELS: Record<string, string> = {
+  uw_deal: "UW: Deal Fields",
+  uw_property: "UW: Property Fields",
+  uw_borrower: "UW: Borrower Fields",
   loan_details: "Loan Details",
   property: "Property",
   borrower_entity: "Borrower / Entity",
@@ -163,6 +171,9 @@ const MODULE_LABELS: Record<string, string> = {
 };
 
 const MODULE_TABLE_LABELS: Record<string, string> = {
+  uw_deal: "unified_deals (uw_data)",
+  uw_property: "unified_deals (uw_data)",
+  uw_borrower: "unified_deals (uw_data)",
   loan_details: "loans",
   property: "loans",
   borrower_entity: "loans",

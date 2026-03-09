@@ -112,6 +112,14 @@ export interface CardMetricDef {
   computed?: boolean;
 }
 
+export interface CardTypeFieldRef {
+  field_key: string;
+  module: string;
+  required?: boolean;
+  object?: UwFieldObject;
+  sort_order: number;
+}
+
 export interface FieldGroupDef {
   label: string;
   fields: string[];
@@ -140,6 +148,10 @@ export interface UnifiedCardType {
   status: CardTypeStatus;
   sort_order: number;
   uw_grid?: GridTemplateDef | null;
+  // Field configuration references (unified field system)
+  uw_field_refs?: CardTypeFieldRef[];
+  property_field_refs?: CardTypeFieldRef[];
+  contact_field_refs?: CardTypeFieldRef[];
 }
 
 export interface UnifiedDeal {
