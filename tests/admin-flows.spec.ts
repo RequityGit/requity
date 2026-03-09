@@ -398,14 +398,14 @@ test("57 — pipeline deal detail loads with tabs and stepper", async ({ adminPa
     const main = adminPage.locator("main");
     await expect(main).toBeVisible();
 
-    // Check for stage stepper
+    // Check for stage stepper (rendered as rounded-full step circles)
     const stepper = adminPage.locator(
-      '[class*="stepper"], [class*="stage"], [class*="Step"]'
+      'main .rounded-full'
     );
     const hasStepper = await stepper.first().isVisible({ timeout: 5_000 }).catch(() => false);
 
-    // Check for tabs (Overview, Documents, Conditions, etc.)
-    const tabs = adminPage.locator('[role="tablist"] [role="tab"]');
+    // Check for tabs (custom buttons in an inline-flex container)
+    const tabs = adminPage.locator('div.inline-flex > button');
     const tabCount = await tabs.count();
 
     // Deal detail should have at least tabs or stepper

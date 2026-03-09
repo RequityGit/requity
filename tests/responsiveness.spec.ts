@@ -27,8 +27,9 @@ test("R1 — borrower dashboard renders on mobile", async ({ borrowerPage }) => 
 test("R2 — borrower sidebar adapts to mobile viewport", async ({ borrowerPage }) => {
   await borrowerPage.goto("/borrower/dashboard");
   await borrowerPage.waitForLoadState("networkidle");
+  await waitForAppShell(borrowerPage);
 
-  const sidebar = borrowerPage.locator('[class*="sidebar"], aside, [role="complementary"]');
+  const sidebar = borrowerPage.locator('aside');
 
   if (await sidebar.first().isVisible({ timeout: 3_000 }).catch(() => false)) {
     const sidebarBox = await sidebar.first().boundingBox();
@@ -39,9 +40,9 @@ test("R2 — borrower sidebar adapts to mobile viewport", async ({ borrowerPage 
     }
   } else {
     const menuBtn = borrowerPage.locator(
-      'button[aria-label*="menu" i], button[aria-label*="sidebar" i], button[aria-label*="navigation" i], button:has-text("Menu"), [class*="hamburger"]'
+      'button[aria-label="Open navigation"], button[aria-label*="menu" i], button[aria-label*="sidebar" i], button[aria-label*="navigation" i], button:has-text("Menu"), [class*="hamburger"]'
     );
-    const hasMenu = await menuBtn.first().isVisible({ timeout: 3_000 }).catch(() => false);
+    const hasMenu = await menuBtn.first().isVisible({ timeout: 5_000 }).catch(() => false);
     expect(hasMenu).toBeTruthy();
   }
 });
