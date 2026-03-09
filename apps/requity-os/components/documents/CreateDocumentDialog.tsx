@@ -173,8 +173,18 @@ export function CreateDocumentDialog() {
 
     try {
       const supabase = createClient();
-      const { data: { session } } = await supabase.auth.getSession();
 
+      // Use getUser() to validate the session server-side and trigger a
+      // token refresh if the access_token has expired, then read the
+      // (now-fresh) session for the access token.
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
+      if (userError || !user) {
+        toast.error("Not authenticated. Please reload and sign in again.");
+        setGenerating(false);
+        return;
+      }
+
+      const { data: { session } } = await supabase.auth.getSession();
       if (!session) {
         toast.error("Not authenticated");
         setGenerating(false);
