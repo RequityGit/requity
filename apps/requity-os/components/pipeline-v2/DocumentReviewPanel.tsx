@@ -72,6 +72,7 @@ const DOC_TYPE_LABELS: Record<string, string> = {
   title_report: "Title Report",
   insurance_policy: "Insurance Policy",
   entity_document: "Entity Document",
+  loan_document: "Loan Document",
   other: "General Document",
 };
 

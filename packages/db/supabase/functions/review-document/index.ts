@@ -15,6 +15,7 @@ type DocumentType =
   | "title_report"
   | "insurance_policy"
   | "entity_document"
+  | "loan_document"
   | "other";
 
 const FILENAME_PATTERNS: Record<string, DocumentType> = {
@@ -48,6 +49,17 @@ const FILENAME_PATTERNS: Record<string, DocumentType> = {
   "ss-?4": "entity_document",
   bylaws: "entity_document",
   resolution: "entity_document",
+  "promissory.?note": "loan_document",
+  "loan.?agreement": "loan_document",
+  "participation.?agreement": "loan_document",
+  "note.?agreement": "loan_document",
+  "mortgage.?note": "loan_document",
+  "deed.?of.?trust": "loan_document",
+  "loan.?participation": "loan_document",
+  "credit.?agreement": "loan_document",
+  "forbearance": "loan_document",
+  "modification.?agreement": "loan_document",
+  "intercreditor": "loan_document",
 };
 
 function detectTypeFromFilename(filename: string): DocumentType | null {
@@ -71,6 +83,7 @@ const CLASSIFICATION_PROMPT = `You are a document classifier for a real estate l
 - title_report (title commitments, preliminary title reports, title searches)
 - insurance_policy (insurance binders, certificates, policies, COIs)
 - entity_document (articles of organization, operating agreements, EIN letters, certificates of good standing, resolutions)
+- loan_document (promissory notes, loan agreements, participation agreements, mortgage notes, deeds of trust, loan modifications, forbearance agreements, intercreditor agreements, credit agreements)
 - other (anything that doesn't match the above)
 
 Respond with ONLY valid JSON:
@@ -303,24 +316,79 @@ Respond with ONLY valid JSON:
   "flags": ["<flag>"]
 }`,
 
+  loan_document: `You are extracting structured data from a loan document (promissory note, loan agreement, participation agreement, deed of trust, or similar) for a real estate lending company's deal management system.
+
+Extract the following fields. For each field, provide the value, your confidence (0.0-1.0), and the source location in the document.
+
+Required fields:
+- loan_amount: The principal loan amount or note amount (number)
+- interest_rate: The annual interest rate (number, e.g. 12 for 12%)
+- loan_term_months: Loan term in months (number)
+- maturity_date: Maturity or due date of the loan
+- borrower_entity_name: The borrowing entity name (LLC, Corp, etc.)
+- borrower_name: The individual borrower or guarantor name (the person, not the entity)
+- guarantor_name: Personal guarantor name if different from borrower
+- property_address: The collateral/secured property address including city, state, zip
+- loan_purpose: Purchase, Refinance, Cash-Out Refinance, Construction, Bridge, etc.
+- origination_date: The date the loan was originated or executed
+- lender_name: Name of the lender or note holder
+- interest_only: Whether the loan is interest-only (boolean)
+- payment_amount: Monthly or periodic payment amount (number)
+- payment_frequency: Monthly, quarterly, annual, etc.
+- prepayment_penalty: Whether there is a prepayment penalty and terms
+- default_rate: Default interest rate if specified (number)
+- ltv: Loan-to-value ratio if stated (number)
+- property_value: Property value or appraised value if referenced (number)
+- purchase_price: Purchase price if referenced (number)
+- purchase_date: Purchase or acquisition date if referenced
+- annual_rental_income: Annual rental income if referenced (number)
+- property_type: Property type if mentioned (SFR, Multi-Family, MHC, Mixed Use, etc.)
+- total_units: Number of units if applicable (number)
+- participation_amount: Participation/investment amount if this is a participation note (number)
+- participation_rate: Participation interest rate if different from note rate (number)
+
+Also provide:
+- summary: 2-3 sentence summary of the loan document, including key terms
+- flags: Array of any concerns (unusual terms, high rates, missing signatures, assignment restrictions, non-recourse provisions, upcoming maturity, large value discrepancies between purchase price and appraisal)
+
+Respond with ONLY valid JSON matching this exact schema:
+{
+  "document_type": "loan_document",
+  "extracted_fields": {
+    "<field_name>": {
+      "value": <extracted value>,
+      "confidence": <0.0-1.0>,
+      "source": "<page/section reference>"
+    }
+  },
+  "summary": "<summary>",
+  "flags": ["<flag1>", "<flag2>"]
+}`,
+
   other: `You are extracting structured data from a document uploaded to a real estate lending deal. The document type is not one of the standard categories, so perform a general extraction.
 
-Extract any relevant information you find, focusing on:
-- Names (people, companies, entities)
-- Addresses (property or mailing)
-- Dollar amounts (loan amounts, values, prices, costs)
-- Dates (effective dates, expiration dates, closing dates)
-- Percentages (rates, LTV, ownership)
-- Key terms and conditions
-- Any data that would be relevant to underwriting a real estate loan
+Extract any relevant information you find. Use these EXACT field names when the data matches, so updates can be proposed to the deal record:
+- loan_amount: Total loan or note amount (number)
+- interest_rate: Annual interest rate (number, e.g. 12 for 12%)
+- loan_term_months: Loan term in months (number)
+- borrower_entity_name: Borrowing entity name (LLC, Corp, etc.)
+- borrower_name: Individual borrower or guarantor name
+- property_address: Property address including city, state, zip
+- property_type: Property type (SFR, Multi-Family, MHC, Mixed Use, etc.)
+- property_value: Property value or appraised value (number)
+- purchase_price: Purchase price (number)
+- purchase_date: Date of purchase or acquisition
+- total_units: Number of units (number)
+- annual_rental_income: Annual rental income (number)
+- loan_purpose: Purpose of loan (Purchase, Refinance, etc.)
 
-Do NOT map these to specific deal fields — instead, present them as informational notes.
+For any other relevant data not matching the above fields, use descriptive keys.
 
 Respond with ONLY valid JSON:
 {
   "document_type": "other",
   "extracted_fields": {
-    "<descriptive_key>": { "value": <value>, "confidence": <0.0-1.0>, "source": "<reference>" }
+    "<field_name>": { "value": <value>, "confidence": <0.0-1.0>, "source": "<reference>" }
   },
   "summary": "<summary of what this document is and what it contains>",
   "flags": ["<any concerns or notable items>"]
@@ -586,7 +654,221 @@ const FIELD_MAPPINGS: Record<string, Record<string, FieldMapping>> = {
     },
   },
 
-  other: {},
+  loan_document: {
+    loan_amount: {
+      label: "Loan Amount",
+      target_table: "unified_deals",
+      target_column: "amount",
+      target_json_path: "",
+    },
+    interest_rate: {
+      label: "Interest Rate",
+      target_table: "unified_deals",
+      target_column: "uw_data",
+      target_json_path: "interest_rate",
+    },
+    loan_term_months: {
+      label: "Loan Term (Months)",
+      target_table: "unified_deals",
+      target_column: "uw_data",
+      target_json_path: "loan_term_months",
+    },
+    borrower_entity_name: {
+      label: "Borrower Entity",
+      target_table: "unified_deals",
+      target_column: "uw_data",
+      target_json_path: "borrower_entity_name",
+    },
+    borrower_name: {
+      label: "Borrower Name",
+      target_table: "unified_deals",
+      target_column: "uw_data",
+      target_json_path: "borrower_name",
+    },
+    guarantor_name: {
+      label: "Guarantor",
+      target_table: "unified_deals",
+      target_column: "uw_data",
+      target_json_path: "guarantor_name",
+    },
+    property_address: {
+      label: "Property Address",
+      target_table: "unified_deals",
+      target_column: "property_data",
+      target_json_path: "property_address",
+    },
+    property_type: {
+      label: "Property Type",
+      target_table: "unified_deals",
+      target_column: "property_data",
+      target_json_path: "property_type",
+    },
+    property_value: {
+      label: "Property Value",
+      target_table: "unified_deals",
+      target_column: "uw_data",
+      target_json_path: "property_value",
+    },
+    purchase_price: {
+      label: "Purchase Price",
+      target_table: "unified_deals",
+      target_column: "uw_data",
+      target_json_path: "purchase_price",
+    },
+    purchase_date: {
+      label: "Purchase Date",
+      target_table: "unified_deals",
+      target_column: "uw_data",
+      target_json_path: "purchase_date",
+    },
+    loan_purpose: {
+      label: "Loan Purpose",
+      target_table: "unified_deals",
+      target_column: "uw_data",
+      target_json_path: "loan_purpose",
+    },
+    origination_date: {
+      label: "Origination Date",
+      target_table: "unified_deals",
+      target_column: "uw_data",
+      target_json_path: "origination_date",
+    },
+    maturity_date: {
+      label: "Maturity Date",
+      target_table: "unified_deals",
+      target_column: "uw_data",
+      target_json_path: "maturity_date",
+    },
+    interest_only: {
+      label: "Interest-Only",
+      target_table: "unified_deals",
+      target_column: "uw_data",
+      target_json_path: "interest_only",
+    },
+    ltv: {
+      label: "LTV",
+      target_table: "unified_deals",
+      target_column: "uw_data",
+      target_json_path: "ltv",
+    },
+    total_units: {
+      label: "Total Units",
+      target_table: "unified_deals",
+      target_column: "property_data",
+      target_json_path: "unit_count",
+    },
+    annual_rental_income: {
+      label: "Annual Rental Income",
+      target_table: "unified_deals",
+      target_column: "uw_data",
+      target_json_path: "annual_rental_income",
+    },
+    lender_name: {
+      label: "Lender",
+      target_table: "unified_deals",
+      target_column: "uw_data",
+      target_json_path: "lender_name",
+    },
+    default_rate: {
+      label: "Default Rate",
+      target_table: "unified_deals",
+      target_column: "uw_data",
+      target_json_path: "default_rate",
+    },
+    participation_amount: {
+      label: "Participation Amount",
+      target_table: "unified_deals",
+      target_column: "uw_data",
+      target_json_path: "participation_amount",
+    },
+    participation_rate: {
+      label: "Participation Rate",
+      target_table: "unified_deals",
+      target_column: "uw_data",
+      target_json_path: "participation_rate",
+    },
+  },
+
+  other: {
+    loan_amount: {
+      label: "Loan Amount",
+      target_table: "unified_deals",
+      target_column: "amount",
+      target_json_path: "",
+    },
+    interest_rate: {
+      label: "Interest Rate",
+      target_table: "unified_deals",
+      target_column: "uw_data",
+      target_json_path: "interest_rate",
+    },
+    loan_term_months: {
+      label: "Loan Term (Months)",
+      target_table: "unified_deals",
+      target_column: "uw_data",
+      target_json_path: "loan_term_months",
+    },
+    borrower_entity_name: {
+      label: "Borrower Entity",
+      target_table: "unified_deals",
+      target_column: "uw_data",
+      target_json_path: "borrower_entity_name",
+    },
+    borrower_name: {
+      label: "Borrower Name",
+      target_table: "unified_deals",
+      target_column: "uw_data",
+      target_json_path: "borrower_name",
+    },
+    property_address: {
+      label: "Property Address",
+      target_table: "unified_deals",
+      target_column: "property_data",
+      target_json_path: "property_address",
+    },
+    property_type: {
+      label: "Property Type",
+      target_table: "unified_deals",
+      target_column: "property_data",
+      target_json_path: "property_type",
+    },
+    property_value: {
+      label: "Property Value",
+      target_table: "unified_deals",
+      target_column: "uw_data",
+      target_json_path: "property_value",
+    },
+    purchase_price: {
+      label: "Purchase Price",
+      target_table: "unified_deals",
+      target_column: "uw_data",
+      target_json_path: "purchase_price",
+    },
+    purchase_date: {
+      label: "Purchase Date",
+      target_table: "unified_deals",
+      target_column: "uw_data",
+      target_json_path: "purchase_date",
+    },
+    total_units: {
+      label: "Total Units",
+      target_table: "unified_deals",
+      target_column: "property_data",
+      target_json_path: "unit_count",
+    },
+    annual_rental_income: {
+      label: "Annual Rental Income",
+      target_table: "unified_deals",
+      target_column: "uw_data",
+      target_json_path: "annual_rental_income",
+    },
+    loan_purpose: {
+      label: "Loan Purpose",
+      target_table: "unified_deals",
+      target_column: "uw_data",
+      target_json_path: "loan_purpose",
+    },
+  },
 };
 
 // ─── Constants ───
@@ -612,6 +894,7 @@ const DOC_TYPE_LABELS: Record<string, string> = {
   title_report: "Title Report",
   insurance_policy: "Insurance Policy",
   entity_document: "Entity Document",
+  loan_document: "Loan Document",
   other: "Document",
 };
 
@@ -748,7 +1031,15 @@ Deno.serve(async (req) => {
     if (documentType === "other") {
       const classification = await classifyDocument(base64, mediaType);
       if (classification) {
-        documentType = classification.document_type as DocumentType;
+        const classifiedType = classification.document_type as string;
+        // Validate the classified type is one of our known types
+        const validTypes: DocumentType[] = [
+          "appraisal", "bank_statement", "pnl_tax_return", "rent_roll",
+          "title_report", "insurance_policy", "entity_document", "loan_document", "other",
+        ];
+        documentType = validTypes.includes(classifiedType as DocumentType)
+          ? (classifiedType as DocumentType)
+          : "other";
         typeConfidence = classification.confidence;
       }
     }
@@ -783,7 +1074,7 @@ Deno.serve(async (req) => {
     // Fetch current deal values for comparison
     const { data: currentDeal } = await supabase
       .from("unified_deals")
-      .select("uw_data, property_data")
+      .select("uw_data, property_data, amount, name")
       .eq("id", dealId)
       .single();
 
@@ -801,12 +1092,20 @@ Deno.serve(async (req) => {
           fieldData?.value !== null &&
           fieldData?.value !== undefined
         ) {
-          // Get current value from the deal's jsonb column
-          const dealData =
-            currentDeal?.[
-              mapping.target_column as "uw_data" | "property_data"
-            ] as Record<string, unknown> | null;
-          const currentValue = dealData?.[mapping.target_json_path];
+          let currentValue: unknown = null;
+
+          if (mapping.target_json_path) {
+            // jsonb column path lookup
+            const dealData =
+              currentDeal?.[
+                mapping.target_column as "uw_data" | "property_data"
+              ] as Record<string, unknown> | null;
+            currentValue = dealData?.[mapping.target_json_path];
+          } else {
+            // Direct column lookup (e.g., amount, name)
+            currentValue = currentDeal?.[mapping.target_column as keyof typeof currentDeal];
+          }
+
           const proposedValue = String(fieldData.value);
 
           reviewItems.push({
@@ -814,7 +1113,7 @@ Deno.serve(async (req) => {
             field_label: mapping.label,
             target_table: mapping.target_table,
             target_column: mapping.target_column,
-            target_json_path: mapping.target_json_path,
+            target_json_path: mapping.target_json_path || null,
             target_record_id: dealId,
             current_value: currentValue != null ? String(currentValue) : null,
             proposed_value: proposedValue,
@@ -865,6 +1164,29 @@ Deno.serve(async (req) => {
       .from("unified_deal_documents")
       .update({ review_status: "ready" })
       .eq("id", documentId);
+
+    // Auto-add deal note with AI summary for context
+    if (notesDraft) {
+      try {
+        await supabase
+          .from("unified_deal_activity")
+          .insert({
+            deal_id: dealId,
+            activity_type: "ai_review",
+            title: `AI Review: ${DOC_TYPE_LABELS[documentType] || "Document"} uploaded`,
+            description: notesDraft,
+            metadata: {
+              document_id: documentId,
+              review_id: review.id,
+              document_type: documentType,
+              auto_generated: true,
+            },
+          });
+      } catch (noteErr) {
+        // Non-critical: log but do not fail the review
+        console.error("[review-document] Failed to create auto deal note:", noteErr);
+      }
+    }
 
     return jsonResponse({
       success: true,

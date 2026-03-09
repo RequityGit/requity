@@ -19,6 +19,7 @@ type DocumentType =
   | "title_report"
   | "insurance_policy"
   | "entity_document"
+  | "loan_document"
   | "other";
 
 const FILENAME_PATTERNS: [RegExp, DocumentType][] = [
@@ -29,6 +30,7 @@ const FILENAME_PATTERNS: [RegExp, DocumentType][] = [
   [/title|commitment|prelim/i, "title_report"],
   [/insurance|policy|binder|certificate.?of.?insurance|coi/i, "insurance_policy"],
   [/articles|operating.?agreement|certificate.?of.?(?:formation|organization|good.?standing)|ein|ss-?4|bylaws|resolution/i, "entity_document"],
+  [/promissory.?note|loan.?agreement|participation.?agreement|note.?agreement|mortgage.?note|deed.?of.?trust|loan.?participation|credit.?agreement|forbearance|modification.?agreement|intercreditor/i, "loan_document"],
 ];
 
 function detectType(filename: string): DocumentType {
@@ -198,6 +200,7 @@ export async function POST(
         title_report: "Title Report",
         insurance_policy: "Insurance Policy",
         entity_document: "Entity Document",
+        loan_document: "Loan Document",
         other: "Document",
       }[documentType] || "Document";
 
@@ -303,7 +306,7 @@ async function classifyDocument(
               },
               {
                 type: "text",
-                text: 'Classify this document as one of: appraisal, bank_statement, pnl_tax_return, rent_roll, title_report, insurance_policy, entity_document, other. Respond with ONLY JSON: {"document_type": "<type>", "confidence": <0-1>}',
+                text: 'Classify this document as one of: appraisal, bank_statement, pnl_tax_return, rent_roll, title_report, insurance_policy, entity_document, loan_document (promissory notes, loan agreements, participation agreements, deeds of trust, mortgage notes), other. Respond with ONLY JSON: {"document_type": "<type>", "confidence": <0-1>}',
               },
             ],
           },
@@ -334,12 +337,21 @@ async function extractDocumentData(
   mediaType: string,
   docType: DocumentType
 ): Promise<Record<string, unknown> | null> {
-  const prompt =
-    "Extract structured data from this " +
-    docType +
-    ' document for a real estate lending underwriting system. For each field found, provide value, confidence (0-1), and source page/section. Include a summary (2-3 sentences) and flags (array of concerns). Respond with ONLY valid JSON: {"document_type": "' +
-    docType +
-    '", "extracted_fields": {"<field>": {"value": <val>, "confidence": <0-1>, "source": "<ref>"}}, "summary": "<text>", "flags": []}';
+  let prompt: string;
+  if (docType === "loan_document") {
+    prompt =
+      'Extract structured data from this loan document (promissory note, loan agreement, participation agreement, deed of trust, etc.) for a real estate lending deal management system. Extract these specific fields when present: loan_amount, interest_rate (annual, as number e.g. 12 for 12%), loan_term_months, maturity_date, borrower_entity_name (the LLC/Corp), borrower_name (the individual), guarantor_name, property_address (full with city/state/zip), property_type, property_value, purchase_price, purchase_date, loan_purpose, origination_date, lender_name, interest_only (boolean), ltv, total_units, annual_rental_income, participation_amount, participation_rate, default_rate. For each field, provide value, confidence (0-1), and source page/section. Include a summary (2-3 sentences) and flags (concerns like unusual terms, non-recourse, assignment restrictions, value discrepancies). Respond with ONLY valid JSON: {"document_type": "loan_document", "extracted_fields": {"<field>": {"value": <val>, "confidence": <0-1>, "source": "<ref>"}}, "summary": "<text>", "flags": []}';
+  } else if (docType === "other") {
+    prompt =
+      'Extract structured data from this document for a real estate lending deal management system. Use these EXACT field names when the data matches: loan_amount, interest_rate (annual, as number), loan_term_months, borrower_entity_name, borrower_name, property_address (full with city/state/zip), property_type, property_value, purchase_price, purchase_date, total_units, annual_rental_income, loan_purpose. For any other relevant data, use descriptive keys. For each field, provide value, confidence (0-1), and source page/section. Include a summary (2-3 sentences) and flags (array of concerns). Respond with ONLY valid JSON: {"document_type": "other", "extracted_fields": {"<field>": {"value": <val>, "confidence": <0-1>, "source": "<ref>"}}, "summary": "<text>", "flags": []}';
+  } else {
+    prompt =
+      "Extract structured data from this " +
+      docType +
+      ' document for a real estate lending underwriting system. For each field found, provide value, confidence (0-1), and source page/section. Include a summary (2-3 sentences) and flags (array of concerns). Respond with ONLY valid JSON: {"document_type": "' +
+      docType +
+      '", "extracted_fields": {"<field>": {"value": <val>, "confidence": <0-1>, "source": "<ref>"}}, "summary": "<text>", "flags": []}';
+  }
 
   try {
     const response = await fetch("https://api.anthropic.com/v1/messages", {
