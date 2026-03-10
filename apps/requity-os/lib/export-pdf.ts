@@ -1,8 +1,44 @@
 import { toast } from "sonner";
 
 /**
+ * CSS styles for PDF rendering. Applied inside an isolated iframe
+ * so that the parent page's dark mode styles cannot interfere.
+ */
+const PDF_STYLES = `
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: white;
+    color: #1a1a1a;
+    font-size: 0.875rem;
+    line-height: 1.625;
+    font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+      "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    width: 816px;
+    padding: 0;
+  }
+  p, span, li, td, th, div { color: #1a1a1a; }
+  a { color: #2563eb; }
+  h1 { font-size: 1.5rem; font-weight: 700; line-height: 1.25; margin-top: 1.5em; margin-bottom: 0.5em; color: #111; }
+  h2 { font-size: 1.25rem; font-weight: 600; line-height: 1.3; margin-top: 1.25em; margin-bottom: 0.4em; color: #111; }
+  h3 { font-size: 1.125rem; font-weight: 600; line-height: 1.35; margin-top: 1em; margin-bottom: 0.3em; color: #111; }
+  ul { list-style-type: disc; padding-left: 1.5em; }
+  ol { list-style-type: decimal; padding-left: 1.5em; }
+  li { margin-top: 0.25em; }
+  blockquote { border-left: 3px solid #d1d5db; padding-left: 1em; color: #4b5563; font-style: italic; }
+  table { border-collapse: collapse; width: 100%; margin: 1em 0; }
+  th, td { border: 1px solid #d1d5db; padding: 0.5em 0.75em; text-align: left; vertical-align: top; }
+  th { background: #f9fafb; font-weight: 600; }
+  hr { border: none; border-top: 1px solid #e5e7eb; margin: 1.5em 0; }
+  img { max-width: 100%; height: auto; }
+  [data-merge-field] { font-weight: 700; background: none; border: none; padding: 0; }
+`;
+
+/**
  * Export HTML content as a PDF file download.
  * Uses html2pdf.js (jsPDF + html2canvas) for client-side conversion.
+ *
+ * Renders inside a hidden iframe to fully isolate from the parent page's
+ * dark-mode Tailwind styles, which otherwise cause white-on-white text.
  */
 export async function exportHtmlAsPdf(
   htmlContent: string,
@@ -10,38 +46,60 @@ export async function exportHtmlAsPdf(
 ): Promise<void> {
   const toastId = toast.loading("Generating PDF...");
 
+  let iframe: HTMLIFrameElement | null = null;
+
   try {
     // Dynamic import to avoid SSR issues
     const html2pdf = (await import("html2pdf.js")).default;
 
-    // Create an off-screen container with document styles
-    const container = document.createElement("div");
-    container.style.position = "absolute";
-    container.style.left = "-9999px";
-    container.style.top = "0";
-    container.style.width = "816px";
-    container.style.padding = "0";
-    container.style.background = "white";
-    container.style.color = "#1a1a1a";
-    container.style.fontSize = "0.875rem";
-    container.style.lineHeight = "1.625";
-    container.style.fontFamily =
-      'ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif';
-    // Force light color scheme so dark-mode Tailwind styles don't apply
-    container.style.colorScheme = "light";
-    container.classList.add("light");
-    container.classList.remove("dark");
-    container.innerHTML = htmlContent;
+    // Create hidden iframe for isolated rendering
+    iframe = document.createElement("iframe");
+    iframe.style.position = "fixed";
+    iframe.style.left = "-9999px";
+    iframe.style.top = "0";
+    iframe.style.width = "816px";
+    iframe.style.height = "1056px";
+    iframe.style.border = "none";
+    iframe.style.opacity = "0";
+    iframe.style.pointerEvents = "none";
+    document.body.appendChild(iframe);
 
-    // Apply inline styles to match TipTap editor rendering
-    applyDocumentStyles(container);
+    const iframeDoc = iframe.contentDocument ?? iframe.contentWindow?.document;
+    if (!iframeDoc) throw new Error("Could not access iframe document");
 
-    document.body.appendChild(container);
+    // Write a clean HTML document with no external stylesheets
+    iframeDoc.open();
+    iframeDoc.write(`<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <style>${PDF_STYLES}</style>
+</head>
+<body>${htmlContent}</body>
+</html>`);
+    iframeDoc.close();
 
-    const safeName = filename.replace(/\.pdf$/i, "").replace(/[^a-zA-Z0-9_\- ]/g, "_");
+    // Wait for images to load
+    const images = iframeDoc.querySelectorAll("img");
+    if (images.length > 0) {
+      await Promise.all(
+        Array.from(images).map(
+          (img) =>
+            new Promise<void>((resolve) => {
+              if (img.complete) return resolve();
+              img.onload = () => resolve();
+              img.onerror = () => resolve();
+            })
+        )
+      );
+    }
+
+    const safeName = filename
+      .replace(/\.pdf$/i, "")
+      .replace(/[^a-zA-Z0-9_\- ]/g, "_");
 
     const opts = {
-      margin: [0.7, 0.75, 0.7, 0.75] as number[], // top, left, bottom, right (inches)
+      margin: [0.7, 0.75, 0.7, 0.75] as number[],
       filename: `${safeName}.pdf`,
       image: { type: "jpeg", quality: 0.98 },
       html2canvas: {
@@ -59,126 +117,16 @@ export async function exportHtmlAsPdf(
 
     await html2pdf()
       .set(opts as Record<string, unknown>)
-      .from(container)
+      .from(iframeDoc.body)
       .save();
 
-    document.body.removeChild(container);
     toast.success("PDF downloaded", { id: toastId });
   } catch (err) {
     console.error("PDF export failed:", err);
     toast.error("Failed to generate PDF", { id: toastId });
+  } finally {
+    if (iframe && iframe.parentNode) {
+      iframe.parentNode.removeChild(iframe);
+    }
   }
-}
-
-/** Apply inline styles to the container to match the editor canvas rendering. */
-function applyDocumentStyles(container: HTMLElement) {
-  // Force all elements to inherit dark text color (prevents dark-mode white text)
-  container.querySelectorAll<HTMLElement>("*").forEach((el) => {
-    if (!el.style.color) {
-      el.style.color = "inherit";
-    }
-  });
-
-  // Paragraphs
-  container.querySelectorAll<HTMLElement>("p").forEach((el) => {
-    el.style.color = "#1a1a1a";
-  });
-  container.querySelectorAll<HTMLElement>("span").forEach((el) => {
-    // Only set color if the span doesn't have an explicit color style from the editor
-    if (!el.style.color) {
-      el.style.color = "#1a1a1a";
-    }
-  });
-  container.querySelectorAll<HTMLElement>("a").forEach((el) => {
-    el.style.color = "#2563eb";
-  });
-
-  // Headings
-  container.querySelectorAll<HTMLElement>("h1").forEach((el) => {
-    el.style.fontSize = "1.5rem";
-    el.style.fontWeight = "700";
-    el.style.lineHeight = "1.25";
-    el.style.marginTop = "1.5em";
-    el.style.marginBottom = "0.5em";
-    el.style.color = "#111";
-  });
-  container.querySelectorAll<HTMLElement>("h2").forEach((el) => {
-    el.style.fontSize = "1.25rem";
-    el.style.fontWeight = "600";
-    el.style.lineHeight = "1.3";
-    el.style.marginTop = "1.25em";
-    el.style.marginBottom = "0.4em";
-    el.style.color = "#111";
-  });
-  container.querySelectorAll<HTMLElement>("h3").forEach((el) => {
-    el.style.fontSize = "1.125rem";
-    el.style.fontWeight = "600";
-    el.style.lineHeight = "1.35";
-    el.style.marginTop = "1em";
-    el.style.marginBottom = "0.3em";
-    el.style.color = "#111";
-  });
-
-  // Lists
-  container.querySelectorAll<HTMLElement>("ul").forEach((el) => {
-    el.style.listStyleType = "disc";
-    el.style.paddingLeft = "1.5em";
-  });
-  container.querySelectorAll<HTMLElement>("ol").forEach((el) => {
-    el.style.listStyleType = "decimal";
-    el.style.paddingLeft = "1.5em";
-  });
-  container.querySelectorAll<HTMLElement>("li").forEach((el) => {
-    el.style.marginTop = "0.25em";
-    el.style.color = "#1a1a1a";
-  });
-
-  // Blockquotes
-  container.querySelectorAll<HTMLElement>("blockquote").forEach((el) => {
-    el.style.borderLeft = "3px solid #d1d5db";
-    el.style.paddingLeft = "1em";
-    el.style.color = "#4b5563";
-    el.style.fontStyle = "italic";
-  });
-
-  // Tables
-  container.querySelectorAll<HTMLElement>("table").forEach((el) => {
-    el.style.borderCollapse = "collapse";
-    el.style.width = "100%";
-    el.style.margin = "1em 0";
-  });
-  container.querySelectorAll<HTMLElement>("th, td").forEach((el) => {
-    el.style.border = "1px solid #d1d5db";
-    el.style.padding = "0.5em 0.75em";
-    el.style.textAlign = "left";
-    el.style.verticalAlign = "top";
-    el.style.color = "#1a1a1a";
-  });
-  container.querySelectorAll<HTMLElement>("th").forEach((el) => {
-    el.style.background = "#f9fafb";
-    el.style.fontWeight = "600";
-  });
-
-  // Horizontal rules
-  container.querySelectorAll<HTMLElement>("hr").forEach((el) => {
-    el.style.border = "none";
-    el.style.borderTop = "1px solid #e5e7eb";
-    el.style.margin = "1.5em 0";
-  });
-
-  // Images
-  container.querySelectorAll<HTMLElement>("img").forEach((el) => {
-    el.style.maxWidth = "100%";
-    el.style.height = "auto";
-  });
-
-  // Merge field badges (render as plain bold text in PDF)
-  container
-    .querySelectorAll<HTMLElement>("[data-merge-field]")
-    .forEach((el) => {
-      el.style.fontWeight = "700";
-      el.style.background = "none";
-      el.style.border = "none";
-      el.style.padding = "0";
-    });
 }
