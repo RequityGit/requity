@@ -64,13 +64,13 @@ const COMPANY_TYPE_OPTIONS = Object.entries(COMPANY_TYPE_CONFIG).map(
 
 // Default section order used when no layout data exists in the database
 const DEFAULT_SECTION_ORDER: SectionLayout[] = [
-  { section_key: "lender_performance", display_order: 0, is_visible: true, visibility_rule: "is_lender" },
-  { section_key: "company_information", display_order: 1, is_visible: true, visibility_rule: null },
-  { section_key: "address", display_order: 2, is_visible: true, visibility_rule: null },
-  { section_key: "lender_details", display_order: 3, is_visible: true, visibility_rule: "is_lender" },
-  { section_key: "capabilities_coverage", display_order: 4, is_visible: true, visibility_rule: "not_lender" },
-  { section_key: "wire_instructions", display_order: 5, is_visible: true, visibility_rule: null },
-  { section_key: "description", display_order: 6, is_visible: true, visibility_rule: null },
+  { section_key: "lender_performance", display_order: 0, is_visible: true, visibility_rule: "is_lender", section_type: "system", section_label: "Lender Performance", section_icon: "trending-up" },
+  { section_key: "company_information", display_order: 1, is_visible: true, visibility_rule: null, section_type: "fields", section_label: "Company Information", section_icon: "building-2" },
+  { section_key: "address", display_order: 2, is_visible: true, visibility_rule: null, section_type: "fields", section_label: "Address", section_icon: "map-pin" },
+  { section_key: "lender_details", display_order: 3, is_visible: true, visibility_rule: "is_lender", section_type: "fields", section_label: "Lender Details", section_icon: "landmark" },
+  { section_key: "capabilities_coverage", display_order: 4, is_visible: true, visibility_rule: "not_lender", section_type: "fields", section_label: "Capabilities & Coverage", section_icon: "target" },
+  { section_key: "wire_instructions", display_order: 5, is_visible: true, visibility_rule: null, section_type: "fields", section_label: "Wire Instructions", section_icon: "credit-card" },
+  { section_key: "description", display_order: 6, is_visible: true, visibility_rule: null, section_type: "fields", section_label: "Description", section_icon: "file-text" },
 ];
 
 function ChipGroup({
