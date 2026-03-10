@@ -14,14 +14,43 @@ export default async function AdminDocumentsPage() {
 
   if (!user) redirect("/login");
 
-  // Fetch documents with owner info
-  const { data: documents } = await supabase
-    .from("documents")
-    .select("*, profiles:uploaded_by(full_name, email), funds(name), loans(property_address)")
-    .order("created_at", { ascending: false });
+  // Fetch documents from all entity tables in parallel
+  const [
+    documentsResult,
+    contactFilesResult,
+    companyFilesResult,
+    dealDocsResult,
+    profilesResult,
+    fundsResult,
+    loansResult,
+  ] = await Promise.all([
+    // Legacy loan/fund documents
+    supabase
+      .from("documents")
+      .select(
+        "*, profiles:uploaded_by(full_name, email), funds(name), loans(property_address)"
+      )
+      .order("created_at", { ascending: false }),
 
-  // Fetch metadata for the upload form
-  const [profilesResult, fundsResult, loansResult] = await Promise.all([
+    // CRM contact files
+    supabase
+      .from("contact_files")
+      .select("*, crm_contacts(first_name, last_name)")
+      .order("created_at", { ascending: false }),
+
+    // CRM company files
+    supabase
+      .from("company_files")
+      .select("*, companies:company_id(name)")
+      .order("created_at", { ascending: false }),
+
+    // Pipeline deal documents
+    supabase
+      .from("unified_deal_documents")
+      .select("*, unified_deals(name)")
+      .order("created_at", { ascending: false }),
+
+    // Metadata for upload form
     supabase
       .from("profiles")
       .select("id, full_name, email, role")
@@ -34,20 +63,93 @@ export default async function AdminDocumentsPage() {
       .order("property_address"),
   ]);
 
-  const documentRows = (documents ?? []).map((doc) => ({
-    id: doc.id,
-    file_name: doc.file_name,
-    description: doc.description,
-    document_type: doc.document_type,
-    owner_name:
-      (doc as Record<string, unknown> & { profiles?: { full_name?: string; email?: string } }).profiles?.full_name ??
-      (doc as Record<string, unknown> & { profiles?: { full_name?: string; email?: string } }).profiles?.email ??
-      "—",
-    fund_name: (doc as Record<string, unknown> & { funds?: { name?: string } }).funds?.name ?? null,
-    loan_address: (doc as Record<string, unknown> & { loans?: { property_address?: string } }).loans?.property_address ?? null,
-    status: doc.status ?? "pending",
-    created_at: doc.created_at,
-  }));
+  // Normalize loan/fund documents
+  const loanDocRows = (documentsResult.data ?? []).map((doc) => {
+    const p = doc as Record<string, unknown> & {
+      profiles?: { full_name?: string; email?: string };
+      funds?: { name?: string };
+      loans?: { property_address?: string };
+    };
+    return {
+      id: doc.id,
+      file_name: doc.file_name,
+      description: doc.description,
+      document_type: doc.document_type,
+      owner_name: p.profiles?.full_name ?? p.profiles?.email ?? "—",
+      entity_name: p.funds?.name ?? p.loans?.property_address ?? null,
+      source: "loan" as const,
+      status: doc.status ?? "pending",
+      created_at: doc.created_at,
+    };
+  });
+
+  // Normalize contact files
+  const contactDocRows = (contactFilesResult.data ?? []).map((doc) => {
+    const c = doc as Record<string, unknown> & {
+      crm_contacts?: { first_name?: string; last_name?: string };
+    };
+    const contactName = [c.crm_contacts?.first_name, c.crm_contacts?.last_name]
+      .filter(Boolean)
+      .join(" ");
+    return {
+      id: doc.id,
+      file_name: doc.file_name,
+      description: doc.notes ?? null,
+      document_type: doc.file_type,
+      owner_name: "—",
+      entity_name: contactName || null,
+      source: "contact" as const,
+      status: "uploaded",
+      created_at: doc.created_at ?? doc.uploaded_at ?? "",
+    };
+  });
+
+  // Normalize company files
+  const companyDocRows = (companyFilesResult.data ?? []).map((doc) => {
+    const c = doc as Record<string, unknown> & {
+      companies?: { name?: string };
+    };
+    return {
+      id: doc.id,
+      file_name: doc.file_name,
+      description: doc.notes ?? null,
+      document_type: doc.file_type,
+      owner_name: "—",
+      entity_name: c.companies?.name ?? null,
+      source: "company" as const,
+      status: "uploaded",
+      created_at: doc.created_at ?? doc.uploaded_at ?? "",
+    };
+  });
+
+  // Normalize deal documents
+  const dealDocRows = (dealDocsResult.data ?? []).map((doc) => {
+    const d = doc as Record<string, unknown> & {
+      unified_deals?: { name?: string };
+    };
+    return {
+      id: doc.id,
+      file_name: doc.document_name,
+      description: null,
+      document_type: doc.category,
+      owner_name: "—",
+      entity_name: d.unified_deals?.name ?? null,
+      source: "deal" as const,
+      status: doc.review_status ?? "uploaded",
+      created_at: doc.created_at,
+    };
+  });
+
+  // Merge and sort by date descending
+  const documentRows = [
+    ...loanDocRows,
+    ...contactDocRows,
+    ...companyDocRows,
+    ...dealDocRows,
+  ].sort(
+    (a, b) =>
+      new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+  );
 
   // Fetch generated documents
   const { data: generatedDocs } = await supabase
