@@ -43,6 +43,7 @@ function getPdfOptions(filename?: string) {
       scale: 2,
       useCORS: true,
       letterRendering: true,
+      backgroundColor: "#ffffff",
     },
     jsPDF: {
       unit: "in",
