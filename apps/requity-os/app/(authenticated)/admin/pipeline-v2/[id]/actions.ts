@@ -11,6 +11,75 @@ function revalidateDeal(dealId: string) {
   revalidatePath(`/admin/pipeline/${dealId}`);
 }
 
+// ─── Log Rich Activity (dual-write to deal activity + CRM activities) ───
+
+export async function logDealActivityRich(
+  dealId: string,
+  primaryContactId: string | null,
+  activityType: string,
+  subject: string,
+  description: string
+) {
+  try {
+    const auth = await requireAdmin();
+    if ("error" in auth) return { error: auth.error ?? "Unauthorized" };
+
+    const admin = createAdminClient();
+
+    // 1. Insert into unified_deal_activity (deal timeline)
+    const { error: dealError } = await admin
+      .from("unified_deal_activity" as never)
+      .insert({
+        deal_id: dealId,
+        activity_type: activityType,
+        title: subject || activityType.replace(/_/g, " "),
+        description: description || null,
+        metadata: {},
+        created_by: auth.user.id,
+      } as never);
+
+    if (dealError) {
+      console.error("logDealActivityRich deal insert error:", dealError);
+      return { error: dealError.message };
+    }
+
+    // 2. If primary contact exists, also insert into crm_activities
+    if (primaryContactId) {
+      const { error: crmError } = await admin
+        .from("crm_activities" as never)
+        .insert({
+          contact_id: primaryContactId,
+          activity_type: activityType,
+          subject: subject || null,
+          description: description || null,
+          linked_entity_type: "loan",
+          linked_entity_id: dealId,
+          performed_by: auth.user.id,
+          created_by: auth.user.id,
+        } as never);
+
+      if (crmError) {
+        console.error("logDealActivityRich crm insert error:", crmError);
+        // Non-fatal: deal activity was already logged
+      }
+
+      // 3. Update contact's last_contacted_at
+      await admin
+        .from("crm_contacts" as never)
+        .update({ last_contacted_at: new Date().toISOString() } as never)
+        .eq("id" as never, primaryContactId as never);
+    }
+
+    revalidateDeal(dealId);
+    return { success: true };
+  } catch (err: unknown) {
+    console.error("logDealActivityRich error:", err);
+    return {
+      error: err instanceof Error ? err.message : "An unexpected error occurred",
+    };
+  }
+}
+
 // ─── Log Quick Action (call, email, approval, closing) ───
 
 export async function logQuickActionV2(

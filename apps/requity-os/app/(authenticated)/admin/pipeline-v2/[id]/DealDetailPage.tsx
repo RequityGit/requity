@@ -77,12 +77,14 @@ import {
 import {
   advanceStageAction,
 } from "@/app/(authenticated)/admin/pipeline-v2/actions";
+import { DealActivityTab } from "@/components/pipeline-v2/tabs/DealActivityTab";
 import { UnifiedNotes } from "@/components/shared/UnifiedNotes";
 import { logQuickActionV2, assignTeamMemberV2, saveGridOverrides } from "./actions";
 import { SubmitForApprovalDialog } from "@/components/approvals/submit-for-approval-dialog";
 import { LoanApprovalSection } from "@/components/approvals/loan-approval-section";
 import type { ApprovalEntityType } from "@/lib/approvals/types";
 import type { OpsTask, Profile } from "@/lib/tasks";
+import type { ActivityData, EmailData } from "@/components/crm/contact-360/types";
 
 // ─── Props ───
 
@@ -93,6 +95,8 @@ interface DealDetailPageProps {
   checklist: ChecklistItem[];
   conditions: DealCondition[];
   activities: DealActivity[];
+  crmActivities: ActivityData[];
+  crmEmails: EmailData[];
   teamMembers: Profile[];
   currentUserId: string;
   currentUserName: string;
@@ -110,6 +114,8 @@ export function DealDetailPage({
   checklist,
   conditions,
   activities,
+  crmActivities,
+  crmEmails,
   teamMembers,
   currentUserId,
   currentUserName,
@@ -325,7 +331,14 @@ export function DealDetailPage({
             )}
             {loadedTabs.has("Activity") && (
               <div className={activeTab !== "Activity" ? "hidden" : undefined}>
-                <ActivityContent activities={activities} />
+                <DealActivityTab
+                  dealId={deal.id}
+                  dealActivities={activities}
+                  crmActivities={crmActivities}
+                  crmEmails={crmEmails}
+                  currentUserId={currentUserId}
+                  primaryContactId={deal.primary_contact_id ?? null}
+                />
               </div>
             )}
             {loadedTabs.has("Notes") && (
@@ -525,38 +538,6 @@ function UnderwritingContent({
     />
   );
 }
-
-// ─── Activity ───
-
-function ActivityContent({ activities }: { activities: DealActivity[] }) {
-  if (activities.length === 0) {
-    return (
-      <p className="text-sm text-muted-foreground py-4">No activity yet.</p>
-    );
-  }
-
-  return (
-    <div className="space-y-3">
-      {activities.map((a) => (
-        <div
-          key={a.id}
-          className="flex gap-3 text-sm border-l-2 border-border pl-4 py-1"
-        >
-          <div className="flex-1">
-            <p className="font-medium">{a.title}</p>
-            {a.description && (
-              <p className="text-muted-foreground mt-0.5">{a.description}</p>
-            )}
-          </div>
-          <span className="text-xs text-muted-foreground whitespace-nowrap num">
-            {new Date(a.created_at).toLocaleDateString()}
-          </span>
-        </div>
-      ))}
-    </div>
-  );
-}
-
 
 // ─── Sidebar ───
 
