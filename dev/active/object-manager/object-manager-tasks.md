@@ -1,8 +1,8 @@
 # Object Manager - Tasks
 
 ## Phase 1: Schema Migration
-- [ ] Apply migration via Supabase MCP
-- [ ] Verify tables created
+- [x] Apply migration via Supabase MCP
+- [x] Verify tables created (8 object_definitions seeded, all 6 new tables + RLS policies confirmed)
 
 ## Phase 2: UI Shell
 - [ ] Create route files (page.tsx, actions.ts)
