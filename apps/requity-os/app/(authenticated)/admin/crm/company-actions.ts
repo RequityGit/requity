@@ -93,11 +93,8 @@ export interface UpdateCompanyInput {
   notes?: string | null;
   source?: string | null;
   other_names?: string | null;
-  fee_agreement_on_file?: boolean;
   title_company_verified?: boolean;
   is_active?: boolean;
-  nda_created_date?: string | null;
-  nda_expiration_date?: string | null;
   asset_types?: string[];
   company_capabilities?: string[];
   lender_programs?: string[];
@@ -136,16 +133,10 @@ export async function updateCompanyAction(input: UpdateCompanyInput) {
     if (input.source !== undefined) updateData.source = input.source || null;
     if (input.other_names !== undefined)
       updateData.other_names = input.other_names || null;
-    if (input.fee_agreement_on_file !== undefined)
-      updateData.fee_agreement_on_file = input.fee_agreement_on_file;
     if (input.title_company_verified !== undefined)
       updateData.title_company_verified = input.title_company_verified;
     if (input.is_active !== undefined)
       updateData.is_active = input.is_active;
-    if (input.nda_created_date !== undefined)
-      updateData.nda_created_date = input.nda_created_date || null;
-    if (input.nda_expiration_date !== undefined)
-      updateData.nda_expiration_date = input.nda_expiration_date || null;
     if (input.asset_types !== undefined)
       updateData.asset_types = input.asset_types;
     if (input.company_capabilities !== undefined)

@@ -79,9 +79,6 @@ export interface CompanyRowV2 {
   contact_count: number;
   file_count: number;
   active_deals: number;
-  nda_created_date: string | null;
-  nda_expiration_date: string | null;
-  fee_agreement_on_file: boolean | null;
   is_active: boolean | null;
   notes: string | null;
 }

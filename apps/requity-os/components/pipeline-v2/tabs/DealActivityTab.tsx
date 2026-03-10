@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -33,10 +33,15 @@ import {
   ChevronUp,
   Paperclip,
   MessageSquare,
+  GitCommitHorizontal,
 } from "lucide-react";
-import { relTime } from "../contact-detail-shared";
-import type { ActivityData, EmailData } from "../types";
-import { ACTIVITY_TYPE_CONFIG } from "../types";
+import { relTime } from "@/components/crm/contact-360/contact-detail-shared";
+import type { ActivityData, EmailData } from "@/components/crm/contact-360/types";
+import { ACTIVITY_TYPE_CONFIG } from "@/components/crm/contact-360/types";
+import type { DealActivity } from "@/components/pipeline-v2/pipeline-types";
+import { logDealActivityRich } from "@/app/(authenticated)/admin/pipeline-v2/[id]/actions";
+
+// ── Icon map for activity types ──
 
 const ACTIVITY_ICON_MAP: Record<string, React.ElementType> = {
   email: Mail,
@@ -47,6 +52,10 @@ const ACTIVITY_ICON_MAP: Record<string, React.ElementType> = {
   event: Calendar,
   system: Activity,
   text_message: MessageSquare,
+  stage_change: GitCommitHorizontal,
+  team_updated: Activity,
+  approval_requested: Activity,
+  closing_scheduled: Calendar,
 };
 
 const FILTER_TYPES = [
@@ -54,19 +63,40 @@ const FILTER_TYPES = [
   "email",
   "call",
   "note",
+  "meeting",
   "task",
-  "event",
   "system",
-];
+] as const;
 
-// Unified timeline item that can be either an activity or an email
+// System-level deal activity types that come from unified_deal_activity
+const SYSTEM_ACTIVITY_TYPES = new Set([
+  "stage_change",
+  "team_updated",
+  "approval_requested",
+  "closing_scheduled",
+]);
+
+// Map unified_deal_activity types to filter categories
+function mapDealActivityToFilter(type: string): string {
+  if (SYSTEM_ACTIVITY_TYPES.has(type)) return "system";
+  if (type === "call_logged") return "call";
+  if (type === "email_sent") return "email";
+  return "system";
+}
+
+// ── Unified timeline item ──
+
 interface TimelineItem {
   id: string;
-  kind: "activity" | "email";
+  kind: "deal_activity" | "activity" | "email";
   created_at: string;
+  filterCategory: string;
+  dealActivity?: DealActivity;
   activity?: ActivityData;
   email?: EmailData;
 }
+
+// ── Email status resolution ──
 
 function resolveEmailStatus(e: EmailData): { label: string; color: string } {
   if (e.opened_at) return { label: "Opened", color: "#8B5CF6" };
@@ -92,23 +122,27 @@ function parseAttachments(
   return raw as { name: string; path: string; size: number; type: string }[];
 }
 
-interface DetailActivityTabProps {
-  contactId: string;
-  activities: ActivityData[];
-  emails: EmailData[];
+// ── Props ──
+
+interface DealActivityTabProps {
+  dealId: string;
+  dealActivities: DealActivity[];
+  crmActivities: ActivityData[];
+  crmEmails: EmailData[];
   currentUserId: string;
-  onComposeEmail?: () => void;
-  logCallTrigger?: number;
+  primaryContactId: string | null;
 }
 
-export function DetailActivityTab({
-  contactId,
-  activities,
-  emails,
+// ── Main Component ──
+
+export function DealActivityTab({
+  dealId,
+  dealActivities,
+  crmActivities,
+  crmEmails,
   currentUserId,
-  onComposeEmail,
-  logCallTrigger = 0,
-}: DetailActivityTabProps) {
+  primaryContactId,
+}: DealActivityTabProps) {
   const [filter, setFilter] = useState("all");
   const [showForm, setShowForm] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -122,34 +156,44 @@ export function DetailActivityTab({
     description: "",
   });
 
-  // Open form pre-filled with "call" when triggered from sidebar Log Call action
-  useEffect(() => {
-    if (logCallTrigger > 0) {
-      setShowForm(true);
-      setForm({ activity_type: "call", subject: "", description: "" });
-    }
-  }, [logCallTrigger]);
-
-  const isCallType = form.activity_type === "call";
-
-  // Build unified timeline: merge activities + emails, sorted by created_at desc
+  // Build unified timeline: merge deal activities + CRM activities + emails
   const timeline = useMemo<TimelineItem[]>(() => {
     const items: TimelineItem[] = [];
 
-    for (const a of activities) {
+    // Add deal-native activities (only system types to avoid duplicates with CRM activities)
+    for (const da of dealActivities) {
+      const filterCat = mapDealActivityToFilter(da.activity_type);
+      // Only include system-type events from unified_deal_activity
+      // User-logged types (call_logged, email_sent) will come from crm_activities if available
+      if (SYSTEM_ACTIVITY_TYPES.has(da.activity_type) || crmActivities.length === 0) {
+        items.push({
+          id: `deal-${da.id}`,
+          kind: "deal_activity",
+          created_at: da.created_at,
+          filterCategory: filterCat,
+          dealActivity: da,
+        });
+      }
+    }
+
+    // Add CRM activities (calls, notes, meetings, etc.)
+    for (const a of crmActivities) {
       items.push({
         id: `activity-${a.id}`,
         kind: "activity",
         created_at: a.created_at,
+        filterCategory: a.activity_type === "text_message" ? "call" : a.activity_type,
         activity: a,
       });
     }
 
-    for (const e of emails) {
+    // Add CRM emails
+    for (const e of crmEmails) {
       items.push({
         id: `email-${e.id}`,
         kind: "email",
         created_at: e.created_at,
+        filterCategory: "email",
         email: e,
       });
     }
@@ -160,50 +204,28 @@ export function DetailActivityTab({
     );
 
     return items;
-  }, [activities, emails]);
+  }, [dealActivities, crmActivities, crmEmails]);
 
   // Filter the timeline
   const filtered = useMemo(() => {
     if (filter === "all") return timeline;
-    if (filter === "email") return timeline.filter((t) => t.kind === "email" || t.activity?.activity_type === "email");
-    return timeline.filter(
-      (t) => t.kind === "activity" && t.activity?.activity_type === filter
-    );
+    return timeline.filter((t) => t.filterCategory === filter);
   }, [timeline, filter]);
-
-  function formatDuration(seconds: number | null): string {
-    if (!seconds) return "";
-    const m = Math.floor(seconds / 60);
-    const s = seconds % 60;
-    return `${m}m ${s.toString().padStart(2, "0")}s`;
-  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-
-    if (form.activity_type === "call" && !form.description.trim()) {
-      toast({ title: "Call notes are required", variant: "destructive" });
-      return;
-    }
-
     setLoading(true);
 
     try {
-      const supabase = createClient();
-      const { error } = await supabase.from("crm_activities").insert({
-        contact_id: contactId,
-        activity_type: form.activity_type as never,
-        subject: form.subject || null,
-        description: form.description || null,
-        performed_by: currentUserId,
-      });
+      const result = await logDealActivityRich(
+        dealId,
+        primaryContactId,
+        form.activity_type,
+        form.subject || form.activity_type.replace(/_/g, " "),
+        form.description || ""
+      );
 
-      if (error) throw error;
-
-      await supabase
-        .from("crm_contacts")
-        .update({ last_contacted_at: new Date().toISOString() })
-        .eq("id", contactId);
+      if (result.error) throw new Error(result.error);
 
       toast({ title: "Activity logged" });
       setShowForm(false);
@@ -242,17 +264,6 @@ export function DetailActivityTab({
           ))}
         </div>
         <div className="flex gap-2">
-          {onComposeEmail && (
-            <Button
-              variant="outline"
-              size="sm"
-              className="gap-1.5 rounded-lg border-border text-xs"
-              onClick={onComposeEmail}
-            >
-              <Send className="h-3.5 w-3.5" strokeWidth={1.5} />
-              Compose
-            </Button>
-          )}
           <Button
             variant="outline"
             size="sm"
@@ -313,9 +324,8 @@ export function DetailActivityTab({
                     setForm((p) => ({ ...p, description: e.target.value }))
                   }
                   rows={3}
-                  placeholder={isCallType ? "Call notes (required)..." : "Details..."}
+                  placeholder="Details..."
                   className="rounded-lg border-border resize-none"
-                  required={isCallType}
                 />
               </div>
               <div className="flex justify-end gap-2">
@@ -331,7 +341,7 @@ export function DetailActivityTab({
                 <Button
                   type="submit"
                   size="sm"
-                  disabled={loading || (isCallType && !form.description.trim())}
+                  disabled={loading}
                   className="rounded-lg bg-foreground text-background hover:bg-foreground/90"
                 >
                   {loading ? "Saving..." : "Save Activity"}
@@ -381,9 +391,19 @@ export function DetailActivityTab({
 
             if (item.kind === "activity" && item.activity) {
               return (
-                <ActivityTimelineItem
+                <CrmActivityTimelineItem
                   key={item.id}
                   activity={item.activity}
+                  isLast={i === filtered.length - 1}
+                />
+              );
+            }
+
+            if (item.kind === "deal_activity" && item.dealActivity) {
+              return (
+                <DealActivityTimelineItem
+                  key={item.id}
+                  activity={item.dealActivity}
                   isLast={i === filtered.length - 1}
                 />
               );
@@ -397,8 +417,9 @@ export function DetailActivityTab({
   );
 }
 
-// ── Activity timeline item (existing pattern) ──
-function ActivityTimelineItem({
+// ── CRM Activity timeline item ──
+
+function CrmActivityTimelineItem({
   activity: a,
   isLast,
 }: {
@@ -475,7 +496,61 @@ function ActivityTimelineItem({
   );
 }
 
+// ── Deal system activity timeline item ──
+
+function DealActivityTimelineItem({
+  activity: a,
+  isLast,
+}: {
+  activity: DealActivity;
+  isLast: boolean;
+}) {
+  const Icon = ACTIVITY_ICON_MAP[a.activity_type] || Activity;
+  const isSystem = SYSTEM_ACTIVITY_TYPES.has(a.activity_type);
+  const config = isSystem
+    ? ACTIVITY_TYPE_CONFIG.system
+    : ACTIVITY_TYPE_CONFIG[a.activity_type] || ACTIVITY_TYPE_CONFIG.system;
+
+  return (
+    <div className="flex gap-3.5 relative pb-5">
+      {!isLast && (
+        <div
+          className="absolute w-px bg-border"
+          style={{ left: 15, top: 36, bottom: 0 }}
+        />
+      )}
+      <div
+        className="w-[30px] h-[30px] rounded-lg flex items-center justify-center shrink-0"
+        style={{ backgroundColor: config.bg }}
+      >
+        <Icon size={14} style={{ color: config.color }} strokeWidth={1.5} />
+      </div>
+      <div className="flex-1">
+        <div className="text-[13px] text-foreground font-medium leading-snug">
+          {a.title}
+        </div>
+        <div className="flex items-center gap-2 mt-0.5 flex-wrap">
+          <span className="text-[11px] text-muted-foreground">
+            {relTime(a.created_at)}
+          </span>
+          {a.description && (
+            <>
+              <span className="text-[11px] text-muted-foreground/50">
+                &middot;
+              </span>
+              <span className="text-[11px] text-muted-foreground">
+                {a.description}
+              </span>
+            </>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ── Email timeline item ──
+
 function EmailTimelineItem({
   email: e,
   isLast,

@@ -133,6 +133,8 @@ export interface PageField {
 
 function revalidate() {
   revalidatePath("/control-center/object-manager");
+  // Revalidate detail pages so layout changes take effect
+  revalidatePath("/admin/crm", "layout");
 }
 
 // ---------------------------------------------------------------------------
@@ -471,6 +473,101 @@ export async function reorderFields(
 }
 
 // ---------------------------------------------------------------------------
+// Reorder layout sections (update display_order on page_layout_sections)
+// ---------------------------------------------------------------------------
+
+export async function reorderLayoutSections(
+  updates: { id: string; display_order: number }[]
+): Promise<{ success?: boolean; error?: string }> {
+  try {
+    const auth = await requireSuperAdmin();
+    if ("error" in auth) return { error: auth.error };
+
+    const admin = createAdminClient();
+    for (const u of updates) {
+      const { error } = await admin
+        .from(SECTIONS)
+        .update({ display_order: u.display_order } as never)
+        .eq("id" as never, u.id as never);
+      if (error) return { error: error.message };
+    }
+
+    revalidate();
+    return { success: true };
+  } catch (err: unknown) {
+    return { error: err instanceof Error ? err.message : "An unexpected error occurred" };
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Reorder layout fields (update display_order and optionally section_id)
+// ---------------------------------------------------------------------------
+
+export async function reorderLayoutFields(
+  updates: { id: string; display_order: number; section_id?: string }[]
+): Promise<{ success?: boolean; error?: string }> {
+  try {
+    const auth = await requireSuperAdmin();
+    if ("error" in auth) return { error: auth.error };
+
+    const admin = createAdminClient();
+    for (const u of updates) {
+      const patch: Record<string, unknown> = { display_order: u.display_order };
+      if (u.section_id) patch.section_id = u.section_id;
+      const { error } = await admin
+        .from(FIELDS)
+        .update(patch as never)
+        .eq("id" as never, u.id as never);
+      if (error) return { error: error.message };
+    }
+
+    revalidate();
+    return { success: true };
+  } catch (err: unknown) {
+    return { error: err instanceof Error ? err.message : "An unexpected error occurred" };
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Add a field from the palette to a layout section
+// ---------------------------------------------------------------------------
+
+export async function addFieldToLayout(input: {
+  section_id: string;
+  field_config_id: string;
+  field_key: string;
+  display_order: number;
+  column_span?: string;
+}): Promise<{ data?: PageField; error?: string }> {
+  try {
+    const auth = await requireSuperAdmin();
+    if ("error" in auth) return { error: auth.error };
+
+    const admin = createAdminClient();
+    const { data, error } = await admin
+      .from(FIELDS)
+      .insert({
+        section_id: input.section_id,
+        field_config_id: input.field_config_id,
+        field_key: input.field_key,
+        display_order: input.display_order,
+        column_position: "left",
+        column_span: input.column_span || "half",
+        is_visible: true,
+        source: "native",
+      } as never)
+      .select("*" as never)
+      .single();
+
+    if (error) return { error: error.message };
+    revalidate();
+    return { data: data as unknown as PageField };
+  } catch (err: unknown) {
+    return { error: err instanceof Error ? err.message : "An unexpected error occurred" };
+  }
+}
+
+// ---------------------------------------------------------------------------
 // Fetch field count per module (for sidebar badges)
 // ---------------------------------------------------------------------------
 
@@ -525,6 +622,270 @@ export async function fetchRelationshipCounts(): Promise<{
       counts[row.child_object_key] = (counts[row.child_object_key] || 0) + 1;
     }
     return { data: counts };
+  } catch (err: unknown) {
+    return { error: err instanceof Error ? err.message : "An unexpected error occurred" };
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Fetch fields for multiple modules at once (for related entity fields)
+// ---------------------------------------------------------------------------
+
+export async function fetchFieldsForModules(modules: string[]): Promise<{
+  data?: FieldConfig[];
+  error?: string;
+}> {
+  try {
+    if (modules.length === 0) return { data: [] };
+
+    const auth = await requireSuperAdmin();
+    if ("error" in auth) return { error: auth.error };
+
+    const admin = createAdminClient();
+    const { data, error } = await admin
+      .from(FIELD_CFG)
+      .select("*" as never)
+      .in("module" as never, modules as never)
+      .eq("is_archived" as never, false as never)
+      .order("display_order" as never, { ascending: true });
+
+    if (error) return { error: error.message };
+    return { data: (data ?? []) as unknown as FieldConfig[] };
+  } catch (err: unknown) {
+    return { error: err instanceof Error ? err.message : "An unexpected error occurred" };
+  }
+}
+
+// ===========================================================================
+// PAGE LAYOUT MUTATIONS
+// ===========================================================================
+
+// ---------------------------------------------------------------------------
+// Update a single section's properties
+// ---------------------------------------------------------------------------
+
+export async function updateSection(
+  sectionId: string,
+  updates: Partial<Pick<PageSection, "section_label" | "section_icon" | "display_order" | "is_visible" | "default_collapsed" | "section_type" | "visibility_rule" | "sidebar">>
+): Promise<{ success?: boolean; error?: string }> {
+  try {
+    const auth = await requireSuperAdmin();
+    if ("error" in auth) return { error: auth.error };
+
+    const admin = createAdminClient();
+    const { error } = await admin
+      .from(SECTIONS)
+      .update({
+        ...updates,
+        updated_at: new Date().toISOString(),
+      } as never)
+      .eq("id" as never, sectionId as never);
+
+    if (error) return { error: error.message };
+    revalidate();
+    return { success: true };
+  } catch (err: unknown) {
+    return { error: err instanceof Error ? err.message : "An unexpected error occurred" };
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Add a new section to a page layout
+// ---------------------------------------------------------------------------
+
+export async function addSection(input: {
+  page_type: string;
+  section_key: string;
+  section_label: string;
+  section_icon?: string;
+  sidebar: boolean;
+  section_type?: string;
+  tab_key?: string;
+  tab_label?: string;
+}): Promise<{ data?: PageSection; error?: string }> {
+  try {
+    const auth = await requireSuperAdmin();
+    if ("error" in auth) return { error: auth.error };
+
+    const admin = createAdminClient();
+
+    // Get max display_order for this page_type + sidebar combo
+    const { data: maxRow } = await admin
+      .from(SECTIONS)
+      .select("display_order" as never)
+      .eq("page_type" as never, input.page_type as never)
+      .eq("sidebar" as never, input.sidebar as never)
+      .order("display_order" as never, { ascending: false })
+      .limit(1)
+      .single();
+
+    const nextOrder =
+      ((maxRow as unknown as { display_order: number } | null)?.display_order ?? -1) + 1;
+
+    const { data, error } = await admin
+      .from(SECTIONS)
+      .insert({
+        page_type: input.page_type,
+        section_key: input.section_key,
+        section_label: input.section_label,
+        section_icon: input.section_icon || "file-text",
+        display_order: nextOrder,
+        is_visible: true,
+        is_locked: false,
+        sidebar: input.sidebar,
+        section_type: input.section_type || "fields",
+        tab_key: input.tab_key || null,
+        tab_label: input.tab_label || null,
+      } as never)
+      .select("*" as never)
+      .single();
+
+    if (error) return { error: error.message };
+    revalidate();
+    return { data: data as unknown as PageSection };
+  } catch (err: unknown) {
+    return { error: err instanceof Error ? err.message : "An unexpected error occurred" };
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Delete a section (non-locked only, cascade deletes field assignments)
+// ---------------------------------------------------------------------------
+
+export async function deleteSection(sectionId: string): Promise<{
+  success?: boolean;
+  error?: string;
+}> {
+  try {
+    const auth = await requireSuperAdmin();
+    if ("error" in auth) return { error: auth.error };
+
+    const admin = createAdminClient();
+
+    // Verify section is not locked
+    const { data: section } = await admin
+      .from(SECTIONS)
+      .select("is_locked" as never)
+      .eq("id" as never, sectionId as never)
+      .single();
+
+    if (!section) return { error: "Section not found" };
+    if ((section as unknown as { is_locked: boolean }).is_locked) {
+      return { error: "Cannot delete a locked system section" };
+    }
+
+    const { error } = await admin
+      .from(SECTIONS)
+      .delete()
+      .eq("id" as never, sectionId as never);
+
+    if (error) return { error: error.message };
+    revalidate();
+    return { success: true };
+  } catch (err: unknown) {
+    return { error: err instanceof Error ? err.message : "An unexpected error occurred" };
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Reorder sections (update display_order for multiple sections)
+// ---------------------------------------------------------------------------
+
+export async function reorderSections(
+  sectionOrders: { id: string; display_order: number }[]
+): Promise<{ success?: boolean; error?: string }> {
+  try {
+    const auth = await requireSuperAdmin();
+    if ("error" in auth) return { error: auth.error };
+
+    const admin = createAdminClient();
+    for (const so of sectionOrders) {
+      const { error } = await admin
+        .from(SECTIONS)
+        .update({ display_order: so.display_order, updated_at: new Date().toISOString() } as never)
+        .eq("id" as never, so.id as never);
+      if (error) return { error: error.message };
+    }
+
+    revalidate();
+    return { success: true };
+  } catch (err: unknown) {
+    return { error: err instanceof Error ? err.message : "An unexpected error occurred" };
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Add a field to a layout section
+// ---------------------------------------------------------------------------
+
+export async function addLayoutField(input: {
+  section_id: string;
+  field_config_id: string | null;
+  field_key: string;
+  column_position?: string;
+  column_span?: string;
+  source?: string;
+}): Promise<{ success?: boolean; error?: string }> {
+  try {
+    const auth = await requireSuperAdmin();
+    if ("error" in auth) return { error: auth.error };
+
+    const admin = createAdminClient();
+
+    // Get max display_order for this section
+    const { data: maxRow } = await admin
+      .from(FIELDS)
+      .select("display_order" as never)
+      .eq("section_id" as never, input.section_id as never)
+      .order("display_order" as never, { ascending: false })
+      .limit(1)
+      .single();
+
+    const nextOrder =
+      ((maxRow as unknown as { display_order: number } | null)?.display_order ?? -1) + 1;
+
+    const { error } = await admin
+      .from(FIELDS)
+      .insert({
+        section_id: input.section_id,
+        field_config_id: input.field_config_id,
+        field_key: input.field_key,
+        display_order: nextOrder,
+        column_position: input.column_position || "left",
+        column_span: input.column_span || "half",
+        is_visible: true,
+        source: input.source || "native",
+      } as never);
+
+    if (error) return { error: error.message };
+    revalidate();
+    return { success: true };
+  } catch (err: unknown) {
+    return { error: err instanceof Error ? err.message : "An unexpected error occurred" };
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Remove a field from a layout section
+// ---------------------------------------------------------------------------
+
+export async function removeLayoutField(fieldId: string): Promise<{
+  success?: boolean;
+  error?: string;
+}> {
+  try {
+    const auth = await requireSuperAdmin();
+    if ("error" in auth) return { error: auth.error };
+
+    const admin = createAdminClient();
+    const { error } = await admin
+      .from(FIELDS)
+      .delete()
+      .eq("id" as never, fieldId as never);
+
+    if (error) return { error: error.message };
+    revalidate();
+    return { success: true };
   } catch (err: unknown) {
     return { error: err instanceof Error ? err.message : "An unexpected error occurred" };
   }

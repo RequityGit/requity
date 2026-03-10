@@ -338,6 +338,17 @@ export async function updateUwDataAction(
           return { error: updateErr.message };
         }
       }
+    } else if (mapping?.source === "deal") {
+      // Route write to a top-level column on unified_deals
+      const { error: updateErr } = await admin
+        .from("unified_deals")
+        .update({ [mapping.column]: value || null })
+        .eq("id", dealId);
+
+      if (updateErr) {
+        console.error("updateUwDataAction deal column error:", updateErr);
+        return { error: updateErr.message };
+      }
     } else if (mapping?.source === "borrower") {
       // Route write to the borrowers table via primary_contact_id
       const { data: deal, error: fetchErr } = await admin

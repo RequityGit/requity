@@ -21,8 +21,8 @@ interface DocumentRow {
   description: string | null;
   document_type: string | null;
   owner_name: string;
-  fund_name: string | null;
-  loan_address: string | null;
+  entity_name: string | null;
+  source: "loan" | "contact" | "company" | "deal";
   status: string;
   created_at: string;
 }
@@ -39,9 +39,17 @@ function getDocTypeLabel(value: string): string {
   );
 }
 
+const SOURCE_LABELS: Record<DocumentRow["source"], string> = {
+  loan: "Loan / Fund",
+  contact: "Contact",
+  company: "Company",
+  deal: "Deal",
+};
+
 export function DocumentListTable({ data, action }: DocumentListTableProps) {
   const [search, setSearch] = useState("");
   const [typeFilter, setTypeFilter] = useState("all");
+  const [sourceFilter, setSourceFilter] = useState("all");
 
   const filtered = useMemo(() => {
     let result = data;
@@ -52,15 +60,17 @@ export function DocumentListTable({ data, action }: DocumentListTableProps) {
           d.file_name.toLowerCase().includes(q) ||
           (d.description?.toLowerCase().includes(q) ?? false) ||
           d.owner_name.toLowerCase().includes(q) ||
-          (d.fund_name?.toLowerCase().includes(q) ?? false) ||
-          (d.loan_address?.toLowerCase().includes(q) ?? false)
+          (d.entity_name?.toLowerCase().includes(q) ?? false)
       );
     }
     if (typeFilter !== "all") {
       result = result.filter((d) => d.document_type === typeFilter);
     }
+    if (sourceFilter !== "all") {
+      result = result.filter((d) => d.source === sourceFilter);
+    }
     return result;
-  }, [data, search, typeFilter]);
+  }, [data, search, typeFilter, sourceFilter]);
 
   const columns: Column<DocumentRow>[] = [
     {
@@ -85,9 +95,18 @@ export function DocumentListTable({ data, action }: DocumentListTableProps) {
       cell: (row) => row.owner_name,
     },
     {
-      key: "fund_loan",
-      header: "Fund / Loan",
-      cell: (row) => row.fund_name || row.loan_address || "—",
+      key: "source",
+      header: "Source",
+      cell: (row) => (
+        <span className="inline-flex items-center rounded-full bg-muted px-2 py-0.5 text-xs font-medium">
+          {SOURCE_LABELS[row.source]}
+        </span>
+      ),
+    },
+    {
+      key: "entity_name",
+      header: "Entity",
+      cell: (row) => row.entity_name || "—",
     },
     {
       key: "created_at",
@@ -113,8 +132,23 @@ export function DocumentListTable({ data, action }: DocumentListTableProps) {
             className="pl-9"
           />
         </div>
+        <Select value={sourceFilter} onValueChange={setSourceFilter}>
+          <SelectTrigger className="w-[180px]">
+            <SelectValue placeholder="All Sources" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Sources</SelectItem>
+            {(Object.entries(SOURCE_LABELS) as [DocumentRow["source"], string][]).map(
+              ([value, label]) => (
+                <SelectItem key={value} value={value}>
+                  {label}
+                </SelectItem>
+              )
+            )}
+          </SelectContent>
+        </Select>
         <Select value={typeFilter} onValueChange={setTypeFilter}>
-          <SelectTrigger className="w-[200px]">
+          <SelectTrigger className="w-[180px]">
             <SelectValue placeholder="All Types" />
           </SelectTrigger>
           <SelectContent>

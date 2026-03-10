@@ -127,6 +127,63 @@ export default async function DealDetailRoute({ params }: PageProps) {
   const documents = ((documentsRaw as unknown as { data: Record<string, unknown>[] | null }).data ?? []);
   const tasks = ((tasksRaw as unknown as { data: OpsTask[] | null }).data ?? []);
 
+  // ─── Fetch CRM activities & emails for primary contact ───
+  type CrmActivityRow = {
+    id: string;
+    activity_type: string;
+    subject: string | null;
+    description: string | null;
+    outcome: string | null;
+    direction: string | null;
+    call_duration_seconds: number | null;
+    performed_by_name: string | null;
+    created_at: string;
+  };
+  type CrmEmailRow = {
+    id: string;
+    created_at: string;
+    from_email: string;
+    to_email: string;
+    to_name: string | null;
+    subject: string;
+    body_text: string | null;
+    body_html: string | null;
+    cc_emails: string[] | null;
+    bcc_emails: string[] | null;
+    sent_by_name: string | null;
+    postmark_status: string | null;
+    delivered_at: string | null;
+    opened_at: string | null;
+    attachments: unknown;
+  };
+
+  let crmActivities: CrmActivityRow[] = [];
+  let crmEmails: CrmEmailRow[] = [];
+
+  if (deal.primary_contact_id) {
+    const [crmActivitiesRaw, crmEmailsRaw] = await Promise.all([
+      admin
+        .from("crm_activities" as never)
+        .select(
+          "id, activity_type, subject, description, outcome, direction, call_duration_seconds, performed_by_name, created_at" as never
+        )
+        .eq("contact_id" as never, deal.primary_contact_id as never)
+        .order("created_at" as never, { ascending: false })
+        .limit(200),
+      admin
+        .from("crm_emails" as never)
+        .select("*" as never)
+        .eq("linked_contact_id" as never, deal.primary_contact_id as never)
+        .order("created_at" as never, { ascending: false })
+        .limit(100),
+    ]);
+
+    crmActivities =
+      ((crmActivitiesRaw as unknown as { data: CrmActivityRow[] | null }).data ?? []);
+    crmEmails =
+      ((crmEmailsRaw as unknown as { data: CrmEmailRow[] | null }).data ?? []);
+  }
+
   // ─── Fetch commercial UW data (for commercial deals) ───
   let commercialUWData: {
     uw: Record<string, unknown>;
@@ -259,6 +316,11 @@ export default async function DealDetailRoute({ params }: PageProps) {
       stageConfigs={stageConfigs}
       checklist={checklistItems}
       activities={activities}
+      crmActivities={crmActivities.map((a) => ({
+        ...a,
+        created_by_name: a.performed_by_name,
+      }))}
+      crmEmails={crmEmails}
       teamMembers={teamMembers}
       currentUserId={user.id}
       currentUserName={currentProfile?.full_name ?? "Unknown"}

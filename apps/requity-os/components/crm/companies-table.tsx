@@ -18,8 +18,6 @@ import {
   X,
   Building2,
   Paperclip,
-  Shield,
-  FileText,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
@@ -39,9 +37,6 @@ export interface CompanyRow {
   contact_count: number;
   file_count: number;
   active_deals: number;
-  nda_created_date: string | null;
-  nda_expiration_date: string | null;
-  fee_agreement_on_file: boolean | null;
   is_active: boolean | null;
 }
 
@@ -74,15 +69,6 @@ function StatusDot({ active }: { active: boolean }) {
       />
     </div>
   );
-}
-
-function hasValidNda(
-  ndaCreatedDate: string | null,
-  ndaExpirationDate: string | null
-): boolean {
-  if (!ndaCreatedDate) return false;
-  if (!ndaExpirationDate) return true;
-  return new Date(ndaExpirationDate) > new Date();
 }
 
 // ── Component ────────────────────────────────────────────────────────────
@@ -188,34 +174,6 @@ export function CompaniesTable({ companies }: CompaniesTableProps) {
           </div>
         ),
         className: "text-center w-[70px]",
-      },
-      {
-        key: "nda",
-        header: "NDA",
-        cell: (row) => (
-          <div className="flex justify-center">
-            {hasValidNda(row.nda_created_date, row.nda_expiration_date) ? (
-              <Shield className="h-4 w-4 text-green-500" />
-            ) : (
-              <Shield className="h-4 w-4 text-red-400" />
-            )}
-          </div>
-        ),
-        className: "text-center w-[60px]",
-      },
-      {
-        key: "fee_agreement",
-        header: "Fee Agmt",
-        cell: (row) => (
-          <div className="flex justify-center">
-            {row.fee_agreement_on_file ? (
-              <FileText className="h-4 w-4 text-green-500" />
-            ) : (
-              <FileText className="h-4 w-4 text-red-400" />
-            )}
-          </div>
-        ),
-        className: "text-center w-[80px]",
       },
     ],
     []

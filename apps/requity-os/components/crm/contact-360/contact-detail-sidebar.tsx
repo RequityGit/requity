@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
@@ -42,6 +41,8 @@ interface ContactDetailSidebarProps {
   currentUserId: string;
   currentUserName: string;
   onComposeEmail?: () => void;
+  onTabChange?: (tab: string) => void;
+  onLogCall?: () => void;
 }
 
 export function ContactDetailSidebar({
@@ -52,8 +53,9 @@ export function ContactDetailSidebar({
   currentUserId,
   currentUserName,
   onComposeEmail,
+  onTabChange,
+  onLogCall,
 }: ContactDetailSidebarProps) {
-  const router = useRouter();
   const [copied, setCopied] = useState(false);
 
   const quickActions = [
@@ -65,21 +67,12 @@ export function ContactDetailSidebar({
     {
       icon: CheckCircle2,
       label: "Create Task",
-      onClick: () => {
-        const params = new URLSearchParams(window.location.search);
-        params.set("tab", "tasks");
-        router.replace(`?${params.toString()}`, { scroll: false });
-      },
+      onClick: () => onTabChange?.("tasks"),
     },
     {
       icon: PhoneCall,
       label: "Log Call",
-      onClick: () => {
-        const params = new URLSearchParams(window.location.search);
-        params.set("tab", "activity");
-        params.set("action", "log-call");
-        router.replace(`?${params.toString()}`, { scroll: false });
-      },
+      onClick: () => onLogCall?.(),
     },
   ];
 

@@ -25,6 +25,7 @@ import {
   fetchObjectFields,
   fetchObjectRelationships,
   fetchObjectLayout,
+  fetchFieldsForModules,
 } from "./actions";
 import { getObjectIcon } from "./_components/constants";
 import { FieldsTab } from "./_components/FieldsTab";
@@ -92,6 +93,7 @@ export function ObjectManagerView({ objects, fieldCounts, relationshipCounts }: 
   const [roles, setRoles] = useState<RelationshipRole[]>([]);
   const [layoutSections, setLayoutSections] = useState<PageSection[]>([]);
   const [layoutFields, setLayoutFields] = useState<PageField[]>([]);
+  const [relatedFields, setRelatedFields] = useState<Record<string, FieldConfig[]>>({});
   const [loading, setLoading] = useState(false);
 
   // Selection states
@@ -125,13 +127,47 @@ export function ObjectManagerView({ objects, fieldCounts, relationshipCounts }: 
         if (result.roles) setRoles(result.roles);
       } else if (activeTab === "layout") {
         const pageType = OBJECT_PAGE_TYPE_MAP[selectedObjectKey];
-        if (pageType) {
-          const result = await fetchObjectLayout(pageType);
-          if (result.sections) setLayoutSections(result.sections);
-          if (result.fields) setLayoutFields(result.fields);
+        const fieldModule = OBJECT_MODULE_MAP[selectedObjectKey] || selectedObjectKey;
+
+        // Fetch layout, native fields, and relationships in parallel
+        const [layoutResult, fieldsResult, relsResult] = await Promise.all([
+          pageType
+            ? fetchObjectLayout(pageType)
+            : Promise.resolve({ sections: [] as PageSection[], fields: [] as PageField[] }),
+          fetchObjectFields(fieldModule),
+          fetchObjectRelationships(selectedObjectKey),
+        ]);
+
+        setLayoutSections(layoutResult.sections ?? []);
+        setLayoutFields(layoutResult.fields ?? []);
+        if (fieldsResult.data) setFields(fieldsResult.data);
+        const rels = relsResult.relationships ?? [];
+        if (relsResult.relationships) setRelationships(rels);
+
+        // Fetch fields for all related entities
+        const relObjectKeys = rels.map((r) =>
+          r.parent_object_key === selectedObjectKey
+            ? r.child_object_key
+            : r.parent_object_key
+        );
+        const uniqueModules = Array.from(
+          new Set(relObjectKeys.map((k) => OBJECT_MODULE_MAP[k] || k))
+        );
+
+        if (uniqueModules.length > 0) {
+          const relFieldsResult = await fetchFieldsForModules(uniqueModules);
+          if (relFieldsResult.data) {
+            const grouped: Record<string, FieldConfig[]> = {};
+            for (const key of relObjectKeys) {
+              const mod = OBJECT_MODULE_MAP[key] || key;
+              grouped[key] = (relFieldsResult.data || []).filter(
+                (f) => f.module === mod
+              );
+            }
+            setRelatedFields(grouped);
+          }
         } else {
-          setLayoutSections([]);
-          setLayoutFields([]);
+          setRelatedFields({});
         }
       }
     } finally {
@@ -346,6 +382,7 @@ export function ObjectManagerView({ objects, fieldCounts, relationshipCounts }: 
               layoutFields={layoutFields}
               fields={fields}
               relationships={relationships}
+              relatedFields={relatedFields}
               objects={objects}
               onSelectSection={(s) => {
                 setSelectedSection(s);
@@ -355,6 +392,7 @@ export function ObjectManagerView({ objects, fieldCounts, relationshipCounts }: 
                 setSelectedLayoutTab(t);
                 setSelectedSection(null);
               }}
+              onLayoutChange={loadData}
               loading={loading}
             />
           )}
@@ -391,6 +429,9 @@ export function ObjectManagerView({ objects, fieldCounts, relationshipCounts }: 
           <SectionConfigPanel
             section={selectedSection}
             onClose={clearSelection}
+            onUpdated={() => {
+              loadData();
+            }}
           />
         )}
         {activeTab === "layout" && selectedLayoutTab && (

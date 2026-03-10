@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -46,12 +46,14 @@ interface ActivityTabProps {
   companyId: string;
   activities: CompanyActivityData[];
   currentUserId: string;
+  logCallTrigger?: number;
 }
 
 export function CompanyActivityTab({
   companyId,
   activities,
   currentUserId,
+  logCallTrigger = 0,
 }: ActivityTabProps) {
   const [filter, setFilter] = useState("all");
   const [showForm, setShowForm] = useState(false);
@@ -64,6 +66,14 @@ export function CompanyActivityTab({
     subject: "",
     description: "",
   });
+
+  // Open form pre-filled with "call" when triggered from sidebar Log Call action
+  useEffect(() => {
+    if (logCallTrigger > 0) {
+      setShowForm(true);
+      setForm({ activity_type: "call", subject: "", description: "" });
+    }
+  }, [logCallTrigger]);
 
   const filtered =
     filter === "all"

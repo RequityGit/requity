@@ -142,6 +142,9 @@ export function ContactDetailClient({
   const initialTab = isValidTab ? tabParam! : "overview";
   const [activeTab, setActiveTab] = useState(initialTab);
   const [emailComposeOpen, setEmailComposeOpen] = useState(false);
+  const [logCallTrigger, setLogCallTrigger] = useState(
+    () => (searchParams.get("action") === "log-call" && initialTab === "activity") ? 1 : 0
+  );
 
   // Track which tabs have been visited so we can keep them mounted
   const [loadedTabs, setLoadedTabs] = useState<Set<string>>(
@@ -169,6 +172,12 @@ export function ContactDetailClient({
     },
     []
   );
+
+  const handleLogCall = useCallback(() => {
+    handleTabChange("activity");
+    // Increment trigger to signal the activity tab to open the log-call form
+    setLogCallTrigger((prev) => prev + 1);
+  }, [handleTabChange]);
 
   return (
     <div className="min-h-screen">
@@ -295,7 +304,7 @@ export function ContactDetailClient({
                   emails={emails}
                   currentUserId={currentUserId}
                   onComposeEmail={() => setEmailComposeOpen(true)}
-                  initialAction={searchParams.get("action")}
+                  logCallTrigger={logCallTrigger}
                 />
               </div>
             )}
@@ -312,6 +321,8 @@ export function ContactDetailClient({
             currentUserId={currentUserId}
             currentUserName={currentUserName}
             onComposeEmail={() => setEmailComposeOpen(true)}
+            onTabChange={handleTabChange}
+            onLogCall={handleLogCall}
           />
         </div>
       </div>

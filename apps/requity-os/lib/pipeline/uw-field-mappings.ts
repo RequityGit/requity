@@ -47,10 +47,19 @@ const BORROWER_FIELD_MAPPINGS: FieldMapping[] = [
   { fieldKey: "flips_completed", source: "borrower", table: "borrowers", column: "experience_count" },
 ];
 
+/**
+ * Deal-level fields: mapped directly to top-level columns on unified_deals
+ * (not stored in uw_data JSONB)
+ */
+const DEAL_FIELD_MAPPINGS: FieldMapping[] = [
+  { fieldKey: "expected_close_date", source: "deal", table: "unified_deals", column: "expected_close_date" },
+];
+
 /** All field mappings combined */
 export const FIELD_MAPPINGS: FieldMapping[] = [
   ...PROPERTY_FIELD_MAPPINGS,
   ...BORROWER_FIELD_MAPPINGS,
+  ...DEAL_FIELD_MAPPINGS,
 ];
 
 /** Lookup by field key for O(1) access */

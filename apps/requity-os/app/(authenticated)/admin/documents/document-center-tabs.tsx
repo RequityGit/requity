@@ -13,8 +13,8 @@ interface UploadedDocRow {
   description: string | null;
   document_type: string | null;
   owner_name: string;
-  fund_name: string | null;
-  loan_address: string | null;
+  entity_name: string | null;
+  source: "loan" | "contact" | "company" | "deal";
   status: string;
   created_at: string;
 }

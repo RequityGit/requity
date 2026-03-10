@@ -91,23 +91,29 @@ export default function FormsListPage() {
           </p>
         </div>
         <Button
-          onClick={() => {
-            // Create new form and redirect to editor
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            const supabase: any = createClient();
-            supabase
-              .from("form_definitions")
-              .insert({
-                name: "Untitled Form",
-                slug: `form-${Date.now()}`,
-                status: "draft",
-                steps: [],
-              })
-              .select("id")
-              .single()
-              .then(({ data }: { data: any }) => {
-                if (data) router.push(`/control-center/forms/${data.id}`);
-              });
+          onClick={async () => {
+            try {
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              const supabase: any = createClient();
+              const { data, error } = await supabase
+                .from("form_definitions")
+                .insert({
+                  name: "Untitled Form",
+                  slug: `form-${Date.now()}`,
+                  status: "draft",
+                  steps: [],
+                })
+                .select("id")
+                .single();
+
+              if (error) {
+                console.error("Failed to create form:", error);
+                return;
+              }
+              if (data) router.push(`/control-center/forms/${data.id}`);
+            } catch (err) {
+              console.error("Failed to create form:", err);
+            }
           }}
         >
           <Plus size={16} strokeWidth={1.5} className="mr-2" />
