@@ -47,6 +47,7 @@ interface CompanyDetailSidebarProps {
   currentUserName: string;
   onTabChange: (tab: string) => void;
   onComposeEmail?: () => void;
+  onLogCall?: () => void;
 }
 
 export function CompanyDetailSidebar({
@@ -56,6 +57,7 @@ export function CompanyDetailSidebar({
   files,
   onTabChange,
   onComposeEmail,
+  onLogCall,
 }: CompanyDetailSidebarProps) {
   const router = useRouter();
   const { toast } = useToast();
@@ -90,7 +92,7 @@ export function CompanyDetailSidebar({
             {
               icon: PhoneCall,
               label: "Log Call",
-              onClick: () => onTabChange("activity"),
+              onClick: () => onLogCall?.(),
             },
             {
               icon: Upload,

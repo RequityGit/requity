@@ -98,7 +98,7 @@ interface DetailActivityTabProps {
   emails: EmailData[];
   currentUserId: string;
   onComposeEmail?: () => void;
-  initialAction?: string | null;
+  logCallTrigger?: number;
 }
 
 export function DetailActivityTab({
@@ -107,7 +107,7 @@ export function DetailActivityTab({
   emails,
   currentUserId,
   onComposeEmail,
-  initialAction,
+  logCallTrigger = 0,
 }: DetailActivityTabProps) {
   const [filter, setFilter] = useState("all");
   const [showForm, setShowForm] = useState(false);
@@ -124,18 +124,11 @@ export function DetailActivityTab({
 
   // Open form pre-filled with "call" when triggered from sidebar Log Call action
   useEffect(() => {
-    if (initialAction === "log-call") {
+    if (logCallTrigger > 0) {
       setShowForm(true);
       setForm({ activity_type: "call", subject: "", description: "" });
-      // Clear the action param from URL to prevent re-triggering
-      const params = new URLSearchParams(window.location.search);
-      params.delete("action");
-      const newUrl = params.toString()
-        ? `${window.location.pathname}?${params.toString()}`
-        : window.location.pathname;
-      window.history.replaceState(null, "", newUrl);
     }
-  }, [initialAction]);
+  }, [logCallTrigger]);
 
   const isCallType = form.activity_type === "call";
 

@@ -81,6 +81,7 @@ export function CompanyDetailClient({
 }: CompanyDetailClientProps) {
   const searchParams = useSearchParams();
   const [emailComposeOpen, setEmailComposeOpen] = useState(false);
+  const [logCallTrigger, setLogCallTrigger] = useState(0);
 
   const openTasks = useMemo(
     () => tasks.filter((t) => t.status !== "completed").length,
@@ -131,6 +132,11 @@ export function CompanyDetailClient({
     },
     []
   );
+
+  const handleLogCall = useCallback(() => {
+    handleTabChange("activity");
+    setLogCallTrigger((prev) => prev + 1);
+  }, [handleTabChange]);
 
   return (
     <div className="min-h-screen">
@@ -246,6 +252,7 @@ export function CompanyDetailClient({
                 companyId={company.id}
                 activities={activities}
                 currentUserId={currentUserId}
+                logCallTrigger={logCallTrigger}
               />
             </div>
           )}
@@ -262,6 +269,7 @@ export function CompanyDetailClient({
             currentUserName={currentUserName}
             onTabChange={handleTabChange}
             onComposeEmail={() => setEmailComposeOpen(true)}
+            onLogCall={handleLogCall}
           />
         </div>
       </div>
