@@ -72,6 +72,7 @@ export default async function CrmContactDetailPage({ params }: PageProps) {
     investingEntitiesResult,
     sectionRowsResult,
     profileSectionRowsResult,
+    allCompaniesResult,
   ] = await Promise.all([
     // Base data
     supabase
@@ -170,6 +171,11 @@ export default async function CrmContactDetailPage({ params }: PageProps) {
       .select("id, section_key" as never)
       .eq("page_type" as never, "contact_detail" as never)
       .in("section_key" as never, ["contact_profile", "borrower_profile", "investor_profile"] as never),
+    // All companies for the company dropdown in edit dialogs
+    supabase
+      .from("companies")
+      .select("id, name, company_type")
+      .order("name"),
   ]);
 
   // Build profile lookup for display names
@@ -498,6 +504,14 @@ export default async function CrmContactDetailPage({ params }: PageProps) {
       }
     : null;
 
+  const allCompanies: CompanyData[] = (allCompaniesResult.data ?? []).map(
+    (c: { id: string; name: string; company_type: string | null }) => ({
+      id: c.id,
+      name: c.name,
+      company_type: c.company_type,
+    })
+  );
+
   const currentUserName = profileLookup[user.id] || user.email || "Unknown";
 
   const assignedToName = contact.assigned_to
@@ -556,6 +570,7 @@ export default async function CrmContactDetailPage({ params }: PageProps) {
       teamMembers={teamMembers}
       profiles={profiles}
       company={company}
+      allCompanies={allCompanies}
       borrower={borrowerData}
       investor={investorProfile}
       entities={allEntities}

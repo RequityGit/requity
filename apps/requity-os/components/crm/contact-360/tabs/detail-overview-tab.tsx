@@ -26,6 +26,8 @@ import type {
   InvestorCommitmentData,
   SectionLayout,
   FieldLayout,
+  TeamMember,
+  CompanyData,
 } from "../types";
 
 interface DetailOverviewTabProps {
@@ -37,6 +39,8 @@ interface DetailOverviewTabProps {
   isSuperAdmin: boolean;
   sectionOrder: SectionLayout[];
   sectionFields: Record<string, FieldLayout[]>;
+  teamMembers: TeamMember[];
+  allCompanies: CompanyData[];
 }
 
 // Default section order used when no layout data exists in the database
@@ -57,6 +61,8 @@ export function DetailOverviewTab({
   isSuperAdmin,
   sectionOrder,
   sectionFields,
+  teamMembers,
+  allCompanies,
 }: DetailOverviewTabProps) {
   const router = useRouter();
   const { toast } = useToast();
@@ -113,9 +119,15 @@ export function DetailOverviewTab({
     field: string,
     value: string | number | boolean | null
   ) {
+    // When company_id changes, also update the denormalized company_name
+    const updates: Record<string, unknown> = { [field]: value };
+    if (field === "company_id") {
+      const companyName = value ? companyLookup[value as string] ?? null : null;
+      updates.company_name = companyName;
+    }
     const { error } = await supabase
       .from("crm_contacts")
-      .update({ [field]: value })
+      .update(updates)
       .eq("id", contact.id);
     if (error) {
       toast({
@@ -184,16 +196,57 @@ export function DetailOverviewTab({
   }, [sectionOrder, hasBorrower, hasInvestor]);
 
   // Data objects for dynamic field rendering
-  const contactData = contact as unknown as Record<string, unknown>;
+  // Enrich contact data with resolved display values for UUID FK fields
+  const teamMemberLookup = useMemo(() => {
+    const map: Record<string, string> = {};
+    for (const m of teamMembers) map[m.id] = m.full_name;
+    return map;
+  }, [teamMembers]);
+  const companyLookup = useMemo(() => {
+    const map: Record<string, string> = {};
+    for (const c of allCompanies) map[c.id] = c.name;
+    return map;
+  }, [allCompanies]);
+  const contactData = useMemo(() => {
+    const data = { ...contact } as Record<string, unknown>;
+    // For display rendering, resolve assigned_to UUID to name
+    if (contact.assigned_to && teamMemberLookup[contact.assigned_to]) {
+      data.assigned_to_display = teamMemberLookup[contact.assigned_to];
+    }
+    // For display, resolve company_id UUID to name
+    if (contact.company_id && companyLookup[contact.company_id]) {
+      data.company_id_display = companyLookup[contact.company_id];
+    }
+    return data;
+  }, [contact, teamMemberLookup, companyLookup]);
   const borrowerData = (borrower ?? {}) as Record<string, unknown>;
   const investorData = (investor ?? {}) as Record<string, unknown>;
 
   // Build edit dialog field lists from layout data
   const contactEditFields = useMemo(
-    () => sectionFields.contact_profile?.length
-      ? buildEditFields(sectionFields.contact_profile, contactData, isSuperAdmin)
-      : [],
-    [sectionFields, contactData, isSuperAdmin]
+    () => {
+      if (!sectionFields.contact_profile?.length) return [];
+      const fields = buildEditFields(sectionFields.contact_profile, contactData, isSuperAdmin);
+      // Inject dynamic options for assigned_to (team members) and company_id (companies)
+      return fields.map((f) => {
+        if (f.fieldName === "assigned_to") {
+          return {
+            ...f,
+            fieldType: "select" as const,
+            options: teamMembers.map((m) => ({ label: m.full_name, value: m.id })),
+          };
+        }
+        if (f.fieldName === "company_id") {
+          return {
+            ...f,
+            fieldType: "select" as const,
+            options: allCompanies.map((c) => ({ label: c.name, value: c.id })),
+          };
+        }
+        return f;
+      });
+    },
+    [sectionFields, contactData, isSuperAdmin, teamMembers, allCompanies]
   );
 
   const borrowerEditFields = useMemo(
