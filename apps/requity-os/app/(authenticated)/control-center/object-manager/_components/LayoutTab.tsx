@@ -35,6 +35,7 @@ import {
   sortableKeyboardCoordinates,
   useSortable,
   verticalListSortingStrategy,
+  rectSortingStrategy,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { Button } from "@/components/ui/button";
@@ -756,7 +757,7 @@ export function LayoutTab({
                             {(section.section_type === "fields" || isRel) && sectionFields.length > 0 && (
                               <SortableContext
                                 items={sectionFields.map((f) => `${FIELD_PREFIX}${f.id}`)}
-                                strategy={verticalListSortingStrategy}
+                                strategy={rectSortingStrategy}
                               >
                                 <div className="grid grid-cols-12 gap-1.5">
                                   {sectionFields.map((lf) => {
@@ -779,7 +780,7 @@ export function LayoutTab({
 
                             {/* Empty field sections with drop zone */}
                             {(section.section_type === "fields" || isRel) && sectionFields.length === 0 && (
-                              <SortableContext items={[]} strategy={verticalListSortingStrategy}>
+                              <SortableContext items={[]} strategy={rectSortingStrategy}>
                                 <div className="grid grid-cols-12 gap-1.5">
                                   <DropZone sectionId={section.id} isEmpty />
                                 </div>
