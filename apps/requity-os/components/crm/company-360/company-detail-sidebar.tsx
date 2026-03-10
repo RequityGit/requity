@@ -46,6 +46,7 @@ interface CompanyDetailSidebarProps {
   currentUserId: string;
   currentUserName: string;
   onTabChange: (tab: string) => void;
+  onComposeEmail?: () => void;
 }
 
 function computeNdaOnFile(company: CompanyDetailData): {
@@ -87,6 +88,7 @@ export function CompanyDetailSidebar({
   followers,
   files,
   onTabChange,
+  onComposeEmail,
 }: CompanyDetailSidebarProps) {
   const router = useRouter();
   const { toast } = useToast();
@@ -112,7 +114,7 @@ export function CompanyDetailSidebar({
             {
               icon: Mail,
               label: "Send Email",
-              onClick: () => toast({ title: "Coming soon" }),
+              onClick: () => onComposeEmail?.(),
             },
             {
               icon: CheckCircle2,
