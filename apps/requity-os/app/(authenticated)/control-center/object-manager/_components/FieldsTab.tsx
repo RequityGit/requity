@@ -33,17 +33,13 @@ import { AddFieldDialog } from "./AddFieldDialog";
 
 // Module mapping
 const OBJECT_MODULE_MAP: Record<string, string> = {
-  opportunity: "uw_deal",
   contact: "contact_profile",
   company: "company_info",
   borrower_entity: "borrower_entity",
   property: "uw_property",
   loan: "loan_details",
-  servicing_loan: "servicing",
   borrower: "borrower_profile",
   investor: "investor_profile",
-  equity_deal: "equity_deal",
-  fund: "fund",
   unified_deal: "uw_deal",
 };
 
