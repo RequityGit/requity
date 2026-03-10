@@ -215,7 +215,7 @@ export function DealDetailPage({
             loanId={deal.id}
             loanData={{
               loan_amount: deal.amount,
-              property_type: (deal.property_data as Record<string, unknown>)?.property_type,
+              property_type: (deal.uw_data as Record<string, unknown>)?.property_type,
               loan_type: (deal.uw_data as Record<string, unknown>)?.loan_type,
               type: cardType.slug,
               ltv: (deal.uw_data as Record<string, unknown>)?.ltv,
@@ -707,7 +707,7 @@ function DealSidebar({
   const dealSnapshot: Record<string, unknown> = {
     borrower_name: approvalBorrowerName,
     loan_amount: deal.amount,
-    property_type: (deal.property_data as Record<string, unknown>)?.property_type,
+    property_type: (deal.uw_data as Record<string, unknown>)?.property_type,
     loan_type: (deal.uw_data as Record<string, unknown>)?.loan_type,
     type: cardType.slug,
     stage: deal.stage,
@@ -717,7 +717,6 @@ function DealSidebar({
 
   const entityData: Record<string, unknown> = {
     ...deal.uw_data,
-    ...deal.property_data,
     loan_amount: deal.amount,
     borrower_name: approvalBorrowerName,
     // Map opportunity fields to the names the loan approval checklist expects

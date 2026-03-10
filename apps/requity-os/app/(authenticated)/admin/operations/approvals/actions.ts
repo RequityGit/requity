@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { requireAdmin } from "@/lib/auth/require-admin";
+import { PROPERTY_TYPE_OPTIONS } from "@/lib/constants";
 import type {
   ApprovalPriority,
   ApprovalEntityType,
@@ -224,6 +225,12 @@ export async function validateChecklist(
     } else {
       // Default to text for unknown fields
       result.field_type = "text";
+    }
+
+    // Fallback: ensure property_type always has dropdown options
+    if (result.field === "property_type" && (!result.options || result.options.length === 0)) {
+      result.field_type = "select";
+      result.options = PROPERTY_TYPE_OPTIONS.map((o) => o.value);
     }
   }
 
