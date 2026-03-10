@@ -295,6 +295,9 @@ export default async function CrmContactDetailPage({ params }: PageProps) {
       rejected_at: t.rejected_at as string | null,
       resubmitted_at: t.resubmitted_at as string | null,
       revision_count: t.revision_count as number | null,
+      requires_approval: (t.requires_approval as boolean) ?? false,
+      approver_id: t.approver_id as string | null,
+      approval_instructions: t.approval_instructions as string | null,
     })
   );
 

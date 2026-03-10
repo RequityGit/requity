@@ -25,7 +25,9 @@ import {
 } from "@/components/ui/select";
 import { useToast } from "@/components/ui/use-toast";
 import { DatePicker } from "@/components/ui/date-picker";
-import { PlusCircle, Loader2 } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
+import { PlusCircle, Loader2, Shield, AlertCircle } from "lucide-react";
+import { createTaskApproval } from "@/app/(authenticated)/admin/operations/tasks/actions";
 import type { OpsProject } from "./ProjectCard";
 import type { TeamMember } from "./OperationsView";
 import {
@@ -70,6 +72,12 @@ export function AddTaskDialog({ projects, teamMembers, externalOpen, onExternalO
   const router = useRouter();
   const { toast } = useToast();
 
+  // Approval state
+  const [requiresApproval, setRequiresApproval] = useState(false);
+  const [approverId, setApproverId] = useState("");
+  const [approvalInstructions, setApprovalInstructions] = useState("");
+  const [selectedAssigneeId, setSelectedAssigneeId] = useState("");
+
   // Recurrence state
   const [recurrencePattern, setRecurrencePattern] = useState("weekly");
   const [recurrenceDaysOfWeek, setRecurrenceDaysOfWeek] = useState<number[]>([]);
@@ -81,6 +89,10 @@ export function AddTaskDialog({ projects, teamMembers, externalOpen, onExternalO
 
   function resetForm() {
     setForm(INITIAL_FORM);
+    setRequiresApproval(false);
+    setApproverId("");
+    setApprovalInstructions("");
+    setSelectedAssigneeId("");
     setRecurrencePattern("weekly");
     setRecurrenceDaysOfWeek([]);
     setRecurrenceDayOfMonth(1);
@@ -95,6 +107,16 @@ export function AddTaskDialog({ projects, teamMembers, externalOpen, onExternalO
 
     if (!form.title.trim()) {
       toast({ title: "Task title is required", variant: "destructive" });
+      return;
+    }
+
+    if (requiresApproval && !approverId) {
+      toast({ title: "Approver is required when approval is enabled", variant: "destructive" });
+      return;
+    }
+
+    if (requiresApproval && approverId && selectedAssigneeId && approverId === selectedAssigneeId) {
+      toast({ title: "Approver cannot be the same as assignee", variant: "destructive" });
       return;
     }
 
@@ -117,13 +139,14 @@ export function AddTaskDialog({ projects, teamMembers, externalOpen, onExternalO
         recurrenceDaysOfWeek
       );
 
-      const { error } = await supabase.from("ops_tasks").insert({
+      const { data: insertedTask, error } = await supabase.from("ops_tasks").insert({
         title: form.title.trim(),
         description: form.description.trim() || null,
         status: form.status,
         priority: form.priority,
         project_id: form.project_id || null,
         assigned_to_name: form.assigned_to_name.trim() || null,
+        assigned_to: selectedAssigneeId || null,
         due_date: form.due_date || null,
         category: form.category.trim() || null,
         is_recurring: form.is_recurring,
@@ -135,7 +158,10 @@ export function AddTaskDialog({ projects, teamMembers, externalOpen, onExternalO
         recurrence_start_date: form.is_recurring && recurrenceStartDate ? recurrenceStartDate : null,
         recurrence_end_date: form.is_recurring && recurrenceEndDate ? recurrenceEndDate : null,
         created_by: user.id,
-      });
+        requires_approval: requiresApproval,
+        approver_id: requiresApproval ? approverId : null,
+        approval_instructions: requiresApproval ? (approvalInstructions.trim() || null) : null,
+      }).select("id").single();
 
       if (error) {
         toast({
@@ -144,6 +170,18 @@ export function AddTaskDialog({ projects, teamMembers, externalOpen, onExternalO
           variant: "destructive",
         });
         return;
+      }
+
+      // Create the approval record if approval is required
+      if (requiresApproval && insertedTask?.id) {
+        const approvalResult = await createTaskApproval({
+          taskId: insertedTask.id,
+          approverId,
+          approvalInstructions: approvalInstructions.trim() || undefined,
+        });
+        if (!approvalResult.success) {
+          console.error("Failed to create approval record:", approvalResult.error);
+        }
       }
 
       toast({ title: "Task created successfully" });
@@ -205,7 +243,7 @@ export function AddTaskDialog({ projects, teamMembers, externalOpen, onExternalO
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {STATUSES.map((s) => (
+                  {STATUSES.filter((s) => s !== "Pending Approval").map((s) => (
                     <SelectItem key={s} value={s}>
                       {s}
                     </SelectItem>
@@ -260,10 +298,17 @@ export function AddTaskDialog({ projects, teamMembers, externalOpen, onExternalO
             <div className="space-y-1.5">
               <Label htmlFor="assigned_to_name">Assignee</Label>
               <Select
-                value={form.assigned_to_name || "none"}
-                onValueChange={(v) =>
-                  setForm({ ...form, assigned_to_name: v === "none" ? "" : v })
-                }
+                value={selectedAssigneeId || "none"}
+                onValueChange={(v) => {
+                  if (v === "none") {
+                    setSelectedAssigneeId("");
+                    setForm({ ...form, assigned_to_name: "" });
+                  } else {
+                    const member = teamMembers.find((m) => m.id === v);
+                    setSelectedAssigneeId(v);
+                    setForm({ ...form, assigned_to_name: member?.full_name || "" });
+                  }
+                }}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Select assignee" />
@@ -271,7 +316,7 @@ export function AddTaskDialog({ projects, teamMembers, externalOpen, onExternalO
                 <SelectContent>
                   <SelectItem value="none">Unassigned</SelectItem>
                   {teamMembers.map((m) => (
-                    <SelectItem key={m.id} value={m.full_name}>
+                    <SelectItem key={m.id} value={m.id}>
                       {m.full_name}
                     </SelectItem>
                   ))}
@@ -321,6 +366,71 @@ export function AddTaskDialog({ projects, teamMembers, externalOpen, onExternalO
               }
               rows={2}
             />
+          </div>
+
+          {/* Approval toggle */}
+          <div className="border-t border-border pt-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Shield className={`h-4 w-4 transition-colors ${requiresApproval ? "text-emerald-500" : "text-muted-foreground"}`} />
+                <Label htmlFor="requires_approval" className="cursor-pointer text-sm font-medium">
+                  Requires Approval
+                </Label>
+              </div>
+              <Switch
+                id="requires_approval"
+                checked={requiresApproval}
+                onCheckedChange={setRequiresApproval}
+              />
+            </div>
+
+            <div
+              className="overflow-hidden transition-all duration-300 ease-in-out"
+              style={{
+                maxHeight: requiresApproval ? 300 : 0,
+                opacity: requiresApproval ? 1 : 0,
+              }}
+            >
+              <div className="mt-3 rounded-lg border border-border bg-muted/50 p-3 space-y-3">
+                <div className="space-y-1.5">
+                  <Label htmlFor="approver">Approver *</Label>
+                  <Select
+                    value={approverId || "none"}
+                    onValueChange={(v) => setApproverId(v === "none" ? "" : v)}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select approver" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">Select approver</SelectItem>
+                      {teamMembers
+                        .filter((m) => m.id !== selectedAssigneeId)
+                        .map((m) => (
+                          <SelectItem key={m.id} value={m.id}>
+                            {m.full_name}
+                          </SelectItem>
+                        ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="approval_instructions">Approval Instructions</Label>
+                  <Textarea
+                    id="approval_instructions"
+                    placeholder="What should the approver check for?"
+                    value={approvalInstructions}
+                    onChange={(e) => setApprovalInstructions(e.target.value)}
+                    rows={2}
+                  />
+                </div>
+                <div className="flex items-center gap-1.5 rounded-md bg-blue-500/10 border border-blue-500/20 px-2.5 py-2">
+                  <AlertCircle className="h-3.5 w-3.5 text-blue-500 shrink-0" />
+                  <span className="text-[11px] text-muted-foreground">
+                    Assignee must submit for approval before task can be completed
+                  </span>
+                </div>
+              </div>
+            </div>
           </div>
 
           {/* Recurring toggle */}

@@ -779,6 +779,7 @@ export const OPS_TASK_STATUSES = [
   "In Progress",
   "In Review",
   "Blocked",
+  "Pending Approval",
   "Complete",
 ] as const;
 export type OpsTaskStatus = (typeof OPS_TASK_STATUSES)[number];

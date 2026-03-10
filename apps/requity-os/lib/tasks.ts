@@ -48,6 +48,25 @@ export interface OpsTask {
   rejected_at: string | null;
   resubmitted_at: string | null;
   revision_count: number | null;
+  // Ad-hoc task approval fields
+  requires_approval: boolean;
+  approver_id: string | null;
+  approval_instructions: string | null;
+}
+
+export interface TaskApproval {
+  id: string;
+  task_id: string;
+  approver_id: string;
+  approval_status: "pending" | "approved" | "rejected" | "revision_requested";
+  approval_instructions: string | null;
+  approval_note: string | null;
+  rejection_reason: string | null;
+  requested_at: string;
+  responded_at: string | null;
+  created_by: string;
+  created_at: string;
+  updated_at: string;
 }
 
 export interface Profile {
@@ -58,7 +77,7 @@ export interface Profile {
 
 // ── Constants ──────────────────────────────────────────────────────────────
 
-export const TASK_STATUSES = ["To Do", "In Progress", "Complete"] as const;
+export const TASK_STATUSES = ["To Do", "In Progress", "Pending Approval", "Complete"] as const;
 export type TaskStatus = (typeof TASK_STATUSES)[number];
 
 export const TASK_PRIORITIES = ["High", "Medium", "Low"] as const;
@@ -108,6 +127,36 @@ export const APPROVAL_STATUS_COLORS: Record<string, { bg: string; text: string }
   approved: {
     bg: "bg-emerald-100 dark:bg-emerald-950/30",
     text: "text-emerald-700 dark:text-emerald-400",
+  },
+};
+
+export const TASK_APPROVAL_STATUS_LABELS: Record<string, string> = {
+  pending: "Awaiting Approval",
+  approved: "Approved",
+  rejected: "Rejected",
+  revision_requested: "Revision Requested",
+};
+
+export const TASK_APPROVAL_STATUS_COLORS: Record<string, { bg: string; text: string; dot: string }> = {
+  pending: {
+    bg: "bg-amber-100 dark:bg-amber-950/30",
+    text: "text-amber-700 dark:text-amber-400",
+    dot: "bg-amber-500",
+  },
+  approved: {
+    bg: "bg-emerald-100 dark:bg-emerald-950/30",
+    text: "text-emerald-700 dark:text-emerald-400",
+    dot: "bg-emerald-500",
+  },
+  rejected: {
+    bg: "bg-red-100 dark:bg-red-950/30",
+    text: "text-red-700 dark:text-red-400",
+    dot: "bg-red-500",
+  },
+  revision_requested: {
+    bg: "bg-amber-100 dark:bg-amber-950/30",
+    text: "text-amber-700 dark:text-amber-400",
+    dot: "bg-amber-500",
   },
 };
 

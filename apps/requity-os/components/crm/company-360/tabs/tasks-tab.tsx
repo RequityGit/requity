@@ -87,6 +87,9 @@ export function CompanyTasksTab({
       rejected_at: null,
       resubmitted_at: null,
       revision_count: null,
+      requires_approval: false,
+      approver_id: null,
+      approval_instructions: null,
     };
     setEditingTask(opsTask);
     setSheetOpen(true);

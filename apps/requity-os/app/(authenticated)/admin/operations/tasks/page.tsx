@@ -17,7 +17,7 @@ export default async function TasksPage() {
 
   const admin = createAdminClient();
 
-  const [tasksRes, profilesRes, templatesRes] = await Promise.all([
+  const [tasksRes, profilesRes, templatesRes, superAdminRes] = await Promise.all([
     admin
       .from("ops_tasks")
       .select("*")
@@ -31,6 +31,13 @@ export default async function TasksPage() {
       .from("recurring_task_templates" as never)
       .select("*" as never)
       .order("title" as never),
+    admin
+      .from("user_roles")
+      .select("id")
+      .eq("user_id", user.id)
+      .eq("role", "super_admin")
+      .eq("is_active", true)
+      .maybeSingle(),
   ]);
 
   const tasks = (tasksRes.data ?? []) as unknown as OpsTask[];
@@ -47,6 +54,7 @@ export default async function TasksPage() {
     })
   );
   const templates = (templatesRes.data ?? []) as unknown as RecurringTaskTemplate[];
+  const isSuperAdmin = !!superAdminRes.data;
 
   return (
     <TaskBoard
@@ -54,6 +62,7 @@ export default async function TasksPage() {
       initialTemplates={templates}
       profiles={profiles}
       currentUserId={user.id}
+      isSuperAdmin={isSuperAdmin}
     />
   );
 }
