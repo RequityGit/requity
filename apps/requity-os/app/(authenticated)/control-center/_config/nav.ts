@@ -14,6 +14,7 @@ import {
   Layers,
   Contact,
   Building2,
+  ClipboardList,
   SlidersHorizontal,
   type LucideIcon,
 } from "lucide-react";
@@ -163,6 +164,19 @@ export const NAV_GROUPS: NavGroup[] = [
         desc: "Manage reusable templates for team-composed emails with merge fields.",
         href: "/control-center/user-email-templates",
         icon: MailPlus,
+      },
+    ],
+  },
+  {
+    id: "forms",
+    label: "Forms",
+    items: [
+      {
+        id: "forms",
+        label: "Form Manager",
+        desc: "Build and manage dynamic forms for loan applications and intake workflows.",
+        href: "/control-center/forms",
+        icon: ClipboardList,
       },
     ],
   },
