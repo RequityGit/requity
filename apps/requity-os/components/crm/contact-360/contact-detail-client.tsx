@@ -63,6 +63,7 @@ interface ContactDetailClientProps {
   isSuperAdmin: boolean;
   sectionOrder: SectionLayout[];
   sectionFields: Record<string, FieldLayout[]>;
+  primaryBorrowerEntity: Record<string, unknown> | null;
 }
 
 export function ContactDetailClient({
@@ -87,6 +88,7 @@ export function ContactDetailClient({
   isSuperAdmin,
   sectionOrder,
   sectionFields,
+  primaryBorrowerEntity,
 }: ContactDetailClientProps) {
   const searchParams = useSearchParams();
 
@@ -272,6 +274,7 @@ export function ContactDetailClient({
                   sectionFields={sectionFields}
                   teamMembers={teamMembers}
                   allCompanies={allCompanies}
+                  primaryBorrowerEntity={primaryBorrowerEntity}
                 />
               </div>
             )}

@@ -162,7 +162,7 @@ export default async function CrmContactDetailPage({ params }: PageProps) {
     // Layout config
     admin
       .from("page_layout_sections" as never)
-      .select("section_key, display_order, is_visible, visibility_rule" as never)
+      .select("section_key, display_order, is_visible, visibility_rule, section_type, section_label, section_icon" as never)
       .eq("page_type" as never, "contact_detail" as never)
       .eq("sidebar" as never, false as never)
       .order("display_order" as never, { ascending: true }),
@@ -170,7 +170,7 @@ export default async function CrmContactDetailPage({ params }: PageProps) {
       .from("page_layout_sections" as never)
       .select("id, section_key" as never)
       .eq("page_type" as never, "contact_detail" as never)
-      .in("section_key" as never, ["contact_profile", "borrower_profile", "investor_profile"] as never),
+      .eq("section_type" as never, "fields" as never),
     // All companies for the company dropdown in edit dialogs
     supabase
       .from("companies")
@@ -419,6 +419,10 @@ export default async function CrmContactDetailPage({ params }: PageProps) {
 
   const allEntities = [...borrowerEntities, ...investingEntities];
 
+  // Flatten first borrower entity for field rendering in the borrower_entity section
+  const primaryBorrowerEntity: Record<string, unknown> | null =
+    borrowerEntities.length > 0 ? { ...borrowerEntities[0] } : null;
+
   // Map layout config from parallel results
   const sectionOrder: SectionLayout[] = (sectionRowsResult.data ?? []).map(
     (r: Record<string, unknown>) => ({
@@ -426,6 +430,9 @@ export default async function CrmContactDetailPage({ params }: PageProps) {
       display_order: r.display_order as number,
       is_visible: r.is_visible as boolean,
       visibility_rule: r.visibility_rule as string | null,
+      section_type: (r.section_type as string) ?? "fields",
+      section_label: (r.section_label as string) ?? (r.section_key as string),
+      section_icon: (r.section_icon as string) ?? "file-text",
     })
   );
 
@@ -582,6 +589,7 @@ export default async function CrmContactDetailPage({ params }: PageProps) {
       isSuperAdmin={isSuperAdmin}
       sectionOrder={sectionOrder}
       sectionFields={sectionFields}
+      primaryBorrowerEntity={primaryBorrowerEntity}
     />
   );
 }

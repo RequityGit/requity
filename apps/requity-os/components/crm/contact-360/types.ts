@@ -164,6 +164,9 @@ export interface SectionLayout {
   display_order: number;
   is_visible: boolean;
   visibility_rule: string | null;
+  section_type: string;
+  section_label: string;
+  section_icon: string;
 }
 
 export interface FieldLayout {

@@ -264,6 +264,9 @@ export default async function CompanyDetailPage({ params }: PageProps) {
       display_order: r.display_order as number,
       is_visible: r.is_visible as boolean,
       visibility_rule: r.visibility_rule as string | null,
+      section_type: (r.section_type as string) ?? "fields",
+      section_label: (r.section_label as string) ?? (r.section_key as string),
+      section_icon: (r.section_icon as string) ?? "file-text",
     })
   );
 
