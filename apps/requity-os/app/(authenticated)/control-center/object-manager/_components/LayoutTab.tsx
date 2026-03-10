@@ -849,12 +849,8 @@ export function LayoutTab({
                 const relatedObject = objects.find(
                   (o) => o.object_key === relatedObjectKey
                 );
-                const inherited = Array.isArray(rel.inherited_fields)
-                  ? rel.inherited_fields
-                  : [];
-                if (inherited.length === 0) return null;
-
                 const entityFields = relatedFields[relatedObjectKey] || [];
+                if (entityFields.length === 0) return null;
 
                 return (
                   <div key={rel.id} className="mt-2.5">
@@ -865,23 +861,20 @@ export function LayoutTab({
                         {isParent ? "child" : "parent"}
                       </span>
                     </div>
-                    {inherited.map((fieldKey) => {
-                      const fieldConfig = entityFields.find(
-                        (f) => f.field_key === fieldKey
-                      );
+                    {entityFields.map((fieldConfig) => {
                       const ft = getFieldType(
-                        fieldConfig?.field_type || "text"
+                        fieldConfig.field_type || "text"
                       );
                       const FI = ft.icon;
                       return (
                         <div
-                          key={fieldKey}
+                          key={fieldConfig.field_key}
                           className="flex items-center gap-1.5 px-1.5 py-1 rounded text-xs text-muted-foreground hover:bg-purple-500/10 hover:text-foreground cursor-grab mb-px border-l-2 border-purple-500/20"
                         >
                           <Grip size={9} className="text-muted-foreground" />
                           <FI size={10} style={{ color: ft.color }} />
                           <span className="flex-1 truncate">
-                            {fieldConfig?.field_label || fieldKey}
+                            {fieldConfig.field_label || fieldConfig.field_key}
                           </span>
                           <ExternalLink
                             size={8}
