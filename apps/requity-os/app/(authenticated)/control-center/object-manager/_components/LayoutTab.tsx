@@ -397,12 +397,27 @@ export function LayoutTab({
     }
   };
 
-  // Fields already placed in a section (to filter palette)
-  const placedFieldKeys = useMemo(() => {
-    return new Set(localFields.map((f) => f.field_key));
-  }, [localFields]);
+  // Build a set of section IDs for user-created (non-locked, non-system) sections.
+  // Only fields placed in these sections should be excluded from the palette.
+  // Locked/system sections are pre-seeded and should not consume from the available pool.
+  const userSectionIds = useMemo(() => {
+    return new Set(
+      localSections
+        .filter((s) => !s.is_locked && s.section_type !== "system")
+        .map((s) => s.id)
+    );
+  }, [localSections]);
 
-  // Available palette fields (not yet placed)
+  // Fields placed in user-created sections only (to filter palette)
+  const placedFieldKeys = useMemo(() => {
+    return new Set(
+      localFields
+        .filter((f) => userSectionIds.has(f.section_id))
+        .map((f) => f.field_key)
+    );
+  }, [localFields, userSectionIds]);
+
+  // Available palette fields (not yet placed in a user-created section)
   const paletteFields = useMemo(() => {
     return fields.filter((f) => !f.is_archived && !placedFieldKeys.has(f.field_key));
   }, [fields, placedFieldKeys]);
@@ -856,9 +871,15 @@ export function LayoutTab({
             </div>
             <div className="flex-1 overflow-y-auto px-1.5 py-1.5">
               {/* Native fields */}
-              <div className="text-[9px] font-semibold uppercase tracking-wider text-muted-foreground px-1.5 mb-1">
+              <div className="text-[9px] font-semibold uppercase tracking-wider text-muted-foreground px-1.5 mb-1 flex items-center gap-1">
                 Native
+                <span className="text-[8px] font-medium ml-auto">{paletteFields.length}</span>
               </div>
+              {paletteFields.length === 0 && (
+                <div className="text-[10px] text-muted-foreground px-1.5 py-2">
+                  All fields placed in custom sections.
+                </div>
+              )}
               {paletteFields.map((f) => (
                 <PaletteItem key={f.id} field={f} />
               ))}

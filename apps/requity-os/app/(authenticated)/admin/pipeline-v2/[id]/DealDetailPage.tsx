@@ -248,6 +248,13 @@ export function DealDetailPage({
               ltv: (deal.uw_data as Record<string, unknown>)?.ltv,
               interest_rate: (deal.uw_data as Record<string, unknown>)?.interest_rate,
               borrower_id: deal.primary_contact_id,
+              property_address: (deal.uw_data as Record<string, unknown>)?.property_address,
+              property_city: (deal.uw_data as Record<string, unknown>)?.property_city,
+              property_state: (deal.uw_data as Record<string, unknown>)?.property_state,
+              property_zip: (deal.uw_data as Record<string, unknown>)?.property_zip,
+              purchase_price: (deal.uw_data as Record<string, unknown>)?.purchase_price,
+              appraised_value: (deal.uw_data as Record<string, unknown>)?.appraised_value,
+              term_months: (deal.uw_data as Record<string, unknown>)?.term_months,
             }}
             borrowerName={borrowerName}
           />

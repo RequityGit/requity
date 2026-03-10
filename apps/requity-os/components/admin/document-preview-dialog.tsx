@@ -56,6 +56,19 @@ export function DocumentPreviewDialog({
   const isPdf = effectiveMime.includes("pdf");
   const isImage = effectiveMime.startsWith("image/");
 
+  const officeExtensions = /\.(docx?|xlsx?|pptx?)$/i;
+  const officeMimeTypes = [
+    "application/msword",
+    "application/vnd.ms-excel",
+    "application/vnd.ms-powerpoint",
+    "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+  ];
+  const isOffice =
+    officeMimeTypes.includes(effectiveMime) ||
+    officeExtensions.test(document?.file_name ?? "");
+
   function handleDownload() {
     if (!url) return;
     const a = window.document.createElement("a");
@@ -105,6 +118,12 @@ export function DocumentPreviewDialog({
                 className="max-w-full max-h-full object-contain"
               />
             </div>
+          ) : isOffice ? (
+            <iframe
+              src={`https://docs.google.com/gview?url=${encodeURIComponent(url)}&embedded=true`}
+              className="w-full h-full border-0"
+              title={displayName}
+            />
           ) : (
             <div className="flex flex-col items-center justify-center h-full gap-4 text-center p-8">
               <FileText className="h-16 w-16 text-muted-foreground" />

@@ -166,7 +166,7 @@ export default async function AdminDocumentsPage() {
       status: doc.review_status ?? "uploaded",
       created_at: doc.created_at,
       storage_path: doc.storage_path ?? null,
-      storage_bucket: doc.storage_path ? "deal-documents" : null,
+      storage_bucket: doc.storage_path ? "loan-documents" : null,
       file_url: doc.file_url,
       mime_type: doc.mime_type ?? null,
     };
