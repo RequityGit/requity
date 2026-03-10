@@ -471,6 +471,101 @@ export async function reorderFields(
 }
 
 // ---------------------------------------------------------------------------
+// Reorder layout sections (update display_order on page_layout_sections)
+// ---------------------------------------------------------------------------
+
+export async function reorderLayoutSections(
+  updates: { id: string; display_order: number }[]
+): Promise<{ success?: boolean; error?: string }> {
+  try {
+    const auth = await requireSuperAdmin();
+    if ("error" in auth) return { error: auth.error };
+
+    const admin = createAdminClient();
+    for (const u of updates) {
+      const { error } = await admin
+        .from(SECTIONS)
+        .update({ display_order: u.display_order } as never)
+        .eq("id" as never, u.id as never);
+      if (error) return { error: error.message };
+    }
+
+    revalidate();
+    return { success: true };
+  } catch (err: unknown) {
+    return { error: err instanceof Error ? err.message : "An unexpected error occurred" };
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Reorder layout fields (update display_order and optionally section_id)
+// ---------------------------------------------------------------------------
+
+export async function reorderLayoutFields(
+  updates: { id: string; display_order: number; section_id?: string }[]
+): Promise<{ success?: boolean; error?: string }> {
+  try {
+    const auth = await requireSuperAdmin();
+    if ("error" in auth) return { error: auth.error };
+
+    const admin = createAdminClient();
+    for (const u of updates) {
+      const patch: Record<string, unknown> = { display_order: u.display_order };
+      if (u.section_id) patch.section_id = u.section_id;
+      const { error } = await admin
+        .from(FIELDS)
+        .update(patch as never)
+        .eq("id" as never, u.id as never);
+      if (error) return { error: error.message };
+    }
+
+    revalidate();
+    return { success: true };
+  } catch (err: unknown) {
+    return { error: err instanceof Error ? err.message : "An unexpected error occurred" };
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Add a field from the palette to a layout section
+// ---------------------------------------------------------------------------
+
+export async function addFieldToLayout(input: {
+  section_id: string;
+  field_config_id: string;
+  field_key: string;
+  display_order: number;
+  column_span?: string;
+}): Promise<{ data?: PageField; error?: string }> {
+  try {
+    const auth = await requireSuperAdmin();
+    if ("error" in auth) return { error: auth.error };
+
+    const admin = createAdminClient();
+    const { data, error } = await admin
+      .from(FIELDS)
+      .insert({
+        section_id: input.section_id,
+        field_config_id: input.field_config_id,
+        field_key: input.field_key,
+        display_order: input.display_order,
+        column_position: "left",
+        column_span: input.column_span || "half",
+        is_visible: true,
+        source: "native",
+      } as never)
+      .select("*" as never)
+      .single();
+
+    if (error) return { error: error.message };
+    revalidate();
+    return { data: data as unknown as PageField };
+  } catch (err: unknown) {
+    return { error: err instanceof Error ? err.message : "An unexpected error occurred" };
+  }
+}
+
+// ---------------------------------------------------------------------------
 // Fetch field count per module (for sidebar badges)
 // ---------------------------------------------------------------------------
 

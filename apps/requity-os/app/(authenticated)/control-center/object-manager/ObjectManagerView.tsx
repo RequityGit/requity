@@ -395,6 +395,7 @@ export function ObjectManagerView({ objects, fieldCounts, relationshipCounts }: 
                 setSelectedLayoutTab(t);
                 setSelectedSection(null);
               }}
+              onLayoutChange={loadData}
               loading={loading}
             />
           )}
