@@ -27,6 +27,10 @@ export async function exportHtmlAsPdf(
     container.style.lineHeight = "1.625";
     container.style.fontFamily =
       'ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif';
+    // Force light color scheme so dark-mode Tailwind styles don't apply
+    container.style.colorScheme = "light";
+    container.classList.add("light");
+    container.classList.remove("dark");
     container.innerHTML = htmlContent;
 
     // Apply inline styles to match TipTap editor rendering
@@ -68,6 +72,27 @@ export async function exportHtmlAsPdf(
 
 /** Apply inline styles to the container to match the editor canvas rendering. */
 function applyDocumentStyles(container: HTMLElement) {
+  // Force all elements to inherit dark text color (prevents dark-mode white text)
+  container.querySelectorAll<HTMLElement>("*").forEach((el) => {
+    if (!el.style.color) {
+      el.style.color = "inherit";
+    }
+  });
+
+  // Paragraphs
+  container.querySelectorAll<HTMLElement>("p").forEach((el) => {
+    el.style.color = "#1a1a1a";
+  });
+  container.querySelectorAll<HTMLElement>("span").forEach((el) => {
+    // Only set color if the span doesn't have an explicit color style from the editor
+    if (!el.style.color) {
+      el.style.color = "#1a1a1a";
+    }
+  });
+  container.querySelectorAll<HTMLElement>("a").forEach((el) => {
+    el.style.color = "#2563eb";
+  });
+
   // Headings
   container.querySelectorAll<HTMLElement>("h1").forEach((el) => {
     el.style.fontSize = "1.5rem";
@@ -105,6 +130,7 @@ function applyDocumentStyles(container: HTMLElement) {
   });
   container.querySelectorAll<HTMLElement>("li").forEach((el) => {
     el.style.marginTop = "0.25em";
+    el.style.color = "#1a1a1a";
   });
 
   // Blockquotes
@@ -126,6 +152,7 @@ function applyDocumentStyles(container: HTMLElement) {
     el.style.padding = "0.5em 0.75em";
     el.style.textAlign = "left";
     el.style.verticalAlign = "top";
+    el.style.color = "#1a1a1a";
   });
   container.querySelectorAll<HTMLElement>("th").forEach((el) => {
     el.style.background = "#f9fafb";
