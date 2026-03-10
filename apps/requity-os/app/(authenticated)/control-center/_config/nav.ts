@@ -14,6 +14,7 @@ import {
   Layers,
   Contact,
   Building2,
+  SlidersHorizontal,
   type LucideIcon,
 } from "lucide-react";
 
@@ -52,6 +53,13 @@ export const NAV_GROUPS: NavGroup[] = [
     id: "page-layouts",
     label: "Page Layouts",
     items: [
+      {
+        id: "object-manager",
+        label: "Object Manager",
+        desc: "Unified admin for objects, fields, relationships, and page layouts.",
+        href: "/control-center/object-manager",
+        icon: SlidersHorizontal,
+      },
       {
         id: "field-manager",
         label: "Field Manager",
