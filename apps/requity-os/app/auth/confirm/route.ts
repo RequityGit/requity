@@ -4,6 +4,7 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import type { Database } from "@/lib/supabase/types";
 import type { EmailOtpType } from "@supabase/supabase-js";
+import { getRequestOrigin } from "@/lib/get-request-origin";
 
 /**
  * Redirect the verified user to their role-based dashboard,
@@ -81,7 +82,8 @@ function buildSupabaseClient() {
 }
 
 export async function GET(request: NextRequest) {
-  const { searchParams, origin } = new URL(request.url);
+  const { searchParams } = new URL(request.url);
+  const origin = getRequestOrigin(request);
 
   // Handle errors forwarded from Supabase (e.g. expired OTP)
   const errorParam = searchParams.get("error");
