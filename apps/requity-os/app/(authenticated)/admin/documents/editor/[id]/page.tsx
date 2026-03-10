@@ -29,12 +29,19 @@ export default async function DocumentEditorPage({ params }: PageProps) {
 
   const template = (doc as Record<string, unknown>).document_templates as Record<string, unknown> | null;
 
-  // Get the generating user's name
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("full_name")
-    .eq("id", doc.generated_by)
-    .single();
+  // Get the generating user's name and current user's profile
+  const [{ data: generatorProfile }, { data: currentProfile }] = await Promise.all([
+    supabase
+      .from("profiles")
+      .select("full_name")
+      .eq("id", doc.generated_by)
+      .single(),
+    supabase
+      .from("profiles")
+      .select("full_name")
+      .eq("id", user.id)
+      .single(),
+  ]);
 
   return (
     <div className="-m-4 md:-m-6 lg:-m-8 h-[calc(100vh-64px)]">
@@ -46,6 +53,7 @@ export default async function DocumentEditorPage({ params }: PageProps) {
         mergeData={doc.merge_data_snapshot as Record<string, string>}
         templateName={(template?.name as string) ?? ""}
         templateVersion={doc.template_version}
+        templateId={doc.template_id}
         recordType={doc.record_type}
         recordId={doc.record_id}
         mergeFields={
@@ -57,8 +65,10 @@ export default async function DocumentEditorPage({ params }: PageProps) {
             format?: string | null;
           }>) ?? []
         }
-        generatedBy={profile?.full_name ?? "Unknown"}
+        generatedBy={generatorProfile?.full_name ?? "Unknown"}
         generatedAt={doc.generated_at}
+        currentUserId={user.id}
+        currentUserName={currentProfile?.full_name ?? undefined}
       />
     </div>
   );

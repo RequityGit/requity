@@ -102,6 +102,15 @@ export async function getValidGmailToken(
   return { accessToken: refreshed.access_token, email: record.email };
 }
 
+export interface MimeAttachment {
+  /** File name for the attachment (e.g. "Broker_Fee_Agreement.pdf") */
+  filename: string;
+  /** MIME type (e.g. "application/pdf") */
+  mimeType: string;
+  /** Raw file content as a Buffer */
+  content: Buffer;
+}
+
 interface MimeMessageOptions {
   from: string;
   to: string;
@@ -110,31 +119,18 @@ interface MimeMessageOptions {
   bodyHtml?: string | null;
   cc?: string[] | null;
   bcc?: string[] | null;
+  attachments?: MimeAttachment[];
 }
 
-/**
- * Build an RFC 2822 MIME message and return it as a base64url-encoded string
- * suitable for the Gmail API `messages.send` endpoint.
- */
-export function buildMimeMessage(options: MimeMessageOptions): string {
-  const { from, to, subject, bodyText, bodyHtml, cc, bcc } = options;
-
-  const boundary = `boundary_${Date.now()}_${Math.random().toString(36).slice(2)}`;
+/** Build the body portion of a MIME message (text, html, or multipart/alternative). */
+function buildBodyParts(
+  bodyText: string | null | undefined,
+  bodyHtml: string | null | undefined,
+  boundary: string
+): string[] {
   const lines: string[] = [];
 
-  lines.push(`From: ${from}`);
-  lines.push(`To: ${to}`);
-  if (cc && cc.length > 0) {
-    lines.push(`Cc: ${cc.join(", ")}`);
-  }
-  if (bcc && bcc.length > 0) {
-    lines.push(`Bcc: ${bcc.join(", ")}`);
-  }
-  lines.push(`Subject: =?UTF-8?B?${Buffer.from(subject).toString("base64")}?=`);
-  lines.push("MIME-Version: 1.0");
-
   if (bodyHtml && bodyText) {
-    // Multipart: plain text + HTML
     lines.push(`Content-Type: multipart/alternative; boundary="${boundary}"`);
     lines.push("");
     lines.push(`--${boundary}`);
@@ -158,6 +154,70 @@ export function buildMimeMessage(options: MimeMessageOptions): string {
     lines.push("Content-Transfer-Encoding: base64");
     lines.push("");
     lines.push(Buffer.from(bodyText || "").toString("base64"));
+  }
+
+  return lines;
+}
+
+/**
+ * Build an RFC 2822 MIME message and return it as a base64url-encoded string
+ * suitable for the Gmail API `messages.send` endpoint.
+ *
+ * When attachments are provided, wraps everything in a multipart/mixed envelope.
+ */
+export function buildMimeMessage(options: MimeMessageOptions): string {
+  const { from, to, subject, bodyText, bodyHtml, cc, bcc, attachments } = options;
+  const hasAttachments = attachments && attachments.length > 0;
+
+  const lines: string[] = [];
+
+  // Headers
+  lines.push(`From: ${from}`);
+  lines.push(`To: ${to}`);
+  if (cc && cc.length > 0) {
+    lines.push(`Cc: ${cc.join(", ")}`);
+  }
+  if (bcc && bcc.length > 0) {
+    lines.push(`Bcc: ${bcc.join(", ")}`);
+  }
+  lines.push(`Subject: =?UTF-8?B?${Buffer.from(subject).toString("base64")}?=`);
+  lines.push("MIME-Version: 1.0");
+
+  if (hasAttachments) {
+    // Wrap body + attachments in multipart/mixed
+    const mixedBoundary = `mixed_${Date.now()}_${Math.random().toString(36).slice(2)}`;
+    const altBoundary = `alt_${Date.now()}_${Math.random().toString(36).slice(2)}`;
+
+    lines.push(`Content-Type: multipart/mixed; boundary="${mixedBoundary}"`);
+    lines.push("");
+
+    // Body part
+    lines.push(`--${mixedBoundary}`);
+    lines.push(...buildBodyParts(bodyText, bodyHtml, altBoundary));
+
+    // Attachment parts
+    for (const att of attachments) {
+      lines.push(`--${mixedBoundary}`);
+      lines.push(
+        `Content-Type: ${att.mimeType}; name="${att.filename}"`
+      );
+      lines.push("Content-Transfer-Encoding: base64");
+      lines.push(
+        `Content-Disposition: attachment; filename="${att.filename}"`
+      );
+      lines.push("");
+      // Split base64 into 76-char lines per RFC 2045
+      const b64 = att.content.toString("base64");
+      for (let i = 0; i < b64.length; i += 76) {
+        lines.push(b64.slice(i, i + 76));
+      }
+    }
+
+    lines.push(`--${mixedBoundary}--`);
+  } else {
+    // No attachments: inline body (backward compatible)
+    const boundary = `boundary_${Date.now()}_${Math.random().toString(36).slice(2)}`;
+    lines.push(...buildBodyParts(bodyText, bodyHtml, boundary));
   }
 
   const raw = lines.join("\r\n");

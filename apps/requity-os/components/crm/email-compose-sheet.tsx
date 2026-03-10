@@ -40,6 +40,14 @@ interface EmailComposeSheetProps {
   currentUserId: string;
   /** Current user display name */
   currentUserName?: string;
+  /** Pre-filled subject line (e.g. from document send flow) */
+  initialSubject?: string;
+  /** Pre-filled body HTML (e.g. from document send flow) */
+  initialBody?: string;
+  /** Pre-loaded file attachments (e.g. PDF from document export) */
+  initialAttachments?: File[];
+  /** Called after a successful email send with the crm_emails record ID */
+  onSendSuccess?: (emailId: string) => void;
 }
 
 export function EmailComposeSheet({
@@ -53,6 +61,10 @@ export function EmailComposeSheet({
   linkedInvestorId,
   currentUserId,
   currentUserName,
+  initialSubject,
+  initialBody,
+  initialAttachments,
+  onSendSuccess,
 }: EmailComposeSheetProps) {
   const router = useRouter();
   const { toast } = useToast();
@@ -89,10 +101,12 @@ export function EmailComposeSheet({
     to_name: toName,
     cc: "",
     bcc: "",
-    subject: "",
-    body: "",
+    subject: initialSubject ?? "",
+    body: initialBody ?? "",
   });
-  const [attachments, setAttachments] = useState<Attachment[]>([]);
+  const [attachments, setAttachments] = useState<Attachment[]>(
+    () => (initialAttachments ?? []).map((f) => ({ file: f, id: crypto.randomUUID() }))
+  );
 
   const isDirty =
     form.subject.trim() !== "" ||
@@ -373,6 +387,11 @@ export function EmailComposeSheet({
       } else {
         toast({ title: "Email queued", description: "Your email has been saved and queued for sending." });
       }
+      // Notify caller of successful send (e.g. for document tracking)
+      if (insertedEmail?.id && onSendSuccess) {
+        onSendSuccess(insertedEmail.id);
+      }
+
       onOpenChange(false);
 
       // Reset form

@@ -33,6 +33,99 @@ const PDF_STYLES = `
   [data-merge-field] { font-weight: 700; background: none; border: none; padding: 0; }
 `;
 
+/** Shared html2pdf options. */
+function getPdfOptions(filename?: string) {
+  return {
+    margin: [0.7, 0.75, 0.7, 0.75] as number[],
+    ...(filename ? { filename } : {}),
+    image: { type: "jpeg", quality: 0.98 },
+    html2canvas: {
+      scale: 2,
+      useCORS: true,
+      letterRendering: true,
+    },
+    jsPDF: {
+      unit: "in",
+      format: "letter",
+      orientation: "portrait",
+    },
+    pagebreak: { mode: ["avoid-all", "css", "legacy"] },
+  };
+}
+
+/**
+ * Create a hidden iframe with isolated styles for PDF rendering.
+ * Returns the iframe element and the body element to render from.
+ */
+async function createPdfIframe(htmlContent: string): Promise<{
+  iframe: HTMLIFrameElement;
+  body: HTMLElement;
+}> {
+  const iframe = document.createElement("iframe");
+  iframe.style.position = "fixed";
+  iframe.style.left = "-9999px";
+  iframe.style.top = "0";
+  iframe.style.width = "816px";
+  iframe.style.height = "1056px";
+  iframe.style.border = "none";
+  iframe.style.opacity = "0";
+  iframe.style.pointerEvents = "none";
+  document.body.appendChild(iframe);
+
+  const iframeDoc = iframe.contentDocument ?? iframe.contentWindow?.document;
+  if (!iframeDoc) throw new Error("Could not access iframe document");
+
+  iframeDoc.open();
+  iframeDoc.write(`<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <style>${PDF_STYLES}</style>
+</head>
+<body>${htmlContent}</body>
+</html>`);
+  iframeDoc.close();
+
+  // Wait for images to load
+  const images = iframeDoc.querySelectorAll("img");
+  if (images.length > 0) {
+    await Promise.all(
+      Array.from(images).map(
+        (img) =>
+          new Promise<void>((resolve) => {
+            if (img.complete) return resolve();
+            img.onload = () => resolve();
+            img.onerror = () => resolve();
+          })
+      )
+    );
+  }
+
+  return { iframe, body: iframeDoc.body };
+}
+
+/**
+ * Generate a PDF Blob from HTML content (for use as an email attachment).
+ * Does NOT trigger a download. Uses an isolated iframe for rendering.
+ */
+export async function generatePdfBlob(htmlContent: string): Promise<Blob> {
+  const html2pdf = (await import("html2pdf.js")).default;
+  const { iframe, body } = await createPdfIframe(htmlContent);
+
+  try {
+    const worker = html2pdf()
+      .set(getPdfOptions() as Record<string, unknown>)
+      .from(body);
+
+    const blob: Blob = await worker.outputPdf("blob");
+    return blob;
+  } finally {
+    if (iframe.parentNode) {
+      iframe.parentNode.removeChild(iframe);
+    }
+  }
+}
+
 /**
  * Export HTML content as a PDF file download.
  * Uses html2pdf.js (jsPDF + html2canvas) for client-side conversion.
@@ -49,75 +142,17 @@ export async function exportHtmlAsPdf(
   let iframe: HTMLIFrameElement | null = null;
 
   try {
-    // Dynamic import to avoid SSR issues
     const html2pdf = (await import("html2pdf.js")).default;
-
-    // Create hidden iframe for isolated rendering
-    iframe = document.createElement("iframe");
-    iframe.style.position = "fixed";
-    iframe.style.left = "-9999px";
-    iframe.style.top = "0";
-    iframe.style.width = "816px";
-    iframe.style.height = "1056px";
-    iframe.style.border = "none";
-    iframe.style.opacity = "0";
-    iframe.style.pointerEvents = "none";
-    document.body.appendChild(iframe);
-
-    const iframeDoc = iframe.contentDocument ?? iframe.contentWindow?.document;
-    if (!iframeDoc) throw new Error("Could not access iframe document");
-
-    // Write a clean HTML document with no external stylesheets
-    iframeDoc.open();
-    iframeDoc.write(`<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="utf-8" />
-  <style>${PDF_STYLES}</style>
-</head>
-<body>${htmlContent}</body>
-</html>`);
-    iframeDoc.close();
-
-    // Wait for images to load
-    const images = iframeDoc.querySelectorAll("img");
-    if (images.length > 0) {
-      await Promise.all(
-        Array.from(images).map(
-          (img) =>
-            new Promise<void>((resolve) => {
-              if (img.complete) return resolve();
-              img.onload = () => resolve();
-              img.onerror = () => resolve();
-            })
-        )
-      );
-    }
+    const result = await createPdfIframe(htmlContent);
+    iframe = result.iframe;
 
     const safeName = filename
       .replace(/\.pdf$/i, "")
       .replace(/[^a-zA-Z0-9_\- ]/g, "_");
 
-    const opts = {
-      margin: [0.7, 0.75, 0.7, 0.75] as number[],
-      filename: `${safeName}.pdf`,
-      image: { type: "jpeg", quality: 0.98 },
-      html2canvas: {
-        scale: 2,
-        useCORS: true,
-        letterRendering: true,
-      },
-      jsPDF: {
-        unit: "in",
-        format: "letter",
-        orientation: "portrait",
-      },
-      pagebreak: { mode: ["avoid-all", "css", "legacy"] },
-    };
-
     await html2pdf()
-      .set(opts as Record<string, unknown>)
-      .from(iframeDoc.body)
+      .set(getPdfOptions(`${safeName}.pdf`) as Record<string, unknown>)
+      .from(result.body)
       .save();
 
     toast.success("PDF downloaded", { id: toastId });

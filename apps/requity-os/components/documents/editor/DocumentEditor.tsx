@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useRef } from "react";
+import { useState, useCallback, useRef, useEffect } from "react";
 import { useEditor, EditorContent } from "@tiptap/react";
 import { StarterKit } from "@tiptap/starter-kit";
 import { Underline } from "@tiptap/extension-underline";
@@ -16,6 +16,7 @@ import { TableHeader } from "@tiptap/extension-table-header";
 import {
   FileText,
   Download,
+  Mail,
   X,
 } from "lucide-react";
 import { toast } from "sonner";
@@ -54,6 +55,12 @@ export interface DocumentEditorProps {
   };
   onSave?: (content: string) => void;
   onClose?: () => void;
+  /** Called when user clicks "Send via Email" — triggers the email preparation flow */
+  onSendEmail?: () => void;
+  /** Whether the email is being prepared (shows loading on the button) */
+  sendEmailPreparing?: boolean;
+  /** Called when the editor is ready, providing a function to get current HTML */
+  onEditorReady?: (getHtml: () => string) => void;
 }
 
 export function DocumentEditor({
@@ -66,6 +73,9 @@ export function DocumentEditor({
   documentInfo,
   onSave,
   onClose,
+  onSendEmail,
+  sendEmailPreparing,
+  onEditorReady,
 }: DocumentEditorProps) {
   const [zoom, setZoom] = useState(100);
   const [sidebarOpen, setSidebarOpen] = useState(true);
@@ -119,6 +129,13 @@ export function DocumentEditor({
       }, 2000);
     },
   });
+
+  // Expose getHtml to parent for Send via Email flow
+  useEffect(() => {
+    if (editor && onEditorReady) {
+      onEditorReady(() => editor.getHTML());
+    }
+  }, [editor, onEditorReady]);
 
   // Word count
   const wordCount = editor
@@ -194,6 +211,18 @@ export function DocumentEditor({
         </div>
 
         <div className="flex items-center gap-2 shrink-0">
+          {mode === "document" && onSendEmail && (
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-7 text-xs"
+              onClick={onSendEmail}
+              disabled={sendEmailPreparing}
+            >
+              <Mail size={12} className="mr-1" />
+              {sendEmailPreparing ? "Preparing..." : "Send via Email"}
+            </Button>
+          )}
           <Button
             variant="outline"
             size="sm"

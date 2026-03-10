@@ -357,3 +357,118 @@ export async function searchRecords(
 
   return { records: [] };
 }
+
+export type RecipientInfo = {
+  email: string | null;
+  name: string | null;
+  contactId: string | null;
+};
+
+/**
+ * Resolve the primary recipient email for a given record.
+ * Used by the "Send via Email" flow to pre-fill the To field.
+ */
+export async function resolveRecipientForRecord(
+  recordType: string,
+  recordId: string
+): Promise<RecipientInfo> {
+  const supabase = await createClient();
+  const empty: RecipientInfo = { email: null, name: null, contactId: null };
+
+  if (recordType === "loan") {
+    const { data: loan } = await supabase
+      .from("loans")
+      .select("borrower_contact_id" as never)
+      .eq("id", recordId)
+      .single();
+    const loanRecord = loan as Record<string, unknown> | null;
+    if (!loanRecord?.borrower_contact_id) return empty;
+
+    const { data: contact } = await supabase
+      .from("crm_contacts")
+      .select("id, first_name, last_name, email")
+      .eq("id", loanRecord.borrower_contact_id as string)
+      .single();
+    if (!contact) return empty;
+
+    return {
+      email: contact.email ?? null,
+      name: [contact.first_name, contact.last_name].filter(Boolean).join(" ") || null,
+      contactId: contact.id,
+    };
+  }
+
+  if (recordType === "contact") {
+    const { data: contact } = await supabase
+      .from("crm_contacts")
+      .select("id, first_name, last_name, email")
+      .eq("id", recordId)
+      .single();
+    if (!contact) return empty;
+
+    return {
+      email: contact.email ?? null,
+      name: [contact.first_name, contact.last_name].filter(Boolean).join(" ") || null,
+      contactId: contact.id,
+    };
+  }
+
+  if (recordType === "deal") {
+    const { data: deal } = await supabase
+      .from("unified_deals" as never)
+      .select("primary_contact_id" as never)
+      .eq("id" as never, recordId as never)
+      .single();
+    const dealRecord = deal as Record<string, unknown> | null;
+    if (!dealRecord?.primary_contact_id) return empty;
+
+    const { data: contact } = await supabase
+      .from("crm_contacts")
+      .select("id, first_name, last_name, email")
+      .eq("id", dealRecord.primary_contact_id as string)
+      .single();
+    if (!contact) return empty;
+
+    return {
+      email: contact.email ?? null,
+      name: [contact.first_name, contact.last_name].filter(Boolean).join(" ") || null,
+      contactId: contact.id,
+    };
+  }
+
+  if (recordType === "company") {
+    // Get the first contact associated with this company
+    const { data: contact } = await supabase
+      .from("crm_contacts")
+      .select("id, first_name, last_name, email")
+      .eq("company_id", recordId)
+      .order("created_at", { ascending: true })
+      .limit(1)
+      .single();
+    if (!contact) return empty;
+
+    return {
+      email: contact.email ?? null,
+      name: [contact.first_name, contact.last_name].filter(Boolean).join(" ") || null,
+      contactId: contact.id,
+    };
+  }
+
+  return empty;
+}
+
+/**
+ * Fetch the default email template ID linked to a document template.
+ */
+export async function fetchLinkedEmailTemplateId(
+  documentTemplateId: string
+): Promise<string | null> {
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("document_templates")
+    .select("default_email_template_id")
+    .eq("id", documentTemplateId)
+    .single();
+
+  return (data as Record<string, unknown> | null)?.default_email_template_id as string | null;
+}
