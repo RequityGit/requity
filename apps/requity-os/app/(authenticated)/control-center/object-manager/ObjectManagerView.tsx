@@ -432,6 +432,9 @@ export function ObjectManagerView({ objects, fieldCounts, relationshipCounts }: 
           <SectionConfigPanel
             section={selectedSection}
             onClose={clearSelection}
+            onUpdated={() => {
+              loadData();
+            }}
           />
         )}
         {activeTab === "layout" && selectedLayoutTab && (
