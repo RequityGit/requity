@@ -1,7 +1,6 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useToast } from "@/components/ui/use-toast";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
@@ -10,7 +9,6 @@ import {
   CheckCircle2,
   PhoneCall,
   Upload,
-  DollarSign,
   Bell,
   Users,
   Hash,
@@ -53,7 +51,6 @@ export function CompanyDetailSidebar({
   onLogCall,
 }: CompanyDetailSidebarProps) {
   const router = useRouter();
-  const { toast } = useToast();
 
   const topContacts = [...contacts]
     .sort((a, b) => {
@@ -88,11 +85,6 @@ export function CompanyDetailSidebar({
               icon: Upload,
               label: "Upload Document",
               onClick: () => onTabChange("files"),
-            },
-            {
-              icon: DollarSign,
-              label: "Submit Deal",
-              onClick: () => toast({ title: "Coming soon" }),
             },
           ].map(({ icon: I, label, onClick }) => (
             <button
