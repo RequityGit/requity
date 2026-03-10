@@ -11,11 +11,17 @@ import type {
   CrmFieldType,
 } from "@/components/crm/crm-edit-section-dialog";
 import { formatCurrency, formatDate, formatPhoneNumber, formatPhoneInput } from "@/lib/format";
+import { CRM_COMPANY_TYPES, CRM_COMPANY_SUBTYPES } from "@/lib/constants";
 import type { FieldLayout } from "./contact-360/types";
 
 // --- Field key → object property mapping for mismatches ---
 export const FIELD_KEY_TO_PROP: Record<string, string> = {
   ssn_last4: "ssn_last_four",
+  company_type: "company_types",
+  subtype: "company_subtype",
+  legal_name: "name",
+  dba_names: "other_names",
+  is_title_co_verified: "title_company_verified",
 };
 
 // --- Dropdown option fallbacks for built-in fields not yet stored in DB ---
@@ -59,6 +65,8 @@ export const DROPDOWN_FALLBACKS: Record<string, { label: string; value: string }
     { label: "Expired", value: "expired" },
     { label: "Not Accredited", value: "not_accredited" },
   ],
+  company_type: CRM_COMPANY_TYPES.map((t) => ({ label: t.label, value: t.value })),
+  subtype: CRM_COMPANY_SUBTYPES.map((t) => ({ label: t.label, value: t.value })),
 };
 
 // --- field_type → CrmFieldType mapping for edit dialogs ---
@@ -75,6 +83,11 @@ export const FC_TYPE_TO_CRM: Record<string, CrmFieldType> = {
   team_member: "select",
   company: "select",
   relationship: "select",
+};
+
+// --- Per-field type overrides (when DB field_type doesn't match UI control) ---
+const FIELD_TYPE_OVERRIDES: Record<string, CrmFieldType> = {
+  company_type: "multi_select",
 };
 
 // --- Custom renderers for fields with special display logic ---
@@ -254,17 +267,24 @@ export function buildEditFields(
     .map((f) => {
       const propKey = FIELD_KEY_TO_PROP[f.field_key] ?? f.field_key;
       const options = f.dropdown_options ?? DROPDOWN_FALLBACKS[f.field_key] ?? undefined;
-      let value = dataObj[propKey] as string | number | boolean | null | undefined;
+      const fieldType = FIELD_TYPE_OVERRIDES[f.field_key] ?? FC_TYPE_TO_CRM[f.field_type] ?? "text";
 
-      // Format phone for edit input
-      if (f.field_type === "phone" && typeof value === "string") {
-        value = formatPhoneInput(value) || value;
+      let value: string | number | boolean | string[] | null | undefined;
+      if (fieldType === "multi_select") {
+        const raw = dataObj[propKey];
+        value = Array.isArray(raw) ? raw : raw ? [String(raw)] : [];
+      } else {
+        value = dataObj[propKey] as string | number | boolean | null | undefined;
+        // Format phone for edit input
+        if (f.field_type === "phone" && typeof value === "string") {
+          value = formatPhoneInput(value) || value;
+        }
       }
 
       return {
         label: f.field_label,
         fieldName: propKey,
-        fieldType: FC_TYPE_TO_CRM[f.field_type] ?? "text",
+        fieldType,
         options,
         value,
         showYearNavigation: f.field_key === "date_of_birth",
