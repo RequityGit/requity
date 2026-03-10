@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useCallback } from "react";
 import Link from "next/link";
 import {
   Search,
@@ -8,8 +8,11 @@ import {
   Download,
   Pencil,
   ExternalLink,
-  XCircle,
+  Loader2,
 } from "lucide-react";
+import { toast } from "sonner";
+import { createClient } from "@/lib/supabase/client";
+import { exportHtmlAsPdf } from "@/lib/export-pdf";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -69,6 +72,31 @@ export function GeneratedDocumentsTable({ data, action }: Props) {
   const [search, setSearch] = useState("");
   const [typeFilter, setTypeFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
+  const [downloadingId, setDownloadingId] = useState<string | null>(null);
+
+  const handleDownloadPdf = useCallback(async (doc: GeneratedDocRow) => {
+    if (downloadingId) return;
+    setDownloadingId(doc.id);
+    try {
+      const supabase = createClient();
+      const { data: row, error } = await supabase
+        .from("generated_documents")
+        .select("content")
+        .eq("id", doc.id)
+        .single();
+
+      if (error || !row?.content) {
+        toast.error("Could not load document content");
+        return;
+      }
+
+      await exportHtmlAsPdf(row.content, doc.file_name);
+    } catch {
+      toast.error("Failed to download PDF");
+    } finally {
+      setDownloadingId(null);
+    }
+  }, [downloadingId]);
 
   const filtered = useMemo(() => {
     let result = data;
@@ -225,9 +253,16 @@ export function GeneratedDocumentsTable({ data, action }: Props) {
                             Open in Drive
                           </DropdownMenuItem>
                         )}
-                        <DropdownMenuItem>
-                          <Download size={14} className="mr-2" />
-                          Download
+                        <DropdownMenuItem
+                          onClick={() => handleDownloadPdf(doc)}
+                          disabled={downloadingId === doc.id}
+                        >
+                          {downloadingId === doc.id ? (
+                            <Loader2 size={14} className="mr-2 animate-spin" />
+                          ) : (
+                            <Download size={14} className="mr-2" />
+                          )}
+                          {downloadingId === doc.id ? "Downloading..." : "Download PDF"}
                         </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>

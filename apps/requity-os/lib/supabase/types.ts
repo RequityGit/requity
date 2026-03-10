@@ -2075,6 +2075,7 @@ export type Database = {
         Row: {
           company_id: string
           created_at: string | null
+          deleted_at: string | null
           file_name: string
           file_size: number | null
           file_type: string
@@ -2088,6 +2089,7 @@ export type Database = {
         Insert: {
           company_id: string
           created_at?: string | null
+          deleted_at?: string | null
           file_name: string
           file_size?: number | null
           file_type: string
@@ -2101,6 +2103,7 @@ export type Database = {
         Update: {
           company_id?: string
           created_at?: string | null
+          deleted_at?: string | null
           file_name?: string
           file_size?: number | null
           file_type?: string
@@ -2389,6 +2392,7 @@ export type Database = {
         Row: {
           contact_id: string
           created_at: string | null
+          deleted_at: string | null
           file_name: string
           file_size: number | null
           file_type: string
@@ -2402,6 +2406,7 @@ export type Database = {
         Insert: {
           contact_id: string
           created_at?: string | null
+          deleted_at?: string | null
           file_name: string
           file_size?: number | null
           file_type: string
@@ -2415,6 +2420,7 @@ export type Database = {
         Update: {
           contact_id?: string
           created_at?: string | null
+          deleted_at?: string | null
           file_name?: string
           file_size?: number | null
           file_type?: string
@@ -4822,6 +4828,7 @@ export type Database = {
       documents: {
         Row: {
           created_at: string
+          deleted_at: string | null
           description: string | null
           document_type: string | null
           file_name: string
@@ -4839,6 +4846,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          deleted_at?: string | null
           description?: string | null
           document_type?: string | null
           file_name: string
@@ -4856,6 +4864,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          deleted_at?: string | null
           description?: string | null
           document_type?: string | null
           file_name?: string
@@ -14495,6 +14504,7 @@ export type Database = {
           condition_id: string | null
           created_at: string
           deal_id: string
+          deleted_at: string | null
           document_name: string
           file_size_bytes: number | null
           file_url: string
@@ -14509,6 +14519,7 @@ export type Database = {
           condition_id?: string | null
           created_at?: string
           deal_id: string
+          deleted_at?: string | null
           document_name: string
           file_size_bytes?: number | null
           file_url: string
@@ -14523,6 +14534,7 @@ export type Database = {
           condition_id?: string | null
           created_at?: string
           deal_id?: string
+          deleted_at?: string | null
           document_name?: string
           file_size_bytes?: number | null
           file_url?: string
@@ -17690,6 +17702,7 @@ export const Constants = {
     },
   },
 } as const
+
 export interface PricingProgram {
   id: string;
   created_at: string;

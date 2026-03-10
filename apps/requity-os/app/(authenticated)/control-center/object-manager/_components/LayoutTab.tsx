@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useCallback, useEffect } from "react";
+import { useState, useMemo, useCallback, useEffect, useRef } from "react";
 import {
   PanelRight,
   FormInput,
@@ -29,6 +29,7 @@ import {
   type DragStartEvent,
   type DragEndEvent,
   type DragOverEvent,
+  useDraggable,
 } from "@dnd-kit/core";
 import {
   SortableContext,
@@ -133,8 +134,8 @@ function SortableSection({
   } = useSortable({ id: `${SECTION_PREFIX}${section.id}` });
 
   const style = {
-    transform: CSS.Transform.toString(transform),
-    transition,
+    transform: CSS.Translate.toString(transform),
+    transition: isDragging ? "none" : transition,
   };
 
   const isRel = section.section_type === "relationship";
@@ -250,8 +251,8 @@ function SortableField({
   } = useSortable({ id: `${FIELD_PREFIX}${layoutField.id}` });
 
   const style = {
-    transform: CSS.Transform.toString(transform),
-    transition,
+    transform: CSS.Translate.toString(transform),
+    transition: isDragging ? "none" : transition,
   };
 
   const isInh = layoutField.source === "inherited";
@@ -371,6 +372,12 @@ export function LayoutTab({
   const [activeTabId, setActiveTabId] = useState(tabs[0]?.id || "");
   const activeTab = tabs.find((t) => t.id === activeTabId) || tabs[0];
 
+  // Refs for stable access inside handleDragEnd without stale closures
+  const localFieldsRef = useRef(localFields);
+  localFieldsRef.current = localFields;
+  const activeTabRef = useRef(activeTab);
+  activeTabRef.current = activeTab;
+
   // Reset active tab when tabs change
   useEffect(() => {
     if (tabs.length > 0 && !tabs.find((t) => t.id === activeTabId)) {
@@ -422,9 +429,10 @@ export function LayoutTab({
       if (isSectionId(activeId) && isSectionId(overId)) {
         const activeSectionId = rawId(activeId);
         const overSectionId = rawId(overId);
+        let sectionUpdates: { id: string; display_order: number }[] = [];
 
         setLocalSections((prev) => {
-          const tabSections = activeTab?.sections.map((s) => s.id) || [];
+          const tabSections = activeTabRef.current?.sections.map((s) => s.id) || [];
           const currentOrder = prev
             .filter((s) => tabSections.includes(s.id))
             .sort((a, b) => a.display_order - b.display_order);
@@ -437,46 +445,48 @@ export function LayoutTab({
           const [moved] = reordered.splice(oldIdx, 1);
           reordered.splice(newIdx, 0, moved);
 
-          const updatedIds = reordered.map((s, i) => ({ id: s.id, display_order: i }));
-          const idToOrder = new Map(updatedIds.map((u) => [u.id, u.display_order]));
-
-          // Persist
-          reorderLayoutSections(updatedIds).then(() => onLayoutChange?.());
+          sectionUpdates = reordered.map((s, i) => ({ id: s.id, display_order: i }));
+          const idToOrder = new Map(sectionUpdates.map((u) => [u.id, u.display_order]));
 
           return prev.map((s) =>
             idToOrder.has(s.id) ? { ...s, display_order: idToOrder.get(s.id)! } : s
           );
         });
+
+        if (sectionUpdates.length > 0) {
+          reorderLayoutSections(sectionUpdates).then(() => onLayoutChange?.());
+        }
         return;
       }
 
       // --- Field reorder within/across sections ---
       if (isFieldId(activeId) && (isFieldId(overId) || overId.startsWith(DROP_ZONE_PREFIX))) {
         const activeFieldId = rawId(activeId);
+        const currentFields = localFieldsRef.current;
 
         // Determine target section
         let targetSectionId: string;
         let insertIndex: number;
 
         if (overId.startsWith(DROP_ZONE_PREFIX)) {
-          // Dropped on a section's drop zone
           targetSectionId = rawId(overId);
-          const sectionFields = localFields
+          const sectionFields = currentFields
             .filter((f) => f.section_id === targetSectionId)
             .sort((a, b) => a.display_order - b.display_order);
           insertIndex = sectionFields.length;
         } else {
-          // Dropped on another field
           const overFieldId = rawId(overId);
-          const overField = localFields.find((f) => f.id === overFieldId);
+          const overField = currentFields.find((f) => f.id === overFieldId);
           if (!overField) return;
           targetSectionId = overField.section_id;
-          const sectionFields = localFields
+          const sectionFields = currentFields
             .filter((f) => f.section_id === targetSectionId)
             .sort((a, b) => a.display_order - b.display_order);
           insertIndex = sectionFields.findIndex((f) => f.id === overFieldId);
           if (insertIndex === -1) insertIndex = sectionFields.length;
         }
+
+        let fieldUpdates: { id: string; display_order: number; section_id?: string }[] = [];
 
         setLocalFields((prev) => {
           const movingField = prev.find((f) => f.id === activeFieldId);
@@ -520,8 +530,7 @@ export function LayoutTab({
             });
           }
 
-          // Persist
-          reorderLayoutFields(updates).then(() => onLayoutChange?.());
+          fieldUpdates = updates;
 
           // Rebuild full list
           const otherFields = without.filter(
@@ -538,6 +547,10 @@ export function LayoutTab({
 
           return [...otherFields, ...targetFields, ...oldSectionFields];
         });
+
+        if (fieldUpdates.length > 0) {
+          reorderLayoutFields(fieldUpdates).then(() => onLayoutChange?.());
+        }
         return;
       }
 
@@ -547,21 +560,22 @@ export function LayoutTab({
         const fieldConfig = fields.find((f) => f.id === fieldConfigId);
         if (!fieldConfig) return;
 
+        const currentFields = localFieldsRef.current;
         let targetSectionId: string;
         let insertOrder: number;
 
         if (overId.startsWith(DROP_ZONE_PREFIX)) {
           targetSectionId = rawId(overId);
-          const sectionFields = localFields
+          const sectionFields = currentFields
             .filter((f) => f.section_id === targetSectionId)
             .sort((a, b) => a.display_order - b.display_order);
           insertOrder = sectionFields.length;
         } else {
           const overFieldId = rawId(overId);
-          const overField = localFields.find((f) => f.id === overFieldId);
+          const overField = currentFields.find((f) => f.id === overFieldId);
           if (!overField) return;
           targetSectionId = overField.section_id;
-          const sectionFields = localFields
+          const sectionFields = currentFields
             .filter((f) => f.section_id === targetSectionId)
             .sort((a, b) => a.display_order - b.display_order);
           insertOrder = sectionFields.findIndex((f) => f.id === overFieldId);
@@ -584,8 +598,12 @@ export function LayoutTab({
         return;
       }
     },
-    [activeTab, localFields, fields, onLayoutChange]
+    [fields, onLayoutChange]
   );
+
+  const handleDragCancel = useCallback(() => {
+    setActiveDragId(null);
+  }, []);
 
   // Determine what's being dragged for the overlay
   const activeDragField = useMemo(() => {
@@ -609,6 +627,11 @@ export function LayoutTab({
     if (!activeDragId || !isSectionId(activeDragId)) return null;
     return localSections.find((s) => s.id === rawId(activeDragId)) || null;
   }, [activeDragId, localSections]);
+
+  // Memoize sorted sections to avoid mutating sort in render
+  const sortedSections = useMemo(() => {
+    return [...(activeTab?.sections || [])].sort((a, b) => a.display_order - b.display_order);
+  }, [activeTab?.sections]);
 
   // ---------------------------------------------------------------------------
   // Render
@@ -647,6 +670,7 @@ export function LayoutTab({
         collisionDetection={closestCenter}
         onDragStart={handleDragStart}
         onDragEnd={handleDragEnd}
+        onDragCancel={handleDragCancel}
       >
         {/* Main Canvas */}
         <div className="flex-1 flex flex-col overflow-hidden">
@@ -727,12 +751,10 @@ export function LayoutTab({
               <div className="flex-1 overflow-y-auto p-4 bg-background">
                 <div className="max-w-[880px] mx-auto">
                   <SortableContext
-                    items={(activeTab?.sections || []).map((s) => `${SECTION_PREFIX}${s.id}`)}
+                    items={sortedSections.map((s) => `${SECTION_PREFIX}${s.id}`)}
                     strategy={verticalListSortingStrategy}
                   >
-                    {activeTab?.sections
-                      .sort((a, b) => a.display_order - b.display_order)
-                      .map((section) => {
+                    {sortedSections.map((section) => {
                         const isCol = collapsed[section.id];
                         const isRel = section.section_type === "relationship";
                         const isSystem = section.section_type === "system";
@@ -850,12 +872,8 @@ export function LayoutTab({
                 const relatedObject = objects.find(
                   (o) => o.object_key === relatedObjectKey
                 );
-                const inherited = Array.isArray(rel.inherited_fields)
-                  ? rel.inherited_fields
-                  : [];
-                if (inherited.length === 0) return null;
-
                 const entityFields = relatedFields[relatedObjectKey] || [];
+                if (entityFields.length === 0) return null;
 
                 return (
                   <div key={rel.id} className="mt-2.5">
@@ -866,23 +884,20 @@ export function LayoutTab({
                         {isParent ? "child" : "parent"}
                       </span>
                     </div>
-                    {inherited.map((fieldKey) => {
-                      const fieldConfig = entityFields.find(
-                        (f) => f.field_key === fieldKey
-                      );
+                    {entityFields.map((fieldConfig) => {
                       const ft = getFieldType(
-                        fieldConfig?.field_type || "text"
+                        fieldConfig.field_type || "text"
                       );
                       const FI = ft.icon;
                       return (
                         <div
-                          key={fieldKey}
+                          key={fieldConfig.field_key}
                           className="flex items-center gap-1.5 px-1.5 py-1 rounded text-xs text-muted-foreground hover:bg-purple-500/10 hover:text-foreground cursor-grab mb-px border-l-2 border-purple-500/20"
                         >
                           <Grip size={9} className="text-muted-foreground" />
                           <FI size={10} style={{ color: ft.color }} />
                           <span className="flex-1 truncate">
-                            {fieldConfig?.field_label || fieldKey}
+                            {fieldConfig.field_label || fieldConfig.field_key}
                           </span>
                           <ExternalLink
                             size={8}
@@ -962,19 +977,9 @@ function DropZone({ sectionId, isEmpty }: { sectionId: string; isEmpty?: boolean
 // ---------------------------------------------------------------------------
 
 function PaletteItem({ field }: { field: FieldConfig }) {
-  const {
-    attributes,
-    listeners,
-    setNodeRef,
-    transform,
-    transition,
-    isDragging,
-  } = useSortable({ id: `${PALETTE_PREFIX}${field.id}` });
-
-  const style = {
-    transform: CSS.Transform.toString(transform),
-    transition,
-  };
+  const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
+    id: `${PALETTE_PREFIX}${field.id}`,
+  });
 
   const ft = getFieldType(field.field_type);
   const FI = ft.icon;
@@ -982,7 +987,6 @@ function PaletteItem({ field }: { field: FieldConfig }) {
   return (
     <div
       ref={setNodeRef}
-      style={style}
       {...attributes}
       {...listeners}
       className={cn(

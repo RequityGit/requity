@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { useToast } from "@/components/ui/use-toast";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
@@ -16,7 +15,6 @@ import {
   CheckCircle2,
   PhoneCall,
   Upload,
-  DollarSign,
   Bell,
   Users,
   Hash,
@@ -33,6 +31,7 @@ import {
   relTime,
 } from "@/components/crm/contact-360/contact-detail-shared";
 import { formatDate } from "@/lib/format";
+import { useToast } from "@/components/ui/use-toast";
 import Link from "next/link";
 import {
   addCompanyFollowerAction,
@@ -129,11 +128,6 @@ export function CompanyDetailSidebar({
               icon: Upload,
               label: "Upload Document",
               onClick: () => onTabChange("files"),
-            },
-            {
-              icon: DollarSign,
-              label: "Submit Deal",
-              onClick: () => toast({ title: "Coming soon" }),
             },
           ].map(({ icon: I, label, onClick }) => (
             <button

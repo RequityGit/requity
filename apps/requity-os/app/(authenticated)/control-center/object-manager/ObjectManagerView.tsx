@@ -62,7 +62,6 @@ interface Props {
 
 // Module mapping: object_key -> field_configurations module(s)
 const OBJECT_MODULE_MAP: Record<string, string> = {
-  opportunity: "uw_deal",
   contact: "contact_profile",
   company: "company_info",
   borrower_entity: "borrower_entity",
@@ -77,7 +76,6 @@ const OBJECT_MODULE_MAP: Record<string, string> = {
 const OBJECT_PAGE_TYPE_MAP: Record<string, string> = {
   contact: "contact_detail",
   company: "company_detail",
-  opportunity: "opportunity_detail",
   loan: "loan_detail",
   property: "property_detail",
 };

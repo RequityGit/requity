@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useEffect, useRef } from "react";
+import { useState, useCallback, useRef } from "react";
 import { useEditor, EditorContent } from "@tiptap/react";
 import { StarterKit } from "@tiptap/starter-kit";
 import { Underline } from "@tiptap/extension-underline";
@@ -27,6 +27,7 @@ import { StyledDivider } from "../extensions/styled-divider";
 import { PageBreak } from "../extensions/page-break";
 import { EditorToolbar } from "./EditorToolbar";
 import { EditorSidebar } from "./EditorSidebar";
+import { exportHtmlAsPdf } from "@/lib/export-pdf";
 
 interface MergeFieldDef {
   key: string;
@@ -72,6 +73,7 @@ export function DocumentEditor({
   const [findText, setFindText] = useState("");
   const [replaceText, setReplaceText] = useState("");
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
+  const [exporting, setExporting] = useState(false);
   const saveTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const editor = useEditor({
@@ -151,22 +153,18 @@ export function DocumentEditor({
     toast.success("Document saved");
   }, [editor, onSave]);
 
-  // Handle export
-  const handleExport = useCallback(
-    (format: "html") => {
-      if (!editor) return;
+  // Handle PDF export
+  const handleExportPdf = useCallback(async () => {
+    if (!editor || exporting) return;
+    setExporting(true);
+    try {
       const html = editor.getHTML();
-      const blob = new Blob([html], { type: "text/html" });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `document.${format}`;
-      a.click();
-      URL.revokeObjectURL(url);
-      toast.success(`Exported as ${format.toUpperCase()}`);
-    },
-    [editor]
-  );
+      const name = documentInfo?.templateName ?? "document";
+      await exportHtmlAsPdf(html, name);
+    } finally {
+      setExporting(false);
+    }
+  }, [editor, exporting, documentInfo?.templateName]);
 
   if (!editor) return null;
 
@@ -200,10 +198,11 @@ export function DocumentEditor({
             variant="outline"
             size="sm"
             className="h-7 text-xs"
-            onClick={() => handleExport("html")}
+            onClick={handleExportPdf}
+            disabled={exporting}
           >
             <Download size={12} className="mr-1" />
-            Export
+            {exporting ? "Exporting..." : "Export PDF"}
           </Button>
           {onSave && (
             <Button size="sm" className="h-7 text-xs" onClick={handleManualSave}>

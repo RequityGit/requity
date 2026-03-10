@@ -135,7 +135,7 @@ export function getNotificationRoute(
     switch (entity_type) {
       case "loan":
         if (activeRole === "borrower") return `/borrower/loans/${entity_id}`;
-        return `/admin/pipeline/${entity_id}`;
+        return `/admin/pipeline-v2/${entity_id}?tab=notes`;
 
       case "borrower":
         if (isAdmin) return `/admin/borrowers/${entity_id}`;
@@ -155,7 +155,7 @@ export function getNotificationRoute(
         if (loanMatch) {
           const loanId = loanMatch[1];
           if (activeRole === "borrower") return `/borrower/loans/${loanId}`;
-          return `/admin/pipeline/${loanId}?condition=${entity_id}`;
+          return `/admin/pipeline-v2/${loanId}?condition=${entity_id}`;
         }
         if (isAdmin) return "/admin/conditions";
         return ROLE_DASHBOARDS[activeRole] ?? "/admin/dashboard";
@@ -189,8 +189,8 @@ export function getNotificationRoute(
     if (isAdmin) return action_url;
 
     // Convert admin-prefixed routes to role-specific routes where possible
-    if (action_url.startsWith("/admin/loans/") && activeRole === "borrower") {
-      return action_url.replace("/admin/loans/", "/borrower/loans/").split("?")[0];
+    if (action_url.startsWith("/admin/servicing/") && activeRole === "borrower") {
+      return action_url.replace("/admin/servicing/", "/borrower/loans/").split("?")[0];
     }
     if (action_url.startsWith("/admin/funds/") && activeRole === "investor") {
       return action_url.replace("/admin/funds/", "/investor/funds/");

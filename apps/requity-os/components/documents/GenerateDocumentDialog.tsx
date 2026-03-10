@@ -1,14 +1,13 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import {
   FileText,
-  Check,
   AlertTriangle,
-  Pencil,
   ChevronRight,
   Loader2,
 } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -72,6 +71,8 @@ export function GenerateDocumentDialog({
   recordLabel,
   trigger,
 }: GenerateDocumentDialogProps) {
+  const router = useRouter();
+  const navTimerRef = useRef<NodeJS.Timeout | null>(null);
   const [open, setOpen] = useState(false);
   const [step, setStep] = useState<Step>("select");
   const [templates, setTemplates] = useState<Template[]>([]);
@@ -99,8 +100,27 @@ export function GenerateDocumentDialog({
       setResolvedFields([]);
       setResult(null);
       loadTemplates();
+    } else if (navTimerRef.current) {
+      clearTimeout(navTimerRef.current);
+      navTimerRef.current = null;
     }
   }, [open, loadTemplates]);
+
+  // Auto-navigate to editor after success
+  useEffect(() => {
+    if (step === "result" && result) {
+      navTimerRef.current = setTimeout(() => {
+        setOpen(false);
+        router.push(`/admin/documents/editor/${result.documentId}`);
+      }, 1500);
+    }
+    return () => {
+      if (navTimerRef.current) {
+        clearTimeout(navTimerRef.current);
+        navTimerRef.current = null;
+      }
+    };
+  }, [step, result, router]);
 
   async function handleSelectTemplate(template: Template) {
     setSelectedTemplate(template);
@@ -332,33 +352,34 @@ export function GenerateDocumentDialog({
           </div>
         )}
 
-        {/* Step 3: Result */}
+        {/* Step 3: Result — animated success + auto-navigate */}
         {step === "result" && result && (
-          <div className="space-y-4 text-center">
+          <div className="space-y-4 text-center py-2">
             <div className="flex items-center justify-center">
-              <div className="w-12 h-12 rounded-full bg-green-100 dark:bg-green-900/40 flex items-center justify-center">
-                <Check size={24} className="text-green-600" />
+              <div className="w-12 h-12 rounded-full bg-green-100 dark:bg-green-900/40 flex items-center justify-center animate-scale-in">
+                <svg viewBox="0 0 24 24" fill="none" className="w-6 h-6">
+                  <path
+                    d="M6 12.5l4 4 8-8"
+                    stroke="currentColor"
+                    strokeWidth={2.5}
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    className="text-green-600 animate-check-draw"
+                    style={{ strokeDasharray: 20, strokeDashoffset: 20 }}
+                  />
+                </svg>
               </div>
             </div>
 
-            <div>
+            <div className="animate-fade-up">
               <p className="text-sm font-medium">{result.fileName}</p>
               <p className="text-xs text-muted-foreground mt-1">
-                Document generated successfully
+                Opening editor...
               </p>
             </div>
 
-            <div className="flex flex-col gap-2">
-              <Button
-                className="w-full"
-                onClick={() => {
-                  setOpen(false);
-                  window.location.href = `/admin/documents/editor/${result.documentId}`;
-                }}
-              >
-                <Pencil size={14} className="mr-1.5" />
-                Open in Editor
-              </Button>
+            <div className="mx-auto w-48 h-1 rounded-full bg-muted overflow-hidden">
+              <div className="h-full bg-primary rounded-full animate-progress-fill" />
             </div>
           </div>
         )}
