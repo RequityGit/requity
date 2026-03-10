@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import {
   LayoutDashboard,
@@ -157,10 +157,28 @@ export function Sidebar({
   accessibleModules?: string[];
 }) {
   const pathname = usePathname();
+  const router = useRouter();
   const [collapsed, setCollapsed] = useState(false);
   const { effectiveViewRole, isViewingAs } = useViewAs();
   // Use view-as role for navigation when super admin is simulating
   const navRole = isViewingAs ? effectiveViewRole : role;
+
+  // Eagerly prefetch the most-used routes on mount for faster navigation
+  useEffect(() => {
+    if (navRole === "admin") {
+      router.prefetch("/admin/dashboard");
+      router.prefetch("/admin/crm/contacts");
+      router.prefetch("/admin/pipeline");
+      router.prefetch("/admin/crm/companies");
+      router.prefetch("/admin/operations/tasks");
+    } else if (navRole === "borrower") {
+      router.prefetch("/borrower/dashboard");
+      router.prefetch("/borrower/draws");
+    } else if (navRole === "investor") {
+      router.prefetch("/investor/dashboard");
+      router.prefetch("/investor/funds");
+    }
+  }, [navRole, router]);
   const allNavEntries = getNavEntries(navRole);
 
   // Filter admin nav entries by module access and inject dynamic badges

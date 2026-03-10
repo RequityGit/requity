@@ -4,30 +4,19 @@ import { redirect } from "next/navigation";
 import { PageHeader } from "@/components/shared/page-header";
 import { CompaniesView } from "@/components/crm/companies-view";
 import type { CompanyRowV2 } from "@/components/crm/crm-v2-page";
+import { getSessionData } from "@/lib/auth/session-cache";
 
 export const dynamic = "force-dynamic";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 export default async function CompaniesPage() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const session = await getSessionData();
+  if (!session) redirect("/login");
 
-  if (!user) redirect("/login");
+  const { isSuperAdmin } = session;
 
-  // Check if user is super admin
-  let isSuperAdmin = false;
-  const { data: superAdminRole } = await supabase
-    .from("user_roles")
-    .select("id")
-    .eq("user_id", user.id)
-    .eq("role", "super_admin")
-    .eq("is_active", true)
-    .maybeSingle();
-  isSuperAdmin = !!superAdminRole;
-
+  const supabase = createClient();
   const admin = createAdminClient();
 
   // Fetch companies-related data in parallel

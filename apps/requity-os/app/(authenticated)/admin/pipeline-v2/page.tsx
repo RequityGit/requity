@@ -17,17 +17,15 @@ import {
   getPropertySelectColumns,
   getBorrowerSelectColumns,
 } from "@/lib/pipeline/resolve-uw-data";
+import { getSessionData } from "@/lib/auth/session-cache";
 
 export const dynamic = "force-dynamic";
 
 export default async function PipelineV2Page() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const session = await getSessionData();
+  if (!session) redirect("/login");
 
-  if (!user) redirect("/login");
-
+  const supabase = createClient();
   const admin = createAdminClient();
 
   const [

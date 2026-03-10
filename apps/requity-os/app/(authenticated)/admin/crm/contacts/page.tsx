@@ -4,33 +4,21 @@ import { redirect } from "next/navigation";
 import { PageHeader } from "@/components/shared/page-header";
 import { ContactsView } from "@/components/crm/contacts-view";
 import type { CrmContactRow } from "@/components/crm/crm-v2-page";
+import { getSessionData } from "@/lib/auth/session-cache";
 
 export const dynamic = "force-dynamic";
 
 export default async function ContactsPage() {
-  const supabase = createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const session = await getSessionData();
+  if (!session) redirect("/login");
 
-  if (!user) redirect("/login");
+  const { user, isSuperAdmin } = session;
 
   let contactRows: CrmContactRow[] = [];
   let teamMembers: { id: string; full_name: string }[] = [];
-  let isSuperAdmin = false;
 
   try {
-    // Check if user is super admin
-    const { data: superAdminRole } = await supabase
-      .from("user_roles")
-      .select("id")
-      .eq("user_id", user.id)
-      .eq("role", "super_admin")
-      .eq("is_active", true)
-      .maybeSingle();
-
-    isSuperAdmin = !!superAdminRole;
-
+    const supabase = createClient();
     const admin = createAdminClient();
 
     // Fetch contacts-related data in parallel

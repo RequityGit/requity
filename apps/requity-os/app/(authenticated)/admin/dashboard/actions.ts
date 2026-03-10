@@ -89,19 +89,14 @@ export async function fetchActionDashboardData(): Promise<
   { data: ActionDashboardData } | { error: string }
 > {
   try {
+    const { getSessionData } = await import("@/lib/auth/session-cache");
+    const session = await getSessionData();
+    if (!session) return { error: "Not authenticated" };
+
+    const user = session.user;
+    const profile = session.profile;
+
     const supabase = createClient();
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-
-    if (!user) return { error: "Not authenticated" };
-
-    // Fetch user profile
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("full_name")
-      .eq("id", user.id)
-      .single();
 
     // Fetch tasks assigned to user
     const { data: tasks } = await supabase
@@ -201,7 +196,7 @@ export async function fetchActionDashboardData(): Promise<
               period: String(weeklyData.period || ""),
             }
           : null,
-        userName: profile?.full_name || "there",
+        userName: (profile?.full_name as string) || "there",
       },
     };
   } catch (err) {

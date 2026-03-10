@@ -1,5 +1,3 @@
-import { createClient } from "@/lib/supabase/server";
-import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { Sidebar } from "@/components/layout/sidebar";
 import { Topbar } from "@/components/layout/topbar";
@@ -14,6 +12,7 @@ import { MobileLayoutWrapper } from "@/components/layout/mobile-layout-wrapper";
 import { ModuleAccessProvider } from "@/contexts/module-access-context";
 import { ModuleGuard } from "@/components/layout/module-guard";
 import { SoftphoneWrapper } from "@/components/softphone/SoftphoneWrapper";
+import { getSessionData } from "@/lib/auth/session-cache";
 
 // Never statically generate authenticated pages
 export const dynamic = "force-dynamic";
@@ -23,63 +22,13 @@ export default async function AuthenticatedLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const supabase = createClient();
+  const session = await getSessionData();
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
+  if (!session) {
     redirect("/login");
   }
 
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("*")
-    .eq("id", user.id)
-    .single();
-
-  if (!profile) {
-    redirect("/login");
-  }
-
-  // Determine effective role from cookie, falling back to profile default
-  const cookieStore = cookies();
-  const activeRoleCookie = cookieStore.get("active_role")?.value;
-  const allowedRoles: string[] = profile.allowed_roles?.length
-    ? (profile.allowed_roles.filter(Boolean) as string[])
-    : [profile.role].filter(Boolean) as string[];
-
-  const effectiveRole =
-    activeRoleCookie && allowedRoles.includes(activeRoleCookie)
-      ? activeRoleCookie
-      : (profile.role ?? "borrower");
-
-  // Check if user has super_admin role for Control Center access
-  const { data: superAdminRole } = await supabase
-    .from("user_roles")
-    .select("id")
-    .eq("user_id", user.id)
-    .eq("role", "super_admin")
-    .eq("is_active", true)
-    .maybeSingle();
-
-  const isSuperAdmin = !!superAdminRole;
-
-  // Fetch user's module access for sidebar filtering
-  const { data: userModuleAccess } = await supabase
-    .from("user_module_access")
-    .select("module_id, modules(name)")
-    .eq("user_id", user.id);
-
-  const accessibleModules: string[] = isSuperAdmin
-    ? [] // empty means "all" for super admins (fail-safe)
-    : (userModuleAccess ?? [])
-        .map((ma) => {
-          const mod = ma.modules as unknown as { name: string } | null;
-          return mod?.name ?? "";
-        })
-        .filter(Boolean);
+  const { user, profile, isSuperAdmin, effectiveRole, accessibleModules, allowedRoles } = session;
 
   // Check impersonation state
   const impersonation = getImpersonationState();
@@ -121,13 +70,13 @@ export default async function AuthenticatedLayout({
                     </div>
                     <div className="flex-1 flex flex-col overflow-hidden">
                       <Topbar
-                        userName={profile.full_name || ""}
+                        userName={(profile.full_name as string) || ""}
                         role={effectiveRole}
-                        email={profile.email ?? ""}
+                        email={(profile.email as string) ?? ""}
                         allowedRoles={allowedRoles}
                         userId={user.id}
                         isSuperAdmin={isSuperAdmin}
-                        avatarUrl={profile.avatar_url}
+                        avatarUrl={profile.avatar_url as string | undefined}
                       />
                       <main className="flex-1 overflow-y-auto bg-background p-4 md:p-6 lg:p-8 pb-20 md:pb-6 lg:pb-8">
                         <ActivityTrackerProvider role={effectiveRole}>
