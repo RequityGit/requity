@@ -192,6 +192,59 @@ export async function deleteCompanyAction(companyId: string) {
   }
 }
 
+export async function addCompanyFollowerAction(companyId: string, userId: string) {
+  try {
+    const auth = await requireAdmin();
+    if ("error" in auth) return { error: auth.error };
+
+    const admin = createAdminClient();
+
+    const { data, error } = await admin
+      .from("crm_followers")
+      .insert({ company_id: companyId, user_id: userId })
+      .select("id")
+      .single();
+
+    if (error) {
+      console.error("addCompanyFollowerAction error:", error);
+      return { error: error.message };
+    }
+
+    return { success: true, id: data.id };
+  } catch (err: unknown) {
+    console.error("addCompanyFollowerAction error:", err);
+    return {
+      error: err instanceof Error ? err.message : "An unexpected error occurred",
+    };
+  }
+}
+
+export async function removeCompanyFollowerAction(followerId: string) {
+  try {
+    const auth = await requireAdmin();
+    if ("error" in auth) return { error: auth.error };
+
+    const admin = createAdminClient();
+
+    const { error } = await admin
+      .from("crm_followers")
+      .delete()
+      .eq("id", followerId);
+
+    if (error) {
+      console.error("removeCompanyFollowerAction error:", error);
+      return { error: error.message };
+    }
+
+    return { success: true };
+  } catch (err: unknown) {
+    console.error("removeCompanyFollowerAction error:", err);
+    return {
+      error: err instanceof Error ? err.message : "An unexpected error occurred",
+    };
+  }
+}
+
 export async function deleteCompanyFileAction(fileId: string, storagePath: string) {
   try {
     const auth = await requireAdmin();

@@ -266,6 +266,7 @@ export function CompanyDetailClient({
             followers={followers}
             currentUserId={currentUserId}
             currentUserName={currentUserName}
+            teamMembers={teamMembers}
             onTabChange={handleTabChange}
             onComposeEmail={() => setEmailComposeOpen(true)}
             onLogCall={handleLogCall}
