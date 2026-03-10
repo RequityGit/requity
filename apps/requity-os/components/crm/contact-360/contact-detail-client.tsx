@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useCallback } from "react";
+import { useState, useMemo, useCallback, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
@@ -23,6 +23,7 @@ import { DetailDealsTab } from "./tabs/detail-deals-tab";
 import { DetailEntitiesTab } from "./tabs/detail-entities-tab";
 import { DetailTasksTab } from "./tabs/detail-tasks-tab";
 import { UnifiedNotes } from "@/components/shared/UnifiedNotes";
+import { createClient } from "@/lib/supabase/client";
 import type {
   ContactData,
   RelationshipData,
@@ -103,6 +104,20 @@ export function ContactDetailClient({
     [activities]
   );
 
+  // Fetch actual notes count from the notes table (UnifiedNotes source of truth)
+  const [notesCount, setNotesCount] = useState<number | null>(null);
+  useEffect(() => {
+    const supabase = createClient();
+    supabase
+      .from("notes" as never)
+      .select("id" as never, { count: "exact", head: true })
+      .eq("contact_id" as never, contact.id as never)
+      .is("deleted_at" as never, null)
+      .then(({ count }) => {
+        setNotesCount(count ?? 0);
+      });
+  }, [contact.id]);
+
   // Derive contact type tags from relationships + contact_types
   const contactTypes = useMemo(() => {
     const fromRelationships = relationships
@@ -116,7 +131,7 @@ export function ContactDetailClient({
   const tabs = useMemo(
     () => [
       { id: "overview", label: "Overview" },
-      { id: "notes", label: "Notes", count: noteActivities.length },
+      { id: "notes", label: "Notes", count: notesCount ?? noteActivities.length },
       { id: "tasks", label: "Tasks", count: openTasks.length },
       {
         id: "deals",
@@ -134,6 +149,7 @@ export function ContactDetailClient({
       entities.length,
       openTasks.length,
       noteActivities.length,
+      notesCount,
     ]
   );
 

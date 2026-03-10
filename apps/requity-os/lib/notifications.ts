@@ -18,7 +18,9 @@ export type EntityType =
   | "draw_request"
   | "payment"
   | "task"
-  | "project";
+  | "project"
+  | "contact"
+  | "company";
 
 export interface NotificationType {
   id: string;
@@ -166,6 +168,14 @@ export function getNotificationRoute(
       case "payment":
         if (activeRole === "borrower") return "/borrower/payments";
         return "/admin/servicing";
+
+      case "contact":
+        if (isAdmin) return `/admin/crm/${entity_id}?tab=notes`;
+        return ROLE_DASHBOARDS[activeRole] ?? "/admin/dashboard";
+
+      case "company":
+        if (isAdmin) return `/admin/crm/companies/${entity_id}?tab=notes`;
+        return ROLE_DASHBOARDS[activeRole] ?? "/admin/dashboard";
 
       case "task":
       case "project":
