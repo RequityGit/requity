@@ -95,6 +95,24 @@ function resolveSystemField(column: string): string {
   }
 }
 
+// ---------- Computed field helpers ----------
+
+// crm_contacts has first_name + last_name but templates reference full_name
+function enrichContact(contact: Record<string, unknown>): Record<string, unknown> {
+  if (!contact.full_name && (contact.first_name || contact.last_name)) {
+    contact.full_name = [contact.first_name, contact.last_name].filter(Boolean).join(" ");
+  }
+  return contact;
+}
+
+// loans table uses loan_amount but templates may reference amount
+function enrichLoan(loan: Record<string, unknown>): Record<string, unknown> {
+  if (loan.loan_amount !== undefined && loan.amount === undefined) {
+    loan.amount = loan.loan_amount;
+  }
+  return loan;
+}
+
 // ---------- HTML merge helpers ----------
 
 function mergeHtmlContent(
@@ -242,7 +260,7 @@ Deno.serve(async (req: Request) => {
         .single();
 
       if (loan) {
-        sourceData["loans"] = loan;
+        sourceData["loans"] = enrichLoan(loan);
         if (loan.borrower_contact_id) {
           const { data: contact } = await supabaseAdmin
             .from("crm_contacts")
@@ -250,7 +268,7 @@ Deno.serve(async (req: Request) => {
             .eq("id", loan.borrower_contact_id)
             .single();
           if (contact) {
-            sourceData["crm_contacts"] = contact;
+            sourceData["crm_contacts"] = enrichContact(contact);
             if (contact.company_id) {
               const { data: company } = await supabaseAdmin
                 .from("companies")
@@ -277,7 +295,7 @@ Deno.serve(async (req: Request) => {
         sourceData["unified_deals"] = dealRecord;
         const uwData = (dealRecord.uw_data ?? {}) as Record<string, unknown>;
         const propertyData = (dealRecord.property_data ?? {}) as Record<string, unknown>;
-        sourceData["loans"] = { ...dealRecord, ...uwData, ...propertyData };
+        sourceData["loans"] = enrichLoan({ ...dealRecord, ...uwData, ...propertyData });
         if (dealRecord.primary_contact_id) {
           const { data: contact } = await supabaseAdmin
             .from("crm_contacts")
@@ -285,7 +303,7 @@ Deno.serve(async (req: Request) => {
             .eq("id", dealRecord.primary_contact_id as string)
             .single();
           if (contact) {
-            sourceData["crm_contacts"] = contact as Record<string, unknown>;
+            sourceData["crm_contacts"] = enrichContact(contact as Record<string, unknown>);
             if ((contact as Record<string, unknown>).company_id) {
               const { data: company } = await supabaseAdmin
                 .from("companies")
@@ -317,7 +335,7 @@ Deno.serve(async (req: Request) => {
           { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
-      sourceData["crm_contacts"] = contact;
+      sourceData["crm_contacts"] = enrichContact(contact);
       if (contact.company_id) {
         const { data: company } = await supabaseAdmin
           .from("companies")
@@ -343,7 +361,7 @@ Deno.serve(async (req: Request) => {
       const uwData = (dealRecord.uw_data ?? {}) as Record<string, unknown>;
       const propertyData = (dealRecord.property_data ?? {}) as Record<string, unknown>;
       const flatDeal = { ...dealRecord, ...uwData, ...propertyData };
-      sourceData["loans"] = flatDeal;
+      sourceData["loans"] = enrichLoan(flatDeal);
       if (dealRecord.primary_contact_id) {
         const { data: contact } = await supabaseAdmin
           .from("crm_contacts")
@@ -351,7 +369,7 @@ Deno.serve(async (req: Request) => {
           .eq("id", dealRecord.primary_contact_id as string)
           .single();
         if (contact) {
-          sourceData["crm_contacts"] = contact as Record<string, unknown>;
+          sourceData["crm_contacts"] = enrichContact(contact as Record<string, unknown>);
           if ((contact as Record<string, unknown>).company_id) {
             const { data: company } = await supabaseAdmin
               .from("companies")

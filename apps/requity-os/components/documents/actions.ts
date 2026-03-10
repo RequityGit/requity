@@ -73,6 +73,22 @@ function resolveSystemField(column: string): string {
   }
 }
 
+// crm_contacts has first_name + last_name but templates reference full_name
+function enrichContact(contact: Record<string, unknown>): Record<string, unknown> {
+  if (!contact.full_name && (contact.first_name || contact.last_name)) {
+    contact.full_name = [contact.first_name, contact.last_name].filter(Boolean).join(" ");
+  }
+  return contact;
+}
+
+// loans table uses loan_amount but templates may reference amount
+function enrichLoan(loan: Record<string, unknown>): Record<string, unknown> {
+  if (loan.loan_amount !== undefined && loan.amount === undefined) {
+    loan.amount = loan.loan_amount;
+  }
+  return loan;
+}
+
 export async function fetchTemplatesForRecord(recordType: "loan" | "contact" | "deal" | "company") {
   const supabase = await createClient();
 
@@ -134,11 +150,11 @@ export async function resolveTemplateData(
   if (resolveType === "loan") {
     const { data: loan } = await supabase.from("loans").select("*").eq("id", recordId).single();
     if (loan) {
-      sourceData["loans"] = loan as Record<string, unknown>;
+      sourceData["loans"] = enrichLoan(loan as Record<string, unknown>);
       if ((loan as Record<string, unknown>).borrower_contact_id) {
         const { data: contact } = await supabase.from("crm_contacts").select("*").eq("id", (loan as Record<string, unknown>).borrower_contact_id as string).single();
         if (contact) {
-          sourceData["crm_contacts"] = contact as Record<string, unknown>;
+          sourceData["crm_contacts"] = enrichContact(contact as Record<string, unknown>);
           if ((contact as Record<string, unknown>).company_id) {
             const { data: company } = await supabase.from("companies").select("*").eq("id", (contact as Record<string, unknown>).company_id as string).single();
             if (company) sourceData["companies"] = company as Record<string, unknown>;
@@ -153,11 +169,11 @@ export async function resolveTemplateData(
         sourceData["unified_deals"] = dealRecord;
         const uwData = (dealRecord.uw_data ?? {}) as Record<string, unknown>;
         const propertyData = (dealRecord.property_data ?? {}) as Record<string, unknown>;
-        sourceData["loans"] = { ...dealRecord, ...uwData, ...propertyData };
+        sourceData["loans"] = enrichLoan({ ...dealRecord, ...uwData, ...propertyData });
         if (dealRecord.primary_contact_id) {
           const { data: contact } = await supabase.from("crm_contacts").select("*").eq("id", dealRecord.primary_contact_id as string).single();
           if (contact) {
-            sourceData["crm_contacts"] = contact as Record<string, unknown>;
+            sourceData["crm_contacts"] = enrichContact(contact as Record<string, unknown>);
             if ((contact as Record<string, unknown>).company_id) {
               const { data: company } = await supabase.from("companies").select("*").eq("id", (contact as Record<string, unknown>).company_id as string).single();
               if (company) sourceData["companies"] = company as Record<string, unknown>;
@@ -173,7 +189,7 @@ export async function resolveTemplateData(
   } else if (resolveType === "contact") {
     const { data: contact } = await supabase.from("crm_contacts").select("*").eq("id", recordId).single();
     if (contact) {
-      sourceData["crm_contacts"] = contact;
+      sourceData["crm_contacts"] = enrichContact(contact as Record<string, unknown>);
       if ((contact as Record<string, unknown>).company_id) {
         const { data: company } = await supabase.from("companies").select("*").eq("id", (contact as Record<string, unknown>).company_id as string).single();
         if (company) sourceData["companies"] = company;
@@ -189,12 +205,12 @@ export async function resolveTemplateData(
       const propertyData = (dealRecord.property_data ?? {}) as Record<string, unknown>;
       const flatDeal = { ...dealRecord, ...uwData, ...propertyData };
       // Also store under "loans" alias for backwards compat with loan templates
-      sourceData["loans"] = flatDeal;
+      sourceData["loans"] = enrichLoan(flatDeal);
       // Resolve related contact
       if (dealRecord.primary_contact_id) {
         const { data: contact } = await supabase.from("crm_contacts").select("*").eq("id", dealRecord.primary_contact_id as string).single();
         if (contact) {
-          sourceData["crm_contacts"] = contact as Record<string, unknown>;
+          sourceData["crm_contacts"] = enrichContact(contact as Record<string, unknown>);
           if ((contact as Record<string, unknown>).company_id) {
             const { data: company } = await supabase.from("companies").select("*").eq("id", (contact as Record<string, unknown>).company_id as string).single();
             if (company) sourceData["companies"] = company as Record<string, unknown>;
