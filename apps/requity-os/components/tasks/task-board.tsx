@@ -4,7 +4,7 @@ import { useState, useCallback, useMemo, useEffect } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
 import { cn } from "@/lib/utils";
-import { Plus, Repeat2 } from "lucide-react";
+import { Plus, Repeat2, Shield } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/components/shared/page-header";
 import { TaskColumn } from "./task-column";
@@ -24,6 +24,7 @@ import type { RecurringTaskTemplate } from "@/lib/recurring-templates";
 const COLUMNS = [
   { id: "To Do", label: "To Do" },
   { id: "In Progress", label: "In Progress" },
+  { id: "Pending Approval", label: "Pending Approval" },
   { id: "Complete", label: "Complete" },
 ] as const;
 
@@ -34,6 +35,7 @@ interface TaskBoardProps {
   initialTemplates: RecurringTaskTemplate[];
   profiles: Profile[];
   currentUserId: string;
+  isSuperAdmin?: boolean;
 }
 
 export function TaskBoard({
@@ -41,6 +43,7 @@ export function TaskBoard({
   initialTemplates,
   profiles,
   currentUserId,
+  isSuperAdmin = false,
 }: TaskBoardProps) {
   const [tasks, setTasks] = useState<OpsTask[]>(initialTasks);
   const [templates, setTemplates] = useState<RecurringTaskTemplate[]>(initialTemplates);
@@ -58,6 +61,7 @@ export function TaskBoard({
   const [categoryFilter, setCategoryFilter] = useState("all");
   const [priorityFilter, setPriorityFilter] = useState("all");
   const [typeFilter, setTypeFilter] = useState<TaskTypeFilter>("all");
+  const [myApprovalsFilter, setMyApprovalsFilter] = useState(false);
 
   const { toast } = useToast();
 
@@ -119,16 +123,26 @@ export function TaskBoard({
       .sort((a, b) => a.label.localeCompare(b.label));
   }, [tasks, profiles]);
 
+  // My Approvals count
+  const myApprovalsCount = useMemo(() => {
+    return tasks.filter(
+      (t) => t.requires_approval && t.approver_id === currentUserId && t.status === "Pending Approval"
+    ).length;
+  }, [tasks, currentUserId]);
+
   // Filtered tasks
   const filteredTasks = useMemo(() => {
     return tasks.filter((t) => {
+      if (myApprovalsFilter) {
+        if (!t.requires_approval || t.approver_id !== currentUserId) return false;
+      }
       if (typeFilter !== "all" && t.type !== typeFilter) return false;
       if (assigneeFilter !== "all" && t.assigned_to !== assigneeFilter) return false;
       if (categoryFilter !== "all" && t.category !== categoryFilter) return false;
       if (priorityFilter !== "all" && t.priority !== priorityFilter) return false;
       return true;
     });
-  }, [tasks, typeFilter, assigneeFilter, categoryFilter, priorityFilter]);
+  }, [tasks, typeFilter, assigneeFilter, categoryFilter, priorityFilter, myApprovalsFilter, currentUserId]);
 
   // Complete handler
   const handleComplete = useCallback(
@@ -191,6 +205,12 @@ export function TaskBoard({
 
       const task = tasks.find((t) => t.id === taskId);
       if (!task || task.status === columnId) return;
+
+      // Prevent non-approval tasks from being dragged to Pending Approval
+      if (columnId === "Pending Approval" && !task.requires_approval) return;
+
+      // Prevent approval tasks from being dragged directly to Complete (must go through approval)
+      if (columnId === "Complete" && task.requires_approval) return;
 
       if (columnId === "Complete") return;
 
@@ -350,6 +370,30 @@ export function TaskBoard({
           </button>
         </div>
 
+        {activeView === "kanban" && myApprovalsCount > 0 && (
+          <button
+            type="button"
+            onClick={() => setMyApprovalsFilter(!myApprovalsFilter)}
+            className={cn(
+              "flex items-center gap-1.5 px-3 py-1.5 rounded-md text-[12px] font-medium transition-colors border",
+              myApprovalsFilter
+                ? "bg-blue-500/10 border-blue-500/20 text-blue-500"
+                : "bg-transparent border-border text-muted-foreground hover:bg-accent"
+            )}
+          >
+            <Shield className="h-3.5 w-3.5" strokeWidth={1.5} />
+            My Approvals
+            <span className={cn(
+              "text-[10px] font-semibold px-1.5 py-0.5 rounded-full num",
+              myApprovalsFilter
+                ? "bg-blue-500/20 text-blue-500"
+                : "bg-muted text-muted-foreground"
+            )}>
+              {myApprovalsCount}
+            </span>
+          </button>
+        )}
+
         {activeView === "kanban" && (
           <TaskFilters
             assigneeOptions={assigneeOptions}
@@ -400,6 +444,7 @@ export function TaskBoard({
         task={editingTask}
         profiles={profiles}
         currentUserId={currentUserId}
+        isSuperAdmin={isSuperAdmin}
         onClose={handleSheetClose}
         onSaved={handleTaskSaved}
         onDeleted={handleTaskDeleted}

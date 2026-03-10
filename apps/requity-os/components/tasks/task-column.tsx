@@ -61,6 +61,8 @@ export function TaskColumn({
     onDrop(e, status);
   };
 
+  const isPendingApprovalColumn = status === "Pending Approval";
+
   return (
     <div className="flex-1 min-w-[280px] max-w-[440px] flex flex-col">
       {/* Column header */}
@@ -72,6 +74,9 @@ export function TaskColumn({
           {tasks.length}
         </span>
       </div>
+      {isPendingApprovalColumn && (
+        <div className="h-0.5 bg-amber-500 rounded-full mb-2" />
+      )}
 
       {/* Cards area */}
       <div

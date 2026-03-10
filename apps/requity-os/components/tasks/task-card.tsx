@@ -2,7 +2,7 @@
 
 import { useState, useCallback } from "react";
 import { cn } from "@/lib/utils";
-import { Calendar, Repeat2, Check, AlertTriangle } from "lucide-react";
+import { Calendar, Repeat2, Check, AlertTriangle, Shield } from "lucide-react";
 import { PriorityDot } from "./priority-dot";
 import { CategoryPill } from "./category-pill";
 import { AnimatedTask } from "./animated-task";
@@ -90,6 +90,12 @@ export function TaskCard({
               >
                 {task.title}
               </span>
+              {task.requires_approval && (
+                <Shield
+                  className="h-3.5 w-3.5 text-blue-400 flex-shrink-0 mt-0.5"
+                  strokeWidth={1.5}
+                />
+              )}
               {(task.is_recurring || task.recurring_template_id) && (
                 <Repeat2
                   className="h-3.5 w-3.5 text-blue-400 flex-shrink-0 mt-0.5"
@@ -116,6 +122,18 @@ export function TaskCard({
             {/* Meta row */}
             <div className="flex items-center gap-2 mt-1.5 flex-wrap">
               <CategoryPill category={task.category} />
+              {task.requires_approval && task.status === "Pending Approval" && (
+                <span className="inline-flex items-center gap-1 text-[10px] font-semibold bg-amber-500/15 text-amber-500 dark:text-amber-400 px-1.5 py-0.5 rounded">
+                  <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
+                  Awaiting Approval
+                </span>
+              )}
+              {task.requires_approval && task.status === "Complete" && (
+                <span className="inline-flex items-center gap-1 text-[10px] font-semibold bg-emerald-500/15 text-emerald-500 dark:text-emerald-400 px-1.5 py-0.5 rounded">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                  Approved
+                </span>
+              )}
               {assigneeName && (
                 <div className="flex items-center gap-1">
                   <div className="w-5 h-5 rounded-lg bg-primary text-primary-foreground flex items-center justify-center text-[9px] font-semibold flex-shrink-0">
