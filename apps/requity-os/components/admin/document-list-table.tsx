@@ -6,6 +6,7 @@ import { StatusBadge } from "@/components/shared/status-badge";
 import { formatDate } from "@/lib/format";
 import { DOCUMENT_TYPES } from "@/lib/constants";
 import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 import {
   Select,
   SelectContent,
@@ -13,9 +14,28 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Search } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  Search,
+  MoreHorizontal,
+  Eye,
+  Pencil,
+  Download,
+  Trash2,
+} from "lucide-react";
+import { toast } from "sonner";
+import { getDocumentPreviewUrl } from "@/app/(authenticated)/admin/documents/actions";
+import { DocumentRenameDialog } from "@/components/admin/document-rename-dialog";
+import { DocumentDeleteDialog } from "@/components/admin/document-delete-dialog";
+import { DocumentPreviewDialog } from "@/components/admin/document-preview-dialog";
 
-interface DocumentRow {
+export interface DocumentRow {
   id: string;
   file_name: string;
   description: string | null;
@@ -25,11 +45,16 @@ interface DocumentRow {
   source: "loan" | "contact" | "company" | "deal";
   status: string;
   created_at: string;
+  storage_path: string | null;
+  storage_bucket: string | null;
+  file_url: string | null;
+  mime_type: string | null;
 }
 
 interface DocumentListTableProps {
   data: DocumentRow[];
   action?: React.ReactNode;
+  isSuperAdmin: boolean;
 }
 
 function getDocTypeLabel(value: string): string {
@@ -46,10 +71,15 @@ const SOURCE_LABELS: Record<DocumentRow["source"], string> = {
   deal: "Deal",
 };
 
-export function DocumentListTable({ data, action }: DocumentListTableProps) {
+export function DocumentListTable({ data, action, isSuperAdmin }: DocumentListTableProps) {
   const [search, setSearch] = useState("");
   const [typeFilter, setTypeFilter] = useState("all");
   const [sourceFilter, setSourceFilter] = useState("all");
+
+  // Dialog state
+  const [previewDoc, setPreviewDoc] = useState<DocumentRow | null>(null);
+  const [renameDoc, setRenameDoc] = useState<DocumentRow | null>(null);
+  const [deleteDoc, setDeleteDoc] = useState<DocumentRow | null>(null);
 
   const filtered = useMemo(() => {
     let result = data;
@@ -72,14 +102,32 @@ export function DocumentListTable({ data, action }: DocumentListTableProps) {
     return result;
   }, [data, search, typeFilter, sourceFilter]);
 
+  async function handleDownload(row: DocumentRow) {
+    const result = await getDocumentPreviewUrl(row.id, row.source);
+    if ("error" in result) {
+      toast.error(result.error);
+      return;
+    }
+    const a = window.document.createElement("a");
+    a.href = result.url;
+    a.download = row.file_name;
+    a.target = "_blank";
+    a.rel = "noopener noreferrer";
+    a.click();
+  }
+
   const columns: Column<DocumentRow>[] = [
     {
       key: "file_name",
       header: "Name",
       cell: (row) => (
-        <span className="font-medium">
+        <button
+          type="button"
+          className="font-medium text-left hover:underline cursor-pointer"
+          onClick={() => setPreviewDoc(row)}
+        >
           {row.description || row.file_name}
-        </span>
+        </button>
       ),
     },
     {
@@ -117,6 +165,47 @@ export function DocumentListTable({ data, action }: DocumentListTableProps) {
       key: "status",
       header: "Status",
       cell: (row) => <StatusBadge status={row.status} />,
+    },
+    {
+      key: "actions",
+      header: "",
+      className: "w-10",
+      cell: (row) => (
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" size="icon" className="h-8 w-8">
+              <MoreHorizontal className="h-4 w-4" />
+              <span className="sr-only">Actions</span>
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem onClick={() => setPreviewDoc(row)}>
+              <Eye className="h-4 w-4 mr-2" />
+              Preview
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => setRenameDoc(row)}>
+              <Pencil className="h-4 w-4 mr-2" />
+              Rename
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => handleDownload(row)}>
+              <Download className="h-4 w-4 mr-2" />
+              Download
+            </DropdownMenuItem>
+            {isSuperAdmin && (
+              <>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  onClick={() => setDeleteDoc(row)}
+                  className="text-red-600 focus:text-red-600"
+                >
+                  <Trash2 className="h-4 w-4 mr-2" />
+                  Delete
+                </DropdownMenuItem>
+              </>
+            )}
+          </DropdownMenuContent>
+        </DropdownMenu>
+      ),
     },
   ];
 
@@ -167,6 +256,23 @@ export function DocumentListTable({ data, action }: DocumentListTableProps) {
         columns={columns}
         data={filtered}
         emptyMessage="No documents found."
+      />
+
+      {/* Dialogs */}
+      <DocumentPreviewDialog
+        open={!!previewDoc}
+        onOpenChange={(open) => { if (!open) setPreviewDoc(null); }}
+        document={previewDoc}
+      />
+      <DocumentRenameDialog
+        open={!!renameDoc}
+        onOpenChange={(open) => { if (!open) setRenameDoc(null); }}
+        document={renameDoc}
+      />
+      <DocumentDeleteDialog
+        open={!!deleteDoc}
+        onOpenChange={(open) => { if (!open) setDeleteDoc(null); }}
+        document={deleteDoc}
       />
     </div>
   );

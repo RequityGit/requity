@@ -14,6 +14,18 @@ export default async function AdminDocumentsPage() {
 
   if (!user) redirect("/login");
 
+  // Check if current user is super_admin
+  const { data: superAdminRole } = await supabase
+    .from("user_roles")
+    .select("id")
+    .eq("user_id", user.id)
+    .eq("role", "super_admin")
+    .eq("is_active", true)
+    .limit(1)
+    .single();
+
+  const isSuperAdmin = !!superAdminRole;
+
   // Fetch documents from all entity tables in parallel
   const [
     documentsResult,
@@ -30,24 +42,28 @@ export default async function AdminDocumentsPage() {
       .select(
         "*, profiles:uploaded_by(full_name, email), funds(name), loans(property_address)"
       )
+      .is("deleted_at", null)
       .order("created_at", { ascending: false }),
 
     // CRM contact files
     supabase
       .from("contact_files")
       .select("*, crm_contacts(first_name, last_name)")
+      .is("deleted_at", null)
       .order("created_at", { ascending: false }),
 
     // CRM company files
     supabase
       .from("company_files")
       .select("*, companies:company_id(name)")
+      .is("deleted_at", null)
       .order("created_at", { ascending: false }),
 
     // Pipeline deal documents
     supabase
       .from("unified_deal_documents")
       .select("*, unified_deals(name)")
+      .is("deleted_at", null)
       .order("created_at", { ascending: false }),
 
     // Metadata for upload form
@@ -80,6 +96,10 @@ export default async function AdminDocumentsPage() {
       source: "loan" as const,
       status: doc.status ?? "pending",
       created_at: doc.created_at,
+      storage_path: doc.file_path ?? null,
+      storage_bucket: doc.file_path ? "loan-documents" : null,
+      file_url: doc.file_url ?? null,
+      mime_type: doc.mime_type ?? null,
     };
   });
 
@@ -101,6 +121,10 @@ export default async function AdminDocumentsPage() {
       source: "contact" as const,
       status: "uploaded",
       created_at: doc.created_at ?? doc.uploaded_at ?? "",
+      storage_path: doc.storage_path,
+      storage_bucket: "contact-files" as const,
+      file_url: null,
+      mime_type: doc.mime_type ?? null,
     };
   });
 
@@ -119,6 +143,10 @@ export default async function AdminDocumentsPage() {
       source: "company" as const,
       status: "uploaded",
       created_at: doc.created_at ?? doc.uploaded_at ?? "",
+      storage_path: doc.storage_path,
+      storage_bucket: "company-files" as const,
+      file_url: null,
+      mime_type: doc.mime_type ?? null,
     };
   });
 
@@ -137,6 +165,10 @@ export default async function AdminDocumentsPage() {
       source: "deal" as const,
       status: doc.review_status ?? "uploaded",
       created_at: doc.created_at,
+      storage_path: doc.storage_path ?? null,
+      storage_bucket: doc.storage_path ? "deal-documents" : null,
+      file_url: doc.file_url,
+      mime_type: doc.mime_type ?? null,
     };
   });
 
@@ -201,6 +233,7 @@ export default async function AdminDocumentsPage() {
       <DocumentCenterTabs
         uploadedDocuments={documentRows}
         generatedDocuments={generatedRows}
+        isSuperAdmin={isSuperAdmin}
         uploadAction={
           <DocumentUploadForm
             profiles={profilesResult.data ?? []}

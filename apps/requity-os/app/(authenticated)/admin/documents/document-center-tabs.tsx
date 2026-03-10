@@ -17,11 +17,16 @@ interface UploadedDocRow {
   source: "loan" | "contact" | "company" | "deal";
   status: string;
   created_at: string;
+  storage_path: string | null;
+  storage_bucket: string | null;
+  file_url: string | null;
+  mime_type: string | null;
 }
 
 interface Props {
   uploadedDocuments: UploadedDocRow[];
   generatedDocuments: GeneratedDocRow[];
+  isSuperAdmin: boolean;
   uploadAction: React.ReactNode;
   createAction?: React.ReactNode;
 }
@@ -29,6 +34,7 @@ interface Props {
 export function DocumentCenterTabs({
   uploadedDocuments,
   generatedDocuments,
+  isSuperAdmin,
   uploadAction,
   createAction,
 }: Props) {
@@ -54,7 +60,7 @@ export function DocumentCenterTabs({
       </TabsList>
 
       <TabsContent value="uploaded">
-        <DocumentListTable data={uploadedDocuments} action={uploadAction} />
+        <DocumentListTable data={uploadedDocuments} action={uploadAction} isSuperAdmin={isSuperAdmin} />
       </TabsContent>
 
       <TabsContent value="generated">

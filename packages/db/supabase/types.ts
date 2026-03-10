@@ -14,6 +14,146 @@ export type Database = {
   }
   public: {
     Tables: {
+      ai_call_logs: {
+        Row: {
+          caller_number: string | null
+          cost_cents: number | null
+          created_at: string
+          duration_seconds: number | null
+          id: string
+          language: string | null
+          outcome: string | null
+          property_id: string | null
+          recording_url: string | null
+          retell_call_id: string | null
+          sentiment: string | null
+          summary: string | null
+          tools_used: Json | null
+          transcript: Json | null
+          transfer_reason: string | null
+          twilio_call_sid: string | null
+        }
+        Insert: {
+          caller_number?: string | null
+          cost_cents?: number | null
+          created_at?: string
+          duration_seconds?: number | null
+          id?: string
+          language?: string | null
+          outcome?: string | null
+          property_id?: string | null
+          recording_url?: string | null
+          retell_call_id?: string | null
+          sentiment?: string | null
+          summary?: string | null
+          tools_used?: Json | null
+          transcript?: Json | null
+          transfer_reason?: string | null
+          twilio_call_sid?: string | null
+        }
+        Update: {
+          caller_number?: string | null
+          cost_cents?: number | null
+          created_at?: string
+          duration_seconds?: number | null
+          id?: string
+          language?: string | null
+          outcome?: string | null
+          property_id?: string | null
+          recording_url?: string | null
+          retell_call_id?: string | null
+          sentiment?: string | null
+          summary?: string | null
+          tools_used?: Json | null
+          transcript?: Json | null
+          transfer_reason?: string | null
+          twilio_call_sid?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_call_logs_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "property_configs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ai_leads: {
+        Row: {
+          application_sent: boolean | null
+          booking_link_sent: boolean | null
+          call_log_id: string | null
+          created_at: string
+          desired_dates: Json | null
+          email: string | null
+          id: string
+          inquiry_type: string | null
+          name: string | null
+          notes: string | null
+          party_size: number | null
+          phone: string | null
+          property_id: string | null
+          site_type_preference: string | null
+          status: string | null
+          unit_preference: string | null
+          updated_at: string
+        }
+        Insert: {
+          application_sent?: boolean | null
+          booking_link_sent?: boolean | null
+          call_log_id?: string | null
+          created_at?: string
+          desired_dates?: Json | null
+          email?: string | null
+          id?: string
+          inquiry_type?: string | null
+          name?: string | null
+          notes?: string | null
+          party_size?: number | null
+          phone?: string | null
+          property_id?: string | null
+          site_type_preference?: string | null
+          status?: string | null
+          unit_preference?: string | null
+          updated_at?: string
+        }
+        Update: {
+          application_sent?: boolean | null
+          booking_link_sent?: boolean | null
+          call_log_id?: string | null
+          created_at?: string
+          desired_dates?: Json | null
+          email?: string | null
+          id?: string
+          inquiry_type?: string | null
+          name?: string | null
+          notes?: string | null
+          party_size?: number | null
+          phone?: string | null
+          property_id?: string | null
+          site_type_preference?: string | null
+          status?: string | null
+          unit_preference?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_leads_call_log_id_fkey"
+            columns: ["call_log_id"]
+            isOneToOne: false
+            referencedRelation: "ai_call_logs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ai_leads_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "property_configs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       approval_audit_log: {
         Row: {
           action: string
@@ -1935,6 +2075,7 @@ export type Database = {
         Row: {
           company_id: string
           created_at: string | null
+          deleted_at: string | null
           file_name: string
           file_size: number | null
           file_type: string
@@ -1948,6 +2089,7 @@ export type Database = {
         Insert: {
           company_id: string
           created_at?: string | null
+          deleted_at?: string | null
           file_name: string
           file_size?: number | null
           file_type: string
@@ -1961,6 +2103,7 @@ export type Database = {
         Update: {
           company_id?: string
           created_at?: string | null
+          deleted_at?: string | null
           file_name?: string
           file_size?: number | null
           file_type?: string
@@ -2249,6 +2392,7 @@ export type Database = {
         Row: {
           contact_id: string
           created_at: string | null
+          deleted_at: string | null
           file_name: string
           file_size: number | null
           file_type: string
@@ -2262,6 +2406,7 @@ export type Database = {
         Insert: {
           contact_id: string
           created_at?: string | null
+          deleted_at?: string | null
           file_name: string
           file_size?: number | null
           file_type: string
@@ -2275,6 +2420,7 @@ export type Database = {
         Update: {
           contact_id?: string
           created_at?: string | null
+          deleted_at?: string | null
           file_name?: string
           file_size?: number | null
           file_type?: string
@@ -3861,6 +4007,52 @@ export type Database = {
           },
         ]
       }
+      deal_team_members: {
+        Row: {
+          created_at: string
+          deal_id: string
+          id: string
+          profile_id: string
+          role: string
+        }
+        Insert: {
+          created_at?: string
+          deal_id: string
+          id?: string
+          profile_id: string
+          role?: string
+        }
+        Update: {
+          created_at?: string
+          deal_id?: string
+          id?: string
+          profile_id?: string
+          role?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "deal_team_members_deal_id_fkey"
+            columns: ["deal_id"]
+            isOneToOne: false
+            referencedRelation: "unified_deals"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "deal_team_members_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "equity_pipeline"
+            referencedColumns: ["assigned_to_profile_id"]
+          },
+          {
+            foreignKeyName: "deal_team_members_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       delinquency_records: {
         Row: {
           amount_past_due: number
@@ -4636,6 +4828,7 @@ export type Database = {
       documents: {
         Row: {
           created_at: string
+          deleted_at: string | null
           description: string | null
           document_type: string | null
           file_name: string
@@ -4653,6 +4846,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          deleted_at?: string | null
           description?: string | null
           document_type?: string | null
           file_name: string
@@ -4670,6 +4864,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          deleted_at?: string | null
           description?: string | null
           document_type?: string | null
           file_name?: string
@@ -6915,6 +7110,51 @@ export type Database = {
           updated_by?: string | null
           validation_message?: string | null
           validation_regex?: string | null
+        }
+        Relationships: []
+      }
+      form_definitions: {
+        Row: {
+          contexts: string[]
+          created_at: string
+          created_by: string | null
+          description: string | null
+          id: string
+          mode: string
+          name: string
+          settings: Json
+          slug: string
+          status: string
+          steps: Json
+          updated_at: string
+        }
+        Insert: {
+          contexts?: string[]
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          mode?: string
+          name?: string
+          settings?: Json
+          slug: string
+          status?: string
+          steps?: Json
+          updated_at?: string
+        }
+        Update: {
+          contexts?: string[]
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          mode?: string
+          name?: string
+          settings?: Json
+          slug?: string
+          status?: string
+          steps?: Json
+          updated_at?: string
         }
         Relationships: []
       }
@@ -10908,6 +11148,182 @@ export type Database = {
         }
         Relationships: []
       }
+      pm_communities: {
+        Row: {
+          address_display: string | null
+          appfolio_listing_url: string | null
+          appfolio_portal_url: string | null
+          city: string
+          core_property_id: string | null
+          created_at: string
+          description_html: string | null
+          featured_image_url: string | null
+          headline: string | null
+          id: string
+          metadata: Json | null
+          name: string
+          region_id: string | null
+          slug: string
+          state_code: string | null
+          updated_at: string
+          zip_code: string | null
+        }
+        Insert: {
+          address_display?: string | null
+          appfolio_listing_url?: string | null
+          appfolio_portal_url?: string | null
+          city: string
+          core_property_id?: string | null
+          created_at?: string
+          description_html?: string | null
+          featured_image_url?: string | null
+          headline?: string | null
+          id?: string
+          metadata?: Json | null
+          name: string
+          region_id?: string | null
+          slug: string
+          state_code?: string | null
+          updated_at?: string
+          zip_code?: string | null
+        }
+        Update: {
+          address_display?: string | null
+          appfolio_listing_url?: string | null
+          appfolio_portal_url?: string | null
+          city?: string
+          core_property_id?: string | null
+          created_at?: string
+          description_html?: string | null
+          featured_image_url?: string | null
+          headline?: string | null
+          id?: string
+          metadata?: Json | null
+          name?: string
+          region_id?: string | null
+          slug?: string
+          state_code?: string | null
+          updated_at?: string
+          zip_code?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pm_communities_core_property_id_fkey"
+            columns: ["core_property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pm_communities_region_id_fkey"
+            columns: ["region_id"]
+            isOneToOne: false
+            referencedRelation: "pm_regions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pm_posts: {
+        Row: {
+          body_html: string
+          community_id: string | null
+          created_at: string
+          excerpt: string | null
+          featured_image_url: string | null
+          id: string
+          published_at: string | null
+          slug: string
+          status: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          body_html: string
+          community_id?: string | null
+          created_at?: string
+          excerpt?: string | null
+          featured_image_url?: string | null
+          id?: string
+          published_at?: string | null
+          slug: string
+          status?: string | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          body_html?: string
+          community_id?: string | null
+          created_at?: string
+          excerpt?: string | null
+          featured_image_url?: string | null
+          id?: string
+          published_at?: string | null
+          slug?: string
+          status?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pm_posts_community_id_fkey"
+            columns: ["community_id"]
+            isOneToOne: false
+            referencedRelation: "pm_communities"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pm_regions: {
+        Row: {
+          created_at: string
+          id: string
+          is_active: boolean | null
+          name: string
+          slug: string
+          sort_order: number | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          name: string
+          slug: string
+          sort_order?: number | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          slug?: string
+          sort_order?: number | null
+        }
+        Relationships: []
+      }
+      pm_site_settings: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          key: string
+          value: string | null
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          key: string
+          value?: string | null
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          key?: string
+          value?: string | null
+        }
+        Relationships: []
+      }
       portal_activity_log: {
         Row: {
           action_type: string
@@ -11356,6 +11772,78 @@ export type Database = {
           year_built?: number | null
           zip?: string | null
           zoning?: string | null
+        }
+        Relationships: []
+      }
+      property_configs: {
+        Row: {
+          active: boolean | null
+          address: string | null
+          application_url: string | null
+          booking_system: string | null
+          booking_url: string | null
+          city: string | null
+          created_at: string
+          default_language: string | null
+          id: string
+          knowledge_base: Json | null
+          name: string
+          property_type: string
+          retell_agent_id: string | null
+          retell_phone_number_id: string | null
+          state: string | null
+          system_prompt: string | null
+          timezone: string | null
+          transfer_number: string | null
+          twilio_number: string | null
+          updated_at: string
+          zip: string | null
+        }
+        Insert: {
+          active?: boolean | null
+          address?: string | null
+          application_url?: string | null
+          booking_system?: string | null
+          booking_url?: string | null
+          city?: string | null
+          created_at?: string
+          default_language?: string | null
+          id?: string
+          knowledge_base?: Json | null
+          name: string
+          property_type: string
+          retell_agent_id?: string | null
+          retell_phone_number_id?: string | null
+          state?: string | null
+          system_prompt?: string | null
+          timezone?: string | null
+          transfer_number?: string | null
+          twilio_number?: string | null
+          updated_at?: string
+          zip?: string | null
+        }
+        Update: {
+          active?: boolean | null
+          address?: string | null
+          application_url?: string | null
+          booking_system?: string | null
+          booking_url?: string | null
+          city?: string | null
+          created_at?: string
+          default_language?: string | null
+          id?: string
+          knowledge_base?: Json | null
+          name?: string
+          property_type?: string
+          retell_agent_id?: string | null
+          retell_phone_number_id?: string | null
+          state?: string | null
+          system_prompt?: string | null
+          timezone?: string | null
+          transfer_number?: string | null
+          twilio_number?: string | null
+          updated_at?: string
+          zip?: string | null
         }
         Relationships: []
       }
@@ -14016,6 +14504,7 @@ export type Database = {
           condition_id: string | null
           created_at: string
           deal_id: string
+          deleted_at: string | null
           document_name: string
           file_size_bytes: number | null
           file_url: string
@@ -14030,6 +14519,7 @@ export type Database = {
           condition_id?: string | null
           created_at?: string
           deal_id: string
+          deleted_at?: string | null
           document_name: string
           file_size_bytes?: number | null
           file_url: string
@@ -14044,6 +14534,7 @@ export type Database = {
           condition_id?: string | null
           created_at?: string
           deal_id?: string
+          deleted_at?: string | null
           document_name?: string
           file_size_bytes?: number | null
           file_url?: string
@@ -17211,3 +17702,4 @@ export const Constants = {
     },
   },
 } as const
+
