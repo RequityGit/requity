@@ -205,7 +205,7 @@ export async function getDocumentPreviewUrl(
 
         if (data.storage_path) {
           const { data: signed, error: signErr } = await admin.storage
-            .from("deal-documents")
+            .from("loan-documents")
             .createSignedUrl(data.storage_path, 3600);
           if (signErr || !signed) return { error: "Failed to generate preview URL" };
           return { url: signed.signedUrl, mime_type: data.mime_type };
