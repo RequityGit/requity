@@ -151,7 +151,12 @@ export function ActivityTab({
       setForm({ activity_type: "note", subject: "", description: "" });
       router.refresh();
     } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : "Unknown error";
+      const message =
+        err instanceof Error
+          ? err.message
+          : typeof err === "object" && err !== null && "message" in err
+            ? String((err as { message: unknown }).message)
+            : "Unknown error";
       toast({
         title: "Error logging activity",
         description: message,

@@ -1786,6 +1786,7 @@ export type Database = {
             | Database["public"]["Enums"]["company_subtype_enum"]
             | null
           company_type: Database["public"]["Enums"]["company_type_enum"]
+          company_types: string[] | null
           country: string | null
           created_at: string
           deleted_at: string | null
@@ -1820,6 +1821,7 @@ export type Database = {
             | Database["public"]["Enums"]["company_subtype_enum"]
             | null
           company_type: Database["public"]["Enums"]["company_type_enum"]
+          company_types?: string[] | null
           country?: string | null
           created_at?: string
           deleted_at?: string | null
@@ -1854,6 +1856,7 @@ export type Database = {
             | Database["public"]["Enums"]["company_subtype_enum"]
             | null
           company_type?: Database["public"]["Enums"]["company_type_enum"]
+          company_types?: string[] | null
           country?: string | null
           created_at?: string
           deleted_at?: string | null
@@ -2474,7 +2477,7 @@ export type Database = {
           call_recording_url: string | null
           company_id: string | null
           completed_at: string | null
-          contact_id: string
+          contact_id: string | null
           created_at: string
           deleted_at: string | null
           description: string | null
@@ -2502,7 +2505,7 @@ export type Database = {
           call_recording_url?: string | null
           company_id?: string | null
           completed_at?: string | null
-          contact_id: string
+          contact_id?: string | null
           created_at?: string
           deleted_at?: string | null
           description?: string | null
@@ -2530,7 +2533,7 @@ export type Database = {
           call_recording_url?: string | null
           company_id?: string | null
           completed_at?: string | null
-          contact_id?: string
+          contact_id?: string | null
           created_at?: string
           deleted_at?: string | null
           description?: string | null
@@ -6248,6 +6251,88 @@ export type Database = {
           },
         ]
       }
+      entity_contacts: {
+        Row: {
+          contact_id: string
+          display_order: number | null
+          entity_id: string
+          id: string
+          linked_at: string
+          linked_by: string | null
+          notes: string | null
+          ownership_percentage: number | null
+          role: string
+          updated_at: string
+        }
+        Insert: {
+          contact_id: string
+          display_order?: number | null
+          entity_id: string
+          id?: string
+          linked_at?: string
+          linked_by?: string | null
+          notes?: string | null
+          ownership_percentage?: number | null
+          role?: string
+          updated_at?: string
+        }
+        Update: {
+          contact_id?: string
+          display_order?: number | null
+          entity_id?: string
+          id?: string
+          linked_at?: string
+          linked_by?: string | null
+          notes?: string | null
+          ownership_percentage?: number | null
+          role?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "entity_contacts_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "crm_contacts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "entity_contacts_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "crm_contacts_active"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "entity_contacts_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "crm_duplicate_candidates"
+            referencedColumns: ["contact_id"]
+          },
+          {
+            foreignKeyName: "entity_contacts_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "crm_duplicate_candidates"
+            referencedColumns: ["potential_duplicate_id"]
+          },
+          {
+            foreignKeyName: "entity_contacts_entity_id_fkey"
+            columns: ["entity_id"]
+            isOneToOne: false
+            referencedRelation: "borrower_entities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "entity_contacts_entity_id_fkey"
+            columns: ["entity_id"]
+            isOneToOne: false
+            referencedRelation: "borrower_entities_safe"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       equity_deal_stage_history: {
         Row: {
           changed_at: string
@@ -6727,52 +6812,118 @@ export type Database = {
       }
       field_configurations: {
         Row: {
+          blocks_stage_progression: boolean
+          column_span: string | null
+          conditional_rules: Json | null
           created_at: string | null
+          created_by: string | null
+          default_value: string | null
+          display_order: number | null
           dropdown_options: Json | null
           field_key: string
           field_label: string
           field_type: string
           formula_expression: string | null
           formula_source_fields: string[] | null
+          help_text: string | null
           id: string
           is_admin_created: boolean
           is_archived: boolean
+          is_filterable: boolean
           is_locked: boolean
+          is_read_only: boolean
+          is_required: boolean
+          is_searchable: boolean
+          is_sortable: boolean
+          is_system: boolean
+          is_unique: boolean
           is_visible: boolean
           module: string
+          permissions: Json | null
+          required_at_stage: string | null
+          section_group: string | null
+          track_changes: boolean
+          type_config: Json | null
           updated_at: string | null
+          updated_by: string | null
+          validation_message: string | null
+          validation_regex: string | null
         }
         Insert: {
+          blocks_stage_progression?: boolean
+          column_span?: string | null
+          conditional_rules?: Json | null
           created_at?: string | null
+          created_by?: string | null
+          default_value?: string | null
+          display_order?: number | null
           dropdown_options?: Json | null
           field_key: string
           field_label: string
           field_type: string
           formula_expression?: string | null
           formula_source_fields?: string[] | null
+          help_text?: string | null
           id?: string
           is_admin_created?: boolean
           is_archived?: boolean
+          is_filterable?: boolean
           is_locked?: boolean
+          is_read_only?: boolean
+          is_required?: boolean
+          is_searchable?: boolean
+          is_sortable?: boolean
+          is_system?: boolean
+          is_unique?: boolean
           is_visible?: boolean
           module: string
+          permissions?: Json | null
+          required_at_stage?: string | null
+          section_group?: string | null
+          track_changes?: boolean
+          type_config?: Json | null
           updated_at?: string | null
+          updated_by?: string | null
+          validation_message?: string | null
+          validation_regex?: string | null
         }
         Update: {
+          blocks_stage_progression?: boolean
+          column_span?: string | null
+          conditional_rules?: Json | null
           created_at?: string | null
+          created_by?: string | null
+          default_value?: string | null
+          display_order?: number | null
           dropdown_options?: Json | null
           field_key?: string
           field_label?: string
           field_type?: string
           formula_expression?: string | null
           formula_source_fields?: string[] | null
+          help_text?: string | null
           id?: string
           is_admin_created?: boolean
           is_archived?: boolean
+          is_filterable?: boolean
           is_locked?: boolean
+          is_read_only?: boolean
+          is_required?: boolean
+          is_searchable?: boolean
+          is_sortable?: boolean
+          is_system?: boolean
+          is_unique?: boolean
           is_visible?: boolean
           module?: string
+          permissions?: Json | null
+          required_at_stage?: string | null
+          section_group?: string | null
+          track_changes?: boolean
+          type_config?: Json | null
           updated_at?: string | null
+          updated_by?: string | null
+          validation_message?: string | null
+          validation_regex?: string | null
         }
         Relationships: []
       }
@@ -9438,6 +9589,111 @@ export type Database = {
           },
         ]
       }
+      object_definitions: {
+        Row: {
+          color: string | null
+          created_at: string
+          description: string | null
+          icon: string
+          id: string
+          is_system: boolean
+          label: string
+          object_key: string
+          sort_order: number | null
+          table_name: string
+          updated_at: string
+        }
+        Insert: {
+          color?: string | null
+          created_at?: string
+          description?: string | null
+          icon?: string
+          id?: string
+          is_system?: boolean
+          label: string
+          object_key: string
+          sort_order?: number | null
+          table_name: string
+          updated_at?: string
+        }
+        Update: {
+          color?: string | null
+          created_at?: string
+          description?: string | null
+          icon?: string
+          id?: string
+          is_system?: boolean
+          label?: string
+          object_key?: string
+          sort_order?: number | null
+          table_name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      object_relationships: {
+        Row: {
+          allow_quick_create: boolean
+          cardinality: string
+          cascade_delete: boolean
+          child_object_key: string
+          created_at: string
+          fk_column: string | null
+          id: string
+          inherited_fields: Json | null
+          junction_table: string | null
+          parent_object_key: string
+          sort_order: number | null
+          sync_direction: string
+          updated_at: string
+        }
+        Insert: {
+          allow_quick_create?: boolean
+          cardinality?: string
+          cascade_delete?: boolean
+          child_object_key: string
+          created_at?: string
+          fk_column?: string | null
+          id?: string
+          inherited_fields?: Json | null
+          junction_table?: string | null
+          parent_object_key: string
+          sort_order?: number | null
+          sync_direction?: string
+          updated_at?: string
+        }
+        Update: {
+          allow_quick_create?: boolean
+          cardinality?: string
+          cascade_delete?: boolean
+          child_object_key?: string
+          created_at?: string
+          fk_column?: string | null
+          id?: string
+          inherited_fields?: Json | null
+          junction_table?: string | null
+          parent_object_key?: string
+          sort_order?: number | null
+          sync_direction?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "object_relationships_child_object_key_fkey"
+            columns: ["child_object_key"]
+            isOneToOne: false
+            referencedRelation: "object_definitions"
+            referencedColumns: ["object_key"]
+          },
+          {
+            foreignKeyName: "object_relationships_parent_object_key_fkey"
+            columns: ["parent_object_key"]
+            isOneToOne: false
+            referencedRelation: "object_definitions"
+            referencedColumns: ["object_key"]
+          },
+        ]
+      }
       opportunities: {
         Row: {
           approval_decided_at: string | null
@@ -9719,6 +9975,149 @@ export type Database = {
             columns: ["opportunity_id"]
             isOneToOne: false
             referencedRelation: "opportunity_pipeline"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      opportunity_contacts: {
+        Row: {
+          contact_id: string
+          display_order: number | null
+          id: string
+          is_primary: boolean
+          linked_at: string
+          linked_by: string | null
+          notes: string | null
+          opportunity_id: string
+          role: string
+          updated_at: string
+        }
+        Insert: {
+          contact_id: string
+          display_order?: number | null
+          id?: string
+          is_primary?: boolean
+          linked_at?: string
+          linked_by?: string | null
+          notes?: string | null
+          opportunity_id: string
+          role?: string
+          updated_at?: string
+        }
+        Update: {
+          contact_id?: string
+          display_order?: number | null
+          id?: string
+          is_primary?: boolean
+          linked_at?: string
+          linked_by?: string | null
+          notes?: string | null
+          opportunity_id?: string
+          role?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "opportunity_contacts_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "crm_contacts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "opportunity_contacts_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "crm_contacts_active"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "opportunity_contacts_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "crm_duplicate_candidates"
+            referencedColumns: ["contact_id"]
+          },
+          {
+            foreignKeyName: "opportunity_contacts_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "crm_duplicate_candidates"
+            referencedColumns: ["potential_duplicate_id"]
+          },
+          {
+            foreignKeyName: "opportunity_contacts_opportunity_id_fkey"
+            columns: ["opportunity_id"]
+            isOneToOne: false
+            referencedRelation: "opportunities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "opportunity_contacts_opportunity_id_fkey"
+            columns: ["opportunity_id"]
+            isOneToOne: false
+            referencedRelation: "opportunity_pipeline"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      opportunity_properties: {
+        Row: {
+          display_order: number | null
+          id: string
+          is_primary: boolean
+          linked_at: string
+          linked_by: string | null
+          notes: string | null
+          opportunity_id: string
+          property_id: string
+          role: string
+          updated_at: string
+        }
+        Insert: {
+          display_order?: number | null
+          id?: string
+          is_primary?: boolean
+          linked_at?: string
+          linked_by?: string | null
+          notes?: string | null
+          opportunity_id: string
+          property_id: string
+          role?: string
+          updated_at?: string
+        }
+        Update: {
+          display_order?: number | null
+          id?: string
+          is_primary?: boolean
+          linked_at?: string
+          linked_by?: string | null
+          notes?: string | null
+          opportunity_id?: string
+          property_id?: string
+          role?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "opportunity_properties_opportunity_id_fkey"
+            columns: ["opportunity_id"]
+            isOneToOne: false
+            referencedRelation: "opportunities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "opportunity_properties_opportunity_id_fkey"
+            columns: ["opportunity_id"]
+            isOneToOne: false
+            referencedRelation: "opportunity_pipeline"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "opportunity_properties_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
             referencedColumns: ["id"]
           },
         ]
@@ -10139,6 +10538,7 @@ export type Database = {
       page_layout_fields: {
         Row: {
           column_position: string
+          column_span: string | null
           created_at: string
           display_order: number
           field_config_id: string | null
@@ -10146,9 +10546,12 @@ export type Database = {
           id: string
           is_visible: boolean
           section_id: string
+          source: string
+          source_object_key: string | null
         }
         Insert: {
           column_position?: string
+          column_span?: string | null
           created_at?: string
           display_order?: number
           field_config_id?: string | null
@@ -10156,9 +10559,12 @@ export type Database = {
           id?: string
           is_visible?: boolean
           section_id: string
+          source?: string
+          source_object_key?: string | null
         }
         Update: {
           column_position?: string
+          column_span?: string | null
           created_at?: string
           display_order?: number
           field_config_id?: string | null
@@ -10166,6 +10572,8 @@ export type Database = {
           id?: string
           is_visible?: boolean
           section_id?: string
+          source?: string
+          source_object_key?: string | null
         }
         Relationships: [
           {
@@ -10186,48 +10594,90 @@ export type Database = {
       }
       page_layout_sections: {
         Row: {
+          card_type_id: string | null
           created_at: string
+          default_collapsed: boolean | null
           display_order: number
           id: string
           is_locked: boolean
           is_visible: boolean
           page_type: string
+          relationship_id: string | null
           section_icon: string
           section_key: string
           section_label: string
+          section_type: string
           sidebar: boolean
+          tab_icon: string | null
+          tab_key: string | null
+          tab_label: string | null
+          tab_locked: boolean | null
+          tab_order: number | null
           updated_at: string
           visibility_rule: string | null
         }
         Insert: {
+          card_type_id?: string | null
           created_at?: string
+          default_collapsed?: boolean | null
           display_order?: number
           id?: string
           is_locked?: boolean
           is_visible?: boolean
           page_type: string
+          relationship_id?: string | null
           section_icon?: string
           section_key: string
           section_label: string
+          section_type?: string
           sidebar?: boolean
+          tab_icon?: string | null
+          tab_key?: string | null
+          tab_label?: string | null
+          tab_locked?: boolean | null
+          tab_order?: number | null
           updated_at?: string
           visibility_rule?: string | null
         }
         Update: {
+          card_type_id?: string | null
           created_at?: string
+          default_collapsed?: boolean | null
           display_order?: number
           id?: string
           is_locked?: boolean
           is_visible?: boolean
           page_type?: string
+          relationship_id?: string | null
           section_icon?: string
           section_key?: string
           section_label?: string
+          section_type?: string
           sidebar?: boolean
+          tab_icon?: string | null
+          tab_key?: string | null
+          tab_label?: string | null
+          tab_locked?: boolean | null
+          tab_order?: number | null
           updated_at?: string
           visibility_rule?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "page_layout_sections_card_type_id_fkey"
+            columns: ["card_type_id"]
+            isOneToOne: false
+            referencedRelation: "unified_card_types"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "page_layout_sections_relationship_id_fkey"
+            columns: ["relationship_id"]
+            isOneToOne: false
+            referencedRelation: "object_relationships"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       payoff_fee_defaults: {
         Row: {
@@ -11405,6 +11855,53 @@ export type Database = {
             columns: ["created_by"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      relationship_roles: {
+        Row: {
+          color: string | null
+          created_at: string
+          id: string
+          is_required: boolean
+          label: string
+          max_count: number | null
+          relationship_id: string
+          required_before_stage: string | null
+          role_key: string
+          sort_order: number | null
+        }
+        Insert: {
+          color?: string | null
+          created_at?: string
+          id?: string
+          is_required?: boolean
+          label: string
+          max_count?: number | null
+          relationship_id: string
+          required_before_stage?: string | null
+          role_key: string
+          sort_order?: number | null
+        }
+        Update: {
+          color?: string | null
+          created_at?: string
+          id?: string
+          is_required?: boolean
+          label?: string
+          max_count?: number | null
+          relationship_id?: string
+          required_before_stage?: string | null
+          role_key?: string
+          sort_order?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "relationship_roles_relationship_id_fkey"
+            columns: ["relationship_id"]
+            isOneToOne: false
+            referencedRelation: "object_relationships"
             referencedColumns: ["id"]
           },
         ]
@@ -13232,6 +13729,7 @@ export type Database = {
           status: string
           updated_at: string
           uw_fields: Json
+          uw_grid: Json | null
           uw_model_key: string
           uw_outputs: Json
         }
@@ -13257,6 +13755,7 @@ export type Database = {
           status?: string
           updated_at?: string
           uw_fields?: Json
+          uw_grid?: Json | null
           uw_model_key: string
           uw_outputs?: Json
         }
@@ -13282,6 +13781,7 @@ export type Database = {
           status?: string
           updated_at?: string
           uw_fields?: Json
+          uw_grid?: Json | null
           uw_model_key?: string
           uw_outputs?: Json
         }
@@ -13780,6 +14280,7 @@ export type Database = {
           tags: string[] | null
           updated_at: string
           uw_data: Json | null
+          uw_grid_overrides: Json | null
         }
         Insert: {
           actual_close_date?: string | null
@@ -13809,6 +14310,7 @@ export type Database = {
           tags?: string[] | null
           updated_at?: string
           uw_data?: Json | null
+          uw_grid_overrides?: Json | null
         }
         Update: {
           actual_close_date?: string | null
@@ -13838,6 +14340,7 @@ export type Database = {
           tags?: string[] | null
           updated_at?: string
           uw_data?: Json | null
+          uw_grid_overrides?: Json | null
         }
         Relationships: [
           {

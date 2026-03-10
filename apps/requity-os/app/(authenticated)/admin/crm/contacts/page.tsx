@@ -73,8 +73,10 @@ export default async function ContactsPage() {
 
     // Count activities per contact
     const activityCounts: Record<string, number> = {};
-    (activitiesResult.data ?? []).forEach((a: { contact_id: string }) => {
-      activityCounts[a.contact_id] = (activityCounts[a.contact_id] ?? 0) + 1;
+    (activitiesResult.data ?? []).forEach((a: { contact_id: string | null }) => {
+      if (a.contact_id) {
+        activityCounts[a.contact_id] = (activityCounts[a.contact_id] ?? 0) + 1;
+      }
     });
 
     // Build relationships lookup

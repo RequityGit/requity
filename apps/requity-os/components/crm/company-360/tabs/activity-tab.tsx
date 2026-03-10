@@ -83,15 +83,13 @@ export function CompanyActivityTab({
 
     try {
       const supabase = createClient();
-      // contact_id is required by the schema; cast to bypass for company-level activities
       const { error } = await supabase.from("crm_activities").insert({
         company_id: companyId,
-        contact_id: companyId,
         activity_type: form.activity_type,
         subject: form.subject || null,
         description: form.description || null,
         performed_by: currentUserId,
-      } as never);
+      });
 
       if (error) throw error;
 
@@ -100,7 +98,12 @@ export function CompanyActivityTab({
       setForm({ activity_type: "note", subject: "", description: "" });
       router.refresh();
     } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : "Unknown error";
+      const message =
+        err instanceof Error
+          ? err.message
+          : typeof err === "object" && err !== null && "message" in err
+            ? String((err as { message: unknown }).message)
+            : "Unknown error";
       toast({
         title: "Error logging activity",
         description: message,
