@@ -34,6 +34,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Switch } from "@/components/ui/switch";
 import { Trash2, Paperclip, X, FileText, Repeat, Link2, ExternalLink, MessageSquare, ChevronDown, ChevronUp, Shield, Check, RotateCcw, AlertCircle } from "lucide-react";
 import Link from "next/link";
 import { UnifiedNotes } from "@/components/shared/UnifiedNotes";
@@ -51,6 +52,7 @@ import {
   rejectTask,
   submitTaskForApproval,
   getTaskApproval,
+  createTaskApproval,
 } from "@/app/(authenticated)/admin/operations/tasks/actions";
 import {
   composeRecurrencePattern,
@@ -119,6 +121,11 @@ export function TaskSheet({
   const [showRejectionInput, setShowRejectionInput] = useState(false);
   const [showSubmitConfirm, setShowSubmitConfirm] = useState(false);
 
+  // New task approval form state
+  const [requiresApproval, setRequiresApproval] = useState(false);
+  const [newApproverId, setNewApproverId] = useState("");
+  const [newApprovalInstructions, setNewApprovalInstructions] = useState("");
+
   // Attachments
   const [attachments, setAttachments] = useState<
     { id: string; file_name: string; file_type: string | null; storage_path: string }[]
@@ -176,6 +183,9 @@ export function TaskSheet({
       setRecurrenceMonthlyWhen("specific_day");
       setRecurrenceStartDate("");
       setRecurrenceEndDate("");
+      setRequiresApproval(false);
+      setNewApproverId("");
+      setNewApprovalInstructions("");
     }
     setAttachments([]);
     setCommentsOpen(false);
@@ -282,6 +292,17 @@ export function TaskSheet({
 
   const handleSave = async () => {
     if (!title.trim()) return;
+
+    if (isNew && requiresApproval && !newApproverId) {
+      toast({ title: "Approver is required when approval is enabled", variant: "destructive" });
+      return;
+    }
+
+    if (isNew && requiresApproval && newApproverId && assignedTo && newApproverId === assignedTo) {
+      toast({ title: "Approver cannot be the same as assignee", variant: "destructive" });
+      return;
+    }
+
     setSaving(true);
 
     const supabase = createClient();
@@ -329,6 +350,9 @@ export function TaskSheet({
       if (isNew) {
         payload.created_by = currentUserId;
         payload.sort_order = 0;
+        payload.requires_approval = requiresApproval;
+        payload.approver_id = requiresApproval ? newApproverId : null;
+        payload.approval_instructions = requiresApproval ? (newApprovalInstructions.trim() || null) : null;
         const { data, error } = await supabase
           .from("ops_tasks")
           .insert(payload as never)
@@ -336,7 +360,18 @@ export function TaskSheet({
           .single();
 
         if (error) throw error;
-        if (data) onSaved(data as unknown as OpsTask);
+        if (data) {
+          const newTask = data as unknown as OpsTask;
+          // Create the approval record if approval is required
+          if (requiresApproval && newApproverId) {
+            await createTaskApproval({
+              taskId: newTask.id,
+              approverId: newApproverId,
+              approvalInstructions: newApprovalInstructions.trim() || undefined,
+            });
+          }
+          onSaved(newTask);
+        }
       } else {
         const { data, error } = await supabase
           .from("ops_tasks")
@@ -745,6 +780,73 @@ export function TaskSheet({
                 />
               </div>
             </div>
+
+            {/* Approval toggle for new tasks */}
+            {isNew && (
+              <div className="border-t border-border pt-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Shield className={`h-4 w-4 transition-colors ${requiresApproval ? "text-emerald-500" : "text-muted-foreground"}`} />
+                    <Label htmlFor="new_requires_approval" className="cursor-pointer text-sm font-medium">
+                      Requires Approval
+                    </Label>
+                  </div>
+                  <Switch
+                    id="new_requires_approval"
+                    checked={requiresApproval}
+                    onCheckedChange={setRequiresApproval}
+                  />
+                </div>
+
+                <div
+                  className="overflow-hidden transition-all duration-300 ease-in-out"
+                  style={{
+                    maxHeight: requiresApproval ? 300 : 0,
+                    opacity: requiresApproval ? 1 : 0,
+                  }}
+                >
+                  <div className="mt-3 rounded-lg border border-border bg-muted/50 p-3 space-y-3">
+                    <div className="space-y-1.5">
+                      <Label htmlFor="new_approver" className="text-xs font-semibold">Approver *</Label>
+                      <Select
+                        value={newApproverId || "none"}
+                        onValueChange={(v) => setNewApproverId(v === "none" ? "" : v)}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select approver" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="none">Select approver</SelectItem>
+                          {profiles
+                            .filter((p) => p.id !== assignedTo)
+                            .map((p) => (
+                              <SelectItem key={p.id} value={p.id}>
+                                {p.full_name}
+                              </SelectItem>
+                            ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label htmlFor="new_approval_instructions" className="text-xs font-semibold">Approval Instructions</Label>
+                      <Textarea
+                        id="new_approval_instructions"
+                        placeholder="What should the approver check for?"
+                        value={newApprovalInstructions}
+                        onChange={(e) => setNewApprovalInstructions(e.target.value)}
+                        rows={2}
+                      />
+                    </div>
+                    <div className="flex items-center gap-1.5 rounded-md bg-blue-500/10 border border-blue-500/20 px-2.5 py-2">
+                      <AlertCircle className="h-3.5 w-3.5 text-blue-500 shrink-0" />
+                      <span className="text-[11px] text-muted-foreground">
+                        Assignee must submit for approval before task can be completed
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
 
             {/* Approver metadata + instructions (for existing tasks with approval) */}
             {!isNew && task.requires_approval && (
