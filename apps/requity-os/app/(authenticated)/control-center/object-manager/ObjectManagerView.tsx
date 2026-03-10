@@ -127,6 +127,15 @@ export function ObjectManagerView({ objects, fieldCounts, relationshipCounts }: 
         if (result.relationships) setRelationships(result.relationships);
         if (result.roles) setRoles(result.roles);
       } else if (activeTab === "layout") {
+        // Fetch fields for the palette alongside layout data
+        const fieldModule = OBJECT_MODULE_MAP[selectedObjectKey] || selectedObjectKey;
+        const [fieldResult, relResult] = await Promise.all([
+          fetchObjectFields(fieldModule),
+          fetchObjectRelationships(selectedObjectKey),
+        ]);
+        if (fieldResult.data) setFields(fieldResult.data);
+        if (relResult.relationships) setRelationships(relResult.relationships);
+
         const pageType = OBJECT_PAGE_TYPE_MAP[selectedObjectKey];
         if (pageType) {
           const result = await fetchObjectLayout(pageType);
@@ -394,6 +403,9 @@ export function ObjectManagerView({ objects, fieldCounts, relationshipCounts }: 
           <SectionConfigPanel
             section={selectedSection}
             onClose={clearSelection}
+            onUpdated={() => {
+              loadData();
+            }}
           />
         )}
         {activeTab === "layout" && selectedLayoutTab && (
