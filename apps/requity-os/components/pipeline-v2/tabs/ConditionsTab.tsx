@@ -302,18 +302,27 @@ function ConditionRow({
 }) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
-  const statusCfg = STATUS_CONFIG[c.status] ?? STATUS_CONFIG.pending;
+
+  // Optimistic status: update UI instantly, revert on error
+  const [optimisticStatus, setOptimisticStatus] = useState(c.status);
+  useEffect(() => {
+    setOptimisticStatus(c.status);
+  }, [c.status]);
+
+  const statusCfg = STATUS_CONFIG[optimisticStatus] ?? STATUS_CONFIG.pending;
   const StatusIcon = statusCfg.icon;
-  const isOverdue = c.status === "pending" && c.due_date && new Date(c.due_date) < new Date();
+  const isOverdue = optimisticStatus === "pending" && c.due_date && new Date(c.due_date) < new Date();
 
   function handleStatusChange(newStatus: string) {
+    setOptimisticStatus(newStatus);
     startTransition(async () => {
-      const result = await updateConditionStatusAction(c.id, newStatus);
+      const result = await updateConditionStatusAction(c.id, newStatus, dealId);
       if (result.error) {
+        setOptimisticStatus(c.status); // revert on failure
         toast.error(`Failed to update: ${result.error}`);
       } else {
         const msg = (result as { message?: string }).message;
-        toast.success(msg ?? `Condition ${newStatus === "approved" ? "approved" : "updated"}`);
+        toast.success(msg ?? "Condition updated");
         router.refresh();
       }
     });
@@ -339,13 +348,13 @@ function ConditionRow({
           <StatusIcon
             className={cn(
               "h-[18px] w-[18px]",
-              c.status === "approved" && "text-green-500",
-              c.status === "waived" && "text-slate-400",
-              c.status === "rejected" && "text-red-500",
-              c.status === "submitted" && "text-blue-500",
-              c.status === "under_review" && "text-amber-500",
-              c.status === "pending" && "text-muted-foreground",
-              c.status === "not_applicable" && "text-slate-400"
+              optimisticStatus === "approved" && "text-green-500",
+              optimisticStatus === "waived" && "text-slate-400",
+              optimisticStatus === "rejected" && "text-red-500",
+              optimisticStatus === "submitted" && "text-blue-500",
+              optimisticStatus === "under_review" && "text-amber-500",
+              optimisticStatus === "pending" && "text-muted-foreground",
+              optimisticStatus === "not_applicable" && "text-slate-400"
             )}
             strokeWidth={1.5}
           />
@@ -357,7 +366,7 @@ function ConditionRow({
             <span
               className={cn(
                 "text-sm font-medium",
-                (c.status === "approved" || c.status === "waived" || c.status === "not_applicable") &&
+                (optimisticStatus === "approved" || optimisticStatus === "waived" || optimisticStatus === "not_applicable") &&
                   "line-through opacity-60"
               )}
             >
@@ -374,7 +383,7 @@ function ConditionRow({
                 Approval Required
               </span>
             )}
-            {c.status === "under_review" && c.requires_approval && (
+            {optimisticStatus === "under_review" && c.requires_approval && (
               <span className="inline-flex items-center gap-1 text-[10px] font-medium text-amber-600 bg-amber-500/10 border border-amber-500/20 rounded-full px-1.5 py-px">
                 <Clock className="h-2.5 w-2.5" strokeWidth={2} />
                 Awaiting Approval
@@ -405,7 +414,7 @@ function ConditionRow({
             {statusCfg.label}
           </Badge>
           <Select
-            value={c.status}
+            value={optimisticStatus}
             onValueChange={handleStatusChange}
             disabled={isPending}
           >

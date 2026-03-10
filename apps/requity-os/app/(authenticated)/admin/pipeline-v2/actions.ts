@@ -593,7 +593,8 @@ export async function updateDealStatusAction(
 
 export async function updateConditionStatusAction(
   conditionId: string,
-  newStatus: string
+  newStatus: string,
+  dealId?: string
 ) {
   try {
     const auth = await requireAdmin();
@@ -678,7 +679,7 @@ export async function updateConditionStatusAction(
       return { error: error.message };
     }
 
-    revalidatePipeline();
+    revalidatePipeline(dealId);
     return { success: true };
   } catch (err: unknown) {
     console.error("updateConditionStatusAction error:", err);
