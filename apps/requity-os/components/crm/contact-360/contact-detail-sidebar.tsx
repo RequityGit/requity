@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
@@ -14,7 +13,6 @@ import {
   HoverCardContent,
   HoverCardTrigger,
 } from "@/components/ui/hover-card";
-import { useToast } from "@/components/ui/use-toast";
 import {
   Activity,
   Bell,
@@ -56,32 +54,7 @@ export function ContactDetailSidebar({
   onComposeEmail,
 }: ContactDetailSidebarProps) {
   const router = useRouter();
-  const { toast } = useToast();
-  const [logging, setLogging] = useState(false);
   const [copied, setCopied] = useState(false);
-
-  async function handleLogCall() {
-    setLogging(true);
-    try {
-      const supabase = createClient();
-      await supabase.from("crm_activities").insert({
-        contact_id: contact.id,
-        activity_type: "call" as never,
-        subject: "Phone call logged",
-        performed_by: currentUserId,
-      });
-      await supabase
-        .from("crm_contacts")
-        .update({ last_contacted_at: new Date().toISOString() })
-        .eq("id", contact.id);
-      toast({ title: "Call logged" });
-      router.refresh();
-    } catch {
-      toast({ title: "Error logging call", variant: "destructive" });
-    } finally {
-      setLogging(false);
-    }
-  }
 
   const quickActions = [
     {
@@ -101,7 +74,12 @@ export function ContactDetailSidebar({
     {
       icon: PhoneCall,
       label: "Log Call",
-      onClick: handleLogCall,
+      onClick: () => {
+        const params = new URLSearchParams(window.location.search);
+        params.set("tab", "activity");
+        params.set("action", "log-call");
+        router.replace(`?${params.toString()}`, { scroll: false });
+      },
     },
   ];
 
@@ -132,7 +110,6 @@ export function ContactDetailSidebar({
                 variant="ghost"
                 size="sm"
                 onClick={onClick}
-                disabled={logging && label === "Log Call"}
                 className="justify-start gap-3 h-9 px-2.5 text-[13px] font-normal text-foreground hover:bg-muted rounded-lg w-full"
               >
                 <Icon

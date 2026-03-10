@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -98,6 +98,7 @@ interface DetailActivityTabProps {
   emails: EmailData[];
   currentUserId: string;
   onComposeEmail?: () => void;
+  initialAction?: string | null;
 }
 
 export function DetailActivityTab({
@@ -106,6 +107,7 @@ export function DetailActivityTab({
   emails,
   currentUserId,
   onComposeEmail,
+  initialAction,
 }: DetailActivityTabProps) {
   const [filter, setFilter] = useState("all");
   const [showForm, setShowForm] = useState(false);
@@ -119,6 +121,23 @@ export function DetailActivityTab({
     subject: "",
     description: "",
   });
+
+  // Open form pre-filled with "call" when triggered from sidebar Log Call action
+  useEffect(() => {
+    if (initialAction === "log-call") {
+      setShowForm(true);
+      setForm({ activity_type: "call", subject: "", description: "" });
+      // Clear the action param from URL to prevent re-triggering
+      const params = new URLSearchParams(window.location.search);
+      params.delete("action");
+      const newUrl = params.toString()
+        ? `${window.location.pathname}?${params.toString()}`
+        : window.location.pathname;
+      window.history.replaceState(null, "", newUrl);
+    }
+  }, [initialAction]);
+
+  const isCallType = form.activity_type === "call";
 
   // Build unified timeline: merge activities + emails, sorted by created_at desc
   const timeline = useMemo<TimelineItem[]>(() => {
@@ -168,6 +187,12 @@ export function DetailActivityTab({
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+
+    if (form.activity_type === "call" && !form.description.trim()) {
+      toast({ title: "Call notes are required", variant: "destructive" });
+      return;
+    }
+
     setLoading(true);
 
     try {
@@ -295,8 +320,9 @@ export function DetailActivityTab({
                     setForm((p) => ({ ...p, description: e.target.value }))
                   }
                   rows={3}
-                  placeholder="Details..."
+                  placeholder={isCallType ? "Call notes (required)..." : "Details..."}
                   className="rounded-lg border-border resize-none"
+                  required={isCallType}
                 />
               </div>
               <div className="flex justify-end gap-2">
@@ -312,7 +338,7 @@ export function DetailActivityTab({
                 <Button
                   type="submit"
                   size="sm"
-                  disabled={loading}
+                  disabled={loading || (isCallType && !form.description.trim())}
                   className="rounded-lg bg-foreground text-background hover:bg-foreground/90"
                 >
                   {loading ? "Saving..." : "Save Activity"}

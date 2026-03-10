@@ -295,6 +295,7 @@ export function ContactDetailClient({
                   emails={emails}
                   currentUserId={currentUserId}
                   onComposeEmail={() => setEmailComposeOpen(true)}
+                  initialAction={searchParams.get("action")}
                 />
               </div>
             )}
