@@ -216,7 +216,13 @@ export function CompanyDetailClient({
               <CompanyTasksTab
                 tasks={tasks}
                 companyId={company.id}
+                companyName={company.name}
                 currentUserId={currentUserId}
+                profiles={teamMembers.map((m) => ({
+                  id: m.id,
+                  full_name: m.full_name,
+                  avatar_url: null,
+                }))}
               />
             </div>
           )}
