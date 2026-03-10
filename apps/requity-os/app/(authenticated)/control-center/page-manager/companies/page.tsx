@@ -5,7 +5,6 @@ export const dynamic = "force-dynamic";
 
 const COMPANY_FIELD_MODULES = [
   "company_info",
-  "wire_instructions",
 ];
 
 export default async function CompanyPageManagerPage() {

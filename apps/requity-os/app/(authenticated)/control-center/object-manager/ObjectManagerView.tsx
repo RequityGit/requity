@@ -67,11 +67,8 @@ const OBJECT_MODULE_MAP: Record<string, string> = {
   borrower_entity: "borrower_entity",
   property: "uw_property",
   loan: "loan_details",
-  servicing_loan: "servicing",
   borrower: "borrower_profile",
   investor: "investor_profile",
-  equity_deal: "equity_deal",
-  fund: "fund",
   unified_deal: "uw_deal",
 };
 
