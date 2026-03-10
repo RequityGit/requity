@@ -137,6 +137,8 @@ const FIELD_TYPES = [
   { value: "email", label: "Email" },
   { value: "phone", label: "Phone" },
   { value: "formula", label: "Formula (Calculated)" },
+  { value: "team_member", label: "Team Member (Select)" },
+  { value: "company", label: "Company (Select)" },
 ] as const;
 
 const MODULE_LABELS: Record<string, string> = {
@@ -228,6 +230,8 @@ const TYPE_COLORS: Record<string, string> = {
   date: "bg-orange-500/10 text-orange-500 border-orange-500/20",
   boolean: "bg-teal-500/10 text-teal-500 border-teal-500/20",
   formula: "bg-rose-500/10 text-rose-500 border-rose-500/20",
+  team_member: "bg-sky-500/10 text-sky-500 border-sky-500/20",
+  company: "bg-emerald-500/10 text-emerald-500 border-emerald-500/20",
 };
 
 function generateFieldKey(label: string): string {

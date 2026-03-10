@@ -50,6 +50,7 @@ interface ContactDetailClientProps {
   teamMembers: TeamMember[];
   profiles: Profile[];
   company: CompanyData | null;
+  allCompanies: CompanyData[];
   borrower: BorrowerData | null;
   investor: InvestorProfileData | null;
   entities: EntityData[];
@@ -73,6 +74,7 @@ export function ContactDetailClient({
   teamMembers,
   profiles,
   company,
+  allCompanies,
   borrower,
   investor,
   entities,
@@ -243,6 +245,8 @@ export function ContactDetailClient({
                   isSuperAdmin={isSuperAdmin}
                   sectionOrder={sectionOrder}
                   sectionFields={sectionFields}
+                  teamMembers={teamMembers}
+                  allCompanies={allCompanies}
                 />
               </div>
             )}

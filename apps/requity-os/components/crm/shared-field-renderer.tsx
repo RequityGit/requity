@@ -72,6 +72,9 @@ export const FC_TYPE_TO_CRM: Record<string, CrmFieldType> = {
   boolean: "boolean",
   dropdown: "select",
   percentage: "number",
+  team_member: "select",
+  company: "select",
+  relationship: "select",
 };
 
 // --- Custom renderers for fields with special display logic ---
@@ -119,13 +122,22 @@ function renderExperienceCount(val: unknown): ReactNode {
 
 // Map of field_key → custom render function
 // Returns undefined for "show dash", null for "skip entirely"
-export type FieldRenderer = (val: unknown, isSuperAdmin: boolean) => ReactNode | null;
+export type FieldRenderer = (val: unknown, isSuperAdmin: boolean, dataObj?: Record<string, unknown>) => ReactNode | null;
 export const FIELD_RENDERERS: Record<string, FieldRenderer> = {
   credit_score: (v) => renderCreditScore(v),
   accreditation_status: (v) => renderAccreditationStatus(v),
   ssn_last4: (v, sa) => renderSsnLast4(v, sa),
   experience_count: (v) => renderExperienceCount(v),
   phone: (v) => formatPhoneNumber(v as string | null),
+  // UUID FK fields: show resolved display name instead of raw UUID
+  assigned_to: (_v, _sa, dataObj) => {
+    const display = dataObj?.assigned_to_display as string | undefined;
+    return display || undefined;
+  },
+  company_id: (_v, _sa, dataObj) => {
+    const display = dataObj?.company_id_display as string | undefined;
+    return display || undefined;
+  },
 };
 
 // --- Render a single field, returning null to skip ---
@@ -140,7 +152,7 @@ export function renderField(
   // Check for custom renderer
   const customRender = FIELD_RENDERERS[f.field_key];
   if (customRender) {
-    const rendered = customRender(rawValue, isSuperAdmin);
+    const rendered = customRender(rawValue, isSuperAdmin, dataObj);
     if (rendered === null) return null; // skip field
     return (
       <FieldRow
