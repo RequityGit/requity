@@ -21,11 +21,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { CRM_COMPANY_TYPES, CRM_COMPANY_SUBTYPES, US_STATES } from "@/lib/constants";
+import { CRM_COMPANY_TYPES, CRM_COMPANY_SUBTYPES, COMPANY_TYPE_COLORS, US_STATES } from "@/lib/constants";
 import { useToast } from "@/components/ui/use-toast";
 import { addCompanyAction } from "@/app/(authenticated)/admin/crm/company-actions";
-import { Building2 } from "lucide-react";
+import { Building2, X as XIcon } from "lucide-react";
 import { formatPhoneInput } from "@/lib/format";
+import { cn } from "@/lib/utils";
 
 interface AddCompanyDialogProps {
   trigger?: React.ReactNode;
@@ -51,6 +52,23 @@ export function AddCompanyDialog({ trigger }: AddCompanyDialogProps) {
     notes: "",
     source: "",
   });
+
+  const [selectedTypes, setSelectedTypes] = useState<string[]>([]);
+
+  function toggleType(value: string) {
+    setSelectedTypes((prev) =>
+      prev.includes(value)
+        ? prev.filter((v) => v !== value)
+        : [...prev, value]
+    );
+    if (errors.company_type) {
+      setErrors((prev) => {
+        const next = { ...prev };
+        delete next.company_type;
+        return next;
+      });
+    }
+  }
 
   const [errors, setErrors] = useState<Record<string, string>>({});
 
@@ -80,13 +98,14 @@ export function AddCompanyDialog({ trigger }: AddCompanyDialogProps) {
       notes: "",
       source: "",
     });
+    setSelectedTypes([]);
     setErrors({});
   }
 
   function validate(): boolean {
     const newErrors: Record<string, string> = {};
     if (!form.name.trim()) newErrors.name = "Required";
-    if (!form.company_type) newErrors.company_type = "Required";
+    if (selectedTypes.length === 0) newErrors.company_type = "Select at least one type";
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   }
@@ -99,7 +118,8 @@ export function AddCompanyDialog({ trigger }: AddCompanyDialogProps) {
     try {
       const result = await addCompanyAction({
         name: form.name,
-        company_type: form.company_type,
+        company_type: selectedTypes[0] || "other",
+        company_types: selectedTypes,
         company_subtype: form.company_subtype || null,
         phone: form.phone || null,
         email: form.email || null,
@@ -171,44 +191,46 @@ export function AddCompanyDialog({ trigger }: AddCompanyDialogProps) {
             )}
           </div>
 
-          {/* Type & Subtype */}
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label>
-                Company Type <span className="text-red-500">*</span>
-              </Label>
-              <Select
-                value={form.company_type}
-                onValueChange={(v) => {
-                  updateField("company_type", v);
-                  if (v !== "lender") {
-                    updateField("company_subtype", "");
-                  }
-                }}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select type..." />
-                </SelectTrigger>
-                <SelectContent>
-                  {CRM_COMPANY_TYPES.map((t) => (
-                    <SelectItem key={t.value} value={t.value}>
-                      {t.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              {errors.company_type && (
-                <p className="text-xs text-red-500">{errors.company_type}</p>
-              )}
+          {/* Type (multi-select) */}
+          <div className="space-y-2">
+            <Label>
+              Company Type <span className="text-red-500">*</span>
+            </Label>
+            <div className="flex flex-wrap gap-2">
+              {CRM_COMPANY_TYPES.map((t) => {
+                const selected = selectedTypes.includes(t.value);
+                const colors = COMPANY_TYPE_COLORS[t.value] ?? "";
+                return (
+                  <button
+                    key={t.value}
+                    type="button"
+                    onClick={() => toggleType(t.value)}
+                    className={cn(
+                      "inline-flex items-center rounded-full border px-3 py-1 text-xs font-medium transition-colors cursor-pointer",
+                      selected
+                        ? colors
+                        : "bg-card text-muted-foreground border-border hover:bg-muted"
+                    )}
+                  >
+                    {t.label}
+                    {selected && <XIcon className="ml-1 h-3 w-3" />}
+                  </button>
+                );
+              })}
             </div>
-            {form.company_type === "lender" && (
-              <div className="space-y-2">
-                <Label>Subtype</Label>
+            {errors.company_type && (
+              <p className="text-xs text-red-500">{errors.company_type}</p>
+            )}
+
+            {/* Lender subtype */}
+            {selectedTypes.includes("lender") && (
+              <div className="mt-2 pl-4 border-l-2 border-blue-200">
+                <Label className="text-xs">Lender Subtype</Label>
                 <Select
                   value={form.company_subtype}
                   onValueChange={(v) => updateField("company_subtype", v)}
                 >
-                  <SelectTrigger>
+                  <SelectTrigger className="mt-1">
                     <SelectValue placeholder="Select subtype..." />
                   </SelectTrigger>
                   <SelectContent>

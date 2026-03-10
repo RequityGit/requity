@@ -66,6 +66,7 @@ export default async function CompaniesPage() {
     phone: c.phone,
     website: c.website,
     company_type: c.company_type,
+    company_types: c.company_types ?? [c.company_type],
     company_subtype: c.company_subtype,
     city: c.city,
     state: c.state,

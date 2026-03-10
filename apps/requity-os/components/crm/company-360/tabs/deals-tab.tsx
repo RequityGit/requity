@@ -44,7 +44,7 @@ export function CompanyDealsTab({ company }: DealsTabProps) {
   const [quotes, setQuotes] = useState<QuoteRow[]>([]);
   const [quoteFilter, setQuoteFilter] = useState("all");
   const [loaded, setLoaded] = useState(false);
-  const isLender = company.company_type === "lender";
+  const isLender = (company.company_types?.length ? company.company_types : [company.company_type]).includes("lender");
 
   useEffect(() => {
     const load = async () => {

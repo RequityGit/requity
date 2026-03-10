@@ -6,6 +6,7 @@ import { requireAdmin } from "@/lib/auth/require-admin";
 export interface AddCompanyInput {
   name: string;
   company_type: string;
+  company_types?: string[];
   company_subtype?: string | null;
   phone?: string | null;
   email?: string | null;
@@ -35,6 +36,7 @@ export async function addCompanyAction(input: AddCompanyInput) {
       .insert({
         name: input.name.trim(),
         company_type: input.company_type as never,
+        company_types: input.company_types?.length ? input.company_types : [input.company_type],
         company_subtype: (input.company_subtype as never) || null,
         phone: input.phone || null,
         email: input.email || null,
@@ -76,6 +78,7 @@ export interface UpdateCompanyInput {
   id: string;
   name?: string;
   company_type?: string;
+  company_types?: string[];
   company_subtype?: string | null;
   phone?: string | null;
   email?: string | null;
@@ -112,6 +115,8 @@ export async function updateCompanyAction(input: UpdateCompanyInput) {
     if (input.name !== undefined) updateData.name = input.name.trim();
     if (input.company_type !== undefined)
       updateData.company_type = input.company_type;
+    if (input.company_types !== undefined)
+      updateData.company_types = input.company_types;
     if (input.company_subtype !== undefined)
       updateData.company_subtype = input.company_subtype || null;
     if (input.phone !== undefined) updateData.phone = input.phone || null;

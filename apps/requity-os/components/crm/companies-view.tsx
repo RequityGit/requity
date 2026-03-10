@@ -85,7 +85,8 @@ export function CompaniesView({ companies, isSuperAdmin = false }: CompaniesView
         (c) =>
           c.name.toLowerCase().includes(q) ||
           c.email?.toLowerCase().includes(q) ||
-          c.company_type.toLowerCase().includes(q)
+          c.company_type.toLowerCase().includes(q) ||
+          c.company_types?.some((ct) => ct.toLowerCase().includes(q))
       );
     }
 
@@ -219,9 +220,13 @@ export function CompaniesView({ companies, isSuperAdmin = false }: CompaniesView
                         </div>
                       </td>
                       <td className="px-4 py-3">
-                        <span className="text-xs text-muted-foreground bg-muted px-2 py-0.5 rounded">
-                          {CRM_COMPANY_TYPES.find((t) => t.value === c.company_type)?.label ?? c.company_type}
-                        </span>
+                        <div className="flex flex-wrap gap-1">
+                          {(c.company_types?.length ? c.company_types : [c.company_type]).map((ct) => (
+                            <span key={ct} className="text-xs text-muted-foreground bg-muted px-2 py-0.5 rounded">
+                              {CRM_COMPANY_TYPES.find((t) => t.value === ct)?.label ?? ct}
+                            </span>
+                          ))}
+                        </div>
                       </td>
                       <td className="px-4 py-3 num text-sm text-foreground text-right">
                         {c.contact_count}

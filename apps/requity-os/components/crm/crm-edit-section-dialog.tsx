@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useCallback } from "react";
-import { Loader2, Check, ChevronsUpDown, Plus } from "lucide-react";
+import { Loader2, X, Check, ChevronsUpDown, Plus } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -34,6 +34,7 @@ export type CrmFieldType =
   | "currency"
   | "date"
   | "select"
+  | "multi_select"
   | "boolean"
   | "textarea"
   | "readonly";
@@ -43,7 +44,7 @@ export interface CrmSectionField {
   fieldName: string;
   fieldType?: CrmFieldType;
   options?: { label: string; value: string }[];
-  value: string | number | boolean | null | undefined;
+  value: string | number | boolean | string[] | null | undefined;
   /** Pass through to DatePicker for date fields (e.g. date of birth) */
   showYearNavigation?: boolean;
   /** When provided, shows a "New" button at the bottom of the select dropdown */
@@ -57,7 +58,7 @@ interface CrmEditSectionDialogProps {
   onOpenChange: (open: boolean) => void;
   title: string;
   fields: CrmSectionField[];
-  onSave: (field: string, value: string | number | boolean | null) => Promise<void>;
+  onSave: (field: string, value: string | number | boolean | string[] | null) => Promise<void>;
 }
 
 export function CrmEditSectionDialog({
@@ -71,6 +72,7 @@ export function CrmEditSectionDialog({
   const buildInitialValues = useCallback(() => {
     const vals: Record<string, string> = {};
     for (const f of editableFields) {
+      if (f.fieldType === "multi_select") continue; // handled separately
       if (f.fieldType === "boolean") {
         vals[f.fieldName] = f.value ? "true" : "false";
       } else {
@@ -80,17 +82,29 @@ export function CrmEditSectionDialog({
     return vals;
   }, [editableFields]);
 
+  const buildInitialMultiValues = useCallback(() => {
+    const vals: Record<string, string[]> = {};
+    for (const f of editableFields) {
+      if (f.fieldType === "multi_select") {
+        vals[f.fieldName] = Array.isArray(f.value) ? f.value : [];
+      }
+    }
+    return vals;
+  }, [editableFields]);
+
   const [values, setValues] = useState<Record<string, string>>(buildInitialValues);
+  const [multiValues, setMultiValues] = useState<Record<string, string[]>>(buildInitialMultiValues);
   const [saving, setSaving] = useState(false);
 
   const handleOpenChange = useCallback(
     (isOpen: boolean) => {
       if (isOpen) {
         setValues(buildInitialValues());
+        setMultiValues(buildInitialMultiValues());
       }
       onOpenChange(isOpen);
     },
-    [buildInitialValues, onOpenChange]
+    [buildInitialValues, buildInitialMultiValues, onOpenChange]
   );
 
   const handleChange = useCallback((fieldName: string, val: string) => {
@@ -101,6 +115,14 @@ export function CrmEditSectionDialog({
     setSaving(true);
     try {
       for (const f of editableFields) {
+        if (f.fieldType === "multi_select") {
+          const newArr = multiValues[f.fieldName] ?? [];
+          const oldArr = Array.isArray(f.value) ? f.value : [];
+          if (JSON.stringify(newArr) === JSON.stringify(oldArr)) continue;
+          await onSave(f.fieldName, newArr);
+          continue;
+        }
+
         const rawVal = values[f.fieldName] ?? "";
         const currentVal = f.value != null ? String(f.value) : "";
 
@@ -132,7 +154,7 @@ export function CrmEditSectionDialog({
     } finally {
       setSaving(false);
     }
-  }, [editableFields, values, onSave, onOpenChange]);
+  }, [editableFields, values, multiValues, onSave, onOpenChange]);
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange} modal>
@@ -168,6 +190,43 @@ export function CrmEditSectionDialog({
                     placeholder={f.label}
                     className="col-span-3 min-h-[80px]"
                   />
+                </div>
+              );
+            }
+
+            if (f.fieldType === "multi_select" && f.options) {
+              const selected = multiValues[f.fieldName] ?? [];
+              return (
+                <div key={f.fieldName} className="grid grid-cols-4 items-start gap-4">
+                  <Label className="text-right pt-2">{f.label}</Label>
+                  <div className="col-span-3 flex flex-wrap gap-1.5">
+                    {f.options.map((opt) => {
+                      const isSelected = selected.includes(opt.value);
+                      return (
+                        <button
+                          key={opt.value}
+                          type="button"
+                          onClick={() => {
+                            setMultiValues((prev) => ({
+                              ...prev,
+                              [f.fieldName]: isSelected
+                                ? selected.filter((v) => v !== opt.value)
+                                : [...selected, opt.value],
+                            }));
+                          }}
+                          className={cn(
+                            "inline-flex items-center rounded-full border px-3 py-1 text-xs font-medium transition-colors cursor-pointer",
+                            isSelected
+                              ? "bg-primary text-primary-foreground border-primary"
+                              : "bg-card text-muted-foreground border-border hover:bg-muted"
+                          )}
+                        >
+                          {opt.label}
+                          {isSelected && <X className="ml-1 h-3 w-3" />}
+                        </button>
+                      );
+                    })}
+                  </div>
                 </div>
               );
             }

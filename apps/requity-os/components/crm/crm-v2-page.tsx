@@ -72,6 +72,7 @@ export interface CompanyRowV2 {
   phone: string | null;
   website: string | null;
   company_type: string;
+  company_types: string[] | null;
   company_subtype: string | null;
   city: string | null;
   state: string | null;

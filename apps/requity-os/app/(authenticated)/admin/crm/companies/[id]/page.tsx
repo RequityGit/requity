@@ -354,6 +354,7 @@ export default async function CompanyDetailPage({ params }: PageProps) {
     id: company.id,
     name: company.name,
     company_type: company.company_type,
+    company_types: (company as any).company_types ?? [company.company_type],
     company_subtype: company.company_subtype,
     phone: company.phone,
     email: company.email,

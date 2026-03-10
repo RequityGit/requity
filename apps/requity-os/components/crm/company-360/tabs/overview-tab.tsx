@@ -119,9 +119,12 @@ export function CompanyOverviewTab({
   const [editAddressOpen, setEditAddressOpen] = useState(false);
   const [editAgreementsOpen, setEditAgreementsOpen] = useState(false);
   const [editNotesOpen, setEditNotesOpen] = useState(false);
-  const isLender = company.company_type === "lender";
+  const types = company.company_types?.length
+    ? company.company_types
+    : [company.company_type];
+  const isLender = types.includes("lender");
   const typeCfg =
-    COMPANY_TYPE_CONFIG[company.company_type] || COMPANY_TYPE_CONFIG.other;
+    COMPANY_TYPE_CONFIG[types[0]] || COMPANY_TYPE_CONFIG.other;
 
   // Compute NDA status for display
   const ndaStatusPill = (() => {
@@ -140,11 +143,13 @@ export function CompanyOverviewTab({
       90 * 86400000;
 
   const saveField = useCallback(
-    async (field: string, value: string | number | boolean | null) => {
-      const result = await updateCompanyAction({
-        id: company.id,
-        [field]: value,
-      });
+    async (field: string, value: string | number | boolean | string[] | null) => {
+      const updates: Record<string, unknown> = { id: company.id, [field]: value };
+      // When saving company_types, also update the primary company_type for backward compatibility
+      if (field === "company_types" && Array.isArray(value) && value.length > 0) {
+        updates.company_type = value[0];
+      }
+      const result = await updateCompanyAction(updates as any);
       if ("error" in result && result.error) {
         toast({ title: "Error saving", description: result.error, variant: "destructive" });
       } else {
@@ -164,7 +169,7 @@ export function CompanyOverviewTab({
     { label: "Legal Name", fieldName: "name", fieldType: "text", value: company.name },
     { label: "DBA / Other Names", fieldName: "other_names", fieldType: "text", value: company.other_names },
     {
-      label: "Company Type", fieldName: "company_type", fieldType: "select", value: company.company_type,
+      label: "Company Types", fieldName: "company_types", fieldType: "multi_select", value: types,
       options: COMPANY_TYPE_OPTIONS,
     },
     { label: "Phone", fieldName: "phone", fieldType: "text", value: formatPhoneInput(company.phone ?? "") || company.phone },
@@ -264,7 +269,25 @@ export function CompanyOverviewTab({
       <div className="grid grid-cols-1 md:grid-cols-2 gap-x-10">
         <FieldRow label="Legal Name" value={company.name} />
         <FieldRow label="DBA / Other Names" value={company.other_names} />
-        <FieldRow label="Company Type" value={typeCfg.label} />
+        <FieldRow
+          label="Company Type"
+          value={
+            <div className="flex flex-wrap gap-1">
+              {types.map((t) => {
+                const cfg = COMPANY_TYPE_CONFIG[t] || COMPANY_TYPE_CONFIG.other;
+                return (
+                  <span
+                    key={t}
+                    className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium"
+                    style={{ backgroundColor: `${cfg.color}14`, color: cfg.color }}
+                  >
+                    {cfg.label}
+                  </span>
+                );
+              })}
+            </div>
+          }
+        />
         {company.company_subtype && (
           <FieldRow
             label="Subtype"

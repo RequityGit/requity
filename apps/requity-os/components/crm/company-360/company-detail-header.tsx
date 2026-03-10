@@ -64,7 +64,10 @@ export function CompanyDetailHeader({
   action,
   onNavigateToFiles,
 }: CompanyDetailHeaderProps) {
-  const typeCfg = COMPANY_TYPE_CONFIG[company.company_type] ||
+  const types = company.company_types?.length
+    ? company.company_types
+    : [company.company_type];
+  const typeCfg = COMPANY_TYPE_CONFIG[types[0]] ||
     COMPANY_TYPE_CONFIG.other;
 
   const initials = company.name
@@ -111,7 +114,10 @@ export function CompanyDetailHeader({
             <h1 className="text-[22px] font-bold text-foreground leading-tight m-0">
               {company.name}
             </h1>
-            <DotPill color={typeCfg.color} label={typeCfg.label} small />
+            {types.map((t) => {
+              const cfg = COMPANY_TYPE_CONFIG[t] || COMPANY_TYPE_CONFIG.other;
+              return <DotPill key={t} color={cfg.color} label={cfg.label} small />;
+            })}
             {company.company_subtype && (
               <span
                 className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium whitespace-nowrap"
@@ -236,7 +242,7 @@ export function CompanyDetailHeader({
                   : "Fee Agreement Missing"}
               </span>
             )}
-            {company.company_type === "title_company" && (
+            {types.includes("title_company") && (
               <span
                 className="inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[11px] font-medium whitespace-nowrap"
                 style={{

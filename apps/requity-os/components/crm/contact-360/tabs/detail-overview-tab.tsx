@@ -78,7 +78,7 @@ export function DetailOverviewTab({
 
   async function updateBorrowerField(
     field: string,
-    value: string | number | boolean | null
+    value: string | number | boolean | string[] | null
   ) {
     if (!borrower) return;
     const { error } = await supabase
@@ -99,7 +99,7 @@ export function DetailOverviewTab({
 
   async function updateInvestorField(
     field: string,
-    value: string | number | boolean | null
+    value: string | number | boolean | string[] | null
   ) {
     if (!investor) return;
     const { error } = await supabase
@@ -120,7 +120,7 @@ export function DetailOverviewTab({
 
   async function updateContactField(
     field: string,
-    value: string | number | boolean | null
+    value: string | number | boolean | string[] | null
   ) {
     // When company_id changes, also update the denormalized company_name
     const updates: Record<string, unknown> = { [field]: value };

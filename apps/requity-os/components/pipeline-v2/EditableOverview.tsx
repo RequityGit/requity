@@ -127,7 +127,7 @@ export function EditableOverview({
 
   // Save handler for CrmEditSectionDialog
   const handleSave = useCallback(
-    async (key: string, value: string | number | boolean | null) => {
+    async (key: string, value: string | number | boolean | string[] | null) => {
       const result = await updateUwDataAction(dealId, key, value);
       if (result.error) {
         toast.error(`Failed to save ${uwFieldMap.get(key)?.label ?? key}: ${result.error}`);

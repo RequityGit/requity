@@ -4,6 +4,7 @@ export interface CompanyDetailData {
   id: string;
   name: string;
   company_type: string;
+  company_types: string[] | null;
   company_subtype: string | null;
   phone: string | null;
   email: string | null;
