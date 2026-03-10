@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Send, Lock, Loader2 } from "lucide-react";
+import { Send, Lock, LockOpen, Loader2 } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { MentionInput } from "@/components/shared/mention-input";
 
@@ -80,14 +80,18 @@ export function NoteComposer({
                 <button
                   type="button"
                   onClick={() => setIsInternal(!isInternal)}
-                  className={`inline-flex items-center gap-1.5 text-xs font-medium transition-colors ${
+                  className={`inline-flex items-center gap-1.5 rounded-md border px-2 py-1 text-xs font-medium cursor-pointer transition-colors ${
                     isInternal
-                      ? "text-amber-600"
-                      : "text-muted-foreground hover:text-foreground"
+                      ? "border-amber-500/30 bg-amber-500/10 text-amber-600"
+                      : "border-emerald-500/30 bg-emerald-500/10 text-emerald-600"
                   }`}
                 >
-                  <Lock className="h-3 w-3" strokeWidth={isInternal ? 2 : 1.5} />
-                  Internal Only
+                  {isInternal ? (
+                    <Lock className="h-3 w-3" strokeWidth={2} />
+                  ) : (
+                    <LockOpen className="h-3 w-3" strokeWidth={2} />
+                  )}
+                  {isInternal ? "Internal Only" : "Visible to Borrower"}
                 </button>
               ) : undefined
             }
