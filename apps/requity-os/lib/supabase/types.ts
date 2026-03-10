@@ -1791,14 +1791,11 @@ export type Database = {
           created_at: string
           deleted_at: string | null
           email: string | null
-          fee_agreement_on_file: boolean | null
           geographies: string[] | null
           id: string
           is_active: boolean | null
           lender_programs: string[] | null
           name: string
-          nda_created_date: string | null
-          nda_expiration_date: string | null
           notes: string | null
           other_names: string | null
           phone: string | null
@@ -1826,14 +1823,11 @@ export type Database = {
           created_at?: string
           deleted_at?: string | null
           email?: string | null
-          fee_agreement_on_file?: boolean | null
           geographies?: string[] | null
           id?: string
           is_active?: boolean | null
           lender_programs?: string[] | null
           name: string
-          nda_created_date?: string | null
-          nda_expiration_date?: string | null
           notes?: string | null
           other_names?: string | null
           phone?: string | null
@@ -1861,14 +1855,11 @@ export type Database = {
           created_at?: string
           deleted_at?: string | null
           email?: string | null
-          fee_agreement_on_file?: boolean | null
           geographies?: string[] | null
           id?: string
           is_active?: boolean | null
           lender_programs?: string[] | null
           name?: string
-          nda_created_date?: string | null
-          nda_expiration_date?: string | null
           notes?: string | null
           other_names?: string | null
           phone?: string | null

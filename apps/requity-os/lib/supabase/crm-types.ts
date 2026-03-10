@@ -109,7 +109,6 @@ export interface Company {
   state: string | null;
   zip: string | null;
   country: string | null;
-  fee_agreement_on_file: boolean;
   is_active: boolean;
   primary_contact_id: string | null;
   notes: string | null;
@@ -242,7 +241,6 @@ export interface CompanyInsert {
   state?: string | null;
   zip?: string | null;
   country?: string | null;
-  fee_agreement_on_file?: boolean;
   is_active?: boolean;
   primary_contact_id?: string | null;
   notes?: string | null;

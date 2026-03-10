@@ -268,7 +268,7 @@ export default async function CompanyDetailPage({ params }: PageProps) {
   );
 
   // Build section_id → section_key lookup for sections that have field-level layout
-  const fieldSectionKeys = ["company_information", "address", "agreements", "wire_instructions"];
+  const fieldSectionKeys = ["company_information", "address", "wire_instructions"];
   const sectionIdToKey: Record<string, string> = {};
   const sectionIds: string[] = [];
   for (const row of (sectionRowsResult.data ?? []) as Record<string, unknown>[]) {
@@ -365,7 +365,6 @@ export default async function CompanyDetailPage({ params }: PageProps) {
     state: company.state,
     zip: company.zip,
     country: company.country,
-    fee_agreement_on_file: company.fee_agreement_on_file,
     is_active: company.is_active,
     primary_contact_id: company.primary_contact_id,
     referral_contact_id: company.referral_contact_id,
@@ -377,8 +376,6 @@ export default async function CompanyDetailPage({ params }: PageProps) {
     geographies: company.geographies,
     company_capabilities: company.company_capabilities,
     other_names: company.other_names,
-    nda_created_date: company.nda_created_date,
-    nda_expiration_date: company.nda_expiration_date,
     source: company.source,
     title_company_verified: company.title_company_verified,
   };

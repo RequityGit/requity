@@ -15,7 +15,6 @@ export interface CompanyDetailData {
   state: string | null;
   zip: string | null;
   country: string | null;
-  fee_agreement_on_file: boolean | null;
   is_active: boolean | null;
   primary_contact_id: string | null;
   referral_contact_id: string | null;
@@ -27,8 +26,6 @@ export interface CompanyDetailData {
   geographies: string[] | null;
   company_capabilities: string[] | null;
   other_names: string | null;
-  nda_created_date: string | null;
-  nda_expiration_date: string | null;
   source: string | null;
   title_company_verified: boolean | null;
 }

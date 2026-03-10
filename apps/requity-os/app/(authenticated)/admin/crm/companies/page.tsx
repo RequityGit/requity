@@ -73,9 +73,6 @@ export default async function CompaniesPage() {
     contact_count: contactsPerCompany[c.id] ?? 0,
     file_count: filesPerCompany[c.id] ?? 0,
     active_deals: 0,
-    nda_created_date: c.nda_created_date,
-    nda_expiration_date: c.nda_expiration_date,
-    fee_agreement_on_file: c.fee_agreement_on_file,
     is_active: c.is_active,
     notes: c.notes,
   }));

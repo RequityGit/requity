@@ -7,9 +7,7 @@ import {
   MapPin,
   ExternalLink,
   Check,
-  X,
   AlertCircle,
-  Upload,
 } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { DotPill } from "@/components/crm/contact-360/contact-detail-shared";
@@ -29,32 +27,6 @@ interface CompanyDetailHeaderProps {
   } | null;
   lastActivityAt: string | null;
   action?: React.ReactNode;
-  onNavigateToFiles?: () => void;
-}
-
-function computeNdaStatus(company: CompanyDetailData) {
-  if (!company.nda_created_date) {
-    return { label: "NDA Missing", color: "#E5453D", Icon: X };
-  }
-  if (!company.nda_expiration_date) {
-    return { label: "NDA On File", color: "#22A861", Icon: Check };
-  }
-  const exp = new Date(company.nda_expiration_date);
-  const now = new Date();
-  if (exp < now) {
-    return { label: "NDA Expired", color: "#E5453D", Icon: AlertCircle };
-  }
-  const daysLeft = Math.floor(
-    (exp.getTime() - now.getTime()) / 86400000
-  );
-  if (daysLeft < 45) {
-    return {
-      label: `NDA Expires ${formatDate(company.nda_expiration_date)}`,
-      color: "#E5930E",
-      Icon: AlertCircle,
-    };
-  }
-  return { label: "NDA On File", color: "#22A861", Icon: Check };
 }
 
 export function CompanyDetailHeader({
@@ -62,7 +34,6 @@ export function CompanyDetailHeader({
   primaryContact,
   lastActivityAt,
   action,
-  onNavigateToFiles,
 }: CompanyDetailHeaderProps) {
   const types = company.company_types?.length
     ? company.company_types
@@ -76,9 +47,6 @@ export function CompanyDetailHeader({
     .join("")
     .slice(0, 2)
     .toUpperCase();
-
-  const ndaStatus = computeNdaStatus(company);
-  const NdaIcon = ndaStatus.Icon;
 
   const pcName = primaryContact
     ? [primaryContact.first_name, primaryContact.last_name]
@@ -184,64 +152,6 @@ export function CompanyDetailHeader({
 
           {/* Document status badges */}
           <div className="flex gap-2 flex-wrap">
-            {ndaStatus.label !== "NDA On File" && onNavigateToFiles ? (
-              <button
-                onClick={onNavigateToFiles}
-                className="inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[11px] font-medium whitespace-nowrap cursor-pointer hover:opacity-80 transition-opacity"
-                style={{
-                  backgroundColor: `${ndaStatus.color}14`,
-                  color: ndaStatus.color,
-                }}
-                title="Go to Files tab to upload NDA"
-              >
-                <NdaIcon size={10} strokeWidth={1.5} /> {ndaStatus.label}
-                <Upload size={9} strokeWidth={1.5} />
-              </button>
-            ) : (
-              <span
-                className="inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[11px] font-medium whitespace-nowrap"
-                style={{
-                  backgroundColor: `${ndaStatus.color}14`,
-                  color: ndaStatus.color,
-                }}
-              >
-                <NdaIcon size={10} strokeWidth={1.5} /> {ndaStatus.label}
-              </span>
-            )}
-            {!company.fee_agreement_on_file && onNavigateToFiles ? (
-              <button
-                onClick={onNavigateToFiles}
-                className="inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[11px] font-medium whitespace-nowrap cursor-pointer hover:opacity-80 transition-opacity"
-                style={{
-                  backgroundColor: "#E5453D14",
-                  color: "#E5453D",
-                }}
-                title="Go to Files tab to upload Fee Agreement"
-              >
-                <X size={10} strokeWidth={1.5} />
-                Fee Agreement Missing
-                <Upload size={9} strokeWidth={1.5} />
-              </button>
-            ) : (
-              <span
-                className="inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[11px] font-medium whitespace-nowrap"
-                style={{
-                  backgroundColor: company.fee_agreement_on_file
-                    ? "#22A86114"
-                    : "#E5453D14",
-                  color: company.fee_agreement_on_file ? "#22A861" : "#E5453D",
-                }}
-              >
-                {company.fee_agreement_on_file ? (
-                  <Check size={10} strokeWidth={1.5} />
-                ) : (
-                  <X size={10} strokeWidth={1.5} />
-                )}
-                {company.fee_agreement_on_file
-                  ? "Fee Agreement On File"
-                  : "Fee Agreement Missing"}
-              </span>
-            )}
             {types.includes("title_company") && (
               <span
                 className="inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[11px] font-medium whitespace-nowrap"

@@ -69,9 +69,8 @@ const DEFAULT_SECTION_ORDER: SectionLayout[] = [
   { section_key: "address", display_order: 2, is_visible: true, visibility_rule: null },
   { section_key: "lender_details", display_order: 3, is_visible: true, visibility_rule: "is_lender" },
   { section_key: "capabilities_coverage", display_order: 4, is_visible: true, visibility_rule: "not_lender" },
-  { section_key: "agreements", display_order: 5, is_visible: true, visibility_rule: null },
-  { section_key: "wire_instructions", display_order: 6, is_visible: true, visibility_rule: null },
-  { section_key: "description", display_order: 7, is_visible: true, visibility_rule: null },
+  { section_key: "wire_instructions", display_order: 5, is_visible: true, visibility_rule: null },
+  { section_key: "description", display_order: 6, is_visible: true, visibility_rule: null },
 ];
 
 function ChipGroup({
@@ -117,7 +116,6 @@ export function CompanyOverviewTab({
   const [showWire, setShowWire] = useState(false);
   const [editCompanyOpen, setEditCompanyOpen] = useState(false);
   const [editAddressOpen, setEditAddressOpen] = useState(false);
-  const [editAgreementsOpen, setEditAgreementsOpen] = useState(false);
   const [editNotesOpen, setEditNotesOpen] = useState(false);
   const types = company.company_types?.length
     ? company.company_types
@@ -125,22 +123,6 @@ export function CompanyOverviewTab({
   const isLender = types.includes("lender");
   const typeCfg =
     COMPANY_TYPE_CONFIG[types[0]] || COMPANY_TYPE_CONFIG.other;
-
-  // Compute NDA status for display
-  const ndaStatusPill = (() => {
-    if (!company.nda_created_date) return { label: "Missing", color: "#E5453D" };
-    if (!company.nda_expiration_date) return { label: "On File", color: "#22A861" };
-    const exp = new Date(company.nda_expiration_date);
-    const now = new Date();
-    if (exp < now) return { label: "Expired", color: "#E5453D" };
-    return { label: "On File", color: "#22A861" };
-  })();
-
-  // NDA expiration danger flag (within ~3 months)
-  const ndaExpDanger =
-    company.nda_expiration_date &&
-    new Date(company.nda_expiration_date).getTime() - new Date().getTime() <
-      90 * 86400000;
 
   const saveField = useCallback(
     async (field: string, value: string | number | boolean | string[] | null) => {
@@ -189,12 +171,6 @@ export function CompanyOverviewTab({
     { label: "Country", fieldName: "country", fieldType: "text", value: company.country || "US" },
   ];
 
-  const agreementFieldsFallback: CrmSectionField[] = [
-    { label: "NDA Created", fieldName: "nda_created_date", fieldType: "date", value: company.nda_created_date },
-    { label: "NDA Expiration", fieldName: "nda_expiration_date", fieldType: "date", value: company.nda_expiration_date },
-    { label: "Fee Agreement On File", fieldName: "fee_agreement_on_file", fieldType: "boolean", value: company.fee_agreement_on_file },
-  ];
-
   const notesFields: CrmSectionField[] = [
     { label: "Description", fieldName: "notes", fieldType: "textarea", value: company.notes },
   ];
@@ -212,14 +188,6 @@ export function CompanyOverviewTab({
     () => sectionFields.address?.length
       ? buildEditFields(sectionFields.address, companyData, false)
       : addressFieldsFallback,
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [sectionFields, company]
-  );
-
-  const agreementEditFields = useMemo(
-    () => sectionFields.agreements?.length
-      ? buildEditFields(sectionFields.agreements, companyData, false)
-      : agreementFieldsFallback,
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [sectionFields, company]
   );
@@ -327,61 +295,6 @@ export function CompanyOverviewTab({
         <FieldRow label="State" value={company.state} />
         <FieldRow label="Zip" value={company.zip} mono />
         <FieldRow label="Country" value={company.country || "US"} />
-      </div>
-    );
-  }
-
-  // Hardcoded fallback rendering for Agreements
-  function renderAgreementsFallback() {
-    return (
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-x-10">
-        <FieldRow
-          label="NDA Status"
-          value={
-            <span
-              className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium"
-              style={{
-                backgroundColor: `${ndaStatusPill.color}14`,
-                color: ndaStatusPill.color,
-              }}
-            >
-              {ndaStatusPill.label}
-            </span>
-          }
-        />
-        <FieldRow
-          label="NDA Created"
-          value={
-            company.nda_created_date
-              ? formatDate(company.nda_created_date)
-              : undefined
-          }
-        />
-        <FieldRow
-          label="NDA Expiration"
-          value={
-            company.nda_expiration_date
-              ? formatDate(company.nda_expiration_date)
-              : undefined
-          }
-          danger={!!ndaExpDanger}
-        />
-        <FieldRow
-          label="Fee Agreement"
-          value={
-            <span
-              className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium"
-              style={{
-                backgroundColor: company.fee_agreement_on_file
-                  ? "#22A86114"
-                  : "#E5453D14",
-                color: company.fee_agreement_on_file ? "#22A861" : "#E5453D",
-              }}
-            >
-              {company.fee_agreement_on_file ? "On File" : "Missing"}
-            </span>
-          }
-        />
       </div>
     );
   }
@@ -523,14 +436,6 @@ export function CompanyOverviewTab({
       </SectionCard>
     ) : null,
 
-    agreements: (
-      <SectionCard title="Agreements" icon={FileText} action={<SectionEditButton onClick={() => setEditAgreementsOpen(true)} />} key="agreements">
-        {sectionFields.agreements?.length
-          ? renderDynamicFields(sectionFields.agreements, companyData, false)
-          : renderAgreementsFallback()}
-      </SectionCard>
-    ),
-
     wire_instructions: (
       <SectionCard
         title="Wire Instructions"
@@ -637,13 +542,6 @@ export function CompanyOverviewTab({
         onOpenChange={setEditAddressOpen}
         title="Address"
         fields={addressEditFields}
-        onSave={saveField}
-      />
-      <CrmEditSectionDialog
-        open={editAgreementsOpen}
-        onOpenChange={setEditAgreementsOpen}
-        title="Agreements"
-        fields={agreementEditFields}
         onSave={saveField}
       />
       <CrmEditSectionDialog

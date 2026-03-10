@@ -165,7 +165,6 @@ export function CompanyDetailClient({
             company={company}
             primaryContact={primaryContact}
             lastActivityAt={activities[0]?.created_at || null}
-            onNavigateToFiles={() => handleTabChange("files")}
           />
 
           {/* Tab Bar */}
