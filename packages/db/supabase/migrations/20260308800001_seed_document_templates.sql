@@ -12,7 +12,7 @@ SELECT
     {"key":"borrower_name","label":"Borrower Name","source":"crm_contacts","column":"full_name"},
     {"key":"borrower_entity","label":"Borrower Entity","source":"companies","column":"name"},
     {"key":"property_address","label":"Property Address","source":"loans","column":"property_address"},
-    {"key":"loan_amount","label":"Loan Amount","source":"loans","column":"amount","format":"currency"},
+    {"key":"loan_amount","label":"Loan Amount","source":"loans","column":"loan_amount","format":"currency"},
     {"key":"interest_rate","label":"Interest Rate","source":"loans","column":"interest_rate","format":"percentage"},
     {"key":"term_months","label":"Loan Term (months)","source":"loans","column":"term_months"},
     {"key":"effective_date","label":"Date","source":"_system","column":"today","format":"date"},
@@ -63,7 +63,7 @@ SELECT
   '[
     {"key":"broker_name","label":"Broker Name","source":"crm_contacts","column":"full_name"},
     {"key":"broker_company","label":"Broker Company","source":"companies","column":"name"},
-    {"key":"loan_amount","label":"Loan Amount","source":"loans","column":"amount","format":"currency"},
+    {"key":"loan_amount","label":"Loan Amount","source":"loans","column":"loan_amount","format":"currency"},
     {"key":"effective_date","label":"Date","source":"_system","column":"today","format":"date"},
     {"key":"lender_entity","label":"Lender Entity","source":"_system","column":"requity_entity"}
   ]'::jsonb,
