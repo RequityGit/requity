@@ -61,7 +61,7 @@ export default async function AuthenticatedLayout({
                   <ImpersonationBanner />
                   <div className="flex flex-1 overflow-hidden">
                     {/* Desktop sidebar - hidden on mobile */}
-                    <div className="hidden md:block">
+                    <div className="hidden md:block no-print">
                       <Sidebar
                         role={sidebarRole}
                         isSuperAdmin={isSuperAdmin && !impersonation.isImpersonating}
