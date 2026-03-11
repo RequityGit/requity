@@ -158,7 +158,7 @@ export function getEntityUrl(
     case "loan":
       return role === "borrower"
         ? `/borrower/loans/${id}`
-        : `/admin/pipeline/debt/${id}`;
+        : `/admin/pipeline/${id}`;
     case "borrower":
       return `/admin/borrowers/${id}`;
     case "borrower_entity":
@@ -174,12 +174,12 @@ export function getEntityUrl(
     case "crm_contact":
       return `/admin/crm/${id}`;
     case "document":
-      if (metadata.loan_id) return `/admin/pipeline/debt/${metadata.loan_id}`;
+      if (metadata.loan_id) return `/admin/pipeline/${metadata.loan_id}`;
       if (metadata.fund_id) return `/admin/funds/${metadata.fund_id}`;
       return "#";
     case "loan_document":
       return metadata.loan_id
-        ? `/admin/pipeline/debt/${metadata.loan_id}`
+        ? `/admin/pipeline/${metadata.loan_id}`
         : "#";
     case "project":
       return `/admin/operations`;
@@ -356,23 +356,6 @@ function formatStageLabel(stage: string): string {
   return stage
     .replace(/_/g, " ")
     .replace(/\b\w/g, (c) => c.toUpperCase());
-}
-
-// Format relative time for display
-export function formatRelativeTime(dateString: string): string {
-  const date = new Date(dateString);
-  const now = new Date();
-  const diffMs = now.getTime() - date.getTime();
-  const diffSec = Math.floor(diffMs / 1000);
-  const diffMin = Math.floor(diffSec / 60);
-  const diffHour = Math.floor(diffMin / 60);
-  const diffDay = Math.floor(diffHour / 24);
-
-  if (diffSec < 60) return "just now";
-  if (diffMin < 60) return `${diffMin}m ago`;
-  if (diffHour < 24) return `${diffHour}h ago`;
-  if (diffDay < 30) return `${diffDay}d ago`;
-  return date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
 }
 
 // Quick navigation links for empty state

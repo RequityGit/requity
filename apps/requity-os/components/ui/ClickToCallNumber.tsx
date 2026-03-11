@@ -2,6 +2,7 @@
 
 import { Phone } from "lucide-react";
 import { useSoftphoneMaybe } from "@/lib/twilio/softphone-context";
+import { formatPhoneNumber } from "@/lib/format";
 
 interface ClickToCallNumberProps {
   number: string | null | undefined;
@@ -41,12 +42,14 @@ export function ClickToCallNumber({
     softphone.makeOutboundCall(normalized);
   };
 
+  const formatted = formatPhoneNumber(number);
+
   const title = isOffline
     ? "Softphone disconnected"
     : isBusy
       ? "Already on a call"
       : canCall
-        ? `Call ${number}`
+        ? `Call ${formatted}`
         : "";
 
   return (
@@ -70,7 +73,7 @@ export function ClickToCallNumber({
           strokeWidth={1.5}
         />
       )}
-      {number}
+      {formatted}
     </button>
   );
 }

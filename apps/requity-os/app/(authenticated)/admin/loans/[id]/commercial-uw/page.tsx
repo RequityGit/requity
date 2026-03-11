@@ -175,7 +175,7 @@ export default async function CommercialUWPage({ params }: PageProps) {
   return (
     <div className="space-y-4">
       <div className="flex items-center gap-3">
-        <Link href={`/admin/pipeline/debt/${loanId}`}>
+        <Link href={`/admin/pipeline/${loanId}`}>
           <Button variant="ghost" size="sm">
             <ArrowLeft className="h-4 w-4 mr-1" />
             Back to Loan

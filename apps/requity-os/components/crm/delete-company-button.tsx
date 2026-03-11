@@ -16,20 +16,20 @@ import {
 } from "@/components/ui/alert-dialog";
 import { useToast } from "@/components/ui/use-toast";
 import { Trash2 } from "lucide-react";
-import { deleteCompanyAction } from "@/app/(authenticated)/admin/crm/company-actions";
+import { deleteCrmCompanyAction } from "@/app/(authenticated)/admin/crm/actions";
 
 interface DeleteCompanyButtonProps {
   companyId: string;
   companyName: string;
-  redirectTo?: string;
   variant?: "icon" | "button";
+  onDeleted?: () => void;
 }
 
 export function DeleteCompanyButton({
   companyId,
   companyName,
-  redirectTo,
   variant = "button",
+  onDeleted,
 }: DeleteCompanyButtonProps) {
   const [loading, setLoading] = useState(false);
   const router = useRouter();
@@ -38,27 +38,27 @@ export function DeleteCompanyButton({
   async function handleDelete() {
     setLoading(true);
     try {
-      const result = await deleteCompanyAction(companyId);
+      const result = await deleteCrmCompanyAction(companyId);
 
-      if ("error" in result && result.error) {
+      if (result.error) {
         toast({
-          title: "Error deactivating company",
+          title: "Error deleting company",
           description: result.error,
           variant: "destructive",
         });
         return;
       }
 
-      toast({ title: "Company deactivated" });
+      toast({ title: "Company deleted" });
 
-      if (redirectTo) {
-        router.push(redirectTo);
-      } else {
-        router.refresh();
+      if (onDeleted) {
+        onDeleted();
       }
+
+      router.refresh();
     } catch {
       toast({
-        title: "Error deactivating company",
+        title: "Error deleting company",
         description: "An unexpected error occurred",
         variant: "destructive",
       });
@@ -85,17 +85,16 @@ export function DeleteCompanyButton({
             className="gap-2 text-red-600 border-red-200 hover:bg-red-50 hover:text-red-700"
           >
             <Trash2 className="h-4 w-4" />
-            Deactivate
+            Delete
           </Button>
         )}
       </AlertDialogTrigger>
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>Deactivate Company</AlertDialogTitle>
+          <AlertDialogTitle>Delete Company</AlertDialogTitle>
           <AlertDialogDescription>
-            Are you sure you want to deactivate &quot;{companyName}&quot;? The
-            company will be hidden from all lists. This can be reversed by
-            reactivating the company.
+            Are you sure you want to delete &quot;{companyName}&quot;? This
+            company will be removed from the CRM. This action cannot be undone.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
@@ -105,7 +104,7 @@ export function DeleteCompanyButton({
             disabled={loading}
             className="bg-red-600 hover:bg-red-700"
           >
-            {loading ? "Deactivating..." : "Deactivate"}
+            {loading ? "Deleting..." : "Delete"}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

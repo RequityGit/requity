@@ -709,8 +709,6 @@ export const COMPANY_FILE_TYPES = [
   { value: "tear_sheet", label: "Tear Sheet" },
   { value: "nda", label: "NDA" },
   { value: "fee_agreement", label: "Fee Agreement" },
-  { value: "rate_sheet", label: "Rate Sheet" },
-  { value: "w9", label: "W-9" },
   { value: "broker_agreement", label: "Broker Agreement" },
   { value: "guidelines", label: "Guidelines" },
   { value: "other", label: "Other" },
@@ -781,6 +779,7 @@ export const OPS_TASK_STATUSES = [
   "In Progress",
   "In Review",
   "Blocked",
+  "Pending Approval",
   "Complete",
 ] as const;
 export type OpsTaskStatus = (typeof OPS_TASK_STATUSES)[number];
@@ -881,8 +880,6 @@ export const PORTAL_DOCUMENT_TYPES = [
   { value: "bank_statement", label: "Bank Statement" },
   { value: "nda", label: "NDA" },
   { value: "fee_agreement", label: "Fee Agreement" },
-  { value: "rate_sheet", label: "Rate Sheet" },
-  { value: "w9", label: "W-9" },
   { value: "broker_agreement", label: "Broker Agreement" },
   { value: "guidelines", label: "Guidelines" },
   { value: "tear_sheet", label: "Tear Sheet" },

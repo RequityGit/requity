@@ -11,7 +11,7 @@ import {
   type PriceAdjustment,
 } from "@/lib/dscr/pricing-engine";
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
+import type { Json } from "@/lib/supabase/types";
 
 // ---------------------------------------------------------------------------
 // Lender CRUD
@@ -37,7 +37,7 @@ export async function addLenderAction(input: LenderInput) {
 
     const admin = createAdminClient();
     const { data, error } = await admin
-      .from("dscr_lenders" as any)
+      .from("dscr_lenders")
       .insert({
         name: input.name,
         short_name: input.short_name,
@@ -56,8 +56,8 @@ export async function addLenderAction(input: LenderInput) {
     if (error) return { error: error.message };
 
     // Record version history
-    const lenderId = (data as any).id;
-    await admin.from("dscr_pricing_versions" as any).insert({
+    const lenderId = data.id;
+    await admin.from("dscr_pricing_versions").insert({
       lender_id: lenderId,
       lender_name: input.short_name || input.name,
       version: 1,
@@ -80,7 +80,7 @@ export async function updateLenderAction(id: string, input: LenderInput) {
 
     const admin = createAdminClient();
     const { error } = await admin
-      .from("dscr_lenders" as any)
+      .from("dscr_lenders")
       .update({
         name: input.name,
         short_name: input.short_name,
@@ -110,7 +110,7 @@ export async function toggleLenderActiveAction(id: string, isActive: boolean) {
 
     const admin = createAdminClient();
     const { error } = await admin
-      .from("dscr_lenders" as any)
+      .from("dscr_lenders")
       .update({ is_active: isActive })
       .eq("id", id);
 
@@ -156,7 +156,7 @@ export async function addProductAction(input: ProductInput) {
 
     const admin = createAdminClient();
     const { data, error } = await admin
-      .from("dscr_lender_products" as any)
+      .from("dscr_lender_products")
       .insert({
         lender_id: input.lender_id,
         product_name: input.product_name,
@@ -185,18 +185,18 @@ export async function addProductAction(input: ProductInput) {
     if (error) return { error: error.message };
 
     // Record version history
-    const productId = (data as any).id;
+    const productId = data.id;
     const { data: lender } = await admin
-      .from("dscr_lenders" as any)
+      .from("dscr_lenders")
       .select("name, short_name")
       .eq("id", input.lender_id)
       .single();
 
     if (lender) {
-      await admin.from("dscr_pricing_versions" as any).insert({
+      await admin.from("dscr_pricing_versions").insert({
         lender_id: input.lender_id,
         product_id: productId,
-        lender_name: (lender as any).short_name || (lender as any).name,
+        lender_name: lender.short_name || lender.name,
         product_name: input.product_name,
         version: 1,
         change_type: "product_added",
@@ -219,7 +219,7 @@ export async function updateProductAction(id: string, input: Omit<ProductInput, 
 
     const admin = createAdminClient();
     const { error } = await admin
-      .from("dscr_lender_products" as any)
+      .from("dscr_lender_products")
       .update({
         product_name: input.product_name,
         product_type: input.product_type || "dscr",
@@ -258,7 +258,7 @@ export async function toggleProductActiveAction(id: string, isActive: boolean) {
 
     const admin = createAdminClient();
     const { error } = await admin
-      .from("dscr_lender_products" as any)
+      .from("dscr_lender_products")
       .update({ is_active: isActive })
       .eq("id", id);
 
@@ -266,21 +266,21 @@ export async function toggleProductActiveAction(id: string, isActive: boolean) {
 
     // Record version history
     const { data: product } = await admin
-      .from("dscr_lender_products" as any)
+      .from("dscr_lender_products")
       .select("*, dscr_lenders(name, short_name)")
       .eq("id", id)
       .single();
 
     if (product) {
-      const p = product as any;
-      await admin.from("dscr_pricing_versions" as any).insert({
-        lender_id: p.lender_id,
+      const lenderInfo = product.dscr_lenders as { name: string; short_name: string } | null;
+      await admin.from("dscr_pricing_versions").insert({
+        lender_id: product.lender_id,
         product_id: id,
-        lender_name: p.dscr_lenders?.short_name || p.dscr_lenders?.name,
-        product_name: p.product_name,
+        lender_name: lenderInfo?.short_name || lenderInfo?.name || "Unknown",
+        product_name: product.product_name,
         version: 0,
         change_type: isActive ? "product_added" : "product_deactivated",
-        change_description: `Product ${isActive ? "activated" : "deactivated"}: ${p.product_name}`,
+        change_description: `Product ${isActive ? "activated" : "deactivated"}: ${product.product_name}`,
         changed_by: auth.user.id,
       });
     }
@@ -336,14 +336,14 @@ export async function commitRateSheetAction(input: CommitRateSheetInput) {
     const admin = createAdminClient();
 
     // Delete existing rate data for this product
-    await admin.from("dscr_base_rates" as any).delete().eq("product_id", input.product_id);
-    await admin.from("dscr_fico_ltv_adjustments" as any).delete().eq("product_id", input.product_id);
-    await admin.from("dscr_price_adjustments" as any).delete().eq("product_id", input.product_id);
+    await admin.from("dscr_base_rates").delete().eq("product_id", input.product_id);
+    await admin.from("dscr_fico_ltv_adjustments").delete().eq("product_id", input.product_id);
+    await admin.from("dscr_price_adjustments").delete().eq("product_id", input.product_id);
 
     // Insert base rates
     if (input.base_rates.length > 0) {
       const { error: rateErr } = await admin
-        .from("dscr_base_rates" as any)
+        .from("dscr_base_rates")
         .insert(
           input.base_rates.map((r) => ({
             product_id: input.product_id,
@@ -357,7 +357,7 @@ export async function commitRateSheetAction(input: CommitRateSheetInput) {
     // Insert FICO/LTV adjustments
     if (input.fico_ltv_adjustments.length > 0) {
       const { error: ficoErr } = await admin
-        .from("dscr_fico_ltv_adjustments" as any)
+        .from("dscr_fico_ltv_adjustments")
         .insert(
           input.fico_ltv_adjustments.map((a) => ({
             product_id: input.product_id,
@@ -377,7 +377,7 @@ export async function commitRateSheetAction(input: CommitRateSheetInput) {
     // Insert price adjustments
     if (input.price_adjustments.length > 0) {
       const { error: adjErr } = await admin
-        .from("dscr_price_adjustments" as any)
+        .from("dscr_price_adjustments")
         .insert(
           input.price_adjustments.map((a, idx) => ({
             product_id: input.product_id,
@@ -401,43 +401,43 @@ export async function commitRateSheetAction(input: CommitRateSheetInput) {
 
     // Update product rate sheet date
     await admin
-      .from("dscr_lender_products" as any)
+      .from("dscr_lender_products")
       .update({ rate_sheet_date: input.rate_sheet_date })
       .eq("id", input.product_id);
 
     // Update upload record if provided
     if (input.upload_id) {
       await admin
-        .from("dscr_rate_sheet_uploads" as any)
+        .from("dscr_rate_sheet_uploads")
         .update({ parsing_status: "success", parsed_at: new Date().toISOString() })
         .eq("id", input.upload_id);
     }
 
     // Record version history
     const { data: product } = await admin
-      .from("dscr_lender_products" as any)
+      .from("dscr_lender_products")
       .select("*, dscr_lenders(name, short_name)")
       .eq("id", input.product_id)
       .single();
 
     if (product) {
-      const p = product as any;
+      const lenderInfo = product.dscr_lenders as { name: string; short_name: string } | null;
       // Get next version number
       const { data: lastVersion } = await admin
-        .from("dscr_pricing_versions" as any)
+        .from("dscr_pricing_versions")
         .select("version")
         .eq("product_id", input.product_id)
         .order("version", { ascending: false })
         .limit(1)
         .single();
 
-      const nextVersion = ((lastVersion as any)?.version ?? 0) + 1;
+      const nextVersion = (lastVersion?.version ?? 0) + 1;
 
-      await admin.from("dscr_pricing_versions" as any).insert({
-        lender_id: p.lender_id,
+      await admin.from("dscr_pricing_versions").insert({
+        lender_id: product.lender_id,
         product_id: input.product_id,
-        lender_name: p.dscr_lenders?.short_name || p.dscr_lenders?.name,
-        product_name: p.product_name,
+        lender_name: lenderInfo?.short_name || lenderInfo?.name || "Unknown",
+        product_name: product.product_name,
         version: nextVersion,
         change_type: "rate_sheet_commit",
         change_description: `Rate sheet committed (${input.base_rates.length} rates, ${input.price_adjustments.length} LLPAs, effective ${input.rate_sheet_date})`,
@@ -522,7 +522,7 @@ export async function runPricingAction(input: PricingRunInput) {
 
     // Fetch all active products with their lender info
     const { data: products, error: prodErr } = await admin
-      .from("dscr_lender_products" as any)
+      .from("dscr_lender_products")
       .select("*, dscr_lenders!inner(name, short_name)")
       .eq("is_active", true);
 
@@ -533,33 +533,33 @@ export async function runPricingAction(input: PricingRunInput) {
 
     // Build product data for the pricing engine
     const productData = await Promise.all(
-      (products as any[]).map(async (p: any) => {
+      products.map(async (p) => {
         const [baseRatesRes, ficoRes, adjRes] = await Promise.all([
           admin
-            .from("dscr_base_rates" as any)
+            .from("dscr_base_rates")
             .select("note_rate, base_price")
             .eq("product_id", p.id)
             .order("note_rate"),
           admin
-            .from("dscr_fico_ltv_adjustments" as any)
+            .from("dscr_fico_ltv_adjustments")
             .select("*")
             .eq("product_id", p.id),
           admin
-            .from("dscr_price_adjustments" as any)
+            .from("dscr_price_adjustments")
             .select("*")
             .eq("product_id", p.id)
             .order("sort_order"),
         ]);
 
-        const lender = p.dscr_lenders;
+        const lenderInfo = p.dscr_lenders as { name: string; short_name: string } | null;
         const product: LenderProduct = {
           id: p.id,
           lender_id: p.lender_id,
-          lender_name: lender?.name || "Unknown",
-          lender_short_name: lender?.short_name || "?",
+          lender_name: lenderInfo?.name || "Unknown",
+          lender_short_name: lenderInfo?.short_name || "?",
           product_name: p.product_name,
-          product_type: p.product_type,
-          lock_period_days: p.lock_period_days,
+          product_type: p.product_type ?? "dscr",
+          lock_period_days: p.lock_period_days ?? 45,
           floor_rate: p.floor_rate,
           max_price: p.max_price,
           min_price: p.min_price,
@@ -568,15 +568,15 @@ export async function runPricingAction(input: PricingRunInput) {
           max_ltv_cashout: p.max_ltv_cashout,
           max_loan_amount: p.max_loan_amount,
           min_loan_amount: p.min_loan_amount,
-          state_restrictions: p.state_restrictions || [],
-          eligible_property_types: p.eligible_property_types || [],
-          eligible_borrower_types: p.eligible_borrower_types || [],
+          state_restrictions: (p.state_restrictions as string[]) || [],
+          eligible_property_types: (p.eligible_property_types as string[]) || [],
+          eligible_borrower_types: (p.eligible_borrower_types as string[]) || [],
           funding_fee: p.funding_fee,
           underwriting_fee: p.underwriting_fee,
           processing_fee: p.processing_fee,
           desk_review_fee: p.desk_review_fee,
           entity_review_fee: p.entity_review_fee,
-          other_fees: p.other_fees || {},
+          other_fees: (p.other_fees as Record<string, number>) || {},
           rate_sheet_date: p.rate_sheet_date,
         };
 
@@ -594,7 +594,7 @@ export async function runPricingAction(input: PricingRunInput) {
 
     // Save the pricing run
     const { data: run, error: runErr } = await admin
-      .from("dscr_pricing_runs" as any)
+      .from("dscr_pricing_runs")
       .insert({
         run_by: auth.user.id,
         borrower_name: input.borrower_name || null,
@@ -623,7 +623,7 @@ export async function runPricingAction(input: PricingRunInput) {
         lock_period_days: input.lock_period_days || 45,
         broker_points: input.broker_points ?? 2.0,
         ltv,
-        results: pricingResult,
+        results: pricingResult as unknown as Json,
         best_execution_lender: pricingResult.best_execution?.lender_name || null,
         best_execution_rate: pricingResult.best_execution?.best_par_rate?.note_rate || null,
         best_execution_price: pricingResult.best_execution?.best_par_rate?.net_price || null,
@@ -637,7 +637,7 @@ export async function runPricingAction(input: PricingRunInput) {
 
     return {
       success: true,
-      pricingRunId: (run as any).id,
+      pricingRunId: run.id,
       result: pricingResult,
     };
   } catch (err: unknown) {
@@ -659,18 +659,16 @@ export async function parseRateSheetAction(uploadId: string) {
 
     // Get upload record
     const { data: upload, error: uploadErr } = await admin
-      .from("dscr_rate_sheet_uploads" as any)
+      .from("dscr_rate_sheet_uploads")
       .select("*")
       .eq("id", uploadId)
       .single();
 
     if (uploadErr || !upload) return { error: "Upload not found" };
 
-    const uploadData = upload as any;
-
     // Update status to parsing
     await admin
-      .from("dscr_rate_sheet_uploads" as any)
+      .from("dscr_rate_sheet_uploads")
       .update({ parsing_status: "parsing" })
       .eq("id", uploadId);
 
@@ -678,11 +676,11 @@ export async function parseRateSheetAction(uploadId: string) {
     const { data: fileData, error: fileErr } = await admin
       .storage
       .from("rate-sheets")
-      .download(uploadData.file_path);
+      .download(upload.file_path);
 
     if (fileErr || !fileData) {
       await admin
-        .from("dscr_rate_sheet_uploads" as any)
+        .from("dscr_rate_sheet_uploads")
         .update({ parsing_status: "error", parsing_notes: "Could not download file" })
         .eq("id", uploadId);
       return { error: "Could not download rate sheet file" };
@@ -697,7 +695,7 @@ export async function parseRateSheetAction(uploadId: string) {
     const apiKey = process.env.ANTHROPIC_API_KEY;
     if (!apiKey) {
       await admin
-        .from("dscr_rate_sheet_uploads" as any)
+        .from("dscr_rate_sheet_uploads")
         .update({ parsing_status: "error", parsing_notes: "ANTHROPIC_API_KEY not configured" })
         .eq("id", uploadId);
       return { error: "ANTHROPIC_API_KEY not configured" };
@@ -798,17 +796,17 @@ Return ONLY valid JSON with this structure:
     if (!response.ok) {
       const errorText = await response.text();
       await admin
-        .from("dscr_rate_sheet_uploads" as any)
+        .from("dscr_rate_sheet_uploads")
         .update({ parsing_status: "error", parsing_notes: `API error: ${response.status}` })
         .eq("id", uploadId);
       return { error: `Claude API error: ${response.status} — ${errorText}` };
     }
 
-    const apiResult = await response.json();
-    const textContent = apiResult.content?.find((c: any) => c.type === "text");
+    const apiResult = await response.json() as { content?: { type: string; text: string }[] };
+    const textContent = apiResult.content?.find((c) => c.type === "text");
     if (!textContent) {
       await admin
-        .from("dscr_rate_sheet_uploads" as any)
+        .from("dscr_rate_sheet_uploads")
         .update({ parsing_status: "error", parsing_notes: "No text response from API" })
         .eq("id", uploadId);
       return { error: "No response from Claude API" };
@@ -821,16 +819,16 @@ Return ONLY valid JSON with this structure:
       jsonStr = jsonMatch[1];
     }
 
-    let parsedData: any;
+    let parsedData: Json;
     try {
       parsedData = JSON.parse(jsonStr.trim());
     } catch {
       await admin
-        .from("dscr_rate_sheet_uploads" as any)
+        .from("dscr_rate_sheet_uploads")
         .update({
           parsing_status: "error",
           parsing_notes: "Failed to parse JSON from API response",
-          raw_parsed_data: { raw_text: textContent.text },
+          raw_parsed_data: { raw_text: textContent.text } as unknown as Json,
         })
         .eq("id", uploadId);
       return { error: "Failed to parse JSON from Claude response" };
@@ -838,7 +836,7 @@ Return ONLY valid JSON with this structure:
 
     // Store parsed data
     await admin
-      .from("dscr_rate_sheet_uploads" as any)
+      .from("dscr_rate_sheet_uploads")
       .update({
         parsing_status: "review_needed",
         parsed_at: new Date().toISOString(),
@@ -871,7 +869,7 @@ export async function createRateSheetUploadAction(
 
     const admin = createAdminClient();
     const { data, error } = await admin
-      .from("dscr_rate_sheet_uploads" as any)
+      .from("dscr_rate_sheet_uploads")
       .insert({
         lender_id: lenderId,
         product_id: productId,
@@ -884,7 +882,7 @@ export async function createRateSheetUploadAction(
       .single();
 
     if (error) return { error: error.message };
-    return { success: true, uploadId: (data as any).id };
+    return { success: true, uploadId: data.id };
   } catch (err: unknown) {
     console.error("createRateSheetUploadAction error:", err);
     return { error: err instanceof Error ? err.message : "An unexpected error occurred" };
@@ -910,7 +908,7 @@ export async function saveQuoteAction(input: {
 
     const admin = createAdminClient();
     const { data, error } = await admin
-      .from("dscr_quotes" as any)
+      .from("dscr_quotes")
       .insert({
         pricing_run_id: input.pricing_run_id,
         borrower_name: input.borrower_name || null,
@@ -926,7 +924,7 @@ export async function saveQuoteAction(input: {
       .single();
 
     if (error) return { error: error.message };
-    return { success: true, quoteId: (data as any).id };
+    return { success: true, quoteId: data.id };
   } catch (err: unknown) {
     console.error("saveQuoteAction error:", err);
     return { error: err instanceof Error ? err.message : "An unexpected error occurred" };

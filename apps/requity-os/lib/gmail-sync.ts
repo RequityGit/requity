@@ -25,7 +25,8 @@ interface GmailMessageHeader {
 interface GmailMessagePart {
   mimeType: string;
   headers?: GmailMessageHeader[];
-  body?: { size: number; data?: string };
+  body?: { size: number; data?: string; attachmentId?: string };
+  filename?: string;
   parts?: GmailMessagePart[];
 }
 
@@ -367,6 +368,240 @@ async function emailExists(
   return !!data;
 }
 
+// ---------------------------------------------------------------------------
+// Email intake helpers
+// ---------------------------------------------------------------------------
+
+const INTAKE_ADDRESSES = (process.env.EMAIL_INTAKE_ADDRESSES || "intake@requitygroup.com")
+  .split(",")
+  .map((e) => e.trim().toLowerCase())
+  .filter(Boolean);
+
+/**
+ * Check if any of the To addresses match a configured intake email address.
+ */
+function isIntakeEmail(parsed: ParsedEmail): boolean {
+  if (INTAKE_ADDRESSES.length === 0) return false;
+  return parsed.to.some((t) => INTAKE_ADDRESSES.includes(t.email.toLowerCase()));
+}
+
+interface AttachmentPart {
+  filename: string;
+  mimeType: string;
+  size: number;
+  attachmentId?: string;
+  inlineData?: string; // base64url-encoded
+}
+
+/**
+ * Walk the MIME tree and collect attachment parts.
+ */
+function findAttachmentParts(payload: GmailMessage["payload"]): AttachmentPart[] {
+  const attachments: AttachmentPart[] = [];
+  if (!payload) return attachments;
+
+  function walk(part: GmailMessagePart) {
+    // A part is an attachment if it has a filename and non-zero size
+    if (part.filename && part.filename.length > 0 && part.body && part.body.size > 0) {
+      attachments.push({
+        filename: part.filename,
+        mimeType: part.mimeType,
+        size: part.body.size,
+        attachmentId: part.body.attachmentId,
+        inlineData: part.body.data || undefined,
+      });
+    }
+    if (part.parts) {
+      part.parts.forEach(walk);
+    }
+  }
+
+  // Check top-level payload
+  if (payload.parts) {
+    payload.parts.forEach(walk);
+  }
+
+  return attachments;
+}
+
+/**
+ * Download an attachment from Gmail API.
+ * Small attachments have inline data; larger ones require a separate API call.
+ */
+async function downloadGmailAttachment(
+  accessToken: string,
+  messageId: string,
+  part: AttachmentPart
+): Promise<Buffer> {
+  if (part.inlineData) {
+    // Data is already available inline (base64url)
+    const base64 = part.inlineData.replace(/-/g, "+").replace(/_/g, "/");
+    return Buffer.from(base64, "base64");
+  }
+
+  if (!part.attachmentId) {
+    throw new Error(`No attachmentId or inline data for ${part.filename}`);
+  }
+
+  // Fetch from Gmail API
+  const res = await gmailGet<{ data: string }>(
+    accessToken,
+    `/messages/${messageId}/attachments/${part.attachmentId}`
+  );
+
+  const base64 = res.data.replace(/-/g, "+").replace(/_/g, "/");
+  return Buffer.from(base64, "base64");
+}
+
+/**
+ * Process an intake email: download attachments, upload to storage, create queue entry.
+ */
+async function processIntakeEmail(
+  admin: ReturnType<typeof createAdminClient>,
+  parsed: ParsedEmail,
+  accessToken: string,
+  fullMessage: GmailMessage,
+  emailRowId: string | null,
+  matchCache: Map<string, EntityMatch[]>
+): Promise<void> {
+  const { sanitizeStorageName, validateFile, MAX_FILE_SIZES, ACCEPTED_DOCUMENT_EXTENSIONS } =
+    await import("@/lib/document-upload-utils");
+
+  const attachmentParts = findAttachmentParts(fullMessage.payload);
+
+  // Upload attachments to Supabase Storage
+  const attachmentsMeta: Array<{
+    filename: string;
+    storage_path: string;
+    mime_type: string;
+    size_bytes: number;
+    extraction_status: string;
+  }> = [];
+
+  for (const part of attachmentParts) {
+    // Validate file
+    const validationError = validateFile(
+      { name: part.filename, size: part.size, type: part.mimeType },
+      { maxSizeBytes: MAX_FILE_SIZES.document, acceptedExtensions: ACCEPTED_DOCUMENT_EXTENSIONS }
+    );
+
+    if (validationError) {
+      console.error(`[Intake] Skipping attachment ${part.filename}: ${validationError}`);
+      attachmentsMeta.push({
+        filename: part.filename,
+        storage_path: "",
+        mime_type: part.mimeType,
+        size_bytes: part.size,
+        extraction_status: "skipped",
+      });
+      continue;
+    }
+
+    try {
+      const buffer = await downloadGmailAttachment(accessToken, parsed.gmailMessageId, part);
+      const safeName = sanitizeStorageName(part.filename);
+      const timestamp = Date.now();
+      const storagePath = `email-intake/${parsed.gmailMessageId}/${timestamp}_${safeName}`;
+
+      const { error: uploadError } = await admin.storage
+        .from("loan-documents")
+        .upload(storagePath, buffer, {
+          contentType: part.mimeType,
+          upsert: false,
+        });
+
+      if (uploadError) {
+        console.error(`[Intake] Failed to upload ${part.filename}:`, uploadError);
+        attachmentsMeta.push({
+          filename: part.filename,
+          storage_path: "",
+          mime_type: part.mimeType,
+          size_bytes: part.size,
+          extraction_status: "upload_failed",
+        });
+        continue;
+      }
+
+      // Determine extraction status based on file type
+      const ext = part.filename.toLowerCase().split(".").pop() || "";
+      const extractable = ["pdf", "png", "jpg", "jpeg"].includes(ext);
+
+      attachmentsMeta.push({
+        filename: part.filename,
+        storage_path: storagePath,
+        mime_type: part.mimeType,
+        size_bytes: buffer.length,
+        extraction_status: extractable ? "pending" : "manual_review",
+      });
+    } catch (err) {
+      console.error(`[Intake] Error downloading attachment ${part.filename}:`, err);
+      attachmentsMeta.push({
+        filename: part.filename,
+        storage_path: "",
+        mime_type: part.mimeType,
+        size_bytes: part.size,
+        extraction_status: "download_failed",
+      });
+    }
+  }
+
+  // Try to match the sender to a known contact
+  const senderMatches = matchCache.get(parsed.from.toLowerCase()) || [];
+  const matchedContactId = senderMatches.find((m) => m.contact_id)?.contact_id || null;
+
+  // Body preview (first 500 chars of plain text)
+  const bodyPreview = parsed.bodyText
+    ? parsed.bodyText.substring(0, 500)
+    : null;
+
+  // Insert queue entry
+  const { data: queueRow, error: queueError } = await admin
+    .from("email_intake_queue")
+    .insert({
+      crm_email_id: emailRowId,
+      gmail_message_id: parsed.gmailMessageId,
+      from_email: parsed.from,
+      from_name: parsed.fromName,
+      subject: parsed.subject,
+      body_preview: bodyPreview,
+      received_at: parsed.date,
+      status: "pending",
+      attachments: attachmentsMeta,
+      matched_contact_id: matchedContactId,
+    })
+    .select("id")
+    .single();
+
+  if (queueError) {
+    // Unique constraint violation means it was already queued
+    if (queueError.code === "23505") return;
+    console.error("[Intake] Failed to insert queue entry:", queueError);
+    return;
+  }
+
+  // Fire-and-forget: trigger AI extraction
+  if (queueRow) {
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.URL || "";
+    const cronSecret = process.env.CRON_SECRET || "";
+    if (appUrl && cronSecret) {
+      fetch(`${appUrl}/api/intake/process`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${cronSecret}`,
+        },
+        body: JSON.stringify({ intake_queue_id: queueRow.id }),
+      }).catch((err) => {
+        console.error("[Intake] Failed to trigger AI extraction:", err);
+      });
+    }
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Message processing
+// ---------------------------------------------------------------------------
+
 /**
  * Process and store a single email message.
  * Returns true if the email was stored, false if skipped.
@@ -376,7 +611,9 @@ async function processMessage(
   parsed: ParsedEmail,
   syncUserId: string,
   syncUserEmail: string,
-  matchCache: Map<string, EntityMatch[]>
+  matchCache: Map<string, EntityMatch[]>,
+  accessToken?: string,
+  fullMessage?: GmailMessage
 ): Promise<boolean> {
   // Skip if already synced (dedup)
   const exists = await emailExists(admin, parsed.gmailMessageId);
@@ -412,8 +649,11 @@ async function processMessage(
     }
   }
 
-  // Skip if no external contacts matched
-  if (!hasExternalMatch) return false;
+  // Check if this is an intake email (sent to intake@requitygroup.com)
+  const isIntake = isIntakeEmail(parsed);
+
+  // Skip if no external contacts matched (unless it's an intake email)
+  if (!hasExternalMatch && !isIntake) return false;
 
   // Determine direction
   const direction = determineDirection(parsed, syncUserEmail);
@@ -500,6 +740,22 @@ async function processMessage(
     console.error("Failed to insert email participants:", participantError);
   }
 
+  // If this is an intake email, process attachments and create queue entry
+  if (isIntake && accessToken && fullMessage) {
+    try {
+      await processIntakeEmail(
+        admin,
+        parsed,
+        accessToken,
+        fullMessage,
+        emailRow.id,
+        matchCache
+      );
+    } catch (err) {
+      console.error("[Intake] Failed to process intake email:", err);
+    }
+  }
+
   return true;
 }
 
@@ -562,14 +818,16 @@ async function initialSync(
         })
       );
 
-      // Parse all messages in this batch
-      const parsedMessages = fullMessages
-        .filter((m): m is GmailMessage => m !== null)
-        .map(parseGmailMessage);
+      // Parse all messages in this batch, keeping reference to full message for attachments
+      const validMessages = fullMessages.filter((m): m is GmailMessage => m !== null);
+      const parsedMessages = validMessages.map((msg) => ({
+        parsed: parseGmailMessage(msg),
+        full: msg,
+      }));
 
       // Collect all email addresses for batch matching
       const allEmails: string[] = [];
-      for (const parsed of parsedMessages) {
+      for (const { parsed } of parsedMessages) {
         allEmails.push(parsed.from);
         parsed.to.forEach((t) => allEmails.push(t.email));
         parsed.cc.forEach((c) => allEmails.push(c.email));
@@ -579,9 +837,9 @@ async function initialSync(
       const matchCache = await buildMatchCache(admin, allEmails);
 
       // Process each message
-      for (const parsed of parsedMessages) {
+      for (const { parsed, full } of parsedMessages) {
         try {
-          const stored = await processMessage(admin, parsed, userId, gmailEmail, matchCache);
+          const stored = await processMessage(admin, parsed, userId, gmailEmail, matchCache, accessToken, full);
           if (stored) {
             messagesProcessed++;
           } else {
@@ -673,12 +931,14 @@ async function incrementalSync(
         })
       );
 
-      const parsedMessages = fullMessages
-        .filter((m): m is GmailMessage => m !== null)
-        .map(parseGmailMessage);
+      const validMessages = fullMessages.filter((m): m is GmailMessage => m !== null);
+      const parsedMessages = validMessages.map((msg) => ({
+        parsed: parseGmailMessage(msg),
+        full: msg,
+      }));
 
       const allEmails: string[] = [];
-      for (const parsed of parsedMessages) {
+      for (const { parsed } of parsedMessages) {
         allEmails.push(parsed.from);
         parsed.to.forEach((t) => allEmails.push(t.email));
         parsed.cc.forEach((c) => allEmails.push(c.email));
@@ -687,9 +947,9 @@ async function incrementalSync(
 
       const matchCache = await buildMatchCache(admin, allEmails);
 
-      for (const parsed of parsedMessages) {
+      for (const { parsed, full } of parsedMessages) {
         try {
-          const stored = await processMessage(admin, parsed, userId, gmailEmail, matchCache);
+          const stored = await processMessage(admin, parsed, userId, gmailEmail, matchCache, accessToken, full);
           if (stored) {
             messagesProcessed++;
           } else {

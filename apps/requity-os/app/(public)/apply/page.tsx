@@ -1,5 +1,36 @@
-// @ts-nocheck
 'use client';
+
+interface GoogleAddressComponent {
+  long_name: string;
+  short_name: string;
+  types: string[];
+}
+
+interface GooglePlaceResult {
+  address_components?: GoogleAddressComponent[];
+  formatted_address?: string;
+  name?: string;
+}
+
+interface GoogleAutocomplete {
+  addListener: (event: string, handler: () => void) => void;
+  getPlace: () => GooglePlaceResult;
+}
+
+declare global {
+  interface Window {
+    google?: {
+      maps?: {
+        places?: {
+          Autocomplete: new (input: HTMLInputElement, opts: Record<string, unknown>) => GoogleAutocomplete;
+        };
+        event?: {
+          clearInstanceListeners: (instance: unknown) => void;
+        };
+      };
+    };
+  }
+}
 
 import { useState, useRef, useEffect, useCallback } from 'react';
 import Link from 'next/link';
@@ -141,7 +172,24 @@ const EXPERIENCE_LEVELS = [
 
 /* ─── Loan Program Pricing (synced from Google Sheets → data/pricing-config.json) ─── */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-const LOAN_PROGRAMS: Record<string, any> = pricingConfig.loanPrograms;
+interface PricingProgramRequirements {
+  minCreditScore: number;
+  minDeals24Months: number;
+  citizenship: string;
+}
+
+interface PricingProgram {
+  loanTermMonths: number;
+  requirements: PricingProgramRequirements;
+  [key: string]: unknown;
+}
+
+interface LoanProgramConfig {
+  programs: PricingProgram[];
+  [key: string]: unknown;
+}
+
+const LOAN_PROGRAMS: Record<string, LoanProgramConfig> = pricingConfig.loanPrograms as Record<string, LoanProgramConfig>;
 
 const COMMERCIAL_TERM_TYPES = ['CRE Bridge', 'RV Park', 'Multifamily'];
 const RESIDENTIAL_TERM_TYPES = ['Fix & Flip', 'DSCR Rental', 'Manufactured Housing', 'New Construction'];
@@ -330,10 +378,10 @@ export default function ApplyPage() {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [generatedTerms, setGeneratedTerms] = useState<Record<string, any> | null>(null);
   const [loanCategory, setLoanCategory] = useState<string | null>(null);
-  const formRef = useRef<HTMLFormElement>(null);
+  const formRef = useRef<HTMLDivElement>(null);
   const addressInputRef = useRef<HTMLInputElement>(null);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const autocompleteRef = useRef<any>(null);
+  const autocompleteRef = useRef<GoogleAutocomplete | null>(null);
 
   const [selectedTermMonths, setSelectedTermMonths] = useState(12);
   const [form, setForm] = useState<Record<string, string>>({
@@ -534,7 +582,7 @@ export default function ApplyPage() {
   function findProgramForTerm(form: Record<string, string>, termMonths: number) {
     const config = LOAN_PROGRAMS[form.loanType];
     if (!config || config.programs.length === 0) return null;
-    const match = config.programs.find((p: any) => p.loanTermMonths === termMonths);
+    const match = config.programs.find((p: PricingProgram) => p.loanTermMonths === termMonths);
     return match || config.programs[0];
   }
 
@@ -551,7 +599,7 @@ export default function ApplyPage() {
   const showRehab = ['Fix & Flip', 'New Construction', 'CRE Bridge'].includes(form.loanType);
   const rehabLabel = form.loanType === 'New Construction' ? 'Construction Budget' : form.loanType === 'Fix & Flip' ? 'Rehab Budget' : 'Rehab / Renovation Budget';
   const unitsLabel = ['Manufactured Housing', 'RV Park', 'Multifamily'].includes(form.loanType) ? 'Number of Units' : 'Number of Units / Lots';
-  const arvLabel = LOAN_PROGRAMS[form.loanType]?.arvLabel || 'After Repair Value (ARV)';
+  const arvLabel = (LOAN_PROGRAMS[form.loanType]?.arvLabel as string | undefined) || 'After Repair Value (ARV)';
   const stepLabels = ['Loan Type', 'Deal Details', 'Loan Terms', 'Contact Info'];
 
   // Slider computations
@@ -670,7 +718,7 @@ export default function ApplyPage() {
       }
       setSubmitted(true);
     } catch (err) {
-      setError(err.message || 'Something went wrong. Please try again.');
+      setError(err instanceof Error ? err.message : String(err));
     } finally {
       setSubmitting(false);
     }

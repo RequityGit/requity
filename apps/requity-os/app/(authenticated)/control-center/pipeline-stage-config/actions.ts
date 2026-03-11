@@ -8,48 +8,45 @@ import { requireSuperAdmin } from "@/lib/auth/require-admin";
 // Types
 // ---------------------------------------------------------------------------
 
-export type PipelineStageRule = {
+export type UnifiedStageRule = {
   id: string;
-  stage_id: string;
+  stage_config_id: string;
   field_key: string;
   error_message: string | null;
   created_at: string | null;
 };
 
-export type PipelineStageWithRules = {
+export type UnifiedStageWithRules = {
   id: string;
-  stage_key: string;
-  name: string;
-  color: string;
-  stage_order: number;
-  warn_days: number;
-  alert_days: number;
-  created_at: string | null;
-  updated_at: string | null;
-  pipeline_stage_rules: PipelineStageRule[];
+  stage: string;
+  sort_order: number;
+  warn_days: number | null;
+  alert_days: number | null;
+  description: string | null;
+  unified_stage_rules: UnifiedStageRule[];
 };
 
 // ---------------------------------------------------------------------------
-// getStagesWithRules — fetch all pipeline_stages + their rules
+// getStagesWithRules — fetch all unified_stage_configs + their rules
 // ---------------------------------------------------------------------------
 
 export async function getStagesWithRules(): Promise<{
-  data: PipelineStageWithRules[] | null;
+  data: UnifiedStageWithRules[] | null;
   error: string | null;
 }> {
   const admin = createAdminClient();
 
   const { data, error } = await admin
-    .from("pipeline_stages")
-    .select("*, pipeline_stage_rules(*)")
-    .order("stage_order", { ascending: true });
+    .from("unified_stage_configs")
+    .select("*, unified_stage_rules(*)")
+    .order("sort_order", { ascending: true });
 
   if (error) {
     console.error("getStagesWithRules error:", error);
     return { data: null, error: error.message };
   }
 
-  return { data: data as PipelineStageWithRules[], error: null };
+  return { data: data as unknown as UnifiedStageWithRules[], error: null };
 }
 
 // ---------------------------------------------------------------------------
@@ -58,7 +55,7 @@ export async function getStagesWithRules(): Promise<{
 
 export async function upsertStage(
   stageId: string,
-  updates: { warn_days?: number; alert_days?: number }
+  updates: { warn_days?: number | null; alert_days?: number | null }
 ): Promise<{ error: string | null }> {
   const auth = await requireSuperAdmin();
   if ("error" in auth) return { error: auth.error ?? "Not authorized" };
@@ -66,11 +63,8 @@ export async function upsertStage(
   const admin = createAdminClient();
 
   const { error } = await admin
-    .from("pipeline_stages")
-    .update({
-      ...updates,
-      updated_at: new Date().toISOString(),
-    })
+    .from("unified_stage_configs")
+    .update(updates)
     .eq("id", stageId);
 
   if (error) {
@@ -87,7 +81,7 @@ export async function upsertStage(
 // ---------------------------------------------------------------------------
 
 export async function addRule(
-  stageId: string,
+  stageConfigId: string,
   fieldKey: string,
   errorMessage?: string
 ): Promise<{ error: string | null }> {
@@ -96,8 +90,8 @@ export async function addRule(
 
   const admin = createAdminClient();
 
-  const { error } = await admin.from("pipeline_stage_rules").insert({
-    stage_id: stageId,
+  const { error } = await admin.from("unified_stage_rules").insert({
+    stage_config_id: stageConfigId,
     field_key: fieldKey,
     error_message: errorMessage || null,
   });
@@ -124,7 +118,7 @@ export async function deleteRule(
   const admin = createAdminClient();
 
   const { error } = await admin
-    .from("pipeline_stage_rules")
+    .from("unified_stage_rules")
     .delete()
     .eq("id", ruleId);
 

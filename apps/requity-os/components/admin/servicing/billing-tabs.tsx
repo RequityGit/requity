@@ -16,6 +16,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { DatePicker } from "@/components/ui/date-picker";
 import {
   formatCurrency,
   formatCurrencyDetailed,
@@ -125,6 +126,7 @@ function BillingCyclesTab({ cycles }: { cycles: any[] }) {
   const [reconResult, setReconResult] = useState<any>(null);
   const [nachaContent, setNachaContent] = useState<string | null>(null);
   const { toast } = useToast();
+  const router = useRouter();
 
   async function loadLineItems(cycleId: string) {
     setLoading("items");
@@ -149,7 +151,7 @@ function BillingCyclesTab({ cycles }: { cycles: any[] }) {
     const result = await approveBillingCycleAction(cycleId);
     if (result.success) {
       setReconResult(result.reconciliation);
-      window.location.reload();
+      router.refresh();
     } else {
       setReconResult(result.reconciliation);
       toast({ title: "Approval failed", description: result.error, variant: "destructive" });
@@ -161,7 +163,7 @@ function BillingCyclesTab({ cycles }: { cycles: any[] }) {
     setLoading("submit");
     const result = await submitBillingCycleAction(cycleId);
     if (result.success) {
-      window.location.reload();
+      router.refresh();
     } else {
       toast({ title: "Submit failed", description: result.error, variant: "destructive" });
     }
@@ -172,7 +174,7 @@ function BillingCyclesTab({ cycles }: { cycles: any[] }) {
     setLoading("complete");
     const result = await completeBillingCycleAction(cycleId);
     if (result.success) {
-      window.location.reload();
+      router.refresh();
     } else {
       toast({ title: "Completion failed", description: result.error, variant: "destructive" });
     }
@@ -532,6 +534,7 @@ function GenerateBillingTab({ activeLoans }: { activeLoans: any[] }) {
   const [billingMonth, setBillingMonth] = useState(defaultMonth);
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<any>(null);
+  const router = useRouter();
 
   async function handleGenerate() {
     setLoading(true);
@@ -554,10 +557,9 @@ function GenerateBillingTab({ activeLoans }: { activeLoans: any[] }) {
         <div className="flex items-end gap-4">
           <div className="space-y-2">
             <Label>Billing Month (first of month)</Label>
-            <Input
-              type="date"
+            <DatePicker
               value={billingMonth}
-              onChange={(e) => setBillingMonth(e.target.value)}
+              onChange={(value) => setBillingMonth(value)}
               className="w-48"
             />
           </div>
@@ -583,7 +585,7 @@ function GenerateBillingTab({ activeLoans }: { activeLoans: any[] }) {
               variant="outline"
               size="sm"
               className="mt-2"
-              onClick={() => window.location.reload()}
+              onClick={() => router.refresh()}
             >
               Refresh to view
             </Button>
@@ -684,10 +686,9 @@ function ApplyPaymentTab({ activeLoans }: { activeLoans: any[] }) {
           </div>
           <div className="space-y-2">
             <Label>Payment Date</Label>
-            <Input
-              type="date"
+            <DatePicker
               value={paymentDate}
-              onChange={(e) => setPaymentDate(e.target.value)}
+              onChange={(value) => setPaymentDate(value)}
             />
           </div>
           <div className="space-y-2">
@@ -817,10 +818,9 @@ function PayoffQuoteTab({ activeLoans }: { activeLoans: any[] }) {
           </div>
           <div className="space-y-2">
             <Label>Payoff Date</Label>
-            <Input
-              type="date"
+            <DatePicker
               value={payoffDate}
-              onChange={(e) => setPayoffDate(e.target.value)}
+              onChange={(value) => setPayoffDate(value)}
               className="w-48"
             />
           </div>
@@ -914,13 +914,14 @@ function DelinquencyTab({ records }: { records: any[] }) {
   const [loading, setLoading] = useState(false);
   const [refreshResult, setRefreshResult] = useState<any>(null);
   const { toast } = useToast();
+  const router = useRouter();
 
   async function handleRefresh() {
     setLoading(true);
     const res = await refreshDelinquencyAction();
     if (res.success) {
       setRefreshResult(res.result);
-      window.location.reload();
+      router.refresh();
     } else {
       toast({ title: "Delinquency refresh failed", description: res.error, variant: "destructive" });
     }

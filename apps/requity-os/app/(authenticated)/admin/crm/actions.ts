@@ -29,9 +29,34 @@ export async function deleteCrmContactAction(contactId: string) {
   }
 }
 
+export async function deleteCrmCompanyAction(companyId: string) {
+  try {
+    const auth = await requireSuperAdmin();
+    if ("error" in auth) return { error: auth.error };
+
+    const admin = createAdminClient();
+
+    const { error } = await admin
+      .from("companies")
+      .update({ deleted_at: new Date().toISOString() })
+      .eq("id", companyId);
+
+    if (error) {
+      console.error("deleteCrmCompanyAction error:", error);
+      return { error: error.message };
+    }
+
+    revalidatePath("/admin/crm");
+    return { success: true };
+  } catch (err: unknown) {
+    console.error("deleteCrmCompanyAction error:", err);
+    return { error: err instanceof Error ? err.message : "An unexpected error occurred" };
+  }
+}
+
 export async function deleteContactFileAction(
   fileId: string,
-  storagePath: string
+  _storagePath: string
 ) {
   try {
     const auth = await requireAdmin();
@@ -39,17 +64,32 @@ export async function deleteContactFileAction(
 
     const admin = createAdminClient();
 
-    // Delete from storage
+    // Look up the actual storage path from the database instead of trusting client input
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data: fileRecord, error: lookupError } = await (admin as any)
+      .from("contact_files")
+      .select("storage_path")
+      .eq("id", fileId)
+      .single();
+
+    if (lookupError || !fileRecord) {
+      console.error("deleteContactFileAction lookup error:", lookupError);
+      return { error: "File not found" };
+    }
+
+    const verifiedPath = (fileRecord as { storage_path: string }).storage_path;
+
+    // Delete from storage using the verified path
     const { error: storageError } = await admin.storage
       .from("contact-files")
-      .remove([storagePath]);
+      .remove([verifiedPath]);
 
     if (storageError) {
       console.error("deleteContactFileAction storage error:", storageError);
     }
 
     // Delete from database
-    const { error } = await (admin as any)
+    const { error } = await admin
       .from("contact_files")
       .delete()
       .eq("id", fileId);

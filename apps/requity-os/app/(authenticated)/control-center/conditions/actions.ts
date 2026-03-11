@@ -17,6 +17,7 @@ export interface ConditionFormData {
   borrower_description: string | null;
   responsible_party: string | null;
   critical_path_item: boolean;
+  requires_approval: boolean;
   sort_order: number | null;
   is_active: boolean;
 }
@@ -41,6 +42,7 @@ export async function saveCondition(data: ConditionFormData) {
       borrower_description: data.borrower_description,
       responsible_party: data.responsible_party,
       critical_path_item: data.critical_path_item,
+      requires_approval: data.requires_approval,
       sort_order: data.sort_order,
       is_active: data.is_active,
     };

@@ -53,7 +53,7 @@ export function Topbar({ userName, role, email, allowedRoles, userId, isSuperAdm
   return (
     <>
       <ViewAsBanner />
-      <header className="sticky top-0 z-30 h-14 md:h-16 border-b bg-card flex items-center px-3 md:px-6">
+      <header className="sticky top-0 z-30 h-14 md:h-16 border-b bg-card flex items-center px-3 md:px-6 no-print">
         {/* Mobile: hamburger button */}
         <button
           onClick={openMobileSidebar}
@@ -66,12 +66,12 @@ export function Topbar({ userName, role, email, allowedRoles, userId, isSuperAdm
         {/* Mobile: centered logo */}
         <div className="md:hidden flex-1 flex justify-center">
           <img
-            src="https://edhlkknvlczhbowasjna.supabase.co/storage/v1/object/public/brand-assets/Requity%20Logo%20White.svg?v=2"
+            src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/brand-assets/Requity%20Logo%20White.svg?v=2`}
             alt="Requity"
             className="h-8 w-auto dark:block hidden"
           />
           <img
-            src="https://edhlkknvlczhbowasjna.supabase.co/storage/v1/object/public/brand-assets/Requity%20Logo%20White.svg?v=2"
+            src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/brand-assets/Requity%20Logo%20White.svg?v=2`}
             alt="Requity"
             className="h-8 w-auto dark:hidden invert"
           />

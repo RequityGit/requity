@@ -1,7 +1,7 @@
-// @ts-nocheck
+import { NextRequest } from 'next/server';
 import nodemailer from 'nodemailer';
 
-export async function POST(request) {
+export async function POST(request: NextRequest) {
   try {
     const data = await request.json();
 
@@ -82,7 +82,24 @@ export async function POST(request) {
   }
 }
 
-function buildProfileEmail(d) {
+interface InvestorProfileEmailData {
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone: string;
+  accreditedStatus: string;
+  targetInvestment: string;
+  privateOfferExperience: string;
+  investmentInterests: string[];
+  state: string;
+  investmentTimeline: string;
+  entityType: string;
+  referralSource: string;
+  additionalInfo: string;
+  timestamp: string;
+}
+
+function buildProfileEmail(d: InvestorProfileEmailData) {
   const interests = Array.isArray(d.investmentInterests) && d.investmentInterests.length > 0
     ? d.investmentInterests.join(', ')
     : 'Not specified';

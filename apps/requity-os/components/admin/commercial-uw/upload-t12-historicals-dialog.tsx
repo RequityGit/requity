@@ -18,6 +18,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
+import { DatePicker } from "@/components/ui/date-picker";
 import { Label } from "@/components/ui/label";
 import { FileUpload } from "@/components/shared/file-upload";
 import { Badge } from "@/components/ui/badge";
@@ -502,19 +503,17 @@ export function UploadT12HistoricalsDialog({
             <div className="grid grid-cols-2 gap-3 mb-3">
               <div>
                 <Label className="text-xs">Period Start</Label>
-                <Input
-                  type="date"
+                <DatePicker
                   value={periodStart}
-                  onChange={(e) => setPeriodStart(e.target.value)}
+                  onChange={(value) => setPeriodStart(value)}
                   className="mt-1 text-xs"
                 />
               </div>
               <div>
                 <Label className="text-xs">Period End</Label>
-                <Input
-                  type="date"
+                <DatePicker
                   value={periodEnd}
-                  onChange={(e) => setPeriodEnd(e.target.value)}
+                  onChange={(value) => setPeriodEnd(value)}
                   className="mt-1 text-xs"
                 />
               </div>

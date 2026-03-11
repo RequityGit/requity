@@ -24,6 +24,7 @@ import { FileUpload } from "@/components/shared/file-upload";
 import { Plus, Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import type { Tables } from "@/lib/supabase/types";
+import { drawFormSchema } from "@/lib/schemas/draw";
 
 type Loan = Tables<"loans">;
 
@@ -95,16 +96,13 @@ export function NewDrawForm() {
     e.preventDefault();
     setError(null);
 
-    if (!selectedLoanId) {
-      setError("Please select a loan.");
+    const validation = drawFormSchema.safeParse({ selectedLoanId, amount });
+    if (!validation.success) {
+      setError(validation.error.issues[0].message);
       return;
     }
 
     const parsedAmount = parseFloat(amount);
-    if (isNaN(parsedAmount) || parsedAmount <= 0) {
-      setError("Please enter a valid amount.");
-      return;
-    }
 
     setSubmitting(true);
 

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo, useCallback, useEffect } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import {
@@ -12,17 +12,18 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { ContactDetailHeader } from "./contact-detail-header";
 import { ContactDetailSidebar } from "./contact-detail-sidebar";
+import { EmailComposeSheet } from "@/components/crm/email-compose-sheet";
 import { DetailOverviewTab } from "./tabs/detail-overview-tab";
 import { DetailActivityTab } from "./tabs/detail-activity-tab";
-import { DetailEmailsTab } from "./tabs/detail-emails-tab";
 import { DetailDealsTab } from "./tabs/detail-deals-tab";
 import { DetailEntitiesTab } from "./tabs/detail-entities-tab";
 import { DetailTasksTab } from "./tabs/detail-tasks-tab";
 import { UnifiedNotes } from "@/components/shared/UnifiedNotes";
+import { createClient } from "@/lib/supabase/client";
 import type {
   ContactData,
   RelationshipData,
@@ -35,6 +36,8 @@ import type {
   BorrowerData,
   InvestorProfileData,
   EntityData,
+  SectionLayout,
+  FieldLayout,
 } from "./types";
 import type { OpsTask, Profile } from "@/lib/tasks";
 
@@ -48,6 +51,7 @@ interface ContactDetailClientProps {
   teamMembers: TeamMember[];
   profiles: Profile[];
   company: CompanyData | null;
+  allCompanies: CompanyData[];
   borrower: BorrowerData | null;
   investor: InvestorProfileData | null;
   entities: EntityData[];
@@ -57,6 +61,9 @@ interface ContactDetailClientProps {
   assignedToName: string | null;
   sourceLabel: string | null;
   isSuperAdmin: boolean;
+  sectionOrder: SectionLayout[];
+  sectionFields: Record<string, FieldLayout[]>;
+  primaryBorrowerEntity: Record<string, unknown> | null;
 }
 
 export function ContactDetailClient({
@@ -69,6 +76,7 @@ export function ContactDetailClient({
   teamMembers,
   profiles,
   company,
+  allCompanies,
   borrower,
   investor,
   entities,
@@ -78,8 +86,10 @@ export function ContactDetailClient({
   assignedToName,
   sourceLabel,
   isSuperAdmin,
+  sectionOrder,
+  sectionFields,
+  primaryBorrowerEntity,
 }: ContactDetailClientProps) {
-  const router = useRouter();
   const searchParams = useSearchParams();
 
   const fullName =
@@ -96,6 +106,20 @@ export function ContactDetailClient({
     [activities]
   );
 
+  // Fetch actual notes count from the notes table (UnifiedNotes source of truth)
+  const [notesCount, setNotesCount] = useState<number | null>(null);
+  useEffect(() => {
+    const supabase = createClient();
+    supabase
+      .from("notes" as never)
+      .select("id" as never, { count: "exact", head: true })
+      .eq("contact_id" as never, contact.id as never)
+      .is("deleted_at" as never, null)
+      .then(({ count }) => {
+        setNotesCount(count ?? 0);
+      });
+  }, [contact.id]);
+
   // Derive contact type tags from relationships + contact_types
   const contactTypes = useMemo(() => {
     const fromRelationships = relationships
@@ -109,7 +133,7 @@ export function ContactDetailClient({
   const tabs = useMemo(
     () => [
       { id: "overview", label: "Overview" },
-      { id: "notes", label: "Notes", count: noteActivities.length },
+      { id: "notes", label: "Notes", count: notesCount ?? noteActivities.length },
       { id: "tasks", label: "Tasks", count: openTasks.length },
       {
         id: "deals",
@@ -117,8 +141,7 @@ export function ContactDetailClient({
         count: loans.length + investorCommitments.length,
       },
       { id: "entities", label: "Entities", count: entities.length },
-      { id: "emails", label: "Emails", count: emails.length },
-      { id: "activity", label: "Activity", count: activities.length },
+      { id: "activity", label: "Activity", count: activities.length + emails.length },
     ],
     [
       activities.length,
@@ -128,6 +151,7 @@ export function ContactDetailClient({
       entities.length,
       openTasks.length,
       noteActivities.length,
+      notesCount,
     ]
   );
 
@@ -135,30 +159,43 @@ export function ContactDetailClient({
   const isValidTab = tabs.some((t) => t.id === tabParam);
   const initialTab = isValidTab ? tabParam! : "overview";
   const [activeTab, setActiveTab] = useState(initialTab);
+  const [emailComposeOpen, setEmailComposeOpen] = useState(false);
+  const [logCallTrigger, setLogCallTrigger] = useState(
+    () => (searchParams.get("action") === "log-call" && initialTab === "activity") ? 1 : 0
+  );
+
+  // Track which tabs have been visited so we can keep them mounted
+  const [loadedTabs, setLoadedTabs] = useState<Set<string>>(
+    () => new Set([initialTab])
+  );
 
   const handleTabChange = useCallback(
     (value: string) => {
       setActiveTab(value);
-      const params = new URLSearchParams(searchParams.toString());
+      setLoadedTabs((prev) => {
+        if (prev.has(value)) return prev;
+        return new Set(prev).add(value);
+      });
+      // Use history.replaceState to update URL without triggering Next.js navigation
+      const params = new URLSearchParams(window.location.search);
       if (value === "overview") {
         params.delete("tab");
       } else {
         params.set("tab", value);
       }
       const newUrl = params.toString()
-        ? `?${params.toString()}`
+        ? `${window.location.pathname}?${params.toString()}`
         : window.location.pathname;
-      router.replace(newUrl, { scroll: false });
+      window.history.replaceState(null, "", newUrl);
     },
-    [router, searchParams]
+    []
   );
 
-  useEffect(() => {
-    const newTab = searchParams.get("tab") || "overview";
-    if (tabs.some((t) => t.id === newTab) && newTab !== activeTab) {
-      setActiveTab(newTab);
-    }
-  }, [searchParams, tabs, activeTab]);
+  const handleLogCall = useCallback(() => {
+    handleTabChange("activity");
+    // Increment trigger to signal the activity tab to open the log-call form
+    setLogCallTrigger((prev) => prev + 1);
+  }, [handleTabChange]);
 
   return (
     <div className="min-h-screen">
@@ -219,67 +256,78 @@ export function ContactDetailClient({
               ))}
             </TabsList>
 
-            <TabsContent value="overview" className="mt-4">
-              <DetailOverviewTab
-                contact={contact}
-                borrower={borrower}
-                investor={investor}
-                loans={loans}
-                commitments={investorCommitments}
-                isSuperAdmin={isSuperAdmin}
-              />
-            </TabsContent>
-
-            <TabsContent value="notes" className="mt-4">
-              <UnifiedNotes
-                entityType="contact"
-                entityId={contact.id}
-              />
-            </TabsContent>
-
-            <TabsContent value="tasks" className="mt-4">
-              <DetailTasksTab
-                tasks={tasks}
-                contactId={contact.id}
-                contactName={fullName}
-                profiles={profiles}
-                currentUserId={currentUserId}
-              />
-            </TabsContent>
-
-            <TabsContent value="deals" className="mt-4">
-              <DetailDealsTab
-                loans={loans}
-                commitments={investorCommitments}
-              />
-            </TabsContent>
-
-            <TabsContent value="entities" className="mt-4">
-              <DetailEntitiesTab entities={entities} />
-            </TabsContent>
-
-            <TabsContent value="tasks" className="mt-4">
-              <DetailTasksTab
-                tasks={tasks}
-                contactId={contact.id}
-                contactName={fullName}
-                profiles={profiles}
-                currentUserId={currentUserId}
-              />
-            </TabsContent>
-
-            <TabsContent value="emails" className="mt-4">
-              <DetailEmailsTab emails={emails} />
-            </TabsContent>
-
-            <TabsContent value="activity" className="mt-4">
-              <DetailActivityTab
-                contactId={contact.id}
-                activities={activities}
-                currentUserId={currentUserId}
-              />
-            </TabsContent>
           </Tabs>
+
+          {/* Tab content rendered outside Tabs to avoid unmount/remount.
+              Visited tabs stay mounted (hidden) to preserve state & subscriptions. */}
+          <div className="mt-4">
+            {loadedTabs.has("overview") && (
+              <div className={activeTab !== "overview" ? "hidden" : undefined}>
+                <DetailOverviewTab
+                  contact={contact}
+                  borrower={borrower}
+                  investor={investor}
+                  loans={loans}
+                  commitments={investorCommitments}
+                  isSuperAdmin={isSuperAdmin}
+                  sectionOrder={sectionOrder}
+                  sectionFields={sectionFields}
+                  teamMembers={teamMembers}
+                  allCompanies={allCompanies}
+                  primaryBorrowerEntity={primaryBorrowerEntity}
+                />
+              </div>
+            )}
+
+            {loadedTabs.has("notes") && (
+              <div className={activeTab !== "notes" ? "hidden" : undefined}>
+                <UnifiedNotes
+                  entityType="contact"
+                  entityId={contact.id}
+                />
+              </div>
+            )}
+
+            {loadedTabs.has("tasks") && (
+              <div className={activeTab !== "tasks" ? "hidden" : undefined}>
+                <DetailTasksTab
+                  tasks={tasks}
+                  contactId={contact.id}
+                  contactName={fullName}
+                  profiles={profiles}
+                  currentUserId={currentUserId}
+                />
+              </div>
+            )}
+
+            {loadedTabs.has("deals") && (
+              <div className={activeTab !== "deals" ? "hidden" : undefined}>
+                <DetailDealsTab
+                  loans={loans}
+                  commitments={investorCommitments}
+                />
+              </div>
+            )}
+
+            {loadedTabs.has("entities") && (
+              <div className={activeTab !== "entities" ? "hidden" : undefined}>
+                <DetailEntitiesTab entities={entities} />
+              </div>
+            )}
+
+            {loadedTabs.has("activity") && (
+              <div className={activeTab !== "activity" ? "hidden" : undefined}>
+                <DetailActivityTab
+                  contactId={contact.id}
+                  activities={activities}
+                  emails={emails}
+                  currentUserId={currentUserId}
+                  onComposeEmail={() => setEmailComposeOpen(true)}
+                  logCallTrigger={logCallTrigger}
+                />
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Right Sidebar */}
@@ -291,9 +339,22 @@ export function ContactDetailClient({
             sourceLabel={sourceLabel}
             currentUserId={currentUserId}
             currentUserName={currentUserName}
+            onComposeEmail={() => setEmailComposeOpen(true)}
+            onTabChange={handleTabChange}
+            onLogCall={handleLogCall}
           />
         </div>
       </div>
+
+      <EmailComposeSheet
+        open={emailComposeOpen}
+        onOpenChange={setEmailComposeOpen}
+        toEmail={contact.email || ""}
+        toName={fullName}
+        linkedContactId={contact.id}
+        currentUserId={currentUserId}
+        currentUserName={currentUserName}
+      />
     </div>
   );
 }

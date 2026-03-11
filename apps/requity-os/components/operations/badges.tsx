@@ -96,6 +96,18 @@ const simplePatternLabels: Record<string, string> = {
 const ordinals = ["", "1st", "2nd", "3rd", "4th"];
 const dayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
+const monthAbbr = [
+  "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+  "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
+];
+
+function ordinalSuffix(n: number): string {
+  if (n === 1 || n === 21 || n === 31) return "st";
+  if (n === 2 || n === 22) return "nd";
+  if (n === 3 || n === 23) return "rd";
+  return "th";
+}
+
 function getPatternLabel(pattern: string): string {
   // Simple patterns
   if (simplePatternLabels[pattern]) return simplePatternLabels[pattern];
@@ -103,11 +115,7 @@ function getPatternLabel(pattern: string): string {
   // monthly_day:DD  →  "15th of month"
   if (pattern.startsWith("monthly_day:")) {
     const day = parseInt(pattern.split(":")[1], 10);
-    const suffix = day === 1 || day === 21 || day === 31 ? "st"
-      : day === 2 || day === 22 ? "nd"
-      : day === 3 || day === 23 ? "rd"
-      : "th";
-    return `${day}${suffix} of month`;
+    return `${day}${ordinalSuffix(day)} of month`;
   }
 
   // monthly_nth:N:DOW  →  "1st Mon of month" or "Last Fri of month"
@@ -118,6 +126,14 @@ function getPatternLabel(pattern: string): string {
     const dayName = dayNames[dow] ?? "?";
     const nthLabel = nth === -1 ? "Last" : (ordinals[nth] ?? `${nth}th`);
     return `${nthLabel} ${dayName} of month`;
+  }
+
+  // annually_date:MM:DD  →  "Mar 15"
+  if (pattern.startsWith("annually_date:")) {
+    const parts = pattern.split(":");
+    const month = parseInt(parts[1], 10);
+    const day = parseInt(parts[2], 10);
+    return `${monthAbbr[month] ?? "?"} ${day}`;
   }
 
   return pattern;

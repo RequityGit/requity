@@ -309,6 +309,7 @@ export function Contact360Client({
               <ActivityTab
                 contactId={contact.id}
                 activities={activities}
+                emails={emails}
                 currentUserId={currentUserId}
               />
             </TabsContent>

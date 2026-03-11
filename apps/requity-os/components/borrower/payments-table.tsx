@@ -10,7 +10,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Input } from "@/components/ui/input";
+import { DatePicker } from "@/components/ui/date-picker";
 import { Label } from "@/components/ui/label";
 import { formatCurrencyDetailed, formatDate } from "@/lib/format";
 
@@ -128,20 +128,18 @@ export function PaymentsTable({ payments, loans }: PaymentsTableProps) {
 
         <div className="space-y-1.5">
           <Label className="text-xs text-muted-foreground">From Date</Label>
-          <Input
-            type="date"
+          <DatePicker
             value={dateFrom}
-            onChange={(e) => setDateFrom(e.target.value)}
+            onChange={(value) => setDateFrom(value)}
             className="h-9 w-[160px]"
           />
         </div>
 
         <div className="space-y-1.5">
           <Label className="text-xs text-muted-foreground">To Date</Label>
-          <Input
-            type="date"
+          <DatePicker
             value={dateTo}
-            onChange={(e) => setDateTo(e.target.value)}
+            onChange={(value) => setDateTo(value)}
             className="h-9 w-[160px]"
           />
         </div>

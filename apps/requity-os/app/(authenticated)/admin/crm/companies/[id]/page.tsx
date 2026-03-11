@@ -15,6 +15,10 @@ import type {
   CompanyQuoteData,
   TabBadgeCounts,
 } from "@/components/crm/company-360/types";
+import type {
+  SectionLayout,
+  FieldLayout,
+} from "@/components/crm/contact-360/types";
 
 interface PageProps {
   params: { id: string };
@@ -42,22 +46,9 @@ export default async function CompanyDetailPage({ params }: PageProps) {
 
   if (!company) notFound();
 
-  // Build profile lookup
-  const { data: profiles } = await admin
-    .from("profiles")
-    .select("id, full_name, email")
-    .eq("role", "admin")
-    .order("full_name");
-
-  const profileLookup: Record<string, string> = {};
-  (profiles ?? []).forEach(
-    (t: { id: string; full_name: string | null; email: string | null }) => {
-      profileLookup[t.id] = t.full_name || t.email || "Unknown";
-    }
-  );
-
-  // Fetch all related data in parallel
+  // Fetch all related data in parallel (profiles + tab data + layout config)
   const [
+    profilesResult,
     contactsResult,
     primaryContactResult,
     activitiesResult,
@@ -66,7 +57,14 @@ export default async function CompanyDetailPage({ params }: PageProps) {
     notesResult,
     wireResult,
     followersResult,
+    sectionRowsResult,
   ] = await Promise.all([
+    // Profiles for lookup
+    admin
+      .from("profiles")
+      .select("id, full_name, email")
+      .eq("role", "admin")
+      .order("full_name"),
     // Contacts
     admin
       .from("crm_contacts")
@@ -99,10 +97,10 @@ export default async function CompanyDetailPage({ params }: PageProps) {
       .order("uploaded_at", { ascending: false }),
     // Tasks
     admin
-      .from("crm_tasks")
+      .from("ops_tasks")
       .select("*")
-      .eq("company_id", id)
-      .is("deleted_at", null)
+      .eq("linked_entity_type", "company")
+      .eq("linked_entity_id", id)
       .order("created_at", { ascending: false }),
     // Notes (from unified notes table)
     admin
@@ -125,7 +123,25 @@ export default async function CompanyDetailPage({ params }: PageProps) {
       .from("crm_followers")
       .select("id, user_id")
       .eq("company_id", id),
+    // Layout config
+    admin
+      .from("page_layout_sections" as never)
+      .select("id, section_key, display_order, is_visible, visibility_rule" as never)
+      .eq("page_type" as never, "company_detail" as never)
+      .eq("sidebar" as never, false as never)
+      .order("display_order" as never, { ascending: true }),
   ]);
+
+  // Build profile lookup
+  const profileLookup: Record<string, string> = {};
+  const teamMembers: { id: string; full_name: string }[] = [];
+  (profilesResult.data ?? []).forEach(
+    (t: { id: string; full_name: string | null; email: string | null }) => {
+      const displayName = t.full_name || t.email || "Unknown";
+      profileLookup[t.id] = displayName;
+      teamMembers.push({ id: t.id, full_name: displayName });
+    }
+  );
 
   // Map contacts
   const contacts: CompanyContactData[] = (contactsResult.data ?? []).map(
@@ -190,11 +206,11 @@ export default async function CompanyDetailPage({ params }: PageProps) {
   const tasks: CompanyTaskData[] = (tasksResult.data ?? []).map(
     (t: Record<string, unknown>) => ({
       id: t.id as string,
-      subject: t.subject as string,
+      subject: (t.title as string) || "",
       description: t.description as string | null,
-      task_type: (t.task_type as string) || "other",
-      priority: (t.priority as string) || "normal",
-      status: (t.status as string) || "not_started",
+      task_type: (t.category as string) || "other",
+      priority: (t.priority as string) || "Medium",
+      status: t.status === "Complete" ? "completed" : t.status === "In Progress" ? "in_progress" : "not_started",
       due_date: t.due_date as string | null,
       assigned_to: t.assigned_to as string | null,
       assigned_to_name: t.assigned_to
@@ -241,6 +257,90 @@ export default async function CompanyDetailPage({ params }: PageProps) {
     })
   );
 
+  // Map layout config from parallel results
+  const sectionOrder: SectionLayout[] = (sectionRowsResult.data ?? []).map(
+    (r: Record<string, unknown>) => ({
+      section_key: r.section_key as string,
+      display_order: r.display_order as number,
+      is_visible: r.is_visible as boolean,
+      visibility_rule: r.visibility_rule as string | null,
+      section_type: (r.section_type as string) ?? "fields",
+      section_label: (r.section_label as string) ?? (r.section_key as string),
+      section_icon: (r.section_icon as string) ?? "file-text",
+    })
+  );
+
+  // Build section_id → section_key lookup for sections that have field-level layout
+  const fieldSectionKeys = ["company_information", "address", "wire_instructions"];
+  const sectionIdToKey: Record<string, string> = {};
+  const sectionIds: string[] = [];
+  for (const row of (sectionRowsResult.data ?? []) as Record<string, unknown>[]) {
+    if (fieldSectionKeys.includes(row.section_key as string)) {
+      sectionIdToKey[row.id as string] = row.section_key as string;
+      sectionIds.push(row.id as string);
+    }
+  }
+
+  // Fetch page_layout_fields with field_configurations for relevant sections
+  const sectionFields: Record<string, FieldLayout[]> = {};
+  if (sectionIds.length > 0) {
+    const { data: fieldRows } = await admin
+      .from("page_layout_fields" as never)
+      .select("field_key, display_order, column_position, is_visible, section_id, field_config_id" as never)
+      .in("section_id" as never, sectionIds as never)
+      .order("display_order" as never, { ascending: true });
+
+    // Collect field_config_ids to fetch labels/types
+    const fcIds = ((fieldRows ?? []) as Record<string, unknown>[])
+      .map((r) => r.field_config_id as string)
+      .filter(Boolean);
+
+    let fcLookup: Record<string, { field_label: string; field_type: string; dropdown_options: unknown }> = {};
+    if (fcIds.length > 0) {
+      const { data: fcRows } = await admin
+        .from("field_configurations" as never)
+        .select("id, field_label, field_type, dropdown_options" as never)
+        .in("id" as never, fcIds as never);
+
+      for (const fc of (fcRows ?? []) as Record<string, unknown>[]) {
+        fcLookup[fc.id as string] = {
+          field_label: fc.field_label as string,
+          field_type: fc.field_type as string,
+          dropdown_options: fc.dropdown_options,
+        };
+      }
+    }
+
+    // Group by section_key
+    for (const row of (fieldRows ?? []) as Record<string, unknown>[]) {
+      const sectionKey = sectionIdToKey[row.section_id as string];
+      if (!sectionKey) continue;
+      const fc = fcLookup[row.field_config_id as string];
+      if (!fc) continue;
+
+      const rawOpts = fc.dropdown_options;
+      let dropdownOptions: { label: string; value: string }[] | null = null;
+      if (Array.isArray(rawOpts)) {
+        dropdownOptions = rawOpts.map((v: unknown) =>
+          typeof v === "string"
+            ? { label: v.charAt(0).toUpperCase() + v.slice(1).replace(/_/g, " "), value: v }
+            : (v as { label: string; value: string })
+        );
+      }
+
+      if (!sectionFields[sectionKey]) sectionFields[sectionKey] = [];
+      sectionFields[sectionKey].push({
+        field_key: row.field_key as string,
+        field_label: fc.field_label,
+        field_type: fc.field_type,
+        column_position: row.column_position as string,
+        display_order: row.display_order as number,
+        is_visible: row.is_visible as boolean,
+        dropdown_options: dropdownOptions,
+      });
+    }
+  }
+
   // Compute tab badge counts
   const openTasks = tasks.filter((t) => t.status !== "completed").length;
   const counts: TabBadgeCounts = {
@@ -257,6 +357,7 @@ export default async function CompanyDetailPage({ params }: PageProps) {
     id: company.id,
     name: company.name,
     company_type: company.company_type,
+    company_types: (company as any).company_types ?? [company.company_type],
     company_subtype: company.company_subtype,
     phone: company.phone,
     email: company.email,
@@ -267,7 +368,6 @@ export default async function CompanyDetailPage({ params }: PageProps) {
     state: company.state,
     zip: company.zip,
     country: company.country,
-    fee_agreement_on_file: company.fee_agreement_on_file,
     is_active: company.is_active,
     primary_contact_id: company.primary_contact_id,
     referral_contact_id: company.referral_contact_id,
@@ -279,8 +379,6 @@ export default async function CompanyDetailPage({ params }: PageProps) {
     geographies: company.geographies,
     company_capabilities: company.company_capabilities,
     other_names: company.other_names,
-    nda_created_date: company.nda_created_date,
-    nda_expiration_date: company.nda_expiration_date,
     source: company.source,
     title_company_verified: company.title_company_verified,
   };
@@ -301,6 +399,9 @@ export default async function CompanyDetailPage({ params }: PageProps) {
       counts={counts}
       currentUserId={user.id}
       currentUserName={currentUserName}
+      teamMembers={teamMembers}
+      sectionOrder={sectionOrder}
+      sectionFields={sectionFields}
     />
   );
 }

@@ -6,6 +6,7 @@ import { requireAdmin } from "@/lib/auth/require-admin";
 export interface AddCompanyInput {
   name: string;
   company_type: string;
+  company_types?: string[];
   company_subtype?: string | null;
   phone?: string | null;
   email?: string | null;
@@ -35,6 +36,7 @@ export async function addCompanyAction(input: AddCompanyInput) {
       .insert({
         name: input.name.trim(),
         company_type: input.company_type as never,
+        company_types: input.company_types?.length ? input.company_types : [input.company_type],
         company_subtype: (input.company_subtype as never) || null,
         phone: input.phone || null,
         email: input.email || null,
@@ -76,6 +78,7 @@ export interface UpdateCompanyInput {
   id: string;
   name?: string;
   company_type?: string;
+  company_types?: string[];
   company_subtype?: string | null;
   phone?: string | null;
   email?: string | null;
@@ -90,11 +93,8 @@ export interface UpdateCompanyInput {
   notes?: string | null;
   source?: string | null;
   other_names?: string | null;
-  fee_agreement_on_file?: boolean;
   title_company_verified?: boolean;
   is_active?: boolean;
-  nda_created_date?: string | null;
-  nda_expiration_date?: string | null;
   asset_types?: string[];
   company_capabilities?: string[];
   lender_programs?: string[];
@@ -112,6 +112,8 @@ export async function updateCompanyAction(input: UpdateCompanyInput) {
     if (input.name !== undefined) updateData.name = input.name.trim();
     if (input.company_type !== undefined)
       updateData.company_type = input.company_type;
+    if (input.company_types !== undefined)
+      updateData.company_types = input.company_types;
     if (input.company_subtype !== undefined)
       updateData.company_subtype = input.company_subtype || null;
     if (input.phone !== undefined) updateData.phone = input.phone || null;
@@ -131,16 +133,10 @@ export async function updateCompanyAction(input: UpdateCompanyInput) {
     if (input.source !== undefined) updateData.source = input.source || null;
     if (input.other_names !== undefined)
       updateData.other_names = input.other_names || null;
-    if (input.fee_agreement_on_file !== undefined)
-      updateData.fee_agreement_on_file = input.fee_agreement_on_file;
     if (input.title_company_verified !== undefined)
       updateData.title_company_verified = input.title_company_verified;
     if (input.is_active !== undefined)
       updateData.is_active = input.is_active;
-    if (input.nda_created_date !== undefined)
-      updateData.nda_created_date = input.nda_created_date || null;
-    if (input.nda_expiration_date !== undefined)
-      updateData.nda_expiration_date = input.nda_expiration_date || null;
     if (input.asset_types !== undefined)
       updateData.asset_types = input.asset_types;
     if (input.company_capabilities !== undefined)
@@ -192,6 +188,59 @@ export async function deleteCompanyAction(companyId: string) {
     return {
       error:
         err instanceof Error ? err.message : "An unexpected error occurred",
+    };
+  }
+}
+
+export async function addCompanyFollowerAction(companyId: string, userId: string) {
+  try {
+    const auth = await requireAdmin();
+    if ("error" in auth) return { error: auth.error };
+
+    const admin = createAdminClient();
+
+    const { data, error } = await admin
+      .from("crm_followers")
+      .insert({ company_id: companyId, user_id: userId })
+      .select("id")
+      .single();
+
+    if (error) {
+      console.error("addCompanyFollowerAction error:", error);
+      return { error: error.message };
+    }
+
+    return { success: true, id: data.id };
+  } catch (err: unknown) {
+    console.error("addCompanyFollowerAction error:", err);
+    return {
+      error: err instanceof Error ? err.message : "An unexpected error occurred",
+    };
+  }
+}
+
+export async function removeCompanyFollowerAction(followerId: string) {
+  try {
+    const auth = await requireAdmin();
+    if ("error" in auth) return { error: auth.error };
+
+    const admin = createAdminClient();
+
+    const { error } = await admin
+      .from("crm_followers")
+      .delete()
+      .eq("id", followerId);
+
+    if (error) {
+      console.error("removeCompanyFollowerAction error:", error);
+      return { error: error.message };
+    }
+
+    return { success: true };
+  } catch (err: unknown) {
+    console.error("removeCompanyFollowerAction error:", err);
+    return {
+      error: err instanceof Error ? err.message : "An unexpected error occurred",
     };
   }
 }

@@ -2,6 +2,8 @@
 // Unified Pipeline — Types, Constants, Formatters
 // ═══════════════════════════════════════════════════════════
 
+import { evaluateFormula } from "@/lib/formula-engine";
+
 export type CapitalSide = "debt" | "equity";
 export type UnifiedStage = "lead" | "analysis" | "negotiation" | "execution" | "closed";
 export type CardTypeStatus = "active" | "draft" | "planned" | "archived";
@@ -19,12 +21,19 @@ export type AssetClass =
   | "mixed_use"
   | "land";
 
+export type UwFieldObject = "deal" | "property" | "borrower";
+
 export interface UwFieldDef {
   key: string;
   label: string;
   type: "currency" | "percent" | "number" | "text" | "boolean" | "select" | "date";
   required?: boolean;
   options?: string[];
+  object?: UwFieldObject;
+  /** If set, this field is a computed formula. Render as read-only. */
+  formulaExpression?: string;
+  formulaOutputFormat?: "currency" | "percent" | "number" | "text";
+  formulaDecimalPlaces?: number;
 }
 
 export interface UwOutputDef {
@@ -34,6 +43,70 @@ export interface UwOutputDef {
   formula?: string;
 }
 
+// ---------------------------------------------------------------------------
+// Grid Pro Forma types
+// ---------------------------------------------------------------------------
+
+export const GRID_PERIODS = [
+  "t12",
+  "yr1",
+  "yr2",
+  "yr3",
+  "yr4",
+  "yr5",
+  "stabilized",
+] as const;
+
+export type GridPeriod = (typeof GRID_PERIODS)[number];
+
+export const GRID_PERIOD_LABELS: Record<GridPeriod, string> = {
+  t12: "T-12",
+  yr1: "Year 1",
+  yr2: "Year 2",
+  yr3: "Year 3",
+  yr4: "Year 4",
+  yr5: "Year 5",
+  stabilized: "Stabilized",
+};
+
+/** Maps period to a numeric index (used as `t` variable in formulas). */
+export const GRID_PERIOD_INDEX: Record<GridPeriod, number> = {
+  t12: 0,
+  yr1: 1,
+  yr2: 2,
+  yr3: 3,
+  yr4: 4,
+  yr5: 5,
+  stabilized: 6,
+};
+
+export type GridRowType = "currency" | "percent" | "ratio" | "number";
+
+export interface GridRowDef {
+  key: string;
+  label: string;
+  type: GridRowType;
+  formula: string;
+  section?: string;
+  bold?: boolean;
+  sort_order: number;
+}
+
+export interface GridTemplateDef {
+  rows: GridRowDef[];
+}
+
+/** Per-cell override on a deal. Key format: `{row_key}:{period}` */
+export interface GridCellOverride {
+  value?: number;
+  formula?: string;
+}
+
+export type GridOverrides = Record<string, GridCellOverride>;
+
+/** Evaluated grid result: row key -> period -> value */
+export type GridResult = Record<string, Record<GridPeriod, number | null>>;
+
 export interface CardMetricDef {
   key: string;
   label?: string;
@@ -41,6 +114,14 @@ export interface CardMetricDef {
   suffix?: string;
   format?: "compact";
   computed?: boolean;
+}
+
+export interface CardTypeFieldRef {
+  field_key: string;
+  module: string;
+  required?: boolean;
+  object?: UwFieldObject;
+  sort_order: number;
 }
 
 export interface FieldGroupDef {
@@ -62,9 +143,19 @@ export interface UnifiedCardType {
   card_icon: string;
   detail_tabs: string[];
   detail_field_groups: FieldGroupDef[];
+  property_fields: UwFieldDef[];
+  property_field_groups: FieldGroupDef[];
+  contact_fields: UwFieldDef[];
+  contact_field_groups: FieldGroupDef[];
+  contact_roles: string[];
   applicable_asset_classes: string[] | null;
   status: CardTypeStatus;
   sort_order: number;
+  uw_grid?: GridTemplateDef | null;
+  // Field configuration references (unified field system)
+  uw_field_refs?: CardTypeFieldRef[];
+  property_field_refs?: CardTypeFieldRef[];
+  contact_field_refs?: CardTypeFieldRef[];
 }
 
 export interface UnifiedDeal {
@@ -78,6 +169,7 @@ export interface UnifiedDeal {
   stage_entered_at: string;
   primary_contact_id: string | null;
   company_id: string | null;
+  property_id: string | null;
   assigned_to: string | null;
   amount: number | null;
   probability: number;
@@ -87,6 +179,7 @@ export interface UnifiedDeal {
   loss_reason: string | null;
   source: string | null;
   uw_data: Record<string, unknown>;
+  uw_grid_overrides: GridOverrides;
   property_data: Record<string, unknown>;
   notes: string | null;
   tags: string[];
@@ -134,6 +227,32 @@ export interface DealActivity {
   metadata: Record<string, unknown>;
   created_by: string | null;
   created_at: string;
+}
+
+export interface DealCondition {
+  id: string;
+  deal_id: string;
+  template_id: string | null;
+  condition_name: string;
+  category: string;
+  required_stage: string;
+  status: string;
+  internal_description: string | null;
+  borrower_description: string | null;
+  responsible_party: string | null;
+  critical_path_item: boolean;
+  requires_approval: boolean;
+  is_required: boolean;
+  sort_order: number;
+  notes: string | null;
+  document_urls: string[] | null;
+  due_date: string | null;
+  assigned_to: string | null;
+  submitted_at: string | null;
+  reviewed_at: string | null;
+  reviewed_by: string | null;
+  created_at: string;
+  updated_at: string;
 }
 
 export interface DealTask {
@@ -234,66 +353,7 @@ export function computeUwOutput(
   const def = outputs.find((o) => o.key === key);
   if (!def?.formula) return null;
 
-  const formula = def.formula;
-  const val = (k: string) => {
-    const v = uwData[k];
-    return typeof v === "number" ? v : null;
-  };
-
-  // Simple formula evaluation for common patterns
-  if (key === "ltv" || key === "ltv_as_is") {
-    const num = val("loan_amount");
-    const den = key === "ltv_as_is" ? val("as_is_value") : val("property_value");
-    if (num != null && den != null && den !== 0) return (num / den) * 100;
-  }
-  if (key === "dscr") {
-    const rent = val("monthly_rent");
-    const exp = val("monthly_expenses");
-    if (rent != null && exp != null && exp !== 0) return rent / exp;
-  }
-  if (key === "cap_rate_in") {
-    const noi = val("noi_current");
-    const price = val("offer_price");
-    if (noi != null && price != null && price !== 0) return (noi / price) * 100;
-  }
-  if (key === "ltc") {
-    const total = val("total_loan");
-    const pp = val("purchase_price");
-    const rehab = val("rehab_budget");
-    if (total != null && pp != null && rehab != null && pp + rehab !== 0)
-      return (total / (pp + rehab)) * 100;
-  }
-  if (key === "ltv_arv") {
-    const total = val("total_loan");
-    const arv = val("arv");
-    if (total != null && arv != null && arv !== 0) return (total / arv) * 100;
-  }
-  if (key === "debt_yield") {
-    const noi = val("noi") ?? val("noi_current");
-    const loan = val("loan_amount");
-    if (noi != null && loan != null && loan !== 0) return (noi / loan) * 100;
-  }
-  if (key === "price_per_unit") {
-    const price = val("offer_price") ?? val("property_value");
-    const units = val("units_lots_sites");
-    if (price != null && units != null && units !== 0) return price / units;
-  }
-  if (key === "cap_rate_stabilized") {
-    const noi = val("noi_stabilized");
-    const price = val("offer_price");
-    if (noi != null && price != null && price !== 0) return (noi / price) * 100;
-  }
-
-  // Fallback: try to parse simple "a / b * c" patterns
-  const parts = formula.split(/\s*([/*+-])\s*/);
-  if (parts.length === 5 && parts[1] === "/" && parts[3] === "*") {
-    const a = val(parts[0]);
-    const b = val(parts[2]);
-    const c = Number(parts[4]);
-    if (a != null && b != null && b !== 0 && !isNaN(c)) return (a / b) * c;
-  }
-
-  return null;
+  return evaluateFormula(def.formula, uwData);
 }
 
 export function getCardMetricValue(

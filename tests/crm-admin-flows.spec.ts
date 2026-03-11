@@ -118,17 +118,17 @@ test("28 — CRM company detail page loads with tabs", async ({ adminPage }) => 
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
-// 29. Deal/opportunity detail loads all tabs, stage stepper renders
+// 29. Unified deal detail loads all tabs, stage stepper renders
 // ─────────────────────────────────────────────────────────────────────────────
-test("29 — deal detail page loads with tabs and stage stepper", async ({
+test("29 — unified deal detail loads with tabs and stage stepper", async ({
   adminPage,
 }) => {
-  await adminPage.goto("/admin/pipeline/debt");
+  await adminPage.goto("/admin/pipeline");
   await adminPage.waitForLoadState("networkidle");
 
-  // Look for a deal card or link on the pipeline/kanban view
+  // Look for a deal card or link on the unified pipeline view
   const dealCard = adminPage.locator(
-    '[class*="card"] a, [class*="Card"] a, table tbody tr a, [draggable] a, a[href*="/deals/"], a[href*="/pipeline/debt/"]'
+    '[class*="card"] a, [class*="Card"] a, table tbody tr a, [draggable] a, a[href*="/deals/"], a[href*="/pipeline/"]'
   );
 
   const hasDeals = await dealCard.first().isVisible({ timeout: 5_000 }).catch(() => false);
@@ -165,16 +165,16 @@ test("29 — deal detail page loads with tabs and stage stepper", async ({
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
-// 30. Pipeline view — kanban board renders with deals in correct stages
+// 30. Unified pipeline view — kanban board renders
 // ─────────────────────────────────────────────────────────────────────────────
-test("30 — pipeline kanban board renders", async ({ adminPage }) => {
-  await adminPage.goto("/admin/pipeline/debt");
+test("30 — unified pipeline kanban board renders", async ({ adminPage }) => {
+  await adminPage.goto("/admin/pipeline");
   await adminPage.waitForLoadState("networkidle");
 
   const main = adminPage.locator("main");
   await expect(main).toBeVisible();
 
-  // Kanban board should have columns or a board-like layout
+  // Unified pipeline should have columns or a board-like layout
   const boardContent = adminPage.locator(
     '[class*="kanban"], [class*="column"], [class*="board"], [class*="pipeline"], [draggable], [class*="stage"]'
   );
@@ -190,45 +190,8 @@ test("30 — pipeline kanban board renders", async ({ adminPage }) => {
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
-// 31. Chatter — chat rooms load, messages display
+// 31. Chatter -- REMOVED (feature was deleted)
 // ─────────────────────────────────────────────────────────────────────────────
-test("31 — chat page loads and displays rooms/messages", async ({
-  adminPage,
-}) => {
-  await adminPage.goto("/chat");
-  await adminPage.waitForLoadState("networkidle");
-  await waitForAppShell(adminPage);
-
-  const main = adminPage.locator("main");
-  await expect(main).toBeVisible({ timeout: 15_000 });
-
-  // Wait for the client-side chat page to finish loading (it starts with a spinner)
-  // The chat page first loads userId, then channels — give it extra time
-  await adminPage.waitForTimeout(3_000);
-
-  // Chat interface should show rooms, messages, or empty/loading state
-  const chatContent = adminPage.locator(
-    'text=/chat|message|room|conversation|channel|loading/i, [class*="chat"], [class*="message"], [class*="channel"], [data-empty], textarea, input[placeholder*="message" i]'
-  );
-
-  const hasChat = await chatContent.first().isVisible({ timeout: 10_000 }).catch(() => false);
-  // Match actual empty state text: "No conversations yet" or "Select a channel to start chatting"
-  const emptyState = adminPage.locator('text=/no.*conversation|no.*message|no.*chat|select.*channel|select.*room|empty/i');
-  const hasEmpty = await emptyState.first().isVisible({ timeout: 3_000 }).catch(() => false);
-  // Also check for error boundary
-  const errorBoundary = adminPage.locator('text=/failed to load|try again|error occurred/i');
-  const hasError = await errorBoundary.first().isVisible({ timeout: 2_000 }).catch(() => false);
-
-  expect(hasChat || hasEmpty || hasError).toBeTruthy();
-
-  // If there's a message input, verify it's interactive
-  const messageInput = adminPage.locator(
-    'textarea, input[placeholder*="message" i], [contenteditable="true"]'
-  );
-  if (await messageInput.first().isVisible({ timeout: 3_000 }).catch(() => false)) {
-    await expect(messageInput.first()).toBeEnabled();
-  }
-});
 
 // ─────────────────────────────────────────────────────────────────────────────
 // 32. Operations page — Projects/Tasks/Approvals tabs load

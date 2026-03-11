@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { GitBranch, FileUp, AlertCircle, ChevronDown } from "lucide-react";
 import { Card } from "@/components/ui/card";
+import { timeAgo } from "@/lib/format";
 import type { DealLogEntry } from "../actions";
 
 const logConfig: Record<
@@ -34,15 +35,6 @@ const logConfig: Record<
     borderColor: "border-[#2E6EA6]/25",
   },
 };
-
-function timeAgo(dateStr: string): string {
-  const diff = Date.now() - new Date(dateStr).getTime();
-  const hours = Math.floor(diff / (1000 * 60 * 60));
-  if (hours < 1) return "just now";
-  if (hours < 24) return `${hours}h ago`;
-  const days = Math.floor(hours / 24);
-  return `${days}d ago`;
-}
 
 interface DealActivityLogProps {
   entries: DealLogEntry[];

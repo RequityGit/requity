@@ -129,7 +129,7 @@ export default async function QuoteDetailPage({ params }: PageProps) {
   return (
     <div className="space-y-6">
       {/* Back link */}
-      <Link href={`/admin/pipeline/debt/${loanId}`}>
+      <Link href={`/admin/pipeline/${loanId}`}>
         <Button variant="ghost" size="sm" className="gap-1 -ml-2 text-muted-foreground">
           <ArrowLeft className="h-4 w-4" />
           Back to {loan?.loan_number ?? "Loan"} Quotes

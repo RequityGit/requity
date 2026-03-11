@@ -1,5 +1,2 @@
-import { redirect } from "next/navigation";
-
-export default function PipelinePage() {
-  redirect("/admin/pipeline/debt");
-}
+export { default } from "@/app/(authenticated)/admin/pipeline-v2/page";
+export { dynamic } from "@/app/(authenticated)/admin/pipeline-v2/page";

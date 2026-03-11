@@ -178,13 +178,13 @@ export function OriginationsTabs({
       <TabsContent value="dscr-pricing" className="mt-4">
         <div className="space-y-4">
           <div className="flex justify-end gap-2">
-            <Link href="/admin/dscr/rate-sheets">
+            <Link href="/admin/models/dscr?tab=rate-sheets">
               <Button variant="outline" className="gap-2">
                 <Building2 className="h-4 w-4" />
                 Rate Sheets
               </Button>
             </Link>
-            <Link href="/admin/dscr/price">
+            <Link href="/admin/models/dscr?tab=pricing">
               <Button variant="outline" className="gap-2">
                 <Calculator className="h-4 w-4" />
                 Deal Calculator

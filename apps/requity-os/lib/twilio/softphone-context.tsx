@@ -11,8 +11,10 @@ import React, {
 import { Device, Call } from "@twilio/voice-sdk";
 import type { SoftphoneContextValue, SoftphoneStatus } from "./types";
 
-const TOKEN_URL = "https://requity-ivr-6327.twil.io/token";
-const IDENTITY = "alfonso";
+const TOKEN_URL =
+  process.env.NEXT_PUBLIC_TWILIO_TOKEN_URL ||
+  "https://requity-ivr-6327.twil.io/token";
+const IDENTITY = process.env.NEXT_PUBLIC_TWILIO_IDENTITY || "requity-portal";
 
 const SoftphoneContext = createContext<SoftphoneContextValue | null>(null);
 

@@ -27,6 +27,9 @@ export interface OpsTask {
   recurrence_start_date: string | null;
   recurrence_end_date: string | null;
   next_recurrence_date: string | null;
+  recurring_template_id: string | null;
+  recurrence_period: string | null;
+  previous_incomplete: boolean | null;
   recurring_series_id: string | null;
   source_task_id: string | null;
   parent_task_id: string | null;
@@ -34,6 +37,36 @@ export interface OpsTask {
   sort_order: number;
   updated_at: string | null;
   created_at: string | null;
+  type: "task" | "approval";
+  approval_status: string | null;
+  active_party: string | null;
+  requestor_user_id: string | null;
+  requestor_name: string | null;
+  amount: number | null;
+  decision_note: string | null;
+  approved_at: string | null;
+  rejected_at: string | null;
+  resubmitted_at: string | null;
+  revision_count: number | null;
+  // Ad-hoc task approval fields
+  requires_approval: boolean;
+  approver_id: string | null;
+  approval_instructions: string | null;
+}
+
+export interface TaskApproval {
+  id: string;
+  task_id: string;
+  approver_id: string;
+  approval_status: "pending" | "approved" | "rejected" | "revision_requested";
+  approval_instructions: string | null;
+  approval_note: string | null;
+  rejection_reason: string | null;
+  requested_at: string;
+  responded_at: string | null;
+  created_by: string;
+  created_at: string;
+  updated_at: string;
 }
 
 export interface Profile {
@@ -44,20 +77,88 @@ export interface Profile {
 
 // ── Constants ──────────────────────────────────────────────────────────────
 
-export const TASK_STATUSES = ["To Do", "In Progress", "Complete"] as const;
+export const TASK_STATUSES = ["To Do", "In Progress", "Pending Approval", "Complete"] as const;
 export type TaskStatus = (typeof TASK_STATUSES)[number];
 
 export const TASK_PRIORITIES = ["High", "Medium", "Low"] as const;
 export type TaskPriority = (typeof TASK_PRIORITIES)[number];
 
 export const TASK_CATEGORIES = [
+  "Approval",
+  "Asset Mgmt",
+  "Finance",
   "General",
+  "HR",
   "Investments",
   "Investor Relations",
   "Lending Ops",
   "Marketing/Website",
   "Tech/Infrastructure",
 ] as const;
+
+export const TASK_TYPE_FILTER = ["all", "task", "approval"] as const;
+export type TaskTypeFilter = (typeof TASK_TYPE_FILTER)[number];
+
+export const APPROVAL_STATUS_LABELS: Record<string, string> = {
+  pending: "Pending",
+  reviewing: "Reviewing",
+  awaiting_revision: "Awaiting Revision",
+  resubmitted: "Resubmitted",
+  approved: "Approved",
+};
+
+export const APPROVAL_STATUS_COLORS: Record<string, { bg: string; text: string }> = {
+  pending: {
+    bg: "bg-amber-100 dark:bg-amber-950/30",
+    text: "text-amber-700 dark:text-amber-400",
+  },
+  reviewing: {
+    bg: "bg-blue-100 dark:bg-blue-950/30",
+    text: "text-blue-700 dark:text-blue-400",
+  },
+  awaiting_revision: {
+    bg: "bg-red-100 dark:bg-red-950/30",
+    text: "text-red-700 dark:text-red-400",
+  },
+  resubmitted: {
+    bg: "bg-violet-100 dark:bg-violet-950/30",
+    text: "text-violet-700 dark:text-violet-400",
+  },
+  approved: {
+    bg: "bg-emerald-100 dark:bg-emerald-950/30",
+    text: "text-emerald-700 dark:text-emerald-400",
+  },
+};
+
+export const TASK_APPROVAL_STATUS_LABELS: Record<string, string> = {
+  pending: "Awaiting Approval",
+  approved: "Approved",
+  rejected: "Rejected",
+  revision_requested: "Revision Requested",
+};
+
+export const TASK_APPROVAL_STATUS_COLORS: Record<string, { bg: string; text: string; dot: string }> = {
+  pending: {
+    bg: "bg-amber-100 dark:bg-amber-950/30",
+    text: "text-amber-700 dark:text-amber-400",
+    dot: "bg-amber-500",
+  },
+  approved: {
+    bg: "bg-emerald-100 dark:bg-emerald-950/30",
+    text: "text-emerald-700 dark:text-emerald-400",
+    dot: "bg-emerald-500",
+  },
+  rejected: {
+    bg: "bg-red-100 dark:bg-red-950/30",
+    text: "text-red-700 dark:text-red-400",
+    dot: "bg-red-500",
+  },
+  revision_requested: {
+    bg: "bg-amber-100 dark:bg-amber-950/30",
+    text: "text-amber-700 dark:text-amber-400",
+    dot: "bg-amber-500",
+  },
+};
 
 export const CATEGORY_COLORS: Record<string, { bg: string; text: string }> = {
   "Lending Ops": {
@@ -83,6 +184,22 @@ export const CATEGORY_COLORS: Record<string, { bg: string; text: string }> = {
   General: {
     bg: "bg-gray-100 dark:bg-gray-800/50",
     text: "text-gray-700 dark:text-gray-400",
+  },
+  Approval: {
+    bg: "bg-orange-100 dark:bg-orange-950/30",
+    text: "text-orange-700 dark:text-orange-400",
+  },
+  Finance: {
+    bg: "bg-green-100 dark:bg-green-950/30",
+    text: "text-green-700 dark:text-green-400",
+  },
+  "Asset Mgmt": {
+    bg: "bg-purple-100 dark:bg-purple-950/30",
+    text: "text-purple-700 dark:text-purple-400",
+  },
+  HR: {
+    bg: "bg-rose-100 dark:bg-rose-950/30",
+    text: "text-rose-700 dark:text-rose-400",
   },
 };
 
@@ -179,6 +296,12 @@ export function isDueOverdue(dueDate: string | null): boolean {
   return d < now;
 }
 
+function taskSortWeight(t: OpsTask): number {
+  if (t.type === "approval" && t.approval_status === "awaiting_revision") return 0;
+  if (t.type === "approval") return 1;
+  return 2;
+}
+
 export function sortTasksByColumn(tasks: OpsTask[], status: string): OpsTask[] {
   if (status === "Complete") {
     return [...tasks].sort((a, b) => {
@@ -188,9 +311,33 @@ export function sortTasksByColumn(tasks: OpsTask[], status: string): OpsTask[] {
     });
   }
   return [...tasks].sort((a, b) => {
+    const wa = taskSortWeight(a);
+    const wb = taskSortWeight(b);
+    if (wa !== wb) return wa - wb;
     if (a.sort_order !== b.sort_order) return a.sort_order - b.sort_order;
     const aTime = a.created_at ? new Date(a.created_at).getTime() : 0;
     const bTime = b.created_at ? new Date(b.created_at).getTime() : 0;
     return bTime - aTime;
   });
+}
+
+export async function submitApprovalDecision(
+  taskId: string,
+  decision: "approve" | "reject" | "resubmit",
+  userId: string,
+  note?: string
+): Promise<{ success: boolean; error?: string }> {
+  const supabase = createClient();
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data, error } = await (supabase as any).rpc("submit_approval_decision", {
+    p_task_id: taskId,
+    p_decision: decision,
+    p_user_id: userId,
+    p_note: note || null,
+  });
+
+  if (error) return { success: false, error: error.message };
+  const result = data as Record<string, unknown>;
+  if (result.error) return { success: false, error: result.error as string };
+  return { success: true };
 }

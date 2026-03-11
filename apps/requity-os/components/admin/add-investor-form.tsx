@@ -9,6 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/components/ui/use-toast";
 import { addInvestorAction } from "@/app/(authenticated)/admin/investors/new/actions";
 import { Loader2 } from "lucide-react";
+import { formatPhoneInput } from "@/lib/format";
 
 export function AddInvestorForm() {
   const [loading, setLoading] = useState(false);
@@ -100,7 +101,7 @@ export function AddInvestorForm() {
               id="phone"
               type="tel"
               value={phone}
-              onChange={(e) => setPhone(e.target.value)}
+              onChange={(e) => setPhone(formatPhoneInput(e.target.value))}
               placeholder="(555) 123-4567"
             />
           </div>

@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { DatePicker } from "@/components/ui/date-picker";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import {
@@ -25,6 +26,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { updateBorrowerAction } from "@/app/(authenticated)/admin/borrowers/new/actions";
 import { Loader2, Pencil } from "lucide-react";
 import { US_STATES } from "@/lib/constants";
+import { formatPhoneInput } from "@/lib/format";
 // Borrower contact fields now live on crm_contacts; use `any` until refactored.
 
 interface BorrowerEditDialogProps {
@@ -40,7 +42,7 @@ export function BorrowerEditDialog({ borrower }: BorrowerEditDialogProps) {
   const [firstName, setFirstName] = useState(borrower.first_name || "");
   const [lastName, setLastName] = useState(borrower.last_name || "");
   const [email, setEmail] = useState(borrower.email || "");
-  const [phone, setPhone] = useState(borrower.phone || "");
+  const [phone, setPhone] = useState(formatPhoneInput(borrower.phone || ""));
   const [dateOfBirth, setDateOfBirth] = useState(
     borrower.date_of_birth || ""
   );
@@ -173,7 +175,8 @@ export function BorrowerEditDialog({ borrower }: BorrowerEditDialogProps) {
                 id="editPhone"
                 type="tel"
                 value={phone}
-                onChange={(e) => setPhone(e.target.value)}
+                onChange={(e) => setPhone(formatPhoneInput(e.target.value))}
+                placeholder="(555) 123-4567"
               />
             </div>
           </div>
@@ -181,11 +184,10 @@ export function BorrowerEditDialog({ borrower }: BorrowerEditDialogProps) {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="editDob">Date of Birth</Label>
-              <Input
-                id="editDob"
-                type="date"
+              <DatePicker
                 value={dateOfBirth}
-                onChange={(e) => setDateOfBirth(e.target.value)}
+                onChange={(value) => setDateOfBirth(value)}
+                showYearNavigation
               />
             </div>
             <div className="space-y-2">
@@ -290,11 +292,9 @@ export function BorrowerEditDialog({ borrower }: BorrowerEditDialogProps) {
               </div>
               <div className="space-y-2">
                 <Label htmlFor="editCreditDate">Credit Report Date</Label>
-                <Input
-                  id="editCreditDate"
-                  type="date"
+                <DatePicker
                   value={creditReportDate}
-                  onChange={(e) => setCreditReportDate(e.target.value)}
+                  onChange={(value) => setCreditReportDate(value)}
                 />
               </div>
               <div className="space-y-2">

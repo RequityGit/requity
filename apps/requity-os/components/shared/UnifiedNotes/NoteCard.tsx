@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Pin, PinOff, Pencil, Trash2, Lock, ThumbsUp } from "lucide-react";
+import { Pin, PinOff, Pencil, Trash2, Lock, ThumbsUp, FileCheck } from "lucide-react";
 import { parseComment, relativeTime } from "@/lib/comment-utils";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { MentionInput } from "@/components/shared/mention-input";
@@ -130,6 +130,12 @@ export function NoteCard({
             )}
             {note.is_edited && (
               <span className="text-[10px] text-muted-foreground">(edited)</span>
+            )}
+            {note.condition_name && (
+              <span className="inline-flex items-center gap-1 text-[10px] font-medium text-teal-600 bg-teal-500/10 border border-teal-500/20 rounded-full px-1.5 py-px">
+                <FileCheck className="h-2.5 w-2.5" strokeWidth={2} />
+                {note.condition_name}
+              </span>
             )}
           </div>
 

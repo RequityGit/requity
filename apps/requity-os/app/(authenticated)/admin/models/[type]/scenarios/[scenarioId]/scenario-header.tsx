@@ -180,9 +180,7 @@ export function ScenarioHeader({
               </div>
               <Link
                 href={
-                  linkedDealType === "opportunity"
-                    ? `/admin/pipeline/equity/${linkedDealId}`
-                    : `/admin/pipeline/debt/${linkedDealId}`
+                  `/admin/pipeline/${linkedDealId}`
                 }
               >
                 <Button variant="ghost" size="sm" className="h-7 w-7 p-0">

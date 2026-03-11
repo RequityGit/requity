@@ -17,12 +17,14 @@ interface CardTypeSelectorProps {
   cardTypes: UnifiedCardType[];
   selected: string | null;
   onSelect: (id: string) => void;
+  onDoubleClick?: (id: string) => void;
 }
 
 export function CardTypeSelector({
   cardTypes,
   selected,
   onSelect,
+  onDoubleClick,
 }: CardTypeSelectorProps) {
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -35,6 +37,10 @@ export function CardTypeSelector({
             key={ct.id}
             type="button"
             onClick={() => onSelect(ct.id)}
+            onDoubleClick={() => {
+              onSelect(ct.id);
+              onDoubleClick?.(ct.id);
+            }}
             className={cn(
               "flex flex-col items-start gap-2 rounded-lg border p-4 text-left transition-all",
               "hover:border-foreground/20 hover:shadow-sm",

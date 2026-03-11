@@ -39,7 +39,7 @@ export function DetailEntitiesTab({ entities }: DetailEntitiesTabProps) {
           No entities
         </h3>
         <p className="text-sm text-muted-foreground">
-          No borrowing or investing entities linked.
+          No borrowing or investing entities linked to this contact yet.
         </p>
       </div>
     );

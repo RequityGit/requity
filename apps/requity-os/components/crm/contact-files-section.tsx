@@ -14,7 +14,7 @@ interface ContactFile {
   storage_path: string;
   file_size: number | null;
   mime_type: string | null;
-  uploaded_at: string;
+  uploaded_at: string | null;
   notes: string | null;
 }
 
@@ -30,14 +30,14 @@ export function ContactFilesSection({ contactId }: ContactFilesSectionProps) {
     setLoading(true);
     try {
       const supabase = createClient();
-      const { data } = await (supabase as any)
+      const { data } = await supabase
         .from("contact_files")
         .select(
           "id, file_name, file_type, storage_path, file_size, mime_type, uploaded_at, notes"
         )
         .eq("contact_id", contactId)
         .order("uploaded_at", { ascending: false });
-      setFiles((data ?? []) as ContactFile[]);
+      setFiles(data ?? []);
     } finally {
       setLoading(false);
     }

@@ -2,7 +2,7 @@
 
 export type ApprovalStatus = "pending" | "approved" | "changes_requested" | "declined" | "cancelled";
 export type ApprovalPriority = "low" | "normal" | "high" | "urgent";
-export type ApprovalEntityType = "loan" | "draw_request" | "payoff" | "exception" | "investor_distribution" | "opportunity";
+export type ApprovalEntityType = "loan" | "draw_request" | "payoff" | "exception" | "investor_distribution" | "opportunity" | "condition";
 export type ApprovalAuditAction =
   | "submitted"
   | "approved"
@@ -90,6 +90,12 @@ export interface ChecklistResult {
   field: string;
   passed: boolean;
   reason?: string;
+  /** Field input type for inline editing in the approval dialog */
+  field_type?: "currency" | "percent" | "number" | "text" | "boolean" | "select" | "date";
+  /** Dropdown options (when field_type is "select") */
+  options?: string[];
+  /** Special fields that need custom UI instead of UwField */
+  is_special?: "borrower_picker" | "loan_amount";
 }
 
 export interface RoutingResult {
@@ -145,4 +151,5 @@ export const ENTITY_TYPE_LABELS: Record<ApprovalEntityType, string> = {
   exception: "Exception",
   investor_distribution: "Investor Distribution",
   opportunity: "Deal",
+  condition: "Condition",
 };

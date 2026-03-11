@@ -8,9 +8,9 @@ import {
   getPrimaryText,
   getSecondaryText,
   getStatusBadge,
-  formatRelativeTime,
   type SearchEntityType,
 } from "@/lib/search-utils";
+import { formatRelativeTime } from "@/lib/notifications";
 
 interface SearchResultProps {
   id: string;

@@ -4,7 +4,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { requireAdmin } from "@/lib/auth/require-admin";
 import { UWEditorClient } from "@/components/admin/underwriting/uw-editor-client";
 import type { UWVersionData } from "@/components/admin/underwriting/uw-editor-client";
-import type { UWModelType } from "@/app/(authenticated)/admin/pipeline/debt/[id]/components";
+import type { UWModelType } from "@/lib/constants/uw-model-types";
 import {
   saveScenarioVersion,
   cloneScenarioVersion,

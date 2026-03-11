@@ -5,6 +5,7 @@ import {
   getValidGmailToken,
   buildMimeMessage,
   sendViaGmailApi,
+  type MimeAttachment,
 } from "@/lib/gmail";
 
 export async function POST(request: NextRequest) {
@@ -31,12 +32,12 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  // Fetch the email record
+  // Fetch the email record (including attachments metadata)
   const admin = createAdminClient();
   const { data: email, error: fetchError } = await admin
     .from("crm_emails")
     .select(
-      "id, to_email, to_name, subject, body_text, body_html, cc_emails, bcc_emails, from_email, sent_by, postmark_status"
+      "id, to_email, to_name, subject, body_text, body_html, cc_emails, bcc_emails, from_email, sent_by, postmark_status, attachments"
     )
     .eq("id", emailId)
     .single();
@@ -81,7 +82,36 @@ export async function POST(request: NextRequest) {
       user.id
     );
 
-    // Build the MIME message
+    // Download attachments from storage if present
+    const mimeAttachments: MimeAttachment[] = [];
+    const attachmentsMeta = email.attachments as Array<{
+      name: string;
+      path: string;
+      size: number;
+      type: string;
+    }> | null;
+
+    if (attachmentsMeta && attachmentsMeta.length > 0) {
+      for (const att of attachmentsMeta) {
+        const { data: fileData, error: dlError } = await admin.storage
+          .from("crm-attachments")
+          .download(att.path);
+
+        if (dlError || !fileData) {
+          console.error(`Failed to download attachment ${att.name}:`, dlError);
+          continue;
+        }
+
+        const arrayBuffer = await fileData.arrayBuffer();
+        mimeAttachments.push({
+          filename: att.name,
+          mimeType: att.type || "application/octet-stream",
+          content: Buffer.from(arrayBuffer),
+        });
+      }
+    }
+
+    // Build the MIME message (with attachments if any)
     const rawMessage = buildMimeMessage({
       from: gmailEmail,
       to: email.to_email,
@@ -90,6 +120,7 @@ export async function POST(request: NextRequest) {
       bodyHtml: email.body_html,
       cc: email.cc_emails,
       bcc: email.bcc_emails,
+      attachments: mimeAttachments.length > 0 ? mimeAttachments : undefined,
     });
 
     // Send via Gmail API

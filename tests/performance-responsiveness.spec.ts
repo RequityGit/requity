@@ -7,7 +7,7 @@ import { test as base, expect as baseExpect } from "@playwright/test";
 test.describe("39 — Page load performance", () => {
   const keyPages = [
     { role: "adminPage" as const, path: "/admin/dashboard", name: "Admin dashboard" },
-    { role: "adminPage" as const, path: "/admin/pipeline/debt", name: "Pipeline" },
+    { role: "adminPage" as const, path: "/admin/pipeline", name: "Pipeline" },
     { role: "adminPage" as const, path: "/admin/crm/contacts", name: "CRM contacts" },
     { role: "borrowerPage" as const, path: "/borrower/dashboard", name: "Borrower dashboard" },
     { role: "investorPage" as const, path: "/investor/dashboard", name: "Investor dashboard" },

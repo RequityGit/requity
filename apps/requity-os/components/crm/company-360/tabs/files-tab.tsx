@@ -14,9 +14,16 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useToast } from "@/components/ui/use-toast";
-import { FileText, Upload, Download, MoreHorizontal, X } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { FileText, Upload, Download, MoreHorizontal, X, Eye, Trash2, Loader2 } from "lucide-react";
 import { relTime } from "@/components/crm/contact-360/contact-detail-shared";
 import { COMPANY_FILE_TYPES } from "@/lib/constants";
+import { deleteCompanyFileAction } from "@/app/(authenticated)/admin/crm/company-actions";
 import type { CompanyFileData } from "../types";
 import { FILE_TYPE_LABELS, FILE_TYPE_COLORS } from "../types";
 
@@ -40,9 +47,71 @@ export function CompanyFilesTab({ files, companyId }: FilesTabProps) {
   const router = useRouter();
   const { toast } = useToast();
 
-  const filterTypes = ["all", "nda", "fee_agreement", "rate_sheet", "w9", "other"];
+  const [downloadingId, setDownloadingId] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+
+  const filterTypes = ["all", "nda", "fee_agreement", "other"];
   const filtered =
     filter === "all" ? files : files.filter((f) => f.file_type === filter);
+
+  async function handleDownload(file: CompanyFileData) {
+    setDownloadingId(file.id);
+    try {
+      const supabase = createClient();
+      const { data, error } = await supabase.storage
+        .from("loan-documents")
+        .createSignedUrl(file.storage_path, 3600, { download: file.file_name });
+
+      if (error || !data?.signedUrl) {
+        toast({ title: "Error generating download link", variant: "destructive" });
+        return;
+      }
+
+      const a = document.createElement("a");
+      a.href = data.signedUrl;
+      a.download = file.file_name;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+    } catch {
+      toast({ title: "Error downloading file", variant: "destructive" });
+    } finally {
+      setDownloadingId(null);
+    }
+  }
+
+  async function handleView(file: CompanyFileData) {
+    try {
+      const supabase = createClient();
+      const { data, error } = await supabase.storage
+        .from("loan-documents")
+        .createSignedUrl(file.storage_path, 3600);
+
+      if (error || !data?.signedUrl) {
+        toast({ title: "Error generating file link", variant: "destructive" });
+        return;
+      }
+
+      window.open(data.signedUrl, "_blank");
+    } catch {
+      toast({ title: "Error opening file", variant: "destructive" });
+    }
+  }
+
+  async function handleDelete(file: CompanyFileData) {
+    setDeletingId(file.id);
+    try {
+      const result = await deleteCompanyFileAction(file.id, file.storage_path);
+      if ("error" in result && result.error) {
+        toast({ title: "Error deleting file", description: result.error, variant: "destructive" });
+      } else {
+        toast({ title: "File deleted" });
+        router.refresh();
+      }
+    } finally {
+      setDeletingId(null);
+    }
+  }
 
   async function handleUpload() {
     if (!selectedFile) return;
@@ -242,20 +311,46 @@ export function CompanyFilesTab({ files, companyId }: FilesTabProps) {
                   </span>
                 )}
                 <div className="flex gap-1 shrink-0">
-                  <button className="w-[30px] h-[30px] rounded-md border border-border flex items-center justify-center cursor-pointer hover:bg-muted">
-                    <Download
-                      size={13}
-                      className="text-muted-foreground"
-                      strokeWidth={1.5}
-                    />
+                  <button
+                    className="w-[30px] h-[30px] rounded-md border border-border flex items-center justify-center cursor-pointer hover:bg-muted disabled:opacity-50 disabled:cursor-not-allowed"
+                    onClick={() => handleDownload(f)}
+                    disabled={downloadingId === f.id}
+                    title="Download"
+                  >
+                    {downloadingId === f.id ? (
+                      <Loader2 size={13} className="text-muted-foreground animate-spin" strokeWidth={1.5} />
+                    ) : (
+                      <Download size={13} className="text-muted-foreground" strokeWidth={1.5} />
+                    )}
                   </button>
-                  <button className="w-[30px] h-[30px] rounded-md border border-border flex items-center justify-center cursor-pointer hover:bg-muted">
-                    <MoreHorizontal
-                      size={13}
-                      className="text-muted-foreground"
-                      strokeWidth={1.5}
-                    />
-                  </button>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <button
+                        className="w-[30px] h-[30px] rounded-md border border-border flex items-center justify-center cursor-pointer hover:bg-muted"
+                        title="More options"
+                      >
+                        <MoreHorizontal size={13} className="text-muted-foreground" strokeWidth={1.5} />
+                      </button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem onClick={() => handleView(f)}>
+                        <Eye className="h-3.5 w-3.5 mr-2" />
+                        View
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => handleDownload(f)}>
+                        <Download className="h-3.5 w-3.5 mr-2" />
+                        Download
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        onClick={() => handleDelete(f)}
+                        disabled={deletingId === f.id}
+                        className="text-red-500 focus:text-red-500"
+                      >
+                        <Trash2 className="h-3.5 w-3.5 mr-2" />
+                        {deletingId === f.id ? "Deleting..." : "Delete"}
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                 </div>
               </div>
             );

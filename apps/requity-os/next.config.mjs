@@ -2,6 +2,9 @@ import { withSentryConfig } from "@sentry/nextjs";
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  serverActions: {
+    bodySizeLimit: "10mb",
+  },
   images: {
     remotePatterns: [
       {
@@ -15,17 +18,27 @@ const nextConfig = {
       {
         source: '/admin/originations',
         destination: '/admin/pipeline?tab=debt',
-        permanent: false,
+        permanent: true,
+      },
+      {
+        source: '/admin/equity-pipeline/:id',
+        destination: '/admin/pipeline/:id',
+        permanent: true,
       },
       {
         source: '/admin/equity-pipeline',
         destination: '/admin/pipeline?tab=equity',
-        permanent: false,
+        permanent: true,
       },
       {
-        source: '/admin/equity-pipeline/:id',
-        destination: '/admin/pipeline/equity/:id',
-        permanent: false,
+        source: '/admin/deals/:id',
+        destination: '/admin/pipeline/:id',
+        permanent: true,
+      },
+      {
+        source: '/admin/dscr',
+        destination: '/admin/models/dscr',
+        permanent: true,
       },
     ];
   },

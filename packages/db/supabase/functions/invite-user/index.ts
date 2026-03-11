@@ -63,14 +63,17 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Verify admin role
-    const { data: callerProfile } = await userClient
-      .from("profiles")
+    // Verify admin role via user_roles table (not profiles.role)
+    const { data: callerRoles } = await userClient
+      .from("user_roles")
       .select("role")
-      .eq("id", callingUser.id)
-      .single();
+      .eq("user_id", callingUser.id);
 
-    if (!callerProfile || callerProfile.role !== "admin") {
+    const isAdmin = callerRoles?.some(
+      (r) => r.role === "admin" || r.role === "super_admin"
+    );
+
+    if (!isAdmin) {
       return new Response(
         JSON.stringify({ error: "Forbidden: admin role required" }),
         {

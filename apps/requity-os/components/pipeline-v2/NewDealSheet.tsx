@@ -9,6 +9,7 @@ import {
 } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { DatePicker } from "@/components/ui/date-picker";
 import { Label } from "@/components/ui/label";
 import {
   Select,
@@ -110,6 +111,10 @@ export function NewDealSheet({
                 cardTypes={cardTypes}
                 selected={cardTypeId}
                 onSelect={(id) => setCardTypeId(id)}
+                onDoubleClick={(id) => {
+                  setCardTypeId(id);
+                  setStep(2);
+                }}
               />
               <div className="flex justify-end">
                 <Button
@@ -130,6 +135,10 @@ export function NewDealSheet({
                     key={ac}
                     type="button"
                     onClick={() => setAssetClass(ac)}
+                    onDoubleClick={() => {
+                      setAssetClass(ac);
+                      setStep(3);
+                    }}
                     className={`rounded-lg border p-3 text-left text-sm transition-all hover:border-foreground/20 ${
                       assetClass === ac ? "border-foreground ring-1 ring-foreground" : ""
                     }`}
@@ -179,10 +188,9 @@ export function NewDealSheet({
 
                 <div className="space-y-1.5">
                   <Label>Expected Close Date</Label>
-                  <Input
-                    type="date"
+                  <DatePicker
                     value={expectedClose}
-                    onChange={(e) => setExpectedClose(e.target.value)}
+                    onChange={(value) => setExpectedClose(value)}
                   />
                 </div>
 

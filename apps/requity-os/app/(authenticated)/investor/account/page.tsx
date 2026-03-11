@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 import { StatusBadge } from "@/components/shared/status-badge";
-import { formatCurrency, formatDate } from "@/lib/format";
+import { formatCurrency, formatDate, formatPhoneInput } from "@/lib/format";
 import { useToast } from "@/components/ui/use-toast";
 import { PhoneVerifyDialog } from "@/components/investor/phone-verify-dialog";
 import { Save, Loader2, Building2, ShieldCheck } from "lucide-react";
@@ -93,10 +93,10 @@ export default function InvestorAccountPage() {
           setAvatarUrl(pd.avatar_url ?? null);
           setFullName(pd.full_name ?? "");
           setEmail(pd.email ?? "");
-          setPhone(pd.phone ?? "");
+          setPhone(formatPhoneInput(pd.phone ?? ""));
           setCompany(pd.company_name ?? "");
           setOriginalEmail(pd.email ?? "");
-          setOriginalPhone(pd.phone ?? "");
+          setOriginalPhone(formatPhoneInput(pd.phone ?? ""));
         }
 
         // Look up investor record ID from auth user
@@ -182,7 +182,7 @@ export default function InvestorAccountPage() {
 
       // Update original values after successful save
       setOriginalEmail(email);
-      setOriginalPhone(phone);
+      setOriginalPhone(formatPhoneInput(phone));
       setOtpVerified(false);
 
       toast({
@@ -303,8 +303,8 @@ export default function InvestorAccountPage() {
                       id="phone"
                       type="tel"
                       value={phone}
-                      onChange={(e) => setPhone(e.target.value)}
-                      placeholder="Enter your phone number"
+                      onChange={(e) => setPhone(formatPhoneInput(e.target.value))}
+                      placeholder="(555) 123-4567"
                     />
                   </div>
                   <div className="space-y-2">

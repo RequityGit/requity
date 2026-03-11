@@ -4,19 +4,19 @@ import { redirect } from "next/navigation";
 import { PageHeader } from "@/components/shared/page-header";
 import { CompaniesView } from "@/components/crm/companies-view";
 import type { CompanyRowV2 } from "@/components/crm/crm-v2-page";
+import { getSessionData } from "@/lib/auth/session-cache";
 
 export const dynamic = "force-dynamic";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 export default async function CompaniesPage() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const session = await getSessionData();
+  if (!session) redirect("/login");
 
-  if (!user) redirect("/login");
+  const { isSuperAdmin } = session;
 
+  const supabase = createClient();
   const admin = createAdminClient();
 
   // Fetch companies-related data in parallel
@@ -33,6 +33,7 @@ export default async function CompaniesPage() {
       .from("companies")
       .select("*")
       .eq("is_active", true)
+      .is("deleted_at", null)
       .order("updated_at", { ascending: false }),
     (admin as any).from("company_files").select("company_id"),
   ]);
@@ -65,15 +66,13 @@ export default async function CompaniesPage() {
     phone: c.phone,
     website: c.website,
     company_type: c.company_type,
+    company_types: c.company_types ?? [c.company_type],
     company_subtype: c.company_subtype,
     city: c.city,
     state: c.state,
     contact_count: contactsPerCompany[c.id] ?? 0,
     file_count: filesPerCompany[c.id] ?? 0,
     active_deals: 0,
-    nda_created_date: c.nda_created_date,
-    nda_expiration_date: c.nda_expiration_date,
-    fee_agreement_on_file: c.fee_agreement_on_file,
     is_active: c.is_active,
     notes: c.notes,
   }));
@@ -84,7 +83,7 @@ export default async function CompaniesPage() {
         title="Companies"
         description="Manage companies and partnerships."
       />
-      <CompaniesView companies={companyRows} />
+      <CompaniesView companies={companyRows} isSuperAdmin={isSuperAdmin} />
     </div>
   );
 }

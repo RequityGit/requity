@@ -5,7 +5,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Search, Code } from "lucide-react";
-import { MERGE_VARIABLES } from "@/app/(authenticated)/admin/email-templates/types";
+import {
+  MERGE_FIELD_REGISTRY,
+  searchFields,
+} from "@/lib/merge-field-registry";
 
 interface VariableInserterProps {
   onInsert: (variable: string) => void;
@@ -15,12 +18,15 @@ export function VariableInserter({ onInsert }: VariableInserterProps) {
   const [search, setSearch] = useState("");
   const [expanded, setExpanded] = useState(false);
 
-  const filtered = MERGE_VARIABLES.filter(
-    (v) =>
-      !search ||
-      v.key.includes(search.toLowerCase()) ||
-      (v.label ?? v.key).toLowerCase().includes(search.toLowerCase())
-  );
+  const filtered = search ? searchFields(search) : MERGE_FIELD_REGISTRY;
+
+  // Group by category for organized display
+  const grouped = new Map<string, typeof filtered>();
+  for (const f of filtered) {
+    const list = grouped.get(f.category) ?? [];
+    list.push(f);
+    grouped.set(f.category, list);
+  }
 
   return (
     <div className="rounded-md border bg-card">
@@ -46,24 +52,33 @@ export function VariableInserter({ onInsert }: VariableInserterProps) {
               className="pl-9 h-8 text-sm"
             />
           </div>
-          <div className="flex flex-wrap gap-1.5">
-            {filtered.map((v) => (
-              <Button
-                key={v.key}
-                variant="outline"
-                size="sm"
-                className="h-7 text-xs gap-1"
-                onClick={() => onInsert(v.key)}
-                title={`Insert {{${v.key}}} — Example: ${v.example}`}
-              >
-                <Badge
-                  variant="secondary"
-                  className="h-4 px-1 text-[10px] font-mono"
-                >
-                  {`{{${v.key}}}`}
-                </Badge>
-                <span className="text-muted-foreground">{v.label ?? v.key}</span>
-              </Button>
+          <div className="space-y-2">
+            {Array.from(grouped.entries()).map(([category, fields]) => (
+              <div key={category}>
+                <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-1">
+                  {category}
+                </p>
+                <div className="flex flex-wrap gap-1.5">
+                  {fields.map((v) => (
+                    <Button
+                      key={v.key}
+                      variant="outline"
+                      size="sm"
+                      className="h-7 text-xs gap-1"
+                      onClick={() => onInsert(v.key)}
+                      title={`Insert {{${v.key}}} — ${v.label}`}
+                    >
+                      <Badge
+                        variant="secondary"
+                        className="h-4 px-1 text-[10px] font-mono"
+                      >
+                        {`{{${v.key}}}`}
+                      </Badge>
+                      <span className="text-muted-foreground">{v.label}</span>
+                    </Button>
+                  ))}
+                </div>
+              </div>
             ))}
             {filtered.length === 0 && (
               <p className="text-xs text-muted-foreground py-2">

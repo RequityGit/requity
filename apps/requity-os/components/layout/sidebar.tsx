@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import {
   LayoutDashboard,
@@ -13,16 +13,17 @@ import {
   Landmark,
   FolderOpen,
   Hammer,
-  Settings2,
+  ListChecks,
   Contact,
   Banknote,
   Cog,
-  Columns3,
   FlaskConical,
+  Layers,
+  Building2,
+  Wrench,
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useViewAs } from "@/contexts/view-as-context";
-import { createClient } from "@/lib/supabase/client";
 import { Separator } from "@/components/ui/separator";
 import {
   Collapsible,
@@ -77,63 +78,57 @@ const borrowerNav: NavItem[] = [
 const adminNav: NavEntry[] = [
   { label: "Dashboard", href: "/admin/dashboard", icon: LayoutDashboard, moduleName: "dashboard" },
   {
-    label: "CRM",
+    label: "Contacts",
+    href: "/admin/crm/contacts",
     icon: Contact,
-    basePath: "/admin/crm",
     moduleName: "crm",
-    activePaths: ["/admin/dialer"],
-    children: [
-      { label: "Contacts", href: "/admin/crm/contacts" },
-      { label: "Companies", href: "/admin/crm/companies" },
-      { label: "Power Dialer", href: "/admin/dialer" },
-    ],
+    activePaths: ["/admin/crm/contacts"],
+  },
+  {
+    label: "Companies",
+    href: "/admin/crm/companies",
+    icon: Building2,
+    moduleName: "crm",
+    activePaths: ["/admin/crm/companies"],
   },
   {
     label: "Pipeline",
-    icon: Columns3,
+    icon: Layers,
     basePath: "/admin/pipeline",
     moduleName: "pipeline",
     children: [
-      { label: "Debt", href: "/admin/pipeline/debt" },
-      { label: "Equity", href: "/admin/pipeline/equity" },
+      { label: "Deals", href: "/admin/pipeline" },
+      { label: "Intake", href: "/admin/pipeline/intake" },
     ],
-  },
-  {
-    label: "Models",
-    icon: FlaskConical,
-    basePath: "/admin/models",
-    moduleName: "models",
-    activePaths: ["/admin/models", "/admin/dscr"],
-    children: [
-      { label: "Commercial", href: "/admin/models/commercial" },
-      { label: "RTL", href: "/admin/models/rtl" },
-      { label: "DSCR", href: "/admin/models/dscr" },
-    ],
-  },
-  { label: "Servicing", href: "/admin/servicing", icon: Banknote, moduleName: "servicing" },
-  {
-    label: "Investments",
-    href: "/admin/funds",
-    icon: Landmark,
-    activePaths: ["/admin/capital-calls", "/admin/distributions"],
-    moduleName: "investments",
-  },
-  {
-    label: "Documents",
-    href: "/admin/document-center",
-    icon: FolderOpen,
-    activePaths: ["/admin/documents"],
-    moduleName: "documents",
   },
   {
     label: "Operations",
-    icon: Settings2,
-    basePath: "/admin/operations",
+    href: "/admin/operations/tasks",
+    icon: ListChecks,
     moduleName: "operations",
-    activePaths: ["/admin/operations/tasks", "/admin/operations/approvals"],
+    activePaths: ["/admin/operations"],
+  },
+  {
+    label: "Toolbox",
+    icon: Wrench,
+    basePath: "/admin/toolbox",
+    activePaths: [
+      "/admin/documents",
+      "/admin/servicing",
+      "/admin/funds",
+      "/admin/capital-calls",
+      "/admin/distributions",
+      "/admin/models",
+      "/admin/dialer",
+    ],
     children: [
-      { label: "Tasks", href: "/admin/operations/tasks" },
-      { label: "Approvals", href: "/admin/operations/approvals" },
+      { label: "Documents", href: "/admin/documents" },
+      { label: "Servicing", href: "/admin/servicing" },
+      { label: "Investments", href: "/admin/funds" },
+      { label: "Comm Model", href: "/admin/models/commercial" },
+      { label: "RTL Model", href: "/admin/models/rtl" },
+      { label: "DSCR Model", href: "/admin/models/dscr" },
+      { label: "Power Dialer", href: "/admin/dialer" },
     ],
   },
 ];
@@ -161,28 +156,28 @@ export function Sidebar({
   accessibleModules?: string[];
 }) {
   const pathname = usePathname();
+  const router = useRouter();
   const [collapsed, setCollapsed] = useState(false);
   const { effectiveViewRole, isViewingAs } = useViewAs();
-  const [pendingApprovals, setPendingApprovals] = useState(0);
-
-  useEffect(() => {
-    const supabase = createClient();
-
-    // Fetch pending approvals count
-    Promise.resolve(
-      supabase
-        .from("approval_requests" as never)
-        .select("id", { count: "exact", head: true })
-        .eq("status" as never, "pending" as never)
-    ).then(({ count }) => {
-      setPendingApprovals(count ?? 0);
-    }).catch((err) => {
-      console.error("sidebar: failed to fetch pending approvals", err);
-    });
-  }, []);
-
   // Use view-as role for navigation when super admin is simulating
   const navRole = isViewingAs ? effectiveViewRole : role;
+
+  // Eagerly prefetch the most-used routes on mount for faster navigation
+  useEffect(() => {
+    if (navRole === "admin") {
+      router.prefetch("/admin/dashboard");
+      router.prefetch("/admin/crm/contacts");
+      router.prefetch("/admin/pipeline");
+      router.prefetch("/admin/crm/companies");
+      router.prefetch("/admin/operations/tasks");
+    } else if (navRole === "borrower") {
+      router.prefetch("/borrower/dashboard");
+      router.prefetch("/borrower/draws");
+    } else if (navRole === "investor") {
+      router.prefetch("/investor/dashboard");
+      router.prefetch("/investor/funds");
+    }
+  }, [navRole, router]);
   const allNavEntries = getNavEntries(navRole);
 
   // Filter admin nav entries by module access and inject dynamic badges
@@ -196,20 +191,7 @@ export function Sidebar({
         )
       : allNavEntries;
 
-  // Inject pending approvals badge into Operations group
-  const navEntries = filteredEntries.map((entry) => {
-    if (isNavGroup(entry) && entry.basePath === "/admin/operations" && pendingApprovals > 0) {
-      return {
-        ...entry,
-        children: entry.children.map((child) =>
-          child.href === "/admin/operations/approvals"
-            ? { ...child, badge: pendingApprovals }
-            : child
-        ),
-      };
-    }
-    return entry;
-  });
+  const navEntries = filteredEntries;
 
   // Check if bottom nav items are accessible
   const showControlCenter =

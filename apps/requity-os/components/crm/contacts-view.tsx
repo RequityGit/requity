@@ -10,13 +10,32 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Button } from "@/components/ui/button";
 import { AddContactDialog } from "@/components/crm/add-contact-dialog";
-import { DeleteContactButton } from "@/components/crm/delete-contact-button";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { deleteCrmContactAction } from "@/app/(authenticated)/admin/crm/actions";
+import { useToast } from "@/components/ui/use-toast";
 import {
   CRM_RELATIONSHIP_TYPES,
   CRM_LIFECYCLE_STAGES,
 } from "@/lib/constants";
-import { formatDate } from "@/lib/format";
+import { smartDate } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import {
   Users,
@@ -25,6 +44,9 @@ import {
   ArrowUpDown,
   ArrowUp,
   ArrowDown,
+  MoreHorizontal,
+  Eye,
+  Trash2,
 } from "lucide-react";
 import { CrmAvatar, RelPill, StageDot } from "./crm-primitives";
 import { ClickToCallNumber } from "@/components/ui/ClickToCallNumber";
@@ -50,12 +72,34 @@ export function ContactsView({
 }: ContactsViewProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { toast } = useToast();
 
   const [contactSearch, setContactSearch] = useState(searchParams.get("q") ?? "");
   const [relFilter, setRelFilter] = useState(searchParams.get("rel") ?? "all");
   const [stageFilter, setStageFilter] = useState(searchParams.get("stage") ?? "all");
   const [contactSortKey, setContactSortKey] = useState<string>("last_contacted_at");
   const [contactSortDir, setContactSortDir] = useState<"asc" | "desc">("desc");
+  const [deleteTarget, setDeleteTarget] = useState<{ id: string; name: string } | null>(null);
+  const [deleting, setDeleting] = useState(false);
+
+  async function handleDelete() {
+    if (!deleteTarget) return;
+    setDeleting(true);
+    try {
+      const result = await deleteCrmContactAction(deleteTarget.id);
+      if (result.error) {
+        toast({ title: "Error deleting contact", description: result.error, variant: "destructive" });
+      } else {
+        toast({ title: "Contact deleted" });
+        router.refresh();
+      }
+    } catch {
+      toast({ title: "Error deleting contact", description: "An unexpected error occurred", variant: "destructive" });
+    } finally {
+      setDeleting(false);
+      setDeleteTarget(null);
+    }
+  }
 
   useEffect(() => {
     const params = new URLSearchParams();
@@ -261,15 +305,13 @@ export function ContactsView({
                   <SortHeader label="Stage" sortKey="lifecycle_stage" />
                   <th className="text-xs font-medium text-muted-foreground text-left px-4 py-2.5">Assigned</th>
                   <SortHeader label="Last Contacted" sortKey="last_contacted_at" />
-                  {isSuperAdmin && (
-                    <th className="text-xs font-medium text-muted-foreground text-center px-4 py-2.5 w-12" />
-                  )}
+                  <th className="text-xs font-medium text-muted-foreground text-center px-4 py-2.5 w-12" />
                 </tr>
               </thead>
               <tbody>
                 {filteredContacts.length === 0 ? (
                   <tr>
-                    <td colSpan={isSuperAdmin ? 9 : 8} className="text-center py-16">
+                    <td colSpan={9} className="text-center py-16">
                       {hasContactFilters ? (
                         <div>
                           <Users className="h-8 w-8 text-muted-foreground/40 mx-auto mb-2" />
@@ -336,17 +378,45 @@ export function ContactsView({
                         )}
                       </td>
                       <td className="px-4 py-3 num text-xs text-muted-foreground whitespace-nowrap">
-                        {c.last_contacted_at ? formatDate(c.last_contacted_at) : "—"}
+                        {(() => {
+                          const sd = smartDate(c.last_contacted_at);
+                          return <span title={sd.title}>{sd.text}</span>;
+                        })()}
                       </td>
-                      {isSuperAdmin && (
-                        <td className="px-4 py-3 text-center" onClick={(e) => e.stopPropagation()}>
-                          <DeleteContactButton
-                            contactId={c.id}
-                            contactName={`${c.first_name} ${c.last_name}`}
-                            variant="icon"
-                          />
-                        </td>
-                      )}
+                      <td className="px-4 py-3 text-center" onClick={(e) => e.stopPropagation()}>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-7 w-7 p-0 text-muted-foreground hover:text-foreground"
+                            >
+                              <MoreHorizontal className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end" className="w-40">
+                            <DropdownMenuItem
+                              onClick={() => router.push(`/admin/crm/${c.id}`)}
+                              className="gap-2 text-xs"
+                            >
+                              <Eye className="h-3.5 w-3.5" />
+                              View / Edit
+                            </DropdownMenuItem>
+                            {isSuperAdmin && (
+                              <>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem
+                                  onClick={() => setDeleteTarget({ id: c.id, name: `${c.first_name} ${c.last_name}` })}
+                                  className="gap-2 text-xs text-red-600 focus:text-red-600"
+                                >
+                                  <Trash2 className="h-3.5 w-3.5" />
+                                  Delete
+                                </DropdownMenuItem>
+                              </>
+                            )}
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </td>
                     </tr>
                   ))
                 )}
@@ -362,6 +432,29 @@ export function ContactsView({
             </span>
           </div>
         </div>
+
+      {/* Delete confirmation dialog */}
+      <AlertDialog open={!!deleteTarget} onOpenChange={(open) => { if (!open) setDeleteTarget(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Contact</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete &quot;{deleteTarget?.name}&quot;? This
+              contact will be removed from the CRM. This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDelete}
+              disabled={deleting}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              {deleting ? "Deleting..." : "Delete"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

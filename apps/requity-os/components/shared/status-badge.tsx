@@ -76,6 +76,14 @@ const statusColorMap: Record<string, DotColor> = {
   normal: "slate",
   on_hold: "amber",
 
+  // Generated document signature statuses
+  sent_for_signature: "blue",
+  viewed: "amber",
+  signed: "green",
+  declined: "red",
+  expired: "gray",
+  voided: "gray",
+
   // Documents / Conditions
   rejected: "red",
   not_requested: "gray",

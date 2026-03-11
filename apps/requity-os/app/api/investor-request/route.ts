@@ -1,7 +1,7 @@
-// @ts-nocheck
+import { NextRequest } from 'next/server';
 import nodemailer from 'nodemailer';
 
-export async function POST(request) {
+export async function POST(request: NextRequest) {
   try {
     const data = await request.json();
 
@@ -82,7 +82,15 @@ export async function POST(request) {
 }
 
 /* ─── Internal Notification Email ─── */
-function buildInternalEmail(d) {
+interface InternalEmailData {
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone: string;
+  timestamp: string;
+}
+
+function buildInternalEmail(d: InternalEmailData) {
   return `
 <!DOCTYPE html>
 <html>
@@ -158,7 +166,13 @@ function buildInternalEmail(d) {
 }
 
 /* ─── Investor Confirmation Email ─── */
-function buildConfirmationEmail(d) {
+interface ConfirmationEmailData {
+  firstName: string;
+  contactEmail: string;
+  timestamp: string;
+}
+
+function buildConfirmationEmail(d: ConfirmationEmailData) {
   return `
 <!DOCTYPE html>
 <html>

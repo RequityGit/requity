@@ -29,8 +29,30 @@ const RESERVED_WORDS = new Set([
 // Map module name to actual table name
 const MODULE_TO_TABLE: Record<string, string> = {
   loan_details: "loans",
-  property: "loans", // Property fields are stored on the loans table
-  borrower_entity: "loans", // Custom fields for this module also land on loans
+  property: "loans",
+  borrower_entity: "loans",
+  equity_deal: "equity_deals",
+  equity_property: "equity_properties",
+  equity_notes: "equity_deals",
+  company_info: "companies",
+  borrower_profile: "borrowers",
+  investor_profile: "investors",
+  contact_profile: "crm_contacts",
+  loans_extended: "loans",
+  servicing_loan: "servicing_loans",
+  fund_details: "funds",
+  opportunity: "opportunities",
+  standalone_property: "properties",
+  borrower_entity_detail: "borrower_entities",
+  investing_entity: "investing_entities",
+  investor_commitment: "investor_commitments",
+  capital_call: "capital_calls",
+  distribution: "distributions",
+  draw_request: "draw_requests",
+  payoff_statement: "payoff_statements",
+  wire_instructions: "company_wire_instructions",
+  crm_activity: "crm_activities",
+  equity_underwriting: "equity_underwriting",
 };
 
 // Map field_type to Postgres column type
@@ -51,8 +73,9 @@ interface CreateFieldPayload {
   field_key: string;
   field_label: string;
   field_type: string;
-  column_position: "left" | "right";
   dropdown_options: string[] | null;
+  formula_expression: string | null;
+  formula_source_fields: string[] | null;
 }
 
 Deno.serve(async (req: Request) => {
@@ -111,12 +134,12 @@ Deno.serve(async (req: Request) => {
 
     // Parse body
     const body: CreateFieldPayload = await req.json();
-    const { module, field_key, field_label, field_type, column_position, dropdown_options } = body;
+    const { module, field_key, field_label, field_type, dropdown_options, formula_expression, formula_source_fields } = body;
 
     // Validate required fields
-    if (!module || !field_key || !field_label || !field_type || !column_position) {
+    if (!module || !field_key || !field_label || !field_type) {
       return new Response(
-        JSON.stringify({ error: "module, field_key, field_label, field_type, and column_position are required" }),
+        JSON.stringify({ error: "module, field_key, field_label, and field_type are required" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
@@ -152,11 +175,20 @@ Deno.serve(async (req: Request) => {
       );
     }
 
-    // Validate field_type
-    const pgType = FIELD_TYPE_TO_PG[field_type];
-    if (!pgType) {
+    // Formula fields don't need a PG column type (they're calculated client-side)
+    const isFormula = field_type === "formula";
+    const pgType = isFormula ? null : FIELD_TYPE_TO_PG[field_type];
+    if (!isFormula && !pgType) {
       return new Response(
         JSON.stringify({ error: `Unknown field_type: ${field_type}` }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // Validate formula fields have expression and source fields
+    if (isFormula && (!formula_expression || !formula_source_fields || formula_source_fields.length === 0)) {
+      return new Response(
+        JSON.stringify({ error: "Formula fields require formula_expression and formula_source_fields" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
@@ -166,15 +198,17 @@ Deno.serve(async (req: Request) => {
       auth: { autoRefreshToken: false, persistSession: false },
     });
 
-    // Check if column already exists on the target table
-    const { data: colExists } = await adminClient
-      .rpc("column_exists", { p_table: tableName, p_column: field_key });
+    // For non-formula fields, check if column already exists on the target table
+    if (!isFormula) {
+      const { data: colExists } = await adminClient
+        .rpc("column_exists", { p_table: tableName, p_column: field_key });
 
-    if (colExists) {
-      return new Response(
-        JSON.stringify({ error: `Column '${field_key}' already exists on table '${tableName}'` }),
-        { status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      if (colExists) {
+        return new Response(
+          JSON.stringify({ error: `Column '${field_key}' already exists on table '${tableName}'` }),
+          { status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
     }
 
     // Check if field_key already exists in field_configurations for this module
@@ -192,30 +226,19 @@ Deno.serve(async (req: Request) => {
       );
     }
 
-    // Get the next display_order for this module
-    const { data: maxOrderRows } = await adminClient
-      .from("field_configurations")
-      .select("display_order")
-      .eq("module", module)
-      .order("display_order", { ascending: false })
-      .limit(1);
+    // For non-formula fields, execute ALTER TABLE to add the column
+    // Formula fields are calculated client-side, no DB column needed
+    if (!isFormula && pgType) {
+      const alterSQL = `ALTER TABLE ${tableName} ADD COLUMN IF NOT EXISTS "${field_key}" ${pgType}`;
+      const { error: alterError } = await adminClient.rpc("exec_ddl", { sql: alterSQL });
 
-    const nextOrder = maxOrderRows && maxOrderRows.length > 0
-      ? maxOrderRows[0].display_order + 1
-      : 0;
-
-    // Execute ALTER TABLE to add the column using our exec_ddl helper
-    // field_key has already been validated (lowercase letters, numbers, underscores only)
-    // so this is safe from SQL injection
-    const alterSQL = `ALTER TABLE ${tableName} ADD COLUMN IF NOT EXISTS "${field_key}" ${pgType}`;
-    const { error: alterError } = await adminClient.rpc("exec_ddl", { sql: alterSQL });
-
-    if (alterError) {
-      console.error("ALTER TABLE error:", alterError);
-      return new Response(
-        JSON.stringify({ error: `Failed to add column: ${alterError.message}` }),
-        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      if (alterError) {
+        console.error("ALTER TABLE error:", alterError);
+        return new Response(
+          JSON.stringify({ error: `Failed to add column: ${alterError.message}` }),
+          { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
     }
 
     // Insert field_configurations row
@@ -226,13 +249,13 @@ Deno.serve(async (req: Request) => {
         field_key,
         field_label,
         field_type,
-        column_position,
-        display_order: nextOrder,
         is_visible: true,
         is_locked: false,
         is_admin_created: true,
         dropdown_options: dropdown_options ?? null,
         is_archived: false,
+        formula_expression: isFormula ? formula_expression : null,
+        formula_source_fields: isFormula ? formula_source_fields : null,
       })
       .select()
       .single();

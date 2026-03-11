@@ -19,7 +19,7 @@ export function CompletedTaskCard({ task, onClick }: CompletedTaskCardProps) {
       <div className="flex h-[18px] w-[18px] shrink-0 items-center justify-center rounded-[4px] bg-green-600">
         <Check className="h-3 w-3 text-white" strokeWidth={3} />
       </div>
-      <span className="text-sm text-muted-foreground line-through flex-1 truncate">
+      <span className="text-sm text-muted-foreground line-through flex-1 line-clamp-2">
         {task.title}
       </span>
       <CategoryPill category={task.category} />

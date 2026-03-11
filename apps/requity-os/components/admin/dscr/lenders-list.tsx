@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { formatPhoneInput } from "@/lib/format";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -132,7 +133,7 @@ export function LendersList({ lenders }: { lenders: any[] }) {
                 <Label>AE Phone</Label>
                 <Input
                   value={form.ae_phone}
-                  onChange={(e) => setForm({ ...form, ae_phone: e.target.value })}
+                  onChange={(e) => setForm({ ...form, ae_phone: formatPhoneInput(e.target.value) })}
                 />
               </div>
               <Button onClick={handleAdd} disabled={saving} className="w-full">

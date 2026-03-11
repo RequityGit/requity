@@ -1,5 +1,6 @@
 "use client";
 
+import { cn } from "@/lib/utils";
 import {
   Select,
   SelectContent,
@@ -7,7 +8,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { TASK_CATEGORIES, TASK_PRIORITIES } from "@/lib/tasks";
+import {
+  TASK_CATEGORIES,
+  TASK_PRIORITIES,
+  TASK_TYPE_FILTER,
+  type TaskTypeFilter,
+} from "@/lib/tasks";
 
 interface TaskFiltersProps {
   assigneeOptions: { value: string; label: string }[];
@@ -17,7 +23,15 @@ interface TaskFiltersProps {
   onCategoryChange: (value: string) => void;
   priorityFilter: string;
   onPriorityChange: (value: string) => void;
+  typeFilter: TaskTypeFilter;
+  onTypeFilterChange: (value: TaskTypeFilter) => void;
 }
+
+const TYPE_LABELS: Record<TaskTypeFilter, string> = {
+  all: "All",
+  task: "Tasks",
+  approval: "Approvals",
+};
 
 export function TaskFilters({
   assigneeOptions,
@@ -27,9 +41,31 @@ export function TaskFilters({
   onCategoryChange,
   priorityFilter,
   onPriorityChange,
+  typeFilter,
+  onTypeFilterChange,
 }: TaskFiltersProps) {
   return (
-    <div className="flex gap-2 flex-wrap">
+    <div className="flex gap-3 flex-wrap items-center">
+      {/* Segmented type filter */}
+      <div className="flex rounded-md overflow-hidden border border-border">
+        {TASK_TYPE_FILTER.map((t, i) => (
+          <button
+            key={t}
+            type="button"
+            onClick={() => onTypeFilterChange(t)}
+            className={cn(
+              "px-3.5 py-1.5 text-[12px] font-semibold transition-colors",
+              typeFilter === t
+                ? "bg-primary text-primary-foreground"
+                : "bg-transparent text-muted-foreground hover:bg-accent",
+              i < TASK_TYPE_FILTER.length - 1 && "border-r border-border"
+            )}
+          >
+            {TYPE_LABELS[t]}
+          </button>
+        ))}
+      </div>
+
       <Select value={assigneeFilter} onValueChange={onAssigneeChange}>
         <SelectTrigger className="w-[160px] h-9 text-[13px]">
           <SelectValue placeholder="Assignee" />

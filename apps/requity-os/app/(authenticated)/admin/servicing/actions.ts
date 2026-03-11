@@ -3,8 +3,9 @@
 import { revalidatePath } from "next/cache";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { requireAdmin } from "@/lib/auth/require-admin";
+import type { Database } from "@/lib/supabase/types";
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
+type ServicingLoanInsert = Database["public"]["Tables"]["servicing_loans"]["Insert"];
 
 export interface ServicingLoanFormData {
   // Basic info (any admin)
@@ -52,7 +53,7 @@ export async function addLoanToServicingAction(formData: ServicingLoanFormData) 
     const auth = await requireAdmin();
     if ("error" in auth) return { error: auth.error };
 
-    const admin = createAdminClient() as any;
+    const admin = createAdminClient();
 
     // Validate required fields
     if (!formData.loan_id?.trim()) return { error: "Loan ID is required" };
@@ -68,7 +69,7 @@ export async function addLoanToServicingAction(formData: ServicingLoanFormData) 
     if (existing) return { error: `Loan ID "${formData.loan_id}" already exists in servicing` };
 
     // Build insert payload
-    const payload: Record<string, any> = {
+    const payload: Record<string, unknown> = {
       loan_id: formData.loan_id.trim(),
       loan_status: formData.loan_status || "Active",
       total_loan_amount: parseFloat(formData.total_loan_amount) || 0,
@@ -113,7 +114,7 @@ export async function addLoanToServicingAction(formData: ServicingLoanFormData) 
 
     const { data: newLoan, error: insertError } = await admin
       .from("servicing_loans")
-      .insert(payload)
+      .insert(payload as ServicingLoanInsert)
       .select("id, loan_id")
       .single();
 
@@ -168,7 +169,7 @@ export async function moveToServicingAction(pipelineLoanId: string) {
     const auth = await requireAdmin();
     if ("error" in auth) return { error: auth.error };
 
-    const admin = createAdminClient() as any;
+    const admin = createAdminClient();
 
     // 1. Fetch pipeline loan with all fields
     const { data: loan, error: loanErr } = await admin
@@ -193,27 +194,17 @@ export async function moveToServicingAction(pipelineLoanId: string) {
       return { error: `Loan ${loan.loan_number} already exists in servicing` };
     }
 
-    // 3. Fetch borrower name
+    // 3. Fetch borrower name via CRM contact
     let borrowerName: string | null = null;
     if (loan.borrower_id) {
       const { data: borrower } = await admin
         .from("borrowers")
-        .select("first_name, last_name, crm_contact_id")
+        .select("crm_contact_id, crm_contacts(first_name, last_name)")
         .eq("id", loan.borrower_id)
         .maybeSingle();
 
-      if (borrower?.crm_contact_id) {
-        const { data: contact } = await admin
-          .from("crm_contacts")
-          .select("first_name, last_name")
-          .eq("id", borrower.crm_contact_id)
-          .maybeSingle();
-        if (contact) {
-          borrowerName = `${contact.first_name ?? ""} ${contact.last_name ?? ""}`.trim() || null;
-        }
-      }
-      if (!borrowerName && borrower) {
-        borrowerName = `${borrower.first_name ?? ""} ${borrower.last_name ?? ""}`.trim() || null;
+      if (borrower?.crm_contacts) {
+        borrowerName = `${borrower.crm_contacts.first_name ?? ""} ${borrower.crm_contacts.last_name ?? ""}`.trim() || null;
       }
     }
 
@@ -233,7 +224,7 @@ export async function moveToServicingAction(pipelineLoanId: string) {
       .filter(Boolean)
       .join(", ");
 
-    const payload: Record<string, any> = {
+    const payload: Record<string, unknown> = {
       loan_id: loan.loan_number,
       pipeline_loan_id: loan.id,
       loan_status: "Active",
@@ -279,7 +270,7 @@ export async function moveToServicingAction(pipelineLoanId: string) {
     // 6. Insert servicing loan
     const { data: newLoan, error: insertError } = await admin
       .from("servicing_loans")
-      .insert(payload)
+      .insert(payload as ServicingLoanInsert)
       .select("id, loan_id")
       .single();
 
@@ -298,7 +289,7 @@ export async function moveToServicingAction(pipelineLoanId: string) {
       .eq("id", pipelineLoanId);
 
     // 8. Log stage history
-    await admin.from("loan_stage_history" as any).insert({
+    await admin.from("loan_stage_history").insert({
       loan_id: pipelineLoanId,
       from_stage: loan.stage,
       to_stage: "servicing",

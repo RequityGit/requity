@@ -1,8 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
-import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
@@ -14,7 +12,6 @@ import {
   HoverCardContent,
   HoverCardTrigger,
 } from "@/components/ui/hover-card";
-import { useToast } from "@/components/ui/use-toast";
 import {
   Activity,
   Bell,
@@ -22,14 +19,16 @@ import {
   Globe,
   Hash,
   Mail,
-  Calendar,
   CheckCircle2,
   PhoneCall,
   Plus,
+  Copy,
+  Check,
+  FileText,
 } from "lucide-react";
+import { GenerateDocumentDialog } from "@/components/documents/GenerateDocumentDialog";
 import { cn } from "@/lib/utils";
 import { MonoValue, relTime } from "./contact-detail-shared";
-import { EmailComposeSheet } from "@/components/crm/email-compose-sheet";
 import { formatDate } from "@/lib/format";
 import type { ContactData, RelationshipData } from "./types";
 import { RELATIONSHIP_BADGE_COLORS } from "./types";
@@ -41,6 +40,9 @@ interface ContactDetailSidebarProps {
   sourceLabel: string | null;
   currentUserId: string;
   currentUserName: string;
+  onComposeEmail?: () => void;
+  onTabChange?: (tab: string) => void;
+  onLogCall?: () => void;
 }
 
 export function ContactDetailSidebar({
@@ -50,63 +52,27 @@ export function ContactDetailSidebar({
   sourceLabel,
   currentUserId,
   currentUserName,
+  onComposeEmail,
+  onTabChange,
+  onLogCall,
 }: ContactDetailSidebarProps) {
-  const router = useRouter();
-  const { toast } = useToast();
-  const [emailOpen, setEmailOpen] = useState(false);
-  const [logging, setLogging] = useState(false);
-
-  const fullName =
-    [contact.first_name, contact.last_name].filter(Boolean).join(" ") ||
-    "Unnamed";
-
-  async function handleLogCall() {
-    setLogging(true);
-    try {
-      const supabase = createClient();
-      await supabase.from("crm_activities").insert({
-        contact_id: contact.id,
-        activity_type: "call" as never,
-        subject: "Phone call logged",
-        performed_by: currentUserId,
-      });
-      await supabase
-        .from("crm_contacts")
-        .update({ last_contacted_at: new Date().toISOString() })
-        .eq("id", contact.id);
-      toast({ title: "Call logged" });
-      router.refresh();
-    } catch {
-      toast({ title: "Error logging call", variant: "destructive" });
-    } finally {
-      setLogging(false);
-    }
-  }
+  const [copied, setCopied] = useState(false);
 
   const quickActions = [
     {
       icon: Mail,
       label: "Send Email",
-      onClick: () => setEmailOpen(true),
-    },
-    {
-      icon: Calendar,
-      label: "Schedule Meeting",
-      onClick: () => toast({ title: "Coming soon" }),
+      onClick: () => onComposeEmail?.(),
     },
     {
       icon: CheckCircle2,
       label: "Create Task",
-      onClick: () => {
-        const params = new URLSearchParams(window.location.search);
-        params.set("tab", "tasks");
-        router.replace(`?${params.toString()}`, { scroll: false });
-      },
+      onClick: () => onTabChange?.("tasks"),
     },
     {
       icon: PhoneCall,
       label: "Log Call",
-      onClick: handleLogCall,
+      onClick: () => onLogCall?.(),
     },
   ];
 
@@ -137,7 +103,6 @@ export function ContactDetailSidebar({
                 variant="ghost"
                 size="sm"
                 onClick={onClick}
-                disabled={logging && label === "Log Call"}
                 className="justify-start gap-3 h-9 px-2.5 text-[13px] font-normal text-foreground hover:bg-muted rounded-lg w-full"
               >
                 <Icon
@@ -148,6 +113,25 @@ export function ContactDetailSidebar({
                 {label}
               </Button>
             ))}
+            <GenerateDocumentDialog
+              recordType="contact"
+              recordId={contact.id}
+              recordLabel={[contact.first_name, contact.last_name].filter(Boolean).join(" ")}
+              trigger={
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="justify-start gap-3 h-9 px-2.5 text-[13px] font-normal text-foreground hover:bg-muted rounded-lg w-full"
+                >
+                  <FileText
+                    size={14}
+                    className="text-muted-foreground"
+                    strokeWidth={1.5}
+                  />
+                  Generate Document
+                </Button>
+              }
+            />
           </div>
         </CardContent>
       </Card>
@@ -205,7 +189,7 @@ export function ContactDetailSidebar({
               </HoverCard>
             )}
             {!assignedToName && (
-              <p className="text-xs text-muted-foreground">No followers yet.</p>
+              <p className="text-xs text-muted-foreground">No followers yet. Assign an owner to add followers.</p>
             )}
           </div>
         </CardContent>
@@ -222,44 +206,52 @@ export function ContactDetailSidebar({
         <CardContent className="px-5 py-4">
           {relationships.length === 0 ? (
             <p className="text-xs text-muted-foreground">
-              No relationships defined.
+              No relationships defined. Edit the contact to add relationship types.
             </p>
           ) : (
             <div className="flex flex-col">
               {relationships.map((r, i) => {
                 const key = r.relationship_type.toLowerCase();
                 const colors = RELATIONSHIP_BADGE_COLORS[key];
+                const typeLabel =
+                  r.relationship_type.charAt(0).toUpperCase() +
+                  r.relationship_type.slice(1);
                 return (
                   <div key={r.id}>
                     <div className="flex justify-between items-center py-2.5">
-                      {colors ? (
-                        <Badge
-                          variant="outline"
-                          className="text-[11px] gap-1"
-                          style={{
-                            color: colors.text,
-                            borderColor: `${colors.text}30`,
-                            backgroundColor: colors.bg,
-                          }}
-                        >
-                          <span
-                            className="h-1.5 w-1.5 rounded-full"
+                      <div className="flex items-center gap-1.5 min-w-0">
+                        {colors ? (
+                          <Badge
+                            variant="outline"
+                            className="text-[11px] gap-1 shrink-0"
                             style={{
-                              backgroundColor: r.is_active
-                                ? colors.dot
-                                : "hsl(var(--muted-foreground))",
+                              color: colors.text,
+                              borderColor: `${colors.text}30`,
+                              backgroundColor: colors.bg,
                             }}
-                          />
-                          {r.relationship_type.charAt(0).toUpperCase() +
-                            r.relationship_type.slice(1)}
-                        </Badge>
-                      ) : (
-                        <Badge variant="secondary" className="text-[11px]">
-                          {r.relationship_type.charAt(0).toUpperCase() +
-                            r.relationship_type.slice(1)}
-                        </Badge>
-                      )}
-                      <span className="text-[10px] text-muted-foreground">
+                          >
+                            <span
+                              className="h-1.5 w-1.5 rounded-full"
+                              style={{
+                                backgroundColor: r.is_active
+                                  ? colors.dot
+                                  : "hsl(var(--muted-foreground))",
+                              }}
+                            />
+                            {typeLabel}
+                          </Badge>
+                        ) : (
+                          <Badge variant="secondary" className="text-[11px] shrink-0">
+                            {typeLabel}
+                          </Badge>
+                        )}
+                        {contact.company_name && (
+                          <span className="text-[10px] text-muted-foreground truncate">
+                            @ {contact.company_name}
+                          </span>
+                        )}
+                      </div>
+                      <span className="text-[10px] text-muted-foreground shrink-0 ml-2">
                         Since {formatDate(r.started_at)}
                       </span>
                     </div>
@@ -338,23 +330,27 @@ export function ContactDetailSidebar({
               <Label className="text-[11px] text-muted-foreground font-normal">
                 Contact ID
               </Label>
-              <MonoValue className="text-[11px] text-foreground">
-                {contact.id.slice(0, 8)}...
-              </MonoValue>
+              <div className="flex items-center gap-1">
+                <MonoValue className="text-[11px] text-foreground" title={contact.id}>
+                  {contact.id.slice(0, 8)}...
+                </MonoValue>
+                <button
+                  onClick={() => {
+                    navigator.clipboard.writeText(contact.id);
+                    setCopied(true);
+                    setTimeout(() => setCopied(false), 2000);
+                  }}
+                  className="p-0.5 rounded hover:bg-muted transition-colors text-muted-foreground hover:text-foreground"
+                  title="Copy full ID"
+                >
+                  {copied ? <Check size={11} className="text-[#22A861]" /> : <Copy size={11} />}
+                </button>
+              </div>
             </div>
           </div>
         </CardContent>
       </Card>
 
-      <EmailComposeSheet
-        open={emailOpen}
-        onOpenChange={setEmailOpen}
-        toEmail={contact.email || ""}
-        toName={fullName}
-        linkedContactId={contact.id}
-        currentUserId={currentUserId}
-        currentUserName={currentUserName}
-      />
     </div>
   );
 }

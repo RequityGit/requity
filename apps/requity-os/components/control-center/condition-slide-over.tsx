@@ -38,6 +38,7 @@ interface ConditionTemplate {
   borrower_description: string | null;
   responsible_party: string | null;
   critical_path_item: boolean | null;
+  requires_approval: boolean | null;
   sort_order: number | null;
   is_active: boolean | null;
   created_at: string;
@@ -83,6 +84,7 @@ export function ConditionSlideOver({
     borrower_description: null,
     responsible_party: null,
     critical_path_item: false,
+    requires_approval: false,
     sort_order: null,
     is_active: true,
   });
@@ -109,6 +111,7 @@ export function ConditionSlideOver({
         borrower_description: condition.borrower_description,
         responsible_party: condition.responsible_party,
         critical_path_item: condition.critical_path_item ?? false,
+        requires_approval: condition.requires_approval ?? false,
         sort_order: condition.sort_order,
         is_active: condition.is_active ?? true,
       });
@@ -132,6 +135,7 @@ export function ConditionSlideOver({
         borrower_description: null,
         responsible_party: null,
         critical_path_item: false,
+        requires_approval: false,
         sort_order: maxSort + 1,
         is_active: true,
       });
@@ -400,6 +404,25 @@ export function ConditionSlideOver({
                 setFormData((prev) => ({
                   ...prev,
                   critical_path_item: v,
+                }))
+              }
+            />
+          </div>
+
+          {/* Requires Approval */}
+          <div className="flex items-center justify-between">
+            <div>
+              <Label>Requires Approval</Label>
+              <p className="text-xs text-muted-foreground">
+                Triggers an approval request when marked as approved
+              </p>
+            </div>
+            <Switch
+              checked={formData.requires_approval}
+              onCheckedChange={(v) =>
+                setFormData((prev) => ({
+                  ...prev,
+                  requires_approval: v,
                 }))
               }
             />

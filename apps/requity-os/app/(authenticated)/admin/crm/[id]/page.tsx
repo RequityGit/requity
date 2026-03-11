@@ -15,6 +15,8 @@ import type {
   BorrowerData,
   InvestorProfileData,
   EntityData,
+  SectionLayout,
+  FieldLayout,
 } from "@/components/crm/contact-360/types";
 import type { OpsTask, Profile } from "@/lib/tasks";
 
@@ -54,7 +56,7 @@ export default async function CrmContactDetailPage({ params }: PageProps) {
 
   if (!contact) notFound();
 
-  // Fetch all related data in parallel
+  // Fetch all related data in parallel (base + conditional + layout queries)
   const [
     activitiesResult,
     teamResult,
@@ -62,7 +64,17 @@ export default async function CrmContactDetailPage({ params }: PageProps) {
     relationshipsResult,
     companyResult,
     tasksResult,
+    borrowerResult,
+    borrowerLoansResult,
+    borrowerEntitiesResult,
+    investorResult,
+    investorCommitmentsResult,
+    investingEntitiesResult,
+    sectionRowsResult,
+    profileSectionRowsResult,
+    allCompaniesResult,
   ] = await Promise.all([
+    // Base data
     supabase
       .from("crm_activities")
       .select("*")
@@ -71,7 +83,6 @@ export default async function CrmContactDetailPage({ params }: PageProps) {
     supabase
       .from("profiles")
       .select("id, full_name, email")
-      .eq("role", "admin")
       .order("full_name"),
     admin
       .from("crm_emails")
@@ -96,6 +107,75 @@ export default async function CrmContactDetailPage({ params }: PageProps) {
       .eq("linked_entity_type", "contact")
       .eq("linked_entity_id", id)
       .order("created_at", { ascending: false }),
+    // Borrower data (conditional, returns null if no borrower_id)
+    contact.borrower_id
+      ? admin
+          .from("borrowers")
+          .select(
+            "id, credit_score, credit_report_date, experience_count, date_of_birth, is_us_citizen, marital_status, ssn_last_four, stated_liquidity, verified_liquidity, stated_net_worth, verified_net_worth"
+          )
+          .eq("id", contact.borrower_id)
+          .single()
+      : Promise.resolve({ data: null }),
+    contact.borrower_id
+      ? admin
+          .from("loans")
+          .select(
+            "id, loan_number, property_address, type, loan_amount, interest_rate, ltv, loan_term_months, stage, stage_updated_at, created_at"
+          )
+          .eq("borrower_id", contact.borrower_id)
+          .is("deleted_at", null)
+          .order("created_at", { ascending: false })
+      : Promise.resolve({ data: null }),
+    contact.borrower_id
+      ? admin
+          .from("borrower_entities")
+          .select(
+            "id, entity_name, entity_type, ein, state_of_formation, formation_date, operating_agreement_url, articles_of_org_url, certificate_good_standing_url, ein_letter_url"
+          )
+          .eq("borrower_id", contact.borrower_id)
+      : Promise.resolve({ data: null }),
+    // Investor data (conditional, returns null if no linked_investor_id)
+    contact.linked_investor_id
+      ? admin
+          .from("investors")
+          .select("id, accreditation_status, accreditation_verified_at")
+          .eq("id", contact.linked_investor_id)
+          .single()
+      : Promise.resolve({ data: null }),
+    contact.linked_investor_id
+      ? admin
+          .from("investor_commitments")
+          .select(
+            "id, commitment_amount, funded_amount, unfunded_amount, status, commitment_date, funds(name), investing_entities(entity_name)"
+          )
+          .eq("investor_id", contact.linked_investor_id)
+      : Promise.resolve({ data: null }),
+    contact.linked_investor_id
+      ? admin
+          .from("investing_entities")
+          .select(
+            "id, entity_name, entity_type, ein, state_of_formation, operating_agreement_url, formation_doc_url, other_doc_urls"
+          )
+          .eq("investor_id", contact.linked_investor_id)
+      : Promise.resolve({ data: null }),
+    // Layout config
+    admin
+      .from("page_layout_sections" as never)
+      .select("section_key, display_order, is_visible, visibility_rule, section_type, section_label, section_icon" as never)
+      .eq("page_type" as never, "contact_detail" as never)
+      .eq("sidebar" as never, false as never)
+      .order("display_order" as never, { ascending: true }),
+    admin
+      .from("page_layout_sections" as never)
+      .select("id, section_key" as never)
+      .eq("page_type" as never, "contact_detail" as never)
+      .eq("section_type" as never, "fields" as never),
+    // All companies for the company dropdown in edit dialogs
+    supabase
+      .from("companies")
+      .select("id, name, company_type")
+      .order("name"),
   ]);
 
   // Build profile lookup for display names
@@ -194,6 +274,9 @@ export default async function CrmContactDetailPage({ params }: PageProps) {
       recurrence_start_date: t.recurrence_start_date as string | null,
       recurrence_end_date: t.recurrence_end_date as string | null,
       next_recurrence_date: t.next_recurrence_date as string | null,
+      recurring_template_id: t.recurring_template_id as string | null,
+      recurrence_period: t.recurrence_period as string | null,
+      previous_incomplete: t.previous_incomplete as boolean | null,
       recurring_series_id: t.recurring_series_id as string | null,
       source_task_id: t.source_task_id as string | null,
       parent_task_id: t.parent_task_id as string | null,
@@ -201,6 +284,20 @@ export default async function CrmContactDetailPage({ params }: PageProps) {
       sort_order: (t.sort_order as number) ?? 0,
       updated_at: t.updated_at as string | null,
       created_at: t.created_at as string | null,
+      type: ((t.type as string) ?? "task") as "task" | "approval",
+      approval_status: t.approval_status as string | null,
+      active_party: t.active_party as string | null,
+      requestor_user_id: t.requestor_user_id as string | null,
+      requestor_name: t.requestor_name as string | null,
+      amount: t.amount as number | null,
+      decision_note: t.decision_note as string | null,
+      approved_at: t.approved_at as string | null,
+      rejected_at: t.rejected_at as string | null,
+      resubmitted_at: t.resubmitted_at as string | null,
+      revision_count: t.revision_count as number | null,
+      requires_approval: (t.requires_approval as boolean) ?? false,
+      approver_id: t.approver_id as string | null,
+      approval_instructions: t.approval_instructions as string | null,
     })
   );
 
@@ -213,44 +310,17 @@ export default async function CrmContactDetailPage({ params }: PageProps) {
     })
   );
 
-  // Determine active relationship types for data fetching
+  // Determine active relationship types
   const activeRelTypes = relationships
     .filter((r) => r.is_active)
     .map((r) => r.relationship_type);
 
-  // Fetch borrower data if borrower relationship exists
+  // Map borrower data from parallel results
   let borrowerData: BorrowerData | null = null;
   let borrowerLoans: LoanData[] = [];
   let borrowerEntities: EntityData[] = [];
 
-  if (
-    activeRelTypes.includes("borrower") &&
-    contact.borrower_id
-  ) {
-    const [borrowerResult, loansResult, entitiesResult] = await Promise.all([
-      admin
-        .from("borrowers")
-        .select(
-          "id, credit_score, credit_report_date, experience_count, date_of_birth, is_us_citizen, marital_status, ssn_last_four, stated_liquidity, verified_liquidity, stated_net_worth, verified_net_worth"
-        )
-        .eq("id", contact.borrower_id)
-        .single(),
-      admin
-        .from("loans")
-        .select(
-          "id, loan_number, property_address, type, loan_amount, interest_rate, ltv, loan_term_months, stage, stage_updated_at, created_at"
-        )
-        .eq("borrower_id", contact.borrower_id)
-        .is("deleted_at", null)
-        .order("created_at", { ascending: false }),
-      admin
-        .from("borrower_entities")
-        .select(
-          "id, entity_name, entity_type, ein, state_of_formation, formation_date, operating_agreement_url, articles_of_org_url, certificate_good_standing_url, ein_letter_url"
-        )
-        .eq("borrower_id", contact.borrower_id),
-    ]);
-
+  if (activeRelTypes.includes("borrower") && contact.borrower_id) {
     if (borrowerResult.data) {
       const b = borrowerResult.data;
       borrowerData = {
@@ -269,7 +339,7 @@ export default async function CrmContactDetailPage({ params }: PageProps) {
       };
     }
 
-    borrowerLoans = (loansResult.data ?? []).map((l: Record<string, unknown>) => ({
+    borrowerLoans = (borrowerLoansResult.data ?? []).map((l: Record<string, unknown>) => ({
       id: l.id as string,
       loan_number: l.loan_number as string | null,
       property_address: l.property_address as string | null,
@@ -283,7 +353,7 @@ export default async function CrmContactDetailPage({ params }: PageProps) {
       created_at: l.created_at as string,
     }));
 
-    borrowerEntities = (entitiesResult.data ?? []).map(
+    borrowerEntities = (borrowerEntitiesResult.data ?? []).map(
       (e: Record<string, unknown>) => ({
         id: e.id as string,
         entity_name: e.entity_name as string,
@@ -301,35 +371,12 @@ export default async function CrmContactDetailPage({ params }: PageProps) {
     );
   }
 
-  // Fetch investor data if investor relationship exists
+  // Map investor data from parallel results
   let investorProfile: InvestorProfileData | null = null;
   let investorCommitments: InvestorCommitmentData[] = [];
   let investingEntities: EntityData[] = [];
 
-  if (
-    activeRelTypes.includes("investor") &&
-    contact.linked_investor_id
-  ) {
-    const [investorResult, commitmentsResult, entitiesResult] = await Promise.all([
-      admin
-        .from("investors")
-        .select("id, accreditation_status, accreditation_verified_at")
-        .eq("id", contact.linked_investor_id)
-        .single(),
-      admin
-        .from("investor_commitments")
-        .select(
-          "id, commitment_amount, funded_amount, unfunded_amount, status, commitment_date, funds(name), investing_entities(entity_name)"
-        )
-        .eq("investor_id", contact.linked_investor_id),
-      admin
-        .from("investing_entities")
-        .select(
-          "id, entity_name, entity_type, ein, state_of_formation, operating_agreement_url, formation_doc_url, other_doc_urls"
-        )
-        .eq("investor_id", contact.linked_investor_id),
-    ]);
-
+  if (activeRelTypes.includes("investor") && contact.linked_investor_id) {
     if (investorResult.data) {
       investorProfile = {
         id: investorResult.data.id,
@@ -338,7 +385,7 @@ export default async function CrmContactDetailPage({ params }: PageProps) {
       };
     }
 
-    investorCommitments = (commitmentsResult.data ?? []).map(
+    investorCommitments = (investorCommitmentsResult.data ?? []).map(
       (c: Record<string, unknown>) => ({
         id: c.id as string,
         fund_name:
@@ -355,7 +402,7 @@ export default async function CrmContactDetailPage({ params }: PageProps) {
       })
     );
 
-    investingEntities = (entitiesResult.data ?? []).map(
+    investingEntities = (investingEntitiesResult.data ?? []).map(
       (e: Record<string, unknown>) => ({
         id: e.id as string,
         entity_name: e.entity_name as string,
@@ -375,6 +422,90 @@ export default async function CrmContactDetailPage({ params }: PageProps) {
 
   const allEntities = [...borrowerEntities, ...investingEntities];
 
+  // Flatten first borrower entity for field rendering in the borrower_entity section
+  const primaryBorrowerEntity: Record<string, unknown> | null =
+    borrowerEntities.length > 0 ? { ...borrowerEntities[0] } : null;
+
+  // Map layout config from parallel results
+  const sectionOrder: SectionLayout[] = (sectionRowsResult.data ?? []).map(
+    (r: Record<string, unknown>) => ({
+      section_key: r.section_key as string,
+      display_order: r.display_order as number,
+      is_visible: r.is_visible as boolean,
+      visibility_rule: r.visibility_rule as string | null,
+      section_type: (r.section_type as string) ?? "fields",
+      section_label: (r.section_label as string) ?? (r.section_key as string),
+      section_icon: (r.section_icon as string) ?? "file-text",
+    })
+  );
+
+  const sectionIdToKey: Record<string, string> = {};
+  const sectionIds: string[] = [];
+  for (const row of (profileSectionRowsResult.data ?? []) as Record<string, unknown>[]) {
+    sectionIdToKey[row.id as string] = row.section_key as string;
+    sectionIds.push(row.id as string);
+  }
+
+  // Fetch page_layout_fields with field_configurations for profile sections
+  const sectionFields: Record<string, FieldLayout[]> = {};
+  if (sectionIds.length > 0) {
+    const { data: fieldRows } = await admin
+      .from("page_layout_fields" as never)
+      .select("field_key, display_order, column_position, is_visible, section_id, field_config_id" as never)
+      .in("section_id" as never, sectionIds as never)
+      .order("display_order" as never, { ascending: true });
+
+    // Collect field_config_ids to fetch labels/types
+    const fcIds = ((fieldRows ?? []) as Record<string, unknown>[])
+      .map((r) => r.field_config_id as string)
+      .filter(Boolean);
+
+    let fcLookup: Record<string, { field_label: string; field_type: string; dropdown_options: unknown }> = {};
+    if (fcIds.length > 0) {
+      const { data: fcRows } = await admin
+        .from("field_configurations" as never)
+        .select("id, field_label, field_type, dropdown_options" as never)
+        .in("id" as never, fcIds as never);
+
+      for (const fc of (fcRows ?? []) as Record<string, unknown>[]) {
+        fcLookup[fc.id as string] = {
+          field_label: fc.field_label as string,
+          field_type: fc.field_type as string,
+          dropdown_options: fc.dropdown_options,
+        };
+      }
+    }
+
+    // Group by section_key
+    for (const row of (fieldRows ?? []) as Record<string, unknown>[]) {
+      const sectionKey = sectionIdToKey[row.section_id as string];
+      if (!sectionKey) continue;
+      const fc = fcLookup[row.field_config_id as string];
+      if (!fc) continue;
+
+      const rawOpts = fc.dropdown_options;
+      let dropdownOptions: { label: string; value: string }[] | null = null;
+      if (Array.isArray(rawOpts)) {
+        dropdownOptions = rawOpts.map((v: unknown) =>
+          typeof v === "string"
+            ? { label: v.charAt(0).toUpperCase() + v.slice(1).replace(/_/g, " "), value: v }
+            : (v as { label: string; value: string })
+        );
+      }
+
+      if (!sectionFields[sectionKey]) sectionFields[sectionKey] = [];
+      sectionFields[sectionKey].push({
+        field_key: row.field_key as string,
+        field_label: fc.field_label,
+        field_type: fc.field_type,
+        column_position: row.column_position as string,
+        display_order: row.display_order as number,
+        is_visible: row.is_visible as boolean,
+        dropdown_options: dropdownOptions,
+      });
+    }
+  }
+
   const company: CompanyData | null = companyResult.data
     ? {
         id: companyResult.data.id,
@@ -382,6 +513,14 @@ export default async function CrmContactDetailPage({ params }: PageProps) {
         company_type: companyResult.data.company_type,
       }
     : null;
+
+  const allCompanies: CompanyData[] = (allCompaniesResult.data ?? []).map(
+    (c: { id: string; name: string; company_type: string | null }) => ({
+      id: c.id,
+      name: c.name,
+      company_type: c.company_type,
+    })
+  );
 
   const currentUserName = profileLookup[user.id] || user.email || "Unknown";
 
@@ -441,6 +580,7 @@ export default async function CrmContactDetailPage({ params }: PageProps) {
       teamMembers={teamMembers}
       profiles={profiles}
       company={company}
+      allCompanies={allCompanies}
       borrower={borrowerData}
       investor={investorProfile}
       entities={allEntities}
@@ -450,6 +590,9 @@ export default async function CrmContactDetailPage({ params }: PageProps) {
       assignedToName={assignedToName}
       sourceLabel={sourceLabel}
       isSuperAdmin={isSuperAdmin}
+      sectionOrder={sectionOrder}
+      sectionFields={sectionFields}
+      primaryBorrowerEntity={primaryBorrowerEntity}
     />
   );
 }

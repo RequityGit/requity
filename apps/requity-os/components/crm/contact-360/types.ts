@@ -159,6 +159,26 @@ export interface EntityData {
   formation_doc_url: string | null;
 }
 
+export interface SectionLayout {
+  section_key: string;
+  display_order: number;
+  is_visible: boolean;
+  visibility_rule: string | null;
+  section_type: string;
+  section_label: string;
+  section_icon: string;
+}
+
+export interface FieldLayout {
+  field_key: string;
+  field_label: string;
+  field_type: string;
+  column_position: string;
+  display_order: number;
+  is_visible: boolean;
+  dropdown_options: { label: string; value: string }[] | null;
+}
+
 export interface TaskData {
   id: string;
   subject: string;

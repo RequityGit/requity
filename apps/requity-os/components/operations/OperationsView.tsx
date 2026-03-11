@@ -890,10 +890,16 @@ export function OperationsView({
 
   // Toggle task complete/incomplete
   async function handleToggleTask(taskId: string, complete: boolean) {
-    await supabase.from("ops_tasks").update({
+    const { error: toggleError } = await supabase.from("ops_tasks").update({
       status: complete ? "Complete" : "To Do",
       completed_at: complete ? new Date().toISOString() : null,
     }).eq("id", taskId);
+
+    if (toggleError) {
+      console.error("Failed to update task status:", toggleError);
+      toast({ title: "Error", description: "Failed to update task status. Please try again.", variant: "destructive" });
+      return;
+    }
 
     if (complete) {
       const task = tasks.find((t) => t.id === taskId);
@@ -928,7 +934,12 @@ export function OperationsView({
   }
 
   async function handleDeleteProject(projectId: string) {
-    await supabase.from("ops_tasks").update({ project_id: null }).eq("project_id", projectId);
+    const { error: unlinkError } = await supabase.from("ops_tasks").update({ project_id: null }).eq("project_id", projectId);
+    if (unlinkError) {
+      console.error("Failed to unlink tasks from project:", unlinkError);
+      toast({ title: "Error", description: "Failed to unlink tasks from project. Please try again.", variant: "destructive" });
+      return;
+    }
     const { error } = await supabase.from("ops_projects").delete().eq("id", projectId);
     if (error) {
       toast({ title: "Error", description: "Could not delete project.", variant: "destructive" });
@@ -940,12 +951,23 @@ export function OperationsView({
 
   async function handleStopRecurrence(taskId: string) {
     const task = tasks.find((t) => t.id === taskId);
-    await supabase.from("ops_tasks").update({ is_active_recurrence: false }).eq("id", taskId);
+    const { error: stopError } = await supabase.from("ops_tasks").update({ is_active_recurrence: false }).eq("id", taskId);
+    if (stopError) {
+      console.error("Failed to stop recurrence:", stopError);
+      toast({ title: "Error", description: "Failed to stop recurrence. Please try again.", variant: "destructive" });
+      return;
+    }
     if (task?.recurring_series_id) {
-      await supabase.from("ops_tasks")
+      const { error: seriesError } = await supabase.from("ops_tasks")
         .update({ is_active_recurrence: false })
         .eq("recurring_series_id", task.recurring_series_id)
         .neq("status", "Complete");
+      if (seriesError) {
+        console.error("Failed to stop series recurrence:", seriesError);
+        toast({ title: "Warning", description: "Recurrence stopped for this task but failed for related tasks.", variant: "destructive" });
+        router.refresh();
+        return;
+      }
     }
     toast({ title: "Recurrence stopped", description: "No further tasks will be generated." });
     router.refresh();
@@ -959,18 +981,38 @@ export function OperationsView({
 
   // Persist sort_order updates to Supabase
   const persistProjectOrder = useCallback(async (orderedIds: string[]) => {
-    const updates = orderedIds.map((id, i) =>
-      supabase.from("ops_projects").update({ sort_order: i }).eq("id", id)
-    );
-    await Promise.all(updates);
-  }, [supabase]);
+    try {
+      const updates = orderedIds.map((id, i) =>
+        supabase.from("ops_projects").update({ sort_order: i }).eq("id", id)
+      );
+      const results = await Promise.all(updates);
+      const failed = results.filter((r) => r.error);
+      if (failed.length > 0) {
+        console.error("Failed to persist project order:", failed.map((r) => r.error));
+        toast({ title: "Error", description: "Failed to save project order. Please refresh and try again.", variant: "destructive" });
+      }
+    } catch (err) {
+      console.error("Failed to persist project order:", err);
+      toast({ title: "Error", description: "Failed to save project order.", variant: "destructive" });
+    }
+  }, [supabase, toast]);
 
   const persistTaskOrder = useCallback(async (taskIds: string[]) => {
-    const updates = taskIds.map((id, i) =>
-      supabase.from("ops_tasks").update({ sort_order: i }).eq("id", id)
-    );
-    await Promise.all(updates);
-  }, [supabase]);
+    try {
+      const updates = taskIds.map((id, i) =>
+        supabase.from("ops_tasks").update({ sort_order: i }).eq("id", id)
+      );
+      const results = await Promise.all(updates);
+      const failed = results.filter((r) => r.error);
+      if (failed.length > 0) {
+        console.error("Failed to persist task order:", failed.map((r) => r.error));
+        toast({ title: "Error", description: "Failed to save task order. Please refresh and try again.", variant: "destructive" });
+      }
+    } catch (err) {
+      console.error("Failed to persist task order:", err);
+      toast({ title: "Error", description: "Failed to save task order.", variant: "destructive" });
+    }
+  }, [supabase, toast]);
 
   function handleProjectDragEnd(event: DragEndEvent) {
     const { active, over } = event;

@@ -18,7 +18,9 @@ export type EntityType =
   | "draw_request"
   | "payment"
   | "task"
-  | "project";
+  | "project"
+  | "contact"
+  | "company";
 
 export interface NotificationType {
   id: string;
@@ -133,7 +135,7 @@ export function getNotificationRoute(
     switch (entity_type) {
       case "loan":
         if (activeRole === "borrower") return `/borrower/loans/${entity_id}`;
-        return `/admin/pipeline/debt/${entity_id}`;
+        return `/admin/pipeline-v2/${entity_id}?tab=notes`;
 
       case "borrower":
         if (isAdmin) return `/admin/borrowers/${entity_id}`;
@@ -153,7 +155,7 @@ export function getNotificationRoute(
         if (loanMatch) {
           const loanId = loanMatch[1];
           if (activeRole === "borrower") return `/borrower/loans/${loanId}`;
-          return `/admin/pipeline/debt/${loanId}?condition=${entity_id}`;
+          return `/admin/pipeline-v2/${loanId}?condition=${entity_id}`;
         }
         if (isAdmin) return "/admin/conditions";
         return ROLE_DASHBOARDS[activeRole] ?? "/admin/dashboard";
@@ -167,6 +169,14 @@ export function getNotificationRoute(
         if (activeRole === "borrower") return "/borrower/payments";
         return "/admin/servicing";
 
+      case "contact":
+        if (isAdmin) return `/admin/crm/${entity_id}?tab=notes`;
+        return ROLE_DASHBOARDS[activeRole] ?? "/admin/dashboard";
+
+      case "company":
+        if (isAdmin) return `/admin/crm/companies/${entity_id}?tab=notes`;
+        return ROLE_DASHBOARDS[activeRole] ?? "/admin/dashboard";
+
       case "task":
       case "project":
         if (isAdmin) return "/admin/operations";
@@ -179,8 +189,8 @@ export function getNotificationRoute(
     if (isAdmin) return action_url;
 
     // Convert admin-prefixed routes to role-specific routes where possible
-    if (action_url.startsWith("/admin/loans/") && activeRole === "borrower") {
-      return action_url.replace("/admin/loans/", "/borrower/loans/").split("?")[0];
+    if (action_url.startsWith("/admin/servicing/") && activeRole === "borrower") {
+      return action_url.replace("/admin/servicing/", "/borrower/loans/").split("?")[0];
     }
     if (action_url.startsWith("/admin/funds/") && activeRole === "investor") {
       return action_url.replace("/admin/funds/", "/investor/funds/");

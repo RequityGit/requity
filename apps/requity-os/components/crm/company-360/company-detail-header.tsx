@@ -7,7 +7,6 @@ import {
   MapPin,
   ExternalLink,
   Check,
-  X,
   AlertCircle,
 } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -30,38 +29,16 @@ interface CompanyDetailHeaderProps {
   action?: React.ReactNode;
 }
 
-function computeNdaStatus(company: CompanyDetailData) {
-  if (!company.nda_created_date) {
-    return { label: "NDA Missing", color: "#E5453D", Icon: X };
-  }
-  if (!company.nda_expiration_date) {
-    return { label: "NDA On File", color: "#22A861", Icon: Check };
-  }
-  const exp = new Date(company.nda_expiration_date);
-  const now = new Date();
-  if (exp < now) {
-    return { label: "NDA Expired", color: "#E5453D", Icon: AlertCircle };
-  }
-  const daysLeft = Math.floor(
-    (exp.getTime() - now.getTime()) / 86400000
-  );
-  if (daysLeft < 45) {
-    return {
-      label: `NDA Expires ${formatDate(company.nda_expiration_date)}`,
-      color: "#E5930E",
-      Icon: AlertCircle,
-    };
-  }
-  return { label: "NDA On File", color: "#22A861", Icon: Check };
-}
-
 export function CompanyDetailHeader({
   company,
   primaryContact,
   lastActivityAt,
   action,
 }: CompanyDetailHeaderProps) {
-  const typeCfg = COMPANY_TYPE_CONFIG[company.company_type] ||
+  const types = company.company_types?.length
+    ? company.company_types
+    : [company.company_type];
+  const typeCfg = COMPANY_TYPE_CONFIG[types[0]] ||
     COMPANY_TYPE_CONFIG.other;
 
   const initials = company.name
@@ -70,9 +47,6 @@ export function CompanyDetailHeader({
     .join("")
     .slice(0, 2)
     .toUpperCase();
-
-  const ndaStatus = computeNdaStatus(company);
-  const NdaIcon = ndaStatus.Icon;
 
   const pcName = primaryContact
     ? [primaryContact.first_name, primaryContact.last_name]
@@ -108,7 +82,10 @@ export function CompanyDetailHeader({
             <h1 className="text-[22px] font-bold text-foreground leading-tight m-0">
               {company.name}
             </h1>
-            <DotPill color={typeCfg.color} label={typeCfg.label} small />
+            {types.map((t) => {
+              const cfg = COMPANY_TYPE_CONFIG[t] || COMPANY_TYPE_CONFIG.other;
+              return <DotPill key={t} color={cfg.color} label={cfg.label} small />;
+            })}
             {company.company_subtype && (
               <span
                 className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium whitespace-nowrap"
@@ -175,34 +152,7 @@ export function CompanyDetailHeader({
 
           {/* Document status badges */}
           <div className="flex gap-2 flex-wrap">
-            <span
-              className="inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[11px] font-medium whitespace-nowrap"
-              style={{
-                backgroundColor: `${ndaStatus.color}14`,
-                color: ndaStatus.color,
-              }}
-            >
-              <NdaIcon size={10} strokeWidth={1.5} /> {ndaStatus.label}
-            </span>
-            <span
-              className="inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[11px] font-medium whitespace-nowrap"
-              style={{
-                backgroundColor: company.fee_agreement_on_file
-                  ? "#22A86114"
-                  : "#E5453D14",
-                color: company.fee_agreement_on_file ? "#22A861" : "#E5453D",
-              }}
-            >
-              {company.fee_agreement_on_file ? (
-                <Check size={10} strokeWidth={1.5} />
-              ) : (
-                <X size={10} strokeWidth={1.5} />
-              )}
-              {company.fee_agreement_on_file
-                ? "Fee Agreement On File"
-                : "Fee Agreement Missing"}
-            </span>
-            {company.company_type === "title_company" && (
+            {types.includes("title_company") && (
               <span
                 className="inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[11px] font-medium whitespace-nowrap"
                 style={{

@@ -1,17 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { cn } from "@/lib/utils";
+import { useState, useTransition, useMemo } from "react";
 import { updateUwDataAction } from "@/app/(authenticated)/admin/pipeline-v2/actions";
 import {
   type UnifiedCardType,
@@ -21,23 +10,50 @@ import {
   formatPercent,
   formatRatio,
 } from "./pipeline-types";
+import { UwField } from "./UwField";
+import { useResolvedCardType } from "@/hooks/useResolvedCardType";
+import type { VisibilityContext } from "@/lib/visibility-engine";
+import { evaluateFormula } from "@/lib/formula-engine";
+import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
+
+const OBJECT_LABELS: Record<string, { label: string; color: string }> = {
+  deal: { label: "Deal", color: "bg-blue-500/10 text-blue-600" },
+  property: { label: "Property", color: "bg-amber-500/10 text-amber-600" },
+  borrower: { label: "Borrower", color: "bg-emerald-500/10 text-emerald-600" },
+};
 
 interface UnderwritingPanelProps {
   cardType: UnifiedCardType;
   dealId: string;
   uwData: Record<string, unknown>;
   readOnly?: boolean;
+  visibilityContext?: VisibilityContext | null;
 }
 
 export function UnderwritingPanel({
-  cardType,
+  cardType: rawCardType,
   dealId,
   uwData,
   readOnly,
+  visibilityContext,
 }: UnderwritingPanelProps) {
+  // Resolve field refs from field_configurations (falls back to inline fields)
+  const cardType = useResolvedCardType(rawCardType, visibilityContext);
+
   const [localData, setLocalData] = useState<Record<string, unknown>>(uwData);
   const [pending, startTransition] = useTransition();
+
+  // Group fields by object binding
+  const fieldGroups = useMemo(() => {
+    const groups: Record<string, UwFieldDef[]> = { deal: [], property: [], borrower: [] };
+    for (const field of cardType.uw_fields) {
+      const obj = field.object ?? "deal";
+      if (!groups[obj]) groups[obj] = [];
+      groups[obj].push(field);
+    }
+    return Object.entries(groups).filter(([, fields]) => fields.length > 0);
+  }, [cardType.uw_fields]);
 
   function handleFieldChange(key: string, value: unknown) {
     setLocalData((prev) => ({ ...prev, [key]: value }));
@@ -65,6 +81,27 @@ export function UnderwritingPanel({
 
   const activeOutputs = computedOutputs.filter((o) => o.value != null);
 
+  // Evaluate formula fields against current deal data
+  const formulaValues = useMemo(() => {
+    const values: Record<string, number | null> = {};
+    for (const field of cardType.uw_fields) {
+      if (field.formulaExpression) {
+        try {
+          const vars: Record<string, number> = {};
+          for (const [k, v] of Object.entries(localData)) {
+            if (typeof v === "number") vars[k] = v;
+            else if (typeof v === "string" && v !== "" && !isNaN(Number(v))) vars[k] = Number(v);
+          }
+          const result = evaluateFormula(field.formulaExpression, vars);
+          values[field.key] = typeof result === "number" && isFinite(result) ? result : null;
+        } catch {
+          values[field.key] = null;
+        }
+      }
+    }
+    return values;
+  }, [cardType.uw_fields, localData]);
+
   return (
     <div className="space-y-6">
       {/* Computed outputs summary */}
@@ -87,165 +124,62 @@ export function UnderwritingPanel({
         </div>
       )}
 
-      {/* UW Fields */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        {cardType.uw_fields.map((field) => (
-          <UwField
-            key={field.key}
-            field={field}
-            value={localData[field.key]}
-            onChange={(val) => handleFieldChange(field.key, val)}
-            onBlur={() => handleFieldBlur(field.key)}
-            disabled={readOnly || pending}
-          />
-        ))}
-      </div>
+      {/* UW Fields grouped by object binding */}
+      {fieldGroups.map(([objectKey, fields]) => {
+        const meta = OBJECT_LABELS[objectKey] ?? OBJECT_LABELS.deal;
+        return (
+          <div key={objectKey} className="space-y-3">
+            <div className="flex items-center gap-2">
+              <h4 className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                {meta.label} Fields
+              </h4>
+              <Badge variant="outline" className={`text-[10px] ${meta.color}`}>
+                {objectKey === "property"
+                  ? "Synced to Property"
+                  : objectKey === "borrower"
+                    ? "Synced to Borrower"
+                    : "Deal UW Data"}
+              </Badge>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {fields.map((field) => {
+                // Formula fields render as read-only computed values
+                if (field.formulaExpression) {
+                  const computed = formulaValues[field.key];
+                  const formatted =
+                    computed == null
+                      ? "---"
+                      : field.formulaOutputFormat === "currency"
+                        ? formatCurrency(computed)
+                        : field.formulaOutputFormat === "percent"
+                          ? formatPercent(computed)
+                          : computed.toFixed(field.formulaDecimalPlaces ?? 2);
+                  return (
+                    <div key={field.key} className="space-y-1.5">
+                      <label className="text-xs font-medium text-muted-foreground">
+                        {field.label}
+                      </label>
+                      <div className="text-sm font-semibold num bg-muted/50 rounded px-3 py-2">
+                        {formatted}
+                      </div>
+                    </div>
+                  );
+                }
+                return (
+                  <UwField
+                    key={field.key}
+                    field={field}
+                    value={localData[field.key]}
+                    onChange={(val) => handleFieldChange(field.key, val)}
+                    onBlur={() => handleFieldBlur(field.key)}
+                    disabled={readOnly || pending}
+                  />
+                );
+              })}
+            </div>
+          </div>
+        );
+      })}
     </div>
   );
-}
-
-function UwField({
-  field,
-  value,
-  onChange,
-  onBlur,
-  disabled,
-}: {
-  field: UwFieldDef;
-  value: unknown;
-  onChange: (val: unknown) => void;
-  onBlur: () => void;
-  disabled?: boolean;
-}) {
-  switch (field.type) {
-    case "currency":
-      return (
-        <div className="space-y-1.5">
-          <Label className="text-xs">{field.label}</Label>
-          <div className="relative">
-            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">
-              $
-            </span>
-            <Input
-              type="number"
-              value={value != null ? String(value) : ""}
-              onChange={(e) =>
-                onChange(e.target.value ? Number(e.target.value) : null)
-              }
-              onBlur={onBlur}
-              disabled={disabled}
-              className="pl-7 text-right num"
-              placeholder="0"
-            />
-          </div>
-        </div>
-      );
-    case "percent":
-      return (
-        <div className="space-y-1.5">
-          <Label className="text-xs">{field.label}</Label>
-          <div className="relative">
-            <Input
-              type="number"
-              step="0.01"
-              value={value != null ? String(value) : ""}
-              onChange={(e) =>
-                onChange(e.target.value ? Number(e.target.value) : null)
-              }
-              onBlur={onBlur}
-              disabled={disabled}
-              className="pr-7 text-right num"
-              placeholder="0.00"
-            />
-            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">
-              %
-            </span>
-          </div>
-        </div>
-      );
-    case "number":
-      return (
-        <div className="space-y-1.5">
-          <Label className="text-xs">{field.label}</Label>
-          <Input
-            type="number"
-            value={value != null ? String(value) : ""}
-            onChange={(e) =>
-              onChange(e.target.value ? Number(e.target.value) : null)
-            }
-            onBlur={onBlur}
-            disabled={disabled}
-            className="num"
-            placeholder="0"
-          />
-        </div>
-      );
-    case "boolean":
-      return (
-        <div className="flex items-center justify-between py-2">
-          <Label className="text-xs">{field.label}</Label>
-          <Switch
-            checked={!!value}
-            onCheckedChange={(checked) => {
-              onChange(checked);
-              // Immediately save boolean changes
-              setTimeout(onBlur, 0);
-            }}
-            disabled={disabled}
-          />
-        </div>
-      );
-    case "select":
-      return (
-        <div className="space-y-1.5">
-          <Label className="text-xs">{field.label}</Label>
-          <Select
-            value={value != null ? String(value) : ""}
-            onValueChange={(val) => {
-              onChange(val);
-              setTimeout(onBlur, 0);
-            }}
-            disabled={disabled}
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="Select..." />
-            </SelectTrigger>
-            <SelectContent>
-              {(field.options ?? []).map((opt) => (
-                <SelectItem key={opt} value={opt}>
-                  {opt.replace(/_/g, " ")}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-      );
-    case "date":
-      return (
-        <div className="space-y-1.5">
-          <Label className="text-xs">{field.label}</Label>
-          <Input
-            type="date"
-            value={value != null ? String(value) : ""}
-            onChange={(e) => onChange(e.target.value || null)}
-            onBlur={onBlur}
-            disabled={disabled}
-          />
-        </div>
-      );
-    default:
-      return (
-        <div className="space-y-1.5">
-          <Label className="text-xs">{field.label}</Label>
-          <Input
-            type="text"
-            value={value != null ? String(value) : ""}
-            onChange={(e) => onChange(e.target.value || null)}
-            onBlur={onBlur}
-            disabled={disabled}
-            placeholder={field.label}
-          />
-        </div>
-      );
-  }
 }

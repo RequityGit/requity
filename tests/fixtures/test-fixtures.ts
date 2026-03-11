@@ -57,6 +57,7 @@ export { expect };
 export async function waitForAppShell(page: import("@playwright/test").Page) {
   // The sidebar or topbar should render once the layout mounts
   await page.waitForSelector('[class*="sidebar"], nav, [role="navigation"]', {
+    state: 'attached',
     timeout: 15_000,
   });
 }

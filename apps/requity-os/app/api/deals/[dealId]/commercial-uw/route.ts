@@ -11,6 +11,11 @@ export async function GET(
   const { dealId } = await params;
   const supabase = await createClient();
 
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   const { data, error } = await fromUW(supabase)
     .select("*")
     .eq("deal_id", dealId)
@@ -29,6 +34,12 @@ export async function POST(
 ) {
   const { dealId } = await params;
   const supabase = await createClient();
+
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   const body = await request.json();
 
   // Get next version number
@@ -46,7 +57,7 @@ export async function POST(
       version: nextVersion,
       status: "draft",
       data: body.data || {},
-      created_by: body.createdBy || "system",
+      created_by: user.id,
     })
     .select()
     .single();

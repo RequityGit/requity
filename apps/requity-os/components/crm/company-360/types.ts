@@ -4,6 +4,7 @@ export interface CompanyDetailData {
   id: string;
   name: string;
   company_type: string;
+  company_types: string[] | null;
   company_subtype: string | null;
   phone: string | null;
   email: string | null;
@@ -14,7 +15,6 @@ export interface CompanyDetailData {
   state: string | null;
   zip: string | null;
   country: string | null;
-  fee_agreement_on_file: boolean | null;
   is_active: boolean | null;
   primary_contact_id: string | null;
   referral_contact_id: string | null;
@@ -26,8 +26,6 @@ export interface CompanyDetailData {
   geographies: string[] | null;
   company_capabilities: string[] | null;
   other_names: string | null;
-  nda_created_date: string | null;
-  nda_expiration_date: string | null;
   source: string | null;
   title_company_verified: boolean | null;
 }
@@ -208,8 +206,6 @@ export const CAPABILITY_LABELS: Record<string, string> = {
 export const FILE_TYPE_LABELS: Record<string, string> = {
   nda: "NDA",
   fee_agreement: "Fee Agreement",
-  rate_sheet: "Rate Sheet",
-  w9: "W-9",
   tear_sheet: "Tear Sheet",
   broker_agreement: "Broker Agreement",
   guidelines: "Guidelines",
@@ -219,8 +215,6 @@ export const FILE_TYPE_LABELS: Record<string, string> = {
 export const FILE_TYPE_COLORS: Record<string, string> = {
   nda: "#E5930E",
   fee_agreement: "#22A861",
-  rate_sheet: "#3B82F6",
-  w9: "#8B5CF6",
   tear_sheet: "#3B82F6",
   broker_agreement: "#E5930E",
   guidelines: "#6B6B6B",

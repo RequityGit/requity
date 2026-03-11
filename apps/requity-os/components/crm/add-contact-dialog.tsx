@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { DatePicker } from "@/components/ui/date-picker";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
@@ -36,6 +37,18 @@ import {
 import { useToast } from "@/components/ui/use-toast";
 import { UserPlus, X, Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { formatPhoneInput } from "@/lib/format";
+import { buildContactSchema } from "@/lib/schemas/contact";
+import type { Database } from "@/lib/supabase/types";
+
+type CompanyType = Database["public"]["Enums"]["company_type_enum"];
+type CrmContactType = Database["public"]["Enums"]["crm_contact_type"];
+type CrmContactSource = Database["public"]["Enums"]["crm_contact_source"];
+type CrmContactStatus = Database["public"]["Enums"]["crm_contact_status"];
+type LifecycleStage = Database["public"]["Enums"]["lifecycle_stage_enum"];
+type RelationshipType = Database["public"]["Enums"]["relationship_type_enum"];
+type LenderDirection = Database["public"]["Enums"]["lender_direction_enum"];
+type VendorTypeEnum = Database["public"]["Enums"]["vendor_type_enum"];
 
 interface TeamMember {
   id: string;
@@ -50,11 +63,19 @@ interface CompanyOption {
 interface AddContactDialogProps {
   teamMembers: TeamMember[];
   currentUserId: string;
+  preselectedCompanyId?: string;
+  preselectedCompanyName?: string;
+  trigger?: React.ReactNode;
+  onSuccess?: (contactId: string) => void;
 }
 
 export function AddContactDialog({
   teamMembers,
   currentUserId,
+  preselectedCompanyId,
+  preselectedCompanyName,
+  trigger,
+  onSuccess,
 }: AddContactDialogProps) {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -74,8 +95,8 @@ export function AddContactDialog({
     last_name: "",
     email: "",
     phone: "",
-    company_id: "" as string,
-    company_name: "",
+    company_id: (preselectedCompanyId ?? "") as string,
+    company_name: preselectedCompanyName ?? "",
     source: "",
     lifecycle_stage: "uncontacted",
     assigned_to: "",
@@ -96,6 +117,12 @@ export function AddContactDialog({
 
   // Validation
   const [errors, setErrors] = useState<Record<string, string>>({});
+
+  const contactSchema = buildContactSchema({
+    selectedRelationships,
+    email: form.email,
+    phone: form.phone,
+  });
 
   function updateField(field: string, value: string) {
     setForm((prev) => ({ ...prev, [field]: value }));
@@ -158,8 +185,8 @@ export function AddContactDialog({
       last_name: "",
       email: "",
       phone: "",
-      company_id: "",
-      company_name: "",
+      company_id: preselectedCompanyId ?? "",
+      company_name: preselectedCompanyName ?? "",
       source: "",
       lifecycle_stage: "uncontacted",
       assigned_to: "",
@@ -181,18 +208,23 @@ export function AddContactDialog({
   }
 
   function validate(): boolean {
-    const newErrors: Record<string, string> = {};
-    if (!form.first_name.trim()) newErrors.first_name = "Required";
-    if (!form.last_name.trim()) newErrors.last_name = "Required";
-    if (selectedRelationships.length === 0) {
-      newErrors.relationships = "At least one relationship type is required";
+    const result = contactSchema.safeParse({
+      first_name: form.first_name.trim(),
+      last_name: form.last_name.trim(),
+    });
+    if (!result.success) {
+      const fieldErrors: Record<string, string> = {};
+      for (const issue of result.error.issues) {
+        const key = issue.path[0]?.toString();
+        if (key && !fieldErrors[key]) {
+          fieldErrors[key] = issue.message;
+        }
+      }
+      setErrors(fieldErrors);
+      return false;
     }
-    if (!form.email.trim() && !form.phone.trim()) {
-      newErrors.contact_method =
-        "At least one contact method (email or phone) is required";
-    }
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
+    setErrors({});
+    return true;
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -210,7 +242,7 @@ export function AddContactDialog({
           .from("companies")
           .insert({
             name: newCompanyName.trim(),
-            company_type: newCompanyType as any,
+            company_type: newCompanyType as CompanyType,
           })
           .select("id")
           .single();
@@ -228,11 +260,11 @@ export function AddContactDialog({
           phone: form.phone.trim() || null,
           company_id: companyId,
           company_name: form.company_name || null,
-          contact_type: "other" as any, // legacy default
+          contact_type: "other" as CrmContactType,
           contact_types: selectedRelationships.length > 0 ? selectedRelationships : ["other"],
-          source: (form.source || null) as any,
-          status: "active" as any, // legacy default
-          lifecycle_stage: form.lifecycle_stage as any,
+          source: (form.source || null) as CrmContactSource | null,
+          status: "active" as CrmContactStatus,
+          lifecycle_stage: form.lifecycle_stage as LifecycleStage,
           assigned_to: form.assigned_to || null,
           address_line1: form.address_line1 || null,
           city: form.city || null,
@@ -249,11 +281,11 @@ export function AddContactDialog({
       // Insert relationship types
       const relationshipInserts = selectedRelationships.map((rt) => ({
         contact_id: newContact.id,
-        relationship_type: rt as any,
+        relationship_type: rt as RelationshipType,
         lender_direction:
-          rt === "lender" && lenderDirection ? (lenderDirection as any) : null,
+          rt === "lender" && lenderDirection ? (lenderDirection as LenderDirection) : null,
         vendor_type:
-          rt === "vendor" && vendorType ? (vendorType as any) : null,
+          rt === "vendor" && vendorType ? (vendorType as VendorTypeEnum) : null,
         is_active: true,
       }));
 
@@ -267,11 +299,15 @@ export function AddContactDialog({
       toast({ title: "Contact added successfully" });
       setOpen(false);
       resetForm();
-      router.push(`/admin/crm/${newContact.id}`);
-    } catch (err: any) {
+      if (onSuccess) {
+        onSuccess(newContact.id);
+      } else {
+        router.push(`/admin/crm/${newContact.id}`);
+      }
+    } catch (err: unknown) {
       toast({
         title: "Error adding contact",
-        description: err.message,
+        description: err instanceof Error ? err.message : "An unexpected error occurred",
         variant: "destructive",
       });
     } finally {
@@ -288,10 +324,12 @@ export function AddContactDialog({
       }}
     >
       <DialogTrigger asChild>
-        <Button className="gap-2">
-          <UserPlus className="h-4 w-4" />
-          Add Contact
-        </Button>
+        {trigger ?? (
+          <Button className="gap-2">
+            <UserPlus className="h-4 w-4" />
+            Add Contact
+          </Button>
+        )}
       </DialogTrigger>
       <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
         <DialogHeader>
@@ -413,7 +451,7 @@ export function AddContactDialog({
               <Label>Phone</Label>
               <Input
                 value={form.phone}
-                onChange={(e) => updateField("phone", e.target.value)}
+                onChange={(e) => updateField("phone", formatPhoneInput(e.target.value))}
                 placeholder="(555) 123-4567"
               />
             </div>
@@ -593,11 +631,10 @@ export function AddContactDialog({
             </div>
             <div className="space-y-2">
               <Label>Next Follow-Up</Label>
-              <Input
-                type="date"
+              <DatePicker
                 value={form.next_follow_up_date}
-                onChange={(e) =>
-                  updateField("next_follow_up_date", e.target.value)
+                onChange={(value) =>
+                  updateField("next_follow_up_date", value)
                 }
               />
             </div>
@@ -654,14 +691,14 @@ export function AddContactDialog({
             </div>
           </div>
 
-          {/* Notes */}
+          {/* Description */}
           <div className="space-y-2">
-            <Label>Notes</Label>
+            <Label>Description</Label>
             <Textarea
               value={form.notes}
               onChange={(e) => updateField("notes", e.target.value)}
               rows={3}
-              placeholder="Internal notes about this contact..."
+              placeholder="Description of this contact..."
             />
           </div>
 

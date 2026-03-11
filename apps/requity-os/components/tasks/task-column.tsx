@@ -4,6 +4,7 @@ import { useState } from "react";
 import { cn } from "@/lib/utils";
 import { ChevronDown } from "lucide-react";
 import { TaskCard } from "./task-card";
+import { ApprovalCard } from "./approval-card";
 import { CompletedTaskCard } from "./completed-task-card";
 import type { OpsTask, Profile } from "@/lib/tasks";
 import { sortTasksByColumn } from "@/lib/tasks";
@@ -60,6 +61,8 @@ export function TaskColumn({
     onDrop(e, status);
   };
 
+  const isPendingApprovalColumn = status === "Pending Approval";
+
   return (
     <div className="flex-1 min-w-[280px] max-w-[440px] flex flex-col">
       {/* Column header */}
@@ -71,6 +74,9 @@ export function TaskColumn({
           {tasks.length}
         </span>
       </div>
+      {isPendingApprovalColumn && (
+        <div className="h-0.5 bg-amber-500 rounded-full mb-2" />
+      )}
 
       {/* Cards area */}
       <div
@@ -99,16 +105,25 @@ export function TaskColumn({
                 onClick={onTaskClick}
               />
             ))
-          : visibleTasks.map((task) => (
-              <TaskCard
-                key={task.id}
-                task={task}
-                profiles={profiles}
-                onComplete={onComplete}
-                onClick={onTaskClick}
-                onDragStart={onDragStart}
-              />
-            ))}
+          : visibleTasks.map((task) =>
+              task.type === "approval" ? (
+                <ApprovalCard
+                  key={task.id}
+                  task={task}
+                  profiles={profiles}
+                  onClick={onTaskClick}
+                />
+              ) : (
+                <TaskCard
+                  key={task.id}
+                  task={task}
+                  profiles={profiles}
+                  onComplete={onComplete}
+                  onClick={onTaskClick}
+                  onDragStart={onDragStart}
+                />
+              )
+            )}
 
         {/* "View all completed" expander */}
         {isComplete && hiddenCount > 0 && !showAllCompleted && (

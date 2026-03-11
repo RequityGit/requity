@@ -39,6 +39,14 @@ function LoginContent() {
       setError(
         "Authentication failed. Please try again or use a magic link."
       );
+    } else if (errorParam === "link_expired") {
+      setError(
+        "Your magic link has expired. Please request a new one below."
+      );
+    } else if (errorParam === "verification_failed") {
+      setError(
+        "Magic link verification failed. Please request a new link and click it only once."
+      );
     }
   }, [errorParam]);
 
@@ -109,12 +117,12 @@ function LoginContent() {
           {/* Logo / Header */}
           <div className="text-center mb-8">
             <img
-              src="https://edhlkknvlczhbowasjna.supabase.co/storage/v1/object/public/brand-assets/Requity%20Logo%20White.svg?v=2"
+              src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/brand-assets/Requity%20Logo%20White.svg?v=2`}
               alt="Requity Group"
               className="h-12 mx-auto mb-4 hidden dark:block"
             />
             <img
-              src="https://edhlkknvlczhbowasjna.supabase.co/storage/v1/object/public/brand-assets/Requity%20Logo%20Color.svg"
+              src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/brand-assets/Requity%20Logo%20Color.svg`}
               alt="Requity Group"
               className="h-12 mx-auto mb-4 dark:hidden"
             />

@@ -350,7 +350,7 @@ export function QuoteDetailClient({
       }
 
       toast({ title: "Quote deleted" });
-      router.push(`/admin/pipeline/debt/${loanId}`);
+      router.push(`/admin/pipeline/${loanId}`);
     } catch (err: unknown) {
       toast({
         title: "Error",
@@ -513,7 +513,7 @@ export function QuoteDetailClient({
               <div>
                 <p className="text-xs text-muted-foreground">Loan</p>
                 <a
-                  href={`/admin/pipeline/debt/${loanId}`}
+                  href={`/admin/pipeline/${loanId}`}
                   className="text-sm font-medium text-blue-600 hover:underline"
                 >
                   {loanNumber ?? "—"}

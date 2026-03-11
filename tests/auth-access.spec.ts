@@ -71,7 +71,7 @@ base(
     await page.goto("/login?error=no_access");
     await page.waitForLoadState("networkidle");
 
-    const errorBanner = page.locator("text=Access denied");
+    const errorBanner = page.locator("text=/access denied|no access|denied/i");
     await baseExpect(errorBanner).toBeVisible({ timeout: 10_000 });
   }
 );

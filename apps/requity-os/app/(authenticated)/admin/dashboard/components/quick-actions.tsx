@@ -8,7 +8,7 @@ const actions = [
     label: "New Deal",
     icon: Plus,
     color: "border-[#1B7A44]/15 bg-[#1B7A44]/5 text-[#1B7A44] hover:bg-[#1B7A44]/10",
-    href: "/admin/pipeline/debt/new",
+    href: "/admin/pipeline",
   },
   {
     label: "Run Reports",

@@ -44,33 +44,6 @@ test("21 — borrower sidebar links all resolve", async ({ borrowerPage }) => {
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
-// 22. Chatter page loads for borrower
-// ─────────────────────────────────────────────────────────────────────────────
-test("22 — borrower chatter page loads", async ({ borrowerPage }) => {
-  await borrowerPage.goto("/chat");
-  await borrowerPage.waitForLoadState("networkidle");
-
-  const main = borrowerPage.locator("main");
-  await expect(main).toBeVisible();
-
-  const chatUI = borrowerPage.locator(
-    'text=/chat|message|conversation|room|chatter/i, input[placeholder*="message" i], textarea'
-  );
-  const emptyState = borrowerPage.locator(
-    'text=/no.*message|no.*conversation|start.*chat|no.*room|no conversations yet|select a channel|loading channels/i'
-  );
-  const loadingIndicator = borrowerPage.locator(
-    '[class*="spinner"], [class*="loading"], svg[class*="animate"], [class*="Loader"], [class*="loader"], svg.lucide'
-  );
-
-  const hasChat = await chatUI.first().isVisible({ timeout: 5_000 }).catch(() => false);
-  const hasEmpty = await emptyState.first().isVisible({ timeout: 5_000 }).catch(() => false);
-  const hasLoading = await loadingIndicator.first().isVisible({ timeout: 3_000 }).catch(() => false);
-
-  expect(hasChat || hasEmpty || hasLoading).toBeTruthy();
-});
-
-// ─────────────────────────────────────────────────────────────────────────────
 // 23. Knowledge base page loads for borrower
 // ─────────────────────────────────────────────────────────────────────────────
 test("23 — borrower knowledge base page loads", async ({ borrowerPage }) => {

@@ -226,7 +226,7 @@ export function LoanKanban({ data, currentUserId }: LoanKanbanProps) {
                             <div
                               className="flex-1 min-w-0 cursor-pointer"
                               onClick={() =>
-                                router.push(`/admin/pipeline/debt/${loan.id}`)
+                                router.push(`/admin/pipeline/${loan.id}`)
                               }
                             >
                               {/* Property address */}

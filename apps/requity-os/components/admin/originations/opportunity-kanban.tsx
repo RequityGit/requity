@@ -297,7 +297,7 @@ export function OpportunityKanban({ data, stageThresholds = [] }: OpportunityKan
                                 className="flex-1 min-w-0 cursor-pointer"
                                 onClick={() =>
                                   router.push(
-                                    `/admin/pipeline/debt/${opp.id}`
+                                    `/admin/pipeline/${opp.id}`
                                   )
                                 }
                               >

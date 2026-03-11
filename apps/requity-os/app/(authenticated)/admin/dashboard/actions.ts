@@ -9,20 +9,15 @@ import { requireAdmin } from "@/lib/auth/require-admin";
 
 export interface DashboardTask {
   id: string;
-  user_id: string;
-  loan_id: string | null;
   title: string;
-  category: string;
+  status: string;
+  priority: string;
+  category: string | null;
   due_date: string | null;
-  is_completed: boolean;
+  assigned_to: string | null;
   completed_at: string | null;
   created_at: string;
-  updated_at: string;
-  loan_name: string | null;
-  loan_number: string | null;
-  is_past_due: boolean;
-  days_overdue: number | null;
-  source: "dashboard_task" | "ops_task";
+  updated_at: string | null;
 }
 
 export interface BorrowerRequest {
@@ -94,25 +89,21 @@ export async function fetchActionDashboardData(): Promise<
   { data: ActionDashboardData } | { error: string }
 > {
   try {
+    const { getSessionData } = await import("@/lib/auth/session-cache");
+    const session = await getSessionData();
+    if (!session) return { error: "Not authenticated" };
+
+    const user = session.user;
+    const profile = session.profile;
+
     const supabase = createClient();
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
 
-    if (!user) return { error: "Not authenticated" };
-
-    // Fetch user profile
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("full_name")
-      .eq("id", user.id)
-      .single();
-
-    // Fetch tasks from the view
+    // Fetch tasks assigned to user
     const { data: tasks } = await supabase
-      .from("dashboard_tasks_view")
+      .from("ops_tasks")
       .select("*")
-      .eq("user_id", user.id)
+      .eq("assigned_to", user.id)
+      .neq("status", "Complete")
       .order("due_date", { ascending: true });
 
     // Fetch borrower requests from the view
@@ -205,7 +196,7 @@ export async function fetchActionDashboardData(): Promise<
               period: String(weeklyData.period || ""),
             }
           : null,
-        userName: profile?.full_name || "there",
+        userName: (profile?.full_name as string) || "there",
       },
     };
   } catch (err) {
@@ -218,8 +209,7 @@ export async function fetchActionDashboardData(): Promise<
 
 export async function toggleTask(
   taskId: string,
-  isCompleted: boolean,
-  source: "dashboard_task" | "ops_task" = "dashboard_task"
+  isCompleted: boolean
 ): Promise<{ success: boolean } | { error: string }> {
   try {
     const auth = await requireAdmin();
@@ -227,31 +217,17 @@ export async function toggleTask(
 
     const admin = createAdminClient();
 
-    if (source === "ops_task") {
-      const { error } = await admin
-        .from("ops_tasks")
-        .update({
-          status: isCompleted ? "Complete" : "To Do",
-          completed_at: isCompleted ? new Date().toISOString() : null,
-          updated_at: new Date().toISOString(),
-        })
-        .eq("id", taskId)
-        .eq("assigned_to", auth.user.id);
+    const { error } = await admin
+      .from("ops_tasks")
+      .update({
+        status: isCompleted ? "Complete" : "To Do",
+        completed_at: isCompleted ? new Date().toISOString() : null,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", taskId)
+      .eq("assigned_to", auth.user.id);
 
-      if (error) return { error: error.message };
-    } else {
-      const { error } = await admin
-        .from("dashboard_tasks")
-        .update({
-          is_completed: isCompleted,
-          completed_at: isCompleted ? new Date().toISOString() : null,
-          updated_at: new Date().toISOString(),
-        })
-        .eq("id", taskId)
-        .eq("user_id", auth.user.id);
-
-      if (error) return { error: error.message };
-    }
+    if (error) return { error: error.message };
 
     // Update streak if completing
     if (isCompleted) {
@@ -284,13 +260,17 @@ export async function createTask(input: {
     const admin = createAdminClient();
 
     const { data, error } = await admin
-      .from("dashboard_tasks")
+      .from("ops_tasks")
       .insert({
-        user_id: auth.user.id,
         title: input.title,
         category: input.category,
         due_date: input.due_date,
-        loan_id: input.loan_id || null,
+        status: "To Do",
+        priority: "Medium",
+        assigned_to: auth.user.id,
+        created_by: auth.user.id,
+        linked_entity_type: input.loan_id ? "loan" : null,
+        linked_entity_id: input.loan_id || null,
       })
       .select("id")
       .single();

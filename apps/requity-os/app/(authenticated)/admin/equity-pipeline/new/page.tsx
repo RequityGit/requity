@@ -30,7 +30,7 @@ export default async function NewEquityDealPage() {
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-2">
-        <Link href="/admin/pipeline/equity">
+        <Link href="/admin/pipeline">
           <Button variant="ghost" size="sm">
             <ArrowLeft className="h-4 w-4 mr-1" /> Pipeline
           </Button>

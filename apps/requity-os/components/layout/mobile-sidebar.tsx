@@ -71,7 +71,7 @@ const adminNav: NavItem[] = [
     activePaths: ["/admin/originations", "/admin/loans", "/admin/conditions", "/admin/pricing"],
     moduleName: "pipeline",
   },
-  { label: "Models", href: "/admin/models", icon: FlaskConical, activePaths: ["/admin/models", "/admin/dscr"], moduleName: "models" },
+  { label: "Models", href: "/admin/models", icon: FlaskConical, activePaths: ["/admin/models"], moduleName: "models" },
   { label: "Servicing", href: "/admin/servicing", icon: Banknote, moduleName: "servicing" },
   {
     label: "Investments",
@@ -80,7 +80,7 @@ const adminNav: NavItem[] = [
     activePaths: ["/admin/capital-calls", "/admin/distributions"],
     moduleName: "investments",
   },
-  { label: "Documents", href: "/admin/document-center", icon: FolderOpen, activePaths: ["/admin/documents"], moduleName: "documents" },
+  { label: "Documents", href: "/admin/documents", icon: FolderOpen, activePaths: ["/admin/documents"], moduleName: "documents" },
   {
     label: "Operations",
     href: "/admin/operations",

@@ -267,7 +267,7 @@ export function EquityKanban({ data }: EquityKanbanProps) {
                                 className="flex-1 min-w-0 cursor-pointer"
                                 onClick={() =>
                                   router.push(
-                                    `/admin/pipeline/equity/${deal.id}`
+                                    `/admin/pipeline/${deal.id}`
                                   )
                                 }
                               >

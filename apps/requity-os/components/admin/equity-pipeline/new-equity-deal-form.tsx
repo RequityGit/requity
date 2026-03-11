@@ -137,7 +137,7 @@ export function NewEquityDealForm({
     }
 
     toast({ title: "Equity deal created successfully" });
-    router.push(`/admin/pipeline/equity/${result.id}`);
+    router.push(`/admin/pipeline/${result.id}`);
   }
 
   return (

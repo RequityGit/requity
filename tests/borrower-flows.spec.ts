@@ -104,6 +104,43 @@ test("17 — borrower dashboard shows loan information", async ({
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
+// 17b. Borrower individual loan detail page loads
+// ─────────────────────────────────────────────────────────────────────────────
+test("17b — borrower loan detail page loads from dashboard", async ({
+  borrowerPage,
+}) => {
+  await borrowerPage.goto("/borrower/dashboard");
+  await borrowerPage.waitForLoadState("networkidle");
+
+  // Look for a link to an individual loan detail page
+  const loanLink = borrowerPage.locator(
+    'a[href*="/borrower/loans/"], a[href*="/loan/"]'
+  );
+
+  const hasLoanLink = await loanLink.first().isVisible({ timeout: 5_000 }).catch(() => false);
+
+  if (hasLoanLink) {
+    await loanLink.first().click();
+    await borrowerPage.waitForLoadState("networkidle");
+
+    const main = borrowerPage.locator("main");
+    await expect(main).toBeVisible();
+
+    // Loan detail should have loan-related content
+    const loanDetail = borrowerPage.locator(
+      'text=/loan|balance|principal|property|rate|status|payment/i'
+    );
+    const hasDetail = await loanDetail.first().isVisible({ timeout: 5_000 }).catch(() => false);
+
+    // No error boundary
+    const errorHeading = borrowerPage.locator('text="Failed to load this page"');
+    await expect(errorHeading).not.toBeVisible({ timeout: 2_000 });
+
+    expect(hasDetail).toBeTruthy();
+  }
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
 // 18. Draw request submission — fill out form, submit, verify confirmation
 // ─────────────────────────────────────────────────────────────────────────────
 test("18 — borrower draw request page loads", async ({ borrowerPage }) => {
@@ -122,7 +159,6 @@ test("18 — borrower draw request page loads", async ({ borrowerPage }) => {
   const hasContent = await drawContent.first().isVisible({ timeout: 5_000 }).catch(() => false);
   const emptyState = borrowerPage.locator('text=/no.*draw|no.*request|empty|no data/i');
   const hasEmptyState = await emptyState.first().isVisible({ timeout: 3_000 }).catch(() => false);
-  // Also check for error boundary (page may have failed to load data)
   const errorBoundary = borrowerPage.locator('text=/failed to load|try again|error occurred/i');
   const hasError = await errorBoundary.first().isVisible({ timeout: 2_000 }).catch(() => false);
 
@@ -140,7 +176,6 @@ test("19 — construction draw management renders", async ({ borrowerPage }) => 
   // Check that either a table/list of draws loads or an empty state
   const table = borrowerPage.locator("table, [role='table'], [class*='table']");
   const emptyState = borrowerPage.locator('text=/no.*draw|no.*request|empty|no data/i');
-  // Also check for error boundary (page may have failed to load data)
   const errorBoundary = borrowerPage.locator('text=/failed to load|try again|error occurred/i');
 
   const hasTable = await table.first().isVisible({ timeout: 10_000 }).catch(() => false);
@@ -170,4 +205,23 @@ test("20 — borrower payments page loads", async ({ borrowerPage }) => {
   const hasEmpty = await emptyState.first().isVisible({ timeout: 3_000 }).catch(() => false);
 
   expect(hasContent || hasEmpty).toBeTruthy();
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 20b. Borrower account/settings page loads
+// ─────────────────────────────────────────────────────────────────────────────
+test("20b — borrower account settings page loads", async ({ borrowerPage }) => {
+  await borrowerPage.goto("/borrower/account");
+  await borrowerPage.waitForLoadState("networkidle");
+
+  const main = borrowerPage.locator("main");
+  await expect(main).toBeVisible();
+
+  // Account page should show profile/settings content
+  const content = borrowerPage.locator(
+    'text=/account|profile|setting|name|email|password|notification/i'
+  );
+  const hasContent = await content.first().isVisible({ timeout: 5_000 }).catch(() => false);
+
+  expect(hasContent).toBeTruthy();
 });

@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { DatePicker } from "@/components/ui/date-picker";
 import {
   Dialog,
   DialogContent,
@@ -203,11 +204,9 @@ export function ContributionForm({ funds }: ContributionFormProps) {
             </div>
             <div className="space-y-2">
               <Label>Due Date *</Label>
-              <Input
-                type="date"
+              <DatePicker
                 value={dueDate}
-                onChange={(e) => setDueDate(e.target.value)}
-                required
+                onChange={(value) => setDueDate(value)}
               />
             </div>
           </div>

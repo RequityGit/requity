@@ -65,16 +65,17 @@ export function PastDueBanner({ tasks, onToggle }: PastDueBannerProps) {
               <div className="text-[13px] font-medium text-foreground">
                 {tk.title}
               </div>
-              <div className="mt-0.5 flex items-center gap-2">
-                <CatTag category={tk.category} />
-                <span className="text-[11px] text-dash-text-faint">
-                  {tk.loan_name || "No loan"}
-                </span>
-              </div>
+              {tk.category && (
+                <div className="mt-0.5 flex items-center gap-2">
+                  <CatTag category={tk.category} />
+                </div>
+              )}
             </div>
             <div className="shrink-0 text-right">
               <div className="text-xs font-bold text-[#B23225] num">
-                {tk.days_overdue}d overdue
+                {tk.due_date
+                  ? `${Math.max(0, Math.floor((Date.now() - new Date(tk.due_date + "T00:00:00").getTime()) / 86400000))}d overdue`
+                  : "Overdue"}
               </div>
               <div className="mt-0.5 text-[11px] text-dash-text-faint num">
                 Due {tk.due_date}

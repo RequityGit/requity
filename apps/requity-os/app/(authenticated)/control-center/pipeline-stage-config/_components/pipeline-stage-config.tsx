@@ -6,7 +6,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { Skeleton } from "@/components/ui/skeleton";
 import {
   Select,
   SelectContent,
@@ -27,30 +26,56 @@ import {
   AlertCircle,
 } from "lucide-react";
 import type {
-  PipelineStageWithRules,
-  PipelineStageRule,
+  UnifiedStageWithRules,
+  UnifiedStageRule,
 } from "../actions";
 import { upsertStage, addRule, deleteRule } from "../actions";
+
+// ---------------------------------------------------------------------------
+// Stage color map (matches pipeline-v2 visual palette)
+// ---------------------------------------------------------------------------
+
+const STAGE_COLORS: Record<string, string> = {
+  lead: "#9B9BA0",
+  analysis: "#3B82F6",
+  negotiation: "#D97706",
+  execution: "#22A861",
+  closed: "#1A1A1A",
+};
+
+// Stage display labels
+const STAGE_LABELS: Record<string, string> = {
+  lead: "Lead",
+  analysis: "Analysis",
+  negotiation: "Negotiation",
+  execution: "Execution",
+  closed: "Closed",
+};
 
 // ---------------------------------------------------------------------------
 // Field options for the rule selector
 // ---------------------------------------------------------------------------
 
 const FIELD_OPTIONS: { value: string; label: string }[] = [
-  { value: "proposed_loan_amount", label: "Loan Amount" },
-  { value: "property_address", label: "Property Address" },
-  { value: "borrower_entity_id", label: "Borrower Entity" },
-  { value: "loan_type", label: "Loan Type" },
-  { value: "loan_purpose", label: "Loan Purpose" },
-  { value: "proposed_ltv", label: "LTV" },
-  { value: "funding_channel", label: "Funding Channel" },
-  { value: "originator", label: "Assigned Originator" },
-  { value: "processor", label: "Assigned Processor" },
-  { value: "assigned_underwriter", label: "Assigned Underwriter" },
-  { value: "deal_name", label: "Deal Name" },
-  { value: "investment_strategy", label: "Investment Strategy" },
-  { value: "capital_partner", label: "Capital Partner" },
-  { value: "approval_status", label: "Approval Status" },
+  // Top-level unified_deals columns
+  { value: "name", label: "Deal Name" },
+  { value: "amount", label: "Deal Amount" },
+  { value: "asset_class", label: "Asset Class" },
+  { value: "assigned_to", label: "Assigned To" },
+  { value: "primary_contact_id", label: "Primary Contact" },
+  { value: "company_id", label: "Company" },
+  { value: "expected_close_date", label: "Expected Close Date" },
+  { value: "capital_side", label: "Capital Side" },
+  { value: "card_type_id", label: "Card Type" },
+  // Common uw_data fields
+  { value: "uw:loan_amount", label: "UW — Loan Amount" },
+  { value: "uw:property_value", label: "UW — Property Value" },
+  { value: "uw:noi_current", label: "UW — NOI (Current)" },
+  { value: "uw:purchase_price", label: "UW — Purchase Price" },
+  { value: "uw:monthly_rent", label: "UW — Monthly Rent" },
+  { value: "uw:rehab_budget", label: "UW — Rehab Budget" },
+  { value: "uw:arv", label: "UW — ARV" },
+  { value: "uw:offer_price", label: "UW — Offer Price" },
 ];
 
 // ---------------------------------------------------------------------------
@@ -58,7 +83,7 @@ const FIELD_OPTIONS: { value: string; label: string }[] = [
 // ---------------------------------------------------------------------------
 
 interface PipelineStageConfigProps {
-  initialStages: PipelineStageWithRules[];
+  initialStages: UnifiedStageWithRules[];
   loadError: string | null;
 }
 
@@ -68,12 +93,10 @@ export function PipelineStageConfig({
 }: PipelineStageConfigProps) {
   const [stages, setStages] = useState(initialStages);
   const [expandedId, setExpandedId] = useState<string | null>(null);
-  const [isPending, startTransition] = useTransition();
   const [savedState, setSavedState] = useState<"idle" | "saved">("idle");
-  const { toast } = useToast();
 
   const totalRules = stages.reduce(
-    (sum, s) => sum + (s.pipeline_stage_rules?.length ?? 0),
+    (sum, s) => sum + (s.unified_stage_rules?.length ?? 0),
     0
   );
 
@@ -179,9 +202,9 @@ export function PipelineStageConfig({
           >
             <span
               className="inline-block h-2 w-2 rounded-full flex-shrink-0"
-              style={{ backgroundColor: stage.color }}
+              style={{ backgroundColor: STAGE_COLORS[stage.stage] ?? "#888" }}
             />
-            {stage.name}
+            {STAGE_LABELS[stage.stage] ?? stage.stage}
           </button>
         ))}
       </div>
@@ -216,18 +239,18 @@ function StageCard({
   onToggle,
   onStageUpdate,
 }: {
-  stage: PipelineStageWithRules;
+  stage: UnifiedStageWithRules;
   isExpanded: boolean;
   onToggle: () => void;
-  onStageUpdate: (updated: PipelineStageWithRules) => void;
+  onStageUpdate: (updated: UnifiedStageWithRules) => void;
 }) {
-  const [warnDays, setWarnDays] = useState(stage.warn_days);
-  const [alertDays, setAlertDays] = useState(stage.alert_days);
+  const [warnDays, setWarnDays] = useState(stage.warn_days ?? 5);
+  const [alertDays, setAlertDays] = useState(stage.alert_days ?? 10);
   const [addingRule, setAddingRule] = useState(false);
   const [isPending, startTransition] = useTransition();
   const { toast } = useToast();
 
-  const rules = stage.pipeline_stage_rules ?? [];
+  const rules = stage.unified_stage_rules ?? [];
 
   function handleThresholdBlur(field: "warn_days" | "alert_days") {
     const value = field === "warn_days" ? warnDays : alertDays;
@@ -241,12 +264,11 @@ function StageCard({
           description: result.error,
           variant: "destructive",
         });
-        // Reset to original
-        if (field === "warn_days") setWarnDays(stage.warn_days);
-        else setAlertDays(stage.alert_days);
+        if (field === "warn_days") setWarnDays(stage.warn_days ?? 5);
+        else setAlertDays(stage.alert_days ?? 10);
       } else {
         onStageUpdate({ ...stage, [field]: value });
-        toast({ title: `${stage.name} ${field === "warn_days" ? "warn" : "alert"} threshold updated` });
+        toast({ title: `${STAGE_LABELS[stage.stage] ?? stage.stage} ${field === "warn_days" ? "warn" : "alert"} threshold updated` });
       }
     });
   }
@@ -261,20 +283,19 @@ function StageCard({
           variant: "destructive",
         });
       } else {
-        // Optimistic: add a placeholder rule
-        const newRule: PipelineStageRule = {
+        const newRule: UnifiedStageRule = {
           id: crypto.randomUUID(),
-          stage_id: stage.id,
+          stage_config_id: stage.id,
           field_key: fieldKey,
           error_message: errorMessage || null,
           created_at: new Date().toISOString(),
         };
         onStageUpdate({
           ...stage,
-          pipeline_stage_rules: [...rules, newRule],
+          unified_stage_rules: [...rules, newRule],
         });
         setAddingRule(false);
-        toast({ title: `Rule added to ${stage.name}` });
+        toast({ title: `Rule added to ${STAGE_LABELS[stage.stage] ?? stage.stage}` });
       }
     });
   }
@@ -291,7 +312,7 @@ function StageCard({
       } else {
         onStageUpdate({
           ...stage,
-          pipeline_stage_rules: rules.filter((r) => r.id !== ruleId),
+          unified_stage_rules: rules.filter((r) => r.id !== ruleId),
         });
         toast({ title: "Rule removed" });
       }
@@ -309,10 +330,10 @@ function StageCard({
           <div className="flex items-center gap-3">
             <span
               className="inline-block h-3 w-3 rounded-full flex-shrink-0"
-              style={{ backgroundColor: stage.color }}
+              style={{ backgroundColor: STAGE_COLORS[stage.stage] ?? "#888" }}
             />
             <span className="text-sm font-medium text-foreground">
-              {stage.name}
+              {STAGE_LABELS[stage.stage] ?? stage.stage}
             </span>
             <Badge variant="secondary" className="text-xs">
               {rules.length} {rules.length === 1 ? "rule" : "rules"}
@@ -321,11 +342,11 @@ function StageCard({
           <div className="flex items-center gap-4">
             <span className="flex items-center gap-1 text-xs">
               <AlertTriangle className="h-3 w-3 text-amber-500" />
-              <span className="text-muted-foreground">{stage.warn_days}d</span>
+              <span className="text-muted-foreground">{stage.warn_days ?? "—"}d</span>
             </span>
             <span className="flex items-center gap-1 text-xs">
               <AlertCircle className="h-3 w-3 text-destructive" />
-              <span className="text-muted-foreground">{stage.alert_days}d</span>
+              <span className="text-muted-foreground">{stage.alert_days ?? "—"}d</span>
             </span>
             {isExpanded ? (
               <ChevronDown className="h-4 w-4 text-muted-foreground" />

@@ -2,6 +2,7 @@
 
 import { useState, useMemo, useRef } from "react";
 import { useRouter } from "next/navigation";
+import { formatPhoneInput } from "@/lib/format";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -277,7 +278,7 @@ export function NewDealForm({
     }
 
     toast({ title: "Deal created successfully" });
-    router.push(`/admin/pipeline/debt/${result.opportunityId}`);
+    router.push(`/admin/pipeline/${result.opportunityId}`);
   }
 
   return (
@@ -663,7 +664,7 @@ export function NewDealForm({
                     <Input
                       type="tel"
                       value={newBorrowerPhone}
-                      onChange={(e) => setNewBorrowerPhone(e.target.value)}
+                      onChange={(e) => setNewBorrowerPhone(formatPhoneInput(e.target.value))}
                       placeholder="(555) 123-4567"
                     />
                   </div>

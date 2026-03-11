@@ -2,6 +2,7 @@
 
 import { cn } from "@/lib/utils";
 import type { LucideIcon } from "lucide-react";
+import { Pencil } from "lucide-react";
 
 // ── DotPill: Pill with colored dot prefix ──
 export function DotPill({
@@ -83,6 +84,19 @@ export function SectionCard({
   );
 }
 
+// ── SectionEditButton: Pencil + "Edit" for section headers ──
+export function SectionEditButton({ onClick }: { onClick: () => void }) {
+  return (
+    <button
+      onClick={onClick}
+      className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs font-medium transition-colors cursor-pointer border-0 text-muted-foreground bg-transparent hover:bg-muted hover:text-foreground"
+    >
+      <Pencil size={12} strokeWidth={1.5} />
+      Edit
+    </button>
+  );
+}
+
 // ── MetricCard: Label/value/subtitle metric ──
 export function MetricCard({
   label,
@@ -122,14 +136,19 @@ export function FieldRow({
   mono?: boolean;
   danger?: boolean;
 }) {
+  const isEmpty = !value || value === "—";
   return (
     <div className="flex justify-between items-center py-2 border-b border-border/40">
       <span className="text-xs text-muted-foreground">{label}</span>
       <span
         className={cn(
           "text-[13px] text-right",
-          danger ? "text-red-500" : "text-foreground",
-          mono ? "font-medium num font-mono" : "font-normal"
+          isEmpty
+            ? "text-muted-foreground/50"
+            : danger
+              ? "text-red-500"
+              : "text-foreground",
+          mono && !isEmpty ? "font-medium num font-mono" : "font-normal"
         )}
       >
         {value || "—"}
@@ -179,14 +198,17 @@ export function TabBtn({
 export function MonoValue({
   children,
   className,
+  title,
 }: {
   children: React.ReactNode;
   className?: string;
+  title?: string;
 }) {
   return (
     <span
       className={cn("tabular-nums", className)}
       style={{ fontFamily: "'JetBrains Mono', monospace" }}
+      title={title}
     >
       {children}
     </span>

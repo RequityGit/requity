@@ -48,7 +48,7 @@ function getQuickActionsForEntity(
           href:
             role === "borrower"
               ? `/borrower/loans/${id}`
-              : `/admin/pipeline/debt/${id}`,
+              : `/admin/pipeline/${id}`,
         },
       ];
     case "borrower":

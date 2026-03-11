@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * Fetches current loan market indexes from public government APIs.
  *
@@ -11,12 +10,39 @@
  * Free key at https://fred.stlouisfed.org/docs/api/api_key.html
  */
 
+/** A single rate index value with its effective date. */
+interface IndexRate {
+  value: number;
+  date: string | null;
+}
+
+/** The full set of loan indexes returned by getLoanIndexes. */
+interface LoanIndexes {
+  treasury5yr: IndexRate | null;
+  treasury10yr: IndexRate | null;
+  sofr30day: IndexRate | null;
+  prime: IndexRate | null;
+}
+
+/** Shape of a Treasury yield curve entry from the OData feed. */
+interface TreasuryEntry {
+  BC_5YEAR?: string | number | null;
+  BC_10YEAR?: string | number | null;
+  NEW_DATE?: string;
+}
+
+/** Shape of a FRED observation. */
+interface FredObservation {
+  value: string;
+  date?: string;
+}
+
 const CACHE_SECONDS = 3600; // 1 hour
 
 // In-memory cache so we can return stale data when APIs fail
-let lastGoodResult = null;
+let lastGoodResult: LoanIndexes | null = null;
 
-async function fetchTreasuryYields() {
+async function fetchTreasuryYields(): Promise<{ treasury5yr?: IndexRate; treasury10yr?: IndexRate }> {
   try {
     const url =
       'https://data.treasury.gov/feed.svc/DailyTreasuryYieldCurveRateData?' +
@@ -25,14 +51,14 @@ async function fetchTreasuryYields() {
     const res = await fetch(url, { next: { revalidate: CACHE_SECONDS } });
     if (!res.ok) return {};
 
-    const data = await res.json();
+    const data: { d?: { results?: TreasuryEntry[] } } = await res.json();
     const results = data?.d?.results;
     if (!results || results.length === 0) return {};
 
     // Find the first entry with valid data
     for (const entry of results) {
-      const fiveYr = entry.BC_5YEAR != null ? parseFloat(entry.BC_5YEAR) : null;
-      const tenYr = entry.BC_10YEAR != null ? parseFloat(entry.BC_10YEAR) : null;
+      const fiveYr = entry.BC_5YEAR != null ? parseFloat(String(entry.BC_5YEAR)) : null;
+      const tenYr = entry.BC_10YEAR != null ? parseFloat(String(entry.BC_10YEAR)) : null;
 
       if (fiveYr && tenYr && !isNaN(fiveYr) && !isNaN(tenYr)) {
         // Parse the OData date format: /Date(1234567890000)/
@@ -55,18 +81,18 @@ async function fetchTreasuryYields() {
   }
 }
 
-async function fetchSOFR() {
+async function fetchSOFR(): Promise<IndexRate | null> {
   try {
     const url = 'https://markets.newyorkfed.org/api/rates/secured/sofr/last/1.json';
     const res = await fetch(url, { next: { revalidate: CACHE_SECONDS } });
     if (!res.ok) return null;
 
-    const data = await res.json();
+    const data: { refRates?: Array<{ percentRate?: string | number; effectiveDate?: string }> } = await res.json();
     const rate = data?.refRates?.[0];
     if (!rate || rate.percentRate == null) return null;
 
     return {
-      value: parseFloat(rate.percentRate),
+      value: parseFloat(String(rate.percentRate)),
       date: rate.effectiveDate || null,
     };
   } catch {
@@ -74,7 +100,7 @@ async function fetchSOFR() {
   }
 }
 
-async function fetchFromFRED(seriesId) {
+async function fetchFromFRED(seriesId: string): Promise<IndexRate | null> {
   const apiKey = process.env.FRED_API_KEY;
   if (!apiKey) return null;
 
@@ -86,8 +112,8 @@ async function fetchFromFRED(seriesId) {
     const res = await fetch(url, { next: { revalidate: CACHE_SECONDS } });
     if (!res.ok) return null;
 
-    const data = await res.json();
-    const obs = data?.observations?.find((o) => o.value !== '.');
+    const data: { observations?: FredObservation[] } = await res.json();
+    const obs = data?.observations?.find((o: FredObservation) => o.value !== '.');
     if (!obs) return null;
 
     return {
@@ -99,9 +125,9 @@ async function fetchFromFRED(seriesId) {
   }
 }
 
-export async function getLoanIndexes() {
+export async function getLoanIndexes(): Promise<LoanIndexes> {
   const hasFredKey = !!process.env.FRED_API_KEY;
-  let result;
+  let result: LoanIndexes;
 
   if (hasFredKey) {
     // Use FRED for all 4 rates (most reliable)
@@ -129,7 +155,7 @@ export async function getLoanIndexes() {
   }
 
   // If we got valid data, cache it; otherwise return last known good data
-  const hasAny = Object.values(result).some((v) => v?.value != null);
+  const hasAny = Object.values(result).some((v: IndexRate | null) => v?.value != null);
   if (hasAny) {
     lastGoodResult = result;
     return result;

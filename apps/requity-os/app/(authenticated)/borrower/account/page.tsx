@@ -16,6 +16,7 @@ import type { Tables } from "@/lib/supabase/types";
 type Profile = Tables<"profiles">;
 import { resilientProfileUpdate } from "@/lib/supabase/resilient-profile-update";
 import { ProfilePhotoUpload } from "@/components/shared/profile-photo-upload";
+import { formatPhoneInput } from "@/lib/format";
 
 export default function BorrowerAccountPage() {
   const { toast } = useToast();
@@ -57,7 +58,7 @@ export default function BorrowerAccountPage() {
         setProfile(data);
         setFullName(data.full_name ?? "");
         setEmail(data.email ?? "");
-        setPhone(data.phone ?? "");
+        setPhone(formatPhoneInput(data.phone ?? ""));
         setCompany(data.company_name ?? "");
         setAvatarUrl(data.avatar_url ?? null);
       }
@@ -198,7 +199,7 @@ export default function BorrowerAccountPage() {
                     id="phone"
                     type="tel"
                     value={phone}
-                    onChange={(e) => setPhone(e.target.value)}
+                    onChange={(e) => setPhone(formatPhoneInput(e.target.value))}
                     placeholder="(555) 123-4567"
                   />
                 </div>

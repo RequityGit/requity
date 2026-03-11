@@ -31,8 +31,8 @@ import { useCommercialUWStore, getDefaultState } from "@/components/commercial-u
 import type { UnderwritingInputs } from "@/lib/underwriting/types";
 import { DEFAULT_INPUTS } from "@/lib/underwriting/types";
 import type { CommercialUWState } from "@/components/commercial-uw/types";
-import type { UWModelType } from "@/app/(authenticated)/admin/pipeline/debt/[id]/components";
-import { UW_MODEL_LABELS } from "@/app/(authenticated)/admin/pipeline/debt/[id]/components";
+import type { UWModelType } from "@/lib/constants/uw-model-types";
+import { UW_MODEL_LABELS } from "@/lib/constants/uw-model-types";
 
 export interface UWVersionData {
   id: string;
@@ -253,10 +253,8 @@ export function UWEditorClient({
               <Link
                 href={
                   linkedDealId !== undefined
-                    ? linkedDealType === "opportunity"
-                      ? `/admin/pipeline/equity/${linkedDealId}`
-                      : `/admin/pipeline/debt/${linkedDealId}`
-                    : `/admin/pipeline/debt/${dealId}`
+                    ? `/admin/pipeline/${linkedDealId}`
+                    : `/admin/pipeline/${dealId}`
                 }
               >
                 <Button variant="ghost" size="sm">

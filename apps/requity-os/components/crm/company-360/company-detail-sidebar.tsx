@@ -1,27 +1,29 @@
 "use client";
 
+import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { useToast } from "@/components/ui/use-toast";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
+  Popover,
+  PopoverTrigger,
+  PopoverContent,
+} from "@/components/ui/popover";
+import {
   Zap,
   Mail,
-  Calendar,
   CheckCircle2,
   PhoneCall,
   Upload,
-  DollarSign,
   Bell,
   Users,
-  Shield,
   Hash,
   Phone,
   Plus,
-  Check,
+  FileText,
   X,
-  AlertCircle,
 } from "lucide-react";
+import { GenerateDocumentDialog } from "@/components/documents/GenerateDocumentDialog";
 import {
   SectionCard,
   FieldRow,
@@ -29,70 +31,69 @@ import {
   relTime,
 } from "@/components/crm/contact-360/contact-detail-shared";
 import { formatDate } from "@/lib/format";
+import { useToast } from "@/components/ui/use-toast";
 import Link from "next/link";
+import {
+  addCompanyFollowerAction,
+  removeCompanyFollowerAction,
+} from "@/app/(authenticated)/admin/crm/company-actions";
 import type {
   CompanyDetailData,
   CompanyContactData,
   CompanyFollowerData,
-  CompanyFileData,
 } from "./types";
 
 interface CompanyDetailSidebarProps {
   company: CompanyDetailData;
   contacts: CompanyContactData[];
   followers: CompanyFollowerData[];
-  files: CompanyFileData[];
   currentUserId: string;
   currentUserName: string;
+  teamMembers: { id: string; full_name: string }[];
   onTabChange: (tab: string) => void;
-}
-
-function computeNdaOnFile(company: CompanyDetailData): {
-  status: boolean;
-  warning: boolean;
-  detail: string | null;
-} {
-  if (!company.nda_created_date) {
-    return { status: false, warning: false, detail: null };
-  }
-  if (!company.nda_expiration_date) {
-    return { status: true, warning: false, detail: null };
-  }
-  const exp = new Date(company.nda_expiration_date);
-  const now = new Date();
-  if (exp < now) {
-    return { status: false, warning: false, detail: "Expired" };
-  }
-  const daysLeft = Math.floor(
-    (exp.getTime() - now.getTime()) / 86400000
-  );
-  if (daysLeft < 45) {
-    return {
-      status: true,
-      warning: true,
-      detail: `Expires ${formatDate(company.nda_expiration_date)}`,
-    };
-  }
-  return {
-    status: true,
-    warning: false,
-    detail: `Expires ${formatDate(company.nda_expiration_date)}`,
-  };
+  onComposeEmail?: () => void;
+  onLogCall?: () => void;
 }
 
 export function CompanyDetailSidebar({
   company,
   contacts,
   followers,
-  files,
+  teamMembers,
   onTabChange,
+  onComposeEmail,
+  onLogCall,
 }: CompanyDetailSidebarProps) {
   const router = useRouter();
   const { toast } = useToast();
+  const [followerPopoverOpen, setFollowerPopoverOpen] = useState(false);
+  const [loadingFollower, setLoadingFollower] = useState<string | null>(null);
 
-  const ndaInfo = computeNdaOnFile(company);
-  const hasW9 = files.some((f) => f.file_type === "w9");
-  const rateSheet = files.find((f) => f.file_type === "rate_sheet");
+  const followerUserIds = new Set(followers.map((f) => f.user_id));
+  const availableMembers = teamMembers.filter((m) => !followerUserIds.has(m.id));
+
+  async function handleAddFollower(userId: string) {
+    setLoadingFollower(userId);
+    const result = await addCompanyFollowerAction(company.id, userId);
+    setLoadingFollower(null);
+    if (result.error) {
+      toast({ title: "Error", description: result.error, variant: "destructive" });
+    } else {
+      setFollowerPopoverOpen(false);
+      router.refresh();
+    }
+  }
+
+  async function handleRemoveFollower(followerId: string) {
+    setLoadingFollower(followerId);
+    const result = await removeCompanyFollowerAction(followerId);
+    setLoadingFollower(null);
+    if (result.error) {
+      toast({ title: "Error", description: result.error, variant: "destructive" });
+    } else {
+      router.refresh();
+    }
+  }
 
   const topContacts = [...contacts]
     .sort((a, b) => {
@@ -111,12 +112,7 @@ export function CompanyDetailSidebar({
             {
               icon: Mail,
               label: "Send Email",
-              onClick: () => toast({ title: "Coming soon" }),
-            },
-            {
-              icon: Calendar,
-              label: "Schedule Meeting",
-              onClick: () => toast({ title: "Coming soon" }),
+              onClick: () => onComposeEmail?.(),
             },
             {
               icon: CheckCircle2,
@@ -126,17 +122,12 @@ export function CompanyDetailSidebar({
             {
               icon: PhoneCall,
               label: "Log Call",
-              onClick: () => onTabChange("activity"),
+              onClick: () => onLogCall?.(),
             },
             {
               icon: Upload,
               label: "Upload Document",
               onClick: () => onTabChange("files"),
-            },
-            {
-              icon: DollarSign,
-              label: "Submit Deal",
-              onClick: () => toast({ title: "Coming soon" }),
             },
           ].map(({ icon: I, label, onClick }) => (
             <button
@@ -148,6 +139,19 @@ export function CompanyDetailSidebar({
               {label}
             </button>
           ))}
+          <GenerateDocumentDialog
+            recordType="company"
+            recordId={company.id}
+            recordLabel={company.name}
+            trigger={
+              <button
+                className="flex items-center gap-2.5 px-3 py-2 rounded-lg border border-border/60 bg-muted/50 cursor-pointer text-[13px] text-foreground font-normal transition-all duration-150 hover:bg-muted"
+              >
+                <FileText size={14} className="text-muted-foreground" strokeWidth={1.5} />
+                Generate Document
+              </button>
+            }
+          />
         </div>
       </SectionCard>
 
@@ -156,13 +160,50 @@ export function CompanyDetailSidebar({
         title="Followers"
         icon={Bell}
         action={
-          <Button
-            variant="ghost"
-            size="sm"
-            className="gap-1 text-xs h-7 text-muted-foreground"
-          >
-            <Plus size={12} strokeWidth={1.5} /> Add
-          </Button>
+          <Popover open={followerPopoverOpen} onOpenChange={setFollowerPopoverOpen}>
+            <PopoverTrigger asChild>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="gap-1 text-xs h-7 text-muted-foreground"
+              >
+                <Plus size={12} strokeWidth={1.5} /> Add
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent align="end" className="w-56 p-2">
+              {availableMembers.length === 0 ? (
+                <p className="text-xs text-muted-foreground px-2 py-1.5">
+                  All team members are already followers.
+                </p>
+              ) : (
+                <div className="flex flex-col">
+                  {availableMembers.map((m) => {
+                    const initials = m.full_name
+                      .split(" ")
+                      .map((w) => w[0])
+                      .join("")
+                      .toUpperCase()
+                      .slice(0, 2);
+                    return (
+                      <button
+                        key={m.id}
+                        disabled={loadingFollower === m.id}
+                        onClick={() => handleAddFollower(m.id)}
+                        className="flex items-center gap-2 px-2 py-1.5 rounded-md text-left text-[13px] hover:bg-muted transition-colors disabled:opacity-50"
+                      >
+                        <Avatar className="h-5 w-5 rounded-md">
+                          <AvatarFallback className="rounded-md bg-foreground/[0.06] text-foreground text-[8px] font-semibold">
+                            {initials}
+                          </AvatarFallback>
+                        </Avatar>
+                        {m.full_name}
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+            </PopoverContent>
+          </Popover>
         }
       >
         <div className="flex gap-2 flex-wrap">
@@ -181,7 +222,7 @@ export function CompanyDetailSidebar({
               return (
                 <div
                   key={f.id}
-                  className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-muted"
+                  className="group flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-muted"
                 >
                   <Avatar className="h-[22px] w-[22px] rounded-md">
                     <AvatarFallback className="rounded-md bg-foreground/[0.06] text-foreground text-[9px] font-semibold">
@@ -191,6 +232,13 @@ export function CompanyDetailSidebar({
                   <span className="text-xs font-medium">
                     {f.user_name?.split(" ")[0] || "Unknown"}
                   </span>
+                  <button
+                    onClick={() => handleRemoveFollower(f.id)}
+                    disabled={loadingFollower === f.id}
+                    className="opacity-0 group-hover:opacity-100 transition-opacity ml-0.5 text-muted-foreground hover:text-foreground disabled:opacity-50"
+                  >
+                    <X size={12} strokeWidth={1.5} />
+                  </button>
                 </div>
               );
             })
@@ -258,73 +306,6 @@ export function CompanyDetailSidebar({
               );
             })
           )}
-        </div>
-      </SectionCard>
-
-      {/* Document Status */}
-      <SectionCard title="Document Status" icon={Shield}>
-        <div className="flex flex-col gap-2">
-          {[
-            {
-              label: "NDA",
-              status: ndaInfo.status,
-              warning: ndaInfo.warning,
-              detail: ndaInfo.detail,
-            },
-            {
-              label: "Fee Agreement",
-              status: !!company.fee_agreement_on_file,
-              warning: false,
-              detail: null,
-            },
-            {
-              label: "W-9",
-              status: hasW9,
-              warning: false,
-              detail: null,
-            },
-            {
-              label: "Rate Sheet",
-              status: !!rateSheet,
-              warning: false,
-              detail: rateSheet?.uploaded_at
-                ? `Updated ${formatDate(rateSheet.uploaded_at)}`
-                : null,
-            },
-          ].map((doc, i) => (
-            <div
-              key={i}
-              className={`flex items-center gap-2 py-1.5${i < 3 ? " border-b border-border/40" : ""}`}
-            >
-              <div
-                className={`w-5 h-5 rounded-md flex items-center justify-center shrink-0 ${
-                  doc.status
-                    ? doc.warning
-                      ? "bg-amber-50 dark:bg-amber-900/20"
-                      : "bg-green-50 dark:bg-green-900/20"
-                    : "bg-red-50 dark:bg-red-900/20"
-                }`}
-              >
-                {doc.status ? (
-                  doc.warning ? (
-                    <AlertCircle size={12} className="text-[#E5930E]" strokeWidth={1.5} />
-                  ) : (
-                    <Check size={12} className="text-[#22A861]" strokeWidth={1.5} />
-                  )
-                ) : (
-                  <X size={12} className="text-[#E5453D]" strokeWidth={1.5} />
-                )}
-              </div>
-              <div className="flex-1">
-                <div className="text-xs font-medium text-foreground">
-                  {doc.label}
-                </div>
-                {doc.detail && (
-                  <div className="text-[10px] text-muted-foreground">{doc.detail}</div>
-                )}
-              </div>
-            </div>
-          ))}
         </div>
       </SectionCard>
 

@@ -29,8 +29,9 @@ type DistributionRow = {
 export default async function DistributionsPage({
   searchParams,
 }: {
-  searchParams: { fund?: string; year?: string; type?: string };
+  searchParams: Promise<{ fund?: string; year?: string; type?: string }>;
 }) {
+  const resolvedParams = await searchParams;
   type DistributionJoined = {
     id: string;
     fund_id: string;
@@ -58,18 +59,18 @@ export default async function DistributionsPage({
         .eq("investor_id", investorId)
         .order("distribution_date", { ascending: false });
 
-      if (searchParams.fund) {
-        query = query.eq("fund_id", searchParams.fund);
+      if (resolvedParams.fund) {
+        query = query.eq("fund_id", resolvedParams.fund);
       }
 
-      if (searchParams.year) {
+      if (resolvedParams.year) {
         query = query
-          .gte("distribution_date", `${searchParams.year}-01-01`)
-          .lte("distribution_date", `${searchParams.year}-12-31`);
+          .gte("distribution_date", `${resolvedParams.year}-01-01`)
+          .lte("distribution_date", `${resolvedParams.year}-12-31`);
       }
 
-      if (searchParams.type) {
-        query = query.eq("distribution_type", searchParams.type);
+      if (resolvedParams.type) {
+        query = query.eq("distribution_type", resolvedParams.type);
       }
 
       const { data: rawDistributions, error } = await query;
@@ -258,9 +259,9 @@ export default async function DistributionsPage({
             value: dt.value,
             label: dt.label,
           }))}
-          currentFund={searchParams.fund}
-          currentYear={searchParams.year}
-          currentType={searchParams.type}
+          currentFund={resolvedParams.fund}
+          currentYear={resolvedParams.year}
+          currentType={resolvedParams.type}
         />
       </Suspense>
 

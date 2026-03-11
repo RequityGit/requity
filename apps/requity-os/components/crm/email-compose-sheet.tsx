@@ -15,6 +15,7 @@ import type { Database } from "@/lib/supabase/types";
 import { TemplatePicker } from "@/components/email/TemplatePicker";
 import { TemplateAppliedBanner } from "@/components/email/TemplateAppliedBanner";
 import type { UserEmailTemplate } from "@/lib/types/user-email-templates";
+import { ContactEmailCombobox } from "@/components/crm/contact-email-combobox";
 
 interface Attachment {
   file: File;
@@ -40,6 +41,14 @@ interface EmailComposeSheetProps {
   currentUserId: string;
   /** Current user display name */
   currentUserName?: string;
+  /** Pre-filled subject line (e.g. from document send flow) */
+  initialSubject?: string;
+  /** Pre-filled body HTML (e.g. from document send flow) */
+  initialBody?: string;
+  /** Pre-loaded file attachments (e.g. PDF from document export) */
+  initialAttachments?: File[];
+  /** Called after a successful email send with the crm_emails record ID */
+  onSendSuccess?: (emailId: string) => void;
 }
 
 export function EmailComposeSheet({
@@ -53,6 +62,10 @@ export function EmailComposeSheet({
   linkedInvestorId,
   currentUserId,
   currentUserName,
+  initialSubject,
+  initialBody,
+  initialAttachments,
+  onSendSuccess,
 }: EmailComposeSheetProps) {
   const router = useRouter();
   const { toast } = useToast();
@@ -69,6 +82,9 @@ export function EmailComposeSheet({
     mergeData: Record<string, string> | null;
   } | null>(null);
   const [templateLoading, setTemplateLoading] = useState(false);
+  const [internalLinkedContactId, setInternalLinkedContactId] = useState<string | null>(
+    linkedContactId ?? null
+  );
 
   // Check if the current user has an active Gmail OAuth connection
   useEffect(() => {
@@ -89,10 +105,12 @@ export function EmailComposeSheet({
     to_name: toName,
     cc: "",
     bcc: "",
-    subject: "",
-    body: "",
+    subject: initialSubject ?? "",
+    body: initialBody ?? "",
   });
-  const [attachments, setAttachments] = useState<Attachment[]>([]);
+  const [attachments, setAttachments] = useState<Attachment[]>(
+    () => (initialAttachments ?? []).map((f) => ({ file: f, id: crypto.randomUUID() }))
+  );
 
   const isDirty =
     form.subject.trim() !== "" ||
@@ -236,6 +254,7 @@ export function EmailComposeSheet({
     });
     setAttachments([]);
     setAppliedTemplate(null);
+    setInternalLinkedContactId(linkedContactId ?? null);
     onOpenChange(false);
   }
 
@@ -284,6 +303,9 @@ export function EmailComposeSheet({
       const ccEmails = parseEmailList(form.cc);
       const bccEmails = parseEmailList(form.bcc);
 
+      // Use autocomplete-selected contact, falling back to prop
+      const resolvedContactId = internalLinkedContactId ?? linkedContactId ?? null;
+
       const insertData: Database["public"]["Tables"]["crm_emails"]["Insert"] = {
         to_email: form.to_email.trim(),
         to_name: form.to_name.trim() || null,
@@ -296,7 +318,7 @@ export function EmailComposeSheet({
         bcc_emails: bccEmails.length > 0 ? bccEmails : null,
         sent_by: currentUserId,
         sent_by_name: currentUserName || null,
-        linked_contact_id: linkedContactId || null,
+        linked_contact_id: resolvedContactId,
         linked_loan_id: linkedLoanId || null,
         linked_borrower_id: linkedBorrowerId || null,
         linked_investor_id: linkedInvestorId || null,
@@ -322,16 +344,16 @@ export function EmailComposeSheet({
             sent_by: currentUserId,
             crm_email_id: insertedEmail.id,
             linked_loan_id: linkedLoanId || null,
-            linked_contact_id: linkedContactId || null,
+            linked_contact_id: resolvedContactId,
             merge_data_snapshot: appliedTemplate.mergeData,
             template_version: appliedTemplate.version,
           } as never);
       }
 
       // Also log as CRM activity if linked to a contact
-      if (linkedContactId) {
+      if (resolvedContactId) {
         await supabase.from("crm_activities").insert({
-          contact_id: linkedContactId,
+          contact_id: resolvedContactId,
           activity_type: "email",
           subject: form.subject.trim(),
           description: form.body.slice(0, 500) || null,
@@ -341,7 +363,7 @@ export function EmailComposeSheet({
         await supabase
           .from("crm_contacts")
           .update({ last_contacted_at: new Date().toISOString() })
-          .eq("id", linkedContactId);
+          .eq("id", resolvedContactId);
       }
 
       // Send the email via Gmail API if the user has an active Gmail connection
@@ -373,6 +395,11 @@ export function EmailComposeSheet({
       } else {
         toast({ title: "Email queued", description: "Your email has been saved and queued for sending." });
       }
+      // Notify caller of successful send (e.g. for document tracking)
+      if (insertedEmail?.id && onSendSuccess) {
+        onSendSuccess(insertedEmail.id);
+      }
+
       onOpenChange(false);
 
       // Reset form
@@ -386,6 +413,7 @@ export function EmailComposeSheet({
       });
       setAttachments([]);
       setAppliedTemplate(null);
+      setInternalLinkedContactId(linkedContactId ?? null);
 
       router.refresh();
     } catch (err: unknown) {
@@ -466,14 +494,20 @@ export function EmailComposeSheet({
       <div className="space-y-1.5">
         <Label htmlFor="to_email">To</Label>
         <div className="flex gap-2">
-          <Input
+          <ContactEmailCombobox
             id="to_email"
-            type="email"
-            placeholder="recipient@example.com"
             value={form.to_email}
-            onChange={(e) => updateField("to_email", e.target.value)}
+            onChange={(email) => {
+              updateField("to_email", email);
+              // Clear linked contact when user manually edits
+              setInternalLinkedContactId(null);
+            }}
+            onContactSelect={(contact) => {
+              updateField("to_email", contact.email);
+              updateField("to_name", contact.name);
+              setInternalLinkedContactId(contact.id);
+            }}
             required
-            className="flex-1"
           />
           <Button
             type="button"

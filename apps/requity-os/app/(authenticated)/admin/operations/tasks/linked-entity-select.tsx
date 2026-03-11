@@ -38,7 +38,7 @@ export function LinkedEntitySelect({
     if (loaded) return;
     const supabase = createClient();
 
-    const [loansRes, borrowersRes, fundsRes] = await Promise.all([
+    const [loansRes, borrowersRes, fundsRes, dealsRes] = await Promise.all([
       supabase
         .from("loans")
         .select("id, loan_number, property_address, loan_amount")
@@ -56,6 +56,11 @@ export function LinkedEntitySelect({
         .is("deleted_at", null)
         .order("name")
         .limit(50),
+      supabase
+        .from("unified_deals" as never)
+        .select("id, name, deal_number" as never)
+        .order("created_at" as never, { ascending: false })
+        .limit(50) as unknown as { data: { id: string; name: string; deal_number: string | null }[] | null },
     ]);
 
     const opts: EntityOption[] = [];
@@ -83,6 +88,14 @@ export function LinkedEntitySelect({
       });
     });
 
+    (dealsRes.data ?? []).forEach((d) => {
+      opts.push({
+        type: "deal",
+        id: d.id,
+        label: d.deal_number ?? d.name ?? `Deal ${d.id.slice(0, 8)}`,
+      });
+    });
+
     setOptions(opts);
     setLoaded(true);
   }, [loaded]);
@@ -105,6 +118,7 @@ export function LinkedEntitySelect({
     loan: options.filter((o) => o.type === "loan"),
     borrower: options.filter((o) => o.type === "borrower"),
     fund: options.filter((o) => o.type === "fund"),
+    deal: options.filter((o) => o.type === "deal"),
   };
 
   return (
@@ -144,6 +158,16 @@ export function LinkedEntitySelect({
             {groupedOptions.fund.map((o) => (
               <SelectItem key={o.id} value={`${o.type}:${o.id}`}>
                 {o.label}
+              </SelectItem>
+            ))}
+          </SelectGroup>
+        )}
+        {groupedOptions.deal.length > 0 && (
+          <SelectGroup>
+            <SelectLabel>Deals</SelectLabel>
+            {groupedOptions.deal.map((o) => (
+              <SelectItem key={o.id} value={`${o.type}:${o.id}`}>
+                <span className="truncate">{o.label}</span>
               </SelectItem>
             ))}
           </SelectGroup>

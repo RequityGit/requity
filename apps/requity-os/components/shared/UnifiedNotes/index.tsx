@@ -4,7 +4,6 @@ import { useState, useEffect, useCallback } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
 import { MessageSquare } from "lucide-react";
-import { extractMentionIds } from "@/lib/comment-utils";
 import { NoteComposer } from "./NoteComposer";
 import { NoteCard } from "./NoteCard";
 import { NoteFilters } from "./NoteFilters";
@@ -18,6 +17,7 @@ import {
 export function UnifiedNotes({
   entityType,
   entityId,
+  dealId,
   loanId,
   opportunityId,
   showInternalToggle,
@@ -26,13 +26,14 @@ export function UnifiedNotes({
   compact = false,
 }: UnifiedNotesProps) {
   // Defaults based on entity type
+  const isConditionType = entityType === "condition" || entityType === "unified_condition";
   const shouldShowInternalToggle =
-    showInternalToggle ?? (entityType === "deal" || entityType === "condition");
+    showInternalToggle ?? (entityType === "deal" || isConditionType);
   const shouldShowFilters =
-    showFilters ?? (entityType === "deal" || entityType === "condition");
-  const isCompact = entityType === "condition" ? (compact || true) : compact;
+    showFilters ?? (entityType === "deal" || isConditionType);
+  const isCompact = isConditionType ? true : compact;
   const defaultInternal =
-    entityType === "deal" || entityType === "condition";
+    entityType === "deal" || isConditionType;
 
   const [notes, setNotes] = useState<NoteData[]>([]);
   const [loading, setLoading] = useState(true);
@@ -70,15 +71,18 @@ export function UnifiedNotes({
 
     if (entityType === "deal") {
       const conditions: string[] = [];
+      if (dealId) conditions.push(`deal_id.eq.${dealId}`);
       if (loanId) conditions.push(`loan_id.eq.${loanId}`);
       if (opportunityId) conditions.push(`opportunity_id.eq.${opportunityId}`);
       if (conditions.length > 0) {
         query = query.or(conditions.join(","));
       }
-      // Exclude condition-scoped notes from deal-level view
+      // Exclude old condition-scoped notes but include unified_condition notes
       query = query.is("condition_id" as never, null);
     } else if (entityType === "condition") {
       query = query.eq("condition_id" as never, entityId as never);
+    } else if (entityType === "unified_condition") {
+      query = query.eq("unified_condition_id" as never, entityId as never);
     } else {
       const col = getEntityColumn(entityType);
       query = query.eq(col as never, entityId as never);
@@ -89,10 +93,41 @@ export function UnifiedNotes({
     if (error) {
       console.error("Error fetching notes:", error);
     } else {
-      setNotes((data as unknown as NoteData[]) ?? []);
+      let fetchedNotes = (data as unknown as NoteData[]) ?? [];
+
+      // For deal-level view, enrich notes that have unified_condition_id with condition names
+      if (entityType === "deal" && fetchedNotes.length > 0) {
+        const conditionNoteIds = fetchedNotes
+          .filter((n) => n.unified_condition_id)
+          .map((n) => n.unified_condition_id as string);
+
+        if (conditionNoteIds.length > 0) {
+          const uniqueIds = Array.from(new Set(conditionNoteIds));
+          const { data: condData } = await supabase
+            .from("unified_deal_conditions" as never)
+            .select("id, condition_name" as never)
+            .in("id" as never, uniqueIds as never);
+
+          if (condData) {
+            const condMap = new Map<string, string>();
+            for (const c of condData as { id: string; condition_name: string }[]) {
+              condMap.set(c.id, c.condition_name);
+            }
+            fetchedNotes = fetchedNotes.map((n) => {
+              const ucId = n.unified_condition_id;
+              if (ucId && condMap.has(ucId)) {
+                return { ...n, condition_name: condMap.get(ucId) };
+              }
+              return n;
+            });
+          }
+        }
+      }
+
+      setNotes(fetchedNotes);
     }
     setLoading(false);
-  }, [entityType, entityId, loanId, opportunityId]);
+  }, [entityType, entityId, dealId, loanId, opportunityId]);
 
   useEffect(() => {
     fetchNotes();
@@ -102,13 +137,15 @@ export function UnifiedNotes({
   useEffect(() => {
     const col =
       entityType === "deal"
-        ? loanId
-          ? "loan_id"
-          : "opportunity_id"
+        ? dealId
+          ? "deal_id"
+          : loanId
+            ? "loan_id"
+            : "opportunity_id"
         : getEntityColumn(entityType);
     const id =
       entityType === "deal"
-        ? loanId || opportunityId
+        ? dealId || loanId || opportunityId
         : entityId;
 
     if (!id) return;
@@ -133,7 +170,7 @@ export function UnifiedNotes({
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [entityType, entityId, loanId, opportunityId, fetchNotes]);
+  }, [entityType, entityId, dealId, loanId, opportunityId, fetchNotes]);
 
   // Post a new note
   async function handlePost(
@@ -159,11 +196,17 @@ export function UnifiedNotes({
         row.company_id = entityId;
         break;
       case "deal":
+        if (dealId) row.deal_id = dealId;
         if (loanId) row.loan_id = loanId;
         if (opportunityId) row.opportunity_id = opportunityId;
         break;
       case "condition":
         row.condition_id = entityId;
+        if (loanId) row.loan_id = loanId;
+        break;
+      case "unified_condition":
+        row.unified_condition_id = entityId;
+        if (dealId) row.deal_id = dealId;
         if (loanId) row.loan_id = loanId;
         break;
       case "task":
@@ -402,7 +445,7 @@ export function UnifiedNotes({
           </h3>
           <p className="text-sm text-muted-foreground">
             Add the first note about this{" "}
-            {entityType === "deal" ? "deal" : entityType}.
+            {entityType === "deal" ? "deal" : entityType === "unified_condition" ? "condition" : entityType}.
           </p>
         </div>
       ) : (

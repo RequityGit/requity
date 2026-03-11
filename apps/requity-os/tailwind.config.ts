@@ -114,12 +114,22 @@ const config = {
           from: { opacity: "0", transform: "scale(0.8)" },
           to: { opacity: "1", transform: "scale(1)" },
         },
+        "check-draw": {
+          from: { strokeDashoffset: "20" },
+          to: { strokeDashoffset: "0" },
+        },
+        "progress-fill": {
+          from: { width: "0%" },
+          to: { width: "100%" },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
         "fade-up": "fade-up 0.45s cubic-bezier(0.25,0.46,0.45,0.94) both",
         "scale-in": "scale-in 0.3s cubic-bezier(0.4,0,0.2,1) both",
+        "check-draw": "check-draw 0.4s cubic-bezier(0.65,0,0.35,1) 0.15s forwards",
+        "progress-fill": "progress-fill 1.5s linear forwards",
       },
     },
   },

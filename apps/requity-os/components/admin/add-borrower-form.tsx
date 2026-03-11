@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { DatePicker } from "@/components/ui/date-picker";
 import { Textarea } from "@/components/ui/textarea";
 import {
   Card,
@@ -24,6 +25,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { addBorrowerAction } from "@/app/(authenticated)/admin/borrowers/new/actions";
 import { Loader2, ChevronRight, ChevronLeft, Check } from "lucide-react";
 import { US_STATES } from "@/lib/constants";
+import { formatPhoneInput } from "@/lib/format";
 // Borrower contact fields (first_name, email, etc.) now live on crm_contacts.
 // Use `any` for the borrower prop until the form is refactored.
 
@@ -48,7 +50,7 @@ export function AddBorrowerForm({ borrower }: AddBorrowerFormProps) {
   const [firstName, setFirstName] = useState(borrower?.first_name ?? "");
   const [lastName, setLastName] = useState(borrower?.last_name ?? "");
   const [email, setEmail] = useState(borrower?.email ?? "");
-  const [phone, setPhone] = useState(borrower?.phone ?? "");
+  const [phone, setPhone] = useState(formatPhoneInput(borrower?.phone ?? ""));
   const [dateOfBirth, setDateOfBirth] = useState(borrower?.date_of_birth ?? "");
   const [ssnLastFour, setSsnLastFour] = useState(
     borrower?.ssn_last_four ?? ""
@@ -227,7 +229,7 @@ export function AddBorrowerForm({ borrower }: AddBorrowerFormProps) {
                     id="phone"
                     type="tel"
                     value={phone}
-                    onChange={(e) => setPhone(e.target.value)}
+                    onChange={(e) => setPhone(formatPhoneInput(e.target.value))}
                     placeholder="(555) 123-4567"
                   />
                 </div>
@@ -235,11 +237,10 @@ export function AddBorrowerForm({ borrower }: AddBorrowerFormProps) {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="dob">Date of Birth</Label>
-                  <Input
-                    id="dob"
-                    type="date"
+                  <DatePicker
                     value={dateOfBirth}
-                    onChange={(e) => setDateOfBirth(e.target.value)}
+                    onChange={(value) => setDateOfBirth(value)}
+                    showYearNavigation
                   />
                 </div>
                 <div className="space-y-2">
@@ -361,11 +362,9 @@ export function AddBorrowerForm({ borrower }: AddBorrowerFormProps) {
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="creditReportDate">Credit Report Date</Label>
-                  <Input
-                    id="creditReportDate"
-                    type="date"
+                  <DatePicker
                     value={creditReportDate}
-                    onChange={(e) => setCreditReportDate(e.target.value)}
+                    onChange={(value) => setCreditReportDate(value)}
                   />
                 </div>
               </div>

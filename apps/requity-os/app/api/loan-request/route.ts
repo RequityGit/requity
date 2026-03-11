@@ -1,7 +1,7 @@
-// @ts-nocheck
+import { NextRequest } from 'next/server';
 import nodemailer from 'nodemailer';
 
-export async function POST(request) {
+export async function POST(request: NextRequest) {
   try {
     const data = await request.json();
 
@@ -99,26 +99,68 @@ export async function POST(request) {
     }
 
     return Response.json({ success: true, message: 'Loan request submitted successfully' });
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Loan request error:', error);
-    const debugInfo = {
-      message: error.message,
-      code: error.code,
-      command: error.command,
-      hasSmtpHost: !!process.env.SMTP_HOST,
-      hasSmtpUser: !!process.env.SMTP_USER,
-      hasSmtpPass: !!process.env.SMTP_PASS,
-      hasNotifyEmail: !!process.env.NOTIFY_EMAIL,
-    };
     return Response.json(
-      { error: 'Failed to submit loan request. Please try again.', debug: debugInfo },
+      { error: 'Failed to submit loan request. Please try again.' },
       { status: 500 }
     );
   }
 }
 
 /* ─── Internal Notification Email Builder ─── */
-function buildInternalEmail(d) {
+interface GeneratedTerms {
+  programName: string;
+  interestRate: number;
+  rateType: string;
+  originationPoints: number;
+  originationFee: number;
+  originationFeeFloored: boolean;
+  minOriginationFee: number;
+  estimatedLoan: number;
+  maxLoan: number | null;
+  monthlyInterest: number;
+  maxLTV: number;
+  maxLTC: number;
+  maxLTP: number;
+  loanTermMonths: number;
+  maxTerm: number;
+  exitPoints: number;
+  exitFee: number;
+  legalDocFee: number;
+  bpoAppraisalCost: number;
+  bpoAppraisalNote: string;
+  termNote: string;
+}
+
+interface InternalLoanEmailData {
+  loanType: string;
+  propertyAddress: string;
+  city: string;
+  state: string;
+  purchasePrice: string;
+  loanAmount: string;
+  unitsOrLots: string;
+  rehabBudget: string;
+  afterRepairValue: string;
+  timeline: string;
+  creditScore: string;
+  dealsInLast24Months: string;
+  citizenshipStatus: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone: string;
+  company: string;
+  experienceLevel: string;
+  generatedTerms: GeneratedTerms | null;
+  unitsLabel: string;
+  showRehab: boolean;
+  rehabLabel: string;
+  timestamp: string;
+}
+
+function buildInternalEmail(d: InternalLoanEmailData) {
   const termsSectionHtml = d.generatedTerms ? `
     <!-- Generated Terms -->
     <div style="padding:0 40px 32px;">
@@ -411,7 +453,21 @@ function buildInternalEmail(d) {
 /* ─── Customer Term Sheet Email Builder ─── */
 const COMMERCIAL_LOAN_TYPES = ['CRE Bridge', 'RV Park', 'Multifamily'];
 
-function buildCustomerTermSheet(d) {
+interface CustomerTermSheetData {
+  loanType: string;
+  propertyAddress: string;
+  city: string;
+  state: string;
+  purchasePrice: string;
+  loanAmount: string;
+  rehabBudget: string;
+  afterRepairValue: string;
+  firstName: string;
+  generatedTerms: GeneratedTerms;
+  timestamp: string;
+}
+
+function buildCustomerTermSheet(d: CustomerTermSheetData) {
   const t = d.generatedTerms;
   const isCommercial = COMMERCIAL_LOAN_TYPES.includes(d.loanType);
 

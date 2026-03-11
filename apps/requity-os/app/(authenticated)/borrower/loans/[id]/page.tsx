@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { PageHeader } from "@/components/shared/page-header";
 import { LoanStageTracker } from "@/components/shared/loan-stage-tracker";
+import { WorkflowStageTracker } from "@/components/shared/workflow-stage-tracker";
 import { StatusBadge } from "@/components/shared/status-badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -60,6 +61,32 @@ export default async function LoanDetailPage({ params }: LoanDetailPageProps) {
     .eq("loan_id", loan.id)
     .order("sort_order", { ascending: true });
 
+  // Try to fetch workflow instance for this loan
+  const { data: workflowInstance } = await supabase
+    .from("workflow_instances")
+    .select("id, current_stage_id, workflow_id")
+    .eq("entity_type", "loan")
+    .eq("entity_id", loan.id)
+    .eq("status", "active")
+    .single();
+
+  // If workflow instance exists, fetch its stages
+  let workflowStages: {
+    id: string;
+    name: string;
+    position: number;
+    is_terminal: boolean | null;
+    borrower_label: string | null;
+  }[] = [];
+  if (workflowInstance?.workflow_id) {
+    const { data: stagesData } = await supabase
+      .from("workflow_stages")
+      .select("id, name, position, is_terminal, borrower_label")
+      .eq("workflow_id", workflowInstance.workflow_id)
+      .order("position", { ascending: true });
+    workflowStages = stagesData ?? [];
+  }
+
   const loanTypeLabel =
     LOAN_TYPES.find((t) => t.value === loan.type)?.label ?? loan.type ?? "—";
 
@@ -101,7 +128,14 @@ export default async function LoanDetailPage({ params }: LoanDetailPageProps) {
       {/* Loan Stage Tracker */}
       <Card className="mb-4 md:mb-6">
         <CardContent className="pt-4 md:pt-6">
-          <LoanStageTracker currentStage={loan.stage} />
+          {workflowStages.length > 0 && workflowInstance ? (
+            <WorkflowStageTracker
+              stages={workflowStages}
+              currentStageId={workflowInstance.current_stage_id}
+            />
+          ) : (
+            <LoanStageTracker currentStage={loan.stage} />
+          )}
         </CardContent>
       </Card>
 

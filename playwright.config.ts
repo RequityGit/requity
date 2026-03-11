@@ -41,14 +41,14 @@ export default defineConfig({
       use: { ...devices["Desktop Chrome"] },
       dependencies: ["auth-setup"],
     },
-    // Mobile viewport tests
+    // Mobile viewport tests (only the dedicated responsiveness spec)
     {
       name: "mobile-chrome",
       use: { ...devices["Pixel 5"] },
-      testMatch: /responsiveness/,
+      testMatch: /\/responsiveness\.spec/,
       dependencies: ["auth-setup"],
     },
-    // Tablet viewport tests
+    // Tablet viewport tests (only the dedicated responsiveness spec)
     {
       name: "tablet",
       use: {
@@ -56,7 +56,7 @@ export default defineConfig({
         userAgent:
           "Mozilla/5.0 (iPad; CPU OS 15_0 like Mac OS X) AppleWebKit/605.1.15",
       },
-      testMatch: /responsiveness/,
+      testMatch: /\/responsiveness\.spec/,
       dependencies: ["auth-setup"],
     },
   ],
