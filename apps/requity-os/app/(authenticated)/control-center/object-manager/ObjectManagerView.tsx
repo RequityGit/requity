@@ -10,6 +10,8 @@ import {
   LayoutGrid,
   Settings2,
   Loader2,
+  Grid3X3,
+  Calculator,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -39,12 +41,14 @@ import { RelationshipConfigPanel } from "./_components/RelationshipConfigPanel";
 import { AddRelationshipDialog } from "./_components/AddRelationshipDialog";
 import { SectionConfigPanel } from "./_components/SectionConfigPanel";
 import { TabConfigPanel } from "./_components/TabConfigPanel";
+import { ConditionMatrixTab } from "./_components/ConditionMatrixTab";
+import { FormulasTab } from "./_components/FormulasTab";
 
 // ---------------------------------------------------------------------------
 // Types
 // ---------------------------------------------------------------------------
 
-export type ActiveTab = "fields" | "relationships" | "layout";
+export type ActiveTab = "fields" | "relationships" | "layout" | "conditions" | "formulas";
 
 export interface TabInfo {
   id: string;
@@ -134,6 +138,11 @@ export function ObjectManagerView({ objects, fieldCounts, relationshipCounts }: 
         const result = await fetchObjectRelationships(selectedObjectKey);
         if (result.relationships) setRelationships(result.relationships);
         if (result.roles) setRoles(result.roles);
+      } else if (activeTab === "conditions" || activeTab === "formulas") {
+        // Both conditions and formulas tabs need the fields data
+        const fieldModule = OBJECT_MODULE_MAP[selectedObjectKey] || selectedObjectKey;
+        const result = await fetchObjectFields(fieldModule);
+        if (result.data) setFields(result.data);
       } else if (activeTab === "layout") {
         const pageType = OBJECT_PAGE_TYPE_MAP[selectedObjectKey];
         const fieldModule = OBJECT_MODULE_MAP[selectedObjectKey] || selectedObjectKey;
@@ -240,7 +249,19 @@ export function ObjectManagerView({ objects, fieldCounts, relationshipCounts }: 
     o.label.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const tabs: { key: ActiveTab; label: string; icon: typeof Type; count: number; color: string }[] = [
+  // Whether the selected object supports two-axis conditional visibility
+  const isAxisObject = selectedObjectKey === "unified_deal";
+
+  const conditionalFieldCount = fields.filter(
+    (f) => !f.is_archived && f.visibility_condition != null &&
+      (Array.isArray((f.visibility_condition as Record<string, unknown>)?.asset_class) ||
+       Array.isArray((f.visibility_condition as Record<string, unknown>)?.loan_type))
+  ).length;
+  const formulaFieldCount = fields.filter(
+    (f) => !f.is_archived && f.field_type === "formula"
+  ).length;
+
+  const baseTabs: { key: ActiveTab; label: string; icon: typeof Type; count: number; color: string }[] = [
     {
       key: "fields",
       label: "Fields",
@@ -263,6 +284,27 @@ export function ObjectManagerView({ objects, fieldCounts, relationshipCounts }: 
       color: "border-green-500",
     },
   ];
+
+  // Add Condition Matrix and Formulas tabs for axis-enabled objects
+  const tabs = isAxisObject
+    ? [
+        ...baseTabs,
+        {
+          key: "conditions" as ActiveTab,
+          label: "Condition Matrix",
+          icon: Grid3X3,
+          count: conditionalFieldCount,
+          color: "border-emerald-500",
+        },
+        {
+          key: "formulas" as ActiveTab,
+          label: "Formulas",
+          icon: Calculator,
+          count: formulaFieldCount,
+          color: "border-pink-500",
+        },
+      ]
+    : baseTabs;
 
   // Show right panel?
   const showRightPanel =
@@ -456,6 +498,18 @@ export function ObjectManagerView({ objects, fieldCounts, relationshipCounts }: 
               }}
               onLayoutChange={handleDataChange}
               loading={loading}
+            />
+          )}
+          {activeTab === "conditions" && (
+            <ConditionMatrixTab fields={fields} />
+          )}
+          {activeTab === "formulas" && (
+            <FormulasTab
+              fields={fields}
+              onSelectField={(f) => {
+                clearSelection();
+                setSelectedField(f);
+              }}
             />
           )}
         </div>

@@ -31,6 +31,11 @@ export interface ObjectDefinition {
   sort_order: number;
 }
 
+export interface VisibilityCondition {
+  asset_class?: string[];
+  loan_type?: string[];
+}
+
 export interface FieldConfig {
   id: string;
   module: string;
@@ -44,6 +49,8 @@ export interface FieldConfig {
   dropdown_options: string[] | null;
   formula_expression: string | null;
   formula_source_fields: string[] | null;
+  formula_output_format: string | null;
+  formula_decimal_places: number;
   is_required: boolean;
   is_unique: boolean;
   is_read_only: boolean;
@@ -64,6 +71,7 @@ export interface FieldConfig {
   display_order: number;
   section_group: string | null;
   column_span: string;
+  visibility_condition: VisibilityCondition | null;
 }
 
 export interface ObjectRelationship {
@@ -981,6 +989,73 @@ export async function removeLayoutField(fieldId: string): Promise<{
     if (error) return { error: error.message };
     revalidate();
     return { success: true };
+  } catch (err: unknown) {
+    return { error: err instanceof Error ? err.message : "An unexpected error occurred" };
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Update visibility condition on a field
+// ---------------------------------------------------------------------------
+
+export async function updateFieldVisibilityCondition(
+  fieldId: string,
+  condition: VisibilityCondition | null
+): Promise<{ success?: boolean; error?: string }> {
+  try {
+    const auth = await requireSuperAdmin();
+    if ("error" in auth) return { error: auth.error };
+
+    const admin = createAdminClient();
+    const { error } = await admin
+      .from(FIELD_CFG)
+      .update({
+        visibility_condition: condition,
+        updated_at: new Date().toISOString(),
+        updated_by: auth.user.id,
+      } as never)
+      .eq("id" as never, fieldId as never);
+
+    if (error) return { error: error.message };
+    revalidate();
+    return { success: true };
+  } catch (err: unknown) {
+    return { error: err instanceof Error ? err.message : "An unexpected error occurred" };
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Fetch pro forma templates
+// ---------------------------------------------------------------------------
+
+export interface ProFormaTemplate {
+  id: string;
+  name: string;
+  visibility_condition: VisibilityCondition;
+  columns: unknown[];
+  sections: unknown[];
+  is_active: boolean;
+  sort_order: number;
+}
+
+const PRO_FORMA_TABLE = "pro_forma_template" as never;
+
+export async function fetchProFormaTemplates(): Promise<{
+  data?: ProFormaTemplate[];
+  error?: string;
+}> {
+  try {
+    const auth = await requireSuperAdmin();
+    if ("error" in auth) return { error: auth.error };
+
+    const admin = createAdminClient();
+    const { data, error } = await admin
+      .from(PRO_FORMA_TABLE)
+      .select("*" as never)
+      .order("sort_order" as never, { ascending: true });
+
+    if (error) return { error: error.message };
+    return { data: (data ?? []) as unknown as ProFormaTemplate[] };
   } catch (err: unknown) {
     return { error: err instanceof Error ? err.message : "An unexpected error occurred" };
   }
