@@ -28,6 +28,7 @@ interface Props {
     field_key: string;
     field_type: string;
   }) => void;
+  defaultType?: string;
 }
 
 function toSnakeCase(str: string): string {
@@ -37,10 +38,10 @@ function toSnakeCase(str: string): string {
     .replace(/^_|_$/g, "");
 }
 
-export function AddFieldDialog({ open, onOpenChange, onSubmit }: Props) {
+export function AddFieldDialog({ open, onOpenChange, onSubmit, defaultType }: Props) {
   const [label, setLabel] = useState("");
   const [key, setKey] = useState("");
-  const [type, setType] = useState("text");
+  const [type, setType] = useState(defaultType ?? "text");
   const [autoKey, setAutoKey] = useState(true);
 
   const handleLabelChange = (val: string) => {
@@ -60,7 +61,7 @@ export function AddFieldDialog({ open, onOpenChange, onSubmit }: Props) {
     onSubmit({ field_label: label.trim(), field_key: key.trim(), field_type: type });
     setLabel("");
     setKey("");
-    setType("text");
+    setType(defaultType ?? "text");
     setAutoKey(true);
   };
 

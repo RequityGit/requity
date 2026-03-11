@@ -308,7 +308,7 @@ export function ObjectManagerView({ objects, fieldCounts, relationshipCounts }: 
 
   // Show right panel?
   const showRightPanel =
-    (activeTab === "fields" && selectedField) ||
+    ((activeTab === "fields" || activeTab === "formulas") && selectedField) ||
     (activeTab === "relationships" && selectedRel) ||
     (activeTab === "layout" && (selectedSection || selectedLayoutTab));
 
@@ -506,6 +506,8 @@ export function ObjectManagerView({ objects, fieldCounts, relationshipCounts }: 
           {activeTab === "formulas" && (
             <FormulasTab
               fields={fields}
+              objectKey={selectedObjectKey}
+              onFieldsChange={handleDataChange}
               onSelectField={(f) => {
                 clearSelection();
                 setSelectedField(f);
@@ -522,7 +524,7 @@ export function ObjectManagerView({ objects, fieldCounts, relationshipCounts }: 
           showRightPanel ? "w-[310px]" : "w-0 border-l-0"
         )}
       >
-        {activeTab === "fields" && selectedField && (
+        {(activeTab === "fields" || activeTab === "formulas") && selectedField && (
           <FieldConfigPanel
             field={selectedField}
             onClose={clearSelection}
