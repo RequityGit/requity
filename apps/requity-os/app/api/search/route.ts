@@ -1,5 +1,4 @@
 import { createClient } from "@/lib/supabase/server";
-import { createAdminClient } from "@/lib/supabase/admin";
 import { NextRequest, NextResponse } from "next/server";
 
 // Track when the materialized view was last refreshed
@@ -27,15 +26,12 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  // Use admin client for RPC calls to bypass PostgREST permission restrictions
-  const adminClient = createAdminClient();
-
   // Refresh the materialized view if stale (at most once per minute)
   const now = Date.now();
   if (now - lastRefreshTime > REFRESH_INTERVAL_MS) {
     lastRefreshTime = now;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { error: refreshError } = await (adminClient.rpc as any)(
+    const { error: refreshError } = await (supabase.rpc as any)(
       "refresh_search_index"
     );
     if (refreshError) {
@@ -74,9 +70,9 @@ export async function GET(request: NextRequest) {
     ? entityFilter.split(",").filter(Boolean)
     : null;
 
-  // Call the search RPC function via admin client to bypass permission issues
+  // Call the search RPC function (SECURITY DEFINER, granted to authenticated)
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data, error } = await (adminClient.rpc as any)("search_portal", {
+  const { data, error } = await (supabase.rpc as any)("search_portal", {
     query_text: query.trim().slice(0, 100),
     user_role: role,
     user_id: user.id,
