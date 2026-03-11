@@ -81,7 +81,7 @@ export function DocumentPreviewDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-5xl h-[85vh] flex flex-col">
+      <DialogContent className="max-w-[95vw] w-[95vw] h-[93vh] flex flex-col">
         <DialogHeader className="flex-none flex flex-row items-center justify-between gap-4">
           <DialogTitle className="truncate">{displayName}</DialogTitle>
           {url && (
