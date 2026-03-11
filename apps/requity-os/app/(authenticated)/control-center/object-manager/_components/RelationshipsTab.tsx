@@ -27,6 +27,7 @@ interface Props {
   objects: ObjectDefinition[];
   selectedRelId: string | null;
   onSelectRel: (rel: ObjectRelationship) => void;
+  onAddRelationship: () => void;
   loading: boolean;
 }
 
@@ -37,6 +38,7 @@ export function RelationshipsTab({
   objects,
   selectedRelId,
   onSelectRel,
+  onAddRelationship,
   loading,
 }: Props) {
   const parentRels = relationships.filter((r) => r.parent_object_key === objectKey);
@@ -60,7 +62,7 @@ export function RelationshipsTab({
           {parentRels.length} parent · {childRels.length} child
         </span>
         <div className="flex-1" />
-        <Button size="sm" variant="outline" className="h-8 gap-1.5">
+        <Button size="sm" variant="outline" className="h-8 gap-1.5" onClick={onAddRelationship}>
           <Plus size={12} />
           Add Relationship
         </Button>

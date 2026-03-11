@@ -28,6 +28,7 @@ import {
   fetchObjectLayout,
   fetchFieldsForModules,
   publishObjectChanges,
+  createRelationship,
 } from "./actions";
 import { getObjectIcon } from "./_components/constants";
 import { FieldsTab } from "./_components/FieldsTab";
@@ -35,6 +36,7 @@ import { RelationshipsTab } from "./_components/RelationshipsTab";
 import { LayoutTab } from "./_components/LayoutTab";
 import { FieldConfigPanel } from "./_components/FieldConfigPanel";
 import { RelationshipConfigPanel } from "./_components/RelationshipConfigPanel";
+import { AddRelationshipDialog } from "./_components/AddRelationshipDialog";
 import { SectionConfigPanel } from "./_components/SectionConfigPanel";
 import { TabConfigPanel } from "./_components/TabConfigPanel";
 
@@ -106,6 +108,8 @@ export function ObjectManagerView({ objects, fieldCounts, relationshipCounts }: 
   const [hasChanges, setHasChanges] = useState(false);
   const [publishing, setPublishing] = useState(false);
   const [lastPublished, setLastPublished] = useState<string | null>(null);
+
+  const [showAddRelDialog, setShowAddRelDialog] = useState(false);
 
   const selectedObject = objects.find((o) => o.object_key === selectedObjectKey);
 
@@ -216,6 +220,20 @@ export function ObjectManagerView({ objects, fieldCounts, relationshipCounts }: 
   const handleTabChange = (tab: ActiveTab) => {
     setActiveTab(tab);
     clearSelection();
+  };
+
+  const handleAddRelationship = async (input: {
+    parent_object_key: string;
+    child_object_key: string;
+    cardinality: string;
+  }) => {
+    const result = await createRelationship(input);
+    if (result.error) {
+      console.error("Failed to create relationship:", result.error);
+      return;
+    }
+    setShowAddRelDialog(false);
+    loadData();
   };
 
   const filteredObjects = objects.filter((o) =>
@@ -415,6 +433,7 @@ export function ObjectManagerView({ objects, fieldCounts, relationshipCounts }: 
                 clearSelection();
                 setSelectedRel(r);
               }}
+              onAddRelationship={() => setShowAddRelDialog(true)}
               loading={loading}
             />
           )}
@@ -495,6 +514,15 @@ export function ObjectManagerView({ objects, fieldCounts, relationshipCounts }: 
           </div>
         )}
       </div>
+
+      {/* Add Relationship Dialog */}
+      <AddRelationshipDialog
+        open={showAddRelDialog}
+        onOpenChange={setShowAddRelDialog}
+        currentObjectKey={selectedObjectKey}
+        objects={objects}
+        onSubmit={handleAddRelationship}
+      />
     </div>
   );
 }

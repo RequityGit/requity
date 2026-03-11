@@ -434,6 +434,61 @@ export async function archiveField(fieldId: string): Promise<{
 }
 
 // ---------------------------------------------------------------------------
+// Create a new relationship
+// ---------------------------------------------------------------------------
+
+export async function createRelationship(input: {
+  parent_object_key: string;
+  child_object_key: string;
+  cardinality: string;
+  junction_table?: string;
+  fk_column?: string;
+  sync_direction?: string;
+  allow_quick_create?: boolean;
+}): Promise<{ data?: ObjectRelationship; error?: string }> {
+  try {
+    const auth = await requireSuperAdmin();
+    if ("error" in auth) return { error: auth.error };
+
+    const admin = createAdminClient();
+
+    // Get max sort_order
+    const { data: maxRow } = await admin
+      .from(OBJ_RELS)
+      .select("sort_order" as never)
+      .order("sort_order" as never, { ascending: false })
+      .limit(1)
+      .single();
+
+    const nextOrder =
+      ((maxRow as unknown as { sort_order: number } | null)?.sort_order ?? -1) + 1;
+
+    const { data, error } = await admin
+      .from(OBJ_RELS)
+      .insert({
+        parent_object_key: input.parent_object_key,
+        child_object_key: input.child_object_key,
+        cardinality: input.cardinality,
+        junction_table: input.junction_table || null,
+        fk_column: input.fk_column || null,
+        sync_direction: input.sync_direction || "parent_to_child",
+        allow_quick_create: input.allow_quick_create ?? false,
+        cascade_delete: false,
+        inherited_fields: [],
+        sort_order: nextOrder,
+      } as never)
+      .select("*" as never)
+      .single();
+
+    if (error) return { error: error.message };
+    revalidate();
+    return { data: data as unknown as ObjectRelationship };
+  } catch (err: unknown) {
+    return { error: err instanceof Error ? err.message : "An unexpected error occurred" };
+  }
+}
+
+// ---------------------------------------------------------------------------
 // Update relationship
 // ---------------------------------------------------------------------------
 
