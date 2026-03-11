@@ -165,6 +165,69 @@ export async function saveTemplateContent(id: string, content: string) {
   return { success: true };
 }
 
+const DEFAULT_STYLED_LAYOUT = {
+  header: {
+    entity: "Requity Lending, LLC",
+    subtitle: "",
+    address: "4023 N Armenia Ave, Ste 300, Tampa, FL 33607",
+    phone: "(813) 535-7535",
+    email: "lending@requitygroup.com",
+    website: "requitylending.com",
+    show_logo: true,
+  },
+  title_banner: {
+    title: "",
+    subtitle: "",
+  },
+  sections: [],
+  footer: {
+    entity: "Requity Lending, LLC",
+    nmls: "2560918",
+    confidential: true,
+    generated_by: "Generated via RequityOS",
+  },
+};
+
+export async function enableLayoutEditor(id: string) {
+  const supabase = await createClient();
+
+  const { error } = await supabase
+    .from("document_templates")
+    .update({
+      styled_layout: DEFAULT_STYLED_LAYOUT,
+      updated_at: new Date().toISOString(),
+    } as Record<string, unknown>)
+    .eq("id", id);
+
+  if (error) {
+    console.error("Failed to enable layout editor:", error);
+    return { error: error.message };
+  }
+
+  revalidatePath("/control-center/document-templates");
+  return { success: true };
+}
+
+export async function disableLayoutEditor(id: string) {
+  const supabase = await createClient();
+
+  const { error } = await supabase
+    .from("document_templates")
+    .update({
+      styled_layout: null,
+      updated_at: new Date().toISOString(),
+    } as Record<string, unknown>)
+    .eq("id", id);
+
+  if (error) {
+    console.error("Failed to disable layout editor:", error);
+    return { error: error.message };
+  }
+
+  revalidatePath("/control-center/document-templates");
+  return { success: true };
+}
+
 export async function deleteTemplate(id: string) {
   const supabase = await createClient();
 

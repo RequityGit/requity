@@ -41,6 +41,8 @@ interface LayoutEditorProps {
     merge_fields: MergeFieldDefinition[];
   };
   onBack: () => void;
+  /** Optional action element for switching editor modes */
+  switchAction?: React.ReactNode;
 }
 
 function generateSampleData(
@@ -65,7 +67,7 @@ function generateSampleData(
   return samples;
 }
 
-export function LayoutEditor({ template, onBack }: LayoutEditorProps) {
+export function LayoutEditor({ template, onBack, switchAction }: LayoutEditorProps) {
   const [layout, setLayout] = useState<StyledLayout>(
     template.styled_layout ?? DEFAULT_LAYOUT
   );
@@ -122,6 +124,7 @@ export function LayoutEditor({ template, onBack }: LayoutEditorProps) {
           </Badge>
         </div>
         <div className="flex items-center gap-2 shrink-0">
+          {switchAction}
           {isDirty && (
             <span className="text-[11px] text-amber-600 dark:text-amber-400">
               Unsaved changes

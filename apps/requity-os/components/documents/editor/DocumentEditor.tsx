@@ -61,6 +61,8 @@ export interface DocumentEditorProps {
   sendEmailPreparing?: boolean;
   /** Called when the editor is ready, providing a function to get current HTML */
   onEditorReady?: (getHtml: () => string) => void;
+  /** Optional action element for switching editor modes */
+  switchAction?: React.ReactNode;
 }
 
 export function DocumentEditor({
@@ -76,6 +78,7 @@ export function DocumentEditor({
   onSendEmail,
   sendEmailPreparing,
   onEditorReady,
+  switchAction,
 }: DocumentEditorProps) {
   const [zoom, setZoom] = useState(100);
   const [sidebarOpen, setSidebarOpen] = useState(true);
@@ -211,6 +214,7 @@ export function DocumentEditor({
         </div>
 
         <div className="flex items-center gap-2 shrink-0">
+          {switchAction}
           {mode === "document" && onSendEmail && (
             <Button
               variant="outline"
