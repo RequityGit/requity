@@ -53,7 +53,7 @@ export function Topbar({ userName, role, email, allowedRoles, userId, isSuperAdm
   return (
     <>
       <ViewAsBanner />
-      <header className="sticky top-0 z-30 h-14 md:h-16 border-b bg-card flex items-center px-3 md:px-6">
+      <header className="sticky top-0 z-30 h-14 md:h-16 border-b bg-card flex items-center px-3 md:px-6 no-print">
         {/* Mobile: hamburger button */}
         <button
           onClick={openMobileSidebar}

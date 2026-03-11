@@ -1,3 +1,17 @@
+/* Force light mode inside document preview — always, regardless of app theme */
+.styled-doc-container {
+  --background: 0 0% 100%;
+  --foreground: 0 0% 10%;
+  --card: 0 0% 100%;
+  --card-foreground: 0 0% 10%;
+  --muted: 240 5% 97%;
+  --muted-foreground: 0 0% 42%;
+  --border: 240 6% 90%;
+  --accent: 240 5% 97%;
+  --accent-foreground: 0 0% 10%;
+  color-scheme: light;
+}
+
 @media print {
   /* Force light mode */
   .styled-doc-container {
@@ -43,6 +57,27 @@
 
   /* Hide interactive elements */
   .no-print { display: none !important; }
+
+  /* Hide toasters and portals */
+  [data-sonner-toaster],
+  [role="status"] {
+    display: none !important;
+  }
+
+  /* Reset layout wrappers that clip content during print */
+  .h-screen {
+    height: auto !important;
+    overflow: visible !important;
+  }
+  .overflow-hidden {
+    overflow: visible !important;
+  }
+  .overflow-y-auto {
+    overflow: visible !important;
+  }
+  main {
+    padding: 0 !important;
+  }
 
   /* Page margins */
   @page {
