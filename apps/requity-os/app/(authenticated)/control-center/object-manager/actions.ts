@@ -135,6 +135,46 @@ function revalidate() {
   revalidatePath("/control-center/object-manager");
   // Revalidate detail pages so layout changes take effect
   revalidatePath("/admin/crm", "layout");
+  revalidatePath("/admin/crm", "page");
+}
+
+// ---------------------------------------------------------------------------
+// Publish: comprehensive revalidation of all pages that consume layout data
+// ---------------------------------------------------------------------------
+
+export async function publishObjectChanges(objectKey: string): Promise<{
+  success?: boolean;
+  error?: string;
+}> {
+  try {
+    const auth = await requireSuperAdmin();
+    if ("error" in auth) return { error: auth.error };
+
+    // Revalidate the Object Manager itself
+    revalidatePath("/control-center/object-manager");
+
+    // Revalidate all CRM pages (contact detail, company detail)
+    revalidatePath("/admin/crm", "layout");
+    revalidatePath("/admin/crm", "page");
+
+    // Revalidate specific detail page types based on object
+    const pageRouteMap: Record<string, string> = {
+      contact: "/admin/crm",
+      company: "/admin/crm",
+      loan: "/admin/loans",
+      property: "/admin/properties",
+    };
+
+    const route = pageRouteMap[objectKey];
+    if (route) {
+      revalidatePath(route, "layout");
+      revalidatePath(route, "page");
+    }
+
+    return { success: true };
+  } catch (err: unknown) {
+    return { error: err instanceof Error ? err.message : "An unexpected error occurred" };
+  }
 }
 
 // ---------------------------------------------------------------------------

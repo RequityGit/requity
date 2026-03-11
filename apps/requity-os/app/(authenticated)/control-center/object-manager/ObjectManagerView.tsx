@@ -9,6 +9,7 @@ import {
   Network,
   LayoutGrid,
   Settings2,
+  Loader2,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -26,6 +27,7 @@ import {
   fetchObjectRelationships,
   fetchObjectLayout,
   fetchFieldsForModules,
+  publishObjectChanges,
   createRelationship,
 } from "./actions";
 import { getObjectIcon } from "./_components/constants";
@@ -101,6 +103,11 @@ export function ObjectManagerView({ objects, fieldCounts, relationshipCounts }: 
   const [selectedRel, setSelectedRel] = useState<ObjectRelationship | null>(null);
   const [selectedSection, setSelectedSection] = useState<PageSection | null>(null);
   const [selectedLayoutTab, setSelectedLayoutTab] = useState<TabInfo | null>(null);
+
+  // Publish state tracking
+  const [hasChanges, setHasChanges] = useState(false);
+  const [publishing, setPublishing] = useState(false);
+  const [lastPublished, setLastPublished] = useState<string | null>(null);
 
   const [showAddRelDialog, setShowAddRelDialog] = useState(false);
 
@@ -182,9 +189,32 @@ export function ObjectManagerView({ objects, fieldCounts, relationshipCounts }: 
     loadData();
   }, [loadData, clearSelection]);
 
+  // Mark changes dirty when any mutation completes
+  const handleDataChange = useCallback(() => {
+    setHasChanges(true);
+    loadData();
+  }, [loadData]);
+
+  const handlePublish = useCallback(async () => {
+    setPublishing(true);
+    try {
+      const result = await publishObjectChanges(selectedObjectKey);
+      if (result.error) {
+        console.error("Publish failed:", result.error);
+      } else {
+        setHasChanges(false);
+        setLastPublished(new Date().toLocaleTimeString());
+      }
+    } finally {
+      setPublishing(false);
+    }
+  }, [selectedObjectKey]);
+
   const handleObjectSelect = (key: string) => {
     setSelectedObjectKey(key);
     clearSelection();
+    setHasChanges(false);
+    setLastPublished(null);
   };
 
   const handleTabChange = (tab: ActiveTab) => {
@@ -325,9 +355,24 @@ export function ObjectManagerView({ objects, fieldCounts, relationshipCounts }: 
             </>
           )}
           <div className="flex-1" />
-          <Button size="sm" className="h-8 gap-1.5">
-            <Check size={13} />
-            Publish
+          {lastPublished && !hasChanges && (
+            <span className="text-[10px] text-muted-foreground mr-2">
+              Published {lastPublished}
+            </span>
+          )}
+          <Button
+            size="sm"
+            className="h-8 gap-1.5"
+            onClick={handlePublish}
+            disabled={publishing}
+            variant={hasChanges ? "default" : "outline"}
+          >
+            {publishing ? (
+              <Loader2 size={13} className="animate-spin" />
+            ) : (
+              <Check size={13} />
+            )}
+            {publishing ? "Publishing..." : hasChanges ? "Publish" : "Publish"}
           </Button>
         </div>
 
@@ -374,7 +419,7 @@ export function ObjectManagerView({ objects, fieldCounts, relationshipCounts }: 
               }}
               loading={loading}
               objectKey={selectedObjectKey}
-              onFieldsChange={loadData}
+              onFieldsChange={handleDataChange}
             />
           )}
           {activeTab === "relationships" && (
@@ -409,7 +454,7 @@ export function ObjectManagerView({ objects, fieldCounts, relationshipCounts }: 
                 setSelectedLayoutTab(t);
                 setSelectedSection(null);
               }}
-              onLayoutChange={loadData}
+              onLayoutChange={handleDataChange}
               loading={loading}
             />
           )}
@@ -429,7 +474,7 @@ export function ObjectManagerView({ objects, fieldCounts, relationshipCounts }: 
             onClose={clearSelection}
             onUpdate={(updated) => {
               setSelectedField(updated);
-              loadData();
+              handleDataChange();
             }}
           />
         )}
@@ -439,7 +484,7 @@ export function ObjectManagerView({ objects, fieldCounts, relationshipCounts }: 
             roles={roles.filter((r) => r.relationship_id === selectedRel.id)}
             objects={objects}
             onClose={clearSelection}
-            onUpdate={loadData}
+            onUpdate={handleDataChange}
           />
         )}
         {activeTab === "layout" && selectedSection && (
@@ -447,7 +492,7 @@ export function ObjectManagerView({ objects, fieldCounts, relationshipCounts }: 
             section={selectedSection}
             onClose={clearSelection}
             onUpdated={() => {
-              loadData();
+              handleDataChange();
             }}
           />
         )}
