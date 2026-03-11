@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState, useTransition, useEffect, useRef, useCallback } from "react";
 import {
   X,
   Link2,
@@ -37,6 +37,41 @@ const SECTION_TYPES = [
 export function SectionConfigPanel({ section, onClose, onUpdated }: Props) {
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
+  const [localName, setLocalName] = useState(section.section_label);
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Sync local name when section changes
+  useEffect(() => {
+    setLocalName(section.section_label);
+  }, [section.id, section.section_label]);
+
+  const handleNameChange = useCallback(
+    (value: string) => {
+      setLocalName(value);
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+      debounceRef.current = setTimeout(() => {
+        if (value.trim() && value.trim() !== section.section_label) {
+          setError(null);
+          startTransition(async () => {
+            const result = await updateSection(section.id, { section_label: value.trim() });
+            if (result.error) {
+              setError(result.error);
+            } else {
+              onUpdated();
+            }
+          });
+        }
+      }, 500);
+    },
+    [section.id, section.section_label, onUpdated]
+  );
+
+  // Cleanup debounce on unmount
+  useEffect(() => {
+    return () => {
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+    };
+  }, []);
 
   const isRel = section.section_type === "relationship";
   const isComputed = section.section_type === "computed";
@@ -152,7 +187,13 @@ export function SectionConfigPanel({ section, onClose, onUpdated }: Props) {
             <label className="text-[9px] font-semibold uppercase tracking-wider text-muted-foreground block mb-1">
               Section Name
             </label>
-            <Input value={section.section_label} className="h-8 text-xs" readOnly />
+            <Input
+              value={localName}
+              onChange={(e) => handleNameChange(e.target.value)}
+              className="h-8 text-xs"
+              disabled={section.is_locked || isPending}
+              readOnly={section.is_locked}
+            />
           </div>
 
           <div>

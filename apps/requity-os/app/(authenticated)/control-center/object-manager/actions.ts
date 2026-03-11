@@ -1025,6 +1025,127 @@ export async function updateFieldVisibilityCondition(
 }
 
 // ---------------------------------------------------------------------------
+// Tab mutations (tabs are stored as tab_* columns on page_layout_sections)
+// ---------------------------------------------------------------------------
+
+export async function addTab(input: {
+  page_type: string;
+  tab_key: string;
+  tab_label: string;
+  tab_icon?: string;
+}): Promise<{ data?: PageSection; error?: string }> {
+  try {
+    const auth = await requireSuperAdmin();
+    if ("error" in auth) return { error: auth.error };
+
+    const admin = createAdminClient();
+
+    // Determine next tab_order
+    const { data: maxRow } = await admin
+      .from(SECTIONS)
+      .select("tab_order" as never)
+      .eq("page_type" as never, input.page_type as never)
+      .order("tab_order" as never, { ascending: false })
+      .limit(1)
+      .single();
+
+    const nextTabOrder =
+      ((maxRow as unknown as { tab_order: number } | null)?.tab_order ?? -1) + 1;
+
+    // Create an initial "fields" section inside the new tab
+    const sectionKey = `${input.tab_key}_fields`;
+    const { data, error } = await admin
+      .from(SECTIONS)
+      .insert({
+        page_type: input.page_type,
+        section_key: sectionKey,
+        section_label: "Fields",
+        section_icon: "file-text",
+        display_order: 0,
+        is_visible: true,
+        is_locked: false,
+        sidebar: false,
+        section_type: "fields",
+        tab_key: input.tab_key,
+        tab_label: input.tab_label,
+        tab_icon: input.tab_icon || "panel-right",
+        tab_order: nextTabOrder,
+        tab_locked: false,
+      } as never)
+      .select("*" as never)
+      .single();
+
+    if (error) return { error: error.message };
+    revalidate();
+    return { data: data as unknown as PageSection };
+  } catch (err: unknown) {
+    return { error: err instanceof Error ? err.message : "An unexpected error occurred" };
+  }
+}
+
+export async function updateTab(
+  pageType: string,
+  tabKey: string,
+  updates: { tab_label?: string; tab_icon?: string; tab_locked?: boolean }
+): Promise<{ success?: boolean; error?: string }> {
+  try {
+    const auth = await requireSuperAdmin();
+    if ("error" in auth) return { error: auth.error };
+
+    const admin = createAdminClient();
+    const { error } = await admin
+      .from(SECTIONS)
+      .update({ ...updates, updated_at: new Date().toISOString() } as never)
+      .eq("page_type" as never, pageType as never)
+      .eq("tab_key" as never, tabKey as never);
+
+    if (error) return { error: error.message };
+    revalidate();
+    return { success: true };
+  } catch (err: unknown) {
+    return { error: err instanceof Error ? err.message : "An unexpected error occurred" };
+  }
+}
+
+export async function deleteTab(
+  pageType: string,
+  tabKey: string
+): Promise<{ success?: boolean; error?: string }> {
+  try {
+    const auth = await requireSuperAdmin();
+    if ("error" in auth) return { error: auth.error };
+
+    const admin = createAdminClient();
+
+    // Verify tab is not locked
+    const { data: sections } = await admin
+      .from(SECTIONS)
+      .select("tab_locked" as never)
+      .eq("page_type" as never, pageType as never)
+      .eq("tab_key" as never, tabKey as never)
+      .limit(1)
+      .single();
+
+    if (sections && (sections as unknown as { tab_locked: boolean }).tab_locked) {
+      return { error: "Cannot delete a locked tab" };
+    }
+
+    // Delete all sections in this tab (cascade deletes field assignments)
+    const { error } = await admin
+      .from(SECTIONS)
+      .delete()
+      .eq("page_type" as never, pageType as never)
+      .eq("tab_key" as never, tabKey as never);
+
+    if (error) return { error: error.message };
+    revalidate();
+    return { success: true };
+  } catch (err: unknown) {
+    return { error: err instanceof Error ? err.message : "An unexpected error occurred" };
+  }
+}
+
+// ---------------------------------------------------------------------------
 // Fetch pro forma templates
 // ---------------------------------------------------------------------------
 

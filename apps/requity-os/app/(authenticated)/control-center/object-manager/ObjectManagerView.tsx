@@ -553,7 +553,9 @@ export function ObjectManagerView({ objects, fieldCounts, relationshipCounts }: 
         {activeTab === "layout" && selectedLayoutTab && (
           <TabConfigPanel
             tab={selectedLayoutTab}
+            pageType={OBJECT_PAGE_TYPE_MAP[selectedObjectKey] || ""}
             onClose={clearSelection}
+            onUpdated={handleDataChange}
           />
         )}
         {!showRightPanel && (

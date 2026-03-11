@@ -54,9 +54,27 @@ import {
   reorderLayoutSections,
   reorderLayoutFields,
   addFieldToLayout,
+  addSection,
+  addTab,
 } from "../actions";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
 import { getObjectIcon, getFieldType } from "./constants";
 import type { TabInfo } from "../ObjectManagerView";
+
+// Page type mapping (mirrors ObjectManagerView)
+const OBJECT_PAGE_TYPE_MAP: Record<string, string> = {
+  contact: "contact_detail",
+  company: "company_detail",
+  loan: "loan_detail",
+  property: "property_detail",
+};
 
 // ---------------------------------------------------------------------------
 // Drag item type prefixes
@@ -328,6 +346,16 @@ export function LayoutTab({
     setLocalFields(propLayoutFields);
   }, [propLayoutFields]);
 
+  // Add Section / Add Tab dialog state
+  const [showAddSectionDialog, setShowAddSectionDialog] = useState(false);
+  const [newSectionLabel, setNewSectionLabel] = useState("");
+  const [addingSectionPending, setAddingSectionPending] = useState(false);
+  const [showAddTabDialog, setShowAddTabDialog] = useState(false);
+  const [newTabLabel, setNewTabLabel] = useState("");
+  const [addingTabPending, setAddingTabPending] = useState(false);
+
+  const pageType = OBJECT_PAGE_TYPE_MAP[objectKey];
+
   // Active drag state
   const [activeDragId, setActiveDragId] = useState<string | null>(null);
 
@@ -377,6 +405,51 @@ export function LayoutTab({
   localFieldsRef.current = localFields;
   const activeTabRef = useRef(activeTab);
   activeTabRef.current = activeTab;
+
+  const handleAddSection = useCallback(async () => {
+    const currentTab = activeTabRef.current;
+    if (!newSectionLabel.trim() || !pageType || !currentTab) return;
+    setAddingSectionPending(true);
+    try {
+      const sectionKey = newSectionLabel.trim().toLowerCase().replace(/\s+/g, "_");
+      const result = await addSection({
+        page_type: pageType,
+        section_key: sectionKey,
+        section_label: newSectionLabel.trim(),
+        sidebar: false,
+        section_type: "fields",
+        tab_key: currentTab.id,
+        tab_label: currentTab.label,
+      });
+      if (result.data) {
+        setShowAddSectionDialog(false);
+        setNewSectionLabel("");
+        onLayoutChange?.();
+      }
+    } finally {
+      setAddingSectionPending(false);
+    }
+  }, [newSectionLabel, pageType, onLayoutChange]);
+
+  const handleAddTab = useCallback(async () => {
+    if (!newTabLabel.trim() || !pageType) return;
+    setAddingTabPending(true);
+    try {
+      const tabKey = newTabLabel.trim().toLowerCase().replace(/\s+/g, "_");
+      const result = await addTab({
+        page_type: pageType,
+        tab_key: tabKey,
+        tab_label: newTabLabel.trim(),
+      });
+      if (result.data) {
+        setShowAddTabDialog(false);
+        setNewTabLabel("");
+        onLayoutChange?.();
+      }
+    } finally {
+      setAddingTabPending(false);
+    }
+  }, [newTabLabel, pageType, onLayoutChange]);
 
   // Reset active tab when tabs change
   useEffect(() => {
@@ -756,10 +829,15 @@ export function LayoutTab({
                     </button>
                   );
                 })}
-                <button className="flex items-center gap-1 px-2.5 py-2.5 text-xs text-muted-foreground hover:text-foreground">
-                  <Plus size={12} />
-                  Add Tab
-                </button>
+                {pageType && (
+                  <button
+                    className="flex items-center gap-1 px-2.5 py-2.5 text-xs text-muted-foreground hover:text-foreground"
+                    onClick={() => setShowAddTabDialog(true)}
+                  >
+                    <Plus size={12} />
+                    Add Tab
+                  </button>
+                )}
               </div>
 
               {/* Canvas */}
@@ -853,10 +931,15 @@ export function LayoutTab({
                   </SortableContext>
 
                   {/* Add Section */}
-                  <div className="p-3 rounded-lg border border-dashed border-border flex items-center justify-center gap-1.5 cursor-pointer text-muted-foreground text-xs hover:text-foreground hover:border-border/80 transition-colors mt-1">
-                    <Plus size={13} />
-                    Add Section
-                  </div>
+                  {pageType && (
+                    <div
+                      className="p-3 rounded-lg border border-dashed border-border flex items-center justify-center gap-1.5 cursor-pointer text-muted-foreground text-xs hover:text-foreground hover:border-border/80 transition-colors mt-1"
+                      onClick={() => setShowAddSectionDialog(true)}
+                    >
+                      <Plus size={13} />
+                      Add Section
+                    </div>
+                  )}
                 </div>
               </div>
             </>
@@ -962,6 +1045,88 @@ export function LayoutTab({
           )}
         </DragOverlay>
       </DndContext>
+
+      {/* Add Section Dialog */}
+      <Dialog open={showAddSectionDialog} onOpenChange={setShowAddSectionDialog}>
+        <DialogContent className="sm:max-w-[400px]">
+          <DialogHeader>
+            <DialogTitle className="text-sm">Add Section</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3 py-2">
+            <div>
+              <label className="text-xs font-medium text-muted-foreground block mb-1">
+                Section Name
+              </label>
+              <Input
+                value={newSectionLabel}
+                onChange={(e) => setNewSectionLabel(e.target.value)}
+                placeholder="e.g. Financial Details"
+                className="h-8 text-xs"
+                onKeyDown={(e) => e.key === "Enter" && handleAddSection()}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setShowAddSectionDialog(false)}
+              className="h-8 text-xs"
+            >
+              Cancel
+            </Button>
+            <Button
+              size="sm"
+              onClick={handleAddSection}
+              disabled={!newSectionLabel.trim() || addingSectionPending}
+              className="h-8 text-xs"
+            >
+              {addingSectionPending ? "Adding..." : "Add Section"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Add Tab Dialog */}
+      <Dialog open={showAddTabDialog} onOpenChange={setShowAddTabDialog}>
+        <DialogContent className="sm:max-w-[400px]">
+          <DialogHeader>
+            <DialogTitle className="text-sm">Add Tab</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3 py-2">
+            <div>
+              <label className="text-xs font-medium text-muted-foreground block mb-1">
+                Tab Name
+              </label>
+              <Input
+                value={newTabLabel}
+                onChange={(e) => setNewTabLabel(e.target.value)}
+                placeholder="e.g. Documents"
+                className="h-8 text-xs"
+                onKeyDown={(e) => e.key === "Enter" && handleAddTab()}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setShowAddTabDialog(false)}
+              className="h-8 text-xs"
+            >
+              Cancel
+            </Button>
+            <Button
+              size="sm"
+              onClick={handleAddTab}
+              disabled={!newTabLabel.trim() || addingTabPending}
+              className="h-8 text-xs"
+            >
+              {addingTabPending ? "Adding..." : "Add Tab"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
