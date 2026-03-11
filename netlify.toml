@@ -1,14 +1,10 @@
 [build]
-  base = "apps/requity-os"
+  base = "apps/trg-living"
   command = "pnpm run build"
   publish = ".next"
-  ignore = "cd ../.. && git diff --quiet $CACHED_COMMIT_REF $COMMIT_REF -- apps/requity-os/ packages/ netlify.toml pnpm-lock.yaml turbo.json || exit 1"
 
 [build.environment]
-  NODE_OPTIONS = "--max-old-space-size=4096"
-
-[build.cancel]
-  auto = false
+  NODE_VERSION = "20"
 
 [[plugins]]
   package = "@netlify/plugin-nextjs"
