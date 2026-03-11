@@ -1,22 +1,60 @@
 "use client";
 
-import { useMemo } from "react";
+import { useState, useMemo } from "react";
 import { Plus, Calculator } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { FieldConfig } from "../actions";
+import { createField } from "../actions";
 import { ConditionBadge } from "./ConditionBadge";
+import { AddFieldDialog } from "./AddFieldDialog";
 import type { VisibilityCondition } from "@/lib/visibility-engine";
+
+// Module mapping: object_key -> field_configurations module
+const OBJECT_MODULE_MAP: Record<string, string> = {
+  contact: "contact_profile",
+  company: "company_info",
+  borrower_entity: "borrower_entity",
+  property: "uw_property",
+  loan: "loan_details",
+  borrower: "borrower_profile",
+  investor: "investor_profile",
+  unified_deal: "uw_deal",
+};
 
 interface Props {
   fields: FieldConfig[];
   onSelectField: (field: FieldConfig) => void;
+  objectKey: string;
+  onFieldsChange: () => void;
 }
 
-export function FormulasTab({ fields, onSelectField }: Props) {
+export function FormulasTab({ fields, onSelectField, objectKey, onFieldsChange }: Props) {
+  const [showAddDialog, setShowAddDialog] = useState(false);
+
   const formulaFields = useMemo(
     () => fields.filter((f) => f.field_type === "formula" && !f.is_archived),
     [fields]
   );
+
+  const handleAddFormulaField = async (input: {
+    field_label: string;
+    field_key: string;
+    field_type: string;
+  }) => {
+    const fieldModule = OBJECT_MODULE_MAP[objectKey] || objectKey;
+    const result = await createField({
+      module: fieldModule,
+      field_key: input.field_key,
+      field_label: input.field_label,
+      field_type: input.field_type,
+    });
+    if (result.error) {
+      console.error("Failed to create formula field:", result.error);
+      return;
+    }
+    setShowAddDialog(false);
+    onFieldsChange();
+  };
 
   if (formulaFields.length === 0) {
     return (
@@ -26,9 +64,23 @@ export function FormulasTab({ fields, onSelectField }: Props) {
           No formula fields
         </span>
         <span className="text-xs text-muted-foreground max-w-sm text-center leading-relaxed">
-          Create formula fields on the Fields tab to see them here. Formulas
-          support cross-object dot notation and recalculate on save.
+          Formula fields compute values from other field data. Supports dot notation and recalculates on save.
         </span>
+        <Button
+          variant="ghost"
+          size="sm"
+          className="mt-1 gap-1.5 text-pink-400 hover:text-pink-300 border border-dashed border-pink-500/20"
+          onClick={() => setShowAddDialog(true)}
+        >
+          <Plus size={13} />
+          Add Formula Field
+        </Button>
+        <AddFieldDialog
+          open={showAddDialog}
+          onOpenChange={setShowAddDialog}
+          onSubmit={handleAddFormulaField}
+          defaultType="formula"
+        />
       </div>
     );
   }
@@ -82,10 +134,17 @@ export function FormulasTab({ fields, onSelectField }: Props) {
         variant="ghost"
         size="sm"
         className="mt-3 gap-1.5 text-pink-400 hover:text-pink-300 border border-dashed border-pink-500/20"
+        onClick={() => setShowAddDialog(true)}
       >
         <Plus size={13} />
         Add Formula Field
       </Button>
+      <AddFieldDialog
+        open={showAddDialog}
+        onOpenChange={setShowAddDialog}
+        onSubmit={handleAddFormulaField}
+        defaultType="formula"
+      />
     </div>
   );
 }
