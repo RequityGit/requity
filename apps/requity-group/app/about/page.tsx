@@ -1,15 +1,11 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { fetchSiteData } from "../../lib/supabase";
-import { renderEmText } from "../../lib/renderEmText";
 import type {
-  PageSection,
   SiteStat,
   TeamMember,
-  SiteValue,
   Testimonial,
 } from "../../lib/types";
-import StatsBar from "../components/StatsBar";
 import ScrollReveal from "../components/ScrollReveal";
 import AnimatedLine from "../components/AnimatedLine";
 import SectionLabel from "../components/SectionLabel";
@@ -25,27 +21,12 @@ export const metadata: Metadata = {
 
 export const revalidate = 300;
 
-const NEW_TEAM = [
-  { initials: "DM", name: "Dylan Marma", title: "Founder & CEO", bio: "Leads firm strategy, capital raising, and investor relations across all Requity Group business lines." },
-  { initials: "G", name: "Grethel", title: "Head of Operations", bio: "Manages the operational infrastructure across the platform, ensuring seamless execution at scale." },
-  { initials: "J", name: "Jet", title: "Acquisitions & Asset Mgmt", bio: "Leads property sourcing, underwriting, and asset management across the investment portfolio." },
-  { initials: "E", name: "Estefania", title: "Lending Operations", bio: "Runs day-to-day operations for Requity Lending, managing the full loan lifecycle." },
-  { initials: "L", name: "Luis", title: "Loan Originations", bio: "Leads borrower relationships and origination for Requity Lending's bridge loan products." },
-  { initials: "MR", name: "Mike Requita", title: "Financial Controller", bio: "Oversees financial reporting, accounting, and compliance across all business lines." },
-];
-
 export default async function AboutPage() {
-  const [sections, stats, team, values, testimonials] = await Promise.all([
-    fetchSiteData<PageSection>("site_page_sections", {
-      filter: { page_slug: "about" },
-    }),
+  const [stats, team, testimonials] = await Promise.all([
     fetchSiteData<SiteStat>("site_stats", {
       filter: { page_slug: "home" },
     }),
     fetchSiteData<TeamMember>("site_team_members", {
-      eq: ["is_published", true],
-    }),
-    fetchSiteData<SiteValue>("site_values", {
       eq: ["is_published", true],
     }),
     fetchSiteData<Testimonial>("site_testimonials", {
@@ -53,16 +34,9 @@ export default async function AboutPage() {
     }),
   ]);
 
-  const hero = sections.find((s) => s.section_key === "hero");
-  const mission = sections.find((s) => s.section_key === "mission");
-  const pillars = (mission?.metadata?.pillars as Array<{ title: string; description: string }>) ?? [];
-
   return (
     <main>
-      {/* ══════════════════════════════════════════════════════════
-          NEW CONTENT: Hero (navy, bottom-anchored)
-          ══════════════════════════════════════════════════════════ */}
-      {/* <!-- NEW CONTENT: Hero --> */}
+      {/* Hero */}
       <PageHero
         label="About Requity Group"
         headline={
@@ -74,81 +48,22 @@ export default async function AboutPage() {
         body="Requity Group is a vertically integrated real estate firm that acquires, operates, manages, and lends on value-add properties across the United States."
       />
 
-      {/* ══════════════════════════════════════════════════════════
-          NEW CONTENT: Stats (navy, gold numbers)
-          ══════════════════════════════════════════════════════════ */}
-      {/* <!-- NEW CONTENT: Stats Bar --> */}
+      {/* Stats Bar */}
       <section className="dark-zone" style={{ padding: 0 }}>
         <div className="container">
           <AnimatedLine light />
           <div className="stats-grid on-navy">
-            <div className="stat-cell">
-              <div className="stat-num gold">$150M+</div>
-              <div className="stat-lbl">Assets Under Management</div>
-            </div>
-            <div className="stat-cell">
-              <div className="stat-num gold">$70M+</div>
-              <div className="stat-lbl">Investor Capital Raised</div>
-            </div>
-            <div className="stat-cell">
-              <div className="stat-num gold">32</div>
-              <div className="stat-lbl">Properties Acquired</div>
-            </div>
-            <div className="stat-cell">
-              <div className="stat-num gold">70+</div>
-              <div className="stat-lbl">Loans Originated</div>
-            </div>
+            {stats.map((stat) => (
+              <div key={stat.id} className="stat-cell">
+                <div className="stat-num gold">{stat.display_value}</div>
+                <div className="stat-lbl">{stat.label}</div>
+              </div>
+            ))}
           </div>
         </div>
       </section>
 
-      {/* ══════════════════════════════════════════════════════════
-          EXISTING CONTENT: Hero (original)
-          ══════════════════════════════════════════════════════════ */}
-      {/* <!-- EXISTING CONTENT: Hero --> */}
-      <section
-        className="dark-zone"
-        style={{
-          paddingTop: "clamp(120px, 16vw, 180px)",
-          paddingBottom: "clamp(80px, 10vw, 120px)",
-        }}
-      >
-        <div className="container">
-          <p className="section-eyebrow" style={{ animation: "fadeUp 0.8s ease forwards" }}>
-            {hero?.subheading}
-          </p>
-          <h1
-            className="section-title section-title-light"
-            style={{
-              fontSize: "clamp(40px, 5.5vw, 60px)",
-              maxWidth: 740,
-              animation: "fadeUp 0.8s 0.1s ease both",
-            }}
-          >
-            {renderEmText(hero?.heading)}
-          </h1>
-          <p
-            className="section-desc section-desc-light"
-            style={{ maxWidth: 560, animation: "fadeUp 0.8s 0.2s ease both" }}
-          >
-            {hero?.body_text}
-          </p>
-        </div>
-      </section>
-
-      {/* <!-- EXISTING CONTENT: Stats --> */}
-      <section className="dark-zone" style={{ paddingTop: 0, paddingBottom: 0 }}>
-        <div className="container">
-          <StatsBar stats={stats} />
-        </div>
-      </section>
-
-      <div className="dark-to-light" />
-
-      {/* ══════════════════════════════════════════════════════════
-          NEW CONTENT: Mission Quote (cream, editorial two-column)
-          ══════════════════════════════════════════════════════════ */}
-      {/* <!-- NEW CONTENT: Mission Quote --> */}
+      {/* Mission Quote */}
       <section className="light-zone section-pad-lg">
         <div className="container">
           <ScrollReveal>
@@ -202,10 +117,7 @@ export default async function AboutPage() {
         </div>
       </section>
 
-      {/* ══════════════════════════════════════════════════════════
-          NEW CONTENT: Story (cream, editorial two-column)
-          ══════════════════════════════════════════════════════════ */}
-      {/* <!-- NEW CONTENT: Story --> */}
+      {/* Story */}
       <section className="light-zone" style={{ paddingBottom: 120 }}>
         <div className="container">
           <AnimatedLine />
@@ -236,10 +148,7 @@ export default async function AboutPage() {
         </div>
       </section>
 
-      {/* ══════════════════════════════════════════════════════════
-          NEW CONTENT: Team (NAVY section)
-          ══════════════════════════════════════════════════════════ */}
-      {/* <!-- NEW CONTENT: Team --> */}
+      {/* Team */}
       <section className="dark-zone section-pad-lg" style={{ overflow: "hidden" }}>
         <div className="navy-grid-pattern">
           {Array.from({ length: 14 }).map((_, i) => (
@@ -256,10 +165,14 @@ export default async function AboutPage() {
           </ScrollReveal>
           <ScrollReveal staggerChildren>
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 20 }}>
-              {NEW_TEAM.map((member) => (
-                <div key={member.initials} className="card-navy" style={{ padding: "36px 32px" }}>
+              {team.map((member) => (
+                <div key={member.id} className="card-navy" style={{ padding: "36px 32px" }}>
                   <div className="team-avatar on-navy" style={{ marginBottom: 24 }}>
-                    {member.initials}
+                    {member.name
+                      .split(" ")
+                      .slice(0, 2)
+                      .map((n) => n[0])
+                      .join("")}
                   </div>
                   <div className="team-name on-navy">{member.name}</div>
                   <p className="team-title">{member.title}</p>
@@ -271,84 +184,7 @@ export default async function AboutPage() {
         </div>
       </section>
 
-      {/* ══════════════════════════════════════════════════════════
-          EXISTING CONTENT: Mission & Pillars
-          ══════════════════════════════════════════════════════════ */}
-      {/* <!-- EXISTING CONTENT: Mission & Pillars --> */}
-      <section className="light-zone section-gap-lg">
-        <div className="container">
-          <ScrollReveal>
-            <p className="section-eyebrow section-eyebrow-dark">Our Approach</p>
-            <h2 className="section-title">
-              {renderEmText(mission?.heading)}
-            </h2>
-            <p className="section-desc" style={{ marginBottom: 56 }}>
-              {mission?.body_text}
-            </p>
-          </ScrollReveal>
-          <ScrollReveal staggerChildren>
-            <div
-              style={{
-                display: "grid",
-                gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))",
-                gap: 24,
-              }}
-            >
-              {pillars.map((pillar, i) => (
-                <div key={i} className="card">
-                  <div className="card-number">0{i + 1}</div>
-                  <h3 className="card-title">{pillar.title}</h3>
-                  <p className="card-body">{pillar.description}</p>
-                </div>
-              ))}
-            </div>
-          </ScrollReveal>
-        </div>
-      </section>
-
-      {/* ══════════════════════════════════════════════════════════
-          EXISTING CONTENT: Team
-          ══════════════════════════════════════════════════════════ */}
-      {/* <!-- EXISTING CONTENT: Team --> */}
-      <section id="team" className="light-zone section-gap-md">
-        <div className="container">
-          <ScrollReveal>
-            <p className="section-eyebrow section-eyebrow-dark">Leadership</p>
-            <h2 className="section-title" style={{ marginBottom: 48 }}>
-              Our <em>Team</em>
-            </h2>
-          </ScrollReveal>
-          <ScrollReveal staggerChildren>
-            <div
-              style={{
-                display: "grid",
-                gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
-                gap: 24,
-              }}
-            >
-              {team.map((member) => (
-                <div key={member.id} className="card" style={{ textAlign: "center" }}>
-                  <div className="team-avatar" style={{ margin: "0 auto 24px" }}>
-                    {member.name
-                      .split(" ")
-                      .slice(0, 2)
-                      .map((n) => n[0])
-                      .join("")}
-                  </div>
-                  <div className="team-name">{member.name}</div>
-                  <p className="team-title">{member.title}</p>
-                  <p className="team-bio">{member.bio}</p>
-                </div>
-              ))}
-            </div>
-          </ScrollReveal>
-        </div>
-      </section>
-
-      {/* ══════════════════════════════════════════════════════════
-          NEW CONTENT: Principles (cream, editorial two-column, 2x2 grid)
-          ══════════════════════════════════════════════════════════ */}
-      {/* <!-- NEW CONTENT: Principles --> */}
+      {/* Principles */}
       <section className="light-zone section-pad-lg">
         <div className="container">
           <ScrollReveal>
@@ -379,10 +215,7 @@ export default async function AboutPage() {
         </div>
       </section>
 
-      {/* ══════════════════════════════════════════════════════════
-          NEW CONTENT: Milestones (darker cream panel)
-          ══════════════════════════════════════════════════════════ */}
-      {/* <!-- NEW CONTENT: Milestones --> */}
+      {/* Milestones */}
       <section className="cream-zone section-pad-lg">
         <div className="container">
           <ScrollReveal>
@@ -429,49 +262,14 @@ export default async function AboutPage() {
         </div>
       </section>
 
-      {/* ══════════════════════════════════════════════════════════
-          EXISTING CONTENT: Values
-          ══════════════════════════════════════════════════════════ */}
-      {/* <!-- EXISTING CONTENT: Values --> */}
-      <section id="values" className="light-zone section-gap-md">
-        <div className="container">
-          <ScrollReveal>
-            <p className="section-eyebrow section-eyebrow-dark">Core Values</p>
-            <h2 className="section-title" style={{ marginBottom: 48 }}>
-              What We <em>Stand For</em>
-            </h2>
-          </ScrollReveal>
-          <ScrollReveal staggerChildren>
-            <div
-              style={{
-                display: "grid",
-                gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))",
-                gap: 20,
-              }}
-            >
-              {values.map((v, i) => (
-                <div key={v.id} className="value-item">
-                  <div className="value-num">0{i + 1}</div>
-                  <h4>{v.title}</h4>
-                  <p>{v.description}</p>
-                </div>
-              ))}
-            </div>
-          </ScrollReveal>
-        </div>
-      </section>
-
-      {/* ══════════════════════════════════════════════════════════
-          EXISTING CONTENT: Testimonials
-          ══════════════════════════════════════════════════════════ */}
-      {/* <!-- EXISTING CONTENT: Testimonials --> */}
+      {/* Testimonials */}
       {testimonials.length > 0 && (
-        <section className="light-zone section-gap-md">
+        <section className="cream-zone section-pad-lg">
           <div className="container">
             <ScrollReveal>
-              <p className="section-eyebrow section-eyebrow-dark">Testimonials</p>
-              <h2 className="section-title" style={{ marginBottom: 48 }}>
-                From Our <em>Investors</em>
+              <SectionLabel>Testimonials</SectionLabel>
+              <h2 className="type-h2" style={{ color: "var(--text)", marginBottom: 48 }}>
+                What our investors say
               </h2>
             </ScrollReveal>
             <ScrollReveal staggerChildren>
@@ -482,7 +280,7 @@ export default async function AboutPage() {
                   gap: 24,
                 }}
               >
-                {testimonials.map((t) => (
+                {testimonials.slice(0, 4).map((t) => (
                   <div key={t.id} className="test-card">
                     <div className="big-q">&ldquo;</div>
                     <div className="stars">{"★".repeat(t.rating)}</div>
@@ -496,10 +294,7 @@ export default async function AboutPage() {
         </section>
       )}
 
-      {/* ══════════════════════════════════════════════════════════
-          NEW CONTENT: CTA (navy)
-          ══════════════════════════════════════════════════════════ */}
-      {/* <!-- NEW CONTENT: CTA --> */}
+      {/* CTA */}
       <FooterCTA
         label="Get Started"
         headline={
