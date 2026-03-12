@@ -198,6 +198,12 @@ export interface FieldLayout {
   conditional_rules: ConditionalRule[] | null;
   /** Role-based view/edit permissions from field_configurations */
   permissions: FieldPermissions | null;
+  /** Formula expression for computed fields (field_type === "formula") */
+  formula_expression: string | null;
+  /** Output format for formula fields: "currency" | "percent" | "number" | "text" */
+  formula_output_format: string | null;
+  /** Decimal places for formula display */
+  formula_decimal_places: number | null;
 }
 
 export interface TaskData {
