@@ -10,7 +10,6 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
-import { ProgressRing } from "./ProgressRing";
 import {
   type UnifiedDeal,
   type UnifiedCardType,
@@ -51,13 +50,12 @@ export function PipelineTable({
             <TableHead className="text-right">Amount</TableHead>
             <TableHead>Stage</TableHead>
             <TableHead className="text-right">Days</TableHead>
-            <TableHead>Progress</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           {deals.length === 0 ? (
             <TableRow>
-              <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
+              <TableCell colSpan={6} className="text-center text-muted-foreground py-8">
                 No deals found
               </TableCell>
             </TableRow>
@@ -114,20 +112,6 @@ export function PipelineTable({
                     )}
                   >
                     {days}d
-                  </TableCell>
-                  <TableCell>
-                    {deal.checklist_total != null && deal.checklist_total > 0 && (
-                      <div className="flex items-center gap-1">
-                        <ProgressRing
-                          completed={deal.checklist_completed ?? 0}
-                          total={deal.checklist_total}
-                          size={16}
-                        />
-                        <span className="text-[11px] text-muted-foreground num">
-                          {deal.checklist_completed ?? 0}/{deal.checklist_total}
-                        </span>
-                      </div>
-                    )}
                   </TableCell>
                 </TableRow>
               );

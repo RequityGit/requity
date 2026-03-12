@@ -3,8 +3,6 @@
 import { revalidatePath } from "next/cache";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { requireAdmin } from "@/lib/auth/require-admin";
-import { validateStageAdvancement } from "@/lib/pipeline/validate-stage-advancement";
-import { validateStageGating } from "@/lib/pipeline/stage-gating";
 import type { Database, Json } from "@/lib/supabase/types";
 import { FIELD_MAPPING_MAP } from "@/lib/pipeline/uw-field-mappings";
 import type {
@@ -230,26 +228,6 @@ export async function advanceStageAction(
       return { error: "Deal not found" };
     }
 
-    // Validate advancement rules (unified_stage_rules)
-    const validation = await validateStageAdvancement(
-      deal as unknown as Record<string, unknown>,
-      newStage
-    );
-    if (!validation.valid) {
-      return { error: validation.message };
-    }
-
-    // Validate field-level stage gating (field_configurations)
-    const dealRecord = deal as unknown as Record<string, unknown>;
-    const uwData = (dealRecord.uw_data as Record<string, unknown>) ?? {};
-    const gating = await validateStageGating(newStage, dealRecord, uwData);
-    if (!gating.canProgress) {
-      const fieldList = gating.missingFields.map((f) => f.label).join(", ");
-      return {
-        error: `The following fields are required before entering this stage: ${fieldList}`,
-      };
-    }
-
     const { error } = await admin.rpc("unified_advance_stage", {
       p_deal_id: dealId,
       p_new_stage: newStage,
@@ -269,111 +247,6 @@ export async function advanceStageAction(
   }
 }
 
-// ─── Validate Stage Jump (pre-flight check) ───
-
-export type StageBlocker = {
-  stage: string;
-  stageLabel: string;
-  ruleErrors: string[];
-  missingFields: { field_key: string; label: string; module: string }[];
-};
-
-export type ValidateStageJumpResult =
-  | { canProgress: true; direction: "forward" | "backward" | "same" }
-  | { canProgress: false; blockers: StageBlocker[] };
-
-const STAGE_ORDER: Record<string, number> = {
-  lead: 0,
-  analysis: 1,
-  negotiation: 2,
-  execution: 3,
-  closed: 4,
-};
-
-const STAGE_LABELS: Record<string, string> = {
-  lead: "Lead",
-  analysis: "Analysis",
-  negotiation: "Negotiation",
-  execution: "Execution",
-  closed: "Closed",
-};
-
-const ORDERED_STAGES = ["lead", "analysis", "negotiation", "execution", "closed"];
-
-export async function validateStageJumpAction(
-  dealId: string,
-  targetStage: string
-): Promise<ValidateStageJumpResult> {
-  try {
-    const auth = await requireAdmin();
-    if ("error" in auth) return { canProgress: true, direction: "same" };
-
-    const admin = createAdminClient();
-
-    const { data: deal, error: fetchErr } = await admin
-      .from("unified_deals")
-      .select("*")
-      .eq("id", dealId)
-      .single();
-
-    if (fetchErr || !deal) {
-      return { canProgress: true, direction: "same" };
-    }
-
-    const currentStage = (deal as Record<string, unknown>).stage as string;
-    const currentIdx = STAGE_ORDER[currentStage] ?? 0;
-    const targetIdx = STAGE_ORDER[targetStage] ?? 0;
-
-    if (targetIdx === currentIdx) {
-      return { canProgress: true, direction: "same" };
-    }
-
-    if (targetIdx < currentIdx) {
-      return { canProgress: true, direction: "backward" };
-    }
-
-    // Forward jump: validate all intermediate stages (current+1 to target inclusive)
-    const dealRecord = deal as unknown as Record<string, unknown>;
-    const uwData = (dealRecord.uw_data as Record<string, unknown>) ?? {};
-    const blockers: StageBlocker[] = [];
-
-    for (let i = currentIdx + 1; i <= targetIdx; i++) {
-      const stage = ORDERED_STAGES[i];
-      const stageLabel = STAGE_LABELS[stage] ?? stage;
-      const blocker: StageBlocker = {
-        stage,
-        stageLabel,
-        ruleErrors: [],
-        missingFields: [],
-      };
-
-      // Check unified_stage_rules
-      const ruleResult = await validateStageAdvancement(dealRecord, stage);
-      if (!ruleResult.valid) {
-        blocker.ruleErrors.push(ruleResult.message);
-      }
-
-      // Check field_configurations stage gating
-      const gatingResult = await validateStageGating(stage, dealRecord, uwData);
-      if (!gatingResult.canProgress) {
-        blocker.missingFields = gatingResult.missingFields;
-      }
-
-      if (blocker.ruleErrors.length > 0 || blocker.missingFields.length > 0) {
-        blockers.push(blocker);
-      }
-    }
-
-    if (blockers.length > 0) {
-      return { canProgress: false, blockers };
-    }
-
-    return { canProgress: true, direction: "forward" };
-  } catch {
-    return { canProgress: true, direction: "forward" };
-  }
-}
-
 // ─── Regress Stage (backward jump, no validation) ───
 
 export async function regressStageAction(
@@ -389,7 +262,7 @@ export async function regressStageAction(
     const { error } = await admin.rpc("unified_advance_stage", {
       p_deal_id: dealId,
       p_new_stage: targetStage,
-      p_notes: `Stage moved back to ${STAGE_LABELS[targetStage] ?? targetStage}`,
+      p_notes: `Stage moved back to ${targetStage}`,
     });
 
     if (error) {
@@ -402,40 +275,6 @@ export async function regressStageAction(
   } catch (err: unknown) {
     console.error("regressStageAction error:", err);
     return { error: err instanceof Error ? err.message : "Failed to change stage" };
-  }
-}
-
-// ─── Toggle Checklist Item ───
-
-export async function toggleChecklistItemAction(
-  itemId: string,
-  completed: boolean
-) {
-  try {
-    const auth = await requireAdmin();
-    if ("error" in auth) return { error: auth.error };
-
-    const admin = createAdminClient();
-
-    const { error } = await admin
-      .from("unified_deal_checklist")
-      .update({
-        completed,
-        completed_by: completed ? auth.user.id : null,
-        completed_at: completed ? new Date().toISOString() : null,
-      })
-      .eq("id", itemId);
-
-    if (error) {
-      console.error("toggleChecklistItemAction error:", error);
-      return { error: error.message };
-    }
-
-    revalidatePipeline();
-    return { success: true };
-  } catch (err: unknown) {
-    console.error("toggleChecklistItemAction error:", err);
-    return { error: err instanceof Error ? err.message : "Failed to toggle checklist item" };
   }
 }
 

@@ -4,7 +4,6 @@ import { cn } from "@/lib/utils";
 import { Link2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { useDraggable } from "@dnd-kit/core";
-import { ProgressRing } from "./ProgressRing";
 import {
   type UnifiedDeal,
   type UnifiedCardType,
@@ -106,18 +105,6 @@ export function DealCard({
       {/* Row 5: Footer */}
       <div className="flex items-center justify-between pt-1 border-t border-border/50">
         <div className="flex items-center gap-2">
-          {deal.checklist_total != null && deal.checklist_total > 0 && (
-            <div className="flex items-center gap-1">
-              <ProgressRing
-                completed={deal.checklist_completed ?? 0}
-                total={deal.checklist_total}
-                size={16}
-              />
-              <span className="text-[11px] text-muted-foreground num">
-                {deal.checklist_completed ?? 0}/{deal.checklist_total}
-              </span>
-            </div>
-          )}
           {hasRelationships && (
             <Link2 className="h-3 w-3 text-muted-foreground" />
           )}
@@ -193,18 +180,6 @@ export function DealCardOverlay({
       )}
       <div className="flex items-center justify-between pt-1 border-t border-border/50">
         <div className="flex items-center gap-2">
-          {deal.checklist_total != null && deal.checklist_total > 0 && (
-            <div className="flex items-center gap-1">
-              <ProgressRing
-                completed={deal.checklist_completed ?? 0}
-                total={deal.checklist_total}
-                size={16}
-              />
-              <span className="text-[11px] text-muted-foreground num">
-                {deal.checklist_completed ?? 0}/{deal.checklist_total}
-              </span>
-            </div>
-          )}
           {hasRelationships && (
             <Link2 className="h-3 w-3 text-muted-foreground" />
           )}

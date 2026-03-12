@@ -12,7 +12,6 @@ import type {
   UnifiedDeal,
   UnifiedCardType,
   StageConfig,
-  ChecklistItem,
   DealActivity,
 } from "./pipeline-types";
 import type { IntakeItem } from "@/lib/intake/types";
@@ -21,7 +20,6 @@ interface PipelineViewProps {
   deals: UnifiedDeal[];
   cardTypes: UnifiedCardType[];
   stageConfigs: StageConfig[];
-  checklistItems: ChecklistItem[];
   activities: DealActivity[];
   relationshipDealIds: Set<string>;
   teamMembers: { id: string; full_name: string }[];
@@ -32,7 +30,6 @@ export function PipelineView({
   deals,
   cardTypes,
   stageConfigs,
-  checklistItems,
   activities,
   relationshipDealIds,
   teamMembers,

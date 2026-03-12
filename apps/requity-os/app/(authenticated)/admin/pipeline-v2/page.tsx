@@ -9,7 +9,6 @@ import {
   type UnifiedDeal,
   type UnifiedCardType,
   type StageConfig,
-  type ChecklistItem,
   type DealActivity,
 } from "@/components/pipeline-v2/pipeline-types";
 import {
@@ -32,7 +31,6 @@ export default async function PipelineV2Page() {
   const [
     cardTypesResult,
     dealsResult,
-    checklistResult,
     stageConfigsResult,
     relationshipsResult,
     activitiesResult,
@@ -51,9 +49,6 @@ export default async function PipelineV2Page() {
       )
       .in("status" as never, ["active", "on_hold"] as never)
       .order("created_at" as never, { ascending: false }),
-    admin
-      .from("unified_deal_checklist" as never)
-      .select("*"),
     admin
       .from("unified_stage_configs" as never)
       .select("*")
@@ -80,20 +75,7 @@ export default async function PipelineV2Page() {
 
   const cardTypes = (cardTypesResult.data ?? []) as unknown as UnifiedCardType[];
   const stageConfigs = (stageConfigsResult.data ?? []) as unknown as StageConfig[];
-  const checklistItems = (checklistResult.data ?? []) as unknown as ChecklistItem[];
   const activities = (activitiesResult.data ?? []) as unknown as DealActivity[];
-
-  // Build checklist counts per deal
-  const checklistCounts = new Map<string, { total: number; completed: number }>();
-  for (const item of checklistItems) {
-    const current = checklistCounts.get(item.deal_id) ?? {
-      total: 0,
-      completed: 0,
-    };
-    current.total++;
-    if (item.completed) current.completed++;
-    checklistCounts.set(item.deal_id, current);
-  }
 
   // Build relationship set
   const relationshipDealIds = new Set<string>();
@@ -148,7 +130,6 @@ export default async function PipelineV2Page() {
 
   // Enrich deals with computed fields + resolved UW data
   const deals: UnifiedDeal[] = rawDeals.map((deal) => {
-    const counts = checklistCounts.get(deal.id);
     const days = daysInStage(deal.stage_entered_at);
     const config = stageConfigMap.get(deal.stage);
     const property = deal.property_id ? propertyMap.get(deal.property_id) ?? null : null;
@@ -157,8 +138,6 @@ export default async function PipelineV2Page() {
     return {
       ...deal,
       uw_data: mergeUwData(deal.uw_data, property, borrower),
-      checklist_total: counts?.total ?? 0,
-      checklist_completed: counts?.completed ?? 0,
       days_in_stage: days,
       alert_level: getAlertLevel(days, config),
     };
@@ -183,7 +162,6 @@ export default async function PipelineV2Page() {
         deals={deals}
         cardTypes={cardTypes}
         stageConfigs={stageConfigs}
-        checklistItems={checklistItems}
         activities={activities}
         relationshipDealIds={relationshipDealIds}
         teamMembers={teamMembers}

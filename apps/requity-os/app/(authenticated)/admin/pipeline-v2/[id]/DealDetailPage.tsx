@@ -64,7 +64,6 @@ import {
   type UnifiedDeal,
   type UnifiedCardType,
   type StageConfig,
-  type ChecklistItem,
   type DealCondition,
   type DealActivity,
   STAGES,
@@ -77,11 +76,8 @@ import {
 } from "@/components/pipeline-v2/pipeline-types";
 import {
   advanceStageAction,
-  validateStageJumpAction,
   regressStageAction,
 } from "@/app/(authenticated)/admin/pipeline-v2/actions";
-import type { StageBlocker } from "@/app/(authenticated)/admin/pipeline-v2/actions";
-import { StageBlockersDialog } from "@/components/pipeline-v2/StageBlockersDialog";
 import { mapAssetClassToVisibility, type VisibilityContext } from "@/lib/visibility-engine";
 import { DealActivityTab } from "@/components/pipeline-v2/tabs/DealActivityTab";
 import { UnifiedNotes } from "@/components/shared/UnifiedNotes";
@@ -117,7 +113,6 @@ interface DealDetailPageProps {
   deal: UnifiedDeal;
   cardType: UnifiedCardType;
   stageConfigs: StageConfig[];
-  checklist: ChecklistItem[];
   conditions: DealCondition[];
   activities: DealActivity[];
   crmActivities: ActivityData[];
@@ -137,7 +132,6 @@ export function DealDetailPage({
   deal,
   cardType,
   stageConfigs,
-  checklist,
   conditions,
   activities,
   crmActivities,
@@ -211,45 +205,33 @@ export function DealDetailPage({
     : deal.company?.name ?? deal.name;
 
   // Stage double-click navigation
-  const [blockersDialogOpen, setBlockersDialogOpen] = useState(false);
-  const [stageBlockers, setStageBlockers] = useState<StageBlocker[]>([]);
-  const [targetStageLabel, setTargetStageLabel] = useState("");
   const [stageJumping, startStageJump] = useTransition();
 
   const handleStageDoubleClick = useCallback(
     (targetStage: string) => {
       if (targetStage === deal.stage) return;
 
+      const currentIdx = STAGES.findIndex((s) => s.key === deal.stage);
+      const targetIdx = STAGES.findIndex((s) => s.key === targetStage);
+      const label = STAGES.find((s) => s.key === targetStage)?.label ?? targetStage;
+
       startStageJump(async () => {
-        const result = await validateStageJumpAction(deal.id, targetStage);
-
-        if (result.canProgress) {
-          const label =
-            STAGES.find((s) => s.key === targetStage)?.label ?? targetStage;
-
-          if (result.direction === "backward") {
-            const res = await regressStageAction(deal.id, targetStage);
-            if (res.error) {
-              toast.error(`Cannot move stage: ${res.error}`);
-            } else {
-              toast.success(`Moved to ${label}`);
-              router.refresh();
-            }
-          } else if (result.direction === "forward") {
-            const res = await advanceStageAction(deal.id, targetStage);
-            if (res.error) {
-              toast.error(`Cannot advance: ${res.error}`);
-            } else {
-              toast.success(`Advanced to ${label}`);
-              router.refresh();
-            }
+        if (targetIdx < currentIdx) {
+          const res = await regressStageAction(deal.id, targetStage);
+          if (res.error) {
+            toast.error(`Cannot move stage: ${res.error}`);
+          } else {
+            toast.success(`Moved to ${label}`);
+            router.refresh();
           }
         } else {
-          const label =
-            STAGES.find((s) => s.key === targetStage)?.label ?? targetStage;
-          setTargetStageLabel(label);
-          setStageBlockers(result.blockers);
-          setBlockersDialogOpen(true);
+          const res = await advanceStageAction(deal.id, targetStage);
+          if (res.error) {
+            toast.error(`Cannot advance: ${res.error}`);
+          } else {
+            toast.success(`Advanced to ${label}`);
+            router.refresh();
+          }
         }
       });
     },
@@ -356,7 +338,6 @@ export function DealDetailPage({
                     expected_close_date: deal.expected_close_date,
                   }}
                   cardType={cardType}
-                  checklist={checklist}
                   visibilityContext={visibilityContext}
                 />
               </div>
@@ -464,13 +445,6 @@ export function DealDetailPage({
         </div>
       </div>
 
-      {/* Stage Blockers Dialog */}
-      <StageBlockersDialog
-        open={blockersDialogOpen}
-        onOpenChange={setBlockersDialogOpen}
-        targetStageLabel={targetStageLabel}
-        blockers={stageBlockers}
-      />
     </div>
   );
 }

@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import { updateUwDataAction } from "@/app/(authenticated)/admin/pipeline-v2/actions";
 import {
   type UnifiedCardType,
-  type ChecklistItem,
   type UwFieldDef,
   computeUwOutput,
   formatCurrency,
@@ -15,7 +14,6 @@ import {
 import { useResolvedCardType } from "@/hooks/useResolvedCardType";
 import type { VisibilityContext } from "@/lib/visibility-engine";
 import { evaluateFormula } from "@/lib/formula-engine";
-import { StageChecklist } from "./StageChecklist";
 import { toast } from "sonner";
 import {
   SectionCard,
@@ -33,7 +31,6 @@ import {
   Building2,
   User,
   FileText,
-  ClipboardCheck,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
@@ -109,7 +106,6 @@ interface EditableOverviewProps {
   dealId: string;
   uwData: Record<string, unknown>;
   cardType: UnifiedCardType;
-  checklist: ChecklistItem[];
   visibilityContext?: VisibilityContext | null;
 }
 
@@ -119,7 +115,6 @@ export function EditableOverview({
   dealId,
   uwData,
   cardType: rawCardType,
-  checklist,
   visibilityContext,
 }: EditableOverviewProps) {
   const router = useRouter();
@@ -234,11 +229,6 @@ export function EditableOverview({
           </div>
         </SectionCard>
       ))}
-
-      {/* Stage Checklist */}
-      <SectionCard title="Stage Checklist" icon={ClipboardCheck}>
-        <StageChecklist items={checklist} />
-      </SectionCard>
 
       {/* Edit Dialogs */}
       {cardType.detail_field_groups.map((group) => (

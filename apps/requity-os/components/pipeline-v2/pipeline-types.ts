@@ -191,22 +191,8 @@ export interface UnifiedDeal {
   primary_contact?: { id: string; first_name: string; last_name: string } | null;
   company?: { id: string; name: string } | null;
   // Computed client-side
-  checklist_total?: number;
-  checklist_completed?: number;
   days_in_stage?: number;
   alert_level?: AlertLevel;
-}
-
-export interface ChecklistItem {
-  id: string;
-  deal_id: string;
-  template_id: string | null;
-  item_label: string;
-  sort_order: number;
-  is_required: boolean;
-  completed: boolean;
-  completed_by: string | null;
-  completed_at: string | null;
 }
 
 export interface StageConfig {

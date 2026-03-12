@@ -9,7 +9,6 @@ import {
   type UnifiedDeal,
   type UnifiedCardType,
   type StageConfig,
-  type ChecklistItem,
   type DealActivity,
   type DealCondition,
 } from "@/components/pipeline-v2/pipeline-types";
@@ -58,7 +57,6 @@ export default async function DealDetailRoute({ params }: PageProps) {
   const [
     cardTypeRaw,
     stageConfigsRaw,
-    checklistRaw,
     activitiesRaw,
     teamResult,
     profileResult,
@@ -75,11 +73,6 @@ export default async function DealDetailRoute({ params }: PageProps) {
     admin
       .from("unified_stage_configs" as never)
       .select("*")
-      .order("sort_order" as never),
-    admin
-      .from("unified_deal_checklist" as never)
-      .select("*")
-      .eq("deal_id" as never, id as never)
       .order("sort_order" as never),
     admin
       .from("unified_deal_activity" as never)
@@ -127,7 +120,6 @@ export default async function DealDetailRoute({ params }: PageProps) {
 
   const cardType = cardTypeResult.data;
   const stageConfigs = ((stageConfigsRaw as unknown as { data: StageConfig[] | null }).data ?? []);
-  const checklistItems = ((checklistRaw as unknown as { data: ChecklistItem[] | null }).data ?? []);
   const activities = ((activitiesRaw as unknown as { data: DealActivity[] | null }).data ?? []);
   const conditions = ((conditionsRaw as unknown as { data: DealCondition[] | null }).data ?? []);
   const documents = ((documentsRaw as unknown as { data: Record<string, unknown>[] | null }).data ?? []);
@@ -308,8 +300,6 @@ export default async function DealDetailRoute({ params }: PageProps) {
     uw_data: resolvedUw,
     days_in_stage: days,
     alert_level: getAlertLevel(days, stageConfigMap.get(deal.stage)),
-    checklist_total: checklistItems.length,
-    checklist_completed: checklistItems.filter((c) => c.completed).length,
   };
 
   const teamMembers: Profile[] = (teamResult.data ?? []).map(
@@ -330,7 +320,6 @@ export default async function DealDetailRoute({ params }: PageProps) {
       deal={enrichedDeal}
       cardType={cardType}
       stageConfigs={stageConfigs}
-      checklist={checklistItems}
       activities={activities}
       crmActivities={crmActivities.map((a) => ({
         ...a,

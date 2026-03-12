@@ -14,7 +14,6 @@ import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
 import { StageStepper } from "./StageStepper";
-import { StageChecklist } from "./StageChecklist";
 import { UnderwritingPanel } from "./UnderwritingPanel";
 import {
   advanceStageAction,
@@ -23,7 +22,6 @@ import {
 import {
   type UnifiedDeal,
   type UnifiedCardType,
-  type ChecklistItem,
   type DealActivity,
   STAGES,
   CARD_TYPE_SHORT_LABELS,
@@ -37,7 +35,6 @@ import { toast } from "sonner";
 interface DealDrawerProps {
   deal: UnifiedDeal | null;
   cardType: UnifiedCardType | null;
-  checklist: ChecklistItem[];
   activities: DealActivity[];
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -46,7 +43,6 @@ interface DealDrawerProps {
 export function DealDrawer({
   deal,
   cardType,
-  checklist,
   activities,
   open,
   onOpenChange,
@@ -60,9 +56,6 @@ export function DealDrawer({
 
   const currentStageIndex = STAGES.findIndex((s) => s.key === deal.stage);
   const nextStage = STAGES[currentStageIndex + 1];
-  const requiredIncomplete = checklist.filter(
-    (c) => c.is_required && !c.completed
-  ).length;
 
   function handleAdvanceStage() {
     if (!nextStage || !deal) return;
@@ -183,13 +176,6 @@ export function DealDrawer({
                   </div>
                 ))}
 
-                {/* Checklist for current stage */}
-                <div className="space-y-2">
-                  <h4 className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                    Stage Checklist
-                  </h4>
-                  <StageChecklist items={checklist} />
-                </div>
               </TabsContent>
 
               {/* Underwriting Tab */}
@@ -312,21 +298,11 @@ export function DealDrawer({
             <Button
               size="sm"
               onClick={handleAdvanceStage}
-              disabled={requiredIncomplete > 0 || advancing}
-              title={
-                requiredIncomplete > 0
-                  ? `${requiredIncomplete} required items incomplete`
-                  : undefined
-              }
+              disabled={advancing}
             >
               {advancing
                 ? "Advancing..."
                 : `Advance to ${nextStage.label}`}
-              {requiredIncomplete > 0 && (
-                <span className="ml-1 text-[10px] opacity-70">
-                  ({requiredIncomplete} left)
-                </span>
-              )}
             </Button>
           </div>
         )}
