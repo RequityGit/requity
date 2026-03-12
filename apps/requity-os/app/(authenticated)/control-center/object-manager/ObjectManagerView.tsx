@@ -527,6 +527,7 @@ export function ObjectManagerView({ objects, fieldCounts, relationshipCounts }: 
         {(activeTab === "fields" || activeTab === "formulas") && selectedField && (
           <FieldConfigPanel
             field={selectedField}
+            siblingFields={fields}
             onClose={clearSelection}
             onUpdate={(updated) => {
               setSelectedField(updated);

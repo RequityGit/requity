@@ -27,8 +27,36 @@ import type { FieldConfig } from "../actions";
 import { updateFieldConfig } from "../actions";
 import { FIELD_TYPES, getFieldType } from "./constants";
 
+export interface ConditionRule {
+  source_field: string;
+  operator: string;
+  value: string;
+  action: string;
+  action_value?: string;
+}
+
+const OPERATORS = [
+  { value: "equals", label: "equals" },
+  { value: "not_equals", label: "not equals" },
+  { value: "contains", label: "contains" },
+  { value: "is_empty", label: "is empty" },
+  { value: "is_not_empty", label: "is not empty" },
+  { value: "greater_than", label: "greater than" },
+  { value: "less_than", label: "less than" },
+];
+
+const ACTIONS = [
+  { value: "show", label: "Show" },
+  { value: "hide", label: "Hide" },
+  { value: "require", label: "Require" },
+  { value: "set_value", label: "Set value" },
+];
+
+const VALUE_FREE_OPERATORS = ["is_empty", "is_not_empty"];
+
 interface Props {
   field: FieldConfig;
+  siblingFields?: FieldConfig[];
   onClose: () => void;
   onUpdate: (updated: FieldConfig) => void;
 }
@@ -45,7 +73,143 @@ const SUB_TABS: { key: SubTab; label: string; icon: typeof Settings2 }[] = [
 
 const ROLES = ["Super Admin", "Admin", "Team", "Investor", "Borrower"];
 
-export function FieldConfigPanel({ field, onClose, onUpdate }: Props) {
+function LogicTab({
+  field,
+  siblingFields,
+  onUpdate,
+}: {
+  field: FieldConfig;
+  siblingFields: FieldConfig[];
+  onUpdate: (updates: Partial<FieldConfig>) => Promise<void>;
+}) {
+  const rules = (field.conditional_rules ?? []) as ConditionRule[];
+  const otherFields = siblingFields.filter((f) => f.field_key !== field.field_key && !f.is_archived);
+
+  const updateRule = (index: number, patch: Partial<ConditionRule>) => {
+    const next = rules.map((r, i) => (i === index ? { ...r, ...patch } : r));
+    onUpdate({ conditional_rules: next });
+  };
+
+  const addRule = () => {
+    const next: ConditionRule[] = [
+      ...rules,
+      { source_field: "", operator: "equals", value: "", action: "show" },
+    ];
+    onUpdate({ conditional_rules: next });
+  };
+
+  const removeRule = (index: number) => {
+    onUpdate({ conditional_rules: rules.filter((_, i) => i !== index) });
+  };
+
+  return (
+    <div>
+      <label className="text-[9px] font-semibold uppercase tracking-wider text-muted-foreground block mb-1">
+        Conditional Logic
+      </label>
+      <p className="text-[10px] text-muted-foreground leading-relaxed mb-2">
+        Show, hide, require, or set value based on other fields.
+      </p>
+
+      {rules.map((rule, idx) => (
+        <div key={idx} className="p-2 rounded border border-border bg-muted mb-1.5">
+          <div className="flex items-center justify-between mb-1.5">
+            <div className="flex items-center gap-1">
+              <Zap size={10} className="text-yellow-600" />
+              <span className="text-[9px] font-semibold text-muted-foreground uppercase">
+                Rule {idx + 1}
+              </span>
+            </div>
+            <button
+              onClick={() => removeRule(idx)}
+              className="text-muted-foreground hover:text-destructive"
+            >
+              <X size={10} />
+            </button>
+          </div>
+
+          <div className="grid grid-cols-2 gap-1.5 mb-1.5">
+            <Select
+              value={rule.source_field}
+              onValueChange={(val) => updateRule(idx, { source_field: val })}
+            >
+              <SelectTrigger className="h-7 text-[10px]">
+                <SelectValue placeholder="Field..." />
+              </SelectTrigger>
+              <SelectContent>
+                {otherFields.map((f) => (
+                  <SelectItem key={f.field_key} value={f.field_key}>
+                    {f.field_label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            <Select
+              value={rule.operator}
+              onValueChange={(val) => updateRule(idx, { operator: val })}
+            >
+              <SelectTrigger className="h-7 text-[10px]">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {OPERATORS.map((op) => (
+                  <SelectItem key={op.value} value={op.value}>
+                    {op.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {!VALUE_FREE_OPERATORS.includes(rule.operator) && (
+            <Input
+              value={rule.value}
+              onChange={(e) => updateRule(idx, { value: e.target.value })}
+              placeholder="Value..."
+              className="h-7 text-[10px]"
+            />
+          )}
+
+          <div className="flex items-center gap-1.5 mt-1.5">
+            <span className="text-[10px] text-muted-foreground">Then</span>
+            <Select
+              value={rule.action}
+              onValueChange={(val) => updateRule(idx, { action: val })}
+            >
+              <SelectTrigger className="h-7 text-[10px] w-auto">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {ACTIONS.map((a) => (
+                  <SelectItem key={a.value} value={a.value}>
+                    {a.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {rule.action === "set_value" && (
+            <Input
+              value={rule.action_value ?? ""}
+              onChange={(e) => updateRule(idx, { action_value: e.target.value })}
+              placeholder="Set to..."
+              className="h-7 text-[10px] mt-1.5"
+            />
+          )}
+        </div>
+      ))}
+
+      <Button variant="ghost" size="sm" className="h-6 text-[10px] gap-1" onClick={addRule}>
+        <Plus size={10} />
+        Add Rule
+      </Button>
+    </div>
+  );
+}
+
+export function FieldConfigPanel({ field, siblingFields = [], onClose, onUpdate }: Props) {
   const [subTab, setSubTab] = useState<SubTab>("type");
   const [saving, setSaving] = useState(false);
   const ft = getFieldType(field.field_type);
@@ -288,66 +452,11 @@ export function FieldConfigPanel({ field, onClose, onUpdate }: Props) {
         )}
 
         {subTab === "logic" && (
-          <div>
-            <label className="text-[9px] font-semibold uppercase tracking-wider text-muted-foreground block mb-1">
-              Conditional Logic
-            </label>
-            <p className="text-[10px] text-muted-foreground leading-relaxed mb-2">
-              Show, hide, require, or set value based on other fields.
-            </p>
-
-            {/* Example rule */}
-            <div className="p-2 rounded border border-border bg-muted mb-1.5">
-              <div className="flex items-center gap-1 mb-1.5">
-                <Zap size={10} className="text-yellow-600" />
-                <span className="text-[9px] font-semibold text-muted-foreground uppercase">
-                  Rule 1
-                </span>
-              </div>
-              <div className="grid grid-cols-2 gap-1.5 mb-1.5">
-                <Select defaultValue="stage">
-                  <SelectTrigger className="h-7 text-[10px]">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="stage">stage</SelectItem>
-                    <SelectItem value="loan_type">loan_type</SelectItem>
-                    <SelectItem value="source">source</SelectItem>
-                  </SelectContent>
-                </Select>
-                <Select defaultValue="equals">
-                  <SelectTrigger className="h-7 text-[10px]">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="equals">equals</SelectItem>
-                    <SelectItem value="not_equals">not equals</SelectItem>
-                    <SelectItem value="contains">contains</SelectItem>
-                    <SelectItem value="is_empty">is empty</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <Input defaultValue="Underwriting" className="h-7 text-[10px]" />
-              <div className="flex items-center gap-1.5 mt-1.5">
-                <span className="text-[10px] text-muted-foreground">Then</span>
-                <Select defaultValue="require">
-                  <SelectTrigger className="h-7 text-[10px] w-auto">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="show">Show</SelectItem>
-                    <SelectItem value="hide">Hide</SelectItem>
-                    <SelectItem value="require">Require</SelectItem>
-                    <SelectItem value="set">Set value</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-            <Button variant="ghost" size="sm" className="h-6 text-[10px] gap-1">
-              <Plus size={10} />
-              Add Rule
-            </Button>
-          </div>
+          <LogicTab
+            field={field}
+            siblingFields={siblingFields}
+            onUpdate={handleUpdate}
+          />
         )}
 
         {subTab === "stage" && (

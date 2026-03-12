@@ -3,7 +3,7 @@
 ## Key Files
 - `apps/requity-os/app/(authenticated)/control-center/object-manager/` - All Object Manager UI
 - `apps/requity-os/app/(authenticated)/control-center/object-manager/actions.ts` - Server actions (1100+ lines)
-- `apps/requity-os/lib/visibility-engine.ts` - Conditional visibility evaluator (not wired into runtime yet)
+- `apps/requity-os/lib/visibility-engine.ts` - Conditional visibility evaluator (wired into resolve-card-type-fields.ts and useResolvedCardType)
 - `apps/requity-os/app/(authenticated)/control-center/card-types/` - Separate, no overlap
 
 ## Decisions Made
@@ -27,5 +27,5 @@
 - field_configurations table
 - Detail pages consume page_layout_sections directly (not via hooks)
 
-## Last Updated: 2026-03-11
-## Next Steps: Runtime visibility wiring (separate task) - connect visibility-engine.ts to pipeline deal rendering
+## Last Updated: 2026-03-12
+## Next Steps: Consolidation complete. Visibility engine already wired. Next task: wire useFieldConfigurations into CRM/loan detail pages.
