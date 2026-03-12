@@ -135,34 +135,45 @@ export function EditableOverview({
     return map;
   }, [cardType.uw_fields, cardType.property_fields, cardType.contact_fields]);
 
-  // Compute layout-driven field groups for the Overview tab.
-  // If layout sections exist for the overview tab with section_type="fields", use those.
-  // Otherwise, fall back to card type's detail_field_groups.
+  // Compute effective field groups for the Overview tab.
+  //
+  // Priority: card type detail_field_groups > layout-driven sections > empty.
+  //
+  // Card types define per-deal-type field groups (e.g., Commercial Equity has
+  // "Acquisition", "Capital Stack", "Returns & Exit" — very different from a
+  // Residential Debt deal). The layout tables serve as:
+  //   1. The Object Manager's visual representation (so admins see the structure)
+  //   2. A fallback for deals whose card type has no detail_field_groups
+  //
+  // Eventually, card type groups will migrate INTO layout tables with
+  // card_type_id filtering, but for now card types take priority.
   const effectiveFieldGroups = useMemo(() => {
-    if (layout.loading || layout.fieldSections.length === 0) {
-      // No layout data yet or no field sections → use card type groups
+    // If the card type defines its own field groups, always use them —
+    // they're tailored to this specific deal type's fields.
+    if (cardType.detail_field_groups.length > 0) {
       return cardType.detail_field_groups;
     }
 
-    // Get field-based sections for the overview tab only
-    const overviewFieldSections = layout.fieldSections.filter(
-      (s) => (s.tab_key || "overview") === "overview"
-    );
+    // No card type groups → try layout-driven sections as fallback
+    if (!layout.loading && layout.fieldSections.length > 0) {
+      const overviewFieldSections = layout.fieldSections.filter(
+        (s) => (s.tab_key || "overview") === "overview"
+      );
 
-    if (overviewFieldSections.length === 0) {
-      return cardType.detail_field_groups;
+      if (overviewFieldSections.length > 0) {
+        return overviewFieldSections.map((section) => {
+          const layoutFields = layout.fieldsBySectionId[section.id] ?? [];
+          return {
+            label: section.section_label,
+            fields: layoutFields
+              .filter((f) => f.is_visible)
+              .map((f) => f.field_key),
+          };
+        });
+      }
     }
 
-    // Convert layout sections → field group format
-    return overviewFieldSections.map((section) => {
-      const layoutFields = layout.fieldsBySectionId[section.id] ?? [];
-      return {
-        label: section.section_label,
-        fields: layoutFields
-          .filter((f) => f.is_visible)
-          .map((f) => f.field_key),
-      };
-    });
+    return [];
   }, [layout.loading, layout.fieldSections, layout.fieldsBySectionId, cardType.detail_field_groups]);
 
   // Evaluate formula fields against current deal data
