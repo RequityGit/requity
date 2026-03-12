@@ -124,8 +124,9 @@ export function EditableOverview({
   // Resolve field refs from field_configurations (falls back to inline fields)
   const cardType = useResolvedCardType(rawCardType, visibilityContext);
 
-  // Fetch layout-driven sections from page_layout_sections / page_layout_fields
-  const layout = useDealLayout();
+  // Fetch layout-driven sections from page_layout_sections / page_layout_fields,
+  // filtered to this deal's card type (+ shared system sections).
+  const layout = useDealLayout(rawCardType.id);
 
   // Build a combined field map including property and contact fields
   const uwFieldMap = useMemo(() => {
@@ -137,24 +138,14 @@ export function EditableOverview({
 
   // Compute effective field groups for the Overview tab.
   //
-  // Priority: card type detail_field_groups > layout-driven sections > empty.
+  // Priority: layout-driven sections (Object Manager) > card type detail_field_groups > empty.
   //
-  // Card types define per-deal-type field groups (e.g., Commercial Equity has
-  // "Acquisition", "Capital Stack", "Returns & Exit" — very different from a
-  // Residential Debt deal). The layout tables serve as:
-  //   1. The Object Manager's visual representation (so admins see the structure)
-  //   2. A fallback for deals whose card type has no detail_field_groups
-  //
-  // Eventually, card type groups will migrate INTO layout tables with
-  // card_type_id filtering, but for now card types take priority.
+  // The Object Manager is the single source of truth. Layout tables contain
+  // per-card-type sections (card_type_id filtering) that mirror the original
+  // card type field groups. Card type detail_field_groups are kept as a
+  // temporary fallback until the migration is fully validated.
   const effectiveFieldGroups = useMemo(() => {
-    // If the card type defines its own field groups, always use them —
-    // they're tailored to this specific deal type's fields.
-    if (cardType.detail_field_groups.length > 0) {
-      return cardType.detail_field_groups;
-    }
-
-    // No card type groups → try layout-driven sections as fallback
+    // Primary: layout-driven sections from Object Manager
     if (!layout.loading && layout.fieldSections.length > 0) {
       const overviewFieldSections = layout.fieldSections.filter(
         (s) => (s.tab_key || "overview") === "overview"
@@ -171,6 +162,11 @@ export function EditableOverview({
           };
         });
       }
+    }
+
+    // Fallback: card type detail_field_groups (temporary until fully migrated)
+    if (cardType.detail_field_groups.length > 0) {
+      return cardType.detail_field_groups;
     }
 
     return [];
