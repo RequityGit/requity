@@ -297,17 +297,22 @@ Deno.serve(async (req: Request) => {
     return new Response("ok", { headers: corsHeaders });
   }
 
-  // Verify CRON_SECRET bearer token (set the same value in pg_cron and here)
+  // Verify bearer token: accept either CRON_SECRET or the service_role key.
+  // pg_cron sends the service_role key from Vault; manual calls can use either.
+  const authHeader = req.headers.get("Authorization") || "";
+  const token = authHeader.replace(/^Bearer\s+/i, "");
   const cronSecret = Deno.env.get("CRON_SECRET");
-  if (cronSecret) {
-    const authHeader = req.headers.get("Authorization") || "";
-    const token = authHeader.replace(/^Bearer\s+/i, "");
-    if (token !== cronSecret) {
-      return new Response(JSON.stringify({ error: "Unauthorized" }), {
-        status: 401,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
+  const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+
+  const isAuthorized =
+    (cronSecret && token === cronSecret) ||
+    (serviceRoleKey && token === serviceRoleKey);
+
+  if (!isAuthorized) {
+    return new Response(JSON.stringify({ error: "Unauthorized" }), {
+      status: 401,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
   }
 
   const admin = createClient(
