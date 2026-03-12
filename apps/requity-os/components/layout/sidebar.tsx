@@ -209,8 +209,8 @@ export function Sidebar({
       <div className="flex items-center justify-between px-4 py-[18px]">
         {!collapsed && (
           <Link href={`/${role}/dashboard`} className="flex items-center gap-2">
-            <div className="h-7 w-7 rounded-md bg-foreground flex items-center justify-center">
-              <span className="text-background text-[13px] font-extrabold leading-none">R</span>
+            <div className="h-8 w-8 rounded-md bg-foreground flex items-center justify-center">
+              <span className="text-background text-[15px] font-extrabold leading-none">R</span>
             </div>
             <span className="text-[15px] font-bold tracking-[-0.03em] text-sidebar-foreground">
               Requity

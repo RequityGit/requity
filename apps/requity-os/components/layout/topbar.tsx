@@ -68,12 +68,12 @@ export function Topbar({ userName, role, email, allowedRoles, userId, isSuperAdm
           <img
             src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/brand-assets/Requity%20Logo%20White.svg?v=2`}
             alt="Requity"
-            className="h-8 w-auto dark:block hidden"
+            className="h-10 w-auto dark:block hidden"
           />
           <img
             src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/brand-assets/Requity%20Logo%20White.svg?v=2`}
             alt="Requity"
-            className="h-8 w-auto dark:hidden invert"
+            className="h-10 w-auto dark:hidden invert"
           />
         </div>
 
