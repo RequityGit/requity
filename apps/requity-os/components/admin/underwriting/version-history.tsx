@@ -4,12 +4,9 @@ import { useState, useEffect } from "react";
 import { Clock, Check, FileText, ChevronRight } from "lucide-react";
 import type { UnderwritingModelType } from "@/lib/underwriting/resolver";
 import { getModelConfig } from "@/lib/underwriting/resolver";
-import { createBrowserClient } from "@supabase/ssr";
+import { createClient } from "@/lib/supabase/client";
 
-const supabase = createBrowserClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-);
+const supabase = createClient();
 
 interface VersionHistoryProps {
   modelType: UnderwritingModelType;
@@ -44,7 +41,7 @@ export function VersionHistory({
       setLoading(true);
       try {
         const { data, error } = await supabase
-          .from(config.primaryTable)
+          .from(config.primaryTable as never)
           .select("id, version_number, is_active, status, label, created_at")
           .eq("scenario_id", scenarioId)
           .order("version_number", { ascending: false });

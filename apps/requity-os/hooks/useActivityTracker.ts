@@ -3,6 +3,7 @@
 import { useEffect, useRef, useCallback } from "react";
 import { usePathname } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import { SUPABASE_URL } from "@/lib/supabase/constants";
 
 interface ActivityEvent {
   action_type: string;
@@ -18,7 +19,7 @@ interface ActivityEvent {
 const BATCH_SIZE = 10;
 const FLUSH_INTERVAL_MS = 30_000;
 const EDGE_FUNCTION_URL =
-  process.env.NEXT_PUBLIC_SUPABASE_URL + "/functions/v1/track-activity";
+  SUPABASE_URL + "/functions/v1/track-activity";
 
 function getOrCreateSessionId(): string {
   if (typeof window === "undefined") return "";

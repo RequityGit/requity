@@ -21,6 +21,7 @@ import {
 } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import { createClient } from "@/lib/supabase/client";
+import { SUPABASE_URL, SUPABASE_ANON_KEY } from "@/lib/supabase/constants";
 import {
   fetchTemplatesForRecord,
   resolveTemplateData,
@@ -146,15 +147,13 @@ export function GenerateDocumentDialog({
         return;
       }
 
-      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-      const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
       const res = await fetch(
-        `${supabaseUrl}/functions/v1/generate-document`,
+        `${SUPABASE_URL}/functions/v1/generate-document`,
         {
           method: "POST",
           headers: {
             Authorization: `Bearer ${session.access_token}`,
-            apikey: supabaseAnonKey ?? "",
+            apikey: SUPABASE_ANON_KEY,
             "Content-Type": "application/json",
           },
           body: JSON.stringify({

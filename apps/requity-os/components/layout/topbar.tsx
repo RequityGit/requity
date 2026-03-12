@@ -1,6 +1,7 @@
 "use client";
 
 import { createClient } from "@/lib/supabase/client";
+import { SUPABASE_URL } from "@/lib/supabase/constants";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { useState } from "react";
@@ -66,12 +67,12 @@ export function Topbar({ userName, role, email, allowedRoles, userId, isSuperAdm
         {/* Mobile: centered logo */}
         <div className="md:hidden flex-1 flex justify-center">
           <img
-            src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/brand-assets/Requity%20Logo%20White.svg?v=2`}
+            src={`${SUPABASE_URL}/storage/v1/object/public/brand-assets/Requity%20Logo%20White.svg?v=2`}
             alt="Requity"
             className="h-10 w-auto dark:block hidden"
           />
           <img
-            src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/brand-assets/Requity%20Logo%20White.svg?v=2`}
+            src={`${SUPABASE_URL}/storage/v1/object/public/brand-assets/Requity%20Logo%20White.svg?v=2`}
             alt="Requity"
             className="h-10 w-auto dark:hidden invert"
           />

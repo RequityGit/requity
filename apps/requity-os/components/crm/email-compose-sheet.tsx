@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import { SUPABASE_URL } from "@/lib/supabase/constants";
 import { useToast } from "@/components/ui/use-toast";
 import { EmailComposerShell } from "@/components/email/email-composer-shell";
 import { Button } from "@/components/ui/button";
@@ -164,9 +165,8 @@ export function EmailComposeSheet({
         return;
       }
 
-      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
       const response = await fetch(
-        `${supabaseUrl}/functions/v1/resolve-user-template`,
+        `${SUPABASE_URL}/functions/v1/resolve-user-template`,
         {
           method: "POST",
           headers: {

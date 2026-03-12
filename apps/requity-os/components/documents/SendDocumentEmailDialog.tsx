@@ -2,6 +2,7 @@
 
 import { useState, useCallback, useEffect } from "react";
 import { createClient } from "@/lib/supabase/client";
+import { SUPABASE_URL } from "@/lib/supabase/constants";
 import { toast } from "sonner";
 import { generatePdfBlob } from "@/lib/export-pdf";
 import { EmailComposeSheet } from "@/components/crm/email-compose-sheet";
@@ -88,9 +89,8 @@ export function SendDocumentEmailDialog({
           // Resolve merge fields via the edge function
           const { data: { session } } = await supabase.auth.getSession();
           if (session) {
-            const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
             const response = await fetch(
-              `${supabaseUrl}/functions/v1/resolve-user-template`,
+              `${SUPABASE_URL}/functions/v1/resolve-user-template`,
               {
                 method: "POST",
                 headers: {

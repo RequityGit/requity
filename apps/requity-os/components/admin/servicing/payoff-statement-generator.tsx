@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { DataTable, Column } from "@/components/shared/data-table";
 import { formatCurrencyDetailed, formatDate } from "@/lib/format";
 import { createClient } from "@/lib/supabase/client";
+import { SUPABASE_URL } from "@/lib/supabase/constants";
 import {
   FileText,
   ChevronDown,
@@ -184,8 +185,6 @@ export function PayoffStatementGenerator({ loanId, loan }: PayoffStatementGenera
         return;
       }
 
-      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-
       // Build fee overrides — only include if user changed values
       const overrides: Record<string, number> = {};
       for (const [key, val] of Object.entries(feeOverrides)) {
@@ -198,7 +197,7 @@ export function PayoffStatementGenerator({ loanId, loan }: PayoffStatementGenera
       }
 
       const res = await fetch(
-        `${supabaseUrl}/functions/v1/generate-payoff-statement`,
+        `${SUPABASE_URL}/functions/v1/generate-payoff-statement`,
         {
           method: "POST",
           headers: {
