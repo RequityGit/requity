@@ -1,0 +1,5 @@
+[fetch-intake-emails]
+verify_jwt = false
+
+[process-intake-email]
+verify_jwt = false
