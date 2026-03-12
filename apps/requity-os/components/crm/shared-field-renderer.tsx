@@ -10,8 +10,9 @@ import type {
   CrmSectionField,
   CrmFieldType,
 } from "@/components/crm/crm-edit-section-dialog";
-import { formatCurrency, formatDate, formatPhoneNumber, formatPhoneInput } from "@/lib/format";
+import { formatCurrency, formatDate, formatPhoneNumber, formatPhoneInput, formatPercent } from "@/lib/format";
 import { CRM_COMPANY_TYPES, CRM_COMPANY_SUBTYPES } from "@/lib/constants";
+import { evaluateFormula } from "@/lib/formula-engine";
 import type { FieldLayout } from "./contact-360/types";
 
 // --- Field key → object property mapping for mismatches ---
@@ -173,6 +174,38 @@ export function renderField(
         label={f.field_label}
         value={rendered}
         mono={f.field_type === "currency"}
+      />
+    );
+  }
+
+  // Formula field: evaluate expression against section data
+  if (f.field_type === "formula" && f.formula_expression) {
+    const result = evaluateFormula(f.formula_expression, dataObj);
+    let formulaDisplay: ReactNode;
+    if (result == null) {
+      formulaDisplay = undefined; // shows "—"
+    } else {
+      const decimals = f.formula_decimal_places ?? 2;
+      switch (f.formula_output_format) {
+        case "currency":
+          formulaDisplay = formatCurrency(result);
+          break;
+        case "percent":
+          formulaDisplay = formatPercent(result);
+          break;
+        case "number":
+          formulaDisplay = result.toFixed(decimals);
+          break;
+        default:
+          formulaDisplay = result.toFixed(decimals);
+      }
+    }
+    return (
+      <FieldRow
+        key={f.field_key}
+        label={f.field_label}
+        value={formulaDisplay}
+        mono={f.formula_output_format === "currency"}
       />
     );
   }

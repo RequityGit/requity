@@ -5,6 +5,8 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { requireAdmin } from "@/lib/auth/require-admin";
 import type { Database, Json } from "@/lib/supabase/types";
 import { FIELD_MAPPING_MAP } from "@/lib/pipeline/uw-field-mappings";
+import { validateStageGating } from "@/lib/pipeline/stage-gating";
+import { validateStageAdvancement } from "@/lib/pipeline/validate-stage-advancement";
 import type {
   IntakeDecisions,
   IntakeEntityKey,
@@ -226,6 +228,22 @@ export async function advanceStageAction(
 
     if (fetchErr || !deal) {
       return { error: "Deal not found" };
+    }
+
+    const dealRecord = deal as Record<string, unknown>;
+    const uwData = (dealRecord.uw_data ?? {}) as Record<string, unknown>;
+
+    // 1. Config-driven stage rule validation
+    const ruleValidation = await validateStageAdvancement(dealRecord, newStage);
+    if (!ruleValidation.valid) {
+      return { error: ruleValidation.message };
+    }
+
+    // 2. Field-level stage gating (blocks_stage_progression fields)
+    const gating = await validateStageGating(newStage, dealRecord, uwData);
+    if (!gating.canProgress) {
+      const fieldList = gating.missingFields.map((f) => f.label).join(", ");
+      return { error: `Missing required fields: ${fieldList}` };
     }
 
     const { error } = await admin.rpc("unified_advance_stage", {

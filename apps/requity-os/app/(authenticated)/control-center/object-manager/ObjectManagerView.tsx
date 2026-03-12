@@ -535,6 +535,7 @@ export function ObjectManagerView({ objects, fieldCounts, relationshipCounts }: 
                 setSelectedSection(null);
               }}
               onLayoutChange={handleDataChange}
+              onDraftLayoutChange={draft.draftLayoutChange}
               loading={loading}
             />
           )}

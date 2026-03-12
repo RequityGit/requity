@@ -295,11 +295,11 @@ export default async function CompanyDetailPage({ params }: PageProps) {
       .map((r) => r.field_config_id as string)
       .filter(Boolean);
 
-    let fcLookup: Record<string, { field_label: string; field_type: string; dropdown_options: unknown; conditional_rules: unknown; permissions: unknown; is_required: boolean }> = {};
+    let fcLookup: Record<string, { field_label: string; field_type: string; dropdown_options: unknown; conditional_rules: unknown; permissions: unknown; is_required: boolean; formula_expression: string | null; formula_output_format: string | null; formula_decimal_places: number | null }> = {};
     if (fcIds.length > 0) {
       const { data: fcRows } = await admin
         .from("field_configurations" as never)
-        .select("id, field_label, field_type, dropdown_options, conditional_rules, permissions, is_required" as never)
+        .select("id, field_label, field_type, dropdown_options, conditional_rules, permissions, is_required, formula_expression, formula_output_format, formula_decimal_places" as never)
         .in("id" as never, fcIds as never);
 
       for (const fc of (fcRows ?? []) as Record<string, unknown>[]) {
@@ -310,6 +310,9 @@ export default async function CompanyDetailPage({ params }: PageProps) {
           conditional_rules: fc.conditional_rules,
           permissions: fc.permissions,
           is_required: (fc.is_required as boolean) ?? false,
+          formula_expression: (fc.formula_expression as string | null) ?? null,
+          formula_output_format: (fc.formula_output_format as string | null) ?? null,
+          formula_decimal_places: (fc.formula_decimal_places as number | null) ?? null,
         };
       }
     }
@@ -344,6 +347,9 @@ export default async function CompanyDetailPage({ params }: PageProps) {
         source_object_key: (row.source_object_key as string | null) ?? "company",
         conditional_rules: fc.conditional_rules as FieldLayout["conditional_rules"],
         permissions: fc.permissions as FieldLayout["permissions"],
+        formula_expression: fc.formula_expression,
+        formula_output_format: fc.formula_output_format,
+        formula_decimal_places: fc.formula_decimal_places,
       });
     }
   }

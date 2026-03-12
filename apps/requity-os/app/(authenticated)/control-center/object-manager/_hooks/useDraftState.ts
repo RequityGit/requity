@@ -65,6 +65,11 @@ export function useDraftState() {
   // Track archived field IDs in draft
   const [draftArchivedFieldIds, setDraftArchivedFieldIds] = useState<Set<string>>(new Set());
 
+  // Track layout changes (already saved to DB, but tracked for dirty count & diff)
+  const [draftLayoutChanges, setDraftLayoutChanges] = useState<
+    { id: string; type: DraftChangeType; label: string; description: string }[]
+  >([]);
+
   // ---------------------------------------------------------------------------
   // Record a field update (accumulate changes)
   // ---------------------------------------------------------------------------
@@ -141,6 +146,31 @@ export function useDraftState() {
         entityLabel: field.field_label,
         timestamp: Date.now(),
         originalSnapshot: { ...field },
+      };
+      setChangeLog((prev) => [...prev, change]);
+    },
+    []
+  );
+
+  // ---------------------------------------------------------------------------
+  // Record a layout change (already persisted to DB, tracked for dirty state)
+  // ---------------------------------------------------------------------------
+  const draftLayoutChange = useCallback(
+    (type: DraftChangeType, label: string, description: string) => {
+      const changeId = nextChangeId();
+
+      setDraftLayoutChanges((prev) => [
+        ...prev,
+        { id: changeId, type, label, description },
+      ]);
+
+      const change: DraftChange = {
+        id: changeId,
+        type,
+        entityId: changeId,
+        entityLabel: label,
+        timestamp: Date.now(),
+        meta: { description },
       };
       setChangeLog((prev) => [...prev, change]);
     },
@@ -280,8 +310,15 @@ export function useDraftState() {
       };
     });
 
-    return { updates, creates, archives };
-  }, [draftFieldOverrides, draftNewFields, draftArchivedFieldIds]);
+    const layoutChanges = draftLayoutChanges.map((lc) => ({
+      id: lc.id,
+      type: lc.type,
+      label: lc.label,
+      description: lc.description,
+    }));
+
+    return { updates, creates, archives, layoutChanges };
+  }, [draftFieldOverrides, draftNewFields, draftArchivedFieldIds, draftLayoutChanges]);
 
   // ---------------------------------------------------------------------------
   // Get publishable payload
@@ -321,6 +358,7 @@ export function useDraftState() {
     setDraftFieldOverrides(new Map());
     setDraftNewFields(new Map());
     setDraftArchivedFieldIds(new Set());
+    setDraftLayoutChanges([]);
     originalFieldSnapshots.current.clear();
   }, []);
 
@@ -339,8 +377,9 @@ export function useDraftState() {
     Array.from(draftFieldOverrides.keys()).forEach((id) => entityIds.add(id));
     Array.from(draftNewFields.keys()).forEach((id) => entityIds.add(id));
     Array.from(draftArchivedFieldIds).forEach((id) => entityIds.add(id));
+    draftLayoutChanges.forEach((lc) => entityIds.add(lc.id));
     return entityIds.size;
-  }, [draftFieldOverrides, draftNewFields, draftArchivedFieldIds]);
+  }, [draftFieldOverrides, draftNewFields, draftArchivedFieldIds, draftLayoutChanges]);
 
   const hasChanges = dirtyCount > 0;
 
@@ -354,6 +393,7 @@ export function useDraftState() {
     draftFieldUpdate,
     draftFieldCreate,
     draftFieldArchive,
+    draftLayoutChange,
 
     // Queries
     applyDraftToFields,

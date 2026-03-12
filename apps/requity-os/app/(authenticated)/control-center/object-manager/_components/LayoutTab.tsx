@@ -122,6 +122,7 @@ interface Props {
   onSelectSection: (section: PageSection) => void;
   onSelectTab: (tab: TabInfo) => void;
   onLayoutChange?: () => void;
+  onDraftLayoutChange?: (type: string, label: string, description: string) => void;
   loading: boolean;
 }
 
@@ -333,6 +334,7 @@ export function LayoutTab({
   onSelectSection,
   onSelectTab,
   onLayoutChange,
+  onDraftLayoutChange,
   loading,
 }: Props) {
   const [activeView, setActiveView] = useState("detail");
@@ -427,13 +429,15 @@ export function LayoutTab({
       });
       if (result.data) {
         setShowAddSectionDialog(false);
+        const label = newSectionLabel.trim();
         setNewSectionLabel("");
         onLayoutChange?.();
+        onDraftLayoutChange?.("section_create", `New section: ${label}`, `Added section "${label}" to layout`);
       }
     } finally {
       setAddingSectionPending(false);
     }
-  }, [newSectionLabel, pageType, onLayoutChange]);
+  }, [newSectionLabel, pageType, onLayoutChange, onDraftLayoutChange]);
 
   const handleAddTab = useCallback(async () => {
     if (!newTabLabel.trim() || !pageType) return;
@@ -447,13 +451,15 @@ export function LayoutTab({
       });
       if (result.data) {
         setShowAddTabDialog(false);
+        const label = newTabLabel.trim();
         setNewTabLabel("");
         onLayoutChange?.();
+        onDraftLayoutChange?.("section_create", `New tab: ${label}`, `Added tab "${label}" to page`);
       }
     } finally {
       setAddingTabPending(false);
     }
-  }, [newTabLabel, pageType, onLayoutChange]);
+  }, [newTabLabel, pageType, onLayoutChange, onDraftLayoutChange]);
 
   // Reset active tab when tabs change
   useEffect(() => {
@@ -546,7 +552,10 @@ export function LayoutTab({
         });
 
         if (sectionUpdates.length > 0) {
-          reorderLayoutSections(sectionUpdates).then(() => onLayoutChange?.());
+          reorderLayoutSections(sectionUpdates).then(() => {
+            onLayoutChange?.();
+            onDraftLayoutChange?.("section_reorder", "Reordered sections", "Changed the display order of sections");
+          });
         }
         return;
       }
@@ -641,7 +650,10 @@ export function LayoutTab({
         });
 
         if (fieldUpdates.length > 0) {
-          reorderLayoutFields(fieldUpdates).then(() => onLayoutChange?.());
+          reorderLayoutFields(fieldUpdates).then(() => {
+            onLayoutChange?.();
+            onDraftLayoutChange?.("layout_field_reorder", "Reordered fields", "Changed field positions in layout");
+          });
         }
         return;
       }
@@ -686,11 +698,12 @@ export function LayoutTab({
         if (result.data) {
           setLocalFields((prev) => [...prev, result.data!]);
           onLayoutChange?.();
+          onDraftLayoutChange?.("layout_field_add", `Added: ${fieldConfig.field_label}`, `Added "${fieldConfig.field_label}" to layout section`);
         }
         return;
       }
     },
-    [fields, onLayoutChange]
+    [fields, onLayoutChange, onDraftLayoutChange]
   );
 
   const handleDragCancel = useCallback(() => {

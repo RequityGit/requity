@@ -1,9 +1,10 @@
 "use client";
 
-import { X, Plus, Trash2, PenLine, ArrowRight, Check, Loader2 } from "lucide-react";
+import { X, Plus, Trash2, PenLine, ArrowRight, Check, Loader2, LayoutGrid } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@repo/lib";
 import type { FieldConfig } from "../actions";
+import type { DraftChangeType } from "../_hooks/useDraftState";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -23,6 +24,12 @@ interface DiffSummary {
   archives: {
     fieldId: string;
     label: string;
+  }[];
+  layoutChanges?: {
+    id: string;
+    type: DraftChangeType;
+    label: string;
+    description: string;
   }[];
 }
 
@@ -89,8 +96,8 @@ export function DiffReviewModal({
 }: Props) {
   if (!open) return null;
 
-  const { updates, creates, archives } = diffSummary;
-  const totalChanges = updates.length + creates.length + archives.length;
+  const { updates, creates, archives, layoutChanges = [] } = diffSummary;
+  const totalChanges = updates.length + creates.length + archives.length + layoutChanges.length;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
@@ -190,6 +197,29 @@ export function DiffReviewModal({
                   <div className="text-xs font-medium text-red-400">{item.label}</div>
                   <div className="text-[10px] text-muted-foreground mt-0.5">
                     Will be archived and hidden from all pages
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Layout Changes */}
+          {layoutChanges.length > 0 && (
+            <div>
+              <div className="flex items-center gap-1.5 mb-2">
+                <LayoutGrid size={12} className="text-emerald-500" />
+                <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                  Layout Changes ({layoutChanges.length})
+                </span>
+              </div>
+              {layoutChanges.map((item) => (
+                <div
+                  key={item.id}
+                  className="rounded border border-emerald-500/20 bg-emerald-500/5 p-2.5 mb-2"
+                >
+                  <div className="text-xs font-medium">{item.label}</div>
+                  <div className="text-[10px] text-muted-foreground mt-0.5">
+                    {item.description}
                   </div>
                 </div>
               ))}
