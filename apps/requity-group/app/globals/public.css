@@ -180,12 +180,12 @@ nav.scrolled {
 .nav-logo:hover { opacity: 0.85; }
 .nav-logo .logo-dot { color: var(--gold-muted); }
 .nav-logo img {
-  height: 44px; width: auto;
+  height: 66px; width: auto;
   transition: opacity 0.3s;
 }
 .nav-logo:hover img { opacity: 0.85; }
 .footer-brand .nav-logo img {
-  height: 36px;
+  height: 54px;
 }
 .nav-links { display: flex; align-items: center; gap: 44px; list-style: none; }
 .nav-links a {
