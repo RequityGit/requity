@@ -67,6 +67,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { getObjectIcon, getFieldType } from "./constants";
 import type { TabInfo } from "../ObjectManagerView";
+import type { DraftChangeType } from "../_hooks/useDraftState";
 
 // Page type mapping (mirrors ObjectManagerView)
 const OBJECT_PAGE_TYPE_MAP: Record<string, string> = {
@@ -122,7 +123,7 @@ interface Props {
   onSelectSection: (section: PageSection) => void;
   onSelectTab: (tab: TabInfo) => void;
   onLayoutChange?: () => void;
-  onDraftLayoutChange?: (type: string, label: string, description: string) => void;
+  onDraftLayoutChange?: (type: DraftChangeType, label: string, description: string) => void;
   loading: boolean;
 }
 
