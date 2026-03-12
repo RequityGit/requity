@@ -13,6 +13,10 @@
 [[plugins]]
   package = "@netlify/plugin-nextjs"
 
+[[edge_functions]]
+  path = "/*"
+  function = "force-https"
+
 [[headers]]
   for = "/*"
   [headers.values]
