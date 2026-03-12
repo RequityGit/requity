@@ -184,8 +184,26 @@ export function CreateDocumentDialog() {
     try {
       const supabase = createClient();
 
-      const { data: { session }, error: refreshError } = await supabase.auth.refreshSession();
-      if (refreshError || !session) {
+      // Try the current session first; only force-refresh when the access token
+      // is missing or expires within the next 60 seconds.
+      let session: Awaited<ReturnType<typeof supabase.auth.getSession>>["data"]["session"] = null;
+      const { data: current } = await supabase.auth.getSession();
+      const expiresAt = current.session?.expires_at ?? 0;
+      const needsRefresh = !current.session || expiresAt - Math.floor(Date.now() / 1000) < 60;
+
+      if (needsRefresh) {
+        const { data: refreshed, error: refreshError } = await supabase.auth.refreshSession();
+        if (refreshError || !refreshed.session) {
+          toast.error("Session expired. Please sign in again.");
+          setGenerating(false);
+          return;
+        }
+        session = refreshed.session;
+      } else {
+        session = current.session;
+      }
+
+      if (!session) {
         toast.error("Session expired. Please sign in again.");
         setGenerating(false);
         return;

@@ -19,6 +19,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { createClient } from "@/lib/supabase/client";
 import { SUPABASE_URL, SUPABASE_ANON_KEY } from "@/lib/supabase/constants";
@@ -82,6 +83,7 @@ export function GenerateDocumentDialog({
   const [resolvedFields, setResolvedFields] = useState<ResolvedField[]>([]);
   const [loadingFields, setLoadingFields] = useState(false);
   const [generating, setGenerating] = useState(false);
+  const [fieldOverrides, setFieldOverrides] = useState<Record<string, string>>({});
   const [result, setResult] = useState<{
     documentId: string;
     fileName: string;
@@ -99,6 +101,7 @@ export function GenerateDocumentDialog({
       setStep("select");
       setSelectedTemplate(null);
       setResolvedFields([]);
+      setFieldOverrides({});
       setResult(null);
       loadTemplates();
     } else if (navTimerRef.current) {
@@ -140,8 +143,26 @@ export function GenerateDocumentDialog({
     try {
       const supabase = createClient();
 
-      const { data: { session }, error: refreshError } = await supabase.auth.refreshSession();
-      if (refreshError || !session) {
+      // Try the current session first; only force-refresh when the access token
+      // is missing or expires within the next 60 seconds.
+      let session: Awaited<ReturnType<typeof supabase.auth.getSession>>["data"]["session"] = null;
+      const { data: current } = await supabase.auth.getSession();
+      const expiresAt = current.session?.expires_at ?? 0;
+      const needsRefresh = !current.session || expiresAt - Math.floor(Date.now() / 1000) < 60;
+
+      if (needsRefresh) {
+        const { data: refreshed, error: refreshError } = await supabase.auth.refreshSession();
+        if (refreshError || !refreshed.session) {
+          toast.error("Session expired. Please sign in again.");
+          setGenerating(false);
+          return;
+        }
+        session = refreshed.session;
+      } else {
+        session = current.session;
+      }
+
+      if (!session) {
         toast.error("Session expired. Please sign in again.");
         setGenerating(false);
         return;
@@ -160,6 +181,7 @@ export function GenerateDocumentDialog({
             template_id: selectedTemplate.id,
             record_id: recordId,
             page_record_type: recordType,
+            ...(Object.keys(fieldOverrides).length > 0 && { field_overrides: fieldOverrides }),
           }),
         }
       );
@@ -205,7 +227,9 @@ export function GenerateDocumentDialog({
     setGenerating(false);
   }
 
-  const missingFields = resolvedFields.filter((f) => f.value === null);
+  const missingFields = resolvedFields.filter(
+    (f) => f.value === null && !fieldOverrides[f.key]
+  );
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -298,7 +322,8 @@ export function GenerateDocumentDialog({
                   <div className="flex items-start gap-2 p-2.5 rounded-md bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800">
                     <AlertTriangle size={14} className="text-amber-600 mt-0.5 shrink-0" />
                     <p className="text-xs text-amber-800 dark:text-amber-300">
-                      {missingFields.length} field{missingFields.length !== 1 ? "s" : ""} missing -- will be blank in the document.
+                      {missingFields.length} field{missingFields.length !== 1 ? "s" : ""} missing.
+                      Fill them in below or they will be blank in the document.
                     </p>
                   </div>
                 )}
@@ -319,10 +344,17 @@ export function GenerateDocumentDialog({
                             {f.value !== null ? (
                               <span className="font-medium">{f.value}</span>
                             ) : (
-                              <span className="flex items-center gap-1 text-amber-600">
-                                <AlertTriangle size={10} />
-                                Missing
-                              </span>
+                              <Input
+                                className="h-7 text-xs"
+                                placeholder={f.label}
+                                value={fieldOverrides[f.key] ?? ""}
+                                onChange={(e) =>
+                                  setFieldOverrides((prev) => ({
+                                    ...prev,
+                                    [f.key]: e.target.value,
+                                  }))
+                                }
+                              />
                             )}
                           </td>
                         </tr>
