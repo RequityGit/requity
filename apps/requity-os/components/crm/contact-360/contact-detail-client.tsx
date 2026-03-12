@@ -61,6 +61,7 @@ interface ContactDetailClientProps {
   assignedToName: string | null;
   sourceLabel: string | null;
   isSuperAdmin: boolean;
+  userRole: string;
   sectionOrder: SectionLayout[];
   sectionFields: Record<string, FieldLayout[]>;
   primaryBorrowerEntity: Record<string, unknown> | null;
@@ -86,6 +87,7 @@ export function ContactDetailClient({
   assignedToName,
   sourceLabel,
   isSuperAdmin,
+  userRole,
   sectionOrder,
   sectionFields,
   primaryBorrowerEntity,
@@ -270,6 +272,7 @@ export function ContactDetailClient({
                   loans={loans}
                   commitments={investorCommitments}
                   isSuperAdmin={isSuperAdmin}
+                  userRole={userRole}
                   sectionOrder={sectionOrder}
                   sectionFields={sectionFields}
                   teamMembers={teamMembers}

@@ -295,11 +295,11 @@ export default async function CompanyDetailPage({ params }: PageProps) {
       .map((r) => r.field_config_id as string)
       .filter(Boolean);
 
-    let fcLookup: Record<string, { field_label: string; field_type: string; dropdown_options: unknown }> = {};
+    let fcLookup: Record<string, { field_label: string; field_type: string; dropdown_options: unknown; conditional_rules: unknown; permissions: unknown; is_required: boolean }> = {};
     if (fcIds.length > 0) {
       const { data: fcRows } = await admin
         .from("field_configurations" as never)
-        .select("id, field_label, field_type, dropdown_options" as never)
+        .select("id, field_label, field_type, dropdown_options, conditional_rules, permissions, is_required" as never)
         .in("id" as never, fcIds as never);
 
       for (const fc of (fcRows ?? []) as Record<string, unknown>[]) {
@@ -307,6 +307,9 @@ export default async function CompanyDetailPage({ params }: PageProps) {
           field_label: fc.field_label as string,
           field_type: fc.field_type as string,
           dropdown_options: fc.dropdown_options,
+          conditional_rules: fc.conditional_rules,
+          permissions: fc.permissions,
+          is_required: (fc.is_required as boolean) ?? false,
         };
       }
     }
@@ -336,8 +339,11 @@ export default async function CompanyDetailPage({ params }: PageProps) {
         column_position: row.column_position as string,
         display_order: row.display_order as number,
         is_visible: row.is_visible as boolean,
+        is_required: fc.is_required,
         dropdown_options: dropdownOptions,
         source_object_key: (row.source_object_key as string | null) ?? "company",
+        conditional_rules: fc.conditional_rules as FieldLayout["conditional_rules"],
+        permissions: fc.permissions as FieldLayout["permissions"],
       });
     }
   }

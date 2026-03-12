@@ -169,6 +169,20 @@ export interface SectionLayout {
   section_icon: string;
 }
 
+/** A single conditional rule from field_configurations.conditional_rules. */
+export interface ConditionalRule {
+  source_field: string;
+  operator: "equals" | "not_equals" | "contains" | "is_empty" | "is_not_empty" | "greater_than" | "less_than";
+  value?: unknown;
+  action: "show" | "hide" | "require" | "set_value";
+  set_value?: unknown;
+}
+
+/** Role-level view/edit permissions from field_configurations.permissions. */
+export interface FieldPermissions {
+  [role: string]: { view: boolean; edit: boolean };
+}
+
 export interface FieldLayout {
   field_key: string;
   field_label: string;
@@ -176,9 +190,14 @@ export interface FieldLayout {
   column_position: string;
   display_order: number;
   is_visible: boolean;
+  is_required: boolean;
   dropdown_options: { label: string; value: string }[] | null;
   /** Which object this field's data lives on (contact, borrower, investor, borrower_entity) */
   source_object_key: string | null;
+  /** Conditional logic rules from field_configurations */
+  conditional_rules: ConditionalRule[] | null;
+  /** Role-based view/edit permissions from field_configurations */
+  permissions: FieldPermissions | null;
 }
 
 export interface TaskData {

@@ -213,8 +213,12 @@ export function renderDynamicFields(
   fields: FieldLayout[],
   dataObj: Record<string, unknown>,
   isSuperAdmin: boolean,
+  /** Optional set of field_keys to hide (from conditional logic or permissions) */
+  hiddenFieldKeys?: Set<string>,
 ): ReactNode {
-  const visible = fields.filter((f) => f.is_visible);
+  const visible = fields
+    .filter((f) => f.is_visible)
+    .filter((f) => !hiddenFieldKeys || !hiddenFieldKeys.has(f.field_key));
 
   // Split into left/right columns and sort each by display_order
   const leftFields = visible
@@ -256,9 +260,14 @@ export function buildEditFields(
   fields: FieldLayout[],
   dataObj: Record<string, unknown>,
   isSuperAdmin: boolean,
+  /** Optional set of field_keys to hide (from conditional logic or permissions) */
+  hiddenFieldKeys?: Set<string>,
+  /** Optional set of field_keys that should be read-only (from permissions) */
+  readOnlyFieldKeys?: Set<string>,
 ): CrmSectionField[] {
   return fields
     .filter((f) => f.is_visible)
+    .filter((f) => !hiddenFieldKeys || !hiddenFieldKeys.has(f.field_key))
     .filter((f) => {
       if (f.field_key === "ssn_last4" && !isSuperAdmin) return false;
       return true;
