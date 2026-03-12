@@ -59,6 +59,10 @@ interface Props {
   siblingFields?: FieldConfig[];
   onClose: () => void;
   onUpdate: (updated: FieldConfig) => void;
+  /** When true, edits go to draft state instead of directly to DB */
+  useDraft?: boolean;
+  /** Called when useDraft is true — accumulates changes locally */
+  onDraftUpdate?: (updates: Partial<FieldConfig>) => void;
 }
 
 type SubTab = "type" | "valid" | "access" | "logic" | "stage";
@@ -209,7 +213,7 @@ function LogicTab({
   );
 }
 
-export function FieldConfigPanel({ field, siblingFields = [], onClose, onUpdate }: Props) {
+export function FieldConfigPanel({ field, siblingFields = [], onClose, onUpdate, useDraft, onDraftUpdate }: Props) {
   const [subTab, setSubTab] = useState<SubTab>("type");
   const [saving, setSaving] = useState(false);
   const ft = getFieldType(field.field_type);
@@ -217,6 +221,13 @@ export function FieldConfigPanel({ field, siblingFields = [], onClose, onUpdate 
 
   const handleUpdate = useCallback(
     async (updates: Partial<FieldConfig>) => {
+      if (useDraft && onDraftUpdate) {
+        // Draft mode: accumulate locally, no DB write
+        onDraftUpdate(updates);
+        return;
+      }
+
+      // Legacy direct-write mode (for non-field tabs)
       setSaving(true);
       try {
         const result = await updateFieldConfig(field.id, updates);
@@ -227,7 +238,7 @@ export function FieldConfigPanel({ field, siblingFields = [], onClose, onUpdate 
         setSaving(false);
       }
     },
-    [field, onUpdate]
+    [field, onUpdate, useDraft, onDraftUpdate]
   );
 
   return (
@@ -503,10 +514,16 @@ export function FieldConfigPanel({ field, siblingFields = [], onClose, onUpdate 
         )}
       </div>
 
-      {/* Saving indicator */}
+      {/* Status indicator */}
       {saving && (
         <div className="px-3 py-1.5 border-t border-border text-[10px] text-muted-foreground">
           Saving...
+        </div>
+      )}
+      {useDraft && !saving && (
+        <div className="px-3 py-1.5 border-t border-border text-[10px] text-amber-600 flex items-center gap-1">
+          <div className="w-1.5 h-1.5 rounded-full bg-amber-500" />
+          Changes saved as draft — publish to apply
         </div>
       )}
     </div>

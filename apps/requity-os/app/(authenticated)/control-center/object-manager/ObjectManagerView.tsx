@@ -4,17 +4,14 @@ import { useState, useEffect, useCallback } from "react";
 import {
   SlidersHorizontal,
   Search,
-  Check,
   Type,
   Network,
   LayoutGrid,
   Settings2,
-  Loader2,
   Grid3X3,
   Calculator,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
 import { cn } from "@repo/lib";
 import type {
   ObjectDefinition,
@@ -30,6 +27,7 @@ import {
   fetchObjectLayout,
   fetchFieldsForModules,
   publishObjectChanges,
+  batchPublishChanges,
   createRelationship,
 } from "./actions";
 import { getObjectIcon } from "./_components/constants";
@@ -43,6 +41,9 @@ import { SectionConfigPanel } from "./_components/SectionConfigPanel";
 import { TabConfigPanel } from "./_components/TabConfigPanel";
 import { ConditionMatrixTab } from "./_components/ConditionMatrixTab";
 import { FormulasTab } from "./_components/FormulasTab";
+import { DraftBanner } from "./_components/DraftBanner";
+import { DiffReviewModal } from "./_components/DiffReviewModal";
+import { useDraftState } from "./_hooks/useDraftState";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -123,10 +124,11 @@ export function ObjectManagerView({ objects, fieldCounts, relationshipCounts }: 
   const [selectedSection, setSelectedSection] = useState<PageSection | null>(null);
   const [selectedLayoutTab, setSelectedLayoutTab] = useState<TabInfo | null>(null);
 
-  // Publish state tracking
-  const [hasChanges, setHasChanges] = useState(false);
+  // Draft state management
+  const draft = useDraftState();
   const [publishing, setPublishing] = useState(false);
   const [lastPublished, setLastPublished] = useState<string | null>(null);
+  const [showDiffReview, setShowDiffReview] = useState(false);
 
   const [showAddRelDialog, setShowAddRelDialog] = useState(false);
 
@@ -213,31 +215,57 @@ export function ObjectManagerView({ objects, fieldCounts, relationshipCounts }: 
     loadData();
   }, [loadData, clearSelection]);
 
-  // Mark changes dirty when any mutation completes
+  // For non-draft mutations (relationships, layout), still reload from DB
   const handleDataChange = useCallback(() => {
-    setHasChanges(true);
     loadData();
   }, [loadData]);
 
+  // Batch publish all draft changes
   const handlePublish = useCallback(async () => {
     setPublishing(true);
     try {
-      const result = await publishObjectChanges(selectedObjectKey);
+      const payload = draft.getPublishPayload();
+      const result = await batchPublishChanges({
+        objectKey: selectedObjectKey,
+        fieldUpdates: payload.fieldUpdates,
+        fieldCreates: payload.fieldCreates,
+        fieldArchiveIds: payload.fieldArchiveIds,
+      });
+
       if (result.error) {
         console.error("Publish failed:", result.error);
       } else {
-        setHasChanges(false);
+        draft.clearAfterPublish();
         setLastPublished(new Date().toLocaleTimeString());
+        setShowDiffReview(false);
+        // Reload fresh data from DB
+        loadData();
       }
     } finally {
       setPublishing(false);
     }
-  }, [selectedObjectKey]);
+  }, [selectedObjectKey, draft, loadData]);
+
+  // Discard all draft changes and reload from DB
+  const handleDiscard = useCallback(() => {
+    draft.discardAll();
+    loadData();
+  }, [draft, loadData]);
+
+  // Get the fields to display: base fields with draft overrides applied
+  const displayFields = draft.applyDraftToFields(fields);
 
   const handleObjectSelect = (key: string) => {
+    // Warn if switching with unsaved changes
+    if (draft.hasChanges) {
+      const confirmed = window.confirm(
+        "You have unsaved changes. Discard and switch objects?"
+      );
+      if (!confirmed) return;
+    }
     setSelectedObjectKey(key);
     clearSelection();
-    setHasChanges(false);
+    draft.discardAll();
     setLastPublished(null);
   };
 
@@ -412,25 +440,15 @@ export function ObjectManagerView({ objects, fieldCounts, relationshipCounts }: 
             </>
           )}
           <div className="flex-1" />
-          {lastPublished && !hasChanges && (
-            <span className="text-[10px] text-muted-foreground mr-2">
-              Published {lastPublished}
-            </span>
-          )}
-          <Button
-            size="sm"
-            className="h-8 gap-1.5"
-            onClick={handlePublish}
-            disabled={publishing}
-            variant={hasChanges ? "default" : "outline"}
-          >
-            {publishing ? (
-              <Loader2 size={13} className="animate-spin" />
-            ) : (
-              <Check size={13} />
-            )}
-            {publishing ? "Publishing..." : hasChanges ? "Publish" : "Publish"}
-          </Button>
+          <DraftBanner
+            dirtyCount={draft.dirtyCount}
+            hasChanges={draft.hasChanges}
+            publishing={publishing}
+            lastPublished={lastPublished}
+            onPublish={() => setShowDiffReview(true)}
+            onDiscard={handleDiscard}
+            onReviewChanges={() => setShowDiffReview(true)}
+          />
         </div>
 
         {/* Tabs */}
@@ -468,7 +486,7 @@ export function ObjectManagerView({ objects, fieldCounts, relationshipCounts }: 
         <div className="flex-1 overflow-hidden">
           {activeTab === "fields" && (
             <FieldsTab
-              fields={fields}
+              fields={displayFields}
               selectedFieldId={selectedField?.id ?? null}
               onSelectField={(f) => {
                 clearSelection();
@@ -477,6 +495,11 @@ export function ObjectManagerView({ objects, fieldCounts, relationshipCounts }: 
               loading={loading}
               objectKey={selectedObjectKey}
               onFieldsChange={handleDataChange}
+              isFieldDirty={draft.isFieldDirty}
+              isFieldNew={draft.isFieldNew}
+              isFieldArchived={draft.isFieldArchived}
+              onDraftFieldCreate={draft.draftFieldCreate}
+              onDraftFieldArchive={draft.draftFieldArchive}
             />
           )}
           {activeTab === "relationships" && (
@@ -516,11 +539,11 @@ export function ObjectManagerView({ objects, fieldCounts, relationshipCounts }: 
             />
           )}
           {activeTab === "conditions" && (
-            <ConditionMatrixTab fields={fields} />
+            <ConditionMatrixTab fields={displayFields} />
           )}
           {activeTab === "formulas" && (
             <FormulasTab
-              fields={fields}
+              fields={displayFields}
               objectKey={selectedObjectKey}
               onFieldsChange={handleDataChange}
               onSelectField={(f) => {
@@ -542,11 +565,18 @@ export function ObjectManagerView({ objects, fieldCounts, relationshipCounts }: 
         {(activeTab === "fields" || activeTab === "formulas") && selectedField && (
           <FieldConfigPanel
             field={selectedField}
-            siblingFields={fields}
+            siblingFields={displayFields}
             onClose={clearSelection}
             onUpdate={(updated) => {
               setSelectedField(updated);
-              handleDataChange();
+            }}
+            useDraft
+            onDraftUpdate={(updates) => {
+              if (selectedField) {
+                draft.draftFieldUpdate(selectedField, updates);
+                // Update local selected field to reflect changes immediately
+                setSelectedField((prev) => prev ? { ...prev, ...updates } : null);
+              }
             }}
           />
         )}
@@ -596,6 +626,15 @@ export function ObjectManagerView({ objects, fieldCounts, relationshipCounts }: 
         currentObjectKey={selectedObjectKey}
         objects={objects}
         onSubmit={handleAddRelationship}
+      />
+
+      {/* Diff Review Modal */}
+      <DiffReviewModal
+        open={showDiffReview}
+        onClose={() => setShowDiffReview(false)}
+        onPublish={handlePublish}
+        publishing={publishing}
+        diffSummary={draft.getDiffSummary()}
       />
     </div>
   );

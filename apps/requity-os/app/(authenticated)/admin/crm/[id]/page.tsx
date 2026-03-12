@@ -45,6 +45,18 @@ export default async function CrmContactDetailPage({ params }: PageProps) {
 
   const isSuperAdmin = !!superAdminRole;
 
+  // Fetch the user's primary role for field permissions
+  const { data: userRoleRow } = await supabase
+    .from("user_roles")
+    .select("role")
+    .eq("user_id", user.id)
+    .eq("is_active", true)
+    .order("created_at", { ascending: true })
+    .limit(1)
+    .maybeSingle();
+
+  const userRole = isSuperAdmin ? "super_admin" : (userRoleRow?.role ?? "user");
+
   const { id } = await params;
   const admin = createAdminClient();
 
@@ -468,11 +480,11 @@ export default async function CrmContactDetailPage({ params }: PageProps) {
       .map((r) => r.field_config_id as string)
       .filter(Boolean);
 
-    let fcLookup: Record<string, { field_label: string; field_type: string; dropdown_options: unknown; module: string }> = {};
+    let fcLookup: Record<string, { field_label: string; field_type: string; dropdown_options: unknown; module: string; conditional_rules: unknown; permissions: unknown; is_required: boolean }> = {};
     if (fcIds.length > 0) {
       const { data: fcRows } = await admin
         .from("field_configurations" as never)
-        .select("id, field_label, field_type, dropdown_options, module" as never)
+        .select("id, field_label, field_type, dropdown_options, module, conditional_rules, permissions, is_required" as never)
         .in("id" as never, fcIds as never);
 
       for (const fc of (fcRows ?? []) as Record<string, unknown>[]) {
@@ -481,6 +493,9 @@ export default async function CrmContactDetailPage({ params }: PageProps) {
           field_type: fc.field_type as string,
           dropdown_options: fc.dropdown_options,
           module: fc.module as string,
+          conditional_rules: fc.conditional_rules,
+          permissions: fc.permissions,
+          is_required: (fc.is_required as boolean) ?? false,
         };
       }
     }
@@ -513,8 +528,11 @@ export default async function CrmContactDetailPage({ params }: PageProps) {
         column_position: row.column_position as string,
         display_order: row.display_order as number,
         is_visible: row.is_visible as boolean,
+        is_required: fc.is_required,
         dropdown_options: dropdownOptions,
         source_object_key: sourceObjectKey,
+        conditional_rules: fc.conditional_rules as FieldLayout["conditional_rules"],
+        permissions: fc.permissions as FieldLayout["permissions"],
       });
     }
   }
@@ -603,6 +621,7 @@ export default async function CrmContactDetailPage({ params }: PageProps) {
       assignedToName={assignedToName}
       sourceLabel={sourceLabel}
       isSuperAdmin={isSuperAdmin}
+      userRole={userRole}
       sectionOrder={sectionOrder}
       sectionFields={sectionFields}
       primaryBorrowerEntity={primaryBorrowerEntity}

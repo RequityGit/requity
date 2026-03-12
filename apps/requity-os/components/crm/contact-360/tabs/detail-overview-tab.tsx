@@ -41,11 +41,41 @@ interface DetailOverviewTabProps {
   loans: LoanData[];
   commitments: InvestorCommitmentData[];
   isSuperAdmin: boolean;
+  userRole: string;
   sectionOrder: SectionLayout[];
   sectionFields: Record<string, FieldLayout[]>;
   teamMembers: TeamMember[];
   allCompanies: CompanyData[];
   primaryBorrowerEntity: Record<string, unknown> | null;
+}
+
+// --- Conditional logic operator evaluation ---
+function evaluateOperator(
+  operator: string,
+  sourceValue: unknown,
+  ruleValue: unknown
+): boolean {
+  switch (operator) {
+    case "equals":
+      return String(sourceValue ?? "") === String(ruleValue ?? "");
+    case "not_equals":
+      return String(sourceValue ?? "") !== String(ruleValue ?? "");
+    case "contains": {
+      const str = String(sourceValue ?? "").toLowerCase();
+      const search = String(ruleValue ?? "").toLowerCase();
+      return str.includes(search);
+    }
+    case "is_empty":
+      return sourceValue === null || sourceValue === undefined || sourceValue === "";
+    case "is_not_empty":
+      return sourceValue !== null && sourceValue !== undefined && sourceValue !== "";
+    case "greater_than":
+      return Number(sourceValue) > Number(ruleValue);
+    case "less_than":
+      return Number(sourceValue) < Number(ruleValue);
+    default:
+      return true;
+  }
 }
 
 // Default section order used when no layout data exists in the database
@@ -66,6 +96,7 @@ export function DetailOverviewTab({
   loans,
   commitments,
   isSuperAdmin,
+  userRole,
   sectionOrder,
   sectionFields,
   teamMembers,
@@ -239,6 +270,96 @@ export function DetailOverviewTab({
     return map;
   }, [contactData, borrowerData, investorData, entityData, borrower, investor, primaryBorrowerEntity, updateContactField, updateBorrowerField, updateInvestorField, updateBorrowerEntityField]);
 
+  // ---------------------------------------------------------------------------
+  // Conditional Logic + Permissions Evaluation
+  // ---------------------------------------------------------------------------
+
+  /**
+   * Evaluate conditional_rules for a section's fields against current data.
+   * Returns a Set of field_keys that should be hidden.
+   */
+  const getHiddenFieldKeys = useCallback((sectionKey: string): Set<string> => {
+    const fields = sectionFields[sectionKey];
+    if (!fields?.length) return new Set();
+
+    const mergedData = buildMergedDataForSection(sectionKey);
+    if (!mergedData) return new Set();
+
+    const hidden = new Set<string>();
+    for (const f of fields) {
+      if (!f.conditional_rules || f.conditional_rules.length === 0) continue;
+
+      let visible = true;
+      const showRules = f.conditional_rules.filter((r) => r.action === "show");
+      const hideRules = f.conditional_rules.filter((r) => r.action === "hide");
+
+      // "show" rules: field is hidden unless ALL pass
+      if (showRules.length > 0) {
+        visible = showRules.every((rule) => {
+          const sourceVal = mergedData[rule.source_field];
+          return evaluateOperator(rule.operator, sourceVal, rule.value);
+        });
+      }
+
+      // "hide" rules: if ALL pass, hide the field
+      if (hideRules.length > 0) {
+        const allPass = hideRules.every((rule) => {
+          const sourceVal = mergedData[rule.source_field];
+          return evaluateOperator(rule.operator, sourceVal, rule.value);
+        });
+        if (allPass) visible = false;
+      }
+
+      if (!visible) hidden.add(f.field_key);
+    }
+
+    return hidden;
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sectionFields]);
+
+  /**
+   * Get field_keys that should not be viewable by the current role (permissions filter).
+   * Also returns a set of field_keys that are read-only for the current role.
+   */
+  const getPermissionFilters = useCallback((sectionKey: string): { hiddenByPermission: Set<string>; readOnlyByPermission: Set<string> } => {
+    const fields = sectionFields[sectionKey];
+    const hiddenByPermission = new Set<string>();
+    const readOnlyByPermission = new Set<string>();
+
+    if (!fields?.length) return { hiddenByPermission, readOnlyByPermission };
+
+    // Super admins bypass all field permissions
+    if (isSuperAdmin) return { hiddenByPermission, readOnlyByPermission };
+
+    for (const f of fields) {
+      if (!f.permissions || Object.keys(f.permissions).length === 0) continue;
+      const rolePerm = f.permissions[userRole];
+      if (!rolePerm) continue; // No specific rule for this role = default visible+editable
+
+      if (rolePerm.view === false) {
+        hiddenByPermission.add(f.field_key);
+      } else if (rolePerm.edit === false) {
+        readOnlyByPermission.add(f.field_key);
+      }
+    }
+
+    return { hiddenByPermission, readOnlyByPermission };
+  }, [sectionFields, isSuperAdmin, userRole]);
+
+  /**
+   * Combine conditional logic + permissions into final hidden/readOnly sets for a section.
+   */
+  const getFieldFilters = useCallback((sectionKey: string) => {
+    const conditionalHidden = getHiddenFieldKeys(sectionKey);
+    const { hiddenByPermission, readOnlyByPermission } = getPermissionFilters(sectionKey);
+
+    // Merge hidden sets
+    const allHidden = new Set<string>(conditionalHidden);
+    hiddenByPermission.forEach((k) => allHidden.add(k));
+
+    return { hiddenFieldKeys: allHidden, readOnlyFieldKeys: readOnlyByPermission };
+  }, [getHiddenFieldKeys, getPermissionFilters]);
+
   // Legacy section_key -> source_object_key fallback (for sections without per-field source)
   const SECTION_KEY_TO_SOURCE: Record<string, string> = {
     contact_profile: "contact",
@@ -275,7 +396,14 @@ export function DetailOverviewTab({
     const mergedData = buildMergedDataForSection(sectionKey);
     if (!mergedData) return [];
 
-    let editFields = buildEditFields(fields, mergedData, isSuperAdmin);
+    // Apply conditional logic + permissions to determine which fields to show/hide in edit
+    const { hiddenFieldKeys, readOnlyFieldKeys } = getFieldFilters(sectionKey);
+
+    // For edit dialogs, hide both conditionally-hidden AND read-only fields
+    const editHidden = new Set(hiddenFieldKeys);
+    readOnlyFieldKeys.forEach((k) => editHidden.add(k));
+
+    let editFields = buildEditFields(fields, mergedData, isSuperAdmin, editHidden);
 
     // Inject special options for FK fields regardless of which section they're in
     editFields = editFields.map((f) => {
@@ -299,7 +427,7 @@ export function DetailOverviewTab({
     });
 
     return editFields;
-  }, [sectionFields, dataSourceMap, isSuperAdmin, teamMembers, localCompanies]);
+  }, [sectionFields, dataSourceMap, isSuperAdmin, teamMembers, localCompanies, getFieldFilters]);
 
   // --- Render helpers ---
 
@@ -388,6 +516,9 @@ export function DetailOverviewTab({
     const mergedData = buildMergedDataForSection(section.section_key);
     if (!mergedData) return null;
 
+    // Apply conditional logic + permissions filtering
+    const { hiddenFieldKeys } = getFieldFilters(section.section_key);
+
     const Icon = getSectionIcon(section.section_icon);
     return (
       <SectionCard
@@ -396,7 +527,7 @@ export function DetailOverviewTab({
         icon={Icon}
         action={<SectionEditButton onClick={() => setEditingSectionKey(section.section_key)} />}
       >
-        {renderDynamicFields(fields, mergedData, isSuperAdmin)}
+        {renderDynamicFields(fields, mergedData, isSuperAdmin, hiddenFieldKeys)}
       </SectionCard>
     );
   }
