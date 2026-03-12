@@ -500,6 +500,7 @@ export function ObjectManagerView({ objects, fieldCounts, relationshipCounts }: 
               isFieldArchived={draft.isFieldArchived}
               onDraftFieldCreate={draft.draftFieldCreate}
               onDraftFieldArchive={draft.draftFieldArchive}
+              onDraftFieldUpdate={draft.draftFieldUpdate}
             />
           )}
           {activeTab === "relationships" && (

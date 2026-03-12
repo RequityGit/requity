@@ -63,6 +63,7 @@ interface Props {
   isFieldArchived?: (fieldId: string) => boolean;
   onDraftFieldCreate?: (tempId: string, data: Partial<FieldConfig>) => void;
   onDraftFieldArchive?: (field: FieldConfig) => void;
+  onDraftFieldUpdate?: (field: FieldConfig, updates: Partial<FieldConfig>) => void;
 }
 
 export function FieldsTab({
@@ -77,6 +78,7 @@ export function FieldsTab({
   isFieldArchived,
   onDraftFieldCreate,
   onDraftFieldArchive,
+  onDraftFieldUpdate,
 }: Props) {
   const [query, setQuery] = useState("");
   const [typeFilter, setTypeFilter] = useState("all");
@@ -184,6 +186,15 @@ export function FieldsTab({
 
   const handleSaveCondition = async (condition: VisibilityCondition | null) => {
     if (!editCondFieldId) return;
+
+    if (onDraftFieldUpdate && editCondField) {
+      // Draft mode: store condition change as a draft update
+      onDraftFieldUpdate(editCondField, { visibility_condition: condition });
+      setEditCondFieldId(null);
+      return;
+    }
+
+    // Legacy direct DB mode
     const result = await updateFieldVisibilityCondition(editCondFieldId, condition);
     if (result.error) {
       console.error("Failed to update visibility condition:", result.error);
