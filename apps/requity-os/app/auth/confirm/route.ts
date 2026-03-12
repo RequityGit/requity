@@ -4,6 +4,7 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import type { Database } from "@/lib/supabase/types";
 import type { EmailOtpType } from "@supabase/supabase-js";
+import { SUPABASE_URL, SUPABASE_ANON_KEY } from "@/lib/supabase/constants";
 import { getRequestOrigin } from "@/lib/get-request-origin";
 
 /**
@@ -55,15 +56,8 @@ async function redirectForUser(
 }
 
 function buildSupabaseClient() {
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-
-  if (!supabaseUrl || !supabaseAnonKey) {
-    return null;
-  }
-
   const cookieStore = cookies();
-  return createServerClient<Database>(supabaseUrl, supabaseAnonKey, {
+  return createServerClient<Database>(SUPABASE_URL, SUPABASE_ANON_KEY, {
     cookies: {
       getAll() {
         return cookieStore.getAll();
@@ -98,10 +92,6 @@ export async function GET(request: NextRequest) {
   const code = searchParams.get("code");
   if (code) {
     const supabase = buildSupabaseClient();
-    if (!supabase) {
-      return NextResponse.redirect(`${origin}/login`);
-    }
-
     const { error } = await supabase.auth.exchangeCodeForSession(code);
     if (!error) {
       return redirectForUser(supabase, origin);
@@ -119,10 +109,6 @@ export async function GET(request: NextRequest) {
 
   if (token_hash && type) {
     const supabase = buildSupabaseClient();
-    if (!supabase) {
-      return NextResponse.redirect(`${origin}/login`);
-    }
-
     const { error } = await supabase.auth.verifyOtp({
       type,
       token_hash,

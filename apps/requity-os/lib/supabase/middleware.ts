@@ -1,32 +1,14 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 import type { Database } from "@/lib/supabase/types";
+import { SUPABASE_URL, SUPABASE_ANON_KEY } from "@/lib/supabase/constants";
 
 export async function updateSession(request: NextRequest) {
   let supabaseResponse = NextResponse.next({
     request,
   });
 
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-
-  if (!supabaseUrl || !supabaseAnonKey) {
-    console.error(
-      "CRITICAL: Supabase environment variables not configured.",
-      `NEXT_PUBLIC_SUPABASE_URL: ${supabaseUrl ? "set" : "MISSING"}`,
-      `NEXT_PUBLIC_SUPABASE_ANON_KEY: ${supabaseAnonKey ? "set" : "MISSING"}`
-    );
-    return {
-      supabase: null,
-      user: null,
-      supabaseResponse: new NextResponse(
-        "Service unavailable — authentication system is being restored. Please try again shortly.",
-        { status: 503 }
-      ),
-    };
-  }
-
-  const supabase = createServerClient<Database>(supabaseUrl, supabaseAnonKey, {
+  const supabase = createServerClient<Database>(SUPABASE_URL, SUPABASE_ANON_KEY, {
     cookies: {
       getAll() {
         return request.cookies.getAll();

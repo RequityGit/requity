@@ -3,6 +3,7 @@
 import { Suspense, useState, useRef, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import { SUPABASE_URL } from "@/lib/supabase/constants";
 import { Mail, Loader2, Chrome, ShieldAlert } from "lucide-react";
 
 function getSupabase() {
@@ -23,24 +24,10 @@ function LoginContent() {
   const [magicLinkSent, setMagicLinkSent] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [noAccess, setNoAccess] = useState(false);
-  const [envMissing, setEnvMissing] = useState(false);
   const searchParams = useSearchParams();
   const supabaseRef = useRef<ReturnType<typeof createClient> | null>(null);
 
   const errorParam = searchParams.get("error");
-
-  // Detect missing env vars on mount (they are baked in at build time)
-  useEffect(() => {
-    if (
-      !process.env.NEXT_PUBLIC_SUPABASE_URL ||
-      !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-    ) {
-      setEnvMissing(true);
-      setError(
-        "Authentication service is not configured. The portal may need to be redeployed. Please contact your administrator."
-      );
-    }
-  }, []);
 
   useEffect(() => {
     if (errorParam === "no_access") {
@@ -90,11 +77,7 @@ function LoginContent() {
       }
     } catch (err) {
       console.error("Google login error:", err);
-      const message =
-        err instanceof Error && err.message.includes("Missing Supabase")
-          ? "Authentication service is not configured. The portal may need to be redeployed."
-          : "An unexpected error occurred. Please try again.";
-      setError(message);
+      setError("An unexpected error occurred. Please try again.");
       setLoading(null);
     }
   }
@@ -125,11 +108,7 @@ function LoginContent() {
       setLoading(null);
     } catch (err) {
       console.error("Magic link error:", err);
-      const message =
-        err instanceof Error && err.message.includes("Missing Supabase")
-          ? "Authentication service is not configured. The portal may need to be redeployed."
-          : "An unexpected error occurred. Please try again.";
-      setError(message);
+      setError("An unexpected error occurred. Please try again.");
       setLoading(null);
     }
   }
@@ -141,12 +120,12 @@ function LoginContent() {
           {/* Logo / Header */}
           <div className="text-center mb-8">
             <img
-              src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/brand-assets/Requity%20Logo%20White.svg?v=2`}
+              src={`${SUPABASE_URL}/storage/v1/object/public/brand-assets/Requity%20Logo%20White.svg?v=2`}
               alt="Requity Group"
               className="h-14 mx-auto mb-4 hidden dark:block"
             />
             <img
-              src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/brand-assets/Requity%20Logo%20Color.svg`}
+              src={`${SUPABASE_URL}/storage/v1/object/public/brand-assets/Requity%20Logo%20Color.svg`}
               alt="Requity Group"
               className="h-14 mx-auto mb-4 dark:hidden"
             />
@@ -204,7 +183,7 @@ function LoginContent() {
               {/* Google OAuth Button */}
               <button
                 onClick={handleGoogleLogin}
-                disabled={loading !== null || envMissing}
+                disabled={loading !== null}
                 className="w-full h-11 px-4 py-2 border border-border bg-card rounded-md text-sm font-medium text-foreground hover:bg-muted disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-3"
               >
                 {loading === "google" ? (
@@ -253,7 +232,7 @@ function LoginContent() {
 
                 <button
                   type="submit"
-                  disabled={loading !== null || !email || envMissing}
+                  disabled={loading !== null || !email}
                   className="w-full h-10 px-4 py-2 bg-primary text-white rounded-md text-sm font-medium hover:bg-[#243a5e] disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
                 >
                   {loading === "magic" ? (

@@ -54,14 +54,6 @@ export async function middleware(request: NextRequest) {
 
   const { supabase, user, supabaseResponse } = await updateSession(request);
 
-  // If Supabase is not configured, allow public routes through; block protected routes
-  if (!supabase) {
-    if (isPublicRoute) {
-      return NextResponse.next();
-    }
-    return supabaseResponse;
-  }
-
   // -----------------------------------------------------------------------
   // Unauthenticated user trying to access a protected route → /login
   // -----------------------------------------------------------------------

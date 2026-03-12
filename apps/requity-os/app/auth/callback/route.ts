@@ -2,6 +2,7 @@ import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 import type { Database } from "@/lib/supabase/types";
+import { SUPABASE_URL, SUPABASE_ANON_KEY } from "@/lib/supabase/constants";
 import { getRequestOrigin } from "@/lib/get-request-origin";
 
 export async function GET(request: Request) {
@@ -21,17 +22,10 @@ export async function GET(request: Request) {
   }
 
   if (code) {
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-    const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-
-    if (!supabaseUrl || !supabaseAnonKey) {
-      return NextResponse.redirect(`${origin}/login`);
-    }
-
     const cookieStore = cookies();
     const supabase = createServerClient<Database>(
-      supabaseUrl,
-      supabaseAnonKey,
+      SUPABASE_URL,
+      SUPABASE_ANON_KEY,
       {
         cookies: {
           getAll() {
