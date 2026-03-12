@@ -221,7 +221,7 @@ async function extractWithClaude(
   const apiKey = Deno.env.get("ANTHROPIC_API_KEY");
   if (!apiKey) {
     console.warn("ANTHROPIC_API_KEY not set; skipping extraction.");
-    return { summary: subject, deal_fields: {} };
+    return { summary: `[EXTRACTION SKIPPED - API key not configured] ${subject}`, deal_fields: {} };
   }
 
   const prompt = `You are a mortgage origination assistant. Extract deal information from this incoming email.
@@ -445,21 +445,37 @@ Deno.serve(async (req: Request) => {
 
         results.inserted++;
 
-        // Fire process-intake-email to build intake_items + CRM matching
+        // Invoke process-intake-email to build intake_items + CRM matching
         const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
         const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
         const fnUrl = `${supabaseUrl}/functions/v1/process-intake-email`;
 
-        fetch(fnUrl, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${serviceKey}`,
-          },
-          body: JSON.stringify({ email_intake_queue_id: queued.id }),
-        }).catch((err) =>
-          console.error(`process-intake-email invoke error for ${queued.id}:`, err)
-        );
+        try {
+          const processRes = await fetch(fnUrl, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${serviceKey}`,
+            },
+            body: JSON.stringify({ email_intake_queue_id: queued.id }),
+          });
+
+          if (!processRes.ok) {
+            const errText = await processRes.text().catch(() => "");
+            console.error(`process-intake-email failed for ${queued.id}: ${processRes.status} ${errText}`);
+            await admin
+              .from("email_intake_queue")
+              .update({ error_message: `process-intake-email returned ${processRes.status}: ${errText.slice(0, 500)}` })
+              .eq("id", queued.id);
+          }
+        } catch (invokeErr) {
+          const errDetail = invokeErr instanceof Error ? invokeErr.message : String(invokeErr);
+          console.error(`process-intake-email invoke error for ${queued.id}:`, invokeErr);
+          await admin
+            .from("email_intake_queue")
+            .update({ error_message: `invoke failed: ${errDetail}` })
+            .eq("id", queued.id);
+        }
       } catch (msgErr) {
         const errMsg = msgErr instanceof Error ? msgErr.message : String(msgErr);
         console.error(`Error processing message ${stub.id}:`, errMsg);
@@ -467,7 +483,76 @@ Deno.serve(async (req: Request) => {
       }
     }
 
-    return new Response(JSON.stringify(results), {
+    // ------------------------------------------------------------------
+    // Retry sweep: find "ready" queue items that have no intake_items
+    // record yet (missed processing). Cap at 3 attempts per item, 10
+    // items per sweep to stay within edge function timeout.
+    // ------------------------------------------------------------------
+    const retryResults = { retried: 0, retry_errors: 0 };
+    try {
+      const { data: stuckItems } = await admin
+        .from("email_intake_queue")
+        .select("id, processing_attempts")
+        .eq("status", "ready")
+        .lt("processing_attempts", 3)
+        .order("created_at", { ascending: true })
+        .limit(10);
+
+      if (stuckItems && stuckItems.length > 0) {
+        const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+        const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+        const fnUrl = `${supabaseUrl}/functions/v1/process-intake-email`;
+
+        for (const item of stuckItems) {
+          // Check if intake_items already exists (may have been created by another path)
+          const { data: hasIntake } = await admin
+            .from("intake_items")
+            .select("id")
+            .eq("email_intake_queue_id", item.id)
+            .maybeSingle();
+
+          if (hasIntake) continue;
+
+          try {
+            const retryRes = await fetch(fnUrl, {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${serviceKey}`,
+              },
+              body: JSON.stringify({ email_intake_queue_id: item.id }),
+            });
+
+            if (retryRes.ok) {
+              retryResults.retried++;
+            } else {
+              retryResults.retry_errors++;
+              const errText = await retryRes.text().catch(() => "");
+              await admin
+                .from("email_intake_queue")
+                .update({
+                  error_message: `retry failed (${retryRes.status}): ${errText.slice(0, 500)}`,
+                  processing_attempts: (item.processing_attempts || 0) + 1,
+                })
+                .eq("id", item.id);
+            }
+          } catch (retryErr) {
+            retryResults.retry_errors++;
+            await admin
+              .from("email_intake_queue")
+              .update({
+                error_message: `retry invoke failed: ${retryErr instanceof Error ? retryErr.message : String(retryErr)}`,
+                processing_attempts: (item.processing_attempts || 0) + 1,
+              })
+              .eq("id", item.id);
+          }
+        }
+      }
+    } catch (sweepErr) {
+      console.error("Retry sweep error:", sweepErr);
+    }
+
+    return new Response(JSON.stringify({ ...results, ...retryResults }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (err) {

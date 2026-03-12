@@ -421,8 +421,28 @@ Deno.serve(async (req: Request) => {
     return new Response("ok", { headers: corsHeaders });
   }
 
+  // Verify bearer token: accept either SUPABASE_SERVICE_ROLE_KEY or CRON_SECRET.
+  const authHeader = req.headers.get("Authorization") || "";
+  const token = authHeader.replace(/^Bearer\s+/i, "");
+  const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+  const cronSecret = Deno.env.get("CRON_SECRET");
+
+  const isAuthorized =
+    (serviceRoleKey && token === serviceRoleKey) ||
+    (cronSecret && token === cronSecret);
+
+  if (!isAuthorized) {
+    return new Response(
+      JSON.stringify({ error: "Unauthorized" }),
+      { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+    );
+  }
+
+  let email_intake_queue_id: string | null = null;
+
   try {
-    const { email_intake_queue_id } = await req.json();
+    const body = await req.json();
+    email_intake_queue_id = body.email_intake_queue_id;
 
     if (!email_intake_queue_id) {
       return new Response(
@@ -433,8 +453,22 @@ Deno.serve(async (req: Request) => {
 
     const admin = createClient(
       Deno.env.get("SUPABASE_URL")!,
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
+      serviceRoleKey!
     );
+
+    // Idempotency guard: skip if intake_items already exists for this queue item
+    const { data: existingIntake } = await admin
+      .from("intake_items")
+      .select("id")
+      .eq("email_intake_queue_id", email_intake_queue_id)
+      .maybeSingle();
+
+    if (existingIntake) {
+      return new Response(
+        JSON.stringify({ success: true, intake_item_id: existingIntake.id, already_processed: true }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
 
     // Fetch the email intake queue item
     const { data: queueItem, error: fetchErr } = await admin
@@ -449,6 +483,8 @@ Deno.serve(async (req: Request) => {
         { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
+
+    const currentAttempts = (queueItem.processing_attempts as number) || 0;
 
     // Parse email into structured 4-entity format
     const parsed = await parseEmailWithAI(
@@ -502,11 +538,29 @@ Deno.serve(async (req: Request) => {
       .single();
 
     if (insertErr) {
+      // Update queue item with error
+      await admin
+        .from("email_intake_queue")
+        .update({
+          error_message: `intake_items insert failed: ${insertErr.message}`,
+          processing_attempts: currentAttempts + 1,
+        })
+        .eq("id", email_intake_queue_id);
+
       return new Response(
         JSON.stringify({ error: insertErr.message }),
         { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
+
+    // Update queue item on success: clear error, increment attempts
+    await admin
+      .from("email_intake_queue")
+      .update({
+        error_message: null,
+        processing_attempts: currentAttempts + 1,
+      })
+      .eq("id", email_intake_queue_id);
 
     return new Response(
       JSON.stringify({
@@ -527,6 +581,25 @@ Deno.serve(async (req: Request) => {
     );
   } catch (err) {
     console.error("process-intake-email error:", err);
+
+    // Update queue item with error details
+    if (email_intake_queue_id) {
+      try {
+        const adminForError = createClient(
+          Deno.env.get("SUPABASE_URL")!,
+          Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
+        );
+        await adminForError
+          .from("email_intake_queue")
+          .update({
+            error_message: err instanceof Error ? err.message : String(err),
+          })
+          .eq("id", email_intake_queue_id);
+      } catch {
+        // Don't mask the original error
+      }
+    }
+
     return new Response(
       JSON.stringify({
         error: err instanceof Error ? err.message : "Internal server error",
