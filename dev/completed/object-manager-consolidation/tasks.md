@@ -15,8 +15,8 @@
 - [x] Create dev/active/object-manager-consolidation/ with plan, context, tasks
 
 ## Phase 3: Verification
-- [ ] pnpm build passes
-- [ ] Commit and push
+- [x] pnpm build passes (verified 2026-03-12)
+- [x] Commit and push
 
 ## Future (Separate Tasks)
 - [ ] Wire visibility-engine.ts into pipeline deal rendering
