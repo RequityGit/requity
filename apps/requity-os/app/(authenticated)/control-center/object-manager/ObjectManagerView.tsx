@@ -69,16 +69,27 @@ interface Props {
 }
 
 // Module mapping: object_key -> field_configurations module(s)
-const OBJECT_MODULE_MAP: Record<string, string> = {
-  contact: "contact_profile",
-  company: "company_info",
-  borrower_entity: "borrower_entity",
-  property: "uw_property",
-  loan: "loan_details",
-  borrower: "borrower_profile",
-  investor: "investor_profile",
-  unified_deal: "uw_deal",
+// Each object can pull fields from multiple modules
+const OBJECT_MODULE_MAP: Record<string, string[]> = {
+  contact: ["contact_profile"],
+  company: ["company_info", "wire_instructions"],
+  borrower_entity: ["borrower_entity", "borrower_entity_detail"],
+  property: ["property", "uw_property", "standalone_property"],
+  loan: ["loan_details", "loans_extended", "servicing_loan"],
+  borrower: ["borrower_profile"],
+  investor: ["investor_profile", "investing_entity", "investor_commitment"],
+  unified_deal: ["uw_deal", "loan_details", "loans_extended"],
 };
+
+// Helper: get all modules for an object key
+function getObjectModules(objectKey: string): string[] {
+  return OBJECT_MODULE_MAP[objectKey] || [objectKey];
+}
+
+// Helper: get primary module for an object (first in the list)
+function getPrimaryModule(objectKey: string): string {
+  return (OBJECT_MODULE_MAP[objectKey] || [objectKey])[0];
+}
 
 // Page type mapping: object_key -> page_layout page_type
 const OBJECT_PAGE_TYPE_MAP: Record<string, string> = {
@@ -86,6 +97,10 @@ const OBJECT_PAGE_TYPE_MAP: Record<string, string> = {
   company: "company_detail",
   loan: "loan_detail",
   property: "property_detail",
+  borrower: "borrower_detail",
+  borrower_entity: "borrower_entity_detail",
+  investor: "investor_detail",
+  unified_deal: "deal_detail",
 };
 
 export function ObjectManagerView({ objects, fieldCounts, relationshipCounts }: Props) {
@@ -131,8 +146,8 @@ export function ObjectManagerView({ objects, fieldCounts, relationshipCounts }: 
 
     try {
       if (activeTab === "fields") {
-        const fieldModule = OBJECT_MODULE_MAP[selectedObjectKey] || selectedObjectKey;
-        const result = await fetchObjectFields(fieldModule);
+        const modules = getObjectModules(selectedObjectKey);
+        const result = await fetchFieldsForModules(modules);
         if (result.data) setFields(result.data);
       } else if (activeTab === "relationships") {
         const result = await fetchObjectRelationships(selectedObjectKey);
@@ -140,19 +155,19 @@ export function ObjectManagerView({ objects, fieldCounts, relationshipCounts }: 
         if (result.roles) setRoles(result.roles);
       } else if (activeTab === "conditions" || activeTab === "formulas") {
         // Both conditions and formulas tabs need the fields data
-        const fieldModule = OBJECT_MODULE_MAP[selectedObjectKey] || selectedObjectKey;
-        const result = await fetchObjectFields(fieldModule);
+        const modules = getObjectModules(selectedObjectKey);
+        const result = await fetchFieldsForModules(modules);
         if (result.data) setFields(result.data);
       } else if (activeTab === "layout") {
         const pageType = OBJECT_PAGE_TYPE_MAP[selectedObjectKey];
-        const fieldModule = OBJECT_MODULE_MAP[selectedObjectKey] || selectedObjectKey;
+        const modules = getObjectModules(selectedObjectKey);
 
         // Fetch layout, native fields, and relationships in parallel
         const [layoutResult, fieldsResult, relsResult] = await Promise.all([
           pageType
             ? fetchObjectLayout(pageType)
             : Promise.resolve({ sections: [] as PageSection[], fields: [] as PageField[] }),
-          fetchObjectFields(fieldModule),
+          fetchFieldsForModules(modules),
           fetchObjectRelationships(selectedObjectKey),
         ]);
 
@@ -168,18 +183,18 @@ export function ObjectManagerView({ objects, fieldCounts, relationshipCounts }: 
             ? r.child_object_key
             : r.parent_object_key
         );
-        const uniqueModules = Array.from(
-          new Set(relObjectKeys.map((k) => OBJECT_MODULE_MAP[k] || k))
+        const allRelModules = Array.from(
+          new Set(relObjectKeys.flatMap((k) => getObjectModules(k)))
         );
 
-        if (uniqueModules.length > 0) {
-          const relFieldsResult = await fetchFieldsForModules(uniqueModules);
+        if (allRelModules.length > 0) {
+          const relFieldsResult = await fetchFieldsForModules(allRelModules);
           if (relFieldsResult.data) {
             const grouped: Record<string, FieldConfig[]> = {};
             for (const key of relObjectKeys) {
-              const mod = OBJECT_MODULE_MAP[key] || key;
+              const mods = getObjectModules(key);
               grouped[key] = (relFieldsResult.data || []).filter(
-                (f) => f.module === mod
+                (f) => mods.includes(f.module)
               );
             }
             setRelatedFields(grouped);
@@ -266,7 +281,7 @@ export function ObjectManagerView({ objects, fieldCounts, relationshipCounts }: 
       key: "fields",
       label: "Fields",
       icon: Type,
-      count: fieldCounts[OBJECT_MODULE_MAP[selectedObjectKey] || selectedObjectKey] || 0,
+      count: getObjectModules(selectedObjectKey).reduce((sum, m) => sum + (fieldCounts[m] || 0), 0),
       color: "border-blue-500",
     },
     {
@@ -337,8 +352,8 @@ export function ObjectManagerView({ objects, fieldCounts, relationshipCounts }: 
           {filteredObjects.map((obj) => {
             const isActive = obj.object_key === selectedObjectKey;
             const ObjIcon = getObjectIcon(obj.icon);
-            const fieldModule = OBJECT_MODULE_MAP[obj.object_key] || obj.object_key;
-            const fc = fieldCounts[fieldModule] || 0;
+            const objModules = getObjectModules(obj.object_key);
+            const fc = objModules.reduce((sum, m) => sum + (fieldCounts[m] || 0), 0);
             const rc = relationshipCounts[obj.object_key] || 0;
 
             return (

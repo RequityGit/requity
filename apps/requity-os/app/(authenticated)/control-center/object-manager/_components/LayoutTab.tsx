@@ -74,6 +74,10 @@ const OBJECT_PAGE_TYPE_MAP: Record<string, string> = {
   company: "company_detail",
   loan: "loan_detail",
   property: "property_detail",
+  borrower: "borrower_detail",
+  borrower_entity: "borrower_entity_detail",
+  investor: "investor_detail",
+  unified_deal: "deal_detail",
 };
 
 // ---------------------------------------------------------------------------

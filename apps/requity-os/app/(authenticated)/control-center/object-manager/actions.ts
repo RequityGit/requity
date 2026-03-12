@@ -166,15 +166,19 @@ export async function publishObjectChanges(objectKey: string): Promise<{
     revalidatePath("/admin/crm", "page");
 
     // Revalidate specific detail page types based on object
-    const pageRouteMap: Record<string, string> = {
-      contact: "/admin/crm",
-      company: "/admin/crm",
-      loan: "/admin/loans",
-      property: "/admin/properties",
+    const pageRouteMap: Record<string, string[]> = {
+      contact: ["/admin/crm"],
+      company: ["/admin/crm"],
+      loan: ["/admin/loans"],
+      property: ["/admin/properties"],
+      borrower: ["/admin/crm"],
+      borrower_entity: ["/admin/crm"],
+      investor: ["/admin/crm"],
+      unified_deal: ["/admin/pipeline-v2"],
     };
 
-    const route = pageRouteMap[objectKey];
-    if (route) {
+    const routes = pageRouteMap[objectKey] || [];
+    for (const route of routes) {
       revalidatePath(route, "layout");
       revalidatePath(route, "page");
     }
@@ -214,7 +218,7 @@ export async function fetchObjectDefinitions(): Promise<{
 // Fetch field configurations for an object
 // ---------------------------------------------------------------------------
 
-export async function fetchObjectFields(module: string): Promise<{
+export async function fetchObjectFields(module: string | string[]): Promise<{
   data?: FieldConfig[];
   error?: string;
 }> {
@@ -223,10 +227,12 @@ export async function fetchObjectFields(module: string): Promise<{
     if ("error" in auth) return { error: auth.error };
 
     const admin = createAdminClient();
+    const modules = Array.isArray(module) ? module : [module];
+
     const { data, error } = await admin
       .from(FIELD_CFG)
       .select("*" as never)
-      .eq("module" as never, module as never)
+      .in("module" as never, modules as never)
       .order("display_order" as never, { ascending: true });
 
     if (error) return { error: error.message };
