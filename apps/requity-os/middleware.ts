@@ -23,6 +23,17 @@ const PUBLIC_ROUTES = [
 ];
 
 export async function middleware(request: NextRequest) {
+  // -----------------------------------------------------------------------
+  // Force HTTPS — redirect any plain-HTTP request to HTTPS.
+  // Netlify edge redirects should catch this first, but this is defense-in-depth.
+  // -----------------------------------------------------------------------
+  const proto = request.headers.get("x-forwarded-proto")?.split(",")[0]?.trim();
+  if (proto === "http") {
+    const httpsUrl = request.nextUrl.clone();
+    httpsUrl.protocol = "https";
+    return NextResponse.redirect(httpsUrl, 301);
+  }
+
   const { pathname } = request.nextUrl;
 
   // -----------------------------------------------------------------------

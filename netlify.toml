@@ -4,6 +4,13 @@
   publish = ".next"
   ignore = "cd ../.. && git diff --quiet $CACHED_COMMIT_REF $COMMIT_REF -- apps/requity-os/ packages/ netlify.toml pnpm-lock.yaml turbo.json || exit 1"
 
+# Force HTTP → HTTPS redirect at the edge (defense-in-depth)
+[[redirects]]
+  from = "http://portal.requitygroup.com/*"
+  to = "https://portal.requitygroup.com/:splat"
+  status = 301
+  force = true
+
 [build.environment]
   NODE_OPTIONS = "--max-old-space-size=4096"
 
