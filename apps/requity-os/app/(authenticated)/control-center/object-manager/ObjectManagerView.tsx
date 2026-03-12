@@ -79,7 +79,7 @@ const OBJECT_MODULE_MAP: Record<string, string[]> = {
   loan: ["loan_details", "loans_extended", "servicing_loan"],
   borrower: ["borrower_profile"],
   investor: ["investor_profile", "investing_entity", "investor_commitment"],
-  unified_deal: ["uw_deal", "loan_details", "loans_extended"],
+  unified_deal: ["uw_deal", "loan_details", "loans_extended", "uw_borrower", "uw_property"],
 };
 
 // Helper: get all modules for an object key

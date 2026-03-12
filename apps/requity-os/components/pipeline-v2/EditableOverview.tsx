@@ -12,6 +12,7 @@ import {
   formatRatio,
 } from "./pipeline-types";
 import { useResolvedCardType } from "@/hooks/useResolvedCardType";
+import { useDealLayout } from "@/hooks/useDealLayout";
 import type { VisibilityContext } from "@/lib/visibility-engine";
 import { evaluateFormula } from "@/lib/formula-engine";
 import { toast } from "sonner";
@@ -123,6 +124,9 @@ export function EditableOverview({
   // Resolve field refs from field_configurations (falls back to inline fields)
   const cardType = useResolvedCardType(rawCardType, visibilityContext);
 
+  // Fetch layout-driven sections from page_layout_sections / page_layout_fields
+  const layout = useDealLayout();
+
   // Build a combined field map including property and contact fields
   const uwFieldMap = useMemo(() => {
     const map = new Map(cardType.uw_fields.map((f) => [f.key, f]));
@@ -130,6 +134,36 @@ export function EditableOverview({
     for (const f of cardType.contact_fields ?? []) map.set(f.key, f);
     return map;
   }, [cardType.uw_fields, cardType.property_fields, cardType.contact_fields]);
+
+  // Compute layout-driven field groups for the Overview tab.
+  // If layout sections exist for the overview tab with section_type="fields", use those.
+  // Otherwise, fall back to card type's detail_field_groups.
+  const effectiveFieldGroups = useMemo(() => {
+    if (layout.loading || layout.fieldSections.length === 0) {
+      // No layout data yet or no field sections → use card type groups
+      return cardType.detail_field_groups;
+    }
+
+    // Get field-based sections for the overview tab only
+    const overviewFieldSections = layout.fieldSections.filter(
+      (s) => (s.tab_key || "overview") === "overview"
+    );
+
+    if (overviewFieldSections.length === 0) {
+      return cardType.detail_field_groups;
+    }
+
+    // Convert layout sections → field group format
+    return overviewFieldSections.map((section) => {
+      const layoutFields = layout.fieldsBySectionId[section.id] ?? [];
+      return {
+        label: section.section_label,
+        fields: layoutFields
+          .filter((f) => f.is_visible)
+          .map((f) => f.field_key),
+      };
+    });
+  }, [layout.loading, layout.fieldSections, layout.fieldsBySectionId, cardType.detail_field_groups]);
 
   // Evaluate formula fields against current deal data
   const formulaValues = useMemo(() => {
@@ -175,7 +209,7 @@ export function EditableOverview({
 
   return (
     <div className="space-y-5">
-      {/* Key Metrics */}
+      {/* Key Metrics (system section — always rendered from card type) */}
       {activeOutputs.length > 0 && (
         <SectionCard title="Key Metrics" icon={BarChart3}>
           <div className="flex gap-5 flex-wrap">
@@ -197,8 +231,8 @@ export function EditableOverview({
         </SectionCard>
       )}
 
-      {/* Field Groups as read-only SectionCards */}
-      {cardType.detail_field_groups.map((group) => (
+      {/* Field Groups — layout-driven when available, card type fallback */}
+      {effectiveFieldGroups.map((group) => (
         <SectionCard
           key={group.label}
           title={group.label}
@@ -231,7 +265,7 @@ export function EditableOverview({
       ))}
 
       {/* Edit Dialogs */}
-      {cardType.detail_field_groups.map((group) => (
+      {effectiveFieldGroups.map((group) => (
         <CrmEditSectionDialog
           key={group.label}
           open={editingSection === group.label}
