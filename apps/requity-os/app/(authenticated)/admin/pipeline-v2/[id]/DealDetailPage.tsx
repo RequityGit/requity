@@ -77,7 +77,11 @@ import {
 } from "@/components/pipeline-v2/pipeline-types";
 import {
   advanceStageAction,
+  validateStageJumpAction,
+  regressStageAction,
 } from "@/app/(authenticated)/admin/pipeline-v2/actions";
+import type { StageBlocker } from "@/app/(authenticated)/admin/pipeline-v2/actions";
+import { StageBlockersDialog } from "@/components/pipeline-v2/StageBlockersDialog";
 import { mapAssetClassToVisibility, type VisibilityContext } from "@/lib/visibility-engine";
 import { DealActivityTab } from "@/components/pipeline-v2/tabs/DealActivityTab";
 import { UnifiedNotes } from "@/components/shared/UnifiedNotes";
@@ -161,6 +165,7 @@ export function DealDetailPage({
   ] as const;
   const tabs = UNIVERSAL_TABS;
 
+  const router = useRouter();
   const searchParams = useSearchParams();
   const tabParam = searchParams.get("tab");
   const initialTab = tabs.find((t) => t.toLowerCase() === tabParam?.toLowerCase()) ?? tabs[0];
@@ -205,6 +210,52 @@ export function DealDetailPage({
     ? `${deal.primary_contact.first_name} ${deal.primary_contact.last_name}`.trim()
     : deal.company?.name ?? deal.name;
 
+  // Stage double-click navigation
+  const [blockersDialogOpen, setBlockersDialogOpen] = useState(false);
+  const [stageBlockers, setStageBlockers] = useState<StageBlocker[]>([]);
+  const [targetStageLabel, setTargetStageLabel] = useState("");
+  const [stageJumping, startStageJump] = useTransition();
+
+  const handleStageDoubleClick = useCallback(
+    (targetStage: string) => {
+      if (targetStage === deal.stage) return;
+
+      startStageJump(async () => {
+        const result = await validateStageJumpAction(deal.id, targetStage);
+
+        if (result.canProgress) {
+          const label =
+            STAGES.find((s) => s.key === targetStage)?.label ?? targetStage;
+
+          if (result.direction === "backward") {
+            const res = await regressStageAction(deal.id, targetStage);
+            if (res.error) {
+              toast.error(`Cannot move stage: ${res.error}`);
+            } else {
+              toast.success(`Moved to ${label}`);
+              router.refresh();
+            }
+          } else if (result.direction === "forward") {
+            const res = await advanceStageAction(deal.id, targetStage);
+            if (res.error) {
+              toast.error(`Cannot advance: ${res.error}`);
+            } else {
+              toast.success(`Advanced to ${label}`);
+              router.refresh();
+            }
+          }
+        } else {
+          const label =
+            STAGES.find((s) => s.key === targetStage)?.label ?? targetStage;
+          setTargetStageLabel(label);
+          setStageBlockers(result.blockers);
+          setBlockersDialogOpen(true);
+        }
+      });
+    },
+    [deal.id, deal.stage, router]
+  );
+
   return (
     <div className="min-h-screen">
       {/* Breadcrumb */}
@@ -240,7 +291,12 @@ export function DealDetailPage({
 
         {/* Stage Stepper */}
         <div className="mt-6 rounded-xl border bg-card px-5 py-4">
-          <StageStepper currentStage={deal.stage} />
+          <StageStepper
+            currentStage={deal.stage}
+            interactive
+            loading={stageJumping}
+            onStageDoubleClick={handleStageDoubleClick}
+          />
         </div>
 
         {/* Inline Approval Status */}
@@ -407,6 +463,14 @@ export function DealDetailPage({
           />
         </div>
       </div>
+
+      {/* Stage Blockers Dialog */}
+      <StageBlockersDialog
+        open={blockersDialogOpen}
+        onOpenChange={setBlockersDialogOpen}
+        targetStageLabel={targetStageLabel}
+        blockers={stageBlockers}
+      />
     </div>
   );
 }
