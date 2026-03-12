@@ -1,0 +1,50 @@
+name: Deploy Supabase Edge Functions
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'packages/db/supabase/functions/**'
+  workflow_dispatch: # Allow manual trigger from GitHub UI
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    env:
+      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+      PROJECT_REF: edhlkknvlczhbowasjna
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: supabase/setup-cli@v1
+        with:
+          version: latest
+
+      - name: Deploy fetch-intake-emails
+        run: supabase functions deploy fetch-intake-emails --project-ref $PROJECT_REF
+        working-directory: packages/db
+
+      - name: Deploy process-intake-email
+        run: supabase functions deploy process-intake-email --project-ref $PROJECT_REF
+        working-directory: packages/db
+
+      - name: Deploy invite-user
+        run: supabase functions deploy invite-user --project-ref $PROJECT_REF
+        working-directory: packages/db
+
+      - name: Deploy generate-document
+        run: supabase functions deploy generate-document --project-ref $PROJECT_REF
+        working-directory: packages/db
+
+      - name: Deploy create-field
+        run: supabase functions deploy create-field --project-ref $PROJECT_REF
+        working-directory: packages/db
+
+      - name: Deploy resolve-user-template
+        run: supabase functions deploy resolve-user-template --project-ref $PROJECT_REF
+        working-directory: packages/db
+
+      - name: Deploy review-document
+        run: supabase functions deploy review-document --project-ref $PROJECT_REF
+        working-directory: packages/db
