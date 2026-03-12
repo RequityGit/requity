@@ -24,6 +24,7 @@ supabase/.temp/
 **/migrations/*_local_*
 **/migrations/*_backup_*
 **/migrations/remote_schema.sql
+packages/db/supabase/migrations/*_master_foundation.sql
 
 # --- IDE & System Files ---
 .vscode/

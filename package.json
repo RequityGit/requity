@@ -19,7 +19,7 @@
     "lint-staged": "^16.3.2",
     "turbo": "^2.5.4"
   },
-  "packageManager": "pnpm@9.15.4",
+  "packageManager": "pnpm@10.32.1",
   "lint-staged": {
     "apps/requity-os/**/*.{ts,tsx}": [
       "bash -c 'pnpm --filter @repo/requity-os typecheck'",

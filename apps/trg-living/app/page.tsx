@@ -55,13 +55,18 @@ export default async function Home() {
                   key={community.id}
                   className="group block bg-white rounded-2xl border border-slate-200 shadow-sm hover:shadow-xl hover:border-blue-300 transition-all overflow-hidden"
                 >
-                  <div className="aspect-video bg-slate-100 relative">
-                    {/* Placeholder for future images */}
-                    <div className="absolute inset-0 flex items-center justify-center text-slate-300 font-bold uppercase tracking-widest text-xs">
-                       {community.name} Image
-                    </div>
-                  </div>
-                  
+                  <div
+                    className="aspect-video bg-slate-100 realtive bg-cover bg-center"
+                    style={{
+                      backgroundImage: community.featured_image_url
+                      ? `url('${community.featured_image_url}')`
+                      : 'none'
+                    }}
+                  >
+                  {!community.featured_image_url && (
+                    <div className="absolute inset-0 flex items-center justify-center text-slate-300 font-bold uppercase tracking widest text-xs"></div>
+                  )}
+                  </div>                  
                   <div className="p-6">
                     <h3 className="text-xl font-bold text-slate-900 group-hover:text-blue-600 transition-colors">
                       {community.name}
