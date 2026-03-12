@@ -57,6 +57,12 @@ interface Props {
   loading: boolean;
   objectKey: string;
   onFieldsChange: () => void;
+  /** Draft-aware callbacks (optional — when provided, uses draft instead of direct DB) */
+  isFieldDirty?: (fieldId: string) => boolean;
+  isFieldNew?: (fieldId: string) => boolean;
+  isFieldArchived?: (fieldId: string) => boolean;
+  onDraftFieldCreate?: (tempId: string, data: Partial<FieldConfig>) => void;
+  onDraftFieldArchive?: (field: FieldConfig) => void;
 }
 
 export function FieldsTab({
@@ -66,6 +72,11 @@ export function FieldsTab({
   loading,
   objectKey,
   onFieldsChange,
+  isFieldDirty,
+  isFieldNew,
+  isFieldArchived,
+  onDraftFieldCreate,
+  onDraftFieldArchive,
 }: Props) {
   const [query, setQuery] = useState("");
   const [typeFilter, setTypeFilter] = useState("all");
@@ -125,6 +136,21 @@ export function FieldsTab({
     field_type: string;
   }) => {
     const fieldModule = OBJECT_MODULE_MAP[objectKey] || objectKey;
+
+    if (onDraftFieldCreate) {
+      // Draft mode: create locally
+      const tempId = `temp_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+      onDraftFieldCreate(tempId, {
+        module: fieldModule,
+        field_key: input.field_key,
+        field_label: input.field_label,
+        field_type: input.field_type,
+      });
+      setShowAddDialog(false);
+      return;
+    }
+
+    // Legacy direct DB mode
     const result = await createField({
       module: fieldModule,
       field_key: input.field_key,
@@ -140,6 +166,14 @@ export function FieldsTab({
   };
 
   const handleArchive = async (fieldId: string) => {
+    if (onDraftFieldArchive) {
+      // Draft mode: mark as archived locally
+      const field = fields.find((f) => f.id === fieldId);
+      if (field) onDraftFieldArchive(field);
+      return;
+    }
+
+    // Legacy direct DB mode
     const result = await archiveField(fieldId);
     if (result.error) {
       console.error("Failed to archive field:", result.error);
@@ -305,6 +339,8 @@ export function FieldsTab({
           const fieldCond = field.visibility_condition as VisibilityCondition | null;
           const isAxisField =
             field.field_key === "asset_class" || field.field_key === "loan_type";
+          const isDirty = isFieldDirty?.(field.id) ?? false;
+          const isNew = isFieldNew?.(field.id) ?? false;
 
           return (
             <div
@@ -319,6 +355,10 @@ export function FieldsTab({
                   : "grid-cols-[22px_1fr_95px_95px_50px_50px_30px]",
                 isActive
                   ? "bg-blue-500/5 border-l-2 border-l-blue-500"
+                  : isDirty && !isNew
+                  ? "bg-amber-500/5 border-l-2 border-l-amber-500 hover:bg-amber-500/10"
+                  : isNew
+                  ? "bg-green-500/5 border-l-2 border-l-green-500 hover:bg-green-500/10"
                   : "border-l-2 border-l-transparent hover:bg-muted/50"
               )}
             >

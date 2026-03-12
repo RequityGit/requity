@@ -1193,6 +1193,126 @@ export async function deleteTab(
   }
 }
 
+// ===========================================================================
+// BATCH PUBLISH (Draft → Production)
+// ===========================================================================
+
+export interface BatchPublishPayload {
+  objectKey: string;
+  fieldUpdates: { id: string; updates: Partial<FieldConfig> }[];
+  fieldCreates: Partial<FieldConfig>[];
+  fieldArchiveIds: string[];
+}
+
+export async function batchPublishChanges(
+  payload: BatchPublishPayload
+): Promise<{ success?: boolean; error?: string; createdIds?: string[] }> {
+  try {
+    const auth = await requireSuperAdmin();
+    if ("error" in auth) return { error: auth.error };
+
+    const admin = createAdminClient();
+    const now = new Date().toISOString();
+    const userId = auth.user.id;
+    const createdIds: string[] = [];
+
+    // --- 1. Apply field updates ---
+    for (const { id, updates } of payload.fieldUpdates) {
+      const { error } = await admin
+        .from(FIELD_CFG)
+        .update({
+          ...updates,
+          updated_at: now,
+          updated_by: userId,
+        } as never)
+        .eq("id" as never, id as never);
+
+      if (error) return { error: `Failed to update field ${id}: ${error.message}` };
+    }
+
+    // --- 2. Create new fields ---
+    for (const fieldData of payload.fieldCreates) {
+      // Get max display_order for this module
+      const { data: maxRow } = await admin
+        .from(FIELD_CFG)
+        .select("display_order" as never)
+        .eq("module" as never, (fieldData.module || "") as never)
+        .order("display_order" as never, { ascending: false })
+        .limit(1)
+        .single();
+
+      const nextOrder =
+        ((maxRow as unknown as { display_order: number } | null)?.display_order ?? -1) + 1;
+
+      const { data, error } = await admin
+        .from(FIELD_CFG)
+        .insert({
+          module: fieldData.module,
+          field_key: fieldData.field_key,
+          field_label: fieldData.field_label,
+          field_type: fieldData.field_type || "text",
+          is_visible: true,
+          is_locked: false,
+          is_admin_created: true,
+          is_archived: false,
+          is_required: fieldData.is_required ?? false,
+          dropdown_options: fieldData.dropdown_options ?? null,
+          display_order: nextOrder,
+          created_by: userId,
+        } as never)
+        .select("id" as never)
+        .single();
+
+      if (error) return { error: `Failed to create field: ${error.message}` };
+      if (data) createdIds.push((data as unknown as { id: string }).id);
+    }
+
+    // --- 3. Archive fields ---
+    for (const fieldId of payload.fieldArchiveIds) {
+      const { error } = await admin
+        .from(FIELD_CFG)
+        .update({
+          is_archived: true,
+          is_visible: false,
+          updated_at: now,
+          updated_by: userId,
+        } as never)
+        .eq("id" as never, fieldId as never)
+        .eq("is_admin_created" as never, true as never);
+
+      if (error) return { error: `Failed to archive field ${fieldId}: ${error.message}` };
+    }
+
+    // --- 4. Revalidate all affected pages ---
+    revalidatePath("/control-center/object-manager");
+
+    const pageRouteMap: Record<string, string[]> = {
+      contact: ["/admin/crm"],
+      company: ["/admin/crm"],
+      loan: ["/admin/loans"],
+      property: ["/admin/properties"],
+      borrower: ["/admin/crm"],
+      borrower_entity: ["/admin/crm"],
+      investor: ["/admin/crm"],
+      unified_deal: ["/admin/pipeline-v2"],
+    };
+
+    const routes = pageRouteMap[payload.objectKey] || [];
+    for (const route of routes) {
+      revalidatePath(route, "layout");
+      revalidatePath(route, "page");
+    }
+
+    // Also revalidate CRM pages
+    revalidatePath("/admin/crm", "layout");
+    revalidatePath("/admin/crm", "page");
+
+    return { success: true, createdIds };
+  } catch (err: unknown) {
+    return { error: err instanceof Error ? err.message : "An unexpected error occurred" };
+  }
+}
+
 // ---------------------------------------------------------------------------
 // Fetch pro forma templates
 // ---------------------------------------------------------------------------
