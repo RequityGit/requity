@@ -11,15 +11,19 @@ export async function updateSession(request: NextRequest) {
   const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
   if (!supabaseUrl || !supabaseAnonKey) {
-    console.error("CRITICAL: Supabase environment variables not configured");
-    if (process.env.NODE_ENV === "production") {
-      return {
-        supabase: null,
-        user: null,
-        supabaseResponse: new NextResponse("Service unavailable", { status: 503 }),
-      };
-    }
-    return { supabase: null, user: null, supabaseResponse };
+    console.error(
+      "CRITICAL: Supabase environment variables not configured.",
+      `NEXT_PUBLIC_SUPABASE_URL: ${supabaseUrl ? "set" : "MISSING"}`,
+      `NEXT_PUBLIC_SUPABASE_ANON_KEY: ${supabaseAnonKey ? "set" : "MISSING"}`
+    );
+    return {
+      supabase: null,
+      user: null,
+      supabaseResponse: new NextResponse(
+        "Service unavailable — authentication system is being restored. Please try again shortly.",
+        { status: 503 }
+      ),
+    };
   }
 
   const supabase = createServerClient<Database>(supabaseUrl, supabaseAnonKey, {

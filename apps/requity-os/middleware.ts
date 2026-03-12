@@ -23,13 +23,7 @@ const PUBLIC_ROUTES = [
 ];
 
 export async function middleware(request: NextRequest) {
-  const { supabase, user, supabaseResponse } = await updateSession(request);
   const { pathname } = request.nextUrl;
-
-  // If Supabase is not configured, let requests through
-  if (!supabase) {
-    return supabaseResponse;
-  }
 
   // -----------------------------------------------------------------------
   // Root path → redirect to /login (marketing site lives on a separate domain)
@@ -46,6 +40,16 @@ export async function middleware(request: NextRequest) {
   const isPublicRoute = PUBLIC_ROUTES.some((route) =>
     pathname.startsWith(route)
   );
+
+  const { supabase, user, supabaseResponse } = await updateSession(request);
+
+  // If Supabase is not configured, allow public routes through; block protected routes
+  if (!supabase) {
+    if (isPublicRoute) {
+      return NextResponse.next();
+    }
+    return supabaseResponse;
+  }
 
   // -----------------------------------------------------------------------
   // Unauthenticated user trying to access a protected route → /login
