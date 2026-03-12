@@ -1,13 +1,18 @@
 import type { SiteStat } from "../../lib/types";
 
-export default function StatsBar({ stats }: { stats: SiteStat[] }) {
+interface StatsBarProps {
+  stats: SiteStat[];
+  variant?: "navy" | "cream";
+}
+
+export default function StatsBar({ stats, variant = "navy" }: StatsBarProps) {
   if (!stats.length) return null;
 
   return (
-    <div className="stats-bar">
-      {stats.map((stat, i) => (
+    <div className={`stats-grid on-${variant}`}>
+      {stats.map((stat) => (
         <div key={stat.id} className="stat-cell">
-          <div className={`stat-num${i === 0 ? " champagne" : ""}`}>
+          <div className="stat-num gold">
             {stat.display_value}
           </div>
           <div className="stat-lbl">{stat.label}</div>

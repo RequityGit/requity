@@ -4,6 +4,7 @@ import { fetchSiteData } from "../../lib/supabase";
 import { renderEmText } from "../../lib/renderEmText";
 import type { PageSection, LoanProgram } from "../../lib/types";
 import ScrollReveal from "../components/ScrollReveal";
+import FooterCTA from "../components/FooterCTA";
 import {
   ArrowRight,
   Zap,
@@ -79,13 +80,20 @@ export default async function LendingPage() {
     <main>
       {/* Hero */}
       <section
-        className="dark-zone"
+        className="dark-zone hero-gradient"
         style={{
           paddingTop: "clamp(160px, 20vw, 220px)",
           paddingBottom: "clamp(80px, 10vw, 120px)",
+          position: "relative",
+          overflow: "hidden",
         }}
       >
-        <div className="container">
+        <div className="navy-grid-pattern">
+          {Array.from({ length: 14 }).map((_, i) => (
+            <div key={i} className="navy-grid-line" style={{ left: `${(i + 1) * 7.14}%` }} />
+          ))}
+        </div>
+        <div className="container" style={{ position: "relative", zIndex: 1 }}>
           <p
             className="section-eyebrow"
             style={{ animation: "fadeUp 0.8s ease forwards" }}
@@ -151,7 +159,7 @@ export default async function LendingPage() {
             >
               {benefits.map((b) => (
                 <div key={b.title} className="value-item">
-                  <div style={{ color: "var(--champagne-dk)", marginBottom: 14 }}>
+                  <div style={{ color: "var(--gold)", marginBottom: 14 }}>
                     {BENEFIT_ICONS[b.title] ?? <Zap size={22} />}
                   </div>
                   <h4>{b.title}</h4>
@@ -163,12 +171,17 @@ export default async function LendingPage() {
         </div>
       </section>
 
-      {/* Process */}
-      <section className="light-zone section-gap-md">
-        <div className="container">
+      {/* Process - Navy section for rhythm */}
+      <section className="dark-zone section-pad-lg" style={{ overflow: "hidden" }}>
+        <div className="navy-grid-pattern">
+          {Array.from({ length: 14 }).map((_, i) => (
+            <div key={i} className="navy-grid-line" style={{ left: `${(i + 1) * 7.14}%` }} />
+          ))}
+        </div>
+        <div className="container" style={{ position: "relative", zIndex: 1 }}>
           <ScrollReveal>
-            <p className="section-eyebrow section-eyebrow-dark">Our Process</p>
-            <h2 className="section-title" style={{ marginBottom: 48 }}>
+            <p className="section-eyebrow" style={{ color: "var(--gold-muted)" }}>Our Process</p>
+            <h2 className="section-title section-title-light" style={{ marginBottom: 48 }}>
               From Application to <em>Funding</em>
             </h2>
           </ScrollReveal>
@@ -181,7 +194,7 @@ export default async function LendingPage() {
               }}
             >
               {PROCESS_STEPS.map((step, i) => (
-                <div key={i} className="card">
+                <div key={i} className="card-navy" style={{ padding: "36px 32px" }}>
                   <div
                     style={{
                       display: "flex",
@@ -193,10 +206,22 @@ export default async function LendingPage() {
                     <div className="step-icon">{PROCESS_ICONS[i]}</div>
                     <span className="step-label">Step {i + 1}</span>
                   </div>
-                  <h3 className="card-title" style={{ fontSize: 21 }}>
+                  <h3
+                    style={{
+                      fontFamily: "var(--font-serif)",
+                      fontSize: 21,
+                      fontWeight: 400,
+                      color: "#fff",
+                      marginBottom: 12,
+                      lineHeight: 1.25,
+                      letterSpacing: "-0.3px",
+                    }}
+                  >
                     {step.title}
                   </h3>
-                  <p className="card-body">{step.description}</p>
+                  <p style={{ fontSize: 15, lineHeight: 1.75, color: "var(--navy-text-mid)" }}>
+                    {step.description}
+                  </p>
                 </div>
               ))}
             </div>
@@ -205,7 +230,7 @@ export default async function LendingPage() {
       </section>
 
       {/* Loan Programs */}
-      <section id="programs" className="light-zone section-gap-md">
+      <section id="programs" className="light-zone section-gap-lg">
         <div className="container">
           <ScrollReveal>
             <p className="section-eyebrow section-eyebrow-dark">Loan Programs</p>
@@ -249,60 +274,26 @@ export default async function LendingPage() {
       </section>
 
       {/* CTA */}
-      <section id="apply" className="light-zone section-gap-sm">
-        <div className="container">
-          <ScrollReveal>
-            <div className="lending-cta-banner">
-              <div>
-                <h3>
-                  Have a deal? <em>Let&apos;s talk.</em>
-                </h3>
-                <p>
-                  Our lending team is available to discuss your project and provide
-                  a quick indication of terms. No obligation, no credit pull.
-                </p>
-              </div>
-              <a href="mailto:lending@requitygroup.com" className="btn-primary">
-                Contact Lending <ArrowRight size={16} />
-              </a>
-            </div>
-          </ScrollReveal>
-        </div>
-      </section>
-
-      {/* Investor CTA */}
-      <section className="light-zone section-gap-sm">
-        <div className="container">
-          <ScrollReveal>
-            <div
-              className="lending-cta-banner"
-              style={{
-                background: "linear-gradient(135deg, var(--champagne-dk), var(--champagne))",
-              }}
-            >
-              <div>
-                <h3 style={{ color: "var(--navy-deep)" }}>
-                  Looking to <em style={{ color: "var(--navy-mid)" }}>Invest</em>, Not Borrow?
-                </h3>
-                <p style={{ color: "rgba(8,21,37,0.55)" }}>
-                  Our Income Fund provides accredited investors with consistent
-                  monthly income backed by the same real estate loans we originate.
-                </p>
-              </div>
-              <Link
-                href="/invest"
-                className="btn-primary"
-                style={{
-                  background: "var(--navy-deep)",
-                  color: "var(--champagne)",
-                }}
-              >
-                Learn More <ArrowRight size={16} />
-              </Link>
-            </div>
-          </ScrollReveal>
-        </div>
-      </section>
+      <FooterCTA
+        label="Apply Now"
+        headline={
+          <>
+            Have a deal?{" "}
+            <em style={{ fontStyle: "italic", color: "var(--gold-muted)" }}>Let&apos;s talk.</em>
+          </>
+        }
+        body="Our lending team is available to discuss your project and provide a quick indication of terms. No obligation, no credit pull."
+        primaryCta={
+          <a href="mailto:lending@requitygroup.com" className="btn-primary">
+            Contact Lending <ArrowRight size={16} />
+          </a>
+        }
+        secondaryCta={
+          <Link href="/invest" className="btn-secondary">
+            Looking to Invest? <ArrowRight size={16} />
+          </Link>
+        }
+      />
     </main>
   );
 }

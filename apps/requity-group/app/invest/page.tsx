@@ -4,6 +4,7 @@ import { fetchSiteData } from "../../lib/supabase";
 import { renderEmText } from "../../lib/renderEmText";
 import type { PageSection, SiteStat, Testimonial } from "../../lib/types";
 import ScrollReveal from "../components/ScrollReveal";
+import FooterCTA from "../components/FooterCTA";
 import {
   ArrowRight,
   Layers,
@@ -59,13 +60,20 @@ export default async function InvestPage() {
     <main>
       {/* Hero */}
       <section
-        className="dark-zone"
+        className="dark-zone hero-gradient"
         style={{
           paddingTop: "clamp(160px, 20vw, 220px)",
           paddingBottom: "clamp(80px, 10vw, 120px)",
+          position: "relative",
+          overflow: "hidden",
         }}
       >
-        <div className="container">
+        <div className="navy-grid-pattern">
+          {Array.from({ length: 14 }).map((_, i) => (
+            <div key={i} className="navy-grid-line" style={{ left: `${(i + 1) * 7.14}%` }} />
+          ))}
+        </div>
+        <div className="container" style={{ position: "relative", zIndex: 1 }}>
           <p
             className="section-eyebrow"
             style={{ animation: "fadeUp 0.8s ease forwards" }}
@@ -134,7 +142,7 @@ export default async function InvestPage() {
             >
               {benefits.map((b) => (
                 <div key={b.title} className="value-item">
-                  <div style={{ color: "var(--champagne-dk)", marginBottom: 14 }}>
+                  <div style={{ color: "var(--gold)", marginBottom: 14 }}>
                     {BENEFIT_ICONS[b.title] ?? <TrendingUp size={22} />}
                   </div>
                   <h4>{b.title}</h4>
@@ -208,29 +216,19 @@ export default async function InvestPage() {
       )}
 
       {/* CTA */}
-      <section id="access" className="light-zone section-gap-sm">
-        <div className="container">
-          <ScrollReveal>
-            <div className="lending-cta-banner">
-              <div>
-                <h3>
-                  Ready to <em>Invest</em>?
-                </h3>
-                <p>
-                  Request access to learn more about the Requity Income Fund and
-                  how you can start earning consistent, asset-backed monthly income.
-                </p>
-              </div>
-              <a
-                href="mailto:invest@requitygroup.com"
-                className="btn-primary"
-              >
-                Request Access <ArrowRight size={16} />
-              </a>
-            </div>
-          </ScrollReveal>
-        </div>
-      </section>
+      <FooterCTA
+        headline={
+          <>
+            Ready to <em style={{ fontStyle: "italic", color: "var(--gold-muted)" }}>Invest</em>?
+          </>
+        }
+        body="Request access to learn more about the Requity Income Fund and how you can start earning consistent, asset-backed monthly income."
+        primaryCta={
+          <a href="mailto:invest@requitygroup.com" className="btn-primary">
+            Request Access <ArrowRight size={16} />
+          </a>
+        }
+      />
     </main>
   );
 }

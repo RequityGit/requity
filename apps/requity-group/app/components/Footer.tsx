@@ -22,8 +22,8 @@ export default function Footer({
   );
 
   return (
-    <div className="light-zone" style={{ paddingTop: 0 }}>
-      <footer>
+    <footer>
+      <div className="footer-inner">
         <div className="footer-grid">
           <div className="footer-brand">
             <Link href="/" className="nav-logo">
@@ -92,7 +92,7 @@ export default function Footer({
             )}
           </div>
         </div>
-      </footer>
-    </div>
+      </div>
+    </footer>
   );
 }
