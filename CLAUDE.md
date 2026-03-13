@@ -235,7 +235,7 @@ Before considering any implementation complete, verify:
 | `loans` | Funded loans | `status` enum (`loan_status`), `stage` text |
 | `draw_requests` | Construction draws | NOT `construction_draws` |
 | `equity_deals` | Equity pipeline | With `equity_deal_stage_history` |
-| `documents` | Document metadata | Google Drive is file storage layer |
+| `documents` | Document metadata | Supabase Storage is file storage layer |
 | `project_tracker` | Internal project tracking | Update when working on Requity projects |
 | `project_notes` | Project note log | Include timestamps |
 | `field_configurations` | **Master field registry** | Single source of truth for ALL field labels, types, options |

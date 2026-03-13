@@ -7,7 +7,6 @@ import {
   MoreHorizontal,
   Download,
   Pencil,
-  ExternalLink,
   Loader2,
 } from "lucide-react";
 import { toast } from "sonner";
@@ -60,7 +59,6 @@ export interface GeneratedDocRow {
   status: string;
   generated_by_name: string;
   generated_at: string;
-  gdrive_file_id: string | null;
 }
 
 interface Props {
@@ -240,19 +238,6 @@ export function GeneratedDocumentsTable({ data, action }: Props) {
                             Edit in Portal
                           </Link>
                         </DropdownMenuItem>
-                        {doc.gdrive_file_id && (
-                          <DropdownMenuItem
-                            onClick={() =>
-                              window.open(
-                                `https://docs.google.com/document/d/${doc.gdrive_file_id}`,
-                                "_blank"
-                              )
-                            }
-                          >
-                            <ExternalLink size={14} className="mr-2" />
-                            Open in Drive
-                          </DropdownMenuItem>
-                        )}
                         <DropdownMenuItem
                           onClick={() => handleDownloadPdf(doc)}
                           disabled={downloadingId === doc.id}

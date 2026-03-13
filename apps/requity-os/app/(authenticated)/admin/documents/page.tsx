@@ -219,7 +219,6 @@ export default async function AdminDocumentsPage() {
       status: doc.status,
       generated_by_name: profileMap.get(doc.generated_by) ?? "Unknown",
       generated_at: doc.generated_at,
-      gdrive_file_id: doc.gdrive_file_id,
     };
   });
 
