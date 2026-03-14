@@ -70,6 +70,18 @@ const ENTITY_ICONS: Record<string, { icon: typeof Building2; color: string }> = 
   opportunity: { icon: Building2, color: "text-blue-400" },
 };
 
+const ENTITY_TYPE_LABELS: Record<string, string> = {
+  opportunity: "Deal",
+  loan: "Loan",
+  draw_request: "Draw Request",
+  payoff: "Payoff",
+  exception: "Exception",
+  condition: "Condition",
+  borrower: "Borrower",
+  investor: "Investor",
+  fund: "Fund",
+};
+
 function getInitials(name: string): string {
   return name
     .split(" ")
@@ -123,8 +135,8 @@ export function ApprovalCard({
           <div className="flex-1 min-w-0">
             <div className="text-sm font-semibold leading-snug mb-1">
               {approval.submission_notes
-                ? `${approval.entity_type.replace(/_/g, " ")} — ${approval.submission_notes.slice(0, 80)}`
-                : `${approval.entity_type.replace(/_/g, " ")} approval`}
+                ? `${ENTITY_TYPE_LABELS[approval.entity_type] ?? approval.entity_type.replace(/_/g, " ")} — ${approval.submission_notes.slice(0, 80)}`
+                : `${ENTITY_TYPE_LABELS[approval.entity_type] ?? approval.entity_type.replace(/_/g, " ")} approval`}
             </div>
             {approval.submission_notes && (
               <p className="text-[12.5px] text-muted-foreground leading-relaxed">
@@ -158,7 +170,7 @@ export function ApprovalCard({
               className="h-[11px] w-[11px]"
               strokeWidth={1.5}
             />
-            {approval.entity_type.replace(/_/g, " ")}
+            {ENTITY_TYPE_LABELS[approval.entity_type] ?? approval.entity_type.replace(/_/g, " ")}
           </span>
         )}
 

@@ -7,7 +7,7 @@ import { requireAdmin } from "@/lib/auth/require-admin";
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 // ---------------------------------------------------------------------------
-// Opportunity CRUD
+// Deal CRUD
 // ---------------------------------------------------------------------------
 
 interface CreateOpportunityInput {
@@ -85,7 +85,7 @@ export async function createOpportunityAction(input: CreateOpportunityInput) {
       valueMethod = "underwritten_arv";
     }
 
-    // Step 3: Create opportunity
+    // Step 3: Create deal
     const { data: oppData, error: oppError } = await admin
       .from("opportunities")
       .insert({
@@ -107,7 +107,7 @@ export async function createOpportunityAction(input: CreateOpportunityInput) {
       .select("id")
       .single();
 
-    if (oppError) return { error: `Opportunity: ${oppError.message}` };
+    if (oppError) return { error: `Deal: ${oppError.message}` };
 
     // Step 4: Add borrowers
     if (input.borrower_ids && input.borrower_ids.length > 0) {
@@ -135,7 +135,7 @@ export async function createOpportunityAction(input: CreateOpportunityInput) {
 }
 
 // ---------------------------------------------------------------------------
-// Update Opportunity
+// Update Deal
 // ---------------------------------------------------------------------------
 
 interface UpdateOpportunityInput {
@@ -191,7 +191,7 @@ export async function moveOpportunityStageAction(
       .eq("id", opportunityId)
       .single();
 
-    if (fetchErr || !opp) return { error: "Opportunity not found" };
+    if (fetchErr || !opp) return { error: "Deal not found" };
 
     const updateData: any = {
       stage: newStage,
@@ -228,7 +228,7 @@ export async function requestApprovalAction(opportunityId: string) {
 
     const admin = createAdminClient();
 
-    // Get opportunity data for the deal snapshot
+    // Get deal data for the deal snapshot
     const { data: opp } = await admin
       .from("opportunities")
       .select("*, properties(*)")
@@ -358,7 +358,7 @@ export async function decideApprovalAction(
 }
 
 // ---------------------------------------------------------------------------
-// Add Borrower to Opportunity
+// Add Borrower to Deal
 // ---------------------------------------------------------------------------
 
 export async function addOpportunityBorrowerAction(
@@ -399,7 +399,7 @@ export async function addOpportunityBorrowerAction(
 }
 
 // ---------------------------------------------------------------------------
-// Remove Borrower from Opportunity
+// Remove Borrower from Deal
 // ---------------------------------------------------------------------------
 
 export async function removeOpportunityBorrowerAction(

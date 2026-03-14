@@ -175,7 +175,7 @@ export function ScenarioHeader({
                   {linkedDealName}
                 </span>
                 <Badge variant="outline" className="text-[8px] h-3.5 px-1">
-                  {linkedDealType === "opportunity" ? "Opp" : "Loan"}
+                  {linkedDealType === "opportunity" ? "Deal" : "Loan"}
                 </Badge>
               </div>
               <Link
@@ -244,7 +244,7 @@ export function ScenarioHeader({
                           </p>
                         </div>
                         <Badge variant="outline" className="text-[9px] h-4 px-1.5 shrink-0 ml-2">
-                          {deal.type === "opportunity" ? "Opportunity" : "Loan"}
+                          {deal.type === "opportunity" ? "Deal" : "Loan"}
                         </Badge>
                       </button>
                     ))

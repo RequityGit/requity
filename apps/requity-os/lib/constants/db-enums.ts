@@ -999,10 +999,10 @@ export const APP_ROLES = [
 export type AppRole = (typeof APP_ROLES)[number];
 
 // ============================================
-// Opportunities — Pipeline Stages
+// Deals — Pipeline Stages
 // ============================================
 
-/** Opportunity pipeline stages (on opportunities table) */
+/** Deal pipeline stages (on opportunities table) */
 export const OPPORTUNITY_STAGES = [
   "awaiting_info",
   "quoting",
@@ -1058,7 +1058,7 @@ export const LOSS_REASONS = [
 ] as const;
 
 // ============================================
-// Opportunities — Funding Channel
+// Deals — Funding Channel
 // ============================================
 
 export const FUNDING_CHANNELS = [
@@ -1068,7 +1068,7 @@ export const FUNDING_CHANNELS = [
 ] as const;
 
 // ============================================
-// Opportunities — Approval Status
+// Deals — Approval Status
 // ============================================
 
 export const APPROVAL_STATUSES = [
@@ -1090,7 +1090,7 @@ export const APPROVAL_STATUS_COLORS: Record<string, string> = {
 };
 
 // ============================================
-// Opportunities — Deal Classification
+// Deals — Deal Classification
 // ============================================
 
 export const DEBT_TRANCHES = [
@@ -1140,7 +1140,7 @@ export const LEASE_TYPES = [
 ] as const;
 
 // ============================================
-// Opportunities — Borrower Roles
+// Deals — Borrower Roles
 // ============================================
 
 export const BORROWER_ROLES = [

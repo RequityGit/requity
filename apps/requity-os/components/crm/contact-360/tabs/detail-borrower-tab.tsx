@@ -288,7 +288,7 @@ export function DetailBorrowerTab({
             <MetricCard label="Total Loans" value={loans.length} sub={`${activeLoans.length} active`} />
             <MetricCard label="Loan Volume" value={formatCurrency(totalVolume)} mono />
             <MetricCard label="Avg Rate" value={avgRate > 0 ? formatPercent(avgRate) : "\u2014"} mono />
-            <MetricCard label="Active Opps" value={activeLoans.length} />
+            <MetricCard label="Active Deals" value={activeLoans.length} />
             <MetricCard label="First Loan" value={firstLoan ? formatDate(firstLoan.created_at) : "\u2014"} />
           </div>
         </SectionCard>
@@ -363,12 +363,12 @@ export function DetailBorrowerTab({
         <CardHeader className="px-5 py-3.5 border-b border-border/60">
           <CardTitle className="text-[13px] font-semibold text-foreground flex items-center gap-2">
             <Landmark size={16} className="text-muted-foreground" strokeWidth={1.5} />
-            Loans & Opportunities
+            Loans & Deals
           </CardTitle>
         </CardHeader>
         {loans.length === 0 ? (
           <CardContent className="p-8 text-center text-sm text-muted-foreground">
-            No loans or opportunities found.
+            No loans or deals found.
           </CardContent>
         ) : (
           <div className="overflow-x-auto">

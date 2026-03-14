@@ -22,7 +22,7 @@ export function DetailDealsTab({ loans, commitments }: DetailDealsTabProps) {
 
   return (
     <div className="flex flex-col gap-5">
-      {/* Loans & Opportunities */}
+      {/* Loans & Deals */}
       <Card className="rounded-xl border-border overflow-hidden">
         <CardHeader className="px-5 py-3.5 border-b border-border/60">
           <CardTitle className="text-[13px] font-semibold text-foreground flex items-center gap-2">
@@ -31,12 +31,12 @@ export function DetailDealsTab({ loans, commitments }: DetailDealsTabProps) {
               className="text-muted-foreground"
               strokeWidth={1.5}
             />
-            Loans & Opportunities
+            Loans & Deals
           </CardTitle>
         </CardHeader>
         {loans.length === 0 ? (
           <CardContent className="p-8 text-center text-sm text-muted-foreground">
-            No loans or opportunities found.
+            No loans or deals found.
           </CardContent>
         ) : (
           <div className="overflow-x-auto">

@@ -301,7 +301,7 @@ export async function POST(request: Request) {
                 .select("id")
                 .single();
 
-              if (oppError) throw new Error(`Opportunity creation failed: ${oppError.message}`);
+              if (oppError) throw new Error(`Deal creation failed: ${oppError.message}`);
               entityIds.opportunity_id = newOpp.id;
             }
             break;

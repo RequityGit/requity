@@ -16,6 +16,19 @@ import { SLA_HOURS } from "@/lib/approvals/types";
 import { nq } from "@/lib/notifications";
 import type { Json } from "@/lib/supabase/types";
 
+// User-facing labels for entity types (keys stay as DB values)
+const ENTITY_TYPE_DISPLAY: Record<string, string> = {
+  opportunity: "deal",
+  loan: "loan",
+  draw_request: "draw request",
+  payoff: "payoff",
+  exception: "exception",
+  condition: "condition",
+  borrower: "borrower",
+  investor: "investor",
+  fund: "fund",
+};
+
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
@@ -344,7 +357,7 @@ export async function saveApprovalFieldAction(
     // Default: use the pipeline updateUwDataAction pattern
     // Import the logic inline to avoid circular deps
     const { updateUwDataAction } = await import(
-      "@/app/(authenticated)/admin/pipeline-v2/actions"
+      "@/app/(authenticated)/admin/pipeline/actions"
     );
     const uwResult = await updateUwDataAction(entityId, fieldKey, value);
     if (uwResult.error) return { error: uwResult.error };
@@ -473,7 +486,7 @@ export async function submitForApproval(input: {
       .from("ops_tasks")
       .insert({
         title: taskTitle,
-        description: input.submissionNotes || `Approval request for ${input.entityType}`,
+        description: input.submissionNotes || `Approval request for ${ENTITY_TYPE_DISPLAY[input.entityType] ?? input.entityType}`,
         status: "Pending Approval",
         priority: routing.auto_priority === "urgent" ? "Critical" : routing.auto_priority === "high" ? "High" : "Medium",
         assigned_to: routing.approver_id,
@@ -531,7 +544,7 @@ export async function submitForApproval(input: {
         user_id: routing.approver_id,
         notification_slug: "approval-submitted",
         title: `New approval: ${taskTitle}`,
-        body: input.submissionNotes || `${auth.profile?.full_name || "Someone"} submitted a ${input.entityType} for your approval.`,
+        body: input.submissionNotes || `${auth.profile?.full_name || "Someone"} submitted a ${ENTITY_TYPE_DISPLAY[input.entityType] ?? input.entityType} for your approval.`,
         priority: routing.auto_priority,
         entity_type: "task",
         entity_id: approvalId,
@@ -643,7 +656,7 @@ export async function approveRequest(approvalId: string, decisionNotes?: string)
         console.error("Failed to update condition status on approval:", condErr);
       }
 
-      revalidatePath("/admin/pipeline-v2");
+      revalidatePath("/admin/pipeline");
     }
 
     // Sync approval status back to opportunities table if entity_type is opportunity
@@ -686,7 +699,7 @@ export async function approveRequest(approvalId: string, decisionNotes?: string)
         user_id: approval.submitted_by,
         notification_slug: "approval-decided",
         title: `Approved: ${borrowerName} approved`,
-        body: `An approver approved your ${approval.entity_type} request.${decisionNotes ? ` Notes: ${decisionNotes}` : ""}`,
+        body: `An approver approved your ${ENTITY_TYPE_DISPLAY[approval.entity_type] ?? approval.entity_type} request.${decisionNotes ? ` Notes: ${decisionNotes}` : ""}`,
         priority: "normal",
         entity_type: "task",
         entity_id: approvalId,
@@ -764,7 +777,7 @@ export async function requestChanges(approvalId: string, decisionNotes: string) 
         console.error("Failed to revert condition status on changes requested:", condErr);
       }
 
-      revalidatePath("/admin/pipeline-v2");
+      revalidatePath("/admin/pipeline");
     }
 
     // Update linked task to on_hold
@@ -930,7 +943,7 @@ export async function declineRequest(approvalId: string, decisionNotes: string) 
         console.error("Failed to update condition status on decline:", condErr);
       }
 
-      revalidatePath("/admin/pipeline-v2");
+      revalidatePath("/admin/pipeline");
     }
 
     // Sync approval status back to opportunities table if entity_type is opportunity
@@ -972,7 +985,7 @@ export async function declineRequest(approvalId: string, decisionNotes: string) 
         user_id: approval.submitted_by,
         notification_slug: "approval-decided",
         title: `Declined: ${borrowerName}`,
-        body: `An approver declined your ${approval.entity_type}: ${decisionNotes.substring(0, 100)}`,
+        body: `An approver declined your ${ENTITY_TYPE_DISPLAY[approval.entity_type] ?? approval.entity_type}: ${decisionNotes.substring(0, 100)}`,
         priority: "high",
         entity_type: "task",
         entity_id: approvalId,

@@ -426,7 +426,7 @@ export default function FormEditorPage() {
                           </SelectTrigger>
                           <SelectContent>
                             <SelectItem value="none">None</SelectItem>
-                            <SelectItem value="opportunity">Opportunity</SelectItem>
+                            <SelectItem value="opportunity">Deal</SelectItem>
                             <SelectItem value="property">Property</SelectItem>
                             <SelectItem value="crm_contact">Contact</SelectItem>
                             <SelectItem value="company">Company</SelectItem>

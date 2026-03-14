@@ -141,7 +141,7 @@ export async function deleteScenario(
   }
 }
 
-// ─── Link scenario to a deal (opportunity or loan) ──────────────────────────
+// ─── Link scenario to a deal (deal or loan) ────────────────────────────────
 
 export async function linkScenarioToDeal(
   scenarioId: string,

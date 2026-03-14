@@ -115,7 +115,7 @@ export default async function ScenarioEditorPage({
       .select("deal_name")
       .eq("id", scenario.opportunity_id)
       .single();
-    linkedDealName = opp?.deal_name || "Unnamed Opportunity";
+    linkedDealName = opp?.deal_name || "Unnamed Deal";
   } else if (scenario.loan_id) {
     linkedDealType = "loan";
     linkedDealId = scenario.loan_id;

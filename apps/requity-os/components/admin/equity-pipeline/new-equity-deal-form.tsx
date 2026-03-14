@@ -244,7 +244,7 @@ export function NewEquityDealForm({
                       investment_thesis: e.target.value,
                     })
                   }
-                  placeholder="Describe the investment opportunity and value-add strategy..."
+                  placeholder="Describe the investment deal and value-add strategy..."
                   rows={3}
                 />
               </div>

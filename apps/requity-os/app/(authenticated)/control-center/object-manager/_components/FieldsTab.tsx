@@ -212,7 +212,7 @@ export function FieldsTab({
     }
   };
 
-  // Whether this object supports two-axis visibility (only Opportunity/unified_deal)
+  // Whether this object supports two-axis visibility (only Deal/unified_deal)
   const isAxisObject = objectKey === "unified_deal";
 
   if (loading) {
@@ -295,7 +295,7 @@ export function FieldsTab({
         </Button>
       </div>
 
-      {/* Axis Indicator Banners (Opportunity only) */}
+      {/* Axis Indicator Banners (Deal only) */}
       {isAxisObject && (
         <div className="flex gap-2 px-3.5 py-2 border-b border-border">
           <div className="flex-1 flex items-center gap-2 px-3 py-1.5 rounded-md bg-amber-500/[0.04] border border-amber-500/10">

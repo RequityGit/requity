@@ -38,7 +38,7 @@ export interface IntakeParsedData {
   arv?: number;
   yearBuilt?: number;
   zoning?: string;
-  // Opportunity / Deal
+  // Deal
   loanAmount?: number;
   loanType?: string;
   ltv?: number;
@@ -146,7 +146,7 @@ export const ENTITY_META: Record<IntakeEntityKey, { label: string; color: string
   contact: { label: "Contact", color: "blue" },
   company: { label: "Company", color: "violet" },
   property: { label: "Property", color: "emerald" },
-  opportunity: { label: "Opportunity", color: "amber" },
+  opportunity: { label: "Deal", color: "amber" },
 };
 
 // ─── Utility: map parsed_data fields to entity-keyed objects for comparison ───

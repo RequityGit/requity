@@ -43,7 +43,7 @@ interface OriginationsTabsProps {
   // Counts for badges
   pipelineCount: number;
   pendingConditionsCount: number;
-  // Opportunity pipeline (new)
+  // Deal pipeline (new)
   opportunityRows: OpportunityRow[];
   opportunityCount: number;
   stageThresholds?: StageThreshold[];
@@ -106,7 +106,7 @@ export function OriginationsTabs({
         </TabsTrigger>
       </TabsList>
 
-      {/* Deals (Opportunities) Tab */}
+      {/* Deals Tab */}
       <TabsContent value="deals" className="mt-4">
         <div className="space-y-4">
           {/* View toggle */}

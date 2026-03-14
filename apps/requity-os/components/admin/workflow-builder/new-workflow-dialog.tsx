@@ -98,7 +98,7 @@ export function NewWorkflowDialog({
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="loan">Loan</SelectItem>
-                <SelectItem value="opportunity">Opportunity</SelectItem>
+                <SelectItem value="opportunity">Deal</SelectItem>
                 <SelectItem value="equity_deal">Equity Deal</SelectItem>
               </SelectContent>
             </Select>

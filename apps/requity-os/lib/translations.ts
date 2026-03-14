@@ -454,7 +454,7 @@ const translations = {
       assetBacked: 'Asset-Backed Security',
       assetBackedDesc: 'Every dollar is secured by tangible real estate assets with conservative loan-to-value ratios. Your capital is protected by real property.',
       productTitle: 'Investment',
-      productTitleEm: 'Opportunities',
+      productTitleEm: 'Deals',
       fundLabel: 'Now Open to Investors',
       fundName: 'Requity Income Fund',
       fundDesc: 'A diversified real estate credit fund targeting consistent monthly income backed by tangible assets with conservative underwriting. The fund deploys capital across bridge loans, manufactured housing, RV parks, and multifamily properties.',

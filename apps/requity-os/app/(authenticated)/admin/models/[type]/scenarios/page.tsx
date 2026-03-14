@@ -112,7 +112,7 @@ export default async function ScenariosPage({
       .select("id, deal_name")
       .in("id", oppIds);
     for (const o of opps ?? []) {
-      dealNames[(o as { id: string }).id] = (o as { deal_name: string | null }).deal_name || "Unnamed Opportunity";
+      dealNames[(o as { id: string }).id] = (o as { deal_name: string | null }).deal_name || "Unnamed Deal";
     }
   }
   if (loanIds.length > 0) {
@@ -226,7 +226,7 @@ export default async function ScenariosPage({
                         variant="outline"
                         className="text-[8px] h-3.5 px-1 ml-1"
                       >
-                        {isOpportunity ? "Opportunity" : "Loan"}
+                        {isOpportunity ? "Deal" : "Loan"}
                       </Badge>
                     </div>
                   ) : (

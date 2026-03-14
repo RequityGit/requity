@@ -79,7 +79,7 @@ export default async function NewDealPage() {
 
       <PageHeader
         title="New Deal"
-        description="Create a new deal opportunity in the pipeline."
+        description="Create a new deal in the pipeline."
       />
 
       <NewDealForm

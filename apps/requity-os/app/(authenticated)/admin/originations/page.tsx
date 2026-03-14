@@ -51,7 +51,7 @@ export default async function AdminOriginationsPage() {
       .from("documents")
       .select("loan_id")
       .not("loan_id", "is", null),
-    // New opportunity pipeline
+    // Deal pipeline
     admin
       .from("opportunity_pipeline")
       .select("*")
@@ -307,7 +307,7 @@ export default async function AdminOriginationsPage() {
   const adjusters = adjustersData;
   const versions = versionsData;
 
-  // ── Build Opportunity Pipeline data ────────────────────────────────
+  // ── Build Deal Pipeline data ────────────────────────────────────────
 
   const opportunities = opportunitiesResult.data ?? [];
   const opportunityRows = opportunities.map((o: any) => ({
