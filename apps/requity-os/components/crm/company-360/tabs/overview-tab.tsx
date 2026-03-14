@@ -34,7 +34,7 @@ import {
 } from "@/components/crm/shared-field-renderer";
 import { useToast } from "@/components/ui/use-toast";
 import { formatDate } from "@/lib/format";
-import { updateCompanyAction } from "@/app/(authenticated)/admin/crm/company-actions";
+import { updateCompanyAction } from "@/app/(authenticated)/(admin)/companies/actions";
 import { AddressAutocomplete, type ParsedAddress } from "@/components/ui/address-autocomplete";
 import type {
   CompanyDetailData,

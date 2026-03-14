@@ -5,6 +5,14 @@ import type { Database } from "@/lib/supabase/types";
 import { SUPABASE_URL, SUPABASE_ANON_KEY } from "@/lib/supabase/constants";
 import { getRequestOrigin } from "@/lib/get-request-origin";
 
+/** Same role→path mapping as middleware; avoids redirecting to /admin/dashboard (which becomes /dashboard and 404s). */
+const ROLE_DASHBOARDS: Record<string, string> = {
+  admin: "/pipeline",
+  super_admin: "/pipeline",
+  borrower: "/b/dashboard",
+  investor: "/i/dashboard",
+};
+
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const origin = getRequestOrigin(request);
@@ -74,7 +82,8 @@ export async function GET(request: Request) {
               .eq("id", user.id);
           }
 
-          return NextResponse.redirect(`${origin}/${profile.role}/dashboard`);
+          const path = ROLE_DASHBOARDS[profile.role] ?? "/b/dashboard";
+          return NextResponse.redirect(`${origin}${path}`);
         }
       }
 

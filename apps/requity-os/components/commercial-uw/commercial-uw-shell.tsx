@@ -63,7 +63,7 @@ export function CommercialUWShell({ dealId, dealName = "123 Test Deal" }: Commer
       <div className="h-[52px] border-b flex items-center px-5 bg-card sticky top-0 z-50 justify-between">
         <div className="flex items-center gap-2.5">
           <a
-            href={`/admin/deals/${dealId}`}
+            href={`/deals/${dealId}`}
             className="flex items-center gap-[5px] text-muted-foreground text-xs font-medium hover:text-foreground transition-colors"
           >
             <ArrowLeft className="w-3.5 h-3.5" strokeWidth={1.5} />

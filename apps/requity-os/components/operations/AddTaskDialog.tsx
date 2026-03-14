@@ -27,7 +27,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { DatePicker } from "@/components/ui/date-picker";
 import { Switch } from "@/components/ui/switch";
 import { PlusCircle, Loader2, Shield, AlertCircle } from "lucide-react";
-import { createTaskApproval } from "@/app/(authenticated)/admin/operations/tasks/actions";
+import { createTaskApproval } from "@/app/(authenticated)/(admin)/tasks/actions";
 import type { OpsProject } from "./ProjectCard";
 import type { TeamMember } from "./OperationsView";
 import {
@@ -35,7 +35,7 @@ import {
   OPS_TASK_PRIORITIES,
   OPS_TASK_CATEGORIES,
 } from "@/lib/constants/db-enums";
-import { RecurrencePanel } from "@/app/(authenticated)/admin/operations/tasks/recurrence-panel";
+import { RecurrencePanel } from "@/app/(authenticated)/(admin)/tasks/recurrence-panel";
 import { composeRecurrencePattern } from "@/lib/recurrence-utils";
 
 const STATUSES = OPS_TASK_STATUSES;

@@ -367,7 +367,7 @@ Dashboard, CRM (Contacts/Companies), Pipeline (Debt/Equity), DSCR Pricing, Servi
 
 ### Bottom Nav Items
 
-Chatter (with unread badge), Knowledge Base, Control Center (super admin only)
+Knowledge Base, Control Center (super admin only)
 
 ### Notification Badge
 

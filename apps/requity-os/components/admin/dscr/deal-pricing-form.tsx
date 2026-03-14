@@ -16,7 +16,7 @@ import {
 import { useToast } from "@/components/ui/use-toast";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Calculator, Loader2 } from "lucide-react";
-import { runPricingAction, type PricingRunInput } from "@/app/(authenticated)/admin/models/dscr/actions";
+import { runPricingAction, type PricingRunInput } from "@/app/(authenticated)/(admin)/models/dscr/actions";
 import {
   DSCR_PROPERTY_TYPES,
   DSCR_LOAN_PURPOSES,

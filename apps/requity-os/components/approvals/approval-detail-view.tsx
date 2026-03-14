@@ -37,7 +37,7 @@ import {
   requestChanges,
   declineRequest,
   cancelApproval,
-} from "@/app/(authenticated)/admin/operations/approvals/actions";
+} from "@/app/(authenticated)/(admin)/tasks/approvals/actions";
 import type {
   ApprovalRequestWithProfiles,
   ApprovalAuditLogEntryWithProfile,
@@ -163,7 +163,7 @@ export function ApprovalDetailView({
       toast({ title: "Error", description: result.error, variant: "destructive" });
     } else {
       toast({ title: "Cancelled", description: "The approval has been cancelled." });
-      router.push("/admin/operations/approvals");
+      router.push("/tasks/approvals");
     }
   }
 
@@ -176,7 +176,7 @@ export function ApprovalDetailView({
             variant="ghost"
             size="sm"
             className="mb-2 -ml-2"
-            onClick={() => router.push("/admin/operations/approvals")}
+            onClick={() => router.push("/tasks/approvals")}
           >
             <ArrowLeft className="h-4 w-4 mr-1" />
             Back to Approvals

@@ -10,7 +10,7 @@ import { useToast } from "@/components/ui/use-toast";
 import {
   fetchUsersAction,
   type UserRow,
-} from "@/app/(authenticated)/admin/users/actions";
+} from "@/app/(authenticated)/(admin)/users/actions";
 import { Skeleton } from "@/components/ui/skeleton";
 
 interface UserManagementClientProps {

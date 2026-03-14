@@ -32,6 +32,7 @@ export interface CompanyDetailData {
 
 export interface CompanyContactData {
   id: string;
+  contact_number: string;
   first_name: string | null;
   last_name: string | null;
   email: string | null;

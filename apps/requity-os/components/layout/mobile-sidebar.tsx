@@ -36,55 +36,55 @@ interface NavItem {
 }
 
 const investorNav: NavItem[] = [
-  { label: "Dashboard", href: "/investor/dashboard", icon: LayoutDashboard },
+  { label: "Dashboard", href: "/i/dashboard", icon: LayoutDashboard },
   {
     label: "My Investments",
-    href: "/investor/funds",
+    href: "/i/funds",
     icon: Landmark,
-    activePaths: ["/investor/capital-calls", "/investor/distributions"],
+    activePaths: ["/i/capital-calls", "/i/distributions"],
   },
-  { label: "Documents", href: "/investor/documents", icon: FileText },
-  { label: "Account", href: "/investor/account", icon: User },
+  { label: "Documents", href: "/i/documents", icon: FileText },
+  { label: "Account", href: "/i/account", icon: User },
 ];
 
 const borrowerNav: NavItem[] = [
-  { label: "Dashboard", href: "/borrower/dashboard", icon: LayoutDashboard },
-  { label: "Draw Requests", href: "/borrower/draws", icon: Hammer },
-  { label: "Payments", href: "/borrower/payments", icon: CreditCard },
-  { label: "Documents", href: "/borrower/documents", icon: FileText },
-  { label: "Account", href: "/borrower/account", icon: User },
+  { label: "Dashboard", href: "/b/dashboard", icon: LayoutDashboard },
+  { label: "Draw Requests", href: "/b/draws", icon: Hammer },
+  { label: "Payments", href: "/b/payments", icon: CreditCard },
+  { label: "Documents", href: "/b/documents", icon: FileText },
+  { label: "Account", href: "/b/account", icon: User },
 ];
 
 const adminNav: NavItem[] = [
   {
     label: "Pipeline",
-    href: "/admin/pipeline",
+    href: "/pipeline",
     icon: Columns3,
-    activePaths: ["/admin/originations", "/admin/loans", "/admin/conditions", "/admin/pricing"],
+    activePaths: ["/originations", "/loans", "/conditions", "/pricing"],
     moduleName: "pipeline",
   },
   {
     label: "CRM",
-    href: "/admin/crm",
+    href: "/contacts",
     icon: Contact,
-    activePaths: ["/admin/investors", "/admin/borrowers"],
+    activePaths: ["/contacts", "/companies"],
     moduleName: "crm",
   },
-  { label: "Models", href: "/admin/models", icon: FlaskConical, activePaths: ["/admin/models"], moduleName: "models" },
-  { label: "Servicing", href: "/admin/servicing", icon: Banknote, moduleName: "servicing" },
+  { label: "Models", href: "/models", icon: FlaskConical, activePaths: ["/models"], moduleName: "models" },
+  { label: "Servicing", href: "/servicing", icon: Banknote, moduleName: "servicing" },
   {
     label: "Investments",
-    href: "/admin/funds",
+    href: "/funds",
     icon: Landmark,
-    activePaths: ["/admin/capital-calls", "/admin/distributions"],
+    activePaths: ["/capital-calls", "/distributions"],
     moduleName: "investments",
   },
-  { label: "Documents", href: "/admin/documents", icon: FolderOpen, activePaths: ["/admin/documents"], moduleName: "documents" },
+  { label: "Documents", href: "/documents", icon: FolderOpen, activePaths: ["/documents"], moduleName: "documents" },
   {
     label: "Operations",
-    href: "/admin/operations",
+    href: "/tasks",
     icon: Settings2,
-    activePaths: ["/admin/operations/approvals"],
+    activePaths: ["/tasks/approvals"],
     moduleName: "operations",
   },
 ];

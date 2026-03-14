@@ -115,7 +115,7 @@ export function DialerListBuilder({ contacts, teamMembers, currentUserId }: Prop
         settings: settings as unknown as Record<string, unknown>,
         contactIds: nonDncIds,
       });
-      router.push(`/admin/dialer/${res.data.id}`);
+      router.push(`/dialer/${res.data.id}`);
     } catch (err) {
       console.error("Failed to create list:", err);
     } finally {
@@ -378,7 +378,7 @@ export function DialerListBuilder({ contacts, teamMembers, currentUserId }: Prop
       {/* Create button */}
       <div className="flex items-center justify-end gap-3">
         <button
-          onClick={() => router.push("/admin/dialer")}
+          onClick={() => router.push("/dialer")}
           className="px-4 py-2 text-sm font-medium rounded-lg border border-border text-muted-foreground hover:bg-muted transition-colors"
         >
           Cancel

@@ -25,7 +25,7 @@ import {
   inviteUserAction,
   fetchInvestorsAction,
   fetchBorrowersAction,
-} from "@/app/(authenticated)/admin/users/actions";
+} from "@/app/(authenticated)/(admin)/users/actions";
 
 interface InviteUserDialogProps {
   open: boolean;

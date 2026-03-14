@@ -9,8 +9,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Plus, Briefcase, UserPlus, Building2, ListTodo } from "lucide-react";
-import { fetchQuickCreateData } from "@/app/(authenticated)/admin/actions/quick-create";
-import { NewDealDialog } from "@/components/pipeline-v2/NewDealDialog";
+import { fetchQuickCreateData } from "@/app/(authenticated)/(admin)/actions/quick-create";
+import { NewDealDialog } from "@/components/pipeline/NewDealDialog";
 import { AddContactDialog } from "@/components/crm/add-contact-dialog";
 import { AddCompanyDialog } from "@/components/crm/add-company-dialog";
 import { TaskSheet } from "@/components/tasks/task-sheet";

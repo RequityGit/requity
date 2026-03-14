@@ -4,9 +4,9 @@ import { NextRequest, NextResponse } from "next/server";
 const VALID_ROLES = ["admin", "borrower", "investor"] as const;
 
 const ROLE_DASHBOARDS: Record<string, string> = {
-  admin: "/admin/pipeline",
-  borrower: "/borrower/dashboard",
-  investor: "/investor/dashboard",
+  admin: "/pipeline",
+  borrower: "/b/dashboard",
+  investor: "/i/dashboard",
 };
 
 export async function POST(request: NextRequest) {
@@ -43,7 +43,7 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const redirectUrl = ROLE_DASHBOARDS[role] || "/borrower/dashboard";
+  const redirectUrl = ROLE_DASHBOARDS[role] || "/b/dashboard";
   const response = NextResponse.json({ success: true, redirect: redirectUrl });
 
   response.cookies.set("active_role", role, {

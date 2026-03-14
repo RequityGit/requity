@@ -188,7 +188,7 @@ export function Contact360Client({
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2 text-sm">
           <Link
-            href="/admin/crm"
+            href="/contacts"
             className="text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1"
           >
             <ChevronLeft className="h-4 w-4" strokeWidth={1.5} />
@@ -201,7 +201,7 @@ export function Contact360Client({
           <Button variant="outline" size="sm" className="h-8 w-8 p-0 rounded-lg border-border">
             <MoreHorizontal className="h-4 w-4" strokeWidth={1.5} />
           </Button>
-          <Link href={`/admin/crm/${contact.id}?edit=true`}>
+          <Link href={`/contacts/${contact.contact_number}?edit=true`}>
             <Button
               variant="outline"
               size="sm"

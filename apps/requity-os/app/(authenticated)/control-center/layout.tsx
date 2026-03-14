@@ -25,7 +25,7 @@ export default async function ControlCenterLayout({
     .eq("is_active", true)
     .single();
 
-  if (!superAdminRole) redirect("/admin/pipeline");
+  if (!superAdminRole) redirect("/pipeline");
 
   return (
     <div>

@@ -11,7 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/components/ui/use-toast";
-import { updateTermSheetTemplate } from "@/app/(authenticated)/admin/settings/term-sheets/actions";
+import { updateTermSheetTemplate } from "@/app/(authenticated)/control-center/term-sheets/actions";
 import { Save, Loader2, Settings, PanelRightOpen, PanelRightClose } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {

@@ -39,7 +39,7 @@ import { PlusCircle, Pencil, Trash2, Loader2, GripVertical } from "lucide-react"
 import {
   upsertRoutingRule,
   deleteRoutingRule,
-} from "@/app/(authenticated)/admin/operations/approvals/actions";
+} from "@/app/(authenticated)/(admin)/tasks/approvals/actions";
 import type { ApprovalRoutingRule } from "@/lib/approvals/types";
 
 interface RoutingRulesManagerProps {

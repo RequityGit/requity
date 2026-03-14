@@ -19,8 +19,6 @@ import {
   Calendar,
   FileText,
   ArrowUpRight,
-  Flame,
-  Pause,
   Clock,
   Building2,
   Percent,
@@ -47,26 +45,6 @@ function formatLoanType(type: string | null): string {
   if (!type) return "--";
   const found = LOAN_TYPES.find((t) => t.value === type);
   return found ? found.label : type.replace(/_/g, " ");
-}
-
-function PriorityBadge({ priority }: { priority: string }) {
-  if (priority === "hot") {
-    return (
-      <span className="inline-flex items-center gap-1 rounded-[6px] px-2 py-[2px] text-[11px] font-semibold bg-[rgba(212,38,32,0.08)] text-[#D42620] dark:bg-[rgba(239,68,68,0.1)] dark:text-[#EF4444]">
-        <Flame className="h-3 w-3" />
-        Hot
-      </span>
-    );
-  }
-  if (priority === "on_hold") {
-    return (
-      <span className="inline-flex items-center gap-1 rounded-[6px] px-2 py-[2px] text-[11px] font-semibold bg-[rgba(204,122,0,0.08)] text-[#CC7A00] dark:bg-[rgba(240,160,48,0.1)] dark:text-[#F0A030]">
-        <Pause className="h-3 w-3" />
-        On Hold
-      </span>
-    );
-  }
-  return null;
 }
 
 function DetailRow({
@@ -133,10 +111,9 @@ export function LoanDetailDrawer({
             </div>
           </div>
 
-          {/* Stage + Priority + Days */}
+          {/* Stage + Days */}
           <div className="flex items-center gap-2 mt-3 flex-wrap">
             <StagePill stage={loan.stage} />
-            <PriorityBadge priority={loan.priority} />
             <span className="inline-flex items-center gap-1 text-[11px] num font-medium text-muted-foreground">
               <Clock className="h-3 w-3" strokeWidth={1.5} />
               {days}d in stage
@@ -298,7 +275,7 @@ export function LoanDetailDrawer({
 
         {/* Footer */}
         <div className="px-6 py-4 border-t mt-auto">
-          <Link href={`/admin/pipeline/${loan.loan_number || loan.id}`}>
+          <Link href={`/pipeline/${loan.loan_number || loan.id}`}>
             <Button className="w-full gap-2">
               <ArrowUpRight className="h-4 w-4" strokeWidth={1.5} />
               View Full Details

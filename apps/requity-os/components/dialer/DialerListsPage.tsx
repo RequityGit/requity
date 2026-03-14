@@ -78,7 +78,7 @@ export function DialerListsPage({ lists, teamMembers }: DialerListsPageProps) {
         </div>
 
         <Link
-          href="/admin/dialer/new"
+          href="/dialer/new"
           className="flex items-center gap-1.5 px-4 py-2 text-sm font-medium rounded-lg bg-foreground text-background hover:opacity-90 transition-opacity"
         >
           <Plus className="h-3.5 w-3.5" strokeWidth={1.5} />
@@ -139,7 +139,7 @@ export function DialerListsPage({ lists, teamMembers }: DialerListsPageProps) {
                   >
                     <td className="px-4 py-3">
                       <Link
-                        href={`/admin/dialer/${list.id}`}
+                        href={`/dialer/${list.id}`}
                         className="text-sm font-medium text-foreground hover:underline"
                       >
                         {list.name}
@@ -185,7 +185,7 @@ export function DialerListsPage({ lists, teamMembers }: DialerListsPageProps) {
                     <td className="px-4 py-3 text-right">
                       {(list.status === "draft" || list.status === "paused") && (
                         <Link
-                          href={`/admin/dialer/${list.id}/session`}
+                          href={`/dialer/${list.id}/session`}
                           className="inline-flex items-center gap-1 px-3 py-1 text-xs font-medium rounded-lg bg-foreground text-background hover:opacity-90 transition-opacity"
                         >
                           <Play className="h-3 w-3" strokeWidth={1.5} />
@@ -194,7 +194,7 @@ export function DialerListsPage({ lists, teamMembers }: DialerListsPageProps) {
                       )}
                       {list.status === "active" && (
                         <Link
-                          href={`/admin/dialer/${list.id}/session`}
+                          href={`/dialer/${list.id}/session`}
                           className="inline-flex items-center gap-1 px-3 py-1 text-xs font-medium rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 transition-colors"
                         >
                           <Phone className="h-3 w-3" strokeWidth={1.5} />
@@ -203,7 +203,7 @@ export function DialerListsPage({ lists, teamMembers }: DialerListsPageProps) {
                       )}
                       {list.status === "completed" && (
                         <Link
-                          href={`/admin/dialer/${list.id}`}
+                          href={`/dialer/${list.id}`}
                           className="inline-flex items-center gap-1 px-3 py-1 text-xs font-medium rounded-lg border border-border text-muted-foreground hover:bg-muted transition-colors"
                         >
                           <Users className="h-3 w-3" strokeWidth={1.5} />

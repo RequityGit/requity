@@ -27,7 +27,7 @@ import {
   fetchInvestorsAction,
   fetchBorrowersAction,
   type UserRow,
-} from "@/app/(authenticated)/admin/users/actions";
+} from "@/app/(authenticated)/(admin)/users/actions";
 import type { Database } from "@/lib/supabase/types";
 
 type AppRole = Database["public"]["Enums"]["app_role"];

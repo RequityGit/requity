@@ -401,7 +401,7 @@ export function GmailIntegration() {
                 <p className="text-sm font-medium text-amber-900">
                   Gmail integration is not configured
                 </p>
-                {pathname.startsWith("/admin") || pathname.startsWith("/control-center") ? (
+                {!pathname.startsWith("/b/") && !pathname.startsWith("/i/") ? (
                   <div className="text-xs text-amber-700 space-y-1 mt-1">
                     <p>
                       To enable Gmail integration, add these environment variables

@@ -23,7 +23,7 @@ import {
 } from "@/components/ui/select";
 import { CRM_COMPANY_TYPES, CRM_COMPANY_SUBTYPES, COMPANY_TYPE_COLORS, US_STATES } from "@/lib/constants";
 import { useToast } from "@/components/ui/use-toast";
-import { addCompanyAction } from "@/app/(authenticated)/admin/crm/company-actions";
+import { addCompanyAction } from "@/app/(authenticated)/(admin)/companies/actions";
 import { Building2, X as XIcon, Sparkles, Loader2 } from "lucide-react";
 import { formatPhoneInput } from "@/lib/format";
 import { cn } from "@/lib/utils";
@@ -210,7 +210,7 @@ export function AddCompanyDialog({
         toast({ title: "Company added successfully" });
         setOpen(false);
         resetForm();
-        router.push(`/admin/crm/companies/${result.id}`);
+        router.push(`/companies/${result.company_number}`);
       }
     } catch (err: unknown) {
       toast({

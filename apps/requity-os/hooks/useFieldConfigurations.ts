@@ -1,12 +1,15 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { createClient } from "@/lib/supabase/client";
 import {
   isVisible,
   type VisibilityCondition,
   type VisibilityContext,
 } from "@/lib/visibility-engine";
+
+/** Custom event name used to trigger field config cache invalidation across components */
+export const FIELD_CONFIG_INVALIDATE_EVENT = "fieldConfigInvalidate";
 
 /** A single rule from the conditional_rules JSONB array on a field. */
 export interface ConditionalRule {
@@ -49,7 +52,7 @@ const moduleCache = new Map<
   string,
   { data: FieldConfiguration[]; timestamp: number }
 >();
-const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+const CACHE_TTL = 30 * 1000; // 30 seconds — field edits are now instant-save
 
 const SELECT_COLS = [
   "id",
@@ -100,6 +103,19 @@ export function useFieldConfigurations(
   const ctxKey = visibilityContext
     ? `${visibilityContext.asset_class}:${JSON.stringify(visibilityContext.dealValues ?? {})}`
     : "";
+
+  // Track a refetch counter that increments when invalidation events fire
+  const [refetchKey, setRefetchKey] = useState(0);
+
+  // Listen for invalidation events from Object Manager saves
+  useEffect(() => {
+    const handler = () => {
+      invalidateFieldConfigCache(module);
+      setRefetchKey((k) => k + 1);
+    };
+    window.addEventListener(FIELD_CONFIG_INVALIDATE_EVENT, handler);
+    return () => window.removeEventListener(FIELD_CONFIG_INVALIDATE_EVENT, handler);
+  }, [module]);
 
   useEffect(() => {
     let cancelled = false;
@@ -162,7 +178,7 @@ export function useFieldConfigurations(
       cancelled = true;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [module, ctxKey]);
+  }, [module, ctxKey, refetchKey]);
 
   return { fields, isLoading, error };
 }
@@ -176,5 +192,16 @@ export function invalidateFieldConfigCache(module?: string) {
     moduleCache.delete(module);
   } else {
     moduleCache.clear();
+  }
+}
+
+/**
+ * Broadcast a field config invalidation event to all mounted hooks.
+ * Call this from the Object Manager after saving field changes.
+ */
+export function broadcastFieldConfigInvalidation() {
+  if (typeof window !== "undefined") {
+    invalidateFieldConfigCache();
+    window.dispatchEvent(new Event(FIELD_CONFIG_INVALIDATE_EVENT));
   }
 }

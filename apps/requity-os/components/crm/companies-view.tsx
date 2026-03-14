@@ -22,7 +22,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { deleteCrmCompanyAction } from "@/app/(authenticated)/admin/crm/actions";
+import { deleteCrmCompanyAction } from "@/app/(authenticated)/(admin)/contacts/actions";
 import { useToast } from "@/components/ui/use-toast";
 import {
   CRM_COMPANY_TYPES,
@@ -203,7 +203,7 @@ export function CompaniesView({ companies, isSuperAdmin = false }: CompaniesView
                   filteredCompanies.map((c, i) => (
                     <tr
                       key={c.id}
-                      onClick={() => router.push(`/admin/crm/companies/${c.id}`)}
+                      onClick={() => router.push(`/companies/${c.company_number}`)}
                       className={cn(
                         "cursor-pointer transition-colors hover:bg-muted/50",
                         i < filteredCompanies.length - 1 && "border-b border-border/50"
@@ -253,7 +253,7 @@ export function CompaniesView({ companies, isSuperAdmin = false }: CompaniesView
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end" className="w-40">
                             <DropdownMenuItem
-                              onClick={() => router.push(`/admin/crm/companies/${c.id}`)}
+                              onClick={() => router.push(`/companies/${c.company_number}`)}
                               className="gap-2 text-xs"
                             >
                               <Eye className="h-3.5 w-3.5" />

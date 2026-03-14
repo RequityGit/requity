@@ -75,7 +75,7 @@ function ActiveLoansCard({ loans }: { loans: LoanData[] }) {
         {activeLoans.slice(0, 3).map((loan) => (
           <Link
             key={loan.id}
-            href={`/admin/pipeline/${loan.loan_number || loan.id}`}
+            href={`/pipeline/${loan.loan_number || loan.id}`}
             className="block rounded-lg border border-border p-3 hover:bg-muted transition-colors"
           >
             <div className="flex items-center justify-between mb-1">

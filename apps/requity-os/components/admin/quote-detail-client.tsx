@@ -44,7 +44,7 @@ import {
   changeQuoteStatus,
   addQuoteActivity,
   deleteLenderQuote,
-} from "@/app/(authenticated)/admin/loans/[id]/quote-actions";
+} from "@/app/(authenticated)/(admin)/loans/[id]/quote-actions";
 import {
   Pencil,
   Loader2,
@@ -350,7 +350,7 @@ export function QuoteDetailClient({
       }
 
       toast({ title: "Quote deleted" });
-      router.push(`/admin/pipeline/${loanNumber || loanId}`);
+      router.push(`/pipeline/${loanNumber || loanId}`);
     } catch (err: unknown) {
       toast({
         title: "Error",
@@ -513,7 +513,7 @@ export function QuoteDetailClient({
               <div>
                 <p className="text-xs text-muted-foreground">Loan</p>
                 <a
-                  href={`/admin/pipeline/${loanNumber || loanId}`}
+                  href={`/pipeline/${loanNumber || loanId}`}
                   className="text-sm font-medium text-blue-600 hover:underline"
                 >
                   {loanNumber ?? "—"}

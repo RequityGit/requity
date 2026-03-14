@@ -6,10 +6,8 @@ import { createAdminClient } from "@/lib/supabase/admin";
  * Call this from server actions after mutating deal data.
  */
 export async function revalidateDealPaths(dealId: string) {
-  revalidatePath("/admin/pipeline-v2");
-  revalidatePath("/admin/pipeline");
-  revalidatePath(`/admin/pipeline-v2/${dealId}`);
-  revalidatePath(`/admin/pipeline/${dealId}`);
+  revalidatePath("/pipeline");
+  revalidatePath(`/pipeline/${dealId}`);
 
   try {
     const admin = createAdminClient();
@@ -19,8 +17,7 @@ export async function revalidateDealPaths(dealId: string) {
       .eq("id", dealId)
       .single();
     if (data?.deal_number) {
-      revalidatePath(`/admin/pipeline-v2/${data.deal_number}`);
-      revalidatePath(`/admin/pipeline/${data.deal_number}`);
+      revalidatePath(`/pipeline/${data.deal_number}`);
     }
   } catch {
     // Non-critical — UUID-based revalidation already ran

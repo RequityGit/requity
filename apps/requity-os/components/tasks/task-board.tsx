@@ -3,6 +3,7 @@
 import { useState, useCallback, useMemo, useEffect } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
 import { Plus, Repeat2, Shield } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -51,6 +52,8 @@ export function TaskBoard({
   const [editingTask, setEditingTask] = useState<OpsTask | null>(null);
   const [approvalDrawerTask, setApprovalDrawerTask] = useState<OpsTask | null>(null);
   const [activeView, setActiveView] = useState<ViewTab>("kanban");
+  const [mobileColumn, setMobileColumn] = useState<string>("To Do");
+  const isMobile = useIsMobile();
 
   // Template sheet state
   const [templateSheetOpen, setTemplateSheetOpen] = useState(false);
@@ -136,7 +139,8 @@ export function TaskBoard({
       if (myApprovalsFilter) {
         if (!t.requires_approval || t.approver_id !== currentUserId) return false;
       }
-      if (typeFilter !== "all" && t.type !== typeFilter) return false;
+      if (typeFilter === "approval" && t.type !== "approval" && !t.requires_approval) return false;
+      if (typeFilter === "task" && (t.type !== "task" || t.requires_approval)) return false;
       if (assigneeFilter !== "all" && t.assigned_to !== assigneeFilter) return false;
       if (categoryFilter !== "all" && t.category !== categoryFilter) return false;
       if (priorityFilter !== "all" && t.priority !== priorityFilter) return false;
@@ -314,7 +318,7 @@ export function TaskBoard({
   const activeTemplateCount = templates.filter((t) => t.is_active).length;
 
   return (
-    <div className="p-6 md:p-8">
+    <div>
       <PageHeader
         title="Operations"
         description="Tasks & approvals to keep the business running."
@@ -330,69 +334,71 @@ export function TaskBoard({
       />
 
       {/* Tab bar + Filters */}
-      <div className="flex items-center gap-4 mb-5 flex-wrap">
-        {/* View tabs: Kanban vs Recurring */}
-        <div className="flex items-center gap-1">
-          <button
-            type="button"
-            onClick={() => setActiveView("kanban")}
-            className={cn(
-              "px-3.5 py-1.5 rounded-md text-[13px] font-medium transition-colors",
-              activeView === "kanban"
-                ? "bg-primary text-primary-foreground"
-                : "text-muted-foreground hover:bg-accent"
-            )}
-          >
-            Tasks
-          </button>
-          <button
-            type="button"
-            onClick={() => setActiveView("recurring")}
-            className={cn(
-              "px-3.5 py-1.5 rounded-md text-[13px] font-medium transition-colors flex items-center gap-1.5",
-              activeView === "recurring"
-                ? "bg-primary text-primary-foreground"
-                : "text-muted-foreground hover:bg-accent"
-            )}
-          >
-            <Repeat2 className="h-3.5 w-3.5" strokeWidth={1.5} />
-            Recurring
-            <span
+      <div className="flex flex-col gap-3 md:flex-row md:items-center md:gap-4 mb-5">
+        <div className="flex items-center gap-2 flex-wrap">
+          {/* View tabs: Kanban vs Recurring */}
+          <div className="flex items-center gap-1">
+            <button
+              type="button"
+              onClick={() => setActiveView("kanban")}
               className={cn(
-                "text-[10px] font-semibold px-1.5 py-0.5 rounded-full num",
-                activeView === "recurring"
-                  ? "bg-primary-foreground/10 text-primary-foreground"
-                  : "bg-muted text-muted-foreground"
+                "px-3.5 py-2 md:py-1.5 rounded-md text-[13px] font-medium transition-colors min-h-[36px]",
+                activeView === "kanban"
+                  ? "bg-primary text-primary-foreground"
+                  : "text-muted-foreground hover:bg-accent"
               )}
             >
-              {activeTemplateCount}
-            </span>
-          </button>
-        </div>
+              Tasks
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveView("recurring")}
+              className={cn(
+                "px-3.5 py-2 md:py-1.5 rounded-md text-[13px] font-medium transition-colors flex items-center gap-1.5 min-h-[36px]",
+                activeView === "recurring"
+                  ? "bg-primary text-primary-foreground"
+                  : "text-muted-foreground hover:bg-accent"
+              )}
+            >
+              <Repeat2 className="h-3.5 w-3.5" strokeWidth={1.5} />
+              Recurring
+              <span
+                className={cn(
+                  "text-[10px] font-semibold px-1.5 py-0.5 rounded-full num",
+                  activeView === "recurring"
+                    ? "bg-primary-foreground/10 text-primary-foreground"
+                    : "bg-muted text-muted-foreground"
+                )}
+              >
+                {activeTemplateCount}
+              </span>
+            </button>
+          </div>
 
-        {activeView === "kanban" && myApprovalsCount > 0 && (
-          <button
-            type="button"
-            onClick={() => setMyApprovalsFilter(!myApprovalsFilter)}
-            className={cn(
-              "flex items-center gap-1.5 px-3 py-1.5 rounded-md text-[12px] font-medium transition-colors border",
-              myApprovalsFilter
-                ? "bg-blue-500/10 border-blue-500/20 text-blue-500"
-                : "bg-transparent border-border text-muted-foreground hover:bg-accent"
-            )}
-          >
-            <Shield className="h-3.5 w-3.5" strokeWidth={1.5} />
-            My Approvals
-            <span className={cn(
-              "text-[10px] font-semibold px-1.5 py-0.5 rounded-full num",
-              myApprovalsFilter
-                ? "bg-blue-500/20 text-blue-500"
-                : "bg-muted text-muted-foreground"
-            )}>
-              {myApprovalsCount}
-            </span>
-          </button>
-        )}
+          {activeView === "kanban" && myApprovalsCount > 0 && (
+            <button
+              type="button"
+              onClick={() => setMyApprovalsFilter(!myApprovalsFilter)}
+              className={cn(
+                "flex items-center gap-1.5 px-3 py-2 md:py-1.5 rounded-md text-[12px] font-medium transition-colors border min-h-[36px]",
+                myApprovalsFilter
+                  ? "bg-blue-500/10 border-blue-500/20 text-blue-500"
+                  : "bg-transparent border-border text-muted-foreground hover:bg-accent"
+              )}
+            >
+              <Shield className="h-3.5 w-3.5" strokeWidth={1.5} />
+              My Approvals
+              <span className={cn(
+                "text-[10px] font-semibold px-1.5 py-0.5 rounded-full num",
+                myApprovalsFilter
+                  ? "bg-blue-500/20 text-blue-500"
+                  : "bg-muted text-muted-foreground"
+              )}>
+                {myApprovalsCount}
+              </span>
+            </button>
+          )}
+        </div>
 
         {activeView === "kanban" && (
           <TaskFilters
@@ -417,7 +423,43 @@ export function TaskBoard({
           onEdit={handleEditTemplate}
           onTemplatesChange={setTemplates}
         />
+      ) : isMobile ? (
+        /* Mobile: tabbed column view -- one column at a time */
+        <div>
+          <div className="flex rounded-lg bg-muted p-1 mb-4 mobile-scroll">
+            {COLUMNS.map((col) => {
+              const count = filteredTasks.filter((t) => t.status === col.id).length;
+              return (
+                <button
+                  key={col.id}
+                  type="button"
+                  onClick={() => setMobileColumn(col.id)}
+                  className={cn(
+                    "flex-1 min-w-0 px-2 py-2 rounded-md text-xs font-medium transition-colors whitespace-nowrap min-h-[40px]",
+                    mobileColumn === col.id
+                      ? "bg-background text-foreground shadow-sm"
+                      : "text-muted-foreground"
+                  )}
+                >
+                  {col.label.replace("Pending Approval", "Approval")}
+                  <span className="ml-1 text-[10px] opacity-60 num">{count}</span>
+                </button>
+              );
+            })}
+          </div>
+          <TaskColumn
+            status={mobileColumn}
+            label={COLUMNS.find((c) => c.id === mobileColumn)?.label ?? mobileColumn}
+            tasks={filteredTasks.filter((t) => t.status === mobileColumn)}
+            profiles={profiles}
+            onComplete={handleComplete}
+            onTaskClick={handleTaskClick}
+            onDragStart={handleDragStart}
+            onDrop={handleDrop}
+          />
+        </div>
       ) : (
+        /* Desktop: side-by-side columns */
         <div className="flex gap-4 overflow-x-auto pb-6">
           {COLUMNS.map((col) => {
             const colTasks = filteredTasks.filter((t) => t.status === col.id);

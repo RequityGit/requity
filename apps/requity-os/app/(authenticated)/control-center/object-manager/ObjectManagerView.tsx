@@ -149,7 +149,7 @@ export function ObjectManagerView({ objects, fieldCounts, relationshipCounts }: 
     try {
       if (activeTab === "fields") {
         const modules = getObjectModules(selectedObjectKey);
-        const result = await fetchFieldsForModules(modules);
+        const result = await fetchFieldsForModules(modules, { includeArchived: true });
         if (result.data) setFields(result.data);
       } else if (activeTab === "relationships") {
         const result = await fetchObjectRelationships(selectedObjectKey);
@@ -263,9 +263,6 @@ export function ObjectManagerView({ objects, fieldCounts, relationshipCounts }: 
     draft.discardAll();
     loadData();
   }, [draft, loadData]);
-
-  // Get the fields to display: base fields with draft overrides applied
-  const displayFields = draft.applyDraftToFields(fields);
 
   const handleObjectSelect = (key: string) => {
     // Warn if switching with unsaved changes
@@ -498,7 +495,7 @@ export function ObjectManagerView({ objects, fieldCounts, relationshipCounts }: 
         <div className="flex-1">
           {activeTab === "fields" && (
             <FieldsTab
-              fields={displayFields}
+              fields={fields}
               selectedFieldId={selectedField?.id ?? null}
               onSelectField={(f) => {
                 clearSelection();
@@ -508,12 +505,6 @@ export function ObjectManagerView({ objects, fieldCounts, relationshipCounts }: 
               objectKey={selectedObjectKey}
               onFieldsChange={handleDataChange}
               onFieldConditionUpdate={handleFieldConditionUpdate}
-              isFieldDirty={draft.isFieldDirty}
-              isFieldNew={draft.isFieldNew}
-              isFieldArchived={draft.isFieldArchived}
-              onDraftFieldCreate={draft.draftFieldCreate}
-              onDraftFieldArchive={draft.draftFieldArchive}
-              onDraftFieldUpdate={draft.draftFieldUpdate}
             />
           )}
           {activeTab === "relationships" && (
@@ -554,11 +545,11 @@ export function ObjectManagerView({ objects, fieldCounts, relationshipCounts }: 
             />
           )}
           {activeTab === "conditions" && (
-            <ConditionMatrixTab fields={displayFields} />
+            <ConditionMatrixTab fields={fields} />
           )}
           {activeTab === "formulas" && (
             <FormulasTab
-              fields={displayFields}
+              fields={fields}
               objectKey={selectedObjectKey}
               onFieldsChange={handleDataChange}
               onSelectField={(f) => {
@@ -580,18 +571,14 @@ export function ObjectManagerView({ objects, fieldCounts, relationshipCounts }: 
         {(activeTab === "fields" || activeTab === "formulas") && selectedField && (
           <FieldConfigPanel
             field={selectedField}
-            siblingFields={displayFields}
+            siblingFields={fields}
             onClose={clearSelection}
             onUpdate={(updated) => {
               setSelectedField(updated);
-            }}
-            useDraft
-            onDraftUpdate={(updates) => {
-              if (selectedField) {
-                draft.draftFieldUpdate(selectedField, updates);
-                // Update local selected field to reflect changes immediately
-                setSelectedField((prev) => prev ? { ...prev, ...updates } : null);
-              }
+              // Update the fields list so the center panel reflects changes immediately
+              setFields((prev) =>
+                prev.map((f) => (f.id === updated.id ? updated : f))
+              );
             }}
           />
         )}

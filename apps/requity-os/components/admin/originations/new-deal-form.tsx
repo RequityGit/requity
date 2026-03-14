@@ -29,8 +29,8 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { useToast } from "@/components/ui/use-toast";
-import { createOpportunityAction } from "@/app/(authenticated)/admin/originations/actions";
-import { addBorrowerAction } from "@/app/(authenticated)/admin/borrowers/new/actions";
+import { createOpportunityAction } from "@/app/(authenticated)/(admin)/originations/actions";
+import { addBorrowerAction } from "@/app/(authenticated)/(admin)/borrowers/new/actions";
 import {
   LOAN_DB_TYPES,
   LOAN_PURPOSES,
@@ -279,7 +279,7 @@ export function NewDealForm({
     }
 
     toast({ title: "Deal created successfully" });
-    router.push(`/admin/pipeline/${result.opportunityId}`);
+    router.push(`/pipeline/${result.opportunityId}`);
   }
 
   return (

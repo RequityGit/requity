@@ -23,7 +23,7 @@ import {
 } from "@/components/ui/table";
 import { useToast } from "@/components/ui/use-toast";
 import { ArrowLeft, CheckCircle, Loader2 } from "lucide-react";
-import { commitRateSheetAction } from "@/app/(authenticated)/admin/models/dscr/actions";
+import { commitRateSheetAction } from "@/app/(authenticated)/(admin)/models/dscr/actions";
 import { LTV_BANDS } from "@/lib/dscr/constants";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */

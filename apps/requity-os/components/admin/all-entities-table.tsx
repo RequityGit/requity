@@ -42,7 +42,7 @@ const columns: Column<EntityRow>[] = [
     header: "Borrower",
     cell: (row) => (
       <Link
-        href={`/admin/borrowers/${row.borrower_id}`}
+        href={`/borrowers/${row.borrower_id}`}
         className="text-sm text-primary hover:underline underline-offset-4"
         onClick={(e) => e.stopPropagation()}
       >

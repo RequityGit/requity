@@ -52,7 +52,7 @@ const BORROWER_FIELD_MAPPINGS: FieldMapping[] = [
  * (not stored in uw_data JSONB)
  */
 const DEAL_FIELD_MAPPINGS: FieldMapping[] = [
-  { fieldKey: "expected_close_date", source: "deal", table: "unified_deals", column: "expected_close_date" },
+  { fieldKey: "date_created", source: "deal", table: "unified_deals", column: "created_at" },
 ];
 
 /** All field mappings combined */

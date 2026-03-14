@@ -4,6 +4,7 @@
 
 @layer base {
   :root {
+    color-scheme: light;
     /* Light theme — Requity V2 monochrome */
     --background: 0 0% 100%;
     --foreground: 0 0% 10%;
@@ -53,6 +54,7 @@
   }
 
   .dark {
+    color-scheme: dark;
     /* Dark theme — Requity V2 true black/charcoal */
     --background: 0 0% 5%;
     --foreground: 0 0% 96%;

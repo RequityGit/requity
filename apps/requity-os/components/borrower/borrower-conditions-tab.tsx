@@ -22,7 +22,7 @@ import {
 import { UnifiedNotes } from "@/components/shared/UnifiedNotes";
 import {
   uploadConditionDocument,
-} from "@/app/(authenticated)/borrower/loans/[id]/actions";
+} from "@/app/(authenticated)/b/loans/[id]/actions";
 import type { Tables } from "@/lib/supabase/types";
 
 type LoanCondition = Tables<"loan_conditions">;

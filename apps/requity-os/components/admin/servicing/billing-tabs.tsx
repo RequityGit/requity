@@ -46,7 +46,7 @@ import {
   generatePayoffQuoteAction,
   refreshDelinquencyAction,
   fetchBillingLineItemsAction,
-} from "@/app/(authenticated)/admin/servicing/billing/actions";
+} from "@/app/(authenticated)/(admin)/servicing/billing/actions";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 

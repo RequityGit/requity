@@ -44,6 +44,7 @@ export interface NoteData {
   note_likes: NoteLike[];
   unified_condition_id?: string | null;
   condition_name?: string | null;
+  deal_id?: string | null;
 }
 
 export type NoteFilter = "all" | "internal" | "external";

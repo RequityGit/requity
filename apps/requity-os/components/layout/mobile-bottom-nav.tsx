@@ -25,46 +25,46 @@ interface BottomNavItem {
 }
 
 const borrowerBottomNav: BottomNavItem[] = [
-  { label: "Dashboard", href: "/borrower/dashboard", icon: LayoutDashboard },
+  { label: "Dashboard", href: "/b/dashboard", icon: LayoutDashboard },
   {
     label: "My Loans",
-    href: "/borrower/dashboard",
+    href: "/b/dashboard",
     icon: Briefcase,
-    activePaths: ["/borrower/loans"],
+    activePaths: ["/b/loans"],
   },
-  { label: "Documents", href: "/borrower/documents", icon: FileText },
+  { label: "Documents", href: "/b/documents", icon: FileText },
 ];
 
 const investorBottomNav: BottomNavItem[] = [
-  { label: "Dashboard", href: "/investor/dashboard", icon: LayoutDashboard },
+  { label: "Dashboard", href: "/i/dashboard", icon: LayoutDashboard },
   {
     label: "Portfolio",
-    href: "/investor/funds",
+    href: "/i/funds",
     icon: Landmark,
-    activePaths: ["/investor/capital-calls", "/investor/distributions"],
+    activePaths: ["/i/capital-calls", "/i/distributions"],
   },
   {
     label: "Distributions",
-    href: "/investor/distributions",
+    href: "/i/distributions",
     icon: Banknote,
   },
-  { label: "Documents", href: "/investor/documents", icon: FileText },
+  { label: "Documents", href: "/i/documents", icon: FileText },
 ];
 
 const adminBottomNav: BottomNavItem[] = [
   {
     label: "Pipeline",
-    href: "/admin/pipeline",
+    href: "/pipeline",
     icon: Briefcase,
-    activePaths: ["/admin/originations", "/admin/loans"],
+    activePaths: ["/originations", "/loans"],
   },
-  { label: "Contacts", href: "/admin/crm", icon: Contact },
+  { label: "Contacts", href: "/contacts", icon: Contact },
   {
     label: "Tasks",
-    href: "/admin/operations",
+    href: "/tasks",
     icon: ListTodo,
   },
-  { label: "More", href: "/admin/pipeline", icon: MoreHorizontal },
+  { label: "More", href: "/pipeline", icon: MoreHorizontal },
 ];
 
 function getBottomNavItems(role: string): BottomNavItem[] {

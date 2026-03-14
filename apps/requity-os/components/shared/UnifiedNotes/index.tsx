@@ -66,8 +66,7 @@ export function UnifiedNotes({
     let query = supabase
       .from("notes" as never)
       .select("*, note_likes(user_id, profiles(full_name))" as never)
-      .is("deleted_at" as never, null)
-      .order("created_at" as never, { ascending: false });
+      .is("deleted_at" as never, null);
 
     if (entityType === "deal") {
       const conditions: string[] = [];
@@ -86,6 +85,13 @@ export function UnifiedNotes({
     } else {
       const col = getEntityColumn(entityType);
       query = query.eq(col as never, entityId as never);
+    }
+
+    // Pinned first for deals, then by created_at desc
+    if (entityType === "deal") {
+      query = query.order("is_pinned" as never, { ascending: false }).order("created_at" as never, { ascending: false });
+    } else {
+      query = query.order("created_at" as never, { ascending: false });
     }
 
     const { data, error } = await query;
@@ -257,9 +263,18 @@ export function UnifiedNotes({
     });
   }
 
-  // Pin/unpin
+  // Pin/unpin. For deals, only one note can be pinned; unpin any existing pinned note first.
   async function handlePin(noteId: string, isPinned: boolean) {
     const supabase = createClient();
+
+    if (entityType === "deal" && !isPinned && dealId) {
+      await supabase
+        .from("notes" as never)
+        .update({ is_pinned: false, pinned_by: null, pinned_at: null } as never)
+        .eq("deal_id" as never, dealId as never)
+        .eq("is_pinned" as never, true as never);
+    }
+
     const update = isPinned
       ? { is_pinned: false, pinned_by: null, pinned_at: null }
       : {
@@ -282,11 +297,13 @@ export function UnifiedNotes({
       return;
     }
 
-    setNotes((prev) =>
-      prev.map((n) =>
-        n.id === noteId ? { ...n, ...update } as NoteData : n
-      )
-    );
+    setNotes((prev) => {
+      const next = prev.map((n) => (n.id === noteId ? { ...n, ...update } as NoteData : n));
+      if (entityType === "deal" && !isPinned && dealId) {
+        return next.map((n) => (n.deal_id === dealId && n.id !== noteId ? { ...n, is_pinned: false, pinned_by: null, pinned_at: null } : n)) as NoteData[];
+      }
+      return next;
+    });
     toast({ title: isPinned ? "Note unpinned" : "Note pinned" });
   }
 

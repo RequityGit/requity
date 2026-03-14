@@ -1,10 +1,18 @@
 "use client";
 
 import { useState } from "react";
-import { Pin, PinOff, Pencil, Trash2, Lock, ThumbsUp, FileCheck } from "lucide-react";
+import { Pin, PinOff, Pencil, Trash2, Lock, ThumbsUp, FileCheck, MoreHorizontal } from "lucide-react";
+import { cn } from "@/lib/utils";
 import { parseComment, relativeTime } from "@/lib/comment-utils";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { MentionInput } from "@/components/shared/mention-input";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Button } from "@/components/ui/button";
 import type { NoteData } from "./types";
 
 function getInitials(name: string): string {
@@ -91,11 +99,13 @@ export function NoteCard({
 
   return (
     <div
-      className={`rounded-xl border bg-card ${pad} relative group ${
-        note.is_internal
-          ? "border-l-[3px] border-l-[rgba(184,130,42,0.25)] border-t-border border-r-border border-b-border"
-          : "border-border"
-      }`}
+      className={cn(
+        "rounded-xl border bg-card relative group",
+        pad,
+        note.is_pinned && "border-l-2 border-l-info bg-info/5 border-t-border border-r-border border-b-border",
+        !note.is_pinned && note.is_internal && "border-l-[3px] border-l-[rgba(184,130,42,0.25)] border-t-border border-r-border border-b-border",
+        !note.is_pinned && !note.is_internal && "border-border"
+      )}
       onMouseEnter={() => setShowActions(true)}
       onMouseLeave={() => setShowActions(false)}
     >
@@ -116,6 +126,57 @@ export function NoteCard({
             <span className="text-[11px] font-mono text-muted-foreground num">
               {relativeTime(note.created_at)}
             </span>
+            {(showPinning || canEdit || isOwn) && (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-7 w-7 shrink-0 text-muted-foreground hover:text-foreground"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <MoreHorizontal className="h-3.5 w-3.5" strokeWidth={1.5} />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  {showPinning && (
+                    <DropdownMenuItem onClick={() => onPin(note.id, note.is_pinned)}>
+                      {note.is_pinned ? (
+                        <>
+                          <PinOff className="h-3.5 w-3.5 mr-2" strokeWidth={1.5} />
+                          Unpin note
+                        </>
+                      ) : (
+                        <>
+                          <Pin className="h-3.5 w-3.5 mr-2" strokeWidth={1.5} />
+                          Pin note
+                        </>
+                      )}
+                    </DropdownMenuItem>
+                  )}
+                  {canEdit && (
+                    <DropdownMenuItem
+                      onClick={() => {
+                        setEditing(true);
+                        setEditText(note.body);
+                      }}
+                    >
+                      <Pencil className="h-3.5 w-3.5 mr-2" strokeWidth={1.5} />
+                      Edit
+                    </DropdownMenuItem>
+                  )}
+                  {isOwn && (
+                    <DropdownMenuItem
+                      onClick={() => onDelete(note.id)}
+                      className="text-destructive focus:text-destructive"
+                    >
+                      <Trash2 className="h-3.5 w-3.5 mr-2" strokeWidth={1.5} />
+                      Delete
+                    </DropdownMenuItem>
+                  )}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
             {note.is_internal && (
               <span className="inline-flex items-center gap-1 text-[10px] font-medium text-amber-600 bg-amber-500/10 border border-amber-500/20 rounded-full px-1.5 py-px">
                 <Lock className="h-2.5 w-2.5" strokeWidth={2} />
@@ -123,8 +184,8 @@ export function NoteCard({
               </span>
             )}
             {note.is_pinned && (
-              <span className="inline-flex items-center gap-1 text-[10px] font-medium text-blue-600 bg-blue-500/10 border border-blue-500/20 rounded-full px-1.5 py-px">
-                <Pin className="h-2.5 w-2.5" strokeWidth={2} />
+              <span className="text-[10px] text-info bg-info/10 px-1.5 py-0.5 rounded flex items-center gap-1">
+                <Pin className="h-2.5 w-2.5" strokeWidth={1.5} />
                 Pinned
               </span>
             )}
@@ -181,8 +242,8 @@ export function NoteCard({
         )}
       </div>
 
-      {/* Hover actions */}
-      {showActions && (
+      {/* Hover actions (compact icon row) — kept for quick access */}
+      {showActions && (showPinning || canEdit || isOwn) && (
         <div className="absolute -top-2 right-2 flex items-center gap-0.5 bg-background border border-border rounded-md shadow-sm px-0.5 py-0.5">
           {showPinning && (
             <button

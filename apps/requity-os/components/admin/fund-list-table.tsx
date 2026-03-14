@@ -72,7 +72,7 @@ export function FundListTable({ data }: FundListTableProps) {
       columns={columns}
       data={data}
       emptyMessage="No investments found."
-      onRowClick={(row) => router.push(`/admin/funds/${row.id}`)}
+      onRowClick={(row) => router.push(`/funds/${row.id}`)}
     />
   );
 }

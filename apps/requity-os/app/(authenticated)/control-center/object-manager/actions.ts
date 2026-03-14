@@ -141,9 +141,10 @@ export interface PageField {
 
 function revalidate() {
   revalidatePath("/control-center/object-manager");
-  // Revalidate detail pages so layout changes take effect
-  revalidatePath("/admin/crm", "layout");
-  revalidatePath("/admin/crm", "page");
+  revalidatePath("/contacts", "layout");
+  revalidatePath("/contacts", "page");
+  revalidatePath("/companies", "layout");
+  revalidatePath("/companies", "page");
 }
 
 // ---------------------------------------------------------------------------
@@ -162,19 +163,21 @@ export async function publishObjectChanges(objectKey: string): Promise<{
     revalidatePath("/control-center/object-manager");
 
     // Revalidate all CRM pages (contact detail, company detail)
-    revalidatePath("/admin/crm", "layout");
-    revalidatePath("/admin/crm", "page");
+    revalidatePath("/contacts", "layout");
+    revalidatePath("/contacts", "page");
+    revalidatePath("/companies", "layout");
+    revalidatePath("/companies", "page");
 
     // Revalidate specific detail page types based on object
     const pageRouteMap: Record<string, string[]> = {
-      contact: ["/admin/crm"],
-      company: ["/admin/crm"],
-      loan: ["/admin/loans"],
-      property: ["/admin/properties"],
-      borrower: ["/admin/crm"],
-      borrower_entity: ["/admin/crm"],
-      investor: ["/admin/crm"],
-      unified_deal: ["/admin/pipeline-v2"],
+      contact: ["/contacts"],
+      company: ["/companies"],
+      loan: ["/loans"],
+      property: ["/properties"],
+      borrower: ["/contacts"],
+      borrower_entity: ["/contacts"],
+      investor: ["/contacts"],
+      unified_deal: ["/pipeline"],
     };
 
     const routes = pageRouteMap[objectKey] || [];
@@ -436,6 +439,74 @@ export async function archiveField(fieldId: string): Promise<{
     const { error } = await admin
       .from(FIELD_CFG)
       .update({ is_archived: true, is_visible: false, updated_at: new Date().toISOString() } as never)
+      .eq("id" as never, fieldId as never)
+      .eq("is_admin_created" as never, true as never);
+
+    if (error) return { error: error.message };
+
+    // Clean up page layout references so the field disappears from deal pages
+    await admin
+      .from(FIELDS)
+      .delete()
+      .eq("field_config_id" as never, fieldId as never);
+
+    revalidate();
+    return { success: true };
+  } catch (err: unknown) {
+    return { error: err instanceof Error ? err.message : "An unexpected error occurred" };
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Unarchive a field
+// ---------------------------------------------------------------------------
+
+export async function unarchiveField(fieldId: string): Promise<{
+  success?: boolean;
+  error?: string;
+}> {
+  try {
+    const auth = await requireSuperAdmin();
+    if ("error" in auth) return { error: auth.error };
+
+    const admin = createAdminClient();
+    const { error } = await admin
+      .from(FIELD_CFG)
+      .update({ is_archived: false, is_visible: true, updated_at: new Date().toISOString() } as never)
+      .eq("id" as never, fieldId as never);
+
+    if (error) return { error: error.message };
+    revalidate();
+    return { success: true };
+  } catch (err: unknown) {
+    return { error: err instanceof Error ? err.message : "An unexpected error occurred" };
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Permanently delete a field (super_admin only, admin-created only)
+// ---------------------------------------------------------------------------
+
+export async function deleteFieldPermanently(fieldId: string): Promise<{
+  success?: boolean;
+  error?: string;
+}> {
+  try {
+    const auth = await requireSuperAdmin();
+    if ("error" in auth) return { error: auth.error };
+
+    const admin = createAdminClient();
+
+    // Remove from all page layouts first
+    await admin
+      .from(FIELDS)
+      .delete()
+      .eq("field_config_id" as never, fieldId as never);
+
+    // Delete the field config itself (only admin-created fields)
+    const { error } = await admin
+      .from(FIELD_CFG)
+      .delete()
       .eq("id" as never, fieldId as never)
       .eq("is_admin_created" as never, true as never);
 
@@ -767,7 +838,10 @@ export async function fetchRelationshipCounts(): Promise<{
 // Fetch fields for multiple modules at once (for related entity fields)
 // ---------------------------------------------------------------------------
 
-export async function fetchFieldsForModules(modules: string[]): Promise<{
+export async function fetchFieldsForModules(
+  modules: string[],
+  options?: { includeArchived?: boolean }
+): Promise<{
   data?: FieldConfig[];
   error?: string;
 }> {
@@ -778,12 +852,16 @@ export async function fetchFieldsForModules(modules: string[]): Promise<{
     if ("error" in auth) return { error: auth.error };
 
     const admin = createAdminClient();
-    const { data, error } = await admin
+    let query = admin
       .from(FIELD_CFG)
       .select("*" as never)
-      .in("module" as never, modules as never)
-      .eq("is_archived" as never, false as never)
-      .order("display_order" as never, { ascending: true });
+      .in("module" as never, modules as never);
+
+    if (!options?.includeArchived) {
+      query = query.eq("is_archived" as never, false as never);
+    }
+
+    const { data, error } = await query.order("display_order" as never, { ascending: true });
 
     if (error) return { error: error.message };
     return { data: (data ?? []) as unknown as FieldConfig[] };
@@ -1306,20 +1384,26 @@ export async function batchPublishChanges(
         .eq("is_admin_created" as never, true as never);
 
       if (error) return { error: `Failed to archive field ${fieldId}: ${error.message}` };
+
+      // Clean up page layout references
+      await admin
+        .from(FIELDS)
+        .delete()
+        .eq("field_config_id" as never, fieldId as never);
     }
 
     // --- 4. Revalidate all affected pages ---
     revalidatePath("/control-center/object-manager");
 
     const pageRouteMap: Record<string, string[]> = {
-      contact: ["/admin/crm"],
-      company: ["/admin/crm"],
-      loan: ["/admin/loans"],
-      property: ["/admin/properties"],
-      borrower: ["/admin/crm"],
-      borrower_entity: ["/admin/crm"],
-      investor: ["/admin/crm"],
-      unified_deal: ["/admin/pipeline-v2"],
+      contact: ["/contacts"],
+      company: ["/companies"],
+      loan: ["/loans"],
+      property: ["/properties"],
+      borrower: ["/contacts"],
+      borrower_entity: ["/contacts"],
+      investor: ["/contacts"],
+      unified_deal: ["/pipeline"],
     };
 
     const routes = pageRouteMap[payload.objectKey] || [];
@@ -1328,9 +1412,10 @@ export async function batchPublishChanges(
       revalidatePath(route, "page");
     }
 
-    // Also revalidate CRM pages
-    revalidatePath("/admin/crm", "layout");
-    revalidatePath("/admin/crm", "page");
+    revalidatePath("/contacts", "layout");
+    revalidatePath("/contacts", "page");
+    revalidatePath("/companies", "layout");
+    revalidatePath("/companies", "page");
 
     return { success: true, createdIds };
   } catch (err: unknown) {

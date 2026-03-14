@@ -4,7 +4,7 @@ import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
-import { deleteCompanyFileAction } from "@/app/(authenticated)/admin/crm/company-actions";
+import { deleteCompanyFileAction } from "@/app/(authenticated)/(admin)/companies/actions";
 import { COMPANY_FILE_TYPES } from "@/lib/constants";
 import { formatDate } from "@/lib/format";
 import { FileText, Eye, ExternalLink, Trash2 } from "lucide-react";

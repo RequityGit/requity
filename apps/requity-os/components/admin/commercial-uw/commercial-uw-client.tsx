@@ -16,7 +16,7 @@ import {
   saveProFormaYears,
   updateUWStatus,
   saveUploadMapping,
-} from "@/app/(authenticated)/admin/loans/[id]/commercial-uw/actions";
+} from "@/app/(authenticated)/(admin)/loans/[id]/commercial-uw/actions";
 import type { RentRollImportMetadata } from "./upload-rent-roll-dialog";
 import type { T12ImportMetadata } from "./upload-t12-dialog";
 import type { UploadVersion } from "./rent-roll-version-history";
@@ -62,7 +62,7 @@ import {
   activateT12Version,
   getT12UploadData,
   updateT12MappingSuggestions,
-} from "@/app/(authenticated)/admin/loans/[id]/commercial-uw/t12-actions";
+} from "@/app/(authenticated)/(admin)/loans/[id]/commercial-uw/t12-actions";
 import type {
   T12LineItem,
   T12FieldMapping,

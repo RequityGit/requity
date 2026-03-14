@@ -1235,7 +1235,7 @@ export function OperationsView({
       {view === "approvals" && (
         <ApprovalsView
           approvals={approvals}
-          onNavigateToApproval={(id) => router.push(`/admin/operations/approvals/${id}`)}
+          onNavigateToApproval={(id) => router.push(`/tasks/approvals/${id}`)}
         />
       )}
 

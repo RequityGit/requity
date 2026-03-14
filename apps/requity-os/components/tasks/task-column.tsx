@@ -64,7 +64,7 @@ export function TaskColumn({
   const isPendingApprovalColumn = status === "Pending Approval";
 
   return (
-    <div className="flex-1 min-w-[280px] max-w-[440px] flex flex-col">
+    <div className="flex-1 min-w-0 md:min-w-[280px] max-w-full md:max-w-[440px] flex flex-col">
       {/* Column header */}
       <div className="flex items-center gap-2 mb-3 px-1">
         <span className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">

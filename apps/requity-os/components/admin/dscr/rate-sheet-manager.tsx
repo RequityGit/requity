@@ -29,7 +29,7 @@ import {
   createRateSheetUploadAction,
   parseRateSheetAction,
   commitRateSheetAction,
-} from "@/app/(authenticated)/admin/models/dscr/actions";
+} from "@/app/(authenticated)/(admin)/models/dscr/actions";
 import { formatDate } from "@/lib/format";
 import { createClient } from "@/lib/supabase/client";
 import { RateSheetReview } from "./rate-sheet-review";
@@ -227,7 +227,7 @@ export function RateSheetManager({
                 <CardContent className="py-12 text-center">
                   <p className="text-muted-foreground">
                     No lenders configured.{" "}
-                    <a href="/admin/models/dscr?tab=lenders" className="text-teal-600 hover:underline">
+                    <a href="/models/dscr?tab=lenders" className="text-teal-600 hover:underline">
                       Add lenders first
                     </a>
                     .

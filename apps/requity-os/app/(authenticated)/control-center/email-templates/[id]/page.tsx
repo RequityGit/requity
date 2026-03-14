@@ -4,7 +4,7 @@ import { TemplateEditor } from "@/components/admin/email-templates/template-edit
 import {
   fetchTemplateAction,
   fetchTemplateVersionsAction,
-} from "@/app/(authenticated)/admin/email-templates/actions";
+} from "@/app/(authenticated)/(admin)/email-templates/actions";
 
 export const dynamic = "force-dynamic";
 

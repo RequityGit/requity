@@ -23,6 +23,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { cn } from "@repo/lib";
+import { useToast } from "@/components/ui/use-toast";
+import { broadcastFieldConfigInvalidation } from "@/hooks/useFieldConfigurations";
 import type { FieldConfig } from "../actions";
 import { updateFieldConfig } from "../actions";
 import { FIELD_TYPES, getFieldType } from "./constants";
@@ -216,8 +218,10 @@ function LogicTab({
 export function FieldConfigPanel({ field, siblingFields = [], onClose, onUpdate, useDraft, onDraftUpdate }: Props) {
   const [subTab, setSubTab] = useState<SubTab>("type");
   const [saving, setSaving] = useState(false);
+  const [lastSaved, setLastSaved] = useState<string | null>(null);
   const ft = getFieldType(field.field_type);
   const FieldIcon = ft.icon;
+  const { toast } = useToast();
 
   const handleUpdate = useCallback(
     async (updates: Partial<FieldConfig>) => {
@@ -227,18 +231,23 @@ export function FieldConfigPanel({ field, siblingFields = [], onClose, onUpdate,
         return;
       }
 
-      // Legacy direct-write mode (for non-field tabs)
+      // Direct-write mode: save to DB immediately
       setSaving(true);
       try {
         const result = await updateFieldConfig(field.id, updates);
-        if (!result.error) {
+        if (result.error) {
+          toast({ title: "Save failed", description: String(result.error), variant: "destructive" });
+        } else {
           onUpdate({ ...field, ...updates });
+          setLastSaved(new Date().toLocaleTimeString());
+          // Broadcast to all mounted field config hooks to refetch
+          broadcastFieldConfigInvalidation();
         }
       } finally {
         setSaving(false);
       }
     },
-    [field, onUpdate, useDraft, onDraftUpdate]
+    [field, onUpdate, useDraft, onDraftUpdate, toast]
   );
 
   return (
@@ -520,10 +529,10 @@ export function FieldConfigPanel({ field, siblingFields = [], onClose, onUpdate,
           Saving...
         </div>
       )}
-      {useDraft && !saving && (
-        <div className="px-3 py-1.5 border-t border-border text-[10px] text-amber-600 flex items-center gap-1">
-          <div className="w-1.5 h-1.5 rounded-full bg-amber-500" />
-          Changes saved as draft — publish to apply
+      {!saving && lastSaved && (
+        <div className="px-3 py-1.5 border-t border-border text-[10px] text-emerald-600 flex items-center gap-1">
+          <div className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+          Saved at {lastSaved}
         </div>
       )}
     </div>

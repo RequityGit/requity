@@ -28,7 +28,7 @@ import { PlusCircle, Lock } from "lucide-react";
 import {
   addLoanToServicingAction,
   type ServicingLoanFormData,
-} from "@/app/(authenticated)/admin/servicing/actions";
+} from "@/app/(authenticated)/(admin)/servicing/actions";
 
 interface AddServicingLoanDialogProps {
   isSuperAdmin: boolean;

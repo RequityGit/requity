@@ -23,7 +23,6 @@ import type {
   CrmFieldType,
 } from "@/components/crm/crm-edit-section-dialog";
 import { formatCurrency, formatDate, formatPhoneNumber, formatPhoneInput, formatPercent } from "@/lib/format";
-import { CRM_COMPANY_TYPES, CRM_COMPANY_SUBTYPES } from "@/lib/constants";
 import { evaluateFormula } from "@/lib/formula-engine";
 import type { FieldLayout } from "./contact-360/types";
 
@@ -37,51 +36,8 @@ export const FIELD_KEY_TO_PROP: Record<string, string> = {
   is_title_co_verified: "title_company_verified",
 };
 
-// --- Dropdown option fallbacks for built-in fields not yet stored in DB ---
-export const DROPDOWN_FALLBACKS: Record<string, { label: string; value: string }[]> = {
-  lifecycle_stage: [
-    { label: "Uncontacted", value: "uncontacted" },
-    { label: "Prospect", value: "prospect" },
-    { label: "Active", value: "active" },
-    { label: "Past", value: "past" },
-    { label: "Do Not Contact", value: "do_not_contact" },
-  ],
-  status: [
-    { label: "Active", value: "active" },
-    { label: "Inactive", value: "inactive" },
-    { label: "Converted", value: "converted" },
-    { label: "Lost", value: "lost" },
-    { label: "Do Not Contact", value: "do_not_contact" },
-  ],
-  source: [
-    { label: "Website", value: "website" },
-    { label: "Referral", value: "referral" },
-    { label: "Cold Call", value: "cold_call" },
-    { label: "Email Campaign", value: "email_campaign" },
-    { label: "Social Media", value: "social_media" },
-    { label: "Event", value: "event" },
-    { label: "Paid Ad", value: "paid_ad" },
-    { label: "Organic", value: "organic" },
-    { label: "Broker", value: "broker" },
-    { label: "Repeat Client", value: "repeat_client" },
-    { label: "Other", value: "other" },
-  ],
-  marital_status: [
-    { label: "Single", value: "single" },
-    { label: "Married", value: "married" },
-    { label: "Divorced", value: "divorced" },
-    { label: "Widowed", value: "widowed" },
-    { label: "Separated", value: "separated" },
-  ],
-  accreditation_status: [
-    { label: "Pending", value: "pending" },
-    { label: "Verified", value: "verified" },
-    { label: "Expired", value: "expired" },
-    { label: "Not Accredited", value: "not_accredited" },
-  ],
-  company_type: CRM_COMPANY_TYPES.map((t) => ({ label: t.label, value: t.value })),
-  subtype: CRM_COMPANY_SUBTYPES.map((t) => ({ label: t.label, value: t.value })),
-};
+// Dropdown options are now fully managed in field_configurations DB table.
+// Edited via Object Manager at /control-center/object-manager.
 
 // --- field_type → CrmFieldType mapping for edit dialogs ---
 export const FC_TYPE_TO_CRM: Record<string, CrmFieldType> = {
@@ -93,16 +49,15 @@ export const FC_TYPE_TO_CRM: Record<string, CrmFieldType> = {
   date: "date",
   boolean: "boolean",
   dropdown: "select",
+  multi_select: "multi_select",
   percentage: "number",
   team_member: "select",
   company: "select",
   relationship: "select",
 };
 
-// --- Per-field type overrides (when DB field_type doesn't match UI control) ---
-const FIELD_TYPE_OVERRIDES: Record<string, CrmFieldType> = {
-  company_type: "multi_select",
-};
+// Field types are now fully managed in field_configurations DB table.
+// company_type is field_type='multi_select' in the DB.
 
 // --- Custom renderers for fields with special display logic ---
 function renderCreditScore(val: unknown): ReactNode {
@@ -324,8 +279,8 @@ export function buildEditFields(
     .sort((a, b) => a.display_order - b.display_order)
     .map((f) => {
       const propKey = FIELD_KEY_TO_PROP[f.field_key] ?? f.field_key;
-      const options = f.dropdown_options ?? DROPDOWN_FALLBACKS[f.field_key] ?? undefined;
-      const fieldType = FIELD_TYPE_OVERRIDES[f.field_key] ?? FC_TYPE_TO_CRM[f.field_type] ?? "text";
+      const options = f.dropdown_options ?? undefined;
+      const fieldType = FC_TYPE_TO_CRM[f.field_type] ?? "text";
 
       let value: string | number | boolean | string[] | null | undefined;
       if (fieldType === "multi_select") {
@@ -384,13 +339,24 @@ function CurrencyInput({
 
   const handleFocus = useCallback(() => {
     setEditing(true);
-    setRawText(value != null && value !== "" ? String(value) : "");
+    setRawText(value != null && value !== "" ? formatCurrencyDisplay(value) : "");
   }, [value]);
 
   const handleBlur = useCallback(() => {
     setEditing(false);
     onBlur();
   }, [onBlur]);
+
+  const handleChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const text = e.target.value;
+      const parsed = parseCurrencyInput(text);
+      const display = parsed != null ? formatCurrencyDisplay(parsed) : text.replace(/[^0-9.\-]/g, "");
+      setRawText(display);
+      onChange(parsed);
+    },
+    [onChange]
+  );
 
   return (
     <div className="space-y-1.5">
@@ -401,10 +367,7 @@ function CurrencyInput({
           type="text"
           inputMode="decimal"
           value={editing ? rawText : formatCurrencyDisplay(value)}
-          onChange={(e) => {
-            setRawText(e.target.value);
-            onChange(parseCurrencyInput(e.target.value));
-          }}
+          onChange={handleChange}
           onFocus={handleFocus}
           onBlur={handleBlur}
           disabled={disabled}
@@ -487,7 +450,7 @@ export function CrmInlineField({
   options: optionsProp,
   showYearNavigation,
 }: CrmInlineFieldProps) {
-  const options = optionsProp ?? field.dropdown_options ?? DROPDOWN_FALLBACKS[field.field_key] ?? [];
+  const options = optionsProp ?? field.dropdown_options ?? [];
 
   switch (field.field_type) {
     case "currency":
@@ -677,7 +640,6 @@ export function renderDynamicFieldsInline(
 
         const options = callbacks.optionsOverrides?.[f.field_key]
           ?? f.dropdown_options
-          ?? DROPDOWN_FALLBACKS[f.field_key]
           ?? undefined;
 
         return (

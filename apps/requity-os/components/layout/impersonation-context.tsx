@@ -62,10 +62,10 @@ export function ImpersonationProvider({
           // Redirect to the impersonated user's dashboard
           const roleDashboard =
             data.role === "investor"
-              ? "/investor/dashboard"
+              ? "/i/dashboard"
               : data.role === "borrower"
-                ? "/borrower/dashboard"
-                : "/admin/pipeline";
+                ? "/b/dashboard"
+                : "/pipeline";
           router.push(roleDashboard);
           router.refresh();
         }
@@ -83,7 +83,7 @@ export function ImpersonationProvider({
       });
 
       if (res.ok) {
-        router.push("/admin/pipeline");
+        router.push("/pipeline");
         router.refresh();
       }
     } catch (err) {

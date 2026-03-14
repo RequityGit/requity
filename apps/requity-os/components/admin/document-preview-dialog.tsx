@@ -11,7 +11,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Download, FileText } from "lucide-react";
-import { getDocumentPreviewUrl } from "@/app/(authenticated)/admin/documents/actions";
+import { getDocumentPreviewUrl } from "@/app/(authenticated)/(admin)/documents/actions";
 import type { DocumentRow } from "@/components/admin/document-list-table";
 
 interface DocumentPreviewDialogProps {

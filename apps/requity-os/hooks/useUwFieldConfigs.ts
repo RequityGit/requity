@@ -2,12 +2,13 @@
 
 import { useState, useEffect, useMemo } from "react";
 import { createClient } from "@/lib/supabase/client";
-import type { UwFieldDef, UwFieldObject } from "@/components/pipeline-v2/pipeline-types";
+import type { UwFieldDef, UwFieldObject } from "@/components/pipeline/pipeline-types";
 import {
   isVisible,
   type VisibilityCondition,
   type VisibilityContext,
 } from "@/lib/visibility-engine";
+import { FIELD_CONFIG_INVALIDATE_EVENT } from "./useFieldConfigurations";
 
 const UW_MODULES = ["uw_deal", "property", "borrower_entity"] as const;
 
@@ -36,6 +37,7 @@ const SELECT_COLS = [
   "permissions",
   "required_at_stage",
   "blocks_stage_progression",
+  "is_read_only",
 ].join(", ");
 
 interface RawFieldConfig {
@@ -46,14 +48,19 @@ interface RawFieldConfig {
   field_type: string;
   is_visible: boolean;
   is_archived: boolean;
-  dropdown_options: string[] | null;
+  /** JSONB from DB can be array or missing; we normalize to string[] */
+  dropdown_options: string[] | unknown;
   display_order: number;
   section_group: string | null;
   visibility_condition: VisibilityCondition | null;
   formula_expression: string | null;
   formula_output_format: string | null;
   formula_decimal_places: number | null;
+  is_read_only: boolean;
 }
+
+// Dropdown options are now fully managed in field_configurations DB table.
+// Edited via Object Manager at /control-center/object-manager.
 
 function mapFieldType(
   fcType: string
@@ -75,8 +82,16 @@ function mapFieldType(
   }
 }
 
+function normalizeDropdownOptions(raw: string[] | unknown): string[] | undefined {
+  if (Array.isArray(raw) && raw.length > 0) {
+    return raw.every((x) => typeof x === "string") ? (raw as string[]) : undefined;
+  }
+  return undefined;
+}
+
 function toUwFieldDef(fc: RawFieldConfig): UwFieldDef {
   const isFormula = fc.field_type === "formula" && fc.formula_expression;
+  const resolvedOptions = normalizeDropdownOptions(fc.dropdown_options);
 
   return {
     key: fc.field_key,
@@ -85,8 +100,9 @@ function toUwFieldDef(fc: RawFieldConfig): UwFieldDef {
       ? mapFieldType(fc.formula_output_format ?? "number")
       : mapFieldType(fc.field_type),
     object: MODULE_TO_OBJECT[fc.module],
-    options: fc.dropdown_options ?? undefined,
+    options: resolvedOptions,
     sectionGroup: fc.section_group ?? undefined,
+    readOnly: fc.is_read_only || undefined,
     ...(isFormula && {
       formulaExpression: fc.formula_expression!,
       formulaOutputFormat: (fc.formula_output_format ?? "number") as UwFieldDef["formulaOutputFormat"],
@@ -97,7 +113,7 @@ function toUwFieldDef(fc: RawFieldConfig): UwFieldDef {
 
 // Shared cache for all UW field configs
 let uwCache: { data: RawFieldConfig[]; timestamp: number } | null = null;
-const CACHE_TTL = 5 * 60 * 1000;
+const CACHE_TTL = 30 * 1000; // 30 seconds — field edits are now instant-save
 
 export interface UwFieldConfigsResult {
   /** All visibility-filtered fields as UwFieldDef, keyed by field_key */
@@ -129,6 +145,19 @@ export function useUwFieldConfigs(
   const ctxKey = visibilityContext
     ? `${visibilityContext.asset_class}:${JSON.stringify(visibilityContext.dealValues ?? {})}`
     : "";
+
+  // Track a refetch counter that increments when invalidation events fire
+  const [refetchKey, setRefetchKey] = useState(0);
+
+  // Listen for invalidation events from Object Manager saves
+  useEffect(() => {
+    const handler = () => {
+      invalidateUwFieldConfigsCache();
+      setRefetchKey((k) => k + 1);
+    };
+    window.addEventListener(FIELD_CONFIG_INVALIDATE_EVENT, handler);
+    return () => window.removeEventListener(FIELD_CONFIG_INVALIDATE_EVENT, handler);
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -175,7 +204,7 @@ export function useUwFieldConfigs(
 
     load();
     return () => { cancelled = true; };
-  }, [ctxKey]);
+  }, [ctxKey, refetchKey]);
 
   const result = useMemo(() => {
     const filtered = visibilityContext

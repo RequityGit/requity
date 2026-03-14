@@ -36,7 +36,7 @@ import Link from "next/link";
 import {
   addCompanyFollowerAction,
   removeCompanyFollowerAction,
-} from "@/app/(authenticated)/admin/crm/company-actions";
+} from "@/app/(authenticated)/(admin)/companies/actions";
 import type {
   CompanyDetailData,
   CompanyContactData,
@@ -274,7 +274,7 @@ export function CompanyDetailSidebar({
               return (
                 <Link
                   key={ct.id}
-                  href={`/admin/crm/${ct.id}`}
+                  href={`/contacts/${ct.contact_number}`}
                   className="flex items-center gap-2.5 cursor-pointer hover:bg-muted -mx-1 px-1 py-1 rounded-lg transition-colors"
                 >
                   <Avatar className="h-7 w-7 rounded-md">

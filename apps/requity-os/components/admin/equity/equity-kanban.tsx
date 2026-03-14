@@ -6,6 +6,11 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
+import {
   Dialog,
   DialogContent,
   DialogHeader,
@@ -27,10 +32,12 @@ import {
   EQUITY_LOSS_REASONS,
 } from "@/lib/constants";
 import { useToast } from "@/components/ui/use-toast";
-import { moveEquityStageAction } from "@/app/(authenticated)/admin/equity-pipeline/actions";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { moveEquityStageAction } from "@/app/(authenticated)/(admin)/equity-pipeline/actions";
 import {
   ChevronRight,
   ChevronLeft,
+  ChevronDown,
   GripVertical,
   Clock,
   User,
@@ -91,6 +98,7 @@ export function EquityKanban({ data }: EquityKanbanProps) {
     dealId: string;
   }>({ open: false, dealId: "" });
   const [lossReason, setLossReason] = useState("");
+  const isMobile = useIsMobile();
   const router = useRouter();
   const { toast } = useToast();
 
@@ -199,188 +207,147 @@ export function EquityKanban({ data }: EquityKanbanProps) {
     return deal.purchase_price || deal.offer_price || deal.asking_price;
   }
 
+  function renderDealCard(deal: EquityDealRow) {
+    const stageIdx = getStageIndex(deal.stage);
+    const canMoveLeft = stageIdx > 0;
+    const canMoveRight = stageIdx < EQUITY_PIPELINE_STAGES.length - 1;
+    const days = getDaysInStage(deal.stage_changed_at);
+    const isMoving = movingId === deal.id;
+    const price = getDisplayPrice(deal);
+    const taskProgress =
+      deal.total_tasks && deal.total_tasks > 0
+        ? `${deal.completed_tasks ?? 0}/${deal.total_tasks}`
+        : null;
+
+    return (
+      <Card
+        key={deal.id}
+        className={`shadow-sm hover:shadow-md transition-all ${isMobile ? "active:bg-muted/50" : "cursor-grab active:cursor-grabbing"} ${isMoving ? "opacity-50" : ""}`}
+        draggable={!isMobile}
+        onDragStart={isMobile ? undefined : (e) => handleDragStart(e, deal.id)}
+      >
+        <CardContent className="p-3">
+          <div className="flex items-start gap-1">
+            {!isMobile && (
+              <GripVertical className="h-4 w-4 text-muted-foreground mt-0.5 flex-shrink-0" />
+            )}
+            <div
+              className="flex-1 min-w-0 cursor-pointer"
+              onClick={() => router.push(`/pipeline/${deal.deal_number || deal.id}`)}
+            >
+              <p className="text-sm font-medium text-foreground truncate">
+                {deal.deal_name || "Untitled Deal"}
+              </p>
+              {deal.deal_number && (
+                <p className="text-[10px] text-muted-foreground">{deal.deal_number}</p>
+              )}
+              <div className="flex items-center justify-between mt-1">
+                <span className="text-xs font-semibold text-foreground">
+                  {price ? formatCurrency(price) : "—"}
+                </span>
+                {deal.asset_type && (
+                  <span className="text-[10px] text-muted-foreground">{deal.asset_type}</span>
+                )}
+              </div>
+              {deal.property_city && (
+                <p className="text-xs text-muted-foreground truncate mt-0.5">
+                  {deal.property_city}{deal.property_state ? `, ${deal.property_state}` : ""}
+                </p>
+              )}
+              <div className="flex items-center gap-2 mt-1.5 flex-wrap">
+                <span className={`inline-flex items-center gap-0.5 text-[10px] font-medium px-1.5 py-0.5 rounded ${getDaysColor(days)}`}>
+                  <Clock className="h-2.5 w-2.5" />{days}d
+                </span>
+                {taskProgress && (
+                  <span className="inline-flex items-center gap-0.5 text-[10px] font-medium px-1.5 py-0.5 rounded bg-blue-50 text-blue-700">
+                    <CheckCircle2 className="h-2.5 w-2.5" />{taskProgress}
+                  </span>
+                )}
+                {deal.target_irr && (
+                  <span className="inline-flex items-center gap-0.5 text-[10px] font-medium px-1.5 py-0.5 rounded bg-emerald-50 text-emerald-700">
+                    <Target className="h-2.5 w-2.5" />{deal.target_irr}% IRR
+                  </span>
+                )}
+              </div>
+              {deal.assigned_to_name && (
+                <div className="flex items-center gap-1 mt-1.5">
+                  <User className="h-2.5 w-2.5 text-muted-foreground" />
+                  <span className="text-[10px] text-muted-foreground truncate">{deal.assigned_to_name}</span>
+                </div>
+              )}
+            </div>
+          </div>
+          <div className="flex justify-between mt-2 pt-2 border-t">
+            <Button variant="ghost" size="icon" className="h-8 w-8 md:h-6 md:w-6" disabled={!canMoveLeft || isMoving} onClick={() => moveToStage(deal.id, EQUITY_PIPELINE_STAGES[stageIdx - 1])}>
+              <ChevronLeft className="h-3 w-3" />
+            </Button>
+            <Button variant="ghost" size="icon" className="h-8 w-8 md:h-6 md:w-6" disabled={!canMoveRight || isMoving} onClick={() => moveToStage(deal.id, EQUITY_PIPELINE_STAGES[stageIdx + 1])}>
+              <ChevronRight className="h-3 w-3" />
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
   return (
     <>
-      <div className="overflow-x-auto pb-4">
-        <div
-          className="flex gap-3"
-          style={{ minWidth: `${EQUITY_PIPELINE_STAGES.length * 240}px` }}
-        >
+      {/* Mobile: collapsible stage list */}
+      {isMobile ? (
+        <div className="space-y-2 pb-4">
           {EQUITY_PIPELINE_STAGES.map((stage) => {
             const stageDeals = deals.filter((d) => d.stage === stage);
-            const totalVolume = stageDeals.reduce(
-              (sum, d) => sum + (getDisplayPrice(d) || 0),
-              0
-            );
-
+            const totalVolume = stageDeals.reduce((sum, d) => sum + (getDisplayPrice(d) || 0), 0);
             return (
-              <div
-                key={stage}
-                className="flex-1 min-w-[230px]"
-                onDragOver={handleDragOver}
-                onDrop={(e) => handleDrop(e, stage)}
-              >
-                <div className="bg-muted rounded-lg p-3">
-                  {/* Column header */}
-                  <div className="mb-3">
-                    <div className="flex items-center justify-between">
-                      <h3 className="text-sm font-semibold text-foreground">
-                        {EQUITY_STAGE_LABELS[stage]}
-                      </h3>
-                      <Badge variant="secondary" className="text-xs">
-                        {stageDeals.length}
-                      </Badge>
-                    </div>
-                    {stageDeals.length > 0 && (
-                      <p className="text-[10px] text-muted-foreground mt-0.5">
-                        {formatCurrency(totalVolume)}
-                      </p>
-                    )}
+              <Collapsible key={stage} defaultOpen={stageDeals.length > 0}>
+                <CollapsibleTrigger className="flex items-center justify-between w-full px-3 py-2.5 bg-muted rounded-lg min-h-[44px]">
+                  <div className="flex items-center gap-2">
+                    <ChevronDown className="h-4 w-4 text-muted-foreground transition-transform [[data-state=closed]>&]:rotate-[-90deg]" />
+                    <h3 className="text-sm font-semibold text-foreground">{EQUITY_STAGE_LABELS[stage]}</h3>
+                    <Badge variant="secondary" className="text-xs">{stageDeals.length}</Badge>
                   </div>
-
-                  {/* Deal cards */}
-                  <div className="space-y-2 min-h-[100px]">
-                    {stageDeals.map((deal) => {
-                      const stageIdx = getStageIndex(deal.stage);
-                      const canMoveLeft = stageIdx > 0;
-                      const canMoveRight =
-                        stageIdx < EQUITY_PIPELINE_STAGES.length - 1;
-                      const days = getDaysInStage(deal.stage_changed_at);
-                      const isMoving = movingId === deal.id;
-                      const price = getDisplayPrice(deal);
-                      const taskProgress =
-                        deal.total_tasks && deal.total_tasks > 0
-                          ? `${deal.completed_tasks ?? 0}/${deal.total_tasks}`
-                          : null;
-
-                      return (
-                        <Card
-                          key={deal.id}
-                          className={`cursor-grab active:cursor-grabbing shadow-sm hover:shadow-md transition-all ${isMoving ? "opacity-50" : ""}`}
-                          draggable
-                          onDragStart={(e) => handleDragStart(e, deal.id)}
-                        >
-                          <CardContent className="p-3">
-                            <div className="flex items-start gap-1">
-                              <GripVertical className="h-4 w-4 text-muted-foreground mt-0.5 flex-shrink-0" />
-                              <div
-                                className="flex-1 min-w-0 cursor-pointer"
-                                onClick={() =>
-                                  router.push(
-                                    `/admin/pipeline/${deal.deal_number || deal.id}`
-                                  )
-                                }
-                              >
-                                {/* Deal name */}
-                                <p className="text-sm font-medium text-foreground truncate">
-                                  {deal.deal_name || "Untitled Deal"}
-                                </p>
-
-                                {/* Deal number + property location */}
-                                {deal.deal_number && (
-                                  <p className="text-[10px] text-muted-foreground">
-                                    {deal.deal_number}
-                                  </p>
-                                )}
-
-                                {/* Price + asset type */}
-                                <div className="flex items-center justify-between mt-1">
-                                  <span className="text-xs font-semibold text-foreground">
-                                    {price ? formatCurrency(price) : "—"}
-                                  </span>
-                                  {deal.asset_type && (
-                                    <span className="text-[10px] text-muted-foreground">
-                                      {deal.asset_type}
-                                    </span>
-                                  )}
-                                </div>
-
-                                {/* Property location */}
-                                {deal.property_city && (
-                                  <p className="text-xs text-muted-foreground truncate mt-0.5">
-                                    {deal.property_city}
-                                    {deal.property_state
-                                      ? `, ${deal.property_state}`
-                                      : ""}
-                                  </p>
-                                )}
-
-                                {/* Days in stage + tasks + IRR */}
-                                <div className="flex items-center gap-2 mt-1.5 flex-wrap">
-                                  <span
-                                    className={`inline-flex items-center gap-0.5 text-[10px] font-medium px-1.5 py-0.5 rounded ${getDaysColor(days)}`}
-                                  >
-                                    <Clock className="h-2.5 w-2.5" />
-                                    {days}d
-                                  </span>
-                                  {taskProgress && (
-                                    <span className="inline-flex items-center gap-0.5 text-[10px] font-medium px-1.5 py-0.5 rounded bg-blue-50 text-blue-700">
-                                      <CheckCircle2 className="h-2.5 w-2.5" />
-                                      {taskProgress}
-                                    </span>
-                                  )}
-                                  {deal.target_irr && (
-                                    <span className="inline-flex items-center gap-0.5 text-[10px] font-medium px-1.5 py-0.5 rounded bg-emerald-50 text-emerald-700">
-                                      <Target className="h-2.5 w-2.5" />
-                                      {deal.target_irr}% IRR
-                                    </span>
-                                  )}
-                                </div>
-
-                                {/* Assigned to */}
-                                {deal.assigned_to_name && (
-                                  <div className="flex items-center gap-1 mt-1.5">
-                                    <User className="h-2.5 w-2.5 text-muted-foreground" />
-                                    <span className="text-[10px] text-muted-foreground truncate">
-                                      {deal.assigned_to_name}
-                                    </span>
-                                  </div>
-                                )}
-                              </div>
-                            </div>
-
-                            {/* Stage move buttons */}
-                            <div className="flex justify-between mt-2 pt-2 border-t">
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-6 w-6"
-                                disabled={!canMoveLeft || isMoving}
-                                onClick={() =>
-                                  moveToStage(
-                                    deal.id,
-                                    EQUITY_PIPELINE_STAGES[stageIdx - 1]
-                                  )
-                                }
-                              >
-                                <ChevronLeft className="h-3 w-3" />
-                              </Button>
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-6 w-6"
-                                disabled={!canMoveRight || isMoving}
-                                onClick={() =>
-                                  moveToStage(
-                                    deal.id,
-                                    EQUITY_PIPELINE_STAGES[stageIdx + 1]
-                                  )
-                                }
-                              >
-                                <ChevronRight className="h-3 w-3" />
-                              </Button>
-                            </div>
-                          </CardContent>
-                        </Card>
-                      );
-                    })}
+                  {stageDeals.length > 0 && (
+                    <span className="text-xs text-muted-foreground num">{formatCurrency(totalVolume)}</span>
+                  )}
+                </CollapsibleTrigger>
+                <CollapsibleContent>
+                  <div className="space-y-2 pt-2 pl-1 pr-1">
+                    {stageDeals.map((deal) => renderDealCard(deal))}
                   </div>
-                </div>
-              </div>
+                </CollapsibleContent>
+              </Collapsible>
             );
           })}
         </div>
-      </div>
+      ) : (
+        /* Desktop: horizontal kanban */
+        <div className="overflow-x-auto pb-4">
+          <div className="flex gap-3" style={{ minWidth: `${EQUITY_PIPELINE_STAGES.length * 240}px` }}>
+            {EQUITY_PIPELINE_STAGES.map((stage) => {
+              const stageDeals = deals.filter((d) => d.stage === stage);
+              const totalVolume = stageDeals.reduce((sum, d) => sum + (getDisplayPrice(d) || 0), 0);
+              return (
+                <div key={stage} className="flex-1 min-w-[230px]" onDragOver={handleDragOver} onDrop={(e) => handleDrop(e, stage)}>
+                  <div className="bg-muted rounded-lg p-3">
+                    <div className="mb-3">
+                      <div className="flex items-center justify-between">
+                        <h3 className="text-sm font-semibold text-foreground">{EQUITY_STAGE_LABELS[stage]}</h3>
+                        <Badge variant="secondary" className="text-xs">{stageDeals.length}</Badge>
+                      </div>
+                      {stageDeals.length > 0 && (
+                        <p className="text-[10px] text-muted-foreground mt-0.5">{formatCurrency(totalVolume)}</p>
+                      )}
+                    </div>
+                    <div className="space-y-2 min-h-[100px]">
+                      {stageDeals.map((deal) => renderDealCard(deal))}
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       {/* Dead Deal Dialog */}
       <Dialog

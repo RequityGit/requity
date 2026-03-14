@@ -144,7 +144,7 @@ export function ApprovalDrawer({
 
   return (
     <Sheet open={open} onOpenChange={handleOpenChange}>
-      <SheetContent className="sm:max-w-[460px] p-0 flex flex-col">
+      <SheetContent className="w-full sm:max-w-[460px] p-0 flex flex-col">
         {/* Header */}
         <SheetHeader className="px-5 pt-5 pb-4 border-b border-border">
           <div className="flex items-center gap-2 mb-2">

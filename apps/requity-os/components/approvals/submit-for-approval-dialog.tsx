@@ -46,7 +46,7 @@ import {
   resubmitApproval,
   saveApprovalFieldAction,
   searchContactsForApproval,
-} from "@/app/(authenticated)/admin/operations/approvals/actions";
+} from "@/app/(authenticated)/(admin)/tasks/approvals/actions";
 import type { ApprovalEntityType, ChecklistResult } from "@/lib/approvals/types";
 
 interface SubmitForApprovalDialogProps {

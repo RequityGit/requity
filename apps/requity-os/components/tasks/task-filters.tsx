@@ -45,7 +45,7 @@ export function TaskFilters({
   onTypeFilterChange,
 }: TaskFiltersProps) {
   return (
-    <div className="flex gap-3 flex-wrap items-center">
+    <div className="flex gap-2 md:gap-3 flex-wrap items-center w-full md:w-auto">
       {/* Segmented type filter */}
       <div className="flex rounded-md overflow-hidden border border-border">
         {TASK_TYPE_FILTER.map((t, i) => (
@@ -54,7 +54,7 @@ export function TaskFilters({
             type="button"
             onClick={() => onTypeFilterChange(t)}
             className={cn(
-              "px-3.5 py-1.5 text-[12px] font-semibold transition-colors",
+              "px-3 md:px-3.5 py-2 md:py-1.5 text-[12px] font-semibold transition-colors min-h-[36px]",
               typeFilter === t
                 ? "bg-primary text-primary-foreground"
                 : "bg-transparent text-muted-foreground hover:bg-accent",
@@ -67,7 +67,7 @@ export function TaskFilters({
       </div>
 
       <Select value={assigneeFilter} onValueChange={onAssigneeChange}>
-        <SelectTrigger className="w-[160px] h-9 text-[13px]">
+        <SelectTrigger className="w-full sm:w-[160px] h-10 md:h-9 text-[13px]">
           <SelectValue placeholder="Assignee" />
         </SelectTrigger>
         <SelectContent>
@@ -81,7 +81,7 @@ export function TaskFilters({
       </Select>
 
       <Select value={categoryFilter} onValueChange={onCategoryChange}>
-        <SelectTrigger className="w-[170px] h-9 text-[13px]">
+        <SelectTrigger className="w-full sm:w-[170px] h-10 md:h-9 text-[13px]">
           <SelectValue placeholder="Category" />
         </SelectTrigger>
         <SelectContent>
@@ -95,7 +95,7 @@ export function TaskFilters({
       </Select>
 
       <Select value={priorityFilter} onValueChange={onPriorityChange}>
-        <SelectTrigger className="w-[140px] h-9 text-[13px]">
+        <SelectTrigger className="w-full sm:w-[140px] h-10 md:h-9 text-[13px]">
           <SelectValue placeholder="Priority" />
         </SelectTrigger>
         <SelectContent>

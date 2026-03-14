@@ -131,7 +131,7 @@ export function ContactDetailClient({
       {/* Breadcrumb */}
       <div className="flex items-center gap-2 mb-3">
         <Link
-          href="/admin/crm"
+          href="/contacts"
           className="text-muted-foreground hover:text-foreground transition-colors"
         >
           <ArrowLeft size={16} strokeWidth={1.5} />
@@ -140,7 +140,7 @@ export function ContactDetailClient({
           <BreadcrumbList>
             <BreadcrumbItem>
               <BreadcrumbLink asChild>
-                <Link href="/admin/crm">Contacts</Link>
+                <Link href="/contacts">Contacts</Link>
               </BreadcrumbLink>
             </BreadcrumbItem>
             <BreadcrumbSeparator />

@@ -69,7 +69,7 @@ export function LoansTab({ loans, contactId, borrowerId }: LoansTabProps) {
             onClick={() => {
               const params = new URLSearchParams({ new_loan: "true" });
               if (borrowerId) params.set("borrower_id", borrowerId);
-              router.push(`/admin/loans?${params.toString()}`);
+              router.push(`/loans?${params.toString()}`);
             }}
           >
             <DollarSign className="h-3.5 w-3.5" strokeWidth={1.5} />
@@ -94,7 +94,7 @@ export function LoansTab({ loans, contactId, borrowerId }: LoansTabProps) {
           return (
             <Link
               key={loan.id}
-              href={`/admin/pipeline/${loan.loan_number || loan.id}`}
+              href={`/pipeline/${loan.loan_number || loan.id}`}
               className="block rounded-xl border border-border bg-card p-4 hover:bg-muted transition-colors"
             >
               <div className="flex items-start justify-between mb-2">
@@ -178,7 +178,7 @@ export function LoansTab({ loans, contactId, borrowerId }: LoansTabProps) {
               {pastLoans.map((loan) => (
                 <Link
                   key={loan.id}
-                  href={`/admin/pipeline/${loan.loan_number || loan.id}`}
+                  href={`/pipeline/${loan.loan_number || loan.id}`}
                   className="flex items-center justify-between rounded-lg border border-border bg-card p-3 hover:bg-muted transition-colors"
                 >
                   <div className="flex items-center gap-3">

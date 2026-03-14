@@ -5,9 +5,9 @@ import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 
 const tabs = [
-  { label: "My Investments", href: "/investor/funds" },
-  { label: "Contributions", href: "/investor/capital-calls" },
-  { label: "Distributions", href: "/investor/distributions" },
+  { label: "My Investments", href: "/i/funds" },
+  { label: "Contributions", href: "/i/capital-calls" },
+  { label: "Distributions", href: "/i/distributions" },
 ];
 
 export function InvestmentTabs() {

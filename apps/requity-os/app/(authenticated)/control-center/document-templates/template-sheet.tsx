@@ -332,7 +332,7 @@ export function TemplateSheet({ open, onOpenChange, template, onSuccess }: Props
 
   return (
     <Sheet open={open} onOpenChange={handleOpenChange}>
-      <SheetContent className="w-[540px] sm:max-w-[540px] p-0 flex flex-col">
+      <SheetContent className="w-full sm:max-w-[540px] p-0 flex flex-col">
         <SheetHeader className="px-6 pt-6 pb-4 border-b">
           <SheetTitle>
             {isEditing ? "Edit Template" : "New Template"}

@@ -26,6 +26,7 @@ import Link from "next/link";
 
 export interface CompanyRow {
   id: string;
+  company_number: string;
   name: string;
   email: string | null;
   phone: string | null;
@@ -106,7 +107,7 @@ export function CompaniesTable({ companies }: CompaniesTableProps) {
         header: "Company",
         cell: (row) => (
           <Link
-            href={`/admin/crm/companies/${row.id}`}
+            href={`/companies/${row.company_number}`}
             className="flex items-center gap-3"
           >
             <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10">

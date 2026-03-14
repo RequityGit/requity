@@ -89,7 +89,7 @@ export function CompanyContactsTab({
             return (
               <Link
                 key={ct.id}
-                href={`/admin/crm/${ct.id}`}
+                href={`/contacts/${ct.contact_number}`}
                 className="bg-card border border-border rounded-xl p-4 flex items-center gap-3.5 cursor-pointer hover:border-[#D0D0D0] transition-all duration-150"
               >
                 <Avatar className="h-10 w-10 rounded-lg shrink-0">

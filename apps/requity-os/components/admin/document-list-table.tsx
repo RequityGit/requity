@@ -30,7 +30,7 @@ import {
   Trash2,
 } from "lucide-react";
 import { toast } from "sonner";
-import { getDocumentPreviewUrl } from "@/app/(authenticated)/admin/documents/actions";
+import { getDocumentPreviewUrl } from "@/app/(authenticated)/(admin)/documents/actions";
 import { DocumentRenameDialog } from "@/components/admin/document-rename-dialog";
 import { DocumentDeleteDialog } from "@/components/admin/document-delete-dialog";
 import { DocumentPreviewDialog } from "@/components/admin/document-preview-dialog";

@@ -22,8 +22,6 @@ export {
   LOAN_TYPES,
   // Loan purposes
   LOAN_PURPOSES,
-  // Loan priorities
-  LOAN_PRIORITIES,
   // Fund types
   FUND_TYPES,
   // Distribution types
@@ -101,7 +99,6 @@ export {
 // Re-export types
 export type {
   LoanStage,
-  LoanPriority,
   ConditionStatus,
   OpportunityStage,
   EquityDealStage,
@@ -193,12 +190,6 @@ export const US_STATES = [
 // UI Color Maps (not DB constraints, only used for styling)
 // ---------------------------------------------------------------------------
 
-export const PRIORITY_COLORS: Record<string, string> = {
-  hot: "bg-red-100 text-red-800 border-red-200",
-  normal: "bg-slate-100 text-slate-700 border-slate-200",
-  on_hold: "bg-amber-100 text-amber-800 border-amber-200",
-};
-
 export const RELATIONSHIP_COLORS: Record<string, string> = {
   borrower: "bg-blue-100 text-blue-800 border-blue-200",
   investor: "bg-green-100 text-green-800 border-green-200",
@@ -259,11 +250,6 @@ export const STATUS_COLORS: Record<string, string> = {
   submitted: "bg-blue-100 text-blue-800",
   under_review: "bg-amber-100 text-amber-800",
   denied: "bg-red-100 text-red-800",
-
-  // Priority
-  hot: "bg-red-100 text-red-800",
-  normal: "bg-slate-100 text-slate-700",
-  on_hold: "bg-amber-100 text-amber-800",
 
   // Condition statuses
   not_applicable: "bg-slate-100 text-slate-500",

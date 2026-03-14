@@ -9,7 +9,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Search } from "lucide-react";
-import { TEMPLATE_CATEGORIES } from "@/app/(authenticated)/admin/email-templates/types";
+import { TEMPLATE_CATEGORIES } from "@/app/(authenticated)/(admin)/email-templates/types";
 
 interface TemplateFiltersProps {
   search: string;

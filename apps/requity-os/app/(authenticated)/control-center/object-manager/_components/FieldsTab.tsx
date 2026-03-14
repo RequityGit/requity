@@ -9,6 +9,10 @@ import {
   Lock,
   MoreHorizontal,
   Calculator,
+  Archive,
+  ArchiveRestore,
+  Trash2,
+  ChevronDown,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -25,10 +29,21 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@repo/lib";
 import type { FieldConfig } from "../actions";
-import { createField, archiveField, updateFieldVisibilityCondition } from "../actions";
+import { createField, archiveField, unarchiveField, deleteFieldPermanently, updateFieldVisibilityCondition } from "../actions";
+import { broadcastFieldConfigInvalidation } from "@/hooks/useFieldConfigurations";
 import { FIELD_TYPES, getFieldType } from "./constants";
 import { AddFieldDialog } from "./AddFieldDialog";
 import { ConditionBadge } from "./ConditionBadge";
@@ -155,7 +170,7 @@ export function FieldsTab({
       return;
     }
 
-    // Legacy direct DB mode
+    // Direct DB mode
     const result = await createField({
       module: fieldModule,
       field_key: input.field_key,
@@ -167,6 +182,7 @@ export function FieldsTab({
       return;
     }
     setShowAddDialog(false);
+    broadcastFieldConfigInvalidation();
     onFieldsChange();
   };
 
@@ -178,12 +194,13 @@ export function FieldsTab({
       return;
     }
 
-    // Legacy direct DB mode
+    // Direct DB mode
     const result = await archiveField(fieldId);
     if (result.error) {
       console.error("Failed to archive field:", result.error);
       return;
     }
+    broadcastFieldConfigInvalidation();
     onFieldsChange();
   };
 
@@ -203,13 +220,42 @@ export function FieldsTab({
       onFieldConditionUpdate(fieldId, condition as Record<string, unknown> | null);
     }
 
-    // Legacy direct DB mode
+    // Direct DB mode
     const result = await updateFieldVisibilityCondition(fieldId, condition);
     if (result.error) {
       console.error("Failed to update visibility condition:", result.error);
       // Revert on failure by refetching
       onFieldsChange();
+    } else {
+      broadcastFieldConfigInvalidation();
     }
+  };
+
+  const [showArchived, setShowArchived] = useState(false);
+  const [deleteConfirmField, setDeleteConfirmField] = useState<FieldConfig | null>(null);
+
+  const archivedFields = useMemo(
+    () => fields.filter((f) => f.is_archived),
+    [fields]
+  );
+
+  const handleUnarchive = async (fieldId: string) => {
+    const result = await unarchiveField(fieldId);
+    if (result.error) {
+      console.error("Failed to unarchive field:", result.error);
+      return;
+    }
+    onFieldsChange();
+  };
+
+  const handleDeletePermanently = async (fieldId: string) => {
+    const result = await deleteFieldPermanently(fieldId);
+    if (result.error) {
+      console.error("Failed to delete field:", result.error);
+      return;
+    }
+    setDeleteConfirmField(null);
+    onFieldsChange();
   };
 
   // Whether this object supports two-axis visibility (only Deal/unified_deal)
@@ -229,7 +275,7 @@ export function FieldsTab({
     <div className="flex flex-col h-full">
       {/* Toolbar */}
       <div className="px-3.5 py-2 border-b border-border flex items-center gap-1.5">
-        <div className="relative w-[180px]">
+        <div className={cn("relative", "w-[180px]")}>
           <Search
             size={13}
             className="absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground"
@@ -323,26 +369,27 @@ export function FieldsTab({
         </div>
       )}
 
-      {/* Table Header */}
-      <div
-        className={cn(
-          "grid px-3.5 py-1.5 gap-1 border-b border-border text-[9px] font-semibold text-muted-foreground uppercase tracking-wider sticky top-0 bg-background z-10",
-          isAxisObject
-            ? "grid-cols-[22px_1fr_95px_80px_40px_150px_30px]"
-            : "grid-cols-[22px_1fr_95px_95px_50px_50px_30px]"
-        )}
-      >
-        <span />
-        <span>Field</span>
-        <span>{isAxisObject ? "Key" : "Type"}</span>
-        <span>{isAxisObject ? "Type" : "Key"}</span>
-        <span className="text-center">Req</span>
-        <span>{isAxisObject ? "Conditions" : ""}</span>
-        <span />
-      </div>
+      {/* Table Header + Rows (scrollable on mobile) */}
+      <div className="mobile-scroll flex-1 flex flex-col min-w-0">
+        <div className="min-w-[520px]">
+          <div
+            className={cn(
+              "grid px-3.5 py-1.5 gap-1 border-b border-border text-[9px] font-semibold text-muted-foreground uppercase tracking-wider sticky top-0 bg-background z-10",
+              isAxisObject
+                ? "grid-cols-[22px_1fr_95px_80px_40px_150px_30px]"
+                : "grid-cols-[22px_1fr_95px_95px_50px_50px_30px]"
+            )}
+          >
+            <span />
+            <span>Field</span>
+            <span>{isAxisObject ? "Key" : "Type"}</span>
+            <span>{isAxisObject ? "Type" : "Key"}</span>
+            <span className="text-center">Req</span>
+            <span>{isAxisObject ? "Conditions" : ""}</span>
+            <span />
+          </div>
 
-      {/* Field Rows */}
-      <div className="flex-1 overflow-y-auto">
+          <div className="overflow-y-auto">
         {filteredFields.length === 0 && (
           <div className="flex flex-col items-center justify-center py-16 gap-2">
             <Search size={24} className="text-muted-foreground" strokeWidth={1} />
@@ -525,7 +572,97 @@ export function FieldsTab({
             </div>
           );
         })}
+          </div>
+        </div>
       </div>
+
+      {/* Archived Fields Section */}
+      {archivedFields.length > 0 && (
+        <div className="border-t border-border">
+          <button
+            onClick={() => setShowArchived(!showArchived)}
+            className="w-full flex items-center gap-2 px-3.5 py-2 text-xs text-muted-foreground hover:text-foreground transition-colors"
+          >
+            <Archive size={12} />
+            <span>Archived ({archivedFields.length})</span>
+            <ChevronDown
+              size={12}
+              className={cn(
+                "ml-auto transition-transform",
+                showArchived && "rotate-180"
+              )}
+            />
+          </button>
+          {showArchived && (
+            <div className="border-t border-border/50">
+              {archivedFields.map((field) => {
+                const ft = getFieldType(field.field_type);
+                const FieldIcon = ft.icon;
+                return (
+                  <div
+                    key={field.id}
+                    className="grid grid-cols-[1fr_80px_80px] px-3.5 py-2 gap-2 border-b border-border/50 items-center opacity-60 hover:opacity-100 transition-opacity"
+                  >
+                    <div className="flex items-center gap-1.5 overflow-hidden">
+                      <FieldIcon size={11} style={{ color: ft.color }} />
+                      <span className="text-xs truncate">{field.field_label}</span>
+                      <span className="text-[9px] font-mono text-muted-foreground truncate">
+                        {field.field_key}
+                      </span>
+                    </div>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="h-7 text-[10px] gap-1"
+                      onClick={() => handleUnarchive(field.id)}
+                    >
+                      <ArchiveRestore size={11} />
+                      Restore
+                    </Button>
+                    {field.is_admin_created && (
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="h-7 text-[10px] gap-1 text-destructive hover:text-destructive"
+                        onClick={() => setDeleteConfirmField(field)}
+                      >
+                        <Trash2 size={11} />
+                        Delete
+                      </Button>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog
+        open={!!deleteConfirmField}
+        onOpenChange={(open) => { if (!open) setDeleteConfirmField(null); }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Permanently delete field?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently delete <span className="font-semibold text-foreground">{deleteConfirmField?.field_label}</span> ({deleteConfirmField?.field_key}) and remove it from all page layouts. Existing deal data referencing this field will become orphaned. This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={() => {
+                if (deleteConfirmField) handleDeletePermanently(deleteConfirmField.id);
+              }}
+            >
+              Delete permanently
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {/* Add Field Dialog */}
       <AddFieldDialog

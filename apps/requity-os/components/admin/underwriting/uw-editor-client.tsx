@@ -228,7 +228,7 @@ export function UWEditorClient({
         <div className="flex items-center justify-between px-6 py-3">
           <div className="flex items-center gap-3">
             {isSandbox ? (
-              <Link href={`/admin/models/${modelType}`}>
+              <Link href={`/models/${modelType}`}>
                 <Button variant="ghost" size="sm">
                   <ArrowLeft className="h-4 w-4 mr-1" />
                   Back to Models
@@ -253,8 +253,8 @@ export function UWEditorClient({
               <Link
                 href={
                   linkedDealId !== undefined
-                    ? `/admin/pipeline/${linkedDealId}`
-                    : `/admin/pipeline/${dealId}`
+                    ? `/pipeline/${linkedDealId}`
+                    : `/pipeline/${dealId}`
                 }
               >
                 <Button variant="ghost" size="sm">

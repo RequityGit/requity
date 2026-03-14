@@ -14,12 +14,12 @@ import {
 } from "@/components/ui/table";
 import { Copy, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import type { EmailTemplate } from "@/app/(authenticated)/admin/email-templates/types";
-import { deleteTemplateAction } from "@/app/(authenticated)/admin/email-templates/actions-write";
+import type { EmailTemplate } from "@/app/(authenticated)/(admin)/email-templates/types";
+import { deleteTemplateAction } from "@/app/(authenticated)/(admin)/email-templates/actions-write";
 import {
   duplicateTemplateAction,
   toggleTemplateActiveAction,
-} from "@/app/(authenticated)/admin/email-templates/actions-extra";
+} from "@/app/(authenticated)/(admin)/email-templates/actions-extra";
 import { DeleteConfirmDialog } from "./delete-confirm-dialog";
 import { TemplateFilters } from "./template-filters";
 

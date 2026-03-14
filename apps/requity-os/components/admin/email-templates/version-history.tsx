@@ -18,8 +18,8 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Eye } from "lucide-react";
-import type { EmailTemplateVersion } from "@/app/(authenticated)/admin/email-templates/types";
-import { fetchTemplateVersionsAction } from "@/app/(authenticated)/admin/email-templates/actions";
+import type { EmailTemplateVersion } from "@/app/(authenticated)/(admin)/email-templates/types";
+import { fetchTemplateVersionsAction } from "@/app/(authenticated)/(admin)/email-templates/actions";
 
 interface VersionHistoryProps {
   templateId: string;

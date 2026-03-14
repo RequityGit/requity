@@ -70,7 +70,7 @@ export function DscrPricingManager({
                 </p>
                 <p className="text-sm text-muted-foreground mt-1">
                   <Link
-                    href="/admin/dscr/lenders"
+                    href="/dscr/lenders"
                     className="text-teal-600 hover:underline"
                   >
                     Add lenders
@@ -144,7 +144,7 @@ function LenderProductCard({
             >
               Active
             </Badge>
-            <Link href={`/admin/dscr/lenders/${lender.id}`}>
+            <Link href={`/dscr/lenders/${lender.id}`}>
               <Button variant="ghost" size="sm">
                 <Pencil className="h-3.5 w-3.5" />
               </Button>
@@ -225,7 +225,7 @@ function LenderProductCard({
             {lender.account_executive && `AE: ${lender.account_executive}`}
             {lender.nmls_id && ` | NMLS: ${lender.nmls_id}`}
           </div>
-          <Link href={`/admin/dscr/lenders/${lender.id}`}>
+          <Link href={`/dscr/lenders/${lender.id}`}>
             <Button variant="outline" size="sm" className="text-xs h-7">
               Manage
             </Button>
@@ -333,7 +333,7 @@ function LlpaPanel({
           <p className="text-muted-foreground text-sm py-8 text-center">
             No LLPAs configured.{" "}
             <Link
-              href="/admin/dscr/rate-sheets"
+              href="/dscr/rate-sheets"
               className="text-teal-600 hover:underline"
             >
               Upload a rate sheet

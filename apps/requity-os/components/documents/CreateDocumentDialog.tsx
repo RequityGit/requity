@@ -126,7 +126,7 @@ export function CreateDocumentDialog() {
     if (step === "result" && result) {
       navTimerRef.current = setTimeout(() => {
         setOpen(false);
-        router.push(`/admin/documents/editor/${result.documentId}`);
+        router.push(`/documents/editor/${result.documentId}`);
       }, 1500);
     }
     return () => {

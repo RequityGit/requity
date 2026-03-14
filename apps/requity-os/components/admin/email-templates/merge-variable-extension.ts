@@ -1,5 +1,5 @@
 import { Node, mergeAttributes } from "@tiptap/core";
-import { MERGE_VARIABLES } from "@/app/(authenticated)/admin/email-templates/types";
+import { MERGE_VARIABLES } from "@/app/(authenticated)/(admin)/email-templates/types";
 
 /**
  * Returns the display label for a merge variable key.

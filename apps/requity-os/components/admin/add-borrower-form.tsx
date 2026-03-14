@@ -23,7 +23,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useToast } from "@/components/ui/use-toast";
-import { addBorrowerAction } from "@/app/(authenticated)/admin/borrowers/new/actions";
+import { addBorrowerAction } from "@/app/(authenticated)/(admin)/borrowers/new/actions";
 import { Loader2, ChevronRight, ChevronLeft, Check } from "lucide-react";
 import { US_STATES } from "@/lib/constants";
 import { formatPhoneInput } from "@/lib/format";
@@ -130,7 +130,7 @@ export function AddBorrowerForm({ borrower }: AddBorrowerFormProps) {
       }
 
       toast({ title: "Borrower added successfully" });
-      router.push(`/admin/borrowers/${result.borrowerId}`);
+      router.push(`/borrowers/${result.borrowerId}`);
     } catch (err: any) {
       toast({
         title: "Error adding borrower",
@@ -425,7 +425,7 @@ export function AddBorrowerForm({ borrower }: AddBorrowerFormProps) {
               <Button
                 type="button"
                 variant="outline"
-                onClick={() => router.push("/admin/borrowers")}
+                onClick={() => router.push("/contacts")}
               >
                 Cancel
               </Button>

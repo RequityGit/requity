@@ -157,34 +157,34 @@ export function getEntityUrl(
   switch (entityType) {
     case "loan":
       return role === "borrower"
-        ? `/borrower/loans/${id}`
-        : `/admin/pipeline/${(metadata.loan_number as string) || (metadata.deal_number as string) || id}`;
+        ? `/b/loans/${id}`
+        : `/pipeline/${(metadata.loan_number as string) || (metadata.deal_number as string) || id}`;
     case "borrower":
-      return `/admin/borrowers/${id}`;
+      return `/borrowers/${id}`;
     case "borrower_entity":
-      return `/admin/borrowers/${metadata.borrower_id}`;
+      return `/borrowers/${metadata.borrower_id}`;
     case "investor":
-      return `/admin/investors/${id}`;
+      return `/investors/${id}`;
     case "investing_entity":
-      return `/admin/investors/${metadata.investor_id}`;
+      return `/investors/${metadata.investor_id}`;
     case "fund":
       return role === "investor"
-        ? `/investor/funds/${id}`
-        : `/admin/funds/${id}`;
+        ? `/i/funds/${id}`
+        : `/funds/${id}`;
     case "crm_contact":
-      return `/admin/crm/${id}`;
+      return `/crm/${id}`;
     case "document":
-      if (metadata.loan_id) return `/admin/pipeline/${(metadata.loan_number as string) || metadata.loan_id}`;
-      if (metadata.fund_id) return `/admin/funds/${metadata.fund_id}`;
+      if (metadata.loan_id) return `/pipeline/${(metadata.loan_number as string) || metadata.loan_id}`;
+      if (metadata.fund_id) return `/funds/${metadata.fund_id}`;
       return "#";
     case "loan_document":
       return metadata.loan_id
-        ? `/admin/pipeline/${(metadata.loan_number as string) || metadata.loan_id}`
+        ? `/pipeline/${(metadata.loan_number as string) || metadata.loan_id}`
         : "#";
     case "project":
-      return `/admin/operations`;
+      return `/tasks`;
     case "task":
-      return `/admin/operations`;
+      return `/tasks`;
     default:
       return "#";
   }
@@ -368,21 +368,21 @@ export interface QuickLink {
 export function getQuickLinks(role: string): QuickLink[] {
   if (role === "borrower") {
     return [
-      { label: "My Loans", href: "/borrower/loans", icon: Banknote },
-      { label: "My Documents", href: "/borrower/documents", icon: FileText },
+      { label: "My Loans", href: "/b/loans", icon: Banknote },
+      { label: "My Documents", href: "/b/documents", icon: FileText },
     ];
   }
   if (role === "investor") {
     return [
-      { label: "My Funds", href: "/investor/funds", icon: Building2 },
-      { label: "My Documents", href: "/investor/documents", icon: FileText },
+      { label: "My Funds", href: "/i/funds", icon: Building2 },
+      { label: "My Documents", href: "/i/documents", icon: FileText },
     ];
   }
   return [
-    { label: "Pipeline", href: "/admin/pipeline", icon: Banknote },
-    { label: "Investors", href: "/admin/investors", icon: TrendingUp },
-    { label: "CRM", href: "/admin/crm", icon: Contact },
-    { label: "Projects", href: "/admin/operations", icon: FolderKanban },
+    { label: "Pipeline", href: "/pipeline", icon: Banknote },
+    { label: "Investors", href: "/contacts", icon: TrendingUp },
+    { label: "Contacts", href: "/contacts", icon: Contact },
+    { label: "Tasks", href: "/tasks", icon: FolderKanban },
   ];
 }
 

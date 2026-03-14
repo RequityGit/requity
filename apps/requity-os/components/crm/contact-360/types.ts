@@ -12,6 +12,7 @@ export interface TabConfig {
 
 export interface ContactData {
   id: string;
+  contact_number: string;
   first_name: string | null;
   last_name: string | null;
   email: string | null;
@@ -119,6 +120,7 @@ export interface TeamMember {
 
 export interface CompanyData {
   id: string;
+  company_number: string;
   name: string;
   company_type: string | null;
 }

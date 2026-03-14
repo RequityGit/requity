@@ -16,7 +16,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { useToast } from "@/components/ui/use-toast";
 import { Trash2 } from "lucide-react";
-import { deleteCrmCompanyAction } from "@/app/(authenticated)/admin/crm/actions";
+import { deleteCrmCompanyAction } from "@/app/(authenticated)/(admin)/contacts/actions";
 
 interface DeleteCompanyButtonProps {
   companyId: string;

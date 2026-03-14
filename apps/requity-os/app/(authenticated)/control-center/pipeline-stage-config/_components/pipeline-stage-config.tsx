@@ -32,7 +32,7 @@ import type {
 import { upsertStage, addRule, deleteRule } from "../actions";
 
 // ---------------------------------------------------------------------------
-// Stage color map (matches pipeline-v2 visual palette)
+// Stage color map (matches pipeline visual palette)
 // ---------------------------------------------------------------------------
 
 const STAGE_COLORS: Record<string, string> = {

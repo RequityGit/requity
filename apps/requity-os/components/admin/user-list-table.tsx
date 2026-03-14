@@ -43,7 +43,7 @@ import {
   updateActivationStatusAction,
   resendInviteAction,
   type UserRow,
-} from "@/app/(authenticated)/admin/users/actions";
+} from "@/app/(authenticated)/(admin)/users/actions";
 
 // Role badge color mapping
 const ROLE_COLORS: Record<string, string> = {

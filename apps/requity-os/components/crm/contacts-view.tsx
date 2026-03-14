@@ -29,7 +29,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { deleteCrmContactAction } from "@/app/(authenticated)/admin/crm/actions";
+import { deleteCrmContactAction } from "@/app/(authenticated)/(admin)/contacts/actions";
 import { useToast } from "@/components/ui/use-toast";
 import {
   CRM_RELATIONSHIP_TYPES,
@@ -333,7 +333,7 @@ export function ContactsView({
                   filteredContacts.map((c, i) => (
                     <tr
                       key={c.id}
-                      onClick={() => router.push(`/admin/crm/${c.id}`)}
+                      onClick={() => router.push(`/contacts/${c.contact_number}`)}
                       className={cn(
                         "cursor-pointer transition-colors hover:bg-muted/50",
                         i < filteredContacts.length - 1 && "border-b border-border/50"
@@ -396,7 +396,7 @@ export function ContactsView({
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end" className="w-40">
                             <DropdownMenuItem
-                              onClick={() => router.push(`/admin/crm/${c.id}`)}
+                              onClick={() => router.push(`/contacts/${c.contact_number}`)}
                               className="gap-2 text-xs"
                             >
                               <Eye className="h-3.5 w-3.5" />

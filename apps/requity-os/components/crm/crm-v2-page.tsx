@@ -43,6 +43,7 @@ import { ClickToCallNumber } from "@/components/ui/ClickToCallNumber";
 
 export interface CrmContactRow {
   id: string;
+  contact_number: string;
   first_name: string;
   last_name: string;
   email: string | null;
@@ -67,6 +68,7 @@ export interface CrmContactRow {
 
 export interface CompanyRowV2 {
   id: string;
+  company_number: string;
   name: string;
   email: string | null;
   phone: string | null;
@@ -554,7 +556,7 @@ export function CrmV2Page({
                     filteredContacts.map((c, i) => (
                       <tr
                         key={c.id}
-                        onClick={() => router.push(`/admin/crm/${c.id}`)}
+                        onClick={() => router.push(`/contacts/${c.contact_number}`)}
                         className={cn(
                           "cursor-pointer transition-colors hover:bg-muted/50",
                           i < filteredContacts.length - 1 && "border-b border-border/50"
@@ -680,7 +682,7 @@ export function CrmV2Page({
                     filteredCompanies.map((c, i) => (
                       <tr
                         key={c.id}
-                        onClick={() => router.push(`/admin/crm/companies/${c.id}`)}
+                        onClick={() => router.push(`/companies/${c.company_number}`)}
                         className={cn(
                           "cursor-pointer transition-colors hover:bg-muted/50",
                           i < filteredCompanies.length - 1 && "border-b border-border/50"

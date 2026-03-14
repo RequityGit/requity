@@ -58,73 +58,66 @@ function isNavGroup(entry: NavEntry): entry is NavGroup {
 }
 
 const investorNav: NavItem[] = [
-  { label: "Dashboard", href: "/investor/dashboard", icon: LayoutDashboard },
+  { label: "Dashboard", href: "/i/dashboard", icon: LayoutDashboard },
   {
     label: "My Investments",
-    href: "/investor/funds",
+    href: "/i/funds",
     icon: Landmark,
-    activePaths: ["/investor/capital-calls", "/investor/distributions"],
+    activePaths: ["/i/capital-calls", "/i/distributions"],
   },
-  { label: "Documents", href: "/investor/documents", icon: FileText },
+  { label: "Documents", href: "/i/documents", icon: FileText },
 ];
 
 const borrowerNav: NavItem[] = [
-  { label: "Dashboard", href: "/borrower/dashboard", icon: LayoutDashboard },
-  { label: "Draw Requests", href: "/borrower/draws", icon: Hammer },
-  { label: "Payments", href: "/borrower/payments", icon: CreditCard },
-  { label: "Documents", href: "/borrower/documents", icon: FileText },
+  { label: "Dashboard", href: "/b/dashboard", icon: LayoutDashboard },
+  { label: "Draw Requests", href: "/b/draws", icon: Hammer },
+  { label: "Payments", href: "/b/payments", icon: CreditCard },
+  { label: "Documents", href: "/b/documents", icon: FileText },
 ];
 
 const adminNav: NavEntry[] = [
   {
     label: "Pipeline",
-    href: "/admin/pipeline",
+    href: "/pipeline",
     icon: Layers,
     moduleName: "pipeline",
-    activePaths: ["/admin/pipeline"],
+    activePaths: ["/pipeline"],
   },
   {
     label: "Contacts",
-    href: "/admin/crm/contacts",
+    href: "/contacts",
     icon: Contact,
     moduleName: "crm",
-    activePaths: ["/admin/crm/contacts"],
+    activePaths: ["/contacts"],
   },
   {
     label: "Companies",
-    href: "/admin/crm/companies",
+    href: "/companies",
     icon: Building2,
     moduleName: "crm",
-    activePaths: ["/admin/crm/companies"],
+    activePaths: ["/companies"],
   },
   {
-    label: "Operations",
-    href: "/admin/operations/tasks",
+    label: "Tasks",
+    href: "/tasks",
     icon: ListChecks,
     moduleName: "operations",
-    activePaths: ["/admin/operations"],
+    activePaths: ["/tasks"],
   },
   {
     label: "Toolbox",
+    href: "/toolbox",
     icon: Wrench,
-    basePath: "/admin/toolbox",
     activePaths: [
-      "/admin/documents",
-      "/admin/servicing",
-      "/admin/funds",
-      "/admin/capital-calls",
-      "/admin/distributions",
-      "/admin/models",
-      "/admin/dialer",
-    ],
-    children: [
-      { label: "Documents", href: "/admin/documents" },
-      { label: "Servicing", href: "/admin/servicing" },
-      { label: "Investments", href: "/admin/funds" },
-      { label: "Comm Model", href: "/admin/models/commercial" },
-      { label: "RTL Model", href: "/admin/models/rtl" },
-      { label: "DSCR Model", href: "/admin/models/dscr" },
-      { label: "Power Dialer", href: "/admin/dialer" },
+      "/toolbox",
+      "/documents",
+      "/servicing",
+      "/funds",
+      "/capital-calls",
+      "/distributions",
+      "/models",
+      "/dialer",
+      "/borrowers/entities",
     ],
   },
 ];
@@ -161,17 +154,16 @@ export function Sidebar({
   // Eagerly prefetch the most-used routes on mount for faster navigation
   useEffect(() => {
     if (navRole === "admin") {
-      router.prefetch("/admin/pipeline");
-      router.prefetch("/admin/crm/contacts");
-      router.prefetch("/admin/pipeline");
-      router.prefetch("/admin/crm/companies");
-      router.prefetch("/admin/operations/tasks");
+      router.prefetch("/pipeline");
+      router.prefetch("/contacts");
+      router.prefetch("/companies");
+      router.prefetch("/tasks");
     } else if (navRole === "borrower") {
-      router.prefetch("/borrower/dashboard");
-      router.prefetch("/borrower/draws");
+      router.prefetch("/b/dashboard");
+      router.prefetch("/b/draws");
     } else if (navRole === "investor") {
-      router.prefetch("/investor/dashboard");
-      router.prefetch("/investor/funds");
+      router.prefetch("/i/dashboard");
+      router.prefetch("/i/funds");
     }
   }, [navRole, router]);
   const allNavEntries = getNavEntries(navRole);
@@ -207,7 +199,7 @@ export function Sidebar({
       {/* Brand area */}
       <div className="flex items-center justify-between px-4 py-[18px]">
         {!collapsed && (
-          <Link href={`/${role}/dashboard`} className="flex items-center gap-2">
+          <Link href={role === "admin" ? "/pipeline" : role === "investor" ? "/i/dashboard" : "/b/dashboard"} className="flex items-center gap-2">
             <div className="h-8 w-8 rounded-md bg-foreground flex items-center justify-center">
               <span className="text-background text-[15px] font-extrabold leading-none">R</span>
             </div>

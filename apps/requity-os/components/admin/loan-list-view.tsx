@@ -14,13 +14,11 @@ import {
 } from "@/components/ui/select";
 import { DataTable, Column } from "@/components/shared/data-table";
 import { StatusBadge } from "@/components/shared/status-badge";
-import { Badge } from "@/components/ui/badge";
 import { formatCurrency, formatPercent, formatDate } from "@/lib/format";
 import {
   LOAN_STAGES,
   LOAN_STAGE_LABELS,
   LOAN_TYPES,
-  LOAN_PRIORITIES,
   PIPELINE_STAGES,
   getDaysInStageColor,
   LoanStage,
@@ -32,8 +30,6 @@ import {
   Table as TableIcon,
   Download,
   X,
-  Flame,
-  Pause,
   Clock,
 } from "lucide-react";
 
@@ -57,21 +53,18 @@ export function LoanListView({
   const [search, setSearch] = useState("");
   const [stageFilter, setStageFilter] = useState("all");
   const [typeFilter, setTypeFilter] = useState("all");
-  const [priorityFilter, setPriorityFilter] = useState("all");
   const [teamFilter, setTeamFilter] = useState("all");
 
   const hasFilters =
     search !== "" ||
     stageFilter !== "all" ||
     typeFilter !== "all" ||
-    priorityFilter !== "all" ||
     teamFilter !== "all";
 
   function clearFilters() {
     setSearch("");
     setStageFilter("all");
     setTypeFilter("all");
-    setPriorityFilter("all");
     setTeamFilter("all");
   }
 
@@ -93,9 +86,6 @@ export function LoanListView({
     if (typeFilter !== "all") {
       result = result.filter((l) => l.loan_type === typeFilter);
     }
-    if (priorityFilter !== "all") {
-      result = result.filter((l) => l.priority === priorityFilter);
-    }
     if (teamFilter !== "all") {
       result = result.filter(
         (l) =>
@@ -104,14 +94,13 @@ export function LoanListView({
       );
     }
     return result;
-  }, [data, search, stageFilter, typeFilter, priorityFilter, teamFilter]);
+  }, [data, search, stageFilter, typeFilter, teamFilter]);
 
   // Pipeline summary stats
   const pipelineStats = useMemo(() => {
     const total = data.length;
     const totalVolume = data.reduce((sum, l) => sum + l.loan_amount, 0);
-    const hotCount = data.filter((l) => l.priority === "hot").length;
-    return { total, totalVolume, hotCount };
+    return { total, totalVolume };
   }, [data]);
 
   function getDaysInStage(stageUpdatedAt: string): number {
@@ -139,7 +128,6 @@ export function LoanListView({
       "Loan Type",
       "Amount",
       "Stage",
-      "Priority",
       "Days in Stage",
       "Originator",
       "Processor",
@@ -155,7 +143,6 @@ export function LoanListView({
       formatLoanType(l.loan_type),
       l.loan_amount.toString(),
       LOAN_STAGE_LABELS[l.stage as LoanStage] ?? l.stage,
-      l.priority,
       getDaysInStage(l.stage_updated_at).toString(),
       l.originator_name ?? "",
       l.processor_name ?? "",
@@ -184,13 +171,7 @@ export function LoanListView({
       header: "Property",
       cell: (row) => (
         <div>
-          <div className="flex items-center gap-1">
-            {row.priority === "hot" && (
-              <Flame className="h-3 w-3 text-red-500 flex-shrink-0" />
-            )}
-            {row.priority === "on_hold" && (
-              <Pause className="h-3 w-3 text-amber-500 flex-shrink-0" />
-            )}
+          <div>
             <p className="font-medium text-foreground">
               {row.property_address ?? "—"}
             </p>
@@ -301,12 +282,6 @@ export function LoanListView({
           </span>{" "}
           pipeline volume
         </span>
-        {pipelineStats.hotCount > 0 && (
-          <Badge className="bg-red-100 text-red-800 border-red-200 gap-1">
-            <Flame className="h-3 w-3" />
-            {pipelineStats.hotCount} hot
-          </Badge>
-        )}
       </div>
 
       {/* Filters */}
@@ -342,19 +317,6 @@ export function LoanListView({
             {LOAN_TYPES.map((t) => (
               <SelectItem key={t.value} value={t.value}>
                 {t.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-        <Select value={priorityFilter} onValueChange={setPriorityFilter}>
-          <SelectTrigger className="w-[140px]">
-            <SelectValue placeholder="Priority" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Priorities</SelectItem>
-            {LOAN_PRIORITIES.map((p) => (
-              <SelectItem key={p.value} value={p.value}>
-                {p.label}
               </SelectItem>
             ))}
           </SelectContent>
@@ -420,7 +382,7 @@ export function LoanListView({
             columns={columns}
             data={filtered}
             emptyMessage="No loans found."
-            onRowClick={(row) => router.push(`/admin/pipeline/${row.loan_number || row.id}`)}
+            onRowClick={(row) => router.push(`/pipeline/${row.loan_number || row.id}`)}
           />
         </TabsContent>
       </Tabs>

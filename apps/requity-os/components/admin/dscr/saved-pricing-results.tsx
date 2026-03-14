@@ -21,7 +21,7 @@ export function SavedPricingResults({ run }: { run: any }) {
     <PricingResults
       results={results}
       pricingRunId={run.id}
-      onBack={() => router.push("/admin/models/dscr?tab=pipeline")}
+      onBack={() => router.push("/models/dscr?tab=pipeline")}
     />
   );
 }

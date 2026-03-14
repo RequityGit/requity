@@ -170,7 +170,7 @@ export function Topbar({ userName, role, email, allowedRoles, userId, isSuperAdm
                   </DropdownMenuItem>
                   {role === "admin" && (
                     <DropdownMenuItem
-                      onClick={() => router.push("/admin/users")}
+                      onClick={() => router.push("/users")}
                       className="cursor-pointer"
                     >
                       <ShieldCheck className="mr-2 h-4 w-4" />

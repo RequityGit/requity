@@ -148,6 +148,29 @@ export function useDraftState() {
         originalSnapshot: { ...field },
       };
       setChangeLog((prev) => [...prev, change]);
+
+      // Record that this field will be removed from all page layouts on publish
+      const layoutChangeId = nextChangeId();
+      setDraftLayoutChanges((prev) => [
+        ...prev,
+        {
+          id: layoutChangeId,
+          type: "layout_field_remove" as DraftChangeType,
+          label: `Remove "${field.field_label}" from layouts`,
+          description: `Field "${field.field_label}" will be removed from all page layout sections when published`,
+        },
+      ]);
+      setChangeLog((prev) => [
+        ...prev,
+        {
+          id: layoutChangeId,
+          type: "layout_field_remove",
+          entityId: layoutChangeId,
+          entityLabel: `Remove "${field.field_label}" from layouts`,
+          timestamp: Date.now(),
+          meta: { description: `Field will be removed from all page layout sections` },
+        },
+      ]);
     },
     []
   );

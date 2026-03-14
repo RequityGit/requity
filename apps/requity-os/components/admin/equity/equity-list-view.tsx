@@ -199,7 +199,7 @@ export function EquityListView({ data }: EquityListViewProps) {
                   key={deal.id}
                   className="cursor-pointer hover:bg-muted/50"
                   onClick={() =>
-                    router.push(`/admin/pipeline/${deal.deal_number || deal.id}`)
+                    router.push(`/pipeline/${deal.deal_number || deal.id}`)
                   }
                 >
                   <TableCell>

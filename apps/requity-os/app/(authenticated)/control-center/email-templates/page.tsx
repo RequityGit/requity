@@ -2,7 +2,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { TemplateList } from "@/components/admin/email-templates/template-list";
 import { CreateTemplateDialog } from "@/components/admin/email-templates/create-template-dialog";
-import { fetchTemplatesAction } from "@/app/(authenticated)/admin/email-templates/actions";
+import { fetchTemplatesAction } from "@/app/(authenticated)/(admin)/email-templates/actions";
 
 export const dynamic = "force-dynamic";
 

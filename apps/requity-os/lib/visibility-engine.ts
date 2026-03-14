@@ -104,6 +104,32 @@ export function isVisible(
 }
 
 /**
+ * Whether this deal should show the Commercial Pro Forma / models tab (full commercial UW)
+ * instead of the simple underwriting panel. Driven by asset class and optionally loan type.
+ * Same layout for all; Pro Forma visibility by deal type.
+ */
+export function isCommercialDeal(deal: {
+  asset_class?: string | null;
+  uw_data?: Record<string, unknown> | null;
+}): boolean {
+  const normalized = normalizeAssetClass(deal.asset_class ?? undefined);
+  // Commercial, multifamily, and MHC get the grid-based commercial UW (Pro Forma, rent roll, etc.)
+  if (
+    normalized === "commercial" ||
+    normalized === "multifamily" ||
+    normalized === "mhc"
+  ) {
+    return true;
+  }
+  const loanType = String(deal.uw_data?.loan_type ?? "").trim().toLowerCase();
+  if (!loanType) return false;
+  const commercialLoanKeywords = ["bridge", "perm", "construction", "equity"];
+  return commercialLoanKeywords.some(
+    (keyword) => loanType === keyword || loanType.includes(keyword)
+  );
+}
+
+/**
  * Check if a visibility condition has any values set.
  */
 export function hasCondition(condition: VisibilityCondition | null | undefined): boolean {

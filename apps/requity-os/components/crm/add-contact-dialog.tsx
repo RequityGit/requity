@@ -291,7 +291,7 @@ export function AddContactDialog({
           next_follow_up_date: form.next_follow_up_date || null,
           notes: form.notes || null,
         })
-        .select("id")
+        .select("id, contact_number")
         .single();
 
       if (contactError) throw contactError;
@@ -320,7 +320,7 @@ export function AddContactDialog({
       if (onSuccess) {
         onSuccess(newContact.id);
       } else {
-        router.push(`/admin/crm/${newContact.id}`);
+        router.push(`/contacts/${newContact.contact_number}`);
       }
     } catch (err: unknown) {
       toast({

@@ -23,7 +23,7 @@ import {
 import { FileText, Upload, Download, MoreHorizontal, X, Eye, Trash2, Loader2 } from "lucide-react";
 import { relTime } from "@/components/crm/contact-360/contact-detail-shared";
 import { COMPANY_FILE_TYPES } from "@/lib/constants";
-import { deleteCompanyFileAction } from "@/app/(authenticated)/admin/crm/company-actions";
+import { deleteCompanyFileAction } from "@/app/(authenticated)/(admin)/companies/actions";
 import type { CompanyFileData } from "../types";
 import { FILE_TYPE_LABELS, FILE_TYPE_COLORS } from "../types";
 

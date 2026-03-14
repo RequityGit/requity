@@ -117,11 +117,10 @@ export function ConditionEditorModal({
     if (!allFields) return [];
     const field = allFields.find((f) => f.field_key === fieldKey);
     if (field?.dropdown_options && Array.isArray(field.dropdown_options)) {
-      return field.dropdown_options as string[];
-    }
-    const wk = WELL_KNOWN_CONDITIONS.find((w) => w.field_key === fieldKey);
-    if (wk?.field_key === "loan_type") {
-      return ["Bridge", "DSCR", "Perm", "Construction", "Equity"];
+      // Handle both string[] and {label,value}[] formats from field_configurations
+      return field.dropdown_options.map((opt: string | { label: string; value: string }) =>
+        typeof opt === "string" ? opt : opt.value
+      );
     }
     return [];
   };

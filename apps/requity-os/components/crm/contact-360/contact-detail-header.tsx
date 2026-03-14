@@ -137,8 +137,8 @@ export function ContactDetailHeader({
                 <span
                   className="text-xs text-[#3B82F6] cursor-pointer hover:underline"
                   onClick={() => {
-                    if (company?.id) {
-                      router.push(`/admin/crm/companies/${company.id}`);
+                    if (company?.company_number) {
+                      router.push(`/companies/${company.company_number}`);
                     }
                   }}
                 >

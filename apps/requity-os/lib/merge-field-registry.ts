@@ -83,7 +83,6 @@ const LOAN_FIELDS: MergeFieldOption[] = [
   { key: "approval_date", label: "Approval Date", source: "loans", column: "approval_date", format: "date", category: "Dates" },
   { key: "expected_close_date", label: "Expected Close Date", source: "loans", column: "expected_close_date", format: "date", category: "Dates" },
   { key: "closing_date", label: "Closing Date", source: "loans", column: "closing_date", format: "date", category: "Dates" },
-  { key: "funding_date", label: "Funding Date", source: "loans", column: "funding_date", format: "date", category: "Dates" },
   { key: "first_payment_date", label: "First Payment Date", source: "loans", column: "first_payment_date", format: "date", category: "Dates" },
   { key: "maturity_date", label: "Maturity Date", source: "loans", column: "maturity_date", format: "date", category: "Dates" },
 

@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/components/ui/use-toast";
-import { addInvestorAction } from "@/app/(authenticated)/admin/investors/new/actions";
+import { addInvestorAction } from "@/app/(authenticated)/(admin)/investors/new/actions";
 import { Loader2 } from "lucide-react";
 import { formatPhoneInput } from "@/lib/format";
 
@@ -43,7 +43,7 @@ export function AddInvestorForm() {
       }
 
       toast({ title: "Investor added successfully" });
-      router.push(`/admin/investors/${result.investorId}`);
+      router.push(`/investors/${result.investorId}`);
     } catch (err: unknown) {
       toast({
         title: "Error adding investor",
@@ -113,7 +113,7 @@ export function AddInvestorForm() {
             <Button
               type="button"
               variant="outline"
-              onClick={() => router.push("/admin/investors")}
+              onClick={() => router.push("/contacts")}
             >
               Cancel
             </Button>

@@ -114,7 +114,7 @@ export function ContactHeader({
         if (contact.borrower_id) {
           loanParams.set("borrower_id", contact.borrower_id);
         }
-        router.push(`/admin/loans?${loanParams.toString()}`);
+        router.push(`/loans?${loanParams.toString()}`);
         break;
       }
       default:

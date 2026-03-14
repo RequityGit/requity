@@ -25,7 +25,7 @@ import { useToast } from "@/components/ui/use-toast";
 import {
   addEntityAction,
   updateEntityAction,
-} from "@/app/(authenticated)/admin/borrowers/new/actions";
+} from "@/app/(authenticated)/(admin)/borrowers/new/actions";
 import { Loader2 } from "lucide-react";
 import { US_STATES, ENTITY_TYPES } from "@/lib/constants";
 import type { Tables } from "@/lib/supabase/types";

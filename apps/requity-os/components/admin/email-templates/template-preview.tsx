@@ -4,7 +4,7 @@ import { useMemo } from "react";
 import {
   MERGE_VARIABLES,
   type TemplateVariable,
-} from "@/app/(authenticated)/admin/email-templates/types";
+} from "@/app/(authenticated)/(admin)/email-templates/types";
 
 interface TemplatePreviewProps {
   subject: string;

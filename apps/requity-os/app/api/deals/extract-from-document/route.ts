@@ -69,10 +69,9 @@ export async function POST(req: NextRequest) {
 
     const admin = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
-    // Look up card type's uw_fields for the target schema
     const { data: cardType, error: ctError } = await admin
       .from("unified_card_types")
-      .select("label, uw_fields, property_fields")
+      .select("label")
       .eq("id", cardTypeId)
       .single();
 
@@ -113,35 +112,39 @@ export async function POST(req: NextRequest) {
     const base64 = Buffer.from(arrayBuffer).toString("base64");
     const mediaType = getMediaType(storagePath);
 
-    // Build the target field descriptions from uw_fields
-    const uwFields = (cardType.uw_fields ?? []) as Array<{
-      key: string;
-      label: string;
-      type: string;
-      options?: string[];
-    }>;
-    const propertyFields = (cardType.property_fields ?? []) as Array<{
-      key: string;
-      label: string;
-      type: string;
-      options?: string[];
-    }>;
+    const { data: fieldConfigs } = await admin
+      .from("field_configurations")
+      .select("field_key, field_label, field_type, dropdown_options, module")
+      .in("module", ["uw_deal", "property"])
+      .eq("is_archived", false)
+      .eq("is_visible", true);
 
-    const uwFieldDescriptions = uwFields
+    type FieldConfig = {
+      field_key: string;
+      field_label: string;
+      field_type: string;
+      dropdown_options: string[] | null;
+      module: string;
+    };
+    const allFields = (fieldConfigs ?? []) as FieldConfig[];
+
+    const uwFieldDescriptions = allFields
+      .filter((f) => f.module === "uw_deal")
       .map((f) => {
-        let desc = `- ${f.key} (${f.type}): ${f.label}`;
-        if (f.options?.length) {
-          desc += ` [options: ${f.options.join(", ")}]`;
+        let desc = `- ${f.field_key} (${f.field_type}): ${f.field_label}`;
+        if (f.dropdown_options?.length) {
+          desc += ` [options: ${f.dropdown_options.join(", ")}]`;
         }
         return desc;
       })
       .join("\n");
 
-    const propertyFieldDescriptions = propertyFields
+    const propertyFieldDescriptions = allFields
+      .filter((f) => f.module === "property")
       .map((f) => {
-        let desc = `- ${f.key} (${f.type}): ${f.label}`;
-        if (f.options?.length) {
-          desc += ` [options: ${f.options.join(", ")}]`;
+        let desc = `- ${f.field_key} (${f.field_type}): ${f.field_label}`;
+        if (f.dropdown_options?.length) {
+          desc += ` [options: ${f.dropdown_options.join(", ")}]`;
         }
         return desc;
       })
@@ -152,7 +155,6 @@ export async function POST(req: NextRequest) {
 Standard deal fields to extract:
 - name (text): Deal name, property address, or project name
 - amount (currency): Loan amount, deal size, or investment amount
-- expected_close_date (date, YYYY-MM-DD format): Expected closing date
 - asset_class (select from: sfr, duplex_fourplex, multifamily, mhc, rv_park, campground, commercial, mixed_use, land): Property/asset type
 
 ${uwFieldDescriptions ? `Underwriting fields to extract:\n${uwFieldDescriptions}` : ""}

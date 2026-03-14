@@ -17,6 +17,7 @@ import {
   LayoutGrid,
   Grip,
   Sparkles,
+  X,
 } from "lucide-react";
 import {
   DndContext,
@@ -57,6 +58,7 @@ import {
   addSection,
   addTab,
   updateLayoutFieldSpan,
+  removeLayoutField,
 } from "../actions";
 import {
   Dialog,
@@ -265,11 +267,13 @@ function SortableField({
   fieldConfig,
   spanClass,
   onSpanChange,
+  onRemove,
 }: {
   layoutField: PageField;
   fieldConfig: FieldConfig | undefined;
   spanClass: string;
   onSpanChange?: (fieldId: string, newSpan: string) => void;
+  onRemove?: (fieldId: string) => void;
 }) {
   const {
     attributes,
@@ -331,6 +335,18 @@ function SortableField({
       >
         {SPAN_LABEL[currentSpan] || "6"}
       </button>
+      {onRemove && (
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            onRemove(layoutField.id);
+          }}
+          className="text-muted-foreground shrink-0 cursor-pointer hover:text-destructive rounded p-0.5 border-0 bg-transparent transition-colors"
+          title="Remove from layout"
+        >
+          <X size={10} />
+        </button>
+      )}
     </div>
   );
 }
@@ -389,6 +405,16 @@ export function LayoutTab({
       onDraftLayoutChange?.("layout_field_update", `Span: ${newSpan}`, `Changed field column span to "${newSpan}"`);
     }
   }, [propLayoutFields, onDraftLayoutChange]);
+
+  const handleRemoveField = useCallback(async (layoutFieldId: string) => {
+    setLocalFields((prev) => prev.filter((f) => f.id !== layoutFieldId));
+    const result = await removeLayoutField(layoutFieldId);
+    if (result.error) {
+      setLocalFields(propLayoutFields);
+    } else {
+      onLayoutChange?.();
+    }
+  }, [propLayoutFields, onLayoutChange]);
 
   // Active drag state
   const [activeDragId, setActiveDragId] = useState<string | null>(null);
@@ -931,6 +957,7 @@ export function LayoutTab({
                                         fieldConfig={fieldConfig}
                                         spanClass={getSpanClass(lf.column_span)}
                                         onSpanChange={handleSpanChange}
+                                        onRemove={handleRemoveField}
                                       />
                                     );
                                   })}

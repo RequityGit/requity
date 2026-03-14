@@ -3497,47 +3497,71 @@ export type Database = {
       deal_commercial_debt: {
         Row: {
           amortization_years: number | null
+          appraisal_cap_rate: number | null
           created_at: string | null
+          dscr_floor_constraint: number | null
           id: string
           interest_rate: number | null
           io_period_months: number | null
+          is_io: boolean | null
           lender_name: string | null
           loan_amount: number | null
           loan_type: string | null
+          ltv_pct: number | null
+          max_ltv_constraint: number | null
           origination_fee_pct: number | null
+          prepay_type: string | null
           sort_order: number | null
+          takeout_year: number | null
           term_years: number | null
           tranche_name: string | null
+          tranche_type: string | null
           uw_id: string
         }
         Insert: {
           amortization_years?: number | null
+          appraisal_cap_rate?: number | null
           created_at?: string | null
+          dscr_floor_constraint?: number | null
           id?: string
           interest_rate?: number | null
           io_period_months?: number | null
+          is_io?: boolean | null
           lender_name?: string | null
           loan_amount?: number | null
           loan_type?: string | null
+          ltv_pct?: number | null
+          max_ltv_constraint?: number | null
           origination_fee_pct?: number | null
+          prepay_type?: string | null
           sort_order?: number | null
+          takeout_year?: number | null
           term_years?: number | null
           tranche_name?: string | null
+          tranche_type?: string | null
           uw_id: string
         }
         Update: {
           amortization_years?: number | null
+          appraisal_cap_rate?: number | null
           created_at?: string | null
+          dscr_floor_constraint?: number | null
           id?: string
           interest_rate?: number | null
           io_period_months?: number | null
+          is_io?: boolean | null
           lender_name?: string | null
           loan_amount?: number | null
           loan_type?: string | null
+          ltv_pct?: number | null
+          max_ltv_constraint?: number | null
           origination_fee_pct?: number | null
+          prepay_type?: string | null
           sort_order?: number | null
+          takeout_year?: number | null
           term_years?: number | null
           tranche_name?: string | null
+          tranche_type?: string | null
           uw_id?: string
         }
         Relationships: [
@@ -3699,30 +3723,45 @@ export type Database = {
       }
       deal_commercial_scope_of_work: {
         Row: {
+          budget_type: string | null
+          category: string | null
           created_at: string | null
           description: string | null
           estimated_cost: number | null
           id: string
           item_name: string
+          qty: number | null
           sort_order: number | null
+          timeline: string | null
+          unit_cost: number | null
           uw_id: string
         }
         Insert: {
+          budget_type?: string | null
+          category?: string | null
           created_at?: string | null
           description?: string | null
           estimated_cost?: number | null
           id?: string
           item_name: string
+          qty?: number | null
           sort_order?: number | null
+          timeline?: string | null
+          unit_cost?: number | null
           uw_id: string
         }
         Update: {
+          budget_type?: string | null
+          category?: string | null
           created_at?: string | null
           description?: string | null
           estimated_cost?: number | null
           id?: string
           item_name?: string
+          qty?: number | null
           sort_order?: number | null
+          timeline?: string | null
+          unit_cost?: number | null
           uw_id?: string
         }
         Relationships: [
@@ -3738,6 +3777,7 @@ export type Database = {
       deal_commercial_sources_uses: {
         Row: {
           amount: number | null
+          category: string | null
           created_at: string | null
           id: string
           line_item: string
@@ -3748,6 +3788,7 @@ export type Database = {
         }
         Insert: {
           amount?: number | null
+          category?: string | null
           created_at?: string | null
           id?: string
           line_item: string
@@ -3758,6 +3799,7 @@ export type Database = {
         }
         Update: {
           amount?: number | null
+          category?: string | null
           created_at?: string | null
           id?: string
           line_item?: string
@@ -3779,12 +3821,16 @@ export type Database = {
       deal_commercial_uw: {
         Row: {
           amortization_years: number | null
+          budget_mode: string | null
           capex_reserve: number | null
           closing_costs: number | null
           created_at: string | null
           created_by: string | null
           disposition_fee_pct: number | null
           exit_cap_rate: number | null
+          ground_up_contingency_pct: number | null
+          ground_up_dev_fee_pct: number | null
+          ground_up_gc_fee_pct: number | null
           hold_period_years: number | null
           id: string
           interest_rate: number | null
@@ -3808,8 +3854,10 @@ export type Database = {
           purchase_price: number | null
           sale_costs_pct: number | null
           status: string
+          takeout_enabled: boolean | null
           total_sf: number | null
           updated_at: string | null
+          value_add_contingency_pct: number | null
           version: number
           working_capital: number | null
           year_built: number | null
@@ -3817,12 +3865,16 @@ export type Database = {
         }
         Insert: {
           amortization_years?: number | null
+          budget_mode?: string | null
           capex_reserve?: number | null
           closing_costs?: number | null
           created_at?: string | null
           created_by?: string | null
           disposition_fee_pct?: number | null
           exit_cap_rate?: number | null
+          ground_up_contingency_pct?: number | null
+          ground_up_dev_fee_pct?: number | null
+          ground_up_gc_fee_pct?: number | null
           hold_period_years?: number | null
           id?: string
           interest_rate?: number | null
@@ -3846,8 +3898,10 @@ export type Database = {
           purchase_price?: number | null
           sale_costs_pct?: number | null
           status?: string
+          takeout_enabled?: boolean | null
           total_sf?: number | null
           updated_at?: string | null
+          value_add_contingency_pct?: number | null
           version?: number
           working_capital?: number | null
           year_built?: number | null
@@ -3855,12 +3909,16 @@ export type Database = {
         }
         Update: {
           amortization_years?: number | null
+          budget_mode?: string | null
           capex_reserve?: number | null
           closing_costs?: number | null
           created_at?: string | null
           created_by?: string | null
           disposition_fee_pct?: number | null
           exit_cap_rate?: number | null
+          ground_up_contingency_pct?: number | null
+          ground_up_dev_fee_pct?: number | null
+          ground_up_gc_fee_pct?: number | null
           hold_period_years?: number | null
           id?: string
           interest_rate?: number | null
@@ -3884,8 +3942,10 @@ export type Database = {
           purchase_price?: number | null
           sale_costs_pct?: number | null
           status?: string
+          takeout_enabled?: boolean | null
           total_sf?: number | null
           updated_at?: string | null
+          value_add_contingency_pct?: number | null
           version?: number
           working_capital?: number | null
           year_built?: number | null
@@ -4003,6 +4063,120 @@ export type Database = {
             columns: ["uw_id"]
             isOneToOne: false
             referencedRelation: "deal_commercial_uw"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      deal_config_templates: {
+        Row: {
+          asset_class_condition: string[] | null
+          capital_side: string
+          card_metrics: Json
+          contact_roles: string[]
+          created_at: string
+          id: string
+          label: string
+          loan_type_condition: string[] | null
+          slug: string
+          sort_order: number
+          status: string
+          updated_at: string
+          uw_outputs: Json
+        }
+        Insert: {
+          asset_class_condition?: string[] | null
+          capital_side?: string
+          card_metrics?: Json
+          contact_roles?: string[]
+          created_at?: string
+          id?: string
+          label: string
+          loan_type_condition?: string[] | null
+          slug: string
+          sort_order?: number
+          status?: string
+          updated_at?: string
+          uw_outputs?: Json
+        }
+        Update: {
+          asset_class_condition?: string[] | null
+          capital_side?: string
+          card_metrics?: Json
+          contact_roles?: string[]
+          created_at?: string
+          id?: string
+          label?: string
+          loan_type_condition?: string[] | null
+          slug?: string
+          sort_order?: number
+          status?: string
+          updated_at?: string
+          uw_outputs?: Json
+        }
+        Relationships: []
+      }
+      deal_contacts: {
+        Row: {
+          contact_id: string
+          created_at: string
+          deal_id: string
+          id: string
+          is_guarantor: boolean
+          role: string
+          sort_order: number
+        }
+        Insert: {
+          contact_id: string
+          created_at?: string
+          deal_id: string
+          id?: string
+          is_guarantor?: boolean
+          role?: string
+          sort_order?: number
+        }
+        Update: {
+          contact_id?: string
+          created_at?: string
+          deal_id?: string
+          id?: string
+          is_guarantor?: boolean
+          role?: string
+          sort_order?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "deal_contacts_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "crm_contacts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "deal_contacts_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "crm_contacts_active"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "deal_contacts_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "crm_duplicate_candidates"
+            referencedColumns: ["contact_id"]
+          },
+          {
+            foreignKeyName: "deal_contacts_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "crm_duplicate_candidates"
+            referencedColumns: ["potential_duplicate_id"]
+          },
+          {
+            foreignKeyName: "deal_contacts_deal_id_fkey"
+            columns: ["deal_id"]
+            isOneToOne: false
+            referencedRelation: "unified_deals"
             referencedColumns: ["id"]
           },
         ]
@@ -4783,6 +4957,7 @@ export type Database = {
           record_type: Database["public"]["Enums"]["record_type_enum"]
           requires_signature: boolean
           signature_roles: Json | null
+          styled_layout: Json | null
           template_type: Database["public"]["Enums"]["template_type_enum"]
           updated_at: string
           version: number
@@ -4801,6 +4976,7 @@ export type Database = {
           record_type: Database["public"]["Enums"]["record_type_enum"]
           requires_signature?: boolean
           signature_roles?: Json | null
+          styled_layout?: Json | null
           template_type: Database["public"]["Enums"]["template_type_enum"]
           updated_at?: string
           version?: number
@@ -4819,6 +4995,7 @@ export type Database = {
           record_type?: Database["public"]["Enums"]["record_type_enum"]
           requires_signature?: boolean
           signature_roles?: Json | null
+          styled_layout?: Json | null
           template_type?: Database["public"]["Enums"]["template_type_enum"]
           updated_at?: string
           version?: number
@@ -4828,6 +5005,7 @@ export type Database = {
       documents: {
         Row: {
           created_at: string
+          deal_id: string | null
           deleted_at: string | null
           description: string | null
           document_type: string | null
@@ -4836,16 +5014,20 @@ export type Database = {
           file_size: number | null
           file_url: string | null
           fund_id: string | null
+          google_drive_file_id: string | null
+          google_drive_url: string | null
           id: string
           loan_id: string | null
           mime_type: string | null
           owner_id: string | null
+          source: string | null
           status: string | null
           updated_at: string
           uploaded_by: string | null
         }
         Insert: {
           created_at?: string
+          deal_id?: string | null
           deleted_at?: string | null
           description?: string | null
           document_type?: string | null
@@ -4854,16 +5036,20 @@ export type Database = {
           file_size?: number | null
           file_url?: string | null
           fund_id?: string | null
+          google_drive_file_id?: string | null
+          google_drive_url?: string | null
           id?: string
           loan_id?: string | null
           mime_type?: string | null
           owner_id?: string | null
+          source?: string | null
           status?: string | null
           updated_at?: string
           uploaded_by?: string | null
         }
         Update: {
           created_at?: string
+          deal_id?: string | null
           deleted_at?: string | null
           description?: string | null
           document_type?: string | null
@@ -4872,15 +5058,25 @@ export type Database = {
           file_size?: number | null
           file_url?: string | null
           fund_id?: string | null
+          google_drive_file_id?: string | null
+          google_drive_url?: string | null
           id?: string
           loan_id?: string | null
           mime_type?: string | null
           owner_id?: string | null
+          source?: string | null
           status?: string | null
           updated_at?: string
           uploaded_by?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "documents_deal_id_fkey"
+            columns: ["deal_id"]
+            isOneToOne: false
+            referencedRelation: "unified_deals"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "documents_fund_id_fkey"
             columns: ["fund_id"]
@@ -6084,6 +6280,7 @@ export type Database = {
           body_preview: string | null
           created_at: string | null
           crm_email_id: string | null
+          error_message: string | null
           extracted_deal_fields: Json | null
           extracted_uw_fields: Json | null
           extraction_summary: string | null
@@ -6092,6 +6289,7 @@ export type Database = {
           gmail_message_id: string
           id: string
           matched_contact_id: string | null
+          processing_attempts: number
           received_at: string
           resolution_notes: string | null
           resolved_at: string | null
@@ -6107,6 +6305,7 @@ export type Database = {
           body_preview?: string | null
           created_at?: string | null
           crm_email_id?: string | null
+          error_message?: string | null
           extracted_deal_fields?: Json | null
           extracted_uw_fields?: Json | null
           extraction_summary?: string | null
@@ -6115,6 +6314,7 @@ export type Database = {
           gmail_message_id: string
           id?: string
           matched_contact_id?: string | null
+          processing_attempts?: number
           received_at: string
           resolution_notes?: string | null
           resolved_at?: string | null
@@ -6130,6 +6330,7 @@ export type Database = {
           body_preview?: string | null
           created_at?: string | null
           crm_email_id?: string | null
+          error_message?: string | null
           extracted_deal_fields?: Json | null
           extracted_uw_fields?: Json | null
           extraction_summary?: string | null
@@ -6138,6 +6339,7 @@ export type Database = {
           gmail_message_id?: string
           id?: string
           matched_contact_id?: string | null
+          processing_attempts?: number
           received_at?: string
           resolution_notes?: string | null
           resolved_at?: string | null
@@ -7009,7 +7211,9 @@ export type Database = {
           field_key: string
           field_label: string
           field_type: string
+          formula_decimal_places: number | null
           formula_expression: string | null
+          formula_output_format: string | null
           formula_source_fields: string[] | null
           help_text: string | null
           id: string
@@ -7034,6 +7238,7 @@ export type Database = {
           updated_by: string | null
           validation_message: string | null
           validation_regex: string | null
+          visibility_condition: Json | null
         }
         Insert: {
           blocks_stage_progression?: boolean
@@ -7047,7 +7252,9 @@ export type Database = {
           field_key: string
           field_label: string
           field_type: string
+          formula_decimal_places?: number | null
           formula_expression?: string | null
+          formula_output_format?: string | null
           formula_source_fields?: string[] | null
           help_text?: string | null
           id?: string
@@ -7072,6 +7279,7 @@ export type Database = {
           updated_by?: string | null
           validation_message?: string | null
           validation_regex?: string | null
+          visibility_condition?: Json | null
         }
         Update: {
           blocks_stage_progression?: boolean
@@ -7085,7 +7293,9 @@ export type Database = {
           field_key?: string
           field_label?: string
           field_type?: string
+          formula_decimal_places?: number | null
           formula_expression?: string | null
+          formula_output_format?: string | null
           formula_source_fields?: string[] | null
           help_text?: string | null
           id?: string
@@ -7110,6 +7320,7 @@ export type Database = {
           updated_by?: string | null
           validation_message?: string | null
           validation_regex?: string | null
+          visibility_condition?: Json | null
         }
         Relationships: []
       }
@@ -7757,6 +7968,291 @@ export type Database = {
           user_id?: string | null
         }
         Relationships: []
+      }
+      intake_form: {
+        Row: {
+          branding: Json | null
+          classification_config: Json
+          confirmation_message: string | null
+          created_at: string | null
+          id: string
+          is_active: boolean | null
+          name: string
+          notification_config: Json | null
+          slug: string
+          submission_config: Json
+          updated_at: string | null
+          welcome_message: string | null
+        }
+        Insert: {
+          branding?: Json | null
+          classification_config?: Json
+          confirmation_message?: string | null
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          name: string
+          notification_config?: Json | null
+          slug: string
+          submission_config?: Json
+          updated_at?: string | null
+          welcome_message?: string | null
+        }
+        Update: {
+          branding?: Json | null
+          classification_config?: Json
+          confirmation_message?: string | null
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          notification_config?: Json | null
+          slug?: string
+          submission_config?: Json
+          updated_at?: string | null
+          welcome_message?: string | null
+        }
+        Relationships: []
+      }
+      intake_form_field: {
+        Row: {
+          created_at: string | null
+          display_order: number
+          field_config_id: string | null
+          field_key: string
+          help_text: string | null
+          id: string
+          intake_form_id: string
+          is_required_on_intake: boolean | null
+          label_override: string | null
+          placeholder: string | null
+          section: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          display_order?: number
+          field_config_id?: string | null
+          field_key: string
+          help_text?: string | null
+          id?: string
+          intake_form_id: string
+          is_required_on_intake?: boolean | null
+          label_override?: string | null
+          placeholder?: string | null
+          section?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          display_order?: number
+          field_config_id?: string | null
+          field_key?: string
+          help_text?: string | null
+          id?: string
+          intake_form_id?: string
+          is_required_on_intake?: boolean | null
+          label_override?: string | null
+          placeholder?: string | null
+          section?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "intake_form_field_field_config_id_fkey"
+            columns: ["field_config_id"]
+            isOneToOne: false
+            referencedRelation: "field_configurations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "intake_form_field_intake_form_id_fkey"
+            columns: ["intake_form_id"]
+            isOneToOne: false
+            referencedRelation: "intake_form"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      intake_items: {
+        Row: {
+          auto_matched_deal_id: string | null
+          auto_matches: Json | null
+          created_at: string | null
+          created_company_id: string | null
+          created_contact_id: string | null
+          created_deal_id: string | null
+          created_property_id: string | null
+          decisions: Json | null
+          email_intake_queue_id: string | null
+          from_email: string
+          from_name: string | null
+          id: string
+          match_confidence: number | null
+          match_details: Json | null
+          parsed_data: Json
+          processed_at: string | null
+          processed_by: string | null
+          raw_body: string | null
+          received_at: string
+          status: string
+          subject: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          auto_matched_deal_id?: string | null
+          auto_matches?: Json | null
+          created_at?: string | null
+          created_company_id?: string | null
+          created_contact_id?: string | null
+          created_deal_id?: string | null
+          created_property_id?: string | null
+          decisions?: Json | null
+          email_intake_queue_id?: string | null
+          from_email: string
+          from_name?: string | null
+          id?: string
+          match_confidence?: number | null
+          match_details?: Json | null
+          parsed_data?: Json
+          processed_at?: string | null
+          processed_by?: string | null
+          raw_body?: string | null
+          received_at?: string
+          status?: string
+          subject?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          auto_matched_deal_id?: string | null
+          auto_matches?: Json | null
+          created_at?: string | null
+          created_company_id?: string | null
+          created_contact_id?: string | null
+          created_deal_id?: string | null
+          created_property_id?: string | null
+          decisions?: Json | null
+          email_intake_queue_id?: string | null
+          from_email?: string
+          from_name?: string | null
+          id?: string
+          match_confidence?: number | null
+          match_details?: Json | null
+          parsed_data?: Json
+          processed_at?: string | null
+          processed_by?: string | null
+          raw_body?: string | null
+          received_at?: string
+          status?: string
+          subject?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "intake_items_auto_matched_deal_id_fkey"
+            columns: ["auto_matched_deal_id"]
+            isOneToOne: false
+            referencedRelation: "unified_deals"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "intake_items_created_company_id_fkey"
+            columns: ["created_company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "intake_items_created_contact_id_fkey"
+            columns: ["created_contact_id"]
+            isOneToOne: false
+            referencedRelation: "crm_contacts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "intake_items_created_contact_id_fkey"
+            columns: ["created_contact_id"]
+            isOneToOne: false
+            referencedRelation: "crm_contacts_active"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "intake_items_created_contact_id_fkey"
+            columns: ["created_contact_id"]
+            isOneToOne: false
+            referencedRelation: "crm_duplicate_candidates"
+            referencedColumns: ["contact_id"]
+          },
+          {
+            foreignKeyName: "intake_items_created_contact_id_fkey"
+            columns: ["created_contact_id"]
+            isOneToOne: false
+            referencedRelation: "crm_duplicate_candidates"
+            referencedColumns: ["potential_duplicate_id"]
+          },
+          {
+            foreignKeyName: "intake_items_created_deal_id_fkey"
+            columns: ["created_deal_id"]
+            isOneToOne: false
+            referencedRelation: "unified_deals"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "intake_items_created_property_id_fkey"
+            columns: ["created_property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "intake_items_email_intake_queue_id_fkey"
+            columns: ["email_intake_queue_id"]
+            isOneToOne: false
+            referencedRelation: "email_intake_queue"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      intake_submission: {
+        Row: {
+          id: string
+          intake_form_id: string | null
+          ip_address: unknown
+          opportunity_id: string | null
+          submission_data: Json
+          submitted_at: string | null
+          submitted_by_email: string | null
+          submitted_by_name: string | null
+          submitted_by_phone: string | null
+        }
+        Insert: {
+          id?: string
+          intake_form_id?: string | null
+          ip_address?: unknown
+          opportunity_id?: string | null
+          submission_data?: Json
+          submitted_at?: string | null
+          submitted_by_email?: string | null
+          submitted_by_name?: string | null
+          submitted_by_phone?: string | null
+        }
+        Update: {
+          id?: string
+          intake_form_id?: string | null
+          ip_address?: unknown
+          opportunity_id?: string | null
+          submission_data?: Json
+          submitted_at?: string | null
+          submitted_by_email?: string | null
+          submitted_by_name?: string | null
+          submitted_by_phone?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "intake_submission_intake_form_id_fkey"
+            columns: ["intake_form_id"]
+            isOneToOne: false
+            referencedRelation: "intake_form"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       investing_entities: {
         Row: {
@@ -10549,8 +11045,10 @@ export type Database = {
         Row: {
           active_party: string | null
           amount: number | null
+          approval_instructions: string | null
           approval_status: string | null
           approved_at: string | null
+          approver_id: string | null
           assigned_to: string | null
           assigned_to_name: string | null
           category: string | null
@@ -10585,6 +11083,7 @@ export type Database = {
           rejected_at: string | null
           requestor_name: string | null
           requestor_user_id: string | null
+          requires_approval: boolean
           resubmitted_at: string | null
           revision_count: number | null
           sort_order: number
@@ -10599,8 +11098,10 @@ export type Database = {
         Insert: {
           active_party?: string | null
           amount?: number | null
+          approval_instructions?: string | null
           approval_status?: string | null
           approved_at?: string | null
+          approver_id?: string | null
           assigned_to?: string | null
           assigned_to_name?: string | null
           category?: string | null
@@ -10635,6 +11136,7 @@ export type Database = {
           rejected_at?: string | null
           requestor_name?: string | null
           requestor_user_id?: string | null
+          requires_approval?: boolean
           resubmitted_at?: string | null
           revision_count?: number | null
           sort_order?: number
@@ -10649,8 +11151,10 @@ export type Database = {
         Update: {
           active_party?: string | null
           amount?: number | null
+          approval_instructions?: string | null
           approval_status?: string | null
           approved_at?: string | null
+          approver_id?: string | null
           assigned_to?: string | null
           assigned_to_name?: string | null
           category?: string | null
@@ -10685,6 +11189,7 @@ export type Database = {
           rejected_at?: string | null
           requestor_name?: string | null
           requestor_user_id?: string | null
+          requires_approval?: boolean
           resubmitted_at?: string | null
           revision_count?: number | null
           sort_order?: number
@@ -11148,6 +11653,27 @@ export type Database = {
         }
         Relationships: []
       }
+      pm_amenities: {
+        Row: {
+          created_at: string
+          icon_slug: string | null
+          id: string
+          name: string
+        }
+        Insert: {
+          created_at?: string
+          icon_slug?: string | null
+          id?: string
+          name: string
+        }
+        Update: {
+          created_at?: string
+          icon_slug?: string | null
+          id?: string
+          name?: string
+        }
+        Relationships: []
+      }
       pm_communities: {
         Row: {
           address_display: string | null
@@ -11219,6 +11745,74 @@ export type Database = {
             columns: ["region_id"]
             isOneToOne: false
             referencedRelation: "pm_regions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pm_community_amenities: {
+        Row: {
+          amenity_id: string
+          community_id: string
+        }
+        Insert: {
+          amenity_id: string
+          community_id: string
+        }
+        Update: {
+          amenity_id?: string
+          community_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pm_community_amenities_amenity_id_fkey"
+            columns: ["amenity_id"]
+            isOneToOne: false
+            referencedRelation: "pm_amenities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pm_community_amenities_community_id_fkey"
+            columns: ["community_id"]
+            isOneToOne: false
+            referencedRelation: "pm_communities"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pm_gallery: {
+        Row: {
+          alt_text: string | null
+          community_id: string
+          created_at: string
+          id: string
+          image_url: string
+          sort_order: number | null
+          updated_at: string
+        }
+        Insert: {
+          alt_text?: string | null
+          community_id: string
+          created_at?: string
+          id?: string
+          image_url: string
+          sort_order?: number | null
+          updated_at?: string
+        }
+        Update: {
+          alt_text?: string | null
+          community_id?: string
+          created_at?: string
+          id?: string
+          image_url?: string
+          sort_order?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pm_gallery_community_id_fkey"
+            columns: ["community_id"]
+            isOneToOne: false
+            referencedRelation: "pm_communities"
             referencedColumns: ["id"]
           },
         ]
@@ -11609,6 +12203,42 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      pro_forma_template: {
+        Row: {
+          columns: Json
+          created_at: string | null
+          id: string
+          is_active: boolean | null
+          name: string
+          sections: Json
+          sort_order: number | null
+          updated_at: string | null
+          visibility_condition: Json
+        }
+        Insert: {
+          columns?: Json
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          name: string
+          sections?: Json
+          sort_order?: number | null
+          updated_at?: string | null
+          visibility_condition?: Json
+        }
+        Update: {
+          columns?: Json
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          sections?: Json
+          sort_order?: number | null
+          updated_at?: string | null
+          visibility_condition?: Json
+        }
+        Relationships: []
       }
       profiles: {
         Row: {
@@ -14029,6 +14659,59 @@ export type Database = {
           },
         ]
       }
+      task_approvals: {
+        Row: {
+          approval_instructions: string | null
+          approval_note: string | null
+          approval_status: string
+          approver_id: string
+          created_at: string
+          created_by: string
+          id: string
+          rejection_reason: string | null
+          requested_at: string
+          responded_at: string | null
+          task_id: string
+          updated_at: string
+        }
+        Insert: {
+          approval_instructions?: string | null
+          approval_note?: string | null
+          approval_status?: string
+          approver_id: string
+          created_at?: string
+          created_by: string
+          id?: string
+          rejection_reason?: string | null
+          requested_at?: string
+          responded_at?: string | null
+          task_id: string
+          updated_at?: string
+        }
+        Update: {
+          approval_instructions?: string | null
+          approval_note?: string | null
+          approval_status?: string
+          approver_id?: string
+          created_at?: string
+          created_by?: string
+          id?: string
+          rejection_reason?: string | null
+          requested_at?: string
+          responded_at?: string | null
+          task_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "task_approvals_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "ops_tasks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       term_sheet_templates: {
         Row: {
           borrower_section_heading: string | null
@@ -14196,6 +14879,7 @@ export type Database = {
           card_metrics: Json
           category: string
           contact_field_groups: Json
+          contact_field_refs: Json | null
           contact_fields: Json
           contact_roles: string[]
           created_at: string
@@ -14205,11 +14889,13 @@ export type Database = {
           id: string
           label: string
           property_field_groups: Json
+          property_field_refs: Json | null
           property_fields: Json
           slug: string
           sort_order: number | null
           status: string
           updated_at: string
+          uw_field_refs: Json | null
           uw_fields: Json
           uw_grid: Json | null
           uw_model_key: string
@@ -14222,6 +14908,7 @@ export type Database = {
           card_metrics?: Json
           category: string
           contact_field_groups?: Json
+          contact_field_refs?: Json | null
           contact_fields?: Json
           contact_roles?: string[]
           created_at?: string
@@ -14231,11 +14918,13 @@ export type Database = {
           id?: string
           label: string
           property_field_groups?: Json
+          property_field_refs?: Json | null
           property_fields?: Json
           slug: string
           sort_order?: number | null
           status?: string
           updated_at?: string
+          uw_field_refs?: Json | null
           uw_fields?: Json
           uw_grid?: Json | null
           uw_model_key: string
@@ -14248,6 +14937,7 @@ export type Database = {
           card_metrics?: Json
           category?: string
           contact_field_groups?: Json
+          contact_field_refs?: Json | null
           contact_fields?: Json
           contact_roles?: string[]
           created_at?: string
@@ -14257,11 +14947,13 @@ export type Database = {
           id?: string
           label?: string
           property_field_groups?: Json
+          property_field_refs?: Json | null
           property_fields?: Json
           slug?: string
           sort_order?: number | null
           status?: string
           updated_at?: string
+          uw_field_refs?: Json | null
           uw_fields?: Json
           uw_grid?: Json | null
           uw_model_key?: string
@@ -14508,11 +15200,13 @@ export type Database = {
           document_name: string
           file_size_bytes: number | null
           file_url: string
+          google_drive_file_id: string | null
           id: string
           mime_type: string | null
           review_status: string | null
           storage_path: string | null
           uploaded_by: string | null
+          visibility: string
         }
         Insert: {
           category?: string | null
@@ -14523,11 +15217,13 @@ export type Database = {
           document_name: string
           file_size_bytes?: number | null
           file_url: string
+          google_drive_file_id?: string | null
           id?: string
           mime_type?: string | null
           review_status?: string | null
           storage_path?: string | null
           uploaded_by?: string | null
+          visibility?: string
         }
         Update: {
           category?: string | null
@@ -14538,11 +15234,13 @@ export type Database = {
           document_name?: string
           file_size_bytes?: number | null
           file_url?: string
+          google_drive_file_id?: string | null
           id?: string
           mime_type?: string | null
           review_status?: string | null
           storage_path?: string | null
           uploaded_by?: string | null
+          visibility?: string
         }
         Relationships: [
           {
@@ -14743,13 +15441,17 @@ export type Database = {
           asset_class: string | null
           assigned_to: string | null
           capital_side: string
-          card_type_id: string
+          card_type_id: string | null
           company_id: string | null
           created_at: string
           created_by: string | null
           deal_number: string | null
           expected_close_date: string | null
+          google_drive_folder_id: string | null
+          google_drive_folder_url: string | null
+          google_drive_shared_folder_id: string | null
           id: string
+          loan_type: string | null
           loss_reason: string | null
           name: string
           notes: string | null
@@ -14773,13 +15475,17 @@ export type Database = {
           asset_class?: string | null
           assigned_to?: string | null
           capital_side: string
-          card_type_id: string
+          card_type_id?: string | null
           company_id?: string | null
           created_at?: string
           created_by?: string | null
           deal_number?: string | null
           expected_close_date?: string | null
+          google_drive_folder_id?: string | null
+          google_drive_folder_url?: string | null
+          google_drive_shared_folder_id?: string | null
           id?: string
+          loan_type?: string | null
           loss_reason?: string | null
           name: string
           notes?: string | null
@@ -14803,13 +15509,17 @@ export type Database = {
           asset_class?: string | null
           assigned_to?: string | null
           capital_side?: string
-          card_type_id?: string
+          card_type_id?: string | null
           company_id?: string | null
           created_at?: string
           created_by?: string | null
           deal_number?: string | null
           expected_close_date?: string | null
+          google_drive_folder_id?: string | null
+          google_drive_folder_url?: string | null
+          google_drive_shared_folder_id?: string | null
           id?: string
+          loan_type?: string | null
           loss_reason?: string | null
           name?: string
           notes?: string | null
@@ -17702,4 +18412,3 @@ export const Constants = {
     },
   },
 } as const
-

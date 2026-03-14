@@ -7,6 +7,14 @@ import type { EmailOtpType } from "@supabase/supabase-js";
 import { SUPABASE_URL, SUPABASE_ANON_KEY } from "@/lib/supabase/constants";
 import { getRequestOrigin } from "@/lib/get-request-origin";
 
+/** Same role→path mapping as middleware and auth callback. */
+const ROLE_DASHBOARDS: Record<string, string> = {
+  admin: "/pipeline",
+  super_admin: "/pipeline",
+  borrower: "/b/dashboard",
+  investor: "/i/dashboard",
+};
+
 /**
  * Redirect the verified user to their role-based dashboard,
  * or back to login with an appropriate error.
@@ -44,9 +52,8 @@ async function redirectForUser(
           .eq("id", user.id);
       }
 
-      return NextResponse.redirect(
-        `${origin}/${profile.role}/dashboard`
-      );
+      const path = ROLE_DASHBOARDS[profile.role] ?? "/b/dashboard";
+      return NextResponse.redirect(`${origin}${path}`);
     }
   }
 

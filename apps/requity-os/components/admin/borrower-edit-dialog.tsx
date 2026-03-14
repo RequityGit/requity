@@ -23,7 +23,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useToast } from "@/components/ui/use-toast";
-import { updateBorrowerAction } from "@/app/(authenticated)/admin/borrowers/new/actions";
+import { updateBorrowerAction } from "@/app/(authenticated)/(admin)/borrowers/new/actions";
 import { Loader2, Pencil } from "lucide-react";
 import { US_STATES } from "@/lib/constants";
 import { formatPhoneInput } from "@/lib/format";

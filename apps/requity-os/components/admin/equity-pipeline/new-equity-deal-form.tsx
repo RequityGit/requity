@@ -16,7 +16,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useToast } from "@/components/ui/use-toast";
-import { createEquityDealAction } from "@/app/(authenticated)/admin/equity-pipeline/actions";
+import { createEquityDealAction } from "@/app/(authenticated)/(admin)/equity-pipeline/actions";
 import {
   EQUITY_DEAL_SOURCES,
   ASSET_TYPES,
@@ -138,7 +138,7 @@ export function NewEquityDealForm({
     }
 
     toast({ title: "Equity deal created successfully" });
-    router.push(`/admin/pipeline/${result.id}`);
+    router.push(`/pipeline/${result.id}`);
   }
 
   return (

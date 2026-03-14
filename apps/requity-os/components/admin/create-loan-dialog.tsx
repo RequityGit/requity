@@ -25,7 +25,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { LOAN_PRIORITIES, LOAN_DB_TYPES, LOAN_PURPOSES } from "@/lib/constants";
+import { LOAN_DB_TYPES, LOAN_PURPOSES } from "@/lib/constants";
 import { useToast } from "@/components/ui/use-toast";
 import { PlusCircle, Search, Check, X, UserPlus } from "lucide-react";
 import { createLoanSchema } from "@/lib/schemas/loan";
@@ -165,7 +165,6 @@ export function CreateLoanDialog({
     term_months: "",
     originator_id: "",
     processor_id: "",
-    priority: "normal",
     expected_close_date: "",
     notes: "",
   });
@@ -195,7 +194,6 @@ export function CreateLoanDialog({
       term_months: "",
       originator_id: "",
       processor_id: "",
-      priority: "normal",
       expected_close_date: "",
       notes: "",
     });
@@ -258,7 +256,6 @@ export function CreateLoanDialog({
           ...(form.origination_fee ? { origination_fee: parseFloat(form.origination_fee) } : {}),
           ...(form.originator_id ? { originator_id: form.originator_id } : {}),
           ...(form.processor_id ? { processor_id: form.processor_id } : {}),
-          ...(form.priority !== "normal" ? { priority: form.priority } : {}),
           ...(form.expected_close_date ? { expected_close_date: form.expected_close_date } : {}),
         })
         .select()
@@ -280,7 +277,7 @@ export function CreateLoanDialog({
       toast({ title: "Loan created successfully" });
       setOpen(false);
       resetForm();
-      router.push(`/admin/pipeline/${newLoan.id}`);
+      router.push(`/pipeline/${newLoan.id}`);
     } catch (err: any) {
       console.error("Loan creation error:", err);
       toast({
@@ -398,7 +395,7 @@ export function CreateLoanDialog({
                         type="button"
                         onClick={() => {
                           setBorrowerDropdownOpen(false);
-                          window.open("/admin/borrowers/new", "_blank");
+                          window.open("/borrowers/new", "_blank");
                         }}
                         className="flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-sm font-medium text-primary hover:bg-accent hover:text-accent-foreground cursor-pointer"
                       >
@@ -415,8 +412,8 @@ export function CreateLoanDialog({
             )}
           </div>
 
-          {/* Loan Type & Priority */}
-          <div className="grid grid-cols-3 gap-4">
+          {/* Loan Type & Close Date */}
+          <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label>
                 Loan Type <span className="text-red-500">*</span>
@@ -439,24 +436,6 @@ export function CreateLoanDialog({
               {formErrors.type && (
                 <p className="text-xs text-red-500">{formErrors.type}</p>
               )}
-            </div>
-            <div className="space-y-2">
-              <Label>Priority</Label>
-              <Select
-                value={form.priority}
-                onValueChange={(v) => updateField("priority", v)}
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {LOAN_PRIORITIES.map((p) => (
-                    <SelectItem key={p.value} value={p.value}>
-                      {p.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
             </div>
             <div className="space-y-2">
               <Label>Expected Close Date</Label>

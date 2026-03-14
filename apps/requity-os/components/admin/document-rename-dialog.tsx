@@ -13,7 +13,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { renameDocumentAction } from "@/app/(authenticated)/admin/documents/actions";
+import { renameDocumentAction } from "@/app/(authenticated)/(admin)/documents/actions";
 
 interface DocumentRenameDialogProps {
   open: boolean;

@@ -376,7 +376,7 @@ export function DetailOverviewTab({
         open={quickAddCompanyOpen}
         onOpenChange={setQuickAddCompanyOpen}
         onCompanyCreated={(company) => {
-          setLocalCompanies((prev) => [...prev, { id: company.id, name: company.name, company_type: company.company_type }]);
+          setLocalCompanies((prev) => [...prev, { id: company.id, company_number: company.company_number, name: company.name, company_type: company.company_type }]);
         }}
       />
     </div>

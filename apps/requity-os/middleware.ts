@@ -1,21 +1,20 @@
 import { NextResponse, type NextRequest } from "next/server";
+import { SUPABASE_AUTH_COOKIE_NAME } from "@/lib/supabase/constants";
 import { updateSession } from "@/lib/supabase/middleware";
 
-// Role-based route prefixes
+// Role-based route prefixes (admin routes are now top-level, guarded by layout)
 const ROLE_ROUTES: Record<string, string> = {
-  admin: "/admin",
-  borrower: "/borrower",
-  investor: "/investor",
+  borrower: "/b",
+  investor: "/i",
 };
 
-// Default dashboards for each role
 const ROLE_DASHBOARDS: Record<string, string> = {
-  admin: "/admin/pipeline",
-  borrower: "/borrower/dashboard",
-  investor: "/investor/dashboard",
+  admin: "/pipeline",
+  super_admin: "/pipeline",
+  borrower: "/b/dashboard",
+  investor: "/i/dashboard",
 };
 
-// Routes that don't require authentication
 const PUBLIC_ROUTES = [
   "/login",
   "/auth/callback",
@@ -23,11 +22,6 @@ const PUBLIC_ROUTES = [
 ];
 
 export async function middleware(request: NextRequest) {
-  // -----------------------------------------------------------------------
-  // Force HTTPS — redirect any plain-HTTP request to HTTPS.
-  // Netlify edge redirects should catch this first, but this is defense-in-depth.
-  // Skipped in local dev where there is no HTTPS server.
-  // -----------------------------------------------------------------------
   if (process.env.NODE_ENV === "production") {
     const proto = request.headers.get("x-forwarded-proto")?.split(",")[0]?.trim();
     if (proto === "http") {
@@ -40,7 +34,27 @@ export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   // -----------------------------------------------------------------------
-  // Root path → redirect to /login (marketing site lives on a separate domain)
+  // Legacy URL redirects: /admin/*, /borrower/*, /investor/*
+  // -----------------------------------------------------------------------
+  if (pathname.startsWith("/admin/") || pathname === "/admin") {
+    const newPath = pathname.replace(/^\/admin/, "") || "/pipeline";
+    const url = request.nextUrl.clone();
+    url.pathname = newPath;
+    return NextResponse.redirect(url, 301);
+  }
+  if (pathname.startsWith("/borrower/") || pathname === "/borrower") {
+    const url = request.nextUrl.clone();
+    url.pathname = pathname.replace(/^\/borrower/, "/b");
+    return NextResponse.redirect(url, 301);
+  }
+  if (pathname.startsWith("/investor/") || pathname === "/investor") {
+    const url = request.nextUrl.clone();
+    url.pathname = pathname.replace(/^\/investor/, "/i");
+    return NextResponse.redirect(url, 301);
+  }
+
+  // -----------------------------------------------------------------------
+  // Root path → redirect to /login
   // -----------------------------------------------------------------------
   if (pathname === "/") {
     const url = request.nextUrl.clone();
@@ -48,12 +62,15 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
-  // -----------------------------------------------------------------------
-  // Check if the current route is public
-  // -----------------------------------------------------------------------
   const isPublicRoute = PUBLIC_ROUTES.some((route) =>
     pathname.startsWith(route)
   );
+
+  // Fast path: on public routes, skip Supabase entirely when there's no auth cookie.
+  // This avoids a slow getUser() round-trip for every unauthenticated /login visit.
+  if (isPublicRoute && !request.cookies.get(SUPABASE_AUTH_COOKIE_NAME)?.value) {
+    return NextResponse.next();
+  }
 
   const { supabase, user, supabaseResponse } = await updateSession(request);
 
@@ -77,13 +94,11 @@ export async function middleware(request: NextRequest) {
       .eq("id", user.id)
       .single();
 
-    // Don't redirect unauthorized users to dashboard — let them stay on login
     if (!profile || profile.activation_status === "unauthorized") {
       return supabaseResponse;
     }
 
     if (profile.role) {
-      // Use the active_role cookie if it's valid, otherwise use the default role
       const activeRoleCookie = request.cookies.get("active_role")?.value;
       const allowedRoles: string[] = profile.allowed_roles || [profile.role];
       const effectiveRole =
@@ -92,7 +107,7 @@ export async function middleware(request: NextRequest) {
           : profile.role;
 
       const dashboardPath =
-        ROLE_DASHBOARDS[effectiveRole] || "/borrower/dashboard";
+        ROLE_DASHBOARDS[effectiveRole] || "/b/dashboard";
       const url = request.nextUrl.clone();
       url.pathname = dashboardPath;
       return NextResponse.redirect(url);
@@ -100,8 +115,8 @@ export async function middleware(request: NextRequest) {
   }
 
   // -----------------------------------------------------------------------
-  // Authenticated user accessing a role-restricted route
-  // Validate against allowed_roles (supports role switching)
+  // Authenticated user accessing /b/* or /i/* role-restricted routes
+  // Admin routes are guarded by the (admin) layout, not middleware.
   // -----------------------------------------------------------------------
   if (user) {
     const isRoleRoute = Object.values(ROLE_ROUTES).some((prefix) =>
@@ -109,26 +124,21 @@ export async function middleware(request: NextRequest) {
     );
 
     if (isRoleRoute) {
-      // Check if user is impersonating — super_admins impersonating can
-      // access any role route matching the impersonated user's role
       const impersonateUserId = request.cookies.get("impersonate_user_id")?.value;
       const impersonateRole = request.cookies.get("impersonate_role")?.value;
 
       if (impersonateUserId && impersonateRole) {
-        // The impersonating super_admin can access the impersonated user's role routes
         const targetRoleEntry = Object.entries(ROLE_ROUTES).find(([, prefix]) =>
           pathname.startsWith(prefix)
         );
 
         if (targetRoleEntry) {
           const targetRole = targetRoleEntry[0];
-          // Allow access if the route matches the impersonated role
           if (targetRole === impersonateRole) {
             return supabaseResponse;
           }
-          // Otherwise redirect to the impersonated role's dashboard
           const url = request.nextUrl.clone();
-          url.pathname = ROLE_DASHBOARDS[impersonateRole] || "/admin/pipeline";
+          url.pathname = ROLE_DASHBOARDS[impersonateRole] || "/pipeline";
           return NextResponse.redirect(url);
         }
       }
@@ -139,7 +149,6 @@ export async function middleware(request: NextRequest) {
         .eq("id", user.id)
         .single();
 
-      // Block unauthorized profiles from accessing any role routes
       if (!profile || profile.activation_status === "unauthorized") {
         const url = request.nextUrl.clone();
         url.pathname = "/login";
@@ -150,7 +159,6 @@ export async function middleware(request: NextRequest) {
       if (profile.role) {
         const allowedRoles: string[] = profile.allowed_roles || [profile.role];
 
-        // Determine which role prefix the user is trying to access
         const targetRoleEntry = Object.entries(ROLE_ROUTES).find(([, prefix]) =>
           pathname.startsWith(prefix)
         );
@@ -158,12 +166,10 @@ export async function middleware(request: NextRequest) {
         if (targetRoleEntry) {
           const targetRole = targetRoleEntry[0];
 
-          // Allow if the target role is in the user's allowed_roles
           if (allowedRoles.includes(targetRole)) {
             return supabaseResponse;
           }
 
-          // Otherwise redirect to the effective role's dashboard
           const activeRoleCookie = request.cookies.get("active_role")?.value;
           const effectiveRole =
             activeRoleCookie && allowedRoles.includes(activeRoleCookie)
@@ -172,7 +178,7 @@ export async function middleware(request: NextRequest) {
 
           const url = request.nextUrl.clone();
           url.pathname =
-            ROLE_DASHBOARDS[effectiveRole] || "/borrower/dashboard";
+            ROLE_DASHBOARDS[effectiveRole] || "/b/dashboard";
           return NextResponse.redirect(url);
         }
       }
@@ -184,15 +190,6 @@ export async function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
-    /*
-     * Match all request paths except for:
-     * - _next/static (static files)
-     * - _next/image (image optimization files)
-     * - favicon.ico (favicon file)
-     * - sw.js, manifest.json, offline.html (PWA files served from public/)
-     * - icons/ directory
-     * - public folder assets (images, fonts, etc.)
-     */
     "/((?!_next/static|_next/image|favicon\\.ico|sw\\.js|manifest\\.json|offline\\.html|icons/|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico|woff2?|ttf)$).*)",
   ],
 };

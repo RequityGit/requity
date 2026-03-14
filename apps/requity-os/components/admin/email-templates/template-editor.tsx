@@ -13,8 +13,8 @@ import { cn } from "@/lib/utils";
 import type {
   EmailTemplate,
   EmailTemplateVersion,
-} from "@/app/(authenticated)/admin/email-templates/types";
-import { updateTemplateAction } from "@/app/(authenticated)/admin/email-templates/actions-write";
+} from "@/app/(authenticated)/(admin)/email-templates/types";
+import { updateTemplateAction } from "@/app/(authenticated)/(admin)/email-templates/actions-write";
 import { HtmlEditor } from "./html-editor";
 import { TemplatePreview } from "./template-preview";
 import { VariableInserter } from "./variable-inserter";

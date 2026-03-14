@@ -224,19 +224,6 @@ export const LOAN_PURPOSE_VALUES = [
 export type LoanPurpose = (typeof LOAN_PURPOSE_VALUES)[number];
 
 // ============================================
-// loans — priority
-// ============================================
-
-/** Constraint: loans_priority_check */
-export const LOAN_PRIORITIES = [
-  { value: "hot", label: "Hot" },
-  { value: "normal", label: "Normal" },
-  { value: "on_hold", label: "On Hold" },
-] as const;
-export const LOAN_PRIORITY_VALUES = ["hot", "normal", "on_hold"] as const;
-export type LoanPriority = (typeof LOAN_PRIORITY_VALUES)[number];
-
-// ============================================
 // loans — property_type (DB enum: property_type)
 // ============================================
 
@@ -494,7 +481,6 @@ export const LOAN_ACTIVITY_TYPES = [
   { value: "terms_modified", label: "Terms Modified" },
   { value: "loan_created", label: "Loan Created" },
   { value: "message_sent", label: "Message Sent" },
-  { value: "priority_change", label: "Priority Changed" },
   { value: "field_updated", label: "Field Updated" },
 ] as const;
 

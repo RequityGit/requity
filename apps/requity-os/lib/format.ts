@@ -100,3 +100,69 @@ export function timeAgo(dateStr: string): string {
 export function getMonthLabel(date: Date): string {
   return date.toLocaleDateString("en-US", { month: "short" });
 }
+
+// ── Field value formatting for read-mode display ──
+
+export function isFieldEmpty(value: unknown): boolean {
+  return (
+    value === null ||
+    value === undefined ||
+    value === "" ||
+    value === 0 ||
+    value === "0" ||
+    value === 0.0
+  );
+}
+
+const FINANCIAL_FIELD_TYPES = new Set(["currency", "percent", "percentage", "number"]);
+
+export function isFinancialFieldType(fieldType: string): boolean {
+  return FINANCIAL_FIELD_TYPES.has(fieldType);
+}
+
+export function formatFieldValue(value: unknown, fieldType: string): string {
+  if (isFieldEmpty(value)) return "";
+
+  switch (fieldType) {
+    case "currency":
+      return new Intl.NumberFormat("en-US", {
+        style: "currency",
+        currency: "USD",
+        maximumFractionDigits: 0,
+      }).format(Number(value));
+
+    case "percent":
+    case "percentage":
+      return `${Number(value).toFixed(2)}%`;
+
+    case "number":
+      return new Intl.NumberFormat("en-US").format(Number(value));
+
+    case "date": {
+      const d = new Date(String(value));
+      if (isNaN(d.getTime())) return String(value);
+      return new Intl.DateTimeFormat("en-US", {
+        month: "short",
+        day: "numeric",
+        year: "numeric",
+      }).format(d);
+    }
+
+    case "phone": {
+      const digits = String(value).replace(/\D/g, "");
+      if (digits.length === 10) {
+        return `(${digits.slice(0, 3)}) ${digits.slice(3, 6)}-${digits.slice(6)}`;
+      }
+      return String(value);
+    }
+
+    case "boolean":
+      return value ? "Yes" : "No";
+
+    case "select":
+      return String(value).replace(/_/g, " ");
+
+    default:
+      return String(value);
+  }
+}

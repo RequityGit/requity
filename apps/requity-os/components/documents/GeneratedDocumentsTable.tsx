@@ -198,7 +198,7 @@ export function GeneratedDocumentsTable({ data, action }: Props) {
                 >
                   <td className="px-4 py-3">
                     <Link
-                      href={`/admin/documents/editor/${doc.id}`}
+                      href={`/documents/editor/${doc.id}`}
                       className="font-medium text-foreground hover:underline"
                     >
                       {doc.file_name}
@@ -233,7 +233,7 @@ export function GeneratedDocumentsTable({ data, action }: Props) {
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
                         <DropdownMenuItem asChild>
-                          <Link href={`/admin/documents/editor/${doc.id}`}>
+                          <Link href={`/documents/editor/${doc.id}`}>
                             <Pencil size={14} className="mr-2" />
                             Edit in Portal
                           </Link>

@@ -114,10 +114,10 @@ export const categoryDisplayNames: Record<NotificationCategory, string> = {
 
 // Role-specific dashboard fallbacks
 const ROLE_DASHBOARDS: Record<string, string> = {
-  super_admin: "/admin/pipeline",
-  admin: "/admin/pipeline",
-  borrower: "/borrower/dashboard",
-  investor: "/investor/dashboard",
+  super_admin: "/pipeline",
+  admin: "/pipeline",
+  borrower: "/b/dashboard",
+  investor: "/i/dashboard",
 };
 
 /**
@@ -134,53 +134,53 @@ export function getNotificationRoute(
   if (entity_type && entity_id) {
     switch (entity_type) {
       case "loan":
-        if (activeRole === "borrower") return `/borrower/loans/${entity_id}`;
-        return `/admin/pipeline-v2/${entity_id}?tab=notes`;
+        if (activeRole === "borrower") return `/b/loans/${entity_id}`;
+        return `/pipeline/${entity_id}?tab=notes`;
 
       case "borrower":
-        if (isAdmin) return `/admin/borrowers/${entity_id}`;
-        return ROLE_DASHBOARDS[activeRole] ?? "/borrower/dashboard";
+        if (isAdmin) return `/borrowers/${entity_id}`;
+        return ROLE_DASHBOARDS[activeRole] ?? "/b/dashboard";
 
       case "investor":
-        if (isAdmin) return `/admin/investors/${entity_id}`;
-        return ROLE_DASHBOARDS[activeRole] ?? "/investor/dashboard";
+        if (isAdmin) return `/investors/${entity_id}`;
+        return ROLE_DASHBOARDS[activeRole] ?? "/i/dashboard";
 
       case "fund":
-        if (activeRole === "investor") return `/investor/funds/${entity_id}`;
-        return `/admin/funds/${entity_id}`;
+        if (activeRole === "investor") return `/i/funds/${entity_id}`;
+        return `/funds/${entity_id}`;
 
       case "condition": {
         // Conditions belong to loans — try to extract loan_id from the stored action_url
         const loanMatch = action_url?.match(/\/loans\/([0-9a-f-]+)/i);
         if (loanMatch) {
           const loanId = loanMatch[1];
-          if (activeRole === "borrower") return `/borrower/loans/${loanId}`;
-          return `/admin/pipeline-v2/${loanId}?condition=${entity_id}`;
+          if (activeRole === "borrower") return `/b/loans/${loanId}`;
+          return `/pipeline/${loanId}?condition=${entity_id}`;
         }
-        if (isAdmin) return "/admin/conditions";
-        return ROLE_DASHBOARDS[activeRole] ?? "/admin/pipeline";
+        if (isAdmin) return "/conditions";
+        return ROLE_DASHBOARDS[activeRole] ?? "/pipeline";
       }
 
       case "draw_request":
-        if (activeRole === "borrower") return "/borrower/draws";
-        return "/admin/servicing";
+        if (activeRole === "borrower") return "/b/draws";
+        return "/servicing";
 
       case "payment":
-        if (activeRole === "borrower") return "/borrower/payments";
-        return "/admin/servicing";
+        if (activeRole === "borrower") return "/b/payments";
+        return "/servicing";
 
       case "contact":
-        if (isAdmin) return `/admin/crm/${entity_id}?tab=notes`;
-        return ROLE_DASHBOARDS[activeRole] ?? "/admin/pipeline";
+        if (isAdmin) return `/crm/${entity_id}?tab=notes`;
+        return ROLE_DASHBOARDS[activeRole] ?? "/pipeline";
 
       case "company":
-        if (isAdmin) return `/admin/crm/companies/${entity_id}?tab=notes`;
-        return ROLE_DASHBOARDS[activeRole] ?? "/admin/pipeline";
+        if (isAdmin) return `/crm/companies/${entity_id}?tab=notes`;
+        return ROLE_DASHBOARDS[activeRole] ?? "/pipeline";
 
       case "task":
       case "project":
-        if (isAdmin) return "/admin/operations";
-        return ROLE_DASHBOARDS[activeRole] ?? "/admin/pipeline";
+        if (isAdmin) return "/tasks";
+        return ROLE_DASHBOARDS[activeRole] ?? "/pipeline";
     }
   }
 
@@ -189,22 +189,22 @@ export function getNotificationRoute(
     if (isAdmin) return action_url;
 
     // Convert admin-prefixed routes to role-specific routes where possible
-    if (action_url.startsWith("/admin/servicing/") && activeRole === "borrower") {
-      return action_url.replace("/admin/servicing/", "/borrower/loans/").split("?")[0];
+    if (action_url.startsWith("/servicing/") && activeRole === "borrower") {
+      return action_url.replace("/servicing/", "/b/loans/").split("?")[0];
     }
-    if (action_url.startsWith("/admin/funds/") && activeRole === "investor") {
-      return action_url.replace("/admin/funds/", "/investor/funds/");
+    if (action_url.startsWith("/funds/") && activeRole === "investor") {
+      return action_url.replace("/funds/", "/i/funds/");
     }
 
     // If the action_url starts with a role prefix the user can't access, redirect to dashboard
-    if (action_url.startsWith("/admin/") && !isAdmin) {
-      return ROLE_DASHBOARDS[activeRole] ?? "/borrower/dashboard";
+    if (action_url.startsWith("/") && !isAdmin) {
+      return ROLE_DASHBOARDS[activeRole] ?? "/b/dashboard";
     }
 
     return action_url;
   }
 
-  return ROLE_DASHBOARDS[activeRole] ?? "/admin/pipeline";
+  return ROLE_DASHBOARDS[activeRole] ?? "/pipeline";
 }
 
 // Relative time formatting

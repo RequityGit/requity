@@ -1,9 +1,15 @@
 import { withSentryConfig } from "@sentry/nextjs";
 
+const isDev = process.env.NODE_ENV === "development";
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  serverActions: {
-    bodySizeLimit: "10mb",
+  experimental: {
+    serverActions: {
+      bodySizeLimit: "10mb",
+    },
+    // Faster dev: tree-shake barrel imports so only used exports are compiled (lucide, recharts, etc.)
+    optimizePackageImports: ["lucide-react", "recharts"],
   },
   images: {
     remotePatterns: [
@@ -16,8 +22,6 @@ const nextConfig = {
   async headers() {
     return [
       {
-        // Prevent browsers from serving stale HTML without revalidating.
-        // Static assets (_next/static) are fingerprinted and safe to cache.
         source: "/((?!_next/static|_next/image|.*\\.(?:js|css|svg|png|jpg|jpeg|gif|webp|ico|woff2?|ttf)$).*)",
         headers: [
           {
@@ -69,53 +73,41 @@ const nextConfig = {
   async redirects() {
     return [
       {
-        source: '/admin/originations',
-        destination: '/admin/pipeline?tab=debt',
+        source: '/originations',
+        destination: '/pipeline?tab=debt',
         permanent: true,
       },
       {
-        source: '/admin/equity-pipeline/:id',
-        destination: '/admin/pipeline/:id',
+        source: '/equity-pipeline/:id',
+        destination: '/pipeline/:id',
         permanent: true,
       },
       {
-        source: '/admin/equity-pipeline',
-        destination: '/admin/pipeline?tab=equity',
+        source: '/equity-pipeline',
+        destination: '/pipeline?tab=equity',
         permanent: true,
       },
       {
-        source: '/admin/deals/:id',
-        destination: '/admin/pipeline/:id',
+        source: '/deals/:id',
+        destination: '/pipeline/:id',
         permanent: true,
       },
       {
-        source: '/admin/dscr',
-        destination: '/admin/models/dscr',
+        source: '/dscr',
+        destination: '/models/dscr',
         permanent: true,
       },
     ];
   },
 };
 
-export default withSentryConfig(nextConfig, {
-  // For all available options, see:
-  // https://github.com/getsentry/sentry-webpack-plugin#options
-
+const sentryConfig = {
   org: "requity",
   project: "javascript-nextjs",
-
-  // Only print logs for uploading source maps in CI
   silent: !process.env.CI,
-
-  // Upload a larger set of source maps for prettier stack traces (increases build time)
   widenClientFileUpload: true,
-
-  // Automatically tree-shake Sentry logger statements to reduce bundle size
   disableLogger: true,
-
-  // Hides source maps from generated client bundles
   hideSourceMaps: true,
+};
 
-  // Enables automatic instrumentation of Vercel Cron Monitors (does not yet work with Netlify)
-  // automaticVercelMonitors: true,
-});
+export default isDev ? nextConfig : withSentryConfig(nextConfig, sentryConfig);
