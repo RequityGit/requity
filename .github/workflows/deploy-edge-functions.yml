@@ -48,3 +48,15 @@ jobs:
       - name: Deploy review-document
         run: supabase functions deploy review-document --project-ref $PROJECT_REF
         working-directory: packages/db
+
+      - name: Deploy sync-document-to-drive
+        run: supabase functions deploy sync-document-to-drive --project-ref $PROJECT_REF
+        working-directory: packages/db
+
+      - name: Deploy send-notification-batches
+        run: supabase functions deploy send-notification-batches --project-ref $PROJECT_REF
+        working-directory: packages/db
+
+      - name: Deploy stale-condition-reminders
+        run: supabase functions deploy stale-condition-reminders --project-ref $PROJECT_REF
+        working-directory: packages/db
