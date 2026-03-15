@@ -162,9 +162,9 @@ export default async function FundPage() {
               flexWrap: "wrap",
             }}
           >
-            <a href="#access" className="btn-primary">
+            <Link href="/invest/request-access" className="btn-primary">
               Request Access <ArrowRight size={16} />
-            </a>
+            </Link>
             <Link href="/invest" className="btn-secondary">
               All Strategies
             </Link>
@@ -235,9 +235,9 @@ export default async function FundPage() {
                     </div>
                   ))}
                 </div>
-                <a href="#access" className="btn-editorial">
+                <Link href="/invest/request-access" className="btn-editorial">
                   Access Fund <span className="arrow"><ArrowRight size={14} /></span>
-                </a>
+                </Link>
               </div>
             </div>
           </ScrollReveal>
@@ -499,9 +499,9 @@ export default async function FundPage() {
                 </p>
               </div>
               <div style={{ display: "flex", gap: 12, flexWrap: "wrap", flexShrink: 0 }}>
-                <a href="#access" className="btn-primary">
+                <Link href="/invest/request-access" className="btn-primary">
                   Get Started <ArrowRight size={16} />
-                </a>
+                </Link>
               </div>
             </div>
           </ScrollReveal>
@@ -624,9 +624,9 @@ export default async function FundPage() {
                 ))}
               </div>
               <div style={{ display: "flex", gap: 16, flexWrap: "wrap" }}>
-                <a href="mailto:invest@requitygroup.com" className="btn-primary">
+                <Link href="/invest/request-access" className="btn-primary">
                   Request Access <ArrowRight size={16} />
-                </a>
+                </Link>
                 <a
                   href="mailto:invest@requitygroup.com"
                   className="btn-editorial-light"
@@ -650,9 +650,9 @@ export default async function FundPage() {
         }
         body="Request access to learn more about the Requity Income Fund and how you can start earning consistent, asset-backed monthly income."
         primaryCta={
-          <a href="mailto:invest@requitygroup.com" className="btn-primary">
+          <Link href="/invest/request-access" className="btn-primary">
             Request Access <ArrowRight size={16} />
-          </a>
+          </Link>
         }
         secondaryCta={
           <Link href="/about" className="btn-secondary">

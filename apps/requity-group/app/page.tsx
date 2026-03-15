@@ -337,7 +337,7 @@ export default async function HomePage() {
         }
         body="Accredited investors can request access to our current equity and credit offerings."
         primaryCta={
-          <Link href="/invest" className="btn-primary">
+          <Link href="/invest/request-access" className="btn-primary">
             Request Access <ArrowRight size={16} />
           </Link>
         }
