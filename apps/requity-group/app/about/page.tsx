@@ -31,6 +31,57 @@ export const metadata: Metadata = {
 
 export const revalidate = 300;
 
+/** Abbreviate long bios so team cards stay similar length (~5–6 lines like Jet/Grethel). */
+function abbreviateBio(bio: string | null, maxLen = 320): string {
+  if (!bio) return "";
+  if (bio.length <= maxLen) return bio;
+  const cut = bio.slice(0, maxLen).trim();
+  const lastSpace = cut.lastIndexOf(" ");
+  const atWord = lastSpace > maxLen * 0.6 ? cut.slice(0, lastSpace) : cut;
+  return atWord + "\u2026";
+}
+
+const DESIGNATIONS_SUFFIX =
+  " He has received the designations for CCIM and CPM as an ongoing student of the industry.";
+
+const JET_BIO_SUFFIX =
+  " Jet has over 15 years of transaction and asset management experience with various private equity and real estate investment companies.";
+
+/** Strip filler opening for Jet so bio starts with substance. */
+const JET_BIO_OPENING_FILLER = /^\s*As Asset Manager with a focus on operations,?\s*/i;
+
+/** Per-member bio display: for Jet, strip filler opening and append experience sentence; no abbrev so it fits without "...". */
+function teamBioDisplay(name: string, bio: string | null): string {
+  if (!bio) return "";
+  let trimmed = bio.trim();
+  if (name.includes("Jet")) {
+    trimmed = trimmed.replace(JET_BIO_OPENING_FILLER, "");
+    if (!trimmed.includes("15 years of transaction")) {
+      trimmed = (trimmed.endsWith(".") ? trimmed : trimmed + ".") + JET_BIO_SUFFIX;
+    }
+  }
+  return trimmed;
+}
+
+/** Title override: Jet shows as Managing Director. */
+function teamTitleDisplay(name: string, title: string): string {
+  return name.includes("Jet") ? "Managing Director" : title;
+}
+
+/** Display override: leadership bio ($200M, no degree). Returns bio only; add DESIGNATIONS_SUFFIX after abbreviate so it is never cut. */
+function leadershipBioDisplay(bio: string | null): string {
+  if (!bio) return "";
+  let text = bio
+    .replace(/\$150 million|150 million/gi, "$200 million")
+    .replace(/\$150M|150M/gi, "$200M");
+  // Remove degree sentence (attended but did not finish).
+  text = text.replace(/\s*Dylan holds a degree in Accounting and Finance from the University at Albany\.?\s*/gi, " ");
+  text = text.replace(/\s*He holds a degree in Accounting and Finance from the University at Albany\.?\s*/gi, " ");
+  text = text.trim().replace(/\s{2,}/g, " ");
+  if (!text.endsWith(".")) text += ".";
+  return text;
+}
+
 export default async function AboutPage() {
   const [stats, team, testimonials] = await Promise.all([
     fetchSiteData<SiteStat>("site_stats", {
@@ -234,9 +285,9 @@ export default async function AboutPage() {
                     <div className="team-avatar on-navy" style={{ marginBottom: 24, width: 64, height: 64, fontSize: 22 }}>
                       {principal.name.split(" ").slice(0, 2).map((n) => n[0]).join("")}
                     </div>
-                    <div className="team-name on-navy">{principal.name}</div>
-                    <p className="team-title">{principal.title}</p>
-                    <p className="team-bio on-navy">{principal.bio}</p>
+                    <div className="team-name on-navy">{principal.name.replace(/,?\s*CCIM\s*/gi, " ").trim()}</div>
+                    <p className="team-title">Founder &amp; CEO</p>
+                    <p className="team-bio on-navy">{abbreviateBio(leadershipBioDisplay(principal.bio))}{DESIGNATIONS_SUFFIX}</p>
                   </div>
                 </div>
               </ScrollReveal>
@@ -262,8 +313,8 @@ export default async function AboutPage() {
                           {member.name.split(" ").slice(0, 2).map((n) => n[0]).join("")}
                         </div>
                         <div className="team-name on-navy">{member.name}</div>
-                        <p className="team-title">{member.title}</p>
-                        <p className="team-bio on-navy">{member.bio}</p>
+                        <p className="team-title">{teamTitleDisplay(member.name, member.title)}</p>
+                        <p className="team-bio on-navy">{abbreviateBio(teamBioDisplay(member.name, member.bio), member.name.includes("Jet") ? 600 : 320)}</p>
                       </div>
                     ))}
                   </div>
@@ -291,8 +342,8 @@ export default async function AboutPage() {
                           {member.name.split(" ").slice(0, 2).map((n) => n[0]).join("")}
                         </div>
                         <div className="team-name on-navy">{member.name}</div>
-                        <p className="team-title">{member.title}</p>
-                        <p className="team-bio on-navy">{member.bio}</p>
+                        <p className="team-title">{teamTitleDisplay(member.name, member.title)}</p>
+                        <p className="team-bio on-navy">{abbreviateBio(teamBioDisplay(member.name, member.bio), member.name.includes("Jet") ? 600 : 320)}</p>
                       </div>
                     ))}
                   </div>

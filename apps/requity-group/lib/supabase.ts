@@ -28,13 +28,14 @@ export async function fetchSiteData<T>(
       });
     }
 
-    if (options?.order) {
-      query = query.order(options.order.column, {
-        ascending: options.order.ascending ?? true,
+    // Only add ORDER BY when explicitly requested or when order is not specified.
+    // Pass order: null to skip ordering for tables without sort_order (e.g. site_company_info).
+    const orderOpt = options?.order;
+    if (orderOpt != null && typeof orderOpt === "object") {
+      query = query.order(orderOpt.column, {
+        ascending: orderOpt.ascending ?? true,
       });
-    } else if (options && "order" in options && options.order === null) {
-      // Skip ordering (table has no sort_order)
-    } else {
+    } else if (orderOpt !== null) {
       query = query.order("sort_order", { ascending: true });
     }
 

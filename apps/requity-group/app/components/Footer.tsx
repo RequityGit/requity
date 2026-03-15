@@ -16,7 +16,7 @@ const DEFAULT_CONTACT = {
 
 const DEFAULT_SOCIAL = {
   linkedin: "https://www.linkedin.com/company/requitygroup",
-  youtube: "https://www.youtube.com/@requitygroup",
+  youtube: "https://www.youtube.com/@requity",
 };
 
 export default function Footer({

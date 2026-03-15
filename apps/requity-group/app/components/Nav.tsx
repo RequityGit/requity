@@ -8,6 +8,8 @@ import type { NavItem } from "../../lib/types";
 const LOGO_URL =
   "https://edhlkknvlczhbowasjna.supabase.co/storage/v1/object/public/brand-assets/Requity%20Logo%20White.svg";
 
+const INVESTOR_LOGIN_URL = "https://investors.appfolioim.com/trg/investor/login";
+
 function isActive(pathname: string, url: string): boolean {
   if (url === "/") return pathname === "/";
   return pathname === url || pathname.startsWith(url + "/");
@@ -43,14 +45,15 @@ export default function Nav({ items }: { items: NavItem[] }) {
         </Link>
         <ul className="nav-links nav-desktop">
           {headerItems.map((item) => {
-            const isExternal = item.url.startsWith("http");
             const isCta = item.label === "Investor Login";
+            const href = isCta ? INVESTOR_LOGIN_URL : item.url;
+            const isExternal = href.startsWith("http");
             const active = !isExternal && !isCta && isActive(pathname, item.url);
             return (
               <li key={item.id}>
                 {isExternal ? (
                   <a
-                    href={item.url}
+                    href={href}
                     className={isCta ? "nav-cta" : undefined}
                     target="_blank"
                     rel="noopener noreferrer"
@@ -59,7 +62,7 @@ export default function Nav({ items }: { items: NavItem[] }) {
                   </a>
                 ) : (
                   <Link
-                    href={item.url}
+                    href={href}
                     className={[
                       isCta ? "nav-cta" : undefined,
                       active ? "nav-active" : undefined,
@@ -89,8 +92,9 @@ export default function Nav({ items }: { items: NavItem[] }) {
       <div className={`mobile-overlay${mobileOpen ? " open" : ""}`}>
         <div className="mobile-overlay-inner">
           {headerItems.map((item, i) => {
-            const isExternal = item.url.startsWith("http");
             const isCta = item.label === "Investor Login";
+            const href = isCta ? INVESTOR_LOGIN_URL : item.url;
+            const isExternal = href.startsWith("http");
             const active = !isExternal && !isCta && isActive(pathname, item.url);
             const cls = [
               "mobile-link",
@@ -100,7 +104,7 @@ export default function Nav({ items }: { items: NavItem[] }) {
             return isExternal ? (
               <a
                 key={item.id}
-                href={item.url}
+                href={href}
                 className={cls}
                 target="_blank"
                 rel="noopener noreferrer"
@@ -112,7 +116,7 @@ export default function Nav({ items }: { items: NavItem[] }) {
             ) : (
               <Link
                 key={item.id}
-                href={item.url}
+                href={href}
                 className={cls}
                 onClick={() => setMobileOpen(false)}
                 style={{ animationDelay: `${i * 0.06 + 0.1}s` }}
