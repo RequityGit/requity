@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
+import { SUPABASE_URL } from "@/lib/supabase/constants";
 import {
   LayoutDashboard,
   FileText,
@@ -163,19 +164,14 @@ export function MobileSidebar({
         side="left"
         className="w-[220px] p-0 flex flex-col bg-sidebar text-sidebar-foreground border-r border-sidebar-border"
       >
-        {/* Header — match desktop brand area */}
+        {/* Header — match desktop: white Requity logo */}
         <div className="flex items-center justify-between px-4 py-[18px]">
-          <Link
-            href={defaultHref}
-            className="flex items-center gap-2"
-            onClick={onClose}
-          >
-            <div className="h-8 w-8 rounded-md bg-foreground flex items-center justify-center">
-              <span className="text-background text-[15px] font-extrabold leading-none">R</span>
-            </div>
-            <span className="text-[15px] font-bold tracking-[-0.03em] text-sidebar-foreground">
-              Requity
-            </span>
+          <Link href={defaultHref} className="flex items-center gap-2" onClick={onClose}>
+            <img
+              src={`${SUPABASE_URL}/storage/v1/object/public/brand-assets/Requity%20Logo%20White.svg?v=2`}
+              alt="Requity"
+              className="h-8 w-auto"
+            />
           </Link>
         </div>
 

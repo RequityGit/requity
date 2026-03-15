@@ -1332,3 +1332,145 @@ export async function removeDealTeamContactAction(id: string, dealId: string) {
     };
   }
 }
+
+// ─── Secure Upload Links ───
+
+export async function createSecureUploadLink(
+  dealId: string,
+  opts: {
+    mode: "general" | "checklist";
+    label?: string;
+    instructions?: string;
+    expiresInDays: number;
+    maxUploads?: number;
+    conditionIds?: string[];
+    includeGeneralUpload?: boolean;
+    /** Client origin (e.g. window.location.origin) so the link matches the host the user is on; avoids 404 when NEXT_PUBLIC_APP_URL is wrong or unset */
+    origin?: string;
+  }
+): Promise<{ error: string | null; url: string | null; linkId: string | null }> {
+  try {
+    const auth = await requireAdmin();
+    if ("error" in auth) return { error: auth.error ?? "Unauthorized", url: null, linkId: null };
+
+    const admin = createAdminClient();
+    const expiresAt = new Date();
+    expiresAt.setDate(expiresAt.getDate() + opts.expiresInDays);
+
+    const { data: link, error } = await admin
+      .from("secure_upload_links")
+      .insert({
+        deal_id: dealId,
+        created_by: auth.user.id,
+        mode: opts.mode,
+        label: opts.label || null,
+        instructions: opts.instructions || null,
+        expires_at: expiresAt.toISOString(),
+        max_uploads: opts.maxUploads || null,
+        include_general_upload: opts.includeGeneralUpload ?? true,
+      })
+      .select("id, token")
+      .single();
+
+    if (error || !link) {
+      console.error("createSecureUploadLink error:", error);
+      return { error: error?.message ?? "Failed to create upload link", url: null, linkId: null };
+    }
+
+    if (opts.mode === "checklist" && opts.conditionIds && opts.conditionIds.length > 0) {
+      const rows = opts.conditionIds.map((conditionId, i) => ({
+        upload_link_id: link.id,
+        condition_id: conditionId,
+        sort_order: i,
+      }));
+
+      const { error: condError } = await admin
+        .from("secure_upload_link_conditions")
+        .insert(rows);
+
+      if (condError) {
+        console.error("createSecureUploadLink conditions error:", condError);
+      }
+    }
+
+    // Prefer client origin so the link always matches the host (avoids 404 if env is wrong)
+    const base =
+      opts.origin && /^https?:\/\//i.test(opts.origin)
+        ? opts.origin.replace(/\/$/, "")
+        : process.env.NEXT_PUBLIC_APP_URL || "https://portal.requitygroup.com";
+    const url = `${base}/upload/${link.token}`;
+
+    return { error: null, url, linkId: link.id };
+  } catch (err) {
+    console.error("createSecureUploadLink error:", err);
+    return {
+      error: err instanceof Error ? err.message : "Failed to create upload link",
+      url: null,
+      linkId: null,
+    };
+  }
+}
+
+export async function revokeSecureUploadLink(
+  linkId: string
+): Promise<{ error: string | null }> {
+  try {
+    const auth = await requireAdmin();
+    if ("error" in auth) return { error: auth.error ?? "Unauthorized" };
+
+    const admin = createAdminClient();
+    const { error } = await admin
+      .from("secure_upload_links")
+      .update({ status: "revoked", revoked_at: new Date().toISOString() })
+      .eq("id", linkId);
+
+    if (error) {
+      console.error("revokeSecureUploadLink error:", error);
+      return { error: error.message };
+    }
+
+    return { error: null };
+  } catch (err) {
+    console.error("revokeSecureUploadLink error:", err);
+    return { error: err instanceof Error ? err.message : "Failed to revoke link" };
+  }
+}
+
+export async function listSecureUploadLinks(
+  dealId: string
+): Promise<{
+  error: string | null;
+  links: {
+    id: string;
+    token: string;
+    mode: string;
+    label: string | null;
+    status: string;
+    expires_at: string;
+    upload_count: number;
+    max_uploads: number | null;
+    created_at: string;
+  }[];
+}> {
+  try {
+    const auth = await requireAdmin();
+    if ("error" in auth) return { error: auth.error ?? "Unauthorized", links: [] };
+
+    const admin = createAdminClient();
+    const { data, error } = await admin
+      .from("secure_upload_links")
+      .select("id, token, mode, label, status, expires_at, upload_count, max_uploads, created_at")
+      .eq("deal_id", dealId)
+      .order("created_at", { ascending: false });
+
+    if (error) {
+      console.error("listSecureUploadLinks error:", error);
+      return { error: error.message, links: [] };
+    }
+
+    return { error: null, links: data || [] };
+  } catch (err) {
+    console.error("listSecureUploadLinks error:", err);
+    return { error: err instanceof Error ? err.message : "Failed to list links", links: [] };
+  }
+}

@@ -215,7 +215,7 @@ export function DealTasks({
   return (
     <div>
       {/* Header */}
-      <div className="flex items-center justify-between mb-4">
+      <div className="flex items-center justify-between mb-2">
         <div className="flex items-center gap-2">
           <span className="text-sm font-semibold">Tasks</span>
           <span className="text-[11px] font-semibold text-muted-foreground/60 num">
@@ -230,9 +230,9 @@ export function DealTasks({
 
       {/* Open tasks */}
       {openTasks.length === 0 && completedTasks.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-8 text-center">
+        <div className="flex flex-col items-center justify-center py-5 text-center">
           <ListChecks
-            className="h-8 w-8 text-muted-foreground/30 mb-2"
+            className="h-7 w-7 text-muted-foreground/30 mb-1.5"
             strokeWidth={1.5}
           />
           <p className="text-sm text-muted-foreground">No tasks for this deal</p>
@@ -240,7 +240,7 @@ export function DealTasks({
             onClick={handleNewTask}
             size="sm"
             variant="outline"
-            className="mt-3"
+            className="mt-2"
           >
             <Plus className="h-3.5 w-3.5 mr-1" strokeWidth={1.5} />
             Add first task
@@ -262,8 +262,8 @@ export function DealTasks({
 
           {/* Completed section */}
           {completedTasks.length > 0 && (
-            <div className="mt-4">
-              <div className="h-px bg-border mb-3" />
+            <div className="mt-3">
+              <div className="h-px bg-border mb-2" />
               <button
                 onClick={() => setShowCompleted(!showCompleted)}
                 className="flex items-center gap-2 text-[13px] font-medium text-muted-foreground hover:text-foreground transition-colors"

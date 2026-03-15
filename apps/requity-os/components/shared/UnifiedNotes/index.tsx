@@ -426,7 +426,7 @@ export function UnifiedNotes({
   const maxHeight = isCompact ? "max-h-[300px]" : "";
 
   return (
-    <div className={`flex flex-col gap-3 ${isCompact ? "" : ""}`}>
+    <div className={`flex flex-col gap-2 ${isCompact ? "" : ""}`}>
       {/* Composer */}
       {currentUserId && (
         <NoteComposer
@@ -450,10 +450,10 @@ export function UnifiedNotes({
           <div className="h-14 rounded-xl bg-muted animate-pulse" />
         </div>
       ) : filteredNotes.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-10 text-center">
-          <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-muted mb-3">
+        <div className="flex flex-col items-center justify-center py-6 text-center">
+          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-muted mb-2">
             <MessageSquare
-              className="h-5 w-5 text-muted-foreground"
+              className="h-4 w-4 text-muted-foreground"
               strokeWidth={1.5}
             />
           </div>

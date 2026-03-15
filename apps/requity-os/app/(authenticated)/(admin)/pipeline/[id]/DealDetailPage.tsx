@@ -66,9 +66,9 @@ import {
 import { StageStepper } from "@/components/pipeline/StageStepper";
 import { EditableOverview } from "@/components/pipeline/EditableOverview";
 import { UnderwritingPanel } from "@/components/pipeline/UnderwritingPanel";
-import { DocumentsTab } from "@/components/pipeline/tabs/DocumentsTab";
 import { DealTasks } from "@/components/tasks/deal-tasks";
-import { ConditionsTab } from "@/components/pipeline/tabs/ConditionsTab";
+import { DiligenceTab } from "@/components/pipeline/tabs/DiligenceTab";
+import { UnifiedNotes } from "@/components/shared/UnifiedNotes";
 import { PropertyTab } from "@/components/pipeline/tabs/PropertyTab";
 import { BorrowerContactsTab } from "@/components/borrower";
 import { UnderwritingTab, type CommercialUWData } from "@/components/pipeline/tabs/UnderwritingTab";
@@ -101,7 +101,6 @@ import {
 } from "@/app/(authenticated)/(admin)/pipeline/actions";
 import { normalizeAssetClass, isCommercialDeal, type VisibilityContext } from "@/lib/visibility-engine";
 import { DealActivityTab } from "@/components/pipeline/tabs/DealActivityTab";
-import { UnifiedNotes } from "@/components/shared/UnifiedNotes";
 import { DealNotePreview } from "@/components/pipeline/DealNotePreview";
 import type { DealPreviewNote } from "@/components/pipeline/DealNotePreview";
 import { logQuickActionV2, addDealTeamMember, removeDealTeamMember, createDealDriveFolder } from "./actions";
@@ -183,11 +182,7 @@ function DealDetailPageInner({
     "Property",
     "Underwriting",
     "Borrower",
-    "Conditions",
-    "Documents",
-    "Tasks",
-    "Activity",
-    "Notes",
+    "Diligence",
   ] as const;
   const tabs = UNIVERSAL_TABS;
 
@@ -198,9 +193,14 @@ function DealDetailPageInner({
   const router = useRouter();
   const searchParams = useSearchParams();
   const tabParam = searchParams.get("tab");
-  // Backward compatibility: redirect old ?tab=contacts to ?tab=borrower
-  const resolvedTabParam =
-    tabParam?.toLowerCase() === "contacts" ? "borrower" : tabParam;
+  // Backward compatibility: redirect old tab params
+  const resolvedTabParam = (() => {
+    const t = tabParam?.toLowerCase();
+    if (t === "contacts") return "borrower";
+    if (t === "conditions" || t === "documents") return "diligence";
+    if (t === "tasks" || t === "activity" || t === "notes") return "overview";
+    return tabParam;
+  })();
   const initialTab =
     tabs.find((t) => t.toLowerCase() === resolvedTabParam?.toLowerCase()) ??
     tabs[0];
@@ -211,13 +211,18 @@ function DealDetailPageInner({
     () => new Set([initialTab])
   );
 
-  // Backward compatibility: replace URL ?tab=contacts with ?tab=borrower once
+  // Backward compatibility: replace old tab params in URL
   React.useEffect(() => {
     if (typeof window === "undefined") return;
-    const tab = searchParams.get("tab");
-    if (tab?.toLowerCase() === "contacts") {
+    const tab = searchParams.get("tab")?.toLowerCase();
+    const redirectMap: Record<string, string> = {
+      contacts: "borrower",
+      conditions: "diligence",
+      documents: "diligence",
+    };
+    if (tab && redirectMap[tab]) {
       const params = new URLSearchParams(window.location.search);
-      params.set("tab", "borrower");
+      params.set("tab", redirectMap[tab]);
       const newUrl = `${window.location.pathname}?${params.toString()}`;
       window.history.replaceState(null, "", newUrl);
     }
@@ -340,7 +345,7 @@ function DealDetailPageInner({
         <DealNotePreview
           pinnedNote={pinnedNote}
           recentNote={recentNote}
-          onClickGoToNotes={() => handleTabChange("Notes")}
+          onClickGoToNotes={() => handleTabChange("Overview")}
         />
 
         {/* Tab Bar */}
@@ -374,7 +379,6 @@ function DealDetailPageInner({
               );
 
               // Wrap with TabEditPopover + reorder arrows when editing.
-              // Use a separate Pencil trigger for the popover so the tab button always switches tabs on click.
               if (inlineLayout.state.isEditing) {
                 const layoutTab = layout.tabs.find(
                   (t) => t.label.toLowerCase() === tab.toLowerCase() || t.key === tab.toLowerCase()
@@ -482,8 +486,8 @@ function DealDetailPageInner({
         {/* Inline Layout Toolbar (shown when editing) */}
         <InlineLayoutToolbar onSaveComplete={() => layout.refetch()} tabs={layout.tabs} />
 
-        {/* Content Area: full-width (sidebar eliminated) */}
-        <div className="flex flex-col gap-5 min-w-0">
+        {/* Tab Content */}
+        <div className="flex flex-col gap-4 min-w-0">
           {loadedTabs.has("Overview") && (
             <div className={activeTab !== "Overview" ? "hidden" : undefined}>
               <EditableOverview
@@ -498,6 +502,39 @@ function DealDetailPageInner({
                 visibilityContext={visibilityContext}
                 dealTeamContacts={dealTeamContacts}
               />
+
+              {/* Tasks section */}
+              <div className="mt-4">
+                <DealTasks
+                  dealId={deal.id}
+                  dealLabel={deal.deal_number ?? deal.name}
+                  dealEntityType="deal"
+                  tasks={tasks}
+                  profiles={teamMembers}
+                  currentUserId={currentUserId}
+                />
+              </div>
+
+              {/* Notes section */}
+              <div className="mt-4">
+                <UnifiedNotes
+                  entityType="deal"
+                  entityId={deal.id}
+                  dealId={deal.id}
+                  showInternalToggle={true}
+                  showFilters={true}
+                  showPinning={true}
+                />
+              </div>
+
+              {/* Activity feed */}
+              <div className="mt-4">
+                <DealActivityTab
+                  dealId={deal.id}
+                  currentUserId={currentUserId}
+                  primaryContactId={deal.primary_contact_id ?? null}
+                />
+              </div>
             </div>
           )}
           {loadedTabs.has("Property") && (
@@ -530,54 +567,13 @@ function DealDetailPageInner({
               <BorrowerContactsTab dealId={deal.id} />
             </div>
           )}
-          {loadedTabs.has("Conditions") && (
-            <div className={activeTab !== "Conditions" ? "hidden" : undefined}>
-              <ConditionsTab
+          {loadedTabs.has("Diligence") && (
+            <div className={activeTab !== "Diligence" ? "hidden" : undefined}>
+              <DiligenceTab
+                documents={documents as unknown as { id: string; deal_id: string; document_name: string; file_url: string; file_size_bytes: number | null; mime_type: string | null; category: string | null; uploaded_by: string | null; created_at: string; review_status: string | null; storage_path: string | null; visibility?: string | null; _uploaded_by_name?: string | null; archived_at?: string | null; condition_id?: string | null }[]}
                 conditions={conditions}
                 dealId={deal.id}
-                documents={documents as { id: string; document_name: string; file_url: string; storage_path: string | null; file_size_bytes: number | null; mime_type: string | null; created_at: string; condition_id: string | null }[]}
-              />
-            </div>
-          )}
-          {loadedTabs.has("Documents") && (
-            <div className={activeTab !== "Documents" ? "hidden" : undefined}>
-              <DocumentsTab
-                documents={documents as unknown as { id: string; deal_id: string; document_name: string; file_url: string; file_size_bytes: number | null; mime_type: string | null; category: string | null; uploaded_by: string | null; created_at: string; review_status: string | null; storage_path: string | null; visibility?: string | null; _uploaded_by_name?: string | null }[]}
-                dealId={deal.id}
                 googleDriveFolderUrl={(deal as unknown as Record<string, unknown>).google_drive_folder_url as string | null}
-              />
-            </div>
-          )}
-          {loadedTabs.has("Tasks") && (
-            <div className={activeTab !== "Tasks" ? "hidden" : undefined}>
-              <DealTasks
-                dealId={deal.id}
-                dealLabel={deal.deal_number ?? deal.name}
-                dealEntityType="deal"
-                tasks={tasks}
-                profiles={teamMembers}
-                currentUserId={currentUserId}
-              />
-            </div>
-          )}
-          {loadedTabs.has("Activity") && (
-            <div className={activeTab !== "Activity" ? "hidden" : undefined}>
-              <DealActivityTab
-                dealId={deal.id}
-                currentUserId={currentUserId}
-                primaryContactId={deal.primary_contact_id ?? null}
-              />
-            </div>
-          )}
-          {loadedTabs.has("Notes") && (
-            <div className={activeTab !== "Notes" ? "hidden" : undefined}>
-              <UnifiedNotes
-                entityType="deal"
-                entityId={deal.id}
-                dealId={deal.id}
-                showInternalToggle={true}
-                showFilters={true}
-                showPinning={true}
               />
             </div>
           )}

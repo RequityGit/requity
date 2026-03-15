@@ -13398,6 +13398,101 @@ export type Database = {
           },
         ]
       }
+      secure_upload_link_conditions: {
+        Row: {
+          condition_id: string
+          id: string
+          sort_order: number
+          upload_link_id: string
+        }
+        Insert: {
+          condition_id: string
+          id?: string
+          sort_order?: number
+          upload_link_id: string
+        }
+        Update: {
+          condition_id?: string
+          id?: string
+          sort_order?: number
+          upload_link_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "secure_upload_link_conditions_condition_id_fkey"
+            columns: ["condition_id"]
+            isOneToOne: false
+            referencedRelation: "unified_deal_conditions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "secure_upload_link_conditions_upload_link_id_fkey"
+            columns: ["upload_link_id"]
+            isOneToOne: false
+            referencedRelation: "secure_upload_links"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      secure_upload_links: {
+        Row: {
+          created_at: string
+          created_by: string
+          deal_id: string
+          expires_at: string
+          id: string
+          include_general_upload: boolean
+          instructions: string | null
+          label: string | null
+          max_uploads: number | null
+          mode: string
+          revoked_at: string | null
+          status: string
+          token: string
+          upload_count: number
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          deal_id: string
+          expires_at: string
+          id?: string
+          include_general_upload?: boolean
+          instructions?: string | null
+          label?: string | null
+          max_uploads?: number | null
+          mode?: string
+          revoked_at?: string | null
+          status?: string
+          token?: string
+          upload_count?: number
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          deal_id?: string
+          expires_at?: string
+          id?: string
+          include_general_upload?: boolean
+          instructions?: string | null
+          label?: string | null
+          max_uploads?: number | null
+          mode?: string
+          revoked_at?: string | null
+          status?: string
+          token?: string
+          upload_count?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "secure_upload_links_deal_id_fkey"
+            columns: ["deal_id"]
+            isOneToOne: false
+            referencedRelation: "unified_deals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       servicing_audit_log: {
         Row: {
           action: string

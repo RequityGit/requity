@@ -6,6 +6,8 @@
 
 [build.environment]
   NODE_OPTIONS = "--max-old-space-size=4096"
+  # Required for secure upload links and other absolute URLs (e.g. email links)
+  NEXT_PUBLIC_APP_URL = "https://portal.requitygroup.com"
 
 [build.cancel]
   auto = false

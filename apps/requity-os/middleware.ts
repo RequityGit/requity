@@ -19,6 +19,8 @@ const PUBLIC_ROUTES = [
   "/login",
   "/auth/callback",
   "/auth/confirm",
+  "/upload",
+  "/api/upload-link", // token-based upload (no auth required)
 ];
 
 export async function middleware(request: NextRequest) {

@@ -77,7 +77,7 @@ export function DealTeamSection({ dealId, initialContacts }: DealTeamSectionProp
   return (
     <>
       <Card className="rounded-xl border bg-card overflow-hidden">
-        <div className="px-4 py-3 flex items-center justify-between border-b border-border/60">
+        <div className="px-4 py-2 flex items-center justify-between border-b border-border/60">
           <div className="flex items-center gap-2">
             <Users className="h-3.5 w-3.5 text-muted-foreground" strokeWidth={1.5} />
             <span className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
@@ -95,19 +95,19 @@ export function DealTeamSection({ dealId, initialContacts }: DealTeamSectionProp
           </Button>
         </div>
 
-        <div className="px-4 py-3">
+        <div className="px-4 py-2">
           {contacts.length === 0 ? (
-            <div className="py-6 text-center">
+            <div className="py-4 text-center">
               <p className="text-sm text-muted-foreground">
                 No deal team contacts added.
               </p>
-              <p className="text-xs text-muted-foreground/80 mt-1">
+              <p className="text-xs text-muted-foreground/80 mt-0.5">
                 Add broker, title company, insurance, or other contacts.
               </p>
               <Button
                 variant="outline"
                 size="sm"
-                className="mt-3 gap-1.5"
+                className="mt-2 gap-1.5"
                 onClick={() => setIsAdding(true)}
               >
                 <UserPlus className="h-3.5 w-3.5" strokeWidth={1.5} />
