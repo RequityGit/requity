@@ -76,6 +76,7 @@ export default function LoanIntakePage() {
   const [generatedTerms, setGeneratedTerms] = useState<CalculatedTerms | null>(null);
   const [loanCategory, setLoanCategory] = useState<string | null>(null);
   const formRef = useRef<HTMLDivElement>(null);
+  const stepSectionRef = useRef<HTMLElement>(null);
   const addressInputRef = useRef<HTMLInputElement>(null);
   const autocompleteRef = useRef<unknown>(null);
 
@@ -172,7 +173,6 @@ export default function LoanIntakePage() {
     setError("");
     setDirection(1);
     setStep(2);
-    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   const backToCategories = () => {
@@ -242,6 +242,13 @@ export default function LoanIntakePage() {
     autocompleteRef.current = null;
     document.querySelectorAll(".pac-container").forEach((el) => el.remove());
   }, [step, initAutocomplete]);
+
+  // Scroll step section into view when moving to step 2+ so user sees progress + form (avoids scroll-to-top)
+  useEffect(() => {
+    if (step >= 2 && stepSectionRef.current) {
+      stepSectionRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  }, [step]);
 
   const hasAutoTerms = !!LOAN_PROGRAMS[form.loanType];
   const isCommercial = COMMERCIAL_TERM_TYPES.includes(form.loanType);
@@ -322,14 +329,12 @@ export default function LoanIntakePage() {
     }
     setDirection(1);
     setStep((s) => Math.min(s + 1, totalSteps));
-    window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
   function goBack() {
     setDirection(-1);
     setStep((s) => Math.max(s - 1, 1));
     setError("");
-    window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
   async function handleSubmit() {
@@ -432,7 +437,7 @@ export default function LoanIntakePage() {
       <div className="dark-to-light" />
 
       {/* Progress */}
-      <section className="light-zone" style={{ paddingTop: 40, paddingBottom: 0 }}>
+      <section ref={stepSectionRef} className="light-zone" style={{ paddingTop: 40, paddingBottom: 0 }}>
         <div className="container" style={{ maxWidth: 720 }}>
           <div style={{ width: "100%", height: 3, background: "var(--border-light)", borderRadius: 3, overflow: "hidden", marginBottom: 24 }}>
             <div style={{ height: "100%", background: "var(--gold)", borderRadius: 3, transition: "width 0.5s cubic-bezier(0.16,1,0.3,1)", width: `${(step / totalSteps) * 100}%` }} />
