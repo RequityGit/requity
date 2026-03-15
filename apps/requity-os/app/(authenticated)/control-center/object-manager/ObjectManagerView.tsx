@@ -6,7 +6,6 @@ import {
   Search,
   Type,
   Network,
-  LayoutGrid,
   Settings2,
   Grid3X3,
   Calculator,
@@ -18,27 +17,19 @@ import type {
   FieldConfig,
   ObjectRelationship,
   RelationshipRole,
-  PageSection,
-  PageField,
 } from "./actions";
 import {
-  fetchObjectFields,
   fetchObjectRelationships,
-  fetchObjectLayout,
   fetchFieldsForModules,
-  publishObjectChanges,
   batchPublishChanges,
   createRelationship,
 } from "./actions";
 import { getObjectIcon } from "./_components/constants";
 import { FieldsTab } from "./_components/FieldsTab";
 import { RelationshipsTab } from "./_components/RelationshipsTab";
-import { LayoutTab } from "./_components/LayoutTab";
 import { FieldConfigPanel } from "./_components/FieldConfigPanel";
 import { RelationshipConfigPanel } from "./_components/RelationshipConfigPanel";
 import { AddRelationshipDialog } from "./_components/AddRelationshipDialog";
-import { SectionConfigPanel } from "./_components/SectionConfigPanel";
-import { TabConfigPanel } from "./_components/TabConfigPanel";
 import { ConditionMatrixTab } from "./_components/ConditionMatrixTab";
 import { FormulasTab } from "./_components/FormulasTab";
 import { DraftBanner } from "./_components/DraftBanner";
@@ -49,15 +40,7 @@ import { useDraftState } from "./_hooks/useDraftState";
 // Types
 // ---------------------------------------------------------------------------
 
-export type ActiveTab = "fields" | "relationships" | "layout" | "conditions" | "formulas";
-
-export interface TabInfo {
-  id: string;
-  label: string;
-  icon: string;
-  locked: boolean;
-  sections: PageSection[];
-}
+export type ActiveTab = "fields" | "relationships" | "conditions" | "formulas";
 
 // ---------------------------------------------------------------------------
 // Object Manager View
@@ -92,18 +75,6 @@ function getPrimaryModule(objectKey: string): string {
   return (OBJECT_MODULE_MAP[objectKey] || [objectKey])[0];
 }
 
-// Page type mapping: object_key -> page_layout page_type
-const OBJECT_PAGE_TYPE_MAP: Record<string, string> = {
-  contact: "contact_detail",
-  company: "company_detail",
-  loan: "loan_detail",
-  property: "property_detail",
-  borrower: "borrower_detail",
-  borrower_entity: "borrower_entity_detail",
-  investor: "investor_detail",
-  unified_deal: "deal_detail",
-};
-
 export function ObjectManagerView({ objects, fieldCounts, relationshipCounts }: Props) {
   const [selectedObjectKey, setSelectedObjectKey] = useState(objects[0]?.object_key || "");
   const [activeTab, setActiveTab] = useState<ActiveTab>("fields");
@@ -113,16 +84,11 @@ export function ObjectManagerView({ objects, fieldCounts, relationshipCounts }: 
   const [fields, setFields] = useState<FieldConfig[]>([]);
   const [relationships, setRelationships] = useState<ObjectRelationship[]>([]);
   const [roles, setRoles] = useState<RelationshipRole[]>([]);
-  const [layoutSections, setLayoutSections] = useState<PageSection[]>([]);
-  const [layoutFields, setLayoutFields] = useState<PageField[]>([]);
-  const [relatedFields, setRelatedFields] = useState<Record<string, FieldConfig[]>>({});
   const [loading, setLoading] = useState(false);
 
   // Selection states
   const [selectedField, setSelectedField] = useState<FieldConfig | null>(null);
   const [selectedRel, setSelectedRel] = useState<ObjectRelationship | null>(null);
-  const [selectedSection, setSelectedSection] = useState<PageSection | null>(null);
-  const [selectedLayoutTab, setSelectedLayoutTab] = useState<TabInfo | null>(null);
 
   // Draft state management
   const draft = useDraftState();
@@ -137,8 +103,6 @@ export function ObjectManagerView({ objects, fieldCounts, relationshipCounts }: 
   const clearSelection = useCallback(() => {
     setSelectedField(null);
     setSelectedRel(null);
-    setSelectedSection(null);
-    setSelectedLayoutTab(null);
   }, []);
 
   // Load data when object or tab changes
@@ -160,50 +124,6 @@ export function ObjectManagerView({ objects, fieldCounts, relationshipCounts }: 
         const modules = getObjectModules(selectedObjectKey);
         const result = await fetchFieldsForModules(modules);
         if (result.data) setFields(result.data);
-      } else if (activeTab === "layout") {
-        const pageType = OBJECT_PAGE_TYPE_MAP[selectedObjectKey];
-        const modules = getObjectModules(selectedObjectKey);
-
-        // Fetch layout, native fields, and relationships in parallel
-        const [layoutResult, fieldsResult, relsResult] = await Promise.all([
-          pageType
-            ? fetchObjectLayout(pageType)
-            : Promise.resolve({ sections: [] as PageSection[], fields: [] as PageField[] }),
-          fetchFieldsForModules(modules),
-          fetchObjectRelationships(selectedObjectKey),
-        ]);
-
-        setLayoutSections(layoutResult.sections ?? []);
-        setLayoutFields(layoutResult.fields ?? []);
-        if (fieldsResult.data) setFields(fieldsResult.data);
-        const rels = relsResult.relationships ?? [];
-        if (relsResult.relationships) setRelationships(rels);
-
-        // Fetch fields for all related entities
-        const relObjectKeys = rels.map((r) =>
-          r.parent_object_key === selectedObjectKey
-            ? r.child_object_key
-            : r.parent_object_key
-        );
-        const allRelModules = Array.from(
-          new Set(relObjectKeys.flatMap((k) => getObjectModules(k)))
-        );
-
-        if (allRelModules.length > 0) {
-          const relFieldsResult = await fetchFieldsForModules(allRelModules);
-          if (relFieldsResult.data) {
-            const grouped: Record<string, FieldConfig[]> = {};
-            for (const key of relObjectKeys) {
-              const mods = getObjectModules(key);
-              grouped[key] = (relFieldsResult.data || []).filter(
-                (f) => mods.includes(f.module)
-              );
-            }
-            setRelatedFields(grouped);
-          }
-        } else {
-          setRelatedFields({});
-        }
       }
     } finally {
       setLoading(false);
@@ -328,13 +248,6 @@ export function ObjectManagerView({ objects, fieldCounts, relationshipCounts }: 
       count: relationshipCounts[selectedObjectKey] || 0,
       color: "border-purple-500",
     },
-    {
-      key: "layout",
-      label: "Page Layout",
-      icon: LayoutGrid,
-      count: layoutSections.length,
-      color: "border-green-500",
-    },
   ];
 
   // Add Condition Matrix and Formulas tabs for axis-enabled objects
@@ -361,8 +274,7 @@ export function ObjectManagerView({ objects, fieldCounts, relationshipCounts }: 
   // Show right panel?
   const showRightPanel =
     ((activeTab === "fields" || activeTab === "formulas") && selectedField) ||
-    (activeTab === "relationships" && selectedRel) ||
-    (activeTab === "layout" && (selectedSection || selectedLayoutTab));
+    (activeTab === "relationships" && selectedRel);
 
   return (
     <div className="flex min-h-[calc(100vh-48px)]">
@@ -373,7 +285,7 @@ export function ObjectManagerView({ objects, fieldCounts, relationshipCounts }: 
             <div className="w-6 h-6 rounded-md bg-muted flex items-center justify-center">
               <SlidersHorizontal size={13} className="text-muted-foreground" />
             </div>
-            <span className="font-bold text-sm">Object Manager</span>
+            <span className="font-bold text-sm">Field Manager</span>
           </div>
           <div className="relative">
             <Search size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
@@ -522,28 +434,6 @@ export function ObjectManagerView({ objects, fieldCounts, relationshipCounts }: 
               loading={loading}
             />
           )}
-          {activeTab === "layout" && (
-            <LayoutTab
-              objectKey={selectedObjectKey}
-              sections={layoutSections}
-              layoutFields={layoutFields}
-              fields={fields}
-              relationships={relationships}
-              relatedFields={relatedFields}
-              objects={objects}
-              onSelectSection={(s) => {
-                setSelectedSection(s);
-                setSelectedLayoutTab(null);
-              }}
-              onSelectTab={(t) => {
-                setSelectedLayoutTab(t);
-                setSelectedSection(null);
-              }}
-              onLayoutChange={handleDataChange}
-              onDraftLayoutChange={draft.draftLayoutChange}
-              loading={loading}
-            />
-          )}
           {activeTab === "conditions" && (
             <ConditionMatrixTab fields={fields} />
           )}
@@ -591,23 +481,6 @@ export function ObjectManagerView({ objects, fieldCounts, relationshipCounts }: 
             onUpdate={handleDataChange}
           />
         )}
-        {activeTab === "layout" && selectedSection && (
-          <SectionConfigPanel
-            section={selectedSection}
-            onClose={clearSelection}
-            onUpdated={() => {
-              handleDataChange();
-            }}
-          />
-        )}
-        {activeTab === "layout" && selectedLayoutTab && (
-          <TabConfigPanel
-            tab={selectedLayoutTab}
-            pageType={OBJECT_PAGE_TYPE_MAP[selectedObjectKey] || ""}
-            onClose={clearSelection}
-            onUpdated={handleDataChange}
-          />
-        )}
         {!showRightPanel && (
           <div className="flex flex-col items-center justify-center p-7 gap-2 h-full">
             <Settings2 size={32} className="text-muted-foreground" strokeWidth={1} />
@@ -615,7 +488,6 @@ export function ObjectManagerView({ objects, fieldCounts, relationshipCounts }: 
             <span className="text-xs text-muted-foreground text-center leading-relaxed">
               {activeTab === "fields" && "Select a field to configure type, validation, permissions, logic, and stage gating."}
               {activeTab === "relationships" && "Select a relationship to configure roles, inherited fields, quick-create, and schema."}
-              {activeTab === "layout" && "Click a section or tab to configure display settings, fields, and column layout."}
             </span>
           </div>
         )}

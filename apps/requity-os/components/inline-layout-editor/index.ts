@@ -1,0 +1,11 @@
+export { InlineLayoutProvider, useInlineLayout } from "./InlineLayoutContext";
+export type { PendingChanges, InlineLayoutState } from "./InlineLayoutContext";
+export { InlineLayoutToolbar } from "./InlineLayoutToolbar";
+export { FieldPicker } from "./FieldPicker";
+export { EditableSection } from "./EditableSection";
+export { EditableFieldSlot } from "./EditableFieldSlot";
+export { SectionConfigPopover } from "./SectionConfigPopover";
+export { FieldConfigPopover } from "./FieldConfigPopover";
+export { CreateFieldDialog } from "./CreateFieldDialog";
+export { TabManager, TabEditPopover } from "./TabManager";
+export { CrmInlineEditorWrapper } from "./CrmInlineEditorWrapper";

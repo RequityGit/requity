@@ -15,6 +15,7 @@ import { ContactDetailHeader } from "./contact-detail-header";
 import { ContactDetailSidebar } from "./contact-detail-sidebar";
 import { EmailComposeSheet } from "@/components/crm/email-compose-sheet";
 import { DetailOverviewTab } from "./tabs/detail-overview-tab";
+import { CrmInlineEditorWrapper } from "@/components/inline-layout-editor/CrmInlineEditorWrapper";
 import { CollapsibleBorrowerSection } from "./sections/collapsible-borrower-section";
 import { CollapsibleInvestorSection } from "./sections/collapsible-investor-section";
 import { CollapsibleTasksSection } from "./sections/collapsible-tasks-section";
@@ -165,6 +166,7 @@ export function ContactDetailClient({
 
           {/* All sections stacked vertically */}
           <div className="mt-4 flex flex-col gap-5">
+            <CrmInlineEditorWrapper pageType="contact_detail" isSuperAdmin={isSuperAdmin}>
             {/* Contact Profile + Address */}
             <DetailOverviewTab
               contact={contact}
@@ -225,6 +227,7 @@ export function ContactDetailClient({
               onComposeEmail={() => setEmailComposeOpen(true)}
               logCallTrigger={logCallTrigger}
             />
+            </CrmInlineEditorWrapper>
           </div>
         </div>
 

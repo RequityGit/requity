@@ -72,6 +72,15 @@ import { ConditionsTab } from "@/components/pipeline/tabs/ConditionsTab";
 import { PropertyTab } from "@/components/pipeline/tabs/PropertyTab";
 import { BorrowerContactsTab } from "@/components/borrower";
 import { UnderwritingTab, type CommercialUWData } from "@/components/pipeline/tabs/UnderwritingTab";
+import {
+  InlineLayoutProvider,
+  useInlineLayout,
+  InlineLayoutToolbar,
+  TabEditPopover,
+} from "@/components/inline-layout-editor";
+import { useDealLayout } from "@/hooks/useDealLayout";
+import { Pencil, ChevronLeft, ChevronRight } from "lucide-react";
+import { reorderTabs } from "@/app/(authenticated)/control-center/object-manager/actions";
 
 import {
   type UnifiedDeal,
@@ -139,11 +148,20 @@ interface DealDetailPageProps {
   commercialUWData: CommercialUWData | null;
   pinnedNote: DealPreviewNote | null;
   recentNote: DealPreviewNote | null;
+  isSuperAdmin?: boolean;
 }
 
 // ─── Main Component ───
 
-export function DealDetailPage({
+export function DealDetailPage(props: DealDetailPageProps) {
+  return (
+    <InlineLayoutProvider>
+      <DealDetailPageInner {...props} />
+    </InlineLayoutProvider>
+  );
+}
+
+function DealDetailPageInner({
   deal,
   cardType,
   stageConfigs,
@@ -158,6 +176,7 @@ export function DealDetailPage({
   commercialUWData,
   pinnedNote,
   recentNote,
+  isSuperAdmin = false,
 }: DealDetailPageProps) {
   const UNIVERSAL_TABS = [
     "Overview",
@@ -171,6 +190,10 @@ export function DealDetailPage({
     "Notes",
   ] as const;
   const tabs = UNIVERSAL_TABS;
+
+  // Inline layout editor
+  const inlineLayout = useInlineLayout();
+  const layout = useDealLayout();
 
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -216,6 +239,7 @@ export function DealDetailPage({
       if (prev.has(tab)) return prev;
       return new Set(prev).add(tab);
     });
+    inlineLayout.setActiveTabKey(tab.toLowerCase());
     // Update URL without triggering Next.js navigation
     const params = new URLSearchParams(window.location.search);
     if (tab === tabs[0]) {
@@ -227,7 +251,7 @@ export function DealDetailPage({
       ? `${window.location.pathname}?${params.toString()}`
       : window.location.pathname;
     window.history.replaceState(null, "", newUrl);
-  }, [tabs]);
+  }, [tabs, inlineLayout]);
 
   const displayId = deal.deal_number ?? deal.id.slice(0, 8);
   const days = deal.days_in_stage ?? daysInStage(deal.stage_entered_at);
@@ -320,31 +344,143 @@ export function DealDetailPage({
         />
 
         {/* Tab Bar */}
-        <div className="mt-6 mb-6">
+        <div className="mt-6 mb-6 flex items-center justify-between">
           <div className="inline-flex gap-0.5 rounded-[10px] p-[3px] bg-muted border">
-            {tabs.map((tab) => (
-              <button
-                key={tab}
-                onClick={() => handleTabChange(tab)}
-                className={cn(
-                  "flex items-center gap-1.5 rounded-lg border-none px-3.5 py-[7px] text-[13px] cursor-pointer transition-all duration-150",
-                  activeTab === tab
-                    ? "bg-background text-foreground font-medium shadow-sm"
-                    : "bg-transparent text-muted-foreground hover:text-foreground"
-                )}
-              >
-                {tab === "Borrower" ? (
-                  <>
-                    <Building2 className="h-3.5 w-3.5 shrink-0" strokeWidth={1.5} />
-                    {tab}
-                  </>
-                ) : (
-                  tab
-                )}
-              </button>
-            ))}
+            {tabs.map((tab) => {
+              const tabButton = (
+                <button
+                  key={tab}
+                  onClick={() => handleTabChange(tab)}
+                  className={cn(
+                    "flex items-center gap-1.5 rounded-lg border-none px-3.5 py-[7px] text-[13px] cursor-pointer transition-all duration-150",
+                    activeTab === tab
+                      ? "bg-background text-foreground font-medium shadow-sm"
+                      : "bg-transparent text-muted-foreground hover:text-foreground",
+                    inlineLayout.state.isEditing && "hover:ring-1 hover:ring-primary/30"
+                  )}
+                >
+                  {tab === "Borrower" ? (
+                    <>
+                      <Building2 className="h-3.5 w-3.5 shrink-0" strokeWidth={1.5} />
+                      {tab}
+                    </>
+                  ) : (
+                    tab
+                  )}
+                  {inlineLayout.state.isEditing && (
+                    <Pencil className="h-2.5 w-2.5 text-muted-foreground/50 ml-0.5" />
+                  )}
+                </button>
+              );
+
+              // Wrap with TabEditPopover + reorder arrows when editing.
+              // Use a separate Pencil trigger for the popover so the tab button always switches tabs on click.
+              if (inlineLayout.state.isEditing) {
+                const layoutTab = layout.tabs.find(
+                  (t) => t.label.toLowerCase() === tab.toLowerCase() || t.key === tab.toLowerCase()
+                );
+                if (layoutTab) {
+                  const tabIdx = layout.tabs.indexOf(layoutTab);
+                  const handleReorder = async (direction: "left" | "right") => {
+                    const swapIdx = direction === "left" ? tabIdx - 1 : tabIdx + 1;
+                    if (swapIdx < 0 || swapIdx >= layout.tabs.length) return;
+                    const newOrders = layout.tabs.map((t, i) => {
+                      if (i === tabIdx) return { tab_key: t.key, tab_order: layout.tabs[swapIdx].order };
+                      if (i === swapIdx) return { tab_key: t.key, tab_order: layout.tabs[tabIdx].order };
+                      return { tab_key: t.key, tab_order: t.order };
+                    });
+                    const result = await reorderTabs("deal_detail", newOrders);
+                    if (result.error) {
+                      toast.error(`Failed to reorder tabs: ${result.error}`);
+                    } else {
+                      layout.refetch();
+                    }
+                  };
+
+                  return (
+                    <div key={tab} className="flex items-center gap-0">
+                      <button
+                        onClick={() => handleReorder("left")}
+                        disabled={tabIdx === 0}
+                        className="flex items-center justify-center h-5 w-4 rounded-l bg-transparent text-muted-foreground/40 hover:text-foreground disabled:opacity-20 disabled:cursor-not-allowed transition-colors cursor-pointer border-0"
+                        title="Move tab left"
+                      >
+                        <ChevronLeft className="h-3 w-3" />
+                      </button>
+                      <div className="flex items-center gap-0 rounded-lg">
+                        <button
+                          onClick={() => handleTabChange(tab)}
+                          className={cn(
+                            "flex items-center gap-1.5 rounded-lg border-none px-3.5 py-[7px] text-[13px] cursor-pointer transition-all duration-150",
+                            activeTab === tab
+                              ? "bg-background text-foreground font-medium shadow-sm"
+                              : "bg-transparent text-muted-foreground hover:text-foreground",
+                            "hover:ring-1 hover:ring-primary/30"
+                          )}
+                        >
+                          {tab === "Borrower" ? (
+                            <>
+                              <Building2 className="h-3.5 w-3.5 shrink-0" strokeWidth={1.5} />
+                              {tab}
+                            </>
+                          ) : (
+                            tab
+                          )}
+                        </button>
+                        <TabEditPopover
+                          tabKey={layoutTab.key}
+                          tabLabel={layoutTab.label}
+                          tabIcon={layoutTab.icon}
+                          tabLocked={layoutTab.locked}
+                          pageType="deal_detail"
+                          onUpdated={() => layout.refetch()}
+                        >
+                          <button
+                            type="button"
+                            onClick={(e) => e.stopPropagation()}
+                            className="flex items-center justify-center h-6 w-6 rounded-md text-muted-foreground/60 hover:text-foreground hover:bg-muted border-0 cursor-pointer transition-colors"
+                            title="Edit tab"
+                          >
+                            <Pencil className="h-2.5 w-2.5" />
+                          </button>
+                        </TabEditPopover>
+                      </div>
+                      <button
+                        onClick={() => handleReorder("right")}
+                        disabled={tabIdx >= layout.tabs.length - 1}
+                        className="flex items-center justify-center h-5 w-4 rounded-r bg-transparent text-muted-foreground/40 hover:text-foreground disabled:opacity-20 disabled:cursor-not-allowed transition-colors cursor-pointer border-0"
+                        title="Move tab right"
+                      >
+                        <ChevronRight className="h-3 w-3" />
+                      </button>
+                    </div>
+                  );
+                }
+              }
+
+              return tabButton;
+            })}
           </div>
+
+          {/* Edit Layout toggle (super_admin only) */}
+          {isSuperAdmin && !inlineLayout.state.isEditing && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-8 text-xs gap-1.5 text-muted-foreground hover:text-foreground"
+              onClick={() => {
+                inlineLayout.setActiveTabKey(activeTab.toLowerCase());
+                inlineLayout.startEditing(layout.sections, layout.fields);
+              }}
+            >
+              <Pencil className="h-3 w-3" />
+              Edit Layout
+            </Button>
+          )}
         </div>
+
+        {/* Inline Layout Toolbar (shown when editing) */}
+        <InlineLayoutToolbar onSaveComplete={() => layout.refetch()} tabs={layout.tabs} />
 
         {/* Content Area: full-width (sidebar eliminated) */}
         <div className="flex flex-col gap-5 min-w-0">
@@ -355,6 +491,7 @@ export function DealDetailPage({
                 uwData={{
                   ...deal.uw_data,
                   date_created: deal.created_at,
+                  asset_class: deal.asset_class ?? undefined,
                 }}
                 propertyData={(deal.property_data as Record<string, unknown>) ?? {}}
                 cardType={cardType}

@@ -271,6 +271,7 @@ export default async function DealDetailRoute({ params }: PageProps) {
       commercialUWData={commercialUWData}
       pinnedNote={pinnedNote ?? null}
       recentNote={recentNote ?? null}
+      isSuperAdmin={session.isSuperAdmin}
     />
   );
 }

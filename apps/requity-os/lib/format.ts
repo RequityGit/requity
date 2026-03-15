@@ -159,8 +159,14 @@ export function formatFieldValue(value: unknown, fieldType: string): string {
     case "boolean":
       return value ? "Yes" : "No";
 
-    case "select":
-      return String(value).replace(/_/g, " ");
+    case "select": {
+      const ACRONYMS: Record<string, boolean> = { sfr: true, mhc: true, rv: true };
+      return String(value)
+        .replace(/_/g, " ")
+        .split(" ")
+        .map((w) => (ACRONYMS[w] ? w.toUpperCase() : w.charAt(0).toUpperCase() + w.slice(1)))
+        .join(" ");
+    }
 
     default:
       return String(value);

@@ -13,6 +13,10 @@ import { Loader2, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { RentRollSubTab } from "./financials/RentRollSubTab";
 import { T12SubTab } from "./financials/T12SubTab";
+import { useInlineLayout } from "@/components/inline-layout-editor/InlineLayoutContext";
+import { EditableSection } from "@/components/inline-layout-editor/EditableSection";
+import { EditableFieldSlot } from "@/components/inline-layout-editor/EditableFieldSlot";
+import { FieldPicker } from "@/components/inline-layout-editor/FieldPicker";
 
 // ── Column span mapping (static for Tailwind purging) ──
 
@@ -320,6 +324,42 @@ function PropertyDetailsContent({
   const hasAddress = !!(localData.property_address ?? localData.address_line1);
   const hasState = !!(localData.property_state ?? localData.state);
 
+  // Inline layout editor support — must be called unconditionally (hooks rule)
+  let inlineLayout: ReturnType<typeof useInlineLayout> | null = null;
+  try {
+    // eslint-disable-next-line react-hooks/rules-of-hooks
+    inlineLayout = useInlineLayout();
+  } catch {
+    // Not inside InlineLayoutProvider
+  }
+  const isEditing = inlineLayout?.state.isEditing ?? false;
+
+  // When editing, use inline layout state; otherwise DB layout
+  const effectiveSections = useMemo(() => {
+    if (isEditing && inlineLayout) {
+      return inlineLayout.state.sections
+        .filter(
+          (s) => s.tab_key === "property" && s.section_type === "fields"
+        )
+        .sort((a, b) => a.display_order - b.display_order);
+    }
+    return layoutSections;
+  }, [isEditing, inlineLayout?.state.sections, layoutSections]);
+
+  const effectiveFieldsBySection = isEditing && inlineLayout
+    ? inlineLayout.state.fieldsBySectionId
+    : layout.fieldsBySectionId;
+
+  const allUsedFieldKeys = useMemo(() => {
+    const set = new Set<string>();
+    for (const section of effectiveSections) {
+      for (const f of (effectiveFieldsBySection[section.id] ?? [])) {
+        set.add(f.field_key);
+      }
+    }
+    return set;
+  }, [effectiveSections, effectiveFieldsBySection]);
+
   if (fieldsLoading || layout.loading) {
     return <div className="rounded-xl border border-dashed p-8 text-center animate-pulse" />;
   }
@@ -354,44 +394,70 @@ function PropertyDetailsContent({
     </div>
   );
 
-  if (useLayoutSections) {
+  if (useLayoutSections || (isEditing && effectiveSections.length > 0)) {
     return (
       <div className="space-y-4">
         {enrichButton}
 
-        {layoutSections.map((section) => {
-          const layoutFields = (layout.fieldsBySectionId[section.id] ?? []).filter(
-            (f) => f.is_visible
-          );
-          if (layoutFields.length === 0) return null;
+        {effectiveSections.map((section, sectionIdx) => {
+          const layoutFields = (effectiveFieldsBySection[section.id] ?? [])
+            .filter((f) => f.is_visible)
+            .sort((a, b) => a.display_order - b.display_order);
+          if (layoutFields.length === 0 && !isEditing) return null;
 
           return (
-            <div key={section.id} className="rounded-xl border bg-card p-4">
-              <h4 className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider mb-3">
-                {section.section_label}
-              </h4>
-              <div className="grid grid-cols-12 gap-x-5 gap-y-2">
-                {layoutFields.map((lf) => {
-                  const fieldDef = uwFieldMap.get(lf.field_key);
-                  if (!fieldDef) return null;
-                  const spanClass = SPAN_CLASS[lf.column_span] || SPAN_CLASS.half;
-                  return (
-                    <div key={lf.field_key} className={spanClass}>
-                      <UwField
-                        field={fieldDef}
-                        value={localData[lf.field_key] ?? null}
-                        onChange={(val) => handleFieldChange(lf.field_key, val)}
-                        onBlur={() => handleFieldBlur(lf.field_key)}
-                        disabled={pending}
-                        mode={editingFieldKey === lf.field_key ? "edit" : "read"}
-                        onStartEdit={() => setEditingFieldKey(lf.field_key)}
-                        onEndEdit={() => setEditingFieldKey(null)}
-                      />
-                    </div>
-                  );
-                })}
+            <EditableSection
+              key={section.id}
+              section={section}
+              sectionIndex={sectionIdx}
+              totalSections={effectiveSections.length}
+            >
+              <div className="rounded-xl border bg-card p-4">
+                <h4 className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider mb-3">
+                  {section.section_label}
+                </h4>
+                <div className="grid grid-cols-12 gap-x-5 gap-y-2">
+                  {layoutFields.map((lf, idx) => {
+                    const fieldDef = uwFieldMap.get(lf.field_key);
+                    if (!fieldDef) return null;
+                    const spanClass = SPAN_CLASS[lf.column_span] || SPAN_CLASS.half;
+                    return (
+                      <div key={lf.id ?? lf.field_key} className={spanClass}>
+                        <EditableFieldSlot
+                          fieldId={lf.id}
+                          fieldLabel={fieldDef.label}
+                          columnSpan={lf.column_span || "half"}
+                          sectionId={section.id}
+                          fieldIndex={idx}
+                          totalFields={layoutFields.length}
+                          fieldConfigId={lf.field_config_id}
+                          fieldKey={lf.field_key}
+                        >
+                          <UwField
+                            field={fieldDef}
+                            value={localData[lf.field_key] ?? null}
+                            onChange={(val) => handleFieldChange(lf.field_key, val)}
+                            onBlur={() => handleFieldBlur(lf.field_key)}
+                            disabled={pending || isEditing}
+                            mode={editingFieldKey === lf.field_key && !isEditing ? "edit" : "read"}
+                            onStartEdit={() => !isEditing && setEditingFieldKey(lf.field_key)}
+                            onEndEdit={() => setEditingFieldKey(null)}
+                          />
+                        </EditableFieldSlot>
+                      </div>
+                    );
+                  })}
+                </div>
+                {isEditing && (
+                  <div className="mt-3 flex justify-center">
+                    <FieldPicker
+                      sectionId={section.id}
+                      usedFieldKeys={allUsedFieldKeys}
+                    />
+                  </div>
+                )}
               </div>
-            </div>
+            </EditableSection>
           );
         })}
       </div>

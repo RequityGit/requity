@@ -46,13 +46,13 @@ export const NAV_GROUPS: NavGroup[] = [
     ],
   },
   {
-    id: "page-layouts",
-    label: "Page Layouts",
+    id: "data-model",
+    label: "Data Model",
     items: [
       {
-        id: "object-manager",
-        label: "Object Manager",
-        desc: "Unified admin for objects, fields, relationships, and page layouts.",
+        id: "field-manager",
+        label: "Field Manager",
+        desc: "Manage object fields, relationships, conditional visibility, and formulas. Page layouts are edited inline on each detail page.",
         href: "/control-center/object-manager",
         icon: SlidersHorizontal,
       },

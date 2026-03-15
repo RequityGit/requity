@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useCallback, useTransition } from "react";
+import { useState, useMemo, useCallback, useTransition, useRef } from "react";
 import { updateUwDataAction, updatePropertyDataAction } from "@/app/(authenticated)/(admin)/pipeline/actions";
 import {
   type UnifiedCardType,
@@ -34,6 +34,10 @@ import {
 import type { LucideIcon } from "lucide-react";
 import { DealTeamSection } from "@/components/deal-team/DealTeamSection";
 import type { DealTeamContact } from "@/app/types/deal-team";
+import { useInlineLayout } from "@/components/inline-layout-editor/InlineLayoutContext";
+import { EditableSection } from "@/components/inline-layout-editor/EditableSection";
+import { EditableFieldSlot } from "@/components/inline-layout-editor/EditableFieldSlot";
+import { FieldPicker } from "@/components/inline-layout-editor/FieldPicker";
 
 // ── Section icon mapping ──
 
@@ -75,9 +79,11 @@ function formatFormulaValue(field: UwFieldDef, computed: number | null | undefin
 // ── Props ──
 
 interface FieldRef {
+  id?: string;
   key: string;
   source: string | null;
   columnSpan: string;
+  fieldConfigId?: string | null;
 }
 
 interface EditableOverviewProps {
@@ -104,35 +110,69 @@ export function EditableOverview({
   const [pending, startTransition] = useTransition();
   const [editingFieldKey, setEditingFieldKey] = useState<string | null>(null);
 
+  // Refs track the latest local state so handleFieldBlur always reads
+  // current values, even when called from a stale setTimeout closure
+  // (select/date fields call onChange + setTimeout(onBlur, 0) in the same tick).
+  const localUwDataRef = useRef(localUwData);
+  const localPropertyDataRef = useRef(localPropertyData);
+  localUwDataRef.current = localUwData;
+  localPropertyDataRef.current = localPropertyData;
+
   const { fieldMap: uwFieldMap } = useUwFieldConfigs(visibilityContext);
   const layout = useDealLayout();
 
-  const effectiveFieldGroups = useMemo<{ label: string; icon: string; fields: FieldRef[] }[]>(() => {
-    if (!layout.loading && layout.fieldSections.length > 0) {
-      const overviewFieldSections = layout.fieldSections.filter(
-        (s) => (s.tab_key || "overview") === "overview"
-      );
+  // Inline layout editor context (may not exist if provider not mounted)
+  let inlineLayout: ReturnType<typeof useInlineLayout> | null = null;
+  try {
+    inlineLayout = useInlineLayout();
+  } catch {
+    // Not inside InlineLayoutProvider - that's fine
+  }
+  const isEditing = inlineLayout?.state.isEditing ?? false;
 
-      if (overviewFieldSections.length > 0) {
-        return overviewFieldSections.map((section) => {
-          const layoutFields = layout.fieldsBySectionId[section.id] ?? [];
-          return {
-            label: section.section_label,
-            icon: section.section_icon,
-            fields: layoutFields
-              .filter((f) => f.is_visible)
-              .map((f) => ({
-                key: f.field_key,
-                source: f.source_object_key,
-                columnSpan: f.column_span || "half",
-              })),
-          };
-        });
-      }
-    }
+  // When editing, use inline layout state for sections/fields; otherwise use DB layout
+  const effectiveFieldGroups = useMemo<{ id: string; label: string; icon: string; fields: (FieldRef & { id: string })[] }[]>(() => {
+    const sections = isEditing && inlineLayout
+      ? inlineLayout.state.sections
+          .filter(
+            (s) => (s.tab_key || "overview") === "overview" && s.section_type === "fields"
+          )
+          .sort((a, b) => a.display_order - b.display_order)
+      : layout.fieldSections.filter(
+          (s) => (s.tab_key || "overview") === "overview"
+        );
 
-    return [];
-  }, [layout.loading, layout.fieldSections, layout.fieldsBySectionId]);
+    const fieldsBySection = isEditing && inlineLayout
+      ? inlineLayout.state.fieldsBySectionId
+      : layout.fieldsBySectionId;
+
+    if (sections.length === 0 && !layout.loading) return [];
+
+    return sections.map((section) => {
+      const layoutFields = fieldsBySection[section.id] ?? [];
+      return {
+        id: section.id,
+        label: section.section_label,
+        icon: section.section_icon,
+        fields: layoutFields
+          .filter((f) => f.is_visible)
+          .map((f) => ({
+            id: f.id,
+            key: f.field_key,
+            source: f.source_object_key,
+            columnSpan: f.column_span || "half",
+            fieldConfigId: f.field_config_id,
+          })),
+      };
+    });
+  }, [
+    isEditing,
+    inlineLayout?.state.sections,
+    inlineLayout?.state.fieldsBySectionId,
+    layout.loading,
+    layout.fieldSections,
+    layout.fieldsBySectionId,
+  ]);
 
   const getFieldValue = useCallback(
     (fieldRef: FieldRef): unknown => {
@@ -174,14 +214,20 @@ export function EditableOverview({
 
   function handleFieldChange(key: string, value: unknown, source: string | null) {
     if (source === "property") {
-      setLocalPropertyData((prev) => ({ ...prev, [key]: value }));
+      const next = { ...localPropertyDataRef.current, [key]: value };
+      localPropertyDataRef.current = next;
+      setLocalPropertyData(next);
     } else {
-      setLocalUwData((prev) => ({ ...prev, [key]: value }));
+      const next = { ...localUwDataRef.current, [key]: value };
+      localUwDataRef.current = next;
+      setLocalUwData(next);
     }
   }
 
   function handleFieldBlur(key: string, source: string | null) {
-    const currentVal = source === "property" ? localPropertyData[key] : localUwData[key];
+    const currentVal = source === "property"
+      ? localPropertyDataRef.current[key]
+      : localUwDataRef.current[key];
     const prevVal = source === "property" ? propertyData[key] : uwData[key];
     if (currentVal === prevVal) return;
 
@@ -193,8 +239,10 @@ export function EditableOverview({
       if (result.error) {
         toast.error(`Failed to save ${uwFieldMap.get(key)?.label ?? key}: ${result.error}`);
         if (source === "property") {
+          localPropertyDataRef.current = { ...localPropertyDataRef.current, [key]: prevVal };
           setLocalPropertyData((prev) => ({ ...prev, [key]: prevVal }));
         } else {
+          localUwDataRef.current = { ...localUwDataRef.current, [key]: prevVal };
           setLocalUwData((prev) => ({ ...prev, [key]: prevVal }));
         }
       }
@@ -207,6 +255,15 @@ export function EditableOverview({
       .map((f) => ({ key: f.key, label: f.label, format: f.formulaOutputFormat, value: formulaValues[f.key] ?? null }))
       .filter((o) => o.value != null);
   }, [uwFieldMap, formulaValues]);
+
+  // All used field keys across all overview sections
+  const allUsedFieldKeys = useMemo(() => {
+    const set = new Set<string>();
+    for (const group of effectiveFieldGroups) {
+      for (const f of group.fields) set.add(f.key);
+    }
+    return set;
+  }, [effectiveFieldGroups]);
 
   return (
     <div className="space-y-4">
@@ -231,77 +288,111 @@ export function EditableOverview({
         </SectionCard>
       )}
 
-      {effectiveFieldGroups.map((group) => {
+      {effectiveFieldGroups.map((group, sectionIdx) => {
         const Icon = getSectionIcon(group.label);
         return (
-          <div key={group.label} className="rounded-xl border bg-card p-4">
-            <div className="flex items-center gap-2 mb-3">
-              {Icon && <Icon className="h-3.5 w-3.5 text-muted-foreground" strokeWidth={1.5} />}
-              <h4 className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
-                {group.label}
-              </h4>
-            </div>
-            <div className="grid grid-cols-12 gap-x-5 gap-y-2">
-              {group.fields.map((fieldRef) => {
-                const fieldDef = uwFieldMap.get(fieldRef.key);
-                if (!fieldDef) return null;
-                const source = fieldSourceMap.get(fieldRef.key) ?? null;
-                const spanClass = SPAN_CLASS[fieldRef.columnSpan] || SPAN_CLASS.half;
+          <EditableSection
+            key={group.id}
+            section={
+              (isEditing && inlineLayout
+                ? inlineLayout.state.sections
+                : layout.fieldSections
+              ).find(s => s.id === group.id)!
+            }
+            sectionIndex={sectionIdx}
+            totalSections={effectiveFieldGroups.length}
+          >
+            <div className="rounded-xl border bg-card p-4">
+              <div className="flex items-center gap-2 mb-3">
+                {Icon && <Icon className="h-3.5 w-3.5 text-muted-foreground" strokeWidth={1.5} />}
+                <h4 className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
+                  {group.label}
+                </h4>
+              </div>
+              <div className="grid grid-cols-12 gap-x-5 gap-y-2">
+                {group.fields.map((fieldRef, fieldIdx) => {
+                  const fieldDef = uwFieldMap.get(fieldRef.key);
+                  if (!fieldDef) return null;
+                  const source = fieldSourceMap.get(fieldRef.key) ?? null;
+                  const spanClass = SPAN_CLASS[fieldRef.columnSpan] || SPAN_CLASS.half;
 
-                if (fieldDef.formulaExpression) {
-                  const computed = formulaValues[fieldRef.key];
-                  const empty = computed == null;
-                  return (
-                    <div key={fieldRef.key} className={spanClass}>
-                      <div className="space-y-0.5">
-                        <span className="text-xs text-muted-foreground">{fieldDef.label}</span>
-                        <div className={cn(
-                          "py-1.5 text-sm",
-                          empty ? "text-muted-foreground/60" : "num text-foreground"
-                        )}>
-                          {empty ? "---" : formatFormulaValue(fieldDef, computed)}
+                  const fieldContent = (() => {
+                    if (fieldDef.formulaExpression) {
+                      const computed = formulaValues[fieldRef.key];
+                      const empty = computed == null;
+                      return (
+                        <div className="space-y-0.5">
+                          <span className="text-xs text-muted-foreground">{fieldDef.label}</span>
+                          <div className={cn(
+                            "py-1.5 text-sm",
+                            empty ? "text-muted-foreground/60" : "num text-foreground"
+                          )}>
+                            {empty ? "---" : formatFormulaValue(fieldDef, computed)}
+                          </div>
                         </div>
-                      </div>
+                      );
+                    }
+
+                    if (fieldDef.readOnly) {
+                      const raw = getFieldValue(fieldRef);
+                      const val = raw != null ? formatFieldValue(raw, fieldDef.type) : "";
+                      const empty = isFieldEmpty(raw);
+                      return (
+                        <div className="space-y-0.5">
+                          <span className="text-xs text-muted-foreground">{fieldDef.label}</span>
+                          <div className={cn(
+                            "py-1.5 text-sm",
+                            empty ? "text-muted-foreground/60" : "text-foreground"
+                          )}>
+                            {empty ? "---" : val}
+                          </div>
+                        </div>
+                      );
+                    }
+
+                    return (
+                      <UwField
+                        field={fieldDef}
+                        value={getFieldValue(fieldRef)}
+                        onChange={(val) => handleFieldChange(fieldRef.key, val, source)}
+                        onBlur={() => handleFieldBlur(fieldRef.key, source)}
+                        disabled={pending || isEditing}
+                        mode={editingFieldKey === fieldRef.key && !isEditing ? "edit" : "read"}
+                        onStartEdit={() => !isEditing && setEditingFieldKey(fieldRef.key)}
+                        onEndEdit={() => setEditingFieldKey(null)}
+                      />
+                    );
+                  })();
+
+                  return (
+                    <div key={fieldRef.id ?? fieldRef.key} className={spanClass}>
+                      <EditableFieldSlot
+                        fieldId={fieldRef.id ?? fieldRef.key}
+                        fieldLabel={fieldDef.label}
+                        columnSpan={fieldRef.columnSpan}
+                        sectionId={group.id}
+                        fieldIndex={fieldIdx}
+                        totalFields={group.fields.length}
+                        fieldConfigId={fieldRef.fieldConfigId}
+                        fieldKey={fieldRef.key}
+                      >
+                        {fieldContent}
+                      </EditableFieldSlot>
                     </div>
                   );
-                }
-
-                if (fieldDef.readOnly) {
-                  const raw = getFieldValue(fieldRef);
-                  const val = raw != null ? formatFieldValue(raw, fieldDef.type) : "";
-                  const empty = isFieldEmpty(raw);
-                  return (
-                    <div key={fieldRef.key} className={spanClass}>
-                      <div className="space-y-0.5">
-                        <span className="text-xs text-muted-foreground">{fieldDef.label}</span>
-                        <div className={cn(
-                          "py-1.5 text-sm",
-                          empty ? "text-muted-foreground/60" : "text-foreground"
-                        )}>
-                          {empty ? "---" : val}
-                        </div>
-                      </div>
-                    </div>
-                  );
-                }
-
-                return (
-                  <div key={fieldRef.key} className={spanClass}>
-                    <UwField
-                      field={fieldDef}
-                      value={getFieldValue(fieldRef)}
-                      onChange={(val) => handleFieldChange(fieldRef.key, val, source)}
-                      onBlur={() => handleFieldBlur(fieldRef.key, source)}
-                      disabled={pending}
-                      mode={editingFieldKey === fieldRef.key ? "edit" : "read"}
-                      onStartEdit={() => setEditingFieldKey(fieldRef.key)}
-                      onEndEdit={() => setEditingFieldKey(null)}
-                    />
-                  </div>
-                );
-              })}
+                })}
+              </div>
+              {/* Add Field button (edit mode only) */}
+              {isEditing && (
+                <div className="mt-3 flex justify-center">
+                  <FieldPicker
+                    sectionId={group.id}
+                    usedFieldKeys={allUsedFieldKeys}
+                  />
+                </div>
+              )}
             </div>
-          </div>
+          </EditableSection>
         );
       })}
 

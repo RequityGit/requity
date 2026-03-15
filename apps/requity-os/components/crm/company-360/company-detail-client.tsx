@@ -17,6 +17,7 @@ import { EmailComposeSheet } from "@/components/crm/email-compose-sheet";
 import { CompanyDetailHeader } from "./company-detail-header";
 import { CompanyDetailSidebar } from "./company-detail-sidebar";
 import { CompanyOverviewTab } from "./tabs/overview-tab";
+import { CrmInlineEditorWrapper } from "@/components/inline-layout-editor/CrmInlineEditorWrapper";
 import { CompanyContactsTab } from "./tabs/contacts-tab";
 import { CompanyActivityTab } from "./tabs/activity-tab";
 import { CompanyDealsTab } from "./tabs/deals-tab";
@@ -60,6 +61,7 @@ interface CompanyDetailClientProps {
   teamMembers: { id: string; full_name: string }[];
   sectionOrder: SectionLayout[];
   sectionFields: Record<string, FieldLayout[]>;
+  isSuperAdmin?: boolean;
 }
 
 export function CompanyDetailClient({
@@ -78,6 +80,7 @@ export function CompanyDetailClient({
   teamMembers,
   sectionOrder,
   sectionFields,
+  isSuperAdmin = false,
 }: CompanyDetailClientProps) {
   const searchParams = useSearchParams();
   const [emailComposeOpen, setEmailComposeOpen] = useState(false);
@@ -189,13 +192,15 @@ export function CompanyDetailClient({
           {/* Tab content: visited tabs stay mounted (hidden) to preserve state & subscriptions */}
           {loadedTabs.has("overview") && (
             <div className={activeTab !== "overview" ? "hidden" : undefined}>
-              <CompanyOverviewTab
-                company={company}
-                wireInstructions={wireInstructions}
-                files={files}
-                sectionOrder={sectionOrder}
-                sectionFields={sectionFields}
-              />
+              <CrmInlineEditorWrapper pageType="company_detail" isSuperAdmin={isSuperAdmin}>
+                <CompanyOverviewTab
+                  company={company}
+                  wireInstructions={wireInstructions}
+                  files={files}
+                  sectionOrder={sectionOrder}
+                  sectionFields={sectionFields}
+                />
+              </CrmInlineEditorWrapper>
             </div>
           )}
           {loadedTabs.has("contacts") && (

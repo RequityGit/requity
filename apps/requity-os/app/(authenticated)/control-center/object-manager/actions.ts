@@ -1258,6 +1258,37 @@ export async function updateTab(
   }
 }
 
+export async function reorderTabs(
+  pageType: string,
+  tabOrders: { tab_key: string; tab_order: number }[]
+): Promise<{ success?: boolean; error?: string }> {
+  try {
+    const auth = await requireSuperAdmin();
+    if ("error" in auth) return { error: auth.error };
+
+    const admin = createAdminClient();
+    const now = new Date().toISOString();
+
+    // Update tab_order on all sections belonging to each tab
+    const promises = tabOrders.map(({ tab_key, tab_order }) =>
+      admin
+        .from(SECTIONS)
+        .update({ tab_order, updated_at: now } as never)
+        .eq("page_type" as never, pageType as never)
+        .eq("tab_key" as never, tab_key as never)
+    );
+
+    const results = await Promise.all(promises);
+    const firstError = results.find((r) => r.error);
+    if (firstError?.error) return { error: firstError.error.message };
+
+    revalidate();
+    return { success: true };
+  } catch (err: unknown) {
+    return { error: err instanceof Error ? err.message : "An unexpected error occurred" };
+  }
+}
+
 export async function deleteTab(
   pageType: string,
   tabKey: string

@@ -17,6 +17,16 @@ import { cn } from "@/lib/utils";
 import type { UwFieldDef } from "./pipeline-types";
 import { ReadValue } from "./ReadValue";
 
+const ACRONYMS = new Set(["sfr", "mhc", "rv"]);
+
+function formatSelectLabel(opt: string): string {
+  return opt
+    .replace(/_/g, " ")
+    .split(" ")
+    .map((w) => (ACRONYMS.has(w) ? w.toUpperCase() : w.charAt(0).toUpperCase() + w.slice(1)))
+    .join(" ");
+}
+
 function formatCurrencyDisplay(val: unknown): string {
   if (val == null || val === "") return "";
   const n = Number(val);
@@ -144,7 +154,7 @@ function CurrencyEditInput({
         onBlur={handleBlur}
         onKeyDown={onKeyDown}
         disabled={disabled}
-        className="pl-7 text-right num"
+        className="pl-7 num"
         placeholder="0"
       />
     </div>
@@ -320,7 +330,7 @@ function EditInput({
             onBlur={onBlur}
             onKeyDown={onKeyDown}
             disabled={disabled}
-            className="pr-7 text-right num"
+            className="pr-7 num"
             placeholder="0.00"
           />
           <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">
@@ -360,7 +370,7 @@ function EditInput({
           <SelectContent>
             {(field.options ?? []).map((opt) => (
               <SelectItem key={opt} value={opt}>
-                {opt.replace(/_/g, " ")}
+                {formatSelectLabel(opt)}
               </SelectItem>
             ))}
           </SelectContent>

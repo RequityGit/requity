@@ -23,6 +23,12 @@ import type {
   TeamMember,
   CompanyData,
 } from "../types";
+import { usePageLayout } from "@/hooks/usePageLayout";
+import { useInlineLayout } from "@/components/inline-layout-editor/InlineLayoutContext";
+import { EditableSection } from "@/components/inline-layout-editor/EditableSection";
+import { EditableFieldSlot } from "@/components/inline-layout-editor/EditableFieldSlot";
+import { FieldPicker } from "@/components/inline-layout-editor/FieldPicker";
+import type { LayoutSection, LayoutField } from "@/hooks/useDealLayout";
 
 interface DetailOverviewTabProps {
   contact: ContactData;
@@ -84,6 +90,16 @@ export function DetailOverviewTab({
   const { toast } = useToast();
   const supabase = createClient();
   const [pending, startTransition] = useTransition();
+
+  // Inline layout editor awareness
+  const layout = usePageLayout("contact_detail");
+  let inlineLayout: ReturnType<typeof useInlineLayout> | null = null;
+  try {
+    inlineLayout = useInlineLayout();
+  } catch {
+    // Not inside InlineLayoutProvider - that's fine
+  }
+  const isEditing = inlineLayout?.state.isEditing ?? false;
 
   const [quickAddCompanyOpen, setQuickAddCompanyOpen] = useState(false);
   const [localCompanies, setLocalCompanies] = useState<CompanyData[]>(allCompanies);
@@ -193,10 +209,19 @@ export function DetailOverviewTab({
     visibility_rule: null, section_type: "address", section_label: "Address", section_icon: "map-pin",
   };
 
+  // When editing, use inline layout state for sections; when not, use server-provided data
   const resolvedSections = useMemo(() => {
-    const layout = sectionOrder.length > 0 ? sectionOrder : DEFAULT_SECTION_ORDER;
+    if (isEditing && inlineLayout) {
+      // In edit mode, show ALL field sections from the inline layout state
+      return inlineLayout.state.sections
+        .filter((s) => s.section_type === "fields")
+        .sort((a, b) => a.display_order - b.display_order);
+    }
 
-    const filtered = layout
+    // Normal mode: use server-provided section order
+    const layoutSections = sectionOrder.length > 0 ? sectionOrder : DEFAULT_SECTION_ORDER;
+
+    const filtered = layoutSections
       .filter((s) => s.is_visible)
       .filter((s) => {
         if (!s.visibility_rule) return true;
@@ -213,7 +238,7 @@ export function DetailOverviewTab({
     }
 
     return filtered;
-  }, [sectionOrder]);
+  }, [sectionOrder, isEditing, inlineLayout?.state.sections]);
 
   function handleInlineChange(fieldKey: string, value: unknown) {
     setLocalContactData((prev) => ({ ...prev, [fieldKey]: value }));
@@ -368,9 +393,66 @@ export function DetailOverviewTab({
     return renderFieldSection(section);
   }
 
+  // Get all used field keys for the FieldPicker
+  const allUsedFieldKeys = useMemo(() => {
+    if (!isEditing || !inlineLayout) return new Set<string>();
+    const keys = new Set<string>();
+    for (const f of inlineLayout.state.fields) keys.add(f.field_key);
+    return keys;
+  }, [isEditing, inlineLayout?.state.fields]);
+
+  // Convert SectionLayout (CRM type) to LayoutSection for EditableSection compatibility
+  function toLayoutSection(section: SectionLayout | LayoutSection, idx: number): LayoutSection {
+    // If it already has an id field, it's a LayoutSection from inline state
+    if ("id" in section && "page_type" in section) return section as LayoutSection;
+    // Otherwise build a compatible object from SectionLayout
+    return {
+      id: (section as SectionLayout).section_key,
+      page_type: "contact_detail",
+      section_key: (section as SectionLayout).section_key,
+      section_label: section.section_label,
+      section_icon: section.section_icon,
+      display_order: section.display_order,
+      is_visible: section.is_visible,
+      is_locked: false,
+      sidebar: false,
+      section_type: section.section_type,
+      tab_key: null,
+      tab_label: null,
+      tab_icon: null,
+      tab_order: 0,
+      tab_locked: false,
+      card_type_id: null,
+    };
+  }
+
   return (
     <div className="flex flex-col gap-5">
-      {resolvedSections.map((section) => renderSection(section))}
+      {resolvedSections.map((section, sectionIdx) => {
+        const content = renderSection(section as SectionLayout);
+        if (!isEditing) return content;
+
+        const layoutSec = toLayoutSection(section, sectionIdx);
+        const fieldSections = resolvedSections.filter(s => ("section_type" in s ? s.section_type : "") === "fields");
+
+        return (
+          <EditableSection
+            key={layoutSec.id}
+            section={layoutSec}
+            sectionIndex={sectionIdx}
+            totalSections={fieldSections.length}
+          >
+            {content}
+            {/* Add Field button in edit mode */}
+            <div className="mt-3 flex justify-center pb-2">
+              <FieldPicker
+                sectionId={layoutSec.id}
+                usedFieldKeys={allUsedFieldKeys}
+              />
+            </div>
+          </EditableSection>
+        );
+      })}
 
       <QuickAddCompanyDialog
         open={quickAddCompanyOpen}

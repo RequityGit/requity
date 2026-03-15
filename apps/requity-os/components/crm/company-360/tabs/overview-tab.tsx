@@ -52,6 +52,11 @@ import type {
   SectionLayout,
   FieldLayout,
 } from "@/components/crm/contact-360/types";
+import { usePageLayout } from "@/hooks/usePageLayout";
+import { useInlineLayout } from "@/components/inline-layout-editor/InlineLayoutContext";
+import { EditableSection } from "@/components/inline-layout-editor/EditableSection";
+import { FieldPicker } from "@/components/inline-layout-editor/FieldPicker";
+import type { LayoutSection } from "@/hooks/useDealLayout";
 
 interface OverviewTabProps {
   company: CompanyDetailData;
@@ -122,6 +127,16 @@ export function CompanyOverviewTab({
   const [pending, startTransition] = useTransition();
   const [showWire, setShowWire] = useState(false);
 
+  // Inline layout editor awareness
+  const layout = usePageLayout("company_detail");
+  let inlineLayout: ReturnType<typeof useInlineLayout> | null = null;
+  try {
+    inlineLayout = useInlineLayout();
+  } catch {
+    // Not inside InlineLayoutProvider - that's fine
+  }
+  const isEditing = inlineLayout?.state.isEditing ?? false;
+
   const types = (localData.company_types as string[] | undefined)?.length
     ? (localData.company_types as string[])
     : [localData.company_type as string];
@@ -155,7 +170,14 @@ export function CompanyOverviewTab({
       (company.geographies ?? []).length > 0);
 
   const resolvedSections = useMemo(() => {
-    const layout = sectionOrder.length > 0 ? sectionOrder : DEFAULT_SECTION_ORDER;
+    if (isEditing && inlineLayout) {
+      // In edit mode, show ALL sections from the inline layout state
+      return inlineLayout.state.sections
+        .sort((a, b) => a.display_order - b.display_order)
+        .map((s) => s.section_key);
+    }
+
+    const layoutData = sectionOrder.length > 0 ? sectionOrder : DEFAULT_SECTION_ORDER;
 
     const visibilityContext: Record<string, boolean> = {
       is_lender: isLender,
@@ -163,7 +185,7 @@ export function CompanyOverviewTab({
       has_wire: !!wireInstructions,
     };
 
-    return layout
+    return layoutData
       .filter((s) => s.is_visible)
       .filter((s) => {
         if (!s.visibility_rule) return true;
@@ -171,7 +193,7 @@ export function CompanyOverviewTab({
       })
       .sort((a, b) => a.display_order - b.display_order)
       .map((s) => s.section_key);
-  }, [sectionOrder, isLender, wireInstructions]);
+  }, [sectionOrder, isLender, wireInstructions, isEditing, inlineLayout?.state.sections]);
 
   const inlineCallbacks = useMemo(() => ({
     onChange: handleChange,
@@ -490,9 +512,72 @@ export function CompanyOverviewTab({
     ),
   };
 
+  // Convert SectionLayout (CRM type) to LayoutSection for EditableSection compatibility
+  function toLayoutSection(sectionKey: string): LayoutSection {
+    // If editing, check inline layout state first
+    if (isEditing && inlineLayout) {
+      const found = inlineLayout.state.sections.find((s) => s.section_key === sectionKey);
+      if (found) return found;
+    }
+    // Build a compatible object from the section order
+    const sectionData = sectionOrder.find((s) => s.section_key === sectionKey)
+      ?? DEFAULT_SECTION_ORDER.find((s) => s.section_key === sectionKey);
+    return {
+      id: sectionKey,
+      page_type: "company_detail",
+      section_key: sectionKey,
+      section_label: sectionData?.section_label ?? sectionKey,
+      section_icon: sectionData?.section_icon ?? "building-2",
+      display_order: sectionData?.display_order ?? 0,
+      is_visible: sectionData?.is_visible ?? true,
+      is_locked: false,
+      sidebar: false,
+      section_type: sectionData?.section_type ?? "fields",
+      tab_key: null,
+      tab_label: null,
+      tab_icon: null,
+      tab_order: 0,
+      tab_locked: false,
+      card_type_id: null,
+    };
+  }
+
+  // Get all used field keys for the FieldPicker
+  const allUsedFieldKeys = useMemo(() => {
+    if (!isEditing || !inlineLayout) return new Set<string>();
+    const keys = new Set<string>();
+    for (const f of inlineLayout.state.fields) keys.add(f.field_key);
+    return keys;
+  }, [isEditing, inlineLayout?.state.fields]);
+
   return (
     <div className="flex flex-col gap-5">
-      {resolvedSections.map((key) => sectionContent[key])}
+      {resolvedSections.map((key, idx) => {
+        const content = sectionContent[key];
+        if (!content) return null;
+
+        if (!isEditing) return content;
+
+        const layoutSec = toLayoutSection(key);
+        return (
+          <EditableSection
+            key={layoutSec.id}
+            section={layoutSec}
+            sectionIndex={idx}
+            totalSections={resolvedSections.length}
+          >
+            {content}
+            {layoutSec.section_type === "fields" && (
+              <div className="mt-3 flex justify-center pb-2">
+                <FieldPicker
+                  sectionId={layoutSec.id}
+                  usedFieldKeys={allUsedFieldKeys}
+                />
+              </div>
+            )}
+          </EditableSection>
+        );
+      })}
     </div>
   );
 }

@@ -34,6 +34,16 @@ export default async function CompanyDetailPage({ params }: PageProps) {
 
   if (!user) redirect("/login");
 
+  // Check if user is super admin
+  const { data: superAdminRole } = await supabase
+    .from("user_roles")
+    .select("id")
+    .eq("user_id", user.id)
+    .eq("role", "super_admin")
+    .eq("is_active", true)
+    .maybeSingle();
+  const isSuperAdmin = !!superAdminRole;
+
   const { id: companyNumber } = await params;
   const admin = createAdminClient();
 
@@ -416,6 +426,7 @@ export default async function CompanyDetailPage({ params }: PageProps) {
       teamMembers={teamMembers}
       sectionOrder={sectionOrder}
       sectionFields={sectionFields}
+      isSuperAdmin={isSuperAdmin}
     />
   );
 }
