@@ -136,8 +136,8 @@ export default async function HomePage() {
                   Direct Real Estate Investment
                 </h3>
                 <p className="type-body" style={{ color: "var(--text-mid)", marginBottom: 32, maxWidth: 480 }}>
-                  Access institutional-quality real estate through direct equity participation. We source, acquire,
-                  renovate, and operate value-add properties across residential and commercial asset classes.
+                  We source, acquire, renovate, and operate value-add properties across commercial asset classes
+                  with an emphasis on the living sector.
                 </p>
                 <Link href="/invest" className="btn-editorial">
                   View Current Offerings <span className="arrow">&rarr;</span>
@@ -145,12 +145,12 @@ export default async function HomePage() {
               </div>
               <div className="card" style={{ padding: "28px 32px" }}>
                 <div style={{ display: "flex", justifyContent: "space-between", padding: "12px 0", borderBottom: "1px solid var(--border-light)" }}>
-                  <span className="type-body-sm" style={{ color: "var(--text-light)" }}>Target IRR</span>
-                  <span className="type-body-sm" style={{ color: "var(--text)", fontWeight: 500 }}>15 &ndash; 22%</span>
+                  <span className="type-body-sm" style={{ color: "var(--text-light)" }}>Target Investor IRR</span>
+                  <span className="type-body-sm" style={{ color: "var(--text)", fontWeight: 500 }}>14 &ndash; 17%</span>
                 </div>
                 <div style={{ display: "flex", justifyContent: "space-between", padding: "12px 0", borderBottom: "1px solid var(--border-light)" }}>
                   <span className="type-body-sm" style={{ color: "var(--text-light)" }}>Hold Period</span>
-                  <span className="type-body-sm" style={{ color: "var(--text)", fontWeight: 500 }}>2 &ndash; 4 Years</span>
+                  <span className="type-body-sm" style={{ color: "var(--text)", fontWeight: 500 }}>3 &ndash; 5 Years</span>
                 </div>
                 <div style={{ display: "flex", justifyContent: "space-between", padding: "12px 0" }}>
                   <span className="type-body-sm" style={{ color: "var(--text-light)" }}>Minimum</span>
@@ -194,7 +194,7 @@ export default async function HomePage() {
               <div className="card" style={{ padding: "28px 32px" }}>
                 <div style={{ display: "flex", justifyContent: "space-between", padding: "12px 0", borderBottom: "1px solid var(--border-light)" }}>
                   <span className="type-body-sm" style={{ color: "var(--text-light)" }}>Target Yield</span>
-                  <span className="type-body-sm" style={{ color: "var(--text)", fontWeight: 500 }}>8 &ndash; 12%</span>
+                  <span className="type-body-sm" style={{ color: "var(--text)", fontWeight: 500 }}>10 &ndash; 12%</span>
                 </div>
                 <div style={{ display: "flex", justifyContent: "space-between", padding: "12px 0", borderBottom: "1px solid var(--border-light)" }}>
                   <span className="type-body-sm" style={{ color: "var(--text-light)" }}>Loan Term</span>
