@@ -118,9 +118,9 @@ export default async function InvestPage() {
               flexWrap: "wrap",
             }}
           >
-            <a href="#access" className="btn-primary">
+            <Link href="/fund" className="btn-primary">
               Request Access <ArrowRight size={16} />
-            </a>
+            </Link>
             <Link href="/about" className="btn-secondary">
               About Requity
             </Link>
@@ -185,9 +185,9 @@ export default async function InvestPage() {
                   </div>
                 ))}
               </div>
-              <a href="#access" className="btn-primary">
+              <Link href="/fund" className="btn-primary">
                 Request Access <ArrowRight size={16} />
-              </a>
+              </Link>
             </div>
           </ScrollReveal>
         </div>
@@ -234,9 +234,9 @@ export default async function InvestPage() {
         }
         body="Request access to learn more about the Requity Income Fund and how you can start earning consistent, asset-backed monthly income."
         primaryCta={
-          <a href="mailto:invest@requitygroup.com" className="btn-primary">
+          <Link href="/fund" className="btn-primary">
             Request Access <ArrowRight size={16} />
-          </a>
+          </Link>
         }
       />
     </main>
