@@ -47,7 +47,6 @@ export default function LoginPage() {
             <div className="max-w-md w-full bg-white rounded-3xl border border-slate-200 shadow-xl p-10 space-y-8">
                 <div className="text-center">
                     <h1 className="text-2xl font-black text-slate-900 uppercase tracking-tighter">TRG Admin</h1>
-                    <p className="text-sm text-slate-500 mt-2 font-medium">Identify yourself to continue.</p>
                 </div>
 
                 {error && (

@@ -1,14 +1,10 @@
-import { createClient } from '@supabase/supabase-js';
+import { createClient } from '@/lib/supabase/server';
 import Link from 'next/link';
 export const dynamic = 'force-dynamic';
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-);
-
 export default async function Home() {
-  // 1. Fetch all Regions AND their Communities in one "Enterprise" query
+  const supabase = createClient();
+
   const { data: regions, error } = await supabase
     .from('pm_regions')
     .select(`
@@ -16,12 +12,8 @@ export default async function Home() {
       name, 
       slug,
       pm_communities (
-        id,
-        name,
-        slug,
-        city,
-        state_code,
-        featured_image_url
+        id, name, slug, city, state_code,
+        pm_media!pm_communities_featured_media_id_fkey (file_path)
       )
     `)
     .eq('is_active', true)
@@ -49,38 +41,46 @@ export default async function Home() {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-              {region.pm_communities.map((community: any) => (
-                <Link 
-                  href={`/communities/${community.slug}`} 
-                  key={community.id}
-                  className="group block bg-white rounded-2xl border border-slate-200 shadow-sm hover:shadow-xl hover:border-blue-300 transition-all overflow-hidden"
-                >
-                  <div
-                    className="aspect-video bg-slate-100 realtive bg-cover bg-center"
-                    style={{
-                      backgroundImage: community.featured_image_url
-                      ? `url('${community.featured_image_url}')`
-                      : 'none'
-                    }}
+              {region.pm_communities.map((community: any) => {
+                // Construct the URL from the joined media object
+                const mediaPath = community.pm_media?.file_path;
+                const imageUrl = mediaPath 
+                  ? `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/trg-living-media/${mediaPath}`
+                  : null;
+
+                return (
+                  <Link 
+                    href={`/communities/${community.slug}`} 
+                    key={community.id}
+                    className="group block bg-white rounded-2xl border border-slate-200 shadow-sm hover:shadow-xl hover:border-blue-300 transition-all overflow-hidden"
                   >
-                  {!community.featured_image_url && (
-                    <div className="absolute inset-0 flex items-center justify-center text-slate-300 font-bold uppercase tracking widest text-xs"></div>
-                  )}
-                  </div>                  
-                  <div className="p-6">
-                    <h3 className="text-xl font-bold text-slate-900 group-hover:text-blue-600 transition-colors">
-                      {community.name}
-                    </h3>
-                    <p className="text-sm text-slate-500 font-medium mt-1">
-                      {community.city}, {community.state_code}
-                    </p>
-                    <div className="mt-6 flex justify-between items-center text-xs font-bold uppercase tracking-widest text-blue-600">
-                      View Community Details 
-                      <span className="group-hover:translate-x-1 transition-transform">→</span>
+                    <div
+                      className="aspect-video bg-slate-100 relative bg-cover bg-center"
+                      style={{
+                        backgroundImage: imageUrl ? `url('${imageUrl}')` : 'none'
+                      }}
+                    >
+                      {!imageUrl && (
+                        <div className="absolute inset-0 flex items-center justify-center text-slate-300 font-bold uppercase tracking-widest text-[10px]">
+                          {community.name}
+                        </div>
+                      )}
+                    </div>                  
+                    <div className="p-6">
+                      <h3 className="text-xl font-bold text-slate-900 group-hover:text-blue-600 transition-colors">
+                        {community.name}
+                      </h3>
+                      <p className="text-sm text-slate-500 font-medium mt-1">
+                        {community.city}, {community.state_code}
+                      </p>
+                      <div className="mt-6 flex justify-between items-center text-xs font-bold uppercase tracking-widest text-blue-600">
+                        View Community Details 
+                        <span className="group-hover:translate-x-1 transition-transform">→</span>
+                      </div>
                     </div>
-                  </div>
-                </Link>
-              ))}
+                  </Link>
+                );
+              })}
             </div>
           </section>
         ))}

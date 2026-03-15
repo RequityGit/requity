@@ -1,20 +1,19 @@
 # TRG Living Admin Panel - Context
 
-## Key Files
-- `middleware.ts`: Intercepts /admin routes and validates session.
-- `lib/supabase/server.ts`: Uses non-deprecated `getAll/setAll` cookie patterns.
-- `app/login/page.tsx`: Implements "Mounted Pattern" to prevent hydration mismatches in privacy browsers (Brave).
-- `app/(admin)/admin/communities/new/page.tsx`: Handles multipart form data and Supabase Storage uploads.
+## Key Architectural Decisions
+- **Media Library Abstraction**: Pivoted to a relational media warehouse model. This enables asset reusability, single-source metadata management, and improved storage efficiency.
+- **Permission Dependency Management**: Resolved multi-table policy dependencies to ensure reliable role verification during data operations.
+- **SSR Client Standardization**: Adopted the non-deprecated `@supabase/ssr` pattern for robust session handling in high-concurrency environments.
 
-## Decisions Made
-- Standardized on `@supabase/ssr` for future-proofing.
-- Implemented "Mounted Pattern" in Client Components to ensure stability across different browser rendering engines.
-- Used `(SELECT auth.uid())` subselects in RLS policies for query plan optimization as per monorepo standards.
-- Isolated Media: Chose `trg-living-media` bucket name to prevent "Namespace Pollution" in the shared storage environment.
+## Data Integrity & Security Features
+- **Payload Sanitization**: Implemented strict property destructuring in all forms to prevent unauthorized field mutation.
+- **Access Control Hardening**: Enforced explicit role-based checks at the database level for all write operations.
+- **Content State Management**: Implemented strict status-checking logic at the query layer to ensure internal drafts remain isolated from public views.
 
-## Gotchas Discovered
-- Brave Browser Hydration: Browser-injected elements (Shields/Password Managers) triggered React <div> mismatches. Resolved via useEffect mount check.
-- RLS Recursion: Discovered that `pm_` policies fail if `user_roles` itself isn't readable by the user.
+## Technical Resiliency
+- **Client-Side Hydration Resilience**: Adopted the "Mounted Component" pattern to ensure UI stability across various browser rendering engines and privacy settings.
+- **Fault-Tolerant Joins**: Configured media relationships to support graceful degradation in the event of missing assets.
+- **Network Stack Stabilization**: Resolved local environment port conflicts to ensure 1:1 Docker-to-Host communication.
 
-## Last Updated: 2026-03-13
-## Next Steps: Deploy Auth and RLS hardening to Production; Build Region Creation Form.
+## Last Updated: 2026-03-15
+## Next Steps: Implement "Edit Region" management; expand Media Library picker functionality.
