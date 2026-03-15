@@ -217,17 +217,21 @@ export default function LoanIntakePage() {
   }, []);
 
   useEffect(() => {
-    const key = process.env.NEXT_PUBLIC_GOOGLE_PLACES_API_KEY;
-    if (!key) return;
     if ((window as any).google?.maps?.places) { initAutocomplete(); return; }
-    const existing = document.querySelector('script[src*="maps.googleapis.com/maps/api/js"]');
-    if (existing) { existing.addEventListener("load", () => initAutocomplete(), { once: true }); return; }
-    const s = document.createElement("script");
-    s.src = `https://maps.googleapis.com/maps/api/js?key=${key}&libraries=places`;
-    s.async = true;
-    s.defer = true;
-    s.onload = () => initAutocomplete();
-    document.head.appendChild(s);
+    fetch("/api/maps-config")
+      .then((r) => r.json())
+      .then(({ key }) => {
+        if (!key) return;
+        const existing = document.querySelector('script[src*="maps.googleapis.com/maps/api/js"]');
+        if (existing) { existing.addEventListener("load", () => initAutocomplete(), { once: true }); return; }
+        const s = document.createElement("script");
+        s.src = `https://maps.googleapis.com/maps/api/js?key=${key}&libraries=places`;
+        s.async = true;
+        s.defer = true;
+        s.onload = () => initAutocomplete();
+        document.head.appendChild(s);
+      })
+      .catch(() => {});
   }, [initAutocomplete]);
 
   useEffect(() => {
