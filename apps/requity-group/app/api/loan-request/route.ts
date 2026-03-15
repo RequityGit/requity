@@ -24,13 +24,14 @@ const PROPERTY_TYPE_MAP: Record<string, string> = {
   Multifamily: "Multifamily",
 };
 
-/* ── Asset type for unified pipeline ── */
+/* ── Asset class for unified pipeline (must match unified_deals_asset_class_check) ── */
+/* Valid values: sfr, duplex_fourplex, multifamily, mhc, rv_park, campground, commercial, industrial, mixed_use, land */
 const ASSET_TYPE_MAP: Record<string, string> = {
-  "Fix & Flip": "residential",
-  "DSCR Rental": "residential",
-  "New Construction": "residential",
+  "Fix & Flip": "sfr",
+  "DSCR Rental": "sfr",
+  "New Construction": "sfr",
   "CRE Bridge": "commercial",
-  "Manufactured Housing": "manufactured_housing",
+  "Manufactured Housing": "mhc",
   "RV Park": "rv_park",
   Multifamily: "multifamily",
 };
