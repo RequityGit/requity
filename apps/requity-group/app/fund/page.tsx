@@ -283,7 +283,7 @@ export default async function FundPage() {
                   acquisitions and strong cash-flow performance across our portfolio.
                 </p>
                 <div style={{ marginTop: "auto", paddingTop: 24 }}>
-                  <Link href="/invest" className="btn-editorial" style={{ fontSize: 12 }}>
+                  <Link href="/portfolio" className="btn-editorial" style={{ fontSize: 12 }}>
                     View Portfolio <span className="arrow"><ArrowUpRight size={12} /></span>
                   </Link>
                 </div>

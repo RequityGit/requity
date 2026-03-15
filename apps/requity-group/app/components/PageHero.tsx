@@ -19,10 +19,11 @@ export default function PageHero({
     <section
       className="dark-zone hero-gradient page-hero"
       style={{
-        minHeight: "100vh",
+        minHeight: "90vh",
         display: "flex",
         flexDirection: "column",
-        justifyContent: "flex-end",
+        justifyContent: "center",
+        paddingTop: 120,
         paddingBottom: 80,
         position: "relative",
       }}

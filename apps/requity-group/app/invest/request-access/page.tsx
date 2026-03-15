@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { ArrowRight, Check, Mail } from "lucide-react";
+import { formatPhone } from "@repo/lib";
 
 const US_STATES = [
   "Alabama","Alaska","Arizona","Arkansas","California","Colorado","Connecticut",
@@ -21,13 +22,6 @@ const INTEREST_OPTIONS = [
   { value: "Debt Fund", label: "Debt Fund" },
   { value: "Equity Fund", label: "Equity Fund" },
 ];
-
-function formatPhone(value: string) {
-  const digits = value.replace(/\D/g, "");
-  if (digits.length <= 3) return digits;
-  if (digits.length <= 6) return `(${digits.slice(0, 3)}) ${digits.slice(3)}`;
-  return `(${digits.slice(0, 3)}) ${digits.slice(3, 6)}-${digits.slice(6, 10)}`;
-}
 
 export default function RequestAccessPage() {
   const [step, setStep] = useState<"form" | "profile" | "complete">("form");

@@ -26,16 +26,16 @@ import {
 export const metadata: Metadata = {
   title: "Requity Lending | Bridge Loans for Real Estate",
   description:
-    "Bridge loans for commercial and residential real estate from an operator who understands your deal. Close in as little as 10 days. Term sheets in 24 hours.",
+    "Bridge loans for commercial and residential real estate from an operator who understands your deal. Close in as little as 7 days. Term sheets in 24 hours.",
   openGraph: {
     title: "Requity Lending | Bridge Loans for Real Estate",
     description:
-      "Bridge loans by real operators. Close in 10 days. CRE bridge, manufactured housing, RV parks, multifamily financing. Up to 80% LTV.",
+      "Bridge loans by real operators. Close in 7 days. CRE bridge, manufactured housing, RV parks, multifamily financing. Up to 90% LTC.",
   },
   twitter: {
     title: "Requity Lending | Bridge Loans for Real Estate",
     description:
-      "Bridge loans by real operators. Close in 10 days. CRE bridge, manufactured housing, RV parks, multifamily financing.",
+      "Bridge loans by real operators. Close in 7 days. CRE bridge, manufactured housing, RV parks, multifamily financing.",
   },
 };
 
@@ -74,15 +74,15 @@ const PROCESS_STEPS = [
   {
     title: "Close & Fund",
     description:
-      "Funds are wired at closing. Most deals close in 10-14 days from term sheet acceptance.",
+      "Funds are wired at closing. Most deals close in 7-14 days from term sheet acceptance.",
   },
 ];
 
 const LENDING_STATS = [
-  { label: "Fastest Close", value: "10 Days" },
+  { label: "Fastest Close Option", value: "7 Days" },
   { label: "Term Sheet Turnaround", value: "24 Hrs" },
-  { label: "Max LTV", value: "80%" },
-  { label: "Loans Funded", value: "150+" },
+  { label: "Max LTC", value: "90%" },
+  { label: "Loans Funded", value: "70+" },
 ];
 
 export default async function LendingPage() {
@@ -122,7 +122,7 @@ export default async function LendingPage() {
             <>
               Close in{" "}
               <em style={{ fontStyle: "italic", color: "var(--gold-muted)" }}>
-                10 days
+                7 days
               </em>
               , not 10 weeks
             </>
@@ -213,7 +213,7 @@ export default async function LendingPage() {
                     {
                       icon: <Clock size={22} />,
                       title: "Fast Execution",
-                      desc: "Term sheets in 24 hours, closings in as fast as 10 business days. We move at the speed your deal requires.",
+                      desc: "Term sheets in 24 hours, closings in as fast as 7 business days. We move at the speed your deal requires.",
                     },
                     {
                       icon: <Shield size={22} />,
@@ -277,15 +277,26 @@ export default async function LendingPage() {
               balance sheet.
             </p>
           </ScrollReveal>
+          {/* Commercial Lending */}
+          <ScrollReveal>
+            <p
+              className="type-label"
+              style={{ color: "var(--gold)", marginBottom: 20 }}
+            >
+              Commercial Lending
+            </p>
+          </ScrollReveal>
           <ScrollReveal staggerChildren>
             <div
               style={{
                 display: "grid",
-                gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))",
+                gridTemplateColumns: "repeat(4, 1fr)",
                 gap: 24,
+                marginBottom: 56,
               }}
+              className="programs-grid-commercial"
             >
-              {programs.map((program) => (
+              {programs.slice(0, 4).map((program) => (
                 <div key={program.id} className="card">
                   <h3 className="card-title" style={{ fontSize: 23 }}>
                     {program.display_name}
@@ -321,6 +332,141 @@ export default async function LendingPage() {
                   </ul>
                 </div>
               ))}
+            </div>
+          </ScrollReveal>
+
+          {/* Residential Lending */}
+          <ScrollReveal>
+            <p
+              className="type-label"
+              style={{ color: "var(--gold)", marginBottom: 20 }}
+            >
+              Residential Lending (1-4 Units)
+            </p>
+          </ScrollReveal>
+          <ScrollReveal staggerChildren>
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "repeat(3, 1fr)",
+                gap: 24,
+                maxWidth: 960,
+                margin: "0 auto",
+              }}
+              className="programs-grid-residential"
+            >
+              {programs.slice(4).map((program) => (
+                <div key={program.id} className="card">
+                  <h3 className="card-title" style={{ fontSize: 23 }}>
+                    {program.display_name}
+                  </h3>
+                  {program.tagline && (
+                    <p
+                      style={{
+                        fontFamily: "var(--font-sans)",
+                        fontSize: 13,
+                        color: "var(--gold)",
+                        fontWeight: 500,
+                        marginBottom: 8,
+                        letterSpacing: "0.02em",
+                      }}
+                    >
+                      {program.tagline}
+                    </p>
+                  )}
+                  <p className="card-body" style={{ marginBottom: 20 }}>
+                    {program.description}
+                  </p>
+                  <ul style={{ listStyle: "none", padding: 0, margin: 0 }}>
+                    {(program.features as string[]).map((feature, i) => (
+                      <li key={i} className="program-feature">
+                        <CheckCircle
+                          size={15}
+                          className="program-feature-icon"
+                          style={{ flexShrink: 0 }}
+                        />
+                        {feature}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ))}
+            </div>
+          </ScrollReveal>
+
+          {/* Additional Services */}
+          <ScrollReveal>
+            <div
+              style={{
+                marginTop: 64,
+                padding: "40px 44px",
+                border: "1px solid var(--border-light)",
+                borderRadius: 12,
+              }}
+            >
+              <p
+                className="type-label"
+                style={{ color: "var(--gold)", marginBottom: 16 }}
+              >
+                Additional Services
+              </p>
+              <p
+                className="type-body"
+                style={{ color: "var(--text-mid)", marginBottom: 28, maxWidth: 640 }}
+              >
+                Beyond direct lending, we offer complementary services to support your deal from start to finish.
+              </p>
+              <div
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "repeat(3, 1fr)",
+                  gap: 32,
+                }}
+                className="additional-services-grid"
+              >
+                <div>
+                  <h4
+                    className="type-h4"
+                    style={{ color: "var(--text)", marginBottom: 8 }}
+                  >
+                    Guarantor Support
+                  </h4>
+                  <p
+                    className="type-body-sm"
+                    style={{ color: "var(--text-mid)", lineHeight: 1.7 }}
+                  >
+                    Balance sheet and experience support for borrowers who need additional guarantor strength to qualify.
+                  </p>
+                </div>
+                <div>
+                  <h4
+                    className="type-h4"
+                    style={{ color: "var(--text)", marginBottom: 8 }}
+                  >
+                    Transactional Funding
+                  </h4>
+                  <p
+                    className="type-body-sm"
+                    style={{ color: "var(--text-mid)", lineHeight: 1.7 }}
+                  >
+                    Short-term capital solutions for wholesalers executing double closings and assignment transactions.
+                  </p>
+                </div>
+                <div>
+                  <h4
+                    className="type-h4"
+                    style={{ color: "var(--text)", marginBottom: 8 }}
+                  >
+                    Capital Advisory
+                  </h4>
+                  <p
+                    className="type-body-sm"
+                    style={{ color: "var(--text-mid)", lineHeight: 1.7 }}
+                  >
+                    Guidance on permanent takeout financing post-bridge, connecting borrowers with the right long-term capital partners.
+                  </p>
+                </div>
+              </div>
             </div>
           </ScrollReveal>
         </div>

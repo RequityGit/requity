@@ -49,14 +49,20 @@ export default async function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const [navItems, companyData] = await Promise.all([
-    fetchSiteData<NavItem>("site_navigation", {
-      eq: ["is_published", true],
-    }),
-    fetchSiteData<CompanyInfo>("site_company_info"),
-  ]);
-
-  const company = companyData[0] ?? null;
+  let navItems: NavItem[] = [];
+  let company: CompanyInfo | null = null;
+  try {
+    const [navResult, companyResult] = await Promise.all([
+      fetchSiteData<NavItem>("site_navigation", {
+        eq: ["is_published", true],
+      }),
+      fetchSiteData<CompanyInfo>("site_company_info", { order: null }),
+    ]);
+    navItems = Array.isArray(navResult) ? navResult : [];
+    company = companyResult?.[0] ?? null;
+  } catch (_) {
+    // Render shell with empty nav/footer data so the app never goes blank
+  }
 
   return (
     <html lang="en">

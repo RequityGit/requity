@@ -11,7 +11,7 @@ import AnimatedLine from "../components/AnimatedLine";
 import SectionLabel from "../components/SectionLabel";
 import PageHero from "../components/PageHero";
 import FooterCTA from "../components/FooterCTA";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, Heart, Compass, Trophy } from "lucide-react";
 
 export const metadata: Metadata = {
   title: "About",
@@ -158,6 +158,55 @@ export default async function AboutPage() {
         </div>
       </section>
 
+      {/* Our Values */}
+      <section className="light-zone section-pad-lg">
+        <div className="container">
+          <ScrollReveal>
+            <h2 className="type-h2" style={{ color: "var(--text)", marginBottom: 48 }}>
+              Our <span style={{ color: "var(--gold)" }}>Values</span>
+            </h2>
+          </ScrollReveal>
+          <ScrollReveal staggerChildren>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 24 }}>
+              {[
+                { num: "01", title: "Be Caring", desc: "We treat every partner, borrower, and community we touch with respect and integrity. How we do business matters as much as the results.", Icon: Heart },
+                { num: "02", title: "Be Honest", desc: "Clear communication, transparent terms, and no hidden agendas. We build trust by saying what we mean and doing what we say.", Icon: Compass },
+                { num: "03", title: "Be Excellent", desc: "Excellence to us means constant improvement. We hold ourselves to high standards in underwriting, operations, and reporting, and we keep raising the bar.", Icon: Trophy },
+              ].map((v) => {
+                const ValueIcon = v.Icon;
+                return (
+                  <div
+                    key={v.num}
+                    className="card-navy"
+                    style={{
+                      background: "var(--navy)",
+                      border: "1px solid var(--navy-border)",
+                      padding: "32px 28px",
+                      display: "flex",
+                      flexDirection: "column",
+                      minHeight: 280,
+                    }}
+                  >
+                    <div style={{ fontFamily: "var(--font-sans)", fontSize: 12, fontWeight: 500, color: "var(--gold-muted)", letterSpacing: 2, marginBottom: 24 }}>
+                      {v.num}
+                    </div>
+                    <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 24 }}>
+                      <ValueIcon size={40} strokeWidth={1.5} style={{ color: "#fff" }} />
+                    </div>
+                    <h4 className="type-h4" style={{ color: "#fff", marginBottom: 12 }}>
+                      {v.title}
+                    </h4>
+                    <p className="type-body-sm" style={{ color: "var(--navy-text-mid)", lineHeight: 1.65, margin: 0 }}>
+                      {v.desc}
+                    </p>
+                  </div>
+                );
+              })}
+            </div>
+          </ScrollReveal>
+        </div>
+      </section>
+
       {/* Team */}
       <section className="dark-zone section-pad-lg" style={{ overflow: "hidden" }}>
         <div className="navy-grid-pattern">
@@ -173,24 +222,84 @@ export default async function AboutPage() {
               <em style={{ fontStyle: "italic", color: "var(--gold-muted)" }}>skin in the game</em>
             </h2>
           </ScrollReveal>
-          <ScrollReveal staggerChildren>
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 20 }}>
-              {team.map((member) => (
-                <div key={member.id} className="card-navy" style={{ padding: "36px 32px" }}>
-                  <div className="team-avatar on-navy" style={{ marginBottom: 24 }}>
-                    {member.name
-                      .split(" ")
-                      .slice(0, 2)
-                      .map((n) => n[0])
-                      .join("")}
+
+          {/* Principal */}
+          {(() => {
+            const principal = team.find((m) => m.department === "leadership");
+            if (!principal) return null;
+            return (
+              <ScrollReveal>
+                <div style={{ maxWidth: 640, marginBottom: 64 }}>
+                  <div className="card-navy" style={{ padding: "40px 36px" }}>
+                    <div className="team-avatar on-navy" style={{ marginBottom: 24, width: 64, height: 64, fontSize: 22 }}>
+                      {principal.name.split(" ").slice(0, 2).map((n) => n[0]).join("")}
+                    </div>
+                    <div className="team-name on-navy">{principal.name}</div>
+                    <p className="team-title">{principal.title}</p>
+                    <p className="team-bio on-navy">{principal.bio}</p>
                   </div>
-                  <div className="team-name on-navy">{member.name}</div>
-                  <p className="team-title">{member.title}</p>
-                  <p className="team-bio on-navy">{member.bio}</p>
                 </div>
-              ))}
-            </div>
-          </ScrollReveal>
+              </ScrollReveal>
+            );
+          })()}
+
+          {/* Investment & Operations */}
+          {(() => {
+            const ops = team.filter((m) => m.department === "investment-operations");
+            if (!ops.length) return null;
+            return (
+              <>
+                <ScrollReveal>
+                  <p className="type-label" style={{ color: "var(--gold)", marginBottom: 24 }}>
+                    Investment &amp; Operations
+                  </p>
+                </ScrollReveal>
+                <ScrollReveal staggerChildren>
+                  <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 20, marginBottom: 64 }}>
+                    {ops.map((member) => (
+                      <div key={member.id} className="card-navy" style={{ padding: "36px 32px" }}>
+                        <div className="team-avatar on-navy" style={{ marginBottom: 24 }}>
+                          {member.name.split(" ").slice(0, 2).map((n) => n[0]).join("")}
+                        </div>
+                        <div className="team-name on-navy">{member.name}</div>
+                        <p className="team-title">{member.title}</p>
+                        <p className="team-bio on-navy">{member.bio}</p>
+                      </div>
+                    ))}
+                  </div>
+                </ScrollReveal>
+              </>
+            );
+          })()}
+
+          {/* Lending Team */}
+          {(() => {
+            const lending = team.filter((m) => m.department === "lending");
+            if (!lending.length) return null;
+            return (
+              <>
+                <ScrollReveal>
+                  <p className="type-label" style={{ color: "var(--gold)", marginBottom: 24 }}>
+                    Lending Team
+                  </p>
+                </ScrollReveal>
+                <ScrollReveal staggerChildren>
+                  <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 20 }}>
+                    {lending.map((member) => (
+                      <div key={member.id} className="card-navy" style={{ padding: "36px 32px" }}>
+                        <div className="team-avatar on-navy" style={{ marginBottom: 24 }}>
+                          {member.name.split(" ").slice(0, 2).map((n) => n[0]).join("")}
+                        </div>
+                        <div className="team-name on-navy">{member.name}</div>
+                        <p className="team-title">{member.title}</p>
+                        <p className="team-bio on-navy">{member.bio}</p>
+                      </div>
+                    ))}
+                  </div>
+                </ScrollReveal>
+              </>
+            );
+          })()}
         </div>
       </section>
 
@@ -226,20 +335,19 @@ export default async function AboutPage() {
       </section>
 
       {/* Milestones */}
-      <section className="cream-zone section-pad-lg">
+      <section className="cream-zone section-pad-lg" style={{ paddingTop: 88, paddingBottom: 88 }}>
         <div className="container">
           <ScrollReveal>
             <SectionLabel>Milestones</SectionLabel>
-            <h2 className="type-h2" style={{ color: "var(--text)", marginBottom: 64 }}>
+            <h2 className="type-h2" style={{ color: "var(--text)", marginTop: 0, marginBottom: 40 }}>
               Our trajectory
             </h2>
           </ScrollReveal>
           <ScrollReveal staggerChildren>
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: 0 }}>
               {[
-                { marker: "Founded", title: "Company Launch", desc: "Requity Group established with a focus on value-add real estate in underserved markets.", accent: false },
-                { marker: "$25M", title: "First Milestone", desc: "Reached $25M AUM and closed first 10 bridge loans through Requity Lending.", accent: false },
-                { marker: "$70M", title: "Capital Raised", desc: "Surpassed $70M in investor capital across equity and credit strategies.", accent: false },
+                { marker: "Founded", title: "Company Launch", desc: "Requity Group was founded with our first acquisition in October of 2020, with a focus on value-add real estate in underserved markets.", accent: false },
+                { marker: "$70M", title: "Capital Raised", desc: "Surpassed $70M equity cumulatively raised by 2025.", accent: false },
                 { marker: "$150M+", title: "Current AUM", desc: "32 properties acquired, 70+ loans originated, 3,000+ units transacted and scaling toward $1B.", accent: true },
               ].map((m) => (
                 <div

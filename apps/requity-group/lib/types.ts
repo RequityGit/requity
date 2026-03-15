@@ -97,3 +97,17 @@ export interface Insight {
   tags: string[];
   sort_order: number;
 }
+
+export interface PortfolioProperty {
+  id: string;
+  name: string;
+  slug: string;
+  location: string;
+  description: string | null;
+  image_url: string | null;
+  property_type: string | null;
+  status: string;
+  detail_page_url: string | null;
+  is_published: boolean;
+  sort_order: number;
+}

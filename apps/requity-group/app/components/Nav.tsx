@@ -2,12 +2,19 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import type { NavItem } from "../../lib/types";
 
 const LOGO_URL =
   "https://edhlkknvlczhbowasjna.supabase.co/storage/v1/object/public/brand-assets/Requity%20Logo%20White.svg";
 
+function isActive(pathname: string, url: string): boolean {
+  if (url === "/") return pathname === "/";
+  return pathname === url || pathname.startsWith(url + "/");
+}
+
 export default function Nav({ items }: { items: NavItem[] }) {
+  const pathname = usePathname();
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
 
@@ -38,6 +45,7 @@ export default function Nav({ items }: { items: NavItem[] }) {
           {headerItems.map((item) => {
             const isExternal = item.url.startsWith("http");
             const isCta = item.label === "Investor Login";
+            const active = !isExternal && !isCta && isActive(pathname, item.url);
             return (
               <li key={item.id}>
                 {isExternal ? (
@@ -50,7 +58,13 @@ export default function Nav({ items }: { items: NavItem[] }) {
                     {item.label}
                   </a>
                 ) : (
-                  <Link href={item.url} className={isCta ? "nav-cta" : undefined}>
+                  <Link
+                    href={item.url}
+                    className={[
+                      isCta ? "nav-cta" : undefined,
+                      active ? "nav-active" : undefined,
+                    ].filter(Boolean).join(" ") || undefined}
+                  >
                     {item.label}
                   </Link>
                 )}
@@ -77,11 +91,17 @@ export default function Nav({ items }: { items: NavItem[] }) {
           {headerItems.map((item, i) => {
             const isExternal = item.url.startsWith("http");
             const isCta = item.label === "Investor Login";
+            const active = !isExternal && !isCta && isActive(pathname, item.url);
+            const cls = [
+              "mobile-link",
+              isCta ? "mobile-link-cta" : "",
+              active ? "mobile-link-active" : "",
+            ].filter(Boolean).join(" ");
             return isExternal ? (
               <a
                 key={item.id}
                 href={item.url}
-                className={`mobile-link${isCta ? " mobile-link-cta" : ""}`}
+                className={cls}
                 target="_blank"
                 rel="noopener noreferrer"
                 onClick={() => setMobileOpen(false)}
@@ -93,7 +113,7 @@ export default function Nav({ items }: { items: NavItem[] }) {
               <Link
                 key={item.id}
                 href={item.url}
-                className={`mobile-link${isCta ? " mobile-link-cta" : ""}`}
+                className={cls}
                 onClick={() => setMobileOpen(false)}
                 style={{ animationDelay: `${i * 0.06 + 0.1}s` }}
               >

@@ -15,19 +15,30 @@ import { ArrowRight } from "lucide-react";
 export const revalidate = 300;
 
 export default async function HomePage() {
-  const [stats, testimonials, insights] = await Promise.all([
-    fetchSiteData<SiteStat>("site_stats", {
-      filter: { page_slug: "home" },
-    }),
-    fetchSiteData<Testimonial>("site_testimonials", {
-      eq: ["is_published", true],
-    }),
-    fetchSiteData<Insight>("site_insights", {
-      eq: ["is_published", true],
-    }),
-  ]);
+  let stats: SiteStat[] = [];
+  let testimonials: Testimonial[] = [];
+  let insights: Insight[] = [];
 
-  const featuredTestimonials = testimonials.filter((t) => t.is_featured).slice(0, 3);
+  try {
+    const [statsRes, testimonialsRes, insightsRes] = await Promise.all([
+      fetchSiteData<SiteStat>("site_stats", {
+        filter: { page_slug: "home" },
+      }),
+      fetchSiteData<Testimonial>("site_testimonials", {
+        eq: ["is_published", true],
+      }),
+      fetchSiteData<Insight>("site_insights", {
+        eq: ["is_published", true],
+      }),
+    ]);
+    stats = Array.isArray(statsRes) ? statsRes : [];
+    testimonials = Array.isArray(testimonialsRes) ? testimonialsRes : [];
+    insights = Array.isArray(insightsRes) ? insightsRes : [];
+  } catch {
+    // Render page with empty sections so app never goes blank
+  }
+
+  const featuredTestimonials = testimonials.filter((t) => t?.is_featured).slice(0, 3);
   const recentInsights = insights.slice(0, 3);
 
   return (
@@ -249,7 +260,7 @@ export default async function HomePage() {
                   Institutional Standards
                 </h4>
                 <p className="type-body-sm" style={{ color: "var(--navy-text-mid)", lineHeight: 1.75 }}>
-                  Rigorous underwriting, quarterly investor reporting, third-party audits, and full transparency:
+                  Rigorous underwriting, quarterly investor reporting, third-party reviews, and full transparency:
                   the standards institutional allocators expect, applied to every deal.
                 </p>
               </div>

@@ -2,6 +2,9 @@ import type { Config } from "tailwindcss";
 
 const config = {
   darkMode: ["class"],
+  corePlugins: {
+    preflight: false, // Requity Group uses globals/public.css for reset and design system
+  },
   content: [
     "./app/**/*.{ts,tsx}",
     "./components/**/*.{ts,tsx}",
