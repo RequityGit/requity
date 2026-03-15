@@ -24,13 +24,30 @@ const PROPERTY_TYPE_MAP: Record<string, string> = {
   Multifamily: "Multifamily",
 };
 
-/* ── Value method from loan type ── */
-function valueMethodFromLoanType(loanType: string): string | null {
-  const code = LOAN_TYPE_CODES[loanType];
-  if (code === "dscr" || code === "guc") return "appraisal_1_arv";
-  if (code === "rtl") return "underwritten_arv";
-  return null;
-}
+/* ── Asset type for unified pipeline ── */
+const ASSET_TYPE_MAP: Record<string, string> = {
+  "Fix & Flip": "residential",
+  "DSCR Rental": "residential",
+  "New Construction": "residential",
+  "CRE Bridge": "commercial",
+  "Manufactured Housing": "manufactured_housing",
+  "RV Park": "rv_park",
+  Multifamily: "multifamily",
+};
+
+/* ── Map loan type to unified_card_types.id ── */
+const CARD_TYPE_MAP: Record<string, string> = {
+  // Residential Fix & Flip / RTL
+  rtl: "6ea336bf-3325-44e9-b83b-26aef2fd0005",
+  guc: "6ea336bf-3325-44e9-b83b-26aef2fd0005",
+  // Residential DSCR
+  dscr: "977496b1-5109-4298-83bb-f8b1735d9d16",
+  // Commercial Bridge (CRE, MHC, RV, Multifamily)
+  cre_bridge: "33ae24e4-3969-4e6e-bd4f-4b007bdcfcaa",
+  mhc: "33ae24e4-3969-4e6e-bd4f-4b007bdcfcaa",
+  rv_park: "33ae24e4-3969-4e6e-bd4f-4b007bdcfcaa",
+  multifamily: "33ae24e4-3969-4e6e-bd4f-4b007bdcfcaa",
+};
 
 export async function POST(request: NextRequest) {
   try {
@@ -63,49 +80,80 @@ export async function POST(request: NextRequest) {
       return Response.json({ error: "Missing required fields" }, { status: 400 });
     }
 
-    /* ─── CRM Lead Creation ─── */
+    /* ─── CRM + Pipeline Creation ─── */
     const admin = getAdminClient();
     let crmContactId: string | null = null;
     let propertyId: string | null = null;
-    let opportunityId: string | null = null;
+    let dealId: string | null = null;
+    let isExistingContact = false;
+
+    if (!admin) {
+      console.error("[loan-request] SUPABASE_SERVICE_ROLE_KEY is not configured. Database writes skipped.");
+    }
 
     if (admin) {
       try {
-        // 1. Dedup by email or create new contact
+        // ── 1. Smart contact dedup: match by email (case-insensitive) ──
+        const normalizedEmail = email.trim().toLowerCase();
         const { data: existing } = await admin
           .from("crm_contacts")
-          .select("id")
-          .eq("email", email)
+          .select("id, first_name, last_name, phone, contact_types")
+          .ilike("email", normalizedEmail)
           .is("deleted_at", null)
           .limit(1)
           .single();
 
         if (existing) {
           crmContactId = existing.id;
+          isExistingContact = true;
+
+          // Update contact info if they submitted with new phone or name
+          const updates: Record<string, unknown> = {};
+          if (phone && phone !== existing.phone) updates.phone = phone;
+          if (firstName && firstName !== existing.first_name) updates.first_name = firstName;
+          if (lastName && lastName !== existing.last_name) updates.last_name = lastName;
+          if (firstName || lastName) {
+            const newName = `${firstName || existing.first_name} ${lastName || existing.last_name}`.trim();
+            updates.name = newName;
+          }
+
+          // Ensure "borrower" is in contact_types array
+          const existingTypes: string[] = existing.contact_types || [];
+          if (!existingTypes.includes("borrower")) {
+            updates.contact_types = [...existingTypes, "borrower"];
+          }
+
+          if (Object.keys(updates).length > 0) {
+            await admin.from("crm_contacts").update(updates).eq("id", crmContactId);
+          }
         } else {
+          // Create new contact
           const { data: newContact, error: contactErr } = await admin
             .from("crm_contacts")
             .insert({
-              contact_number: "",
-              contact_type: "lead" as const,
+              contact_type: "lead" as never,
               contact_types: ["borrower"],
-              source: "website" as const,
+              source: "website" as never,
               first_name: firstName,
               last_name: lastName,
               name: `${firstName} ${lastName}`.trim(),
-              email,
+              email: normalizedEmail,
               phone,
               company_name: company || null,
               city: city || null,
               state: state || null,
-            })
+            } as never)
             .select("id")
             .single();
-          if (contactErr) console.error("CRM contact error:", contactErr.message);
-          else crmContactId = newContact?.id ?? null;
+
+          if (contactErr) {
+            console.error("[loan-request] CRM contact error:", contactErr.message, contactErr.details);
+          } else {
+            crmContactId = newContact?.id ?? null;
+          }
         }
 
-        // 2. Create property record
+        // ── 2. Create property record ──
         const units = unitsOrLots ? parseInt(unitsOrLots) : null;
         const { data: propData, error: propErr } = await admin
           .from("properties")
@@ -114,48 +162,124 @@ export async function POST(request: NextRequest) {
             city: city || null,
             state: state || null,
             property_type: PROPERTY_TYPE_MAP[loanType] || null,
+            asset_type: ASSET_TYPE_MAP[loanType] || null,
             number_of_units: Number.isFinite(units) ? units : null,
           })
           .select("id")
           .single();
-        if (propErr) console.error("Property error:", propErr.message);
-        else propertyId = propData?.id ?? null;
 
-        // 3. Create opportunity (pipeline deal)
+        if (propErr) {
+          console.error("[loan-request] Property error:", propErr.message, propErr.details);
+        } else {
+          propertyId = propData?.id ?? null;
+        }
+
+        // ── 3. Create unified_deal (pipeline deal) ──
         const loanAmountNum = parseCurrency(loanAmount);
         const loanTypeCode = LOAN_TYPE_CODES[loanType] || null;
-        const { data: oppData, error: oppErr } = await admin
-          .from("opportunities")
+        const cardTypeId = loanTypeCode ? CARD_TYPE_MAP[loanTypeCode] || null : null;
+
+        // Build deal name: "FirstName LastName - Address" or "FirstName LastName - LoanType"
+        const addressPart = propertyAddress
+          ? propertyAddress.split(",")[0].trim()
+          : loanType;
+        const dealName = `${firstName} ${lastName} - ${addressPart}`;
+
+        // Build uw_data with all intake fields so nothing is lost
+        const uwData: Record<string, unknown> = {};
+        if (purchasePrice) uwData.purchase_price = parseCurrency(purchasePrice);
+        if (loanAmount) uwData.loan_amount_requested = loanAmountNum;
+        if (rehabBudget) uwData.rehab_budget = parseCurrency(rehabBudget);
+        if (afterRepairValue) uwData.after_repair_value = parseCurrency(afterRepairValue);
+        if (unitsOrLots) uwData.number_of_units = units;
+        if (creditScore) uwData.credit_score = creditScore;
+        if (dealsInLast24Months) uwData.deals_in_last_24_months = dealsInLast24Months;
+        if (citizenshipStatus) uwData.citizenship_status = citizenshipStatus;
+        if (experienceLevel) uwData.experience_level = experienceLevel;
+        if (timeline) uwData.timeline_to_close = timeline;
+        if (company) uwData.company = company;
+
+        // Include generated terms if present
+        if (generatedTerms) {
+          uwData.generated_interest_rate = generatedTerms.interestRate;
+          uwData.generated_origination_points = generatedTerms.originationPoints;
+          uwData.generated_loan_amount = generatedTerms.estimatedLoan;
+          uwData.generated_max_ltv = generatedTerms.maxLTV;
+          uwData.generated_max_ltc = generatedTerms.maxLTC;
+          uwData.generated_program = generatedTerms.programName;
+          uwData.generated_loan_term_months = generatedTerms.loanTermMonths;
+        }
+
+        // Build notes string for quick reference
+        const notesLines = [
+          `Website submission - ${new Date().toISOString().split("T")[0]}`,
+          isExistingContact ? `Returning contact (existing in CRM)` : `New contact`,
+          timeline ? `Timeline: ${timeline}` : null,
+          creditScore ? `Credit: ${creditScore}` : null,
+          dealsInLast24Months ? `Deals (24mo): ${dealsInLast24Months}` : null,
+          citizenshipStatus ? `Citizenship: ${citizenshipStatus}` : null,
+          experienceLevel ? `Experience: ${experienceLevel}` : null,
+          purchasePrice ? `Purchase Price: ${purchasePrice}` : null,
+          rehabBudget ? `Rehab: ${rehabBudget}` : null,
+          afterRepairValue ? `ARV: ${afterRepairValue}` : null,
+        ].filter(Boolean).join("\n");
+
+        const { data: dealData, error: dealErr } = await admin
+          .from("unified_deals")
           .insert({
-            property_id: propertyId,
-            deal_name: `${firstName} ${lastName} - ${loanType}`,
+            name: dealName,
+            capital_side: "debt",
+            stage: "lead",
+            card_type_id: cardTypeId,
             loan_type: loanTypeCode,
-            proposed_loan_amount: loanAmountNum > 0 ? loanAmountNum : null,
-            proposed_ltv: generatedTerms?.maxLTV || null,
-            proposed_interest_rate: generatedTerms?.interestRate || null,
-            proposed_loan_term_months: generatedTerms?.loanTermMonths || null,
-            funding_channel: "website",
-            stage: "new_lead",
-            value_method: valueMethodFromLoanType(loanType),
-            internal_notes: [
-              timeline ? `Timeline: ${timeline}` : null,
-              creditScore ? `Credit: ${creditScore}` : null,
-              dealsInLast24Months ? `Experience: ${dealsInLast24Months}` : null,
-              citizenshipStatus ? `Citizenship: ${citizenshipStatus}` : null,
-              experienceLevel ? `Experience Level: ${experienceLevel}` : null,
-              purchasePrice ? `Purchase Price: ${purchasePrice}` : null,
-              rehabBudget ? `Rehab: ${rehabBudget}` : null,
-              afterRepairValue ? `ARV: ${afterRepairValue}` : null,
-            ]
-              .filter(Boolean)
-              .join(" | "),
-          })
+            primary_contact_id: crmContactId,
+            property_id: propertyId,
+            amount: loanAmountNum > 0 ? loanAmountNum : null,
+            source: "website",
+            source_detail: "requitygroup.com loan application",
+            asset_class: ASSET_TYPE_MAP[loanType] || null,
+            uw_data: uwData,
+            notes: notesLines,
+            tags: ["website-lead"],
+          } as never)
           .select("id")
           .single();
-        if (oppErr) console.error("Opportunity error:", oppErr.message);
-        else opportunityId = oppData?.id ?? null;
+
+        if (dealErr) {
+          console.error("[loan-request] Deal creation error:", dealErr.message, dealErr.details);
+        } else {
+          dealId = dealData?.id ?? null;
+        }
+
+        // ── 4. Link contact to deal via deal_contacts ──
+        if (dealId && crmContactId) {
+          const { error: linkErr } = await admin
+            .from("deal_contacts")
+            .insert({
+              deal_id: dealId,
+              contact_id: crmContactId,
+              role: "borrower",
+              is_guarantor: false,
+              sort_order: 0,
+            });
+
+          if (linkErr) {
+            console.error("[loan-request] Deal contact link error:", linkErr.message);
+          }
+        }
+
+        // ── 5. Log deal activity ──
+        if (dealId) {
+          await admin.from("unified_deal_activity" as never).insert({
+            deal_id: dealId,
+            activity_type: "website_submission",
+            title: "Website loan application received",
+            description: `${firstName} ${lastName} submitted a ${loanType} loan request for ${loanAmount} via requitygroup.com.${isExistingContact ? " Contact already existed in CRM." : ""}`,
+            metadata: { source: "website", loan_type: loanType, is_existing_contact: isExistingContact },
+          } as never);
+        }
       } catch (crmErr) {
-        console.error("CRM pipeline error:", crmErr);
+        console.error("[loan-request] CRM pipeline error:", crmErr);
       }
     }
 
@@ -191,7 +315,7 @@ export async function POST(request: NextRequest) {
         creditScore, dealsInLast24Months, citizenshipStatus,
         firstName, lastName, email, phone, company, experienceLevel,
         generatedTerms, unitsLabel, showRehab, rehabLabel, timestamp,
-        crmContactId, propertyId, opportunityId,
+        crmContactId, propertyId, dealId, isExistingContact,
       });
 
       await transporter.sendMail({
@@ -215,7 +339,7 @@ export async function POST(request: NextRequest) {
         });
       }
     } else {
-      console.warn("SMTP not configured; skipping email notifications");
+      console.warn("[loan-request] SMTP not configured; skipping email notifications");
     }
 
     return Response.json({
@@ -223,10 +347,10 @@ export async function POST(request: NextRequest) {
       message: "Loan request submitted successfully",
       crmContactId,
       propertyId,
-      opportunityId,
+      dealId,
     });
   } catch (error: unknown) {
-    console.error("Loan request error:", error);
+    console.error("[loan-request] error:", error);
     return Response.json({ error: "Failed to submit loan request. Please try again." }, { status: 500 });
   }
 }
@@ -259,7 +383,8 @@ interface InternalEmailData {
   timestamp: string;
   crmContactId: string | null;
   propertyId: string | null;
-  opportunityId: string | null;
+  dealId: string | null;
+  isExistingContact: boolean;
 }
 
 interface GeneratedTermsData {
@@ -289,7 +414,11 @@ interface GeneratedTermsData {
 function buildInternalEmail(d: InternalEmailData) {
   const portalBase = "https://portal.requitygroup.com";
   const crmLink = d.crmContactId ? `${portalBase}/admin/crm/${d.crmContactId}` : null;
-  const dealLink = d.opportunityId ? `${portalBase}/admin/pipeline/${d.opportunityId}` : null;
+  const dealLink = d.dealId ? `${portalBase}/admin/pipeline/${d.dealId}` : null;
+
+  const existingBadge = d.isExistingContact
+    ? `<div style="display:inline-block;padding:6px 14px;background-color:rgba(74,222,128,0.12);border:1px solid rgba(74,222,128,0.3);border-radius:4px;margin-left:12px;"><span style="font-size:11px;font-weight:600;color:#4ade80;letter-spacing:0.5px;">EXISTING CONTACT</span></div>`
+    : `<div style="display:inline-block;padding:6px 14px;background-color:rgba(96,165,250,0.12);border:1px solid rgba(96,165,250,0.3);border-radius:4px;margin-left:12px;"><span style="font-size:11px;font-weight:600;color:#60a5fa;letter-spacing:0.5px;">NEW LEAD</span></div>`;
 
   const crmLinksHtml = crmLink || dealLink ? `
     <div style="padding:16px 40px 24px;">
@@ -332,6 +461,7 @@ function buildInternalEmail(d: InternalEmailData) {
     <div style="display:inline-block;padding:10px 24px;background-color:rgba(232,98,44,0.15);border:1px solid rgba(232,98,44,0.3);border-radius:4px;">
       <span style="font-size:14px;font-weight:600;color:#E8622C;letter-spacing:1px;text-transform:uppercase;">${d.loanType}</span>
     </div>
+    ${existingBadge}
   </div>
   ${crmLinksHtml}
   ${termsSectionHtml}

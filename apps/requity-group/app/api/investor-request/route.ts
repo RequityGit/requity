@@ -28,35 +28,59 @@ export async function POST(request: NextRequest) {
 
     /* ── CRM: create or find crm_contact ── */
     let contactId: string | null = null;
+    let isExistingContact = false;
     const admin = getAdminClient();
+
+    if (!admin) {
+      console.error("[investor-request] SUPABASE_SERVICE_ROLE_KEY not configured. DB writes skipped.");
+    }
+
     if (admin) {
       try {
+        const normalizedEmail = email.trim().toLowerCase();
         const { data: existing } = await admin
           .from("crm_contacts")
-          .select("id")
-          .eq("email", email.toLowerCase())
+          .select("id, contact_types")
+          .ilike("email", normalizedEmail)
+          .is("deleted_at", null)
           .maybeSingle();
 
         if (existing) {
           contactId = existing.id;
+          isExistingContact = true;
+
+          // Ensure "investor" is in contact_types
+          const existingTypes: string[] = (existing.contact_types as string[]) || [];
+          if (!existingTypes.includes("investor")) {
+            await admin
+              .from("crm_contacts")
+              .update({ contact_types: [...existingTypes, "investor"] })
+              .eq("id", contactId);
+          }
         } else {
-          const { data: created } = await admin
+          const { data: created, error: createErr } = await admin
             .from("crm_contacts")
             .insert({
               first_name: firstName,
               last_name: lastName,
-              email: email.toLowerCase(),
+              name: `${firstName} ${lastName}`.trim(),
+              email: normalizedEmail,
               phone,
-              contact_type: "investor",
-              lead_source: "website",
-              status: "active",
-            })
+              contact_type: "investor" as never,
+              contact_types: ["investor"],
+              source: "website" as never,
+            } as never)
             .select("id")
             .single();
-          contactId = created?.id ?? null;
+
+          if (createErr) {
+            console.error("[investor-request] CRM contact error:", createErr.message, createErr.details);
+          } else {
+            contactId = created?.id ?? null;
+          }
         }
       } catch (crmErr) {
-        console.error("CRM contact creation error (non-fatal):", crmErr);
+        console.error("[investor-request] CRM contact creation error (non-fatal):", crmErr);
       }
     }
 
