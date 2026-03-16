@@ -62,7 +62,7 @@ export default async function PostPage({
       <article className="max-w-3xl mx-auto py-16 px-8">
         <header className="mb-12 text-center">
           <div className="inline-block px-3 py-1 bg-blue-50 text-blue-600 rounded-full text-[10px] font-bold uppercase tracking-widest mb-6 border border-blue-100">
-            {community.name} Update // {new Date(post.created_at).toLocaleDateString()}
+            {community.name} Update • {new Date(post.created_at).toLocaleDateString()}
           </div>
           
           <h1 className="text-5xl font-black tracking-tighter text-slate-900 mb-6 leading-[1.1]">

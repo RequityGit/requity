@@ -56,7 +56,7 @@ export default async function AdminPostsList() {
                 <td className="px-6 py-5 text-sm text-slate-500">
                   {new Date(post.created_at).toLocaleDateString()}
                 </td>
-                <td className="px-6 py-5 text-right">
+                <td className="px-6 py-5 text-right flex items-center justify-end gap-4">
                   <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${
                     post.status === 'published' 
                     ? 'bg-emerald-50 text-emerald-600' 
@@ -64,7 +64,15 @@ export default async function AdminPostsList() {
                   }`}>
                     {post.status}
                   </span>
-                </td>
+                  
+                  {/* NEW MANAGE BUTTON */}
+                  <Link 
+                    href={`/admin/posts/${post.id}`} 
+                    className="text-blue-600 hover:text-blue-800 text-xs font-bold uppercase tracking-widest ml-4"
+                  >
+                    Manage
+                  </Link>
+              </td>
               </tr>
             ))}
           </tbody>
