@@ -1,11 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { fetchSiteData } from "../../lib/supabase";
-import type {
-  SiteStat,
-  TeamMember,
-  Testimonial,
-} from "../../lib/types";
+import type { SiteStat, TeamMember } from "../../lib/types";
 import ScrollReveal from "../components/ScrollReveal";
 import AnimatedLine from "../components/AnimatedLine";
 import SectionLabel from "../components/SectionLabel";
@@ -99,14 +95,11 @@ function leadershipBioDisplay(bio: string | null): string {
 }
 
 export default async function AboutPage() {
-  const [stats, team, testimonials] = await Promise.all([
+  const [stats, team] = await Promise.all([
     fetchSiteData<SiteStat>("site_stats", {
       filter: { page_slug: "home" },
     }),
     fetchSiteData<TeamMember>("site_team_members", {
-      eq: ["is_published", true],
-    }),
-    fetchSiteData<Testimonial>("site_testimonials", {
       eq: ["is_published", true],
     }),
   ]);
@@ -367,6 +360,23 @@ export default async function AboutPage() {
               </>
             );
           })()}
+
+          {/* Full-width strip: onsite + back office */}
+          <ScrollReveal>
+            <p
+              className="type-body"
+              style={{
+                color: "var(--navy-text-mid)",
+                textAlign: "center",
+                maxWidth: 720,
+                margin: "48px auto 0",
+                padding: "0 var(--page-x)",
+                lineHeight: 1.7,
+              }}
+            >
+              …and our 50+ dedicated professionals across onsite property staff and back office operations.
+            </p>
+          </ScrollReveal>
         </div>
       </section>
 
@@ -446,38 +456,6 @@ export default async function AboutPage() {
           </ScrollReveal>
         </div>
       </section>
-
-      {/* Testimonials */}
-      {testimonials.length > 0 && (
-        <section className="cream-zone section-pad-lg">
-          <div className="container">
-            <ScrollReveal>
-              <SectionLabel>Testimonials</SectionLabel>
-              <h2 className="type-h2" style={{ color: "var(--text)", marginBottom: 48 }}>
-                What our investors say
-              </h2>
-            </ScrollReveal>
-            <ScrollReveal staggerChildren>
-              <div
-                style={{
-                  display: "grid",
-                  gridTemplateColumns: "repeat(auto-fit, minmax(340px, 1fr))",
-                  gap: 24,
-                }}
-              >
-                {testimonials.slice(0, 4).map((t) => (
-                  <div key={t.id} className="test-card">
-                    <div className="big-q">&ldquo;</div>
-                    <div className="stars">{"★".repeat(t.rating)}</div>
-                    <p className="quote-text">&ldquo;{t.quote}&rdquo;</p>
-                    <div className="author-name">{t.author_name}</div>
-                  </div>
-                ))}
-              </div>
-            </ScrollReveal>
-          </div>
-        </section>
-      )}
 
       {/* CTA */}
       <FooterCTA
