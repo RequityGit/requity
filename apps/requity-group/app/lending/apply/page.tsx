@@ -426,7 +426,7 @@ export default function LoanIntakePage() {
       {/* Trust bar */}
       <section className="dark-zone" style={{ padding: 0 }}>
         <div className="container">
-          <div style={{ display: "flex", justifyContent: "center", gap: 40, padding: "16px 0", borderTop: "1px solid rgba(255,255,255,0.06)", borderBottom: "1px solid rgba(255,255,255,0.06)", flexWrap: "wrap" }}>
+          <div className="loan-trust-bar">
             <span style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13, color: "var(--gold-muted)", fontWeight: 500 }}><Shield size={14} /> No Credit Pull Required</span>
             <span style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13, color: "var(--gold-muted)", fontWeight: 500 }}><Clock size={14} /> 24hr Turnaround</span>
             <span style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13, color: "var(--gold-muted)", fontWeight: 500 }}><Phone size={14} /> <a href="tel:+18133275180" style={{ color: "inherit", textDecoration: "none" }}>813.327.5180</a></span>
@@ -442,7 +442,7 @@ export default function LoanIntakePage() {
           <div style={{ width: "100%", height: 3, background: "var(--border-light)", borderRadius: 3, overflow: "hidden", marginBottom: 24 }}>
             <div style={{ height: "100%", background: "var(--gold)", borderRadius: 3, transition: "width 0.5s cubic-bezier(0.16,1,0.3,1)", width: `${(step / totalSteps) * 100}%` }} />
           </div>
-          <div style={{ display: "flex", justifyContent: "space-between" }}>
+          <div className="loan-step-bar">
             {stepLabels.map((label, i) => (
               <div key={label} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 8 }}>
                 <div style={{
@@ -455,7 +455,7 @@ export default function LoanIntakePage() {
                 }}>
                   {step > i + 1 ? <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 8l3 3 5-5" /></svg> : <span>{i + 1}</span>}
                 </div>
-                <span style={{ fontSize: 11, fontWeight: 500, letterSpacing: 1, textTransform: "uppercase" as const, color: step === i + 1 ? "var(--gold)" : step > i + 1 ? "var(--text-mid)" : "var(--text-light)" }}>{label}</span>
+                <span className="loan-step-label" style={{ color: step === i + 1 ? "var(--gold)" : step > i + 1 ? "var(--text-mid)" : "var(--text-light)" }}>{label}</span>
               </div>
             ))}
           </div>
@@ -474,7 +474,7 @@ export default function LoanIntakePage() {
                   <div style={{ animation: "fadeUp 0.35s ease" }}>
                     <h2 className="type-h2" style={{ color: "var(--text)", marginBottom: 8 }}>Select Your Loan Program</h2>
                     <p className="type-body" style={{ color: "var(--text-mid)", marginBottom: 40 }}>Start by choosing a property type.</p>
-                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20 }}>
+                    <div className="loan-form-2col" style={{ gap: 20 }}>
                       {[
                         { id: "residential", label: "Residential", desc: "Single-family, fix & flip, rental properties, and new construction." },
                         { id: "commercial", label: "Commercial", desc: "Multifamily, CRE bridge, manufactured housing, and RV parks." },
@@ -517,7 +517,7 @@ export default function LoanIntakePage() {
                   Tell us about the property and your financing needs.{hasAutoTerms ? " We\u2019ll generate your loan terms instantly." : ""}
                 </p>
 
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginBottom: 16 }}>
+                <div className="loan-form-2col" style={{ marginBottom: 16 }}>
                   <div style={{ gridColumn: "1 / -1" }}>
                     <FieldLabel>Property Address</FieldLabel>
                     <input ref={addressInputRef} type="text" placeholder="Start typing an address..." defaultValue={form.propertyAddress} onChange={(e) => { setForm((prev) => ({ ...prev, propertyAddress: e.target.value })); setError(""); }} style={inputStyle} autoComplete="off" />
@@ -562,7 +562,7 @@ export default function LoanIntakePage() {
                     <div style={{ fontSize: 13, color: "var(--text-mid)", marginTop: 16, marginBottom: 20 }}>
                       Total project cost: ${totalCost.toLocaleString("en-US")}
                     </div>
-                    <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 12 }}>
+                    <div className="loan-metrics-3col">
                       <MetricPill value={`${ltc.toFixed(1)}%`} label="Loan-to-Cost" variant={ltc <= 75 ? "green" : ltc <= 85 ? "amber" : "red"} />
                       <MetricPill value={ltv !== null ? `${ltv.toFixed(1)}%` : "\u2014"} label="Loan-to-ARV" variant={ltv === null ? "default" : ltv <= 65 ? "green" : ltv <= 75 ? "amber" : "red"} />
                       <MetricPill value={`$${equityIn.toLocaleString("en-US")}`} label="Equity In" variant="default" />
@@ -570,7 +570,7 @@ export default function LoanIntakePage() {
                   </div>
                 )}
 
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
+                <div className="loan-form-2col">
                   {!hasAutoTerms && (
                     <div>
                       <FieldLabel>{unitsLabel}</FieldLabel>
@@ -601,7 +601,7 @@ export default function LoanIntakePage() {
                       <div style={{ flex: 1, height: 1, background: "var(--border)" }} />
                     </div>
                     <p style={{ fontSize: 14, color: "var(--text-mid)", marginBottom: 20 }}>This determines your loan program and rate.</p>
-                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
+                    <div className="loan-form-2col">
                       <div>
                         <FieldLabel required>Credit Score Range</FieldLabel>
                         <select value={form.creditScore} onChange={set("creditScore")} style={inputStyle}>
@@ -641,7 +641,7 @@ export default function LoanIntakePage() {
                       {generatedTerms.programName}
                     </div>
 
-                    <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 16, marginBottom: 24 }}>
+                    <div className="loan-terms-3col" style={{ marginBottom: 24 }}>
                       <TermMetric value={`${generatedTerms.interestRate}%`} label="Interest Rate" note={generatedTerms.rateType} />
                       <TermMetric value={`${generatedTerms.originationPoints}%`} label="Origination" note={generatedTerms.originationFee ? `$${generatedTerms.originationFee.toLocaleString()}` : "\u2014"} />
                       <TermMetric value={`${generatedTerms.loanTermMonths} Mo`} label="Loan Term" note={isCommercial && generatedTerms.exitPoints > 0 ? `${generatedTerms.exitPoints} exit pts` : generatedTerms.termNote} />
@@ -650,7 +650,7 @@ export default function LoanIntakePage() {
                     {isCommercial && (
                       <div style={{ marginBottom: 24 }}>
                         <div style={{ fontSize: 12, color: "var(--text-light)", textTransform: "uppercase" as const, letterSpacing: 1.5, fontWeight: 500, marginBottom: 12 }}>Select Loan Term</div>
-                        <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 12 }}>
+                        <div className="loan-terms-3col" style={{ gap: 12 }}>
                           {TERM_OPTIONS.map((opt) => (
                             <button key={opt.months} type="button" onClick={() => handleTermChange(opt.months)}
                               style={{ padding: "16px 12px", background: selectedTermMonths === opt.months ? "rgba(160,138,78,0.1)" : "var(--white)", border: selectedTermMonths === opt.months ? "2px solid var(--gold)" : "1px solid var(--border)", borderRadius: 8, cursor: "pointer", textAlign: "center", fontFamily: "inherit", transition: "all 0.3s" }}>
@@ -707,8 +707,8 @@ export default function LoanIntakePage() {
                 <p className="type-body" style={{ color: "var(--text-mid)", marginBottom: 36 }}>
                   {generatedTerms ? "Enter your details to receive your term sheet via email." : "Let us know how to reach you."}
                 </p>
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 340px", gap: 40, alignItems: "start" }}>
-                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
+                <div className="loan-contact-layout">
+                  <div className="loan-form-2col">
                     <div>
                       <FieldLabel required>First Name</FieldLabel>
                       <input type="text" placeholder="John" value={form.firstName} onChange={set("firstName")} style={inputStyle} />
@@ -780,7 +780,7 @@ export default function LoanIntakePage() {
           )}
 
           {/* Nav */}
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 40, paddingTop: 32, borderTop: "1px solid var(--border-light)" }}>
+          <div className="loan-nav-buttons">
             {step > 1 ? (
               <button type="button" onClick={goBack} className="btn-outline-light" style={{ height: 48, padding: "0 24px", borderRadius: 8 }}>
                 <ArrowLeft size={16} /> Back
