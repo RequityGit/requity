@@ -3,6 +3,24 @@
 import { useRef, useEffect, useCallback } from "react";
 import { cn } from "@/lib/utils";
 
+declare global {
+  interface Window {
+    google?: {
+      maps: {
+        places: {
+          Autocomplete: new (
+            input: HTMLInputElement,
+            opts?: Record<string, unknown>
+          ) => GoogleAutocomplete;
+        };
+        event: {
+          clearInstanceListeners: (instance: unknown) => void;
+        };
+      };
+    };
+  }
+}
+
 interface GoogleAddressComponent {
   long_name: string;
   short_name: string;
