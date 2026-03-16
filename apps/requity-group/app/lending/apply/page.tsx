@@ -427,7 +427,7 @@ export default function LoanIntakePage() {
       <section className="dark-zone" style={{ padding: 0 }}>
         <div className="container">
           <div className="loan-trust-bar">
-            <span style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13, color: "var(--gold-muted)", fontWeight: 500 }}><Shield size={14} /> No Credit Pull Required</span>
+            <span style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13, color: "var(--gold-muted)", fontWeight: 500 }}><Shield size={14} /> No Minimum Credit</span>
             <span style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13, color: "var(--gold-muted)", fontWeight: 500 }}><Clock size={14} /> 24hr Turnaround</span>
             <span style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13, color: "var(--gold-muted)", fontWeight: 500 }}><Phone size={14} /> <a href="tel:+18133275180" style={{ color: "inherit", textDecoration: "none" }}>813.327.5180</a></span>
           </div>

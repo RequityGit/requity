@@ -83,6 +83,7 @@ export interface CompanyRowV2 {
   active_deals: number;
   is_active: boolean | null;
   notes: string | null;
+  created_at: string;
 }
 
 interface TeamMember {

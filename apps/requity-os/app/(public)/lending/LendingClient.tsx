@@ -213,7 +213,7 @@ export default function LendingClient({ testimonials = [], loanIndexes = null }:
                   {t.heroDesc}
                 </p>
                 <div className="ld-hero-actions" style={{ opacity: 0, animation: 'fadeUp 0.8s 0.8s forwards' }}>
-                  <Link href="/apply" className="btn-primary">{t.requestLoan} <ArrowIcon /></Link>
+                  <Link href="https://requitygroup.com/lending/apply" className="btn-primary">{t.requestLoan} <ArrowIcon /></Link>
                   <a href="tel:+18133275180" className="btn-secondary">{t.callUs}</a>
                 </div>
               </div>
@@ -264,7 +264,7 @@ export default function LendingClient({ testimonials = [], loanIndexes = null }:
                 return (
                 <Link
                   key={program.id}
-                  href={`/apply?type=${encodeURIComponent(program.name)}`}
+                  href={`https://requitygroup.com/lending/apply?type=${encodeURIComponent(program.name)}`}
                   className={`ld-program-card card reveal ${i < 3 ? `reveal-delay-${i + 1}` : ''}`}
                 >
                   <div className="ld-program-icon">{program.icon}</div>
@@ -408,7 +408,7 @@ export default function LendingClient({ testimonials = [], loanIndexes = null }:
                 <p>{t.contactDesc}</p>
               </div>
               <div className="ld-contact-actions">
-                <Link href="/apply" className="btn-primary" style={{ borderRadius: 8, whiteSpace: 'nowrap' }}>{t.submitLoanRequest} <ArrowIcon /></Link>
+                <Link href="https://requitygroup.com/lending/apply" className="btn-primary" style={{ borderRadius: 8, whiteSpace: 'nowrap' }}>{t.submitLoanRequest} <ArrowIcon /></Link>
                 <a href="tel:+18133275180" className="ld-phone-link">
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07 19.5 19.5 0 01-6-6 19.79 19.79 0 01-3.07-8.67A2 2 0 014.11 2h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z" /></svg>
                   813.327.5180
@@ -440,7 +440,7 @@ export default function LendingClient({ testimonials = [], loanIndexes = null }:
               </div>
               <div className="footer-col"><h4>{f.company}</h4><Link href="/about">{f.about}</Link><Link href="/portfolio">{f.portfolio}</Link><Link href="/insights">{f.insights}</Link></div>
               <div className="footer-col"><h4>{f.invest}</h4><Link href="/income-fund">{f.incomeFund}</Link><a href="https://investors.appfolioim.com/trg/investor/login">{f.investorLogin}</a><Link href="/request-access">{f.requestAccess}</Link><Link href="/investor-faq">{f.investorFaq}</Link></div>
-              <div className="footer-col"><h4>{f.lending}</h4><Link href="/lending">{f.loanPrograms}</Link><Link href="/apply">{f.requestQuote}</Link><Link href="/apply">{f.loanApplication}</Link><Link href="/borrower-faq">{f.borrowerFaq}</Link></div>
+              <div className="footer-col"><h4>{f.lending}</h4><Link href="/lending">{f.loanPrograms}</Link><Link href="https://requitygroup.com/lending/apply">{f.requestQuote}</Link><Link href="https://requitygroup.com/lending/apply">{f.loanApplication}</Link><Link href="/borrower-faq">{f.borrowerFaq}</Link></div>
             </div>
             <div className="footer-bottom">
               <p>{f.copyright} &nbsp;|&nbsp; {f.address} &nbsp;|&nbsp; {f.phone}</p>

@@ -113,6 +113,20 @@ export interface InvestorCommitmentData {
   entity_name: string | null;
 }
 
+export interface PipelineDealData {
+  id: string;
+  deal_number: string | null;
+  name: string;
+  stage: string;
+  amount: number | null;
+  loan_type: string | null;
+  asset_class: string | null;
+  source: string | null;
+  capital_side: string;
+  role: string | null;
+  created_at: string;
+}
+
 export interface TeamMember {
   id: string;
   full_name: string;

@@ -28,6 +28,7 @@ import {
   CRM_COMPANY_TYPES,
 } from "@/lib/constants";
 import { cn } from "@/lib/utils";
+import { DateAddedFilter, filterByDateAdded } from "@/components/ui/date-added-filter";
 import {
   Building2,
   Search,
@@ -52,6 +53,7 @@ export function CompaniesView({ companies, isSuperAdmin = false }: CompaniesView
   const { toast } = useToast();
 
   const [companySearch, setCompanySearch] = useState("");
+  const [dateAdded, setDateAdded] = useState("all");
   const [companySortKey, setCompanySortKey] = useState<string>("name");
   const [companySortDir, setCompanySortDir] = useState<"asc" | "desc">("asc");
   const [deleteTarget, setDeleteTarget] = useState<{ id: string; name: string } | null>(null);
@@ -90,6 +92,10 @@ export function CompaniesView({ companies, isSuperAdmin = false }: CompaniesView
       );
     }
 
+    if (dateAdded !== "all") {
+      result = result.filter((c) => filterByDateAdded(c.created_at, dateAdded));
+    }
+
     result.sort((a, b) => {
       const key = companySortKey as keyof CompanyRowV2;
       let av = a[key];
@@ -108,7 +114,7 @@ export function CompaniesView({ companies, isSuperAdmin = false }: CompaniesView
     });
 
     return result;
-  }, [companies, companySearch, companySortKey, companySortDir]);
+  }, [companies, companySearch, dateAdded, companySortKey, companySortDir]);
 
   function handleCompanySort(key: string) {
     if (companySortKey === key) {
@@ -173,6 +179,11 @@ export function CompaniesView({ companies, isSuperAdmin = false }: CompaniesView
               </button>
             )}
           </div>
+          <DateAddedFilter
+            value={dateAdded}
+            onChange={setDateAdded}
+            className="w-[150px] h-9 text-xs"
+          />
           <div className="flex-1" />
           <AddCompanyDialog />
         </div>

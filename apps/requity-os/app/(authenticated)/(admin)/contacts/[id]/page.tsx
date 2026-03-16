@@ -10,6 +10,7 @@ import type {
   EmailData,
   LoanData,
   InvestorCommitmentData,
+  PipelineDealData,
   TeamMember,
   CompanyData,
   BorrowerData,
@@ -85,6 +86,7 @@ export default async function CrmContactDetailPage({ params }: PageProps) {
     sectionRowsResult,
     profileSectionRowsResult,
     allCompaniesResult,
+    dealContactsResult,
   ] = await Promise.all([
     // Base data
     supabase
@@ -188,6 +190,11 @@ export default async function CrmContactDetailPage({ params }: PageProps) {
       .from("companies")
       .select("id, company_number, name, company_type")
       .order("name"),
+    // Pipeline deals linked via deal_contacts
+    admin
+      .from("deal_contacts")
+      .select("role, unified_deals(id, deal_number, name, stage, amount, loan_type, asset_class, source, capital_side, created_at)")
+      .eq("contact_id", contact.id),
   ]);
 
   // Build profile lookup for display names
@@ -576,6 +583,26 @@ export default async function CrmContactDetailPage({ params }: PageProps) {
       )?.label || contact.source
     : null;
 
+  // Map pipeline deals from deal_contacts join
+  const pipelineDeals: PipelineDealData[] = (dealContactsResult.data ?? [])
+    .filter((dc: Record<string, unknown>) => dc.unified_deals)
+    .map((dc: Record<string, unknown>) => {
+      const d = dc.unified_deals as Record<string, unknown>;
+      return {
+        id: d.id as string,
+        deal_number: d.deal_number as string | null,
+        name: d.name as string,
+        stage: d.stage as string,
+        amount: d.amount as number | null,
+        loan_type: d.loan_type as string | null,
+        asset_class: d.asset_class as string | null,
+        source: d.source as string | null,
+        capital_side: d.capital_side as string,
+        role: dc.role as string | null,
+        created_at: d.created_at as string,
+      };
+    });
+
   // Map contact to our typed shape
   const contactData: ContactData = {
     id: contact.id,
@@ -619,6 +646,7 @@ export default async function CrmContactDetailPage({ params }: PageProps) {
       activities={activities}
       emails={emails}
       loans={borrowerLoans}
+      pipelineDeals={pipelineDeals}
       investorCommitments={investorCommitments}
       teamMembers={teamMembers}
       profiles={profiles}

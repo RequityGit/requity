@@ -279,6 +279,19 @@ export async function POST(request: NextRequest) {
             metadata: { source: "website", loan_type: loanType, is_existing_contact: isExistingContact },
           } as never);
         }
+
+        // ── 6. Log CRM contact activity (shows on contact timeline) ──
+        if (crmContactId) {
+          const dealRef = dealId ? ` Deal created.` : "";
+          await admin.from("crm_activities").insert({
+            contact_id: crmContactId,
+            activity_type: "deal_update",
+            subject: "Loan request submitted via website",
+            description: `${firstName} ${lastName} submitted a ${loanType} loan request for ${loanAmount} via requitygroup.com.${dealRef}`,
+            performed_by: null,
+            performed_by_name: "Website",
+          });
+        }
       } catch (crmErr) {
         console.error("[loan-request] CRM pipeline error:", crmErr);
       }

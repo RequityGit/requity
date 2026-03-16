@@ -118,6 +118,42 @@ export async function POST(request: NextRequest) {
 
           contactId = created?.id ?? null;
         }
+        // Ensure investor relationship type exists (CRM filters use this table)
+        if (contactId) {
+          const { data: existingRel } = await admin
+            .from("contact_relationship_types")
+            .select("id")
+            .eq("contact_id", contactId)
+            .eq("relationship_type", "investor")
+            .maybeSingle();
+
+          if (!existingRel) {
+            await admin.from("contact_relationship_types").insert({
+              contact_id: contactId,
+              relationship_type: "investor",
+              is_active: true,
+              started_at: new Date().toISOString(),
+            });
+          }
+        }
+
+        // Log CRM contact activity (shows on contact timeline)
+        if (contactId) {
+          const profileDetails = [
+            accreditedStatus ? `Accredited: ${accreditedStatus}` : null,
+            targetInvestment ? `Target: ${targetInvestment}` : null,
+            investmentTimeline ? `Timeline: ${investmentTimeline}` : null,
+          ].filter(Boolean).join(", ");
+
+          await admin.from("crm_activities").insert({
+            contact_id: contactId,
+            activity_type: "note",
+            subject: "Investor profile submitted via website",
+            description: `${firstName} ${lastName} completed the investor profile form via requitygroup.com.${profileDetails ? ` ${profileDetails}.` : ""}`,
+            performed_by: null,
+            performed_by_name: "Website",
+          });
+        }
       } catch (crmErr) {
         console.error("[investor-profile] CRM update error (non-fatal):", crmErr);
       }

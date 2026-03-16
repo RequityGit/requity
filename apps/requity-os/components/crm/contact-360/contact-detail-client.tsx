@@ -16,6 +16,7 @@ import { ContactDetailSidebar } from "./contact-detail-sidebar";
 import { EmailComposeSheet } from "@/components/crm/email-compose-sheet";
 import { DetailOverviewTab } from "./tabs/detail-overview-tab";
 import { CrmInlineEditorWrapper } from "@/components/inline-layout-editor/CrmInlineEditorWrapper";
+import { CollapsiblePipelineDealsSection } from "./sections/collapsible-pipeline-deals-section";
 import { CollapsibleBorrowerSection } from "./sections/collapsible-borrower-section";
 import { CollapsibleInvestorSection } from "./sections/collapsible-investor-section";
 import { CollapsibleTasksSection } from "./sections/collapsible-tasks-section";
@@ -27,6 +28,7 @@ import type {
   EmailData,
   LoanData,
   InvestorCommitmentData,
+  PipelineDealData,
   TeamMember,
   CompanyData,
   BorrowerData,
@@ -43,6 +45,7 @@ interface ContactDetailClientProps {
   activities: ActivityData[];
   emails: EmailData[];
   loans: LoanData[];
+  pipelineDeals: PipelineDealData[];
   investorCommitments: InvestorCommitmentData[];
   teamMembers: TeamMember[];
   profiles: Profile[];
@@ -69,6 +72,7 @@ export function ContactDetailClient({
   activities,
   emails,
   loans,
+  pipelineDeals,
   investorCommitments,
   teamMembers,
   profiles,
@@ -177,6 +181,9 @@ export function ContactDetailClient({
               teamMembers={teamMembers}
               allCompanies={allCompanies}
             />
+
+            {/* Pipeline Deals (from unified pipeline) */}
+            <CollapsiblePipelineDealsSection deals={pipelineDeals} />
 
             {/* Borrower (collapsible, only if exists) */}
             {borrower && (

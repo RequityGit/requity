@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/select";
 import { LayoutGrid, List, Plus, Search } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { DateAddedFilter } from "@/components/ui/date-added-filter";
 import type { CapitalSide, UnifiedCardType } from "./pipeline-types";
 
 export interface FilterState {
@@ -18,6 +19,7 @@ export interface FilterState {
   capitalSide: CapitalSide | "all";
   cardTypeSlug: string;
   assetClass: string;
+  dateAdded: string;
   view: "kanban" | "table";
 }
 
@@ -87,6 +89,12 @@ export function DealFilters({
             ))}
           </SelectContent>
         </Select>
+
+        {/* Date added filter */}
+        <DateAddedFilter
+          value={filters.dateAdded}
+          onChange={(val) => update({ dateAdded: val })}
+        />
       </div>
 
       <div className="flex items-center gap-2">

@@ -37,6 +37,7 @@ import {
 } from "@/lib/constants";
 import { smartDate } from "@/lib/format";
 import { cn } from "@/lib/utils";
+import { DateAddedFilter, filterByDateAdded } from "@/components/ui/date-added-filter";
 import {
   Users,
   Search,
@@ -77,6 +78,7 @@ export function ContactsView({
   const [contactSearch, setContactSearch] = useState(searchParams.get("q") ?? "");
   const [relFilter, setRelFilter] = useState(searchParams.get("rel") ?? "all");
   const [stageFilter, setStageFilter] = useState(searchParams.get("stage") ?? "all");
+  const [dateAdded, setDateAdded] = useState(searchParams.get("date") ?? "all");
   const [contactSortKey, setContactSortKey] = useState<string>("last_contacted_at");
   const [contactSortDir, setContactSortDir] = useState<"asc" | "desc">("desc");
   const [deleteTarget, setDeleteTarget] = useState<{ id: string; name: string } | null>(null);
@@ -106,10 +108,11 @@ export function ContactsView({
     if (contactSearch) params.set("q", contactSearch);
     if (relFilter !== "all") params.set("rel", relFilter);
     if (stageFilter !== "all") params.set("stage", stageFilter);
+    if (dateAdded !== "all") params.set("date", dateAdded);
     const str = params.toString();
     const newUrl = str ? `?${str}` : window.location.pathname;
     window.history.replaceState(null, "", newUrl);
-  }, [contactSearch, relFilter, stageFilter]);
+  }, [contactSearch, relFilter, stageFilter, dateAdded]);
 
   const filteredContacts = useMemo(() => {
     let result = [...contacts];
@@ -133,6 +136,10 @@ export function ContactsView({
       result = result.filter((c) => c.lifecycle_stage === stageFilter);
     }
 
+    if (dateAdded !== "all") {
+      result = result.filter((c) => filterByDateAdded(c.created_at, dateAdded));
+    }
+
     result.sort((a, b) => {
       const key = contactSortKey as keyof CrmContactRow;
       let av = a[key];
@@ -151,9 +158,9 @@ export function ContactsView({
     });
 
     return result;
-  }, [contacts, contactSearch, relFilter, stageFilter, contactSortKey, contactSortDir]);
+  }, [contacts, contactSearch, relFilter, stageFilter, dateAdded, contactSortKey, contactSortDir]);
 
-  const hasContactFilters = contactSearch.trim() !== "" || relFilter !== "all" || stageFilter !== "all";
+  const hasContactFilters = contactSearch.trim() !== "" || relFilter !== "all" || stageFilter !== "all" || dateAdded !== "all";
 
   function handleContactSort(key: string) {
     if (contactSortKey === key) {
@@ -168,6 +175,7 @@ export function ContactsView({
     setContactSearch("");
     setRelFilter("all");
     setStageFilter("all");
+    setDateAdded("all");
   }
 
   function SortHeader({
@@ -250,6 +258,11 @@ export function ContactsView({
               ))}
             </SelectContent>
           </Select>
+          <DateAddedFilter
+            value={dateAdded}
+            onChange={setDateAdded}
+            className="w-[150px] h-9 text-xs"
+          />
           <div className="flex-1" />
           <AddContactDialog teamMembers={teamMembers} currentUserId={currentUserId} />
         </div>
@@ -280,6 +293,15 @@ export function ContactsView({
                 className="inline-flex items-center gap-1 text-xs text-foreground bg-muted rounded-md px-2.5 py-1 hover:bg-muted/80"
               >
                 {CRM_LIFECYCLE_STAGES.find((s) => s.value === stageFilter)?.label ?? stageFilter}{" "}
+                <X className="h-2.5 w-2.5" />
+              </button>
+            )}
+            {dateAdded !== "all" && (
+              <button
+                onClick={() => setDateAdded("all")}
+                className="inline-flex items-center gap-1 text-xs text-foreground bg-muted rounded-md px-2.5 py-1 hover:bg-muted/80"
+              >
+                {dateAdded === "today" ? "Today" : dateAdded === "yesterday" ? "Yesterday" : dateAdded === "7d" ? "Last 7 Days" : dateAdded === "30d" ? "Last 30 Days" : dateAdded === "this_month" ? "This Month" : dateAdded}{" "}
                 <X className="h-2.5 w-2.5" />
               </button>
             )}

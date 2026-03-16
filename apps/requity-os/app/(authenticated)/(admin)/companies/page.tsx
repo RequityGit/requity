@@ -76,6 +76,7 @@ export default async function CompaniesPage() {
     active_deals: 0,
     is_active: c.is_active,
     notes: c.notes,
+    created_at: c.created_at,
   }));
 
   return (

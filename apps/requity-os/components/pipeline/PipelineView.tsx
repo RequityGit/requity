@@ -4,6 +4,7 @@ import { useState, useMemo, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { DealFilters, type FilterState } from "./DealFilters";
+import { filterByDateAdded } from "@/components/ui/date-added-filter";
 import { PipelineKanban } from "./PipelineKanban";
 import { PipelineTable } from "./PipelineTable";
 import { NewDealDialog } from "./NewDealDialog";
@@ -44,6 +45,7 @@ export function PipelineView({
     capitalSide: "all",
     cardTypeSlug: "all",
     assetClass: "all",
+    dateAdded: "all",
     view: "kanban",
   });
 
@@ -71,6 +73,9 @@ export function PipelineView({
       }
 
       if (filters.assetClass !== "all" && d.asset_class !== filters.assetClass)
+        return false;
+
+      if (filters.dateAdded !== "all" && !filterByDateAdded(d.created_at, filters.dateAdded))
         return false;
 
       if (filters.search) {

@@ -79,6 +79,36 @@ export async function POST(request: NextRequest) {
             contactId = created?.id ?? null;
           }
         }
+        // Ensure investor relationship type exists (CRM filters use this table)
+        if (contactId) {
+          const { data: existingRel } = await admin
+            .from("contact_relationship_types")
+            .select("id")
+            .eq("contact_id", contactId)
+            .eq("relationship_type", "investor")
+            .maybeSingle();
+
+          if (!existingRel) {
+            await admin.from("contact_relationship_types").insert({
+              contact_id: contactId,
+              relationship_type: "investor",
+              is_active: true,
+              started_at: new Date().toISOString(),
+            });
+          }
+        }
+
+        // Log CRM contact activity (shows on contact timeline)
+        if (contactId) {
+          await admin.from("crm_activities").insert({
+            contact_id: contactId,
+            activity_type: "note",
+            subject: "Investor access request submitted via website",
+            description: `${firstName} ${lastName} submitted an investor access request via requitygroup.com.${isExistingContact ? " Contact already existed in CRM." : ""}`,
+            performed_by: null,
+            performed_by_name: "Website",
+          });
+        }
       } catch (crmErr) {
         console.error("[investor-request] CRM contact creation error (non-fatal):", crmErr);
       }
