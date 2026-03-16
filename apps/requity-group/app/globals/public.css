@@ -886,31 +886,30 @@ footer {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 40px;
-  height: 40px;
-  border-radius: 8px;
-  transition: color 0.25s var(--ease-smooth), background 0.25s var(--ease-smooth), transform 0.2s var(--ease-smooth);
+  width: 32px;
+  height: 32px;
+  border-radius: 0;
+  background: none;
+  transition: opacity 0.25s var(--ease-smooth), transform 0.2s var(--ease-smooth);
+  opacity: 0.6;
 }
 .footer-social-btn:hover {
   transform: translateY(-2px);
+  opacity: 1;
 }
-/* LinkedIn: brand blue, white icon */
+/* LinkedIn: brand blue icon */
 .footer-social-btn-linkedin {
-  color: #fff;
-  background: #0A66C2;
+  color: #0A66C2;
 }
 .footer-social-btn-linkedin:hover {
-  color: #fff;
-  background: #004182;
+  color: #0A66C2;
 }
-/* YouTube: brand red, white icon */
+/* YouTube: brand red icon */
 .footer-social-btn-youtube {
-  color: #fff;
-  background: #FF0000;
+  color: #FF0000;
 }
 .footer-social-btn-youtube:hover {
-  color: #fff;
-  background: #CC0000;
+  color: #FF0000;
 }
 
 /* Subscribe */

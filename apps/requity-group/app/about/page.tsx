@@ -50,8 +50,17 @@ const JET_BIO_SUFFIX =
 /** Strip filler opening for Jet so bio starts with substance. */
 const JET_BIO_OPENING_FILLER = /^\s*As Asset Manager with a focus on operations,?\s*/i;
 
-/** Per-member bio display: for Jet, strip filler opening and append experience sentence; no abbrev so it fits without "...". */
+const ESTEFANIA_DISPLAY_NAME = "Estefanía Espinal, MBA";
+const ESTEFANIA_BIO =
+  "Estefanía is part of the Real Estate Lending and Investing team at Requity, focused on structuring and evaluating debt and equity investments across the U.S. Leveraging her prior experience, she previously served on the Capital Markets team at JLL, working alongside decision makers at some of the world's largest institutions to bring foreign capital into U.S. real estate. Before that, as part of the acquisitions team at EXAN Group, she was directly involved in over $800 million in acquisitions and dispositions across multiple asset types nationwide. Estefanía holds an MBA from Boston College, and a BS of International Business from EAFIT University.";
+
+function isEstefania(name: string): boolean {
+  return /Estefan[ií]a/i.test(name) || (name.includes("Espinal") && name.toLowerCase().includes("estefan"));
+}
+
+/** Per-member bio display: for Jet, strip filler and append experience; for Estefanía, use full override bio. */
 function teamBioDisplay(name: string, bio: string | null): string {
+  if (isEstefania(name)) return ESTEFANIA_BIO;
   if (!bio) return "";
   let trimmed = bio.trim();
   if (name.includes("Jet")) {
@@ -63,9 +72,16 @@ function teamBioDisplay(name: string, bio: string | null): string {
   return trimmed;
 }
 
-/** Title override: Jet shows as Managing Director. */
+/** Title override: Jet shows as Managing Director; Estefanía as Lending & Investments. */
 function teamTitleDisplay(name: string, title: string): string {
-  return name.includes("Jet") ? "Managing Director" : title;
+  if (name.includes("Jet")) return "Managing Director";
+  if (isEstefania(name)) return "Lending & Investments";
+  return title;
+}
+
+/** Name override: Estefanía shows as "Estefanía Espinal, MBA". */
+function teamNameDisplay(name: string): string {
+  return isEstefania(name) ? ESTEFANIA_DISPLAY_NAME : name;
 }
 
 /** Display override: leadership bio ($200M, no degree). Returns bio only; add DESIGNATIONS_SUFFIX after abbreviate so it is never cut. */
@@ -310,11 +326,11 @@ export default async function AboutPage() {
                     {ops.map((member) => (
                       <div key={member.id} className="card-navy" style={{ padding: "36px 32px" }}>
                         <div className="team-avatar on-navy" style={{ marginBottom: 24 }}>
-                          {member.name.split(" ").slice(0, 2).map((n) => n[0]).join("")}
+                          {teamNameDisplay(member.name).replace(/,.*$/, "").split(" ").slice(0, 2).map((n) => n[0]).join("")}
                         </div>
-                        <div className="team-name on-navy">{member.name}</div>
+                        <div className="team-name on-navy">{teamNameDisplay(member.name)}</div>
                         <p className="team-title">{teamTitleDisplay(member.name, member.title)}</p>
-                        <p className="team-bio on-navy">{abbreviateBio(teamBioDisplay(member.name, member.bio), member.name.includes("Jet") ? 600 : 320)}</p>
+                        <p className="team-bio on-navy">{abbreviateBio(teamBioDisplay(member.name, member.bio), member.name.includes("Jet") ? 600 : isEstefania(member.name) ? 999 : 320)}</p>
                       </div>
                     ))}
                   </div>
@@ -339,11 +355,11 @@ export default async function AboutPage() {
                     {lending.map((member) => (
                       <div key={member.id} className="card-navy" style={{ padding: "36px 32px" }}>
                         <div className="team-avatar on-navy" style={{ marginBottom: 24 }}>
-                          {member.name.split(" ").slice(0, 2).map((n) => n[0]).join("")}
+                          {teamNameDisplay(member.name).replace(/,.*$/, "").split(" ").slice(0, 2).map((n) => n[0]).join("")}
                         </div>
-                        <div className="team-name on-navy">{member.name}</div>
+                        <div className="team-name on-navy">{teamNameDisplay(member.name)}</div>
                         <p className="team-title">{teamTitleDisplay(member.name, member.title)}</p>
-                        <p className="team-bio on-navy">{abbreviateBio(teamBioDisplay(member.name, member.bio), member.name.includes("Jet") ? 600 : 320)}</p>
+                        <p className="team-bio on-navy">{abbreviateBio(teamBioDisplay(member.name, member.bio), member.name.includes("Jet") ? 600 : isEstefania(member.name) ? 999 : 320)}</p>
                       </div>
                     ))}
                   </div>

@@ -38,7 +38,17 @@ export default async function HomePage() {
     // Render page with empty sections so app never goes blank
   }
 
-  const featuredTestimonials = testimonials.filter((t) => t?.is_featured).slice(0, 3);
+  // Home: exactly 3 testimonials from Marshall, Ben, Russell (first names only); Todd stays on /testimonials
+  const HOME_TESTIMONIAL_FIRST_NAMES: string[] = ["Marshall", "Ben", "Russell"];
+  const getFirstName = (authorName: string) => (authorName ?? "").trim().split(/\s+/)[0] ?? "";
+  const featuredTestimonials = testimonials
+    .filter((t) => t?.author_name && HOME_TESTIMONIAL_FIRST_NAMES.includes(getFirstName(t.author_name)))
+    .sort((a, b) => {
+      const order = [...HOME_TESTIMONIAL_FIRST_NAMES];
+      const i = (name: string) => order.indexOf(getFirstName(name));
+      return i(a.author_name) - i(b.author_name);
+    })
+    .slice(0, 3);
   const recentInsights = insights.slice(0, 3);
 
   return (
@@ -292,7 +302,7 @@ export default async function HomePage() {
                     <div className="big-q">&ldquo;</div>
                     <div className="stars">{"★".repeat(t.rating)}</div>
                     <p className="quote-text">&ldquo;{t.quote}&rdquo;</p>
-                    <div className="author-name">{t.author_name}</div>
+                    <div className="author-name">{getFirstName(t.author_name)}</div>
                   </div>
                 ))}
               </div>

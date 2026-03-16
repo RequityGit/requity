@@ -31,7 +31,7 @@ export default function StructuredData() {
       "Manufactured Housing",
       "Multifamily Properties",
     ],
-    email: "info@requitygroup.com",
+    email: "contact@requitygroup.com",
     sameAs: [],
   };
 

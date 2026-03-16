@@ -9,6 +9,7 @@ const LOGO_URL =
   "https://edhlkknvlczhbowasjna.supabase.co/storage/v1/object/public/brand-assets/Requity%20Logo%20White.svg";
 
 const INVESTOR_LOGIN_URL = "https://investors.appfolioim.com/trg/investor/login";
+const CONTACT_EMAIL = "contact@requitygroup.com";
 
 function isActive(pathname: string, url: string): boolean {
   if (url === "/") return pathname === "/";
@@ -46,8 +47,9 @@ export default function Nav({ items }: { items: NavItem[] }) {
         <ul className="nav-links nav-desktop">
           {headerItems.map((item) => {
             const isCta = item.label === "Investor Login";
-            const href = isCta ? INVESTOR_LOGIN_URL : item.url;
-            const isExternal = href.startsWith("http");
+            const isContact = item.label === "Contact";
+            const href = isCta ? INVESTOR_LOGIN_URL : isContact ? `mailto:${CONTACT_EMAIL}` : item.url;
+            const isExternal = href.startsWith("http") || href.startsWith("mailto:");
             const active = !isExternal && !isCta && isActive(pathname, item.url);
             return (
               <li key={item.id}>
@@ -93,8 +95,9 @@ export default function Nav({ items }: { items: NavItem[] }) {
         <div className="mobile-overlay-inner">
           {headerItems.map((item, i) => {
             const isCta = item.label === "Investor Login";
-            const href = isCta ? INVESTOR_LOGIN_URL : item.url;
-            const isExternal = href.startsWith("http");
+            const isContact = item.label === "Contact";
+            const href = isCta ? INVESTOR_LOGIN_URL : isContact ? `mailto:${CONTACT_EMAIL}` : item.url;
+            const isExternal = href.startsWith("http") || href.startsWith("mailto:");
             const active = !isExternal && !isCta && isActive(pathname, item.url);
             const cls = [
               "mobile-link",
