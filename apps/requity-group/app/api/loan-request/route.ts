@@ -108,7 +108,6 @@ export async function POST(request: NextRequest) {
           crmContactId = existing.id;
           isExistingContact = true;
 
-          // Update contact info if they submitted with new phone or name
           const updates: Record<string, unknown> = {};
           if (phone && phone !== existing.phone) updates.phone = phone;
           if (firstName && firstName !== existing.first_name) updates.first_name = firstName;
@@ -118,7 +117,6 @@ export async function POST(request: NextRequest) {
             updates.name = newName;
           }
 
-          // Ensure "borrower" is in contact_types array
           const existingTypes: string[] = existing.contact_types || [];
           if (!existingTypes.includes("borrower")) {
             updates.contact_types = [...existingTypes, "borrower"];
@@ -128,7 +126,6 @@ export async function POST(request: NextRequest) {
             await admin.from("crm_contacts").update(updates).eq("id", crmContactId);
           }
         } else {
-          // Create new contact
           const { data: newContact, error: contactErr } = await admin
             .from("crm_contacts")
             .insert({
@@ -148,31 +145,46 @@ export async function POST(request: NextRequest) {
             .single();
 
           if (contactErr) {
-            console.error("[loan-request] CRM contact error:", contactErr.message, contactErr.details);
+            console.error("[loan-request] CRM contact creation FAILED:", {
+              error: contactErr.message,
+              details: contactErr.details,
+              code: contactErr.code,
+              hint: contactErr.hint,
+              email: normalizedEmail,
+            });
           } else {
             crmContactId = newContact?.id ?? null;
+            console.log("[loan-request] CRM contact created:", crmContactId);
           }
         }
 
         // ── 2. Create property record ──
         const units = unitsOrLots ? parseInt(unitsOrLots) : null;
+        const propertyInsert = {
+          address_line1: propertyAddress || null,
+          city: city || null,
+          state: state || null,
+          property_type: PROPERTY_TYPE_MAP[loanType] || null,
+          asset_type: ASSET_TYPE_MAP[loanType] || null,
+          number_of_units: Number.isFinite(units) ? units : null,
+        };
         const { data: propData, error: propErr } = await admin
           .from("properties")
-          .insert({
-            address_line1: propertyAddress || null,
-            city: city || null,
-            state: state || null,
-            property_type: PROPERTY_TYPE_MAP[loanType] || null,
-            asset_type: ASSET_TYPE_MAP[loanType] || null,
-            number_of_units: Number.isFinite(units) ? units : null,
-          })
+          .insert(propertyInsert)
           .select("id")
           .single();
 
         if (propErr) {
-          console.error("[loan-request] Property error:", propErr.message, propErr.details);
+          console.error("[loan-request] Property creation FAILED:", {
+            error: propErr.message,
+            details: propErr.details,
+            code: propErr.code,
+            hint: propErr.hint,
+            attempted: propertyInsert,
+          });
         } else {
           propertyId = propData?.id ?? null;
+          console.log("[loan-request] Property created:", propertyId);
         }
 
         // ── 3. Create unified_deal (pipeline deal) ──
@@ -180,13 +192,11 @@ export async function POST(request: NextRequest) {
         const loanTypeCode = LOAN_TYPE_CODES[loanType] || null;
         const cardTypeId = loanTypeCode ? CARD_TYPE_MAP[loanTypeCode] || null : null;
 
-        // Build deal name: "FirstName LastName - Address" or "FirstName LastName - LoanType"
         const addressPart = propertyAddress
           ? propertyAddress.split(",")[0].trim()
           : loanType;
         const dealName = `${firstName} ${lastName} - ${addressPart}`;
 
-        // Build uw_data with all intake fields so nothing is lost
         const uwData: Record<string, unknown> = {};
         if (purchasePrice) uwData.purchase_price = parseCurrency(purchasePrice);
         if (loanAmount) uwData.loan_amount_requested = loanAmountNum;
@@ -200,7 +210,6 @@ export async function POST(request: NextRequest) {
         if (timeline) uwData.timeline_to_close = timeline;
         if (company) uwData.company = company;
 
-        // Include generated terms if present
         if (generatedTerms) {
           uwData.generated_interest_rate = generatedTerms.interestRate;
           uwData.generated_origination_points = generatedTerms.originationPoints;
@@ -211,7 +220,6 @@ export async function POST(request: NextRequest) {
           uwData.generated_loan_term_months = generatedTerms.loanTermMonths;
         }
 
-        // Build notes string for quick reference
         const notesLines = [
           `Website submission - ${new Date().toISOString().split("T")[0]}`,
           isExistingContact ? `Returning contact (existing in CRM)` : `New contact`,
@@ -224,6 +232,9 @@ export async function POST(request: NextRequest) {
           rehabBudget ? `Rehab: ${rehabBudget}` : null,
           afterRepairValue ? `ARV: ${afterRepairValue}` : null,
         ].filter(Boolean).join("\n");
+
+        // If property creation failed, store property data inline as fallback
+        const propertyData = !propertyId ? propertyInsert : undefined;
 
         const { data: dealData, error: dealErr } = await admin
           .from("unified_deals")
@@ -240,6 +251,7 @@ export async function POST(request: NextRequest) {
             source_detail: "requitygroup.com loan application",
             asset_class: ASSET_TYPE_MAP[loanType] || null,
             uw_data: uwData,
+            property_data: propertyData ?? null,
             notes: notesLines,
             tags: ["website-lead"],
           } as never)
@@ -247,9 +259,16 @@ export async function POST(request: NextRequest) {
           .single();
 
         if (dealErr) {
-          console.error("[loan-request] Deal creation error:", dealErr.message, dealErr.details);
+          console.error("[loan-request] Deal creation FAILED:", {
+            error: dealErr.message,
+            details: dealErr.details,
+            code: dealErr.code,
+            contactId: crmContactId,
+            propertyId,
+          });
         } else {
           dealId = dealData?.id ?? null;
+          console.log("[loan-request] Deal created:", dealId, { crmContactId, propertyId });
         }
 
         // ── 4. Link contact to deal via deal_contacts ──
@@ -259,9 +278,9 @@ export async function POST(request: NextRequest) {
             .insert({
               deal_id: dealId,
               contact_id: crmContactId,
-              role: "borrower",
+              role: "primary",
               is_guarantor: false,
-              sort_order: 0,
+              sort_order: 1,
             });
 
           if (linkErr) {
@@ -274,9 +293,15 @@ export async function POST(request: NextRequest) {
           await admin.from("unified_deal_activity" as never).insert({
             deal_id: dealId,
             activity_type: "website_submission",
-            title: "Website loan application received",
+            title: "New deal submission",
             description: `${firstName} ${lastName} submitted a ${loanType} loan request for ${loanAmount} via requitygroup.com.${isExistingContact ? " Contact already existed in CRM." : ""}`,
-            metadata: { source: "website", loan_type: loanType, is_existing_contact: isExistingContact },
+            metadata: {
+              source: "website",
+              loan_type: loanType,
+              is_existing_contact: isExistingContact,
+              contact_id: crmContactId,
+              property_id: propertyId,
+            },
           } as never);
         }
 
@@ -291,6 +316,39 @@ export async function POST(request: NextRequest) {
             performed_by: null,
             performed_by_name: "Website",
           });
+        }
+
+        // ── 7. Notify all super_admin users in-app ──
+        if (dealId) {
+          try {
+            const { data: superAdmins } = await admin
+              .from("user_roles")
+              .select("user_id")
+              .eq("role", "super_admin");
+
+            if (superAdmins && superAdmins.length > 0) {
+              const notifications = superAdmins.map((sa: { user_id: string }) => ({
+                user_id: sa.user_id,
+                notification_slug: "website_deal_submission",
+                title: `New Deal: ${dealName}`,
+                body: `${firstName} ${lastName} submitted a ${loanType} request for ${loanAmount} via requitygroup.com`,
+                priority: "high",
+                entity_type: "deal",
+                entity_id: dealId,
+                action_url: `/admin/pipeline/${dealId}`,
+              }));
+
+              const { error: notifErr } = await admin
+                .from("notifications")
+                .insert(notifications);
+
+              if (notifErr) {
+                console.error("[loan-request] Notification insert error:", notifErr.message);
+              }
+            }
+          } catch (notifErr) {
+            console.error("[loan-request] Notification error:", notifErr);
+          }
         }
       } catch (crmErr) {
         console.error("[loan-request] CRM pipeline error:", crmErr);
