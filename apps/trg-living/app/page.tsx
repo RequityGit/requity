@@ -23,16 +23,53 @@ export default async function Home() {
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900 font-sans">
-      <header className="bg-white border-b border-slate-200 px-8 py-12">
-        <div className="max-w-6xl mx-auto">
-          <h1 className="text-4xl font-black tracking-tight text-slate-900 mb-2 uppercase">
-            TRG Living <span className="text-blue-600">Communities</span>
-          </h1>
-          <p className="text-slate-500 font-medium">Browse our manufactured housing communities by region.</p>
-        </div>
-      </header>
+      {/* 1. THE HERO SECTION (Replacing the old Sub-header) */}
+      <section className="relative bg-white overflow-hidden border-b border-slate-100">
+        <div className="max-w-[1440px] mx-auto px-8 py-20 lg:py-32 flex flex-col lg:flex-row items-center gap-12">
+          
+          {/* Text Side (Left) */}
+          <div className="lg:w-1/2 space-y-8 z-10">
+            <h1 className="text-6xl lg:text-7xl font-black text-slate-900 tracking-tighter leading-[0.9]">
+              Find a new place <br />
+              <span className="text-blue-600">to call home.</span>
+            </h1>
+            
+            <p className="text-xl text-slate-500 font-medium max-w-md leading-relaxed">
+              Discover premium manufactured housing communities designed for modern living and lasting value.
+            </p>
 
-      <main className="max-w-6xl mx-auto px-8 py-16 space-y-20">
+            {/* SEARCH BAR SHELL (Camden Style) */}
+            <div className="relative max-w-md group">
+              <div className="absolute inset-0 bg-blue-600/10 blur-xl rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity"></div>
+              <div className="relative flex bg-white border-2 border-slate-200 rounded-2xl p-2 shadow-sm focus-within:border-blue-600 transition-all">
+                <input 
+                  type="text" 
+                  placeholder="City, state, or community name..."
+                  className="flex-1 bg-transparent px-4 py-3 outline-none text-slate-900 font-medium placeholder:text-slate-400"
+                />
+                <button className="bg-slate-900 text-white px-6 py-3 rounded-xl font-bold uppercase tracking-widest text-[10px] hover:bg-blue-600 transition-colors">
+                  Search
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* Image Side (Right) */}
+          <div className="lg:w-1/2 relative aspect-[4/3] w-full">
+            <div className="absolute inset-0 bg-blue-100 rounded-[3rem] rotate-3 scale-95 translate-x-4 translate-y-4 opacity-50"></div>
+            <div className="relative h-full w-full rounded-[3rem] overflow-hidden shadow-2xl border-8 border-white">
+              <img 
+                src="https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&w=1200&q=80" 
+                alt="Modern Community Living" 
+                className="w-full h-full object-cover"
+              />
+            </div>
+          </div>
+
+        </div>
+      </section>
+
+      <main className="max-w-[1440px] mx-auto px-8 pt-24 pb-32 space-y-24">
         {regions?.map((region) => (
           <section key={region.id} className="space-y-8">
             <div className="flex items-center gap-4">
@@ -71,7 +108,7 @@ export default async function Home() {
                         {community.name}
                       </h3>
                       <p className="text-sm text-slate-500 font-medium mt-1">
-                        {community.city}, {community.state_code}
+                        {community.city}{community.state_code ? `, ${community.state_code}` : ''}
                       </p>
                       <div className="mt-6 flex justify-between items-center text-xs font-bold uppercase tracking-widest text-blue-600">
                         View Community Details 
