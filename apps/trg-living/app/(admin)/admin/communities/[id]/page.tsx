@@ -27,7 +27,7 @@ export default function EditCommunityPage() {
             .select(`
                 id, name, slug, region_id, headline, description_html, 
                 address_display, city, state_code, zip_code,
-                appfolio_listing_url, appfolio_portal_url, featured_media_id,
+                beds_range, baths_range, starting_price, featured_media_id,
                 featured_media:pm_media!pm_communities_featured_media_id_fkey (id, file_path),
                 pm_gallery (
                     id, media_id, sort_order,
@@ -86,7 +86,7 @@ export default function EditCommunityPage() {
         e.preventDefault();
         setSaving(true);        
         
-        // 🛡️ DEFENSIVE: PAYLOAD PICKING (Prevent Mass Assignment)
+        // DEFENSIVE: PAYLOAD PICKING (Prevent Mass Assignment)
         const updatePayload = {
             name: formData.name,
             slug: formData.slug,
@@ -97,6 +97,9 @@ export default function EditCommunityPage() {
             city: formData.city,
             state_code: formData.state_code,
             zip_code: formData.zip_code,
+            beds_range: formData.beds_range,
+            baths_range: formData.baths_range,
+            starting_price: formData.starting_price,
             appfolio_listing_url: formData.appfolio_listing_url,
             appfolio_portal_url: formData.appfolio_portal_url,
             featured_media_id: formData.featured_media_id

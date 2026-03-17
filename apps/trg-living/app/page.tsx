@@ -56,8 +56,8 @@ export default async function Home() {
 
           {/* Image Side (Right) */}
           <div className="lg:w-1/2 relative aspect-[4/3] w-full">
-            <div className="absolute inset-0 bg-blue-100 rounded-[3rem] rotate-3 scale-95 translate-x-4 translate-y-4 opacity-50"></div>
-            <div className="relative h-full w-full rounded-[3rem] overflow-hidden shadow-2xl border-8 border-white">
+            <div className="absolute inset-0 bg-blue-100 rounded-[1rem] rotate-3 scale-95 translate-x-4 translate-y-4 opacity-50"></div>
+            <div className="relative h-full w-full rounded-[1rem] overflow-hidden shadow-2xl border-8 border-white">
               <img 
                 src="https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&w=1200&q=80" 
                 alt="Modern Community Living" 

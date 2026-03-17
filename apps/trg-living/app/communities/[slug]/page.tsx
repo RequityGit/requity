@@ -12,8 +12,19 @@ export default async function CommunityPage({ params }: { params: { slug: string
   const { data: community } = await supabase
     .from('pm_communities')
     .select(`
-      id, name, slug, headline, description_html, 
-      appfolio_listing_url, address_display, city, state_code, zip_code,
+      id, 
+      name, 
+      slug, 
+      headline, 
+      description_html, 
+      appfolio_listing_url, 
+      address_display, 
+      city, 
+      state_code, 
+      zip_code, 
+      beds_range, 
+      baths_range, 
+      starting_price,
       hero:pm_media!pm_communities_featured_media_id_fkey (id, file_path),
       pm_posts (id, title, slug, created_at, status),
       pm_gallery (
@@ -25,13 +36,10 @@ export default async function CommunityPage({ params }: { params: { slug: string
     .eq('slug', params.slug)
     .single();
 
-  if (!community) {
-    notFound();
-  }
+  if (!community) notFound();
 
-  // Filter only published posts for the public sidebar
   const publishedPosts = community.pm_posts?.filter((p: any) => p.status === 'published') || [];
-
+  
   const heroUrl = community.hero 
     ? `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/trg-living-media/${(community.hero as any).file_path}` 
     : null;
@@ -43,110 +51,131 @@ export default async function CommunityPage({ params }: { params: { slug: string
   })) || [];
 
   return (
-    <div className="min-h-screen bg-white text-slate-900 font-sans">
+    <div className="min-h-screen bg-white text-[#0f172a] font-sans leading-relaxed">
       
-      {/* 1. SUB-HEADER / BREADCRUMBS
-          Standardized to 1440px alignment. Redundant nav and login button removed.
-      */}
-      <div className="bg-slate-50 border-b border-slate-100">
-        <div className="max-w-[1440px] mx-auto px-8 py-4">
-          <Link 
-            href="/" 
-            className="text-[10px] font-black tracking-[0.2em] text-slate-400 hover:text-blue-600 transition-colors uppercase"
-          >
-            ← Back to All Communities
-          </Link>
+      {/* 1. SUB-HEADER (Anchor Nav) */}
+      <div className="sticky top-20 z-[90] bg-[#f8fafc] border-b border-slate-200">
+        <div className="max-w-[1440px] mx-auto px-8 py-4 flex items-center gap-10 overflow-x-auto no-scrollbar">
+          {['ABOUT THE COMMUNITY', 'AMENITIES', 'AVAILABLE LISTINGS', 'GALLERY'].map((item) => (
+            <a 
+              key={item}
+              href={`#${item.toLowerCase().replace(/ /g, '-')}`}
+              className="text-xs font-black tracking-[1px] text-slate-400 hover:text-[#2563eb] transition-colors whitespace-nowrap"
+            >
+              {item}
+            </a>
+          ))}
         </div>
       </div>
 
-      {/* 2. HERO SECTION
-          Constrained inner content to 1440px for vertical symmetry.
-      */}
+      {/* 2. HERO SECTION (490px CONTENT BLOCK) */}
       <section 
-        className="bg-slate-900 text-white py-32 px-8 text-center bg-cover bg-center"
-        style={{ 
-            backgroundImage: heroUrl ? `linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)), url('${heroUrl}')` : 'none' 
-        }}
+        className="relative bg-slate-900 text-white py-32 lg:py-14 px-8 bg-cover bg-center"
+        style={{ backgroundImage: heroUrl ? `linear-gradient(rgba(15, 23, 42, 0.75), rgba(15, 23, 42, 0.75)), url('${heroUrl}')` : 'none' }}
       >
-        <div className="max-w-[1440px] mx-auto">
-          <h1 className="text-6xl font-black tracking-tighter mb-4 leading-none uppercase">
-            {community.name}
-          </h1>
-          <p className="text-xl text-slate-300 font-medium max-w-2xl mx-auto opacity-90">
-            {community.headline || 'Welcome to our community'}
-          </p>
+         <div className="max-w-[1380px] mx-auto">
+          <div className="max-w-[490px] space-y-8">
+            <div className="space-y-4">
+               <h1 className="text-[3.75rem] font-black tracking-wide leading-[1] uppercase">
+                 {community.name}
+               </h1>
+               <p className="text-xl text-blue-400 font-bold uppercase tracking-widest leading-none">
+                 {community.headline || 'Welcome to our community'}
+               </p>
+            </div>
+            
+            <div className="flex flex-col gap-3 pt-8 font-bold uppercase tracking-widest text-sm">
+               <div className="flex items-center gap-4">
+                  <span className="text-slate-400 text-xs">Icon</span>
+                  <span>{community.beds_range || '2 - 4 Beds'}</span>
+               </div>
+               <div className="flex items-center gap-4">
+                  <span className="text-slate-400 text-xs">Icon</span>
+                  <span>{community.baths_range || '1 - 2 Baths'}</span>
+               </div>
+               <div className="flex items-center gap-4">
+                  <span className="text-slate-400 text-xs">Icon</span>
+                  <span>{community.starting_price || 'Starting at $550'}
+                  </span>
+               </div>
+            </div>
+          </div>
         </div>
       </section>
 
-      {/* 3. MAIN CONTENT
-          Aligned to 1440px grid.
-      */}
-      <main className="max-w-[1440px] mx-auto px-8 py-20 grid grid-cols-1 lg:grid-cols-3 gap-16">
+      {/* 3. MAIN SECTION (1440px Grid) */}
+      <main className="max-w-[1440px] mx-auto px-8 py-24 space-y-32">
         
-        {/* LEFT COLUMN: Content & Media */}
-        <div className="lg:col-span-2 space-y-20">
+        {/* 3.1 SPLIT LAYOUT: CONTENT vs SIDEBAR */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-24">
           
-          {/* About Section */}
-          <article className="prose prose-slate max-w-none prose-headings:text-slate-900 prose-p:text-slate-600 prose-p:leading-relaxed prose-p:text-lg">
-            <h2 className="text-3xl font-black uppercase tracking-tight mb-8">About Our Community</h2>
-            <div dangerouslySetInnerHTML={{ __html: community.description_html || 'No description available yet.' }} />
-          </article>     
+          <div className="lg:col-span-2 space-y-32">
+            <section id="about-the-community" className="scroll-mt-48">
+              <h2 className="text-[2.18rem] font-bold text-[#333333] uppercase tracking-tight">About Our Community</h2>
+              <div 
+                className="prose prose-slate max-w-none text-[#0f172a] text-lg leading-[1.8]
+                           prose-p:mb-6 prose-strong:text-[#333333]"
+                dangerouslySetInnerHTML={{ __html: community.description_html || 'Information coming soon.' }} 
+              />
+            </section>
 
-          {/* Photo Gallery Grid */}
-          <div className="pt-10 border-t border-slate-100">
-            <CommunityGallery images={galleryImages} />
+            <section id="amenities" className="scroll-mt-48 border-t pt-24 border-slate-100">
+              <h2 className="text-[2.18rem] font-bold text-[#333333] mb-12 uppercase tracking-tight">Amenities</h2>
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-16">
+                 {/* Structural Markup only - No placeholder icons */}
+                 {['Playground', 'Bark Park', '24h Maintenance', 'Private Patios', 'Landscaping', 'Rental Office'].map(a => (
+                    <div key={a} className="flex flex-col gap-2">
+                       <div>Icon</div>
+                       <p className="text-sm font-black uppercase tracking-widest text-[#333333]">{a}</p>
+                    </div>
+                 ))}
+              </div>
+            </section>
           </div>
 
-          {/* AppFolio Listing Widget */}
-          <div className="pt-10 border-t border-slate-100">
-             <h2 className="text-sm font-black uppercase tracking-[0.2em] text-slate-400 mb-8 text-center">Available Listings</h2>
-             <AppfolioWidget listingUrl={community.appfolio_listing_url} />
-          </div>
-          
-        </div>
+          {/* RIGHT SIDEBAR */}
+          <div className="space-y-12">
+            <section className="bg-[#f8fafc] p-12 rounded-[1rem] border border-slate-100 shadow-sm">
+              <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400 mb-10 border-b border-slate-200 pb-4">Community News</h3>
+              <div className="space-y-10">
+                {publishedPosts.map((post: any) => (
+                  <Link href={`/communities/${community.slug}/posts/${post.slug}`} key={post.id} className="block group">
+                    <h4 className="font-bold text-[25px] text-[#333333] group-hover:text-[#2563eb] transition-colors leading-tight mb-2">
+                      {post.title}
+                    </h4>
+                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                      {new Date(post.created_at).toLocaleDateString(undefined, { month: 'long', day: 'numeric', year: 'numeric' })}
+                    </p>
+                  </Link>
+                ))}
+              </div>
+            </section>
 
-        {/* RIGHT COLUMN: Sidebar */}
-        <div className="space-y-12">
-          
-          {/* Newsroom Sidebar */}
-          <section className="bg-slate-50 p-10 rounded-[2.5rem] border border-slate-100 shadow-sm">
-            <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mb-8 border-b border-slate-200 pb-4">Community News</h3>
-            <div className="space-y-8">
-              {publishedPosts.map((post: any) => (
-                <Link href={`/communities/${community.slug}/posts/${post.slug}`} key={post.id} className="block group">
-                  <h4 className="font-bold text-lg text-slate-900 group-hover:text-blue-600 transition-colors mb-1 leading-tight">
-                    {post.title}
-                  </h4>
-                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
-                    {new Date(post.created_at).toLocaleDateString(undefined, { month: 'long', day: 'numeric', year: 'numeric' })}
-                  </p>
-                </Link>
-              ))}
-              {publishedPosts.length === 0 && (
-                <p className="text-xs italic text-slate-400">No recent updates for this community.</p>
-              )}
-            </div>
-          </section>
-
-          {/* Location Sidebar */}
-          <section className="p-10 border-l-2 border-slate-100">
-             <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mb-6">Location & Details</h3>
-             <div className="space-y-4">
-                <div>
-                  <p className="text-slate-900 font-bold text-lg leading-tight">{community.address_display || 'Address TBD'}</p>
-                  <p className="text-slate-500 font-medium">
+            <section className="p-12 border-l-8 border-[#f8fafc]">
+               <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400 mb-6">Location & Details</h3>
+               <div className="space-y-2">
+                  <p className="text-[#333333] font-bold text-2xl tracking-tighter leading-tight">{community.address_display}</p>
+                  <p className="text-slate-500 font-medium text-lg italic">
                     {community.city}, {community.state_code} {community.zip_code}
                   </p>
-                </div>
-                <div className="pt-4">
-                  <button className="text-xs font-black text-blue-600 uppercase tracking-widest hover:underline">
-                    View on Google Maps →
-                  </button>
-                </div>
-             </div>
-          </section>
+               </div>
+            </section>
+          </div>
 
         </div>
+
+        {/* 3.2 AVAILABLE LISTINGS (Full Width) */}
+        <section id="available-listings" className="scroll-mt-48 border-t pt-24 border-slate-100">
+           <h2 className="text-[2.18rem] font-bold text-[#333333] mb-12 uppercase text-center">Available Listings</h2>
+           <AppfolioWidget listingUrl={community.appfolio_listing_url} />
+        </section>
+
+        {/* 3.3 GALLERY (Full Width) */}
+        <section id="gallery" className="scroll-mt-48 border-t pt-24 border-slate-100 pb-20">
+           <h2 className="text-[2.18rem] font-bold text-[#333333] mb-12 uppercase text-center">Photo Gallery</h2>
+           <CommunityGallery images={galleryImages} />
+        </section>
+
       </main>
     </div>
   );
