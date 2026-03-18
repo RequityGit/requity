@@ -26,3 +26,11 @@
 - [x] Verify performance index parity for relational scaling
 - [x] Deploy CMS infrastructure to production hosting via feature branch
 - [x] Implement idempotent database update scripts
+- [x] Standardize global container to 1440px (Navigation, Hero, Main)
+- [x] Split Hero to Homepage
+- [x] Implement dynamic breadcrumb navigation in community routes
+- [x] Verify font-parity with Inter Google Font integration
+- [x] Implement server-side HTML scraper via cheerio
+- [x] Build /api/listings route with city filtering and caching
+- [ ] Build listings grid UI component
+- [ ] Integrate listings grid into community pages
