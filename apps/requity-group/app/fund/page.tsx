@@ -50,19 +50,11 @@ const FUND_FEATURES = [
     icon: <Landmark size={20} />,
     label: "Tax Advantaged",
   },
-  {
-    icon: <TrendingUp size={20} />,
-    label: "10% Annual Preferred Return",
-  },
-  {
-    icon: <Clock size={20} />,
-    label: "90-Day Redemption Liquidity",
-  },
 ];
 
 const FUND_STATS = [
   { value: "10%", label: "Preferred Return" },
-  { value: "$70M+", label: "Capital Raised" },
+  { value: "$1M", label: "GP First-Loss Position" },
   { value: "90 Day", label: "Redemption Liquidity" },
   { value: "Monthly", label: "Distributions" },
 ];
@@ -586,7 +578,6 @@ export default async function FundPage() {
                 {testimonials.slice(0, 4).map((t) => (
                   <div key={t.id} className="test-card">
                     <div className="big-q">&ldquo;</div>
-                    <div className="stars">{"â".repeat(t.rating)}</div>
                     <p className="quote-text">&ldquo;{t.quote}&rdquo;</p>
                     <div className="author-name">{t.author_name}</div>
                   </div>
@@ -613,7 +604,7 @@ export default async function FundPage() {
               <div className="fund-highlights">
                 {[
                   { icon: <Calendar size={20} />, label: "Monthly Distributions" },
-                  { icon: <DollarSign size={20} />, label: "$70M+ Capital Raised" },
+                  { icon: <ShieldCheck size={20} />, label: "$1M GP First-Loss Position" },
                   { icon: <Users size={20} />, label: "Accredited Investors Only" },
                   { icon: <BarChart3 size={20} />, label: "Asset-Backed Real Estate" },
                 ].map((h, i) => (

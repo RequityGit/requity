@@ -40,6 +40,9 @@ function abbreviateBio(bio: string | null, maxLen = 320): string {
 const DESIGNATIONS_SUFFIX =
   " He has received the designations for CCIM and CPM as an ongoing student of the industry.";
 
+const DYLAN_BIO =
+  "Dylan founded Requity Group to build a vertically integrated platform spanning investment, lending, and property management. As a principal, he has led over $250 million in investments across 4,000+ units spanning manufactured housing, RV communities, multifamily, and small bay industrial, applying strict valuation discipline and driving returns through operational rigor. Today, he sets the firm's strategic direction and leads a senior team across acquisitions, lending, and operations, staying closely involved in investment decisions, capital allocation, and the key inflection points that drive portfolio performance. He holds both the CCIM and CPM designations.";
+
 const JET_BIO_SUFFIX =
   " Jet has over 15 years of transaction and asset management experience with various private equity and real estate investment companies.";
 
@@ -48,15 +51,19 @@ const JET_BIO_OPENING_FILLER = /^\s*As Asset Manager with a focus on operations,
 
 const ESTEFANIA_DISPLAY_NAME = "Estefanía Espinal, MBA";
 const ESTEFANIA_BIO =
-  "Estefanía is part of the Real Estate Lending and Investing team at Requity, focused on structuring and evaluating debt and equity investments across the U.S. Leveraging her prior experience, she previously served on the Capital Markets team at JLL, working alongside decision makers at some of the world's largest institutions to bring foreign capital into U.S. real estate. Before that, as part of the acquisitions team at EXAN Group, she was directly involved in over $800 million in acquisitions and dispositions across multiple asset types nationwide. Estefanía holds an MBA from Boston College, and a BS of International Business from EAFIT University.";
+  "Estefanía drives capital markets relationships and deal structuring across Requity's lending and investment platform, building and maintaining the institutional partnerships that fuel the firm's growth. She previously served on the Capital Markets team at JLL, working alongside decision makers at some of the world's largest institutions to place foreign capital into U.S. real estate. Before that, she was part of the acquisitions team at EXAN Group, where she was directly involved in over $800 million in acquisitions and dispositions across multiple asset types nationwide. Estefanía holds an MBA from Boston College and a BS in International Business from EAFIT University.";
+
+const LUIS_BIO =
+  "Luis leads loan originations at Requity Lending and works alongside Dylan as a key point of contact for investor relations. On the lending side, he manages the full lifecycle from initial inquiry through closing, ensuring a streamlined and transparent process for borrowers. On the capital side, he helps maintain the communication and transparency that Requity's partners expect. Prior to Requity, Luis built hands-on experience through residential redevelopment and operating rental properties, giving him a firsthand understanding of the borrower's perspective.";
 
 function isEstefania(name: string): boolean {
   return /Estefan[ií]a/i.test(name) || (name.includes("Espinal") && name.toLowerCase().includes("estefan"));
 }
 
-/** Per-member bio display: for Jet, strip filler and append experience; for Estefanía, use full override bio. */
+/** Per-member bio display: for Jet, strip filler and append experience; for Estefanía and Luis, use full override bio. */
 function teamBioDisplay(name: string, bio: string | null): string {
   if (isEstefania(name)) return ESTEFANIA_BIO;
+  if (name.includes("Luis")) return LUIS_BIO;
   if (!bio) return "";
   let trimmed = bio.trim();
   if (name.includes("Jet")) {
@@ -71,7 +78,7 @@ function teamBioDisplay(name: string, bio: string | null): string {
 /** Title override: Jet shows as Managing Director; Estefanía as Lending & Investments. */
 function teamTitleDisplay(name: string, title: string): string {
   if (name.includes("Jet")) return "Managing Director";
-  if (isEstefania(name)) return "Lending & Investments";
+  if (isEstefania(name)) return "Capital Markets";
   return title;
 }
 
@@ -177,7 +184,7 @@ export default async function AboutPage() {
                       Dylan Marma
                     </div>
                     <div className="type-caption" style={{ color: "var(--text-light)", marginTop: 2 }}>
-                      Founder &amp; CEO
+                      FOUNDER &amp; PRINCIPAL
                     </div>
                   </div>
                 </div>
@@ -295,8 +302,12 @@ export default async function AboutPage() {
                       {principal.name.split(" ").slice(0, 2).map((n) => n[0]).join("")}
                     </div>
                     <div className="team-name on-navy">{principal.name.replace(/,?\s*CCIM\s*/gi, " ").trim()}</div>
-                    <p className="team-title">Founder &amp; CEO</p>
-                    <p className="team-bio on-navy">{abbreviateBio(leadershipBioDisplay(principal.bio))}{DESIGNATIONS_SUFFIX}</p>
+                    <p className="team-title">FOUNDER &amp; PRINCIPAL</p>
+                    <p className="team-bio on-navy">
+                      {principal.name.includes("Dylan")
+                        ? DYLAN_BIO
+                        : abbreviateBio(leadershipBioDisplay(principal.bio)) + DESIGNATIONS_SUFFIX}
+                    </p>
                   </div>
                 </div>
               </ScrollReveal>
@@ -323,7 +334,7 @@ export default async function AboutPage() {
                         </div>
                         <div className="team-name on-navy">{teamNameDisplay(member.name)}</div>
                         <p className="team-title">{teamTitleDisplay(member.name, member.title)}</p>
-                        <p className="team-bio on-navy">{abbreviateBio(teamBioDisplay(member.name, member.bio), member.name.includes("Jet") ? 600 : isEstefania(member.name) ? 999 : 320)}</p>
+                        <p className="team-bio on-navy">{abbreviateBio(teamBioDisplay(member.name, member.bio), member.name.includes("Jet") ? 600 : isEstefania(member.name) || member.name.includes("Luis") ? 999 : 320)}</p>
                       </div>
                     ))}
                   </div>
@@ -352,7 +363,7 @@ export default async function AboutPage() {
                         </div>
                         <div className="team-name on-navy">{teamNameDisplay(member.name)}</div>
                         <p className="team-title">{teamTitleDisplay(member.name, member.title)}</p>
-                        <p className="team-bio on-navy">{abbreviateBio(teamBioDisplay(member.name, member.bio), member.name.includes("Jet") ? 600 : isEstefania(member.name) ? 999 : 320)}</p>
+                        <p className="team-bio on-navy">{abbreviateBio(teamBioDisplay(member.name, member.bio), member.name.includes("Jet") ? 600 : isEstefania(member.name) || member.name.includes("Luis") ? 999 : 320)}</p>
                       </div>
                     ))}
                   </div>
@@ -372,9 +383,10 @@ export default async function AboutPage() {
                 margin: "48px auto 0",
                 padding: "0 var(--page-x)",
                 lineHeight: 1.7,
+                fontSize: "1.125rem",
               }}
             >
-              …and our 50+ dedicated professionals across onsite property staff and back office operations.
+              Backed and supported by our 50+ dedicated team members who bring our mission to life every day, both on and off site.
             </p>
           </ScrollReveal>
         </div>

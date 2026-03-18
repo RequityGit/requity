@@ -157,7 +157,7 @@ export default function IncomeFundPage() {
                   </svg>
                 </div>
                 <h3>Proven Track Record</h3>
-                <p>Over $70M in investor capital raised and deployed across 70+ loans with consistent performance through all market conditions.</p>
+                <p>Over $70M in investor capital raised and deployed with zero losses.</p>
               </div>
               <div className="card if-benefit-card reveal reveal-delay-1">
                 <div className="if-benefit-icon">

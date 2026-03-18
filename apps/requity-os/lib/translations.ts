@@ -450,7 +450,7 @@ const translations = {
       investorFirst: 'Investor-First Approach',
       investorFirstDesc: 'Transparent reporting, consistent communication, and detailed property-level updates. You always know exactly where your money is working.',
       provenTrackRecord: 'Proven Track Record',
-      provenTrackRecordDesc: 'Over $70M in investor capital raised and deployed across 70+ loans with consistent performance through all market conditions.',
+      provenTrackRecordDesc: 'Over $70M in investor capital raised and deployed with zero losses.',
       assetBacked: 'Asset-Backed Security',
       assetBackedDesc: 'Every dollar is secured by tangible real estate assets with conservative loan-to-value ratios. Your capital is protected by real property.',
       productTitle: 'Investment',

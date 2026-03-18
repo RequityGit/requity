@@ -595,7 +595,6 @@ export default async function LendingPage() {
                 {featuredTestimonials.map((t) => (
                   <div key={t.id} className="test-card">
                     <div className="big-q">&ldquo;</div>
-                    <div className="stars">{"★".repeat(t.rating)}</div>
                     <p className="quote-text">&ldquo;{t.quote}&rdquo;</p>
                     <div className="author-name">{t.author_name}</div>
                   </div>

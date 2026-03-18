@@ -44,7 +44,7 @@ const BENEFIT_ICONS: Record<string, React.ReactNode> = {
 
 const FUND_HIGHLIGHTS = [
   { icon: <Calendar size={20} />, label: "Monthly Distributions" },
-  { icon: <DollarSign size={20} />, label: "$70M+ Capital Raised" },
+  { icon: <ShieldCheck size={20} />, label: "$1M GP First-Loss Position" },
   { icon: <Lock size={20} />, label: "Accredited Investors Only" },
   { icon: <BarChart3 size={20} />, label: "Asset-Backed Real Estate" },
 ];
@@ -156,7 +156,11 @@ export default async function InvestPage() {
                     {BENEFIT_ICONS[b.title] ?? <TrendingUp size={22} />}
                   </div>
                   <h4>{b.title}</h4>
-                  <p>{b.description}</p>
+                  <p>
+                    {b.title === "Proven Track Record"
+                      ? "Over $70M in investor capital raised and deployed with zero losses."
+                      : b.description}
+                  </p>
                 </div>
               ))}
             </div>
@@ -185,8 +189,8 @@ export default async function InvestPage() {
                   </div>
                 ))}
               </div>
-              <Link href="/invest/request-access" className="btn-primary">
-                Request Access <ArrowRight size={16} />
+              <Link href="/fund" className="btn-primary">
+                Learn More <ArrowRight size={16} />
               </Link>
             </div>
           </ScrollReveal>
@@ -214,7 +218,6 @@ export default async function InvestPage() {
                 {testimonials.slice(0, 4).map((t) => (
                   <div key={t.id} className="test-card">
                     <div className="big-q">&ldquo;</div>
-                    <div className="stars">{"★".repeat(t.rating)}</div>
                     <p className="quote-text">&ldquo;{t.quote}&rdquo;</p>
                     <div className="author-name">{t.author_name}</div>
                   </div>
