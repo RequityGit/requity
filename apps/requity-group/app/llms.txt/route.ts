@@ -69,6 +69,14 @@ Learn more: https://requitygroup.com/invest
 - [Home](https://requitygroup.com/)
 - [About](https://requitygroup.com/about)
 - [Lending](https://requitygroup.com/lending)
+- [Manufactured Housing & Mobile Home Park Financing](https://requitygroup.com/lending/manufactured-housing)
+- [Small Bay Industrial & Flex Space Financing](https://requitygroup.com/lending/small-bay-industrial)
+- [Industrial Outdoor Storage (IOS) Financing](https://requitygroup.com/lending/industrial-outdoor-storage)
+- [RV Park & Campground Financing](https://requitygroup.com/lending/rv-parks)
+- [Multifamily & Apartment Building Financing](https://requitygroup.com/lending/multifamily)
+- [Commercial Bridge Loans: Self Storage & Retail](https://requitygroup.com/lending/commercial-bridge)
+- [Guarantor Support: Balance Sheet & Experience Partners](https://requitygroup.com/lending/guarantor-support)
+- [Transactional Funding for Wholesalers](https://requitygroup.com/lending/transactional-funding)
 - [Apply for a Loan](https://requitygroup.com/lending/apply)
 - [Invest](https://requitygroup.com/invest)
 - [Request Investor Access](https://requitygroup.com/invest/request-access)
@@ -103,7 +111,7 @@ A: Up to 75-80% of purchase price depending on property type and borrower experi
 
 ### Investing
 Q: What is the minimum investment with Requity Group?
-A: $50,000 minimum for accredited investors.
+A: $50,000 is the typical minimum for deal-by-deal investments, while $100,000 is the typical minimum for fund investments. Fund investments are generally restricted to accredited investors. Deal-by-deal opportunities may be available to non-accredited investors who qualify under Rule 506(b).
 
 Q: What returns does Requity target?
 A: Net to investor IRR of 14-17% for value-add equity investments, 10-12% for debt.
@@ -112,7 +120,7 @@ Q: Are investments asset-backed?
 A: Yes. Bridge lending fund investments are secured by first-position liens on real property. Equity investments are backed by the underlying real estate assets.
 
 Q: How often are distributions paid?
-A: Monthly distributions for the lending fund. Equity deal distributions vary by project.
+A: All of Requity's investment vehicles target to pay monthly distributions.
 
 Q: Does Requity have skin in the game?
 A: Yes. The GP maintains a $1M first-loss position in the lending fund, meaning management capital absorbs losses before investor capital.

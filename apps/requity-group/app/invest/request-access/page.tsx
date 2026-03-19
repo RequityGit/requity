@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { ArrowRight, Check, Mail } from "lucide-react";
+import { ArrowRight, Check, Mail, ArrowLeft } from "lucide-react";
 import { formatPhone } from "@repo/lib";
 
 const US_STATES = [
@@ -23,6 +23,12 @@ const INTEREST_OPTIONS = [
   { value: "Equity Fund", label: "Equity Fund" },
 ];
 
+const QUICK_INTERESTS = [
+  { value: "bridge-lending-fund", label: "Bridge Lending Fund", desc: "8-12% target yield, monthly distributions" },
+  { value: "direct-equity", label: "Direct Equity", desc: "15-22% target IRR, value-add real estate" },
+  { value: "both", label: "Both / Exploring", desc: "I want to learn about all options" },
+];
+
 export default function RequestAccessPage() {
   const [step, setStep] = useState<"form" | "profile" | "complete">("form");
 
@@ -31,6 +37,7 @@ export default function RequestAccessPage() {
     lastName: "",
     email: "",
     phone: "",
+    quickInterest: "",
   });
 
   const [profile, setProfile] = useState({
@@ -91,16 +98,19 @@ export default function RequestAccessPage() {
     e.preventDefault();
     setError("");
     const validationError = validateForm();
-    if (validationError) {
-      setError(validationError);
-      return;
-    }
+    if (validationError) { setError(validationError); return; }
     setSubmitting(true);
     try {
       const res = await fetch("/api/investor-request", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(form),
+        body: JSON.stringify({
+          firstName: form.firstName,
+          lastName: form.lastName,
+          email: form.email,
+          phone: form.phone,
+          quickInterest: form.quickInterest,
+        }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Submission failed");
@@ -108,9 +118,7 @@ export default function RequestAccessPage() {
       window.scrollTo({ top: 0, behavior: "smooth" });
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));
-    } finally {
-      setSubmitting(false);
-    }
+    } finally { setSubmitting(false); }
   }
 
   async function handleProfileSubmit(e: React.FormEvent<HTMLFormElement>) {
@@ -135,409 +143,337 @@ export default function RequestAccessPage() {
       window.scrollTo({ top: 0, behavior: "smooth" });
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));
-    } finally {
-      setSubmitting(false);
-    }
+    } finally { setSubmitting(false); }
   }
 
   return (
     <main>
-      {/* Hero */}
-      <section
-        className="dark-zone hero-gradient"
-        style={{
-          paddingTop: "clamp(160px, 20vw, 220px)",
-          paddingBottom: "clamp(60px, 8vw, 100px)",
-          position: "relative",
-          overflow: "hidden",
-          textAlign: "center",
-        }}
-      >
-        <div className="navy-grid-pattern">
-          {Array.from({ length: 14 }).map((_, i) => (
-            <div key={i} className="navy-grid-line" style={{ left: `${(i + 1) * 7.14}%` }} />
-          ))}
-        </div>
-        <div className="container" style={{ position: "relative", zIndex: 1 }}>
-          <p
-            className="section-eyebrow"
-            style={{ animation: "fadeUp 0.8s ease forwards", justifyContent: "center" }}
-          >
-            {step === "form" && "Invest with Requity"}
-            {step === "profile" && "Investor Profile"}
-            {step === "complete" && "All Set"}
-          </p>
-          <h1
-            className="section-title section-title-light"
+      {/* ── Step 1: Compact hero + form above fold ── */}
+      {step === "form" && (
+        <>
+          <section
+            className="dark-zone hero-gradient"
             style={{
-              fontSize: "clamp(36px, 5vw, 56px)",
-              maxWidth: 720,
-              margin: "0 auto",
-              animation: "fadeUp 0.8s 0.1s ease both",
+              paddingTop: "clamp(100px, 12vw, 140px)",
+              paddingBottom: "clamp(40px, 5vw, 56px)",
+              position: "relative",
+              overflow: "hidden",
+              textAlign: "center",
             }}
           >
-            {step === "form" && (
-              <>
-                Request <em>Access</em>
-              </>
-            )}
-            {step === "profile" && (
-              <>
-                Thank You, <em>{form.firstName}</em>
-              </>
-            )}
-            {step === "complete" && (
-              <>
-                You&apos;re All Set, <em>{form.firstName}</em>
-              </>
-            )}
-          </h1>
-          {step === "form" && (
-            <p
-              className="section-desc section-desc-light"
-              style={{
-                maxWidth: 520,
-                margin: "20px auto 0",
-                animation: "fadeUp 0.8s 0.2s ease both",
-              }}
-            >
-              Submit your details below and our investor relations team will follow up
-              with the offering documents and next steps.
-            </p>
-          )}
-          {step === "complete" && (
-            <p
-              className="section-desc section-desc-light"
-              style={{
-                maxWidth: 520,
-                margin: "20px auto 0",
-                animation: "fadeUp 0.8s 0.2s ease both",
-              }}
-            >
-              Our investor relations team will be in touch shortly with the offering
-              documents and next steps.
-            </p>
-          )}
-        </div>
-      </section>
-
-      <div className="dark-to-light" />
-
-      {/* Form Section */}
-      <section className="light-zone" style={{ paddingTop: 0, paddingBottom: "clamp(80px, 10vw, 120px)" }}>
-        <div className="container" style={{ maxWidth: 680 }}>
-          {/* Step 1: Basic Info */}
-          {step === "form" && (
-            <form
-              onSubmit={handleFormSubmit}
-              style={{ animation: "fadeUp 0.6s ease forwards", marginTop: -20 }}
-            >
-              <div className="ra-grid">
-                <div className="ra-field">
-                  <label className="ra-label">
-                    First Name <span style={{ color: "var(--gold)" }}>*</span>
-                  </label>
-                  <input
-                    type="text"
-                    className="ra-input"
-                    placeholder="John"
-                    value={form.firstName}
-                    onChange={set("firstName")}
-                  />
-                </div>
-                <div className="ra-field">
-                  <label className="ra-label">
-                    Last Name <span style={{ color: "var(--gold)" }}>*</span>
-                  </label>
-                  <input
-                    type="text"
-                    className="ra-input"
-                    placeholder="Smith"
-                    value={form.lastName}
-                    onChange={set("lastName")}
-                  />
-                </div>
-                <div className="ra-field">
-                  <label className="ra-label">
-                    Email <span style={{ color: "var(--gold)" }}>*</span>
-                  </label>
-                  <input
-                    type="email"
-                    className="ra-input"
-                    placeholder="john@example.com"
-                    value={form.email}
-                    onChange={set("email")}
-                  />
-                </div>
-                <div className="ra-field">
-                  <label className="ra-label">
-                    Phone <span style={{ color: "var(--gold)" }}>*</span>
-                  </label>
-                  <input
-                    type="tel"
-                    className="ra-input"
-                    placeholder="(813) 555-0100"
-                    value={form.phone}
-                    onChange={handlePhoneChange}
-                  />
-                </div>
-              </div>
-
-              {error && <div className="ra-error">{error}</div>}
-
-              <button type="submit" className="btn-primary ra-submit" disabled={submitting}>
-                {submitting ? "Submitting..." : "Request Access"}
-                {!submitting && <ArrowRight size={16} />}
-              </button>
-
-              <p className="ra-fine-print">
-                By submitting, you acknowledge this is an expression of interest only and
-                does not constitute a commitment to invest. Offers are made only to
-                accredited investors through the fund&apos;s private placement memorandum.
+            <div className="navy-grid-pattern">
+              {Array.from({ length: 14 }).map((_, i) => (
+                <div key={i} className="navy-grid-line" style={{ left: `${(i + 1) * 7.14}%` }} />
+              ))}
+            </div>
+            <div className="container" style={{ position: "relative", zIndex: 1 }}>
+              <p
+                className="section-eyebrow"
+                style={{ animation: "fadeUp 0.8s ease forwards", justifyContent: "center" }}
+              >
+                Invest with Requity
               </p>
-            </form>
-          )}
+              <h1
+                className="section-title section-title-light"
+                style={{
+                  fontSize: "clamp(32px, 4.5vw, 48px)",
+                  maxWidth: 600,
+                  margin: "0 auto",
+                  animation: "fadeUp 0.8s 0.1s ease both",
+                }}
+              >
+                Request <em>Access</em>
+              </h1>
+            </div>
+          </section>
 
-          {/* Step 2: Investor Profile */}
-          {step === "profile" && (
-            <div style={{ animation: "fadeUp 0.6s ease forwards", marginTop: -20 }}>
-              {/* Thank-you banner */}
-              <div className="ra-confirm-banner">
-                <div className="ra-confirm-icon">
-                  <Check size={24} />
-                </div>
-                <p>
-                  Thank you for your interest, {form.firstName}! We will follow up with
-                  more information about our company. Filling out the profile below helps
-                  us tailor investment opportunities specifically to you.
-                </p>
-                <span className="ra-confirm-email">
-                  <Mail size={14} /> Confirmation sent to {form.email}
-                </span>
-              </div>
+          <div className="dark-to-light" style={{ height: 36 }} />
 
-              <form onSubmit={handleProfileSubmit}>
+          <section className="light-zone" style={{ paddingTop: 0, paddingBottom: "clamp(60px, 8vw, 100px)" }}>
+            <div className="container" style={{ maxWidth: 640 }}>
+              <form onSubmit={handleFormSubmit} style={{ animation: "fadeUp 0.6s ease forwards", marginTop: -12 }}>
                 <div className="ra-grid">
-                  {/* Accredited Status */}
-                  <div className="ra-field ra-full">
-                    <label className="ra-label">Accredited Investor Status</label>
-                    <select
-                      className="ra-input"
-                      value={profile.accreditedStatus}
-                      onChange={setProf("accreditedStatus")}
-                    >
-                      <option value="">Select your status</option>
-                      <option value="Yes — Individual Net Worth">
-                        Yes — Individual Net Worth ($1M+ excluding primary residence)
-                      </option>
-                      <option value="Yes — Individual Income">
-                        Yes — Individual Income ($200K+ or $300K+ joint)
-                      </option>
-                      <option value="Yes — Entity">Yes — Entity ($5M+ in assets)</option>
-                      <option value="No">No</option>
-                      <option value="Not Sure">Not Sure</option>
-                    </select>
-                  </div>
-
-                  {/* Target Investment */}
                   <div className="ra-field">
-                    <label className="ra-label">Target Investment Per Opportunity</label>
-                    <select
-                      className="ra-input"
-                      value={profile.targetInvestment}
-                      onChange={setProf("targetInvestment")}
-                    >
-                      <option value="">Select amount</option>
-                      <option value="$25,000 – $50,000">$25,000 - $50,000</option>
-                      <option value="$50,000 – $100,000">$50,000 - $100,000</option>
-                      <option value="$100,000 – $250,000">$100,000 - $250,000</option>
-                      <option value="$250,000 – $500,000">$250,000 - $500,000</option>
-                      <option value="$500,000 – $1,000,000">$500,000 - $1,000,000</option>
-                      <option value="$1,000,000+">$1,000,000+</option>
-                    </select>
+                    <label className="ra-label">First Name <span style={{ color: "var(--gold)" }}>*</span></label>
+                    <input type="text" className="ra-input" placeholder="John" value={form.firstName} onChange={set("firstName")} />
                   </div>
-
-                  {/* Private Offer Experience */}
                   <div className="ra-field">
-                    <label className="ra-label">Private Offer Experience</label>
-                    <select
-                      className="ra-input"
-                      value={profile.privateOfferExperience}
-                      onChange={setProf("privateOfferExperience")}
-                    >
-                      <option value="">Select experience level</option>
-                      <option value="No prior experience">No prior experience</option>
-                      <option value="1-2 investments">1-2 investments</option>
-                      <option value="3-5 investments">3-5 investments</option>
-                      <option value="6-10 investments">6-10 investments</option>
-                      <option value="10+ investments">10+ investments</option>
-                    </select>
+                    <label className="ra-label">Last Name <span style={{ color: "var(--gold)" }}>*</span></label>
+                    <input type="text" className="ra-input" placeholder="Smith" value={form.lastName} onChange={set("lastName")} />
                   </div>
-
-                  {/* Investment Interests */}
-                  <div className="ra-field ra-full">
-                    <label className="ra-label">
-                      Investment Interests{" "}
-                      <span style={{ opacity: 0.5, fontWeight: 400, textTransform: "none", letterSpacing: 0 }}>
-                        (select all that apply)
-                      </span>
-                    </label>
-                    <div className="ra-checks">
-                      {INTEREST_OPTIONS.map((opt) => (
-                        <label
-                          key={opt.value}
-                          className={`ra-check-card${profile.investmentInterests.includes(opt.value) ? " selected" : ""}`}
-                        >
-                          <input
-                            type="checkbox"
-                            hidden
-                            checked={profile.investmentInterests.includes(opt.value)}
-                            onChange={() => toggleInterest(opt.value)}
-                          />
-                          <span className="ra-check-box">
-                            {profile.investmentInterests.includes(opt.value) && <Check size={14} />}
-                          </span>
-                          {opt.label}
-                        </label>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* State */}
                   <div className="ra-field">
-                    <label className="ra-label">State</label>
-                    <select className="ra-input" value={profile.state} onChange={setProf("state")}>
-                      <option value="">Select your state</option>
-                      {US_STATES.map((s) => (
-                        <option key={s} value={s}>
-                          {s}
-                        </option>
-                      ))}
-                    </select>
+                    <label className="ra-label">Email <span style={{ color: "var(--gold)" }}>*</span></label>
+                    <input type="email" className="ra-input" placeholder="john@example.com" value={form.email} onChange={set("email")} />
                   </div>
-
-                  {/* Investment Timeline */}
                   <div className="ra-field">
-                    <label className="ra-label">Investment Timeline</label>
-                    <select
-                      className="ra-input"
-                      value={profile.investmentTimeline}
-                      onChange={setProf("investmentTimeline")}
-                    >
-                      <option value="">Select timeline</option>
-                      <option value="Immediately">Immediately</option>
-                      <option value="1-3 months">1-3 months</option>
-                      <option value="3-6 months">3-6 months</option>
-                      <option value="6-12 months">6-12 months</option>
-                      <option value="Just exploring">Just exploring</option>
-                    </select>
-                  </div>
-
-                  {/* Entity Type */}
-                  <div className="ra-field">
-                    <label className="ra-label">How Will You Invest?</label>
-                    <select
-                      className="ra-input"
-                      value={profile.entityType}
-                      onChange={setProf("entityType")}
-                    >
-                      <option value="">Select entity type</option>
-                      <option value="Individual">Individual</option>
-                      <option value="Joint">Joint Account</option>
-                      <option value="LLC">LLC</option>
-                      <option value="Trust">Trust</option>
-                      <option value="IRA / Self-Directed IRA">IRA / Self-Directed IRA</option>
-                      <option value="Other Entity">Other Entity</option>
-                    </select>
-                  </div>
-
-                  {/* Referral Source */}
-                  <div className="ra-field">
-                    <label className="ra-label">How Did You Hear About Us?</label>
-                    <input
-                      type="text"
-                      className="ra-input"
-                      placeholder="Referral, podcast, Google..."
-                      value={profile.referralSource}
-                      onChange={setProf("referralSource")}
-                    />
-                  </div>
-
-                  {/* Additional Info */}
-                  <div className="ra-field ra-full">
-                    <label className="ra-label">Additional Information</label>
-                    <textarea
-                      className="ra-input"
-                      placeholder="Any questions, preferences, or details you'd like to share..."
-                      value={profile.additionalInfo}
-                      onChange={setProf("additionalInfo")}
-                      rows={4}
-                    />
+                    <label className="ra-label">Phone <span style={{ color: "var(--gold)" }}>*</span></label>
+                    <input type="tel" className="ra-input" placeholder="(813) 555-0100" value={form.phone} onChange={handlePhoneChange} />
                   </div>
                 </div>
 
                 {error && <div className="ra-error">{error}</div>}
 
-                <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 16, marginTop: 32 }}>
-                  <button type="submit" className="btn-primary ra-submit" disabled={submitting}>
-                    {submitting ? "Submitting..." : "Submit Profile"}
-                    {!submitting && <ArrowRight size={16} />}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setStep("complete");
-                      window.scrollTo({ top: 0, behavior: "smooth" });
-                    }}
-                    style={{
-                      background: "none",
-                      border: "none",
-                      color: "var(--text-light)",
-                      cursor: "pointer",
-                      fontSize: 14,
-                      textDecoration: "underline",
-                      textUnderlineOffset: 3,
-                      padding: "8px 16px",
-                      fontFamily: "var(--font-sans)",
-                    }}
-                  >
-                    Skip for now
-                  </button>
-                </div>
+                <button type="submit" className="btn-primary ra-submit" disabled={submitting}>
+                  {submitting ? "Submitting..." : "Request Access"}
+                  {!submitting && <ArrowRight size={16} />}
+                </button>
+
+                <p className="ra-fine-print">
+                  By submitting, you acknowledge this is an expression of interest only and
+                  does not constitute a commitment to invest. Offers are made only to
+                  accredited investors through the fund&apos;s private placement memorandum.
+                </p>
               </form>
             </div>
-          )}
+          </section>
+        </>
+      )}
 
-          {/* Step 3: Complete */}
-          {step === "complete" && (
-            <div
-              className="ra-success-card"
-              style={{ animation: "fadeUp 0.6s ease forwards", marginTop: -20 }}
-            >
-              <div className="ra-success-icon">
+      {/* ── Step 2: Thank you + profile (reframed) ── */}
+      {step === "profile" && (
+        <>
+          <section
+            className="dark-zone hero-gradient"
+            style={{
+              paddingTop: "clamp(100px, 12vw, 140px)",
+              paddingBottom: "clamp(40px, 5vw, 56px)",
+              position: "relative",
+              overflow: "hidden",
+              textAlign: "center",
+            }}
+          >
+            <div className="navy-grid-pattern">
+              {Array.from({ length: 14 }).map((_, i) => (
+                <div key={i} className="navy-grid-line" style={{ left: `${(i + 1) * 7.14}%` }} />
+              ))}
+            </div>
+            <div className="container" style={{ position: "relative", zIndex: 1 }}>
+              <div className="ra-confirm-icon-hero">
+                <Check size={28} />
+              </div>
+              <h1
+                className="section-title section-title-light"
+                style={{
+                  fontSize: "clamp(32px, 4.5vw, 48px)",
+                  maxWidth: 600,
+                  margin: "0 auto",
+                }}
+              >
+                Welcome, <em>{form.firstName}</em>
+              </h1>
+              <p
+                className="section-desc section-desc-light"
+                style={{ maxWidth: 480, margin: "16px auto 0" }}
+              >
+                Your request is confirmed. Our investor relations team will reach out within 1-2 business days.
+              </p>
+              <span className="ra-confirm-email" style={{ marginTop: 16, display: "inline-flex" }}>
+                <Mail size={14} /> Confirmation sent to {form.email}
+              </span>
+            </div>
+          </section>
+
+          <div className="dark-to-light" style={{ height: 36 }} />
+
+          <section className="light-zone" style={{ paddingTop: 0, paddingBottom: "clamp(60px, 8vw, 100px)" }}>
+            <div className="container" style={{ maxWidth: 640 }}>
+              <div style={{ animation: "fadeUp 0.6s ease forwards", marginTop: -12 }}>
+
+                {/* Reframed profile intro */}
+                <div style={{ textAlign: "center", marginBottom: 32 }}>
+                  <h2 style={{
+                    fontFamily: "var(--font-serif)",
+                    fontSize: "clamp(24px, 3vw, 32px)",
+                    fontWeight: 400,
+                    color: "var(--text)",
+                    marginBottom: 10,
+                  }}>
+                    Help us prepare for your call
+                  </h2>
+                  <p style={{ fontSize: 15, color: "var(--text-mid)", lineHeight: 1.7, maxWidth: 460, margin: "0 auto" }}>
+                    The more we know, the more relevant our first conversation will be. Everything below is optional.
+                  </p>
+                </div>
+
+                <form onSubmit={handleProfileSubmit}>
+                  <div className="ra-grid">
+                    {/* Accredited Status */}
+                    <div className="ra-field ra-full">
+                      <label className="ra-label">Accredited Investor Status</label>
+                      <select className="ra-input" value={profile.accreditedStatus} onChange={setProf("accreditedStatus")}>
+                        <option value="">Select your status</option>
+                        <option value="Yes — Individual Net Worth">Yes - Individual Net Worth ($1M+ excluding primary residence)</option>
+                        <option value="Yes — Individual Income">Yes - Individual Income ($200K+ or $300K+ joint)</option>
+                        <option value="Yes — Entity">Yes - Entity ($5M+ in assets)</option>
+                        <option value="No">No</option>
+                        <option value="Not Sure">Not Sure</option>
+                      </select>
+                    </div>
+
+                    {/* Target Investment */}
+                    <div className="ra-field">
+                      <label className="ra-label">Target Investment Per Opportunity</label>
+                      <select className="ra-input" value={profile.targetInvestment} onChange={setProf("targetInvestment")}>
+                        <option value="">Select amount</option>
+                        <option value="$25,000 – $50,000">$25,000 - $50,000</option>
+                        <option value="$50,000 – $100,000">$50,000 - $100,000</option>
+                        <option value="$100,000 – $250,000">$100,000 - $250,000</option>
+                        <option value="$250,000 – $500,000">$250,000 - $500,000</option>
+                        <option value="$500,000 – $1,000,000">$500,000 - $1,000,000</option>
+                        <option value="$1,000,000+">$1,000,000+</option>
+                      </select>
+                    </div>
+
+                    {/* Private Offer Experience */}
+                    <div className="ra-field">
+                      <label className="ra-label">Private Offer Experience</label>
+                      <select className="ra-input" value={profile.privateOfferExperience} onChange={setProf("privateOfferExperience")}>
+                        <option value="">Select experience level</option>
+                        <option value="No prior experience">No prior experience</option>
+                        <option value="1-2 investments">1-2 investments</option>
+                        <option value="3-5 investments">3-5 investments</option>
+                        <option value="6-10 investments">6-10 investments</option>
+                        <option value="10+ investments">10+ investments</option>
+                      </select>
+                    </div>
+
+                    {/* Investment Interests */}
+                    <div className="ra-field ra-full">
+                      <label className="ra-label">
+                        Investment Interests{" "}
+                        <span style={{ opacity: 0.5, fontWeight: 400, textTransform: "none", letterSpacing: 0 }}>(select all that apply)</span>
+                      </label>
+                      <div className="ra-checks">
+                        {INTEREST_OPTIONS.map((opt) => (
+                          <label key={opt.value} className={`ra-check-card${profile.investmentInterests.includes(opt.value) ? " selected" : ""}`}>
+                            <input type="checkbox" hidden checked={profile.investmentInterests.includes(opt.value)} onChange={() => toggleInterest(opt.value)} />
+                            <span className="ra-check-box">{profile.investmentInterests.includes(opt.value) && <Check size={14} />}</span>
+                            {opt.label}
+                          </label>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div className="ra-field">
+                      <label className="ra-label">State</label>
+                      <select className="ra-input" value={profile.state} onChange={setProf("state")}>
+                        <option value="">Select your state</option>
+                        {US_STATES.map((s) => (<option key={s} value={s}>{s}</option>))}
+                      </select>
+                    </div>
+
+                    <div className="ra-field">
+                      <label className="ra-label">Investment Timeline</label>
+                      <select className="ra-input" value={profile.investmentTimeline} onChange={setProf("investmentTimeline")}>
+                        <option value="">Select timeline</option>
+                        <option value="Immediately">Immediately</option>
+                        <option value="1-3 months">1-3 months</option>
+                        <option value="3-6 months">3-6 months</option>
+                        <option value="6-12 months">6-12 months</option>
+                        <option value="Just exploring">Just exploring</option>
+                      </select>
+                    </div>
+
+                    <div className="ra-field">
+                      <label className="ra-label">How Will You Invest?</label>
+                      <select className="ra-input" value={profile.entityType} onChange={setProf("entityType")}>
+                        <option value="">Select entity type</option>
+                        <option value="Individual">Individual</option>
+                        <option value="Joint">Joint Account</option>
+                        <option value="LLC">LLC</option>
+                        <option value="Trust">Trust</option>
+                        <option value="IRA / Self-Directed IRA">IRA / Self-Directed IRA</option>
+                        <option value="Other Entity">Other Entity</option>
+                      </select>
+                    </div>
+
+                    <div className="ra-field">
+                      <label className="ra-label">How Did You Hear About Us?</label>
+                      <input type="text" className="ra-input" placeholder="Referral, podcast, Google..." value={profile.referralSource} onChange={setProf("referralSource")} />
+                    </div>
+
+                    <div className="ra-field ra-full">
+                      <label className="ra-label">Additional Information</label>
+                      <textarea className="ra-input" placeholder="Any questions, preferences, or details you'd like to share..." value={profile.additionalInfo} onChange={setProf("additionalInfo")} rows={4} />
+                    </div>
+                  </div>
+
+                  {error && <div className="ra-error">{error}</div>}
+
+                  <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 16, marginTop: 32 }}>
+                    <button type="submit" className="btn-primary ra-submit" disabled={submitting} style={{ marginTop: 0 }}>
+                      {submitting ? "Submitting..." : "Submit Profile"}
+                      {!submitting && <ArrowRight size={16} />}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => { setStep("complete"); window.scrollTo({ top: 0, behavior: "smooth" }); }}
+                      style={{
+                        background: "none", border: "none", color: "var(--text-light)",
+                        cursor: "pointer", fontSize: 14, textDecoration: "underline",
+                        textUnderlineOffset: 3, padding: "8px 16px", fontFamily: "var(--font-sans)",
+                      }}
+                    >
+                      Skip for now
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          </section>
+        </>
+      )}
+
+      {/* ── Step 3: Complete ── */}
+      {step === "complete" && (
+        <>
+          <section
+            className="dark-zone hero-gradient"
+            style={{
+              paddingTop: "clamp(140px, 18vw, 200px)",
+              paddingBottom: "clamp(80px, 10vw, 120px)",
+              position: "relative",
+              overflow: "hidden",
+              textAlign: "center",
+            }}
+          >
+            <div className="navy-grid-pattern">
+              {Array.from({ length: 14 }).map((_, i) => (
+                <div key={i} className="navy-grid-line" style={{ left: `${(i + 1) * 7.14}%` }} />
+              ))}
+            </div>
+            <div className="container" style={{ position: "relative", zIndex: 1 }}>
+              <div className="ra-confirm-icon-hero">
                 <Check size={32} />
               </div>
-              <h2>Thank You, {form.firstName}</h2>
-              <p>
-                Our investor relations team will reach out within 1-2 business days with the
-                offering documents and next steps. We look forward to connecting with you.
+              <h1
+                className="section-title section-title-light"
+                style={{
+                  fontSize: "clamp(32px, 4.5vw, 48px)",
+                  maxWidth: 600,
+                  margin: "0 auto 16px",
+                }}
+              >
+                You&apos;re All Set, <em>{form.firstName}</em>
+              </h1>
+              <p className="section-desc section-desc-light" style={{ maxWidth: 480, margin: "0 auto 24px" }}>
+                Our investor relations team will reach out within 1-2 business days with the offering documents and next steps.
               </p>
-              <span className="ra-confirm-email" style={{ marginBottom: 32 }}>
+              <span className="ra-confirm-email" style={{ marginBottom: 36, display: "inline-flex" }}>
                 <Mail size={14} /> A confirmation has been sent to {form.email}
               </span>
-              <Link href="/" className="btn-editorial">
-                Back to Home <span className="arrow"><ArrowRight size={14} /></span>
-              </Link>
+              <div style={{ marginTop: 24 }}>
+                <Link href="/" className="btn-editorial-light">
+                  Back to Home <span className="arrow"><ArrowRight size={14} /></span>
+                </Link>
+              </div>
             </div>
-          )}
-        </div>
-      </section>
+          </section>
+        </>
+      )}
 
       {/* Disclaimer */}
-      <section
-        className="dark-zone"
-        style={{ padding: "32px 0", borderTop: "1px solid rgba(255,255,255,0.04)" }}
-      >
+      <section className="dark-zone" style={{ padding: "32px 0", borderTop: "1px solid rgba(255,255,255,0.04)" }}>
         <div className="container" style={{ textAlign: "center" }}>
           <p style={{ fontSize: 11, color: "rgba(255,255,255,0.25)", lineHeight: 1.7, maxWidth: 800, margin: "0 auto" }}>
             This page is for informational purposes only and does not constitute an offer to sell or
@@ -595,9 +531,73 @@ export default function RequestAccessPage() {
           min-height: 100px;
           line-height: 1.6;
         }
+
+        /* Quick interest cards */
+        .ra-quick-interests {
+          display: grid;
+          grid-template-columns: repeat(3, 1fr);
+          gap: 12px;
+        }
+        .ra-quick-card {
+          padding: 16px 14px;
+          background: var(--cream);
+          border: 1px solid var(--border);
+          border-radius: 0;
+          cursor: pointer;
+          text-align: left;
+          transition: all 0.25s;
+          font-family: inherit;
+          color: inherit;
+        }
+        .ra-quick-card:hover {
+          border-color: var(--gold);
+        }
+        .ra-quick-card.selected {
+          border-color: var(--gold);
+          background: rgba(160,138,78,0.06);
+          box-shadow: 0 0 0 1px var(--gold);
+        }
+        .ra-quick-name {
+          font-family: var(--font-sans);
+          font-size: 14px;
+          font-weight: 600;
+          color: var(--text);
+          margin-bottom: 4px;
+        }
+        .ra-quick-desc {
+          font-size: 12px;
+          color: var(--text-light);
+          line-height: 1.4;
+        }
+        .ra-quick-card.selected .ra-quick-name { color: var(--navy); }
+        .ra-quick-card.selected .ra-quick-desc { color: var(--gold); }
+
+        /* Accredited checkbox */
+        .ra-accredited-check {
+          display: flex;
+          align-items: flex-start;
+          gap: 12px;
+          padding: 16px 18px;
+          background: var(--cream);
+          border: 1px solid var(--border);
+          cursor: pointer;
+          transition: all 0.25s;
+          font-family: var(--font-sans);
+          font-size: 14px;
+          color: var(--text-mid);
+          line-height: 1.5;
+          user-select: none;
+        }
+        .ra-accredited-check:hover { border-color: var(--gold); }
+        .ra-accredited-check.checked {
+          border-color: var(--gold);
+          background: rgba(160,138,78,0.04);
+          color: var(--text);
+        }
+
         .ra-submit {
           width: 100%;
-          margin-top: 32px;
+          margin-top: 28px;
           justify-content: center;
         }
         .ra-error {
@@ -624,37 +624,29 @@ export default function RequestAccessPage() {
           text-align: center;
           opacity: 0.7;
         }
-        .ra-confirm-banner {
-          text-align: center;
-          padding: 32px;
-          margin-bottom: 32px;
-          background: rgba(180,155,80,0.04);
-          border: 1px solid rgba(180,155,80,0.15);
-        }
-        .ra-confirm-icon {
+        .ra-confirm-icon-hero {
           display: inline-flex;
           align-items: center;
           justify-content: center;
-          width: 48px;
-          height: 48px;
+          width: 56px;
+          height: 56px;
           border-radius: 50%;
-          background: rgba(180,155,80,0.1);
-          color: var(--gold);
-          margin-bottom: 16px;
+          border: 2px solid var(--gold-muted);
+          color: var(--gold-muted);
+          margin-bottom: 20px;
+          animation: applyCheckPop 0.5s var(--ease-out);
         }
-        .ra-confirm-banner p {
-          font-size: 14px;
-          color: var(--text-mid);
-          line-height: 1.7;
-          max-width: 500px;
-          margin: 0 auto 12px;
+        @keyframes applyCheckPop {
+          0% { transform: scale(0); opacity: 0; }
+          60% { transform: scale(1.15); }
+          100% { transform: scale(1); opacity: 1; }
         }
         .ra-confirm-email {
           display: inline-flex;
           align-items: center;
           gap: 6px;
           font-size: 13px;
-          color: var(--text-light);
+          color: rgba(255,255,255,0.4);
         }
         .ra-checks {
           display: grid;
@@ -676,15 +668,8 @@ export default function RequestAccessPage() {
           color: var(--text-mid);
           font-weight: 500;
         }
-        .ra-check-card:hover {
-          border-color: var(--gold);
-          background: rgba(180,155,80,0.03);
-        }
-        .ra-check-card.selected {
-          border-color: var(--gold);
-          background: rgba(180,155,80,0.06);
-          color: var(--navy);
-        }
+        .ra-check-card:hover { border-color: var(--gold); background: rgba(180,155,80,0.03); }
+        .ra-check-card.selected { border-color: var(--gold); background: rgba(180,155,80,0.06); color: var(--navy); }
         .ra-check-box {
           display: flex;
           align-items: center;
@@ -696,48 +681,16 @@ export default function RequestAccessPage() {
           transition: all 0.3s;
           color: transparent;
         }
-        .ra-check-card.selected .ra-check-box {
+        .ra-check-card.selected .ra-check-box,
+        .ra-accredited-check.checked .ra-check-box {
           border-color: var(--gold);
           background: var(--gold);
           color: #fff;
         }
-        .ra-success-card {
-          text-align: center;
-          padding: 56px 40px;
-          background: var(--cream);
-          border: 1px solid var(--border);
-        }
-        .ra-success-icon {
-          display: inline-flex;
-          align-items: center;
-          justify-content: center;
-          width: 64px;
-          height: 64px;
-          border-radius: 50%;
-          background: rgba(180,155,80,0.1);
-          color: var(--gold);
-          margin-bottom: 28px;
-        }
-        .ra-success-card h2 {
-          font-family: var(--font-serif);
-          font-size: 32px;
-          font-weight: 400;
-          color: var(--navy);
-          margin-bottom: 16px;
-        }
-        .ra-success-card p {
-          font-size: 15px;
-          color: var(--text-mid);
-          line-height: 1.7;
-          max-width: 480px;
-          margin: 0 auto 24px;
-        }
         @media (max-width: 768px) {
           .ra-grid { grid-template-columns: 1fr; }
           .ra-checks { grid-template-columns: 1fr; }
-          .ra-success-card { padding: 40px 24px; }
-          .ra-success-card h2 { font-size: 28px; }
-          .ra-confirm-banner { padding: 24px; }
+          .ra-quick-interests { grid-template-columns: 1fr; }
         }
       `}</style>
     </main>

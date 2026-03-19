@@ -96,8 +96,46 @@ export default async function BlogPostPage({ params }: Props) {
   const relatedPosts = await getRelatedPosts(post.id, post.tags || []);
   const heroImage = post.featured_image_url || post.thumbnail_url;
 
+  // Article structured data for SEO and AI discoverability
+  const articleJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "Article",
+    headline: post.title,
+    description: post.meta_description || post.excerpt || "",
+    author: {
+      "@type": post.author === "Requity Group" ? "Organization" : "Person",
+      name: post.author || "Requity Group",
+      ...(post.author === "Requity Group"
+        ? { url: "https://requitygroup.com" }
+        : {}),
+    },
+    publisher: {
+      "@type": "Organization",
+      name: "Requity Group",
+      url: "https://requitygroup.com",
+      logo: {
+        "@type": "ImageObject",
+        url: "https://edhlkknvlczhbowasjna.supabase.co/storage/v1/object/public/brand-assets/Requity%20Logo%20White.svg",
+      },
+    },
+    datePublished: post.published_date || undefined,
+    mainEntityOfPage: {
+      "@type": "WebPage",
+      "@id": `https://requitygroup.com/insights/${post.slug}`,
+    },
+    ...(heroImage ? { image: heroImage } : {}),
+    keywords: post.tags?.join(", ") || "",
+    wordCount: post.body_content
+      ? post.body_content.replace(/<[^>]*>/g, "").split(/\s+/).length
+      : undefined,
+  };
+
   return (
     <main>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(articleJsonLd) }}
+      />
       {/* Article Hero */}
       <section
         className="dark-zone hero-gradient"

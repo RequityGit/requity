@@ -8,6 +8,8 @@ import SectionLabel from "../components/SectionLabel";
 import AnimatedLine from "../components/AnimatedLine";
 import PageHero from "../components/PageHero";
 import FooterCTA from "../components/FooterCTA";
+import FAQSchema from "../components/FAQSchema";
+import FAQSection from "../components/FAQSection";
 import {
   ArrowRight,
   Zap,
@@ -110,8 +112,44 @@ export default async function LendingPage() {
     .filter((t) => t.is_featured)
     .slice(0, 3);
 
+  const lendingFAQs = [
+    {
+      question: "How fast can Requity Lending close a bridge loan?",
+      answer: "Requity Lending can close bridge loans in as few as 10 business days from signed term sheet to funding. Most deals close within 7-14 days of term sheet acceptance.",
+    },
+    {
+      question: "What is the interest rate on Requity bridge loans?",
+      answer: "Requity bridge loans are 12% interest-only. Terms are standardized for speed and certainty of execution.",
+    },
+    {
+      question: "What property types does Requity Lending finance?",
+      answer: "Requity Lending finances commercial real estate including multifamily, mixed-use, retail, and industrial properties. We also specialize in manufactured housing communities, mobile home parks, residential fix-and-flip, and ground-up construction projects.",
+    },
+    {
+      question: "What is the loan size range for Requity bridge loans?",
+      answer: "Requity bridge loans range from $250,000 to $10,000,000. Loan-to-value ratios up to 75-80% of purchase price are available depending on property type and borrower experience.",
+    },
+    {
+      question: "Does Requity Lending finance mobile home parks and manufactured housing communities?",
+      answer: "Yes. Manufactured housing communities are one of Requity Lending's most active categories. We finance MHP acquisitions including parks with park-owned homes, and we structure improvement holdbacks for value-add execution plans.",
+    },
+    {
+      question: "What is the typical term length for a Requity bridge loan?",
+      answer: "Bridge loan terms are typically 12 to 24 months with interest-only payments. Extension options are available depending on the deal structure and exit strategy.",
+    },
+    {
+      question: "How quickly can I get a term sheet from Requity Lending?",
+      answer: "Requity Lending delivers term sheets within 48 hours of receiving a complete deal package. Initial responses to inquiries are provided within 24 hours.",
+    },
+    {
+      question: "Does Requity Lending require a credit check to get a term sheet?",
+      answer: "No. Requity Lending does not pull credit to issue a preliminary term sheet. You can submit your deal for review with no credit pull and no commitment.",
+    },
+  ];
+
   return (
     <main>
+      <FAQSchema faqs={lendingFAQs} />
       {/* HERO */}
       <PageHero
         label="Bridge Lending"
@@ -135,7 +173,7 @@ export default async function LendingPage() {
         cta={
           <div style={{ display: "flex", gap: 16, flexWrap: "wrap" as const }}>
             <Link href="/lending/apply" className="btn-primary">
-              Submit a Deal <ArrowRight size={16} />
+              Get Your Quote <ArrowRight size={16} />
             </Link>
             <a href="#programs" className="btn-editorial-light">
               View Programs <span className="arrow">&rarr;</span>
@@ -277,194 +315,128 @@ export default async function LendingPage() {
               balance sheet.
             </p>
           </ScrollReveal>
-          {/* Commercial Lending */}
-          <ScrollReveal>
-            <p
-              className="type-label"
-              style={{ color: "var(--gold)", marginBottom: 20 }}
-            >
-              Commercial Lending
-            </p>
-          </ScrollReveal>
-          <ScrollReveal staggerChildren>
-            <div
-              style={{
-                display: "grid",
-                gridTemplateColumns: "repeat(4, 1fr)",
-                gap: 24,
-                marginBottom: 56,
-              }}
-              className="programs-grid-commercial"
-            >
-              {programs.slice(0, 4).map((program) => (
-                <div key={program.id} className="card">
-                  <h3 className="card-title" style={{ fontSize: 23 }}>
-                    {program.display_name}
-                  </h3>
-                  {program.tagline && (
-                    <p
-                      style={{
-                        fontFamily: "var(--font-sans)",
-                        fontSize: 13,
-                        color: "var(--gold)",
-                        fontWeight: 500,
-                        marginBottom: 8,
-                        letterSpacing: "0.02em",
-                      }}
-                    >
-                      {program.tagline}
-                    </p>
-                  )}
-                  <p className="card-body" style={{ marginBottom: 20 }}>
-                    {program.description}
-                  </p>
-                  <ul style={{ listStyle: "none", padding: 0, margin: 0 }}>
-                    {(program.features as string[]).map((feature, i) => (
-                      <li key={i} className="program-feature">
-                        <CheckCircle
-                          size={15}
-                          className="program-feature-icon"
-                          style={{ flexShrink: 0 }}
-                        />
-                        {feature}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              ))}
-            </div>
-          </ScrollReveal>
 
-          {/* Residential Lending */}
+          {/* ── Program Directory ── */}
           <ScrollReveal>
-            <p
-              className="type-label"
-              style={{ color: "var(--gold)", marginBottom: 20 }}
-            >
-              Residential Lending (1-4 Units)
-            </p>
-          </ScrollReveal>
-          <ScrollReveal staggerChildren>
-            <div
-              style={{
-                display: "grid",
-                gridTemplateColumns: "repeat(3, 1fr)",
-                gap: 24,
-                maxWidth: 960,
-                margin: "0 auto",
-              }}
-              className="programs-grid-residential"
-            >
-              {programs.slice(4).map((program) => (
-                <div key={program.id} className="card">
-                  <h3 className="card-title" style={{ fontSize: 23 }}>
-                    {program.display_name}
-                  </h3>
-                  {program.tagline && (
-                    <p
-                      style={{
-                        fontFamily: "var(--font-sans)",
-                        fontSize: 13,
-                        color: "var(--gold)",
-                        fontWeight: 500,
-                        marginBottom: 8,
-                        letterSpacing: "0.02em",
-                      }}
-                    >
-                      {program.tagline}
-                    </p>
-                  )}
-                  <p className="card-body" style={{ marginBottom: 20 }}>
-                    {program.description}
+            <div className="program-directory">
+              {/* Specialty Asset Classes */}
+              <div className="program-group">
+                <div className="program-group-header">
+                  <p className="type-label" style={{ color: "var(--gold)", marginBottom: 4 }}>
+                    Specialty Asset Classes
                   </p>
-                  <ul style={{ listStyle: "none", padding: 0, margin: 0 }}>
-                    {(program.features as string[]).map((feature, i) => (
-                      <li key={i} className="program-feature">
-                        <CheckCircle
-                          size={15}
-                          className="program-feature-icon"
-                          style={{ flexShrink: 0 }}
-                        />
-                        {feature}
-                      </li>
-                    ))}
-                  </ul>
+                  <p className="type-body-sm" style={{ color: "var(--text-light)" }}>
+                    Deep sector expertise in asset classes conventional lenders avoid
+                  </p>
                 </div>
-              ))}
-            </div>
-          </ScrollReveal>
+                <div className="program-list">
+                  {[
+                    { name: "Manufactured Housing", tagline: "MHC and mobile home park acquisitions, infill, and repositioning", href: "/lending/manufactured-housing" },
+                    { name: "RV Parks & Campgrounds", tagline: "Park acquisitions, site expansion, and seasonal asset financing", href: "/lending/rv-parks" },
+                    { name: "Small Bay Industrial", tagline: "Multi-tenant flex space, light manufacturing, and conversions", href: "/lending/small-bay-industrial" },
+                    { name: "Industrial Outdoor Storage", tagline: "Truck yards, container depots, equipment storage, and open-air sites", href: "/lending/industrial-outdoor-storage" },
+                  ].map((item) => (
+                    <Link key={item.name} href={item.href} className="program-row">
+                      <div className="program-row-content">
+                        <span className="program-row-name">{item.name}</span>
+                        <span className="program-row-divider" />
+                        <span className="program-row-tagline">{item.tagline}</span>
+                      </div>
+                      <ArrowRight size={16} className="program-row-arrow" />
+                    </Link>
+                  ))}
+                </div>
+              </div>
 
-          {/* Additional Services */}
-          <ScrollReveal>
-            <div
-              style={{
-                marginTop: 64,
-                padding: "40px 44px",
-                border: "1px solid var(--border-light)",
-                borderRadius: 12,
-              }}
-            >
-              <p
-                className="type-label"
-                style={{ color: "var(--gold)", marginBottom: 16 }}
-              >
-                Additional Services
-              </p>
-              <p
-                className="type-body"
-                style={{ color: "var(--text-mid)", marginBottom: 28, maxWidth: 640 }}
-              >
-                Beyond direct lending, we offer complementary services to support your deal from start to finish.
-              </p>
-              <div
-                style={{
-                  display: "grid",
-                  gridTemplateColumns: "repeat(3, 1fr)",
-                  gap: 32,
-                }}
-                className="additional-services-grid"
-              >
-                <div>
-                  <h4
-                    className="type-h4"
-                    style={{ color: "var(--text)", marginBottom: 8 }}
-                  >
-                    Guarantor Support
-                  </h4>
-                  <p
-                    className="type-body-sm"
-                    style={{ color: "var(--text-mid)", lineHeight: 1.7 }}
-                  >
-                    Balance sheet and experience support for borrowers who need additional guarantor strength to qualify.
+              {/* Commercial Bridge */}
+              <div className="program-group">
+                <div className="program-group-header">
+                  <p className="type-label" style={{ color: "var(--gold)", marginBottom: 4 }}>
+                    Commercial Bridge
+                  </p>
+                  <p className="type-body-sm" style={{ color: "var(--text-light)" }}>
+                    Acquisition and repositioning capital for all commercial property types
                   </p>
                 </div>
-                <div>
-                  <h4
-                    className="type-h4"
-                    style={{ color: "var(--text)", marginBottom: 8 }}
-                  >
-                    Transactional Funding
-                  </h4>
-                  <p
-                    className="type-body-sm"
-                    style={{ color: "var(--text-mid)", lineHeight: 1.7 }}
-                  >
-                    Short-term capital solutions for wholesalers executing double closings and assignment transactions.
+                <div className="program-list">
+                  {[
+                    { name: "Multifamily", tagline: "Apartment buildings, 5+ units, value-add renovations and lease-up", href: "/lending/multifamily" },
+                    { name: "CRE Bridge", tagline: "Self storage, retail, mixed-use, office, and other commercial assets", href: "/lending/commercial-bridge" },
+                  ].map((item) => (
+                    <Link key={item.name} href={item.href} className="program-row">
+                      <div className="program-row-content">
+                        <span className="program-row-name">{item.name}</span>
+                        <span className="program-row-divider" />
+                        <span className="program-row-tagline">{item.tagline}</span>
+                      </div>
+                      <ArrowRight size={16} className="program-row-arrow" />
+                    </Link>
+                  ))}
+                </div>
+              </div>
+
+              {/* Residential */}
+              <div className="program-group">
+                <div className="program-group-header">
+                  <p className="type-label" style={{ color: "var(--gold)", marginBottom: 4 }}>
+                    Residential (1-4 Units)
+                  </p>
+                  <p className="type-body-sm" style={{ color: "var(--text-light)" }}>
+                    Fix-and-flip, rental, and new construction financing for residential investors
                   </p>
                 </div>
-                <div>
-                  <h4
-                    className="type-h4"
-                    style={{ color: "var(--text)", marginBottom: 8 }}
-                  >
-                    Capital Advisory
-                  </h4>
-                  <p
-                    className="type-body-sm"
-                    style={{ color: "var(--text-mid)", lineHeight: 1.7 }}
-                  >
-                    Guidance on permanent takeout financing post-bridge, connecting borrowers with the right long-term capital partners.
+                <div className="program-list">
+                  {[
+                    { name: "Fix & Flip", tagline: "Short-term renovation and resale, up to 90% LTC, draw-based rehab" },
+                    { name: "DSCR Rental", tagline: "Long-term rental loans qualified on property cash flow, 30-year fixed available" },
+                    { name: "New Construction", tagline: "Ground-up residential and commercial, draw schedule based" },
+                  ].map((item) => (
+                    <div key={item.name} className="program-row program-row-static">
+                      <div className="program-row-content">
+                        <span className="program-row-name">{item.name}</span>
+                        <span className="program-row-divider" />
+                        <span className="program-row-tagline">{item.tagline}</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Additional Services */}
+              <div className="program-group">
+                <div className="program-group-header">
+                  <p className="type-label" style={{ color: "var(--gold)", marginBottom: 4 }}>
+                    Additional Services
                   </p>
+                  <p className="type-body-sm" style={{ color: "var(--text-light)" }}>
+                    Complementary capital solutions beyond direct bridge lending
+                  </p>
+                </div>
+                <div className="program-list">
+                  {[
+                    { name: "Guarantor Support", tagline: "Balance sheet and experience support, 1.5-2.5% of loan balance for non-recourse", href: "/lending/guarantor-support" },
+                    { name: "Transactional Funding", tagline: "Same-day capital for wholesale double closes, 1-2% of loan balance", href: "/lending/transactional-funding" },
+                  ].map((item) => (
+                    <Link key={item.name} href={item.href} className="program-row">
+                      <div className="program-row-content">
+                        <span className="program-row-name">{item.name}</span>
+                        <span className="program-row-divider" />
+                        <span className="program-row-tagline">{item.tagline}</span>
+                      </div>
+                      <ArrowRight size={16} className="program-row-arrow" />
+                    </Link>
+                  ))}
+                  {[
+                    { name: "Capital Advisory", tagline: "Permanent takeout financing placement, connecting borrowers with long-term capital partners" },
+                  ].map((item) => (
+                    <div key={item.name} className="program-row program-row-static">
+                      <div className="program-row-content">
+                        <span className="program-row-name">{item.name}</span>
+                        <span className="program-row-divider" />
+                        <span className="program-row-tagline">{item.tagline}</span>
+                      </div>
+                    </div>
+                  ))}
                 </div>
               </div>
             </div>
@@ -605,6 +577,21 @@ export default async function LendingPage() {
         </section>
       )}
 
+      {/* FAQ */}
+      <section className="light-zone section-pad-lg" style={{ borderTop: "1px solid var(--border-light)" }}>
+        <div className="container">
+          <ScrollReveal>
+            <SectionLabel>FAQ</SectionLabel>
+            <h2 className="type-h2" style={{ color: "var(--text)", marginBottom: 40 }}>
+              Frequently asked questions
+            </h2>
+          </ScrollReveal>
+          <ScrollReveal>
+            <FAQSection faqs={lendingFAQs} />
+          </ScrollReveal>
+        </div>
+      </section>
+
       {/* CTA */}
       <FooterCTA
         label="Get Started"
@@ -619,7 +606,7 @@ export default async function LendingPage() {
         body="Submit your deal details and our lending team will deliver a term sheet within 24 hours. No obligation, no credit pull."
         primaryCta={
           <Link href="/lending/apply" className="btn-primary">
-            Submit a Deal <ArrowRight size={16} />
+            Get Your Quote <ArrowRight size={16} />
           </Link>
         }
         secondaryCta={

@@ -72,7 +72,7 @@ export default async function InvestPage() {
   const investFAQs = [
     {
       question: "What is the minimum investment with Requity Group?",
-      answer: "$50,000 is the minimum investment. Requity Group investment offerings are available to accredited investors only, as defined by SEC regulations.",
+      answer: "$50,000 is the typical minimum for deal-by-deal investments, while $100,000 is the typical minimum for fund investments. Fund investments are generally restricted to accredited investors. Deal-by-deal opportunities may be available to non-accredited investors who qualify under Rule 506(b).",
     },
     {
       question: "What returns does Requity Group target?",
@@ -84,7 +84,7 @@ export default async function InvestPage() {
     },
     {
       question: "How often does Requity Group pay distributions?",
-      answer: "The bridge lending fund pays monthly distributions. Equity deal distributions vary by project and are typically paid quarterly or upon capital events such as refinance or sale.",
+      answer: "All of Requity's investment vehicles target to pay monthly distributions.",
     },
     {
       question: "Does Requity Group invest its own capital alongside investors?",
