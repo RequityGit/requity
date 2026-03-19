@@ -5,6 +5,9 @@ import { renderEmText } from "../../lib/renderEmText";
 import type { PageSection, SiteStat, Testimonial } from "../../lib/types";
 import ScrollReveal from "../components/ScrollReveal";
 import FooterCTA from "../components/FooterCTA";
+import FAQSchema from "../components/FAQSchema";
+import FAQSection from "../components/FAQSection";
+import SectionLabel from "../components/SectionLabel";
 import {
   ArrowRight,
   Layers,
@@ -66,8 +69,40 @@ export default async function InvestPage() {
   const whySection = sections.find((s) => s.section_key === "why");
   const benefits = (whySection?.metadata?.benefits as Array<{ title: string; description: string }>) ?? [];
 
+  const investFAQs = [
+    {
+      question: "What is the minimum investment with Requity Group?",
+      answer: "$50,000 is the minimum investment. Requity Group investment offerings are available to accredited investors only, as defined by SEC regulations.",
+    },
+    {
+      question: "What returns does Requity Group target?",
+      answer: "Net to investor IRR of 14-17% for value-add equity investments, 10-12% for debt. Past performance does not guarantee future results.",
+    },
+    {
+      question: "Are Requity Group investments asset-backed?",
+      answer: "Yes. Bridge lending fund investments are secured by first-position liens on real property. Equity investments are backed by the underlying real estate assets. All investments carry risk and are not FDIC insured.",
+    },
+    {
+      question: "How often does Requity Group pay distributions?",
+      answer: "The bridge lending fund pays monthly distributions. Equity deal distributions vary by project and are typically paid quarterly or upon capital events such as refinance or sale.",
+    },
+    {
+      question: "Does Requity Group invest its own capital alongside investors?",
+      answer: "Yes. The general partner maintains a $1,000,000 first-loss position in the lending fund. This means management capital absorbs losses before investor capital is impacted, creating strong alignment of interests.",
+    },
+    {
+      question: "What types of real estate does Requity Group invest in?",
+      answer: "Requity Group focuses on value-add real estate including manufactured housing communities, multifamily properties, and commercial assets. The bridge lending fund provides short-term financing secured by commercial and residential real estate.",
+    },
+    {
+      question: "How do I get started investing with Requity Group?",
+      answer: "Request investor materials through requitygroup.com/invest/request-access. Our investor relations team will provide fund documentation, track record information, and schedule a call to discuss your investment objectives.",
+    },
+  ];
+
   return (
     <main>
+      <FAQSchema faqs={investFAQs} />
       {/* Hero */}
       <section
         className="dark-zone hero-gradient"
@@ -227,6 +262,21 @@ export default async function InvestPage() {
           </div>
         </section>
       )}
+
+      {/* FAQ */}
+      <section className="light-zone section-pad-lg" style={{ borderTop: "1px solid var(--border-light)" }}>
+        <div className="container">
+          <ScrollReveal>
+            <SectionLabel>FAQ</SectionLabel>
+            <h2 className="type-h2" style={{ color: "var(--text)", marginBottom: 40 }}>
+              Frequently asked questions
+            </h2>
+          </ScrollReveal>
+          <ScrollReveal>
+            <FAQSection faqs={investFAQs} />
+          </ScrollReveal>
+        </div>
+      </section>
 
       {/* CTA */}
       <FooterCTA

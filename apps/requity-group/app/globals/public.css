@@ -1119,55 +1119,145 @@ footer {
 }
 
 /* ═══════════════════════════════════════════════════════════════
-   Insights Filter Tabs
+   Insights Filter Tabs (segmented control)
    ═══════════════════════════════════════════════════════════════ */
 .insights-tabs {
-  display: flex;
-  gap: 0;
-  border-bottom: 1px solid var(--border);
-  margin-bottom: 8px;
+  display: inline-flex;
+  gap: 4px;
+  padding: 4px;
+  background: var(--cream-dark);
+  border-radius: 12px;
+  margin-bottom: 32px;
+  border: 1px solid var(--border);
 }
 .insights-tab {
   font-family: var(--font-sans);
   font-size: 13px;
   font-weight: 500;
-  letter-spacing: 1.5px;
-  text-transform: uppercase;
-  color: var(--text-light);
-  background: none;
+  letter-spacing: 0.5px;
+  color: var(--text-mid);
+  background: transparent;
   border: none;
-  border-bottom: 2px solid transparent;
-  padding: 12px 24px 14px;
+  border-radius: 8px;
+  padding: 10px 18px 10px;
   cursor: pointer;
-  transition: all 0.25s ease;
-  display: flex;
+  transition: all 0.2s var(--ease-smooth);
+  display: inline-flex;
   align-items: center;
   gap: 8px;
 }
 .insights-tab:hover {
-  color: var(--text-mid);
+  color: var(--text);
+  background: rgba(255,255,255,0.5);
 }
 .insights-tab-active {
   color: var(--text);
-  border-bottom-color: var(--gold);
+  background: var(--white);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.06);
 }
-.insights-tab-count {
+.insights-tab-label {
+  white-space: nowrap;
+}
+.insights-tab-badge {
   font-size: 11px;
   font-weight: 600;
   color: var(--text-light);
   background: var(--cream);
-  padding: 1px 8px;
-  border-radius: 10px;
-  min-width: 22px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  min-width: 20px;
   text-align: center;
 }
-.insights-tab-active .insights-tab-count {
+.insights-tab-active .insights-tab-badge {
   color: var(--gold);
-  background: rgba(160,138,78,0.1);
+  background: rgba(160,138,78,0.12);
+}
+.insights-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 24px;
+}
+.insights-empty {
+  text-align: center;
+  padding: 48px 0;
 }
 @media (max-width: 768px) {
-  .insights-tabs { overflow-x: auto; -webkit-overflow-scrolling: touch; }
-  .insights-tab { padding: 10px 16px 12px; font-size: 11px; white-space: nowrap; }
+  .insights-tabs {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    width: 100%;
+    justify-content: flex-start;
+  }
+  .insights-tab {
+    padding: 8px 14px;
+    font-size: 12px;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   FAQ Accordion
+   ═══════════════════════════════════════════════════════════════ */
+.faq-section {
+  max-width: 720px;
+}
+.faq-item {
+  border-bottom: 1px solid var(--border-light);
+}
+.faq-item:first-child {
+  border-top: 1px solid var(--border-light);
+}
+.faq-question {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  padding: 20px 0;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-family: var(--font-sans);
+  font-size: 16px;
+  font-weight: 500;
+  color: var(--text);
+  text-align: left;
+  line-height: 1.4;
+  gap: 16px;
+  transition: color 0.2s ease;
+}
+.faq-question:hover {
+  color: var(--gold);
+}
+.faq-chevron {
+  flex-shrink: 0;
+  color: var(--text-light);
+  transition: transform 0.3s var(--ease-out);
+}
+.faq-chevron-open {
+  transform: rotate(180deg);
+  color: var(--gold);
+}
+.faq-answer {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.35s var(--ease-out), padding 0.35s var(--ease-out);
+  padding: 0 0 0 0;
+}
+.faq-answer-open {
+  max-height: 400px;
+  padding: 0 0 20px 0;
+}
+.faq-answer p {
+  font-family: var(--font-sans);
+  font-size: 15px;
+  line-height: 1.75;
+  color: var(--text-mid);
+  padding-right: 40px;
+}
+@media (max-width: 768px) {
+  .faq-question { font-size: 15px; padding: 16px 0; }
+  .faq-answer p { font-size: 14px; padding-right: 0; }
 }
 
 /* ═══════════════════════════════════════════════════════════════

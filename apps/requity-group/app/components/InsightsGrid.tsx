@@ -26,33 +26,33 @@ export default function InsightsGrid({ insights }: { insights: Insight[] }) {
 
   return (
     <>
-      {/* Tab bar */}
-      <div className="insights-tabs" role="tablist">
-        {TABS.map((tab) => (
-          <button
-            key={tab.key}
-            role="tab"
-            aria-selected={activeTab === tab.key}
-            className={`insights-tab${activeTab === tab.key ? " insights-tab-active" : ""}`}
-            onClick={() => setActiveTab(tab.key)}
-          >
-            {tab.label}
-            <span className="insights-tab-count">
-              {filterInsights(insights, tab.key).length}
-            </span>
-          </button>
-        ))}
+      {/* Tab bar — segmented control style */}
+      <div className="insights-tabs" role="tablist" aria-label="Filter insights by audience">
+        {TABS.map((tab) => {
+          const isActive = activeTab === tab.key;
+          return (
+            <button
+              key={tab.key}
+              type="button"
+              role="tab"
+              aria-selected={isActive}
+              aria-controls="insights-grid"
+              className={`insights-tab${isActive ? " insights-tab-active" : ""}`}
+              onClick={() => setActiveTab(tab.key)}
+            >
+              {tab.label}
+            </button>
+          );
+        })}
       </div>
 
       {/* Grid */}
       {filtered.length > 0 ? (
         <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))",
-            gap: 24,
-            marginTop: 32,
-          }}
+          id="insights-grid"
+          role="tabpanel"
+          aria-label="Filtered insights"
+          className="insights-grid"
         >
           {filtered.map((insight) => (
             <Link
@@ -114,7 +114,7 @@ export default function InsightsGrid({ insights }: { insights: Insight[] }) {
           ))}
         </div>
       ) : (
-        <div style={{ textAlign: "center", padding: "48px 0" }}>
+        <div className="insights-empty">
           <p className="type-body" style={{ color: "var(--text-mid)" }}>
             No posts in this category yet. Check back soon.
           </p>
