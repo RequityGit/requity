@@ -148,85 +148,94 @@ export default function RequestAccessPage() {
 
   return (
     <main>
-      {/* ── Step 1: Compact hero + form above fold ── */}
+      {/* ── Step 1: Split layout — brand left, form right ── */}
       {step === "form" && (
-        <>
-          <section
-            className="dark-zone hero-gradient"
-            style={{
-              paddingTop: "clamp(100px, 12vw, 140px)",
-              paddingBottom: "clamp(40px, 5vw, 56px)",
-              position: "relative",
-              overflow: "hidden",
-              textAlign: "center",
-            }}
-          >
-            <div className="navy-grid-pattern">
-              {Array.from({ length: 14 }).map((_, i) => (
-                <div key={i} className="navy-grid-line" style={{ left: `${(i + 1) * 7.14}%` }} />
-              ))}
-            </div>
-            <div className="container" style={{ position: "relative", zIndex: 1 }}>
-              <p
-                className="section-eyebrow"
-                style={{ animation: "fadeUp 0.8s ease forwards", justifyContent: "center" }}
-              >
+        <section className="dark-zone hero-gradient ra-split-section">
+          <div className="navy-grid-pattern">
+            {Array.from({ length: 14 }).map((_, i) => (
+              <div key={i} className="navy-grid-line" style={{ left: `${(i + 1) * 7.14}%` }} />
+            ))}
+          </div>
+          <div className="container ra-split-container">
+            {/* Left: Brand zone */}
+            <div className="ra-split-brand">
+              <p className="section-eyebrow" style={{ animation: "fadeUp 0.8s ease forwards" }}>
                 Invest with Requity
               </p>
               <h1
                 className="section-title section-title-light"
                 style={{
-                  fontSize: "clamp(32px, 4.5vw, 48px)",
-                  maxWidth: 600,
-                  margin: "0 auto",
+                  fontSize: "clamp(32px, 4vw, 44px)",
                   animation: "fadeUp 0.8s 0.1s ease both",
                 }}
               >
                 Request <em>Access</em>
               </h1>
+              <p style={{
+                fontFamily: "var(--font-sans)",
+                fontSize: 15,
+                lineHeight: 1.75,
+                color: "var(--navy-text-mid)",
+                marginTop: 16,
+                maxWidth: 360,
+                animation: "fadeUp 0.8s 0.2s ease both",
+              }}>
+                Submit your details and our investor relations team will follow up with the offering documents and next steps.
+              </p>
+
+              {/* Trust stats */}
+              <div className="ra-trust-stats">
+                {[
+                  { value: "$70M+", label: "Capital Deployed" },
+                  { value: "Monthly", label: "Distributions" },
+                  { value: "0", label: "Investor Losses" },
+                ].map((stat) => (
+                  <div key={stat.label} className="ra-trust-stat">
+                    <div className="ra-trust-value">{stat.value}</div>
+                    <div className="ra-trust-label">{stat.label}</div>
+                  </div>
+                ))}
+              </div>
             </div>
-          </section>
 
-          <div className="dark-to-light" style={{ height: 36 }} />
-
-          <section className="light-zone" style={{ paddingTop: 0, paddingBottom: "clamp(60px, 8vw, 100px)" }}>
-            <div className="container" style={{ maxWidth: 640 }}>
-              <form onSubmit={handleFormSubmit} style={{ animation: "fadeUp 0.6s ease forwards", marginTop: -12 }}>
+            {/* Right: Form */}
+            <div className="ra-split-form">
+              <form onSubmit={handleFormSubmit}>
                 <div className="ra-grid">
                   <div className="ra-field">
-                    <label className="ra-label">First Name <span style={{ color: "var(--gold)" }}>*</span></label>
-                    <input type="text" className="ra-input" placeholder="John" value={form.firstName} onChange={set("firstName")} />
+                    <label className="ra-label-light">First Name <span style={{ color: "var(--gold-muted)" }}>*</span></label>
+                    <input type="text" className="ra-input-dark" placeholder="John" value={form.firstName} onChange={set("firstName")} />
                   </div>
                   <div className="ra-field">
-                    <label className="ra-label">Last Name <span style={{ color: "var(--gold)" }}>*</span></label>
-                    <input type="text" className="ra-input" placeholder="Smith" value={form.lastName} onChange={set("lastName")} />
+                    <label className="ra-label-light">Last Name <span style={{ color: "var(--gold-muted)" }}>*</span></label>
+                    <input type="text" className="ra-input-dark" placeholder="Smith" value={form.lastName} onChange={set("lastName")} />
                   </div>
                   <div className="ra-field">
-                    <label className="ra-label">Email <span style={{ color: "var(--gold)" }}>*</span></label>
-                    <input type="email" className="ra-input" placeholder="john@example.com" value={form.email} onChange={set("email")} />
+                    <label className="ra-label-light">Email <span style={{ color: "var(--gold-muted)" }}>*</span></label>
+                    <input type="email" className="ra-input-dark" placeholder="john@example.com" value={form.email} onChange={set("email")} />
                   </div>
                   <div className="ra-field">
-                    <label className="ra-label">Phone <span style={{ color: "var(--gold)" }}>*</span></label>
-                    <input type="tel" className="ra-input" placeholder="(813) 555-0100" value={form.phone} onChange={handlePhoneChange} />
+                    <label className="ra-label-light">Phone <span style={{ color: "var(--gold-muted)" }}>*</span></label>
+                    <input type="tel" className="ra-input-dark" placeholder="(813) 555-0100" value={form.phone} onChange={handlePhoneChange} />
                   </div>
                 </div>
 
-                {error && <div className="ra-error">{error}</div>}
+                {error && <div className="ra-error" style={{ background: "rgba(220,38,38,0.1)", border: "1px solid rgba(220,38,38,0.3)", color: "#fca5a5" }}>{error}</div>}
 
-                <button type="submit" className="btn-primary ra-submit" disabled={submitting}>
+                <button type="submit" className="ra-submit-gold" disabled={submitting}>
                   {submitting ? "Submitting..." : "Request Access"}
                   {!submitting && <ArrowRight size={16} />}
                 </button>
 
-                <p className="ra-fine-print">
+                <p className="ra-fine-print" style={{ color: "rgba(255,255,255,0.25)" }}>
                   By submitting, you acknowledge this is an expression of interest only and
                   does not constitute a commitment to invest. Offers are made only to
                   accredited investors through the fund&apos;s private placement memorandum.
                 </p>
               </form>
             </div>
-          </section>
-        </>
+          </div>
+        </section>
       )}
 
       {/* ── Step 2: Thank you + profile (reframed) ── */}
@@ -486,6 +495,108 @@ export default function RequestAccessPage() {
       </section>
 
       <style>{`
+        /* Split layout */
+        .ra-split-section {
+          min-height: 100vh;
+          display: flex;
+          align-items: center;
+          padding: 80px 0;
+          position: relative;
+        }
+        .ra-split-container {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: clamp(40px, 6vw, 80px);
+          align-items: center;
+          position: relative;
+          z-index: 1;
+        }
+        .ra-split-brand {
+          animation: fadeUp 0.8s ease forwards;
+        }
+        .ra-split-form {
+          background: rgba(255,255,255,0.03);
+          border: 1px solid rgba(255,255,255,0.08);
+          border-radius: 16px;
+          padding: clamp(28px, 3vw, 44px);
+          animation: fadeUp 0.8s 0.15s ease both;
+        }
+        .ra-trust-stats {
+          display: flex;
+          gap: 32px;
+          margin-top: 40px;
+          padding-top: 32px;
+          border-top: 1px solid rgba(255,255,255,0.08);
+        }
+        .ra-trust-stat {}
+        .ra-trust-value {
+          font-family: var(--font-serif);
+          font-size: 24px;
+          color: var(--gold-muted);
+          margin-bottom: 2px;
+        }
+        .ra-trust-label {
+          font-family: var(--font-sans);
+          font-size: 11px;
+          font-weight: 500;
+          letter-spacing: 1.5px;
+          text-transform: uppercase;
+          color: var(--navy-text-mid);
+        }
+        .ra-label-light {
+          display: block;
+          font-family: var(--font-sans);
+          font-size: 12px;
+          font-weight: 600;
+          color: rgba(255,255,255,0.4);
+          text-transform: uppercase;
+          letter-spacing: 1px;
+          margin-bottom: 8px;
+        }
+        .ra-input-dark {
+          width: 100%;
+          padding: 14px 16px;
+          font-family: var(--font-sans);
+          font-size: 15px;
+          color: #fff;
+          background: rgba(255,255,255,0.04);
+          border: 1px solid rgba(255,255,255,0.1);
+          border-radius: 8px;
+          outline: none;
+          transition: border-color 0.3s, box-shadow 0.3s;
+          -webkit-appearance: none;
+        }
+        .ra-input-dark:focus {
+          border-color: var(--gold-muted);
+          box-shadow: 0 0 0 3px rgba(180,155,80,0.1);
+        }
+        .ra-input-dark::placeholder { color: rgba(255,255,255,0.2); }
+        .ra-submit-gold {
+          width: 100%;
+          margin-top: 24px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 10px;
+          padding: 15px 32px;
+          background: var(--gold);
+          color: #fff;
+          border: none;
+          border-radius: 8px;
+          cursor: pointer;
+          font-family: var(--font-sans);
+          font-size: 15px;
+          font-weight: 600;
+          letter-spacing: 0.3px;
+          transition: all 0.25s;
+        }
+        .ra-submit-gold:hover {
+          background: var(--gold-muted);
+          transform: translateY(-1px);
+          box-shadow: 0 4px 16px rgba(160,138,78,0.3);
+        }
+        .ra-submit-gold:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+
         .ra-grid {
           display: grid;
           grid-template-columns: 1fr 1fr;
@@ -687,10 +798,18 @@ export default function RequestAccessPage() {
           background: var(--gold);
           color: #fff;
         }
+        @media (max-width: 968px) {
+          .ra-split-container { grid-template-columns: 1fr; }
+          .ra-split-section { padding-top: 100px; min-height: auto; }
+          .ra-split-brand { text-align: center; }
+          .ra-split-brand .section-eyebrow { justify-content: center; }
+          .ra-trust-stats { justify-content: center; }
+        }
         @media (max-width: 768px) {
           .ra-grid { grid-template-columns: 1fr; }
           .ra-checks { grid-template-columns: 1fr; }
-          .ra-quick-interests { grid-template-columns: 1fr; }
+          .ra-trust-stats { flex-direction: column; gap: 16px; align-items: center; text-align: center; }
+          .ra-split-form { padding: 24px 20px; }
         }
       `}</style>
     </main>

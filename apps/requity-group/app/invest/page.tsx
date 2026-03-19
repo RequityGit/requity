@@ -153,11 +153,11 @@ export default async function InvestPage() {
               flexWrap: "wrap",
             }}
           >
-            <Link href="/invest/request-access" className="btn-primary">
-              Request Access <ArrowRight size={16} />
+            <Link href="/fund" className="btn-primary">
+              Requity Income Fund <ArrowRight size={16} />
             </Link>
-            <Link href="/about" className="btn-secondary">
-              About Requity
+            <Link href="/invest/request-access" className="btn-secondary">
+              Request Access
             </Link>
           </div>
         </div>
