@@ -329,17 +329,23 @@ export default async function HomePage() {
                 }}
               >
                 {recentInsights.map((insight) => (
-                  <div key={insight.id} className="card">
-                    <div style={{ display: "flex", gap: 8, marginBottom: 16 }}>
-                      {insight.tags?.map((tag) => (
-                        <span key={tag} className="insight-tag">{tag}</span>
-                      ))}
+                  <Link
+                    key={insight.id}
+                    href={`/insights/${insight.slug}`}
+                    style={{ textDecoration: "none", color: "inherit", display: "block", height: "100%" }}
+                  >
+                    <div className="card insight-card">
+                      <div className="insight-tags">
+                        {insight.tags?.map((tag) => (
+                          <span key={tag} className="insight-tag">{tag}</span>
+                        ))}
+                      </div>
+                      <h3 className="card-title" style={{ fontSize: 21 }}>
+                        {insight.title}
+                      </h3>
+                      <p className="card-body">{insight.excerpt}</p>
                     </div>
-                    <h3 className="card-title" style={{ fontSize: 21 }}>
-                      {insight.title}
-                    </h3>
-                    <p className="card-body">{insight.excerpt}</p>
-                  </div>
+                  </Link>
                 ))}
               </div>
             </ScrollReveal>

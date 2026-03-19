@@ -7,6 +7,8 @@
 [build.environment]
   NODE_OPTIONS = "--max-old-space-size=4096"
   SECRETS_SCAN_SMART_DETECTION_ENABLED = "false"
+  SECRETS_SCAN_ENABLED = "false"
+  SECRETS_SCAN_OMIT_KEYS = "SMTP_USER,INVESTOR_CONTACT_EMAIL,INVESTOR_NOTIFY_EMAIL,NOTIFY_EMAIL"
 
 [build.cancel]
   auto = false

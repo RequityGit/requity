@@ -94,7 +94,17 @@ export interface Insight {
   slug: string;
   published_date: string | null;
   excerpt: string | null;
+  body_content: string | null;
+  thumbnail_url: string | null;
+  featured_image_url: string | null;
   tags: string[];
+  author: string | null;
+  reading_time_minutes: number | null;
+  meta_description: string | null;
+  category: string | null;
+  audience?: "investor" | "borrower" | "both" | null;
+  status: "draft" | "approved" | "published";
+  is_published: boolean;
   sort_order: number;
 }
 
