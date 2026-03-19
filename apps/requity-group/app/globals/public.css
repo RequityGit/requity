@@ -1119,6 +1119,58 @@ footer {
 }
 
 /* ═══════════════════════════════════════════════════════════════
+   Insights Filter Tabs
+   ═══════════════════════════════════════════════════════════════ */
+.insights-tabs {
+  display: flex;
+  gap: 0;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 8px;
+}
+.insights-tab {
+  font-family: var(--font-sans);
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--text-light);
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  padding: 12px 24px 14px;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.insights-tab:hover {
+  color: var(--text-mid);
+}
+.insights-tab-active {
+  color: var(--text);
+  border-bottom-color: var(--gold);
+}
+.insights-tab-count {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-light);
+  background: var(--cream);
+  padding: 1px 8px;
+  border-radius: 10px;
+  min-width: 22px;
+  text-align: center;
+}
+.insights-tab-active .insights-tab-count {
+  color: var(--gold);
+  background: rgba(160,138,78,0.1);
+}
+@media (max-width: 768px) {
+  .insights-tabs { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  .insights-tab { padding: 10px 16px 12px; font-size: 11px; white-space: nowrap; }
+}
+
+/* ═══════════════════════════════════════════════════════════════
    Loan Program Features
    ═══════════════════════════════════════════════════════════════ */
 .program-feature {
