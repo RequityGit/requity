@@ -7,7 +7,7 @@ import AnimatedLine from "../components/AnimatedLine";
 import SectionLabel from "../components/SectionLabel";
 import PageHero from "../components/PageHero";
 import FooterCTA from "../components/FooterCTA";
-import { ArrowRight, Heart, Compass, Trophy } from "lucide-react";
+import { ArrowRight, Heart, Compass, Trophy, Mail, Linkedin } from "lucide-react";
 
 export const metadata: Metadata = {
   title: "About",
@@ -58,6 +58,22 @@ const LUIS_BIO =
 
 function isEstefania(name: string): boolean {
   return /Estefan[ií]a/i.test(name) || (name.includes("Espinal") && name.toLowerCase().includes("estefan"));
+}
+
+/** Email and LinkedIn per team member (matched by name). */
+const TEAM_CONTACT_LINKS: Array<{ match: (n: string) => boolean; email: string; linkedin: string }> = [
+  { match: (n) => n.toLowerCase().includes("dylan"), email: "dylan@requitygroup.com", linkedin: "https://www.linkedin.com/in/dylanmarma/" },
+  { match: (n) => isEstefania(n), email: "ee@requitygroup.com", linkedin: "https://www.linkedin.com/in/estefan%C3%ADa-espinal-monsalve-mba-131065b0/" },
+  { match: (n) => n.toLowerCase().includes("luis"), email: "luis@requitygroup.com", linkedin: "https://www.linkedin.com/in/luisevelez/" },
+  { match: (n) => n.toLowerCase().includes("grethel"), email: "grethel@requitygroup.com", linkedin: "https://www.linkedin.com/in/grethel-kauss-62b0b31a7/" },
+  { match: (n) => n.toLowerCase().includes("jet"), email: "jet@requitygroup.com", linkedin: "https://www.linkedin.com/in/jvanaardt/" },
+  { match: (n) => n.toLowerCase().includes("gena"), email: "gena@therequitygroup.com", linkedin: "" },
+];
+
+function getTeamContactLinks(name: string): { email: string; linkedin: string } | null {
+  const entry = TEAM_CONTACT_LINKS.find((e) => e.match(name));
+  if (!entry) return null;
+  return { email: entry.email, linkedin: entry.linkedin };
 }
 
 /** Per-member bio display: for Jet, strip filler and append experience; for Estefanía and Luis, use full override bio. */
@@ -308,6 +324,22 @@ export default async function AboutPage() {
                         ? DYLAN_BIO
                         : abbreviateBio(leadershipBioDisplay(principal.bio)) + DESIGNATIONS_SUFFIX}
                     </p>
+                    {(() => {
+                      const links = getTeamContactLinks(principal.name);
+                      if (!links) return null;
+                      return (
+                        <div className="team-contact-row">
+                          <a href={`mailto:${links.email}`} className="team-contact-link" aria-label="Email">
+                            <Mail size={20} />
+                          </a>
+                          {links.linkedin && (
+                            <a href={links.linkedin} target="_blank" rel="noopener noreferrer" className="team-contact-link" aria-label="LinkedIn">
+                              <Linkedin size={20} />
+                            </a>
+                          )}
+                        </div>
+                      );
+                    })()}
                   </div>
                 </div>
               </ScrollReveal>
@@ -335,6 +367,22 @@ export default async function AboutPage() {
                         <div className="team-name on-navy">{teamNameDisplay(member.name)}</div>
                         <p className="team-title">{teamTitleDisplay(member.name, member.title)}</p>
                         <p className="team-bio on-navy">{abbreviateBio(teamBioDisplay(member.name, member.bio), member.name.includes("Jet") ? 600 : isEstefania(member.name) || member.name.includes("Luis") ? 999 : 320)}</p>
+                        {(() => {
+                          const links = getTeamContactLinks(member.name);
+                          if (!links) return null;
+                          return (
+                            <div className="team-contact-row">
+                              <a href={`mailto:${links.email}`} className="team-contact-link" aria-label="Email">
+                                <Mail size={20} />
+                              </a>
+                              {links.linkedin && (
+                                <a href={links.linkedin} target="_blank" rel="noopener noreferrer" className="team-contact-link" aria-label="LinkedIn">
+                                  <Linkedin size={20} />
+                                </a>
+                              )}
+                            </div>
+                          );
+                        })()}
                       </div>
                     ))}
                   </div>
@@ -364,6 +412,22 @@ export default async function AboutPage() {
                         <div className="team-name on-navy">{teamNameDisplay(member.name)}</div>
                         <p className="team-title">{teamTitleDisplay(member.name, member.title)}</p>
                         <p className="team-bio on-navy">{abbreviateBio(teamBioDisplay(member.name, member.bio), member.name.includes("Jet") ? 600 : isEstefania(member.name) || member.name.includes("Luis") ? 999 : 320)}</p>
+                        {(() => {
+                          const links = getTeamContactLinks(member.name);
+                          if (!links) return null;
+                          return (
+                            <div className="team-contact-row">
+                              <a href={`mailto:${links.email}`} className="team-contact-link" aria-label="Email">
+                                <Mail size={20} />
+                              </a>
+                              {links.linkedin && (
+                                <a href={links.linkedin} target="_blank" rel="noopener noreferrer" className="team-contact-link" aria-label="LinkedIn">
+                                  <Linkedin size={20} />
+                                </a>
+                              )}
+                            </div>
+                          );
+                        })()}
                       </div>
                     ))}
                   </div>
