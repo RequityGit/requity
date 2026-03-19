@@ -165,10 +165,21 @@ export default function Footer({
           </div>
         </div>
 
-        <div className="footer-bottom">
+        <div className="footer-bottom" style={{ flexDirection: "column", gap: 8 }}>
           <p>
             &copy; {new Date().getFullYear()}{" "}
             {company?.company_name || "Requity Group"}. All rights reserved.
+          </p>
+          <p className="footer-legal-links" style={{ fontSize: 12 }}>
+            <Link href="/privacy-policy">Privacy Policy</Link>
+            <span className="footer-legal-sep" aria-hidden>
+              |
+            </span>
+            <Link href="/terms">Terms of Service</Link>
+            <span className="footer-legal-sep" aria-hidden>
+              |
+            </span>
+            <Link href="/sms-terms">SMS Terms</Link>
           </p>
         </div>
       </div>
