@@ -2,7 +2,7 @@ import { createClient } from '@/lib/supabase/server';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import CommunityGallery from '@/components/CommunityGallery';
-import AppfolioWidget from '@/components/AppfolioWidget';
+import ListingGrid from '@/components/ListingGrid';
 
 export const dynamic = 'force-dynamic';
 
@@ -38,6 +38,27 @@ export default async function CommunityPage({ params }: { params: { slug: string
 
   if (!community) notFound();
 
+  // Base logic
+  const baseUrl = process.env.NODE_ENV === 'development'
+      ? 'http://localhost:3002'
+      : 'https://trgliving.netlify.app'; //update for production
+  
+  let listings = [];
+  try {
+    const listingsRes = await fetch(
+      `${baseUrl}/api/listings?city=${encodeURIComponent(community.city)}`,
+      { next: { revalidate: 3600 } }
+    );
+
+    if (listingsRes.ok) {
+      listings = await listingsRes.json();
+    } else {
+      console.error("API Error:", listingsRes.statusText);
+    }
+    } catch (err) {
+      console.error("Listing fetch failed:", err);
+    }
+
   const publishedPosts = community.pm_posts?.filter((p: any) => p.status === 'published') || [];
   
   const heroUrl = community.hero 
@@ -53,7 +74,7 @@ export default async function CommunityPage({ params }: { params: { slug: string
   return (
     <div className="min-h-screen bg-white text-[#0f172a] font-sans leading-relaxed">
       
-      {/* 1. SUB-HEADER (Anchor Nav) */}
+      {/* SUB-HEADER / ANCHOR NAV */}
       <div className="sticky top-20 z-[90] bg-[#f8fafc] border-b border-slate-200">
         <div className="max-w-[1440px] mx-auto px-8 py-4 flex items-center gap-10 overflow-x-auto no-scrollbar">
           {['ABOUT THE COMMUNITY', 'AMENITIES', 'AVAILABLE LISTINGS', 'GALLERY'].map((item) => (
@@ -74,7 +95,7 @@ export default async function CommunityPage({ params }: { params: { slug: string
         style={{ backgroundImage: heroUrl ? `linear-gradient(rgba(15, 23, 42, 0.75), rgba(15, 23, 42, 0.75)), url('${heroUrl}')` : 'none' }}
       >
          <div className="max-w-[1380px] mx-auto">
-          <div className="max-w-[490px] space-y-8">
+          <div className="max-w-[490px] space-y-10">
             <div className="space-y-4">
                <h1 className="text-[3.75rem] font-black tracking-wide leading-[1] uppercase">
                  {community.name}
@@ -95,7 +116,8 @@ export default async function CommunityPage({ params }: { params: { slug: string
                </div>
                <div className="flex items-center gap-4">
                   <span className="text-slate-400 text-xs">Icon</span>
-                  <span>{community.starting_price || 'Starting at $550'}
+                  <span>
+                    {community.starting_price || 'Starting at $550'}
                   </span>
                </div>
             </div>
@@ -164,13 +186,15 @@ export default async function CommunityPage({ params }: { params: { slug: string
 
         </div>
 
-        {/* 3.2 AVAILABLE LISTINGS (Full Width) */}
+        {/* 3.2 AVAILABLE LISTINGS (grid) */}
         <section id="available-listings" className="scroll-mt-48 border-t pt-24 border-slate-100">
-           <h2 className="text-[2.18rem] font-bold text-[#333333] mb-12 uppercase text-center">Available Listings</h2>
-           <AppfolioWidget listingUrl={community.appfolio_listing_url} />
+          <h2 className="text-[2.18rem] font-bold text-[#333333] mb-12 uppercase tracking-tight text-center">
+            Available Listings
+          </h2>
+          <ListingGrid listings={listings} />
         </section>
 
-        {/* 3.3 GALLERY (Full Width) */}
+        {/* 3.3 GALLERY */}
         <section id="gallery" className="scroll-mt-48 border-t pt-24 border-slate-100 pb-20">
            <h2 className="text-[2.18rem] font-bold text-[#333333] mb-12 uppercase text-center">Photo Gallery</h2>
            <CommunityGallery images={galleryImages} />
