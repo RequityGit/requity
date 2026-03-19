@@ -2,17 +2,24 @@
 const nextConfig = {
   images: {
     remotePatterns: [
-      // 1. Existing Cloud Supabase Pattern
+      // 1. Cloud Supabase
       {
         protocol: 'https',
         hostname: 'edhlkknvlczhbowasjna.supabase.co',
         port: '',
         pathname: '/storage/v1/object/public/**',
       },
-      // 2. NEW: Appfolio CDN for Listings
+      // 2. Appfolio Listing CDN (UI/Placeholders)
       {
         protocol: 'https',
         hostname: 'listings.cdn.appfolio.com',
+        port: '',
+        pathname: '/**',
+      },
+      // 3. NEW: Appfolio Property Image CDN (Real Photos)
+      {
+        protocol: 'https',
+        hostname: 'images.cdn.appfolio.com',
         port: '',
         pathname: '/**',
       },
@@ -20,7 +27,7 @@ const nextConfig = {
   },
 };
 
-// SECURITY OVERRIDE: Local development injection
+// SECURITY OVERRIDE: Local development
 if (process.env.LOCAL_SUPABASE_HOSTNAME) {
   nextConfig.images.remotePatterns.push({
     protocol: 'http',

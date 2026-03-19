@@ -10,8 +10,9 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: 'City parameter is required' }, { status: 400 });
     }
 
-    // Sanitize the input to prevent URL injection
+    // Sanitize the input
     const safeCity = encodeURIComponent(city.trim());
+    // array syntax [] because that's how AppFolio handles filters
     const url = `https://trgliving.appfolio.com/listings?filters[cities][]=${safeCity}`;
 
     const res = await fetch(url, {
@@ -22,35 +23,37 @@ export async function GET(request: Request) {
       next: { revalidate: 3600 } // Cache for 1 hour to prevent AppFolio from blocking our IP
     });
 
-    if (!res.ok) throw new Error('AppFolio fetch failed');
-
     const html = await res.text();
     const $ = cheerio.load(html);
     const listings: any[] = [];
-    const seen = new Set<string>();
 
-    $('h2 a[href*="/listings/detail/"]').each((_, el) => {
-      const href = $(el).attr('href') || '';
-      const uid = href.split('/listings/detail/')[1];
-      if (!uid || seen.has(uid)) return;
-      seen.add(uid);
+    // Use the 'js-' classes from appfolio's listing
+    $('.js-listing-item').each((_, el) => {
+      const $item = $(el);
 
-      const title = $(el).text().trim();
-      const $h2 = $(el).closest('h2');
-      const address = $h2.next('p, div').text().trim().replace(/\s*Map\s*$/i, '');
+      // Extract the UUID from the title anchor
+      const detailLink = $item.find('.js-listing-title a').attr('href') || '';
+      const uid = detailLink.split('/listings/detail/')[1];
+      if (!uid) return;
+      // Map fields based on the specific classes
+      const title = $item.find('.js-listing-title').text().trim();
+      const address = $item.find('.js-listing-address').text().trim();
       
-      // Select the specific thumb associated with this UID
-      const $thumb = $(`a[href="/listings/detail/${uid}"]:not(h2 a)`).first();
-      const rent = $thumb.text().match(/\$[\d,]+/)?.[0] || 'Contact for Price';
-      const image = $thumb.find('img').attr('src');
+      // Use 'data-original'
+      const $img = $item.find('.js-listing-image');
+      const image = $img.attr('data-original') || $img.attr('src');
+      // PRICE & AVAILABILITY
+      const rent = $item.find('.js-listing-blurb-rent').text().trim() || 'Contact for Price';
+      const available = $item.find('.js-listing-available').first().text().trim();
 
       listings.push({
         uid,
         title,
         address,
         rent,
+        available,
         image,
-        detailUrl: `https://trgliving.appfolio.com${href}`,
+        detailUrl: `https://trgliving.appfolio.com${detailLink}`,
         applyUrl: `https://trgliving.appfolio.com/listings/rental_applications/new?listable_uid=${uid}&source=Website`,
       });
     });
@@ -58,6 +61,6 @@ export async function GET(request: Request) {
     return NextResponse.json(listings);
   } catch (error: any) {
     console.error('Scraper Error:', error.message);
-    return NextResponse.json({ error: 'Failed to sync listings' }, { status: 500 });
+    return NextResponse.json({ error: 'Internal Sync Error' }, { status: 500 });
   }
 }

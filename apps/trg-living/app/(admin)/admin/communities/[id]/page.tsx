@@ -179,25 +179,42 @@ export default function EditCommunityPage() {
                         <h2 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-300 border-b pb-4">3. Location Details</h2>
                         <div className="space-y-1">
                             <label className="text-[10px] font-bold text-slate-400 uppercase ml-1">Display Address</label>
-                            <input className="w-full p-4 rounded-2xl border border-slate-200 focus:ring-4 focus:ring-blue-50 transition-all outline-none" 
+                            <input
+                                className="w-full p-4 rounded-2xl border border-slate-200 focus:ring-4 focus:ring-blue-50 transition-all outline-none"
                                 placeholder="e.g. 221 Riggs Rd, Hubert, NC 28539"
-                                value={formData.address_display || ''} onChange={(e) => setFormData({...formData, address_display: e.target.value})} />
+                                value={formData.address_display || ''}
+                                onChange={(e) => setFormData({...formData, address_display: e.target.value})}
+                            />
                         </div>
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                             <div className="space-y-1">
                                 <label className="text-[10px] font-bold text-slate-400 uppercase ml-1">City</label>
-                                <input className="w-full p-4 rounded-2xl border border-slate-200 text-sm outline-none focus:ring-4 focus:ring-blue-50 transition-all" 
-                                    placeholder="Hubert" value={formData.city || ''} onChange={(e) => setFormData({...formData, city: e.target.value})} />
+                                <input
+                                    className="w-full p-4 rounded-2xl border border-slate-200 text-sm outline-none focus:ring-4 focus:ring-blue-50 transition-all" 
+                                    placeholder="Hubert"
+                                    value={formData.city || ''}
+                                    onChange={(e) => setFormData({...formData, city: e.target.value})}
+                                />
+                                {/* Tooltip */}
+                                <p className="text-[9px] text-amber-500 font-bold uppercase mt-1 ml-1 flex items-center gap-1">
+                                        Must match AppFolio city name exactly for listing sync.
+                                </p>
                             </div>
                             <div className="space-y-1">
                                 <label className="text-[10px] font-bold text-slate-400 uppercase ml-1">State Code</label>
-                                <input className="w-full p-4 rounded-2xl border border-slate-200 text-sm outline-none focus:ring-4 focus:ring-blue-50 transition-all" 
-                                    placeholder="NC" value={formData.state_code || ''} onChange={(e) => setFormData({...formData, state_code: e.target.value})} />
+                                <input
+                                    className="w-full p-4 rounded-2xl border border-slate-200 text-sm outline-none focus:ring-4 focus:ring-blue-50 transition-all"
+                                    placeholder="NC" value={formData.state_code || ''}
+                                    onChange={(e) => setFormData({...formData, state_code: e.target.value})}
+                                />
                             </div>
                             <div className="space-y-1">
                                 <label className="text-[10px] font-bold text-slate-400 uppercase ml-1">Zip Code</label>
-                                <input className="w-full p-4 rounded-2xl border border-slate-200 text-sm outline-none focus:ring-4 focus:ring-blue-50 transition-all" 
-                                    placeholder="28539" value={formData.zip_code || ''} onChange={(e) => setFormData({...formData, zip_code: e.target.value})} />
+                                <input
+                                    className="w-full p-4 rounded-2xl border border-slate-200 text-sm outline-none focus:ring-4 focus:ring-blue-50 transition-all"
+                                    placeholder="28539" value={formData.zip_code || ''}
+                                    onChange={(e) => setFormData({...formData, zip_code: e.target.value})}
+                                />
                             </div>
                         </div>
                     </div>
