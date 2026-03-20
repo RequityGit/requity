@@ -53,6 +53,7 @@ import { CrmAvatar, RelPill, StageDot, getInitials } from "./crm-primitives";
 import { ClickToCallNumber } from "@/components/ui/ClickToCallNumber";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Badge } from "@/components/ui/badge";
+import Link from "next/link";
 import type { CrmContactRow } from "./crm-v2-page";
 
 interface TeamMember {
@@ -383,8 +384,18 @@ export function ContactsView({
                           </Tooltip>
                         </TooltipProvider>
                       </td>
-                      <td className="px-4 py-2.5 text-sm text-muted-foreground max-w-[200px] truncate">
-                        {c.company_name || "—"}
+                      <td className="px-4 py-2.5 text-sm max-w-[200px] truncate">
+                        {c.company_number ? (
+                          <Link
+                            href={`/companies/${c.company_number}`}
+                            onClick={(e) => e.stopPropagation()}
+                            className="text-muted-foreground hover:text-foreground hover:underline transition-colors"
+                          >
+                            {c.company_name}
+                          </Link>
+                        ) : (
+                          <span className="text-muted-foreground">{c.company_name || "—"}</span>
+                        )}
                       </td>
                       <td className="px-4 py-2.5">
                         {c.relationships.length === 0 ? (
