@@ -11,7 +11,6 @@ import {
   Building2,
   Settings,
   Receipt,
-  Hammer,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -26,8 +25,6 @@ import { RentRollSubTab } from "./financials/RentRollSubTab";
 import { T12SubTab } from "./financials/T12SubTab";
 import { AssumptionsSubTab } from "./financials/AssumptionsSubTab";
 import { ClosingCostsSubTab } from "./financials/ClosingCostsSubTab";
-import { ScopeOfWorkSubTab } from "./financials/ScopeOfWorkSubTab";
-
 // ── Types ──
 
 export interface CommercialUWData {
@@ -62,7 +59,6 @@ const SUB_TABS = [
   { key: "t12" as const, label: "T12 / Historical", icon: FileSpreadsheet },
   { key: "assumptions" as const, label: "Assumptions", icon: Settings },
   { key: "closing-costs" as const, label: "Closing Costs", icon: Receipt },
-  { key: "scope" as const, label: "Scope of Work", icon: Hammer },
 ];
 
 type SubTabKey = (typeof SUB_TABS)[number]["key"];
@@ -74,7 +70,7 @@ export function FinancialsTab({
   dealId,
   currentUserId,
 }: FinancialsTabProps) {
-  const { uw, income, expenses, rentRoll, sourcesUses, scopeOfWork, allVersions } = data;
+  const { uw, income, expenses, rentRoll, sourcesUses, allVersions } = data;
   const router = useRouter();
   const [activeSubTab, setActiveSubTab] = useState<SubTabKey>("rent-roll");
   const [creatingVersion, setCreatingVersion] = useState(false);
@@ -164,13 +160,7 @@ export function FinancialsTab({
           purchasePrice={purchasePrice}
         />
       )}
-      {activeSubTab === "scope" && (
-        <ScopeOfWorkSubTab
-          scopeOfWork={scopeOfWork}
-          uwId={uwId}
-          numUnits={numUnits}
-        />
-      )}
+      {/* Scope of Work moved to Underwriting > Sources & Uses (Capital Stack) */}
     </div>
   );
 }

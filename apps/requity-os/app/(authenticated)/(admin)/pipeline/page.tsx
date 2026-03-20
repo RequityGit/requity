@@ -7,7 +7,6 @@ import {
   daysInStage,
   getAlertLevel,
   type UnifiedDeal,
-  type UnifiedCardType,
   type StageConfig,
   type DealActivity,
 } from "@/components/pipeline/pipeline-types";
@@ -29,7 +28,6 @@ export default async function PipelinePage() {
   const admin = createAdminClient();
 
   const [
-    cardTypesResult,
     dealsResult,
     stageConfigsResult,
     relationshipsResult,
@@ -37,11 +35,6 @@ export default async function PipelinePage() {
     teamResult,
     intakeResult,
   ] = await Promise.all([
-    admin
-      .from("unified_card_types" as never)
-      .select("*")
-      .eq("status" as never, "active" as never)
-      .order("sort_order" as never),
     admin
       .from("unified_deals" as never)
       .select(
@@ -73,7 +66,6 @@ export default async function PipelinePage() {
       .order("received_at" as never, { ascending: false }),
   ]);
 
-  const cardTypes = (cardTypesResult.data ?? []) as unknown as UnifiedCardType[];
   const stageConfigs = (stageConfigsResult.data ?? []) as unknown as StageConfig[];
   const activities = (activitiesResult.data ?? []) as unknown as DealActivity[];
 
@@ -157,7 +149,6 @@ export default async function PipelinePage() {
       <PipelineHeader intakeCount={intakeItems.length} />
       <PipelineView
         deals={deals}
-        cardTypes={cardTypes}
         stageConfigs={stageConfigs}
         activities={activities}
         relationshipDealIds={relationshipDealIds}

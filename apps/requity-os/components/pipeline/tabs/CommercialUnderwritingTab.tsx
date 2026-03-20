@@ -98,7 +98,17 @@ export function CommercialUnderwritingTab({ data, dealId }: CommercialUnderwriti
   const { uw, income, expenses, sourcesUses, waterfall, debt } = data;
 
   const incomeRows: DealIncomeRow[] = useMemo(
-    () => income.map((r) => ({ id: String(r.id ?? ""), line_item: String(r.line_item ?? ""), t12_amount: n(r.t12_amount), year_1_amount: n(r.year_1_amount), growth_rate: n(r.growth_rate), is_deduction: Boolean(r.is_deduction), sort_order: n(r.sort_order) })),
+    () => income.map((r) => ({
+      id: String(r.id ?? ""),
+      line_item: String(r.line_item ?? ""),
+      t12_amount: n(r.t12_amount),
+      year_1_amount: n(r.year_1_amount),
+      growth_rate: n(r.growth_rate),
+      is_deduction: Boolean(r.is_deduction),
+      sort_order: n(r.sort_order),
+      section: r.section != null ? String(r.section) : undefined,
+      meta: r.meta ?? undefined,
+    })),
     [income]
   );
 
@@ -167,7 +177,13 @@ export function CommercialUnderwritingTab({ data, dealId }: CommercialUnderwriti
     };
   }, [uwRecord, debtTranches, hasTypedTranches]);
 
-  const proForma = useMemo(() => computeProForma(incomeRows, expenseRows, effectiveUWRecord), [incomeRows, expenseRows, effectiveUWRecord]);
+  // Pull stabilized vacancy from the UW record (set in Assumptions tab)
+  const stabilizedVacancyPct = n(uw?.stabilized_vacancy_pct) || 5;
+
+  const proForma = useMemo(
+    () => computeProForma(incomeRows, expenseRows, effectiveUWRecord, { stabilizedVacancyPct }),
+    [incomeRows, expenseRows, effectiveUWRecord, stabilizedVacancyPct]
+  );
 
   const totalEquity = useMemo(() => {
     const eq = suRows.filter((s) => s.type === "source" && s.line_item.toLowerCase().includes("equity")).reduce((sum, s) => sum + s.amount, 0);
@@ -286,6 +302,7 @@ function ProFormaContent({
 }) {
   const t12 = proForma.find((p) => p.year === 0);
   const yr1 = proForma.find((p) => p.year === 1);
+  const stabilized = proForma.find((p) => p.year === 99);
   const years = proForma.filter((p) => p.year >= 1 && p.year <= holdYears);
 
   return (
@@ -294,7 +311,7 @@ function ProFormaContent({
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
         <KPICard label="T-12 NOI" value={fC(t12?.noi ?? 0)} />
         <KPICard label="Year 1 NOI" value={fC(yr1?.noi ?? 0)} accent="text-blue-500" />
-        <KPICard label="Stabilized NOI" value={fC(years[years.length - 1]?.noi ?? 0)} accent="text-green-500" />
+        <KPICard label="Stabilized NOI" value={fC(stabilized?.noi ?? years[years.length - 1]?.noi ?? 0)} accent="text-green-500" />
         <KPICard label="DSCR (Yr1)" value={yr1 ? fX(yr1.dscr) : "\u2014"} accent={yr1 && yr1.dscr >= 1.2 ? "text-green-500" : "text-red-500"} />
         <KPICard label="LTV" value={uwRecord.purchase_price > 0 ? `${((uwRecord.loan_amount / uwRecord.purchase_price) * 100).toFixed(1)}%` : "\u2014"} />
         <KPICard label="Going-In Cap" value={fPct(dealAnalysis.goingInCap)} />
@@ -522,6 +539,7 @@ function ReturnsContent({
 function ProFormaTable({ proForma, holdYears }: { proForma: ProFormaYearResult[]; holdYears: number }) {
   const t12 = proForma.find((p) => p.year === 0);
   const years = proForma.filter((p) => p.year >= 1 && p.year <= holdYears);
+  const stabilized = proForma.find((p) => p.year === 99);
   const firstYear = t12 || years[0];
 
   if (!firstYear) {
@@ -530,8 +548,15 @@ function ProFormaTable({ proForma, holdYears }: { proForma: ProFormaYearResult[]
 
   const incomeLabels = firstYear.incomeRows.map((r) => r.label);
   const expenseLabels = firstYear.expenseRows.map((r) => r.label);
-  const colHeaders = [...(t12 ? ["T12"] : []), ...years.map((y) => `Year ${y.year}`)];
-  const allPFs = [...(t12 ? [t12] : []), ...years];
+  const colHeaders = [
+    ...(t12 ? ["T-12"] : []),
+    ...years.map((y) => `Year ${y.year}`),
+    ...(stabilized ? ["Stabilized"] : []),
+  ];
+  const allPFs = [...(t12 ? [t12] : []), ...years, ...(stabilized ? [stabilized] : [])];
+
+  // NOI upside: Stabilized NOI vs T-12 NOI
+  const noiUpside = stabilized && t12 ? stabilized.noi - t12.noi : null;
 
   function getVal(pf: ProFormaYearResult, type: "income" | "expense", key: string): number | null {
     if (type === "income") return pf.incomeRows.find((r) => r.label === key)?.amount ?? null;
@@ -539,12 +564,15 @@ function ProFormaTable({ proForma, holdYears }: { proForma: ProFormaYearResult[]
   }
 
   return (
-    <table className="w-full text-sm min-w-[600px]">
+    <table className="w-full text-sm min-w-[700px]">
       <thead>
         <tr className="bg-muted/50">
           <th className="text-left text-xs font-medium text-muted-foreground uppercase tracking-wider px-3 py-2 sticky left-0 z-10 bg-muted/50">&nbsp;</th>
           {colHeaders.map((h, i) => (
-            <th key={i} className="text-right text-xs font-medium text-muted-foreground uppercase tracking-wider px-3 py-2">{h}</th>
+            <th key={i} className={cn(
+              "text-right text-xs font-medium uppercase tracking-wider px-3 py-2",
+              h === "Stabilized" ? "text-green-600 dark:text-green-400" : "text-muted-foreground"
+            )}>{h}</th>
           ))}
         </tr>
       </thead>
@@ -557,42 +585,58 @@ function ProFormaTable({ proForma, holdYears }: { proForma: ProFormaYearResult[]
               <td className="px-3 py-1.5 sticky left-0 z-10 bg-card">{isDeduction ? `(${label})` : label}</td>
               {allPFs.map((pf, i) => {
                 const val = getVal(pf, "income", label);
-                return <td key={i} className={cn("text-right px-3 py-1.5 num", isDeduction && "text-destructive")}>{val != null ? (val < 0 ? `(${fC(Math.abs(val))})` : fC(val)) : "\u2014"}</td>;
+                const isStab = pf.year === 99;
+                return <td key={i} className={cn("text-right px-3 py-1.5 num", isDeduction && "text-destructive", isStab && "bg-green-500/5")}>{val != null ? (val < 0 ? `(${fC(Math.abs(val))})` : fC(val)) : "\u2014"}</td>;
               })}
             </tr>
           );
         })}
         <tr className="border-y border-border">
           <td className="px-3 py-1.5 font-semibold sticky left-0 z-10 bg-card">Net Revenue</td>
-          {allPFs.map((pf, i) => <td key={i} className="text-right px-3 py-1.5 font-semibold num">{fC(pf.netRevenue)}</td>)}
+          {allPFs.map((pf, i) => <td key={i} className={cn("text-right px-3 py-1.5 font-semibold num", pf.year === 99 && "bg-green-500/5")}>{fC(pf.netRevenue)}</td>)}
         </tr>
         <tr><td colSpan={colHeaders.length + 1} className="text-xs font-medium text-muted-foreground uppercase tracking-wider px-3 py-1.5 bg-card">Expenses</td></tr>
         {expenseLabels.map((label) => (
           <tr key={label} className="border-b border-border/30">
             <td className="px-3 py-1.5 sticky left-0 z-10 bg-card">{label}</td>
-            {allPFs.map((pf, i) => { const val = getVal(pf, "expense", label); return <td key={i} className="text-right px-3 py-1.5 num">{val != null ? fC(val) : "\u2014"}</td>; })}
+            {allPFs.map((pf, i) => { const val = getVal(pf, "expense", label); return <td key={i} className={cn("text-right px-3 py-1.5 num", pf.year === 99 && "bg-green-500/5")}>{val != null ? fC(val) : "\u2014"}</td>; })}
           </tr>
         ))}
         <tr className="border-t border-border">
           <td className="px-3 py-1.5 font-semibold sticky left-0 z-10 bg-card">Total Expenses</td>
-          {allPFs.map((pf, i) => <td key={i} className="text-right px-3 py-1.5 font-semibold num">{fC(pf.totalExpenses)}</td>)}
+          {allPFs.map((pf, i) => <td key={i} className={cn("text-right px-3 py-1.5 font-semibold num", pf.year === 99 && "bg-green-500/5")}>{fC(pf.totalExpenses)}</td>)}
         </tr>
         <tr className="border-t-2 border-border bg-muted">
           <td className="px-3 py-2 font-bold sticky left-0 z-10 bg-muted">Net Operating Income</td>
-          {allPFs.map((pf, i) => <td key={i} className="text-right px-3 py-2 font-bold num">{fC(pf.noi)}</td>)}
+          {allPFs.map((pf, i) => <td key={i} className={cn("text-right px-3 py-2 font-bold num", pf.year === 99 && "text-green-600 dark:text-green-400 bg-green-500/10")}>{fC(pf.noi)}</td>)}
         </tr>
+        {/* NOI Upside row */}
+        {noiUpside != null && (
+          <tr className="border-b border-border">
+            <td className="px-3 py-1.5 text-[12px] text-muted-foreground sticky left-0 z-10 bg-card">NOI Upside (vs T-12)</td>
+            {allPFs.map((pf, i) => (
+              <td key={i} className={cn("text-right px-3 py-1.5 num text-[12px]", pf.year === 99 && "bg-green-500/5")}>
+                {pf.year === 99 ? (
+                  <span className={noiUpside > 0 ? "text-green-500" : "text-red-500"}>
+                    {noiUpside > 0 ? "+" : ""}{fC(noiUpside)}
+                  </span>
+                ) : "\u2014"}
+              </td>
+            ))}
+          </tr>
+        )}
         <tr><td colSpan={colHeaders.length + 1} className="text-xs font-medium text-muted-foreground uppercase tracking-wider px-3 py-1.5 bg-card">Debt Service</td></tr>
         <tr className="border-b border-border">
           <td className="px-3 py-1.5 sticky left-0 z-10 bg-card">Annual Debt Service</td>
-          {allPFs.map((pf, i) => <td key={i} className="text-right px-3 py-1.5 num">{pf.year === 0 ? "\u2014" : fC(pf.debtService)}</td>)}
+          {allPFs.map((pf, i) => <td key={i} className={cn("text-right px-3 py-1.5 num", pf.year === 99 && "bg-green-500/5")}>{pf.year === 0 || pf.year === 99 ? "\u2014" : fC(pf.debtService)}</td>)}
         </tr>
         <tr className="border-t border-border">
           <td className="px-3 py-1.5 font-semibold sticky left-0 z-10 bg-card">Cash Flow Before Tax</td>
-          {allPFs.map((pf, i) => <td key={i} className={cn("text-right px-3 py-1.5 font-semibold num", pf.year > 0 && pf.cashFlowBeforeTax < 0 && "text-destructive")}>{pf.year === 0 ? "\u2014" : fC(pf.cashFlowBeforeTax)}</td>)}
+          {allPFs.map((pf, i) => <td key={i} className={cn("text-right px-3 py-1.5 font-semibold num", pf.year > 0 && pf.year < 99 && pf.cashFlowBeforeTax < 0 && "text-destructive", pf.year === 99 && "bg-green-500/5")}>{pf.year === 0 || pf.year === 99 ? "\u2014" : fC(pf.cashFlowBeforeTax)}</td>)}
         </tr>
         <tr className="border-t border-border">
           <td className="px-3 py-2 font-bold sticky left-0 z-10 bg-card">DSCR</td>
-          {allPFs.map((pf, i) => <td key={i} className={cn("text-right px-3 py-2 font-bold num", pf.year > 0 && pf.dscr < 1 && "text-destructive")}>{pf.year === 0 ? "\u2014" : `${pf.dscr.toFixed(2)}x`}</td>)}
+          {allPFs.map((pf, i) => <td key={i} className={cn("text-right px-3 py-2 font-bold num", pf.year > 0 && pf.year < 99 && pf.dscr < 1 && "text-destructive", pf.year === 99 && "bg-green-500/5")}>{pf.year === 0 || pf.year === 99 ? "\u2014" : `${pf.dscr.toFixed(2)}x`}</td>)}
         </tr>
       </tbody>
     </table>
@@ -604,15 +648,14 @@ function ProFormaTable({ proForma, holdYears }: { proForma: ProFormaYearResult[]
 function CapRateTable({ proForma, uwRecord, holdYears }: { proForma: ProFormaYearResult[]; uwRecord: DealUWRecord; holdYears: number }) {
   const t12 = proForma.find((p) => p.year === 0);
   const yr1 = proForma.find((p) => p.year === 1);
-  const stabilized = proForma.find((p) => p.year === holdYears);
+  const stabilized = proForma.find((p) => p.year === 99) ?? proForma.find((p) => p.year === holdYears);
   const capRates = [5.0, 5.5, 6.0, 6.5, 7.0, 7.5, 8.0, 8.5, 9.0, 9.5, 10.0];
   const goingInPct = uwRecord.exit_cap_rate > 0 ? uwRecord.exit_cap_rate * 100 : null;
-  const exitPct = uwRecord.exit_cap_rate > 0 ? uwRecord.exit_cap_rate * 100 : null;
 
   const rows = [
-    { label: "T-12 NOI", noi: t12?.noi ?? 0 },
-    { label: "Year 1 NOI", noi: yr1?.noi ?? 0 },
-    { label: "Stabilized NOI", noi: stabilized?.noi ?? 0 },
+    { label: "T-12 NOI", noi: t12?.noi ?? 0, accent: "" },
+    { label: "Year 1 NOI", noi: yr1?.noi ?? 0, accent: "text-blue-500" },
+    { label: "Stabilized NOI", noi: stabilized?.noi ?? 0, accent: "text-green-500" },
   ];
 
   return (
@@ -622,7 +665,10 @@ function CapRateTable({ proForma, uwRecord, holdYears }: { proForma: ProFormaYea
           <tr className="border-b">
             <th className="text-left px-2.5 py-2 text-[11px] text-muted-foreground">Cap Rate</th>
             {capRates.map((cr) => (
-              <th key={cr} className={cn("text-right px-2.5 py-2 text-[11px]", (goingInPct && Math.abs(cr - goingInPct) < 0.01) || (exitPct && Math.abs(cr - exitPct) < 0.01) ? "text-blue-500 font-bold" : "text-muted-foreground")}>
+              <th key={cr} className={cn(
+                "text-right px-2.5 py-2 text-[11px]",
+                goingInPct && Math.abs(cr - goingInPct) < 0.26 ? "text-blue-500 font-bold" : "text-muted-foreground"
+              )}>
                 {cr.toFixed(1)}%
               </th>
             ))}
@@ -630,12 +676,16 @@ function CapRateTable({ proForma, uwRecord, holdYears }: { proForma: ProFormaYea
         </thead>
         <tbody>
           {rows.map((row, ri) => (
-            <tr key={ri} className="border-b">
-              <td className="px-2.5 py-2 font-semibold">{row.label}</td>
+            <tr key={ri} className={cn("border-b", ri === 2 && "bg-green-500/5")}>
+              <td className={cn("px-2.5 py-2 font-semibold", row.accent)}>{row.label}</td>
               {capRates.map((cr) => {
                 const val = row.noi / (cr / 100);
+                const isHighlight = goingInPct && Math.abs(cr - goingInPct) < 0.26;
                 return (
-                  <td key={cr} className={cn("text-right px-2.5 py-2 num text-muted-foreground")}>
+                  <td key={cr} className={cn(
+                    "text-right px-2.5 py-2 num",
+                    isHighlight ? "font-semibold text-foreground" : "text-muted-foreground"
+                  )}>
                     {val > 0 ? `$${Math.round(val / 1000).toLocaleString()}K` : "\u2014"}
                   </td>
                 );

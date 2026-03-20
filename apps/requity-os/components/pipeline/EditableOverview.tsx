@@ -3,7 +3,6 @@
 import { useState, useMemo, useCallback, useTransition, useRef } from "react";
 import { updateUwDataAction, updatePropertyDataAction } from "@/app/(authenticated)/(admin)/pipeline/actions";
 import {
-  type UnifiedCardType,
   type UwFieldDef,
   formatCurrency,
   formatPercent,
@@ -90,7 +89,6 @@ interface EditableOverviewProps {
   dealId: string;
   uwData: Record<string, unknown>;
   propertyData: Record<string, unknown>;
-  cardType: UnifiedCardType;
   visibilityContext?: VisibilityContext | null;
   dealTeamContacts?: DealTeamContact[];
 }
@@ -101,7 +99,6 @@ export function EditableOverview({
   dealId,
   uwData,
   propertyData,
-  cardType,
   visibilityContext,
   dealTeamContacts = [],
 }: EditableOverviewProps) {

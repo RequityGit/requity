@@ -6,7 +6,6 @@ import {
   daysInStage,
   getAlertLevel,
   type UnifiedDeal,
-  type UnifiedCardType,
   type StageConfig,
   type DealCondition,
 } from "@/components/pipeline/pipeline-types";
@@ -71,7 +70,6 @@ export default async function DealDetailRoute({ params }: PageProps) {
 
   // Step 2: Single parallel batch -- all queries that depend only on deal fields
   const [
-    cardTypeRaw,
     stageConfigsRaw,
     teamResult,
     conditionsRaw,
@@ -85,11 +83,6 @@ export default async function DealDetailRoute({ params }: PageProps) {
     pinnedNote,
     recentNote,
   ] = await Promise.all([
-    admin
-      .from("unified_card_types" as never)
-      .select("*")
-      .eq("id" as never, deal.card_type_id as never)
-      .single(),
     admin
       .from("unified_stage_configs" as never)
       .select("*")
@@ -146,13 +139,6 @@ export default async function DealDetailRoute({ params }: PageProps) {
     getMostRecentNote(admin, dealId),
   ]);
 
-  const cardTypeResult = cardTypeRaw as unknown as {
-    data: UnifiedCardType | null;
-    error: { message: string } | null;
-  };
-  if (cardTypeResult.error || !cardTypeResult.data) notFound();
-
-  const cardType = cardTypeResult.data;
   const stageConfigs = ((stageConfigsRaw as unknown as { data: StageConfig[] | null }).data ?? []);
   const conditionsWithJoin = ((conditionsRaw as unknown as { data: (DealCondition & { loan_condition_templates?: { internal_description: string | null; borrower_description: string | null } | null })[] | null }).data ?? []);
   const conditions: DealCondition[] = conditionsWithJoin.map((c) => {
@@ -301,7 +287,6 @@ export default async function DealDetailRoute({ params }: PageProps) {
   return (
     <DealDetailPage
       deal={enrichedDeal}
-      cardType={cardType}
       stageConfigs={stageConfigs}
       teamMembers={teamMembers}
       currentUserId={session.user.id}

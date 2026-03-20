@@ -32,7 +32,7 @@ async function revalidatePipeline(dealId?: string) {
 
 export async function createUnifiedDealAction(data: {
   name: string;
-  card_type_id: string;
+  card_type_id?: string;
   capital_side?: string;
   asset_class?: string;
   amount?: number;
@@ -92,7 +92,7 @@ export async function createUnifiedDealAction(data: {
 
     const insertData: UnifiedDealInsert = {
       name: data.name,
-      card_type_id: data.card_type_id,
+      ...(data.card_type_id ? { card_type_id: data.card_type_id } : {}),
       capital_side: data.capital_side || "debt",
       asset_class: data.asset_class || null,
       amount: data.amount || null,

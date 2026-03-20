@@ -11,15 +11,14 @@ import { NewDealDialog } from "./NewDealDialog";
 import { IntakeReviewModal } from "./IntakeReviewModal";
 import type {
   UnifiedDeal,
-  UnifiedCardType,
   StageConfig,
   DealActivity,
 } from "./pipeline-types";
+import { getDealFlavor } from "@/lib/pipeline/deal-display-config";
 import type { IntakeItem } from "@/lib/intake/types";
 
 interface PipelineViewProps {
   deals: UnifiedDeal[];
-  cardTypes: UnifiedCardType[];
   stageConfigs: StageConfig[];
   activities: DealActivity[];
   relationshipDealIds: Set<string>;
@@ -30,7 +29,6 @@ interface PipelineViewProps {
 
 export function PipelineView({
   deals,
-  cardTypes,
   stageConfigs,
   activities,
   relationshipDealIds,
@@ -43,7 +41,7 @@ export function PipelineView({
   const [filters, setFilters] = useState<FilterState>({
     search: "",
     capitalSide: "all",
-    cardTypeSlug: "all",
+    dealFlavor: "all",
     assetClass: "all",
     dateAdded: "all",
     view: "kanban",
@@ -52,11 +50,6 @@ export function PipelineView({
   const effectiveView = isMobile ? "table" : filters.view;
   const [newDealOpen, setNewDealOpen] = useState(false);
   const [reviewItem, setReviewItem] = useState<IntakeItem | null>(null);
-
-  const cardTypeMap = useMemo(
-    () => new Map(cardTypes.map((ct) => [ct.id, ct])),
-    [cardTypes]
-  );
 
   // Filter deals
   const filteredDeals = useMemo(() => {
@@ -67,9 +60,8 @@ export function PipelineView({
       )
         return false;
 
-      if (filters.cardTypeSlug !== "all") {
-        const ct = cardTypeMap.get(d.card_type_id);
-        if (ct?.slug !== filters.cardTypeSlug) return false;
+      if (filters.dealFlavor !== "all") {
+        if (getDealFlavor(d) !== filters.dealFlavor) return false;
       }
 
       if (filters.assetClass !== "all" && d.asset_class !== filters.assetClass)
@@ -90,7 +82,7 @@ export function PipelineView({
 
       return true;
     });
-  }, [deals, filters, cardTypeMap]);
+  }, [deals, filters]);
 
   const handleDealClick = useCallback(
     (deal: UnifiedDeal) => {
@@ -108,14 +100,12 @@ export function PipelineView({
       <DealFilters
         filters={filters}
         onChange={setFilters}
-        cardTypes={cardTypes}
         onNewDeal={() => setNewDealOpen(true)}
       />
 
       {effectiveView === "kanban" ? (
         <PipelineKanban
           deals={filteredDeals}
-          cardTypes={cardTypes}
           stageConfigs={stageConfigs}
           relationshipDealIds={relationshipDealIds}
           onDealClick={handleDealClick}
@@ -125,7 +115,6 @@ export function PipelineView({
       ) : (
         <PipelineTable
           deals={filteredDeals}
-          cardTypes={cardTypes}
           stageConfigs={stageConfigs}
           onDealClick={handleDealClick}
         />
@@ -134,7 +123,6 @@ export function PipelineView({
       <NewDealDialog
         open={newDealOpen}
         onOpenChange={setNewDealOpen}
-        cardTypes={cardTypes}
         teamMembers={teamMembers}
         currentUserId={currentUserId}
       />
@@ -145,7 +133,6 @@ export function PipelineView({
         onOpenChange={(open) => {
           if (!open) setReviewItem(null);
         }}
-        cardTypes={cardTypes}
       />
     </div>
   );

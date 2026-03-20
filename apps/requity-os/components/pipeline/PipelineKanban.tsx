@@ -22,18 +22,17 @@ import { IntakeCard } from "./IntakeCard";
 import { advanceStageAction } from "@/app/(authenticated)/(admin)/pipeline/actions";
 import {
   type UnifiedDeal,
-  type UnifiedCardType,
   type StageConfig,
   type UnifiedStage,
   STAGES,
   formatCurrency,
 } from "./pipeline-types";
+import { getDealDisplayConfig } from "@/lib/pipeline/deal-display-config";
 import { useUwFieldConfigs } from "@/hooks/useUwFieldConfigs";
 import type { IntakeItem } from "@/lib/intake/types";
 
 interface PipelineKanbanProps {
   deals: UnifiedDeal[];
-  cardTypes: UnifiedCardType[];
   stageConfigs: StageConfig[];
   relationshipDealIds: Set<string>;
   onDealClick: (deal: UnifiedDeal) => void;
@@ -65,7 +64,6 @@ function StageColumn({
 
 export function PipelineKanban({
   deals,
-  cardTypes,
   stageConfigs,
   relationshipDealIds,
   onDealClick,
@@ -88,10 +86,6 @@ export function PipelineKanban({
   }, [allFields]);
 
   // Memoize maps to prevent recreation on every render
-  const cardTypeMap = useMemo(
-    () => new Map(cardTypes.map((ct) => [ct.id, ct])),
-    [cardTypes]
-  );
   const stageConfigMap = useMemo(
     () => new Map(stageConfigs.map((sc) => [sc.stage, sc])),
     [stageConfigs]
@@ -161,9 +155,6 @@ export function PipelineKanban({
 
   // Find active deal for DragOverlay
   const activeDeal = activeId ? deals.find((d) => d.id === activeId) : null;
-  const activeCardType = activeDeal
-    ? cardTypeMap.get(activeDeal.card_type_id)
-    : null;
 
   // Memoize stage calculations to avoid recomputing on every render
   const stageData = useMemo(() => {
@@ -233,14 +224,11 @@ export function PipelineKanban({
                     </p>
                   ) : (
                     stageDeals.map((deal) => {
-                      const ct = cardTypeMap.get(deal.card_type_id);
-                      if (!ct) return null;
                       const stageConfig = stageConfigMap.get(stage.key);
                       return (
                         <DealCard
                           key={deal.id}
                           deal={deal}
-                          cardType={ct}
                           stageConfig={stageConfig}
                           hasRelationships={relationshipDealIds.has(deal.id)}
                           formulaMap={formulaMap}
@@ -258,10 +246,9 @@ export function PipelineKanban({
       </ScrollArea>
 
       <DragOverlay>
-        {activeDeal && activeCardType ? (
+        {activeDeal ? (
           <DealCardOverlay
             deal={activeDeal}
-            cardType={activeCardType}
             stageConfig={stageConfigMap.get(activeDeal.stage)}
             hasRelationships={relationshipDealIds.has(activeDeal.id)}
             formulaMap={formulaMap}

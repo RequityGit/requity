@@ -29,7 +29,7 @@ import { createClient } from "@/lib/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
 import { EntityMergeSection } from "./EntityMergeSection";
 import { processIntakeItemAction } from "@/app/(authenticated)/(admin)/pipeline/actions";
-import type { UnifiedCardType } from "./pipeline-types";
+import { ASSET_CLASS_LABELS, type AssetClass } from "./pipeline-types";
 import {
   type IntakeItem,
   type IntakeEntityKey,
@@ -54,7 +54,6 @@ interface IntakeReviewModalProps {
   item: IntakeItem | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  cardTypes?: UnifiedCardType[];
 }
 
 /** All editable fields in the form, keyed by a flat string key */
@@ -99,7 +98,8 @@ interface IntakeFormData {
   cashFlow: string;
   cocReturn: string;
   // Meta
-  cardTypeId: string;
+  capitalSide: string;
+  assetClass: string;
   notes: string;
 }
 
@@ -325,7 +325,7 @@ function SectionHeader({ title, count }: { title: string; count?: number }) {
 // Main component
 // ---------------------------------------------------------------------------
 
-export function IntakeReviewModal({ item, open, onOpenChange, cardTypes = [] }: IntakeReviewModalProps) {
+export function IntakeReviewModal({ item, open, onOpenChange }: IntakeReviewModalProps) {
   const router = useRouter();
   const { toast } = useToast();
   const [entityModes, setEntityModes] = useState<Partial<Record<IntakeEntityKey, EntityMode>>>({});
@@ -343,7 +343,7 @@ export function IntakeReviewModal({ item, open, onOpenChange, cardTypes = [] }: 
     loanType: "", loanAmount: "", purchasePrice: "", ltv: "", rate: "", term: "",
     dscr: "", noi: "", capRate: "", arv: "", rehabBudget: "", closingDate: "",
     sellerFinancing: "", existingDebt: "", debtService: "", cashFlow: "", cocReturn: "",
-    cardTypeId: "", notes: "",
+    capitalSide: "debt", assetClass: "", notes: "",
   });
 
   // Track which fields were AI-prefilled
@@ -391,32 +391,24 @@ export function IntakeReviewModal({ item, open, onOpenChange, cardTypes = [] }: 
       debtService: numStr(p.debtService),
       cashFlow: numStr(p.cashFlow),
       cocReturn: numStr(p.cocReturn),
-      cardTypeId: "",
+      capitalSide: "debt",
+      assetClass: "",
       notes: toStr(p.notes),
     };
 
     // Track which fields have AI values
     for (const [key, val] of Object.entries(init)) {
-      if (val && key !== "cardTypeId" && key !== "notes") {
+      if (val && key !== "capitalSide" && key !== "assetClass" && key !== "notes") {
         prefilled.add(key as FormKey);
       }
     }
 
-    // Auto-detect card type from loan type
-    if (p.loanType && cardTypes.length > 0) {
+    // Auto-detect capital side from loan type
+    if (p.loanType) {
       const lt = p.loanType.toLowerCase();
-      const slugMap: Record<string, string> = {
-        dscr: "res_debt_dscr", rtl: "res_debt_rtl",
-        "comm debt": "comm_debt", "comm eq": "comm_equity",
-        commercial: "comm_debt", commdebt: "comm_debt",
-      };
-      const slug = slugMap[lt];
-      if (slug) {
-        const ct = cardTypes.find((c) => c.slug === slug && c.status === "active");
-        if (ct) {
-          init.cardTypeId = ct.id;
-          prefilled.add("cardTypeId");
-        }
+      if (lt.includes("equity") || lt.includes("comm eq")) {
+        init.capitalSide = "equity";
+        prefilled.add("capitalSide" as FormKey);
       }
     }
 
@@ -564,7 +556,6 @@ export function IntakeReviewModal({ item, open, onOpenChange, cardTypes = [] }: 
 
   if (!item || !p) return null;
 
-  const activeCardTypes = cardTypes.filter((ct) => ct.status === "active");
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -609,24 +600,35 @@ export function IntakeReviewModal({ item, open, onOpenChange, cardTypes = [] }: 
             {/* LEFT COLUMN: Editable fields */}
             <div className="flex-1 min-w-0 p-6 pr-4 space-y-5 border-r border-border/50">
 
-              {/* Card Type Selector */}
+              {/* Deal Type Selectors */}
               <div>
                 <SectionHeader title="Deal Type" />
-                <Select value={form.cardTypeId || "__none__"} onValueChange={(v) => updateField("cardTypeId", v === "__none__" ? "" : v)}>
-                  <SelectTrigger className="h-8 text-xs bg-background w-full max-w-xs">
-                    <SelectValue placeholder="Select card type..." />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="__none__">
-                      <span className="text-muted-foreground">Auto-detect from loan type</span>
-                    </SelectItem>
-                    {activeCardTypes.map((ct) => (
-                      <SelectItem key={ct.id} value={ct.id}>
-                        {ct.label} ({ct.capital_side})
+                <div className="grid grid-cols-2 gap-3 max-w-xs">
+                  <Select value={form.capitalSide || "debt"} onValueChange={(v) => updateField("capitalSide", v)}>
+                    <SelectTrigger className="h-8 text-xs bg-background">
+                      <SelectValue placeholder="Capital side..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="debt">Debt</SelectItem>
+                      <SelectItem value="equity">Equity</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <Select value={form.assetClass || "__none__"} onValueChange={(v) => updateField("assetClass", v === "__none__" ? "" : v)}>
+                    <SelectTrigger className="h-8 text-xs bg-background">
+                      <SelectValue placeholder="Asset class..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="__none__">
+                        <span className="text-muted-foreground">Auto-detect</span>
                       </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                      {Object.entries(ASSET_CLASS_LABELS).map(([ac, label]) => (
+                        <SelectItem key={ac} value={ac}>
+                          {label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
 
               {/* Broker / Correspondent */}

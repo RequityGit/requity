@@ -611,7 +611,16 @@ export default function LoanIntakePage() {
                   </select>
                 </div>
               </div>
-              <button type="button" onClick={handleSubmit} disabled={submitting} className="apply-submit-btn" style={{ marginTop: 32 }}>
+              <p style={{ color: "rgba(255,255,255,0.35)", fontSize: 11, lineHeight: 1.5, marginTop: 24 }}>
+                By providing your phone number, you consent to receive text messages from Requity Lending
+                (e.g., loan updates, payment reminders, and promotional offers) using automated technology.
+                Consent is not a condition of obtaining a loan. Message and data rates may apply. Message
+                frequency varies. Reply STOP to unsubscribe at any time.{" "}
+                <a href="https://requitygroup.com/privacy-policy" style={{ textDecoration: "underline", color: "inherit" }}>Privacy Policy</a>
+                {" | "}
+                <a href="https://requitygroup.com/terms" style={{ textDecoration: "underline", color: "inherit" }}>Terms</a>
+              </p>
+              <button type="button" onClick={handleSubmit} disabled={submitting} className="apply-submit-btn" style={{ marginTop: 12 }}>
                 {submitting ? "Submitting..." : generatedTerms ? "Get My Term Sheet" : "Submit My Deal"} <ArrowRight size={16} />
               </button>
             </div>

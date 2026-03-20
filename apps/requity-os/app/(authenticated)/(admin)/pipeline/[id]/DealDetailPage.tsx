@@ -84,11 +84,9 @@ import { reorderTabs } from "@/app/(authenticated)/control-center/object-manager
 
 import {
   type UnifiedDeal,
-  type UnifiedCardType,
   type StageConfig,
   type DealCondition,
   STAGES,
-  CARD_TYPE_SHORT_LABELS,
   CAPITAL_SIDE_COLORS,
   ASSET_CLASS_LABELS,
   type AssetClass,
@@ -100,6 +98,7 @@ import {
   regressStageAction,
 } from "@/app/(authenticated)/(admin)/pipeline/actions";
 import { normalizeAssetClass, isCommercialDeal, type VisibilityContext } from "@/lib/visibility-engine";
+import { getDealDisplayConfig, getDealFlavor } from "@/lib/pipeline/deal-display-config";
 import { DealActivityTab } from "@/components/pipeline/tabs/DealActivityTab";
 import { DealMessagesPanel } from "@/components/pipeline/DealMessagesPanel";
 import { FormsTab } from "@/components/pipeline/tabs/FormsTab";
@@ -136,7 +135,6 @@ const KEY_ROLES = ["Originator", "Processor", "Underwriter"] as const;
 
 interface DealDetailPageProps {
   deal: UnifiedDeal;
-  cardType: UnifiedCardType;
   stageConfigs: StageConfig[];
   conditions: DealCondition[];
   teamMembers: Profile[];
@@ -164,7 +162,6 @@ export function DealDetailPage(props: DealDetailPageProps) {
 
 function DealDetailPageInner({
   deal,
-  cardType,
   stageConfigs,
   conditions,
   teamMembers,
@@ -264,7 +261,8 @@ function DealDetailPageInner({
 
   const displayId = deal.deal_number ?? deal.id.slice(0, 8);
   const days = deal.days_in_stage ?? daysInStage(deal.stage_entered_at);
-  const shortLabel = CARD_TYPE_SHORT_LABELS[cardType.slug] ?? cardType.label;
+  const dealConfig = getDealDisplayConfig(deal);
+  const shortLabel = dealConfig.shortLabel;
 
   // Stage double-click navigation
   const [stageJumping, startStageJump] = useTransition();
@@ -313,7 +311,7 @@ function DealDetailPageInner({
           <BreadcrumbSeparator />
           <BreadcrumbItem>
             <BreadcrumbLink asChild>
-              <Link href="/pipeline">{cardType.label}</Link>
+              <Link href="/pipeline">{dealConfig.label}</Link>
             </BreadcrumbLink>
           </BreadcrumbItem>
           <BreadcrumbSeparator />
@@ -327,7 +325,6 @@ function DealDetailPageInner({
         {/* Header */}
         <DealHeader
           deal={deal}
-          cardType={cardType}
           shortLabel={shortLabel}
           days={days}
           dealTeamMembers={dealTeamMembers}
@@ -502,7 +499,6 @@ function DealDetailPageInner({
                   asset_class: deal.asset_class ?? undefined,
                 }}
                 propertyData={(deal.property_data as Record<string, unknown>) ?? {}}
-                cardType={cardType}
                 visibilityContext={visibilityContext}
                 dealTeamContacts={dealTeamContacts}
               />
@@ -546,7 +542,6 @@ function DealDetailPageInner({
               <PropertyTab
                 dealId={deal.id}
                 propertyData={(deal.property_data as Record<string, unknown>) ?? {}}
-                cardType={cardType}
                 visibilityContext={visibilityContext}
                 rentRoll={commercialUWData?.rentRoll ?? []}
                 income={commercialUWData?.income ?? []}
@@ -608,7 +603,6 @@ function DealDetailPageInner({
 
 function DealHeader({
   deal,
-  cardType,
   shortLabel,
   days,
   dealTeamMembers,
@@ -616,7 +610,6 @@ function DealHeader({
   currentUserId,
 }: {
   deal: UnifiedDeal;
-  cardType: UnifiedCardType;
   shortLabel: string;
   days: number;
   dealTeamMembers: DealTeamMember[];
@@ -741,7 +734,7 @@ function DealHeader({
     loan_amount: deal.amount,
     property_type: (deal.uw_data as Record<string, unknown>)?.property_type,
     loan_type: (deal.uw_data as Record<string, unknown>)?.loan_type,
-    type: cardType.slug,
+    type: getDealFlavor(deal),
     stage: deal.stage,
     ltv: (deal.uw_data as Record<string, unknown>)?.ltv,
     interest_rate: (deal.uw_data as Record<string, unknown>)?.interest_rate,

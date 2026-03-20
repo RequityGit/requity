@@ -12,9 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import {
   type UnifiedDeal,
-  type UnifiedCardType,
   type StageConfig,
-  CARD_TYPE_SHORT_LABELS,
   CAPITAL_SIDE_COLORS,
   ASSET_CLASS_LABELS,
   type AssetClass,
@@ -22,21 +20,19 @@ import {
   daysInStage,
   getAlertLevel,
 } from "./pipeline-types";
+import { getDealDisplayConfig } from "@/lib/pipeline/deal-display-config";
 
 interface PipelineTableProps {
   deals: UnifiedDeal[];
-  cardTypes: UnifiedCardType[];
   stageConfigs: StageConfig[];
   onDealClick: (deal: UnifiedDeal) => void;
 }
 
 export function PipelineTable({
   deals,
-  cardTypes,
   stageConfigs,
   onDealClick,
 }: PipelineTableProps) {
-  const cardTypeMap = new Map(cardTypes.map((ct) => [ct.id, ct]));
   const stageConfigMap = new Map(stageConfigs.map((sc) => [sc.stage, sc]));
 
   return (
@@ -63,8 +59,7 @@ export function PipelineTable({
             [...deals]
               .sort((a, b) => (b.amount ?? -Infinity) - (a.amount ?? -Infinity))
               .map((deal) => {
-              const ct = cardTypeMap.get(deal.card_type_id);
-              if (!ct) return null;
+              const dealConfig = getDealDisplayConfig(deal);
               const days = daysInStage(deal.stage_entered_at);
               const alertLevel = getAlertLevel(days, stageConfigMap.get(deal.stage));
 
@@ -92,7 +87,7 @@ export function PipelineTable({
                         CAPITAL_SIDE_COLORS[deal.capital_side]
                       )}
                     >
-                      {CARD_TYPE_SHORT_LABELS[ct.slug] ?? ct.label}
+                      {dealConfig.shortLabel}
                     </Badge>
                   </TableCell>
                   <TableCell className="text-sm text-muted-foreground">

@@ -7,9 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { useDraggable } from "@dnd-kit/core";
 import {
   type UnifiedDeal,
-  type UnifiedCardType,
   type StageConfig,
-  CARD_TYPE_SHORT_LABELS,
   CAPITAL_SIDE_COLORS,
   ASSET_CLASS_LABELS,
   type AssetClass,
@@ -18,10 +16,10 @@ import {
   getAlertLevel,
   getCardMetricValue,
 } from "./pipeline-types";
+import { getDealDisplayConfig } from "@/lib/pipeline/deal-display-config";
 
 interface DealCardProps {
   deal: UnifiedDeal;
-  cardType: UnifiedCardType;
   stageConfig?: StageConfig;
   hasRelationships?: boolean;
   formulaMap?: Map<string, string>;
@@ -30,7 +28,6 @@ interface DealCardProps {
 
 function DealCardInner({
   deal,
-  cardType,
   stageConfig,
   hasRelationships,
   formulaMap,
@@ -41,18 +38,21 @@ function DealCardInner({
     data: { stage: deal.stage },
   });
 
+  // Derive display config from deal data (no DB lookup)
+  const dealConfig = useMemo(() => getDealDisplayConfig(deal), [deal.asset_class, deal.capital_side, deal.uw_data]);
+
   // Memoize expensive computations
   const { days, alertLevel, displayMetrics } = useMemo(() => {
     const d = daysInStage(deal.stage_entered_at);
     const al = getAlertLevel(d, stageConfig);
-    const metrics = cardType.card_metrics
+    const metrics = dealConfig.cardMetrics
       .map((m) => {
         const val = getCardMetricValue(m, deal, formulaMap);
         return m.label ? `${m.label} ${val}` : val;
       })
       .join(" · ");
     return { days: d, alertLevel: al, displayMetrics: metrics };
-  }, [deal.stage_entered_at, deal, stageConfig, cardType.card_metrics, formulaMap]);
+  }, [deal.stage_entered_at, deal, stageConfig, dealConfig.cardMetrics, formulaMap]);
 
   return (
     <div
@@ -68,7 +68,7 @@ function DealCardInner({
         isDragging && "opacity-50"
       )}
     >
-      {/* Row 1: Name + card type badge */}
+      {/* Row 1: Name + deal type badge */}
       <div className="flex items-start justify-between gap-2">
         <span className="text-sm font-medium leading-tight line-clamp-1">
           {deal.name}
@@ -80,7 +80,7 @@ function DealCardInner({
             CAPITAL_SIDE_COLORS[deal.capital_side]
           )}
         >
-          {CARD_TYPE_SHORT_LABELS[cardType.slug] ?? cardType.label}
+          {dealConfig.shortLabel}
         </Badge>
       </div>
 
@@ -128,7 +128,6 @@ function DealCardInner({
 
 // Memoized wrapper to prevent unnecessary re-renders
 export const DealCard = React.memo(DealCardInner, (prev, next) => {
-  // Only re-render if these props change
   return (
     prev.deal.id === next.deal.id &&
     prev.deal.stage === next.deal.stage &&
@@ -137,7 +136,6 @@ export const DealCard = React.memo(DealCardInner, (prev, next) => {
     prev.deal.amount === next.deal.amount &&
     prev.deal.asset_class === next.deal.asset_class &&
     prev.deal.capital_side === next.deal.capital_side &&
-    prev.cardType.id === next.cardType.id &&
     prev.stageConfig?.stage === next.stageConfig?.stage &&
     prev.hasRelationships === next.hasRelationships &&
     prev.formulaMap === next.formulaMap
@@ -147,15 +145,15 @@ export const DealCard = React.memo(DealCardInner, (prev, next) => {
 /** Static card clone for DragOverlay -- no hooks, no interactivity */
 export function DealCardOverlay({
   deal,
-  cardType,
   stageConfig,
   hasRelationships,
   formulaMap,
 }: Omit<DealCardProps, "onClick">) {
   const days = daysInStage(deal.stage_entered_at);
   const alertLevel = getAlertLevel(days, stageConfig);
+  const dealConfig = getDealDisplayConfig(deal);
 
-  const displayMetrics = cardType.card_metrics
+  const displayMetrics = dealConfig.cardMetrics
     .map((m) => {
       const val = getCardMetricValue(m, deal, formulaMap);
       return m.label ? `${m.label} ${val}` : val;
@@ -180,7 +178,7 @@ export function DealCardOverlay({
             CAPITAL_SIDE_COLORS[deal.capital_side]
           )}
         >
-          {CARD_TYPE_SHORT_LABELS[cardType.slug] ?? cardType.label}
+          {dealConfig.shortLabel}
         </Badge>
       </div>
       <div className="flex items-center gap-1.5 mt-1.5">

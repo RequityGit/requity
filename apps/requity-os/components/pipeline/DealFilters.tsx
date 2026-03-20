@@ -12,12 +12,13 @@ import {
 import { LayoutGrid, List, Plus, Search } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { DateAddedFilter } from "@/components/ui/date-added-filter";
-import type { CapitalSide, UnifiedCardType } from "./pipeline-types";
+import { ASSET_CLASS_LABELS, type CapitalSide } from "./pipeline-types";
+import { getAllDealConfigs, type DealFlavor } from "@/lib/pipeline/deal-display-config";
 
 export interface FilterState {
   search: string;
   capitalSide: CapitalSide | "all";
-  cardTypeSlug: string;
+  dealFlavor: DealFlavor | "all";
   assetClass: string;
   dateAdded: string;
   view: "kanban" | "table";
@@ -26,19 +27,19 @@ export interface FilterState {
 interface DealFiltersProps {
   filters: FilterState;
   onChange: (filters: FilterState) => void;
-  cardTypes: UnifiedCardType[];
   onNewDeal: () => void;
 }
 
 export function DealFilters({
   filters,
   onChange,
-  cardTypes,
   onNewDeal,
 }: DealFiltersProps) {
   function update(partial: Partial<FilterState>) {
     onChange({ ...filters, ...partial });
   }
+
+  const dealConfigs = getAllDealConfigs();
 
   return (
     <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -72,19 +73,37 @@ export function DealFilters({
           ))}
         </div>
 
-        {/* Card type filter */}
+        {/* Deal type (flavor) filter */}
         <Select
-          value={filters.cardTypeSlug}
-          onValueChange={(val) => update({ cardTypeSlug: val })}
+          value={filters.dealFlavor}
+          onValueChange={(val) => update({ dealFlavor: val as DealFlavor | "all" })}
         >
           <SelectTrigger className="w-full sm:w-40 h-10 md:h-9">
             <SelectValue placeholder="All types" />
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All types</SelectItem>
-            {cardTypes.map((ct) => (
-              <SelectItem key={ct.slug} value={ct.slug}>
-                {ct.label}
+            {dealConfigs.map((dc) => (
+              <SelectItem key={dc.flavor} value={dc.flavor}>
+                {dc.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+
+        {/* Asset class filter */}
+        <Select
+          value={filters.assetClass}
+          onValueChange={(val) => update({ assetClass: val })}
+        >
+          <SelectTrigger className="w-full sm:w-40 h-10 md:h-9">
+            <SelectValue placeholder="All asset classes" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All asset classes</SelectItem>
+            {Object.entries(ASSET_CLASS_LABELS).map(([key, label]) => (
+              <SelectItem key={key} value={key}>
+                {label}
               </SelectItem>
             ))}
           </SelectContent>

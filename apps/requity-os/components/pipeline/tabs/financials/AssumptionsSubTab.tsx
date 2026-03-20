@@ -67,6 +67,11 @@ export function AssumptionsSubTab({ uw, uwId, propertyType }: AssumptionsSubTabP
     setSaving(true);
     try {
       const result = await updateCommercialUW(uwId, {
+        vacancy_pct: fields.vacancy_pct,
+        stabilized_vacancy_pct: fields.stabilized_vacancy_pct,
+        bad_debt_pct: fields.bad_debt_pct,
+        mgmt_fee_pct: fields.mgmt_fee_pct,
+        going_in_cap_rate: fields.going_in_cap_rate,
         exit_cap_rate: fields.exit_cap_rate / 100,
         disposition_fee_pct: fields.disposition_fee_pct / 100,
         sale_costs_pct: fields.sale_costs_pct / 100,

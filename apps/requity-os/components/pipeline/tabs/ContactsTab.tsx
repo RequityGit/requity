@@ -485,7 +485,7 @@ export function ContactsTab({
       {/* Contact Roles */}
       {hasRoles && (
         <div className="flex flex-wrap gap-1.5">
-          {cardType.contact_roles.map((role) => (
+          {cardType.contact_roles.map((role: string) => (
             <Badge key={role} variant="outline" className="text-xs">
               {ROLE_LABELS[role] ?? role}
             </Badge>

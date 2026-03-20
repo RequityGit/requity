@@ -215,6 +215,22 @@ export function ObjectManagerView({ objects, fieldCounts, relationshipCounts }: 
     loadData();
   }, [loadData, clearSelection]);
 
+  // Warn on page unload if there are unsaved changes
+  useEffect(() => {
+    if (!draft.hasChanges) return;
+
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      e.preventDefault();
+      e.returnValue = "";
+    };
+
+    window.addEventListener("beforeunload", handleBeforeUnload);
+
+    return () => {
+      window.removeEventListener("beforeunload", handleBeforeUnload);
+    };
+  }, [draft.hasChanges]);
+
   // For non-draft mutations (relationships, layout), still reload from DB
   const handleDataChange = useCallback(() => {
     loadData();

@@ -111,7 +111,6 @@ export function QuickCreateButton({ currentUserId, isSuperAdmin }: QuickCreateBu
         <NewDealDialog
           open={activeDialog === "deal"}
           onOpenChange={(v) => { if (!v) closeDialog(); }}
-          cardTypes={data.cardTypes}
           teamMembers={data.teamMembers}
           currentUserId={currentUserId}
         />

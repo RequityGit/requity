@@ -19,7 +19,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { FileUpload } from "@/components/shared/file-upload";
-import { CardTypeSelector } from "./CardTypeSelector";
 import {
   ExtractedFieldsReview,
   type ExtractedField,
@@ -31,21 +30,26 @@ import {
   addDealNoteAction,
 } from "@/app/(authenticated)/(admin)/pipeline/actions";
 import {
-  type UnifiedCardType,
   ASSET_CLASS_LABELS,
   type AssetClass,
+  type CapitalSide,
 } from "./pipeline-types";
 import { AddressAutocomplete } from "@/components/ui/address-autocomplete";
 import { useUwFieldConfigs } from "@/hooks/useUwFieldConfigs";
 import { toast } from "sonner";
-import { Loader2, Upload } from "lucide-react";
+import { Loader2, Upload, Home, Building2 } from "lucide-react";
 
 type Step = 1 | 2 | 3 | 4;
+
+/** Loan type options for residential debt deals */
+const LOAN_TYPE_OPTIONS = [
+  { value: "dscr", label: "DSCR" },
+  { value: "rtl", label: "Fix & Flip / RTL" },
+] as const;
 
 interface NewDealDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  cardTypes: UnifiedCardType[];
   teamMembers: { id: string; full_name: string }[];
   currentUserId?: string;
 }
@@ -53,13 +57,13 @@ interface NewDealDialogProps {
 export function NewDealDialog({
   open,
   onOpenChange,
-  cardTypes,
   teamMembers,
   currentUserId,
 }: NewDealDialogProps) {
   const [step, setStep] = useState<Step>(1);
-  const [cardTypeId, setCardTypeId] = useState<string | null>(null);
+  const [capitalSide, setCapitalSide] = useState<CapitalSide | null>(null);
   const [assetClass, setAssetClass] = useState<string>("");
+  const [loanType, setLoanType] = useState<string>("");
   const [name, setName] = useState("");
   const [addressLine1, setAddressLine1] = useState("");
   const [city, setCity] = useState("");
@@ -80,15 +84,11 @@ export function NewDealDialog({
   >({});
   const [extractionSummary, setExtractionSummary] = useState("");
 
-  const selectedCardType = cardTypes.find((ct) => ct.id === cardTypeId);
-  const applicableAssets =
-    selectedCardType?.applicable_asset_classes ??
-    Object.keys(ASSET_CLASS_LABELS);
-
   function reset() {
     setStep(1);
-    setCardTypeId(null);
+    setCapitalSide(null);
     setAssetClass("");
+    setLoanType("");
     setName("");
     setAddressLine1("");
     setCity("");
@@ -131,17 +131,28 @@ export function NewDealDialog({
 
   const dealDisplayName = name.trim() || addressLine1.trim();
 
+  /** Whether this is a residential debt deal (shows loan_type selector) */
+  const isResidentialDebt =
+    capitalSide === "debt" &&
+    assetClass &&
+    !["mhc", "rv_park", "campground", "multifamily", "commercial", "mixed_use"].includes(assetClass);
+
   function handleSubmit(uwData?: Record<string, unknown>) {
-    if (!cardTypeId || !addressLine1.trim()) return;
+    if (!capitalSide || !addressLine1.trim()) return;
+
+    const finalUwData = { ...uwData };
+    if (isResidentialDebt && loanType) {
+      finalUwData.loan_type = loanType;
+    }
 
     startTransition(async () => {
       const result = await createUnifiedDealAction({
         name: dealDisplayName,
-        card_type_id: cardTypeId,
+        capital_side: capitalSide,
         asset_class: assetClass || undefined,
         amount: amount ? Number(amount) : undefined,
         assigned_to: assignedTo || undefined,
-        uw_data: uwData,
+        uw_data: Object.keys(finalUwData).length > 0 ? finalUwData : undefined,
         property_data: buildPropertyData(),
       });
 
@@ -158,7 +169,7 @@ export function NewDealDialog({
   }
 
   async function handleFileSelect(file: File) {
-    if (!cardTypeId) return;
+    if (!capitalSide) return;
 
     setExtracting(true);
     let uploadedPath: string | null = null;
@@ -188,7 +199,6 @@ export function NewDealDialog({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           storage_path: urlResult.storagePath,
-          card_type_id: cardTypeId,
         }),
       });
 
@@ -259,15 +269,20 @@ export function NewDealDialog({
     const finalName = accepted.dealFields.name
       ? String(accepted.dealFields.name)
       : dealDisplayName;
-    if (!cardTypeId || !addressLine1.trim()) {
+    if (!capitalSide || !addressLine1.trim()) {
       toast.error("Deal address is required");
       return;
+    }
+
+    const finalUwFields: Record<string, unknown> = { ...accepted.uwFields };
+    if (isResidentialDebt && loanType) {
+      finalUwFields.loan_type = loanType;
     }
 
     startTransition(async () => {
       const result = await createUnifiedDealAction({
         name: finalName.trim(),
-        card_type_id: cardTypeId,
+        capital_side: capitalSide,
         asset_class:
           (accepted.dealFields.asset_class as string) || assetClass || undefined,
         amount: accepted.dealFields.amount
@@ -277,8 +292,8 @@ export function NewDealDialog({
             : undefined,
         assigned_to: assignedTo || undefined,
         uw_data:
-          Object.keys(accepted.uwFields).length > 0
-            ? accepted.uwFields
+          Object.keys(finalUwFields).length > 0
+            ? finalUwFields
             : undefined,
         property_data: buildPropertyData(),
       });
@@ -302,7 +317,7 @@ export function NewDealDialog({
 
   const stepTitle =
     step === 1
-      ? "Select Deal Type"
+      ? "Capital Side"
       : step === 2
         ? "Select Asset Class"
         : step === 3
@@ -311,7 +326,7 @@ export function NewDealDialog({
 
   const stepDescription =
     step === 1
-      ? "Choose the type of deal you want to create."
+      ? "Is this a debt or equity deal?"
       : step === 2
         ? "Select the asset class for this deal."
         : step === 3
@@ -327,20 +342,47 @@ export function NewDealDialog({
         </DialogHeader>
 
         <div className="space-y-6">
-          {/* Step 1: Select Deal Type */}
+          {/* Step 1: Select Capital Side */}
           {step === 1 && (
             <>
-              <CardTypeSelector
-                cardTypes={cardTypes}
-                selected={cardTypeId}
-                onSelect={(id) => setCardTypeId(id)}
-                onDoubleClick={(id) => {
-                  setCardTypeId(id);
-                  setStep(2);
-                }}
-              />
+              <div className="grid grid-cols-2 gap-4">
+                <button
+                  type="button"
+                  onClick={() => setCapitalSide("debt")}
+                  onDoubleClick={() => {
+                    setCapitalSide("debt");
+                    setStep(2);
+                  }}
+                  className={`flex flex-col items-center gap-2 rounded-lg border p-6 text-sm transition-all hover:border-foreground/20 ${
+                    capitalSide === "debt"
+                      ? "border-foreground ring-1 ring-foreground"
+                      : ""
+                  }`}
+                >
+                  <Home className="h-6 w-6" />
+                  <span className="font-medium">Debt</span>
+                  <span className="text-xs text-muted-foreground">Bridge loans, DSCR, RTL</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setCapitalSide("equity")}
+                  onDoubleClick={() => {
+                    setCapitalSide("equity");
+                    setStep(2);
+                  }}
+                  className={`flex flex-col items-center gap-2 rounded-lg border p-6 text-sm transition-all hover:border-foreground/20 ${
+                    capitalSide === "equity"
+                      ? "border-foreground ring-1 ring-foreground"
+                      : ""
+                  }`}
+                >
+                  <Building2 className="h-6 w-6" />
+                  <span className="font-medium">Equity</span>
+                  <span className="text-xs text-muted-foreground">Acquisitions, JV equity</span>
+                </button>
+              </div>
               <div className="flex justify-end">
-                <Button onClick={() => setStep(2)} disabled={!cardTypeId}>
+                <Button onClick={() => setStep(2)} disabled={!capitalSide}>
                   Next
                 </Button>
               </div>
@@ -351,7 +393,7 @@ export function NewDealDialog({
           {step === 2 && (
             <>
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                {applicableAssets.map((ac) => (
+                {Object.entries(ASSET_CLASS_LABELS).map(([ac, label]) => (
                   <button
                     key={ac}
                     type="button"
@@ -366,7 +408,7 @@ export function NewDealDialog({
                         : ""
                     }`}
                   >
-                    {ASSET_CLASS_LABELS[ac as AssetClass] ?? ac}
+                    {label}
                   </button>
                 ))}
               </div>
@@ -425,6 +467,25 @@ export function NewDealDialog({
                     placeholder="Optional -- defaults to address if left blank"
                   />
                 </div>
+
+                {/* Loan type selector for residential debt */}
+                {isResidentialDebt && (
+                  <div className="space-y-1.5">
+                    <Label>Loan Product</Label>
+                    <Select value={loanType} onValueChange={setLoanType}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select loan product..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {LOAN_TYPE_OPTIONS.map((opt) => (
+                          <SelectItem key={opt.value} value={opt.value}>
+                            {opt.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
 
                 <div className="space-y-1.5">
                   <Label>Amount</Label>
@@ -512,7 +573,7 @@ export function NewDealDialog({
           )}
 
           {/* Step 4: Review Extracted Fields */}
-          {step === 4 && selectedCardType && (
+          {step === 4 && (
             <ExtractedFieldsReview
               dealFields={extractedDealFields}
               uwFields={extractedUwFields}

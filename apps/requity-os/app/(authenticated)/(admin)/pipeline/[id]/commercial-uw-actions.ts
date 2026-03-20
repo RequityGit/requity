@@ -149,6 +149,9 @@ export async function upsertIncomeRows(
     growth_rate: number;
     is_deduction: boolean;
     sort_order: number;
+    section?: string;
+    meta?: Record<string, unknown> | null;
+    notes?: string | null;
   }[]
 ): Promise<{ error: string | null }> {
   const supabase = db();
@@ -157,7 +160,18 @@ export async function upsertIncomeRows(
   if (rows.length > 0) {
     const { error } = await supabase
       .from("deal_commercial_income")
-      .insert(rows.map((r) => ({ uw_id: uwId, ...r })));
+      .insert(rows.map((r) => ({
+        uw_id: uwId,
+        line_item: r.line_item,
+        t12_amount: r.t12_amount,
+        year_1_amount: r.year_1_amount,
+        growth_rate: r.growth_rate,
+        is_deduction: r.is_deduction,
+        sort_order: r.sort_order,
+        section: r.section ?? "lease",
+        meta: r.meta ?? null,
+        notes: r.notes ?? null,
+      })));
     if (error) return { error: error.message };
   }
 
@@ -177,6 +191,8 @@ export async function upsertExpenseRows(
     growth_rate: number;
     is_percentage: boolean;
     sort_order: number;
+    source?: string;
+    notes?: string | null;
   }[]
 ): Promise<{ error: string | null }> {
   const supabase = db();
@@ -185,12 +201,100 @@ export async function upsertExpenseRows(
   if (rows.length > 0) {
     const { error } = await supabase
       .from("deal_commercial_expenses")
-      .insert(rows.map((r) => ({ uw_id: uwId, ...r })));
+      .insert(rows.map((r) => ({
+        uw_id: uwId,
+        category: r.category,
+        t12_amount: r.t12_amount,
+        year_1_amount: r.year_1_amount,
+        growth_rate: r.growth_rate,
+        is_percentage: r.is_percentage,
+        sort_order: r.sort_order,
+        source: r.source ?? "manual",
+        notes: r.notes ?? null,
+      })));
     if (error) return { error: error.message };
   }
 
   await supabase.from("deal_commercial_uw").update({ updated_at: new Date().toISOString() }).eq("id", uwId);
 
+  return { error: null };
+}
+
+/**
+ * Upsert income rows for a specific section only.
+ * Only deletes/replaces rows matching the given section (lease, occupancy, ancillary).
+ */
+export async function upsertIncomeBySectionRows(
+  uwId: string,
+  section: "lease" | "occupancy" | "ancillary",
+  rows: {
+    id?: string;
+    line_item: string;
+    t12_amount: number;
+    year_1_amount: number;
+    growth_rate: number;
+    is_deduction: boolean;
+    sort_order: number;
+    meta?: Record<string, unknown> | null;
+    notes?: string | null;
+  }[]
+): Promise<{ error: string | null }> {
+  const supabase = db();
+  await supabase
+    .from("deal_commercial_income")
+    .delete()
+    .eq("uw_id", uwId)
+    .eq("section", section);
+
+  if (rows.length > 0) {
+    const { error } = await supabase
+      .from("deal_commercial_income")
+      .insert(rows.map((r) => ({
+        uw_id: uwId,
+        line_item: r.line_item,
+        t12_amount: r.t12_amount,
+        year_1_amount: r.year_1_amount,
+        growth_rate: r.growth_rate,
+        is_deduction: r.is_deduction,
+        sort_order: r.sort_order,
+        section,
+        meta: r.meta ?? null,
+        notes: r.notes ?? null,
+      })));
+    if (error) return { error: error.message };
+  }
+
+  // Touch parent to trigger snapshot
+  await supabase.from("deal_commercial_uw").update({ updated_at: new Date().toISOString() }).eq("id", uwId);
+
+  return { error: null };
+}
+
+/** Update notes for a single expense row */
+export async function updateExpenseNotes(
+  rowId: string,
+  notes: string | null
+): Promise<{ error: string | null }> {
+  const supabase = db();
+  const { error } = await supabase
+    .from("deal_commercial_expenses")
+    .update({ notes })
+    .eq("id", rowId);
+  if (error) return { error: error.message };
+  return { error: null };
+}
+
+/** Update notes for a single income row */
+export async function updateIncomeNotes(
+  rowId: string,
+  notes: string | null
+): Promise<{ error: string | null }> {
+  const supabase = db();
+  const { error } = await supabase
+    .from("deal_commercial_income")
+    .update({ notes })
+    .eq("id", rowId);
+  if (error) return { error: error.message };
   return { error: null };
 }
 

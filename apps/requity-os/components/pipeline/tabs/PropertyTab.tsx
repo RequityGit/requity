@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useTransition, useMemo } from "react";
 import { updatePropertyDataAction } from "@/app/(authenticated)/(admin)/pipeline/actions";
-import type { UnifiedCardType, UwFieldDef } from "../pipeline-types";
+import type { UwFieldDef } from "../pipeline-types";
 import { UwField } from "../UwField";
 import { useUwFieldConfigs } from "@/hooks/useUwFieldConfigs";
 import { useDealLayout } from "@/hooks/useDealLayout";
@@ -30,7 +30,6 @@ const SPAN_CLASS: Record<string, string> = {
 interface PropertyTabProps {
   dealId: string;
   propertyData: Record<string, unknown>;
-  cardType: UnifiedCardType;
   visibilityContext?: VisibilityContext | null;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   rentRoll?: any[];
@@ -52,7 +51,6 @@ function sectionId(name: string) {
 export function PropertyTab({
   dealId,
   propertyData,
-  cardType,
   visibilityContext,
   rentRoll = [],
   income = [],
@@ -122,7 +120,6 @@ export function PropertyTab({
         <PropertyDetailsContent
           dealId={dealId}
           propertyData={propertyData}
-          cardType={cardType}
           visibilityContext={visibilityContext}
         />
       </div>
@@ -192,12 +189,10 @@ function SectionHeader({
 function PropertyDetailsContent({
   dealId,
   propertyData,
-  cardType,
   visibilityContext,
 }: {
   dealId: string;
   propertyData: Record<string, unknown>;
-  cardType: UnifiedCardType;
   visibilityContext?: VisibilityContext | null;
 }) {
   const { byObject, fieldMap: uwFieldMap, loading: fieldsLoading, error: fieldsError } = useUwFieldConfigs(visibilityContext);

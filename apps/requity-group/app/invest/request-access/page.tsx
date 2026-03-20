@@ -232,6 +232,16 @@ export default function RequestAccessPage() {
                   does not constitute a commitment to invest. Offers are made only to
                   accredited investors through the fund&apos;s private placement memorandum.
                 </p>
+
+                <p className="ra-fine-print" style={{ color: "rgba(255,255,255,0.25)", marginTop: 8 }}>
+                  By providing your phone number, you consent to receive text messages from Requity Group
+                  (e.g., investment updates, distribution notices, and account reminders) using automated
+                  technology. Consent is not a condition of investing. Message and data rates may apply.
+                  Message frequency varies. Reply STOP to unsubscribe at any time.{" "}
+                  <a href="https://requitygroup.com/privacy-policy" style={{ textDecoration: "underline" }}>Privacy Policy</a>
+                  {" | "}
+                  <a href="https://requitygroup.com/terms" style={{ textDecoration: "underline" }}>Terms</a>
+                </p>
               </form>
             </div>
           </div>
