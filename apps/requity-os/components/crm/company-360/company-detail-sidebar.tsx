@@ -252,7 +252,7 @@ export function CompanyDetailSidebar({
         icon={Users}
         action={
           <span
-            className="text-xs text-[#3B82F6] cursor-pointer"
+            className="text-xs text-primary cursor-pointer hover:underline"
             onClick={() => onTabChange("contacts")}
           >
             View All

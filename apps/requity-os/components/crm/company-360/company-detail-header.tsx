@@ -131,7 +131,7 @@ export function CompanyDetailHeader({
                 }
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center gap-1.5 text-[13px] text-[#3B82F6] hover:underline"
+                className="flex items-center gap-1.5 text-[13px] text-primary hover:underline"
               >
                 <Globe size={13} strokeWidth={1.5} />{" "}
                 {company.website.replace(/^https?:\/\//, "")}{" "}

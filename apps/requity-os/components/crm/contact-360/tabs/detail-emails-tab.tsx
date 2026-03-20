@@ -93,7 +93,7 @@ export function DetailEmailsTab({ emails, onCompose }: DetailEmailsTabProps) {
                   {isOutbound ? (
                     <Send
                       size={13}
-                      className="text-[#3B82F6]"
+                      className="text-muted-foreground"
                       strokeWidth={1.5}
                     />
                   ) : (

@@ -310,7 +310,7 @@ export function ContactsView({
             )}
             <button
               onClick={clearAllFilters}
-              className="text-xs text-blue-600 dark:text-blue-400 hover:underline"
+              className="text-xs text-primary hover:underline"
             >
               Clear All
             </button>
@@ -341,7 +341,7 @@ export function ContactsView({
                         <div>
                           <Users className="h-8 w-8 text-muted-foreground/40 mx-auto mb-2" />
                           <p className="text-sm font-medium text-muted-foreground">No contacts match your filters</p>
-                          <button onClick={clearAllFilters} className="text-xs text-blue-600 dark:text-blue-400 mt-1 hover:underline">
+                          <button onClick={clearAllFilters} className="text-xs text-primary mt-1 hover:underline">
                             Clear Filters
                           </button>
                         </div>
@@ -373,7 +373,7 @@ export function ContactsView({
                                   text={getInitials(c.first_name || "", c.last_name || "")} 
                                   size="sm" 
                                 />
-                                <span className="text-sm font-medium text-blue-600 dark:text-blue-400 truncate max-w-[180px]">
+                                <span className="text-sm font-medium text-primary truncate max-w-[180px]">
                                   {[c.first_name, c.last_name].filter(Boolean).join(" ") || "Unknown"}
                                 </span>
                               </div>

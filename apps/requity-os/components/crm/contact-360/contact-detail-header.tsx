@@ -135,7 +135,7 @@ export function ContactDetailHeader({
               )}
               {(company || contact.company_name) && (
                 <span
-                  className="text-xs text-[#3B82F6] cursor-pointer hover:underline"
+                  className="text-xs text-primary cursor-pointer hover:underline"
                   onClick={() => {
                     if (company?.company_number) {
                       router.push(`/companies/${company.company_number}`);

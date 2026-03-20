@@ -510,7 +510,7 @@ export function CrmV2Page({
               )}
               <button
                 onClick={clearAllFilters}
-                className="text-xs text-blue-600 dark:text-blue-400 hover:underline"
+                className="text-xs text-primary hover:underline"
               >
                 Clear All
               </button>
@@ -544,7 +544,7 @@ export function CrmV2Page({
                           <div>
                             <Users className="h-8 w-8 text-muted-foreground/40 mx-auto mb-2" />
                             <p className="text-sm font-medium text-muted-foreground">No contacts match your filters</p>
-                            <button onClick={clearAllFilters} className="text-xs text-blue-600 dark:text-blue-400 mt-1 hover:underline">
+                            <button onClick={clearAllFilters} className="text-xs text-primary mt-1 hover:underline">
                               Clear Filters
                             </button>
                           </div>
@@ -576,7 +576,7 @@ export function CrmV2Page({
                                     text={getInitials(c.first_name || "", c.last_name || "")} 
                                     size="sm" 
                                   />
-                                  <span className="text-sm font-medium text-blue-600 dark:text-blue-400 truncate max-w-[180px]">
+                                  <span className="text-sm font-medium text-primary truncate max-w-[180px]">
                                     {[c.first_name, c.last_name].filter(Boolean).join(" ") || "Unknown"}
                                   </span>
                                 </div>
@@ -748,10 +748,10 @@ export function CrmV2Page({
                       >
                         <td className="px-4 py-3">
                           <div className="flex items-center gap-2.5">
-                            <div className="h-8 w-8 rounded-lg bg-blue-50 dark:bg-blue-950/30 border border-blue-100 dark:border-blue-900 flex items-center justify-center shrink-0">
-                              <Building2 className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                            <div className="h-8 w-8 rounded-lg bg-muted flex items-center justify-center shrink-0">
+                              <Building2 className="h-4 w-4 text-muted-foreground" />
                             </div>
-                            <span className="text-sm font-medium text-blue-600 dark:text-blue-400">
+                            <span className="text-sm font-medium text-primary">
                               {c.name}
                             </span>
                           </div>

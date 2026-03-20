@@ -222,10 +222,10 @@ export function CompaniesView({ companies, isSuperAdmin = false }: CompaniesView
                     >
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-2.5">
-                          <div className="h-8 w-8 rounded-lg bg-blue-50 dark:bg-blue-950/30 border border-blue-100 dark:border-blue-900 flex items-center justify-center shrink-0">
-                            <Building2 className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                          <div className="h-8 w-8 rounded-lg bg-muted flex items-center justify-center shrink-0">
+                            <Building2 className="h-4 w-4 text-muted-foreground" />
                           </div>
-                          <span className="text-sm font-medium text-blue-600 dark:text-blue-400">
+                          <span className="text-sm font-medium text-primary">
                             {c.name}
                           </span>
                         </div>

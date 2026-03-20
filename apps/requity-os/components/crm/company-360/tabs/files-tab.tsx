@@ -280,7 +280,7 @@ export function CompanyFilesTab({ files, companyId }: FilesTabProps) {
                 <div className="w-9 h-9 rounded-lg bg-[#EFF6FF] flex items-center justify-center shrink-0">
                   <FileText
                     size={16}
-                    className="text-[#3B82F6]"
+                    className="text-muted-foreground"
                     strokeWidth={1.5}
                   />
                 </div>

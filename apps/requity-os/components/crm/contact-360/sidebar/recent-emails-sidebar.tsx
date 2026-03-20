@@ -112,7 +112,7 @@ export function RecentEmailsSidebar({
                     )}
                     {email.opened_at && (
                       <Eye
-                        className="h-3 w-3 text-[#3B82F6]"
+                        className="h-3 w-3 text-muted-foreground"
                         strokeWidth={1.5}
                       />
                     )}
