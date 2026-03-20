@@ -69,7 +69,7 @@ export default async function PipelinePage() {
     admin
       .from("intake_items" as never)
       .select("*")
-      .eq("status" as never, "pending" as never)
+      .in("status" as never, ["pending", "auto_matched"] as never)
       .order("received_at" as never, { ascending: false }),
   ]);
 
