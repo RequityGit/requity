@@ -67,102 +67,68 @@ export default async function AdminOriginationsPage() {
     console.error("Failed to fetch borrowers:", borrowersResult.error);
   }
 
-  // RTL Pricing data — tables may not exist yet
-  let programsData: any[] = [];
-  let adjustersData: any[] = [];
-  let versionsData: any[] = [];
-
-  try {
-    const { data } = await (supabase as any)
+  // Pricing and DSCR data — tables may not exist yet, fetch in parallel
+  const pricingQueries = await Promise.allSettled([
+    // RTL Pricing
+    (supabase as any)
       .from("pricing_programs")
       .select("*")
       .order("program_id")
-      .order("version", { ascending: false });
-    programsData = data ?? [];
-  } catch {
-    /* table may not exist */
-  }
-
-  try {
-    const { data } = await (supabase as any)
+      .order("version", { ascending: false }),
+    (supabase as any)
       .from("leverage_adjusters")
       .select("*")
-      .order("sort_order");
-    adjustersData = data ?? [];
-  } catch {
-    /* table may not exist */
-  }
-
-  try {
-    const { data } = await (supabase as any)
+      .order("sort_order"),
+    (supabase as any)
       .from("pricing_program_versions")
       .select("*")
       .order("changed_at", { ascending: false })
-      .limit(20);
-    versionsData = data ?? [];
-  } catch {
-    /* table may not exist */
-  }
-
-  // DSCR Pricing data — tables may not exist yet
-  let dscrLendersData: any[] = [];
-  let dscrProductsData: any[] = [];
-  let dscrAdjustmentsData: any[] = [];
-  let dscrVersionsData: any[] = [];
-  let dscrUploadsData: any[] = [];
-
-  try {
-    const { data } = await (supabase as any)
+      .limit(20),
+    // DSCR Pricing
+    (supabase as any)
       .from("dscr_lenders")
       .select("*")
-      .order("name");
-    dscrLendersData = data ?? [];
-  } catch { /* table may not exist */ }
-
-  try {
-    const { data } = await (supabase as any)
+      .order("name"),
+    (supabase as any)
       .from("dscr_lender_products")
       .select("*, dscr_lenders(name, short_name)")
-      .order("product_name");
-    dscrProductsData = data ?? [];
-  } catch { /* table may not exist */ }
-
-  try {
-    const { data } = await (supabase as any)
+      .order("product_name"),
+    (supabase as any)
       .from("dscr_price_adjustments")
       .select("*")
       .order("category")
-      .order("sort_order");
-    dscrAdjustmentsData = data ?? [];
-  } catch { /* table may not exist */ }
-
-  try {
-    const { data } = await (supabase as any)
+      .order("sort_order"),
+    (supabase as any)
       .from("dscr_pricing_versions")
       .select("*")
       .order("changed_at", { ascending: false })
-      .limit(30);
-    dscrVersionsData = data ?? [];
-  } catch { /* table may not exist */ }
-
-  try {
-    const { data } = await (supabase as any)
+      .limit(30),
+    (supabase as any)
       .from("dscr_rate_sheet_uploads")
       .select("*, dscr_lenders(name, short_name), dscr_lender_products(product_name)")
       .order("created_at", { ascending: false })
-      .limit(30);
-    dscrUploadsData = data ?? [];
-  } catch { /* table may not exist */ }
-
-  // Condition counts — separate query so it won't break if the table doesn't exist yet
-  let conditionsResult: { data: any[] | null } = { data: [] };
-  try {
-    conditionsResult = await supabase
+      .limit(30),
+    // Loan conditions — fetch all fields once for reuse
+    supabase
       .from("loan_conditions")
-      .select("loan_id, status");
-  } catch {
-    // table may not exist yet
-  }
+      .select("*")
+      .order("due_date", { ascending: true }),
+  ]);
+
+  // Extract results from allSettled (handles errors gracefully)
+  // Supabase queries return { data, error } objects
+  const programsData = pricingQueries[0].status === "fulfilled" && !pricingQueries[0].value.error && pricingQueries[0].value.data ? pricingQueries[0].value.data : [];
+  const adjustersData = pricingQueries[1].status === "fulfilled" && !pricingQueries[1].value.error && pricingQueries[1].value.data ? pricingQueries[1].value.data : [];
+  const versionsData = pricingQueries[2].status === "fulfilled" && !pricingQueries[2].value.error && pricingQueries[2].value.data ? pricingQueries[2].value.data : [];
+  const dscrLendersData = pricingQueries[3].status === "fulfilled" && !pricingQueries[3].value.error && pricingQueries[3].value.data ? pricingQueries[3].value.data : [];
+  const dscrProductsData = pricingQueries[4].status === "fulfilled" && !pricingQueries[4].value.error && pricingQueries[4].value.data ? pricingQueries[4].value.data : [];
+  const dscrAdjustmentsData = pricingQueries[5].status === "fulfilled" && !pricingQueries[5].value.error && pricingQueries[5].value.data ? pricingQueries[5].value.data : [];
+  const dscrVersionsData = pricingQueries[6].status === "fulfilled" && !pricingQueries[6].value.error && pricingQueries[6].value.data ? pricingQueries[6].value.data : [];
+  const dscrUploadsData = pricingQueries[7].status === "fulfilled" && !pricingQueries[7].value.error && pricingQueries[7].value.data ? pricingQueries[7].value.data : [];
+  const allConditionsData = pricingQueries[8].status === "fulfilled" && !pricingQueries[8].value.error && pricingQueries[8].value.data ? pricingQueries[8].value.data : [];
+
+  // Condition counts for loan rows (using loan_id and status only)
+  const conditionsResult = { data: allConditionsData.map((c: any) => ({ loan_id: c.loan_id, status: c.status })) };
 
   // ── Build Pipeline tab data ────────────────────────────────────────
 
@@ -256,35 +222,22 @@ export default async function AdminOriginationsPage() {
   );
   const activeLoanIds = activeLoans.map((l: any) => l.id);
 
-  let conditionsForDashboard: any[] = [];
-  if (activeLoanIds.length > 0) {
-    try {
-      const { data } = await supabase
-        .from("loan_conditions")
-        .select("*")
-        .in("loan_id", activeLoanIds)
-        .order("due_date", { ascending: true });
-      conditionsForDashboard = data ?? [];
-    } catch {
-      // table may not exist
-    }
-  }
+  // Filter conditions for active loans (reuse the already-fetched allConditionsData)
+  const conditionsForDashboard = allConditionsData.filter((c: any) =>
+    activeLoanIds.includes(c.loan_id)
+  );
 
-  // Build loan lookup for conditions
+  // Build loan lookup for conditions - reuse borrowersResult instead of fetching again
   const borrowerIds = Array.from(
     new Set(activeLoans.map((l: any) => l.borrower_id).filter(Boolean))
   );
-  let borrowerNames: Record<string, string> = {};
-  if (borrowerIds.length > 0) {
-    const { data: borrowerRows } = await supabase
-      .from("borrowers")
-      .select("id, first_name, last_name")
-      .in("id", borrowerIds);
-    (borrowerRows ?? []).forEach((b: any) => {
+  const borrowerNames: Record<string, string> = {};
+  (borrowersResult.data ?? []).forEach((b: any) => {
+    if (borrowerIds.includes(b.id)) {
       borrowerNames[b.id] =
         `${b.first_name ?? ""} ${b.last_name ?? ""}`.trim() || "Unknown";
-    });
-  }
+    }
+  });
 
   const loanLookup: Record<string, any> = {};
   activeLoans.forEach((l: any) => {
