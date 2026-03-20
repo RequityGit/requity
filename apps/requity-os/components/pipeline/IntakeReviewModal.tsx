@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useMemo, useTransition, useCallback } from "react";
+import { useRouter } from "next/navigation";
 import {
   Dialog,
   DialogContent,
@@ -9,7 +10,6 @@ import {
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -228,6 +228,7 @@ function SectionHeader({ title, count }: { title: string; count?: number }) {
 // ---------------------------------------------------------------------------
 
 export function IntakeReviewModal({ item, open, onOpenChange, cardTypes = [] }: IntakeReviewModalProps) {
+  const router = useRouter();
   const { toast } = useToast();
   const [entityModes, setEntityModes] = useState<Partial<Record<IntakeEntityKey, EntityMode>>>({});
   const [fieldChoices, setFieldChoices] = useState<Partial<Record<IntakeEntityKey, Record<string, FieldChoice>>>>({});
@@ -428,7 +429,7 @@ export function IntakeReviewModal({ item, open, onOpenChange, cardTypes = [] }: 
       if (result?.error) {
         toast({ title: "Processing failed", description: result.error, variant: "destructive" });
       } else {
-        const deal = result.deal as { deal_number?: string } | undefined;
+        const deal = result.deal as { id?: string; deal_number?: string } | undefined;
         toast({
           title: "Intake processed",
           description: deal?.deal_number ? `Deal ${deal.deal_number} created.` : "Deal created.",
@@ -437,6 +438,11 @@ export function IntakeReviewModal({ item, open, onOpenChange, cardTypes = [] }: 
         setEntityModes({});
         setFieldChoices({});
         setManualMatches({});
+
+        // Navigate to the new deal so the user can act on it immediately
+        if (deal?.deal_number || deal?.id) {
+          router.push(`/pipeline/${deal.deal_number || deal.id}`);
+        }
       }
     });
   };
@@ -462,7 +468,7 @@ export function IntakeReviewModal({ item, open, onOpenChange, cardTypes = [] }: 
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-[1400px] max-h-[92vh] p-0 flex flex-col gap-0">
+      <DialogContent className="md:max-w-[1400px] max-h-[92vh] md:max-h-[92vh] p-0 md:p-0 flex flex-col gap-0 overflow-hidden">
         {/* Header */}
         <div className="px-6 py-4 border-b">
           <DialogHeader>
@@ -498,8 +504,8 @@ export function IntakeReviewModal({ item, open, onOpenChange, cardTypes = [] }: 
         </div>
 
         {/* Two-column body */}
-        <ScrollArea className="flex-1 h-0 min-h-0">
-          <div className="flex gap-0 min-h-0">
+        <div className="flex-1 min-h-0 overflow-y-auto">
+          <div className="flex min-h-0">
             {/* LEFT COLUMN: Editable fields */}
             <div className="flex-1 min-w-0 p-6 pr-4 space-y-5 border-r border-border/50">
 
@@ -609,7 +615,7 @@ export function IntakeReviewModal({ item, open, onOpenChange, cardTypes = [] }: 
             </div>
 
             {/* RIGHT COLUMN: Documents + Entity merge + Summary */}
-            <div className="w-[420px] shrink-0 p-6 pl-4 space-y-5">
+            <div className="w-[380px] shrink-0 p-6 pl-4 space-y-5 overflow-y-auto">
 
               {/* Documents */}
               {item.email_intake_queue_id && (
@@ -694,7 +700,7 @@ export function IntakeReviewModal({ item, open, onOpenChange, cardTypes = [] }: 
               )}
             </div>
           </div>
-        </ScrollArea>
+        </div>
 
         {/* Bottom action bar */}
         <div className="px-6 py-4 border-t flex items-center justify-between bg-muted/5">

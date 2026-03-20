@@ -129,8 +129,22 @@ export interface FormEngineProps {
   recordType?: string;
   prefillData?: Record<string, unknown>;
   sessionToken?: string;
+  dealToken?: string;
   onComplete?: (submission: FormSubmission) => void;
   onClose?: () => void;
+}
+
+export interface DealTokenData {
+  valid: boolean;
+  reason?: string;
+  link_id?: string;
+  deal_id?: string;
+  form_id?: string;
+  deal_name?: string;
+  deal_number?: string;
+  message?: string;
+  prefill_data?: Record<string, unknown>;
+  existing_session_token?: string | null;
 }
 
 export interface FormState {
@@ -138,6 +152,8 @@ export interface FormState {
   currentStepIndex: number;
   submissionId: string | null;
   sessionToken: string | null;
+  dealId: string | null;
+  dealApplicationLinkId: string | null;
   isSubmitting: boolean;
   isLoading: boolean;
   error: string | null;

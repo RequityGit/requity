@@ -8,11 +8,13 @@ export default function PublicFormPage() {
   const searchParams = useSearchParams();
   const slug = params.slug as string;
   const sessionToken = searchParams.get("t") || undefined;
+  const dealToken = searchParams.get("dt") || undefined;
 
   return (
     <FormPage
       formSlug={slug}
       sessionToken={sessionToken}
+      dealToken={dealToken}
     />
   );
 }

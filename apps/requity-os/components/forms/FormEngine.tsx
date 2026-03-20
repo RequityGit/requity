@@ -16,6 +16,7 @@ import type {
   FormEngineProps,
   FormState,
   FormStep,
+  DealTokenData,
   SubmissionType,
 } from "@/lib/form-engine/types";
 import { toast } from "sonner";
@@ -29,15 +30,19 @@ export function FormEngine({
   recordType,
   prefillData,
   sessionToken,
+  dealToken,
   onComplete,
   onClose,
 }: FormEngineProps) {
   const [formDef, setFormDef] = useState<FormDefinition | null>(null);
+  const [dealContext, setDealContext] = useState<DealTokenData | null>(null);
   const [state, setState] = useState<FormState>({
     data: prefillData || {},
     currentStepIndex: 0,
     submissionId: null,
     sessionToken: sessionToken || null,
+    dealId: null,
+    dealApplicationLinkId: null,
     isSubmitting: false,
     isLoading: true,
     error: null,
@@ -49,15 +54,67 @@ export function FormEngine({
   const mode = recordId ? "edit" : initialMode;
   const visibilityContext = context === "page" ? "external" : "internal";
 
-  // Load form definition
+  // Load form definition (with optional deal token)
   useEffect(() => {
     async function loadForm() {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const supabase: any = createClient();
+
+      // If deal token provided, validate it first to get form_id and prefill
+      let dealData: DealTokenData | null = null;
+      let resolvedFormId = formId;
+      let resolvedPrefill = prefillData || {};
+      let resolvedSessionToken = sessionToken;
+
+      if (dealToken) {
+        try {
+          const res = await fetch("/api/forms/deal-token", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ token: dealToken }),
+          });
+          dealData = await res.json();
+
+          if (!dealData?.valid) {
+            setState((s) => ({
+              ...s,
+              isLoading: false,
+              error: dealData?.reason || "This application link is no longer valid.",
+            }));
+            return;
+          }
+
+          setDealContext(dealData);
+
+          // Use form_id from deal token if not explicitly provided
+          if (dealData.form_id && !formId) {
+            resolvedFormId = dealData.form_id;
+          }
+
+          // Merge prefill data from deal token
+          if (dealData.prefill_data) {
+            resolvedPrefill = { ...dealData.prefill_data, ...resolvedPrefill };
+          }
+
+          // Resume existing submission if available
+          if (dealData.existing_session_token) {
+            resolvedSessionToken = dealData.existing_session_token;
+          }
+        } catch {
+          setState((s) => ({
+            ...s,
+            isLoading: false,
+            error: "Failed to validate application link. Please try again.",
+          }));
+          return;
+        }
+      }
+
+      // Load form definition
       let query = supabase.from("form_definitions").select("*");
 
-      if (formId) {
-        query = query.eq("id", formId);
+      if (resolvedFormId) {
+        query = query.eq("id", resolvedFormId);
       } else if (formSlug) {
         query = query.eq("slug", formSlug);
       } else {
@@ -81,27 +138,30 @@ export function FormEngine({
 
       setFormDef(definition);
 
-      // Resume from session token
-      if (sessionToken) {
+      // Resume from session token (either provided directly or from deal token)
+      if (resolvedSessionToken) {
         const { data: submission } = await supabase
           .from("form_submissions")
           .select("*")
-          .eq("session_token", sessionToken)
+          .eq("session_token", resolvedSessionToken)
           .single();
 
         if (submission && submission.token_expires_at && new Date(submission.token_expires_at) > new Date()) {
           const submissionData = (submission.data || {}) as Record<string, unknown>;
-          const visibleSteps = getVisibleSteps(definition.steps, submissionData);
+          const mergedData = { ...resolvedPrefill, ...submissionData };
+          const visibleSteps = getVisibleSteps(definition.steps, mergedData);
           const resumeIndex = submission.current_step_id
             ? visibleSteps.findIndex((s) => s.id === submission.current_step_id)
             : 0;
 
           setState((s) => ({
             ...s,
-            data: { ...prefillData, ...submissionData },
+            data: mergedData,
             currentStepIndex: Math.max(0, resumeIndex),
             submissionId: submission.id,
             sessionToken: submission.session_token,
+            dealId: dealData?.deal_id || null,
+            dealApplicationLinkId: dealData?.link_id || null,
             isLoading: false,
           }));
           return;
@@ -109,12 +169,23 @@ export function FormEngine({
       }
 
       // Create new submission record
-      const result = await createSubmission(data.id, prefillData || {}, definition.steps[0]?.id || null);
+      const result = await createSubmission(
+        data.id,
+        resolvedPrefill,
+        definition.steps[0]?.id || null,
+        dealData?.deal_id
+          ? { dealId: dealData.deal_id, dealApplicationLinkId: dealData.link_id }
+          : undefined
+      );
+
       if (result) {
         setState((s) => ({
           ...s,
+          data: resolvedPrefill,
           submissionId: result.id,
           sessionToken: result.session_token,
+          dealId: dealData?.deal_id || null,
+          dealApplicationLinkId: dealData?.link_id || null,
           isLoading: false,
         }));
       } else {
@@ -123,7 +194,8 @@ export function FormEngine({
     }
 
     loadForm();
-  }, [formId, formSlug, sessionToken, prefillData]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [formId, formSlug, sessionToken, dealToken]);
 
   // Get visible steps based on current data
   const visibleSteps = formDef ? getVisibleSteps(formDef.steps, state.data) : [];
@@ -163,8 +235,8 @@ export function FormEngine({
         debouncedSave(state.submissionId, state.data, currentStep?.id || null);
       }
 
-      // Email lookup for external forms
-      if (fieldId === "email" && context === "page" && state.data.email) {
+      // Email lookup for external forms (skip if deal token provided - data already pre-filled)
+      if (fieldId === "email" && context === "page" && state.data.email && !dealToken) {
         lookupContactByEmail(state.data.email as string).then((result) => {
           if (result.found) {
             setState((s) => ({
@@ -181,7 +253,7 @@ export function FormEngine({
         });
       }
     },
-    [state.submissionId, state.data, currentStep, context]
+    [state.submissionId, state.data, currentStep, context, dealToken]
   );
 
   // Validate current step
@@ -247,6 +319,8 @@ export function FormEngine({
       data: state.data,
       mode: (mode === "edit" ? "update" : "create") as "create" | "update",
       recordId,
+      dealId: state.dealId || undefined,
+      dealApplicationLinkId: state.dealApplicationLinkId || undefined,
     });
 
     if (result.success) {
@@ -282,7 +356,7 @@ export function FormEngine({
         error: result.error || "Submission failed. Please try again.",
       }));
     }
-  }, [formDef, state.submissionId, state.data, state.sessionToken, mode, recordId, recordType, onComplete, validateStep]);
+  }, [formDef, state.submissionId, state.data, state.sessionToken, state.dealId, state.dealApplicationLinkId, mode, recordId, recordType, onComplete, validateStep]);
 
   // Loading state
   if (state.isLoading) {
@@ -316,6 +390,21 @@ export function FormEngine({
 
   return (
     <div className="space-y-6">
+      {/* Deal context banner */}
+      {dealContext?.deal_name && (
+        <div className="rounded-lg border border-border bg-muted/50 px-4 py-3">
+          <p className="text-sm text-muted-foreground">
+            Application for <span className="font-medium text-foreground">{dealContext.deal_name}</span>
+            {dealContext.deal_number && (
+              <span className="ml-1 text-xs text-muted-foreground">({dealContext.deal_number})</span>
+            )}
+          </p>
+          {dealContext.message && (
+            <p className="mt-1 text-xs text-muted-foreground">{dealContext.message}</p>
+          )}
+        </div>
+      )}
+
       <FormProgress
         currentStep={state.currentStepIndex}
         totalSteps={visibleSteps.length}
@@ -355,7 +444,7 @@ export function FormEngine({
               ) : (
                 <Send size={16} strokeWidth={1.5} className="mr-2" />
               )}
-              Submit
+              Submit Application
             </Button>
           ) : (
             <Button onClick={goNext}>
