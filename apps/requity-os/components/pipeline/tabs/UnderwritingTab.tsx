@@ -19,6 +19,10 @@ import { SectionHeader } from "../uw/uw-shared";
 import { ProFormaSection } from "../uw/ProFormaSection";
 import { AssumptionsSection } from "../uw/AssumptionsSection";
 import { SourcesUsesSubTab } from "./sources-uses/SourcesUsesSubTab";
+import { RentRollSubTab } from "./financials/RentRollSubTab";
+import { T12SubTab } from "./financials/T12SubTab";
+import { AssumptionsSubTab } from "./financials/AssumptionsSubTab";
+import { ClosingCostsSubTab } from "./financials/ClosingCostsSubTab";
 import { updateDealGoogleSheetAction, clearDealGoogleSheetAction } from "@/app/(authenticated)/(admin)/pipeline/[id]/actions";
 import { toast } from "sonner";
 
@@ -53,7 +57,7 @@ interface UnderwritingTabProps {
   sheetUrl?: string | null;
 }
 
-const UW_SECTIONS = ["Pro Forma", "Assumptions", "Sources & Uses"];
+const UW_SECTIONS = ["Pro Forma", "T12 / Historical", "Rent Roll", "Assumptions", "Sources & Uses"];
 
 function sectionId(name: string) {
   return name.toLowerCase().replace(/[\s\/&]+/g, "-");
@@ -63,7 +67,7 @@ function sectionId(name: string) {
 
 export function UnderwritingTab({ data, dealId, sheetUrl }: UnderwritingTabProps) {
   const router = useRouter();
-  const { uw, income, expenses, sourcesUses, scopeOfWork } = data;
+  const { uw, income, expenses, rentRoll, sourcesUses, scopeOfWork } = data;
   const [activeSection, setActiveSection] = useState(sectionId(UW_SECTIONS[0]));
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
@@ -75,6 +79,8 @@ export function UnderwritingTab({ data, dealId, sheetUrl }: UnderwritingTabProps
   const uwId = uw?.id ?? null;
   const purchasePrice = Number(uw?.purchase_price) || 0;
   const numUnits = Number(uw?.num_units) || 0;
+  const totalSf = Number(uw?.total_sf) || 0;
+  const propertyType = (uw?.property_type as string) ?? "";
   const exitCapRate = Number(uw?.exit_cap_rate) || 0;
 
   const scrollToSection = useCallback((id: string) => {
@@ -192,6 +198,30 @@ export function UnderwritingTab({ data, dealId, sheetUrl }: UnderwritingTabProps
         </div>
       </div>
 
+      {/* Section: T12 / Historical */}
+      <div id="t12-historical" className="scroll-mt-24 mt-6">
+        <SectionHeader title="T12 / Historical" badge="Income & expenses" />
+        <div className="mt-3">
+          <T12SubTab
+            income={income}
+            expenses={expenses}
+            uwId={uwId}
+            purchasePrice={purchasePrice}
+            numUnits={numUnits}
+            propertyType={propertyType}
+            totalSf={totalSf}
+          />
+        </div>
+      </div>
+
+      {/* Section: Rent Roll */}
+      <div id="rent-roll" className="scroll-mt-24 mt-6">
+        <SectionHeader title="Rent Roll" badge="Unit-level detail" />
+        <div className="mt-3">
+          <RentRollSubTab rentRoll={rentRoll} uwId={uwId} />
+        </div>
+      </div>
+
       {/* Section: Assumptions */}
       <div id="assumptions" className="scroll-mt-24 mt-6">
         <SectionHeader
@@ -212,10 +242,17 @@ export function UnderwritingTab({ data, dealId, sheetUrl }: UnderwritingTabProps
             numUnits={numUnits}
           />
         </div>
+        <div className="mt-4">
+          <AssumptionsSubTab
+            uw={uw}
+            uwId={uwId}
+            propertyType={propertyType}
+          />
+        </div>
       </div>
 
       {/* Section: Sources & Uses */}
-      <div id="sources--uses" className="scroll-mt-24 mt-6">
+      <div id="sources-uses" className="scroll-mt-24 mt-6">
         <SectionHeader title="Sources & Uses" badge="Capital structure" />
         <div className="mt-3">
           <SourcesUsesSubTab
