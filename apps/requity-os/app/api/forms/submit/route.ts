@@ -8,6 +8,8 @@ interface SubmitRequest {
   data: Record<string, unknown>;
   mode: "create" | "update";
   record_id: string | null;
+  deal_id?: string | null;
+  deal_application_link_id?: string | null;
 }
 
 interface EntityFieldGroup {
