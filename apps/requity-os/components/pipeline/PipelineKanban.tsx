@@ -87,8 +87,15 @@ export function PipelineKanban({
     return map;
   }, [allFields]);
 
-  const cardTypeMap = new Map(cardTypes.map((ct) => [ct.id, ct]));
-  const stageConfigMap = new Map(stageConfigs.map((sc) => [sc.stage, sc]));
+  // Memoize maps to prevent recreation on every render
+  const cardTypeMap = useMemo(
+    () => new Map(cardTypes.map((ct) => [ct.id, ct])),
+    [cardTypes]
+  );
+  const stageConfigMap = useMemo(
+    () => new Map(stageConfigs.map((sc) => [sc.stage, sc])),
+    [stageConfigs]
+  );
 
   const sensors = useSensors(
     useSensor(MouseSensor, { activationConstraint: { distance: 8 } }),
@@ -158,6 +165,26 @@ export function PipelineKanban({
     ? cardTypeMap.get(activeDeal.card_type_id)
     : null;
 
+  // Memoize stage calculations to avoid recomputing on every render
+  const stageData = useMemo(() => {
+    return STAGES.map((stage) => {
+      const stageDeals = deals
+        .filter(
+          (d) => (dealOverrides.get(d.id) ?? d.stage) === stage.key
+        )
+        .sort((a, b) => (b.amount ?? -Infinity) - (a.amount ?? -Infinity));
+      
+      const totalAmount = stageDeals.reduce(
+        (sum, d) => sum + (d.amount ?? 0),
+        0
+      );
+      const isLead = stage.key === "lead";
+      const columnCount = stageDeals.length + (isLead ? intakeItems.length : 0);
+      
+      return { stage, stageDeals, totalAmount, isLead, columnCount };
+    });
+  }, [deals, dealOverrides, intakeItems.length]);
+
   return (
     <DndContext
       sensors={sensors}
@@ -168,18 +195,7 @@ export function PipelineKanban({
     >
       <ScrollArea className="w-full">
         <div className="flex gap-4 pb-4 min-w-max">
-          {STAGES.map((stage) => {
-            const stageDeals = deals
-              .filter(
-                (d) => (dealOverrides.get(d.id) ?? d.stage) === stage.key
-              )
-              .sort((a, b) => (b.amount ?? -Infinity) - (a.amount ?? -Infinity));
-            const totalAmount = stageDeals.reduce(
-              (sum, d) => sum + (d.amount ?? 0),
-              0
-            );
-            const isLead = stage.key === "lead";
-            const columnCount = stageDeals.length + (isLead ? intakeItems.length : 0);
+          {stageData.map(({ stage, stageDeals, totalAmount, isLead, columnCount }) => {
 
             return (
               <div key={stage.key} className="flex flex-col w-72 shrink-0">
@@ -219,12 +235,13 @@ export function PipelineKanban({
                     stageDeals.map((deal) => {
                       const ct = cardTypeMap.get(deal.card_type_id);
                       if (!ct) return null;
+                      const stageConfig = stageConfigMap.get(stage.key);
                       return (
                         <DealCard
                           key={deal.id}
                           deal={deal}
                           cardType={ct}
-                          stageConfig={stageConfigMap.get(stage.key)}
+                          stageConfig={stageConfig}
                           hasRelationships={relationshipDealIds.has(deal.id)}
                           formulaMap={formulaMap}
                           onClick={() => onDealClick(deal)}

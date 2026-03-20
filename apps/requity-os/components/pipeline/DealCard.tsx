@@ -1,5 +1,6 @@
 "use client";
 
+import React, { useMemo } from "react";
 import { cn } from "@/lib/utils";
 import { Link2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
@@ -27,7 +28,7 @@ interface DealCardProps {
   onClick: () => void;
 }
 
-export function DealCard({
+function DealCardInner({
   deal,
   cardType,
   stageConfig,
@@ -40,15 +41,18 @@ export function DealCard({
     data: { stage: deal.stage },
   });
 
-  const days = daysInStage(deal.stage_entered_at);
-  const alertLevel = getAlertLevel(days, stageConfig);
-
-  const displayMetrics = cardType.card_metrics
-    .map((m) => {
-      const val = getCardMetricValue(m, deal, formulaMap);
-      return m.label ? `${m.label} ${val}` : val;
-    })
-    .join(" · ");
+  // Memoize expensive computations
+  const { days, alertLevel, displayMetrics } = useMemo(() => {
+    const d = daysInStage(deal.stage_entered_at);
+    const al = getAlertLevel(d, stageConfig);
+    const metrics = cardType.card_metrics
+      .map((m) => {
+        const val = getCardMetricValue(m, deal, formulaMap);
+        return m.label ? `${m.label} ${val}` : val;
+      })
+      .join(" · ");
+    return { days: d, alertLevel: al, displayMetrics: metrics };
+  }, [deal.stage_entered_at, deal, stageConfig, cardType.card_metrics, formulaMap]);
 
   return (
     <div
@@ -121,6 +125,24 @@ export function DealCard({
     </div>
   );
 }
+
+// Memoized wrapper to prevent unnecessary re-renders
+export const DealCard = React.memo(DealCardInner, (prev, next) => {
+  // Only re-render if these props change
+  return (
+    prev.deal.id === next.deal.id &&
+    prev.deal.stage === next.deal.stage &&
+    prev.deal.stage_entered_at === next.deal.stage_entered_at &&
+    prev.deal.name === next.deal.name &&
+    prev.deal.amount === next.deal.amount &&
+    prev.deal.asset_class === next.deal.asset_class &&
+    prev.deal.capital_side === next.deal.capital_side &&
+    prev.cardType.id === next.cardType.id &&
+    prev.stageConfig?.stage === next.stageConfig?.stage &&
+    prev.hasRelationships === next.hasRelationships &&
+    prev.formulaMap === next.formulaMap
+  );
+});
 
 /** Static card clone for DragOverlay -- no hooks, no interactivity */
 export function DealCardOverlay({

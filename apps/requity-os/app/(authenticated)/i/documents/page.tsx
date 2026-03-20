@@ -1,3 +1,4 @@
+import React from "react";
 import { PageHeader } from "@/components/shared/page-header";
 import { getEffectiveAuth, getInvestorId } from "@/lib/impersonation";
 import { formatDate } from "@/lib/format";

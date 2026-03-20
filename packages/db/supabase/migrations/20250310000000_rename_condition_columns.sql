@@ -1,6 +1,0 @@
--- =============================================================================
--- This migration is intentionally empty.
--- The column renames and additions that were originally planned here
--- have been incorporated directly into the base migration
--- (20250303000000_conditions_templates.sql) to match the live database schema.
--- =============================================================================

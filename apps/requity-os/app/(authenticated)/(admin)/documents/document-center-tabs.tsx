@@ -1,5 +1,6 @@
 "use client";
 
+import React from "react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { DocumentListTable } from "@/components/admin/document-list-table";
 import {
