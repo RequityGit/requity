@@ -17,21 +17,6 @@ interface GoogleAutocomplete {
   getPlace: () => GooglePlaceResult;
 }
 
-declare global {
-  interface Window {
-    google?: {
-      maps?: {
-        places?: {
-          Autocomplete: new (input: HTMLInputElement, opts: Record<string, unknown>) => GoogleAutocomplete;
-        };
-        event?: {
-          clearInstanceListeners: (instance: unknown) => void;
-        };
-      };
-    };
-  }
-}
-
 import { useState, useRef, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import pricingConfig from '@/data/pricing-config.json';

@@ -117,6 +117,7 @@ export function FinancialsTab({
   const propertyType = (uw?.property_type as string) ?? "";
   const purchasePrice = Number(uw?.purchase_price) || 0;
   const numUnits = Number(uw?.num_units) || 0;
+  const totalSf = Number(uw?.total_sf) || 0;
 
   return (
     <div className="flex flex-col gap-5">
@@ -144,6 +145,8 @@ export function FinancialsTab({
           uwId={uwId}
           purchasePrice={purchasePrice}
           numUnits={numUnits}
+          propertyType={propertyType}
+          totalSf={totalSf}
         />
       )}
       {activeSubTab === "assumptions" && (

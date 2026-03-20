@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { LOAN_APPLICATION_FORM } from "@/lib/form-engine/loan-application-form";
+import type { Json } from "@/lib/supabase/types";
 
 /**
  * POST /api/forms/create-loan-application
@@ -36,8 +37,8 @@ export async function POST() {
         status: LOAN_APPLICATION_FORM.status,
         mode: LOAN_APPLICATION_FORM.mode,
         contexts: LOAN_APPLICATION_FORM.contexts,
-        settings: LOAN_APPLICATION_FORM.settings,
-        steps: LOAN_APPLICATION_FORM.steps as any,
+        settings: LOAN_APPLICATION_FORM.settings as Json,
+        steps: LOAN_APPLICATION_FORM.steps as unknown as Json,
       })
       .select("id, name, slug")
       .single();

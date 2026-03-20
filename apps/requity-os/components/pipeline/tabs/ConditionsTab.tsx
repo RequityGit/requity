@@ -29,13 +29,13 @@ import {
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { type DealCondition } from "@/components/pipeline/pipeline-types";
-import { updateConditionStatusAction } from "@/app/(authenticated)/admin/pipeline/actions";
+import { updateConditionStatusAction } from "@/app/(authenticated)/(admin)/pipeline/actions";
 import {
   createDealDocumentUploadUrl,
   saveDealDocumentRecord,
   deleteDealDocumentV2,
   getDocumentSignedUrl,
-} from "@/app/(authenticated)/admin/pipeline/[id]/actions";
+} from "@/app/(authenticated)/(admin)/pipeline/[id]/actions";
 import { UnifiedNotes } from "@/components/shared/UnifiedNotes";
 import { createClient } from "@/lib/supabase/client";
 

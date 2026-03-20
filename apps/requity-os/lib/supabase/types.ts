@@ -14,24 +14,6 @@ export type Database = {
   }
   public: {
     Tables: {
-      _debug_log: {
-        Row: {
-          created_at: string | null
-          data: Json | null
-          id: number
-        }
-        Insert: {
-          created_at?: string | null
-          data?: Json | null
-          id?: number
-        }
-        Update: {
-          created_at?: string | null
-          data?: Json | null
-          id?: number
-        }
-        Relationships: []
-      }
       ai_call_logs: {
         Row: {
           caller_number: string | null
@@ -1245,17 +1227,31 @@ export type Database = {
             foreignKeyName: "capital_calls_issued_by_fkey"
             columns: ["issued_by"]
             isOneToOne: false
-            referencedRelation: "equity_pipeline"
-            referencedColumns: ["assigned_to_profile_id"]
-          },
-          {
-            foreignKeyName: "capital_calls_issued_by_fkey"
-            columns: ["issued_by"]
-            isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
+      }
+      chat_followup_processed: {
+        Row: {
+          chat_id: string
+          followup_types: string[]
+          id: string
+          processed_at: string
+        }
+        Insert: {
+          chat_id: string
+          followup_types?: string[]
+          id?: string
+          processed_at?: string
+        }
+        Update: {
+          chat_id?: string
+          followup_types?: string[]
+          id?: string
+          processed_at?: string
+        }
+        Relationships: []
       }
       commercial_ancillary_income: {
         Row: {
@@ -1839,13 +1835,6 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "commercial_underwriting_equity_deal_id_fkey"
-            columns: ["equity_deal_id"]
-            isOneToOne: false
-            referencedRelation: "equity_pipeline"
-            referencedColumns: ["id"]
-          },
-          {
             foreignKeyName: "commercial_underwriting_loan_id_fkey"
             columns: ["loan_id"]
             isOneToOne: false
@@ -2340,13 +2329,6 @@ export type Database = {
             foreignKeyName: "condition_templates_created_by_fkey"
             columns: ["created_by"]
             isOneToOne: false
-            referencedRelation: "equity_pipeline"
-            referencedColumns: ["assigned_to_profile_id"]
-          },
-          {
-            foreignKeyName: "condition_templates_created_by_fkey"
-            columns: ["created_by"]
-            isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
@@ -2680,13 +2662,6 @@ export type Database = {
             foreignKeyName: "contact_tags_created_by_fkey"
             columns: ["created_by"]
             isOneToOne: false
-            referencedRelation: "equity_pipeline"
-            referencedColumns: ["assigned_to_profile_id"]
-          },
-          {
-            foreignKeyName: "contact_tags_created_by_fkey"
-            columns: ["created_by"]
-            isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
@@ -2817,13 +2792,6 @@ export type Database = {
             foreignKeyName: "crm_activities_performed_by_fkey"
             columns: ["performed_by"]
             isOneToOne: false
-            referencedRelation: "equity_pipeline"
-            referencedColumns: ["assigned_to_profile_id"]
-          },
-          {
-            foreignKeyName: "crm_activities_performed_by_fkey"
-            columns: ["performed_by"]
-            isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
@@ -2831,6 +2799,7 @@ export type Database = {
       }
       crm_contacts: {
         Row: {
+          accredited_status: string | null
           address_line1: string | null
           address_line2: string | null
           assigned_to: string | null
@@ -2848,8 +2817,11 @@ export type Database = {
           dnc: boolean | null
           dnc_reason: string | null
           email: string | null
+          entity_type: string | null
           first_name: string | null
           id: string
+          investment_interests: string[] | null
+          investment_timeline: string | null
           is_independent_broker: boolean | null
           language_preference: Database["public"]["Enums"]["language_preference_enum"]
           last_contacted_at: string | null
@@ -2866,10 +2838,13 @@ export type Database = {
           notes: string | null
           phone: string | null
           postmark_contact_id: string | null
+          private_offer_experience: string | null
           rating: Database["public"]["Enums"]["contact_rating_enum"] | null
+          referral_source: string | null
           source: Database["public"]["Enums"]["crm_contact_source"] | null
           state: string | null
           status: Database["public"]["Enums"]["crm_contact_status"]
+          target_investment: string | null
           twilio_contact_id: string | null
           updated_at: string
           user_function: string | null
@@ -2877,6 +2852,7 @@ export type Database = {
           zip: string | null
         }
         Insert: {
+          accredited_status?: string | null
           address_line1?: string | null
           address_line2?: string | null
           assigned_to?: string | null
@@ -2894,8 +2870,11 @@ export type Database = {
           dnc?: boolean | null
           dnc_reason?: string | null
           email?: string | null
+          entity_type?: string | null
           first_name?: string | null
           id?: string
+          investment_interests?: string[] | null
+          investment_timeline?: string | null
           is_independent_broker?: boolean | null
           language_preference?: Database["public"]["Enums"]["language_preference_enum"]
           last_contacted_at?: string | null
@@ -2912,10 +2891,13 @@ export type Database = {
           notes?: string | null
           phone?: string | null
           postmark_contact_id?: string | null
+          private_offer_experience?: string | null
           rating?: Database["public"]["Enums"]["contact_rating_enum"] | null
+          referral_source?: string | null
           source?: Database["public"]["Enums"]["crm_contact_source"] | null
           state?: string | null
           status?: Database["public"]["Enums"]["crm_contact_status"]
+          target_investment?: string | null
           twilio_contact_id?: string | null
           updated_at?: string
           user_function?: string | null
@@ -2923,6 +2905,7 @@ export type Database = {
           zip?: string | null
         }
         Update: {
+          accredited_status?: string | null
           address_line1?: string | null
           address_line2?: string | null
           assigned_to?: string | null
@@ -2940,8 +2923,11 @@ export type Database = {
           dnc?: boolean | null
           dnc_reason?: string | null
           email?: string | null
+          entity_type?: string | null
           first_name?: string | null
           id?: string
+          investment_interests?: string[] | null
+          investment_timeline?: string | null
           is_independent_broker?: boolean | null
           language_preference?: Database["public"]["Enums"]["language_preference_enum"]
           last_contacted_at?: string | null
@@ -2958,10 +2944,13 @@ export type Database = {
           notes?: string | null
           phone?: string | null
           postmark_contact_id?: string | null
+          private_offer_experience?: string | null
           rating?: Database["public"]["Enums"]["contact_rating_enum"] | null
+          referral_source?: string | null
           source?: Database["public"]["Enums"]["crm_contact_source"] | null
           state?: string | null
           status?: Database["public"]["Enums"]["crm_contact_status"]
+          target_investment?: string | null
           twilio_contact_id?: string | null
           updated_at?: string
           user_function?: string | null
@@ -2969,13 +2958,6 @@ export type Database = {
           zip?: string | null
         }
         Relationships: [
-          {
-            foreignKeyName: "crm_contacts_assigned_to_fkey"
-            columns: ["assigned_to"]
-            isOneToOne: false
-            referencedRelation: "equity_pipeline"
-            referencedColumns: ["assigned_to_profile_id"]
-          },
           {
             foreignKeyName: "crm_contacts_assigned_to_fkey"
             columns: ["assigned_to"]
@@ -3045,13 +3027,6 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "loans"
             referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "crm_contacts_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "equity_pipeline"
-            referencedColumns: ["assigned_to_profile_id"]
           },
           {
             foreignKeyName: "crm_contacts_user_id_fkey"
@@ -3355,13 +3330,6 @@ export type Database = {
             foreignKeyName: "crm_event_attendees_profile_id_fkey"
             columns: ["profile_id"]
             isOneToOne: false
-            referencedRelation: "equity_pipeline"
-            referencedColumns: ["assigned_to_profile_id"]
-          },
-          {
-            foreignKeyName: "crm_event_attendees_profile_id_fkey"
-            columns: ["profile_id"]
-            isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
@@ -3477,13 +3445,6 @@ export type Database = {
             foreignKeyName: "crm_events_created_by_fkey"
             columns: ["created_by"]
             isOneToOne: false
-            referencedRelation: "equity_pipeline"
-            referencedColumns: ["assigned_to_profile_id"]
-          },
-          {
-            foreignKeyName: "crm_events_created_by_fkey"
-            columns: ["created_by"]
-            isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
@@ -3571,14 +3532,111 @@ export type Database = {
             foreignKeyName: "crm_followers_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
-            referencedRelation: "equity_pipeline"
-            referencedColumns: ["assigned_to_profile_id"]
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      deal_application_links: {
+        Row: {
+          completed_at: string | null
+          contact_id: string | null
+          created_at: string
+          created_by: string | null
+          deal_id: string
+          expires_at: string
+          form_id: string
+          id: string
+          label: string | null
+          message: string | null
+          prefill_data: Json | null
+          revoked_at: string | null
+          status: string
+          submission_id: string | null
+          token: string
+        }
+        Insert: {
+          completed_at?: string | null
+          contact_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          deal_id: string
+          expires_at: string
+          form_id: string
+          id?: string
+          label?: string | null
+          message?: string | null
+          prefill_data?: Json | null
+          revoked_at?: string | null
+          status?: string
+          submission_id?: string | null
+          token?: string
+        }
+        Update: {
+          completed_at?: string | null
+          contact_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          deal_id?: string
+          expires_at?: string
+          form_id?: string
+          id?: string
+          label?: string | null
+          message?: string | null
+          prefill_data?: Json | null
+          revoked_at?: string | null
+          status?: string
+          submission_id?: string | null
+          token?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "deal_application_links_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "crm_contacts"
+            referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "crm_followers_user_id_fkey"
-            columns: ["user_id"]
+            foreignKeyName: "deal_application_links_contact_id_fkey"
+            columns: ["contact_id"]
             isOneToOne: false
-            referencedRelation: "profiles"
+            referencedRelation: "crm_contacts_active"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "deal_application_links_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "crm_duplicate_candidates"
+            referencedColumns: ["contact_id"]
+          },
+          {
+            foreignKeyName: "deal_application_links_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "crm_duplicate_candidates"
+            referencedColumns: ["potential_duplicate_id"]
+          },
+          {
+            foreignKeyName: "deal_application_links_deal_id_fkey"
+            columns: ["deal_id"]
+            isOneToOne: false
+            referencedRelation: "unified_deals"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "deal_application_links_form_id_fkey"
+            columns: ["form_id"]
+            isOneToOne: false
+            referencedRelation: "form_definitions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "deal_application_links_submission_id_fkey"
+            columns: ["submission_id"]
+            isOneToOne: false
+            referencedRelation: "form_submissions"
             referencedColumns: ["id"]
           },
         ]
@@ -3586,17 +3644,21 @@ export type Database = {
       deal_borrower_members: {
         Row: {
           borrowing_entity_id: string
-          contact_id: string
+          contact_id: string | null
           created_at: string
           created_by: string | null
           credit_score: number | null
           deal_id: string
+          email: string | null
           experience: number | null
+          first_name: string | null
           id: string
           is_guarantor: boolean
+          last_name: string | null
           liquidity: number | null
           net_worth: number | null
           ownership_pct: number | null
+          phone: string | null
           role: string
           sort_order: number
           updated_at: string
@@ -3604,17 +3666,21 @@ export type Database = {
         }
         Insert: {
           borrowing_entity_id: string
-          contact_id: string
+          contact_id?: string | null
           created_at?: string
           created_by?: string | null
           credit_score?: number | null
           deal_id: string
+          email?: string | null
           experience?: number | null
+          first_name?: string | null
           id?: string
           is_guarantor?: boolean
+          last_name?: string | null
           liquidity?: number | null
           net_worth?: number | null
           ownership_pct?: number | null
+          phone?: string | null
           role?: string
           sort_order?: number
           updated_at?: string
@@ -3622,17 +3688,21 @@ export type Database = {
         }
         Update: {
           borrowing_entity_id?: string
-          contact_id?: string
+          contact_id?: string | null
           created_at?: string
           created_by?: string | null
           credit_score?: number | null
           deal_id?: string
+          email?: string | null
           experience?: number | null
+          first_name?: string | null
           id?: string
           is_guarantor?: boolean
+          last_name?: string | null
           liquidity?: number | null
           net_worth?: number | null
           ownership_pct?: number | null
+          phone?: string | null
           role?: string
           sort_order?: number
           updated_at?: string
@@ -3838,7 +3908,9 @@ export type Database = {
           growth_rate: number | null
           id: string
           is_percentage: boolean | null
+          notes: string | null
           sort_order: number | null
+          source: string
           t12_amount: number | null
           uw_id: string
           year_1_amount: number | null
@@ -3849,7 +3921,9 @@ export type Database = {
           growth_rate?: number | null
           id?: string
           is_percentage?: boolean | null
+          notes?: string | null
           sort_order?: number | null
+          source?: string
           t12_amount?: number | null
           uw_id: string
           year_1_amount?: number | null
@@ -3860,7 +3934,9 @@ export type Database = {
           growth_rate?: number | null
           id?: string
           is_percentage?: boolean | null
+          notes?: string | null
           sort_order?: number | null
+          source?: string
           t12_amount?: number | null
           uw_id?: string
           year_1_amount?: number | null
@@ -3882,6 +3958,9 @@ export type Database = {
           id: string
           is_deduction: boolean | null
           line_item: string
+          meta: Json | null
+          notes: string | null
+          section: string
           sort_order: number | null
           t12_amount: number | null
           uw_id: string
@@ -3893,6 +3972,9 @@ export type Database = {
           id?: string
           is_deduction?: boolean | null
           line_item: string
+          meta?: Json | null
+          notes?: string | null
+          section?: string
           sort_order?: number | null
           t12_amount?: number | null
           uw_id: string
@@ -3904,6 +3986,9 @@ export type Database = {
           id?: string
           is_deduction?: boolean | null
           line_item?: string
+          meta?: Json | null
+          notes?: string | null
+          section?: string
           sort_order?: number | null
           t12_amount?: number | null
           uw_id?: string
@@ -4763,13 +4848,6 @@ export type Database = {
             foreignKeyName: "deal_team_members_profile_id_fkey"
             columns: ["profile_id"]
             isOneToOne: false
-            referencedRelation: "equity_pipeline"
-            referencedColumns: ["assigned_to_profile_id"]
-          },
-          {
-            foreignKeyName: "deal_team_members_profile_id_fkey"
-            columns: ["profile_id"]
-            isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
@@ -4963,13 +5041,6 @@ export type Database = {
             foreignKeyName: "dialer_calls_performed_by_fkey"
             columns: ["performed_by"]
             isOneToOne: false
-            referencedRelation: "equity_pipeline"
-            referencedColumns: ["assigned_to_profile_id"]
-          },
-          {
-            foreignKeyName: "dialer_calls_performed_by_fkey"
-            columns: ["performed_by"]
-            isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
@@ -5123,22 +5194,8 @@ export type Database = {
             foreignKeyName: "dialer_lists_assigned_to_fkey"
             columns: ["assigned_to"]
             isOneToOne: false
-            referencedRelation: "equity_pipeline"
-            referencedColumns: ["assigned_to_profile_id"]
-          },
-          {
-            foreignKeyName: "dialer_lists_assigned_to_fkey"
-            columns: ["assigned_to"]
-            isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "dialer_lists_created_by_fkey"
-            columns: ["created_by"]
-            isOneToOne: false
-            referencedRelation: "equity_pipeline"
-            referencedColumns: ["assigned_to_profile_id"]
           },
           {
             foreignKeyName: "dialer_lists_created_by_fkey"
@@ -5275,13 +5332,6 @@ export type Database = {
             foreignKeyName: "distributions_approved_by_fkey"
             columns: ["approved_by"]
             isOneToOne: false
-            referencedRelation: "equity_pipeline"
-            referencedColumns: ["assigned_to_profile_id"]
-          },
-          {
-            foreignKeyName: "distributions_approved_by_fkey"
-            columns: ["approved_by"]
-            isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
@@ -5375,13 +5425,6 @@ export type Database = {
           target_table?: string
         }
         Relationships: [
-          {
-            foreignKeyName: "document_review_items_approved_by_fkey"
-            columns: ["approved_by"]
-            isOneToOne: false
-            referencedRelation: "equity_pipeline"
-            referencedColumns: ["assigned_to_profile_id"]
-          },
           {
             foreignKeyName: "document_review_items_approved_by_fkey"
             columns: ["approved_by"]
@@ -5483,13 +5526,6 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "unified_deal_documents"
             referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "document_reviews_reviewed_by_fkey"
-            columns: ["reviewed_by"]
-            isOneToOne: false
-            referencedRelation: "equity_pipeline"
-            referencedColumns: ["assigned_to_profile_id"]
           },
           {
             foreignKeyName: "document_reviews_reviewed_by_fkey"
@@ -5660,22 +5696,8 @@ export type Database = {
             foreignKeyName: "documents_owner_id_fkey"
             columns: ["owner_id"]
             isOneToOne: false
-            referencedRelation: "equity_pipeline"
-            referencedColumns: ["assigned_to_profile_id"]
-          },
-          {
-            foreignKeyName: "documents_owner_id_fkey"
-            columns: ["owner_id"]
-            isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "documents_uploaded_by_fkey"
-            columns: ["uploaded_by"]
-            isOneToOne: false
-            referencedRelation: "equity_pipeline"
-            referencedColumns: ["assigned_to_profile_id"]
           },
           {
             foreignKeyName: "documents_uploaded_by_fkey"
@@ -5958,13 +5980,6 @@ export type Database = {
           wire_initiated_by?: string | null
         }
         Relationships: [
-          {
-            foreignKeyName: "draw_requests_borrower_id_fkey"
-            columns: ["borrower_id"]
-            isOneToOne: false
-            referencedRelation: "equity_pipeline"
-            referencedColumns: ["assigned_to_profile_id"]
-          },
           {
             foreignKeyName: "draw_requests_borrower_id_fkey"
             columns: ["borrower_id"]
@@ -6778,13 +6793,6 @@ export type Database = {
             foreignKeyName: "dscr_underwriting_created_by_fkey"
             columns: ["created_by"]
             isOneToOne: false
-            referencedRelation: "equity_pipeline"
-            referencedColumns: ["assigned_to_profile_id"]
-          },
-          {
-            foreignKeyName: "dscr_underwriting_created_by_fkey"
-            columns: ["created_by"]
-            isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
@@ -7079,13 +7087,6 @@ export type Database = {
             foreignKeyName: "email_participants_profile_id_fkey"
             columns: ["profile_id"]
             isOneToOne: false
-            referencedRelation: "equity_pipeline"
-            referencedColumns: ["assigned_to_profile_id"]
-          },
-          {
-            foreignKeyName: "email_participants_profile_id_fkey"
-            columns: ["profile_id"]
-            isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
@@ -7200,6 +7201,69 @@ export type Database = {
           },
         ]
       }
+      entity_audit_log: {
+        Row: {
+          changed_by: string | null
+          changed_via: string
+          created_at: string
+          entity_id: string
+          entity_type: string
+          field_name: string
+          form_definition_id: string | null
+          form_submission_id: string | null
+          id: string
+          new_value: string | null
+          old_value: string | null
+          related_entity_id: string | null
+          related_entity_type: string | null
+        }
+        Insert: {
+          changed_by?: string | null
+          changed_via?: string
+          created_at?: string
+          entity_id: string
+          entity_type: string
+          field_name: string
+          form_definition_id?: string | null
+          form_submission_id?: string | null
+          id?: string
+          new_value?: string | null
+          old_value?: string | null
+          related_entity_id?: string | null
+          related_entity_type?: string | null
+        }
+        Update: {
+          changed_by?: string | null
+          changed_via?: string
+          created_at?: string
+          entity_id?: string
+          entity_type?: string
+          field_name?: string
+          form_definition_id?: string | null
+          form_submission_id?: string | null
+          id?: string
+          new_value?: string | null
+          old_value?: string | null
+          related_entity_id?: string | null
+          related_entity_type?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "entity_audit_log_form_definition_id_fkey"
+            columns: ["form_definition_id"]
+            isOneToOne: false
+            referencedRelation: "form_definitions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "entity_audit_log_form_submission_id_fkey"
+            columns: ["form_submission_id"]
+            isOneToOne: false
+            referencedRelation: "form_submissions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       entity_contacts: {
         Row: {
           contact_id: string
@@ -7278,159 +7342,6 @@ export type Database = {
             columns: ["entity_id"]
             isOneToOne: false
             referencedRelation: "borrower_entities_safe"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      equity_deal_stage_history: {
-        Row: {
-          changed_at: string
-          changed_by: string | null
-          deal_id: string
-          duration_in_previous_stage: string | null
-          from_stage: Database["public"]["Enums"]["equity_deal_stage"]
-          id: string
-          notes: string | null
-          to_stage: Database["public"]["Enums"]["equity_deal_stage"]
-        }
-        Insert: {
-          changed_at?: string
-          changed_by?: string | null
-          deal_id: string
-          duration_in_previous_stage?: string | null
-          from_stage: Database["public"]["Enums"]["equity_deal_stage"]
-          id?: string
-          notes?: string | null
-          to_stage: Database["public"]["Enums"]["equity_deal_stage"]
-        }
-        Update: {
-          changed_at?: string
-          changed_by?: string | null
-          deal_id?: string
-          duration_in_previous_stage?: string | null
-          from_stage?: Database["public"]["Enums"]["equity_deal_stage"]
-          id?: string
-          notes?: string | null
-          to_stage?: Database["public"]["Enums"]["equity_deal_stage"]
-        }
-        Relationships: [
-          {
-            foreignKeyName: "equity_deal_stage_history_deal_id_fkey"
-            columns: ["deal_id"]
-            isOneToOne: false
-            referencedRelation: "equity_deals"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "equity_deal_stage_history_deal_id_fkey"
-            columns: ["deal_id"]
-            isOneToOne: false
-            referencedRelation: "equity_pipeline"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      equity_deal_tasks: {
-        Row: {
-          assigned_to: string | null
-          category: string | null
-          completed_at: string | null
-          completed_by: string | null
-          created_at: string
-          deal_id: string
-          description: string | null
-          due_date: string | null
-          id: string
-          is_critical_path: boolean
-          notes: string | null
-          required_stage:
-            | Database["public"]["Enums"]["equity_deal_stage"]
-            | null
-          responsible_party: string | null
-          sort_order: number
-          status: Database["public"]["Enums"]["equity_task_status"]
-          task_name: string
-          template_item_id: string | null
-          updated_at: string
-        }
-        Insert: {
-          assigned_to?: string | null
-          category?: string | null
-          completed_at?: string | null
-          completed_by?: string | null
-          created_at?: string
-          deal_id: string
-          description?: string | null
-          due_date?: string | null
-          id?: string
-          is_critical_path?: boolean
-          notes?: string | null
-          required_stage?:
-            | Database["public"]["Enums"]["equity_deal_stage"]
-            | null
-          responsible_party?: string | null
-          sort_order?: number
-          status?: Database["public"]["Enums"]["equity_task_status"]
-          task_name: string
-          template_item_id?: string | null
-          updated_at?: string
-        }
-        Update: {
-          assigned_to?: string | null
-          category?: string | null
-          completed_at?: string | null
-          completed_by?: string | null
-          created_at?: string
-          deal_id?: string
-          description?: string | null
-          due_date?: string | null
-          id?: string
-          is_critical_path?: boolean
-          notes?: string | null
-          required_stage?:
-            | Database["public"]["Enums"]["equity_deal_stage"]
-            | null
-          responsible_party?: string | null
-          sort_order?: number
-          status?: Database["public"]["Enums"]["equity_task_status"]
-          task_name?: string
-          template_item_id?: string | null
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "equity_deal_tasks_assigned_to_fkey"
-            columns: ["assigned_to"]
-            isOneToOne: false
-            referencedRelation: "equity_pipeline"
-            referencedColumns: ["assigned_to_profile_id"]
-          },
-          {
-            foreignKeyName: "equity_deal_tasks_assigned_to_fkey"
-            columns: ["assigned_to"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "equity_deal_tasks_deal_id_fkey"
-            columns: ["deal_id"]
-            isOneToOne: false
-            referencedRelation: "equity_deals"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "equity_deal_tasks_deal_id_fkey"
-            columns: ["deal_id"]
-            isOneToOne: false
-            referencedRelation: "equity_pipeline"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "equity_deal_tasks_template_item_id_fkey"
-            columns: ["template_item_id"]
-            isOneToOne: false
-            referencedRelation: "equity_task_template_items"
             referencedColumns: ["id"]
           },
         ]
@@ -7516,13 +7427,6 @@ export type Database = {
             foreignKeyName: "equity_deals_assigned_to_fkey"
             columns: ["assigned_to"]
             isOneToOne: false
-            referencedRelation: "equity_pipeline"
-            referencedColumns: ["assigned_to_profile_id"]
-          },
-          {
-            foreignKeyName: "equity_deals_assigned_to_fkey"
-            columns: ["assigned_to"]
-            isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
@@ -7531,230 +7435,6 @@ export type Database = {
             columns: ["property_id"]
             isOneToOne: false
             referencedRelation: "properties"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      equity_task_template_items: {
-        Row: {
-          category: string | null
-          created_at: string
-          description: string | null
-          due_date_offset_days: number | null
-          id: string
-          is_critical_path: boolean
-          required_stage:
-            | Database["public"]["Enums"]["equity_deal_stage"]
-            | null
-          responsible_party: string | null
-          sort_order: number
-          task_name: string
-          template_id: string
-        }
-        Insert: {
-          category?: string | null
-          created_at?: string
-          description?: string | null
-          due_date_offset_days?: number | null
-          id?: string
-          is_critical_path?: boolean
-          required_stage?:
-            | Database["public"]["Enums"]["equity_deal_stage"]
-            | null
-          responsible_party?: string | null
-          sort_order?: number
-          task_name: string
-          template_id: string
-        }
-        Update: {
-          category?: string | null
-          created_at?: string
-          description?: string | null
-          due_date_offset_days?: number | null
-          id?: string
-          is_critical_path?: boolean
-          required_stage?:
-            | Database["public"]["Enums"]["equity_deal_stage"]
-            | null
-          responsible_party?: string | null
-          sort_order?: number
-          task_name?: string
-          template_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "equity_task_template_items_template_id_fkey"
-            columns: ["template_id"]
-            isOneToOne: false
-            referencedRelation: "equity_task_templates"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      equity_task_templates: {
-        Row: {
-          created_at: string
-          description: string | null
-          id: string
-          is_default: boolean
-          name: string
-          property_type: string | null
-          updated_at: string
-        }
-        Insert: {
-          created_at?: string
-          description?: string | null
-          id?: string
-          is_default?: boolean
-          name: string
-          property_type?: string | null
-          updated_at?: string
-        }
-        Update: {
-          created_at?: string
-          description?: string | null
-          id?: string
-          is_default?: boolean
-          name?: string
-          property_type?: string | null
-          updated_at?: string
-        }
-        Relationships: []
-      }
-      equity_underwriting: {
-        Row: {
-          capex_budget: number | null
-          cash_on_cash: number | null
-          created_at: string
-          created_by: string | null
-          deal_id: string
-          debt_amount: number | null
-          debt_ltv: number | null
-          debt_rate: number | null
-          equity_multiple: number | null
-          equity_required: number | null
-          exit_cap_rate: number | null
-          expense_growth_pct: number | null
-          going_in_cap_rate: number | null
-          hold_period_years: number | null
-          id: string
-          is_active: boolean
-          label: string | null
-          levered_irr: number | null
-          management_fee_pct: number | null
-          noi_stabilized: number | null
-          noi_year1: number | null
-          notes: string | null
-          rent_growth_pct: number | null
-          scenario_id: string | null
-          stabilized_cap_rate: number | null
-          status: string
-          total_project_cost: number | null
-          unlevered_irr: number | null
-          updated_at: string
-          vacancy_rate_pct: number | null
-          version_number: number
-        }
-        Insert: {
-          capex_budget?: number | null
-          cash_on_cash?: number | null
-          created_at?: string
-          created_by?: string | null
-          deal_id: string
-          debt_amount?: number | null
-          debt_ltv?: number | null
-          debt_rate?: number | null
-          equity_multiple?: number | null
-          equity_required?: number | null
-          exit_cap_rate?: number | null
-          expense_growth_pct?: number | null
-          going_in_cap_rate?: number | null
-          hold_period_years?: number | null
-          id?: string
-          is_active?: boolean
-          label?: string | null
-          levered_irr?: number | null
-          management_fee_pct?: number | null
-          noi_stabilized?: number | null
-          noi_year1?: number | null
-          notes?: string | null
-          rent_growth_pct?: number | null
-          scenario_id?: string | null
-          stabilized_cap_rate?: number | null
-          status?: string
-          total_project_cost?: number | null
-          unlevered_irr?: number | null
-          updated_at?: string
-          vacancy_rate_pct?: number | null
-          version_number?: number
-        }
-        Update: {
-          capex_budget?: number | null
-          cash_on_cash?: number | null
-          created_at?: string
-          created_by?: string | null
-          deal_id?: string
-          debt_amount?: number | null
-          debt_ltv?: number | null
-          debt_rate?: number | null
-          equity_multiple?: number | null
-          equity_required?: number | null
-          exit_cap_rate?: number | null
-          expense_growth_pct?: number | null
-          going_in_cap_rate?: number | null
-          hold_period_years?: number | null
-          id?: string
-          is_active?: boolean
-          label?: string | null
-          levered_irr?: number | null
-          management_fee_pct?: number | null
-          noi_stabilized?: number | null
-          noi_year1?: number | null
-          notes?: string | null
-          rent_growth_pct?: number | null
-          scenario_id?: string | null
-          stabilized_cap_rate?: number | null
-          status?: string
-          total_project_cost?: number | null
-          unlevered_irr?: number | null
-          updated_at?: string
-          vacancy_rate_pct?: number | null
-          version_number?: number
-        }
-        Relationships: [
-          {
-            foreignKeyName: "equity_underwriting_created_by_fkey"
-            columns: ["created_by"]
-            isOneToOne: false
-            referencedRelation: "equity_pipeline"
-            referencedColumns: ["assigned_to_profile_id"]
-          },
-          {
-            foreignKeyName: "equity_underwriting_created_by_fkey"
-            columns: ["created_by"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "equity_underwriting_deal_id_fkey"
-            columns: ["deal_id"]
-            isOneToOne: false
-            referencedRelation: "equity_deals"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "equity_underwriting_deal_id_fkey"
-            columns: ["deal_id"]
-            isOneToOne: false
-            referencedRelation: "equity_pipeline"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "equity_underwriting_scenario_id_fkey"
-            columns: ["scenario_id"]
-            isOneToOne: false
-            referencedRelation: "model_scenarios"
             referencedColumns: ["id"]
           },
         ]
@@ -7930,6 +7610,106 @@ export type Database = {
         }
         Relationships: []
       }
+      form_submissions: {
+        Row: {
+          changes: Json | null
+          created_at: string
+          current_step_id: string | null
+          data: Json
+          deal_application_link_id: string | null
+          deal_id: string | null
+          entity_ids: Json | null
+          form_id: string
+          id: string
+          internal_notes: string | null
+          ip_address: unknown
+          prefilled_by: string | null
+          record_id: string | null
+          record_type: string | null
+          session_token: string | null
+          signature_audit: Json | null
+          status: string
+          submitted_by: string | null
+          submitted_by_email: string | null
+          token_expires_at: string | null
+          type: string
+          updated_at: string
+          user_agent: string | null
+        }
+        Insert: {
+          changes?: Json | null
+          created_at?: string
+          current_step_id?: string | null
+          data?: Json
+          deal_application_link_id?: string | null
+          deal_id?: string | null
+          entity_ids?: Json | null
+          form_id: string
+          id?: string
+          internal_notes?: string | null
+          ip_address?: unknown
+          prefilled_by?: string | null
+          record_id?: string | null
+          record_type?: string | null
+          session_token?: string | null
+          signature_audit?: Json | null
+          status?: string
+          submitted_by?: string | null
+          submitted_by_email?: string | null
+          token_expires_at?: string | null
+          type?: string
+          updated_at?: string
+          user_agent?: string | null
+        }
+        Update: {
+          changes?: Json | null
+          created_at?: string
+          current_step_id?: string | null
+          data?: Json
+          deal_application_link_id?: string | null
+          deal_id?: string | null
+          entity_ids?: Json | null
+          form_id?: string
+          id?: string
+          internal_notes?: string | null
+          ip_address?: unknown
+          prefilled_by?: string | null
+          record_id?: string | null
+          record_type?: string | null
+          session_token?: string | null
+          signature_audit?: Json | null
+          status?: string
+          submitted_by?: string | null
+          submitted_by_email?: string | null
+          token_expires_at?: string | null
+          type?: string
+          updated_at?: string
+          user_agent?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "form_submissions_deal_application_link_id_fkey"
+            columns: ["deal_application_link_id"]
+            isOneToOne: false
+            referencedRelation: "deal_application_links"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "form_submissions_deal_id_fkey"
+            columns: ["deal_id"]
+            isOneToOne: false
+            referencedRelation: "unified_deals"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "form_submissions_form_id_fkey"
+            columns: ["form_id"]
+            isOneToOne: false
+            referencedRelation: "form_definitions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       funds: {
         Row: {
           bank_account_info: string | null
@@ -8022,13 +7802,6 @@ export type Database = {
           vintage_year?: number | null
         }
         Relationships: [
-          {
-            foreignKeyName: "funds_created_by_fkey"
-            columns: ["created_by"]
-            isOneToOne: false
-            referencedRelation: "equity_pipeline"
-            referencedColumns: ["assigned_to_profile_id"]
-          },
           {
             foreignKeyName: "funds_created_by_fkey"
             columns: ["created_by"]
@@ -8190,191 +7963,6 @@ export type Database = {
         }
         Relationships: []
       }
-      guc_underwriting: {
-        Row: {
-          assumptions_json: Json | null
-          construction_io: boolean | null
-          construction_loan_amount: number | null
-          construction_ltc: number | null
-          construction_rate: number | null
-          construction_term_months: number | null
-          construction_timeline_months: number | null
-          contingency_pct: number | null
-          created_at: string | null
-          created_by: string | null
-          draw_schedule_json: Json | null
-          dscr_at_stabilization: number | null
-          equity_multiple: number | null
-          exit_cap_rate: number | null
-          exit_loan_amount: number | null
-          exit_rate: number | null
-          exit_strategy: string | null
-          exit_term_months: number | null
-          hard_costs: number | null
-          id: string
-          is_active: boolean
-          label: string | null
-          land_acquisition_date: string | null
-          land_cost: number | null
-          loan_id: string | null
-          lot_size_acres: number | null
-          notes: string | null
-          opportunity_id: string | null
-          origination_fee_pct: number | null
-          profit_on_cost: number | null
-          projected_irr: number | null
-          scenario_id: string | null
-          soft_costs: number | null
-          stabilized_noi: number | null
-          stabilized_value: number | null
-          status: string
-          total_equity_required: number | null
-          total_project_cost: number | null
-          updated_at: string | null
-          version_number: number
-          yield_on_cost: number | null
-          zoning: string | null
-        }
-        Insert: {
-          assumptions_json?: Json | null
-          construction_io?: boolean | null
-          construction_loan_amount?: number | null
-          construction_ltc?: number | null
-          construction_rate?: number | null
-          construction_term_months?: number | null
-          construction_timeline_months?: number | null
-          contingency_pct?: number | null
-          created_at?: string | null
-          created_by?: string | null
-          draw_schedule_json?: Json | null
-          dscr_at_stabilization?: number | null
-          equity_multiple?: number | null
-          exit_cap_rate?: number | null
-          exit_loan_amount?: number | null
-          exit_rate?: number | null
-          exit_strategy?: string | null
-          exit_term_months?: number | null
-          hard_costs?: number | null
-          id?: string
-          is_active?: boolean
-          label?: string | null
-          land_acquisition_date?: string | null
-          land_cost?: number | null
-          loan_id?: string | null
-          lot_size_acres?: number | null
-          notes?: string | null
-          opportunity_id?: string | null
-          origination_fee_pct?: number | null
-          profit_on_cost?: number | null
-          projected_irr?: number | null
-          scenario_id?: string | null
-          soft_costs?: number | null
-          stabilized_noi?: number | null
-          stabilized_value?: number | null
-          status?: string
-          total_equity_required?: number | null
-          total_project_cost?: number | null
-          updated_at?: string | null
-          version_number?: number
-          yield_on_cost?: number | null
-          zoning?: string | null
-        }
-        Update: {
-          assumptions_json?: Json | null
-          construction_io?: boolean | null
-          construction_loan_amount?: number | null
-          construction_ltc?: number | null
-          construction_rate?: number | null
-          construction_term_months?: number | null
-          construction_timeline_months?: number | null
-          contingency_pct?: number | null
-          created_at?: string | null
-          created_by?: string | null
-          draw_schedule_json?: Json | null
-          dscr_at_stabilization?: number | null
-          equity_multiple?: number | null
-          exit_cap_rate?: number | null
-          exit_loan_amount?: number | null
-          exit_rate?: number | null
-          exit_strategy?: string | null
-          exit_term_months?: number | null
-          hard_costs?: number | null
-          id?: string
-          is_active?: boolean
-          label?: string | null
-          land_acquisition_date?: string | null
-          land_cost?: number | null
-          loan_id?: string | null
-          lot_size_acres?: number | null
-          notes?: string | null
-          opportunity_id?: string | null
-          origination_fee_pct?: number | null
-          profit_on_cost?: number | null
-          projected_irr?: number | null
-          scenario_id?: string | null
-          soft_costs?: number | null
-          stabilized_noi?: number | null
-          stabilized_value?: number | null
-          status?: string
-          total_equity_required?: number | null
-          total_project_cost?: number | null
-          updated_at?: string | null
-          version_number?: number
-          yield_on_cost?: number | null
-          zoning?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "guc_underwriting_created_by_fkey"
-            columns: ["created_by"]
-            isOneToOne: false
-            referencedRelation: "equity_pipeline"
-            referencedColumns: ["assigned_to_profile_id"]
-          },
-          {
-            foreignKeyName: "guc_underwriting_created_by_fkey"
-            columns: ["created_by"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "guc_underwriting_loan_id_fkey"
-            columns: ["loan_id"]
-            isOneToOne: false
-            referencedRelation: "loan_pipeline"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "guc_underwriting_loan_id_fkey"
-            columns: ["loan_id"]
-            isOneToOne: false
-            referencedRelation: "loans"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "guc_underwriting_opportunity_id_fkey"
-            columns: ["opportunity_id"]
-            isOneToOne: false
-            referencedRelation: "opportunities"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "guc_underwriting_opportunity_id_fkey"
-            columns: ["opportunity_id"]
-            isOneToOne: false
-            referencedRelation: "opportunity_pipeline"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "guc_underwriting_scenario_id_fkey"
-            columns: ["scenario_id"]
-            isOneToOne: false
-            referencedRelation: "model_scenarios"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       inspection_line_item_assessments: {
         Row: {
           budget_line_item_id: string
@@ -8530,108 +8118,6 @@ export type Database = {
         }
         Relationships: []
       }
-      intake_form: {
-        Row: {
-          branding: Json | null
-          classification_config: Json
-          confirmation_message: string | null
-          created_at: string | null
-          id: string
-          is_active: boolean | null
-          name: string
-          notification_config: Json | null
-          slug: string
-          submission_config: Json
-          updated_at: string | null
-          welcome_message: string | null
-        }
-        Insert: {
-          branding?: Json | null
-          classification_config?: Json
-          confirmation_message?: string | null
-          created_at?: string | null
-          id?: string
-          is_active?: boolean | null
-          name: string
-          notification_config?: Json | null
-          slug: string
-          submission_config?: Json
-          updated_at?: string | null
-          welcome_message?: string | null
-        }
-        Update: {
-          branding?: Json | null
-          classification_config?: Json
-          confirmation_message?: string | null
-          created_at?: string | null
-          id?: string
-          is_active?: boolean | null
-          name?: string
-          notification_config?: Json | null
-          slug?: string
-          submission_config?: Json
-          updated_at?: string | null
-          welcome_message?: string | null
-        }
-        Relationships: []
-      }
-      intake_form_field: {
-        Row: {
-          created_at: string | null
-          display_order: number
-          field_config_id: string | null
-          field_key: string
-          help_text: string | null
-          id: string
-          intake_form_id: string
-          is_required_on_intake: boolean | null
-          label_override: string | null
-          placeholder: string | null
-          section: string | null
-        }
-        Insert: {
-          created_at?: string | null
-          display_order?: number
-          field_config_id?: string | null
-          field_key: string
-          help_text?: string | null
-          id?: string
-          intake_form_id: string
-          is_required_on_intake?: boolean | null
-          label_override?: string | null
-          placeholder?: string | null
-          section?: string | null
-        }
-        Update: {
-          created_at?: string | null
-          display_order?: number
-          field_config_id?: string | null
-          field_key?: string
-          help_text?: string | null
-          id?: string
-          intake_form_id?: string
-          is_required_on_intake?: boolean | null
-          label_override?: string | null
-          placeholder?: string | null
-          section?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "intake_form_field_field_config_id_fkey"
-            columns: ["field_config_id"]
-            isOneToOne: false
-            referencedRelation: "field_configurations"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "intake_form_field_intake_form_id_fkey"
-            columns: ["intake_form_id"]
-            isOneToOne: false
-            referencedRelation: "intake_form"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       intake_items: {
         Row: {
           auto_matched_deal_id: string | null
@@ -8767,50 +8253,6 @@ export type Database = {
             columns: ["email_intake_queue_id"]
             isOneToOne: false
             referencedRelation: "email_intake_queue"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      intake_submission: {
-        Row: {
-          id: string
-          intake_form_id: string | null
-          ip_address: unknown
-          opportunity_id: string | null
-          submission_data: Json
-          submitted_at: string | null
-          submitted_by_email: string | null
-          submitted_by_name: string | null
-          submitted_by_phone: string | null
-        }
-        Insert: {
-          id?: string
-          intake_form_id?: string | null
-          ip_address?: unknown
-          opportunity_id?: string | null
-          submission_data?: Json
-          submitted_at?: string | null
-          submitted_by_email?: string | null
-          submitted_by_name?: string | null
-          submitted_by_phone?: string | null
-        }
-        Update: {
-          id?: string
-          intake_form_id?: string | null
-          ip_address?: unknown
-          opportunity_id?: string | null
-          submission_data?: Json
-          submitted_at?: string | null
-          submitted_by_email?: string | null
-          submitted_by_name?: string | null
-          submitted_by_phone?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "intake_submission_intake_form_id_fkey"
-            columns: ["intake_form_id"]
-            isOneToOne: false
-            referencedRelation: "intake_form"
             referencedColumns: ["id"]
           },
         ]
@@ -9581,13 +9023,6 @@ export type Database = {
             foreignKeyName: "loan_underwriting_versions_created_by_fkey"
             columns: ["created_by"]
             isOneToOne: false
-            referencedRelation: "equity_pipeline"
-            referencedColumns: ["assigned_to_profile_id"]
-          },
-          {
-            foreignKeyName: "loan_underwriting_versions_created_by_fkey"
-            columns: ["created_by"]
-            isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
@@ -10099,13 +9534,6 @@ export type Database = {
             foreignKeyName: "loans_closer_id_fkey"
             columns: ["closer_id"]
             isOneToOne: false
-            referencedRelation: "equity_pipeline"
-            referencedColumns: ["assigned_to_profile_id"]
-          },
-          {
-            foreignKeyName: "loans_closer_id_fkey"
-            columns: ["closer_id"]
-            isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
@@ -10134,22 +9562,8 @@ export type Database = {
             foreignKeyName: "loans_originator_id_fkey"
             columns: ["originator_id"]
             isOneToOne: false
-            referencedRelation: "equity_pipeline"
-            referencedColumns: ["assigned_to_profile_id"]
-          },
-          {
-            foreignKeyName: "loans_originator_id_fkey"
-            columns: ["originator_id"]
-            isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "loans_processor_id_fkey"
-            columns: ["processor_id"]
-            isOneToOne: false
-            referencedRelation: "equity_pipeline"
-            referencedColumns: ["assigned_to_profile_id"]
           },
           {
             foreignKeyName: "loans_processor_id_fkey"
@@ -10164,13 +9578,6 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "properties"
             referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "loans_underwriter_id_fkey"
-            columns: ["underwriter_id"]
-            isOneToOne: false
-            referencedRelation: "equity_pipeline"
-            referencedColumns: ["assigned_to_profile_id"]
           },
           {
             foreignKeyName: "loans_underwriter_id_fkey"
@@ -10266,13 +9673,6 @@ export type Database = {
             foreignKeyName: "model_scenarios_created_by_fkey"
             columns: ["created_by"]
             isOneToOne: false
-            referencedRelation: "equity_pipeline"
-            referencedColumns: ["assigned_to_profile_id"]
-          },
-          {
-            foreignKeyName: "model_scenarios_created_by_fkey"
-            columns: ["created_by"]
-            isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
@@ -10281,13 +9681,6 @@ export type Database = {
             columns: ["equity_deal_id"]
             isOneToOne: false
             referencedRelation: "equity_deals"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "model_scenarios_equity_deal_id_fkey"
-            columns: ["equity_deal_id"]
-            isOneToOne: false
-            referencedRelation: "equity_pipeline"
             referencedColumns: ["id"]
           },
           {
@@ -10387,13 +9780,6 @@ export type Database = {
             foreignKeyName: "note_likes_user_id_profiles_fkey"
             columns: ["user_id"]
             isOneToOne: false
-            referencedRelation: "equity_pipeline"
-            referencedColumns: ["assigned_to_profile_id"]
-          },
-          {
-            foreignKeyName: "note_likes_user_id_profiles_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
@@ -10422,13 +9808,6 @@ export type Database = {
           notification_sent?: boolean | null
         }
         Relationships: [
-          {
-            foreignKeyName: "note_mentions_mentioned_user_id_fkey"
-            columns: ["mentioned_user_id"]
-            isOneToOne: false
-            referencedRelation: "equity_pipeline"
-            referencedColumns: ["assigned_to_profile_id"]
-          },
           {
             foreignKeyName: "note_mentions_mentioned_user_id_fkey"
             columns: ["mentioned_user_id"]
@@ -10539,13 +9918,6 @@ export type Database = {
             foreignKeyName: "notes_author_id_fkey"
             columns: ["author_id"]
             isOneToOne: false
-            referencedRelation: "equity_pipeline"
-            referencedColumns: ["assigned_to_profile_id"]
-          },
-          {
-            foreignKeyName: "notes_author_id_fkey"
-            columns: ["author_id"]
-            isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
@@ -10632,13 +10004,6 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "notes"
             referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "notes_pinned_by_fkey"
-            columns: ["pinned_by"]
-            isOneToOne: false
-            referencedRelation: "equity_pipeline"
-            referencedColumns: ["assigned_to_profile_id"]
           },
           {
             foreignKeyName: "notes_pinned_by_fkey"
@@ -11320,197 +10685,6 @@ export type Database = {
           },
         ]
       }
-      opportunity_contacts: {
-        Row: {
-          contact_id: string
-          display_order: number | null
-          id: string
-          is_primary: boolean
-          linked_at: string
-          linked_by: string | null
-          notes: string | null
-          opportunity_id: string
-          role: string
-          updated_at: string
-        }
-        Insert: {
-          contact_id: string
-          display_order?: number | null
-          id?: string
-          is_primary?: boolean
-          linked_at?: string
-          linked_by?: string | null
-          notes?: string | null
-          opportunity_id: string
-          role?: string
-          updated_at?: string
-        }
-        Update: {
-          contact_id?: string
-          display_order?: number | null
-          id?: string
-          is_primary?: boolean
-          linked_at?: string
-          linked_by?: string | null
-          notes?: string | null
-          opportunity_id?: string
-          role?: string
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "opportunity_contacts_contact_id_fkey"
-            columns: ["contact_id"]
-            isOneToOne: false
-            referencedRelation: "crm_contacts"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "opportunity_contacts_contact_id_fkey"
-            columns: ["contact_id"]
-            isOneToOne: false
-            referencedRelation: "crm_contacts_active"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "opportunity_contacts_contact_id_fkey"
-            columns: ["contact_id"]
-            isOneToOne: false
-            referencedRelation: "crm_duplicate_candidates"
-            referencedColumns: ["contact_id"]
-          },
-          {
-            foreignKeyName: "opportunity_contacts_contact_id_fkey"
-            columns: ["contact_id"]
-            isOneToOne: false
-            referencedRelation: "crm_duplicate_candidates"
-            referencedColumns: ["potential_duplicate_id"]
-          },
-          {
-            foreignKeyName: "opportunity_contacts_opportunity_id_fkey"
-            columns: ["opportunity_id"]
-            isOneToOne: false
-            referencedRelation: "opportunities"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "opportunity_contacts_opportunity_id_fkey"
-            columns: ["opportunity_id"]
-            isOneToOne: false
-            referencedRelation: "opportunity_pipeline"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      opportunity_properties: {
-        Row: {
-          display_order: number | null
-          id: string
-          is_primary: boolean
-          linked_at: string
-          linked_by: string | null
-          notes: string | null
-          opportunity_id: string
-          property_id: string
-          role: string
-          updated_at: string
-        }
-        Insert: {
-          display_order?: number | null
-          id?: string
-          is_primary?: boolean
-          linked_at?: string
-          linked_by?: string | null
-          notes?: string | null
-          opportunity_id: string
-          property_id: string
-          role?: string
-          updated_at?: string
-        }
-        Update: {
-          display_order?: number | null
-          id?: string
-          is_primary?: boolean
-          linked_at?: string
-          linked_by?: string | null
-          notes?: string | null
-          opportunity_id?: string
-          property_id?: string
-          role?: string
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "opportunity_properties_opportunity_id_fkey"
-            columns: ["opportunity_id"]
-            isOneToOne: false
-            referencedRelation: "opportunities"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "opportunity_properties_opportunity_id_fkey"
-            columns: ["opportunity_id"]
-            isOneToOne: false
-            referencedRelation: "opportunity_pipeline"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "opportunity_properties_property_id_fkey"
-            columns: ["property_id"]
-            isOneToOne: false
-            referencedRelation: "properties"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      opportunity_stage_history: {
-        Row: {
-          changed_at: string
-          changed_by: string | null
-          duration_in_previous_stage: string | null
-          from_stage: string
-          id: string
-          notes: string | null
-          opportunity_id: string
-          to_stage: string
-        }
-        Insert: {
-          changed_at?: string
-          changed_by?: string | null
-          duration_in_previous_stage?: string | null
-          from_stage: string
-          id?: string
-          notes?: string | null
-          opportunity_id: string
-          to_stage: string
-        }
-        Update: {
-          changed_at?: string
-          changed_by?: string | null
-          duration_in_previous_stage?: string | null
-          from_stage?: string
-          id?: string
-          notes?: string | null
-          opportunity_id?: string
-          to_stage?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "opportunity_stage_history_opportunity_id_fkey"
-            columns: ["opportunity_id"]
-            isOneToOne: false
-            referencedRelation: "opportunities"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "opportunity_stage_history_opportunity_id_fkey"
-            columns: ["opportunity_id"]
-            isOneToOne: false
-            referencedRelation: "opportunity_pipeline"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       ops_projects: {
         Row: {
           assigned_to: string | null
@@ -11571,22 +10745,8 @@ export type Database = {
             foreignKeyName: "ops_projects_assigned_to_fkey"
             columns: ["assigned_to"]
             isOneToOne: false
-            referencedRelation: "equity_pipeline"
-            referencedColumns: ["assigned_to_profile_id"]
-          },
-          {
-            foreignKeyName: "ops_projects_assigned_to_fkey"
-            columns: ["assigned_to"]
-            isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "ops_projects_created_by_fkey"
-            columns: ["created_by"]
-            isOneToOne: false
-            referencedRelation: "equity_pipeline"
-            referencedColumns: ["assigned_to_profile_id"]
           },
           {
             foreignKeyName: "ops_projects_created_by_fkey"
@@ -11635,13 +10795,6 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "ops_tasks"
             referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "ops_task_attachments_uploaded_by_fkey"
-            columns: ["uploaded_by"]
-            isOneToOne: false
-            referencedRelation: "equity_pipeline"
-            referencedColumns: ["assigned_to_profile_id"]
           },
           {
             foreignKeyName: "ops_task_attachments_uploaded_by_fkey"
@@ -11817,22 +10970,8 @@ export type Database = {
             foreignKeyName: "ops_tasks_assigned_to_fkey"
             columns: ["assigned_to"]
             isOneToOne: false
-            referencedRelation: "equity_pipeline"
-            referencedColumns: ["assigned_to_profile_id"]
-          },
-          {
-            foreignKeyName: "ops_tasks_assigned_to_fkey"
-            columns: ["assigned_to"]
-            isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "ops_tasks_created_by_fkey"
-            columns: ["created_by"]
-            isOneToOne: false
-            referencedRelation: "equity_pipeline"
-            referencedColumns: ["assigned_to_profile_id"]
           },
           {
             foreignKeyName: "ops_tasks_created_by_fkey"
@@ -12160,74 +11299,6 @@ export type Database = {
           },
         ]
       }
-      pipeline_stage_config: {
-        Row: {
-          color: string | null
-          created_at: string
-          id: string
-          is_terminal: boolean
-          label: string
-          pipeline_type: string
-          sla_days: number | null
-          sort_order: number
-          stage_key: string
-        }
-        Insert: {
-          color?: string | null
-          created_at?: string
-          id?: string
-          is_terminal?: boolean
-          label: string
-          pipeline_type: string
-          sla_days?: number | null
-          sort_order?: number
-          stage_key: string
-        }
-        Update: {
-          color?: string | null
-          created_at?: string
-          id?: string
-          is_terminal?: boolean
-          label?: string
-          pipeline_type?: string
-          sla_days?: number | null
-          sort_order?: number
-          stage_key?: string
-        }
-        Relationships: []
-      }
-      pipeline_stage_rules: {
-        Row: {
-          created_at: string | null
-          error_message: string | null
-          field_key: string
-          id: string
-          stage_id: string
-        }
-        Insert: {
-          created_at?: string | null
-          error_message?: string | null
-          field_key: string
-          id?: string
-          stage_id: string
-        }
-        Update: {
-          created_at?: string | null
-          error_message?: string | null
-          field_key?: string
-          id?: string
-          stage_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "pipeline_stage_rules_stage_id_fkey"
-            columns: ["stage_id"]
-            isOneToOne: false
-            referencedRelation: "pipeline_stages"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       pipeline_stages: {
         Row: {
           alert_days: number
@@ -12290,6 +11361,8 @@ export type Database = {
           address_display: string | null
           appfolio_listing_url: string | null
           appfolio_portal_url: string | null
+          baths_range: string | null
+          beds_range: string | null
           city: string
           core_property_id: string | null
           created_at: string
@@ -12301,6 +11374,7 @@ export type Database = {
           name: string
           region_id: string | null
           slug: string
+          starting_price: string | null
           state_code: string | null
           updated_at: string
           zip_code: string | null
@@ -12309,6 +11383,8 @@ export type Database = {
           address_display?: string | null
           appfolio_listing_url?: string | null
           appfolio_portal_url?: string | null
+          baths_range?: string | null
+          beds_range?: string | null
           city: string
           core_property_id?: string | null
           created_at?: string
@@ -12320,6 +11396,7 @@ export type Database = {
           name: string
           region_id?: string | null
           slug: string
+          starting_price?: string | null
           state_code?: string | null
           updated_at?: string
           zip_code?: string | null
@@ -12328,6 +11405,8 @@ export type Database = {
           address_display?: string | null
           appfolio_listing_url?: string | null
           appfolio_portal_url?: string | null
+          baths_range?: string | null
+          beds_range?: string | null
           city?: string
           core_property_id?: string | null
           created_at?: string
@@ -12339,6 +11418,7 @@ export type Database = {
           name?: string
           region_id?: string | null
           slug?: string
+          starting_price?: string | null
           state_code?: string | null
           updated_at?: string
           zip_code?: string | null
@@ -12631,239 +11711,6 @@ export type Database = {
             foreignKeyName: "portal_activity_log_profile_id_fkey"
             columns: ["profile_id"]
             isOneToOne: false
-            referencedRelation: "equity_pipeline"
-            referencedColumns: ["assigned_to_profile_id"]
-          },
-          {
-            foreignKeyName: "portal_activity_log_profile_id_fkey"
-            columns: ["profile_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      portal_documents: {
-        Row: {
-          borrower_entity_id: string | null
-          borrower_id: string | null
-          category: string
-          company_id: string | null
-          created_at: string
-          crm_contact_id: string | null
-          deleted_at: string | null
-          display_name: string | null
-          document_type: string
-          file_name: string
-          file_path: string
-          file_size: number | null
-          fund_id: string | null
-          id: string
-          investing_entity_id: string | null
-          investor_id: string | null
-          loan_id: string | null
-          mime_type: string | null
-          notes: string | null
-          tags: string[] | null
-          updated_at: string
-          uploaded_by: string | null
-          visibility: string
-        }
-        Insert: {
-          borrower_entity_id?: string | null
-          borrower_id?: string | null
-          category?: string
-          company_id?: string | null
-          created_at?: string
-          crm_contact_id?: string | null
-          deleted_at?: string | null
-          display_name?: string | null
-          document_type?: string
-          file_name: string
-          file_path: string
-          file_size?: number | null
-          fund_id?: string | null
-          id?: string
-          investing_entity_id?: string | null
-          investor_id?: string | null
-          loan_id?: string | null
-          mime_type?: string | null
-          notes?: string | null
-          tags?: string[] | null
-          updated_at?: string
-          uploaded_by?: string | null
-          visibility?: string
-        }
-        Update: {
-          borrower_entity_id?: string | null
-          borrower_id?: string | null
-          category?: string
-          company_id?: string | null
-          created_at?: string
-          crm_contact_id?: string | null
-          deleted_at?: string | null
-          display_name?: string | null
-          document_type?: string
-          file_name?: string
-          file_path?: string
-          file_size?: number | null
-          fund_id?: string | null
-          id?: string
-          investing_entity_id?: string | null
-          investor_id?: string | null
-          loan_id?: string | null
-          mime_type?: string | null
-          notes?: string | null
-          tags?: string[] | null
-          updated_at?: string
-          uploaded_by?: string | null
-          visibility?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "portal_documents_borrower_entity_id_fkey"
-            columns: ["borrower_entity_id"]
-            isOneToOne: false
-            referencedRelation: "borrower_entities"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "portal_documents_borrower_entity_id_fkey"
-            columns: ["borrower_entity_id"]
-            isOneToOne: false
-            referencedRelation: "borrower_entities_safe"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "portal_documents_borrower_id_fkey"
-            columns: ["borrower_id"]
-            isOneToOne: false
-            referencedRelation: "borrowers"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "portal_documents_borrower_id_fkey"
-            columns: ["borrower_id"]
-            isOneToOne: false
-            referencedRelation: "borrowers_portal"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "portal_documents_borrower_id_fkey"
-            columns: ["borrower_id"]
-            isOneToOne: false
-            referencedRelation: "borrowers_safe"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "portal_documents_company_id_fkey"
-            columns: ["company_id"]
-            isOneToOne: false
-            referencedRelation: "companies"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "portal_documents_crm_contact_id_fkey"
-            columns: ["crm_contact_id"]
-            isOneToOne: false
-            referencedRelation: "crm_contacts"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "portal_documents_crm_contact_id_fkey"
-            columns: ["crm_contact_id"]
-            isOneToOne: false
-            referencedRelation: "crm_contacts_active"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "portal_documents_crm_contact_id_fkey"
-            columns: ["crm_contact_id"]
-            isOneToOne: false
-            referencedRelation: "crm_duplicate_candidates"
-            referencedColumns: ["contact_id"]
-          },
-          {
-            foreignKeyName: "portal_documents_crm_contact_id_fkey"
-            columns: ["crm_contact_id"]
-            isOneToOne: false
-            referencedRelation: "crm_duplicate_candidates"
-            referencedColumns: ["potential_duplicate_id"]
-          },
-          {
-            foreignKeyName: "portal_documents_fund_id_fkey"
-            columns: ["fund_id"]
-            isOneToOne: false
-            referencedRelation: "funds"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "portal_documents_investing_entity_id_fkey"
-            columns: ["investing_entity_id"]
-            isOneToOne: false
-            referencedRelation: "investing_entities"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "portal_documents_investing_entity_id_fkey"
-            columns: ["investing_entity_id"]
-            isOneToOne: false
-            referencedRelation: "investing_entities_portal"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "portal_documents_investing_entity_id_fkey"
-            columns: ["investing_entity_id"]
-            isOneToOne: false
-            referencedRelation: "investing_entities_safe"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "portal_documents_investor_id_fkey"
-            columns: ["investor_id"]
-            isOneToOne: false
-            referencedRelation: "investors"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "portal_documents_investor_id_fkey"
-            columns: ["investor_id"]
-            isOneToOne: false
-            referencedRelation: "investors_portal"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "portal_documents_investor_id_fkey"
-            columns: ["investor_id"]
-            isOneToOne: false
-            referencedRelation: "investors_safe"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "portal_documents_loan_id_fkey"
-            columns: ["loan_id"]
-            isOneToOne: false
-            referencedRelation: "loan_pipeline"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "portal_documents_loan_id_fkey"
-            columns: ["loan_id"]
-            isOneToOne: false
-            referencedRelation: "loans"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "portal_documents_uploaded_by_profiles_fkey"
-            columns: ["uploaded_by"]
-            isOneToOne: false
-            referencedRelation: "equity_pipeline"
-            referencedColumns: ["assigned_to_profile_id"]
-          },
-          {
-            foreignKeyName: "portal_documents_uploaded_by_profiles_fkey"
-            columns: ["uploaded_by"]
-            isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
@@ -13081,10 +11928,12 @@ export type Database = {
           created_at: string
           default_language: string | null
           display_name: string | null
+          gchat_sender_email: string | null
           gchat_webhook_url: string | null
           id: string
           knowledge_base: Json | null
           manager_email: string | null
+          manager_gchat_email: string | null
           manager_name: string | null
           manager_phone: string | null
           monday_person_id: number | null
@@ -13114,10 +11963,12 @@ export type Database = {
           created_at?: string
           default_language?: string | null
           display_name?: string | null
+          gchat_sender_email?: string | null
           gchat_webhook_url?: string | null
           id?: string
           knowledge_base?: Json | null
           manager_email?: string | null
+          manager_gchat_email?: string | null
           manager_name?: string | null
           manager_phone?: string | null
           monday_person_id?: number | null
@@ -13147,10 +11998,12 @@ export type Database = {
           created_at?: string
           default_language?: string | null
           display_name?: string | null
+          gchat_sender_email?: string | null
           gchat_webhook_url?: string | null
           id?: string
           knowledge_base?: Json | null
           manager_email?: string | null
+          manager_gchat_email?: string | null
           manager_name?: string | null
           manager_phone?: string | null
           monday_person_id?: number | null
@@ -13640,22 +12493,8 @@ export type Database = {
             foreignKeyName: "recurring_task_templates_assigned_to_fkey"
             columns: ["assigned_to"]
             isOneToOne: false
-            referencedRelation: "equity_pipeline"
-            referencedColumns: ["assigned_to_profile_id"]
-          },
-          {
-            foreignKeyName: "recurring_task_templates_assigned_to_fkey"
-            columns: ["assigned_to"]
-            isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "recurring_task_templates_created_by_fkey"
-            columns: ["created_by"]
-            isOneToOne: false
-            referencedRelation: "equity_pipeline"
-            referencedColumns: ["assigned_to_profile_id"]
           },
           {
             foreignKeyName: "recurring_task_templates_created_by_fkey"
@@ -14461,45 +13300,69 @@ export type Database = {
       }
       site_insights: {
         Row: {
+          audience: string
+          author: string | null
           body_content: string | null
+          category: string | null
           created_at: string
           detail_page_url: string | null
           excerpt: string | null
+          featured_image_url: string | null
           id: string
           is_published: boolean
+          meta_description: string | null
           published_date: string | null
+          reading_time_minutes: number | null
+          scheduled_publish_date: string | null
           slug: string
           sort_order: number
+          status: string
           tags: string[] | null
           thumbnail_url: string | null
           title: string
           updated_at: string
         }
         Insert: {
+          audience?: string
+          author?: string | null
           body_content?: string | null
+          category?: string | null
           created_at?: string
           detail_page_url?: string | null
           excerpt?: string | null
+          featured_image_url?: string | null
           id?: string
           is_published?: boolean
+          meta_description?: string | null
           published_date?: string | null
+          reading_time_minutes?: number | null
+          scheduled_publish_date?: string | null
           slug: string
           sort_order?: number
+          status?: string
           tags?: string[] | null
           thumbnail_url?: string | null
           title: string
           updated_at?: string
         }
         Update: {
+          audience?: string
+          author?: string | null
           body_content?: string | null
+          category?: string | null
           created_at?: string
           detail_page_url?: string | null
           excerpt?: string | null
+          featured_image_url?: string | null
           id?: string
           is_published?: boolean
+          meta_description?: string | null
           published_date?: string | null
+          reading_time_minutes?: number | null
+          scheduled_publish_date?: string | null
           slug?: string
           sort_order?: number
+          status?: string
           tags?: string[] | null
           thumbnail_url?: string | null
           title?: string
@@ -14773,10 +13636,12 @@ export type Database = {
       site_testimonials: {
         Row: {
           author_name: string
+          category: string
           created_at: string
           id: string
           is_featured: boolean
           is_published: boolean
+          loan_product: string | null
           quote: string
           rating: number
           sort_order: number
@@ -14784,10 +13649,12 @@ export type Database = {
         }
         Insert: {
           author_name: string
+          category?: string
           created_at?: string
           id?: string
           is_featured?: boolean
           is_published?: boolean
+          loan_product?: string | null
           quote: string
           rating?: number
           sort_order?: number
@@ -14795,10 +13662,12 @@ export type Database = {
         }
         Update: {
           author_name?: string
+          category?: string
           created_at?: string
           id?: string
           is_featured?: boolean
           is_published?: boolean
+          loan_product?: string | null
           quote?: string
           rating?: number
           sort_order?: number
@@ -14969,13 +13838,6 @@ export type Database = {
             foreignKeyName: "sop_questions_log_profile_id_fkey"
             columns: ["profile_id"]
             isOneToOne: false
-            referencedRelation: "equity_pipeline"
-            referencedColumns: ["assigned_to_profile_id"]
-          },
-          {
-            foreignKeyName: "sop_questions_log_profile_id_fkey"
-            columns: ["profile_id"]
-            isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
@@ -15016,13 +13878,6 @@ export type Database = {
           status?: string
         }
         Relationships: [
-          {
-            foreignKeyName: "sop_staleness_flags_resolved_by_fkey"
-            columns: ["resolved_by"]
-            isOneToOne: false
-            referencedRelation: "equity_pipeline"
-            referencedColumns: ["assigned_to_profile_id"]
-          },
           {
             foreignKeyName: "sop_staleness_flags_resolved_by_fkey"
             columns: ["resolved_by"]
@@ -16140,13 +14995,6 @@ export type Database = {
             foreignKeyName: "unified_deal_documents_uploaded_by_fkey"
             columns: ["uploaded_by"]
             isOneToOne: false
-            referencedRelation: "equity_pipeline"
-            referencedColumns: ["assigned_to_profile_id"]
-          },
-          {
-            foreignKeyName: "unified_deal_documents_uploaded_by_fkey"
-            columns: ["uploaded_by"]
-            isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
@@ -16280,22 +15128,8 @@ export type Database = {
             foreignKeyName: "unified_deal_tasks_assigned_to_fkey"
             columns: ["assigned_to"]
             isOneToOne: false
-            referencedRelation: "equity_pipeline"
-            referencedColumns: ["assigned_to_profile_id"]
-          },
-          {
-            foreignKeyName: "unified_deal_tasks_assigned_to_fkey"
-            columns: ["assigned_to"]
-            isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "unified_deal_tasks_created_by_fkey"
-            columns: ["created_by"]
-            isOneToOne: false
-            referencedRelation: "equity_pipeline"
-            referencedColumns: ["assigned_to_profile_id"]
           },
           {
             foreignKeyName: "unified_deal_tasks_created_by_fkey"
@@ -17011,58 +15845,6 @@ export type Database = {
           },
         ]
       }
-      workflow_stage_history: {
-        Row: {
-          created_at: string | null
-          from_stage_id: string | null
-          id: string
-          instance_id: string | null
-          note: string | null
-          to_stage_id: string | null
-          transitioned_by: string | null
-        }
-        Insert: {
-          created_at?: string | null
-          from_stage_id?: string | null
-          id?: string
-          instance_id?: string | null
-          note?: string | null
-          to_stage_id?: string | null
-          transitioned_by?: string | null
-        }
-        Update: {
-          created_at?: string | null
-          from_stage_id?: string | null
-          id?: string
-          instance_id?: string | null
-          note?: string | null
-          to_stage_id?: string | null
-          transitioned_by?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "workflow_stage_history_from_stage_id_fkey"
-            columns: ["from_stage_id"]
-            isOneToOne: false
-            referencedRelation: "workflow_stages"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "workflow_stage_history_instance_id_fkey"
-            columns: ["instance_id"]
-            isOneToOne: false
-            referencedRelation: "workflow_instances"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "workflow_stage_history_to_stage_id_fkey"
-            columns: ["to_stage_id"]
-            isOneToOne: false
-            referencedRelation: "workflow_stages"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       workflow_stages: {
         Row: {
           alert_after_days: number | null
@@ -17487,13 +16269,6 @@ export type Database = {
             foreignKeyName: "crm_contacts_assigned_to_fkey"
             columns: ["assigned_to"]
             isOneToOne: false
-            referencedRelation: "equity_pipeline"
-            referencedColumns: ["assigned_to_profile_id"]
-          },
-          {
-            foreignKeyName: "crm_contacts_assigned_to_fkey"
-            columns: ["assigned_to"]
-            isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
@@ -17564,13 +16339,6 @@ export type Database = {
             foreignKeyName: "crm_contacts_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
-            referencedRelation: "equity_pipeline"
-            referencedColumns: ["assigned_to_profile_id"]
-          },
-          {
-            foreignKeyName: "crm_contacts_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
@@ -17609,61 +16377,6 @@ export type Database = {
           urgency: string | null
         }
         Relationships: []
-      }
-      equity_pipeline: {
-        Row: {
-          actual_close_date: string | null
-          asking_price: number | null
-          asset_type: string | null
-          assigned_to: string | null
-          assigned_to_profile_id: string | null
-          completed_tasks: number | null
-          created_at: string | null
-          days_in_stage: number | null
-          deal_name: string | null
-          deal_number: string | null
-          equity_multiple: number | null
-          expected_close_date: string | null
-          going_in_cap_rate: number | null
-          id: string | null
-          investment_thesis: string | null
-          levered_irr: number | null
-          loss_reason: string | null
-          lot_size_acres: number | null
-          number_of_units: number | null
-          offer_price: number | null
-          property_address: string | null
-          property_city: string | null
-          property_state: string | null
-          property_type: string | null
-          property_zip: string | null
-          purchase_price: number | null
-          source: Database["public"]["Enums"]["equity_deal_source"] | null
-          stabilized_cap_rate: number | null
-          stage: Database["public"]["Enums"]["equity_deal_stage"] | null
-          stage_changed_at: string | null
-          target_irr: number | null
-          total_tasks: number | null
-          underwriting_status: string | null
-          updated_at: string | null
-          value_add_strategy: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "equity_deals_assigned_to_fkey"
-            columns: ["assigned_to"]
-            isOneToOne: false
-            referencedRelation: "equity_pipeline"
-            referencedColumns: ["assigned_to_profile_id"]
-          },
-          {
-            foreignKeyName: "equity_deals_assigned_to_fkey"
-            columns: ["assigned_to"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
       }
       investing_entities_portal: {
         Row: {
@@ -18077,13 +16790,6 @@ export type Database = {
             foreignKeyName: "ops_tasks_assigned_to_fkey"
             columns: ["user_id"]
             isOneToOne: false
-            referencedRelation: "equity_pipeline"
-            referencedColumns: ["assigned_to_profile_id"]
-          },
-          {
-            foreignKeyName: "ops_tasks_assigned_to_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
@@ -18298,6 +17004,7 @@ export type Database = {
           profile_id: string
         }[]
       }
+      lookup_contact_by_email: { Args: { p_email: string }; Returns: Json }
       match_email_to_entities: {
         Args: { lookup_email: string }
         Returns: {
@@ -18313,6 +17020,7 @@ export type Database = {
       match_or_create_property: { Args: { p_loan_id: string }; Returns: string }
       my_borrower_ids: { Args: never; Returns: string[] }
       my_investor_ids: { Args: never; Returns: string[] }
+      publish_scheduled_blog_posts: { Args: never; Returns: undefined }
       recalc_combined_borrower_financials: {
         Args: { p_loan_id: string }
         Returns: undefined
@@ -19298,4 +18006,3 @@ export const Constants = {
     },
   },
 } as const
-

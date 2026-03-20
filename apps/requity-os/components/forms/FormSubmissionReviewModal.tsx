@@ -45,7 +45,7 @@ export function FormSubmissionReviewModal({
   const { toast } = useToast();
   const [isPending, startTransition] = useTransition();
   const formData = (submission.data as Record<string, unknown>) || {};
-  const entityIds = (submission.entity_ids as Record<string, unknown>) || {};
+  const entityIds = (submission.entity_ids as Record<string, string | undefined>) || {};
 
   // Pre-fill from form data
   const prefilledDealName = (formData.deal_name as string) || 

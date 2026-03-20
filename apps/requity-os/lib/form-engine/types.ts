@@ -94,6 +94,7 @@ export type SubmissionStatus =
   | "partial"
   | "pending_borrower"
   | "submitted"
+  | "pending_review"
   | "reviewed"
   | "processed";
 
@@ -119,6 +120,7 @@ export interface FormSubmission {
   token_expires_at: string;
   created_at: string;
   updated_at: string;
+  internal_notes?: string | null;
 }
 
 export interface FieldChange {

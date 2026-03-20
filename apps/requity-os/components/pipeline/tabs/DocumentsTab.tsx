@@ -24,7 +24,7 @@ import {
   triggerDocumentAnalysis,
   getDocumentSignedUrl,
   updateDocumentVisibility,
-} from "@/app/(authenticated)/admin/pipeline/[id]/actions";
+} from "@/app/(authenticated)/(admin)/pipeline/[id]/actions";
 import { ReviewStatusBadge } from "@/components/pipeline/ReviewStatusBadge";
 import { DocumentReviewPanel } from "@/components/pipeline/DocumentReviewPanel";
 import { useDocumentReviewStatus } from "@/hooks/useDocumentReviewStatus";
@@ -181,7 +181,7 @@ export function DocumentsTab({
             toast.success(`Uploaded ${file.name}`);
             if (saveResult.documentId) {
               triggerDocumentAnalysis(saveResult.documentId, dealId).then(
-                (result) => {
+                (result: { error: string | null }) => {
                   if (result.error) {
                     toast.error(
                       `AI review failed for ${file.name}: ${result.error}`
