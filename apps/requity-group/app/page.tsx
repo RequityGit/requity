@@ -38,11 +38,12 @@ export default async function HomePage() {
     // Render page with empty sections so app never goes blank
   }
 
-  // Home: exactly 3 testimonials from Marshall, Ben, Russell (first names only); Todd stays on /testimonials
-  const HOME_TESTIMONIAL_FIRST_NAMES: string[] = ["Marshall", "Ben", "Russell"];
   const getFirstName = (authorName: string) => (authorName ?? "").trim().split(/\s+/)[0] ?? "";
-  const featuredTestimonials = testimonials
-    .filter((t) => t?.author_name && HOME_TESTIMONIAL_FIRST_NAMES.includes(getFirstName(t.author_name)))
+
+  // Investor testimonials: Marshall, Ben, Russell
+  const HOME_TESTIMONIAL_FIRST_NAMES: string[] = ["Marshall", "Ben", "Russell"];
+  const investorTestimonials = testimonials
+    .filter((t) => t?.category === "investor" && t?.author_name && HOME_TESTIMONIAL_FIRST_NAMES.includes(getFirstName(t.author_name)))
     .sort((a, b) => {
       const order = [...HOME_TESTIMONIAL_FIRST_NAMES];
       const i = (name: string) => order.indexOf(getFirstName(name));
@@ -208,9 +209,29 @@ export default async function HomePage() {
                   Earn consistent, asset-backed income through our bridge lending platform. Every loan is secured
                   by first-lien positions on residential and commercial real estate with conservative underwriting.
                 </p>
-                <Link href="/lending" className="btn-editorial">
-                  Explore Lending <span className="arrow">&rarr;</span>
-                </Link>
+                <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-start", gap: 16 }}>
+                  <Link href="/fund" className="btn-editorial">
+                    View Fund Details <span className="arrow">&rarr;</span>
+                  </Link>
+                  <Link
+                    href="/lending"
+                    className="borrower-home-cta"
+                    style={{
+                      fontSize: 13,
+                      fontWeight: 400,
+                      color: "var(--text-light)",
+                      textDecoration: "none",
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: 6,
+                      transition: "color 0.2s ease",
+                      borderBottom: "1px solid transparent",
+                      paddingBottom: 1,
+                    }}
+                  >
+                    Looking for a loan? Apply here <span className="arrow">&rarr;</span>
+                  </Link>
+                </div>
               </div>
               <div className="card" style={{ padding: "28px 32px" }}>
                 <div style={{ display: "flex", justifyContent: "space-between", padding: "12px 0", borderBottom: "1px solid var(--border-light)" }}>
@@ -279,8 +300,8 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {/* Testimonials */}
-      {featuredTestimonials.length > 0 && (
+      {/* Investor Testimonials */}
+      {investorTestimonials.length > 0 && (
         <section className="cream-zone section-pad-lg">
           <div className="container">
             <ScrollReveal>
@@ -297,7 +318,7 @@ export default async function HomePage() {
                   gap: 24,
                 }}
               >
-                {featuredTestimonials.map((t) => (
+                {investorTestimonials.map((t) => (
                   <div key={t.id} className="test-card">
                     <div className="big-q">&ldquo;</div>
                     <p className="quote-text">&ldquo;{t.quote}&rdquo;</p>
@@ -367,6 +388,16 @@ export default async function HomePage() {
             Request Access <ArrowRight size={16} />
           </Link>
         }
+      />
+      <style
+        dangerouslySetInnerHTML={{
+          __html: `
+            .borrower-home-cta:hover {
+              color: var(--text) !important;
+              border-bottom-color: var(--text-light) !important;
+            }
+          `,
+        }}
       />
     </main>
   );

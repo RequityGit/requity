@@ -1,6 +1,10 @@
 {
   "name": "requity-monorepo",
   "private": true,
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/RequityGit/requity.git"
+  },
   "scripts": {
     "dev": "turbo run dev",
     "build": "turbo run build",

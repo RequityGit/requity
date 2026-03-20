@@ -108,8 +108,14 @@ export default async function LendingPage() {
       description: string;
     }>) ?? [];
 
+  const getFirstName = (name: string) => (name ?? "").trim().split(/\s+/)[0] ?? "";
+  const getLastInitial = (name: string) => {
+    const parts = (name ?? "").trim().split(/\s+/);
+    return parts.length > 1 ? `${parts[parts.length - 1]?.[0]?.toUpperCase()}.` : "";
+  };
   const featuredTestimonials = testimonials
-    .filter((t) => t.is_featured)
+    .filter((t) => t.category === "borrower" && t.is_published)
+    .sort((a, b) => a.sort_order - b.sort_order)
     .slice(0, 3);
 
   const lendingFAQs = [
@@ -568,7 +574,7 @@ export default async function LendingPage() {
                   <div key={t.id} className="test-card">
                     <div className="big-q">&ldquo;</div>
                     <p className="quote-text">&ldquo;{t.quote}&rdquo;</p>
-                    <div className="author-name">{t.author_name}</div>
+                    <div className="author-name">{getFirstName(t.author_name)} {getLastInitial(t.author_name)}, Borrower</div>
                   </div>
                 ))}
               </div>

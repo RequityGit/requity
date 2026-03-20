@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { ArrowRight, Check, Mail, ArrowLeft } from "lucide-react";
+import { ArrowRight, Check, Mail, ArrowLeft, Calendar } from "lucide-react";
 import { formatPhone } from "@repo/lib";
 
 const US_STATES = [
@@ -30,7 +30,7 @@ const QUICK_INTERESTS = [
 ];
 
 export default function RequestAccessPage() {
-  const [step, setStep] = useState<"form" | "profile" | "complete">("form");
+  const [step, setStep] = useState<"form" | "schedule" | "profile" | "complete">("form");
 
   const [form, setForm] = useState({
     firstName: "",
@@ -114,7 +114,7 @@ export default function RequestAccessPage() {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Submission failed");
-      setStep("profile");
+      setStep("schedule");
       window.scrollTo({ top: 0, behavior: "smooth" });
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));
@@ -238,7 +238,124 @@ export default function RequestAccessPage() {
         </section>
       )}
 
-      {/* ── Step 2: Thank you + profile (reframed) ── */}
+      {/* ── Step 2: Schedule a Call ── */}
+      {step === "schedule" && (
+        <>
+          <section
+            className="dark-zone hero-gradient"
+            style={{
+              paddingTop: "clamp(140px, 18vw, 200px)",
+              paddingBottom: "clamp(60px, 8vw, 80px)",
+              position: "relative",
+              overflow: "hidden",
+              textAlign: "center",
+            }}
+          >
+            <div className="navy-grid-pattern">
+              {Array.from({ length: 14 }).map((_, i) => (
+                <div key={i} className="navy-grid-line" style={{ left: `${(i + 1) * 7.14}%` }} />
+              ))}
+            </div>
+            <div className="container" style={{ position: "relative", zIndex: 1 }}>
+              <div className="ra-confirm-icon-hero">
+                <Check size={32} />
+              </div>
+              <h1
+                className="section-title section-title-light"
+                style={{
+                  fontSize: "clamp(32px, 4.5vw, 48px)",
+                  maxWidth: 600,
+                  margin: "0 auto 16px",
+                }}
+              >
+                You&apos;re In, <em>{form.firstName}</em>
+              </h1>
+              <p className="section-desc section-desc-light" style={{ maxWidth: 480, margin: "0 auto 24px" }}>
+                We are preparing your investor materials now. In the meantime, the fastest way to get started is to schedule a quick call.
+              </p>
+              <span className="ra-confirm-email" style={{ marginBottom: 36, display: "inline-flex" }}>
+                <Mail size={14} /> Confirmation sent to {form.email}
+              </span>
+            </div>
+          </section>
+
+          <section
+            className="dark-zone"
+            style={{
+              paddingTop: 0,
+              paddingBottom: "clamp(80px, 10vw, 120px)",
+              textAlign: "center",
+              position: "relative",
+            }}
+          >
+            <div className="container" style={{ maxWidth: 520 }}>
+              <div className="ra-schedule-card">
+                <div className="ra-schedule-icon">
+                  <Calendar size={24} />
+                </div>
+                <h2 style={{
+                  fontFamily: "var(--font-serif)",
+                  fontSize: "clamp(22px, 3vw, 28px)",
+                  fontWeight: 400,
+                  color: "#fff",
+                  marginBottom: 10,
+                }}>
+                  Schedule a call with Dylan
+                </h2>
+                <p style={{
+                  fontSize: 15,
+                  lineHeight: 1.7,
+                  color: "var(--navy-text-mid)",
+                  maxWidth: 400,
+                  margin: "0 auto 28px",
+                }}>
+                  Skip the back and forth. We will walk through the opportunities, answer your questions, and find the right fit for your portfolio.
+                </p>
+                <a
+                  href="https://calendar.google.com/calendar/appointments/schedules/AcZssZ11B1grjySJ2v7jfyINpfSngKmXiP2UAV4-or9gefawxQ0ABQC6CTb_ldLZE_o56JLIbB5pooAt?gv=true"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="ra-schedule-btn"
+                >
+                  <Calendar size={16} />
+                  Schedule a Call
+                </a>
+                <p style={{
+                  fontSize: 12,
+                  color: "rgba(255,255,255,0.25)",
+                  marginTop: 16,
+                }}>
+                  15-minute intro call via Google Meet
+                </p>
+              </div>
+              <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 12, marginTop: 32 }}>
+                <button
+                  type="button"
+                  onClick={() => { setStep("profile"); window.scrollTo({ top: 0, behavior: "smooth" }); }}
+                  style={{
+                    background: "none",
+                    border: "none",
+                    color: "rgba(255,255,255,0.4)",
+                    cursor: "pointer",
+                    fontSize: 14,
+                    fontFamily: "var(--font-sans)",
+                    textDecoration: "underline",
+                    textUnderlineOffset: 3,
+                    padding: "8px 16px",
+                    transition: "color 0.2s",
+                  }}
+                  onMouseEnter={(e) => e.currentTarget.style.color = "rgba(255,255,255,0.7)"}
+                  onMouseLeave={(e) => e.currentTarget.style.color = "rgba(255,255,255,0.4)"}
+                >
+                  Tell us more about yourself instead
+                </button>
+              </div>
+            </div>
+          </section>
+        </>
+      )}
+
+      {/* ── Step 3: Optional profile ── */}
       {step === "profile" && (
         <>
           <section
@@ -433,7 +550,7 @@ export default function RequestAccessPage() {
         </>
       )}
 
-      {/* ── Step 3: Complete ── */}
+      {/* ── Step 4: Complete ── */}
       {step === "complete" && (
         <>
           <section
@@ -471,7 +588,7 @@ export default function RequestAccessPage() {
               <span className="ra-confirm-email" style={{ marginBottom: 36, display: "inline-flex" }}>
                 <Mail size={14} /> A confirmation has been sent to {form.email}
               </span>
-              <div style={{ marginTop: 24 }}>
+              <div style={{ marginTop: 32 }}>
                 <Link href="/" className="btn-editorial-light">
                   Back to Home <span className="arrow"><ArrowRight size={14} /></span>
                 </Link>
@@ -758,6 +875,47 @@ export default function RequestAccessPage() {
           gap: 6px;
           font-size: 13px;
           color: rgba(255,255,255,0.4);
+        }
+        .ra-schedule-card {
+          background: rgba(255,255,255,0.03);
+          border: 1px solid rgba(255,255,255,0.08);
+          border-radius: 16px;
+          padding: clamp(32px, 4vw, 48px);
+          animation: fadeUp 0.6s 0.2s ease both;
+        }
+        .ra-schedule-icon {
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          width: 48px;
+          height: 48px;
+          border-radius: 50%;
+          background: rgba(160,138,78,0.12);
+          color: var(--gold-muted);
+          margin-bottom: 20px;
+        }
+        .ra-schedule-btn {
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          gap: 10px;
+          padding: 15px 40px;
+          background: var(--gold);
+          color: #fff;
+          border: none;
+          border-radius: 8px;
+          font-family: var(--font-sans);
+          font-size: 15px;
+          font-weight: 600;
+          letter-spacing: 0.3px;
+          text-decoration: none;
+          transition: all 0.25s;
+          cursor: pointer;
+        }
+        .ra-schedule-btn:hover {
+          background: var(--gold-muted);
+          transform: translateY(-1px);
+          box-shadow: 0 4px 20px rgba(160,138,78,0.35);
         }
         .ra-checks {
           display: grid;

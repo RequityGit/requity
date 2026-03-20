@@ -76,6 +76,8 @@ export default function LoanIntakePage() {
 
   const addressInputRef = useRef<HTMLInputElement>(null);
   const autocompleteRef = useRef<unknown>(null);
+  /** Always call the latest advance() from stale closures (Places autocomplete, setTimeout after loan type). */
+  const advanceRef = useRef<() => void>(() => {});
 
   const [form, setForm] = useState<Record<string, string>>({
     loanType: "", propertyAddress: "", city: "", state: "",
@@ -106,8 +108,9 @@ export default function LoanIntakePage() {
 
   const screens = ["loanType", "address", "dealSizing", ...(hasAutoTerms ? ["borrowerProfile"] : []), "terms", "contact"];
   const totalScreens = screens.length;
-  const currentScreenId = screens[screen] || "loanType";
-  const progressPercent = Math.round(((screen + 1) / totalScreens) * 100);
+  const clampedScreen = Math.min(Math.max(0, screen), Math.max(0, totalScreens - 1));
+  const currentScreenId = screens[clampedScreen] ?? "loanType";
+  const progressPercent = Math.round(((clampedScreen + 1) / totalScreens) * 100);
 
   /* ── Thousands input (preserved) ── */
   const handleThousandsKeyDown = (field: string) => (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -147,75 +150,7 @@ export default function LoanIntakePage() {
     setError("");
   };
 
-  /* ── Google Places (preserved) ── */
-  const initAutocomplete = useCallback(() => {
-    if (!addressInputRef.current || !(window as any).google?.maps?.places) return;
-    if (autocompleteRef.current) return;
-    const ac = new (window as any).google.maps.places.Autocomplete(addressInputRef.current, {
-      types: ["address"], componentRestrictions: { country: "us" }, fields: ["address_components", "formatted_address"],
-    });
-    ac.addListener("place_changed", () => {
-      const place = ac.getPlace();
-      if (place.address_components) {
-        let streetNumber = "", route = "", city = "", st = "", zip = "";
-        for (const c of place.address_components) {
-          const t = c.types;
-          if (t.includes("street_number")) streetNumber = c.long_name;
-          if (t.includes("route")) route = c.long_name;
-          if (t.includes("locality")) city = c.long_name;
-          if (t.includes("sublocality_level_1") && !city) city = c.long_name;
-          if (t.includes("administrative_area_level_1")) st = c.short_name;
-          if (t.includes("postal_code")) zip = c.long_name;
-        }
-        const street = streetNumber ? `${streetNumber} ${route}` : route;
-        const display = [street, city, st].filter(Boolean).join(", ") + (zip ? ` ${zip}` : "");
-        if (addressInputRef.current) addressInputRef.current.value = display;
-        setForm((prev) => ({ ...prev, propertyAddress: street || display || prev.propertyAddress, city: city || prev.city, state: st || prev.state }));
-        setTimeout(() => advance(), 400);
-      }
-    });
-    autocompleteRef.current = ac;
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  useEffect(() => {
-    if ((window as any).google?.maps?.places) { initAutocomplete(); return; }
-    fetch("/api/maps-config").then((r) => r.json()).then(({ key }) => {
-      if (!key) return;
-      const existing = document.querySelector('script[src*="maps.googleapis.com/maps/api/js"]');
-      if (existing) { existing.addEventListener("load", () => initAutocomplete(), { once: true }); return; }
-      const s = document.createElement("script");
-      s.src = `https://maps.googleapis.com/maps/api/js?key=${key}&libraries=places`;
-      s.async = true; s.defer = true;
-      s.onload = () => initAutocomplete();
-      document.head.appendChild(s);
-    }).catch(() => {});
-  }, [initAutocomplete]);
-
-  useEffect(() => {
-    if (currentScreenId === "address") {
-      const t = setTimeout(() => { initAutocomplete(); addressInputRef.current?.focus(); }, 350);
-      return () => clearTimeout(t);
-    }
-    if (autocompleteRef.current && (window as any).google?.maps?.event) {
-      (window as any).google.maps.event.clearInstanceListeners(autocompleteRef.current);
-    }
-    autocompleteRef.current = null;
-    document.querySelectorAll(".pac-container").forEach((el) => el.remove());
-  }, [screen, initAutocomplete, currentScreenId]);
-
-  /* ── Slider sync ── */
-  useEffect(() => {
-    const tc = parseCurrency(form.purchasePrice) + parseCurrency(form.rehabBudget);
-    if (tc > 0) {
-      const amount = Math.round((tc * sliderPercent) / 100);
-      setForm((prev) => ({ ...prev, loanAmount: formatCurrencyInput(String(amount)) }));
-    } else {
-      setForm((prev) => ({ ...prev, loanAmount: "" }));
-    }
-  }, [form.purchasePrice, form.rehabBudget, sliderPercent]);
-
-  /* ── Navigation ── */
+  /* ── Navigation (above Places init so autocomplete uses latest advance via advanceRef) ── */
   function advance() {
     if (currentScreenId === "address" && addressInputRef.current) {
       const domValue = addressInputRef.current.value;
@@ -224,7 +159,6 @@ export default function LoanIntakePage() {
     const err = validateScreen();
     if (err) { setError(err); return; }
 
-    // Generate terms when advancing past relevant screens
     if ((currentScreenId === "dealSizing" || currentScreenId === "borrowerProfile") && hasAutoTerms) {
       let program;
       if (COMMERCIAL_TERM_TYPES.includes(form.loanType)) {
@@ -239,6 +173,7 @@ export default function LoanIntakePage() {
     setAnimateIn(false);
     setTimeout(() => { setScreen((s) => Math.min(s + 1, totalScreens - 1)); setAnimateIn(true); }, 50);
   }
+  advanceRef.current = advance;
 
   function goBack() {
     setDirection(-1);
@@ -293,13 +228,81 @@ export default function LoanIntakePage() {
     } finally { setSubmitting(false); }
   }
 
+  /* ── Google Places (preserved) ── */
+  const initAutocomplete = useCallback(() => {
+    if (!addressInputRef.current || !(window as any).google?.maps?.places) return;
+    if (autocompleteRef.current) return;
+    const ac = new (window as any).google.maps.places.Autocomplete(addressInputRef.current, {
+      types: ["address"], componentRestrictions: { country: "us" }, fields: ["address_components", "formatted_address"],
+    });
+    ac.addListener("place_changed", () => {
+      const place = ac.getPlace();
+      if (place.address_components) {
+        let streetNumber = "", route = "", city = "", st = "", zip = "";
+        for (const c of place.address_components) {
+          const t = c.types;
+          if (t.includes("street_number")) streetNumber = c.long_name;
+          if (t.includes("route")) route = c.long_name;
+          if (t.includes("locality")) city = c.long_name;
+          if (t.includes("sublocality_level_1") && !city) city = c.long_name;
+          if (t.includes("administrative_area_level_1")) st = c.short_name;
+          if (t.includes("postal_code")) zip = c.long_name;
+        }
+        const street = streetNumber ? `${streetNumber} ${route}` : route;
+        const display = [street, city, st].filter(Boolean).join(", ") + (zip ? ` ${zip}` : "");
+        if (addressInputRef.current) addressInputRef.current.value = display;
+        setForm((prev) => ({ ...prev, propertyAddress: street || display || prev.propertyAddress, city: city || prev.city, state: st || prev.state }));
+        setTimeout(() => advanceRef.current(), 400);
+      }
+    });
+    autocompleteRef.current = ac;
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
+    if ((window as any).google?.maps?.places) { initAutocomplete(); return; }
+    fetch("/api/maps-config").then((r) => r.json()).then(({ key }) => {
+      if (!key) return;
+      const existing = document.querySelector('script[src*="maps.googleapis.com/maps/api/js"]');
+      if (existing) { existing.addEventListener("load", () => initAutocomplete(), { once: true }); return; }
+      const s = document.createElement("script");
+      s.src = `https://maps.googleapis.com/maps/api/js?key=${key}&libraries=places`;
+      s.async = true; s.defer = true;
+      s.onload = () => initAutocomplete();
+      document.head.appendChild(s);
+    }).catch(() => {});
+  }, [initAutocomplete]);
+
+  useEffect(() => {
+    if (currentScreenId === "address") {
+      const t = setTimeout(() => { initAutocomplete(); addressInputRef.current?.focus(); }, 350);
+      return () => clearTimeout(t);
+    }
+    if (autocompleteRef.current && (window as any).google?.maps?.event) {
+      (window as any).google.maps.event.clearInstanceListeners(autocompleteRef.current);
+    }
+    autocompleteRef.current = null;
+    document.querySelectorAll(".pac-container").forEach((el) => el.remove());
+  }, [screen, initAutocomplete, currentScreenId]);
+
+  /* ── Slider sync ── */
+  useEffect(() => {
+    const tc = parseCurrency(form.purchasePrice) + parseCurrency(form.rehabBudget);
+    if (tc > 0) {
+      const amount = Math.round((tc * sliderPercent) / 100);
+      setForm((prev) => ({ ...prev, loanAmount: formatCurrencyInput(String(amount)) }));
+    } else {
+      setForm((prev) => ({ ...prev, loanAmount: "" }));
+    }
+  }, [form.purchasePrice, form.rehabBudget, sliderPercent]);
+
   /* ── Keyboard ── */
   useEffect(() => {
     function handleKey(e: KeyboardEvent) {
       if (e.key === "Enter" && currentScreenId !== "loanType" && currentScreenId !== "address") {
         e.preventDefault();
         if (currentScreenId === "contact") handleSubmit();
-        else advance();
+        else advanceRef.current();
       }
     }
     window.addEventListener("keydown", handleKey);
@@ -339,7 +342,7 @@ export default function LoanIntakePage() {
       {/* Step nav */}
       <div className="apply-step-nav">
         <div className="apply-nav-left">
-          {screen > 0 ? (
+          {clampedScreen > 0 ? (
             <button type="button" onClick={goBack} className="apply-back-btn"><ArrowLeft size={16} /> Back</button>
           ) : (
             <Link href="/lending" className="apply-back-btn"><ArrowLeft size={16} /> Lending</Link>
@@ -347,7 +350,7 @@ export default function LoanIntakePage() {
         </div>
         <div className="apply-step-dots">
           {screens.map((s, i) => (
-            <div key={s} className={`apply-step-dot${i === screen ? " active" : ""}${i < screen ? " done" : ""}`} />
+            <div key={s} className={`apply-step-dot${i === clampedScreen ? " active" : ""}${i < clampedScreen ? " done" : ""}`} />
           ))}
         </div>
         <div className="apply-nav-right">
@@ -371,7 +374,7 @@ export default function LoanIntakePage() {
                 {COMMERCIAL_TYPES.map((lt) => (
                   <button key={lt.id} type="button"
                     className={`apply-type-card${form.loanType === lt.id ? " selected" : ""}`}
-                    onClick={() => { setForm((prev) => ({ ...prev, loanType: lt.id })); setError(""); setTimeout(() => advance(), 200); }}>
+                    onClick={() => { setForm((prev) => ({ ...prev, loanType: lt.id })); setError(""); setTimeout(() => advanceRef.current(), 200); }}>
                     <div className="apply-type-icon">{LOAN_ICONS[lt.id]}</div>
                     <div className="apply-type-name">{lt.label}</div>
                   </button>
@@ -382,7 +385,7 @@ export default function LoanIntakePage() {
                 {RESIDENTIAL_TYPES.map((lt) => (
                   <button key={lt.id} type="button"
                     className={`apply-type-card${form.loanType === lt.id ? " selected" : ""}`}
-                    onClick={() => { setForm((prev) => ({ ...prev, loanType: lt.id })); setError(""); setTimeout(() => advance(), 200); }}>
+                    onClick={() => { setForm((prev) => ({ ...prev, loanType: lt.id })); setError(""); setTimeout(() => advanceRef.current(), 200); }}>
                     <div className="apply-type-icon">{LOAN_ICONS[lt.id]}</div>
                     <div className="apply-type-name">{lt.label}</div>
                   </button>

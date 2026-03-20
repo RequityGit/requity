@@ -35,6 +35,8 @@ export interface Testimonial {
   sort_order: number;
   is_published: boolean;
   is_featured: boolean;
+  category: "investor" | "borrower";
+  loan_product?: string | null;
 }
 
 export interface SiteValue {
