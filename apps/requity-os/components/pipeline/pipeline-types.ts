@@ -65,6 +65,7 @@ export interface UnifiedCardType {
   slug: string;
   label: string;
   capital_side: CapitalSide;
+  category: string;
   description: string | null;
   card_metrics: CardMetricDef[];
   card_icon: string;
@@ -72,6 +73,19 @@ export interface UnifiedCardType {
   applicable_asset_classes: string[] | null;
   status: CardTypeStatus;
   sort_order: number;
+  uw_model_key: string;
+  uw_fields: UwFieldDef[];
+  uw_outputs: UwOutputDef[];
+  uw_grid: GridTemplateDef | null;
+  uw_field_refs: CardTypeFieldRef[];
+  detail_tabs: string[];
+  detail_field_groups: FieldGroupDef[];
+  property_fields: UwFieldDef[];
+  property_field_groups: FieldGroupDef[];
+  property_field_refs: CardTypeFieldRef[];
+  contact_fields: UwFieldDef[];
+  contact_field_groups: FieldGroupDef[];
+  contact_field_refs: CardTypeFieldRef[];
 }
 
 export interface UnifiedDeal {
