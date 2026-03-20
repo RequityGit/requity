@@ -197,10 +197,18 @@ export default async function DealDetailRoute({ params }: PageProps) {
     let uwRecord = uwRawTyped.data;
 
     if (!uwRecord) {
-      const ensureResult = await ensureCommercialUW(dealId);
+      // Commercial deal but no UW record - ensure it exists and fetch versions in parallel
+      // Versions query uses opportunity_id, so it can run in parallel with ensureCommercialUW
+      const [ensureResult, versionsRes] = await Promise.all([
+        ensureCommercialUW(dealId),
+        admin.from("deal_commercial_uw" as never).select("id, version, status, created_at, created_by" as never).eq("opportunity_id" as never, dealId as never).order("version" as never, { ascending: false }),
+      ]);
+
       if (ensureResult.error) {
         console.error("[CommercialUW] Failed to auto-init UW:", ensureResult.error);
       }
+
+      // Fetch the UW record (it should exist after ensureCommercialUW)
       const retryRaw = await admin
         .from("deal_commercial_uw" as never)
         .select("*")
@@ -209,9 +217,35 @@ export default async function DealDetailRoute({ params }: PageProps) {
         .limit(1)
         .maybeSingle();
       uwRecord = (retryRaw as unknown as { data: Record<string, unknown> | null }).data;
-    }
 
-    if (uwRecord) {
+      if (uwRecord) {
+        const uwId = uwRecord.id as string;
+        // Fetch all 7 sub-tables in parallel (they all require uw_id)
+        const [incomeRes, expensesRes, rentRollRes, scopeRes, suRes, debtRes, waterfallRes] =
+          await Promise.all([
+            admin.from("deal_commercial_income" as never).select("*").eq("uw_id" as never, uwId as never).order("sort_order" as never),
+            admin.from("deal_commercial_expenses" as never).select("*").eq("uw_id" as never, uwId as never).order("sort_order" as never),
+            admin.from("deal_commercial_rent_roll" as never).select("*").eq("uw_id" as never, uwId as never).order("sort_order" as never),
+            admin.from("deal_commercial_scope_of_work" as never).select("*").eq("uw_id" as never, uwId as never).order("sort_order" as never),
+            admin.from("deal_commercial_sources_uses" as never).select("*").eq("uw_id" as never, uwId as never).order("sort_order" as never),
+            admin.from("deal_commercial_debt" as never).select("*").eq("uw_id" as never, uwId as never).order("sort_order" as never),
+            admin.from("deal_commercial_waterfall" as never).select("*").eq("uw_id" as never, uwId as never).order("tier_order" as never),
+          ]);
+
+        commercialUWData = {
+          uw: uwRecord,
+          income: ((incomeRes as unknown as { data: Record<string, unknown>[] | null }).data ?? []),
+          expenses: ((expensesRes as unknown as { data: Record<string, unknown>[] | null }).data ?? []),
+          rentRoll: ((rentRollRes as unknown as { data: Record<string, unknown>[] | null }).data ?? []),
+          scopeOfWork: ((scopeRes as unknown as { data: Record<string, unknown>[] | null }).data ?? []),
+          sourcesUses: ((suRes as unknown as { data: Record<string, unknown>[] | null }).data ?? []),
+          debt: ((debtRes as unknown as { data: Record<string, unknown>[] | null }).data ?? []),
+          waterfall: ((waterfallRes as unknown as { data: Record<string, unknown>[] | null }).data ?? []),
+          allVersions: ((versionsRes as unknown as { data: Record<string, unknown>[] | null }).data ?? []),
+        };
+      }
+    } else {
+      // UW record exists from speculative fetch - fetch sub-tables
       const uwId = uwRecord.id as string;
       const [incomeRes, expensesRes, rentRollRes, scopeRes, suRes, debtRes, waterfallRes, versionsRes] =
         await Promise.all([
