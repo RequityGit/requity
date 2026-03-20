@@ -882,7 +882,122 @@ export async function resolveIntakeItemAction(data: {
         .eq("id", data.cardTypeId)
         .single();
 
-      // Create the deal using the existing action logic
+      // Fetch FULL extracted data from the intake queue (don't rely solely on frontend)
+      const { data: fullIntake } = await admin
+        .from("email_intake_queue")
+        .select("extracted_deal_fields, extraction_summary, body_preview, from_email, from_name, subject, attachments")
+        .eq("id", data.intakeQueueId)
+        .single();
+
+      // Also fetch parsed_data from intake_items for richer field data
+      const { data: intakeItem } = await admin
+        .from("intake_items")
+        .select("parsed_data")
+        .eq("email_intake_queue_id", data.intakeQueueId)
+        .single();
+
+      const extracted = fullIntake?.extracted_deal_fields as Record<string, { value: unknown; confidence: number }> | null;
+      const parsed = intakeItem?.parsed_data as Record<string, unknown> | null;
+
+      // Helper to get a value from parsed_data or extracted_deal_fields
+      const getField = (key: string): string | number | null => {
+        if (parsed?.[key] != null && parsed[key] !== "") return parsed[key] as string | number;
+        if (extracted?.[key]?.value != null && extracted[key].value !== "") return extracted[key].value as string | number;
+        return null;
+      };
+
+      // Build comprehensive uw_data from ALL sources
+      const uwData: Record<string, unknown> = {};
+      if (data.uwFields) Object.assign(uwData, data.uwFields);
+
+      // Map parsed fields into uw_data (only if not already set by frontend)
+      const uwMappings: Record<string, string> = {
+        ltv: "ltv", dscr: "dscr", arv: "arv", noi: "noi",
+        cap_rate: "cap_rate", capRate: "cap_rate",
+        units: "units", sqft: "sqft", year_built: "year_built",
+        rehab_budget: "rehab_budget", closing_date: "closing_date",
+        existing_debt: "existing_debt", cash_flow: "cash_flow",
+        coc_return: "coc_return", debt_service: "debt_service",
+        seller_financing: "seller_financing", purchase_price: "purchase_price",
+        loanAmount: "loan_amount", loan_amount: "loan_amount",
+        loanType: "loan_type", loan_type: "loan_type",
+        propertyType: "property_type", property_type: "property_type",
+        propertyCount: "property_count", property_count: "property_count",
+        interestRate: "interest_rate", interest_rate: "interest_rate",
+      };
+
+      for (const [srcKey, destKey] of Object.entries(uwMappings)) {
+        if (uwData[destKey] == null) {
+          const val = getField(srcKey);
+          if (val != null) uwData[destKey] = val;
+        }
+      }
+
+      // Build property_data JSONB
+      const propertyData: Record<string, unknown> = {};
+      const propAddr = getField("propertyAddress") || getField("property_address");
+      const propCity = getField("propertyCity") || getField("property_city");
+      const propState = getField("propertyState") || getField("property_state");
+      const propType = getField("propertyType") || getField("property_type");
+      if (propAddr) propertyData.address = propAddr;
+      if (propCity) propertyData.city = propCity;
+      if (propState) propertyData.state = propState;
+      if (propType) propertyData.property_type = propType;
+
+      // Determine loan_type for the top-level column
+      const loanType = (getField("loanType") || getField("loan_type")) as string | null;
+
+      // Build the catch-all notes text (goes directly on the deal.notes column)
+      const noteLines: string[] = [];
+      noteLines.push(`Source: Email from ${fullIntake?.from_name || ""} <${fullIntake?.from_email || ""}>`);
+      noteLines.push(`Subject: ${fullIntake?.subject || "(no subject)"}`);
+      if (fullIntake?.extraction_summary) {
+        noteLines.push(`\nAI Summary: ${fullIntake.extraction_summary}`);
+      }
+
+      // Broker info
+      const brokerName = getField("brokerName") || getField("broker_name");
+      const brokerEmail = getField("brokerEmail") || getField("broker_email");
+      const brokerPhone = getField("brokerPhone") || getField("broker_phone");
+      const brokerCompany = getField("brokerCompany") || getField("broker_company");
+      if (brokerName || brokerEmail) {
+        noteLines.push(`\nBroker: ${brokerName || ""} ${brokerEmail ? `<${brokerEmail}>` : ""} ${brokerPhone || ""}`);
+        if (brokerCompany) noteLines.push(`Company: ${brokerCompany}`);
+      }
+
+      // Borrower info
+      const borrowerName = getField("borrowerName") || getField("borrower_name");
+      const borrowerEmail = getField("borrowerEmail") || getField("borrower_email");
+      const borrowerPhone = getField("borrowerPhone") || getField("borrower_phone");
+      const borrowerEntity = getField("borrowerEntityName") || getField("borrower_entity_name");
+      if (borrowerName || borrowerEmail) {
+        noteLines.push(`\nBorrower: ${borrowerName || ""} ${borrowerEmail ? `<${borrowerEmail}>` : ""} ${borrowerPhone || ""}`);
+        if (borrowerEntity) noteLines.push(`Entity: ${borrowerEntity}`);
+      }
+
+      // Dump ALL extracted fields
+      if (extracted) {
+        const fieldEntries = Object.entries(extracted)
+          .filter(([k, f]) => !k.startsWith("_") && f.value != null && f.value !== "")
+          .sort(([, a], [, b]) => (b.confidence || 0) - (a.confidence || 0));
+        if (fieldEntries.length > 0) {
+          noteLines.push("\nAll Extracted Fields:");
+          for (const [key, field] of fieldEntries) {
+            const label = key.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+            noteLines.push(`  ${label}: ${field.value}`);
+          }
+        }
+      }
+
+      // Dump parsed_data notes if present
+      const parsedNotes = getField("notes");
+      if (parsedNotes) {
+        noteLines.push(`\nDetailed Notes: ${parsedNotes}`);
+      }
+
+      const catchAllNotes = noteLines.join("\n");
+
+      // Create the deal with ALL available data
       const insertData: UnifiedDealInsert = {
         name: data.dealFields?.name || "Untitled Deal",
         card_type_id: data.cardTypeId,
@@ -890,9 +1005,12 @@ export async function resolveIntakeItemAction(data: {
         asset_class: data.dealFields?.asset_class || null,
         amount: data.dealFields?.amount || null,
         created_by: auth.user.id,
-        ...(data.uwFields && Object.keys(data.uwFields).length > 0
-          ? { uw_data: data.uwFields as Json }
-          : {}),
+        source: "email_intake",
+        source_detail: brokerName ? `Broker: ${brokerName}${brokerCompany ? ` (${brokerCompany})` : ""}` : fullIntake?.from_email || null,
+        notes: catchAllNotes,
+        ...(loanType ? { loan_type: loanType } : {}),
+        ...(Object.keys(uwData).length > 0 ? { uw_data: uwData as Json } : {}),
+        ...(Object.keys(propertyData).length > 0 ? { property_data: propertyData as Json } : {}),
       };
 
       const { data: deal, error: dealError } = await admin
@@ -904,6 +1022,83 @@ export async function resolveIntakeItemAction(data: {
       if (dealError) {
         console.error("resolveIntakeItemAction create deal error:", dealError);
         return { error: dealError.message };
+      }
+
+      // Auto-create/link broker as CRM contact
+      if (brokerEmail) {
+        try {
+          // Check if contact already exists by email
+          const { data: existingContact } = await admin
+            .from("crm_contacts")
+            .select("id, company_id")
+            .eq("email", String(brokerEmail).toLowerCase())
+            .limit(1)
+            .single();
+
+          let contactId = existingContact?.id;
+          let companyId = existingContact?.company_id;
+
+          if (!contactId) {
+            // Create company first if we have broker_company
+            if (brokerCompany && !companyId) {
+              const { data: existingCompany } = await admin
+                .from("companies")
+                .select("id")
+                .ilike("name", String(brokerCompany))
+                .limit(1)
+                .single();
+
+              if (existingCompany) {
+                companyId = existingCompany.id;
+              } else {
+                const { data: newCompany } = await admin
+                  .from("companies")
+                  .insert({
+                    name: String(brokerCompany),
+                    source: "email_intake",
+                  } as never)
+                  .select("id")
+                  .single();
+                companyId = newCompany?.id;
+              }
+            }
+
+            // Parse broker name into first/last
+            const nameParts = String(brokerName || "").trim().split(/\s+/);
+            const firstName = nameParts[0] || "";
+            const lastName = nameParts.slice(1).join(" ") || "";
+
+            const { data: newContact } = await admin
+              .from("crm_contacts")
+              .insert({
+                first_name: firstName,
+                last_name: lastName,
+                email: String(brokerEmail).toLowerCase(),
+                phone: brokerPhone ? String(brokerPhone) : null,
+                company_name: brokerCompany ? String(brokerCompany) : null,
+                company_id: companyId || null,
+                source: "broker",
+                status: "active",
+              } as never)
+              .select("id")
+              .single();
+            contactId = newContact?.id;
+          }
+
+          // Link contact to the deal
+          if (contactId) {
+            await admin
+              .from("unified_deals")
+              .update({
+                primary_contact_id: contactId,
+                ...(companyId ? { company_id: companyId } : {}),
+              })
+              .eq("id", deal.id);
+          }
+        } catch (contactErr) {
+          console.error("Failed to auto-create broker contact:", contactErr);
+          // Non-fatal: deal was already created
+        }
       }
 
       // Generate conditions (non-fatal)
@@ -998,51 +1193,27 @@ export async function resolveIntakeItemAction(data: {
           created_by: auth.user.id,
         });
 
-      // Catch-all notes: dump ALL extracted fields into a deal note so nothing gets lost.
-      // Fields that mapped to deal columns are included for reference alongside unmapped fields.
+      // Also create a note in the notes table as a backup (deal.notes column already has the data)
       try {
-        const { data: fullQueue } = await admin
-          .from("email_intake_queue")
-          .select("extracted_deal_fields, extraction_summary, body_preview, from_email, from_name, subject")
-          .eq("id", data.intakeQueueId)
-          .single();
-
-        if (fullQueue) {
-          const extractedFields = fullQueue.extracted_deal_fields as Record<string, { value: unknown; confidence: number }> | null;
-          const lines: string[] = [];
-
-          lines.push(`Source: Email intake from ${fullQueue.from_name || ""} <${fullQueue.from_email}>`);
-          lines.push(`Subject: ${fullQueue.subject || "(no subject)"}`);
-          if (fullQueue.extraction_summary) {
-            lines.push(`\nAI Summary: ${fullQueue.extraction_summary}`);
-          }
-
-          if (extractedFields) {
-            const fieldEntries = Object.entries(extractedFields)
-              .filter(([k, f]) => !k.startsWith("_") && f.value != null)
-              .sort(([, a], [, b]) => (b.confidence || 0) - (a.confidence || 0));
-
-            if (fieldEntries.length > 0) {
-              lines.push("\nExtracted Fields:");
-              for (const [key, field] of fieldEntries) {
-                const label = key.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
-                lines.push(`  ${label}: ${field.value}`);
-              }
-            }
-          }
-
-          const noteContent = lines.join("\n");
-
+        await admin.from("notes").insert({
+          deal_id: deal.id,
+          body: `**Email Intake - ${fullIntake?.subject || "No subject"}**\n\n${catchAllNotes}`,
+          author_id: auth.user.id,
+          author_name: "Email Intake",
+          is_internal: true,
+        });
+      } catch (noteErr) {
+        // FK constraint on author_id -> profiles may fail; try without author_id
+        try {
           await admin.from("notes").insert({
             deal_id: deal.id,
-            body: noteContent,
-            author_id: auth.user.id,
+            body: `**Email Intake - ${fullIntake?.subject || "No subject"}**\n\n${catchAllNotes}`,
+            author_name: "Email Intake",
             is_internal: true,
-          });
+          } as never);
+        } catch (noteErr2) {
+          console.error("Failed to create intake note (both attempts):", noteErr2);
         }
-      } catch (noteErr) {
-        console.error("Failed to create catch-all intake note:", noteErr);
-        // Non-fatal: deal was already created successfully
       }
 
       // Mark intake item as resolved
