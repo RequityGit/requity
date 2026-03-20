@@ -123,9 +123,11 @@ export function IntakeReviewSheet({ item, cardTypes, open, onOpenChange }: Intak
   const [mergeNote, setMergeNote] = useState("");
   const [searching, setSearching] = useState(false);
 
-  // Editable deal fields
+  // Editable deal fields and UW fields
   const [editedDealFields, setEditedDealFields] = useState<Record<string, string>>({});
+  const [editedUwFields, setEditedUwFields] = useState<Record<string, string>>({});
   const [selectedCardTypeId, setSelectedCardTypeId] = useState<string>("");
+  const [showRawEmail, setShowRawEmail] = useState(false);
 
   // Initialize editable fields when item changes
   const dealFields = useMemo(() => {
@@ -155,6 +157,14 @@ export function IntakeReviewSheet({ item, cardTypes, open, onOpenChange }: Intak
     setEditedDealFields((prev) => ({ ...prev, [key]: value }));
   };
 
+  const handleUwFieldChange = (key: string, value: string) => {
+    setEditedUwFields((prev) => ({ ...prev, [key]: value }));
+  };
+
+  const getCurrentUwFields = () => {
+    return { ...uwFields, ...editedUwFields };
+  };
+
   const effectiveCardTypeId = selectedCardTypeId || item?.suggested_card_type_id || "";
 
   const handleCreateDeal = () => {
@@ -172,7 +182,7 @@ export function IntakeReviewSheet({ item, cardTypes, open, onOpenChange }: Intak
           amount: fields.amount ? parseFloat(fields.amount) : undefined,
           asset_class: fields.asset_class || undefined,
         },
-        uwFields: uwFields,
+        uwFields: getCurrentUwFields(),
       });
 
       if (result?.error) {
@@ -301,15 +311,22 @@ export function IntakeReviewSheet({ item, cardTypes, open, onOpenChange }: Intak
         {/* Scrollable content */}
         <ScrollArea className="flex-1">
           <div className="p-6 space-y-6">
-            {/* Email body preview */}
+            {/* Email body preview (expandable) */}
             {item.body_preview && (
               <div className="space-y-1">
-                <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                  Email Preview
-                </Label>
-                <p className="text-xs text-muted-foreground whitespace-pre-wrap rounded-lg border p-3 max-h-32 overflow-y-auto">
-                  {item.body_preview}
-                </p>
+                <button
+                  type="button"
+                  className="flex items-center gap-1 text-xs font-semibold uppercase tracking-wider text-muted-foreground hover:text-foreground transition-colors"
+                  onClick={() => setShowRawEmail((prev) => !prev)}
+                >
+                  <Mail className="h-3 w-3" />
+                  Original Email {showRawEmail ? "(collapse)" : "(expand)"}
+                </button>
+                {showRawEmail && (
+                  <p className="text-xs text-muted-foreground whitespace-pre-wrap rounded-lg border p-3 max-h-64 overflow-y-auto">
+                    {item.body_preview}
+                  </p>
+                )}
               </div>
             )}
 
@@ -319,36 +336,45 @@ export function IntakeReviewSheet({ item, cardTypes, open, onOpenChange }: Intak
                 <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                   Attachments ({item.attachments.length})
                 </Label>
+                {item.attachments.some((a) => a.extraction_status?.startsWith("upload_failed") || a.extraction_status === "skipped_too_large") && (
+                  <div className="flex items-center gap-1.5 text-amber-600 text-[11px] rounded-md border border-amber-500/30 bg-amber-500/5 p-2">
+                    <AlertTriangle className="h-3.5 w-3.5 flex-shrink-0" />
+                    <span>Some attachments failed to upload. Check the original email for missing files.</span>
+                  </div>
+                )}
                 <div className="space-y-1">
-                  {item.attachments.map((att, i) => (
-                    <div
-                      key={i}
-                      className="flex items-center gap-2 rounded-md border p-2"
-                    >
-                      {getFileIcon(att.filename)}
-                      <span className="text-xs flex-1 truncate">{att.filename}</span>
-                      <span className="text-[10px] text-muted-foreground">
-                        {formatBytes(att.size_bytes)}
-                      </span>
-                      {att.storage_path && (
-                        <Button variant="ghost" size="sm" className="h-6 w-6 p-0" asChild>
-                          <a
-                            href={`/api/storage/download?path=${encodeURIComponent(att.storage_path)}&bucket=loan-documents`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                          >
-                            <Download className="h-3 w-3" />
-                          </a>
-                        </Button>
-                      )}
-                      <Badge
-                        variant="outline"
-                        className="text-[9px]"
+                  {item.attachments.map((att, i) => {
+                    const isFailed = att.extraction_status?.startsWith("upload_failed") || att.extraction_status === "skipped_too_large";
+                    return (
+                      <div
+                        key={i}
+                        className={`flex items-center gap-2 rounded-md border p-2 ${isFailed ? "border-amber-500/50 bg-amber-500/5" : ""}`}
                       >
-                        {att.extraction_status}
-                      </Badge>
-                    </div>
-                  ))}
+                        {getFileIcon(att.filename)}
+                        <span className="text-xs flex-1 truncate">{att.filename}</span>
+                        <span className="text-[10px] text-muted-foreground">
+                          {formatBytes(att.size_bytes)}
+                        </span>
+                        {att.storage_path && (
+                          <Button variant="ghost" size="sm" className="h-6 w-6 p-0" asChild>
+                            <a
+                              href={`/api/storage/download?path=${encodeURIComponent(att.storage_path)}&bucket=loan-documents`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                            >
+                              <Download className="h-3 w-3" />
+                            </a>
+                          </Button>
+                        )}
+                        <Badge
+                          variant="outline"
+                          className={`text-[9px] ${isFailed ? "border-amber-500/50 text-amber-600" : ""}`}
+                        >
+                          {att.extraction_status}
+                        </Badge>
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
             )}
@@ -414,30 +440,33 @@ export function IntakeReviewSheet({ item, cardTypes, open, onOpenChange }: Intak
               </div>
             )}
 
-            {/* Extracted UW Fields */}
+            {/* Extracted UW Fields (editable) */}
             {isReady && Object.keys(uwFields).length > 0 && (
               <div className="space-y-2">
                 <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                   Underwriting Fields
                 </Label>
                 <div className="space-y-3 rounded-lg border p-3">
-                  {Object.entries(item.extracted_uw_fields || {}).map(([key, field]) => (
-                    <div key={key} className="flex items-center gap-3">
-                      <div className="w-28 flex-shrink-0">
-                        <span className="text-xs font-medium capitalize">
-                          {key.replace(/_/g, " ")}
-                        </span>
+                  {Object.entries(item.extracted_uw_fields || {}).map(([key, field]) => {
+                    const currentUw = getCurrentUwFields();
+                    return (
+                      <div key={key} className="flex items-center gap-3">
+                        <div className="w-28 flex-shrink-0">
+                          <span className="text-xs font-medium capitalize">
+                            {key.replace(/_/g, " ")}
+                          </span>
+                        </div>
+                        <div className="flex-1">
+                          <Input
+                            className="h-8 text-xs"
+                            value={currentUw[key] || ""}
+                            onChange={(e) => handleUwFieldChange(key, e.target.value)}
+                          />
+                        </div>
+                        <ConfidenceBadge confidence={field.confidence} />
                       </div>
-                      <div className="flex-1">
-                        <Input
-                          className="h-8 text-xs"
-                          value={String(field.value)}
-                          readOnly
-                        />
-                      </div>
-                      <ConfidenceBadge confidence={field.confidence} />
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </div>
             )}

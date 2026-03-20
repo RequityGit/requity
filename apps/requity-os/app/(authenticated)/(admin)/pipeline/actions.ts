@@ -981,6 +981,53 @@ export async function resolveIntakeItemAction(data: {
           created_by: auth.user.id,
         });
 
+      // Catch-all notes: dump ALL extracted fields into a deal note so nothing gets lost.
+      // Fields that mapped to deal columns are included for reference alongside unmapped fields.
+      try {
+        const { data: fullQueue } = await admin
+          .from("email_intake_queue")
+          .select("extracted_deal_fields, extraction_summary, body_preview, from_email, from_name, subject")
+          .eq("id", data.intakeQueueId)
+          .single();
+
+        if (fullQueue) {
+          const extractedFields = fullQueue.extracted_deal_fields as Record<string, { value: unknown; confidence: number }> | null;
+          const lines: string[] = [];
+
+          lines.push(`Source: Email intake from ${fullQueue.from_name || ""} <${fullQueue.from_email}>`);
+          lines.push(`Subject: ${fullQueue.subject || "(no subject)"}`);
+          if (fullQueue.extraction_summary) {
+            lines.push(`\nAI Summary: ${fullQueue.extraction_summary}`);
+          }
+
+          if (extractedFields) {
+            const fieldEntries = Object.entries(extractedFields)
+              .filter(([k, f]) => !k.startsWith("_") && f.value != null)
+              .sort(([, a], [, b]) => (b.confidence || 0) - (a.confidence || 0));
+
+            if (fieldEntries.length > 0) {
+              lines.push("\nExtracted Fields:");
+              for (const [key, field] of fieldEntries) {
+                const label = key.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+                lines.push(`  ${label}: ${field.value}`);
+              }
+            }
+          }
+
+          const noteContent = lines.join("\n");
+
+          await admin.from("notes").insert({
+            deal_id: deal.id,
+            body: noteContent,
+            author_id: auth.user.id,
+            is_internal: true,
+          });
+        }
+      } catch (noteErr) {
+        console.error("Failed to create catch-all intake note:", noteErr);
+        // Non-fatal: deal was already created successfully
+      }
+
       // Mark intake item as resolved
       await admin
         .from("email_intake_queue")

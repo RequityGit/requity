@@ -17,7 +17,7 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const INTERNAL_DOMAIN = "requitygroup.com";
-const STORAGE_BUCKET = "portal-documents";
+const STORAGE_BUCKET = "loan-documents";
 const MAX_ATTACHMENT_BYTES = 15 * 1024 * 1024;
 
 const corsHeaders = {
@@ -95,19 +95,38 @@ async function listMessages(
   afterEpochSecs: number
 ): Promise<GmailMessageStub[]> {
   const q = `to:intake@requitygroup.com -in:trash -in:spam after:${afterEpochSecs}`;
-  const url = `https://gmail.googleapis.com/gmail/v1/users/me/messages?q=${encodeURIComponent(q)}&maxResults=50`;
+  const allMessages: GmailMessageStub[] = [];
+  let pageToken: string | undefined;
+  const MAX_PAGES = 10; // Safety limit: 500 messages max per run
 
-  const res = await fetch(url, {
-    headers: { Authorization: `Bearer ${accessToken}` },
-  });
+  for (let page = 0; page < MAX_PAGES; page++) {
+    let url = `https://gmail.googleapis.com/gmail/v1/users/me/messages?q=${encodeURIComponent(q)}&maxResults=50`;
+    if (pageToken) url += `&pageToken=${encodeURIComponent(pageToken)}`;
 
-  if (!res.ok) {
-    const err = await res.text();
-    throw new Error(`Gmail list messages failed: ${err}`);
+    const res = await fetch(url, {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    });
+
+    if (res.status === 429) {
+      // Rate limited; return what we have so far, retry next poll
+      console.warn("Gmail rate limited; returning partial results.");
+      break;
+    }
+
+    if (!res.ok) {
+      const err = await res.text();
+      throw new Error(`Gmail list messages failed: ${err}`);
+    }
+
+    const data = await res.json();
+    const messages = (data.messages as GmailMessageStub[]) || [];
+    allMessages.push(...messages);
+
+    if (!data.nextPageToken) break;
+    pageToken = data.nextPageToken;
   }
 
-  const data = await res.json();
-  return (data.messages as GmailMessageStub[]) || [];
+  return allMessages;
 }
 
 async function getMessage(
