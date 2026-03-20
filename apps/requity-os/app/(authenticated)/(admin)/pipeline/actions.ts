@@ -948,7 +948,7 @@ export async function resolveIntakeItemAction(data: {
                 upsert: true,
               });
 
-            // Create document record
+            // Create document record in unified_deal_documents (pipeline doc center)
             await admin
               .from("unified_deal_documents")
               .insert({
@@ -959,7 +959,24 @@ export async function resolveIntakeItemAction(data: {
                 file_size_bytes: att.size_bytes,
                 mime_type: att.mime_type,
                 uploaded_by: auth.user.id,
+                category: "intake_email",
               });
+
+            // Also create in documents table (borrower/investor portal + global doc center)
+            try {
+              await admin.from("documents").insert({
+                deal_id: deal.id,
+                file_name: att.filename,
+                file_path: newPath,
+                file_url: newPath,
+                file_size: att.size_bytes,
+                mime_type: att.mime_type,
+                uploaded_by: auth.user.id,
+                document_type: "intake_email",
+                source: "email_intake",
+                status: "active",
+              });
+            } catch { /* Non-fatal: unified_deal_documents is primary */ }
 
             // Clean up intake file (non-fatal)
             await admin.storage
@@ -1296,17 +1313,32 @@ export async function mergeToDealAction(data: {
             .from("loan-documents")
             .upload(newPath, fileData, { contentType: att.mime_type, upsert: true });
 
-          await admin.from("documents").insert({
+          // Create in unified_deal_documents (pipeline doc center)
+          await admin.from("unified_deal_documents").insert({
             deal_id: data.dealId,
-            file_name: att.filename,
-            file_path: newPath,
+            document_name: att.filename,
+            storage_path: newPath,
             file_url: newPath,
-            file_size: att.size_bytes,
+            file_size_bytes: att.size_bytes,
             mime_type: att.mime_type,
-            document_type: "email_attachment",
-            source: "email_intake",
-            status: "active",
+            uploaded_by: auth.user.id,
+            category: "intake_email",
           });
+
+          // Also create in documents table (borrower/investor portal + global doc center)
+          try {
+            await admin.from("documents").insert({
+              deal_id: data.dealId,
+              file_name: att.filename,
+              file_path: newPath,
+              file_url: newPath,
+              file_size: att.size_bytes,
+              mime_type: att.mime_type,
+              document_type: "email_attachment",
+              source: "email_intake",
+              status: "active",
+            });
+          } catch { /* Non-fatal */ }
 
           await admin.storage.from("loan-documents").remove([att.storage_path]);
         } catch (err) {

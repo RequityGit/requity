@@ -4,7 +4,7 @@ import { ThemeProvider } from "@/components/theme-provider";
 import { ServiceWorkerRegistration } from "@/components/service-worker-registration";
 
 export const metadata: Metadata = {
-  title: "Requity Group Portal",
+  title: "Requity Group Platform",
   description:
     "Unified portal for borrowers, investors, and administrators at Requity Group.",
   manifest: "/manifest.json",
@@ -22,7 +22,7 @@ export const metadata: Metadata = {
     statusBarStyle: "default",
     title: "Requity Group",
   },
-  applicationName: "Requity Group Portal",
+  applicationName: "Requity Group Platform",
 };
 
 export const viewport: Viewport = {

@@ -1,6 +1,6 @@
 # Requity Group — Design System v3 (shadcn/ui)
 
-This is the single source of truth for the Requity Group Portal's visual design. It reflects the **actual implementation** built on [shadcn/ui](https://ui.shadcn.com) (new-york style, neutral base color) with Tailwind CSS.
+This is the single source of truth for the Requity Group Platform's visual design. It reflects the **actual implementation** built on [shadcn/ui](https://ui.shadcn.com) (new-york style, neutral base color) with Tailwind CSS.
 
 **Previous versions (v1 "Cinematic Institutional", v2 custom token system) are retired.** This document matches what ships in `globals.css`, `tailwind.config.ts`, `components.json`, and `components/ui/`.
 
