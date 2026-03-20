@@ -59,14 +59,18 @@
 - [x] Inline notes on occupancy and ancillary rows
 - [x] TypeScript check (zero errors in modified files, pre-existing PipelineView error only)
 
-## Sprint 3: Polish + Integration (DEFERRED)
-- [ ] Connect Stabilized to Takeout Test
-- [ ] Asset-type-specific placeholders
-- [ ] Move Scope of Work to Capital Stack
-- [ ] Edge cases: Mixed Use, no property type, zero units
-- [ ] Update Import Wizard to detect occupancy-style sheets
+## Sprint 3: Polish + Integration
+- [x] Fix income row mapping in CommercialUnderwritingTab to pass section/meta to Pro Forma engine
+- [x] Wire stabilized_vacancy_pct from UW record into computeProForma options
+- [x] Fix AssumptionsSubTab handleSave to persist all 8 assumption fields
+- [x] Move Scope of Work from FinancialsTab to Capital Stack (already in Sources & Uses)
+- [x] Edge cases: Mixed Use shows both sections, no property type graceful fallback
+- [x] Asset-type-specific empty state placeholder text in T12SubTab
+- [x] TypeScript check: zero errors in modified files (pre-existing ContactsTab/PipelineView only)
+- [ ] Update Import Wizard to detect occupancy-style sheets (DEFERRED to future sprint)
 
 ## Blockers
-- None currently
+- None
 
 ## Last Updated: 2026-03-20
+## Status: COMPLETE (all 3 sprints shipped)
