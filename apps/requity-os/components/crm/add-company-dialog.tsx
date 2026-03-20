@@ -329,7 +329,7 @@ export function AddCompanyDialog({
 
             {/* Lender subtype */}
             {selectedTypes.includes("lender") && (
-              <div className="mt-2 pl-4 border-l-2 border-blue-200">
+              <div className="mt-2 pl-4 border-l-2 border-border">
                 <Label className="text-xs">Lender Subtype</Label>
                 <Select
                   value={form.company_subtype}
