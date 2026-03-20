@@ -338,7 +338,7 @@ export function IntakeReviewModal({ item, open, onOpenChange }: IntakeReviewModa
         </div>
 
         {/* Scrollable content */}
-        <ScrollArea className="flex-1 min-h-0">
+        <ScrollArea className="flex-1 h-0 min-h-0">
           <div className="p-5 space-y-5">
             {/* Forwarded email banner */}
             {p.isForwarded && (
@@ -359,9 +359,52 @@ export function IntakeReviewModal({ item, open, onOpenChange }: IntakeReviewModa
               </div>
             )}
 
-            {/* Entity Merge Decisions first so they're visible without scrolling */}
-            <div>
-              <Label className="text-[9px] font-semibold uppercase tracking-wider text-muted-foreground">
+            {/* Extracted Fields FIRST so user sees all data before deciding */}
+            {sections.length > 0 && (
+              <div>
+                <Label className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                  Extracted Data
+                </Label>
+                <div className="space-y-4 mt-2">
+                  {sections.map((section) => (
+                    <div key={section.title}>
+                      <div className="text-[10px] font-semibold text-muted-foreground/70 uppercase tracking-wider mb-1.5">
+                        {section.title}
+                      </div>
+                      <div className="grid grid-cols-4 gap-x-4 gap-y-1.5">
+                        {section.fields.map((f) => (
+                          <div key={f.label}>
+                            <div className="text-[9px] text-muted-foreground/50">{f.label}</div>
+                            <div className="text-[11px] text-foreground font-medium mt-0.5 truncate">
+                              {f.value || "--"}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {item.email_intake_queue_id && (
+                  <AttachmentList queueId={item.email_intake_queue_id} />
+                )}
+
+                {p.notes && (
+                  <div className="mt-3 rounded-md border p-2.5">
+                    <div className="text-[9px] text-muted-foreground/50 mb-0.5">Notes</div>
+                    <div className="text-[11px] text-muted-foreground leading-relaxed whitespace-pre-wrap">{p.notes}</div>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {sections.length === 0 && (
+              <p className="text-[11px] text-muted-foreground">No fields extracted from this email.</p>
+            )}
+
+            {/* Entity Merge Decisions AFTER data review */}
+            <div className="border-t border-border pt-4">
+              <Label className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
                 Entity Merge Decisions
               </Label>
               <p className="text-[10px] text-muted-foreground mt-1 mb-3">
@@ -382,50 +425,6 @@ export function IntakeReviewModal({ item, open, onOpenChange }: IntakeReviewModa
                   />
                 ))}
               </div>
-            </div>
-
-            {/* Extracted Fields (read-only summary) */}
-            <div className="border-t border-border pt-4">
-              <Label className="text-[9px] font-semibold uppercase tracking-wider text-muted-foreground">
-                Extracted Fields
-              </Label>
-              <p className="text-[10px] text-muted-foreground/80 mt-1">
-                Read-only summary from the email.
-              </p>
-              {sections.length === 0 ? (
-                <p className="text-[11px] text-muted-foreground mt-2">No fields extracted from this email.</p>
-              ) : (
-                <div className="space-y-4 mt-2">
-                  {sections.map((section) => (
-                    <div key={section.title}>
-                      <div className="text-[10px] font-semibold text-muted-foreground/70 uppercase tracking-wider mb-1.5">
-                        {section.title}
-                      </div>
-                      <div className="grid grid-cols-4 gap-x-4 gap-y-1.5">
-                        {section.fields.map((f) => (
-                          <div key={f.label}>
-                            <div className="text-[9px] text-muted-foreground/50">{f.label}</div>
-                            <div className="text-[11px] text-foreground font-medium mt-0.5 truncate">
-                              {f.value || "--"}
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-
-              {item.email_intake_queue_id && (
-                <AttachmentList queueId={item.email_intake_queue_id} />
-              )}
-
-              {p.notes && (
-                <div className="mt-3 rounded-md border p-2.5">
-                  <div className="text-[9px] text-muted-foreground/50 mb-0.5">Notes</div>
-                  <div className="text-[11px] text-muted-foreground leading-relaxed">{p.notes}</div>
-                </div>
-              )}
             </div>
 
             {/* Action Summary */}

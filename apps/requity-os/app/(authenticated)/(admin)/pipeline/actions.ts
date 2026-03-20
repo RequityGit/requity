@@ -1688,6 +1688,27 @@ export async function processIntakeItemAction(
 
     const parsed = (item as Record<string, unknown>).parsed_data as IntakeParsedData;
     const autoMatches = (item as Record<string, unknown>).auto_matches as Record<string, { match_id: string; snapshot: Record<string, unknown> } | null>;
+    const emailQueueId = (item as Record<string, unknown>).email_intake_queue_id as string | null;
+
+    // Fetch email intake queue data for email context, attachments, and extracted fields
+    interface EmailQueueData {
+      from_email?: string;
+      from_name?: string;
+      subject?: string;
+      body_preview?: string;
+      extraction_summary?: string;
+      extracted_deal_fields?: Record<string, { value: unknown; confidence: number }>;
+      attachments?: Array<{ filename: string; storage_path: string; mime_type: string; size_bytes: number }>;
+    }
+    let emailData: EmailQueueData | null = null;
+    if (emailQueueId) {
+      const { data: eq } = await admin
+        .from("email_intake_queue")
+        .select("from_email, from_name, subject, body_preview, extraction_summary, extracted_deal_fields, attachments")
+        .eq("id", emailQueueId)
+        .single();
+      emailData = eq as unknown as EmailQueueData | null;
+    }
 
     // Merge manual matches into auto matches for unified resolution
     const effectiveMatches = { ...autoMatches };
@@ -2032,14 +2053,65 @@ export async function processIntakeItemAction(
       }
     }
 
-    const dealNotes = [
-      parsed.notes,
-      parsed.brokerLicense ? `Broker License: ${parsed.brokerLicense}` : null,
-      parsed.borrowerName ? `Borrower: ${parsed.borrowerName}` : null,
-      parsed.borrowerEntityName ? `Borrower Entity: ${parsed.borrowerEntityName}` : null,
-    ]
-      .filter(Boolean)
-      .join("\n");
+    // Build comprehensive catch-all notes (same format as resolveIntakeItemAction)
+    const noteLines: string[] = [];
+    if (emailData) {
+      noteLines.push(`Source: Email from ${emailData.from_name || ""} <${emailData.from_email || ""}>`);
+      noteLines.push(`Subject: ${emailData.subject || "(no subject)"}`);
+      if (emailData.extraction_summary) {
+        noteLines.push(`\nAI Summary: ${emailData.extraction_summary}`);
+      }
+    }
+
+    // Broker info
+    if (parsed.brokerName || parsed.brokerEmail) {
+      noteLines.push(`\nBroker: ${parsed.brokerName || ""} ${parsed.brokerEmail ? `<${parsed.brokerEmail}>` : ""} ${parsed.brokerPhone || ""}`);
+      if (parsed.brokerCompany) noteLines.push(`Company: ${parsed.brokerCompany}`);
+      if (parsed.brokerLicense) noteLines.push(`License: ${parsed.brokerLicense}`);
+    }
+
+    // Borrower info
+    if (parsed.borrowerName || parsed.borrowerEmail) {
+      noteLines.push(`\nBorrower: ${parsed.borrowerName || ""} ${parsed.borrowerEmail ? `<${parsed.borrowerEmail}>` : ""} ${parsed.borrowerPhone || ""}`);
+      if (parsed.borrowerEntityName) noteLines.push(`Entity: ${parsed.borrowerEntityName}`);
+    }
+
+    // Dump ALL extracted fields from email_intake_queue
+    const extracted = emailData?.extracted_deal_fields as Record<string, { value: unknown; confidence: number }> | undefined;
+    if (extracted) {
+      const fieldEntries = Object.entries(extracted)
+        .filter(([k, f]) => !k.startsWith("_") && f?.value != null && f.value !== "")
+        .sort(([, a], [, b]) => ((b?.confidence as number) || 0) - ((a?.confidence as number) || 0));
+      if (fieldEntries.length > 0) {
+        noteLines.push("\nAll Extracted Fields:");
+        for (const [key, field] of fieldEntries) {
+          const label = key.replace(/_/g, " ").replace(/\b\w/g, (c: string) => c.toUpperCase());
+          noteLines.push(`  ${label}: ${field.value}`);
+        }
+      }
+    }
+
+    // Parsed notes
+    if (parsed.notes) {
+      noteLines.push(`\nDetailed Notes: ${parsed.notes}`);
+    }
+
+    const catchAllNotes = noteLines.join("\n");
+
+    // Build property_data JSONB
+    const propertyData: Record<string, unknown> = {};
+    if (parsed.propertyAddress) propertyData.address = parsed.propertyAddress;
+    if (parsed.propertyCity) propertyData.city = parsed.propertyCity;
+    if (parsed.propertyState) propertyData.state = parsed.propertyState;
+    if (parsed.propertyType) propertyData.property_type = parsed.propertyType;
+
+    // Determine source_detail
+    const sourceDetail = parsed.brokerName
+      ? `Broker: ${parsed.brokerName}${parsed.brokerCompany ? ` (${parsed.brokerCompany})` : ""}`
+      : emailData?.from_email || null;
+
+    // Determine loan_type for top-level column
+    const loanType = (parsed.loanType || opportunityData.loan_type || null) as string | null;
 
     const insertData: UnifiedDealInsert = {
       name: dealName,
@@ -2052,8 +2124,11 @@ export async function processIntakeItemAction(
       property_id: propertyId,
       created_by: auth.user.id,
       source: "email_intake",
-      ...(dealNotes ? { notes: dealNotes } : {}),
+      source_detail: sourceDetail as string | null,
+      notes: catchAllNotes || null,
+      ...(loanType ? { loan_type: loanType } : {}),
       ...(Object.keys(uwData).length > 0 ? { uw_data: uwData as Json } : {}),
+      ...(Object.keys(propertyData).length > 0 ? { property_data: propertyData as Json } : {}),
     };
 
     const { data: deal, error: dealError } = await admin
@@ -2082,6 +2157,94 @@ export async function processIntakeItemAction(
       created_by: auth.user.id,
     });
     if (actErr) console.error("Failed to log activity:", actErr);
+
+    // Move attachments from email-intake/ to deals/{dealId}/ and create documents
+    if (emailData?.attachments) {
+      for (const att of emailData.attachments) {
+        if (!att.storage_path) continue;
+        try {
+          const { data: fileData } = await admin.storage
+            .from("loan-documents")
+            .download(att.storage_path);
+          if (!fileData) continue;
+
+          const newPath = `deals/${deal.id}/${att.filename.replace(/[^a-zA-Z0-9._-]/g, "_")}`;
+          await admin.storage
+            .from("loan-documents")
+            .upload(newPath, fileData, { contentType: att.mime_type, upsert: true });
+
+          // Create in unified_deal_documents (pipeline doc center)
+          await admin.from("unified_deal_documents").insert({
+            deal_id: deal.id,
+            document_name: att.filename,
+            storage_path: newPath,
+            file_url: newPath,
+            file_size_bytes: att.size_bytes,
+            mime_type: att.mime_type,
+            uploaded_by: auth.user.id,
+            category: "intake_email",
+          });
+
+          // Also create in documents table (borrower/investor portal + global doc center)
+          try {
+            await admin.from("documents").insert({
+              deal_id: deal.id,
+              file_name: att.filename,
+              file_path: newPath,
+              file_url: newPath,
+              file_size: att.size_bytes,
+              mime_type: att.mime_type,
+              uploaded_by: auth.user.id,
+              document_type: "intake_email",
+              source: "email_intake",
+              status: "active",
+            });
+          } catch { /* Non-fatal: unified_deal_documents is primary */ }
+
+          // Clean up intake file (non-fatal)
+          await admin.storage.from("loan-documents").remove([att.storage_path]);
+        } catch (err) {
+          console.error(`Failed to move attachment ${att.filename}:`, err);
+        }
+      }
+    }
+
+    // Create a note in the notes table as backup (deal.notes column already has catch-all)
+    if (catchAllNotes) {
+      try {
+        await admin.from("notes").insert({
+          deal_id: deal.id,
+          body: `**Email Intake - ${emailData?.subject || "No subject"}**\n\n${catchAllNotes}`,
+          author_id: auth.user.id,
+          author_name: "Email Intake",
+          is_internal: true,
+        });
+      } catch (noteErr) {
+        try {
+          await admin.from("notes").insert({
+            deal_id: deal.id,
+            body: `**Email Intake - ${emailData?.subject || "No subject"}**\n\n${catchAllNotes}`,
+            author_name: "Email Intake",
+            is_internal: true,
+          } as never);
+        } catch (noteErr2) {
+          console.error("Failed to create intake note (both attempts):", noteErr2);
+        }
+      }
+    }
+
+    // Also update email_intake_queue status if linked
+    if (emailQueueId) {
+      await admin
+        .from("email_intake_queue")
+        .update({
+          status: "deal_created",
+          resolved_deal_id: deal.id,
+          resolved_by: auth.user.id,
+          resolved_at: new Date().toISOString(),
+        })
+        .eq("id", emailQueueId);
+    }
 
     // Mark intake item as processed
     await admin
