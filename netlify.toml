@@ -1,6 +1,5 @@
 [build]
-  base = "apps/requity-os"
-  command = "cd ../.. && pnpm --filter @repo/requity-os build"
+  command = "pnpm --filter @repo/requity-os build"
   publish = "apps/requity-os/.next"
   ignore = "cd ../.. && git diff --quiet $CACHED_COMMIT_REF $COMMIT_REF -- apps/requity-os/ packages/ netlify.toml pnpm-lock.yaml turbo.json || exit 1"
 
