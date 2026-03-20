@@ -53,13 +53,6 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    if (!cardTypeId) {
-      return NextResponse.json(
-        { error: "No card_type_id provided" },
-        { status: 400 }
-      );
-    }
-
     if (!ANTHROPIC_API_KEY) {
       return NextResponse.json(
         { error: "AI extraction is not configured" },
@@ -69,17 +62,15 @@ export async function POST(req: NextRequest) {
 
     const admin = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
-    const { data: cardType, error: ctError } = await admin
-      .from("unified_card_types")
-      .select("label")
-      .eq("id", cardTypeId)
-      .single();
-
-    if (ctError || !cardType) {
-      return NextResponse.json(
-        { error: "Card type not found" },
-        { status: 404 }
-      );
+    // Optionally look up card type label for prompt context (backward compat)
+    let dealTypeLabel = "real estate";
+    if (cardTypeId) {
+      const { data: cardType } = await admin
+        .from("unified_card_types")
+        .select("label")
+        .eq("id", cardTypeId)
+        .single();
+      if (cardType) dealTypeLabel = cardType.label;
     }
 
     // Reject unsupported file types early
@@ -150,7 +141,7 @@ export async function POST(req: NextRequest) {
       })
       .join("\n");
 
-    const prompt = `Extract deal information from this document for a real estate lending platform. This is a "${cardType.label}" deal type.
+    const prompt = `Extract deal information from this document for a real estate lending platform. This is a "${dealTypeLabel}" deal type.
 
 Standard deal fields to extract:
 - name (text): Deal name, property address, or project name

@@ -15,7 +15,6 @@ import {
 import Link from "next/link";
 import { updateUwDataAction } from "@/app/(authenticated)/(admin)/pipeline/actions";
 import type {
-  UnifiedCardType,
   UnifiedDeal,
   UwFieldDef,
 } from "@/components/pipeline/pipeline-types";
@@ -53,7 +52,7 @@ interface ContactsTabProps {
   deal: UnifiedDeal;
   dealId: string;
   uwData: Record<string, unknown>;
-  cardType: UnifiedCardType;
+  contactRoles?: string[];
   visibilityContext?: VisibilityContext | null;
 }
 
@@ -403,7 +402,7 @@ export function ContactsTab({
   deal,
   dealId,
   uwData,
-  cardType,
+  contactRoles = [],
   visibilityContext,
 }: ContactsTabProps) {
   const [dealContacts, setDealContacts] = useState<DealContact[]>([]);
@@ -475,7 +474,7 @@ export function ContactsTab({
   }
 
   const company = deal.company;
-  const hasRoles = cardType.contact_roles.length > 0;
+  const hasRoles = contactRoles.length > 0;
   const hasFields = borrowerFields.length > 0;
   const existingContactIds = new Set(dealContacts.map((dc) => dc.contact_id));
   const atMax = dealContacts.length >= 5;
@@ -485,7 +484,7 @@ export function ContactsTab({
       {/* Contact Roles */}
       {hasRoles && (
         <div className="flex flex-wrap gap-1.5">
-          {cardType.contact_roles.map((role: string) => (
+          {contactRoles.map((role: string) => (
             <Badge key={role} variant="outline" className="text-xs">
               {ROLE_LABELS[role] ?? role}
             </Badge>

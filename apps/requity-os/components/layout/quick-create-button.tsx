@@ -26,7 +26,6 @@ export function QuickCreateButton({ currentUserId, isSuperAdmin }: QuickCreateBu
   const [activeDialog, setActiveDialog] = useState<"deal" | "contact" | "company" | "task" | null>(null);
   const [data, setData] = useState<{
     teamMembers: { id: string; full_name: string; avatar_url: string | null }[];
-    cardTypes: any[];
   } | null>(null);
   const [loading, setLoading] = useState(false);
 
