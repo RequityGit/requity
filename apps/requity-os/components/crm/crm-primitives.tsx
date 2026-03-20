@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 // ── Color Maps ───────────────────────────────────────────────────────────
 
 export const REL_COLORS: Record<string, { bg: string; text: string; border: string }> = {
-  borrower:        { bg: "bg-blue-50 dark:bg-blue-950/30",    text: "text-blue-600 dark:text-blue-400",     border: "border-blue-200 dark:border-blue-800" },
+  borrower:        { bg: "bg-slate-50 dark:bg-slate-950/30",    text: "text-slate-600 dark:text-slate-400",     border: "border-slate-200 dark:border-slate-800" },
   investor:        { bg: "bg-green-50 dark:bg-green-950/30",  text: "text-green-600 dark:text-green-400",   border: "border-green-200 dark:border-green-800" },
   broker:          { bg: "bg-amber-50 dark:bg-amber-950/30",  text: "text-amber-600 dark:text-amber-400",   border: "border-amber-200 dark:border-amber-800" },
   lender:          { bg: "bg-purple-50 dark:bg-purple-950/30", text: "text-purple-600 dark:text-purple-400", border: "border-purple-200 dark:border-purple-800" },
