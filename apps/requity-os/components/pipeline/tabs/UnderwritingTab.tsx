@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
-import { CheckCircle2, RefreshCw, Maximize2, Minimize2, ExternalLink, Link2, Unlink } from "lucide-react";
+import { RefreshCw, Maximize2, Minimize2, ExternalLink, Link2, Unlink } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -16,13 +16,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { SectionHeader } from "../uw/uw-shared";
-import { ProFormaSection } from "../uw/ProFormaSection";
-import { AssumptionsSection } from "../uw/AssumptionsSection";
 import { SourcesUsesSubTab } from "./sources-uses/SourcesUsesSubTab";
 import { RentRollSubTab } from "./financials/RentRollSubTab";
 import { T12SubTab } from "./financials/T12SubTab";
 import { AssumptionsSubTab } from "./financials/AssumptionsSubTab";
-import { ClosingCostsSubTab } from "./financials/ClosingCostsSubTab";
+import { CommercialUnderwritingTab } from "./CommercialUnderwritingTab";
 import { updateDealGoogleSheetAction, clearDealGoogleSheetAction } from "@/app/(authenticated)/(admin)/pipeline/[id]/actions";
 import { toast } from "sonner";
 
@@ -180,22 +178,9 @@ export function UnderwritingTab({ data, dealId, sheetUrl }: UnderwritingTabProps
 
   const uwContent = (
     <>
-      {/* Section: Pro Forma */}
+      {/* Section: Pro Forma (enhanced with KPI strip, stabilized column, sensitivity, returns) */}
       <div id="pro-forma" className="scroll-mt-24 mt-4">
-        <div className="rounded-xl border bg-card overflow-hidden">
-          <ProFormaSection
-            uw={uw ?? {}}
-            income={income}
-            expenses={expenses}
-            debt={data.debt ?? []}
-            sourcesUses={sourcesUses}
-            scopeOfWork={scopeOfWork}
-            purchasePrice={purchasePrice}
-            numUnits={numUnits}
-            holdYears={Number(uw?.hold_period_years) || 5}
-            exitCapRate={exitCapRate}
-          />
-        </div>
+        <CommercialUnderwritingTab data={data} dealId={dealId} />
       </div>
 
       {/* Section: T12 / Historical */}
@@ -224,25 +209,8 @@ export function UnderwritingTab({ data, dealId, sheetUrl }: UnderwritingTabProps
 
       {/* Section: Assumptions */}
       <div id="assumptions" className="scroll-mt-24 mt-6">
-        <SectionHeader
-          title="Assumptions"
-          badge="Model inputs"
-          action={
-            <div className="inline-flex items-center gap-1.5 text-[11px] text-emerald-600 dark:text-emerald-400">
-              <CheckCircle2 className="h-3.5 w-3.5" strokeWidth={1.5} />
-              Synced
-            </div>
-          }
-        />
-        <div className="rounded-xl border bg-card overflow-hidden mt-3">
-          <AssumptionsSection
-            uw={uw ?? {}}
-            debt={data.debt ?? []}
-            purchasePrice={purchasePrice}
-            numUnits={numUnits}
-          />
-        </div>
-        <div className="mt-4">
+        <SectionHeader title="Assumptions" badge="Model inputs" />
+        <div className="mt-3">
           <AssumptionsSubTab
             uw={uw}
             uwId={uwId}
