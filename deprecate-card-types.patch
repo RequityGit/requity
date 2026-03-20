@@ -1,0 +1,3044 @@
+From 44f3b55b986684ad026b233eb6aa80aa69308e9f Mon Sep 17 00:00:00 2001
+From: Dylan Marma <dylan@requitygroup.com>
+Date: Thu, 12 Mar 2026 11:16:29 -0400
+Subject: [PATCH 1/3] SEO, meta tags, structured data, mobile menu, and footer
+ fixes for requity-group site
+
+- Enhanced global metadata with robots, Twitter cards, OG image dimensions, and metadataBase for canonical URLs
+- Added page-specific OG and Twitter meta tags to About, Lending, and Invest pages with keyword-rich descriptions
+- Created StructuredData component (JSON-LD FinancialService schema) for Google rich results
+- Added GA4 analytics placeholder driven by NEXT_PUBLIC_GA_ID env var
+- Fixed footer copyright to fallback to "Requity Group" when company_name is empty in Supabase
+- Fixed mobile nav overlay to use full-screen fixed positioning instead of absolute dropdown
+
+Co-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>
+---
+ apps/requity-group/app/about/page.tsx         | 12 ++++-
+ apps/requity-group/app/components/Footer.tsx  |  4 +-
+ .../app/components/StructuredData.tsx         | 44 +++++++++++++++++
+ apps/requity-group/app/globals/public.css     | 13 +++--
+ apps/requity-group/app/invest/page.tsx        | 12 ++++-
+ apps/requity-group/app/layout.tsx             | 47 +++++++++++++++++--
+ apps/requity-group/app/lending/page.tsx       | 14 +++++-
+ 7 files changed, 132 insertions(+), 14 deletions(-)
+ create mode 100644 apps/requity-group/app/components/StructuredData.tsx
+
+diff --git a/apps/requity-group/app/about/page.tsx b/apps/requity-group/app/about/page.tsx
+index fef6fcd..183c710 100644
+--- a/apps/requity-group/app/about/page.tsx
++++ b/apps/requity-group/app/about/page.tsx
+@@ -16,7 +16,17 @@ import { ArrowRight } from "lucide-react";
+ export const metadata: Metadata = {
+   title: "About",
+   description:
+-    "Learn about Requity Group, a vertically integrated real estate investment company with deep operational expertise.",
++    "Meet the Requity Group team. Founded by Dylan Marma, we apply institutional rigor to small-cap real estate, managing $150M+ in assets across 32 properties and 3,000+ units.",
++  openGraph: {
++    title: "About Requity Group",
++    description:
++      "Meet the team behind $150M+ in real estate assets. We operate every property we own — no outsourced management, no third-party sponsors.",
++  },
++  twitter: {
++    title: "About Requity Group",
++    description:
++      "Meet the team behind $150M+ in real estate assets. We operate every property we own.",
++  },
+ };
+ 
+ export const revalidate = 300;
+diff --git a/apps/requity-group/app/components/Footer.tsx b/apps/requity-group/app/components/Footer.tsx
+index 21a13a2..161716f 100644
+--- a/apps/requity-group/app/components/Footer.tsx
++++ b/apps/requity-group/app/components/Footer.tsx
+@@ -71,8 +71,8 @@ export default function Footer({
+         </div>
+         <div className="footer-bottom">
+           <p>
+-            &copy; {new Date().getFullYear()} {company?.company_name}. All
+-            rights reserved.
++            &copy; {new Date().getFullYear()}{" "}
++            {company?.company_name || "Requity Group"}. All rights reserved.
+           </p>
+           <div className="footer-contact">
+             {company?.phone && <a href={`tel:${company.phone}`}>{company.phone}</a>}
+diff --git a/apps/requity-group/app/components/StructuredData.tsx b/apps/requity-group/app/components/StructuredData.tsx
+new file mode 100644
+index 0000000..75047e5
+--- /dev/null
++++ b/apps/requity-group/app/components/StructuredData.tsx
+@@ -0,0 +1,44 @@
++export default function StructuredData() {
++  const jsonLd = {
++    "@context": "https://schema.org",
++    "@type": "FinancialService",
++    name: "Requity Group",
++    url: "https://requitygroup.com",
++    logo: "https://edhlkknvlczhbowasjna.supabase.co/storage/v1/object/public/brand-assets/Requity%20Logo%20White.svg",
++    description:
++      "Vertically integrated real estate investment and lending firm specializing in value-add properties across the United States.",
++    foundingDate: "2020",
++    founder: {
++      "@type": "Person",
++      name: "Dylan Marma",
++      jobTitle: "CEO",
++    },
++    areaServed: {
++      "@type": "Country",
++      name: "United States",
++    },
++    serviceType: [
++      "Real Estate Investment",
++      "Bridge Lending",
++      "Property Management",
++      "Real Estate Acquisition",
++    ],
++    knowsAbout: [
++      "Commercial Real Estate",
++      "Residential Real Estate",
++      "Bridge Loans",
++      "Value-Add Real Estate",
++      "Manufactured Housing",
++      "Multifamily Properties",
++    ],
++    email: "info@requitygroup.com",
++    sameAs: [],
++  };
++
++  return (
++    <script
++      type="application/ld+json"
++      dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
++    />
++  );
++}
+diff --git a/apps/requity-group/app/globals/public.css b/apps/requity-group/app/globals/public.css
+index a1fc561..76bf7cd 100644
+--- a/apps/requity-group/app/globals/public.css
++++ b/apps/requity-group/app/globals/public.css
+@@ -219,14 +219,14 @@ nav.scrolled {
+   .mobile-toggle { display: flex; }
+   .nav-links.open {
+     display: flex; flex-direction: column; align-items: center;
+-    position: absolute; top: 100%; left: 0; right: 0;
++    justify-content: center;
++    position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+     background: rgba(12,28,48,0.98);
+     backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px);
+     padding: 40px 24px; gap: 28px;
+-    border-bottom: 1px solid var(--navy-border);
+     text-align: center;
+-    box-shadow: 0 24px 64px rgba(0,0,0,0.4);
+-    animation: slideDown 0.4s var(--ease-out);
++    z-index: 9998;
++    animation: fadeIn 0.3s var(--ease-out);
+   }
+   .nav-links.open a { font-size: 15px; }
+   .nav-links.open a::after { display: none; }
+@@ -237,6 +237,11 @@ nav.scrolled {
+   to { opacity: 1; transform: translateY(0); }
+ }
+ 
++@keyframes fadeIn {
++  from { opacity: 0; }
++  to { opacity: 1; }
++}
++
+ /* ═══════════════════════════════════════════════════════════════
+    Buttons
+    ═══════════════════════════════════════════════════════════════ */
+diff --git a/apps/requity-group/app/invest/page.tsx b/apps/requity-group/app/invest/page.tsx
+index 3a54b88..dea1d09 100644
+--- a/apps/requity-group/app/invest/page.tsx
++++ b/apps/requity-group/app/invest/page.tsx
+@@ -20,7 +20,17 @@ import {
+ export const metadata: Metadata = {
+   title: "Invest",
+   description:
+-    "Invest in value-add real estate with Requity Group. Access institutional-quality investments through our vertically integrated platform.",
++    "Invest in value-add real estate with Requity Group. Direct equity (15-22% target IRR) and bridge lending (8-12% target yield). $50K minimum. Accredited investors only.",
++  openGraph: {
++    title: "Invest in Real Estate | Requity Group",
++    description:
++      "Access institutional-quality real estate investments. Direct equity and income-producing credit strategies. $50K minimum for accredited investors.",
++  },
++  twitter: {
++    title: "Invest in Real Estate | Requity Group",
++    description:
++      "Access institutional-quality real estate investments. Direct equity and credit strategies for accredited investors.",
++  },
+ };
+ 
+ export const revalidate = 300;
+diff --git a/apps/requity-group/app/layout.tsx b/apps/requity-group/app/layout.tsx
+index f9094e3..681e153 100644
+--- a/apps/requity-group/app/layout.tsx
++++ b/apps/requity-group/app/layout.tsx
+@@ -5,22 +5,41 @@ import Nav from "./components/Nav";
+ import Footer from "./components/Footer";
+ import { fetchSiteData } from "../lib/supabase";
+ import type { NavItem, CompanyInfo } from "../lib/types";
++import StructuredData from "./components/StructuredData";
+ 
+ export const metadata: Metadata = {
+   title: {
+-    default: "Requity Group",
++    default: "Requity Group | Real Estate Investment & Lending",
+     template: "%s | Requity Group",
+   },
+   description:
+-    "Requity Group — A vertically integrated real estate investment company. Investing, operating, and lending in value-add real estate.",
++    "Requity Group is a vertically integrated real estate firm that acquires, operates, and lends on value-add properties. $150M+ in assets under management.",
++  metadataBase: new URL("https://requitygroup.com"),
++  robots: {
++    index: true,
++    follow: true,
++  },
+   openGraph: {
++    type: "website",
++    siteName: "Requity Group",
+     images: [
+       {
+-        url: "https://edhlkknvlczhbowasjna.supabase.co/storage/v1/object/public/brand-assets/Requity%20Logo%20White.svg",
+-        alt: "Requity Group",
++        url: "https://edhlkknvlczhbowasjna.supabase.co/storage/v1/object/public/brand-assets/og-default.jpg",
++        width: 1200,
++        height: 630,
++        alt: "Requity Group — Real Estate Investment & Lending",
+       },
+     ],
+   },
++  twitter: {
++    card: "summary_large_image",
++    title: "Requity Group | Real Estate Investment & Lending",
++    description:
++      "A vertically integrated platform for acquiring, operating, and lending on value-add real estate across the United States.",
++    images: [
++      "https://edhlkknvlczhbowasjna.supabase.co/storage/v1/object/public/brand-assets/og-default.jpg",
++    ],
++  },
+ };
+ 
+ export const revalidate = 300; // ISR: revalidate every 5 minutes
+@@ -51,8 +70,28 @@ export default async function RootLayout({
+           href="https://edhlkknvlczhbowasjna.supabase.co/storage/v1/object/public/brand-assets/Diamond%20Favicon%20White.svg"
+           type="image/svg+xml"
+         />
++        {/* Google Analytics 4 — Replace G-XXXXXXXXXX with your GA4 Measurement ID */}
++        {process.env.NEXT_PUBLIC_GA_ID && (
++          <>
++            <script
++              async
++              src={`https://www.googletagmanager.com/gtag/js?id=${process.env.NEXT_PUBLIC_GA_ID}`}
++            />
++            <script
++              dangerouslySetInnerHTML={{
++                __html: `
++                  window.dataLayer = window.dataLayer || [];
++                  function gtag(){dataLayer.push(arguments);}
++                  gtag('js', new Date());
++                  gtag('config', '${process.env.NEXT_PUBLIC_GA_ID}');
++                `,
++              }}
++            />
++          </>
++        )}
+       </head>
+       <body>
++        <StructuredData />
+         <Nav items={navItems} />
+         {children}
+         <Footer navItems={navItems} company={company} />
+diff --git a/apps/requity-group/app/lending/page.tsx b/apps/requity-group/app/lending/page.tsx
+index 55eaada..de52c18 100644
+--- a/apps/requity-group/app/lending/page.tsx
++++ b/apps/requity-group/app/lending/page.tsx
+@@ -18,9 +18,19 @@ import {
+ } from "lucide-react";
+ 
+ export const metadata: Metadata = {
+-  title: "Lending",
++  title: "Bridge Lending",
+   description:
+-    "Real estate lending by real operators. Bridge loans, fix & flip, DSCR, construction, and more. Close in as little as 10 days.",
++    "Bridge loans for commercial and residential real estate. Close in as little as 10 days. CRE bridge, manufactured housing, RV parks, multifamily. Up to 80% LTV.",
++  openGraph: {
++    title: "Real Estate Bridge Lending | Requity Group",
++    description:
++      "Bridge loans by real operators. Close in 10 days. CRE bridge, manufactured housing, RV parks, multifamily financing. Up to 80% LTV.",
++  },
++  twitter: {
++    title: "Real Estate Bridge Lending | Requity Group",
++    description:
++      "Bridge loans by real operators. Close in 10 days. CRE bridge, manufactured housing, RV parks, multifamily financing.",
++  },
+ };
+ 
+ export const revalidate = 300;
+-- 
+2.34.1
+
+
+From 8199779984b2d46f2ca1e39a06e5041921295e03 Mon Sep 17 00:00:00 2001
+From: Dylan Marma <dylan@requitygroup.com>
+Date: Thu, 12 Mar 2026 12:41:29 -0400
+Subject: [PATCH 2/3] Revamp lending homepage and add /apply deal submission
+ page
+
+Rebuilds the lending page as a full standalone homepage for requitylending.com
+with PageHero, stats bar, editorial-grid why-us section, Supabase-driven loan
+programs, process steps, testimonials, and footer CTA. Adds /lending/apply with
+a structured deal submission form. All CTAs now point to /lending/apply instead
+of mailto links. Uses the same design system and shared components as the
+corporate site for seamless domain merge.
+
+Co-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>
+---
+ apps/requity-group/app/lending/apply/page.tsx | 514 ++++++++++++++++++
+ apps/requity-group/app/lending/page.tsx       | 453 ++++++++++-----
+ 2 files changed, 830 insertions(+), 137 deletions(-)
+ create mode 100644 apps/requity-group/app/lending/apply/page.tsx
+
+diff --git a/apps/requity-group/app/lending/apply/page.tsx b/apps/requity-group/app/lending/apply/page.tsx
+new file mode 100644
+index 0000000..7cde6ae
+--- /dev/null
++++ b/apps/requity-group/app/lending/apply/page.tsx
+@@ -0,0 +1,514 @@
++import type { Metadata } from "next";
++import Link from "next/link";
++import SectionLabel from "../../components/SectionLabel";
++import ScrollReveal from "../../components/ScrollReveal";
++import FooterCTA from "../../components/FooterCTA";
++import { ArrowRight, ArrowLeft } from "lucide-react";
++
++export const metadata: Metadata = {
++  title: "Submit a Deal | Requity Lending",
++  description:
++    "Submit your bridge loan request to Requity Lending. Term sheets in 24 hours, closings in as fast as 10 days.",
++};
++
++export default function ApplyPage() {
++  return (
++    <main>
++      {/* Hero */}
++      <section
++        className="dark-zone hero-gradient"
++        style={{
++          paddingTop: "clamp(160px, 20vw, 200px)",
++          paddingBottom: "clamp(60px, 8vw, 100px)",
++          position: "relative",
++          overflow: "hidden",
++        }}
++      >
++        <div className="navy-grid-pattern">
++          {Array.from({ length: 14 }).map((_, i) => (
++            <div
++              key={i}
++              className="navy-grid-line"
++              style={{ left: `${(i + 1) * 7.14}%` }}
++            />
++          ))}
++        </div>
++        <div
++          className="container"
++          style={{ position: "relative", zIndex: 1 }}
++        >
++          <div style={{ animation: "fadeUp 0.8s ease forwards" }}>
++            <SectionLabel light>Submit a Deal</SectionLabel>
++          </div>
++          <h1
++            className="type-hero"
++            style={{
++              color: "#fff",
++              maxWidth: 700,
++              animation: "fadeUp 0.8s 0.1s ease both",
++            }}
++          >
++            Tell us about your{" "}
++            <em style={{ fontStyle: "italic", color: "var(--gold-muted)" }}>
++              project
++            </em>
++          </h1>
++          <p
++            style={{
++              fontFamily: "var(--font-sans)",
++              fontSize: 17,
++              lineHeight: 1.75,
++              color: "var(--navy-text-mid)",
++              maxWidth: 520,
++              animation: "fadeUp 0.8s 0.2s ease both",
++              marginTop: 24,
++            }}
++          >
++            Fill out the form below and our team will review your deal. Expect a
++            term sheet within 24 hours of receiving a complete submission.
++          </p>
++        </div>
++      </section>
++
++      <div className="dark-to-light" />
++
++      {/* Form Section */}
++      <section className="light-zone section-pad-lg">
++        <div className="container" style={{ maxWidth: 720 }}>
++          <ScrollReveal>
++            <div
++              className="card"
++              style={{
++                padding: "48px 44px",
++                borderRadius: 16,
++              }}
++            >
++              <h2
++                className="type-h3"
++                style={{
++                  color: "var(--text)",
++                  marginBottom: 8,
++                }}
++              >
++                Deal Submission
++              </h2>
++              <p
++                className="type-body-sm"
++                style={{
++                  color: "var(--text-mid)",
++                  marginBottom: 36,
++                }}
++              >
++                All fields are optional at this stage. The more detail you
++                provide, the faster we can turn around a term sheet.
++              </p>
++
++              {/* Contact Info */}
++              <fieldset
++                style={{
++                  border: "none",
++                  padding: 0,
++                  margin: "0 0 36px",
++                }}
++              >
++                <legend
++                  style={{
++                    fontFamily: "var(--font-sans)",
++                    fontSize: 12,
++                    fontWeight: 500,
++                    letterSpacing: "3px",
++                    textTransform: "uppercase" as const,
++                    color: "var(--gold)",
++                    marginBottom: 20,
++                    padding: 0,
++                  }}
++                >
++                  Contact Information
++                </legend>
++                <div
++                  style={{
++                    display: "grid",
++                    gridTemplateColumns: "1fr 1fr",
++                    gap: 16,
++                  }}
++                >
++                  <FormField label="Full Name" name="name" />
++                  <FormField label="Email" name="email" type="email" />
++                  <FormField label="Phone" name="phone" type="tel" />
++                  <FormField label="Company" name="company" />
++                </div>
++              </fieldset>
++
++              {/* Property Info */}
++              <fieldset
++                style={{
++                  border: "none",
++                  padding: 0,
++                  margin: "0 0 36px",
++                }}
++              >
++                <legend
++                  style={{
++                    fontFamily: "var(--font-sans)",
++                    fontSize: 12,
++                    fontWeight: 500,
++                    letterSpacing: "3px",
++                    textTransform: "uppercase" as const,
++                    color: "var(--gold)",
++                    marginBottom: 20,
++                    padding: 0,
++                  }}
++                >
++                  Property Details
++                </legend>
++                <div
++                  style={{
++                    display: "grid",
++                    gridTemplateColumns: "1fr 1fr",
++                    gap: 16,
++                  }}
++                >
++                  <FormField label="Property Address" name="address" />
++                  <FormSelect
++                    label="Property Type"
++                    name="property_type"
++                    options={[
++                      "Residential (1-4 units)",
++                      "Multifamily (5+)",
++                      "Mixed Use",
++                      "Commercial",
++                      "Land",
++                      "Other",
++                    ]}
++                  />
++                  <FormField
++                    label="Purchase Price / Value"
++                    name="value"
++                    placeholder="$"
++                  />
++                  <FormField
++                    label="Loan Amount Requested"
++                    name="loan_amount"
++                    placeholder="$"
++                  />
++                </div>
++              </fieldset>
++
++              {/* Deal Info */}
++              <fieldset
++                style={{
++                  border: "none",
++                  padding: 0,
++                  margin: "0 0 36px",
++                }}
++              >
++                <legend
++                  style={{
++                    fontFamily: "var(--font-sans)",
++                    fontSize: 12,
++                    fontWeight: 500,
++                    letterSpacing: "3px",
++                    textTransform: "uppercase" as const,
++                    color: "var(--gold)",
++                    marginBottom: 20,
++                    padding: 0,
++                  }}
++                >
++                  Deal Details
++                </legend>
++                <div
++                  style={{
++                    display: "grid",
++                    gridTemplateColumns: "1fr 1fr",
++                    gap: 16,
++                  }}
++                >
++                  <FormSelect
++                    label="Loan Purpose"
++                    name="purpose"
++                    options={[
++                      "Acquisition",
++                      "Refinance",
++                      "Cash-Out Refinance",
++                      "Renovation / Rehab",
++                      "Bridge to Permanent",
++                    ]}
++                  />
++                  <FormSelect
++                    label="Timeline"
++                    name="timeline"
++                    options={[
++                      "Urgent (under 2 weeks)",
++                      "Standard (2-4 weeks)",
++                      "Flexible (1+ months)",
++                    ]}
++                  />
++                </div>
++                <div style={{ marginTop: 16 }}>
++                  <FormTextarea
++                    label="Tell us about the deal"
++                    name="notes"
++                    placeholder="Exit strategy, renovation scope, current status of the property, anything that helps us understand the opportunity."
++                  />
++                </div>
++              </fieldset>
++
++              {/* Submit */}
++              <div
++                style={{
++                  display: "flex",
++                  justifyContent: "space-between",
++                  alignItems: "center",
++                  paddingTop: 16,
++                  borderTop: "1px solid var(--border-light)",
++                }}
++              >
++                <Link
++                  href="/lending"
++                  style={{
++                    fontFamily: "var(--font-sans)",
++                    fontSize: 13,
++                    color: "var(--text-light)",
++                    textDecoration: "none",
++                    display: "flex",
++                    alignItems: "center",
++                    gap: 6,
++                  }}
++                >
++                  <ArrowLeft size={14} /> Back to Lending
++                </Link>
++                <button
++                  type="submit"
++                  className="btn-primary"
++                  style={{
++                    border: "none",
++                    cursor: "pointer",
++                    display: "flex",
++                    alignItems: "center",
++                    gap: 8,
++                  }}
++                >
++                  Submit Deal <ArrowRight size={16} />
++                </button>
++              </div>
++            </div>
++          </ScrollReveal>
++
++          {/* Trust signals */}
++          <ScrollReveal>
++            <div
++              style={{
++                display: "flex",
++                justifyContent: "center",
++                gap: 32,
++                marginTop: 40,
++                flexWrap: "wrap" as const,
++              }}
++            >
++              {[
++                "No credit pull required",
++                "No commitment or fees",
++                "Response within 24 hours",
++              ].map((text) => (
++                <div
++                  key={text}
++                  style={{
++                    display: "flex",
++                    alignItems: "center",
++                    gap: 8,
++                    fontFamily: "var(--font-sans)",
++                    fontSize: 13,
++                    color: "var(--text-mid)",
++                  }}
++                >
++                  <svg
++                    width="16"
++                    height="16"
++                    viewBox="0 0 24 24"
++                    fill="none"
++                    stroke="var(--gold)"
++                    strokeWidth="2"
++                  >
++                    <path d="M20 6L9 17l-5-5" />
++                  </svg>
++                  {text}
++                </div>
++              ))}
++            </div>
++          </ScrollReveal>
++        </div>
++      </section>
++
++      {/* CTA */}
++      <FooterCTA
++        headline={
++          <>
++            Prefer to talk{" "}
++            <em style={{ fontStyle: "italic", color: "var(--gold-muted)" }}>
++              directly
++            </em>
++            ?
++          </>
++        }
++        body="Our lending team is available to discuss your project. Reach out anytime."
++        primaryCta={
++          <a href="mailto:lending@requitygroup.com" className="btn-primary">
++            Email Our Team <ArrowRight size={16} />
++          </a>
++        }
++        secondaryCta={
++          <Link href="/lending" className="btn-secondary">
++            Back to Lending
++          </Link>
++        }
++      />
++    </main>
++  );
++}
++
++/* ── Form Field Components ── */
++function FormField({
++  label,
++  name,
++  type = "text",
++  placeholder,
++}: {
++  label: string;
++  name: string;
++  type?: string;
++  placeholder?: string;
++}) {
++  return (
++    <div>
++      <label
++        htmlFor={name}
++        style={{
++          display: "block",
++          fontFamily: "var(--font-sans)",
++          fontSize: 13,
++          fontWeight: 500,
++          color: "var(--text)",
++          marginBottom: 6,
++        }}
++      >
++        {label}
++      </label>
++      <input
++        id={name}
++        name={name}
++        type={type}
++        placeholder={placeholder}
++        style={{
++          width: "100%",
++          padding: "10px 14px",
++          borderRadius: 8,
++          border: "1px solid var(--border)",
++          background: "var(--bg)",
++          fontFamily: "var(--font-sans)",
++          fontSize: 14,
++          color: "var(--text)",
++          outline: "none",
++          boxSizing: "border-box" as const,
++        }}
++      />
++    </div>
++  );
++}
++
++function FormSelect({
++  label,
++  name,
++  options,
++}: {
++  label: string;
++  name: string;
++  options: string[];
++}) {
++  return (
++    <div>
++      <label
++        htmlFor={name}
++        style={{
++          display: "block",
++          fontFamily: "var(--font-sans)",
++          fontSize: 13,
++          fontWeight: 500,
++          color: "var(--text)",
++          marginBottom: 6,
++        }}
++      >
++        {label}
++      </label>
++      <select
++        id={name}
++        name={name}
++        style={{
++          width: "100%",
++          padding: "10px 14px",
++          borderRadius: 8,
++          border: "1px solid var(--border)",
++          background: "var(--bg)",
++          fontFamily: "var(--font-sans)",
++          fontSize: 14,
++          color: "var(--text)",
++          outline: "none",
++          boxSizing: "border-box" as const,
++        }}
++      >
++        <option value="">Select...</option>
++        {options.map((opt) => (
++          <option key={opt} value={opt}>
++            {opt}
++          </option>
++        ))}
++      </select>
++    </div>
++  );
++}
++
++function FormTextarea({
++  label,
++  name,
++  placeholder,
++}: {
++  label: string;
++  name: string;
++  placeholder?: string;
++}) {
++  return (
++    <div>
++      <label
++        htmlFor={name}
++        style={{
++          display: "block",
++          fontFamily: "var(--font-sans)",
++          fontSize: 13,
++          fontWeight: 500,
++          color: "var(--text)",
++          marginBottom: 6,
++        }}
++      >
++        {label}
++      </label>
++      <textarea
++        id={name}
++        name={name}
++        rows={4}
++        placeholder={placeholder}
++        style={{
++          width: "100%",
++          padding: "10px 14px",
++          borderRadius: 8,
++          border: "1px solid var(--border)",
++          background: "var(--bg)",
++          fontFamily: "var(--font-sans)",
++          fontSize: 14,
++          color: "var(--text)",
++          outline: "none",
++          resize: "vertical" as const,
++          boxSizing: "border-box" as const,
++        }}
++      />
++    </div>
++  );
++}
+diff --git a/apps/requity-group/app/lending/page.tsx b/apps/requity-group/app/lending/page.tsx
+index de52c18..eb2d28a 100644
+--- a/apps/requity-group/app/lending/page.tsx
++++ b/apps/requity-group/app/lending/page.tsx
+@@ -2,8 +2,11 @@ import type { Metadata } from "next";
+ import Link from "next/link";
+ import { fetchSiteData } from "../../lib/supabase";
+ import { renderEmText } from "../../lib/renderEmText";
+-import type { PageSection, LoanProgram } from "../../lib/types";
++import type { PageSection, LoanProgram, SiteStat, Testimonial } from "../../lib/types";
+ import ScrollReveal from "../components/ScrollReveal";
++import SectionLabel from "../components/SectionLabel";
++import AnimatedLine from "../components/AnimatedLine";
++import PageHero from "../components/PageHero";
+ import FooterCTA from "../components/FooterCTA";
+ import {
+   ArrowRight,
+@@ -15,19 +18,22 @@ import {
+   FileText,
+   Search,
+   DollarSign,
++  Clock,
++  Shield,
++  Handshake,
+ } from "lucide-react";
+ 
+ export const metadata: Metadata = {
+-  title: "Bridge Lending",
++  title: "Requity Lending | Bridge Loans for Real Estate",
+   description:
+-    "Bridge loans for commercial and residential real estate. Close in as little as 10 days. CRE bridge, manufactured housing, RV parks, multifamily. Up to 80% LTV.",
++    "Bridge loans for commercial and residential real estate from an operator who understands your deal. Close in as little as 10 days. Term sheets in 24 hours.",
+   openGraph: {
+-    title: "Real Estate Bridge Lending | Requity Group",
++    title: "Requity Lending | Bridge Loans for Real Estate",
+     description:
+       "Bridge loans by real operators. Close in 10 days. CRE bridge, manufactured housing, RV parks, multifamily financing. Up to 80% LTV.",
+   },
+   twitter: {
+-    title: "Real Estate Bridge Lending | Requity Group",
++    title: "Requity Lending | Bridge Loans for Real Estate",
+     description:
+       "Bridge loans by real operators. Close in 10 days. CRE bridge, manufactured housing, RV parks, multifamily financing.",
+   },
+@@ -37,7 +43,7 @@ export const revalidate = 300;
+ 
+ const BENEFIT_ICONS: Record<string, React.ReactNode> = {
+   "Fast Execution": <Zap size={22} />,
+-  "Certainty of Close": <CheckCircle size={22} />,
++  "Certainty of Close": <Shield size={22} />,
+   "Operator Mentality": <HardHat size={22} />,
+   "Direct Communication": <MessageSquare size={22} />,
+ };
+@@ -53,17 +59,17 @@ const PROCESS_STEPS = [
+   {
+     title: "Submit Your Deal",
+     description:
+-      "Complete our simple loan request form with your deal details. No credit pull, no commitment.",
++      "Complete our simple deal submission form with your property and project details. No credit pull, no commitment.",
+   },
+   {
+     title: "Receive a Term Sheet",
+     description:
+-      "Our team reviews your request and issues a term sheet within 24 hours.",
++      "Our team reviews your request and delivers a term sheet within 24 hours of receiving a complete package.",
+   },
+   {
+     title: "Underwriting & Diligence",
+     description:
+-      "We conduct property-level due diligence and finalize loan documents.",
++      "We conduct property-level due diligence and finalize loan documents with clear, direct communication throughout.",
+   },
+   {
+     title: "Close & Fund",
+@@ -72,108 +78,247 @@ const PROCESS_STEPS = [
+   },
+ ];
+ 
++const LENDING_STATS = [
++  { label: "Fastest Close", value: "10 Days" },
++  { label: "Term Sheet Turnaround", value: "24 Hrs" },
++  { label: "Max LTV", value: "80%" },
++  { label: "Loans Funded", value: "150+" },
++];
++
+ export default async function LendingPage() {
+-  const [sections, programs] = await Promise.all([
++  const [sections, programs, testimonials] = await Promise.all([
+     fetchSiteData<PageSection>("site_page_sections", {
+       filter: { page_slug: "lending" },
+     }),
+     fetchSiteData<LoanProgram>("site_loan_programs", {
+       eq: ["is_published", true],
+     }),
++    fetchSiteData<Testimonial>("site_testimonials", {
++      eq: ["is_published", true],
++    }),
+   ]);
+ 
+   const hero = sections.find((s) => s.section_key === "hero");
+   const whySection = sections.find((s) => s.section_key === "why");
+-  const benefits = (whySection?.metadata?.benefits as Array<{ title: string; description: string }>) ?? [];
++  const benefits =
++    (whySection?.metadata?.benefits as Array<{
++      title: string;
++      description: string;
++    }>) ?? [];
++
++  const featuredTestimonials = testimonials
++    .filter((t) => t.is_featured)
++    .slice(0, 3);
+ 
+   return (
+     <main>
+-      {/* Hero */}
+-      <section
+-        className="dark-zone hero-gradient"
+-        style={{
+-          paddingTop: "clamp(160px, 20vw, 220px)",
+-          paddingBottom: "clamp(80px, 10vw, 120px)",
+-          position: "relative",
+-          overflow: "hidden",
+-        }}
+-      >
+-        <div className="navy-grid-pattern">
+-          {Array.from({ length: 14 }).map((_, i) => (
+-            <div key={i} className="navy-grid-line" style={{ left: `${(i + 1) * 7.14}%` }} />
+-          ))}
+-        </div>
+-        <div className="container" style={{ position: "relative", zIndex: 1 }}>
+-          <p
+-            className="section-eyebrow"
+-            style={{ animation: "fadeUp 0.8s ease forwards" }}
+-          >
+-            {hero?.subheading}
+-          </p>
+-          <h1
+-            className="section-title section-title-light"
+-            style={{
+-              fontSize: "clamp(40px, 5.5vw, 60px)",
+-              maxWidth: 720,
+-              animation: "fadeUp 0.8s 0.1s ease both",
+-            }}
+-          >
+-            {renderEmText(hero?.heading)}
+-          </h1>
+-          <p
+-            className="section-desc section-desc-light"
+-            style={{ animation: "fadeUp 0.8s 0.2s ease both" }}
+-          >
+-            {hero?.body_text}
+-          </p>
+-          <div
+-            style={{
+-              display: "flex",
+-              gap: 16,
+-              marginTop: 44,
+-              animation: "fadeUp 0.8s 0.3s ease both",
+-              flexWrap: "wrap",
+-            }}
+-          >
+-            <a href="#apply" className="btn-primary">
++      {/* ──────────────── HERO ──────────────── */}
++      <PageHero
++        label="Bridge Lending"
++        headline={
++          hero?.heading ? (
++            renderEmText(hero.heading)
++          ) : (
++            <>
++              Close in{" "}
++              <em style={{ fontStyle: "italic", color: "var(--gold-muted)" }}>
++                10 days
++              </em>
++              , not 10 weeks
++            </>
++          )
++        }
++        body={
++          hero?.body_text ??
++          "Residential and commercial bridge loans from an operator who understands your deal. Direct communication, fast execution, certainty of close."
++        }
++        cta={
++          <div style={{ display: "flex", gap: 16, flexWrap: "wrap" as const }}>
++            <Link href="/lending/apply" className="btn-primary">
+               Submit a Deal <ArrowRight size={16} />
+-            </a>
+-            <a href="#programs" className="btn-secondary">
+-              Loan Programs
++            </Link>
++            <a href="#programs" className="btn-editorial-light">
++              View Programs <span className="arrow">&rarr;</span>
+             </a>
+           </div>
++        }
++      />
++
++      {/* ──────────────── STATS BAR ──────────────── */}
++      <section className="dark-zone" style={{ padding: 0 }}>
++        <div className="container">
++          <AnimatedLine light />
++          <div className="stats-grid on-navy">
++            {LENDING_STATS.map((stat) => (
++              <div key={stat.label} className="stat-cell">
++                <div className="stat-num gold">{stat.value}</div>
++                <div className="stat-lbl">{stat.label}</div>
++              </div>
++            ))}
++          </div>
++        </div>
++      </section>
++
++      {/* ──────────────── WHY REQUITY LENDING ──────────────── */}
++      <section className="light-zone section-pad-lg">
++        <div className="container">
++          <ScrollReveal>
++            <div className="editorial-grid">
++              <div>
++                <SectionLabel>Why Us</SectionLabel>
++              </div>
++              <div>
++                <h2
++                  className="type-h2"
++                  style={{ color: "var(--text)", marginBottom: 32 }}
++                >
++                  {whySection?.heading
++                    ? renderEmText(whySection.heading)
++                    : "Built by operators, for operators"}
++                </h2>
++                <p
++                  className="type-body"
++                  style={{
++                    color: "var(--text-mid)",
++                    maxWidth: 680,
++                    marginBottom: 44,
++                  }}
++                >
++                  {whySection?.body_text ??
++                    "We invest in real estate ourselves, so we understand your deal from both sides of the table. That means faster decisions, smarter structuring, and a lender who speaks your language."}
++                </p>
++              </div>
++            </div>
++          </ScrollReveal>
++
++          <ScrollReveal staggerChildren>
++            <div
++              style={{
++                display: "grid",
++                gridTemplateColumns: "repeat(auto-fit, minmax(250px, 1fr))",
++                gap: 24,
++              }}
++            >
++              {benefits.length > 0
++                ? benefits.map((b) => (
++                    <div key={b.title} className="value-item">
++                      <div style={{ color: "var(--gold)", marginBottom: 14 }}>
++                        {BENEFIT_ICONS[b.title] ?? <Zap size={22} />}
++                      </div>
++                      <h4>{b.title}</h4>
++                      <p>{b.description}</p>
++                    </div>
++                  ))
++                : [
++                    {
++                      icon: <Clock size={22} />,
++                      title: "Fast Execution",
++                      desc: "Term sheets in 24 hours, closings in as fast as 10 business days. We move at the speed your deal requires.",
++                    },
++                    {
++                      icon: <Shield size={22} />,
++                      title: "Certainty of Close",
++                      desc: "Direct balance sheet lender with capital ready to deploy. No last-minute surprises or committee delays.",
++                    },
++                    {
++                      icon: <HardHat size={22} />,
++                      title: "Operator Mentality",
++                      desc: "We invest in real estate too. We understand renovation timelines, lease-up risk, and exit strategies firsthand.",
++                    },
++                    {
++                      icon: <Handshake size={22} />,
++                      title: "Direct Access",
++                      desc: "Talk to decision-makers from day one. No call centers, no layers of bureaucracy, no runaround.",
++                    },
++                  ].map((b) => (
++                    <div key={b.title} className="value-item">
++                      <div style={{ color: "var(--gold)", marginBottom: 14 }}>
++                        {b.icon}
++                      </div>
++                      <h4>{b.title}</h4>
++                      <p>{b.desc}</p>
++                    </div>
++                  ))}
++            </div>
++          </ScrollReveal>
+         </div>
+       </section>
+ 
+-      <div className="dark-to-light" />
++      <section className="light-zone" style={{ padding: "0 0 24px" }}>
++        <div className="container">
++          <AnimatedLine />
++        </div>
++      </section>
+ 
+-      {/* Why Requity Lending */}
+-      <section className="light-zone section-gap-lg">
++      {/* ──────────────── LOAN PROGRAMS ──────────────── */}
++      <section id="programs" className="light-zone section-pad-lg">
+         <div className="container">
+           <ScrollReveal>
+-            <p className="section-eyebrow section-eyebrow-dark">Why Us</p>
+-            <h2 className="section-title">
+-              {renderEmText(whySection?.heading)}
++            <SectionLabel>Loan Programs</SectionLabel>
++            <h2
++              className="type-h2"
++              style={{ color: "var(--text)", marginBottom: 16 }}
++            >
++              Flexible bridge{" "}
++              <em style={{ fontStyle: "italic", color: "var(--gold)" }}>
++                financing
++              </em>
+             </h2>
+-            <p className="section-desc" style={{ marginBottom: 56 }}>
+-              {whySection?.body_text}
++            <p
++              className="type-body"
++              style={{
++                color: "var(--text-mid)",
++                maxWidth: 600,
++                marginBottom: 56,
++              }}
++            >
++              Tailored loan structures for residential, commercial, and
++              value-add projects. Every program is backed by our direct lending
++              balance sheet.
+             </p>
+           </ScrollReveal>
+           <ScrollReveal staggerChildren>
+             <div
+               style={{
+                 display: "grid",
+-                gridTemplateColumns: "repeat(auto-fit, minmax(250px, 1fr))",
++                gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))",
+                 gap: 24,
+               }}
+             >
+-              {benefits.map((b) => (
+-                <div key={b.title} className="value-item">
+-                  <div style={{ color: "var(--gold)", marginBottom: 14 }}>
+-                    {BENEFIT_ICONS[b.title] ?? <Zap size={22} />}
+-                  </div>
+-                  <h4>{b.title}</h4>
+-                  <p>{b.description}</p>
++              {programs.map((program) => (
++                <div key={program.id} className="card">
++                  <h3 className="card-title" style={{ fontSize: 23 }}>
++                    {program.display_name}
++                  </h3>
++                  {program.tagline && (
++                    <p
++                      style={{
++                        fontFamily: "var(--font-sans)",
++                        fontSize: 13,
++                        color: "var(--gold)",
++                        fontWeight: 500,
++                        marginBottom: 8,
++                        letterSpacing: "0.02em",
++                      }}
++                    >
++                      {program.tagline}
++                    </p>
++                  )}
++                  <p className="card-body" style={{ marginBottom: 20 }}>
++                    {program.description}
++                  </p>
++                  <ul style={{ listStyle: "none", padding: 0, margin: 0 }}>
++                    {(program.features as string[]).map((feature, i) => (
++                      <li key={i} className="program-feature">
++                        <CheckCircle
++                          size={15}
++                          className="program-feature-icon"
++                          style={{ flexShrink: 0 }}
++                        />
++                        {feature}
++                      </li>
++                    ))}
++                  </ul>
+                 </div>
+               ))}
+             </div>
+@@ -181,19 +326,49 @@ export default async function LendingPage() {
+         </div>
+       </section>
+ 
+-      {/* Process - Navy section for rhythm */}
+-      <section className="dark-zone section-pad-lg" style={{ overflow: "hidden" }}>
++      {/* ──────────────── PROCESS ──────────────── */}
++      <section
++        className="dark-zone section-pad-lg"
++        style={{ overflow: "hidden" }}
++      >
+         <div className="navy-grid-pattern">
+           {Array.from({ length: 14 }).map((_, i) => (
+-            <div key={i} className="navy-grid-line" style={{ left: `${(i + 1) * 7.14}%` }} />
++            <div
++              key={i}
++              className="navy-grid-line"
++              style={{ left: `${(i + 1) * 7.14}%` }}
++            />
+           ))}
+         </div>
+-        <div className="container" style={{ position: "relative", zIndex: 1 }}>
++        <div
++          className="container"
++          style={{ position: "relative", zIndex: 1 }}
++        >
+           <ScrollReveal>
+-            <p className="section-eyebrow" style={{ color: "var(--gold-muted)" }}>Our Process</p>
+-            <h2 className="section-title section-title-light" style={{ marginBottom: 48 }}>
+-              From Application to <em>Funding</em>
++            <SectionLabel light>Our Process</SectionLabel>
++            <h2
++              className="type-h2"
++              style={{ color: "#fff", marginBottom: 16 }}
++            >
++              From submission to{" "}
++              <em style={{ fontStyle: "italic", color: "var(--gold-muted)" }}>
++                funding
++              </em>
+             </h2>
++            <p
++              style={{
++                fontFamily: "var(--font-sans)",
++                fontSize: 17,
++                lineHeight: 1.75,
++                color: "var(--navy-text-mid)",
++                maxWidth: 560,
++                marginBottom: 56,
++              }}
++            >
++              We have streamlined our process to get you from application to
++              closing as quickly as possible, with clear communication at every
++              step.
++            </p>
+           </ScrollReveal>
+           <ScrollReveal staggerChildren>
+             <div
+@@ -204,7 +379,11 @@ export default async function LendingPage() {
+               }}
+             >
+               {PROCESS_STEPS.map((step, i) => (
+-                <div key={i} className="card-navy" style={{ padding: "36px 32px" }}>
++                <div
++                  key={i}
++                  className="card-navy"
++                  style={{ padding: "36px 32px" }}
++                >
+                   <div
+                     style={{
+                       display: "flex",
+@@ -229,7 +408,13 @@ export default async function LendingPage() {
+                   >
+                     {step.title}
+                   </h3>
+-                  <p style={{ fontSize: 15, lineHeight: 1.75, color: "var(--navy-text-mid)" }}>
++                  <p
++                    style={{
++                      fontSize: 15,
++                      lineHeight: 1.75,
++                      color: "var(--navy-text-mid)",
++                    }}
++                  >
+                     {step.description}
+                   </p>
+                 </div>
+@@ -239,64 +424,58 @@ export default async function LendingPage() {
+         </div>
+       </section>
+ 
+-      {/* Loan Programs */}
+-      <section id="programs" className="light-zone section-gap-lg">
+-        <div className="container">
+-          <ScrollReveal>
+-            <p className="section-eyebrow section-eyebrow-dark">Loan Programs</p>
+-            <h2 className="section-title" style={{ marginBottom: 48 }}>
+-              Flexible Capital <em>Solutions</em>
+-            </h2>
+-          </ScrollReveal>
+-          <ScrollReveal staggerChildren>
+-            <div
+-              style={{
+-                display: "grid",
+-                gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))",
+-                gap: 24,
+-              }}
+-            >
+-              {programs.map((program) => (
+-                <div key={program.id} className="card">
+-                  <h3 className="card-title" style={{ fontSize: 23 }}>
+-                    {program.display_name}
+-                  </h3>
+-                  <p className="card-body" style={{ marginBottom: 20 }}>
+-                    {program.description}
+-                  </p>
+-                  <ul style={{ listStyle: "none", padding: 0, margin: 0 }}>
+-                    {(program.features as string[]).map((feature, i) => (
+-                      <li key={i} className="program-feature">
+-                        <CheckCircle
+-                          size={15}
+-                          className="program-feature-icon"
+-                          style={{ flexShrink: 0 }}
+-                        />
+-                        {feature}
+-                      </li>
+-                    ))}
+-                  </ul>
+-                </div>
+-              ))}
+-            </div>
+-          </ScrollReveal>
+-        </div>
+-      </section>
++      {/* ──────────────── TESTIMONIALS ──────────────── */}
++      {featuredTestimonials.length > 0 && (
++        <section className="cream-zone section-pad-lg">
++          <div className="container">
++            <ScrollReveal>
++              <SectionLabel>Testimonials</SectionLabel>
++              <h2
++                className="type-h2"
++                style={{ color: "var(--text)", marginBottom: 48 }}
++              >
++                Trusted by borrowers and brokers
++              </h2>
++            </ScrollReveal>
++            <ScrollReveal staggerChildren>
++              <div
++                style={{
++                  display: "grid",
++                  gridTemplateColumns:
++                    "repeat(auto-fit, minmax(340px, 1fr))",
++                  gap: 24,
++                }}
++              >
++                {featuredTestimonials.map((t) => (
++                  <div key={t.id} className="test-card">
++                    <div className="big-q">&ldquo;</div>
++                    <div className="stars">{"★".repeat(t.rating)}</div>
++                    <p className="quote-text">&ldquo;{t.quote}&rdquo;</p>
++                    <div className="author-name">{t.author_name}</div>
++                  </div>
++                ))}
++              </div>
++            </ScrollReveal>
++          </div>
++        </section>
++      )}
+ 
+-      {/* CTA */}
++      {/* ──────────────── CTA ──────────────── */}
+       <FooterCTA
+-        label="Apply Now"
++        label="Get Started"
+         headline={
+           <>
+             Have a deal?{" "}
+-            <em style={{ fontStyle: "italic", color: "var(--gold-muted)" }}>Let&apos;s talk.</em>
++            <em style={{ fontStyle: "italic", color: "var(--gold-muted)" }}>
++              Let&apos;s talk.
++            </em>
+           </>
+         }
+-        body="Our lending team is available to discuss your project and provide a quick indication of terms. No obligation, no credit pull."
++        body="Submit your deal details and our lending team will deliver a term sheet within 24 hours. No obligation, no credit pull."
+         primaryCta={
+-          <a href="mailto:lending@requitygroup.com" className="btn-primary">
+-            Contact Lending <ArrowRight size={16} />
+-          </a>
++          <Link href="/lending/apply" className="btn-primary">
++            Submit a Deal <ArrowRight size={16} />
++          </Link>
+         }
+         secondaryCta={
+           <Link href="/invest" className="btn-secondary">
+-- 
+2.34.1
+
+
+From ff3fea4fbab5abf0b88ed83d62254e4b104e08d3 Mon Sep 17 00:00:00 2001
+From: Dylan Marma <dylan@requitygroup.com>
+Date: Thu, 12 Mar 2026 18:42:49 -0400
+Subject: [PATCH 3/3] Deprecate card types in favor of conditions engine for
+ pipeline field resolution
+
+Replace unified_card_types with the two-axis visibility conditions engine
+(asset_class x loan_type) as the single source of truth for which fields,
+UW outputs, and card metrics appear on pipeline deals.
+
+- Rewrite NewDealDialog to use Capital Side + Loan Type instead of CardTypeSelector
+- Replace card type filter with loan type filter in DealFilters
+- DealDetailPage uses useConditionDrivenFields + useDealConfig hooks
+- Add useConditionDrivenFields hook (fetches field_configurations by visibility)
+- Add useDealConfig hook (matches deal_config_templates by conditions scoring)
+- Make card_type_id nullable on unified_deals, add loan_type column
+- Fix visibility engine: multifamily/mhc classified as Commercial
+- Document extraction API works with conditions engine fields
+- Backward-compatible synthetic cardType for child components
+
+Co-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>
+---
+ .../admin/pipeline-v2/[id]/DealDetailPage.tsx |  56 ++++-
+ .../admin/pipeline-v2/[id]/page.tsx           |  25 +-
+ .../admin/pipeline-v2/actions.ts              | 104 ++++-----
+ .../card-types/CardTypeManagerView.tsx        |  13 +-
+ .../control-center/object-manager/actions.ts  |   7 +
+ .../api/deals/extract-from-document/route.ts  | 164 ++++++++-----
+ .../components/pipeline-v2/DealFilters.tsx    |  31 ++-
+ .../pipeline-v2/EditableOverview.tsx          |   6 +-
+ .../components/pipeline-v2/NewDealDialog.tsx  | 166 +++++++++++---
+ .../components/pipeline-v2/PipelineView.tsx   |  13 +-
+ .../pipeline-v2/UnderwritingPanel.tsx         |   6 +-
+ .../components/pipeline-v2/pipeline-types.ts  |   3 +-
+ .../hooks/useConditionDrivenFields.ts         | 217 ++++++++++++++++++
+ apps/requity-os/hooks/useDealConfig.ts        | 181 +++++++++++++++
+ apps/requity-os/lib/visibility-engine.ts      |   9 +-
+ .../card-types-deprecation-context.md         |  65 ++++++
+ 16 files changed, 873 insertions(+), 193 deletions(-)
+ create mode 100644 apps/requity-os/hooks/useConditionDrivenFields.ts
+ create mode 100644 apps/requity-os/hooks/useDealConfig.ts
+ create mode 100644 dev/active/card-types-deprecation/card-types-deprecation-context.md
+
+diff --git a/apps/requity-os/app/(authenticated)/admin/pipeline-v2/[id]/DealDetailPage.tsx b/apps/requity-os/app/(authenticated)/admin/pipeline-v2/[id]/DealDetailPage.tsx
+index 0e19fac..afb65a9 100644
+--- a/apps/requity-os/app/(authenticated)/admin/pipeline-v2/[id]/DealDetailPage.tsx
++++ b/apps/requity-os/app/(authenticated)/admin/pipeline-v2/[id]/DealDetailPage.tsx
+@@ -79,6 +79,8 @@ import {
+   regressStageAction,
+ } from "@/app/(authenticated)/admin/pipeline-v2/actions";
+ import { mapAssetClassToVisibility, type VisibilityContext } from "@/lib/visibility-engine";
++import { useConditionDrivenFields } from "@/hooks/useConditionDrivenFields";
++import { useDealConfig } from "@/hooks/useDealConfig";
+ import { DealActivityTab } from "@/components/pipeline-v2/tabs/DealActivityTab";
+ import { UnifiedNotes } from "@/components/shared/UnifiedNotes";
+ import { logQuickActionV2, assignTeamMemberV2, addDealTeamMember, removeDealTeamMember, saveGridOverrides } from "./actions";
+@@ -111,7 +113,7 @@ const TEAM_ROLE_OPTIONS = [
+ 
+ interface DealDetailPageProps {
+   deal: UnifiedDeal;
+-  cardType: UnifiedCardType;
++  cardType?: UnifiedCardType | null;
+   stageConfigs: StageConfig[];
+   conditions: DealCondition[];
+   activities: DealActivity[];
+@@ -130,7 +132,7 @@ interface DealDetailPageProps {
+ 
+ export function DealDetailPage({
+   deal,
+-  cardType,
++  cardType: rawCardType,
+   stageConfigs,
+   conditions,
+   activities,
+@@ -144,7 +146,7 @@ export function DealDetailPage({
+   tasks,
+   commercialUWData,
+ }: DealDetailPageProps) {
+-  // Universal 10-tab layout — same for ALL card types
++  // Universal 10-tab layout — same for ALL deal types
+   const UNIVERSAL_TABS = [
+     "Overview",
+     "Property",
+@@ -171,10 +173,49 @@ export function DealDetailPage({
+   );
+ 
+   // Build visibility context for field filtering (asset_class x loan_type)
++  // loan_type: prefer top-level column, fall back to uw_data for legacy deals
+   const visibilityContext = useMemo<VisibilityContext>(() => ({
+     asset_class: mapAssetClassToVisibility(deal.asset_class),
+-    loan_type: (deal.uw_data?.loan_type as string) ?? "",
+-  }), [deal.asset_class, deal.uw_data?.loan_type]);
++    loan_type: deal.loan_type || (deal.uw_data?.loan_type as string) || "",
++  }), [deal.asset_class, deal.loan_type, deal.uw_data?.loan_type]);
++
++  // ── CONDITIONS-DRIVEN FIELD RESOLUTION ──
++  // Fields are determined by visibility_condition on field_configurations,
++  // filtered by the deal's asset_class x loan_type. No card type needed.
++  const { uwFields, propertyFields, contactFields } = useConditionDrivenFields(visibilityContext);
++
++  // Deal config (uw_outputs, card_metrics) from deal_config_templates
++  const dealConfig = useDealConfig(visibilityContext, deal.capital_side);
++
++  // Build a synthetic cardType object for backward compatibility with child components.
++  // This allows PropertyTab, ContactsTab, UnderwritingPanel, etc. to work unchanged.
++  const cardType = useMemo<UnifiedCardType>(() => ({
++    id: rawCardType?.id ?? "conditions-driven",
++    slug: rawCardType?.slug ?? dealConfig.template?.slug ?? "",
++    label: dealConfig.dealTypeLabel,
++    capital_side: deal.capital_side,
++    category: rawCardType?.category ?? "",
++    description: rawCardType?.description ?? null,
++    uw_model_key: rawCardType?.uw_model_key ?? "",
++    // Fields come from conditions engine, not card type refs
++    uw_fields: uwFields,
++    property_fields: propertyFields,
++    contact_fields: contactFields,
++    // Outputs and metrics come from deal_config_templates
++    uw_outputs: dealConfig.uwOutputs,
++    card_metrics: dealConfig.cardMetrics,
++    card_icon: rawCardType?.card_icon ?? "layers",
++    // Layout: use universal tabs, empty groups (fields self-organize)
++    detail_tabs: [...UNIVERSAL_TABS],
++    detail_field_groups: rawCardType?.detail_field_groups ?? [],
++    property_field_groups: rawCardType?.property_field_groups ?? [],
++    contact_field_groups: rawCardType?.contact_field_groups ?? [],
++    contact_roles: dealConfig.contactRoles,
++    applicable_asset_classes: rawCardType?.applicable_asset_classes ?? null,
++    status: "active",
++    sort_order: 0,
++    uw_grid: rawCardType?.uw_grid ?? null,
++  }), [rawCardType, uwFields, propertyFields, contactFields, dealConfig, deal.capital_side, UNIVERSAL_TABS]);
+ 
+   const handleTabChange = useCallback((tab: string) => {
+     setActiveTab(tab);
+@@ -197,7 +238,7 @@ export function DealDetailPage({
+ 
+   const displayId = deal.deal_number ?? deal.id.slice(0, 8);
+   const days = deal.days_in_stage ?? daysInStage(deal.stage_entered_at);
+-  const shortLabel = CARD_TYPE_SHORT_LABELS[cardType.slug] ?? cardType.label;
++  const shortLabel = CARD_TYPE_SHORT_LABELS[cardType.slug] ?? dealConfig.dealTypeLabel;
+ 
+   // Derive borrower name for approval section
+   const borrowerName = deal.primary_contact
+@@ -627,7 +668,8 @@ function UnderwritingContent({
+   commercialUWData: CommercialUWData | null;
+   visibilityContext: VisibilityContext;
+ }) {
+-  const isCommercial = cardType.slug === "comm_debt";
++  // Determine commercial by asset_class context rather than card type slug
++  const isCommercial = deal.asset_class ? !["sfr", "duplex_fourplex"].includes(deal.asset_class) : cardType.slug === "comm_debt";
+   if (isCommercial && commercialUWData) {
+     return (
+       <CommercialUnderwritingTab
+diff --git a/apps/requity-os/app/(authenticated)/admin/pipeline-v2/[id]/page.tsx b/apps/requity-os/app/(authenticated)/admin/pipeline-v2/[id]/page.tsx
+index 83cf627..984206e 100644
+--- a/apps/requity-os/app/(authenticated)/admin/pipeline-v2/[id]/page.tsx
++++ b/apps/requity-os/app/(authenticated)/admin/pipeline-v2/[id]/page.tsx
+@@ -54,6 +54,15 @@ export default async function DealDetailRoute({ params }: PageProps) {
+   const deal = dealResult.data;
+ 
+   // Fetch remaining data in parallel
++  // Card type is optional now (conditions engine drives field selection)
++  const cardTypePromise = deal.card_type_id
++    ? admin
++        .from("unified_card_types" as never)
++        .select("*")
++        .eq("id" as never, deal.card_type_id as never)
++        .single()
++    : Promise.resolve({ data: null, error: null });
++
+   const [
+     cardTypeRaw,
+     stageConfigsRaw,
+@@ -65,11 +74,7 @@ export default async function DealDetailRoute({ params }: PageProps) {
+     tasksRaw,
+     dealTeamMembersRaw,
+   ] = await Promise.all([
+-    admin
+-      .from("unified_card_types" as never)
+-      .select("*")
+-      .eq("id" as never, deal.card_type_id as never)
+-      .single(),
++    cardTypePromise,
+     admin
+       .from("unified_stage_configs" as never)
+       .select("*")
+@@ -116,9 +121,8 @@ export default async function DealDetailRoute({ params }: PageProps) {
+     data: UnifiedCardType | null;
+     error: { message: string } | null;
+   };
+-  if (cardTypeResult.error || !cardTypeResult.data) notFound();
+-
+-  const cardType = cardTypeResult.data;
++  // Card type is optional now -- conditions engine handles field selection
++  const cardType = cardTypeResult.data ?? null;
+   const stageConfigs = ((stageConfigsRaw as unknown as { data: StageConfig[] | null }).data ?? []);
+   const activities = ((activitiesRaw as unknown as { data: DealActivity[] | null }).data ?? []);
+   const conditions = ((conditionsRaw as unknown as { data: DealCondition[] | null }).data ?? []);
+@@ -205,7 +209,10 @@ export default async function DealDetailRoute({ params }: PageProps) {
+     allVersions: Record<string, unknown>[];
+   } | null = null;
+ 
+-  const isCommercial = cardType.slug === "comm_debt";
++  // Determine commercial by asset_class instead of card type slug
++  const isCommercial = deal.asset_class
++    ? !["sfr", "duplex_fourplex"].includes(deal.asset_class as string)
++    : cardType?.slug === "comm_debt";
+   if (isCommercial) {
+     const uwRaw = await admin
+       .from("deal_commercial_uw" as never)
+diff --git a/apps/requity-os/app/(authenticated)/admin/pipeline-v2/actions.ts b/apps/requity-os/app/(authenticated)/admin/pipeline-v2/actions.ts
+index 1fe39c3..e926d2c 100644
+--- a/apps/requity-os/app/(authenticated)/admin/pipeline-v2/actions.ts
++++ b/apps/requity-os/app/(authenticated)/admin/pipeline-v2/actions.ts
+@@ -17,7 +17,11 @@ import {
+   valsMatch,
+ } from "@/lib/intake/types";
+ 
+-type UnifiedDealInsert = Database["public"]["Tables"]["unified_deals"]["Insert"];
++// card_type_id and loan_type are nullable in the DB but types may not reflect this yet
++type UnifiedDealInsert = Omit<Database["public"]["Tables"]["unified_deals"]["Insert"], "card_type_id" | "loan_type"> & {
++  card_type_id?: string | null;
++  loan_type?: string | null;
++};
+ type UnifiedDealUpdate = Database["public"]["Tables"]["unified_deals"]["Update"];
+ 
+ function revalidatePipeline(dealId?: string) {
+@@ -33,8 +37,9 @@ function revalidatePipeline(dealId?: string) {
+ 
+ export async function createUnifiedDealAction(data: {
+   name: string;
+-  card_type_id: string;
++  card_type_id?: string;
+   capital_side?: string;
++  loan_type?: string;
+   asset_class?: string;
+   amount?: number;
+   primary_contact_id?: string;
+@@ -51,8 +56,9 @@ export async function createUnifiedDealAction(data: {
+ 
+     const insertData: UnifiedDealInsert = {
+       name: data.name,
+-      card_type_id: data.card_type_id,
++      card_type_id: data.card_type_id || null,
+       capital_side: data.capital_side || "debt",
++      loan_type: data.loan_type || null,
+       asset_class: data.asset_class || null,
+       amount: data.amount || null,
+       primary_contact_id: data.primary_contact_id || null,
+@@ -702,6 +708,8 @@ export async function resolveIntakeItemAction(data: {
+   intakeQueueId: string;
+   action: "create_deal" | "attach" | "dismiss";
+   cardTypeId?: string;
++  capitalSide?: string;
++  loanType?: string;
+   dealFields?: {
+     name?: string;
+     amount?: number;
+@@ -735,20 +743,23 @@ export async function resolveIntakeItemAction(data: {
+     }
+ 
+     if (data.action === "create_deal") {
+-      if (!data.cardTypeId) return { error: "Card type is required" };
+-
+-      // Look up the card type for capital_side
+-      const { data: cardType } = await admin
+-        .from("unified_card_types")
+-        .select("capital_side")
+-        .eq("id", data.cardTypeId)
+-        .single();
++      // Derive capital_side: from explicit param, card type lookup, or default
++      let capitalSide = data.capitalSide || "debt";
++      if (!data.capitalSide && data.cardTypeId) {
++        const { data: cardType } = await admin
++          .from("unified_card_types")
++          .select("capital_side")
++          .eq("id", data.cardTypeId)
++          .single();
++        if (cardType) capitalSide = cardType.capital_side;
++      }
+ 
+-      // Create the deal using the existing action logic
++      // Create the deal
+       const insertData: UnifiedDealInsert = {
+         name: data.dealFields?.name || "Untitled Deal",
+-        card_type_id: data.cardTypeId,
+-        capital_side: cardType?.capital_side || "debt",
++        card_type_id: data.cardTypeId || null,
++        capital_side: capitalSide,
++        loan_type: data.loanType || null,
+         asset_class: data.dealFields?.asset_class || null,
+         amount: data.dealFields?.amount || null,
+         expected_close_date: data.dealFields?.expected_close_date || null,
+@@ -1080,57 +1091,34 @@ export async function processIntakeItemAction(
+       .filter(Boolean)
+       .join(" - ");
+ 
+-    // Try to determine a card type from the loan type
+-    let cardTypeId: string | null = null;
++    // Derive capital side and loan type from parsed data
++    let capitalSide = "debt";
++    let loanType: string | null = null;
++
+     if (parsed.loanType) {
+       const loanTypeLower = parsed.loanType.toLowerCase();
+-      const slugMap: Record<string, string> = {
+-        dscr: "res_debt_dscr",
+-        rtl: "res_debt_rtl",
+-        "comm debt": "comm_debt",
+-        "comm eq": "comm_equity",
+-        commercial: "comm_debt",
++      // Map parsed loan type to visibility engine loan types
++      const loanTypeMap: Record<string, string> = {
++        dscr: "DSCR",
++        rtl: "Bridge",
++        bridge: "Bridge",
++        perm: "Perm",
++        permanent: "Perm",
++        construction: "Construction",
++        equity: "Equity",
++        "comm debt": "Bridge",
++        "comm eq": "Equity",
++        commercial: "Bridge",
+       };
+-      const targetSlug = slugMap[loanTypeLower];
+-      if (targetSlug) {
+-        const { data: ct } = await admin
+-          .from("unified_card_types" as never)
+-          .select("id" as never)
+-          .eq("slug" as never, targetSlug as never)
+-          .eq("status" as never, "active" as never)
+-          .limit(1)
+-          .single();
+-        if (ct) cardTypeId = (ct as { id: string }).id;
+-      }
+-    }
+-
+-    // Fall back to first active card type if none matched
+-    if (!cardTypeId) {
+-      const { data: fallbackCt } = await admin
+-        .from("unified_card_types" as never)
+-        .select("id" as never)
+-        .eq("status" as never, "active" as never)
+-        .order("sort_order" as never)
+-        .limit(1)
+-        .single();
+-      if (fallbackCt) cardTypeId = (fallbackCt as { id: string }).id;
++      loanType = loanTypeMap[loanTypeLower] || null;
++      if (loanType === "Equity") capitalSide = "equity";
+     }
+ 
+-    if (!cardTypeId) {
+-      return { error: "No active card types found" };
+-    }
+-
+-    // Get capital_side from card type
+-    const { data: cardType } = await admin
+-      .from("unified_card_types" as never)
+-      .select("capital_side" as never)
+-      .eq("id" as never, cardTypeId as never)
+-      .single();
+-
+     const insertData: UnifiedDealInsert = {
+       name: dealName,
+-      card_type_id: cardTypeId,
+-      capital_side: (cardType as { capital_side: string } | null)?.capital_side || "debt",
++      card_type_id: null,
++      capital_side: capitalSide,
++      loan_type: loanType,
+       amount: (opportunityData.amount as number) || null,
+       primary_contact_id: contactId,
+       company_id: companyId,
+diff --git a/apps/requity-os/app/(authenticated)/control-center/card-types/CardTypeManagerView.tsx b/apps/requity-os/app/(authenticated)/control-center/card-types/CardTypeManagerView.tsx
+index a43cceb..f7029a7 100644
+--- a/apps/requity-os/app/(authenticated)/control-center/card-types/CardTypeManagerView.tsx
++++ b/apps/requity-os/app/(authenticated)/control-center/card-types/CardTypeManagerView.tsx
+@@ -221,6 +221,13 @@ export function CardTypeManagerView({
+   const handleSave = async () => {
+     if (!edits || !selectedId) return;
+     setSaving(true);
++
++    // When field_refs exist, clear inline fields to prevent stale cached labels.
++    // Runtime resolution via useResolvedCardType will hydrate fields from field_configurations.
++    const hasUwRefs = (edits.uw_field_refs ?? []).length > 0;
++    const hasPropRefs = (edits.property_field_refs ?? []).length > 0;
++    const hasContactRefs = (edits.contact_field_refs ?? []).length > 0;
++
+     const result = await saveCardType(selectedId, {
+       label: edits.label,
+       slug: edits.slug,
+@@ -229,13 +236,13 @@ export function CardTypeManagerView({
+       category: edits.category,
+       card_icon: edits.card_icon,
+       card_metrics: edits.card_metrics,
+-      uw_fields: edits.uw_fields,
++      uw_fields: hasUwRefs ? [] : edits.uw_fields,
+       uw_outputs: edits.uw_outputs,
+       detail_field_groups: edits.detail_field_groups,
+       detail_tabs: edits.detail_tabs,
+-      property_fields: edits.property_fields,
++      property_fields: hasPropRefs ? [] : edits.property_fields,
+       property_field_groups: edits.property_field_groups,
+-      contact_fields: edits.contact_fields,
++      contact_fields: hasContactRefs ? [] : edits.contact_fields,
+       contact_field_groups: edits.contact_field_groups,
+       contact_roles: edits.contact_roles,
+       applicable_asset_classes: edits.applicable_asset_classes,
+diff --git a/apps/requity-os/app/(authenticated)/control-center/object-manager/actions.ts b/apps/requity-os/app/(authenticated)/control-center/object-manager/actions.ts
+index a4f66d9..60b13d5 100644
+--- a/apps/requity-os/app/(authenticated)/control-center/object-manager/actions.ts
++++ b/apps/requity-os/app/(authenticated)/control-center/object-manager/actions.ts
+@@ -144,6 +144,9 @@ function revalidate() {
+   // Revalidate detail pages so layout changes take effect
+   revalidatePath("/admin/crm", "layout");
+   revalidatePath("/admin/crm", "page");
++  // Revalidate pipeline deal pages so resolved field refs pick up changes
++  revalidatePath("/admin/pipeline-v2", "layout");
++  revalidatePath("/admin/pipeline-v2", "page");
+ }
+ 
+ // ---------------------------------------------------------------------------
+@@ -175,6 +178,10 @@ export async function publishObjectChanges(objectKey: string): Promise<{
+       borrower_entity: ["/admin/crm"],
+       investor: ["/admin/crm"],
+       unified_deal: ["/admin/pipeline-v2"],
++      // UW field modules also affect pipeline deal pages
++      uw_deal: ["/admin/pipeline-v2"],
++      uw_property: ["/admin/pipeline-v2"],
++      uw_borrower: ["/admin/pipeline-v2"],
+     };
+ 
+     const routes = pageRouteMap[objectKey] || [];
+diff --git a/apps/requity-os/app/api/deals/extract-from-document/route.ts b/apps/requity-os/app/api/deals/extract-from-document/route.ts
+index cd32e9b..c019a42 100644
+--- a/apps/requity-os/app/api/deals/extract-from-document/route.ts
++++ b/apps/requity-os/app/api/deals/extract-from-document/route.ts
+@@ -44,6 +44,11 @@ export async function POST(req: NextRequest) {
+   try {
+     const body = await req.json();
+     const storagePath = body.storage_path as string | null;
++    const capitalSide = (body.capital_side as string) || "debt";
++    const loanType = (body.loan_type as string) || "";
++    const assetClass = (body.asset_class as string) || "";
++
++    // Legacy support: if card_type_id is provided, look up the card type
+     const cardTypeId = body.card_type_id as string | null;
+ 
+     if (!storagePath) {
+@@ -53,13 +58,6 @@ export async function POST(req: NextRequest) {
+       );
+     }
+ 
+-    if (!cardTypeId) {
+-      return NextResponse.json(
+-        { error: "No card_type_id provided" },
+-        { status: 400 }
+-      );
+-    }
+-
+     if (!ANTHROPIC_API_KEY) {
+       return NextResponse.json(
+         { error: "AI extraction is not configured" },
+@@ -69,18 +67,112 @@ export async function POST(req: NextRequest) {
+ 
+     const admin = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+ 
+-    // Look up card type's uw_fields for the target schema
+-    const { data: cardType, error: ctError } = await admin
+-      .from("unified_card_types")
+-      .select("label, uw_fields, property_fields")
+-      .eq("id", cardTypeId)
+-      .single();
++    // Determine field schema for extraction
++    let uwFieldDescriptions = "";
++    let propertyFieldDescriptions = "";
++    let dealTypeLabel = `${capitalSide} deal`;
++
++    if (cardTypeId) {
++      // Legacy path: use card type's inline fields
++      const { data: cardType } = await admin
++        .from("unified_card_types")
++        .select("label, uw_fields, property_fields")
++        .eq("id", cardTypeId)
++        .single();
++
++      if (cardType) {
++        dealTypeLabel = cardType.label as string;
++        const uwFields = (cardType.uw_fields ?? []) as Array<{
++          key: string;
++          label: string;
++          type: string;
++          options?: string[];
++        }>;
++        const propertyFields = (cardType.property_fields ?? []) as Array<{
++          key: string;
++          label: string;
++          type: string;
++          options?: string[];
++        }>;
++
++        uwFieldDescriptions = uwFields
++          .map((f) => {
++            let desc = `- ${f.key} (${f.type}): ${f.label}`;
++            if (f.options?.length) {
++              desc += ` [options: ${f.options.join(", ")}]`;
++            }
++            return desc;
++          })
++          .join("\n");
++
++        propertyFieldDescriptions = propertyFields
++          .map((f) => {
++            let desc = `- ${f.key} (${f.type}): ${f.label}`;
++            if (f.options?.length) {
++              desc += ` [options: ${f.options.join(", ")}]`;
++            }
++            return desc;
++          })
++          .join("\n");
++      }
++    } else {
++      // New conditions-driven path: fetch fields from field_configurations
++      dealTypeLabel = loanType
++        ? `${capitalSide} - ${loanType}`
++        : `${capitalSide} deal`;
++
++      const { data: fields } = await admin
++        .from("field_configurations")
++        .select("field_key, field_label, field_type, options, module, visibility_condition")
++        .in("module", ["uw_deal", "uw_property", "uw_borrower"])
++        .eq("is_active", true);
++
++      if (fields && fields.length > 0) {
++        // Simple visibility filter based on deal context
++        const visibleFields = fields.filter((f: Record<string, unknown>) => {
++          const cond = f.visibility_condition as { asset_class?: string[]; loan_type?: string[] } | null;
++          if (!cond) return true;
++          if (cond.asset_class?.length && assetClass) {
++            // Map deal asset_class to visibility engine values
++            const isResidential = ["sfr", "duplex_fourplex"].includes(assetClass);
++            const visAssetClass = isResidential ? "Residential" : "Commercial";
++            if (!cond.asset_class.includes(visAssetClass)) return false;
++          }
++          if (cond.loan_type?.length && loanType) {
++            if (!cond.loan_type.includes(loanType)) return false;
++          }
++          return true;
++        });
++
++        const uwFields = visibleFields.filter(
++          (f: Record<string, unknown>) => f.module === "uw_deal" || f.module === "uw_borrower"
++        );
++        const propFields = visibleFields.filter(
++          (f: Record<string, unknown>) => f.module === "uw_property"
++        );
+ 
+-    if (ctError || !cardType) {
+-      return NextResponse.json(
+-        { error: "Card type not found" },
+-        { status: 404 }
+-      );
++        uwFieldDescriptions = uwFields
++          .map((f: Record<string, unknown>) => {
++            const opts = f.options as string[] | null;
++            let desc = `- ${f.field_key} (${f.field_type}): ${f.field_label}`;
++            if (opts?.length) {
++              desc += ` [options: ${opts.join(", ")}]`;
++            }
++            return desc;
++          })
++          .join("\n");
++
++        propertyFieldDescriptions = propFields
++          .map((f: Record<string, unknown>) => {
++            const opts = f.options as string[] | null;
++            let desc = `- ${f.field_key} (${f.field_type}): ${f.field_label}`;
++            if (opts?.length) {
++              desc += ` [options: ${opts.join(", ")}]`;
++            }
++            return desc;
++          })
++          .join("\n");
++      }
+     }
+ 
+     // Reject unsupported file types early
+@@ -113,41 +205,7 @@ export async function POST(req: NextRequest) {
+     const base64 = Buffer.from(arrayBuffer).toString("base64");
+     const mediaType = getMediaType(storagePath);
+ 
+-    // Build the target field descriptions from uw_fields
+-    const uwFields = (cardType.uw_fields ?? []) as Array<{
+-      key: string;
+-      label: string;
+-      type: string;
+-      options?: string[];
+-    }>;
+-    const propertyFields = (cardType.property_fields ?? []) as Array<{
+-      key: string;
+-      label: string;
+-      type: string;
+-      options?: string[];
+-    }>;
+-
+-    const uwFieldDescriptions = uwFields
+-      .map((f) => {
+-        let desc = `- ${f.key} (${f.type}): ${f.label}`;
+-        if (f.options?.length) {
+-          desc += ` [options: ${f.options.join(", ")}]`;
+-        }
+-        return desc;
+-      })
+-      .join("\n");
+-
+-    const propertyFieldDescriptions = propertyFields
+-      .map((f) => {
+-        let desc = `- ${f.key} (${f.type}): ${f.label}`;
+-        if (f.options?.length) {
+-          desc += ` [options: ${f.options.join(", ")}]`;
+-        }
+-        return desc;
+-      })
+-      .join("\n");
+-
+-    const prompt = `Extract deal information from this document for a real estate lending platform. This is a "${cardType.label}" deal type.
++    const prompt = `Extract deal information from this document for a real estate lending platform. This is a "${dealTypeLabel}" deal type.
+ 
+ Standard deal fields to extract:
+ - name (text): Deal name, property address, or project name
+diff --git a/apps/requity-os/components/pipeline-v2/DealFilters.tsx b/apps/requity-os/components/pipeline-v2/DealFilters.tsx
+index 6669a55..c8dd611 100644
+--- a/apps/requity-os/components/pipeline-v2/DealFilters.tsx
++++ b/apps/requity-os/components/pipeline-v2/DealFilters.tsx
+@@ -11,27 +11,36 @@ import {
+ } from "@/components/ui/select";
+ import { LayoutGrid, List, Plus, Search } from "lucide-react";
+ import { cn } from "@/lib/utils";
+-import type { CapitalSide, UnifiedCardType } from "./pipeline-types";
++import type { CapitalSide } from "./pipeline-types";
++import { LOAN_TYPES } from "@/lib/visibility-engine";
+ 
+ export interface FilterState {
+   search: string;
+   capitalSide: CapitalSide | "all";
+   cardTypeSlug: string;
++  loanType: string;
+   assetClass: string;
+   view: "kanban" | "table";
+ }
+ 
++const LOAN_TYPE_LABELS: Record<string, string> = {
++  Bridge: "Bridge / RTL",
++  DSCR: "DSCR",
++  Perm: "Permanent",
++  Construction: "Construction",
++  Equity: "Equity",
++};
++
+ interface DealFiltersProps {
+   filters: FilterState;
+   onChange: (filters: FilterState) => void;
+-  cardTypes: UnifiedCardType[];
++  cardTypes?: unknown[];
+   onNewDeal: () => void;
+ }
+ 
+ export function DealFilters({
+   filters,
+   onChange,
+-  cardTypes,
+   onNewDeal,
+ }: DealFiltersProps) {
+   function update(partial: Partial<FilterState>) {
+@@ -70,19 +79,19 @@ export function DealFilters({
+           ))}
+         </div>
+ 
+-        {/* Card type filter */}
++        {/* Loan type filter */}
+         <Select
+-          value={filters.cardTypeSlug}
+-          onValueChange={(val) => update({ cardTypeSlug: val })}
++          value={filters.loanType || "all"}
++          onValueChange={(val) => update({ loanType: val === "all" ? "" : val })}
+         >
+           <SelectTrigger className="w-40">
+-            <SelectValue placeholder="All types" />
++            <SelectValue placeholder="All loan types" />
+           </SelectTrigger>
+           <SelectContent>
+-            <SelectItem value="all">All types</SelectItem>
+-            {cardTypes.map((ct) => (
+-              <SelectItem key={ct.slug} value={ct.slug}>
+-                {ct.label}
++            <SelectItem value="all">All loan types</SelectItem>
++            {LOAN_TYPES.map((lt) => (
++              <SelectItem key={lt} value={lt}>
++                {LOAN_TYPE_LABELS[lt] ?? lt}
+               </SelectItem>
+             ))}
+           </SelectContent>
+diff --git a/apps/requity-os/components/pipeline-v2/EditableOverview.tsx b/apps/requity-os/components/pipeline-v2/EditableOverview.tsx
+index 087d2fb..e90f88d 100644
+--- a/apps/requity-os/components/pipeline-v2/EditableOverview.tsx
++++ b/apps/requity-os/components/pipeline-v2/EditableOverview.tsx
+@@ -11,7 +11,6 @@ import {
+   formatPercent,
+   formatRatio,
+ } from "./pipeline-types";
+-import { useResolvedCardType } from "@/hooks/useResolvedCardType";
+ import type { VisibilityContext } from "@/lib/visibility-engine";
+ import { evaluateFormula } from "@/lib/formula-engine";
+ import { toast } from "sonner";
+@@ -114,14 +113,13 @@ interface EditableOverviewProps {
+ export function EditableOverview({
+   dealId,
+   uwData,
+-  cardType: rawCardType,
++  cardType,
+   visibilityContext,
+ }: EditableOverviewProps) {
+   const router = useRouter();
+   const [editingSection, setEditingSection] = useState<string | null>(null);
+ 
+-  // Resolve field refs from field_configurations (falls back to inline fields)
+-  const cardType = useResolvedCardType(rawCardType, visibilityContext);
++  // cardType is now resolved by the parent DealDetailPage via useResolvedCardType
+ 
+   // Build a combined field map including property and contact fields
+   const uwFieldMap = useMemo(() => {
+diff --git a/apps/requity-os/components/pipeline-v2/NewDealDialog.tsx b/apps/requity-os/components/pipeline-v2/NewDealDialog.tsx
+index 17b31ee..23756f4 100644
+--- a/apps/requity-os/components/pipeline-v2/NewDealDialog.tsx
++++ b/apps/requity-os/components/pipeline-v2/NewDealDialog.tsx
+@@ -1,6 +1,6 @@
+ "use client";
+ 
+-import { useState, useTransition } from "react";
++import { useState, useTransition, useMemo } from "react";
+ import {
+   Dialog,
+   DialogContent,
+@@ -20,7 +20,6 @@ import {
+   SelectValue,
+ } from "@/components/ui/select";
+ import { FileUpload } from "@/components/shared/file-upload";
+-import { CardTypeSelector } from "./CardTypeSelector";
+ import {
+   ExtractedFieldsReview,
+   type ExtractedField,
+@@ -32,30 +31,39 @@ import {
+   addDealNoteAction,
+ } from "@/app/(authenticated)/admin/pipeline-v2/actions";
+ import {
+-  type UnifiedCardType,
+   ASSET_CLASS_LABELS,
+   type AssetClass,
++  type CapitalSide,
+ } from "./pipeline-types";
++import { LOAN_TYPES, type LoanTypeValue } from "@/lib/visibility-engine";
+ import { toast } from "sonner";
+-import { Loader2, Upload } from "lucide-react";
++import { Loader2, Upload, Building2, DollarSign } from "lucide-react";
+ 
+ type Step = 1 | 2 | 3 | 4;
+ 
++// Loan type labels for display
++const LOAN_TYPE_LABELS: Record<string, string> = {
++  Bridge: "Bridge / RTL",
++  DSCR: "DSCR",
++  Perm: "Permanent",
++  Construction: "Construction",
++  Equity: "Equity",
++};
++
+ interface NewDealDialogProps {
+   open: boolean;
+   onOpenChange: (open: boolean) => void;
+-  cardTypes: UnifiedCardType[];
+   teamMembers: { id: string; full_name: string }[];
+ }
+ 
+ export function NewDealDialog({
+   open,
+   onOpenChange,
+-  cardTypes,
+   teamMembers,
+ }: NewDealDialogProps) {
+   const [step, setStep] = useState<Step>(1);
+-  const [cardTypeId, setCardTypeId] = useState<string | null>(null);
++  const [capitalSide, setCapitalSide] = useState<CapitalSide | "">("");
++  const [loanType, setLoanType] = useState<string>("");
+   const [assetClass, setAssetClass] = useState<string>("");
+   const [name, setName] = useState("");
+   const [amount, setAmount] = useState("");
+@@ -73,14 +81,31 @@ export function NewDealDialog({
+   >({});
+   const [extractionSummary, setExtractionSummary] = useState("");
+ 
+-  const selectedCardType = cardTypes.find((ct) => ct.id === cardTypeId);
+-  const applicableAssets =
+-    selectedCardType?.applicable_asset_classes ??
+-    Object.keys(ASSET_CLASS_LABELS);
++  // Filter loan types based on capital side
++  const availableLoanTypes = useMemo(() => {
++    if (capitalSide === "equity") return ["Equity"] as string[];
++    if (capitalSide === "debt")
++      return LOAN_TYPES.filter((lt) => lt !== "Equity") as string[];
++    return [...LOAN_TYPES] as string[];
++  }, [capitalSide]);
++
++  // Determine applicable asset classes based on loan type
++  const applicableAssets = useMemo(() => {
++    const allClasses = Object.keys(ASSET_CLASS_LABELS) as AssetClass[];
++    if (loanType === "DSCR" || loanType === "Bridge") {
++      // Residential loan types
++      return allClasses.filter((ac) =>
++        ["sfr", "duplex_fourplex", "multifamily"].includes(ac)
++      );
++    }
++    // Commercial / Equity / Construction / Perm can be any asset class
++    return allClasses;
++  }, [loanType]);
+ 
+   function reset() {
+     setStep(1);
+-    setCardTypeId(null);
++    setCapitalSide("");
++    setLoanType("");
+     setAssetClass("");
+     setName("");
+     setAmount("");
+@@ -98,12 +123,13 @@ export function NewDealDialog({
+   }
+ 
+   function handleSubmit(uwData?: Record<string, unknown>) {
+-    if (!cardTypeId || !name.trim()) return;
++    if (!capitalSide || !name.trim()) return;
+ 
+     startTransition(async () => {
+       const result = await createUnifiedDealAction({
+         name: name.trim(),
+-        card_type_id: cardTypeId,
++        capital_side: capitalSide,
++        loan_type: loanType || undefined,
+         asset_class: assetClass || undefined,
+         amount: amount ? Number(amount) : undefined,
+         expected_close_date: expectedClose || undefined,
+@@ -124,7 +150,7 @@ export function NewDealDialog({
+   }
+ 
+   async function handleFileSelect(file: File) {
+-    if (!cardTypeId) return;
++    if (!capitalSide) return;
+ 
+     setExtracting(true);
+     let uploadedPath: string | null = null;
+@@ -148,13 +174,15 @@ export function NewDealDialog({
+         throw new Error(`Upload failed: ${errorText}`);
+       }
+ 
+-      // 3. Call extraction API with storage path (tiny JSON body)
++      // 3. Call extraction API with storage path and deal context
+       const response = await fetch("/api/deals/extract-from-document", {
+         method: "POST",
+         headers: { "Content-Type": "application/json" },
+         body: JSON.stringify({
+           storage_path: urlResult.storagePath,
+-          card_type_id: cardTypeId,
++          capital_side: capitalSide,
++          loan_type: loanType || undefined,
++          asset_class: assetClass || undefined,
+         }),
+       });
+ 
+@@ -230,7 +258,7 @@ export function NewDealDialog({
+     const finalName = accepted.dealFields.name
+       ? String(accepted.dealFields.name)
+       : name;
+-    if (!cardTypeId || !finalName.trim()) {
++    if (!capitalSide || !finalName.trim()) {
+       toast.error("Deal name is required");
+       return;
+     }
+@@ -238,7 +266,8 @@ export function NewDealDialog({
+     startTransition(async () => {
+       const result = await createUnifiedDealAction({
+         name: finalName.trim(),
+-        card_type_id: cardTypeId,
++        capital_side: capitalSide,
++        loan_type: loanType || undefined,
+         asset_class:
+           (accepted.dealFields.asset_class as string) || assetClass || undefined,
+         amount: accepted.dealFields.amount
+@@ -277,7 +306,7 @@ export function NewDealDialog({
+ 
+   const stepTitle =
+     step === 1
+-      ? "Select Deal Type"
++      ? "Deal Classification"
+       : step === 2
+         ? "Select Asset Class"
+         : step === 3
+@@ -286,13 +315,15 @@ export function NewDealDialog({
+ 
+   const stepDescription =
+     step === 1
+-      ? "Choose the type of deal you want to create."
++      ? "Choose the capital side and loan type for this deal."
+       : step === 2
+         ? "Select the asset class for this deal."
+         : step === 3
+           ? "Enter deal details or upload a document to auto-fill."
+           : "Review and confirm the fields extracted from your document.";
+ 
++  const canAdvanceStep1 = capitalSide !== "";
++
+   return (
+     <Dialog open={open} onOpenChange={handleClose}>
+       <DialogContent className="md:max-w-2xl max-h-[85vh] overflow-y-auto">
+@@ -302,20 +333,87 @@ export function NewDealDialog({
+         </DialogHeader>
+ 
+         <div className="space-y-6">
+-          {/* Step 1: Select Deal Type */}
++          {/* Step 1: Capital Side + Loan Type */}
+           {step === 1 && (
+             <>
+-              <CardTypeSelector
+-                cardTypes={cardTypes}
+-                selected={cardTypeId}
+-                onSelect={(id) => setCardTypeId(id)}
+-                onDoubleClick={(id) => {
+-                  setCardTypeId(id);
+-                  setStep(2);
+-                }}
+-              />
++              {/* Capital Side */}
++              <div className="space-y-3">
++                <Label className="text-sm font-medium">Capital Side *</Label>
++                <div className="grid grid-cols-2 gap-3">
++                  <button
++                    type="button"
++                    onClick={() => {
++                      setCapitalSide("debt");
++                      if (loanType === "Equity") setLoanType("");
++                    }}
++                    className={`flex items-center gap-3 rounded-lg border p-4 text-left transition-all hover:border-foreground/20 ${
++                      capitalSide === "debt"
++                        ? "border-blue-500 bg-blue-500/5 ring-1 ring-blue-500"
++                        : ""
++                    }`}
++                  >
++                    <DollarSign className="h-5 w-5 text-blue-500" />
++                    <div>
++                      <div className="font-medium">Debt</div>
++                      <div className="text-xs text-muted-foreground">
++                        Bridge, DSCR, Perm, Construction
++                      </div>
++                    </div>
++                  </button>
++                  <button
++                    type="button"
++                    onClick={() => {
++                      setCapitalSide("equity");
++                      setLoanType("Equity");
++                    }}
++                    className={`flex items-center gap-3 rounded-lg border p-4 text-left transition-all hover:border-foreground/20 ${
++                      capitalSide === "equity"
++                        ? "border-emerald-500 bg-emerald-500/5 ring-1 ring-emerald-500"
++                        : ""
++                    }`}
++                  >
++                    <Building2 className="h-5 w-5 text-emerald-500" />
++                    <div>
++                      <div className="font-medium">Equity</div>
++                      <div className="text-xs text-muted-foreground">
++                        Equity investment deals
++                      </div>
++                    </div>
++                  </button>
++                </div>
++              </div>
++
++              {/* Loan Type (shown for debt) */}
++              {capitalSide === "debt" && (
++                <div className="space-y-3">
++                  <Label className="text-sm font-medium">Loan Type</Label>
++                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
++                    {availableLoanTypes.map((lt) => (
++                      <button
++                        key={lt}
++                        type="button"
++                        onClick={() => setLoanType(lt)}
++                        className={`rounded-lg border px-3 py-2 text-sm transition-all hover:border-foreground/20 ${
++                          loanType === lt
++                            ? "border-foreground ring-1 ring-foreground"
++                            : ""
++                        }`}
++                      >
++                        {LOAN_TYPE_LABELS[lt] ?? lt}
++                      </button>
++                    ))}
++                  </div>
++                  <p className="text-xs text-muted-foreground">
++                    Optional. Determines which underwriting fields are shown.
++                  </p>
++                </div>
++              )}
++
+               <div className="flex justify-end">
+-                <Button onClick={() => setStep(2)} disabled={!cardTypeId}>
++                <Button
++                  onClick={() => setStep(2)}
++                  disabled={!canAdvanceStep1}
++                >
+                   Next
+                 </Button>
+               </div>
+@@ -463,11 +561,11 @@ export function NewDealDialog({
+           )}
+ 
+           {/* Step 4: Review Extracted Fields */}
+-          {step === 4 && selectedCardType && (
++          {step === 4 && (
+             <ExtractedFieldsReview
+               dealFields={extractedDealFields}
+               uwFields={extractedUwFields}
+-              uwFieldDefs={selectedCardType.uw_fields}
++              uwFieldDefs={[]}
+               summary={extractionSummary}
+               onAccept={handleAcceptExtraction}
+               onBack={() => setStep(3)}
+diff --git a/apps/requity-os/components/pipeline-v2/PipelineView.tsx b/apps/requity-os/components/pipeline-v2/PipelineView.tsx
+index 886b257..dbc7cd5 100644
+--- a/apps/requity-os/components/pipeline-v2/PipelineView.tsx
++++ b/apps/requity-os/components/pipeline-v2/PipelineView.tsx
+@@ -18,7 +18,7 @@ import type { IntakeItem } from "@/lib/intake/types";
+ 
+ interface PipelineViewProps {
+   deals: UnifiedDeal[];
+-  cardTypes: UnifiedCardType[];
++  cardTypes?: UnifiedCardType[];
+   stageConfigs: StageConfig[];
+   activities: DealActivity[];
+   relationshipDealIds: Set<string>;
+@@ -28,7 +28,7 @@ interface PipelineViewProps {
+ 
+ export function PipelineView({
+   deals,
+-  cardTypes,
++  cardTypes = [],
+   stageConfigs,
+   activities,
+   relationshipDealIds,
+@@ -40,6 +40,7 @@ export function PipelineView({
+     search: "",
+     capitalSide: "all",
+     cardTypeSlug: "all",
++    loanType: "",
+     assetClass: "all",
+     view: "kanban",
+   });
+@@ -60,9 +61,10 @@ export function PipelineView({
+       )
+         return false;
+ 
+-      if (filters.cardTypeSlug !== "all") {
+-        const ct = cardTypeMap.get(d.card_type_id);
+-        if (ct?.slug !== filters.cardTypeSlug) return false;
++      // Filter by loan type (from deal.loan_type or legacy card type mapping)
++      if (filters.loanType) {
++        const dealLoanType = d.loan_type;
++        if (dealLoanType !== filters.loanType) return false;
+       }
+ 
+       if (filters.assetClass !== "all" && d.asset_class !== filters.assetClass)
+@@ -127,7 +129,6 @@ export function PipelineView({
+       <NewDealDialog
+         open={newDealOpen}
+         onOpenChange={setNewDealOpen}
+-        cardTypes={cardTypes}
+         teamMembers={teamMembers}
+       />
+ 
+diff --git a/apps/requity-os/components/pipeline-v2/UnderwritingPanel.tsx b/apps/requity-os/components/pipeline-v2/UnderwritingPanel.tsx
+index b241794..e4e9350 100644
+--- a/apps/requity-os/components/pipeline-v2/UnderwritingPanel.tsx
++++ b/apps/requity-os/components/pipeline-v2/UnderwritingPanel.tsx
+@@ -11,7 +11,6 @@ import {
+   formatRatio,
+ } from "./pipeline-types";
+ import { UwField } from "./UwField";
+-import { useResolvedCardType } from "@/hooks/useResolvedCardType";
+ import type { VisibilityContext } from "@/lib/visibility-engine";
+ import { evaluateFormula } from "@/lib/formula-engine";
+ import { Badge } from "@/components/ui/badge";
+@@ -32,14 +31,13 @@ interface UnderwritingPanelProps {
+ }
+ 
+ export function UnderwritingPanel({
+-  cardType: rawCardType,
++  cardType,
+   dealId,
+   uwData,
+   readOnly,
+   visibilityContext,
+ }: UnderwritingPanelProps) {
+-  // Resolve field refs from field_configurations (falls back to inline fields)
+-  const cardType = useResolvedCardType(rawCardType, visibilityContext);
++  // cardType is now resolved by the parent DealDetailPage via useResolvedCardType
+ 
+   const [localData, setLocalData] = useState<Record<string, unknown>>(uwData);
+   const [pending, startTransition] = useTransition();
+diff --git a/apps/requity-os/components/pipeline-v2/pipeline-types.ts b/apps/requity-os/components/pipeline-v2/pipeline-types.ts
+index eabd3fe..5b61105 100644
+--- a/apps/requity-os/components/pipeline-v2/pipeline-types.ts
++++ b/apps/requity-os/components/pipeline-v2/pipeline-types.ts
+@@ -160,8 +160,9 @@ export interface UnifiedCardType {
+ 
+ export interface UnifiedDeal {
+   id: string;
+-  card_type_id: string;
++  card_type_id: string | null;
+   capital_side: CapitalSide;
++  loan_type?: string | null;
+   asset_class: AssetClass | null;
+   name: string;
+   deal_number: string | null;
+diff --git a/apps/requity-os/hooks/useConditionDrivenFields.ts b/apps/requity-os/hooks/useConditionDrivenFields.ts
+new file mode 100644
+index 0000000..d1d280b
+--- /dev/null
++++ b/apps/requity-os/hooks/useConditionDrivenFields.ts
+@@ -0,0 +1,217 @@
++"use client";
++
++import { useState, useEffect, useCallback, useMemo } from "react";
++import { createClient } from "@/lib/supabase/client";
++import type { UwFieldDef, UwFieldObject } from "@/components/pipeline-v2/pipeline-types";
++import {
++  isVisible,
++  type VisibilityCondition,
++  type VisibilityContext,
++} from "@/lib/visibility-engine";
++import type { ConditionalRule, FieldPermissions } from "@/hooks/useFieldConfigurations";
++
++// ─── Types ───
++
++interface FieldConfigRecord {
++  id: string;
++  module: string;
++  field_key: string;
++  field_label: string;
++  field_type: string;
++  is_visible: boolean;
++  is_archived: boolean;
++  dropdown_options: string[] | null;
++  visibility_condition: VisibilityCondition | null;
++  formula_expression: string | null;
++  formula_output_format: string | null;
++  formula_decimal_places: number | null;
++  conditional_rules: ConditionalRule[] | null;
++  permissions: FieldPermissions | null;
++  required_at_stage: string | null;
++  blocks_stage_progression: boolean | null;
++}
++
++/**
++ * Map field_configurations field_type to UwFieldDef type.
++ */
++function mapFieldType(fcType: string): UwFieldDef["type"] {
++  switch (fcType) {
++    case "percentage":
++      return "percent";
++    case "dropdown":
++      return "select";
++    case "currency":
++    case "number":
++    case "text":
++    case "boolean":
++    case "date":
++      return fcType as UwFieldDef["type"];
++    default:
++      return "text";
++  }
++}
++
++// ─── Cache ───
++
++const SELECT_COLS = [
++  "id",
++  "module",
++  "field_key",
++  "field_label",
++  "field_type",
++  "is_visible",
++  "is_archived",
++  "dropdown_options",
++  "visibility_condition",
++  "formula_expression",
++  "formula_output_format",
++  "formula_decimal_places",
++  "conditional_rules",
++  "permissions",
++  "required_at_stage",
++  "blocks_stage_progression",
++].join(", ");
++
++// Modules that feed pipeline deal tabs
++const PIPELINE_MODULES = [
++  "uw_deal",
++  "uw_property",
++  "uw_borrower",
++] as const;
++
++let pipelineFieldCache: {
++  data: FieldConfigRecord[];
++  timestamp: number;
++} | null = null;
++const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
++
++/**
++ * Invalidate the pipeline field config cache.
++ * Call after Object Manager publishes changes.
++ */
++export function invalidateConditionFieldCache() {
++  pipelineFieldCache = null;
++}
++
++// ─── Hook ───
++
++export interface ConditionDrivenFieldsResult {
++  /** UW deal fields filtered by conditions */
++  uwFields: UwFieldDef[];
++  /** Property fields filtered by conditions */
++  propertyFields: UwFieldDef[];
++  /** Borrower/contact fields filtered by conditions */
++  contactFields: UwFieldDef[];
++  /** Whether field configs are still loading */
++  isLoading: boolean;
++}
++
++/**
++ * Fetches ALL pipeline field_configurations (uw_deal, uw_property, uw_borrower)
++ * and filters them by the deal's visibility context (asset_class x loan_type).
++ *
++ * This replaces useResolvedCardType for field selection -- no card type needed.
++ * The conditions on each field (set via Object Manager) determine visibility.
++ */
++export function useConditionDrivenFields(
++  visibilityContext: VisibilityContext
++): ConditionDrivenFieldsResult {
++  const [fieldConfigs, setFieldConfigs] = useState<FieldConfigRecord[]>([]);
++  const [isLoading, setIsLoading] = useState(true);
++
++  const fetchConfigs = useCallback(async () => {
++    // Check cache
++    if (pipelineFieldCache && Date.now() - pipelineFieldCache.timestamp < CACHE_TTL) {
++      setFieldConfigs(pipelineFieldCache.data);
++      setIsLoading(false);
++      return;
++    }
++
++    try {
++      const supabase = createClient();
++      const { data, error } = await supabase
++        .from("field_configurations")
++        .select(SELECT_COLS)
++        .in("module", [...PIPELINE_MODULES])
++        .eq("is_visible", true)
++        .eq("is_archived", false)
++        .order("field_label", { ascending: true });
++
++      if (error || !data) {
++        setIsLoading(false);
++        return;
++      }
++
++      const records = data as unknown as FieldConfigRecord[];
++      pipelineFieldCache = { data: records, timestamp: Date.now() };
++      setFieldConfigs(records);
++    } catch {
++      // Silent fallback
++    } finally {
++      setIsLoading(false);
++    }
++  }, []);
++
++  useEffect(() => {
++    fetchConfigs();
++  }, [fetchConfigs]);
++
++  // Stable context key to avoid re-computation
++  const ctxKey = `${visibilityContext.asset_class}:${visibilityContext.loan_type}`;
++
++  const result = useMemo<ConditionDrivenFieldsResult>(() => {
++    if (isLoading || fieldConfigs.length === 0) {
++      return { uwFields: [], propertyFields: [], contactFields: [], isLoading };
++    }
++
++    const uwFields: UwFieldDef[] = [];
++    const propertyFields: UwFieldDef[] = [];
++    const contactFields: UwFieldDef[] = [];
++
++    for (const fc of fieldConfigs) {
++      // Filter by visibility conditions
++      if (!isVisible(fc.visibility_condition, visibilityContext)) {
++        continue;
++      }
++
++      const isFormula = fc.field_type === "formula" && fc.formula_expression;
++
++      const fieldDef: UwFieldDef = {
++        key: fc.field_key,
++        label: fc.field_label,
++        type: isFormula
++          ? mapFieldType(fc.formula_output_format ?? "number")
++          : mapFieldType(fc.field_type),
++        options: fc.dropdown_options ?? undefined,
++        // Derive object from module
++        object: fc.module === "uw_property"
++          ? "property"
++          : fc.module === "uw_borrower"
++            ? "borrower"
++            : "deal" as UwFieldObject,
++        ...(isFormula && {
++          formulaExpression: fc.formula_expression!,
++          formulaOutputFormat: (fc.formula_output_format ?? "number") as UwFieldDef["formulaOutputFormat"],
++          formulaDecimalPlaces: fc.formula_decimal_places ?? 2,
++        }),
++      };
++
++      switch (fc.module) {
++        case "uw_deal":
++          uwFields.push(fieldDef);
++          break;
++        case "uw_property":
++          propertyFields.push(fieldDef);
++          break;
++        case "uw_borrower":
++          contactFields.push(fieldDef);
++          break;
++      }
++    }
++
++    return { uwFields, propertyFields, contactFields, isLoading: false };
++    // eslint-disable-next-line react-hooks/exhaustive-deps
++  }, [fieldConfigs, isLoading, ctxKey]);
++
++  return result;
++}
+diff --git a/apps/requity-os/hooks/useDealConfig.ts b/apps/requity-os/hooks/useDealConfig.ts
+new file mode 100644
+index 0000000..f51a86f
+--- /dev/null
++++ b/apps/requity-os/hooks/useDealConfig.ts
+@@ -0,0 +1,181 @@
++"use client";
++
++import { useState, useEffect, useCallback, useMemo } from "react";
++import { createClient } from "@/lib/supabase/client";
++import type { UwOutputDef, CardMetricDef } from "@/components/pipeline-v2/pipeline-types";
++import type { VisibilityContext } from "@/lib/visibility-engine";
++
++// ─── Types ───
++
++export interface DealConfigTemplate {
++  id: string;
++  label: string;
++  slug: string;
++  capital_side: string;
++  asset_class_condition: string[] | null;
++  loan_type_condition: string[] | null;
++  uw_outputs: UwOutputDef[];
++  card_metrics: CardMetricDef[];
++  contact_roles: string[];
++}
++
++export interface DealConfig {
++  /** Best matching config template */
++  template: DealConfigTemplate | null;
++  /** UW output definitions for this deal context */
++  uwOutputs: UwOutputDef[];
++  /** Pipeline card metric definitions */
++  cardMetrics: CardMetricDef[];
++  /** Contact roles */
++  contactRoles: string[];
++  /** Deal type label derived from config */
++  dealTypeLabel: string;
++  /** Loading state */
++  isLoading: boolean;
++}
++
++// ─── Cache ───
++
++let configCache: {
++  data: DealConfigTemplate[];
++  timestamp: number;
++} | null = null;
++const CACHE_TTL = 5 * 60 * 1000;
++
++export function invalidateDealConfigCache() {
++  configCache = null;
++}
++
++// ─── Matching Logic ───
++
++/**
++ * Score how well a config template matches a visibility context.
++ * Higher score = better match. -1 = no match.
++ */
++function matchScore(
++  template: DealConfigTemplate,
++  context: VisibilityContext,
++  capitalSide?: string
++): number {
++  let score = 0;
++
++  // Asset class match
++  if (template.asset_class_condition && template.asset_class_condition.length > 0) {
++    if (template.asset_class_condition.includes(context.asset_class)) {
++      score += 10;
++    } else {
++      return -1; // Hard mismatch
++    }
++  }
++
++  // Loan type match
++  if (template.loan_type_condition && template.loan_type_condition.length > 0) {
++    if (context.loan_type && template.loan_type_condition.includes(context.loan_type)) {
++      score += 20; // Loan type is more specific
++    } else if (context.loan_type) {
++      return -1; // Hard mismatch
++    }
++    // If deal has no loan_type yet, don't penalize
++  }
++
++  // Capital side match (bonus, not hard filter)
++  if (capitalSide && template.capital_side === capitalSide) {
++    score += 5;
++  }
++
++  return score;
++}
++
++// ─── Hook ───
++
++/**
++ * Fetches deal_config_templates and returns the best match for the given
++ * visibility context (asset_class x loan_type).
++ *
++ * This replaces the uw_outputs/card_metrics that previously lived on card types.
++ */
++export function useDealConfig(
++  visibilityContext: VisibilityContext,
++  capitalSide?: string
++): DealConfig {
++  const [configs, setConfigs] = useState<DealConfigTemplate[]>([]);
++  const [isLoading, setIsLoading] = useState(true);
++
++  const fetchConfigs = useCallback(async () => {
++    if (configCache && Date.now() - configCache.timestamp < CACHE_TTL) {
++      setConfigs(configCache.data);
++      setIsLoading(false);
++      return;
++    }
++
++    try {
++      const supabase = createClient();
++      const { data, error } = await supabase
++        .from("deal_config_templates")
++        .select("*")
++        .eq("status", "active")
++        .order("sort_order");
++
++      if (error || !data) {
++        setIsLoading(false);
++        return;
++      }
++
++      const templates = data as unknown as DealConfigTemplate[];
++      configCache = { data: templates, timestamp: Date.now() };
++      setConfigs(templates);
++    } catch {
++      // Silent fallback
++    } finally {
++      setIsLoading(false);
++    }
++  }, []);
++
++  useEffect(() => {
++    fetchConfigs();
++  }, [fetchConfigs]);
++
++  const ctxKey = `${visibilityContext.asset_class}:${visibilityContext.loan_type}:${capitalSide ?? ""}`;
++
++  const result = useMemo<DealConfig>(() => {
++    if (isLoading || configs.length === 0) {
++      return {
++        template: null,
++        uwOutputs: [],
++        cardMetrics: [],
++        contactRoles: ["borrower"],
++        dealTypeLabel: "Deal",
++        isLoading,
++      };
++    }
++
++    // Find best matching template
++    let bestTemplate: DealConfigTemplate | null = null;
++    let bestScore = -1;
++
++    for (const t of configs) {
++      const score = matchScore(t, visibilityContext, capitalSide);
++      if (score > bestScore) {
++        bestScore = score;
++        bestTemplate = t;
++      }
++    }
++
++    // Fallback: if no match, use first config
++    if (!bestTemplate && configs.length > 0) {
++      bestTemplate = configs[0];
++    }
++
++    return {
++      template: bestTemplate,
++      uwOutputs: bestTemplate?.uw_outputs ?? [],
++      cardMetrics: bestTemplate?.card_metrics ?? [],
++      contactRoles: bestTemplate?.contact_roles ?? ["borrower"],
++      dealTypeLabel: bestTemplate?.label ?? "Deal",
++      isLoading: false,
++    };
++    // eslint-disable-next-line react-hooks/exhaustive-deps
++  }, [configs, isLoading, ctxKey]);
++
++  return result;
++}
+diff --git a/apps/requity-os/lib/visibility-engine.ts b/apps/requity-os/lib/visibility-engine.ts
+index c189bda..820b076 100644
+--- a/apps/requity-os/lib/visibility-engine.ts
++++ b/apps/requity-os/lib/visibility-engine.ts
+@@ -72,10 +72,13 @@ export function hasCondition(condition: VisibilityCondition | null | undefined):
+ 
+ /**
+  * Map a DB asset_class enum value to the visibility axis value.
+- * sfr, duplex_fourplex, multifamily, mhc → "Residential"
+- * commercial, mixed_use, land, rv_park, campground → "Commercial"
++ * sfr, duplex_fourplex → "Residential"
++ * multifamily, mhc, commercial, mixed_use, land, rv_park, campground → "Commercial"
++ *
++ * Note: multifamily and mhc are classified as Commercial because they use
++ * commercial underwriting models (comm_debt / comm_equity fields).
+  */
+-const RESIDENTIAL_CLASSES = new Set(["sfr", "duplex_fourplex", "multifamily", "mhc"]);
++const RESIDENTIAL_CLASSES = new Set(["sfr", "duplex_fourplex"]);
+ 
+ export function mapAssetClassToVisibility(dbValue: string | null | undefined): AssetClassValue {
+   return RESIDENTIAL_CLASSES.has(dbValue ?? "") ? "Residential" : "Commercial";
+diff --git a/dev/active/card-types-deprecation/card-types-deprecation-context.md b/dev/active/card-types-deprecation/card-types-deprecation-context.md
+new file mode 100644
+index 0000000..00f61e5
+--- /dev/null
++++ b/dev/active/card-types-deprecation/card-types-deprecation-context.md
+@@ -0,0 +1,65 @@
++# Card Types Deprecation - Context
++
++## Objective
++Replace the unified_card_types system with the conditions engine (field_configurations visibility conditions) as the single source of truth for determining which fields appear on pipeline deals.
++
++## Key Decisions
++
++### Two-axis conditions engine replaces card type selection
++- Asset Class (Residential/Commercial) x Loan Type (Bridge/DSCR/Perm/Construction/Equity) determines which fields show
++- Each field's own `visibility_condition` in `field_configurations` determines visibility
++- No more "selecting a card type" when creating deals
++
++### New deal creation flow
++- Step 1: Capital Side (Debt/Equity) + Loan Type selection
++- Step 2: Asset Class selection
++- Step 3: Deal details (name, amount, date, assignee)
++- No more CardTypeSelector component
++
++### deal_config_templates table provides uw_outputs/card_metrics
++- Created in prior session, keyed by asset_class_condition + loan_type_condition
++- Replaces uw_outputs and card_metrics that lived on card types
++- useDealConfig hook fetches and matches by conditions
++
++### Synthetic cardType for backward compatibility
++- DealDetailPage constructs a synthetic UnifiedCardType object from conditions-driven data
++- Child components (PropertyTab, ContactsTab, UnderwritingPanel) still receive cardType prop
++- No changes needed to child components yet
++
++## Completed Changes
++
++### Database
++- `unified_deals.card_type_id` made nullable
++- `unified_deals.loan_type` column added (text)
++- `deal_config_templates` table created (prior session)
++- field_configurations visibility_condition backfilled for 50 fields (prior session)
++- loan_type backfilled on all 23 active deals from card type slug mapping
++
++### Files Modified
++- `components/pipeline-v2/NewDealDialog.tsx` - Rewrote to use Capital Side + Loan Type instead of CardTypeSelector
++- `components/pipeline-v2/DealFilters.tsx` - Replaced card type filter with loan type filter
++- `components/pipeline-v2/PipelineView.tsx` - cardTypes prop optional, filter by loan_type
++- `components/pipeline-v2/pipeline-types.ts` - card_type_id nullable, added loan_type
++- `app/(authenticated)/admin/pipeline-v2/actions.ts` - card_type_id optional, accepts loan_type
++- `app/api/deals/extract-from-document/route.ts` - Works with conditions engine fields instead of card type
++- `app/(authenticated)/admin/pipeline-v2/[id]/page.tsx` - Card type fetch conditional
++- `app/(authenticated)/admin/pipeline-v2/[id]/DealDetailPage.tsx` - Uses useConditionDrivenFields + useDealConfig
++- `hooks/useConditionDrivenFields.ts` - New hook (prior session)
++- `hooks/useDealConfig.ts` - New hook (prior session)
++
++### Files NOT Changed (still reference card types for backward compat)
++- `components/pipeline-v2/PipelineKanban.tsx` - Uses cardTypeMap for display labels
++- `components/pipeline-v2/PipelineTable.tsx` - Uses cardTypeMap for display labels
++- Pipeline list page still fetches card types (for label display on existing deals)
++- Card type admin pages still exist but can be removed in future cleanup
++
++## Gotchas
++- Generated Supabase types still have card_type_id as non-nullable; used Omit override in actions.ts
++- LOAN_TYPES enum in visibility-engine.ts matches what the new deal dialog presents
++- Existing deals with card_type_id continue to work; new deals created without one
++
++## Last Updated: 2026-03-12
++## Next Steps:
++- Optional: Remove card type admin pages
++- Optional: Remove CardTypeSelector component and NewDealSheet (dead code)
++- Optional: Regenerate Supabase types to reflect nullable card_type_id
+-- 
+2.34.1
+

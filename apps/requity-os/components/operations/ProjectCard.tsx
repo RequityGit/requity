@@ -1,0 +1,274 @@
+"use client";
+
+import { useState } from "react";
+import { ChevronDown, ChevronRight, MessageCircle, MoreHorizontal, Pause, Trash2 } from "lucide-react";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Progress } from "@/components/ui/progress";
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+} from "@/components/ui/dropdown-menu";
+import { Separator } from "@/components/ui/separator";
+import { Checkbox } from "@/components/ui/checkbox";
+import { cn } from "@/lib/utils";
+import {
+  PriorityBadge,
+  OpsStatusBadge,
+  OwnerBadge,
+  DueDateLabel,
+  RecurringBadge,
+} from "./badges";
+import { UnifiedNotes } from "@/components/shared/UnifiedNotes";
+
+export interface OpsTask {
+  id: string;
+  title: string;
+  description: string | null;
+  status: string;
+  priority: string;
+  assigned_to: string | null;
+  assigned_to_name: string | null;
+  project_id: string | null;
+  due_date: string | null;
+  completed_at: string | null;
+  category: string | null;
+  linked_entity_type: string | null;
+  linked_entity_id: string | null;
+  linked_entity_label: string | null;
+  is_recurring: boolean | null;
+  recurrence_pattern: string | null;
+  recurring_series_id: string | null;
+  source_task_id: string | null;
+  recurrence_end_date: string | null;
+  is_active_recurrence: boolean | null;
+  next_recurrence_date: string | null;
+  parent_task_id: string | null;
+  recurrence_day_of_month: number | null;
+  recurrence_day_of_week: number | null;
+  created_by: string | null;
+  sort_order: number;
+  updated_at: string | null;
+  created_at: string | null;
+}
+
+export interface OpsProject {
+  id: string;
+  project_name: string;
+  category: string | null;
+  owner: string | null;
+  status: string | null;
+  priority: string | null;
+  description: string | null;
+  latest_update: string | null;
+  due_date: string | null;
+  assigned_to: string | null;
+  created_by: string | null;
+  started_at: string | null;
+  completed_at: string | null;
+  sort_order: number;
+  updated_at: string | null;
+  created_at: string | null;
+}
+
+interface ProjectCardProps {
+  project: OpsProject;
+  tasks: OpsTask[];
+  onToggleTask: (taskId: string, completed: boolean) => void;
+  onStopRecurrence: (taskId: string) => void;
+  onDeleteTask: (taskId: string) => void;
+  onDeleteProject: (projectId: string) => void;
+  commentCount: number;
+  currentUserId: string;
+  isSuperAdmin: boolean;
+  taskCommentCounts: Record<string, number>;
+  onOpenTask: (task: OpsTask) => void;
+}
+
+const priorityOrder: Record<string, number> = {
+  Critical: 0,
+  High: 1,
+  Medium: 2,
+  Low: 3,
+};
+
+export function ProjectCard({ project, tasks, onToggleTask, onStopRecurrence, onDeleteTask, onDeleteProject, commentCount, currentUserId, isSuperAdmin, taskCommentCounts, onOpenTask }: ProjectCardProps) {
+  const [expanded, setExpanded] = useState(false);
+
+  const completedCount = tasks.filter((t) => t.status === "Complete").length;
+  const totalCount = tasks.length;
+  const progress = totalCount > 0 ? (completedCount / totalCount) * 100 : 0;
+
+  const sortedTasks = [...tasks].sort(
+    (a, b) => (priorityOrder[a.priority] ?? 99) - (priorityOrder[b.priority] ?? 99)
+  );
+
+  return (
+    <Card className="transition-shadow hover:shadow-md">
+      <CardHeader className="pb-3">
+        <div className="flex items-start gap-2">
+          <button
+            type="button"
+            onClick={() => setExpanded(!expanded)}
+            className="flex items-start gap-3 text-left flex-1 min-w-0"
+          >
+            <div className="mt-0.5 shrink-0">
+              {expanded ? (
+                <ChevronDown className="h-4 w-4 text-muted-foreground" />
+              ) : (
+                <ChevronRight className="h-4 w-4 text-muted-foreground" />
+              )}
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2 flex-wrap">
+                <h3 className="text-sm font-semibold text-foreground">
+                  {project.project_name}
+                </h3>
+                <PriorityBadge priority={project.priority} />
+                <OpsStatusBadge status={project.status} />
+              </div>
+              <div className="flex items-center gap-2 mt-1.5 flex-wrap">
+                <OwnerBadge name={project.owner} />
+                {project.category && (
+                  <span className="text-xs text-muted-foreground">
+                    {project.category}
+                  </span>
+                )}
+              </div>
+
+              {/* Task progress bar */}
+              {totalCount > 0 && (
+                <div className="mt-2 flex items-center gap-2">
+                  <Progress value={progress} className="flex-1 h-1.5 bg-muted [&>div]:bg-teal-500" />
+                  <span className="text-xs text-muted-foreground whitespace-nowrap">
+                    {completedCount}/{totalCount} tasks
+                  </span>
+                  {commentCount > 0 && (
+                    <span className="inline-flex items-center gap-0.5 text-xs text-muted-foreground whitespace-nowrap">
+                      <MessageCircle className="h-3 w-3" />
+                      {commentCount}
+                    </span>
+                  )}
+                </div>
+              )}
+            </div>
+          </button>
+
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button
+                type="button"
+                className="shrink-0 p-1 rounded hover:bg-muted text-muted-foreground"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <MoreHorizontal className="h-4 w-4" />
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem
+                className="text-red-600 focus:text-red-600"
+                onClick={() => onDeleteProject(project.id)}
+              >
+                <Trash2 className="h-3.5 w-3.5 mr-2" />
+                Delete project
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+      </CardHeader>
+
+      {expanded && (
+        <CardContent className="pt-0">
+          {/* Latest update */}
+          {project.latest_update && (
+            <div className="mb-4 rounded-md bg-card p-3 border border-border">
+              <p className="text-xs font-medium text-muted-foreground mb-1">
+                Latest Update
+              </p>
+              <p className="text-sm text-foreground">{project.latest_update}</p>
+            </div>
+          )}
+
+          {/* Linked tasks */}
+          {sortedTasks.length > 0 ? (
+            <div className="space-y-2">
+              <p className="text-xs font-medium text-muted-foreground">Tasks</p>
+              {sortedTasks.map((task) => {
+                const isComplete = task.status === "Complete";
+                return (
+                  <div
+                    key={task.id}
+                    className="flex items-center gap-3 py-1.5 px-2 rounded hover:bg-muted"
+                  >
+                    <Checkbox
+                      checked={isComplete}
+                      onCheckedChange={() => onToggleTask(task.id, !isComplete)}
+                    />
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onOpenTask(task);
+                      }}
+                      className={cn(
+                        "flex-1 text-sm text-left hover:underline",
+                        isComplete && "line-through text-muted-foreground"
+                      )}
+                    >
+                      {task.title}
+                    </button>
+                    <div className="flex items-center gap-1.5">
+                      {(taskCommentCounts[task.id] ?? 0) > 0 && (
+                        <span className="inline-flex items-center gap-0.5 text-xs text-muted-foreground">
+                          <MessageCircle className="h-3 w-3" />
+                          {taskCommentCounts[task.id]}
+                        </span>
+                      )}
+                      <PriorityBadge priority={task.priority} />
+                      {task.is_recurring && (
+                        <RecurringBadge pattern={task.recurrence_pattern} isActive={task.is_active_recurrence ?? false} />
+                      )}
+                      <DueDateLabel dueDate={task.due_date} />
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <button className="p-0.5 rounded hover:bg-muted text-muted-foreground">
+                            <MoreHorizontal className="h-3 w-3" />
+                          </button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          {task.is_recurring && task.is_active_recurrence && (
+                            <DropdownMenuItem onClick={() => onStopRecurrence(task.id)}>
+                              <Pause className="h-3.5 w-3.5 mr-2" />
+                              Stop recurrence
+                            </DropdownMenuItem>
+                          )}
+                          <DropdownMenuItem
+                            className="text-red-600 focus:text-red-600"
+                            onClick={() => onDeleteTask(task.id)}
+                          >
+                            <Trash2 className="h-3.5 w-3.5 mr-2" />
+                            Delete task
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          ) : (
+            <p className="text-sm text-muted-foreground">No tasks linked.</p>
+          )}
+
+          <Separator className="my-4" />
+
+          <UnifiedNotes
+            entityType="project"
+            entityId={project.id}
+          />
+        </CardContent>
+      )}
+    </Card>
+  );
+}

@@ -1,0 +1,162 @@
+name: E2E Failure Notifier
+
+on:
+  workflow_run:
+    workflows: ["E2E Tests"]
+    types: [completed]
+
+permissions:
+  issues: write
+  actions: read
+
+jobs:
+  notify:
+    name: Create Issue on E2E Failure
+    runs-on: ubuntu-latest
+    if: github.event.workflow_run.conclusion == 'failure'
+
+    steps:
+      - name: Ensure labels exist
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const labels = [
+              { name: 'e2e-failure', color: 'CC0000', description: 'E2E test failure' },
+              { name: 'needs-fix', color: 'E4E669', description: 'Needs a fix' },
+            ];
+            for (const label of labels) {
+              try {
+                await github.rest.issues.createLabel({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  ...label,
+                });
+              } catch (e) {
+                if (e.status !== 422) throw e;
+                // Label already exists, ignore
+              }
+            }
+
+      - name: Download playwright-report artifact
+        id: artifact
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const runId = context.payload.workflow_run.id;
+            let artifacts;
+            try {
+              artifacts = await github.rest.actions.listWorkflowRunArtifacts({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                run_id: runId,
+              });
+            } catch (e) {
+              console.log('Could not list artifacts:', e.message);
+              return;
+            }
+
+            const match = artifacts.data.artifacts.find(a => a.name === 'playwright-report');
+            if (!match) {
+              console.log('playwright-report artifact not found');
+              return;
+            }
+
+            const download = await github.rest.actions.downloadArtifact({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              artifact_id: match.id,
+              archive_format: 'zip',
+            });
+
+            const fs = require('fs');
+            fs.writeFileSync('/tmp/playwright-report.zip', Buffer.from(download.data));
+            console.log('Downloaded playwright-report artifact');
+
+      - name: Create or update GitHub Issue
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const run = context.payload.workflow_run;
+            const branch = run.head_branch;
+            const shortSha = run.head_sha.substring(0, 7);
+            const runUrl = `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${run.id}`;
+            const runId = run.id;
+
+            const title = `🔴 E2E Failures — ${branch} @ ${shortSha}`;
+
+            const body = `## 🔴 E2E Tests Failed
+
+            **Branch:** \`${branch}\`
+            **Commit:** \`${shortSha}\`
+            **Run:** [View full Playwright report](${runUrl})
+
+            ---
+
+            ## Claude Code Fix Prompt
+
+            Copy everything below and paste it into Claude Code:
+
+            \`\`\`
+            E2E tests failed on branch ${branch} (commit ${shortSha}).
+
+            Full test run: ${runUrl}
+
+            STEP 1 — Read the failure output
+            Fetch the GitHub Actions run page or read from the downloaded artifact to get the exact
+            failing test names and error messages.
+
+            STEP 2 — Categorize each failure as one of:
+              a) Test bug — wrong selector, bad assertion, strict mode violation, flaky timing
+              b) Missing page — route doesn't exist yet, <main> element not found
+              c) App bug — feature exists but broken
+              d) DB/auth issue — session, RLS, or data problem
+
+            STEP 3 — Fix all failures:
+              - For (a): fix the test file only, do not touch app code
+              - For (b): build the minimum viable page at the expected route
+              - For (c): fix the app code
+              - For (d): investigate Supabase logs and fix at the infra level
+
+            STEP 4 — For any new pages you build, follow Requity Design System v2:
+              - Background #FFFFFF, secondary #F7F7F8, text #1A1A1A, borders #E5E5E7
+              - Inter font only. NO serifs, NO navy, NO gold.
+              - shadcn/ui components, Lucide icons, 12px card radius, 8px button radius
+              - Status pills with colored dots
+              - Success #22A861, Warning #E5930E, Danger #E5453D, Info #3B82F6
+              - All pages must use the existing layout wrapper and createClient() auth pattern
+
+            STEP 5 — After all fixes, confirm:
+              - List every file changed and why
+              - Flag any failures that require DB migrations or schema changes
+            \`\`\`
+
+            ---
+            > Auto-created by e2e-notify workflow on failed run [${runId}](${runUrl})`.replace(/^            /gm, '');
+
+            // Check for existing open issue to avoid duplicates
+            const issues = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              labels: 'e2e-failure',
+              per_page: 1,
+            });
+
+            if (issues.data.length > 0) {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issues.data[0].number,
+                body: body,
+              });
+              console.log(`Commented on existing issue #${issues.data[0].number}`);
+            } else {
+              const issue = await github.rest.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title: title,
+                body: body,
+                labels: ['e2e-failure', 'needs-fix'],
+              });
+              console.log(`Created issue #${issue.data.number}`);
+            }

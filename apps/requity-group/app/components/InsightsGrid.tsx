@@ -1,0 +1,125 @@
+"use client";
+
+import { useState } from "react";
+import Link from "next/link";
+import { Clock } from "lucide-react";
+import type { Insight } from "../../lib/types";
+
+type AudienceTab = "investor" | "borrower" | "all";
+
+const TABS: { key: AudienceTab; label: string }[] = [
+  { key: "investor", label: "Investor Insights" },
+  { key: "borrower", label: "Borrower Resources" },
+  { key: "all", label: "All" },
+];
+
+function filterInsights(insights: Insight[], tab: AudienceTab): Insight[] {
+  if (tab === "all") return insights;
+  return insights.filter(
+    (i) => i.audience === tab || i.audience === "both"
+  );
+}
+
+export default function InsightsGrid({ insights }: { insights: Insight[] }) {
+  const [activeTab, setActiveTab] = useState<AudienceTab>("investor");
+  const filtered = filterInsights(insights, activeTab);
+
+  return (
+    <>
+      {/* Tab bar — segmented control style */}
+      <div className="insights-tabs" role="tablist" aria-label="Filter insights by audience">
+        {TABS.map((tab) => {
+          const isActive = activeTab === tab.key;
+          return (
+            <button
+              key={tab.key}
+              type="button"
+              role="tab"
+              aria-selected={isActive}
+              aria-controls="insights-grid"
+              className={`insights-tab${isActive ? " insights-tab-active" : ""}`}
+              onClick={() => setActiveTab(tab.key)}
+            >
+              {tab.label}
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Grid */}
+      {filtered.length > 0 ? (
+        <div
+          id="insights-grid"
+          role="tabpanel"
+          aria-label="Filtered insights"
+          className="insights-grid"
+        >
+          {filtered.map((insight) => (
+            <Link
+              key={insight.id}
+              href={`/insights/${insight.slug}`}
+              style={{ textDecoration: "none", color: "inherit", display: "block", height: "100%" }}
+            >
+              <div className="card insight-card">
+                <div className="insight-tags">
+                  {insight.tags?.map((tag) => (
+                    <span key={tag} className="insight-tag">
+                      {tag}
+                    </span>
+                  ))}
+                </div>
+                <h3 className="card-title" style={{ fontSize: 21 }}>
+                  {insight.title}
+                </h3>
+                {insight.excerpt && (
+                  <p className="card-body">{insight.excerpt}</p>
+                )}
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 16,
+                    marginTop: 16,
+                    flexWrap: "wrap" as const,
+                  }}
+                >
+                  {insight.published_date && (
+                    <span
+                      className="type-caption"
+                      style={{ color: "var(--text-light)" }}
+                    >
+                      {new Date(insight.published_date).toLocaleDateString(
+                        "en-US",
+                        { year: "numeric", month: "long", day: "numeric" }
+                      )}
+                    </span>
+                  )}
+                  {insight.reading_time_minutes && (
+                    <span
+                      className="type-caption"
+                      style={{
+                        color: "var(--text-light)",
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 4,
+                      }}
+                    >
+                      <Clock size={12} />
+                      {insight.reading_time_minutes} min
+                    </span>
+                  )}
+                </div>
+              </div>
+            </Link>
+          ))}
+        </div>
+      ) : (
+        <div className="insights-empty">
+          <p className="type-body" style={{ color: "var(--text-mid)" }}>
+            No posts in this category yet. Check back soon.
+          </p>
+        </div>
+      )}
+    </>
+  );
+}
