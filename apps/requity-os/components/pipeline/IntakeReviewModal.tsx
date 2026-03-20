@@ -11,7 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Label } from "@/components/ui/label";
-import { Mail, Check, X, Plus, Merge, Forward, Paperclip } from "lucide-react";
+import { Mail, Check, X, Plus, Merge, Forward, Paperclip, FileText, FileSpreadsheet, Image, File } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { createClient } from "@/lib/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
@@ -315,7 +315,7 @@ export function IntakeReviewModal({ item, open, onOpenChange }: IntakeReviewModa
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-[960px] max-h-[92vh] p-0 flex flex-col gap-0">
+      <DialogContent className="max-w-[1200px] max-h-[92vh] p-0 flex flex-col gap-0">
         {/* Header */}
         <div className="p-5 pb-3 border-b">
           <DialogHeader>
@@ -371,11 +371,11 @@ export function IntakeReviewModal({ item, open, onOpenChange }: IntakeReviewModa
                       <div className="text-[10px] font-semibold text-muted-foreground/70 uppercase tracking-wider mb-1.5">
                         {section.title}
                       </div>
-                      <div className="grid grid-cols-4 gap-x-4 gap-y-1.5">
+                      <div className="grid grid-cols-5 gap-x-4 gap-y-2">
                         {section.fields.map((f) => (
                           <div key={f.label}>
                             <div className="text-[9px] text-muted-foreground/50">{f.label}</div>
-                            <div className="text-[11px] text-foreground font-medium mt-0.5 truncate">
+                            <div className="text-[11px] text-foreground font-medium mt-0.5 break-words">
                               {f.value || "--"}
                             </div>
                           </div>
@@ -477,8 +477,24 @@ export function IntakeReviewModal({ item, open, onOpenChange }: IntakeReviewModa
   );
 }
 
+function getFileIcon(filename: string) {
+  const ext = filename.split(".").pop()?.toLowerCase();
+  if (ext === "pdf") return <FileText className="h-4 w-4 shrink-0 text-red-400" />;
+  if (["xlsx", "xls", "csv"].includes(ext || "")) return <FileSpreadsheet className="h-4 w-4 shrink-0 text-green-400" />;
+  if (["doc", "docx"].includes(ext || "")) return <FileText className="h-4 w-4 shrink-0 text-blue-400" />;
+  if (["png", "jpg", "jpeg", "gif", "webp"].includes(ext || "")) return <Image className="h-4 w-4 shrink-0 text-purple-400" />;
+  return <File className="h-4 w-4 shrink-0 text-muted-foreground" />;
+}
+
+function formatFileSize(bytes?: number) {
+  if (!bytes) return "";
+  if (bytes >= 1_000_000) return `${(bytes / 1_000_000).toFixed(1)} MB`;
+  if (bytes >= 1_000) return `${Math.round(bytes / 1_000)} KB`;
+  return `${bytes} B`;
+}
+
 function AttachmentList({ queueId }: { queueId: string }) {
-  const [attachments, setAttachments] = useState<Array<{ filename: string; size_bytes?: number }>>([]);
+  const [attachments, setAttachments] = useState<Array<{ filename: string; mime_type?: string; size_bytes?: number }>>([]);
 
   useEffect(() => {
     const supabase = createClient();
@@ -489,7 +505,7 @@ function AttachmentList({ queueId }: { queueId: string }) {
       .single()
       .then(({ data }) => {
         if (data?.attachments && Array.isArray(data.attachments) && data.attachments.length > 0) {
-          setAttachments(data.attachments as Array<{ filename: string; size_bytes?: number }>);
+          setAttachments(data.attachments as Array<{ filename: string; mime_type?: string; size_bytes?: number }>);
         }
       });
   }, [queueId]);
@@ -497,22 +513,30 @@ function AttachmentList({ queueId }: { queueId: string }) {
   if (attachments.length === 0) return null;
 
   return (
-    <div className="mt-3">
-      <div className="text-[10px] font-semibold text-muted-foreground/70 uppercase tracking-wider mb-1.5">
-        Attachments
+    <div className="mt-4">
+      <div className="flex items-center gap-2 mb-2">
+        <div className="text-[10px] font-semibold text-muted-foreground/70 uppercase tracking-wider">
+          Documents ({attachments.length})
+        </div>
+        <Badge variant="outline" className="text-[8px] px-1.5 py-0 text-green-500 border-green-500/30">
+          Will upload to deal
+        </Badge>
       </div>
-      <div className="space-y-1">
+      <div className="grid grid-cols-2 gap-2">
         {attachments.map((att, i) => (
-          <div key={i} className="flex items-center gap-2 text-[11px] text-muted-foreground">
-            <Paperclip className="h-3 w-3 shrink-0" />
-            <span className="truncate">{att.filename}</span>
-            {att.size_bytes && (
-              <span className="text-[9px] text-muted-foreground/50 shrink-0">
-                {att.size_bytes >= 1_000_000
-                  ? `${(att.size_bytes / 1_000_000).toFixed(1)} MB`
-                  : `${Math.round(att.size_bytes / 1_000)} KB`}
-              </span>
-            )}
+          <div
+            key={i}
+            className="flex items-center gap-3 rounded-lg border border-border/50 bg-muted/10 px-3 py-2"
+          >
+            {getFileIcon(att.filename)}
+            <div className="flex-1 min-w-0">
+              <div className="text-[11px] text-foreground font-medium break-words">{att.filename}</div>
+              <div className="text-[9px] text-muted-foreground/60 mt-0.5">
+                {att.mime_type?.split("/").pop()?.toUpperCase() || "FILE"}
+                {att.size_bytes ? ` \u00B7 ${formatFileSize(att.size_bytes)}` : ""}
+              </div>
+            </div>
+            <Paperclip className="h-3 w-3 shrink-0 text-muted-foreground/30" />
           </div>
         ))}
       </div>
