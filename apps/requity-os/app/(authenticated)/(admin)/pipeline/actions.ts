@@ -1653,7 +1653,8 @@ export async function searchEntityAction(
 
 export async function processIntakeItemAction(
   intakeItemId: string,
-  decisions: IntakeDecisions | null
+  decisions: IntakeDecisions | null,
+  formOverrides?: Record<string, string> | null,
 ) {
   try {
     const auth = await requireAdmin();
@@ -1686,9 +1687,51 @@ export async function processIntakeItemAction(
 
     if (fetchErr || !item) return { error: "Intake item not found" };
 
-    const parsed = (item as Record<string, unknown>).parsed_data as IntakeParsedData;
+    const rawParsed = (item as Record<string, unknown>).parsed_data as IntakeParsedData;
     const autoMatches = (item as Record<string, unknown>).auto_matches as Record<string, { match_id: string; snapshot: Record<string, unknown> } | null>;
     const emailQueueId = (item as Record<string, unknown>).email_intake_queue_id as string | null;
+
+    // Merge form overrides from the inline editor into parsed data
+    // formOverrides keys match IntakeParsedData keys (camelCase)
+    const parsed: IntakeParsedData = { ...rawParsed };
+    if (formOverrides) {
+      const ov = formOverrides;
+      if (ov.brokerName) parsed.brokerName = ov.brokerName;
+      if (ov.brokerEmail) parsed.brokerEmail = ov.brokerEmail;
+      if (ov.brokerPhone) parsed.brokerPhone = ov.brokerPhone;
+      if (ov.brokerCompany) parsed.brokerCompany = ov.brokerCompany;
+      if (ov.brokerLicense) parsed.brokerLicense = ov.brokerLicense;
+      if (ov.borrowerName) parsed.borrowerName = ov.borrowerName;
+      if (ov.borrowerEntityName) parsed.borrowerEntityName = ov.borrowerEntityName;
+      if (ov.borrowerEmail) parsed.borrowerEmail = ov.borrowerEmail;
+      if (ov.borrowerPhone) parsed.borrowerPhone = ov.borrowerPhone;
+      if (ov.propertyAddress) parsed.propertyAddress = ov.propertyAddress;
+      if (ov.propertyCity) parsed.propertyCity = ov.propertyCity;
+      if (ov.propertyState) parsed.propertyState = ov.propertyState;
+      if (ov.propertyType) parsed.propertyType = ov.propertyType;
+      if (ov.units) parsed.units = Number(ov.units) || undefined;
+      if (ov.sqft) parsed.sqft = Number(ov.sqft) || undefined;
+      if (ov.loanType) parsed.loanType = ov.loanType;
+      if (ov.loanAmount) parsed.loanAmount = Number(ov.loanAmount) || undefined;
+      if (ov.purchasePrice) parsed.purchasePrice = Number(ov.purchasePrice) || undefined;
+      if (ov.ltv) parsed.ltv = Number(ov.ltv) || undefined;
+      if (ov.rate) parsed.rate = Number(ov.rate) || undefined;
+      if (ov.term) parsed.term = ov.term;
+      if (ov.dscr) parsed.dscr = Number(ov.dscr) || undefined;
+      if (ov.noi) parsed.noi = Number(ov.noi) || undefined;
+      if (ov.capRate) parsed.capRate = Number(ov.capRate) || undefined;
+      if (ov.arv) parsed.arv = Number(ov.arv) || undefined;
+      if (ov.rehabBudget) parsed.rehabBudget = Number(ov.rehabBudget) || undefined;
+      if (ov.closingDate) parsed.closingDate = ov.closingDate;
+      if (ov.sellerFinancing) parsed.sellerFinancing = ov.sellerFinancing;
+      if (ov.existingDebt) parsed.existingDebt = ov.existingDebt;
+      if (ov.debtService) parsed.debtService = Number(ov.debtService) || undefined;
+      if (ov.cashFlow) parsed.cashFlow = Number(ov.cashFlow) || undefined;
+      if (ov.cocReturn) parsed.cocReturn = Number(ov.cocReturn) || undefined;
+      if (ov.notes !== undefined) parsed.notes = ov.notes;
+    }
+    // If user explicitly selected a card type, store for later use
+    const overrideCardTypeId = formOverrides?.cardTypeId || null;
 
     // Fetch email intake queue data for email context, attachments, and extracted fields
     interface EmailQueueData {
@@ -1953,9 +1996,9 @@ export async function processIntakeItemAction(
       .filter(Boolean)
       .join(" - ");
 
-    // Try to determine a card type from the loan type
-    let cardTypeId: string | null = null;
-    if (parsed.loanType) {
+    // Use override card type if explicitly selected, otherwise detect from loan type
+    let cardTypeId: string | null = overrideCardTypeId || null;
+    if (!cardTypeId && parsed.loanType) {
       const loanTypeLower = parsed.loanType.toLowerCase();
       const slugMap: Record<string, string> = {
         dscr: "res_debt_dscr",

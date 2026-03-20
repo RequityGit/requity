@@ -145,6 +145,7 @@ export function PipelineView({
         onOpenChange={(open) => {
           if (!open) setReviewItem(null);
         }}
+        cardTypes={cardTypes}
       />
     </div>
   );

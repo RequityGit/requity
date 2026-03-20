@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo, useTransition } from "react";
+import { useState, useEffect, useMemo, useTransition, useCallback } from "react";
 import {
   Dialog,
   DialogContent,
@@ -11,12 +11,25 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Label } from "@/components/ui/label";
-import { Mail, Check, X, Plus, Merge, Forward, Paperclip, FileText, FileSpreadsheet, Image, File } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Mail, Check, X, Plus, Merge, Forward, Paperclip,
+  FileText, FileSpreadsheet, Image, File, Sparkles, ChevronDown, ChevronRight,
+} from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { createClient } from "@/lib/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
 import { EntityMergeSection } from "./EntityMergeSection";
 import { processIntakeItemAction } from "@/app/(authenticated)/(admin)/pipeline/actions";
+import type { UnifiedCardType } from "./pipeline-types";
 import {
   type IntakeItem,
   type IntakeEntityKey,
@@ -33,113 +46,289 @@ import {
   hasBorrowerData,
 } from "@/lib/intake/types";
 
+// ---------------------------------------------------------------------------
+// Types
+// ---------------------------------------------------------------------------
+
 interface IntakeReviewModalProps {
   item: IntakeItem | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  cardTypes?: UnifiedCardType[];
 }
 
-function formatMoney(n: number | undefined | null): string {
-  if (!n) return "--";
-  if (n >= 1_000_000) return `$${(n / 1_000_000).toFixed(1)}M`;
-  if (n >= 1_000) return `$${(n / 1_000).toFixed(0)}K`;
-  return `$${n}`;
+/** All editable fields in the form, keyed by a flat string key */
+interface IntakeFormData {
+  // Broker
+  brokerName: string;
+  brokerEmail: string;
+  brokerPhone: string;
+  brokerCompany: string;
+  brokerLicense: string;
+  // Borrower
+  borrowerName: string;
+  borrowerEntityName: string;
+  borrowerEmail: string;
+  borrowerPhone: string;
+  // Property
+  propertyAddress: string;
+  propertyCity: string;
+  propertyState: string;
+  propertyType: string;
+  units: string;
+  sqft: string;
+  yearBuilt: string;
+  // Deal / Financials
+  loanType: string;
+  loanAmount: string;
+  purchasePrice: string;
+  ltv: string;
+  rate: string;
+  term: string;
+  dscr: string;
+  noi: string;
+  capRate: string;
+  arv: string;
+  rehabBudget: string;
+  closingDate: string;
+  sellerFinancing: string;
+  existingDebt: string;
+  debtService: string;
+  cashFlow: string;
+  cocReturn: string;
+  // Meta
+  cardTypeId: string;
+  notes: string;
 }
 
-function formatPercent(n: number | undefined | null): string {
-  if (!n) return "--";
-  if (n > 1) return `${n.toFixed(2)}%`;
-  return `${(n * 100).toFixed(2)}%`;
+type FormKey = keyof IntakeFormData;
+
+// ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
+
+function toStr(v: string | number | null | undefined): string {
+  if (v == null || v === "") return "";
+  return String(v);
 }
+
+function numStr(v: number | null | undefined): string {
+  if (v == null) return "";
+  return String(v);
+}
+
+const PROPERTY_TYPES = [
+  "Single Family",
+  "Duplex/Fourplex",
+  "Multifamily",
+  "Mixed Use",
+  "Commercial",
+  "Industrial",
+  "Retail",
+  "Office",
+  "Warehouse",
+  "Land",
+  "Mobile Home/MHC",
+  "RV Park",
+  "Campground",
+  "Self Storage",
+];
 
 const BASE_ENTITY_KEYS: IntakeEntityKey[] = ["contact", "company", "property", "opportunity"];
 
-interface FieldDisplayDef {
+// ---------------------------------------------------------------------------
+// Form field component
+// ---------------------------------------------------------------------------
+
+interface FieldInputProps {
   label: string;
-  value: string | undefined;
+  value: string;
+  onChange: (v: string) => void;
+  placeholder?: string;
+  aiPrefilled?: boolean;
+  type?: "text" | "number" | "date";
+  className?: string;
 }
 
-function buildFieldSection(
-  title: string,
-  fields: FieldDisplayDef[]
-): { title: string; fields: FieldDisplayDef[] } | null {
-  const populated = fields.filter((f) => f.value && f.value !== "--");
-  if (populated.length === 0) return null;
-  return { title, fields: populated };
+function FieldInput({ label, value, onChange, placeholder, aiPrefilled, type = "text", className }: FieldInputProps) {
+  return (
+    <div className={className}>
+      <div className="flex items-center gap-1 mb-1">
+        <label className="text-[9px] text-muted-foreground/60 uppercase tracking-wider font-medium">{label}</label>
+        {aiPrefilled && (
+          <Sparkles className="h-2.5 w-2.5 text-amber-500/70" />
+        )}
+      </div>
+      <Input
+        type={type}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder={placeholder}
+        className="h-7 text-[11px] px-2 bg-background"
+      />
+    </div>
+  );
 }
 
-function buildSections(p: IntakeParsedData) {
-  const sections: { title: string; fields: FieldDisplayDef[] }[] = [];
-
-  const broker = buildFieldSection("Broker / Correspondent", [
-    { label: "Name", value: p.brokerName },
-    { label: "Email", value: p.brokerEmail },
-    { label: "Phone", value: p.brokerPhone },
-    { label: "Company", value: p.brokerCompany },
-    { label: "License #", value: p.brokerLicense },
-  ]);
-  if (broker) sections.push(broker);
-
-  const borrower = buildFieldSection("Borrower", [
-    { label: "Name", value: p.borrowerName },
-    { label: "Entity", value: p.borrowerEntityName },
-    { label: "Email", value: p.borrowerEmail },
-    { label: "Phone", value: p.borrowerPhone },
-  ]);
-  if (borrower) sections.push(borrower);
-
-  const contact = buildFieldSection("Contact", [
-    { label: "Name", value: p.contactName },
-    { label: "Email", value: p.contactEmail },
-    { label: "Phone", value: p.contactPhone },
-    { label: "Company", value: p.companyName },
-  ]);
-  if (contact && !broker) sections.push(contact);
-
-  const property = buildFieldSection("Property", [
-    { label: "Address", value: p.propertyAddress },
-    { label: "City", value: p.propertyCity },
-    { label: "State", value: p.propertyState },
-    { label: "Type", value: p.propertyType },
-    { label: "Units", value: p.units?.toString() },
-    { label: "Sq Ft", value: p.sqft?.toLocaleString() },
-    { label: "Properties", value: p.propertyCount && p.propertyCount > 1 ? p.propertyCount.toString() : undefined },
-  ]);
-  if (property) sections.push(property);
-
-  const deal = buildFieldSection("Deal / Financials", [
-    { label: "Purchase Price", value: formatMoney(p.purchasePrice) },
-    { label: "Loan Amount", value: formatMoney(p.loanAmount) },
-    { label: "Loan Type", value: p.loanType },
-    { label: "LTV", value: formatPercent(p.ltv) },
-    { label: "Rate", value: formatPercent(p.rate) },
-    { label: "Term", value: p.term },
-    { label: "DSCR", value: p.dscr?.toFixed(2) },
-    { label: "NOI", value: formatMoney(p.noi) },
-    { label: "Cap Rate", value: formatPercent(p.capRate) },
-    { label: "Debt Service", value: formatMoney(p.debtService) },
-    { label: "Cash Flow", value: formatMoney(p.cashFlow) },
-    { label: "COC Return", value: formatPercent(p.cocReturn) },
-    { label: "ARV", value: formatMoney(p.arv) },
-    { label: "Rehab Budget", value: formatMoney(p.rehabBudget) },
-    { label: "Closing Date", value: p.closingDate },
-    { label: "Seller Financing", value: p.sellerFinancing },
-    { label: "Existing Debt", value: p.existingDebt },
-  ]);
-  if (deal) sections.push(deal);
-
-  return sections;
+interface FieldSelectProps {
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+  options: { value: string; label: string }[];
+  placeholder?: string;
+  aiPrefilled?: boolean;
+  className?: string;
 }
 
-export function IntakeReviewModal({ item, open, onOpenChange }: IntakeReviewModalProps) {
+function FieldSelect({ label, value, onChange, options, placeholder, aiPrefilled, className }: FieldSelectProps) {
+  return (
+    <div className={className}>
+      <div className="flex items-center gap-1 mb-1">
+        <label className="text-[9px] text-muted-foreground/60 uppercase tracking-wider font-medium">{label}</label>
+        {aiPrefilled && (
+          <Sparkles className="h-2.5 w-2.5 text-amber-500/70" />
+        )}
+      </div>
+      <Select value={value || "__none__"} onValueChange={(v) => onChange(v === "__none__" ? "" : v)}>
+        <SelectTrigger className="h-7 text-[11px] px-2 bg-background">
+          <SelectValue placeholder={placeholder || "Select..."} />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="__none__">
+            <span className="text-muted-foreground">{placeholder || "Select..."}</span>
+          </SelectItem>
+          {options.map((o) => (
+            <SelectItem key={o.value} value={o.value}>
+              {o.label}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Section header
+// ---------------------------------------------------------------------------
+
+function SectionHeader({ title, count }: { title: string; count?: number }) {
+  return (
+    <div className="flex items-center gap-2 mb-2 mt-1">
+      <div className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">{title}</div>
+      {count !== undefined && count > 0 && (
+        <Badge variant="secondary" className="text-[8px] px-1 py-0 h-3.5">{count} fields</Badge>
+      )}
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Main component
+// ---------------------------------------------------------------------------
+
+export function IntakeReviewModal({ item, open, onOpenChange, cardTypes = [] }: IntakeReviewModalProps) {
   const { toast } = useToast();
   const [entityModes, setEntityModes] = useState<Partial<Record<IntakeEntityKey, EntityMode>>>({});
   const [fieldChoices, setFieldChoices] = useState<Partial<Record<IntakeEntityKey, Record<string, FieldChoice>>>>({});
   const [manualMatches, setManualMatches] = useState<Partial<Record<IntakeEntityKey, EntityMatchResult>>>({});
   const [pending, startTransition] = useTransition();
+  const [mergeExpanded, setMergeExpanded] = useState(false);
+
+  // Form state
+  const [form, setForm] = useState<IntakeFormData>({
+    brokerName: "", brokerEmail: "", brokerPhone: "", brokerCompany: "", brokerLicense: "",
+    borrowerName: "", borrowerEntityName: "", borrowerEmail: "", borrowerPhone: "",
+    propertyAddress: "", propertyCity: "", propertyState: "", propertyType: "",
+    units: "", sqft: "", yearBuilt: "",
+    loanType: "", loanAmount: "", purchasePrice: "", ltv: "", rate: "", term: "",
+    dscr: "", noi: "", capRate: "", arv: "", rehabBudget: "", closingDate: "",
+    sellerFinancing: "", existingDebt: "", debtService: "", cashFlow: "", cocReturn: "",
+    cardTypeId: "", notes: "",
+  });
+
+  // Track which fields were AI-prefilled
+  const [aiFields, setAiFields] = useState<Set<FormKey>>(new Set());
 
   const p = item?.parsed_data;
 
+  // Initialize form from parsed_data when item changes
+  useEffect(() => {
+    if (!p) return;
+    const prefilled = new Set<FormKey>();
+    const init: IntakeFormData = {
+      brokerName: toStr(p.brokerName),
+      brokerEmail: toStr(p.brokerEmail),
+      brokerPhone: toStr(p.brokerPhone),
+      brokerCompany: toStr(p.brokerCompany),
+      brokerLicense: toStr(p.brokerLicense),
+      borrowerName: toStr(p.borrowerName),
+      borrowerEntityName: toStr(p.borrowerEntityName),
+      borrowerEmail: toStr(p.borrowerEmail),
+      borrowerPhone: toStr(p.borrowerPhone),
+      propertyAddress: toStr(p.propertyAddress),
+      propertyCity: toStr(p.propertyCity),
+      propertyState: toStr(p.propertyState),
+      propertyType: toStr(p.propertyType),
+      units: numStr(p.units),
+      sqft: numStr(p.sqft),
+      yearBuilt: "",
+      loanType: toStr(p.loanType),
+      loanAmount: numStr(p.loanAmount),
+      purchasePrice: numStr(p.purchasePrice),
+      ltv: numStr(p.ltv),
+      rate: numStr(p.rate),
+      term: toStr(p.term),
+      dscr: numStr(p.dscr),
+      noi: numStr(p.noi),
+      capRate: numStr(p.capRate),
+      arv: numStr(p.arv),
+      rehabBudget: numStr(p.rehabBudget),
+      closingDate: toStr(p.closingDate),
+      sellerFinancing: toStr(p.sellerFinancing),
+      existingDebt: toStr(p.existingDebt),
+      debtService: numStr(p.debtService),
+      cashFlow: numStr(p.cashFlow),
+      cocReturn: numStr(p.cocReturn),
+      cardTypeId: "",
+      notes: toStr(p.notes),
+    };
+
+    // Track which fields have AI values
+    for (const [key, val] of Object.entries(init)) {
+      if (val && key !== "cardTypeId" && key !== "notes") {
+        prefilled.add(key as FormKey);
+      }
+    }
+
+    // Auto-detect card type from loan type
+    if (p.loanType && cardTypes.length > 0) {
+      const lt = p.loanType.toLowerCase();
+      const slugMap: Record<string, string> = {
+        dscr: "res_debt_dscr", rtl: "res_debt_rtl",
+        "comm debt": "comm_debt", "comm eq": "comm_equity",
+        commercial: "comm_debt", commdebt: "comm_debt",
+      };
+      const slug = slugMap[lt];
+      if (slug) {
+        const ct = cardTypes.find((c) => c.slug === slug && c.status === "active");
+        if (ct) {
+          init.cardTypeId = ct.id;
+          prefilled.add("cardTypeId");
+        }
+      }
+    }
+
+    setForm(init);
+    setAiFields(prefilled);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [item?.id]);
+
+  const updateField = useCallback((key: FormKey, value: string) => {
+    setForm((prev) => ({ ...prev, [key]: value }));
+  }, []);
+
+  // Entity merge logic (preserved from v1)
   const activeEntityKeys = useMemo<IntakeEntityKey[]>(() => {
     if (!p) return BASE_ENTITY_KEYS;
     if (hasBorrowerData(p)) {
@@ -177,29 +366,12 @@ export function IntakeReviewModal({ item, open, onOpenChange }: IntakeReviewModa
     setEntityModes((prev) => ({ ...prev, [entityKey]: "merge" }));
   };
 
-  const allResolved = useMemo(() => {
-    if (!item) return false;
-    for (const ek of activeEntityKeys) {
-      const mode = getMode(ek);
-      const match = getEffectiveMatch(ek);
-      if (mode === "merge" && match) {
-        const fields = ENTITY_FIELD_MAP[ek];
-        const incoming = INCOMING_DATA_MAP[ek](item.parsed_data);
-        const existing = match.snapshot;
-        const ec = getFieldChoicesForEntity(ek);
-        for (const f of fields) {
-          const inc = incoming[f.key];
-          const ext = existing[f.key];
-          if (!isEmpty(inc) && !isEmpty(ext) && !valsMatch(inc, ext) && !ec[f.key]) {
-            return false;
-          }
-        }
-      }
-    }
-    return true;
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [entityModes, fieldChoices, manualMatches, item, activeEntityKeys]);
+  const matchCount = useMemo(() => {
+    return activeEntityKeys.filter((ek) => getEffectiveMatch(ek)).length;
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeEntityKeys, manualMatches, item]);
 
+  // Action summary
   const summary = useMemo(() => {
     if (!item) return [];
     const actions: { label: string; isNew: boolean }[] = [];
@@ -211,42 +383,17 @@ export function IntakeReviewModal({ item, open, onOpenChange }: IntakeReviewModa
       if (mode === "new") {
         actions.push({ label: `Create new ${displayLabel}`, isNew: true });
       } else if (mode === "merge" && match) {
-        const fields = ENTITY_FIELD_MAP[ek];
-        const incoming = INCOMING_DATA_MAP[ek](item.parsed_data);
-        const existing = match.snapshot;
-        const fc = getFieldChoicesForEntity(ek);
-        const overwrites: string[] = [];
-        const fills: string[] = [];
-        const boths: string[] = [];
-        fields.forEach((f) => {
-          const inc = incoming[f.key];
-          const ext = existing[f.key];
-          if (isEmpty(inc) && isEmpty(ext)) return;
-          if (valsMatch(inc, ext)) return;
-          if (isEmpty(ext) && !isEmpty(inc)) { fills.push(f.label); return; }
-          if (isEmpty(inc) && !isEmpty(ext)) return;
-          if (fc[f.key] === "incoming") overwrites.push(f.label);
-          if (fc[f.key] === "both") boths.push(f.label);
-        });
-        const parts: string[] = [];
-        if (fills.length) parts.push(`fill ${fills.length} empty field${fills.length > 1 ? "s" : ""}`);
-        if (overwrites.length) parts.push(`overwrite ${overwrites.join(", ")}`);
-        if (boths.length) parts.push(`keep both for ${boths.join(", ")}`);
-        const matchName = String(existing.name || existing.address_line1 || "");
-        actions.push({
-          label: `Merge ${displayLabel} \u2192 ${matchName}${parts.length ? ": " + parts.join("; ") : ""}`,
-          isNew: false,
-        });
+        const matchName = String(match.snapshot.name || match.snapshot.address_line1 || "");
+        actions.push({ label: `Merge ${displayLabel} into ${matchName}`, isNew: false });
       }
     });
     return actions;
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [entityModes, fieldChoices, manualMatches, item, activeEntityKeys]);
 
   const handleConfirm = () => {
     if (!item) return;
 
-    // Build effective field choices: default any unresolved merge conflict to "incoming" so the user can submit without expanding every section
     const effectiveFieldChoices: Partial<Record<IntakeEntityKey, Record<string, FieldChoice>>> = {};
     for (const ek of activeEntityKeys) {
       const current = fieldChoices[ek] || {};
@@ -272,14 +419,14 @@ export function IntakeReviewModal({ item, open, onOpenChange }: IntakeReviewModa
       fieldChoices: effectiveFieldChoices as Partial<Record<IntakeEntityKey, Record<string, FieldChoice>>>,
       manualMatches: Object.keys(manualMatches).length > 0 ? manualMatches : undefined,
     };
+
+    // Pass form overrides so processIntakeItemAction uses edited values
+    const formOverrides = { ...form };
+
     startTransition(async () => {
-      const result = await processIntakeItemAction(item.id, decisions);
+      const result = await processIntakeItemAction(item.id, decisions, formOverrides);
       if (result?.error) {
-        toast({
-          title: "Processing failed",
-          description: result.error,
-          variant: "destructive",
-        });
+        toast({ title: "Processing failed", description: result.error, variant: "destructive" });
       } else {
         const deal = result.deal as { deal_number?: string } | undefined;
         toast({
@@ -311,15 +458,15 @@ export function IntakeReviewModal({ item, open, onOpenChange }: IntakeReviewModa
 
   if (!item || !p) return null;
 
-  const sections = buildSections(p);
+  const activeCardTypes = cardTypes.filter((ct) => ct.status === "active");
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-[1200px] max-h-[92vh] p-0 flex flex-col gap-0">
+      <DialogContent className="max-w-[1400px] max-h-[92vh] p-0 flex flex-col gap-0">
         {/* Header */}
-        <div className="p-5 pb-3 border-b">
+        <div className="px-6 py-4 border-b">
           <DialogHeader>
-            <div className="flex items-center gap-2 mb-2">
+            <div className="flex items-center gap-2 mb-1">
               <Badge className="text-[9px] font-bold px-1.5 py-0 bg-gradient-to-r from-amber-500 to-amber-600 text-black border-0">
                 INTAKE REVIEW
               </Badge>
@@ -327,129 +474,230 @@ export function IntakeReviewModal({ item, open, onOpenChange }: IntakeReviewModa
                 {formatDistanceToNow(new Date(item.received_at), { addSuffix: true })}
               </span>
             </div>
-            <DialogTitle className="text-base truncate">
-              {item.subject || "(no subject)"}
-            </DialogTitle>
+            <DialogTitle className="text-base">{item.subject || "(no subject)"}</DialogTitle>
           </DialogHeader>
           <div className="flex items-center gap-1.5 text-xs text-muted-foreground mt-1">
             <Mail className="h-3.5 w-3.5" />
             <span>{item.from_name ? `${item.from_name} <${item.from_email}>` : item.from_email}</span>
           </div>
+          {p.isForwarded && (
+            <div className="flex items-center gap-2 rounded-lg border border-blue-500/20 bg-blue-500/5 px-3 py-1.5 text-[11px] mt-2">
+              <Forward className="h-3.5 w-3.5 text-blue-500 shrink-0" />
+              <span className="text-muted-foreground">
+                Forwarded by <span className="font-medium text-foreground">{p.forwarderName || item.from_name || item.from_email}</span>
+                {(p.brokerName || p.contactName) && (
+                  <>{" - Original sender: "}<span className="font-medium text-foreground">{p.brokerName || p.contactName}</span>
+                    {(p.brokerEmail || p.contactEmail) && (
+                      <span className="text-muted-foreground/70"> ({p.brokerEmail || p.contactEmail})</span>
+                    )}
+                  </>
+                )}
+              </span>
+            </div>
+          )}
         </div>
 
-        {/* Scrollable content */}
+        {/* Two-column body */}
         <ScrollArea className="flex-1 h-0 min-h-0">
-          <div className="p-5 space-y-5">
-            {/* Forwarded email banner */}
-            {p.isForwarded && (
-              <div className="flex items-center gap-2 rounded-lg border border-blue-500/20 bg-blue-500/5 px-3 py-2 text-[11px]">
-                <Forward className="h-3.5 w-3.5 text-blue-500 shrink-0" />
-                <span className="text-muted-foreground">
-                  Forwarded by <span className="font-medium text-foreground">{p.forwarderName || item.from_name || item.from_email}</span>
-                  {(p.brokerName || p.contactName) && (
-                    <>
-                      {" \u2014 Original sender: "}
-                      <span className="font-medium text-foreground">{p.brokerName || p.contactName}</span>
-                      {(p.brokerEmail || p.contactEmail) && (
-                        <span className="text-muted-foreground/70"> ({p.brokerEmail || p.contactEmail})</span>
-                      )}
-                    </>
-                  )}
-                </span>
-              </div>
-            )}
+          <div className="flex gap-0 min-h-0">
+            {/* LEFT COLUMN: Editable fields */}
+            <div className="flex-1 min-w-0 p-6 pr-4 space-y-5 border-r border-border/50">
 
-            {/* Extracted Fields FIRST so user sees all data before deciding */}
-            {sections.length > 0 && (
+              {/* Card Type Selector */}
               <div>
-                <Label className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-                  Extracted Data
-                </Label>
-                <div className="space-y-4 mt-2">
-                  {sections.map((section) => (
-                    <div key={section.title}>
-                      <div className="text-[10px] font-semibold text-muted-foreground/70 uppercase tracking-wider mb-1.5">
-                        {section.title}
-                      </div>
-                      <div className="grid grid-cols-5 gap-x-4 gap-y-2">
-                        {section.fields.map((f) => (
-                          <div key={f.label}>
-                            <div className="text-[9px] text-muted-foreground/50">{f.label}</div>
-                            <div className="text-[11px] text-foreground font-medium mt-0.5 break-words">
-                              {f.value || "--"}
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  ))}
+                <SectionHeader title="Deal Type" />
+                <Select value={form.cardTypeId || "__none__"} onValueChange={(v) => updateField("cardTypeId", v === "__none__" ? "" : v)}>
+                  <SelectTrigger className="h-8 text-xs bg-background w-full max-w-xs">
+                    <SelectValue placeholder="Select card type..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="__none__">
+                      <span className="text-muted-foreground">Auto-detect from loan type</span>
+                    </SelectItem>
+                    {activeCardTypes.map((ct) => (
+                      <SelectItem key={ct.id} value={ct.id}>
+                        {ct.label} ({ct.capital_side})
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Broker / Correspondent */}
+              <div>
+                <SectionHeader title="Broker / Correspondent" />
+                <div className="grid grid-cols-3 gap-x-3 gap-y-2">
+                  <FieldInput label="Name" value={form.brokerName} onChange={(v) => updateField("brokerName", v)} placeholder="Broker name" aiPrefilled={aiFields.has("brokerName")} />
+                  <FieldInput label="Email" value={form.brokerEmail} onChange={(v) => updateField("brokerEmail", v)} placeholder="broker@email.com" aiPrefilled={aiFields.has("brokerEmail")} />
+                  <FieldInput label="Phone" value={form.brokerPhone} onChange={(v) => updateField("brokerPhone", v)} placeholder="(555) 555-5555" aiPrefilled={aiFields.has("brokerPhone")} />
+                  <FieldInput label="Company" value={form.brokerCompany} onChange={(v) => updateField("brokerCompany", v)} placeholder="Brokerage name" aiPrefilled={aiFields.has("brokerCompany")} />
+                  <FieldInput label="License #" value={form.brokerLicense} onChange={(v) => updateField("brokerLicense", v)} placeholder="License number" aiPrefilled={aiFields.has("brokerLicense")} />
                 </div>
+              </div>
 
-                {item.email_intake_queue_id && (
-                  <AttachmentList queueId={item.email_intake_queue_id} />
-                )}
+              {/* Borrower */}
+              <div>
+                <SectionHeader title="Borrower" />
+                <div className="grid grid-cols-3 gap-x-3 gap-y-2">
+                  <FieldInput label="Name" value={form.borrowerName} onChange={(v) => updateField("borrowerName", v)} placeholder="Borrower name" aiPrefilled={aiFields.has("borrowerName")} />
+                  <FieldInput label="Entity Name" value={form.borrowerEntityName} onChange={(v) => updateField("borrowerEntityName", v)} placeholder="LLC / Corp name" aiPrefilled={aiFields.has("borrowerEntityName")} />
+                  <FieldInput label="Email" value={form.borrowerEmail} onChange={(v) => updateField("borrowerEmail", v)} placeholder="borrower@email.com" aiPrefilled={aiFields.has("borrowerEmail")} />
+                  <FieldInput label="Phone" value={form.borrowerPhone} onChange={(v) => updateField("borrowerPhone", v)} placeholder="(555) 555-5555" aiPrefilled={aiFields.has("borrowerPhone")} />
+                </div>
+              </div>
 
-                {p.notes && (
-                  <div className="mt-3 rounded-md border p-2.5">
-                    <div className="text-[9px] text-muted-foreground/50 mb-0.5">Notes</div>
-                    <div className="text-[11px] text-muted-foreground leading-relaxed whitespace-pre-wrap">{p.notes}</div>
+              {/* Property */}
+              <div>
+                <SectionHeader title="Property" />
+                <div className="grid grid-cols-3 gap-x-3 gap-y-2">
+                  <FieldInput label="Address" value={form.propertyAddress} onChange={(v) => updateField("propertyAddress", v)} placeholder="123 Main St" aiPrefilled={aiFields.has("propertyAddress")} className="col-span-2" />
+                  <FieldInput label="City" value={form.propertyCity} onChange={(v) => updateField("propertyCity", v)} placeholder="City" aiPrefilled={aiFields.has("propertyCity")} />
+                  <FieldInput label="State" value={form.propertyState} onChange={(v) => updateField("propertyState", v)} placeholder="TX" aiPrefilled={aiFields.has("propertyState")} />
+                  <FieldSelect
+                    label="Property Type"
+                    value={form.propertyType}
+                    onChange={(v) => updateField("propertyType", v)}
+                    options={PROPERTY_TYPES.map((t) => ({ value: t, label: t }))}
+                    placeholder="Select type"
+                    aiPrefilled={aiFields.has("propertyType")}
+                  />
+                  <FieldInput label="Units" value={form.units} onChange={(v) => updateField("units", v)} placeholder="1" type="number" aiPrefilled={aiFields.has("units")} />
+                  <FieldInput label="Sq Ft" value={form.sqft} onChange={(v) => updateField("sqft", v)} placeholder="2,500" type="number" aiPrefilled={aiFields.has("sqft")} />
+                  <FieldInput label="Year Built" value={form.yearBuilt} onChange={(v) => updateField("yearBuilt", v)} placeholder="1990" type="number" aiPrefilled={aiFields.has("yearBuilt")} />
+                </div>
+              </div>
+
+              {/* Deal / Financials */}
+              <div>
+                <SectionHeader title="Deal / Financials" />
+                <div className="grid grid-cols-4 gap-x-3 gap-y-2">
+                  <FieldInput label="Loan Amount" value={form.loanAmount} onChange={(v) => updateField("loanAmount", v)} placeholder="1100000" type="number" aiPrefilled={aiFields.has("loanAmount")} />
+                  <FieldInput label="Purchase Price" value={form.purchasePrice} onChange={(v) => updateField("purchasePrice", v)} placeholder="1800000" type="number" aiPrefilled={aiFields.has("purchasePrice")} />
+                  <FieldInput label="Loan Type" value={form.loanType} onChange={(v) => updateField("loanType", v)} placeholder="DSCR, Bridge, etc." aiPrefilled={aiFields.has("loanType")} />
+                  <FieldInput label="LTV" value={form.ltv} onChange={(v) => updateField("ltv", v)} placeholder="65" aiPrefilled={aiFields.has("ltv")} />
+                  <FieldInput label="Rate" value={form.rate} onChange={(v) => updateField("rate", v)} placeholder="8.5" aiPrefilled={aiFields.has("rate")} />
+                  <FieldInput label="Term" value={form.term} onChange={(v) => updateField("term", v)} placeholder="12 months" aiPrefilled={aiFields.has("term")} />
+                  <FieldInput label="DSCR" value={form.dscr} onChange={(v) => updateField("dscr", v)} placeholder="1.25" aiPrefilled={aiFields.has("dscr")} />
+                  <FieldInput label="NOI" value={form.noi} onChange={(v) => updateField("noi", v)} placeholder="132000" type="number" aiPrefilled={aiFields.has("noi")} />
+                  <FieldInput label="Cap Rate" value={form.capRate} onChange={(v) => updateField("capRate", v)} placeholder="7.5" aiPrefilled={aiFields.has("capRate")} />
+                  <FieldInput label="ARV" value={form.arv} onChange={(v) => updateField("arv", v)} placeholder="2400000" type="number" aiPrefilled={aiFields.has("arv")} />
+                  <FieldInput label="Rehab Budget" value={form.rehabBudget} onChange={(v) => updateField("rehabBudget", v)} placeholder="250000" type="number" aiPrefilled={aiFields.has("rehabBudget")} />
+                  <FieldInput label="Closing Date" value={form.closingDate} onChange={(v) => updateField("closingDate", v)} placeholder="2026-04-15" type="date" aiPrefilled={aiFields.has("closingDate")} />
+                  <FieldInput label="Seller Financing" value={form.sellerFinancing} onChange={(v) => updateField("sellerFinancing", v)} placeholder="Details..." aiPrefilled={aiFields.has("sellerFinancing")} />
+                  <FieldInput label="Existing Debt" value={form.existingDebt} onChange={(v) => updateField("existingDebt", v)} placeholder="Details..." aiPrefilled={aiFields.has("existingDebt")} />
+                  <FieldInput label="Debt Service" value={form.debtService} onChange={(v) => updateField("debtService", v)} placeholder="Annual debt service" type="number" aiPrefilled={aiFields.has("debtService")} />
+                  <FieldInput label="Cash Flow" value={form.cashFlow} onChange={(v) => updateField("cashFlow", v)} placeholder="Annual cash flow" type="number" aiPrefilled={aiFields.has("cashFlow")} />
+                </div>
+              </div>
+
+              {/* Notes */}
+              <div>
+                <SectionHeader title="Deal Notes" />
+                <Textarea
+                  value={form.notes}
+                  onChange={(e) => updateField("notes", e.target.value)}
+                  placeholder="Add any additional notes, context, or details about this deal..."
+                  className="text-[11px] min-h-[100px] bg-background resize-y"
+                />
+                {aiFields.has("notes") && form.notes && (
+                  <div className="flex items-center gap-1 mt-1">
+                    <Sparkles className="h-2.5 w-2.5 text-amber-500/70" />
+                    <span className="text-[9px] text-muted-foreground/50">AI-extracted summary, editable</span>
                   </div>
                 )}
-              </div>
-            )}
-
-            {sections.length === 0 && (
-              <p className="text-[11px] text-muted-foreground">No fields extracted from this email.</p>
-            )}
-
-            {/* Entity Merge Decisions AFTER data review */}
-            <div className="border-t border-border pt-4">
-              <Label className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-                Entity Merge Decisions
-              </Label>
-              <p className="text-[10px] text-muted-foreground mt-1 mb-3">
-                <strong className="text-foreground">Click each row below</strong> to expand. Choose + New or Find/Merge, and for matches pick existing vs incoming.
-              </p>
-              <div className="space-y-2">
-                {activeEntityKeys.map((ek) => (
-                  <EntityMergeSection
-                    key={ek}
-                    entityKey={ek}
-                    autoMatch={getEffectiveMatch(ek) ?? null}
-                    parsed={p}
-                    mode={getMode(ek)}
-                    onModeChange={(v) => setMode(ek, v)}
-                    fieldChoices={getFieldChoicesForEntity(ek)}
-                    onFieldChoice={setFieldChoice}
-                    onManualMatch={handleManualMatch}
-                  />
-                ))}
               </div>
             </div>
 
-            {/* Action Summary */}
-            {summary.length > 0 && (
-              <div className="rounded-lg border bg-muted/20 p-3">
-                <div className="text-[9px] font-semibold uppercase tracking-wider text-muted-foreground mb-2">
-                  Action Summary
-                </div>
-                {summary.map((s, i) => (
-                  <div key={i} className="flex items-start gap-1.5 py-0.5 text-[10px] text-muted-foreground">
-                    {s.isNew ? (
-                      <Plus className="h-3 w-3 shrink-0 mt-0.5 text-muted-foreground" />
-                    ) : (
-                      <Merge className="h-3 w-3 shrink-0 mt-0.5 text-primary" />
-                    )}
-                    <span>{s.label}</span>
+            {/* RIGHT COLUMN: Documents + Entity merge + Summary */}
+            <div className="w-[420px] shrink-0 p-6 pl-4 space-y-5">
+
+              {/* Documents */}
+              {item.email_intake_queue_id && (
+                <AttachmentList queueId={item.email_intake_queue_id} />
+              )}
+
+              {/* Entity Merge Decisions */}
+              <div>
+                <button
+                  type="button"
+                  onClick={() => setMergeExpanded(!mergeExpanded)}
+                  className="flex items-center gap-2 w-full text-left"
+                >
+                  {mergeExpanded ? <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" /> : <ChevronRight className="h-3.5 w-3.5 text-muted-foreground" />}
+                  <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
+                    Entity Matching
+                  </span>
+                  {matchCount > 0 && (
+                    <Badge variant="secondary" className="text-[8px] px-1 py-0 h-3.5">
+                      {matchCount} match{matchCount > 1 ? "es" : ""}
+                    </Badge>
+                  )}
+                </button>
+                <p className="text-[9px] text-muted-foreground/60 mt-1 ml-5">
+                  Choose to create new records or merge with existing contacts, companies, and properties.
+                </p>
+
+                {mergeExpanded && (
+                  <div className="space-y-2 mt-3">
+                    {activeEntityKeys.map((ek) => (
+                      <EntityMergeSection
+                        key={ek}
+                        entityKey={ek}
+                        autoMatch={getEffectiveMatch(ek) ?? null}
+                        parsed={p}
+                        mode={getMode(ek)}
+                        onModeChange={(v) => setMode(ek, v)}
+                        fieldChoices={getFieldChoicesForEntity(ek)}
+                        onFieldChoice={setFieldChoice}
+                        onManualMatch={handleManualMatch}
+                      />
+                    ))}
                   </div>
-                ))}
+                )}
+
+                {!mergeExpanded && matchCount > 0 && (
+                  <div className="mt-2 ml-5 space-y-1">
+                    {activeEntityKeys.map((ek) => {
+                      const match = getEffectiveMatch(ek);
+                      if (!match) return null;
+                      const meta = ENTITY_META[ek];
+                      const displayLabel = ek === "opportunity" ? "Deal" : meta.label;
+                      const matchName = String(match.snapshot.name || match.snapshot.address_line1 || "");
+                      return (
+                        <div key={ek} className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
+                          <Merge className="h-3 w-3 text-primary shrink-0" />
+                          <span>{displayLabel}: merge with <span className="font-medium text-foreground">{matchName}</span></span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
-            )}
+
+              {/* Action Summary */}
+              {summary.length > 0 && (
+                <div className="rounded-lg border bg-muted/20 p-3">
+                  <div className="text-[9px] font-semibold uppercase tracking-wider text-muted-foreground mb-2">
+                    What will happen
+                  </div>
+                  {summary.map((s, i) => (
+                    <div key={i} className="flex items-start gap-1.5 py-0.5 text-[10px] text-muted-foreground">
+                      {s.isNew ? (
+                        <Plus className="h-3 w-3 shrink-0 mt-0.5 text-muted-foreground" />
+                      ) : (
+                        <Merge className="h-3 w-3 shrink-0 mt-0.5 text-primary" />
+                      )}
+                      <span>{s.label}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
         </ScrollArea>
 
         {/* Bottom action bar */}
-        <div className="p-4 border-t flex items-center justify-between">
+        <div className="px-6 py-4 border-t flex items-center justify-between bg-muted/5">
           <Button
             type="button"
             variant="ghost"
@@ -461,21 +709,30 @@ export function IntakeReviewModal({ item, open, onOpenChange }: IntakeReviewModa
             <X className="h-3.5 w-3.5 mr-1" />
             Dismiss
           </Button>
-          <Button
-            type="button"
-            size="sm"
-            className="text-xs bg-gradient-to-r from-amber-500 to-amber-600 text-black hover:from-amber-600 hover:to-amber-700"
-            onClick={handleConfirm}
-            disabled={pending}
-          >
-            <Check className="h-3.5 w-3.5 mr-1" />
-            Confirm &amp; Process
-          </Button>
+          <div className="flex items-center gap-2">
+            <span className="text-[9px] text-muted-foreground/50">
+              {aiFields.size} fields auto-filled by AI
+            </span>
+            <Button
+              type="button"
+              size="sm"
+              className="text-xs bg-gradient-to-r from-amber-500 to-amber-600 text-black hover:from-amber-600 hover:to-amber-700"
+              onClick={handleConfirm}
+              disabled={pending}
+            >
+              <Check className="h-3.5 w-3.5 mr-1" />
+              Confirm &amp; Process
+            </Button>
+          </div>
         </div>
       </DialogContent>
     </Dialog>
   );
 }
+
+// ---------------------------------------------------------------------------
+// Attachment list (right column)
+// ---------------------------------------------------------------------------
 
 function getFileIcon(filename: string) {
   const ext = filename.split(".").pop()?.toLowerCase();
@@ -510,19 +767,27 @@ function AttachmentList({ queueId }: { queueId: string }) {
       });
   }, [queueId]);
 
-  if (attachments.length === 0) return null;
+  if (attachments.length === 0) {
+    return (
+      <div>
+        <SectionHeader title="Documents" />
+        <div className="rounded-lg border border-dashed border-border/50 p-4 text-center">
+          <Paperclip className="h-5 w-5 text-muted-foreground/30 mx-auto mb-1.5" />
+          <p className="text-[10px] text-muted-foreground/50">No attachments in this email</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="mt-4">
+    <div>
       <div className="flex items-center gap-2 mb-2">
-        <div className="text-[10px] font-semibold text-muted-foreground/70 uppercase tracking-wider">
-          Documents ({attachments.length})
-        </div>
+        <SectionHeader title={`Documents (${attachments.length})`} />
         <Badge variant="outline" className="text-[8px] px-1.5 py-0 text-green-500 border-green-500/30">
           Will upload to deal
         </Badge>
       </div>
-      <div className="grid grid-cols-2 gap-2">
+      <div className="space-y-1.5">
         {attachments.map((att, i) => (
           <div
             key={i}
@@ -536,7 +801,6 @@ function AttachmentList({ queueId }: { queueId: string }) {
                 {att.size_bytes ? ` \u00B7 ${formatFileSize(att.size_bytes)}` : ""}
               </div>
             </div>
-            <Paperclip className="h-3 w-3 shrink-0 text-muted-foreground/30" />
           </div>
         ))}
       </div>
