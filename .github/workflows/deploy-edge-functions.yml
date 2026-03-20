@@ -22,11 +22,11 @@ jobs:
           version: latest
 
       - name: Deploy fetch-intake-emails
-        run: supabase functions deploy fetch-intake-emails --project-ref $PROJECT_REF
+        run: supabase functions deploy fetch-intake-emails --project-ref $PROJECT_REF --no-verify-jwt
         working-directory: packages/db
 
       - name: Deploy process-intake-email
-        run: supabase functions deploy process-intake-email --project-ref $PROJECT_REF
+        run: supabase functions deploy process-intake-email --project-ref $PROJECT_REF --no-verify-jwt
         working-directory: packages/db
 
       - name: Deploy invite-user
