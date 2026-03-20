@@ -380,7 +380,7 @@ export function ProFormaSection({
       {/* Column headers */}
       <div className="flex items-center py-2.5 px-4 border-b border-border/50">
         <div className="w-[240px] shrink-0">
-          <div className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+          <div className="rq-micro-label">
             Cash Flow Projections
           </div>
         </div>
@@ -388,7 +388,7 @@ export function ProFormaSection({
           <div
             key={c}
             className={cn(
-              "flex-1 text-right text-[10px] font-semibold uppercase tracking-wider px-3",
+              "flex-1 text-right rq-micro-label px-3",
               i === 0
                 ? "text-muted-foreground"
                 : i === YR0
@@ -487,7 +487,7 @@ export function ProFormaSection({
       {/* Operating Expenses */}
       <div className="mt-1">
         <div className="flex items-center gap-2 px-4 pt-4 pb-1.5">
-          <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/70">
+          <span className="rq-micro-label text-muted-foreground/70">
             Operating Expenses
           </span>
           <div className="flex-1 h-px bg-border/40" />
@@ -736,7 +736,7 @@ export function ProFormaSection({
       {takeoutEnabled && takeoutLoanAmt > 0 && (
         <div className="mt-1">
           <div className="flex items-center gap-2 px-4 pt-4 pb-1.5">
-            <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/70">
+            <span className="rq-micro-label text-muted-foreground/70">
               Takeout Financing (Year {takeoutYear})
             </span>
             <div className="flex-1 h-px bg-border/40" />
@@ -815,7 +815,7 @@ function PFSectionHeader({ title }: { title: string }) {
   return (
     <div className="mt-1">
       <div className="flex items-center gap-2 px-4 pt-4 pb-1.5">
-        <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/70">
+        <span className="rq-micro-label text-muted-foreground/70">
           {title}
         </span>
         <div className="flex-1 h-px bg-border/40" />
@@ -1001,7 +1001,7 @@ function FinancingSection({
   return (
     <div className="mt-1">
       <div className="flex items-center gap-2 px-4 pt-4 pb-1.5">
-        <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/70">
+        <span className="rq-micro-label text-muted-foreground/70">
           {title}
         </span>
         <div className="flex-1 h-px bg-border/40" />

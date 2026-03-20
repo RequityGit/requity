@@ -245,6 +245,18 @@ All reusable UI patterns are defined as global CSS classes in `apps/requity-os/a
 | `.rq-action-btn` | Ghost-style action button (add/edit/remove) | `inline-flex items-center gap-1.5 px-3.5 py-[7px] rounded-lg border text-xs font-medium...` |
 | `.rq-action-btn-sm` | Small variant of action button | Same but `px-2.5 py-[5px] text-[11px]` |
 | `.rq-empty-state` | Centered empty content placeholder | `py-12 text-center text-muted-foreground` |
+| `.rq-value-positive` | Green text for positive financial values | `text-emerald-600 dark:text-emerald-400` |
+| `.rq-value-negative` | Red text for negative financial values | `text-red-600 dark:text-red-400` |
+| `.rq-value-warn` | Amber text for warning/caution values | `text-amber-600 dark:text-amber-400` |
+| `.rq-total-row` | Total row in financial tables (`<tr>` or flex wrapper) | `border-t-2 border-border bg-muted/30 font-semibold` |
+| `.rq-subtotal-row` | Subtotal row (lighter than total) | `border-t border-border font-medium` |
+| `.rq-td` | Financial table data cell (counterpart to `.rq-th`) | `px-[14px] py-[9px] text-[13px] tabular-nums align-middle` |
+| `.rq-field-grid` | 2-column responsive grid for detail pages | `grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4` |
+| `.rq-field-grid-3` | 3-column grid for denser layouts | `grid grid-cols-1 md:grid-cols-3 gap-x-6 gap-y-4` |
+| `.rq-field-stack` | Tight vertical stack for drawers/forms | `flex flex-col space-y-3` |
+| `.rq-link` | Inline text link (primary color, hover underline) | `text-sm text-primary hover:underline underline-offset-4` |
+| `.rq-link-muted` | Subtle text link (muted, brightens on hover) | `text-sm text-muted-foreground hover:text-foreground` |
+| `.rq-divider` | Horizontal section divider | `border-t border-border` |
 | `.rq-card` | Card padding (20px) | `p-5` |
 | `.rq-panel` | Panel padding (24px) | `p-6` |
 | `.rq-tab-content` | Tab content area padding (24px) | `p-6` |

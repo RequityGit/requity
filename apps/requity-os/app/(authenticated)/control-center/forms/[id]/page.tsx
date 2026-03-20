@@ -1049,13 +1049,13 @@ export default function FormEditorPage() {
               <TableBody>
                 {submissionsLoading ? (
                   <TableRow>
-                    <TableCell colSpan={4} className="text-center text-sm text-muted-foreground py-12">
+                    <TableCell colSpan={4} className="rq-empty-state">
                       Loading...
                     </TableCell>
                   </TableRow>
                 ) : submissions.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={4} className="text-center text-sm text-muted-foreground py-12">
+                    <TableCell colSpan={4} className="rq-empty-state">
                       No submissions yet.
                     </TableCell>
                   </TableRow>

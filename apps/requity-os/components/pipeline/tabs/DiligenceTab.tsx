@@ -559,7 +559,7 @@ function DocPreviewModal({
           <div className="shrink-0 flex items-start gap-2.5 rounded-lg border border-primary/15 bg-primary/5 px-3 py-2.5 dark:border-primary/20 dark:bg-primary/10">
             <Info className="h-4 w-4 shrink-0 mt-0.5 text-primary/50" strokeWidth={1.5} aria-hidden />
             <div className="min-w-0 flex-1">
-              <p className="text-[10px] font-semibold uppercase tracking-wider text-primary/50 dark:text-primary/40 mb-1">
+              <p className="rq-micro-label text-primary/50 dark:text-primary/40 mb-1">
                 What to look for
                 {linkedCondition?.conditionName && (
                   <span className="normal-case font-medium text-primary/40 ml-1.5">
@@ -579,7 +579,7 @@ function DocPreviewModal({
           <div className="shrink-0 flex items-start gap-2.5 rounded-lg border border-blue-500/15 bg-blue-500/5 px-3 py-2.5 dark:border-blue-400/20 dark:bg-blue-400/10">
             <MessageSquare className="h-4 w-4 shrink-0 mt-0.5 text-blue-500/50 dark:text-blue-400/50" strokeWidth={1.5} aria-hidden />
             <div className="min-w-0 flex-1">
-              <p className="text-[10px] font-semibold uppercase tracking-wider text-blue-500/50 dark:text-blue-400/40 mb-1">
+              <p className="rq-micro-label text-blue-500/50 dark:text-blue-400/40 mb-1">
                 Borrower Note
                 {linkedCondition?.conditionName && (
                   <span className="normal-case font-medium text-blue-500/40 dark:text-blue-400/30 ml-1.5">
@@ -595,7 +595,7 @@ function DocPreviewModal({
         {/* Revision feedback form (inline in modal) */}
         {showRevisionForm && onRequestRevision && doc.condition_id && (
           <div className="shrink-0 rounded-lg border border-destructive/20 bg-destructive/5 p-3">
-            <p className="text-[10px] font-semibold uppercase tracking-wider text-destructive/50 mb-1">
+            <p className="rq-micro-label text-destructive/50 mb-1">
               Borrower-Facing Feedback
             </p>
             <p className="text-[10px] text-muted-foreground mb-2">
@@ -672,7 +672,7 @@ function DocPreviewModal({
           <div className="shrink-0 flex items-start gap-2.5 rounded-lg border border-destructive/15 bg-destructive/5 px-3 py-2.5">
             <AlertTriangle className="h-4 w-4 shrink-0 mt-0.5 text-destructive/60" strokeWidth={1.5} />
             <div className="min-w-0 flex-1">
-              <p className="text-[10px] font-semibold uppercase tracking-wider text-destructive/50 mb-0.5">AI Review Failed</p>
+              <p className="rq-micro-label text-destructive/50 mb-0.5">AI Review Failed</p>
               <p className="text-xs text-destructive/70">{aiReviewError}</p>
             </div>
             <Button
@@ -696,7 +696,7 @@ function DocPreviewModal({
             >
               <Sparkles className="h-4 w-4 shrink-0 text-violet-500/70 dark:text-violet-400/70" strokeWidth={1.5} />
               <div className="flex-1 min-w-0 flex items-center gap-2">
-                <p className="text-[10px] font-semibold uppercase tracking-wider text-violet-500/60 dark:text-violet-400/50">
+                <p className="rq-micro-label text-violet-500/60 dark:text-violet-400/50">
                   AI Review
                 </p>
                 <span
@@ -773,7 +773,7 @@ function DocPreviewModal({
                 {/* Summary */}
                 {aiReview.summary && (
                   <div className="mt-2.5 rounded-md bg-background/50 px-2.5 py-2">
-                    <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/40 mb-0.5">Summary</p>
+                    <p className="rq-micro-label text-muted-foreground/40 mb-0.5">Summary</p>
                     <p className="text-xs text-foreground/75 leading-relaxed">{aiReview.summary}</p>
                   </div>
                 )}
@@ -1006,7 +1006,7 @@ function ConditionNoteThread({
   return (
     <div className="flex flex-col gap-3">
       <div className="flex items-center justify-between">
-        <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+        <span className="rq-micro-label">
           Condition Notes
         </span>
         <span className="text-xs text-muted-foreground num">{noteCount}</span>
@@ -1515,7 +1515,7 @@ function DocumentsSection({
 
       {/* Collapsible category groups */}
       {categoryOrder.length === 0 && (
-        <div className="px-4 py-8 text-center text-sm text-muted-foreground">
+        <div className="px-4 rq-empty-state">
           {documents.length === 0
             ? "No documents uploaded yet."
             : "No documents match your search."}
@@ -2108,7 +2108,7 @@ function ConditionRow({
               <div className="mb-3 flex items-start gap-2 rounded-lg bg-primary/5 border border-primary/10 px-3 py-2.5">
                 <Info className="h-3.5 w-3.5 shrink-0 mt-0.5 text-primary/50" strokeWidth={1.5} />
                 <div className="flex-1 min-w-0">
-                  <span className="text-[10px] font-semibold uppercase tracking-wider text-primary/40 block mb-0.5">What to look for</span>
+                  <span className="rq-micro-label text-primary/40 block mb-0.5">What to look for</span>
                   <p className="text-xs text-primary/70 leading-relaxed">{cond.template_guidance}</p>
                 </div>
               </div>
@@ -2119,7 +2119,7 @@ function ConditionRow({
               <div className="mb-3 flex items-start gap-2 rounded-lg bg-blue-500/5 border border-blue-500/10 px-3 py-2.5">
                 <MessageSquare className="h-3.5 w-3.5 shrink-0 mt-0.5 text-blue-500/50" strokeWidth={1.5} />
                 <div className="flex-1 min-w-0">
-                  <span className="text-[10px] font-semibold uppercase tracking-wider text-blue-500/40 block mb-0.5">Borrower Note</span>
+                  <span className="rq-micro-label text-blue-500/40 block mb-0.5">Borrower Note</span>
                   <p className="text-xs text-blue-500/70 leading-relaxed">{cond.borrower_comment}</p>
                 </div>
               </div>
@@ -2132,7 +2132,7 @@ function ConditionRow({
                   <Sparkles className="h-3.5 w-3.5 shrink-0 mt-0.5 text-violet-500/50 dark:text-violet-400/50" strokeWidth={1.5} />
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1">
-                      <span className="text-[10px] font-semibold uppercase tracking-wider text-violet-500/50 dark:text-violet-400/40">
+                      <span className="rq-micro-label text-violet-500/50 dark:text-violet-400/40">
                         AI Review
                       </span>
                       <span
@@ -2210,7 +2210,7 @@ function ConditionRow({
                   <div className="mb-2 flex items-start gap-2 rounded-lg bg-destructive/5 border border-destructive/10 px-3 py-2.5">
                     <AlertTriangle className="h-3.5 w-3.5 shrink-0 mt-0.5 text-destructive/50" strokeWidth={1.5} />
                     <div className="flex-1 min-w-0">
-                      <span className="text-[10px] font-semibold uppercase tracking-wider text-destructive/40 block mb-0.5">Borrower Feedback (visible to borrower)</span>
+                      <span className="rq-micro-label text-destructive/40 block mb-0.5">Borrower Feedback (visible to borrower)</span>
                       <p className="text-xs text-destructive/70 leading-relaxed">{cond.borrower_feedback}</p>
                     </div>
                   </div>
@@ -2231,7 +2231,7 @@ function ConditionRow({
                   </button>
                 ) : (
                   <div className="rounded-lg border border-destructive/20 bg-destructive/5 p-3" onClick={(e) => e.stopPropagation()}>
-                    <p className="text-[10px] font-semibold uppercase tracking-wider text-destructive/50 mb-1.5">
+                    <p className="rq-micro-label text-destructive/50 mb-1.5">
                       Borrower-Facing Feedback
                     </p>
                     <p className="text-[10px] text-muted-foreground mb-2">
@@ -2585,7 +2585,7 @@ function ConditionsSection({
       </div>
 
       {filtered.length === 0 && (
-        <div className="rounded-xl border border-border bg-card px-5 py-8 text-center text-sm text-muted-foreground">
+        <div className="rounded-xl border border-border bg-card px-5 rq-empty-state">
           No conditions match the current filter.
         </div>
       )}

@@ -25,7 +25,7 @@ function InputSection({
     <div className="rounded-xl border bg-card/50">
       <div className="flex items-center gap-2 px-4 pt-3.5 pb-2">
         <Icon className="h-3.5 w-3.5 text-muted-foreground" strokeWidth={1.5} />
-        <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground/70">
+        <span className="rq-micro-label text-muted-foreground/70">
           {title}
         </span>
       </div>
@@ -208,7 +208,7 @@ export function AssumptionsSection({
               className="h-3.5 w-3.5 text-muted-foreground"
               strokeWidth={1.5}
             />
-            <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/70">
+            <span className="rq-micro-label text-muted-foreground/70">
               From Sources & Uses
             </span>
           </div>
@@ -249,7 +249,7 @@ export function AssumptionsSection({
               className="h-3.5 w-3.5 text-muted-foreground"
               strokeWidth={1.5}
             />
-            <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/70">
+            <span className="rq-micro-label text-muted-foreground/70">
               Pulled from deal
             </span>
           </div>

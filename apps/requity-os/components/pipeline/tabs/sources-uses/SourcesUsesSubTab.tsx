@@ -388,7 +388,7 @@ export function SourcesUsesSubTab({
             <div className="rounded-xl border bg-card/50">
               <div className="flex items-center gap-2 px-4 pt-3 pb-1.5">
                 <TrendingUp className="h-3.5 w-3.5 text-emerald-600" strokeWidth={1.5} />
-                <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/70">Sources</span>
+                <span className="rq-micro-label">Sources</span>
               </div>
               <div className="flex flex-col px-2 pb-3">
                 <StackRow label="Senior Loan" value={fmt(seniorLoan)} pct={pctOf(seniorLoan)} />
@@ -405,7 +405,7 @@ export function SourcesUsesSubTab({
             <div className="rounded-xl border bg-card/50">
               <div className="flex items-center gap-2 px-4 pt-3 pb-1.5">
                 <Receipt className="h-3.5 w-3.5 text-blue-600" strokeWidth={1.5} />
-                <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/70">Uses</span>
+                <span className="rq-micro-label">Uses</span>
               </div>
               <div className="flex flex-col px-2 pb-3">
                 {[
@@ -428,7 +428,7 @@ export function SourcesUsesSubTab({
           {/* Capital Stack Bar */}
           {totalUses > 0 && (
             <div className="mt-4">
-              <div className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/70 mb-2">Capital Stack</div>
+              <div className="rq-micro-label mb-2">Capital Stack</div>
               <div className="flex h-7 rounded-full overflow-hidden border">
                 {seniorLoan > 0 && (
                   <div className="bg-primary/80 flex items-center justify-center" style={{ width: `${(seniorLoan / totalUses * 100).toFixed(1)}%` }}>
@@ -485,7 +485,7 @@ export function SourcesUsesSubTab({
             </div>
 
             <div className="rounded-xl border bg-muted/20 p-3">
-              <div className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/70 mb-2">Computed Outputs</div>
+              <div className="rq-micro-label mb-2">Computed Outputs</div>
               <div className="flex flex-col gap-0.5">
                 <SUFieldRow label="Monthly Payment" value={fmt(Math.round(senior.is_io ? seniorLoan * senior.interest_rate / 100 / 12 : calcMonthlyPmt(seniorLoan, senior.interest_rate, senior.amortization_years)))} computed />
                 <SUFieldRow label="Annual Debt Service" value={fmt(Math.round(seniorAnnualDS))} computed />
@@ -520,7 +520,7 @@ export function SourcesUsesSubTab({
             </div>
 
             <div className="rounded-xl border bg-muted/20 p-3">
-              <div className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/70 mb-2">Combined Metrics</div>
+              <div className="rq-micro-label mb-2">Combined Metrics</div>
               <div className="flex flex-col gap-0.5">
                 <SUFieldRow label="Combined LTV" value={`${combinedLTV.toFixed(1)}%`} computed />
                 <SUFieldRow label="Combined Annual DS" value={fmt(Math.round(totalAnnualDS))} computed />
@@ -597,7 +597,7 @@ export function SourcesUsesSubTab({
                 const catTotal = items.reduce((s, i) => s + i.qty * i.unit_cost, 0);
                 return (
                   <div key={catName}>
-                    <div className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/70 mb-2 pb-1.5 border-b">{catName}</div>
+                    <div className="rq-micro-label mb-2 pb-1.5 border-b">{catName}</div>
                     <table className="w-full text-[12px]">
                       <thead>
                         <tr>
@@ -640,7 +640,7 @@ export function SourcesUsesSubTab({
                         };
                         setSowItems((prev) => [...prev, newItem]);
                         setTimeout(saveSOW, 0);
-                      }} className="inline-flex items-center gap-1.5 px-2.5 py-[5px] rounded-lg border text-[11px] font-medium cursor-pointer hover:bg-muted/50 transition-colors">
+                      }} className="rq-action-btn-sm">
                         <Plus className="w-3 h-3" strokeWidth={2} /> Add Item
                       </button>
                       <span className="text-[11px] font-semibold num">{fmt(catTotal)}</span>
@@ -660,7 +660,7 @@ export function SourcesUsesSubTab({
                     };
                     setSowItems((prev) => [...prev, newItem]);
                     setTimeout(saveSOW, 0);
-                  }} className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-[11px] font-medium cursor-pointer hover:bg-muted/50 transition-colors">
+                  }} className="rq-action-btn-sm">
                     <Plus className="w-3 h-3" strokeWidth={2} /> Add Item
                   </button>
                 </div>
@@ -690,7 +690,7 @@ export function SourcesUsesSubTab({
                 const sectionTotal = items.reduce((s, i) => s + i.estimated_cost, 0);
                 return (
                   <div key={catName}>
-                    <div className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/70 mb-2 pb-1.5 border-b">{catName}</div>
+                    <div className="rq-micro-label mb-2 pb-1.5 border-b">{catName}</div>
                     <table className="w-full text-[12px]">
                       <thead>
                         <tr>
@@ -738,7 +738,7 @@ export function SourcesUsesSubTab({
                         };
                         setSowItems((prev) => [...prev, newItem]);
                         setTimeout(saveSOW, 0);
-                      }} className="inline-flex items-center gap-1.5 px-2.5 py-[5px] rounded-lg border text-[11px] font-medium cursor-pointer hover:bg-muted/50 transition-colors">
+                      }} className="rq-action-btn-sm">
                         <Plus className="w-3 h-3" strokeWidth={2} /> Add Item
                       </button>
                       <span className="text-[11px] font-semibold num">{fmt(sectionTotal)}</span>
@@ -758,7 +758,7 @@ export function SourcesUsesSubTab({
                     };
                     setSowItems((prev) => [...prev, newItem]);
                     setTimeout(saveSOW, 0);
-                  }} className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-[11px] font-medium cursor-pointer hover:bg-muted/50 transition-colors">
+                  }} className="rq-action-btn-sm">
                     <Plus className="w-3 h-3" strokeWidth={2} /> Add Item
                   </button>
                 </div>
@@ -838,7 +838,7 @@ export function SourcesUsesSubTab({
             <div className="flex flex-col gap-5">
               <div className="grid grid-cols-2 gap-5">
                 <div className="flex flex-col gap-0.5">
-                  <div className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/70 mb-1">Takeout Terms</div>
+                  <div className="rq-micro-label mb-1">Takeout Terms</div>
                   <div className="flex items-center justify-between py-[5px] px-3 rounded-md hover:bg-muted/40 transition-colors">
                     <span className="text-[12px] text-muted-foreground">Takeout Year</span>
                     <select value={takeout.takeout_year} onChange={(e) => updateTakeout({ takeout_year: parseInt(e.target.value) })} className="text-[12px] num font-medium bg-transparent border border-transparent rounded-md outline-none cursor-pointer px-1.5 py-0.5 hover:border-border hover:bg-muted/40 focus:border-primary/60 focus:bg-background transition-colors">
@@ -849,14 +849,14 @@ export function SourcesUsesSubTab({
                   <SUFieldRow label="Amortization" value={takeout.amortization_years.toString()} suffix="years" onChange={(v) => { const x = parseInt(v); if (!isNaN(x)) updateTakeout({ amortization_years: x }); }} />
                   <SUFieldRow label="Term" value={takeout.term_years.toString()} suffix="years" onChange={(v) => { const x = parseInt(v); if (!isNaN(x)) updateTakeout({ term_years: x }); }} />
 
-                  <div className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/70 mt-3 mb-1">Sizing Constraints</div>
+                  <div className="rq-micro-label mt-3 mb-1">Sizing Constraints</div>
                   <SUFieldRow label="Max LTV" value={takeout.max_ltv_constraint.toFixed(1)} suffix="%" onChange={(v) => { const x = parseFloat(v); if (!isNaN(x)) updateTakeout({ max_ltv_constraint: x }); }} />
                   <SUFieldRow label="Min DSCR" value={takeout.dscr_floor_constraint.toFixed(2)} suffix="x" onChange={(v) => { const x = parseFloat(v); if (!isNaN(x)) updateTakeout({ dscr_floor_constraint: x }); }} />
                   <SUFieldRow label="Appraisal Cap Rate" value={exitCapRate.toFixed(2)} suffix="%" onChange={(v) => { const x = parseFloat(v); if (!isNaN(x)) setExitCapRate(x); }} />
                 </div>
 
                 <div className="rounded-xl border bg-muted/20 p-3">
-                  <div className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/70 mb-2">Takeout Sizing</div>
+                  <div className="rq-micro-label mb-2">Takeout Sizing</div>
                   <div className="flex flex-col gap-0.5">
                     <SUFieldRow label={`Stabilized NOI (Yr ${takeout.takeout_year})`} value={fmt(Math.round(takeoutNOI))} computed />
                     <SUFieldRow label="Appraised Value" value={fmt(takeoutAppraised)} computed />
@@ -872,7 +872,7 @@ export function SourcesUsesSubTab({
                   </div>
 
                   <div className="border-t border-border/40 mt-3 pt-3">
-                    <div className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/70 mb-2">Proceeds Analysis</div>
+                    <div className="rq-micro-label mb-2">Proceeds Analysis</div>
                     <SUFieldRow label="Going-In Loan Payoff" value={fmt(takeoutPayoff)} computed />
                     <SUFieldRow label={`Takeout Closing (${takeoutCostPct}%)`} value={`(${fmt(takeoutCosts)})`} computed />
                     <div className={cn(
@@ -902,7 +902,7 @@ export function SourcesUsesSubTab({
               <div className="rounded-xl border bg-card/50">
                 <div className="flex items-center gap-2 px-4 pt-3.5 pb-2">
                   <Target className="h-3.5 w-3.5 text-muted-foreground" strokeWidth={1.5} />
-                  <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground/70">Takeout Proceeds Sensitivity</span>
+                  <span className="rq-micro-label text-muted-foreground/70">Takeout Proceeds Sensitivity</span>
                   <span className="text-[10px] text-muted-foreground ml-1">(Rate vs. Min DSCR)</span>
                 </div>
                 <div className="px-4 pb-3 overflow-x-auto">

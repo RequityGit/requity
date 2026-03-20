@@ -148,6 +148,45 @@ async function renameDriveFolder(
   }
 }
 
+async function uploadFileToDrive(
+  accessToken: string,
+  fileBytes: Uint8Array,
+  fileName: string,
+  mimeType: string,
+  parentFolderId: string
+): Promise<{ id: string }> {
+  const boundary = "---supabase-drive-sync-boundary";
+  const metadata = JSON.stringify({
+    name: fileName,
+    parents: [parentFolderId],
+  });
+  const body = new Uint8Array(
+    await new Blob([
+      `--${boundary}\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n`,
+      metadata,
+      `\r\n--${boundary}\r\nContent-Type: ${mimeType}\r\n\r\n`,
+      fileBytes,
+      `\r\n--${boundary}--`,
+    ]).arrayBuffer()
+  );
+  const res = await fetch(
+    "https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id&supportsAllDrives=true",
+    {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        "Content-Type": `multipart/related; boundary=${boundary}`,
+      },
+      body,
+    }
+  );
+  if (!res.ok) {
+    const err = await res.text();
+    throw new Error(`Drive upload failed: ${err}`);
+  }
+  return res.json();
+}
+
 async function verifyFolderAccess(
   accessToken: string,
   folderId: string
@@ -417,6 +456,64 @@ Deno.serve(async (req: Request) => {
       );
     }
 
+    // ── Backfill mode: folder exists, sync unsynced docs directly ──
+    if (body.backfill && deal.google_drive_folder_id) {
+      const { data: unsyncedDocs } = await admin
+        .from("unified_deal_documents")
+        .select("id, storage_path, document_name, mime_type, visibility")
+        .eq("deal_id", deal_id)
+        .is("google_drive_file_id", null)
+        .not("storage_path", "is", null);
+
+      let synced = 0;
+      const errors: string[] = [];
+      if (unsyncedDocs && unsyncedDocs.length > 0) {
+        for (const doc of unsyncedDocs) {
+          try {
+            const { data: fileData, error: dlErr } = await admin.storage
+              .from("loan-documents")
+              .download(doc.storage_path);
+            if (dlErr || !fileData) {
+              errors.push(`${doc.document_name}: download failed`);
+              continue;
+            }
+            const fileBytes = new Uint8Array(await fileData.arrayBuffer());
+            const targetFolder = doc.visibility === "external"
+              ? (deal.google_drive_shared_folder_id || deal.google_drive_folder_id)
+              : deal.google_drive_folder_id;
+            const driveFile = await uploadFileToDrive(
+              accessToken,
+              fileBytes,
+              doc.document_name,
+              doc.mime_type || "application/octet-stream",
+              targetFolder!
+            );
+            await admin
+              .from("unified_deal_documents")
+              .update({ google_drive_file_id: driveFile.id })
+              .eq("id", doc.id);
+            synced++;
+          } catch (err) {
+            const msg = err instanceof Error ? err.message : String(err);
+            errors.push(`${doc.document_name}: ${msg}`);
+            console.error(`Backfill failed for doc ${doc.id}:`, err);
+          }
+        }
+      }
+
+      return new Response(
+        JSON.stringify({
+          success: true,
+          action: "backfill",
+          folder_id: deal.google_drive_folder_id,
+          documents_synced: synced,
+          documents_failed: errors.length,
+          errors: errors.length > 0 ? errors : undefined,
+        }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
     // ── Create mode ──
     if (deal.google_drive_folder_id) {
       return new Response(
@@ -455,42 +552,41 @@ Deno.serve(async (req: Request) => {
       })
       .eq("id", deal_id);
 
-    // ── Backfill: sync any existing documents to the new Drive folder ──
-    // Documents uploaded before the Drive folder existed (e.g. from email intake)
-    // will not have been synced. Fire-and-forget sync for each one.
+    // ── Backfill: sync any existing documents directly to the new Drive folder ──
     try {
       const { data: unsyncedDocs } = await admin
         .from("unified_deal_documents")
-        .select("id, storage_path, document_name, mime_type")
+        .select("id, storage_path, document_name, mime_type, visibility")
         .eq("deal_id", deal_id)
         .is("google_drive_file_id", null)
         .not("storage_path", "is", null);
 
       if (unsyncedDocs && unsyncedDocs.length > 0) {
-        const syncUrl = `${supabaseUrl}/functions/v1/sync-document-to-drive`;
         for (const doc of unsyncedDocs) {
-          // Fire-and-forget: don't await, don't block folder creation response
-          fetch(syncUrl, {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${token}`,
-            },
-            body: JSON.stringify({
-              document_id: doc.id,
-              deal_id: deal_id,
-              storage_path: doc.storage_path,
-              file_name: doc.document_name,
-              mime_type: doc.mime_type || "application/octet-stream",
-            }),
-          }).catch((syncErr) => {
-            console.error(`Backfill sync failed for doc ${doc.id}:`, syncErr);
-          });
+          try {
+            const { data: fileData } = await admin.storage
+              .from("loan-documents")
+              .download(doc.storage_path);
+            if (!fileData) continue;
+            const fileBytes = new Uint8Array(await fileData.arrayBuffer());
+            const targetFolder = doc.visibility === "external"
+              ? sharedFolder.id
+              : folder.id;
+            const driveFile = await uploadFileToDrive(
+              accessToken, fileBytes, doc.document_name,
+              doc.mime_type || "application/octet-stream", targetFolder
+            );
+            await admin
+              .from("unified_deal_documents")
+              .update({ google_drive_file_id: driveFile.id })
+              .eq("id", doc.id);
+          } catch (docErr) {
+            console.error(`Backfill failed for doc ${doc.id}:`, docErr);
+          }
         }
-        console.log(`Triggered backfill sync for ${unsyncedDocs.length} documents`);
+        console.log(`Backfill synced ${unsyncedDocs.length} documents`);
       }
     } catch (backfillErr) {
-      // Non-fatal: folder was created successfully, backfill is best-effort
       console.error("Document backfill error (non-fatal):", backfillErr);
     }
 

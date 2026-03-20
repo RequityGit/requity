@@ -139,7 +139,7 @@ export function ConditionEditorModal({
         <div className="space-y-5 py-2">
           {/* Asset Classes */}
           <div>
-            <label className="text-[10px] font-semibold uppercase tracking-wider text-amber-500 block mb-2">
+            <label className="rq-micro-label text-amber-500 block mb-2">
               Asset Class
             </label>
             <div className="flex gap-2 flex-wrap">
@@ -171,7 +171,7 @@ export function ConditionEditorModal({
 
           {/* Additional Conditions */}
           <div>
-            <label className="text-[10px] font-semibold uppercase tracking-wider text-indigo-400 block mb-2">
+            <label className="rq-micro-label text-indigo-400 block mb-2">
               Additional Conditions
             </label>
 

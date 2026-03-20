@@ -52,7 +52,7 @@ export function ScenarioToggle({
           key={s.key}
           onClick={() => onChange(s.key)}
           className={cn(
-            "rounded-md px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider cursor-pointer transition-colors",
+            "rounded-md px-2.5 py-1 rq-micro-label cursor-pointer transition-colors",
             active === s.key
               ? s.key === "base"
                 ? "bg-background text-foreground shadow-sm"

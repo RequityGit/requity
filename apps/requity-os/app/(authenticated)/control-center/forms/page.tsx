@@ -165,13 +165,13 @@ export default function FormsListPage() {
           <TableBody>
             {loading ? (
               <TableRow>
-                <TableCell colSpan={6} className="text-center text-sm text-muted-foreground py-12">
+                <TableCell colSpan={6} className="rq-empty-state">
                   Loading...
                 </TableCell>
               </TableRow>
             ) : filtered.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={6} className="text-center text-sm text-muted-foreground py-12">
+                <TableCell colSpan={6} className="rq-empty-state">
                   No forms found.
                 </TableCell>
               </TableRow>

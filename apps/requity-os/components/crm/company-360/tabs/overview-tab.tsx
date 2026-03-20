@@ -369,7 +369,7 @@ export function CompanyOverviewTab({
             { key: "zip", label: "Zip" },
             { key: "country", label: "Country" },
           ].map((f) => (
-            <div key={f.key} className="space-y-1.5">
+            <div key={f.key} className="space-y-0">
               <span className="inline-field-label">{f.label}</span>
               <Input
                 value={((localData[f.key] as string) ?? (f.key === "country" ? "US" : "")) || ""}
@@ -441,19 +441,19 @@ export function CompanyOverviewTab({
       <SectionCard title="Lender Details" icon={Landmark} key="lender_details">
         <div className="flex flex-col gap-5">
           <div>
-            <div className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-2">Programs</div>
+            <div className="rq-micro-label mb-2">Programs</div>
             <ChipGroup items={company.lender_programs ?? []} labelMap={PROGRAM_LABELS} color="#3B82F6" />
           </div>
           <div>
-            <div className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-2">Asset Types</div>
+            <div className="rq-micro-label mb-2">Asset Types</div>
             <ChipGroup items={company.asset_types ?? []} labelMap={ASSET_LABELS} color="#E5930E" />
           </div>
           <div>
-            <div className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-2">Geographies</div>
+            <div className="rq-micro-label mb-2">Geographies</div>
             <ChipGroup items={company.geographies ?? []} labelMap={{}} color="#22A861" />
           </div>
           <div>
-            <div className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-2">Capabilities</div>
+            <div className="rq-micro-label mb-2">Capabilities</div>
             <ChipGroup items={company.company_capabilities ?? []} labelMap={CAPABILITY_LABELS} color="#8B5CF6" />
           </div>
         </div>
@@ -465,19 +465,19 @@ export function CompanyOverviewTab({
         <div className="flex flex-col gap-4">
           {(company.company_capabilities ?? []).length > 0 && (
             <div>
-              <div className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-2">Capabilities</div>
+              <div className="rq-micro-label mb-2">Capabilities</div>
               <ChipGroup items={company.company_capabilities!} labelMap={CAPABILITY_LABELS} color="#8B5CF6" />
             </div>
           )}
           {(company.asset_types ?? []).length > 0 && (
             <div>
-              <div className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-2">Asset Types</div>
+              <div className="rq-micro-label mb-2">Asset Types</div>
               <ChipGroup items={company.asset_types!} labelMap={ASSET_LABELS} color="#E5930E" />
             </div>
           )}
           {(company.geographies ?? []).length > 0 && (
             <div>
-              <div className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-2">Geographies</div>
+              <div className="rq-micro-label mb-2">Geographies</div>
               <ChipGroup items={company.geographies!} labelMap={{}} color="#22A861" />
             </div>
           )}

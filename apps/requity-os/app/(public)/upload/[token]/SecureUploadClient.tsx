@@ -950,7 +950,7 @@ function ConditionUploadCard({
           <div className="flex items-start gap-2">
             <RotateCcw className="mt-0.5 h-3.5 w-3.5 shrink-0 text-red-500" />
             <div className="min-w-0 flex-1">
-              <p className="text-[10px] font-semibold uppercase tracking-wider text-red-400">Revision Requested</p>
+              <p className="rq-micro-label text-red-400">Revision Requested</p>
               <p className="mt-0.5 text-xs leading-relaxed text-red-700">{condition.borrower_feedback}</p>
               {condition.feedback_updated_at && (
                 <p className="mt-1 text-[10px] text-red-400">{formatRelativeDate(condition.feedback_updated_at)}</p>
@@ -976,7 +976,7 @@ function ConditionUploadCard({
       {/* Staged documents (ready to submit) */}
       {stagedDocs.length > 0 && (
         <div className={cn("border-t px-4 py-2", hasStagedFiles ? "border-amber-200 bg-amber-50/50" : "border-gray-100")}>
-          <p className="text-[10px] font-semibold uppercase tracking-wider text-amber-600 mb-1">
+          <p className="rq-micro-label text-amber-600 mb-1">
             Ready to submit ({stagedDocs.length} file{stagedDocs.length === 1 ? "" : "s"})
           </p>
           {stagedDocs.map((doc) => (

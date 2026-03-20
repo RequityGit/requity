@@ -222,12 +222,12 @@ export function GridProForma({
       <table className="w-full border-collapse">
         <thead>
           <tr className="bg-accent/50">
-            <th className="text-left text-[10px] font-semibold uppercase tracking-[0.06em] text-muted-foreground p-[9px_14px] pl-[22px] border-b-2 w-[20%]" />
+            <th className="text-left rq-th pl-[22px] w-[20%]" />
             {GRID_PERIODS.map((p) => (
               <th
                 key={p}
                 className={cn(
-                  "text-right text-[10px] font-semibold uppercase tracking-[0.06em] text-muted-foreground p-[9px_14px] border-b-2",
+                  "text-right rq-th",
                   p === "t12" && "border-r"
                 )}
               >

@@ -307,7 +307,7 @@ export function DetailBorrowerTab({
             <Card key={ent.id} className="rounded-xl border-border">
               <CardHeader className="px-5 py-3.5 border-b border-border/60">
                 <div className="flex items-center justify-between">
-                  <CardTitle className="text-[13px] font-semibold text-foreground flex items-center gap-2">
+                  <CardTitle className="rq-section-title flex items-center gap-2">
                     <Building2 size={16} className="text-muted-foreground" strokeWidth={1.5} />
                     {ent.entity_name}
                   </CardTitle>
@@ -331,7 +331,7 @@ export function DetailBorrowerTab({
                   )}
                 </div>
                 <div>
-                  <div className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wide mb-2">
+                  <div className="rq-micro-label mb-2">
                     Documents
                   </div>
                   <div className="flex gap-2 flex-wrap">
@@ -361,13 +361,13 @@ export function DetailBorrowerTab({
       {/* Deals & Loans */}
       <Card className="rounded-xl border-border overflow-hidden">
         <CardHeader className="px-5 py-3.5 border-b border-border/60">
-          <CardTitle className="text-[13px] font-semibold text-foreground flex items-center gap-2">
+          <CardTitle className="rq-section-title flex items-center gap-2">
             <Landmark size={16} className="text-muted-foreground" strokeWidth={1.5} />
             Loans & Deals
           </CardTitle>
         </CardHeader>
         {loans.length === 0 ? (
-          <CardContent className="p-8 text-center text-sm text-muted-foreground">
+          <CardContent className="rq-empty-state">
             No loans or deals found.
           </CardContent>
         ) : (
@@ -378,7 +378,7 @@ export function DetailBorrowerTab({
                   {["Deal", "Stage", "Amount", "Rate", "LTV", "Type"].map((h) => (
                     <th
                       key={h}
-                      className="px-4 py-2.5 text-[11px] font-semibold text-muted-foreground uppercase tracking-wide"
+                      className="px-4 py-2.5 rq-micro-label"
                       style={{ textAlign: ["Amount", "Rate", "LTV"].includes(h) ? "right" : "left" }}
                     >
                       {h}

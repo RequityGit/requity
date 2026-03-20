@@ -98,11 +98,11 @@ export function MetricBar({
     <div className="rounded-xl border bg-muted/30 px-6 py-4 flex flex-wrap gap-8">
       {items.map((m, i) => (
         <div key={i} className="flex-1 min-w-[100px]">
-          <div className="text-[11px] text-muted-foreground uppercase tracking-[0.05em] mb-1">
+          <div className="rq-micro-label mb-1">
             {m.label}
           </div>
           <div
-            className={cn("text-xl font-semibold num", m.accent)}
+            className={cn("rq-stat-value", m.accent)}
           >
             {m.value}
           </div>
@@ -137,7 +137,7 @@ export function SectionCard({
           {Icon && (
             <Icon className="h-4 w-4 text-muted-foreground" strokeWidth={1.5} />
           )}
-          <span className="text-sm font-semibold">{title}</span>
+          <span className="rq-section-title">{title}</span>
         </div>
         {actions && <div className="flex gap-2">{actions}</div>}
       </div>

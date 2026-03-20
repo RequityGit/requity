@@ -222,7 +222,7 @@ export function ConditionsTab({ conditions, dealId }: ConditionsTabProps) {
 
       {/* Condition cards grouped by category */}
       {filtered.length === 0 && (
-        <div className="rounded-xl border bg-card px-5 py-8 text-center text-sm text-muted-foreground">
+        <div className="rounded-xl border bg-card px-5 rq-empty-state">
           No conditions match the current filter.
         </div>
       )}

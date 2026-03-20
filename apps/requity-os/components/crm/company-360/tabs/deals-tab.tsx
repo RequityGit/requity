@@ -183,7 +183,7 @@ export function CompanyDealsTab({ company }: DealsTabProps) {
                   ].map((h) => (
                     <th
                       key={h}
-                      className="px-4 py-2.5 text-[11px] font-semibold text-muted-foreground uppercase tracking-wider"
+                      className="px-4 py-2.5 rq-micro-label"
                       style={{
                         textAlign: ["Amount", "Rate", "LTV"].includes(h)
                           ? "right"
@@ -318,7 +318,7 @@ export function CompanyDealsTab({ company }: DealsTabProps) {
                     ].map((h) => (
                       <th
                         key={h}
-                        className="px-4 py-2.5 text-[11px] font-semibold text-muted-foreground uppercase tracking-wider"
+                        className="px-4 py-2.5 rq-micro-label"
                         style={{
                           textAlign: ["Rate", "Points"].includes(h)
                             ? "right"

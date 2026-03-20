@@ -125,7 +125,7 @@ export function DiffReviewModal({
             <div>
               <div className="flex items-center gap-1.5 mb-2">
                 <PenLine size={12} className="text-blue-500" />
-                <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                <span className="rq-micro-label">
                   Modified Fields ({updates.length})
                 </span>
               </div>
@@ -161,7 +161,7 @@ export function DiffReviewModal({
             <div>
               <div className="flex items-center gap-1.5 mb-2">
                 <Plus size={12} className="text-green-500" />
-                <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                <span className="rq-micro-label">
                   New Fields ({creates.length})
                 </span>
               </div>
@@ -185,7 +185,7 @@ export function DiffReviewModal({
             <div>
               <div className="flex items-center gap-1.5 mb-2">
                 <Trash2 size={12} className="text-red-500" />
-                <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                <span className="rq-micro-label">
                   Archived Fields ({archives.length})
                 </span>
               </div>
@@ -208,7 +208,7 @@ export function DiffReviewModal({
             <div>
               <div className="flex items-center gap-1.5 mb-2">
                 <LayoutGrid size={12} className="text-emerald-500" />
-                <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                <span className="rq-micro-label">
                   Layout Changes ({layoutChanges.length})
                 </span>
               </div>

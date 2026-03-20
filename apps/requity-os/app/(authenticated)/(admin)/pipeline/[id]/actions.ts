@@ -1065,7 +1065,8 @@ export async function updateDealFieldV2(
 // ─── Create Google Drive Folder ───
 
 export async function createDealDriveFolder(
-  dealId: string
+  dealId: string,
+  options?: { backfill?: boolean }
 ): Promise<{ success?: boolean; error?: string }> {
   try {
     const auth = await requireAdmin();
@@ -1085,7 +1086,10 @@ export async function createDealDriveFolder(
           "Content-Type": "application/json",
           Authorization: `Bearer ${serviceRoleKey}`,
         },
-        body: JSON.stringify({ deal_id: dealId }),
+        body: JSON.stringify({
+          deal_id: dealId,
+          ...(options?.backfill ? { backfill: true } : {}),
+        }),
       }
     );
 

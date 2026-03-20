@@ -74,9 +74,9 @@ export function ScopeOfWorkSubTab({ scopeOfWork, uwId, numUnits }: ScopeOfWorkSu
         <table className="w-full border-collapse text-[13px]">
           <thead>
             <tr className="border-b">
-              <th className="text-left px-4 py-2.5 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Item</th>
-              <th className="text-left px-4 py-2.5 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Description</th>
-              <th className="text-right px-4 py-2.5 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Estimated Cost</th>
+              <th className="text-left px-4 py-2.5 rq-micro-label">Item</th>
+              <th className="text-left px-4 py-2.5 rq-micro-label">Description</th>
+              <th className="text-right px-4 py-2.5 rq-micro-label">Estimated Cost</th>
             </tr>
           </thead>
           <tbody>

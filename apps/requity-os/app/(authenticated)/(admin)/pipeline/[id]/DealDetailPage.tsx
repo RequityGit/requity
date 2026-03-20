@@ -978,10 +978,18 @@ function DealHeader({
 
           {/* Google Drive Button */}
           {googleDriveUrl ? (
-            <Button variant="outline" size="icon" className="h-9 w-9" asChild>
-              <a href={googleDriveUrl} target="_blank" rel="noopener noreferrer" title="Open Google Drive Folder">
-                <FolderOpen className="h-4 w-4" />
-              </a>
+            <Button
+              variant="outline"
+              size="icon"
+              className="h-9 w-9"
+              title="Open Google Drive Folder"
+              onClick={() => {
+                // Fire-and-forget: sync any unsynced docs to Drive
+                createDealDriveFolder(deal.id, { backfill: true }).catch(() => {});
+                window.open(googleDriveUrl, "_blank", "noopener,noreferrer");
+              }}
+            >
+              <FolderOpen className="h-4 w-4" />
             </Button>
           ) : (
             <Button

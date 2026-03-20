@@ -79,7 +79,7 @@ export function NewWorkflowDialog({
         </DialogHeader>
         <div className="space-y-3 mt-2">
           <div className="space-y-1.5">
-            <Label className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+            <Label className="rq-micro-label">
               Name
             </Label>
             <Input
@@ -89,7 +89,7 @@ export function NewWorkflowDialog({
             />
           </div>
           <div className="space-y-1.5">
-            <Label className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+            <Label className="rq-micro-label">
               Entity Type
             </Label>
             <Select value={entityType} onValueChange={setEntityType}>

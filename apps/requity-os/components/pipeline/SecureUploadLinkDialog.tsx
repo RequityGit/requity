@@ -513,7 +513,7 @@ export function SecureUploadLinkDialog({
                       {Object.entries(conditionsByCategory).map(
                         ([category, conds]) => (
                           <div key={category}>
-                            <p className="mb-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                            <p className="mb-1 rq-micro-label">
                               {CATEGORY_LABELS[category] ??
                                 category.replace(/_/g, " ")}
                             </p>

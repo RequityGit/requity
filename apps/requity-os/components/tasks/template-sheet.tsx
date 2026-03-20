@@ -270,7 +270,7 @@ export function TemplateSheet({
           <div className="space-y-4 pb-4 pt-3">
             {/* Title */}
             <div className="space-y-1.5">
-              <Label className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+              <Label className="rq-micro-label">
                 Title
               </Label>
               <Input
@@ -284,7 +284,7 @@ export function TemplateSheet({
             {/* Category + Priority */}
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
-                <Label className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                <Label className="rq-micro-label">
                   Category
                 </Label>
                 <Select value={category || "none"} onValueChange={(v) => setCategory(v === "none" ? "" : v)}>
@@ -300,7 +300,7 @@ export function TemplateSheet({
                 </Select>
               </div>
               <div className="space-y-1.5">
-                <Label className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                <Label className="rq-micro-label">
                   Priority
                 </Label>
                 <Select value={priority} onValueChange={setPriority}>
@@ -318,7 +318,7 @@ export function TemplateSheet({
 
             {/* Assign To */}
             <div className="space-y-1.5">
-              <Label className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+              <Label className="rq-micro-label">
                 Assign To
               </Label>
               <Select value={assignedTo || "unassigned"} onValueChange={(v) => setAssignedTo(v === "unassigned" ? "" : v)}>
@@ -338,7 +338,7 @@ export function TemplateSheet({
             <div className="bg-secondary rounded-lg border border-border overflow-hidden">
               {/* Frequency pills */}
               <div className="p-4 pb-3">
-                <Label className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground mb-2 block">
+                <Label className="rq-micro-label mb-2 block">
                   Frequency
                 </Label>
                 <div className="flex rounded-md overflow-hidden border border-border">
@@ -376,7 +376,7 @@ export function TemplateSheet({
 
                 {recurrenceType === "weekly" && (
                   <div className="space-y-1.5">
-                    <Label className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                    <Label className="rq-micro-label">
                       Repeats On
                     </Label>
                     <div className="flex gap-1">
@@ -402,7 +402,7 @@ export function TemplateSheet({
                 {recurrenceType === "annually" && (
                   <div className="space-y-3">
                     <div className="space-y-1.5">
-                      <Label className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                      <Label className="rq-micro-label">
                         Month
                       </Label>
                       <div className="grid grid-cols-6 gap-1">
@@ -424,7 +424,7 @@ export function TemplateSheet({
                       </div>
                     </div>
                     <div className="space-y-1.5">
-                      <Label className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                      <Label className="rq-micro-label">
                         Day of Month
                       </Label>
                       <Input
@@ -447,7 +447,7 @@ export function TemplateSheet({
                   <div className="space-y-3">
                     {/* Repeat Every */}
                     <div className="space-y-1.5">
-                      <Label className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                      <Label className="rq-micro-label">
                         Repeat Every
                       </Label>
                       <div className="flex items-center gap-2">
@@ -483,7 +483,7 @@ export function TemplateSheet({
 
                     {/* On The: mode toggle */}
                     <div className="space-y-1.5">
-                      <Label className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                      <Label className="rq-micro-label">
                         On The
                       </Label>
                       <div className="flex rounded-md overflow-hidden border border-border w-fit">
@@ -589,7 +589,7 @@ export function TemplateSheet({
 
               {/* Lead time */}
               <div className="p-4">
-                <Label className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground mb-1.5 block">
+                <Label className="rq-micro-label mb-1.5 block">
                   Lead Time
                 </Label>
                 <div className="flex items-center gap-2.5">
@@ -619,7 +619,7 @@ export function TemplateSheet({
               <div className="p-4">
                 <div className="flex items-center gap-1.5 mb-2.5">
                   <Zap className="h-3 w-3 text-amber-400" strokeWidth={2} />
-                  <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                  <span className="rq-micro-label">
                     Next 3 Instances
                   </span>
                 </div>
@@ -662,7 +662,7 @@ export function TemplateSheet({
 
             {/* Description */}
             <div className="space-y-1.5">
-              <Label className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+              <Label className="rq-micro-label">
                 Description
                 <span className="ml-1.5 normal-case tracking-normal font-normal text-muted-foreground/60">
                   optional

@@ -332,7 +332,7 @@ export function DocumentsTab({
         </div>
 
         {filteredDocs.length === 0 && (
-          <div className="px-5 py-8 text-center text-sm text-muted-foreground">
+          <div className="px-5 rq-empty-state">
             {documents.length === 0
               ? "No documents uploaded yet."
               : `No ${visibilityFilter} documents.`}

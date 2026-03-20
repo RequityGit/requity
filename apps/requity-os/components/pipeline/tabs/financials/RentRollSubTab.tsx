@@ -157,11 +157,11 @@ export function RentRollSubTab({ rentRoll, uwId }: RentRollSubTabProps) {
                       <tr className="border-b">
                         {["Unit", "Tenant", "Beds", "Baths", "SF", "Status", "Lease Start", "Lease End", "Current Rent"].map(h => (
                           <th key={h} className={cn(
-                            "px-3 py-2.5 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground",
+                            "px-3 py-2.5 rq-micro-label",
                             ["SF", "Current Rent"].includes(h) ? "text-right" : "text-left"
                           )}>{h}</th>
                         ))}
-                        <th className="px-3 py-2.5 text-[11px] font-semibold uppercase tracking-wider text-right text-purple-400">
+                        <th className="px-3 py-2.5 rq-micro-label text-right text-purple-400">
                           Market Rent
                         </th>
                       </tr>

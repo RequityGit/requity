@@ -44,7 +44,7 @@ export function ControlCenterSidebar() {
       {/* Header */}
       <div className="px-4 pt-5 pb-4 border-b border-border space-y-3">
         <div>
-          <p className="text-[13px] font-semibold text-foreground">
+          <p className="rq-section-title">
             Control Center
           </p>
           <p className="text-[11px] text-muted-foreground">Super Admin</p>

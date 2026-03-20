@@ -762,7 +762,7 @@ export function FieldConfigPopover({
                   </div>
 
                   <div className="border-t pt-3 mt-3">
-                    <div className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-2">Stage Gating</div>
+                    <div className="rq-micro-label mb-2">Stage Gating</div>
                     <div>
                       <label className="text-[10px] font-medium text-muted-foreground mb-1 block">Required at Stage</label>
                       <Select value={requiredAtStage} onValueChange={setRequiredAtStage}>
@@ -798,9 +798,9 @@ export function FieldConfigPopover({
                   </p>
                   <div className="rounded border border-border overflow-hidden">
                     <div className="grid grid-cols-3 gap-0 bg-muted px-3 py-1.5">
-                      <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Role</span>
-                      <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground text-center">View</span>
-                      <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground text-center">Edit</span>
+                      <span className="rq-micro-label">Role</span>
+                      <span className="rq-micro-label text-center">View</span>
+                      <span className="rq-micro-label text-center">Edit</span>
                     </div>
                     {CONFIGURABLE_ROLES.map((role) => {
                       const rolePerm = permissions[role] ?? { view: true, edit: true };
@@ -832,7 +832,7 @@ export function FieldConfigPopover({
                   {/* Two-axis visibility (pipeline fields only) */}
                   {isUwModule && (
                     <div>
-                      <div className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-2">
+                      <div className="rq-micro-label mb-2">
                         Asset Class / Loan Type Visibility
                       </div>
                       <p className="text-[10px] text-muted-foreground mb-2">
@@ -898,7 +898,7 @@ export function FieldConfigPopover({
                   {/* Conditional rules (all field types) */}
                   <div className={isUwModule ? "border-t pt-3 mt-3" : ""}>
                     <div className="flex items-center justify-between mb-2">
-                      <div className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                      <div className="rq-micro-label">
                         Conditional Rules
                       </div>
                       <Button

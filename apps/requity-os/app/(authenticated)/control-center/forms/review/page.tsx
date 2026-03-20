@@ -96,13 +96,13 @@ export default function FormSubmissionsReviewPage() {
           <TableBody>
             {loading ? (
               <TableRow>
-                <TableCell colSpan={6} className="text-center text-sm text-muted-foreground py-12">
+                <TableCell colSpan={6} className="rq-empty-state">
                   Loading...
                 </TableCell>
               </TableRow>
             ) : submissions.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={6} className="text-center text-sm text-muted-foreground py-12">
+                <TableCell colSpan={6} className="rq-empty-state">
                   No submissions pending review.
                 </TableCell>
               </TableRow>

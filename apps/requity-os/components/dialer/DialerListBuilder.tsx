@@ -302,7 +302,7 @@ export function DialerListBuilder({ contacts, teamMembers, currentUserId }: Prop
         {/* Contact list */}
         <div className="max-h-[400px] overflow-y-auto">
           {filtered.length === 0 ? (
-            <div className="py-8 text-center text-sm text-muted-foreground">
+            <div className="rq-empty-state">
               No contacts match your filters.
             </div>
           ) : (

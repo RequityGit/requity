@@ -288,7 +288,7 @@ export function ApprovalDrawer({
             {/* Previous decision note */}
             {task.decision_note && (
               <div className="px-5 py-4 border-b border-border">
-                <Label className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                <Label className="rq-micro-label">
                   Decision Note
                 </Label>
                 <p className="text-sm mt-1.5">{task.decision_note}</p>
@@ -298,7 +298,7 @@ export function ApprovalDrawer({
             {/* Note input */}
             {!isCompleted && !isAwaitingRevision && (
               <div className="px-5 py-4 border-b border-border">
-                <Label className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground mb-2 block">
+                <Label className="rq-micro-label mb-2 block">
                   Note (optional)
                 </Label>
                 <Textarea
