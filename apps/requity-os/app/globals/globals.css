@@ -335,7 +335,7 @@
    Mobile-specific styles
    ============================ */
 
-/* Gold shimmer skeleton animation */
+/* Skeleton shimmer animation */
 @keyframes rq-shimmer {
   0% { background-position: -200% 0; }
   100% { background-position: 200% 0; }
@@ -345,7 +345,7 @@
   background: linear-gradient(
     90deg,
     hsl(var(--muted)) 25%,
-    rgba(197, 151, 91, 0.08) 50%,
+    rgba(255, 255, 255, 0.06) 50%,
     hsl(var(--muted)) 75%
   );
   background-size: 200% 100%;
