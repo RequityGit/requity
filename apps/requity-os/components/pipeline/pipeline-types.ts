@@ -290,3 +290,64 @@ export function getCardMetricValue(
 
   return `${metric.prefix ?? ""}${formatted}${metric.suffix ?? ""}`;
 }
+
+// ─── Grid Pro Forma Types ───
+
+export type GridPeriod = "t12" | "year1" | "year2" | "year3" | "year4" | "year5" | "stabilized";
+export type GridRowType = "currency" | "percent" | "ratio" | "number";
+
+export interface GridRowDef {
+  key: string;
+  label: string;
+  type: GridRowType;
+  formula: string;
+  section: string;
+  bold: boolean;
+  sort_order: number;
+}
+
+export interface GridTemplateDef {
+  rows: GridRowDef[];
+}
+
+export interface GridOverrides {
+  [cellKey: string]: {
+    value?: number;
+    formula?: string;
+  };
+}
+
+export interface GridResult {
+  [rowKey: string]: Record<GridPeriod, number | null>;
+}
+
+export interface UwOutputDef {
+  key: string;
+  label: string;
+  type: "currency" | "percent" | "ratio" | "number" | "text";
+  formula?: string;
+}
+
+// ─── Grid Constants ───
+
+export const GRID_PERIODS: GridPeriod[] = ["t12", "year1", "year2", "year3", "year4", "year5", "stabilized"];
+
+export const GRID_PERIOD_LABELS: Record<GridPeriod, string> = {
+  t12: "T-12",
+  year1: "Year 1",
+  year2: "Year 2",
+  year3: "Year 3",
+  year4: "Year 4",
+  year5: "Year 5",
+  stabilized: "Stabilized",
+};
+
+export const GRID_PERIOD_INDEX: Record<GridPeriod, number> = {
+  t12: 0,
+  year1: 1,
+  year2: 2,
+  year3: 3,
+  year4: 4,
+  year5: 5,
+  stabilized: 6,
+};
