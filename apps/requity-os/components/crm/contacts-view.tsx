@@ -52,6 +52,7 @@ import {
 import { CrmAvatar, RelPill, StageDot, getInitials } from "./crm-primitives";
 import { ClickToCallNumber } from "@/components/ui/ClickToCallNumber";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Badge } from "@/components/ui/badge";
 import type { CrmContactRow } from "./crm-v2-page";
 
 interface TeamMember {
@@ -386,13 +387,41 @@ export function ContactsView({
                         {c.company_name || "—"}
                       </td>
                       <td className="px-4 py-2.5">
-                        <div className="flex items-center gap-1 flex-wrap max-w-[150px]">
-                          {c.relationships.length > 0 ? (
-                            c.relationships.map((r) => <RelPill key={r} type={r} />)
-                          ) : (
-                            <span className="text-xs text-muted-foreground">—</span>
-                          )}
-                        </div>
+                        {c.relationships.length === 0 ? (
+                          <span className="text-xs text-muted-foreground">—</span>
+                        ) : c.relationships.length <= 2 ? (
+                          <div className="flex items-center gap-1 flex-nowrap">
+                            {c.relationships.map((r) => <RelPill key={r} type={r} />)}
+                          </div>
+                        ) : (
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <div className="flex items-center gap-1 flex-nowrap">
+                                  {c.relationships.slice(0, 1).map((r) => <RelPill key={r} type={r} />)}
+                                  <Badge
+                                    variant="outline"
+                                    className="rounded-full text-[11px] font-medium bg-muted text-muted-foreground border-border shrink-0"
+                                  >
+                                    +{c.relationships.length - 1}
+                                  </Badge>
+                                </div>
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                <div className="flex flex-col gap-1">
+                                  {c.relationships.map((r) => {
+                                    const label = CRM_RELATIONSHIP_TYPES.find((rel) => rel.value === r)?.label ?? r;
+                                    return (
+                                      <span key={r} className="text-xs">
+                                        {label}
+                                      </span>
+                                    );
+                                  })}
+                                </div>
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
+                        )}
                       </td>
                       <td className="px-4 py-2.5 text-sm text-muted-foreground max-w-[220px] truncate">
                         {c.email || "—"}
