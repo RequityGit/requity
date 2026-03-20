@@ -1,0 +1,31 @@
+[build]
+  base = "apps/requity-os"
+  command = "pnpm run build"
+  publish = ".next"
+  ignore = "cd ../.. && git diff --quiet $CACHED_COMMIT_REF $COMMIT_REF -- apps/requity-os/ packages/ netlify.toml pnpm-lock.yaml turbo.json || exit 1"
+
+[build.environment]
+  NODE_OPTIONS = "--max-old-space-size=4096"
+  # Required for secure upload links and other absolute URLs (e.g. email links)
+  NEXT_PUBLIC_APP_URL = "https://app.requitygroup.com"
+
+[build.cancel]
+  auto = false
+
+[[plugins]]
+  package = "@netlify/plugin-nextjs"
+
+[[edge_functions]]
+  path = "/*"
+  function = "force-https"
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Content-Type-Options = "nosniff"
+    X-Frame-Options = "DENY"
+    X-XSS-Protection = "1; mode=block"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+    Strict-Transport-Security = "max-age=31536000; includeSubDomains; preload"
+    Content-Security-Policy = "upgrade-insecure-requests; default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://maps.googleapis.com https://accounts.google.com https://*.sentry.io; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' https: data: blob:; connect-src 'self' https://*.supabase.co wss://*.supabase.co https://*.sentry.io https://accounts.google.com https://oauth2.googleapis.com https://www.googleapis.com https://gmail.googleapis.com https://*.twil.io https://fonts.googleapis.com https://fonts.gstatic.com; frame-src 'self' https://docs.google.com; worker-src 'self' blob:"
+    Permissions-Policy = "camera=(), microphone=(), geolocation=(self)"
