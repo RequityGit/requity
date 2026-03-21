@@ -6,7 +6,7 @@ DROP MATERIALIZED VIEW IF EXISTS search_index;
 
 CREATE MATERIALIZED VIEW search_index AS
 
--- Loans
+-- Loans (borrower name pulled from crm_contacts via borrowers.crm_contact_id)
 SELECT
   l.id,
   'loan' AS entity_type,
@@ -16,7 +16,7 @@ SELECT
   COALESCE(l.property_city, '') || ' ' ||
   COALESCE(l.property_state, '') || ' ' ||
   COALESCE(l.property_zip, '') || ' ' ||
-  COALESCE(b.first_name || ' ' || b.last_name, '') || ' ' ||
+  COALESCE(lcc.first_name || ' ' || lcc.last_name, '') || ' ' ||
   COALESCE(l.type::text, '') || ' ' ||
   COALESCE(l.stage::text, '') || ' ' ||
   COALESCE(l.originator, '') || ' ' ||
@@ -27,7 +27,7 @@ SELECT
   jsonb_build_object(
     'loan_number', l.loan_number,
     'property_address', COALESCE(l.property_address, COALESCE(l.property_address_line1, '') || ', ' || COALESCE(l.property_city, '') || ' ' || COALESCE(l.property_state, '')),
-    'borrower_name', COALESCE(b.first_name || ' ' || b.last_name, ''),
+    'borrower_name', COALESCE(lcc.first_name || ' ' || lcc.last_name, ''),
     'borrower_id', l.borrower_id,
     'loan_amount', l.loan_amount,
     'stage', l.stage,
@@ -37,24 +37,25 @@ SELECT
   l.updated_at,
   l.borrower_id AS owner_ref
 FROM loans l
-LEFT JOIN borrowers b ON l.borrower_id = b.id
+LEFT JOIN borrowers lb ON l.borrower_id = lb.id
+LEFT JOIN crm_contacts lcc ON lcc.id = lb.crm_contact_id AND lcc.deleted_at IS NULL
 WHERE l.deleted_at IS NULL
 
 UNION ALL
 
--- Borrowers (now includes contact_number for routing to CRM contact page)
+-- Borrowers (display fields from crm_contacts, includes contact_number for routing)
 SELECT
   br.id, 'borrower' AS entity_type,
-  COALESCE(br.first_name, '') || ' ' || COALESCE(br.last_name, '') || ' ' ||
-  COALESCE(br.email, '') || ' ' || COALESCE(br.phone, '') || ' ' ||
-  COALESCE(br.city, '') || ' ' || COALESCE(br.state, '') || ' ' ||
+  COALESCE(cc.first_name, '') || ' ' || COALESCE(cc.last_name, '') || ' ' ||
+  COALESCE(cc.email, '') || ' ' || COALESCE(cc.phone, '') || ' ' ||
+  COALESCE(cc.city, '') || ' ' || COALESCE(cc.state, '') || ' ' ||
   COALESCE(br.notes, ''),
   jsonb_build_object(
-    'name', COALESCE(br.first_name, '') || ' ' || COALESCE(br.last_name, ''),
-    'email', br.email,
-    'phone', br.phone,
-    'city', br.city,
-    'state', br.state,
+    'name', COALESCE(cc.first_name, '') || ' ' || COALESCE(cc.last_name, ''),
+    'email', cc.email,
+    'phone', cc.phone,
+    'city', cc.city,
+    'state', cc.state,
     'credit_score', br.credit_score,
     'contact_number', cc.contact_number,
     'contact_id', cc.id
@@ -62,70 +63,72 @@ SELECT
   br.updated_at,
   br.id AS owner_ref
 FROM borrowers br
-LEFT JOIN crm_contacts cc ON cc.borrower_id = br.id AND cc.deleted_at IS NULL
+LEFT JOIN crm_contacts cc ON cc.id = br.crm_contact_id AND cc.deleted_at IS NULL
 
 UNION ALL
 
--- Borrower Entities (now includes contact_number for routing to CRM contact page)
+-- Borrower Entities (display fields from crm_contacts, includes contact_number for routing)
 SELECT
   be.id, 'borrower_entity' AS entity_type,
   COALESCE(be.entity_name, '') || ' ' || COALESCE(be.entity_type, '') || ' ' ||
   COALESCE(be.ein, '') || ' ' || COALESCE(be.state_of_formation, '') || ' ' ||
-  COALESCE(b.first_name || ' ' || b.last_name, ''),
+  COALESCE(becc.first_name || ' ' || becc.last_name, ''),
   jsonb_build_object(
     'entity_name', be.entity_name,
     'entity_type', be.entity_type,
     'state_of_formation', be.state_of_formation,
-    'borrower_name', COALESCE(b.first_name || ' ' || b.last_name, ''),
+    'borrower_name', COALESCE(becc.first_name || ' ' || becc.last_name, ''),
     'borrower_id', be.borrower_id,
-    'contact_number', cc.contact_number,
-    'contact_id', cc.id
+    'contact_number', becc.contact_number,
+    'contact_id', becc.id
   ),
   be.updated_at,
   be.borrower_id AS owner_ref
 FROM borrower_entities be
-LEFT JOIN borrowers b ON be.borrower_id = b.id
-LEFT JOIN crm_contacts cc ON cc.borrower_id = be.borrower_id AND cc.deleted_at IS NULL
+LEFT JOIN borrowers beb ON be.borrower_id = beb.id
+LEFT JOIN crm_contacts becc ON becc.id = beb.crm_contact_id AND becc.deleted_at IS NULL
 
 UNION ALL
 
--- Investors
+-- Investors (display fields from crm_contacts via investors.crm_contact_id)
 SELECT
-  id, 'investor' AS entity_type,
-  COALESCE(first_name, '') || ' ' || COALESCE(last_name, '') || ' ' ||
-  COALESCE(email, '') || ' ' || COALESCE(phone, '') || ' ' ||
-  COALESCE(city, '') || ' ' || COALESCE(state, '') || ' ' ||
-  COALESCE(notes, ''),
+  inv.id, 'investor' AS entity_type,
+  COALESCE(icc.first_name, '') || ' ' || COALESCE(icc.last_name, '') || ' ' ||
+  COALESCE(icc.email, '') || ' ' || COALESCE(icc.phone, '') || ' ' ||
+  COALESCE(icc.city, '') || ' ' || COALESCE(icc.state, '') || ' ' ||
+  COALESCE(inv.notes, ''),
   jsonb_build_object(
-    'name', COALESCE(first_name, '') || ' ' || COALESCE(last_name, ''),
-    'email', email,
-    'phone', phone,
-    'accreditation_status', accreditation_status,
-    'city', city,
-    'state', state
+    'name', COALESCE(icc.first_name, '') || ' ' || COALESCE(icc.last_name, ''),
+    'email', icc.email,
+    'phone', icc.phone,
+    'accreditation_status', inv.accreditation_status,
+    'city', icc.city,
+    'state', icc.state
   ),
-  updated_at,
-  id AS owner_ref
-FROM investors
+  inv.updated_at,
+  inv.id AS owner_ref
+FROM investors inv
+LEFT JOIN crm_contacts icc ON icc.id = inv.crm_contact_id AND icc.deleted_at IS NULL
 
 UNION ALL
 
--- Investing Entities
+-- Investing Entities (investor name from crm_contacts)
 SELECT
   ie.id, 'investing_entity' AS entity_type,
   COALESCE(ie.entity_name, '') || ' ' || COALESCE(ie.entity_type, '') || ' ' ||
   COALESCE(ie.ein, '') || ' ' || COALESCE(ie.state_of_formation, '') || ' ' ||
-  COALESCE(i.first_name || ' ' || i.last_name, ''),
+  COALESCE(iecc.first_name || ' ' || iecc.last_name, ''),
   jsonb_build_object(
     'entity_name', ie.entity_name,
     'entity_type', ie.entity_type,
-    'investor_name', COALESCE(i.first_name || ' ' || i.last_name, ''),
+    'investor_name', COALESCE(iecc.first_name || ' ' || iecc.last_name, ''),
     'investor_id', ie.investor_id
   ),
   ie.updated_at,
   ie.investor_id AS owner_ref
 FROM investing_entities ie
-LEFT JOIN investors i ON ie.investor_id = i.id
+LEFT JOIN investors iei ON ie.investor_id = iei.id
+LEFT JOIN crm_contacts iecc ON iecc.id = iei.crm_contact_id AND iecc.deleted_at IS NULL
 
 UNION ALL
 
