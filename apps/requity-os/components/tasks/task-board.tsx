@@ -235,8 +235,6 @@ export function TaskBoard({
       // Prevent approval tasks from being dragged directly to Complete (must go through approval)
       if (columnId === "Complete" && task.requires_approval) return;
 
-      if (columnId === "Complete") return;
-
       setTasks((prev) =>
         prev.map((t) =>
           t.id === taskId

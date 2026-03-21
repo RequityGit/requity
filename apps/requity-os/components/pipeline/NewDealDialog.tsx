@@ -30,7 +30,7 @@ import {
   addDealNoteAction,
 } from "@/app/(authenticated)/(admin)/pipeline/actions";
 import {
-  ASSET_CLASS_LABELS,
+  ACTIVE_ASSET_CLASS_OPTIONS,
   type AssetClass,
   type CapitalSide,
 } from "./pipeline-types";
@@ -393,7 +393,7 @@ export function NewDealDialog({
           {step === 2 && (
             <>
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                {Object.entries(ASSET_CLASS_LABELS).map(([ac, label]) => (
+                {ACTIVE_ASSET_CLASS_OPTIONS.map(({ key: ac, label }) => (
                   <button
                     key={ac}
                     type="button"

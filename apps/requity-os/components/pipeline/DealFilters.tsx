@@ -12,7 +12,7 @@ import {
 import { LayoutGrid, List, Plus, Search } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { DateAddedFilter } from "@/components/ui/date-added-filter";
-import { ASSET_CLASS_LABELS, type CapitalSide } from "./pipeline-types";
+import { ACTIVE_ASSET_CLASS_OPTIONS, type CapitalSide } from "./pipeline-types";
 import { getAllDealConfigs, type DealFlavor } from "@/lib/pipeline/deal-display-config";
 
 export interface FilterState {
@@ -101,7 +101,7 @@ export function DealFilters({
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All asset classes</SelectItem>
-            {Object.entries(ASSET_CLASS_LABELS).map(([key, label]) => (
+            {ACTIVE_ASSET_CLASS_OPTIONS.map(({ key, label }) => (
               <SelectItem key={key} value={key}>
                 {label}
               </SelectItem>

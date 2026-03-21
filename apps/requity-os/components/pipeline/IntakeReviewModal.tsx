@@ -29,7 +29,7 @@ import { createClient } from "@/lib/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
 import { EntityMergeSection } from "./EntityMergeSection";
 import { processIntakeItemAction } from "@/app/(authenticated)/(admin)/pipeline/actions";
-import { ASSET_CLASS_LABELS, type AssetClass } from "./pipeline-types";
+import { ACTIVE_ASSET_CLASS_OPTIONS, type AssetClass } from "./pipeline-types";
 import {
   type IntakeItem,
   type IntakeEntityKey,
@@ -621,7 +621,7 @@ export function IntakeReviewModal({ item, open, onOpenChange }: IntakeReviewModa
                       <SelectItem value="__none__">
                         <span className="text-muted-foreground">Auto-detect</span>
                       </SelectItem>
-                      {Object.entries(ASSET_CLASS_LABELS).map(([ac, label]) => (
+                      {ACTIVE_ASSET_CLASS_OPTIONS.map(({ key: ac, label }) => (
                         <SelectItem key={ac} value={ac}>
                           {label}
                         </SelectItem>
