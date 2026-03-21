@@ -160,9 +160,17 @@ export function getEntityUrl(
         ? `/b/loans/${id}`
         : `/pipeline/${(metadata.loan_number as string) || (metadata.deal_number as string) || id}`;
     case "borrower":
-      return `/borrowers/${id}`;
+      return metadata.contact_number
+        ? `/contacts/${metadata.contact_number}`
+        : metadata.contact_id
+        ? `/contacts/${metadata.contact_id}`
+        : "#";
     case "borrower_entity":
-      return `/borrowers/${metadata.borrower_id}`;
+      return metadata.contact_number
+        ? `/contacts/${metadata.contact_number}`
+        : metadata.contact_id
+        ? `/contacts/${metadata.contact_id}`
+        : "#";
     case "investor":
       return `/investors/${id}`;
     case "investing_entity":
