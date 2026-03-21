@@ -26,8 +26,28 @@ function LoginContent() {
   const [noAccess, setNoAccess] = useState(false);
   const searchParams = useSearchParams();
   const supabaseRef = useRef<ReturnType<typeof createClient> | null>(null);
+  /** Sync guard: React state is async, so double-clicks can fire two OAuth starts before `loading` updates. */
+  const googleOAuthLockRef = useRef(false);
 
   const errorParam = searchParams.get("error");
+  const authRetry = searchParams.get("_auth_retry");
+  /** Prevents the auto-retry from firing more than once per mount. */
+  const autoRetryFiredRef = useRef(false);
+
+  // Auto-retry: if the callback redirected here with _auth_retry, automatically
+  // re-initiate Google OAuth. This handles transient PKCE cookie loss without
+  // the user needing to click again.
+  useEffect(() => {
+    if (authRetry && !autoRetryFiredRef.current) {
+      autoRetryFiredRef.current = true;
+      // Small delay so the page renders briefly (avoids a blank flash)
+      const timer = setTimeout(() => {
+        handleGoogleLogin();
+      }, 300);
+      return () => clearTimeout(timer);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [authRetry]);
 
   useEffect(() => {
     if (errorParam === "no_access") {
@@ -59,26 +79,42 @@ function LoginContent() {
   }
 
   async function handleGoogleLogin() {
+    if (googleOAuthLockRef.current) return;
+    googleOAuthLockRef.current = true;
     setLoading("google");
     setError(null);
 
     try {
       const supabase = getClient();
-      const { error } = await supabase.auth.signInWithOAuth({
+      // One explicit navigation avoids flaky auto-redirect in some browsers / extensions.
+      const { data, error } = await supabase.auth.signInWithOAuth({
         provider: "google",
         options: {
           redirectTo: `${window.location.origin}/auth/callback`,
+          skipBrowserRedirect: true,
         },
       });
 
       if (error) {
         setError(error.message);
         setLoading(null);
+        googleOAuthLockRef.current = false;
+        return;
       }
+
+      if (data?.url) {
+        window.location.assign(data.url);
+        return;
+      }
+
+      setError("Could not start Google sign-in. Please try again.");
+      setLoading(null);
+      googleOAuthLockRef.current = false;
     } catch (err) {
       console.error("Google login error:", err);
       setError("An unexpected error occurred. Please try again.");
       setLoading(null);
+      googleOAuthLockRef.current = false;
     }
   }
 
@@ -182,6 +218,7 @@ function LoginContent() {
             <div className="space-y-6">
               {/* Google OAuth Button */}
               <button
+                type="button"
                 onClick={handleGoogleLogin}
                 disabled={loading !== null}
                 className="w-full h-11 px-4 py-2 border border-border bg-card rounded-md text-sm font-medium text-foreground hover:bg-muted disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-3"
