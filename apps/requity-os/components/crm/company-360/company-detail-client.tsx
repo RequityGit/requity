@@ -24,13 +24,13 @@ import { CompanyDealsTab } from "./tabs/deals-tab";
 import { CompanyFilesTab } from "./tabs/files-tab";
 import { CompanyTasksTab } from "./tabs/tasks-tab";
 import { UnifiedNotes } from "@/components/shared/UnifiedNotes";
+import { useCompany360Lazy } from "@/hooks/useCompany360Lazy";
 import type {
   CompanyDetailData,
   CompanyContactData,
   CompanyActivityData,
   CompanyFileData,
   CompanyTaskData,
-  CompanyNoteData,
   CompanyWireData,
   CompanyFollowerData,
   TabBadgeCounts,
@@ -39,6 +39,14 @@ import type {
   SectionLayout,
   FieldLayout,
 } from "@/components/crm/contact-360/types";
+
+type OverviewPayload = {
+  wireInstructions: CompanyWireData | null;
+  files: CompanyFileData[];
+};
+type ActivitiesPayload = { activities: CompanyActivityData[] };
+type FilesPayload = { files: CompanyFileData[] };
+type TasksPayload = { tasks: CompanyTaskData[] };
 
 interface CompanyDetailClientProps {
   company: CompanyDetailData;
@@ -49,13 +57,9 @@ interface CompanyDetailClientProps {
     last_name: string | null;
     user_function: string | null;
   } | null;
-  activities: CompanyActivityData[];
-  files: CompanyFileData[];
-  tasks: CompanyTaskData[];
-  notes: CompanyNoteData[];
-  wireInstructions: CompanyWireData | null;
   followers: CompanyFollowerData[];
   counts: TabBadgeCounts;
+  lastActivityAt: string | null;
   currentUserId: string;
   currentUserName: string;
   teamMembers: { id: string; full_name: string }[];
@@ -68,13 +72,9 @@ export function CompanyDetailClient({
   company,
   contacts,
   primaryContact,
-  activities,
-  files,
-  tasks,
-  notes,
-  wireInstructions,
   followers,
   counts,
+  lastActivityAt,
   currentUserId,
   currentUserName,
   teamMembers,
@@ -86,22 +86,17 @@ export function CompanyDetailClient({
   const [emailComposeOpen, setEmailComposeOpen] = useState(false);
   const [logCallTrigger, setLogCallTrigger] = useState(0);
 
-  const openTasks = useMemo(
-    () => tasks.filter((t) => t.status !== "completed").length,
-    [tasks]
-  );
-
   const tabs = useMemo(
     () => [
       { id: "overview", label: "Overview" },
       { id: "contacts", label: "Contacts", count: counts.contacts },
       { id: "notes", label: "Notes", count: counts.notes },
-      { id: "tasks", label: "Tasks", count: openTasks },
+      { id: "tasks", label: "Tasks", count: counts.openTasks },
       { id: "deals", label: "Deals & Quotes", count: counts.deals || undefined },
       { id: "files", label: "Files", count: counts.files },
       { id: "activity", label: "Activity", count: counts.activities },
     ],
-    [counts, openTasks]
+    [counts]
   );
 
   const tabParam = searchParams.get("tab");
@@ -109,10 +104,32 @@ export function CompanyDetailClient({
   const initialTab = isValidTab ? tabParam! : "overview";
   const [activeTab, setActiveTab] = useState(initialTab);
 
-  // Track which tabs have been visited so we can keep them mounted
   const [loadedTabs, setLoadedTabs] = useState<Set<string>>(
     () => new Set([initialTab])
   );
+
+  const overviewQ = useCompany360Lazy<OverviewPayload>(company.id, "overview", true);
+  const activitiesQ = useCompany360Lazy<ActivitiesPayload>(
+    company.id,
+    "activities",
+    loadedTabs.has("activity")
+  );
+  const filesQ = useCompany360Lazy<FilesPayload>(
+    company.id,
+    "files",
+    loadedTabs.has("files")
+  );
+  const tasksQ = useCompany360Lazy<TasksPayload>(
+    company.id,
+    "tasks",
+    loadedTabs.has("tasks")
+  );
+
+  const wireInstructions = overviewQ.data?.wireInstructions ?? null;
+  const overviewFiles = overviewQ.data?.files ?? [];
+  const activities = activitiesQ.data?.activities ?? [];
+  const filesForTab = filesQ.data?.files ?? [];
+  const tasks = tasksQ.data?.tasks ?? [];
 
   const handleTabChange = useCallback(
     (value: string) => {
@@ -121,7 +138,6 @@ export function CompanyDetailClient({
         if (prev.has(value)) return prev;
         return new Set(prev).add(value);
       });
-      // Use history.replaceState to update URL without triggering Next.js navigation
       const params = new URLSearchParams(window.location.search);
       if (value === "overview") {
         params.delete("tab");
@@ -143,7 +159,6 @@ export function CompanyDetailClient({
 
   return (
     <div className="min-h-screen">
-      {/* Breadcrumb */}
       <div className="flex items-center gap-2 mb-3">
         <Link
           href="/companies"
@@ -167,16 +182,13 @@ export function CompanyDetailClient({
       </div>
 
       <div className="flex max-w-[1400px] mx-auto">
-        {/* Main Content */}
         <div className="flex-1 min-w-0">
-          {/* Header Card */}
           <CompanyDetailHeader
             company={company}
             primaryContact={primaryContact}
-            lastActivityAt={activities[0]?.created_at || null}
+            lastActivityAt={lastActivityAt}
           />
 
-          {/* Tab Bar */}
           <div className="border-b border-border mb-6 flex overflow-x-auto">
             {tabs.map((t) => (
               <TabBtn
@@ -189,14 +201,13 @@ export function CompanyDetailClient({
             ))}
           </div>
 
-          {/* Tab content: visited tabs stay mounted (hidden) to preserve state & subscriptions */}
           {loadedTabs.has("overview") && (
             <div className={activeTab !== "overview" ? "hidden" : undefined}>
               <CrmInlineEditorWrapper pageType="company_detail" isSuperAdmin={isSuperAdmin}>
                 <CompanyOverviewTab
                   company={company}
                   wireInstructions={wireInstructions}
-                  files={files}
+                  files={overviewFiles}
                   sectionOrder={sectionOrder}
                   sectionFields={sectionFields}
                 />
@@ -235,6 +246,7 @@ export function CompanyDetailClient({
                   full_name: m.full_name,
                   avatar_url: null,
                 }))}
+                loading={tasksQ.loading}
               />
             </div>
           )}
@@ -246,8 +258,9 @@ export function CompanyDetailClient({
           {loadedTabs.has("files") && (
             <div className={activeTab !== "files" ? "hidden" : undefined}>
               <CompanyFilesTab
-                files={files}
+                files={filesForTab}
                 companyId={company.id}
+                loading={filesQ.loading}
               />
             </div>
           )}
@@ -258,12 +271,12 @@ export function CompanyDetailClient({
                 activities={activities}
                 currentUserId={currentUserId}
                 logCallTrigger={logCallTrigger}
+                loading={activitiesQ.loading}
               />
             </div>
           )}
         </div>
 
-        {/* Right Sidebar */}
         <div className="hidden lg:block w-[320px] shrink-0 pt-6 pl-6">
           <CompanyDetailSidebar
             company={company}

@@ -5,14 +5,7 @@ import { CompanyDetailClient } from "@/components/crm/company-360/company-detail
 import type {
   CompanyDetailData,
   CompanyContactData,
-  CompanyActivityData,
-  CompanyFileData,
-  CompanyTaskData,
-  CompanyNoteData,
-  CompanyWireData,
   CompanyFollowerData,
-  CompanyDealData,
-  CompanyQuoteData,
   TabBadgeCounts,
 } from "@/components/crm/company-360/types";
 import type {
@@ -56,26 +49,23 @@ export default async function CompanyDetailPage({ params }: PageProps) {
 
   if (!company) notFound();
 
-  // Fetch all related data in parallel (profiles + tab data + layout config)
   const [
     profilesResult,
     contactsResult,
     primaryContactResult,
-    activitiesResult,
-    filesResult,
-    tasksResult,
-    notesResult,
-    wireResult,
     followersResult,
     sectionRowsResult,
+    lastActivityResult,
+    countActivities,
+    countFiles,
+    countOpenTasks,
+    countNotes,
   ] = await Promise.all([
-    // Profiles for lookup
     admin
       .from("profiles")
       .select("id, full_name, email")
       .eq("role", "admin")
       .order("full_name"),
-    // Contacts
     admin
       .from("crm_contacts")
       .select(
@@ -84,7 +74,6 @@ export default async function CompanyDetailPage({ params }: PageProps) {
       .eq("company_id", company.id)
       .is("deleted_at", null)
       .order("first_name"),
-    // Primary contact
     company.primary_contact_id
       ? admin
           .from("crm_contacts")
@@ -92,54 +81,44 @@ export default async function CompanyDetailPage({ params }: PageProps) {
           .eq("id", company.primary_contact_id)
           .single()
       : Promise.resolve({ data: null }),
-    // Activities
-    admin
-      .from("crm_activities")
-      .select("id, activity_type, subject, description, direction, call_duration_seconds, performed_by, performed_by_name, created_at")
-      .eq("company_id", company.id)
-      .is("deleted_at", null)
-      .order("created_at", { ascending: false }),
-    // Files
-    admin
-      .from("company_files")
-      .select("id, file_name, file_type, file_size, mime_type, storage_path, uploaded_by, uploaded_at, notes")
-      .eq("company_id", company.id)
-      .order("uploaded_at", { ascending: false }),
-    // Tasks
-    admin
-      .from("ops_tasks")
-      .select("id, title, description, category, priority, status, due_date, assigned_to, completed_at, created_at")
-      .eq("linked_entity_type", "company")
-      .eq("linked_entity_id", company.id)
-      .order("created_at", { ascending: false }),
-    // Notes (from unified notes table)
-    admin
-      .from("notes" as never)
-      .select("id, body, author_id, is_pinned, created_at" as never)
-      .eq("company_id" as never, company.id as never)
-      .is("deleted_at" as never, null)
-      .order("is_pinned" as never, { ascending: false })
-      .order("created_at" as never, { ascending: false }),
-    // Wire instructions
-    admin
-      .from("company_wire_instructions")
-      .select("id, bank_name, account_name, account_number, routing_number, wire_type, updated_at, updated_by")
-      .eq("company_id", company.id)
-      .order("updated_at", { ascending: false })
-      .limit(1)
-      .maybeSingle(),
-    // Followers
     admin
       .from("crm_followers")
       .select("id, user_id")
       .eq("company_id", company.id),
-    // Layout config
     admin
       .from("page_layout_sections" as never)
       .select("id, section_key, display_order, is_visible, visibility_rule" as never)
       .eq("page_type" as never, "company_detail" as never)
       .eq("sidebar" as never, false as never)
       .order("display_order" as never, { ascending: true }),
+    admin
+      .from("crm_activities")
+      .select("created_at")
+      .eq("company_id", company.id)
+      .is("deleted_at", null)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle(),
+    admin
+      .from("crm_activities")
+      .select("id", { count: "exact", head: true })
+      .eq("company_id", company.id)
+      .is("deleted_at", null),
+    admin
+      .from("company_files")
+      .select("id", { count: "exact", head: true })
+      .eq("company_id", company.id),
+    admin
+      .from("ops_tasks")
+      .select("id", { count: "exact", head: true })
+      .eq("linked_entity_type", "company")
+      .eq("linked_entity_id", company.id)
+      .neq("status", "Complete"),
+    admin
+      .from("notes" as never)
+      .select("id", { count: "exact", head: true } as never)
+      .eq("company_id" as never, company.id as never)
+      .is("deleted_at" as never, null),
   ]);
 
   // Build profile lookup
@@ -168,7 +147,6 @@ export default async function CompanyDetailPage({ params }: PageProps) {
     })
   );
 
-  // Map primary contact info
   const primaryContact = primaryContactResult.data
     ? {
         id: primaryContactResult.data.id as string,
@@ -178,86 +156,7 @@ export default async function CompanyDetailPage({ params }: PageProps) {
       }
     : null;
 
-  // Map activities
-  const activities: CompanyActivityData[] = (activitiesResult.data ?? []).map(
-    (a: Record<string, unknown>) => ({
-      id: a.id as string,
-      activity_type: a.activity_type as string,
-      subject: a.subject as string | null,
-      description: a.description as string | null,
-      direction: (a.direction as string | null) ?? null,
-      call_duration_seconds: (a.call_duration_seconds as number | null) ?? null,
-      performed_by_name: a.performed_by
-        ? (a.performed_by_name as string | null) ||
-          profileLookup[a.performed_by as string] ||
-          null
-        : null,
-      created_at: a.created_at as string,
-    })
-  );
-
-  // Map files
-  const files: CompanyFileData[] = (filesResult.data ?? []).map(
-    (f: Record<string, unknown>) => ({
-      id: f.id as string,
-      file_name: f.file_name as string,
-      file_type: f.file_type as string,
-      file_size: f.file_size as number | null,
-      mime_type: f.mime_type as string | null,
-      storage_path: f.storage_path as string,
-      uploaded_by_name: f.uploaded_by
-        ? profileLookup[f.uploaded_by as string] || null
-        : null,
-      uploaded_at: f.uploaded_at as string | null,
-      notes: f.notes as string | null,
-    })
-  );
-
-  // Map tasks
-  const tasks: CompanyTaskData[] = (tasksResult.data ?? []).map(
-    (t: Record<string, unknown>) => ({
-      id: t.id as string,
-      subject: (t.title as string) || "",
-      description: t.description as string | null,
-      task_type: (t.category as string) || "other",
-      priority: (t.priority as string) || "Medium",
-      status: t.status === "Complete" ? "completed" : t.status === "In Progress" ? "in_progress" : "not_started",
-      due_date: t.due_date as string | null,
-      assigned_to: t.assigned_to as string | null,
-      assigned_to_name: t.assigned_to
-        ? profileLookup[t.assigned_to as string] || null
-        : null,
-      completed_at: t.completed_at as string | null,
-    })
-  );
-
-  // Map notes
-  const notes: CompanyNoteData[] = (notesResult.data ?? []).map(
-    (n: Record<string, unknown>) => ({
-      id: n.id as string,
-      body: (n.body as string) || "",
-      author_name: n.author_id
-        ? profileLookup[n.author_id as string] || null
-        : null,
-      author_id: n.author_id as string | null,
-      is_pinned: (n.is_pinned as boolean) || false,
-      created_at: n.created_at as string,
-    })
-  );
-
-  // Map wire instructions
-  const wireInstructions: CompanyWireData | null = wireResult.data
-    ? {
-        id: wireResult.data.id,
-        bank_name: wireResult.data.bank_name,
-        account_name: wireResult.data.account_name,
-        account_number: wireResult.data.account_number,
-        routing_number: wireResult.data.routing_number,
-        wire_type: wireResult.data.wire_type,
-        updated_at: wireResult.data.updated_at,
-        updated_by: wireResult.data.updated_by,
-      }
-    : null;
+  const lastActivityAt = (lastActivityResult.data as { created_at?: string } | null)?.created_at ?? null;
 
   // Map followers
   const followers: CompanyFollowerData[] = (followersResult.data ?? []).map(
@@ -368,15 +267,13 @@ export default async function CompanyDetailPage({ params }: PageProps) {
     }
   }
 
-  // Compute tab badge counts
-  const openTasks = tasks.filter((t) => t.status !== "completed").length;
   const counts: TabBadgeCounts = {
     contacts: contacts.length,
-    activities: activities.length,
-    deals: 0, // Will be computed client-side or via a separate query
-    files: files.length,
-    openTasks,
-    notes: notes.length,
+    activities: countActivities.count ?? 0,
+    deals: 0,
+    files: countFiles.count ?? 0,
+    openTasks: countOpenTasks.count ?? 0,
+    notes: countNotes.count ?? 0,
   };
 
   // Map company data
@@ -417,13 +314,9 @@ export default async function CompanyDetailPage({ params }: PageProps) {
       company={companyData}
       contacts={contacts}
       primaryContact={primaryContact}
-      activities={activities}
-      files={files}
-      tasks={tasks}
-      notes={notes}
-      wireInstructions={wireInstructions}
       followers={followers}
       counts={counts}
+      lastActivityAt={lastActivityAt}
       currentUserId={user.id}
       currentUserName={currentUserName}
       teamMembers={teamMembers}

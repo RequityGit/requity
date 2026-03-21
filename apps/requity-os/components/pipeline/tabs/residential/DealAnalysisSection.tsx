@@ -32,21 +32,24 @@ interface DealAnalysisSectionProps {
   dealInputs: ResidentialDealInputs;
   dealType: DealType;
   onDealTypeChange?: (type: DealType) => void;
+  selectedProgramId: string;
+  onProgramChange: (programId: string) => void;
+  selectedProgram: LoanProgram;
+  activeAdjusterKeys: string[];
+  onAdjusterKeysChange: (keys: string[]) => void;
 }
 
 export function DealAnalysisSection({
   dealInputs,
   dealType,
   onDealTypeChange,
+  selectedProgramId,
+  onProgramChange,
+  selectedProgram,
+  activeAdjusterKeys,
+  onAdjusterKeysChange,
 }: DealAnalysisSectionProps) {
-  const [selectedProgramId, setSelectedProgramId] = useState<string>(MOCK_PROGRAMS[0]?.id || "");
   const [expandedAdjusters, setExpandedAdjusters] = useState(false);
-  const [activeAdjusterKeys, setActiveAdjusterKeys] = useState<string[]>([]);
-
-  const selectedProgram = useMemo(
-    () => MOCK_PROGRAMS.find((p) => p.id === selectedProgramId) || MOCK_PROGRAMS[0],
-    [selectedProgramId]
-  );
 
   const loanSizing = useMemo(
     () => computeLoanSizing(dealInputs, selectedProgram, activeAdjusterKeys),
@@ -147,9 +150,9 @@ export function DealAnalysisSection({
 
   const toggleAdjuster = (key: string) => {
     if (activeAdjusterKeys.includes(key)) {
-      setActiveAdjusterKeys(activeAdjusterKeys.filter((k) => k !== key));
+      onAdjusterKeysChange(activeAdjusterKeys.filter((k) => k !== key));
     } else {
-      setActiveAdjusterKeys([...activeAdjusterKeys, key]);
+      onAdjusterKeysChange([...activeAdjusterKeys, key]);
     }
   };
 
@@ -184,7 +187,7 @@ export function DealAnalysisSection({
         <div className="space-y-4">
           <div className="flex items-center gap-2">
             <label className="inline-field-label">Program</label>
-            <Select value={selectedProgramId} onValueChange={setSelectedProgramId}>
+            <Select value={selectedProgramId} onValueChange={onProgramChange}>
               <SelectTrigger className="inline-field w-full md:w-64">
                 <SelectValue />
               </SelectTrigger>

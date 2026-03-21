@@ -13,6 +13,7 @@ import {
   Building2,
 } from "lucide-react";
 import type { DealType, ResidentialDealInputs } from "@/lib/residential-uw/types";
+import { MOCK_PROGRAMS } from "@/lib/residential-uw/types";
 
 type SubTabKey = "deal_analysis" | "borrower" | "costs" | "comps";
 
@@ -29,11 +30,20 @@ interface ResidentialAnalysisTabProps {
 }
 
 export function ResidentialAnalysisTab({
-  dealId,
+  dealId: _dealId,
   uwData,
 }: ResidentialAnalysisTabProps) {
   const [activeTab, setActiveTab] = useState<SubTabKey>("deal_analysis");
   const [dealType, setDealType] = useState<DealType>("rtl");
+  const [selectedProgramId, setSelectedProgramId] = useState<string>(
+    MOCK_PROGRAMS[0]?.id || ""
+  );
+  const [activeAdjusterKeys, setActiveAdjusterKeys] = useState<string[]>([]);
+
+  const selectedProgram = useMemo(
+    () => MOCK_PROGRAMS.find((p) => p.id === selectedProgramId) || MOCK_PROGRAMS[0],
+    [selectedProgramId]
+  );
 
   // Parse uw_data into ResidentialDealInputs
   const dealInputs = useMemo((): ResidentialDealInputs => {
@@ -78,14 +88,31 @@ export function ResidentialAnalysisTab({
           dealInputs={dealInputs}
           dealType={dealType}
           onDealTypeChange={setDealType}
+          selectedProgramId={selectedProgramId}
+          onProgramChange={setSelectedProgramId}
+          selectedProgram={selectedProgram}
+          activeAdjusterKeys={activeAdjusterKeys}
+          onAdjusterKeysChange={setActiveAdjusterKeys}
         />
       )}
 
-      {activeTab === "borrower" && <BorrowerEligibilitySection />}
+      {activeTab === "borrower" && (
+        <BorrowerEligibilitySection
+          dealInputs={dealInputs}
+          selectedProgram={selectedProgram}
+        />
+      )}
 
-      {activeTab === "costs" && <CostsReturnsSection />}
+      {activeTab === "costs" && (
+        <CostsReturnsSection
+          dealInputs={dealInputs}
+          dealType={dealType}
+          selectedProgram={selectedProgram}
+          activeAdjusterKeys={activeAdjusterKeys}
+        />
+      )}
 
-      {activeTab === "comps" && <CompAnalysisSection />}
+      {activeTab === "comps" && <CompAnalysisSection dealInputs={dealInputs} />}
     </div>
   );
 }

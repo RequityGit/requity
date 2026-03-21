@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
 import { useDebounce } from "@/hooks/useDebounce";
 import { useRouter } from "next/navigation";
 import { Input } from "@/components/ui/input";
@@ -43,6 +43,13 @@ import {
 } from "lucide-react";
 import { CompanyStatusDot } from "./crm-primitives";
 import type { CompanyRowV2 } from "./crm-v2-page";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+} from "@/components/ui/pagination";
+
+const PAGE_SIZE = 50;
 
 interface CompaniesViewProps {
   companies: CompanyRowV2[];
@@ -58,8 +65,10 @@ export function CompaniesView({ companies, isSuperAdmin = false }: CompaniesView
   const [dateAdded, setDateAdded] = useState("all");
   const [companySortKey, setCompanySortKey] = useState<string>("name");
   const [companySortDir, setCompanySortDir] = useState<"asc" | "desc">("asc");
+  const [page, setPage] = useState(1);
   const [deleteTarget, setDeleteTarget] = useState<{ id: string; name: string } | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const tableContainerRef = useRef<HTMLDivElement>(null);
 
   async function handleDelete() {
     if (!deleteTarget) return;
@@ -79,6 +88,10 @@ export function CompaniesView({ companies, isSuperAdmin = false }: CompaniesView
       setDeleteTarget(null);
     }
   }
+
+  useEffect(() => {
+    setPage(1);
+  }, [debouncedSearch, dateAdded]);
 
   const filteredCompanies = useMemo(() => {
     let result = [...companies];
@@ -117,6 +130,21 @@ export function CompaniesView({ companies, isSuperAdmin = false }: CompaniesView
 
     return result;
   }, [companies, debouncedSearch, dateAdded, companySortKey, companySortDir]);
+
+  const totalFiltered = filteredCompanies.length;
+  const totalPages = Math.max(1, Math.ceil(totalFiltered / PAGE_SIZE));
+
+  useEffect(() => {
+    if (page > totalPages) setPage(totalPages);
+  }, [page, totalPages]);
+
+  const safePage = Math.min(page, totalPages);
+  const rangeStart = totalFiltered === 0 ? 0 : (safePage - 1) * PAGE_SIZE + 1;
+  const rangeEnd = Math.min(safePage * PAGE_SIZE, totalFiltered);
+  const paginatedCompanies = filteredCompanies.slice(
+    (safePage - 1) * PAGE_SIZE,
+    safePage * PAGE_SIZE
+  );
 
   function handleCompanySort(key: string) {
     if (companySortKey === key) {
@@ -191,7 +219,7 @@ export function CompaniesView({ companies, isSuperAdmin = false }: CompaniesView
         </div>
 
         <div className="rounded-xl border bg-card overflow-hidden">
-          <div className="overflow-x-auto">
+          <div ref={tableContainerRef} className="overflow-x-auto">
             <table className="w-full border-collapse">
               <thead>
                 <tr className="border-b">
@@ -205,7 +233,7 @@ export function CompaniesView({ companies, isSuperAdmin = false }: CompaniesView
                 </tr>
               </thead>
               <tbody>
-                {filteredCompanies.length === 0 ? (
+                {paginatedCompanies.length === 0 ? (
                   <tr>
                     <td colSpan={7} className="text-center py-16">
                       <Building2 className="h-8 w-8 text-muted-foreground/40 mx-auto mb-2" />
@@ -213,13 +241,13 @@ export function CompaniesView({ companies, isSuperAdmin = false }: CompaniesView
                     </td>
                   </tr>
                 ) : (
-                  filteredCompanies.map((c, i) => (
+                  paginatedCompanies.map((c, i) => (
                     <tr
                       key={c.id}
                       onClick={() => router.push(`/companies/${c.company_number}`)}
                       className={cn(
                         "cursor-pointer transition-colors hover:bg-muted/50",
-                        i < filteredCompanies.length - 1 && "border-b border-border/50"
+                        i < paginatedCompanies.length - 1 && "border-b border-border/50"
                       )}
                     >
                       <td className="px-4 py-3">
@@ -293,10 +321,53 @@ export function CompaniesView({ companies, isSuperAdmin = false }: CompaniesView
               </tbody>
             </table>
           </div>
-          <div className="px-5 py-3 border-t flex items-center justify-between">
+          <div className="px-5 py-3 border-t flex flex-col sm:flex-row flex-wrap items-start sm:items-center justify-between gap-3">
             <span className="text-xs text-muted-foreground">
-              Showing {filteredCompanies.length} of {companies.length} companies
+              {totalFiltered === 0
+                ? `0 of ${companies.length} companies`
+                : `Showing ${rangeStart}-${rangeEnd} of ${totalFiltered} compan${totalFiltered !== 1 ? "ies" : "y"} (${companies.length} total in CRM)`}
             </span>
+            {totalFiltered > PAGE_SIZE && (
+              <Pagination>
+                <PaginationContent className="gap-1">
+                  <PaginationItem>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="h-8 gap-1"
+                      disabled={safePage <= 1}
+                      onClick={() => {
+                        setPage((p) => Math.max(1, p - 1));
+                        tableContainerRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+                      }}
+                    >
+                      Previous
+                    </Button>
+                  </PaginationItem>
+                  <PaginationItem>
+                    <span className="text-xs text-muted-foreground px-2 tabular-nums">
+                      Page {safePage} of {totalPages}
+                    </span>
+                  </PaginationItem>
+                  <PaginationItem>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="h-8 gap-1"
+                      disabled={safePage >= totalPages}
+                      onClick={() => {
+                        setPage((p) => Math.min(totalPages, p + 1));
+                        tableContainerRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+                      }}
+                    >
+                      Next
+                    </Button>
+                  </PaginationItem>
+                </PaginationContent>
+              </Pagination>
+            )}
           </div>
         </div>
 

@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
 import { Plus, Check, CheckCircle2 } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
 import { DotPill } from "@/components/crm/contact-360/contact-detail-shared";
 import { formatDate } from "@/lib/format";
 import { TaskSheet } from "@/components/tasks/task-sheet";
@@ -19,6 +20,7 @@ interface TasksTabProps {
   companyName: string;
   currentUserId: string;
   profiles: Profile[];
+  loading?: boolean;
 }
 
 export function CompanyTasksTab({
@@ -27,6 +29,7 @@ export function CompanyTasksTab({
   companyName,
   currentUserId,
   profiles,
+  loading = false,
 }: TasksTabProps) {
   const openCount = tasks.filter((t) => t.status !== "completed").length;
   const router = useRouter();
@@ -145,6 +148,15 @@ export function CompanyTasksTab({
       }
     }
     router.refresh();
+  }
+
+  if (loading && tasks.length === 0) {
+    return (
+      <div className="space-y-2 px-4 py-6">
+        <Skeleton className="h-12 w-full rounded-lg" />
+        <Skeleton className="h-12 w-full rounded-lg" />
+      </div>
+    );
   }
 
   return (

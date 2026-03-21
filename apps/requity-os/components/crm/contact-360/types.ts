@@ -10,6 +10,16 @@ export interface TabConfig {
   showWhen: "always" | RelationshipType[];
 }
 
+/** Server-provided badge counts for lazy-loaded Contact 360 sections */
+export interface Contact360TabCounts {
+  activities: number;
+  emails: number;
+  tasks: number;
+  loans: number;
+  pipelineDeals: number;
+  investorCommitments: number;
+}
+
 export interface ContactData {
   id: string;
   contact_number: string;

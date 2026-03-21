@@ -20,6 +20,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Skeleton } from "@/components/ui/skeleton";
 import { FileText, Upload, Download, MoreHorizontal, X, Eye, Trash2, Loader2 } from "lucide-react";
 import { relTime } from "@/components/crm/contact-360/contact-detail-shared";
 import { COMPANY_FILE_TYPES } from "@/lib/constants";
@@ -30,6 +31,7 @@ import { FILE_TYPE_LABELS, FILE_TYPE_COLORS } from "../types";
 interface FilesTabProps {
   files: CompanyFileData[];
   companyId: string;
+  loading?: boolean;
 }
 
 function formatBytes(bytes: number | null): string {
@@ -38,7 +40,7 @@ function formatBytes(bytes: number | null): string {
   return `${Math.round(bytes / 1000)} KB`;
 }
 
-export function CompanyFilesTab({ files, companyId }: FilesTabProps) {
+export function CompanyFilesTab({ files, companyId, loading = false }: FilesTabProps) {
   const [filter, setFilter] = useState("all");
   const [showUpload, setShowUpload] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -161,6 +163,15 @@ export function CompanyFilesTab({ files, companyId }: FilesTabProps) {
     } finally {
       setUploading(false);
     }
+  }
+
+  if (loading && files.length === 0) {
+    return (
+      <div className="space-y-2 px-4 py-6">
+        <Skeleton className="h-12 w-full rounded-lg" />
+        <Skeleton className="h-12 w-full rounded-lg" />
+      </div>
+    );
   }
 
   return (

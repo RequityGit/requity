@@ -42,5 +42,16 @@
 8. unified_deals left as select("*") -- UnifiedDeal type uses nearly every column.
 9. FieldConfigProvider consolidation deferred to Phase 4.
 
+## Phase 3 Key Files
+
+| Area | Files |
+|------|--------|
+| CRM lists | `components/crm/contacts-view.tsx`, `companies-view.tsx` (page state, PAGE_SIZE 50, slice filtered rows, pagination bar) |
+| Contact 360 API | `app/api/crm/contacts/[contactId]/tab-data/route.ts` |
+| Company 360 API | `app/api/crm/companies/[companyId]/tab-data/route.ts` |
+| Lazy hooks | `hooks/useContact360Lazy.ts`, `hooks/useCompany360Lazy.ts` |
+| Pages | `app/(authenticated)/(admin)/contacts/[id]/page.tsx`, `companies/[id]/page.tsx` (SSR counts + core data only) |
+| Clients | `contact-360/contact-detail-client.tsx`, `company-360/company-detail-client.tsx` and tab sections |
+
 ## Last Updated: 2026-03-21
-## Next Steps: Phase 3 - Cursor-based pagination for CRM lists, lazy-load tab data on 360 pages
+## Next Steps: Phase 4 - Realtime messaging, auth snapshot cookie, virtualization, DB indexes

@@ -17,16 +17,16 @@
 - [x] Verified deal detail page queries already parallelized with Promise.all (12 queries Phase 2, 8 queries Phase 3)
 - [ ] Consolidate field config hooks into single FieldConfigProvider at page root (deferred to Phase 4)
 
-## Phase 3: CRM Scaling (Days 4-5) - PENDING
-- [ ] Add cursor-based pagination to contacts list (page size 50)
-- [ ] Add cursor-based pagination to companies list (page size 50)
-- [ ] Lazy-load tab data on Contact 360 (defer activities, emails, tasks, loans, pipeline to tab click)
-- [ ] Lazy-load tab data on Company 360
+## Phase 3: CRM Scaling (Days 4-5) - DONE
+- [x] Add client-side pagination to contacts list (page size 50, Prev/Next, range label, reset page on search/filters)
+- [x] Add client-side pagination to companies list (page size 50)
+- [x] Lazy-load tab data on Contact 360 (API routes + useContact360Lazy; counts on SSR, full data on tab)
+- [x] Lazy-load tab data on Company 360 (API routes + useCompany360Lazy)
 
 ## Phase 4: Architecture Hardening (Days 6-7) - PENDING
-- [ ] Replace borrower message polling with Supabase Realtime subscription
-- [ ] Cache auth role data in session cookie (eliminate middleware + layout double query)
-- [ ] Add list virtualization with @tanstack/react-virtual to contacts/companies
-- [ ] Add composite database indexes (unified_deals, field_configurations, crm_contacts)
+- [ ] Replace borrower message polling with Realtime (postgres_changes for portal, broadcast for token upload pages)
+- [ ] Cache auth snapshot (user_roles + module access) in httpOnly cookie + same-request header for getSessionData
+- [ ] Add list virtualization with @tanstack/react-virtual to contacts/companies tables
+- [ ] Add composite database indexes (migration + MCP apply)
 
 ## Last Updated: 2026-03-21

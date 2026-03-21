@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
 import { useDebounce } from "@/hooks/useDebounce";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Input } from "@/components/ui/input";
@@ -54,8 +54,15 @@ import { CrmAvatar, RelPill, StageDot, getInitials } from "./crm-primitives";
 import { ClickToCallNumber } from "@/components/ui/ClickToCallNumber";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Badge } from "@/components/ui/badge";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+} from "@/components/ui/pagination";
 import Link from "next/link";
 import type { CrmContactRow } from "./crm-v2-page";
+
+const PAGE_SIZE = 50;
 
 interface TeamMember {
   id: string;
@@ -86,8 +93,10 @@ export function ContactsView({
   const [dateAdded, setDateAdded] = useState(searchParams.get("date") ?? "all");
   const [contactSortKey, setContactSortKey] = useState<string>("last_contacted_at");
   const [contactSortDir, setContactSortDir] = useState<"asc" | "desc">("desc");
+  const [page, setPage] = useState(1);
   const [deleteTarget, setDeleteTarget] = useState<{ id: string; name: string } | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const tableContainerRef = useRef<HTMLDivElement>(null);
 
   async function handleDelete() {
     if (!deleteTarget) return;
@@ -117,6 +126,10 @@ export function ContactsView({
     const str = params.toString();
     const newUrl = str ? `?${str}` : window.location.pathname;
     window.history.replaceState(null, "", newUrl);
+  }, [debouncedSearch, relFilter, stageFilter, dateAdded]);
+
+  useEffect(() => {
+    setPage(1);
   }, [debouncedSearch, relFilter, stageFilter, dateAdded]);
 
   const filteredContacts = useMemo(() => {
@@ -164,6 +177,21 @@ export function ContactsView({
 
     return result;
   }, [contacts, debouncedSearch, relFilter, stageFilter, dateAdded, contactSortKey, contactSortDir]);
+
+  const totalFiltered = filteredContacts.length;
+  const totalPages = Math.max(1, Math.ceil(totalFiltered / PAGE_SIZE));
+
+  useEffect(() => {
+    if (page > totalPages) setPage(totalPages);
+  }, [page, totalPages]);
+
+  const safePage = Math.min(page, totalPages);
+  const rangeStart = totalFiltered === 0 ? 0 : (safePage - 1) * PAGE_SIZE + 1;
+  const rangeEnd = Math.min(safePage * PAGE_SIZE, totalFiltered);
+  const paginatedContacts = filteredContacts.slice(
+    (safePage - 1) * PAGE_SIZE,
+    safePage * PAGE_SIZE
+  );
 
   const hasContactFilters = contactSearch.trim() !== "" || relFilter !== "all" || stageFilter !== "all" || dateAdded !== "all";
 
@@ -320,7 +348,7 @@ export function ContactsView({
         )}
 
         <div className="rounded-xl border bg-card overflow-hidden">
-          <div className="overflow-x-auto">
+          <div ref={tableContainerRef} className="overflow-x-auto">
             <table className="w-full border-collapse">
               <thead>
                 <tr className="border-b">
@@ -336,7 +364,7 @@ export function ContactsView({
                 </tr>
               </thead>
               <tbody>
-                {filteredContacts.length === 0 ? (
+                {paginatedContacts.length === 0 ? (
                   <tr>
                     <td colSpan={9} className="text-center py-16">
                       {hasContactFilters ? (
@@ -357,13 +385,13 @@ export function ContactsView({
                     </td>
                   </tr>
                 ) : (
-                  filteredContacts.map((c, i) => (
+                  paginatedContacts.map((c, i) => (
                     <tr
                       key={c.id}
                       onClick={() => router.push(`/contacts/${c.contact_number}`)}
                       className={cn(
                         "cursor-pointer transition-colors hover:bg-muted/50",
-                        i < filteredContacts.length - 1 && "border-b border-border/50"
+                        i < paginatedContacts.length - 1 && "border-b border-border/50"
                       )}
                     >
                       <td className="px-4 py-2.5">
@@ -503,13 +531,53 @@ export function ContactsView({
               </tbody>
             </table>
           </div>
-          <div className="px-5 py-3 border-t flex items-center justify-between">
+          <div className="px-5 py-3 border-t flex flex-col sm:flex-row flex-wrap items-start sm:items-center justify-between gap-3">
             <span className="text-xs text-muted-foreground">
-              Showing {filteredContacts.length} of {contacts.length} contacts
+              {totalFiltered === 0
+                ? `0 of ${contacts.length} contacts`
+                : `Showing ${rangeStart}-${rangeEnd} of ${totalFiltered} contact${totalFiltered !== 1 ? "s" : ""} (${contacts.length} total in CRM)`}
             </span>
-            <span className="num text-xs text-muted-foreground">
-              {filteredContacts.length} contact{filteredContacts.length !== 1 ? "s" : ""}
-            </span>
+            {totalFiltered > PAGE_SIZE && (
+              <Pagination>
+                <PaginationContent className="gap-1">
+                  <PaginationItem>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="h-8 gap-1"
+                      disabled={safePage <= 1}
+                      onClick={() => {
+                        setPage((p) => Math.max(1, p - 1));
+                        tableContainerRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+                      }}
+                    >
+                      Previous
+                    </Button>
+                  </PaginationItem>
+                  <PaginationItem>
+                    <span className="text-xs text-muted-foreground px-2 tabular-nums">
+                      Page {safePage} of {totalPages}
+                    </span>
+                  </PaginationItem>
+                  <PaginationItem>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="h-8 gap-1"
+                      disabled={safePage >= totalPages}
+                      onClick={() => {
+                        setPage((p) => Math.min(totalPages, p + 1));
+                        tableContainerRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+                      }}
+                    >
+                      Next
+                    </Button>
+                  </PaginationItem>
+                </PaginationContent>
+              </Pagination>
+            )}
           </div>
         </div>
 
