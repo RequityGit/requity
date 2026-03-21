@@ -142,6 +142,25 @@ export function useNotifications(
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  const markAsRead = useCallback(
+    async (notificationId: string) => {
+      const { error } = await q.rpc("mark_notification_read", {
+        p_notification_id: notificationId,
+      });
+      if (!error) {
+        setNotifications((prev) =>
+          prev.map((n) =>
+            n.id === notificationId
+              ? { ...n, read_at: n.read_at ?? new Date().toISOString() }
+              : n
+          )
+        );
+      }
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    []
+  );
+
   const unarchiveNotification = useCallback(
     async (notificationId: string) => {
       const { error } = await q.rpc("unarchive_notification", {
@@ -160,6 +179,7 @@ export function useNotifications(
     loading,
     hasMore,
     loadMore,
+    markAsRead,
     archiveNotification,
     archiveAll,
     unarchiveNotification,

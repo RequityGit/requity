@@ -13,7 +13,7 @@ export function useUnreadCount(userId: string | undefined) {
   const fetchCount = useCallback(async () => {
     if (!userId) return;
     const { data, error } = await nq(supabaseRef.current).rpc(
-      "get_active_notification_count"
+      "get_unread_notification_count"
     );
     if (!error && data !== null) {
       setCount(data as number);

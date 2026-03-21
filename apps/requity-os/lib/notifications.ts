@@ -49,6 +49,7 @@ export interface Notification {
   entity_id: string | null;
   entity_label: string | null;
   action_url: string | null;
+  read_at: string | null;
   archived_at: string | null;
 }
 
@@ -207,6 +208,26 @@ export function getNotificationRoute(
   }
 
   return ROLE_DASHBOARDS[activeRole] ?? "/pipeline";
+}
+
+// Entity type display labels
+const ENTITY_TYPE_LABELS: Record<string, string> = {
+  loan: "Loan",
+  borrower: "Borrower",
+  investor: "Investor",
+  fund: "Fund",
+  condition: "Condition",
+  draw_request: "Draw Request",
+  payment: "Payment",
+  task: "Task",
+  project: "Project",
+  contact: "Contact",
+  company: "Company",
+};
+
+export function getEntityTypeLabel(entityType: string | null): string | null {
+  if (!entityType) return null;
+  return ENTITY_TYPE_LABELS[entityType] ?? entityType;
 }
 
 // Relative time formatting
