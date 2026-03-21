@@ -50,7 +50,7 @@ export default async function CompanyDetailPage({ params }: PageProps) {
   // Fetch company by company_number
   const { data: company } = await admin
     .from("companies")
-    .select("*")
+    .select("id, company_number, name, company_type, company_types, company_subtype, phone, email, website, address_line1, address_line2, city, state, zip, country, is_active, primary_contact_id, referral_contact_id, notes, created_at, updated_at, lender_programs, asset_types, geographies, company_capabilities, other_names, source, title_company_verified")
     .eq("company_number", companyNumber)
     .single();
 
@@ -95,27 +95,27 @@ export default async function CompanyDetailPage({ params }: PageProps) {
     // Activities
     admin
       .from("crm_activities")
-      .select("*")
+      .select("id, activity_type, subject, description, direction, call_duration_seconds, performed_by, performed_by_name, created_at")
       .eq("company_id", company.id)
       .is("deleted_at", null)
       .order("created_at", { ascending: false }),
     // Files
     admin
       .from("company_files")
-      .select("*")
+      .select("id, file_name, file_type, file_size, mime_type, storage_path, uploaded_by, uploaded_at, notes")
       .eq("company_id", company.id)
       .order("uploaded_at", { ascending: false }),
     // Tasks
     admin
       .from("ops_tasks")
-      .select("*")
+      .select("id, title, description, category, priority, status, due_date, assigned_to, completed_at, created_at")
       .eq("linked_entity_type", "company")
       .eq("linked_entity_id", company.id)
       .order("created_at", { ascending: false }),
     // Notes (from unified notes table)
     admin
       .from("notes" as never)
-      .select("*" as never)
+      .select("id, body, author_id, is_pinned, created_at" as never)
       .eq("company_id" as never, company.id as never)
       .is("deleted_at" as never, null)
       .order("is_pinned" as never, { ascending: false })
@@ -123,7 +123,7 @@ export default async function CompanyDetailPage({ params }: PageProps) {
     // Wire instructions
     admin
       .from("company_wire_instructions")
-      .select("*")
+      .select("id, bank_name, account_name, account_number, routing_number, wire_type, updated_at, updated_by")
       .eq("company_id", company.id)
       .order("updated_at", { ascending: false })
       .limit(1)

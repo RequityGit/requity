@@ -44,7 +44,8 @@ export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
     const storagePath = body.storage_path as string | null;
-    const cardTypeId = body.card_type_id as string | null;
+    const capitalSide = body.capital_side as string | null;
+    const assetClass = body.asset_class as string | null;
 
     if (!storagePath) {
       return NextResponse.json(
@@ -62,15 +63,12 @@ export async function POST(req: NextRequest) {
 
     const admin = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
-    // Optionally look up card type label for prompt context (backward compat)
+    // Build deal type label from capital_side + asset_class for prompt context
     let dealTypeLabel = "real estate";
-    if (cardTypeId) {
-      const { data: cardType } = await admin
-        .from("unified_card_types")
-        .select("label")
-        .eq("id", cardTypeId)
-        .single();
-      if (cardType) dealTypeLabel = cardType.label;
+    if (capitalSide === "equity") {
+      dealTypeLabel = "commercial equity";
+    } else if (assetClass) {
+      dealTypeLabel = `${assetClass.replace(/_/g, " ")} debt`;
     }
 
     // Reject unsupported file types early

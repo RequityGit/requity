@@ -168,8 +168,8 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // Auto-detect card type
-    let suggestedCardTypeId: string | null = null;
+    // Auto-detect deal type (no DB lookup needed)
+    const suggestedCardTypeId: string | null = null; // deprecated, kept for schema compat
     const loanPurpose = (
       body.deal_loan_purpose ||
       body.deal_type ||
@@ -178,43 +178,12 @@ export async function POST(req: NextRequest) {
       .toString()
       .toLowerCase();
 
+    // Detect loan_type for downstream flavor derivation
     if (loanPurpose) {
-      const { data: cardTypes } = await admin
-        .from("unified_card_types")
-        .select("id, label, slug");
-
-      if (cardTypes && cardTypes.length > 0) {
-        const labelMatch = (keywords: string[]) =>
-          cardTypes.find((ct) =>
-            keywords.some(
-              (kw) =>
-                ct.label.toLowerCase().includes(kw) ||
-                ct.slug?.toLowerCase().includes(kw)
-            )
-          );
-
-        if (
-          loanPurpose.includes("fix") ||
-          loanPurpose.includes("flip")
-        ) {
-          suggestedCardTypeId = labelMatch(["fix", "flip"])?.id || null;
-        } else if (
-          loanPurpose.includes("construction") ||
-          loanPurpose.includes("ground")
-        ) {
-          suggestedCardTypeId =
-            labelMatch(["construction", "ground"])?.id || null;
-        } else if (loanPurpose.includes("bridge")) {
-          suggestedCardTypeId = labelMatch(["bridge"])?.id || null;
-        } else if (
-          loanPurpose.includes("dscr") ||
-          loanPurpose.includes("rental")
-        ) {
-          suggestedCardTypeId = labelMatch(["dscr", "rental"])?.id || null;
-        } else if (loanPurpose.includes("multifamily")) {
-          suggestedCardTypeId =
-            labelMatch(["multifamily", "commercial"])?.id || null;
-        }
+      if (loanPurpose.includes("fix") || loanPurpose.includes("flip")) {
+        if (!dealFields.loan_type) dealFields.loan_type = { value: "rtl", confidence: 0.6, source: "auto-detect" };
+      } else if (loanPurpose.includes("dscr") || loanPurpose.includes("rental")) {
+        if (!dealFields.loan_type) dealFields.loan_type = { value: "dscr", confidence: 0.6, source: "auto-detect" };
       }
     }
 

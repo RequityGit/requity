@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useMemo } from "react";
+import React, { useMemo, useCallback } from "react";
+import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { Link2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
@@ -33,6 +34,12 @@ function DealCardInner({
   formulaMap,
   onClick,
 }: DealCardProps) {
+  const router = useRouter();
+  const dealHref = `/pipeline/${deal.deal_number || deal.id}`;
+  const prefetchDeal = useCallback(() => {
+    router.prefetch(dealHref);
+  }, [router, dealHref]);
+
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
     id: deal.id,
     data: { stage: deal.stage },
@@ -59,6 +66,7 @@ function DealCardInner({
       ref={setNodeRef}
       {...listeners}
       {...attributes}
+      onPointerEnter={prefetchDeal}
       onClick={onClick}
       onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") onClick(); }}
       className={cn(

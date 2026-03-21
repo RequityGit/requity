@@ -6,7 +6,6 @@ import { evaluateFormula } from "@/lib/formula-engine";
 
 export type CapitalSide = "debt" | "equity";
 export type UnifiedStage = "lead" | "analysis" | "negotiation" | "execution" | "closed";
-export type CardTypeStatus = "active" | "draft" | "planned" | "archived";
 export type DealStatus = "active" | "won" | "lost" | "on_hold";
 export type AlertLevel = "normal" | "warn" | "alert";
 
@@ -60,33 +59,9 @@ export interface FieldGroupDef {
   fields: string[];
 }
 
-export interface UnifiedCardType {
-  id: string;
-  slug: string;
-  label: string;
-  capital_side: CapitalSide;
-  category: string;
-  description: string | null;
-  card_metrics: CardMetricDef[];
-  card_icon: string;
-  contact_roles: string[];
-  applicable_asset_classes: string[] | null;
-  status: CardTypeStatus;
-  sort_order: number;
-  uw_model_key: string;
-  uw_fields: UwFieldDef[];
-  uw_outputs: UwOutputDef[];
-  uw_grid: GridTemplateDef | null;
-  uw_field_refs: CardTypeFieldRef[];
-  detail_tabs: string[];
-  detail_field_groups: FieldGroupDef[];
-  property_fields: UwFieldDef[];
-  property_field_groups: FieldGroupDef[];
-  property_field_refs: CardTypeFieldRef[];
-  contact_fields: UwFieldDef[];
-  contact_field_groups: FieldGroupDef[];
-  contact_field_refs: CardTypeFieldRef[];
-}
+// DEPRECATED: UnifiedCardType interface removed. Deal display metadata is now
+// derived deterministically via getDealDisplayConfig() in
+// lib/pipeline/deal-display-config.ts using asset_class + capital_side + loan_type.
 
 export interface UnifiedDeal {
   id: string;
@@ -117,7 +92,6 @@ export interface UnifiedDeal {
   google_sheet_id?: string | null;
   google_sheet_url?: string | null;
   // Joined
-  card_type?: UnifiedCardType;
   primary_contact?: { id: string; first_name: string; last_name: string } | null;
   company?: { id: string; name: string } | null;
   // Computed client-side
@@ -220,12 +194,8 @@ export const ASSET_CLASS_LABELS: Record<AssetClass, string> = {
   land: "Land",
 };
 
-export const CARD_TYPE_SHORT_LABELS: Record<string, string> = {
-  res_debt_dscr: "DSCR",
-  res_debt_rtl: "RTL",
-  comm_equity: "Comm Eq",
-  comm_debt: "Comm Debt",
-};
+// DEPRECATED: CARD_TYPE_SHORT_LABELS removed. Use getDealShortLabel() from
+// lib/pipeline/deal-display-config.ts instead.
 
 export const CAPITAL_SIDE_COLORS: Record<CapitalSide, string> = {
   debt: "bg-blue-500/10 text-blue-600 dark:text-blue-400",
