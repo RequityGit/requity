@@ -35,7 +35,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Switch } from "@/components/ui/switch";
-import { Trash2, Paperclip, X, FileText, Repeat, Link2, ExternalLink, MessageSquare, ChevronDown, ChevronUp, Shield, Check, RotateCcw, AlertCircle } from "lucide-react";
+import { Trash2, Paperclip, X, FileText, Repeat, Link2, ExternalLink, MessageSquare, ChevronDown, ChevronUp, Shield, Check, RotateCcw, AlertCircle, Upload, Terminal, Eye, Image, Download } from "lucide-react";
 import Link from "next/link";
 import { UnifiedNotes } from "@/components/shared/UnifiedNotes";
 import { RecurrencePanel } from "@/app/(authenticated)/(admin)/tasks/recurrence-panel";
@@ -131,6 +131,10 @@ export function TaskSheet({
     { id: string; file_name: string; file_type: string | null; storage_path: string }[]
   >([]);
   const [uploading, setUploading] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
+  const [stagedFiles, setStagedFiles] = useState<File[]>([]);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [previewName, setPreviewName] = useState<string>("");
 
   // Reset form when task changes
   useEffect(() => {
@@ -188,6 +192,7 @@ export function TaskSheet({
       setNewApprovalInstructions("");
     }
     setAttachments([]);
+    setStagedFiles([]);
     setCommentsOpen(false);
   }, [task, defaultLinkedEntity]);
 
@@ -234,8 +239,80 @@ export function TaskSheet({
     []
   );
 
+  const handleDragOver = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(true);
+  }, []);
+
+  const handleDragLeave = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+  }, []);
+
+  const handleDrop = useCallback(
+    (e: React.DragEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      setIsDragging(false);
+      if (!e.dataTransfer.files?.length) return;
+      if (isNew) {
+        setStagedFiles((prev) => [...prev, ...Array.from(e.dataTransfer.files)]);
+      } else {
+        uploadFiles(Array.from(e.dataTransfer.files));
+      }
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [isNew]
+  );
+
+  const uploadFiles = async (files: File[]) => {
+    if (!task) return;
+    setUploading(true);
+    const supabase = createClient();
+
+    for (const file of files) {
+      const path = `tasks/${task.id}/${Date.now()}_${file.name}`;
+      const { error: uploadError } = await supabase.storage
+        .from("loan-documents")
+        .upload(path, file);
+
+      if (uploadError) {
+        toast({ title: "Upload failed", description: uploadError.message, variant: "destructive" });
+        continue;
+      }
+
+      const { data: inserted, error: insertError } = await supabase
+        .from("ops_task_attachments" as never)
+        .insert({
+          task_id: task.id,
+          file_name: file.name,
+          file_type: file.type || null,
+          storage_path: path,
+          file_size_bytes: file.size,
+          uploaded_by: currentUserId,
+        } as never)
+        .select()
+        .single();
+
+      if (insertError) {
+        toast({ title: "Failed to save attachment", description: insertError.message, variant: "destructive" });
+      } else if (inserted) {
+        setAttachments((prev) => [...prev, inserted as never]);
+      }
+    }
+    setUploading(false);
+  };
+
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (!task || !e.target.files?.length) return;
+    if (!e.target.files?.length) return;
+    if (isNew) {
+      setStagedFiles((prev) => [...prev, ...Array.from(e.target.files!)]);
+      e.target.value = "";
+      return;
+    }
+    if (!task) return;
     setUploading(true);
     const supabase = createClient();
 
@@ -370,6 +447,26 @@ export function TaskSheet({
               approvalInstructions: newApprovalInstructions.trim() || undefined,
             });
           }
+          // Upload staged files for new task
+          if (stagedFiles.length > 0) {
+            for (const file of stagedFiles) {
+              const path = `tasks/${newTask.id}/${Date.now()}_${file.name}`;
+              const { error: upErr } = await supabase.storage
+                .from("loan-documents")
+                .upload(path, file);
+              if (upErr) continue;
+              await supabase
+                .from("ops_task_attachments" as never)
+                .insert({
+                  task_id: newTask.id,
+                  file_name: file.name,
+                  file_type: file.type || null,
+                  storage_path: path,
+                  file_size_bytes: file.size,
+                  uploaded_by: currentUserId,
+                } as never);
+            }
+          }
           onSaved(newTask);
         }
       } else {
@@ -411,6 +508,76 @@ export function TaskSheet({
     } else {
       onDeleted(task.id);
       onClose();
+    }
+  };
+
+  const handleSendToClaudeCode = async () => {
+    if (!task) return;
+    const supabase = createClient();
+    const lines: string[] = [];
+
+    lines.push(`# Task: ${task.title}`);
+    if (task.category) lines.push(`Category: ${task.category}`);
+    if (task.priority) lines.push(`Priority: ${task.priority}`);
+    if (task.linked_entity_label) lines.push(`Linked to: ${task.linked_entity_label} (${task.linked_entity_type})`);
+    lines.push("");
+    if (task.description) {
+      lines.push("## Description");
+      lines.push(task.description);
+      lines.push("");
+    }
+
+    // Download image attachments to /tmp and include paths
+    const imageAttachments = attachments.filter(
+      (a) => a.file_type?.startsWith("image/")
+    );
+    if (imageAttachments.length > 0) {
+      lines.push("## Screenshots");
+      for (const att of imageAttachments) {
+        const { data } = await supabase.storage
+          .from("loan-documents")
+          .createSignedUrl(att.storage_path, 3600);
+        if (data?.signedUrl) {
+          lines.push(`- ![${att.file_name}](${data.signedUrl})`);
+        }
+      }
+      lines.push("");
+    }
+
+    // Non-image attachments
+    const docAttachments = attachments.filter(
+      (a) => !a.file_type?.startsWith("image/")
+    );
+    if (docAttachments.length > 0) {
+      lines.push("## Attached Files");
+      for (const att of docAttachments) {
+        lines.push(`- ${att.file_name} (${att.file_type ?? "unknown"})`);
+      }
+      lines.push("");
+    }
+
+    lines.push("## Instructions");
+    lines.push("Please investigate and fix this issue. Read any screenshots above for visual context.");
+
+    const prompt = lines.join("\n");
+    await navigator.clipboard.writeText(prompt);
+    toast({ title: "Copied to clipboard", description: "Paste into Claude Code to start working on this task." });
+  };
+
+  const handlePreviewAttachment = async (att: { file_name: string; storage_path: string; file_type: string | null }) => {
+    const supabase = createClient();
+    const { data } = await supabase.storage
+      .from("loan-documents")
+      .createSignedUrl(att.storage_path, 3600);
+    if (data?.signedUrl) {
+      if (att.file_type?.startsWith("image/")) {
+        setPreviewName(att.file_name);
+        setPreviewUrl(data.signedUrl);
+      } else {
+        window.open(data.signedUrl, "_blank");
+      }
+    } else {
+      toast({ title: "Could not load file", variant: "destructive" });
     }
   };
 
@@ -911,42 +1078,99 @@ export function TaskSheet({
               )}
             </div>
 
-            {/* Attachments — only for existing tasks */}
-            {!isNew && (
-              <div className="space-y-2">
-                <Label className="text-xs font-semibold text-foreground">
-                  Attachments
-                </Label>
-                <input
-                  ref={fileRef}
-                  type="file"
-                  accept="image/*,.pdf,.doc,.docx,.xls,.xlsx"
-                  multiple
-                  onChange={handleFileUpload}
-                  className="hidden"
-                />
-                <button
-                  type="button"
-                  onClick={() => fileRef.current?.click()}
-                  className="flex items-center gap-1.5 justify-center w-full py-1.5 rounded-md border border-dashed border-border text-[12px] font-medium text-muted-foreground hover:border-ring/50 transition-colors"
-                >
-                  <Paperclip className="h-[13px] w-[13px]" strokeWidth={1.5} />
-                  {uploading ? "Uploading..." : "Add files"}
-                </button>
-                {attachments.length > 0 && (
-                  <div className="space-y-1">
-                    {attachments.map((att) => (
+            {/* Attachments — drag & drop zone */}
+            <div className="space-y-2">
+              <Label className="text-xs font-semibold text-foreground">
+                Attachments
+              </Label>
+              <input
+                ref={fileRef}
+                type="file"
+                accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.csv"
+                multiple
+                onChange={handleFileUpload}
+                className="hidden"
+              />
+              <div
+                onDragOver={handleDragOver}
+                onDragLeave={handleDragLeave}
+                onDrop={handleDrop}
+                onClick={() => fileRef.current?.click()}
+                className={`flex flex-col items-center justify-center gap-1 py-3 rounded-md border border-dashed cursor-pointer transition-colors ${
+                  isDragging
+                    ? "border-primary bg-primary/5"
+                    : "border-border hover:border-ring/50"
+                }`}
+              >
+                <Upload className="h-4 w-4 text-muted-foreground" strokeWidth={1.5} />
+                <span className="text-[12px] text-muted-foreground">
+                  {uploading ? "Uploading..." : "Drop files here or click to browse"}
+                </span>
+              </div>
+              {/* Staged files for new tasks */}
+              {isNew && stagedFiles.length > 0 && (
+                <div className="space-y-1">
+                  {stagedFiles.map((file, i) => (
+                    <div
+                      key={`${file.name}-${i}`}
+                      className="flex items-center gap-2 px-2 py-1.5 bg-secondary rounded-md border border-border"
+                    >
+                      <FileText className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" strokeWidth={1.5} />
+                      <span className="text-[12px] font-medium flex-1 truncate">{file.name}</span>
+                      <span className="text-[10px] text-muted-foreground">
+                        {(file.size / 1024).toFixed(0)}KB
+                      </span>
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setStagedFiles((prev) => prev.filter((_, idx) => idx !== i));
+                        }}
+                        className="text-muted-foreground hover:text-foreground p-0.5"
+                      >
+                        <X className="h-3.5 w-3.5" strokeWidth={1.5} />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+              {/* Uploaded attachments for existing tasks */}
+              {!isNew && attachments.length > 0 && (
+                <div className="space-y-1">
+                  {attachments.map((att) => {
+                    const isImage = att.file_type?.startsWith("image/");
+                    return (
                       <div
                         key={att.id}
-                        className="flex items-center gap-2 px-2 py-1.5 bg-secondary rounded-md border border-border"
+                        className="flex items-center gap-2 px-2 py-1.5 bg-secondary rounded-md border border-border group"
                       >
-                        <FileText
-                          className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0"
-                          strokeWidth={1.5}
-                        />
-                        <span className="text-[12px] font-medium flex-1 truncate">
+                        {isImage ? (
+                          <Image
+                            className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0"
+                            strokeWidth={1.5}
+                          />
+                        ) : (
+                          <FileText
+                            className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0"
+                            strokeWidth={1.5}
+                          />
+                        )}
+                        <button
+                          type="button"
+                          onClick={() => handlePreviewAttachment(att)}
+                          className="text-[12px] font-medium flex-1 truncate text-left hover:text-primary transition-colors cursor-pointer"
+                          title={isImage ? "Click to preview" : "Click to open"}
+                        >
                           {att.file_name}
-                        </span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handlePreviewAttachment(att)}
+                          className="text-muted-foreground hover:text-foreground p-0.5 opacity-0 group-hover:opacity-100 transition-opacity"
+                          title="Preview"
+                        >
+                          <Eye className="h-3.5 w-3.5" strokeWidth={1.5} />
+                        </button>
                         <button
                           type="button"
                           onClick={() => handleRemoveAttachment(att.id)}
@@ -955,11 +1179,11 @@ export function TaskSheet({
                           <X className="h-3.5 w-3.5" strokeWidth={1.5} />
                         </button>
                       </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            )}
+                    );
+                  })}
+                </div>
+              )}
+            </div>
 
             {/* Comments — collapsible, closed by default */}
             {task && (
@@ -994,6 +1218,7 @@ export function TaskSheet({
         {/* Footer */}
         <div className="flex items-center justify-between border-t border-border px-6 py-4 shrink-0">
           {!isNew ? (
+            <div className="flex items-center gap-2">
             <AlertDialog>
               <AlertDialogTrigger asChild>
                 <Button
@@ -1024,6 +1249,17 @@ export function TaskSheet({
                 </AlertDialogFooter>
               </AlertDialogContent>
             </AlertDialog>
+            <Button
+              variant="outline"
+              size="sm"
+              className="gap-1.5 text-xs"
+              onClick={handleSendToClaudeCode}
+              title="Copy task as prompt for Claude Code"
+            >
+              <Terminal className="h-3.5 w-3.5" strokeWidth={1.5} />
+              Send to Claude Code
+            </Button>
+            </div>
           ) : (
             <div />
           )}
@@ -1041,6 +1277,43 @@ export function TaskSheet({
           </div>
         </div>
       </DialogContent>
+
+      {/* Image Preview Overlay */}
+      {previewUrl && (
+        <div
+          className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm"
+          onClick={() => setPreviewUrl(null)}
+        >
+          <div className="relative max-w-[90vw] max-h-[90vh] flex flex-col items-center gap-3">
+            <div className="flex items-center gap-3 text-white">
+              <span className="text-sm font-medium">{previewName}</span>
+              <a
+                href={previewUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={(e) => e.stopPropagation()}
+                className="p-1.5 rounded-md hover:bg-white/10 transition-colors"
+                title="Open in new tab"
+              >
+                <Download className="h-4 w-4" strokeWidth={1.5} />
+              </a>
+              <button
+                onClick={() => setPreviewUrl(null)}
+                className="p-1.5 rounded-md hover:bg-white/10 transition-colors"
+              >
+                <X className="h-4 w-4" strokeWidth={1.5} />
+              </button>
+            </div>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={previewUrl}
+              alt={previewName}
+              className="max-w-[85vw] max-h-[80vh] rounded-lg object-contain shadow-2xl"
+              onClick={(e) => e.stopPropagation()}
+            />
+          </div>
+        </div>
+      )}
 
       {/* Submit for Approval confirmation */}
       <AlertDialog open={showSubmitConfirm} onOpenChange={setShowSubmitConfirm}>

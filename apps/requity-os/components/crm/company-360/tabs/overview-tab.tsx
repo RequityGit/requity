@@ -2,7 +2,6 @@
 
 import { useState, useCallback, useMemo, useTransition, type ReactNode } from "react";
 import {
-  TrendingUp,
   Building2,
   MapPin,
   Landmark,
@@ -27,7 +26,6 @@ import {
 } from "@/components/ui/select";
 import {
   SectionCard,
-  MetricCard,
   FieldRow,
 } from "@/components/crm/contact-360/contact-detail-shared";
 import {
@@ -36,6 +34,7 @@ import {
 } from "@/components/crm/shared-field-renderer";
 import { useToast } from "@/components/ui/use-toast";
 import { formatDate } from "@/lib/format";
+import { US_STATES } from "@/lib/constants";
 import { updateCompanyAction } from "@/app/(authenticated)/(admin)/companies/actions";
 import { AddressAutocomplete, type ParsedAddress } from "@/components/ui/address-autocomplete";
 import type {
@@ -74,10 +73,13 @@ const COMPANY_TYPE_OPTIONS = Object.entries(COMPANY_TYPE_CONFIG).map(
   ([value, { label }]) => ({ value, label })
 );
 
+const GEOGRAPHY_OPTIONS: Record<string, string> = Object.fromEntries(
+  US_STATES.map((s) => [s.value, s.value])
+);
+
 // Default section order used when no layout data exists in the database
 const DEFAULT_SECTION_ORDER: SectionLayout[] = [
-  { section_key: "lender_performance", display_order: 0, is_visible: true, visibility_rule: "is_lender", section_type: "system", section_label: "Lender Performance", section_icon: "trending-up" },
-  { section_key: "company_information", display_order: 1, is_visible: true, visibility_rule: null, section_type: "fields", section_label: "Company Information", section_icon: "building-2" },
+  { section_key: "company_information", display_order: 0, is_visible: true, visibility_rule: null, section_type: "fields", section_label: "Company Information", section_icon: "building-2" },
   { section_key: "address", display_order: 2, is_visible: true, visibility_rule: null, section_type: "fields", section_label: "Address", section_icon: "map-pin" },
   { section_key: "lender_details", display_order: 3, is_visible: true, visibility_rule: "is_lender", section_type: "fields", section_label: "Lender Details", section_icon: "landmark" },
   { section_key: "capabilities_coverage", display_order: 4, is_visible: true, visibility_rule: "not_lender", section_type: "fields", section_label: "Capabilities & Coverage", section_icon: "target" },
@@ -111,6 +113,58 @@ function ChipGroup({
       {items.length === 0 && (
         <span className="text-xs text-muted-foreground italic">None configured</span>
       )}
+    </div>
+  );
+}
+
+function EditableChipGroup({
+  field,
+  selected,
+  options,
+  color,
+  disabled,
+  onChange,
+}: {
+  field: string;
+  selected: string[];
+  options: Record<string, string>;
+  color: string;
+  disabled?: boolean;
+  onChange: (field: string, value: string[]) => void;
+}) {
+  function toggle(key: string) {
+    if (disabled) return;
+    const next = selected.includes(key)
+      ? selected.filter((k) => k !== key)
+      : [...selected, key];
+    onChange(field, next);
+  }
+
+  return (
+    <div className="flex gap-1.5 flex-wrap">
+      {Object.entries(options).map(([key, label]) => {
+        const active = selected.includes(key);
+        return (
+          <button
+            key={key}
+            type="button"
+            disabled={disabled}
+            onClick={() => toggle(key)}
+            className={cn(
+              "inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[11px] font-medium border whitespace-nowrap transition-colors",
+              "hover:opacity-80 disabled:opacity-50 disabled:cursor-not-allowed",
+              active ? "text-white" : "opacity-40 hover:opacity-70",
+            )}
+            style={
+              active
+                ? { borderColor: color, backgroundColor: color, color: "#fff" }
+                : { borderColor: color, color }
+            }
+          >
+            {label}
+          </button>
+        );
+      })}
     </div>
   );
 }
@@ -155,6 +209,18 @@ export function CompanyOverviewTab({
         updates.company_type = (currentVal as string[])[0];
       }
       const result = await updateCompanyAction(updates as any);
+      if ("error" in result && result.error) {
+        toast({ title: "Error saving", description: result.error, variant: "destructive" });
+        setLocalData((prev) => ({ ...prev, [field]: prevVal }));
+      }
+    });
+  }
+
+  function handleLenderArrayChange(field: string, value: string[]) {
+    const prevVal = localData[field];
+    setLocalData((prev) => ({ ...prev, [field]: value }));
+    startTransition(async () => {
+      const result = await updateCompanyAction({ id: company.id, [field]: value } as any);
       if ("error" in result && result.error) {
         toast({ title: "Error saving", description: result.error, variant: "destructive" });
         setLocalData((prev) => ({ ...prev, [field]: prevVal }));
@@ -402,19 +468,6 @@ export function CompanyOverviewTab({
   }
 
   const sectionContent: Record<string, ReactNode> = {
-    lender_performance: isLender ? (
-      <SectionCard title="Lender Performance" icon={TrendingUp} key="lender_performance">
-        <div className="flex gap-5 flex-wrap">
-          <MetricCard label="Deals Submitted" value="\u2014" />
-          <MetricCard label="Deals Funded" value="\u2014" />
-          <MetricCard label="Hit Rate" value="\u2014" mono />
-          <MetricCard label="Funded Volume" value="\u2014" mono />
-          <MetricCard label="Avg Rate" value="\u2014" mono />
-          <MetricCard label="Avg Close Time" value="\u2014" mono />
-        </div>
-      </SectionCard>
-    ) : null,
-
     company_information: (
       <SectionCard title="Company Information" icon={Building2} key="company_information">
         {sectionFields.company_information?.length
@@ -442,19 +495,47 @@ export function CompanyOverviewTab({
         <div className="flex flex-col gap-5">
           <div>
             <div className="rq-micro-label mb-2">Programs</div>
-            <ChipGroup items={company.lender_programs ?? []} labelMap={PROGRAM_LABELS} color="#3B82F6" />
+            <EditableChipGroup
+              field="lender_programs"
+              selected={(localData.lender_programs as string[]) ?? []}
+              options={PROGRAM_LABELS}
+              color="#3B82F6"
+              disabled={pending}
+              onChange={handleLenderArrayChange}
+            />
           </div>
           <div>
             <div className="rq-micro-label mb-2">Asset Types</div>
-            <ChipGroup items={company.asset_types ?? []} labelMap={ASSET_LABELS} color="#E5930E" />
+            <EditableChipGroup
+              field="asset_types"
+              selected={(localData.asset_types as string[]) ?? []}
+              options={ASSET_LABELS}
+              color="#E5930E"
+              disabled={pending}
+              onChange={handleLenderArrayChange}
+            />
           </div>
           <div>
             <div className="rq-micro-label mb-2">Geographies</div>
-            <ChipGroup items={company.geographies ?? []} labelMap={{}} color="#22A861" />
+            <EditableChipGroup
+              field="geographies"
+              selected={(localData.geographies as string[]) ?? []}
+              options={GEOGRAPHY_OPTIONS}
+              color="#22A861"
+              disabled={pending}
+              onChange={handleLenderArrayChange}
+            />
           </div>
           <div>
             <div className="rq-micro-label mb-2">Capabilities</div>
-            <ChipGroup items={company.company_capabilities ?? []} labelMap={CAPABILITY_LABELS} color="#8B5CF6" />
+            <EditableChipGroup
+              field="company_capabilities"
+              selected={(localData.company_capabilities as string[]) ?? []}
+              options={CAPABILITY_LABELS}
+              color="#8B5CF6"
+              disabled={pending}
+              onChange={handleLenderArrayChange}
+            />
           </div>
         </div>
       </SectionCard>

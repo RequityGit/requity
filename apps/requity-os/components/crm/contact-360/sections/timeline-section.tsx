@@ -84,6 +84,7 @@ export const TimelineSection = forwardRef<HTMLDivElement, Props>(
               currentUserId={currentUserId}
               onComposeEmail={onComposeEmail}
               logCallTrigger={logCallTrigger}
+              onRefreshTimeline={timelineQ.refresh}
             />
           )}
         </div>

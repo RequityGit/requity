@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -26,7 +26,7 @@ import {
 import { useToast } from "@/components/ui/use-toast";
 import { DatePicker } from "@/components/ui/date-picker";
 import { Switch } from "@/components/ui/switch";
-import { PlusCircle, Loader2, Shield, AlertCircle } from "lucide-react";
+import { PlusCircle, Loader2, Shield, AlertCircle, Paperclip, X, FileText, Upload } from "lucide-react";
 import { createTaskApproval } from "@/app/(authenticated)/(admin)/tasks/actions";
 import type { OpsProject } from "./ProjectCard";
 import type { TeamMember } from "./OperationsView";
@@ -78,6 +78,11 @@ export function AddTaskDialog({ projects, teamMembers, externalOpen, onExternalO
   const [approvalInstructions, setApprovalInstructions] = useState("");
   const [selectedAssigneeId, setSelectedAssigneeId] = useState("");
 
+  // File attachment state
+  const fileRef = useRef<HTMLInputElement>(null);
+  const [stagedFiles, setStagedFiles] = useState<File[]>([]);
+  const [isDragging, setIsDragging] = useState(false);
+
   // Recurrence state
   const [recurrencePattern, setRecurrencePattern] = useState("weekly");
   const [recurrenceDaysOfWeek, setRecurrenceDaysOfWeek] = useState<number[]>([]);
@@ -87,12 +92,42 @@ export function AddTaskDialog({ projects, teamMembers, externalOpen, onExternalO
   const [recurrenceStartDate, setRecurrenceStartDate] = useState("");
   const [recurrenceEndDate, setRecurrenceEndDate] = useState("");
 
+  const addFiles = useCallback((files: FileList | File[]) => {
+    const arr = Array.from(files);
+    setStagedFiles((prev) => [...prev, ...arr]);
+  }, []);
+
+  const handleDragOver = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(true);
+  }, []);
+
+  const handleDragLeave = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+  }, []);
+
+  const handleDrop = useCallback(
+    (e: React.DragEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      setIsDragging(false);
+      if (e.dataTransfer.files?.length) {
+        addFiles(e.dataTransfer.files);
+      }
+    },
+    [addFiles]
+  );
+
   function resetForm() {
     setForm(INITIAL_FORM);
     setRequiresApproval(false);
     setApproverId("");
     setApprovalInstructions("");
     setSelectedAssigneeId("");
+    setStagedFiles([]);
     setRecurrencePattern("weekly");
     setRecurrenceDaysOfWeek([]);
     setRecurrenceDayOfMonth(1);
@@ -181,6 +216,32 @@ export function AddTaskDialog({ projects, teamMembers, externalOpen, onExternalO
         });
         if (!approvalResult.success) {
           console.error("Failed to create approval record:", approvalResult.error);
+        }
+      }
+
+      // Upload staged files
+      if (insertedTask?.id && stagedFiles.length > 0) {
+        for (const file of stagedFiles) {
+          const path = `tasks/${insertedTask.id}/${Date.now()}_${file.name}`;
+          const { error: uploadError } = await supabase.storage
+            .from("loan-documents")
+            .upload(path, file);
+
+          if (uploadError) {
+            toast({ title: "Upload failed", description: `${file.name}: ${uploadError.message}`, variant: "destructive" });
+            continue;
+          }
+
+          await supabase
+            .from("ops_task_attachments" as never)
+            .insert({
+              task_id: insertedTask.id,
+              file_name: file.name,
+              file_type: file.type || null,
+              storage_path: path,
+              file_size_bytes: file.size,
+              uploaded_by: user.id,
+            } as never);
         }
       }
 
@@ -366,6 +427,64 @@ export function AddTaskDialog({ projects, teamMembers, externalOpen, onExternalO
               }
               rows={2}
             />
+          </div>
+
+          {/* Attachments — drag & drop zone */}
+          <div className="space-y-1.5">
+            <Label>Attachments</Label>
+            <input
+              ref={fileRef}
+              type="file"
+              accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.csv"
+              multiple
+              onChange={(e) => {
+                if (e.target.files?.length) addFiles(e.target.files);
+                e.target.value = "";
+              }}
+              className="hidden"
+            />
+            <div
+              onDragOver={handleDragOver}
+              onDragLeave={handleDragLeave}
+              onDrop={handleDrop}
+              onClick={() => fileRef.current?.click()}
+              className={`flex flex-col items-center justify-center gap-1 py-3 rounded-md border border-dashed cursor-pointer transition-colors ${
+                isDragging
+                  ? "border-primary bg-primary/5"
+                  : "border-border hover:border-ring/50"
+              }`}
+            >
+              <Upload className="h-4 w-4 text-muted-foreground" strokeWidth={1.5} />
+              <span className="text-[12px] text-muted-foreground">
+                Drop files here or click to browse
+              </span>
+            </div>
+            {stagedFiles.length > 0 && (
+              <div className="space-y-1">
+                {stagedFiles.map((file, i) => (
+                  <div
+                    key={`${file.name}-${i}`}
+                    className="flex items-center gap-2 px-2 py-1.5 bg-secondary rounded-md border border-border"
+                  >
+                    <FileText className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" strokeWidth={1.5} />
+                    <span className="text-[12px] font-medium flex-1 truncate">{file.name}</span>
+                    <span className="text-[10px] text-muted-foreground">
+                      {(file.size / 1024).toFixed(0)}KB
+                    </span>
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setStagedFiles((prev) => prev.filter((_, idx) => idx !== i));
+                      }}
+                      className="text-muted-foreground hover:text-foreground p-0.5"
+                    >
+                      <X className="h-3.5 w-3.5" strokeWidth={1.5} />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* Approval toggle */}

@@ -99,6 +99,7 @@ interface DetailActivityTabProps {
   currentUserId: string;
   onComposeEmail?: () => void;
   logCallTrigger?: number;
+  onRefreshTimeline?: () => void;
 }
 
 export function DetailActivityTab({
@@ -108,6 +109,7 @@ export function DetailActivityTab({
   currentUserId,
   onComposeEmail,
   logCallTrigger = 0,
+  onRefreshTimeline,
 }: DetailActivityTabProps) {
   const [filter, setFilter] = useState("all");
   const [showForm, setShowForm] = useState(false);
@@ -208,6 +210,7 @@ export function DetailActivityTab({
       toast({ title: "Activity logged" });
       setShowForm(false);
       setForm({ activity_type: "note", subject: "", description: "" });
+      onRefreshTimeline?.();
       router.refresh();
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : "Unknown error";

@@ -77,7 +77,7 @@ export interface Profile {
 
 // ── Constants ──────────────────────────────────────────────────────────────
 
-export const TASK_STATUSES = ["To Do", "In Progress", "Pending Approval", "Complete"] as const;
+export const TASK_STATUSES = ["To Do", "In Progress", "Pending Approval", "Complete", "Parking Lot"] as const;
 export type TaskStatus = (typeof TASK_STATUSES)[number];
 
 export const TASK_PRIORITIES = ["High", "Medium", "Low"] as const;

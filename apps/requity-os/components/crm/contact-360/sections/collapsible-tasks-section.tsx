@@ -17,11 +17,12 @@ interface Props {
   currentUserId: string;
   loading?: boolean;
   taskCount: number;
+  onRefreshTasks?: () => void;
 }
 
 export const CollapsibleTasksSection = forwardRef<HTMLDivElement, Props>(
   function CollapsibleTasksSection(props, ref) {
-    const { tasks, loading = false, taskCount, ...tabProps } = props;
+    const { tasks, loading = false, taskCount, onRefreshTasks, ...tabProps } = props;
 
     const openCount = useMemo(
       () => tasks.filter((t) => t.status !== "Complete").length,
@@ -52,7 +53,7 @@ export const CollapsibleTasksSection = forwardRef<HTMLDivElement, Props>(
             <Skeleton className="h-12 w-full rounded-lg" />
           </div>
         ) : (
-          <DetailTasksTab {...tabProps} tasks={tasks} />
+          <DetailTasksTab {...tabProps} tasks={tasks} onRefreshTasks={onRefreshTasks} />
         )}
       </CollapsibleSectionCard>
     );
