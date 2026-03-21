@@ -111,6 +111,7 @@ const adminNav: NavEntry[] = [
     icon: Wrench,
     activePaths: [
       "/toolbox",
+      "/conditions",
       "/documents",
       "/servicing",
       "/funds",
