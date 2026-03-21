@@ -90,6 +90,8 @@ interface T12SubTabProps {
   numUnits?: number;
   propertyType?: string;
   totalSf?: number;
+  /** When set, only show the income or expenses section (used by UnderwritingTab sub-tabs) */
+  initialView?: "income" | "expenses";
 }
 
 type Mode = "manual" | "upload";
@@ -142,6 +144,7 @@ export function T12SubTab({
   numUnits = 0,
   propertyType = "",
   totalSf = 0,
+  initialView,
 }: T12SubTabProps) {
   const [uploadOpen, setUploadOpen] = useState(false);
   const [editIncomeOpen, setEditIncomeOpen] = useState(false);
@@ -336,6 +339,9 @@ export function T12SubTab({
     { key: "upload" as const, label: "Upload & Map", icon: FileUp },
   ];
 
+  const showIncome = !initialView || initialView === "income";
+  const showExpenses = !initialView || initialView === "expenses";
+
   return (
     <div className="flex flex-col gap-4">
       <PillNav tabs={MODE_TABS} active={mode} onChange={setMode} />
@@ -344,41 +350,75 @@ export function T12SubTab({
         !hasData ? (
           <div className="rounded-xl border border-dashed p-8 text-center">
             <p className="text-sm text-muted-foreground mb-3">
-              No T12 data yet. Upload an operating statement or enter data manually.
+              No {initialView === "expenses" ? "expense" : initialView === "income" ? "income" : "T12"} data yet. Upload an operating statement or enter data manually.
             </p>
             <div className="flex items-center gap-2 justify-center flex-wrap">
               <Button variant="outline" size="sm" onClick={() => setMode("upload")}>
                 <Upload className="h-3.5 w-3.5 mr-1.5" />
                 Upload T12
               </Button>
-              <Button variant="outline" size="sm" onClick={() => setEditIncomeOpen(true)}>
-                <Plus className="h-3.5 w-3.5 mr-1.5" />
-                Enter Manually
-              </Button>
-              {benchmarks && (
+              {showIncome && (
+                <Button variant="outline" size="sm" onClick={() => setEditIncomeOpen(true)}>
+                  <Plus className="h-3.5 w-3.5 mr-1.5" />
+                  Enter Income Manually
+                </Button>
+              )}
+              {showExpenses && benchmarks && (
                 <Button variant="outline" size="sm" onClick={handleApplyGuidance}>
                   <Zap className="h-3.5 w-3.5 mr-1.5" />
                   Apply Expense Guidance
+                </Button>
+              )}
+              {showExpenses && (
+                <Button variant="outline" size="sm" onClick={() => setEditExpenseOpen(true)}>
+                  <Plus className="h-3.5 w-3.5 mr-1.5" />
+                  Enter Expenses Manually
                 </Button>
               )}
             </div>
           </div>
         ) : (
           <>
-            {/* Two-column layout: Income + Expenses */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-              {/* Lease-Based Income Card */}
-              <IncomeCard
-                incomeRows={incomeRows}
-                netRevenue={leaseNetRevenue}
-                expandedNoteId={expandedNoteId}
-                onToggleNote={setExpandedNoteId}
-                onSaveNote={handleSaveNote}
-                onEdit={() => setEditIncomeOpen(true)}
-                title={showOccupancy ? "Lease-Based Income" : "Income"}
-              />
-
-              {/* Expenses Card with Guidance */}
+            {/* When no initialView filter, show side-by-side. When filtered, show single column full width. */}
+            {!initialView ? (
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                <IncomeCard
+                  incomeRows={incomeRows}
+                  netRevenue={leaseNetRevenue}
+                  expandedNoteId={expandedNoteId}
+                  onToggleNote={setExpandedNoteId}
+                  onSaveNote={handleSaveNote}
+                  onEdit={() => setEditIncomeOpen(true)}
+                  title={showOccupancy ? "Lease-Based Income" : "Income"}
+                />
+                <ExpensesCard
+                  expenseRows={expenseRows}
+                  netRevenue={netRevenue}
+                  totalExpenses={totalExpenses}
+                  benchmarks={benchmarks}
+                  benchmarkInfo={benchmarkInfo}
+                  unitLabel={unitLabel}
+                  expandedNoteId={expandedNoteId}
+                  onToggleNote={setExpandedNoteId}
+                  onSaveNote={handleSaveNote}
+                  onEdit={() => setEditExpenseOpen(true)}
+                  onApplyGuidance={benchmarks ? handleApplyGuidance : undefined}
+                  totalBenchmark={totalBenchmark}
+                />
+              </div>
+            ) : showIncome ? (
+              <>
+                <IncomeCard
+                  incomeRows={incomeRows}
+                  netRevenue={leaseNetRevenue}
+                  expandedNoteId={expandedNoteId}
+                  onToggleNote={setExpandedNoteId}
+                  onSaveNote={handleSaveNote}
+                  onEdit={() => setEditIncomeOpen(true)}
+                  title={showOccupancy ? "Lease-Based Income" : "Income"}
+                />
+              </>
+            ) : (
               <ExpensesCard
                 expenseRows={expenseRows}
                 netRevenue={netRevenue}
@@ -393,10 +433,10 @@ export function T12SubTab({
                 onApplyGuidance={benchmarks ? handleApplyGuidance : undefined}
                 totalBenchmark={totalBenchmark}
               />
-            </div>
+            )}
 
-            {/* Occupancy-Based Income (shown for transient asset types) */}
-            {showOccupancy && (
+            {/* Occupancy-Based Income (shown for transient asset types, income view only) */}
+            {showIncome && showOccupancy && (
               <OccupancyIncomeSection
                 rows={allIncomeRows}
                 uwId={uwId}
@@ -405,15 +445,17 @@ export function T12SubTab({
               />
             )}
 
-            {/* Ancillary / Other Income */}
-            <AncillaryIncomeSection
-              rows={allIncomeRows}
-              uwId={uwId}
-              propertyType={propertyType}
-            />
+            {/* Ancillary / Other Income (income view only) */}
+            {showIncome && (
+              <AncillaryIncomeSection
+                rows={allIncomeRows}
+                uwId={uwId}
+                propertyType={propertyType}
+              />
+            )}
 
-            {/* GPI Summary (when multiple income sections exist) */}
-            {(showOccupancy || ancillaryRevenue > 0) && (
+            {/* GPI Summary (income view, when multiple income sections exist) */}
+            {showIncome && (showOccupancy || ancillaryRevenue > 0) && (
               <div className="rounded-xl border bg-card overflow-hidden">
                 <div className="px-5 py-3.5 border-b">
                   <span className="rq-section-title">Gross Potential Income Summary</span>
