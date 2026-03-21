@@ -23,10 +23,10 @@
 - [x] Lazy-load tab data on Contact 360 (API routes + useContact360Lazy; counts on SSR, full data on tab)
 - [x] Lazy-load tab data on Company 360 (API routes + useCompany360Lazy)
 
-## Phase 4: Architecture Hardening (Days 6-7) - PENDING
-- [ ] Replace borrower message polling with Realtime (postgres_changes for portal, broadcast for token upload pages)
-- [ ] Cache auth snapshot (user_roles + module access) in httpOnly cookie + same-request header for getSessionData
-- [ ] Add list virtualization with @tanstack/react-virtual to contacts/companies tables
-- [ ] Add composite database indexes (migration + MCP apply)
+## Phase 4: Architecture Hardening (Days 6-7) - DONE
+- [x] Replace borrower message polling with Realtime (postgres_changes for portal, broadcast for token upload pages)
+- [x] Cache auth snapshot (user_roles + module access) in httpOnly cookie + same-request header for getSessionData
+- [x] Add list virtualization with @tanstack/react-virtual to contacts/companies tables
+- [x] Add composite database indexes (migration + MCP apply)
 
 ## Last Updated: 2026-03-21

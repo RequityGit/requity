@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useMemo, useEffect, useRef } from "react";
+import { useVirtualizer } from "@tanstack/react-virtual";
 import { useDebounce } from "@/hooks/useDebounce";
 import { useRouter } from "next/navigation";
 import { Input } from "@/components/ui/input";
@@ -68,7 +69,7 @@ export function CompaniesView({ companies, isSuperAdmin = false }: CompaniesView
   const [page, setPage] = useState(1);
   const [deleteTarget, setDeleteTarget] = useState<{ id: string; name: string } | null>(null);
   const [deleting, setDeleting] = useState(false);
-  const tableContainerRef = useRef<HTMLDivElement>(null);
+  const tableScrollRef = useRef<HTMLDivElement>(null);
 
   async function handleDelete() {
     if (!deleteTarget) return;
@@ -146,6 +147,17 @@ export function CompaniesView({ companies, isSuperAdmin = false }: CompaniesView
     safePage * PAGE_SIZE
   );
 
+  const rowVirtualizer = useVirtualizer({
+    count: paginatedCompanies.length,
+    getScrollElement: () => tableScrollRef.current,
+    estimateSize: () => 64,
+    overscan: 8,
+  });
+
+  useEffect(() => {
+    tableScrollRef.current?.scrollTo({ top: 0 });
+  }, [safePage]);
+
   function handleCompanySort(key: string) {
     if (companySortKey === key) {
       setCompanySortDir((d) => (d === "asc" ? "desc" : "asc"));
@@ -219,10 +231,11 @@ export function CompaniesView({ companies, isSuperAdmin = false }: CompaniesView
         </div>
 
         <div className="rounded-xl border bg-card overflow-hidden">
-          <div ref={tableContainerRef} className="overflow-x-auto">
-            <table className="w-full border-collapse">
-              <thead>
-                <tr className="border-b">
+          <div className="overflow-x-auto">
+            <div ref={tableScrollRef} className="max-h-[min(70vh,560px)] overflow-y-auto">
+            <table className="w-full border-collapse block">
+              <thead className="sticky top-0 z-10 bg-card border-b">
+                <tr className="border-b" style={{ display: "table", width: "100%", tableLayout: "fixed" }}>
                   <SortHeader label="Company" sortKey="name" />
                   <SortHeader label="Type" sortKey="company_type" />
                   <SortHeader label="Contacts" sortKey="contact_count" className="text-right" />
@@ -232,7 +245,17 @@ export function CompaniesView({ companies, isSuperAdmin = false }: CompaniesView
                   <th className="text-xs font-medium text-muted-foreground text-center px-4 py-2.5 w-12" />
                 </tr>
               </thead>
-              <tbody>
+              <tbody
+                style={
+                  paginatedCompanies.length > 0
+                    ? {
+                        display: "block",
+                        height: `${rowVirtualizer.getTotalSize()}px`,
+                        position: "relative",
+                      }
+                    : undefined
+                }
+              >
                 {paginatedCompanies.length === 0 ? (
                   <tr>
                     <td colSpan={7} className="text-center py-16">
@@ -241,14 +264,24 @@ export function CompaniesView({ companies, isSuperAdmin = false }: CompaniesView
                     </td>
                   </tr>
                 ) : (
-                  paginatedCompanies.map((c, i) => (
+                  rowVirtualizer.getVirtualItems().map((vi) => {
+                    const c = paginatedCompanies[vi.index];
+                    return (
                     <tr
                       key={c.id}
+                      data-index={vi.index}
                       onClick={() => router.push(`/companies/${c.company_number}`)}
-                      className={cn(
-                        "cursor-pointer transition-colors hover:bg-muted/50",
-                        i < paginatedCompanies.length - 1 && "border-b border-border/50"
-                      )}
+                      className="cursor-pointer transition-colors hover:bg-muted/50 border-b border-border/50"
+                      style={{
+                        display: "table",
+                        width: "100%",
+                        tableLayout: "fixed",
+                        position: "absolute",
+                        top: 0,
+                        left: 0,
+                        transform: `translateY(${vi.start}px)`,
+                        height: `${vi.size}px`,
+                      }}
                     >
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-2.5">
@@ -316,10 +349,12 @@ export function CompaniesView({ companies, isSuperAdmin = false }: CompaniesView
                         </DropdownMenu>
                       </td>
                     </tr>
-                  ))
+                  );
+                  })
                 )}
               </tbody>
             </table>
+            </div>
           </div>
           <div className="px-5 py-3 border-t flex flex-col sm:flex-row flex-wrap items-start sm:items-center justify-between gap-3">
             <span className="text-xs text-muted-foreground">
@@ -339,7 +374,7 @@ export function CompaniesView({ companies, isSuperAdmin = false }: CompaniesView
                       disabled={safePage <= 1}
                       onClick={() => {
                         setPage((p) => Math.max(1, p - 1));
-                        tableContainerRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+                        tableScrollRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
                       }}
                     >
                       Previous
@@ -359,7 +394,7 @@ export function CompaniesView({ companies, isSuperAdmin = false }: CompaniesView
                       disabled={safePage >= totalPages}
                       onClick={() => {
                         setPage((p) => Math.min(totalPages, p + 1));
-                        tableContainerRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+                        tableScrollRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
                       }}
                     >
                       Next

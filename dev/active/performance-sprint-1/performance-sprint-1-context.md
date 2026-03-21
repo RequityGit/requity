@@ -53,5 +53,20 @@
 | Pages | `app/(authenticated)/(admin)/contacts/[id]/page.tsx`, `companies/[id]/page.tsx` (SSR counts + core data only) |
 | Clients | `contact-360/contact-detail-client.tsx`, `company-360/company-detail-client.tsx` and tab sections |
 
+## Phase 4 Key Files
+
+| Area | Files |
+|------|--------|
+| Deal messages | `lib/realtime/deal-message-broadcast.ts`, `hooks/useDealMessages.ts`, `app/api/deal-messages/send/route.ts`, `SecureUploadClient.tsx` |
+| Auth cache | `lib/auth/auth-snapshot.ts`, `lib/auth/session-cache.ts`, `middleware.ts` |
+| List virtualization | `contacts-view.tsx`, `companies-view.tsx` (useVirtualizer), `@tanstack/react-virtual` |
+| DB | `packages/db/supabase/migrations/20260323100000_add_performance_indexes.sql` |
+
+## Phase 4 Decisions
+
+10. Token upload pages cannot use `postgres_changes` for `deal_messages` without RLS auth. Server broadcasts on `deal_messages` insert after send; clients subscribe to `broadcast` on channel `deal-messages:{dealId}`. Portal users keep `postgres_changes` on `deal_messages`.
+11. Auth snapshot stores `isSuperAdmin` and `accessibleModules` from `user_roles` + `user_module_access` with 5‑minute TTL. Middleware refreshes stale snapshot and sets `x-rq-auth-snapshot` header plus `rq_auth_snap` cookie so `getSessionData()` can skip those two queries when fresh.
+12. `pnpm` dependency `@tanstack/react-virtual` added for CRM table body virtualization with sticky header and scroll container.
+
 ## Last Updated: 2026-03-21
-## Next Steps: Phase 4 - Realtime messaging, auth snapshot cookie, virtualization, DB indexes
+## Next Steps: Monitor Realtime broadcast errors in production; consider DB trigger broadcast for messages inserted outside `/api/deal-messages/send`

@@ -2,6 +2,10 @@
 
 import { useEffect, useState, useCallback, useRef } from "react";
 import { createClient } from "@/lib/supabase/client";
+import {
+  dealMessagesChannelName,
+  DEAL_MESSAGES_BROADCAST_EVENT,
+} from "@/lib/realtime/deal-message-broadcast";
 
 export interface DealMessage {
   id: string;
@@ -32,8 +36,8 @@ export function useDealMessages({ dealId, token, limit = 50 }: UseDealMessagesOp
 
   // Fetch messages from API
   const fetchMessages = useCallback(
-    async (cursor?: string) => {
-      setLoading(true);
+    async (cursor?: string, opts?: { silent?: boolean }) => {
+      if (!opts?.silent) setLoading(true);
       try {
         const params = new URLSearchParams({ limit: String(limit) });
         if (token) params.set("token", token);
@@ -64,7 +68,7 @@ export function useDealMessages({ dealId, token, limit = 50 }: UseDealMessagesOp
       } catch (err) {
         console.error("Error fetching deal messages:", err);
       } finally {
-        setLoading(false);
+        if (!opts?.silent) setLoading(false);
       }
     },
     [dealId, token, limit]
@@ -75,14 +79,27 @@ export function useDealMessages({ dealId, token, limit = 50 }: UseDealMessagesOp
     fetchMessages();
   }, [fetchMessages]);
 
-  // Real-time subscription for new messages
+  // Realtime: postgres_changes for authenticated portal users; broadcast for token (upload link) clients
   useEffect(() => {
-    // Only subscribe via Supabase realtime if admin (has auth session)
-    // Borrowers poll or rely on optimistic updates since they don't have Supabase auth
-    if (token) return;
+    if (token) {
+      const channel = supabase
+        .channel(dealMessagesChannelName(dealId), {
+          config: { broadcast: { self: true } },
+        })
+        .on("broadcast", { event: DEAL_MESSAGES_BROADCAST_EVENT }, () => {
+          void fetchMessages(undefined, { silent: true });
+        })
+        .subscribe();
+
+      channelRef.current = channel;
+      return () => {
+        supabase.removeChannel(channel);
+        channelRef.current = null;
+      };
+    }
 
     const channel = supabase
-      .channel(`deal-messages-${dealId}`)
+      .channel(`deal-messages-pg-${dealId}`)
       .on(
         "postgres_changes",
         {
@@ -91,36 +108,8 @@ export function useDealMessages({ dealId, token, limit = 50 }: UseDealMessagesOp
           table: "deal_messages",
           filter: `deal_id=eq.${dealId}`,
         },
-        async (payload) => {
-          const newMsg = payload.new as {
-            id: string;
-            deal_id: string;
-            sender_type: string;
-            sender_id: string | null;
-            contact_id: string | null;
-            source: string;
-            body: string;
-            metadata: Record<string, unknown> | null;
-            created_at: string;
-          };
-
-          // Avoid duplicates (in case our optimistic update already added it)
-          setMessages((prev) => {
-            if (prev.some((m) => m.id === newMsg.id)) return prev;
-            return [
-              ...prev,
-              {
-                ...newMsg,
-                sender_type: newMsg.sender_type as DealMessage["sender_type"],
-                source: newMsg.source as DealMessage["source"],
-                sender_name: newMsg.sender_type === "system" ? "System" : "...",
-              },
-            ];
-          });
-
-          // Re-fetch to get enriched sender names
-          // Small delay to let the DB settle
-          setTimeout(() => fetchMessages(), 500);
+        () => {
+          void fetchMessages(undefined, { silent: true });
         }
       )
       .subscribe();
@@ -133,35 +122,6 @@ export function useDealMessages({ dealId, token, limit = 50 }: UseDealMessagesOp
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dealId, token]);
-
-  // Borrower polling fallback (every 10s), paused when tab is hidden
-  useEffect(() => {
-    if (!token) return;
-
-    let interval: ReturnType<typeof setInterval> | null = null;
-
-    function startPolling() {
-      if (interval) clearInterval(interval);
-      interval = setInterval(() => fetchMessages(), 10000);
-    }
-
-    function handleVisibility() {
-      if (document.visibilityState === "hidden") {
-        if (interval) { clearInterval(interval); interval = null; }
-      } else {
-        fetchMessages();
-        startPolling();
-      }
-    }
-
-    startPolling();
-    document.addEventListener("visibilitychange", handleVisibility);
-
-    return () => {
-      if (interval) clearInterval(interval);
-      document.removeEventListener("visibilitychange", handleVisibility);
-    };
-  }, [token, fetchMessages]);
 
   // Send a message
   const sendMessage = useCallback(
@@ -184,11 +144,9 @@ export function useDealMessages({ dealId, token, limit = 50 }: UseDealMessagesOp
           throw new Error(err.error || "Failed to send");
         }
 
-        // If token (borrower), immediately re-fetch since no realtime
         if (token) {
-          await fetchMessages();
+          await fetchMessages(undefined, { silent: true });
         }
-        // Admin gets the message via realtime subscription
       } finally {
         setSending(false);
       }

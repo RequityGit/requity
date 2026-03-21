@@ -1,6 +1,15 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { SUPABASE_AUTH_COOKIE_NAME } from "@/lib/supabase/constants";
 import { updateSession } from "@/lib/supabase/middleware";
+import {
+  AUTH_SNAPSHOT_COOKIE,
+  AUTH_SNAPSHOT_HEADER,
+  buildAuthSnapshot,
+  decodeAuthSnapshot,
+  encodeAuthSnapshot,
+  isSnapshotFresh,
+  toSnapshotPayload,
+} from "@/lib/auth/auth-snapshot";
 
 // Role-based route prefixes (admin routes are now top-level, guarded by layout)
 const ROLE_ROUTES: Record<string, string> = {
@@ -77,6 +86,44 @@ export async function middleware(request: NextRequest) {
 
   const { supabase, user, supabaseResponse } = await updateSession(request);
 
+  let response = supabaseResponse;
+
+  if (user) {
+    const snapRaw = request.cookies.get(AUTH_SNAPSHOT_COOKIE)?.value;
+    const parsed = snapRaw ? decodeAuthSnapshot(snapRaw) : null;
+    const needsRefresh =
+      !parsed || parsed.uid !== user.id || !isSnapshotFresh(parsed);
+
+    if (needsRefresh) {
+      const partial = await buildAuthSnapshot(supabase, user.id);
+      const payload = toSnapshotPayload(partial);
+      const encoded = encodeAuthSnapshot(payload);
+      const requestHeaders = new Headers(request.headers);
+      requestHeaders.set(AUTH_SNAPSHOT_HEADER, encoded);
+      const res = NextResponse.next({
+        request: { headers: requestHeaders },
+      });
+      supabaseResponse.cookies.getAll().forEach((c) => {
+        res.cookies.set(c.name, c.value, c);
+      });
+      res.cookies.set(AUTH_SNAPSHOT_COOKIE, encoded, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "lax",
+        maxAge: 300,
+        path: "/",
+      });
+      response = res;
+    }
+  } else if (request.cookies.get(AUTH_SNAPSHOT_COOKIE)?.value) {
+    const res = NextResponse.next();
+    supabaseResponse.cookies.getAll().forEach((c) => {
+      res.cookies.set(c.name, c.value, c);
+    });
+    res.cookies.set(AUTH_SNAPSHOT_COOKIE, "", { maxAge: 0, path: "/" });
+    response = res;
+  }
+
   // -----------------------------------------------------------------------
   // Unauthenticated user trying to access a protected route → /login
   // -----------------------------------------------------------------------
@@ -84,7 +131,14 @@ export async function middleware(request: NextRequest) {
     const url = request.nextUrl.clone();
     url.pathname = "/login";
     url.searchParams.set("redirectedFrom", pathname);
-    return NextResponse.redirect(url);
+    const redirectRes = NextResponse.redirect(url);
+    response.cookies.getAll().forEach((c) => {
+      redirectRes.cookies.set(c.name, c.value, c);
+    });
+    if (request.cookies.get(AUTH_SNAPSHOT_COOKIE)?.value) {
+      redirectRes.cookies.set(AUTH_SNAPSHOT_COOKIE, "", { maxAge: 0, path: "/" });
+    }
+    return redirectRes;
   }
 
   // -----------------------------------------------------------------------
@@ -98,7 +152,7 @@ export async function middleware(request: NextRequest) {
       .single();
 
     if (!profile || profile.activation_status === "unauthorized") {
-      return supabaseResponse;
+      return response;
     }
 
     if (profile.role) {
@@ -138,7 +192,7 @@ export async function middleware(request: NextRequest) {
         if (targetRoleEntry) {
           const targetRole = targetRoleEntry[0];
           if (targetRole === impersonateRole) {
-            return supabaseResponse;
+            return response;
           }
           const url = request.nextUrl.clone();
           url.pathname = ROLE_DASHBOARDS[impersonateRole] || "/pipeline";
@@ -170,7 +224,7 @@ export async function middleware(request: NextRequest) {
           const targetRole = targetRoleEntry[0];
 
           if (allowedRoles.includes(targetRole)) {
-            return supabaseResponse;
+            return response;
           }
 
           const activeRoleCookie = request.cookies.get("active_role")?.value;
@@ -188,7 +242,7 @@ export async function middleware(request: NextRequest) {
     }
   }
 
-  return supabaseResponse;
+  return response;
 }
 
 export const config = {

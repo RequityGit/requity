@@ -43,6 +43,7 @@
     "@sentry/nextjs": "^10.41.0",
     "@supabase/ssr": "^0.8.0",
     "@supabase/supabase-js": "^2.47.12",
+    "@tanstack/react-virtual": "^3.13.23",
     "@tiptap/core": "^3.20.0",
     "@tiptap/extension-color": "^3.20.0",
     "@tiptap/extension-horizontal-rule": "^3.20.1",
