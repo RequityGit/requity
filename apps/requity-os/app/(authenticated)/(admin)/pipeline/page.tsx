@@ -44,14 +44,14 @@ export default async function PipelinePage() {
       .order("created_at" as never, { ascending: false }),
     admin
       .from("unified_stage_configs" as never)
-      .select("*")
+      .select("id, stage, warn_days, alert_days, description, sort_order")
       .order("sort_order" as never),
     admin
       .from("unified_deal_relationships" as never)
       .select("deal_a_id, deal_b_id"),
     admin
       .from("unified_deal_activity" as never)
-      .select("*")
+      .select("id, deal_id, activity_type, title, description, metadata, created_by, created_at")
       .order("created_at" as never, { ascending: false })
       .limit(500),
     supabase
@@ -61,7 +61,7 @@ export default async function PipelinePage() {
       .order("full_name"),
     admin
       .from("intake_items" as never)
-      .select("*")
+      .select("id, email_intake_queue_id, received_at, from_email, from_name, subject, raw_body, parsed_data, auto_matches, status, processed_at, processed_by, decisions, created_deal_id, created_contact_id, created_company_id, created_property_id, created_at, updated_at")
       .in("status" as never, ["pending", "auto_matched"] as never)
       .order("received_at" as never, { ascending: false }),
   ]);

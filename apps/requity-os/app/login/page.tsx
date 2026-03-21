@@ -10,9 +10,17 @@ function getSupabase() {
   return createClient();
 }
 
+function LoginFallback() {
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-muted">
+      <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" aria-label="Loading" />
+    </div>
+  );
+}
+
 export default function LoginPage() {
   return (
-    <Suspense>
+    <Suspense fallback={<LoginFallback />}>
       <LoginContent />
     </Suspense>
   );

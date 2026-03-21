@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { broadcastDealMessageInserted } from "@/lib/realtime/deal-message-broadcast";
 
 /**
  * POST /api/deal-messages/send
@@ -127,6 +128,8 @@ export async function POST(request: Request) {
         console.error("deal-messages notification error:", e)
       );
 
+      void broadcastDealMessageInserted(dealId).catch(() => {});
+
       return NextResponse.json({ success: true, message });
     }
 
@@ -193,6 +196,8 @@ export async function POST(request: Request) {
     });
 
     // TODO: Phase 1E - email notify borrower contacts with notify_email=true
+
+    void broadcastDealMessageInserted(dealId).catch(() => {});
 
     return NextResponse.json({ success: true, message });
   } catch (err) {

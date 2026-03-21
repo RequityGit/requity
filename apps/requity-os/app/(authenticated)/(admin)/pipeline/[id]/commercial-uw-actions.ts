@@ -302,6 +302,7 @@ export async function upsertRentRoll(
   uwId: string,
   rows: {
     unit_number: string;
+    unit_type?: string | null;
     bedrooms?: number | null;
     bathrooms?: number | null;
     sq_ft?: number | null;
@@ -605,5 +606,49 @@ export async function activateVersion(
   if (error) return { error: error.message };
 
   await revalidateDealPaths(dealId);
+  return { error: null };
+}
+
+/** Batch-update market_rent on all rent roll rows matching a unit_type */
+export async function updateMarketRentByUnitType(
+  uwId: string,
+  unitType: string,
+  marketRent: number
+): Promise<{ error: string | null }> {
+  const supabase = db();
+  const { error } = await supabase
+    .from("deal_commercial_rent_roll")
+    .update({ market_rent: marketRent })
+    .eq("uw_id", uwId)
+    .eq("unit_type", unitType);
+  if (error) return { error: error.message };
+  return { error: null };
+}
+
+/** Update unit_type for a single rent roll row */
+export async function updateRentRollUnitType(
+  rowId: string,
+  unitType: string
+): Promise<{ error: string | null }> {
+  const supabase = db();
+  const { error } = await supabase
+    .from("deal_commercial_rent_roll")
+    .update({ unit_type: unitType })
+    .eq("id", rowId);
+  if (error) return { error: error.message };
+  return { error: null };
+}
+
+/** Batch-update unit_type for multiple rent roll rows */
+export async function batchUpdateUnitType(
+  rowIds: string[],
+  unitType: string
+): Promise<{ error: string | null }> {
+  const supabase = db();
+  const { error } = await supabase
+    .from("deal_commercial_rent_roll")
+    .update({ unit_type: unitType })
+    .in("id", rowIds);
+  if (error) return { error: error.message };
   return { error: null };
 }

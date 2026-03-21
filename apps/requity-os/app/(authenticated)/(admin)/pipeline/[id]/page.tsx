@@ -85,7 +85,7 @@ export default async function DealDetailRoute({ params }: PageProps) {
   ] = await Promise.all([
     admin
       .from("unified_stage_configs" as never)
-      .select("*")
+      .select("id, stage, warn_days, alert_days, description, sort_order")
       .order("sort_order" as never),
     admin
       .from("profiles" as never)
@@ -99,7 +99,7 @@ export default async function DealDetailRoute({ params }: PageProps) {
       .order("sort_order" as never),
     admin
       .from("unified_deal_documents" as never)
-      .select("*")
+      .select("id, deal_id, document_name, document_type, category, subcategory, storage_path, file_url, file_size, file_size_bytes, mime_type, uploaded_by, status, notes, condition_id, condition_approval_status, review_status, archived_at, visibility, version, created_at, updated_at")
       .eq("deal_id" as never, dealId as never)
       .order("created_at" as never, { ascending: false }),
     admin

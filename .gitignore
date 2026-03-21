@@ -24,6 +24,8 @@ dist
 # misc
 .DS_Store
 *.pem
+# fuse / OS (stray hidden copies)
+.fuse_hidden*
 
 # cursor
 .cursor/

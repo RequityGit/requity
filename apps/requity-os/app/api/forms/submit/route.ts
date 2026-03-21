@@ -309,19 +309,7 @@ export async function POST(request: Request) {
                 Multifamily: "multifamily",
               };
 
-              // Card type mapping (from loan-request API)
-              const CARD_TYPE_MAP: Record<string, string> = {
-                rtl: "6ea336bf-3325-44e9-b83b-26aef2fd0005",
-                guc: "6ea336bf-3325-44e9-b83b-26aef2fd0005",
-                dscr: "977496b1-5109-4298-83bb-f8b1735d9d16",
-                cre_bridge: "33ae24e4-3969-4e6e-bd4f-4b007bdcfcaa",
-                mhc: "33ae24e4-3969-4e6e-bd4f-4b007bdcfcaa",
-                rv_park: "33ae24e4-3969-4e6e-bd4f-4b007bdcfcaa",
-                multifamily: "33ae24e4-3969-4e6e-bd4f-4b007bdcfcaa",
-              };
-
               const loanTypeCode = LOAN_TYPE_CODES[loanType] || null;
-              const cardTypeId = loanTypeCode ? CARD_TYPE_MAP[loanTypeCode] || null : null;
               const loanAmountNum = parseCurrency(loanAmount);
 
               const addressPart = propertyAddress
@@ -362,7 +350,6 @@ export async function POST(request: Request) {
                   name: dealName,
                   capital_side: "debt",
                   stage: "lead",
-                  card_type_id: cardTypeId,
                   loan_type: loanTypeCode,
                   primary_contact_id: entityIds.contact_id || null,
                   property_id: entityIds.property_id || null,

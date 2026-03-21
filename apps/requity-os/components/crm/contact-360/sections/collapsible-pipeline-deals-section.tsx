@@ -3,18 +3,23 @@
 import { forwardRef, useState } from "react";
 import Link from "next/link";
 import { ChevronDown, ChevronRight, ExternalLink, TrendingUp } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
 import type { PipelineDealData } from "../types";
 import { STATUS_CONFIG } from "../types";
 
 interface Props {
   deals: PipelineDealData[];
+  loading?: boolean;
+  dealCount: number;
 }
 
 export const CollapsiblePipelineDealsSection = forwardRef<HTMLDivElement, Props>(
-  function CollapsiblePipelineDealsSection({ deals }, ref) {
+  function CollapsiblePipelineDealsSection({ deals, loading = false, dealCount }, ref) {
     const [open, setOpen] = useState(true);
 
-    if (deals.length === 0) return null;
+    if (dealCount === 0) return null;
+
+    const displayCount = loading ? dealCount : deals.length;
 
     return (
       <div ref={ref} className="rounded-lg border border-border bg-card">
@@ -26,7 +31,7 @@ export const CollapsiblePipelineDealsSection = forwardRef<HTMLDivElement, Props>
           <div className="flex items-center gap-2">
             <TrendingUp className="h-4 w-4 text-muted-foreground" />
             <span className="text-sm font-semibold">
-              Pipeline Deals ({deals.length})
+              Pipeline Deals ({displayCount})
             </span>
           </div>
           {open ? (
@@ -38,6 +43,12 @@ export const CollapsiblePipelineDealsSection = forwardRef<HTMLDivElement, Props>
 
         {open && (
           <div className="border-t border-border">
+            {loading && deals.length === 0 ? (
+              <div className="px-5 py-6 space-y-2">
+                <Skeleton className="h-10 w-full rounded-md" />
+                <Skeleton className="h-10 w-full rounded-md" />
+              </div>
+            ) : (
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-border text-muted-foreground">
@@ -110,6 +121,7 @@ export const CollapsiblePipelineDealsSection = forwardRef<HTMLDivElement, Props>
                 })}
               </tbody>
             </table>
+            )}
           </div>
         )}
       </div>

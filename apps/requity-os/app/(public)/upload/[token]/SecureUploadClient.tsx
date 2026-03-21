@@ -21,6 +21,11 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { SUPABASE_URL } from "@/lib/supabase/constants";
+import { createClient } from "@/lib/supabase/client";
+import {
+  dealMessagesChannelName,
+  DEAL_MESSAGES_BROADCAST_EVENT,
+} from "@/lib/realtime/deal-message-broadcast";
 
 /* ------------------------------------------------------------------ */
 /*  Types                                                              */
@@ -212,11 +217,25 @@ export function SecureUploadClient({ token }: { token: string }) {
     }
   }, [token]);
 
-  // Initial load + polling
+  // Initial load + polling (paused when tab is hidden)
   useEffect(() => {
     fetchLinkData();
-    const interval = setInterval(fetchLinkData, REFRESH_INTERVAL_MS);
-    return () => clearInterval(interval);
+    let interval: ReturnType<typeof setInterval> | null = setInterval(fetchLinkData, REFRESH_INTERVAL_MS);
+
+    function handleVisibility() {
+      if (document.visibilityState === "hidden") {
+        if (interval) { clearInterval(interval); interval = null; }
+      } else {
+        fetchLinkData();
+        interval = setInterval(fetchLinkData, REFRESH_INTERVAL_MS);
+      }
+    }
+
+    document.addEventListener("visibilitychange", handleVisibility);
+    return () => {
+      if (interval) clearInterval(interval);
+      document.removeEventListener("visibilitychange", handleVisibility);
+    };
   }, [fetchLinkData]);
 
   // Upload files as staged (for checklist conditions) or final (for general)
@@ -520,8 +539,8 @@ function BorrowerMessaging({ token, dealId, contactName, dealContacts }: { token
   const [selectedName, setSelectedName] = useState<string | null>(contactName ?? null);
   const showIdentityPicker = dealContacts.length > 1 && !contactName;
 
-  const fetchMessages = useCallback(async () => {
-    setLoadingMsgs(true);
+  const fetchMessages = useCallback(async (opts?: { silent?: boolean }) => {
+    if (!opts?.silent) setLoadingMsgs(true);
     try {
       const res = await fetch(
         `/api/deal-messages/${dealId}?token=${encodeURIComponent(token)}&limit=50&_t=${Date.now()}`,
@@ -544,16 +563,29 @@ function BorrowerMessaging({ token, dealId, contactName, dealContacts }: { token
     } catch {
       // Silently fail - messaging is supplemental
     } finally {
-      setLoadingMsgs(false);
+      if (!opts?.silent) setLoadingMsgs(false);
     }
   }, [dealId, token, expanded]);
 
-  // Initial fetch + polling
   useEffect(() => {
-    fetchMessages();
-    const interval = setInterval(fetchMessages, 15000);
-    return () => clearInterval(interval);
+    void fetchMessages();
   }, [fetchMessages]);
+
+  useEffect(() => {
+    const supabase = createClient();
+    const channel = supabase
+      .channel(dealMessagesChannelName(dealId), {
+        config: { broadcast: { self: true } },
+      })
+      .on("broadcast", { event: DEAL_MESSAGES_BROADCAST_EVENT }, () => {
+        void fetchMessages({ silent: true });
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [dealId, fetchMessages]);
 
   // Scroll to bottom on expand or new messages
   useEffect(() => {
@@ -597,7 +629,7 @@ function BorrowerMessaging({ token, dealId, contactName, dealContacts }: { token
         }
         // Small delay before refetch to let DB settle, prevents
         // optimistic message from being wiped by a stale query result
-        setTimeout(() => fetchMessages(), 1000);
+        setTimeout(() => fetchMessages({ silent: true }), 1000);
       } else {
         const data = await res.json().catch(() => ({}));
         setSendError((data.error as string) || "Message could not be sent. Please try again.");

@@ -49,6 +49,7 @@ import {
   ChevronDown,
   FolderOpen,
   Building2,
+  Trash2,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -102,9 +103,16 @@ import { getDealDisplayConfig, getDealFlavor } from "@/lib/pipeline/deal-display
 import { DealActivityTab } from "@/components/pipeline/tabs/DealActivityTab";
 import { DealMessagesPanel } from "@/components/pipeline/DealMessagesPanel";
 import { FormsTab } from "@/components/pipeline/tabs/FormsTab";
+import { ResidentialAnalysisTab } from "@/components/pipeline/tabs/ResidentialAnalysisTab";
 import { DealNotePreview } from "@/components/pipeline/DealNotePreview";
 import type { DealPreviewNote } from "@/components/pipeline/DealNotePreview";
-import { logQuickActionV2, addDealTeamMember, removeDealTeamMember, createDealDriveFolder } from "./actions";
+import {
+  logQuickActionV2,
+  addDealTeamMember,
+  removeDealTeamMember,
+  createDealDriveFolder,
+  deleteUnifiedDealSuperAdmin,
+} from "./actions";
 import { SubmitForApprovalDialog } from "@/components/approvals/submit-for-approval-dialog";
 import type { ApprovalEntityType } from "@/lib/approvals/types";
 import type { OpsTask, Profile } from "@/lib/tasks";
@@ -179,6 +187,7 @@ function DealDetailPageInner({
   const UNIVERSAL_TABS = [
     "Overview",
     "Property",
+    "Analysis",
     "Underwriting",
     "Borrower",
     "Forms",
@@ -330,6 +339,7 @@ function DealDetailPageInner({
           dealTeamMembers={dealTeamMembers}
           teamMembers={teamMembers}
           currentUserId={currentUserId}
+          isSuperAdmin={isSuperAdmin}
         />
 
         {/* Stage Stepper */}
@@ -552,6 +562,14 @@ function DealDetailPageInner({
               />
             </div>
           )}
+          {loadedTabs.has("Analysis") && (
+            <div className={activeTab !== "Analysis" ? "hidden" : undefined}>
+              <ResidentialAnalysisTab
+                dealId={deal.id}
+                uwData={(deal.uw_data as Record<string, unknown>) ?? {}}
+              />
+            </div>
+          )}
           {loadedTabs.has("Underwriting") && (
             <div className={activeTab !== "Underwriting" ? "hidden" : undefined}>
               <UnderwritingContent
@@ -608,6 +626,7 @@ function DealHeader({
   dealTeamMembers,
   teamMembers,
   currentUserId,
+  isSuperAdmin,
 }: {
   deal: UnifiedDeal;
   shortLabel: string;
@@ -615,6 +634,7 @@ function DealHeader({
   dealTeamMembers: DealTeamMember[];
   teamMembers: Profile[];
   currentUserId: string;
+  isSuperAdmin: boolean;
 }) {
   const router = useRouter();
   const currentStageIndex = STAGES.findIndex((s) => s.key === deal.stage);
@@ -634,6 +654,8 @@ function DealHeader({
   const [actionLoading, setActionLoading] = useState(false);
 
   const [creatingDrive, setCreatingDrive] = useState(false);
+  const [deleteDealOpen, setDeleteDealOpen] = useState(false);
+  const [deleteDealLoading, setDeleteDealLoading] = useState(false);
 
   const resolvedMembers = dealTeamMembers.map((dtm) => {
     const profile = teamMembers.find((t) => t.id === dtm.profile_id);
@@ -721,6 +743,23 @@ function DealHeader({
       }
     } finally {
       setActionLoading(false);
+    }
+  }, [deal.id, router]);
+
+  const handleConfirmDeleteDeal = useCallback(async () => {
+    setDeleteDealLoading(true);
+    try {
+      const result = await deleteUnifiedDealSuperAdmin(deal.id);
+      if ("error" in result) {
+        toast.error(result.error);
+        return;
+      }
+      toast.success("Deal deleted");
+      setDeleteDealOpen(false);
+      router.push("/pipeline");
+      router.refresh();
+    } finally {
+      setDeleteDealLoading(false);
     }
   }, [deal.id, router]);
 
@@ -1037,6 +1076,18 @@ function DealHeader({
                   </DropdownMenuItem>
                 }
               />
+              {isSuperAdmin && (
+                <>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem
+                    className="text-destructive focus:text-destructive focus:bg-destructive/10"
+                    onClick={() => setDeleteDealOpen(true)}
+                  >
+                    <Trash2 className="h-4 w-4 mr-2" />
+                    Delete
+                  </DropdownMenuItem>
+                </>
+              )}
             </DropdownMenuContent>
           </DropdownMenu>
 
@@ -1044,6 +1095,28 @@ function DealHeader({
       </div>
 
       {/* ── Dialogs (rendered outside header layout, triggered by dropdown) ── */}
+
+      {/* Delete deal (super admin) */}
+      <Dialog open={deleteDealOpen} onOpenChange={setDeleteDealOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete this deal?</DialogTitle>
+            <DialogDescription>
+              This permanently removes the deal from the pipeline, including related records that
+              are stored only for this deal. This cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDeleteDealOpen(false)} disabled={deleteDealLoading}>
+              Cancel
+            </Button>
+            <Button variant="destructive" onClick={handleConfirmDeleteDeal} disabled={deleteDealLoading}>
+              {deleteDealLoading && <Loader2 className="h-3.5 w-3.5 animate-spin mr-1.5" />}
+              Delete deal
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Log Call */}
       <Dialog open={logCallOpen} onOpenChange={setLogCallOpen}>

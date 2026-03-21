@@ -1,5 +1,6 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import {
   Table,
   TableBody,
@@ -33,6 +34,7 @@ export function PipelineTable({
   stageConfigs,
   onDealClick,
 }: PipelineTableProps) {
+  const router = useRouter();
   const stageConfigMap = new Map(stageConfigs.map((sc) => [sc.stage, sc]));
 
   return (
@@ -67,6 +69,9 @@ export function PipelineTable({
                 <TableRow
                   key={deal.id}
                   className="cursor-pointer hover:bg-muted/50"
+                  onPointerEnter={() =>
+                    router.prefetch(`/pipeline/${deal.deal_number || deal.id}`)
+                  }
                   onClick={() => onDealClick(deal)}
                 >
                   <TableCell>

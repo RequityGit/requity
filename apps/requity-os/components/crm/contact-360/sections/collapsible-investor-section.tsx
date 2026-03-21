@@ -2,6 +2,7 @@
 
 import { useMemo } from "react";
 import { TrendingUp } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
 import { CollapsibleSectionCard } from "./collapsible-section-card";
 import { DetailInvestorTab } from "../tabs/detail-investor-tab";
 import { formatCurrency } from "@repo/lib";
@@ -23,10 +24,12 @@ interface Props {
   userRole: string;
   sectionOrder: SectionLayout[];
   sectionFields: Record<string, FieldLayout[]>;
+  loading?: boolean;
+  commitmentCount: number;
 }
 
 export function CollapsibleInvestorSection(props: Props) {
-  const { commitments } = props;
+  const { commitments, loading = false, commitmentCount, ...tabProps } = props;
 
   const summary = useMemo(() => {
     const parts: string[] = [];
@@ -39,14 +42,23 @@ export function CollapsibleInvestorSection(props: Props) {
     return parts.join("  ·  ");
   }, [commitments]);
 
+  const countBadge = loading ? commitmentCount : commitments.length;
+
   return (
     <CollapsibleSectionCard
       icon={TrendingUp}
       title="Investor"
       summary={summary || undefined}
-      count={commitments.length || undefined}
+      count={countBadge || undefined}
     >
-      <DetailInvestorTab {...props} />
+      {loading && commitments.length === 0 ? (
+        <div className="px-5 pb-5 space-y-3">
+          <Skeleton className="h-24 w-full rounded-lg" />
+          <Skeleton className="h-32 w-full rounded-lg" />
+        </div>
+      ) : (
+        <DetailInvestorTab {...tabProps} commitments={commitments} />
+      )}
     </CollapsibleSectionCard>
   );
 }

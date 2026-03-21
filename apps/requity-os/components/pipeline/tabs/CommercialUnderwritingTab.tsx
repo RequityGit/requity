@@ -381,7 +381,7 @@ function SensitivityContent({
         <table className="w-full border-collapse text-xs">
           <thead>
             <tr className="border-b">
-              <th className="text-left px-2.5 py-2 text-[11px] text-muted-foreground">Rate \u2193 / Vacancy \u2192</th>
+              <th className="text-left px-2.5 py-2 text-[11px] text-muted-foreground">Rate ↓ / Vacancy →</th>
               {vacancies.map((v) => (
                 <th key={v} className={cn("text-center px-2.5 py-2 text-[11px]", v === 8 ? "text-blue-500 font-bold" : "text-muted-foreground")}>{v}%</th>
               ))}

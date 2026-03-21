@@ -1,18 +1,10 @@
-import { createAdminClient } from "@/lib/supabase/admin";
-import type { UnifiedCardType } from "@/components/pipeline/pipeline-types";
-import { CardTypeManagerView } from "./CardTypeManagerView";
+// DEPRECATED: The Card Type Manager has been replaced by deterministic
+// DealFlavor derivation in lib/pipeline/deal-display-config.ts.
+// This page is no longer linked from the control center sidebar.
+// Safe to delete this file and the entire card-types/ directory.
 
-export const dynamic = "force-dynamic";
+import { redirect } from "next/navigation";
 
-export default async function CardTypesPage() {
-  const admin = createAdminClient();
-
-  const { data } = await admin
-    .from("unified_card_types" as never)
-    .select("*" as never)
-    .order("sort_order" as never);
-
-  const cardTypes = (data ?? []) as unknown as UnifiedCardType[];
-
-  return <CardTypeManagerView initialCardTypes={cardTypes} />;
+export default function CardTypesPage() {
+  redirect("/control-center");
 }

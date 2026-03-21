@@ -1,6 +1,8 @@
 "use client";
 
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
+import { useVirtualizer } from "@tanstack/react-virtual";
+import { useDebounce } from "@/hooks/useDebounce";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Input } from "@/components/ui/input";
 import {
@@ -53,8 +55,15 @@ import { CrmAvatar, RelPill, StageDot, getInitials } from "./crm-primitives";
 import { ClickToCallNumber } from "@/components/ui/ClickToCallNumber";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Badge } from "@/components/ui/badge";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+} from "@/components/ui/pagination";
 import Link from "next/link";
 import type { CrmContactRow } from "./crm-v2-page";
+
+const PAGE_SIZE = 50;
 
 interface TeamMember {
   id: string;
@@ -79,13 +88,16 @@ export function ContactsView({
   const { toast } = useToast();
 
   const [contactSearch, setContactSearch] = useState(searchParams.get("q") ?? "");
+  const debouncedSearch = useDebounce(contactSearch, 300);
   const [relFilter, setRelFilter] = useState(searchParams.get("rel") ?? "all");
   const [stageFilter, setStageFilter] = useState(searchParams.get("stage") ?? "all");
   const [dateAdded, setDateAdded] = useState(searchParams.get("date") ?? "all");
   const [contactSortKey, setContactSortKey] = useState<string>("last_contacted_at");
   const [contactSortDir, setContactSortDir] = useState<"asc" | "desc">("desc");
+  const [page, setPage] = useState(1);
   const [deleteTarget, setDeleteTarget] = useState<{ id: string; name: string } | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const tableScrollRef = useRef<HTMLDivElement>(null);
 
   async function handleDelete() {
     if (!deleteTarget) return;
@@ -108,20 +120,24 @@ export function ContactsView({
 
   useEffect(() => {
     const params = new URLSearchParams();
-    if (contactSearch) params.set("q", contactSearch);
+    if (debouncedSearch) params.set("q", debouncedSearch);
     if (relFilter !== "all") params.set("rel", relFilter);
     if (stageFilter !== "all") params.set("stage", stageFilter);
     if (dateAdded !== "all") params.set("date", dateAdded);
     const str = params.toString();
     const newUrl = str ? `?${str}` : window.location.pathname;
     window.history.replaceState(null, "", newUrl);
-  }, [contactSearch, relFilter, stageFilter, dateAdded]);
+  }, [debouncedSearch, relFilter, stageFilter, dateAdded]);
+
+  useEffect(() => {
+    setPage(1);
+  }, [debouncedSearch, relFilter, stageFilter, dateAdded]);
 
   const filteredContacts = useMemo(() => {
     let result = [...contacts];
 
-    if (contactSearch.trim()) {
-      const q = contactSearch.toLowerCase();
+    if (debouncedSearch.trim()) {
+      const q = debouncedSearch.toLowerCase();
       result = result.filter(
         (c) =>
           `${c.first_name} ${c.last_name}`.toLowerCase().includes(q) ||
@@ -161,7 +177,33 @@ export function ContactsView({
     });
 
     return result;
-  }, [contacts, contactSearch, relFilter, stageFilter, dateAdded, contactSortKey, contactSortDir]);
+  }, [contacts, debouncedSearch, relFilter, stageFilter, dateAdded, contactSortKey, contactSortDir]);
+
+  const totalFiltered = filteredContacts.length;
+  const totalPages = Math.max(1, Math.ceil(totalFiltered / PAGE_SIZE));
+
+  useEffect(() => {
+    if (page > totalPages) setPage(totalPages);
+  }, [page, totalPages]);
+
+  const safePage = Math.min(page, totalPages);
+  const rangeStart = totalFiltered === 0 ? 0 : (safePage - 1) * PAGE_SIZE + 1;
+  const rangeEnd = Math.min(safePage * PAGE_SIZE, totalFiltered);
+  const paginatedContacts = filteredContacts.slice(
+    (safePage - 1) * PAGE_SIZE,
+    safePage * PAGE_SIZE
+  );
+
+  const rowVirtualizer = useVirtualizer({
+    count: paginatedContacts.length,
+    getScrollElement: () => tableScrollRef.current,
+    estimateSize: () => 56,
+    overscan: 8,
+  });
+
+  useEffect(() => {
+    tableScrollRef.current?.scrollTo({ top: 0 });
+  }, [safePage]);
 
   const hasContactFilters = contactSearch.trim() !== "" || relFilter !== "all" || stageFilter !== "all" || dateAdded !== "all";
 
@@ -319,9 +361,10 @@ export function ContactsView({
 
         <div className="rounded-xl border bg-card overflow-hidden">
           <div className="overflow-x-auto">
-            <table className="w-full border-collapse">
-              <thead>
-                <tr className="border-b">
+            <div ref={tableScrollRef} className="max-h-[min(70vh,560px)] overflow-y-auto">
+            <table className="w-full border-collapse block">
+              <thead className="sticky top-0 z-10 bg-card border-b">
+                <tr className="border-b" style={{ display: "table", width: "100%", tableLayout: "fixed" }}>
                   <SortHeader label="Name" sortKey="first_name" />
                   <th className="text-xs font-medium text-muted-foreground text-left px-4 py-2.5">Company</th>
                   <th className="text-xs font-medium text-muted-foreground text-left px-4 py-2.5">Relationships</th>
@@ -333,8 +376,18 @@ export function ContactsView({
                   <th className="text-xs font-medium text-muted-foreground text-center px-4 py-2.5 w-12" />
                 </tr>
               </thead>
-              <tbody>
-                {filteredContacts.length === 0 ? (
+              <tbody
+                style={
+                  paginatedContacts.length > 0
+                    ? {
+                        display: "block",
+                        height: `${rowVirtualizer.getTotalSize()}px`,
+                        position: "relative",
+                      }
+                    : undefined
+                }
+              >
+                {paginatedContacts.length === 0 ? (
                   <tr>
                     <td colSpan={9} className="text-center py-16">
                       {hasContactFilters ? (
@@ -355,14 +408,24 @@ export function ContactsView({
                     </td>
                   </tr>
                 ) : (
-                  filteredContacts.map((c, i) => (
+                  rowVirtualizer.getVirtualItems().map((vi) => {
+                    const c = paginatedContacts[vi.index];
+                    return (
                     <tr
                       key={c.id}
+                      data-index={vi.index}
                       onClick={() => router.push(`/contacts/${c.contact_number}`)}
-                      className={cn(
-                        "cursor-pointer transition-colors hover:bg-muted/50",
-                        i < filteredContacts.length - 1 && "border-b border-border/50"
-                      )}
+                      className="cursor-pointer transition-colors hover:bg-muted/50 border-b border-border/50"
+                      style={{
+                        display: "table",
+                        width: "100%",
+                        tableLayout: "fixed",
+                        position: "absolute",
+                        top: 0,
+                        left: 0,
+                        transform: `translateY(${vi.start}px)`,
+                        height: `${vi.size}px`,
+                      }}
                     >
                       <td className="px-4 py-2.5">
                         <TooltipProvider>
@@ -496,18 +559,60 @@ export function ContactsView({
                         </DropdownMenu>
                       </td>
                     </tr>
-                  ))
+                  );
+                  })
                 )}
               </tbody>
             </table>
+            </div>
           </div>
-          <div className="px-5 py-3 border-t flex items-center justify-between">
+          <div className="px-5 py-3 border-t flex flex-col sm:flex-row flex-wrap items-start sm:items-center justify-between gap-3">
             <span className="text-xs text-muted-foreground">
-              Showing {filteredContacts.length} of {contacts.length} contacts
+              {totalFiltered === 0
+                ? `0 of ${contacts.length} contacts`
+                : `Showing ${rangeStart}-${rangeEnd} of ${totalFiltered} contact${totalFiltered !== 1 ? "s" : ""} (${contacts.length} total in CRM)`}
             </span>
-            <span className="num text-xs text-muted-foreground">
-              {filteredContacts.length} contact{filteredContacts.length !== 1 ? "s" : ""}
-            </span>
+            {totalFiltered > PAGE_SIZE && (
+              <Pagination>
+                <PaginationContent className="gap-1">
+                  <PaginationItem>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="h-8 gap-1"
+                      disabled={safePage <= 1}
+                      onClick={() => {
+                        setPage((p) => Math.max(1, p - 1));
+                        tableScrollRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+                      }}
+                    >
+                      Previous
+                    </Button>
+                  </PaginationItem>
+                  <PaginationItem>
+                    <span className="text-xs text-muted-foreground px-2 tabular-nums">
+                      Page {safePage} of {totalPages}
+                    </span>
+                  </PaginationItem>
+                  <PaginationItem>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="h-8 gap-1"
+                      disabled={safePage >= totalPages}
+                      onClick={() => {
+                        setPage((p) => Math.min(totalPages, p + 1));
+                        tableScrollRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+                      }}
+                    >
+                      Next
+                    </Button>
+                  </PaginationItem>
+                </PaginationContent>
+              </Pagination>
+            )}
           </div>
         </div>
 

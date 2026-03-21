@@ -91,12 +91,23 @@ export function useActivityTracker(role?: string, department?: string) {
     [role, department, flush]
   );
 
-  // ---- periodic flush ----
+  // ---- periodic flush (paused when tab is hidden) ----
   useEffect(() => {
     timerRef.current = setInterval(flush, FLUSH_INTERVAL_MS);
+
+    function handleVisibility() {
+      if (document.visibilityState === "hidden") {
+        if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null; }
+        flush(); // flush remaining before going idle
+      } else {
+        timerRef.current = setInterval(flush, FLUSH_INTERVAL_MS);
+      }
+    }
+
+    document.addEventListener("visibilitychange", handleVisibility);
     return () => {
       if (timerRef.current) clearInterval(timerRef.current);
-      // flush remaining on unmount
+      document.removeEventListener("visibilitychange", handleVisibility);
       flush();
     };
   }, [flush]);

@@ -840,7 +840,8 @@ export async function updateConditionStatusAction(
 export async function resolveIntakeItemAction(data: {
   intakeQueueId: string;
   action: "create_deal" | "attach" | "dismiss";
-  cardTypeId?: string;
+  cardTypeId?: string; // deprecated, kept for backward compat
+  capitalSide?: string;
   dealFields?: {
     name?: string;
     amount?: number;
@@ -873,14 +874,8 @@ export async function resolveIntakeItemAction(data: {
     }
 
     if (data.action === "create_deal") {
-      if (!data.cardTypeId) return { error: "Card type is required" };
-
-      // Look up the card type for capital_side
-      const { data: cardType } = await admin
-        .from("unified_card_types")
-        .select("capital_side")
-        .eq("id", data.cardTypeId)
-        .single();
+      // Derive capital_side: prefer explicit param, fall back to "debt"
+      const capitalSide = data.capitalSide || "debt";
 
       // Fetch FULL extracted data from the intake queue (don't rely solely on frontend)
       const { data: fullIntake } = await admin
@@ -1001,8 +996,8 @@ export async function resolveIntakeItemAction(data: {
       // Create the deal with ALL available data
       const insertData: UnifiedDealInsert = {
         name: data.dealFields?.name || "Untitled Deal",
-        card_type_id: data.cardTypeId,
-        capital_side: cardType?.capital_side || "debt",
+        ...(data.cardTypeId ? { card_type_id: data.cardTypeId } : {}),
+        capital_side: capitalSide,
         asset_class: data.dealFields?.asset_class || null,
         amount: data.dealFields?.amount || null,
         created_by: auth.user.id,
@@ -1735,7 +1730,9 @@ export async function processIntakeItemAction(
       if (ov.notes !== undefined) parsed.notes = ov.notes;
     }
     // If user explicitly selected a card type, store for later use
-    const overrideCardTypeId = formOverrides?.cardTypeId || null;
+    // Capital side from form overrides (IntakeReviewModal now sends capitalSide + assetClass)
+    const overrideCapitalSide = formOverrides?.capitalSide || null;
+    const overrideAssetClass = formOverrides?.assetClass || null;
 
     // Fetch email intake queue data for email context, attachments, and extracted fields
     interface EmailQueueData {
@@ -2000,52 +1997,14 @@ export async function processIntakeItemAction(
       .filter(Boolean)
       .join(" - ");
 
-    // Use override card type if explicitly selected, otherwise detect from loan type
-    let cardTypeId: string | null = overrideCardTypeId || null;
-    if (!cardTypeId && parsed.loanType) {
-      const loanTypeLower = parsed.loanType.toLowerCase();
-      const slugMap: Record<string, string> = {
-        dscr: "res_debt_dscr",
-        rtl: "res_debt_rtl",
-        "comm debt": "comm_debt",
-        "comm eq": "comm_equity",
-        commercial: "comm_debt",
-      };
-      const targetSlug = slugMap[loanTypeLower];
-      if (targetSlug) {
-        const { data: ct } = await admin
-          .from("unified_card_types" as never)
-          .select("id" as never)
-          .eq("slug" as never, targetSlug as never)
-          .eq("status" as never, "active" as never)
-          .limit(1)
-          .single();
-        if (ct) cardTypeId = (ct as { id: string }).id;
+    // Derive capital_side from form override or loan type heuristics
+    let capitalSide: string = overrideCapitalSide || "debt";
+    if (!overrideCapitalSide && parsed.loanType) {
+      const lt = parsed.loanType.toLowerCase();
+      if (lt.includes("equity") || lt.includes("comm eq")) {
+        capitalSide = "equity";
       }
     }
-
-    // Fall back to first active card type if none matched
-    if (!cardTypeId) {
-      const { data: fallbackCt } = await admin
-        .from("unified_card_types" as never)
-        .select("id" as never)
-        .eq("status" as never, "active" as never)
-        .order("sort_order" as never)
-        .limit(1)
-        .single();
-      if (fallbackCt) cardTypeId = (fallbackCt as { id: string }).id;
-    }
-
-    if (!cardTypeId) {
-      return { error: "No active card types found" };
-    }
-
-    // Get capital_side from card type
-    const { data: cardType } = await admin
-      .from("unified_card_types" as never)
-      .select("capital_side" as never)
-      .eq("id" as never, cardTypeId as never)
-      .single();
 
     // Build uw_data with all available financial fields
     // Keys MUST match field_configurations.field_key for the overview tab to render them
@@ -2190,10 +2149,9 @@ export async function processIntakeItemAction(
 
     const insertData: UnifiedDealInsert = {
       name: dealName,
-      card_type_id: cardTypeId,
-      capital_side: (cardType as { capital_side: string } | null)?.capital_side || "debt",
+      capital_side: capitalSide,
       amount: dealAmount,
-      asset_class: resolvedAssetClass,
+      asset_class: overrideAssetClass || resolvedAssetClass,
       primary_contact_id: contactId,
       company_id: companyId,
       property_id: propertyId,

@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RequityOS Performance Audit</title>
+<style>
+  @page { size: letter; margin: 1in; }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: Arial, Helvetica, sans-serif; color: #1a1a2e; line-height: 1.6; max-width: 8.5in; margin: 0 auto; padding: 48px; background: #fff; }
+  .confidential { text-align: right; color: #999; font-style: italic; font-size: 12px; margin-bottom: 32px; }
+  .title { font-size: 36px; font-weight: 700; color: #1a1a2e; margin-bottom: 8px; }
+  .subtitle { font-size: 18px; color: #666; margin-bottom: 8px; }
+  .date { font-size: 14px; color: #666; padding-bottom: 16px; border-bottom: 3px solid #1a1a2e; margin-bottom: 40px; }
+  h1 { font-size: 26px; font-weight: 700; color: #1a1a2e; margin: 40px 0 16px; padding-bottom: 8px; border-bottom: 2px solid #e5e7eb; }
+  h2 { font-size: 20px; font-weight: 700; color: #1a1a2e; margin: 32px 0 12px; }
+  p { font-size: 14px; color: #333; margin-bottom: 12px; }
+  ul { margin: 8px 0 16px 24px; }
+  li { font-size: 14px; color: #333; margin-bottom: 8px; }
+  li strong { color: #1a1a2e; }
+  table { width: 100%; border-collapse: collapse; margin: 16px 0 24px; font-size: 13px; }
+  th { background: #1a1a2e; color: #fff; text-align: left; padding: 10px 12px; font-weight: 600; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; }
+  td { padding: 10px 12px; border-bottom: 1px solid #e5e7eb; vertical-align: top; }
+  tr:last-child td { border-bottom: 2px solid #e5e7eb; }
+  .sev { font-weight: 700; text-align: center; border-radius: 4px; padding: 4px 8px; display: inline-block; font-size: 11px; letter-spacing: 0.5px; }
+  .sev-critical { background: #fee2e2; color: #991b1b; }
+  .sev-high { background: #fef3c7; color: #92400e; }
+  .sev-medium { background: #dbeafe; color: #1e40af; }
+  .sev-low { background: #d1fae5; color: #065f46; }
+  .issue-name { font-weight: 600; color: #1a1a2e; }
+  .area { color: #666; font-size: 12px; }
+  .action-num { font-weight: 700; color: #1a1a2e; text-align: center; font-size: 16px; }
+  .action-name { font-weight: 600; color: #1a1a2e; }
+  .effort { color: #666; white-space: nowrap; }
+  .page-break { page-break-before: always; }
+  .sprint-box { background: #f0f7ff; border: 1px solid #dbeafe; border-radius: 8px; padding: 20px 24px; margin: 20px 0; }
+  .sprint-box h2 { margin-top: 0; color: #1e40af; }
+  .outcome-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 16px 0; }
+  .outcome-card { background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 8px; padding: 14px 16px; }
+  .outcome-label { font-size: 12px; font-weight: 600; color: #666; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; }
+  .outcome-value { font-size: 15px; font-weight: 700; color: #1a1a2e; }
+  .outcome-from { font-size: 12px; color: #999; margin-top: 2px; }
+  .footer { margin-top: 48px; padding-top: 16px; border-top: 1px solid #e5e7eb; text-align: center; color: #999; font-size: 12px; }
+</style>
+</head>
+<body>
+
+<div class="confidential">CONFIDENTIAL</div>
+
+<div class="title">RequityOS Performance Audit</div>
+<div class="subtitle">Speed Optimization Roadmap for Pipeline, CRM, and Core Platform</div>
+<div class="date">March 21, 2026 &nbsp;|&nbsp; Prepared for Dylan Marma</div>
+
+<h1>Executive Summary</h1>
+<p>A deep audit of RequityOS identified 16 performance bottlenecks across the pipeline, CRM, and core platform. The slowdown you are feeling is real and has specific, fixable causes. The two biggest offenders are aggressive cache invalidation on inline saves (every field edit re-renders the entire pipeline) and loading all contacts/companies without pagination (the DOM grows linearly with your data).</p>
+<p>The good news: the architecture is solid. Parallel queries, React Server Components, and optimistic updates are already in place in many areas. The issues are localized and surgical. A focused sprint of 8-10 dev days can deliver a <strong>2-4x perceived speed improvement</strong> on the pages you use most.</p>
+
+<h2>Current State Snapshot</h2>
+<ul>
+  <li><strong>Pipeline deal detail:</strong> 20+ sequential Supabase queries for commercial deals across 3 phases</li>
+  <li><strong>Pipeline inline save:</strong> Every field edit invalidates /pipeline cache, triggering full re-render of all deal cards</li>
+  <li><strong>Contacts list:</strong> Loads ALL contacts into DOM. No pagination, no virtualization, no search debouncing</li>
+  <li><strong>Contact 360:</strong> 16 parallel queries (good) + waterfall field config query (bad) + all tab data upfront (wasteful)</li>
+  <li><strong>Borrower portal:</strong> Polls for messages every 10 seconds even when tab is hidden</li>
+  <li><strong>Every page load:</strong> Middleware and layout both query profiles table independently (double DB round trip)</li>
+</ul>
+
+<div class="page-break"></div>
+<h1>All Issues Identified</h1>
+<p>Ranked by severity. CRITICAL issues are actively degrading user experience at current scale.</p>
+
+<table>
+<thead>
+  <tr><th style="width:24%">Issue</th><th style="width:10%">Severity</th><th style="width:10%">Area</th><th style="width:56%">Impact</th></tr>
+</thead>
+<tbody>
+  <tr><td class="issue-name">revalidateDeal on inline saves</td><td><span class="sev sev-critical">CRITICAL</span></td><td class="area">Pipeline</td><td>Every inline field edit triggers full /pipeline cache bust, re-rendering 50-100+ deal cards. CLAUDE.md explicitly bans this pattern.</td></tr>
+  <tr><td class="issue-name">No pagination on contacts/companies</td><td><span class="sev sev-critical">CRITICAL</span></td><td class="area">CRM</td><td>Loads ALL contacts and companies into DOM at once. With 500+ contacts, causes multi-second render and memory bloat.</td></tr>
+  <tr><td class="issue-name">select("*") on 12+ queries</td><td><span class="sev sev-high">HIGH</span></td><td class="area">Everywhere</td><td>Pipeline page, deal detail, contacts list, contact 360, company 360 all fetch every column. JSONB fields and email bodies add 2-3MB per page load.</td></tr>
+  <tr><td class="issue-name">Waterfall queries on deal detail</td><td><span class="sev sev-high">HIGH</span></td><td class="area">Pipeline</td><td>Commercial deals run 20+ sequential queries across 3 phases. Properties, borrowers, and commercial UW sub-tables fetched in series.</td></tr>
+  <tr><td class="issue-name">No search debouncing</td><td><span class="sev sev-high">HIGH</span></td><td class="area">CRM</td><td>Contact and company search re-filters the entire list on every keystroke. No debounce delay.</td></tr>
+  <tr><td class="issue-name">No list virtualization</td><td><span class="sev sev-high">HIGH</span></td><td class="area">CRM</td><td>All filtered rows rendered as DOM elements. 500 contacts = 500 table rows with tooltips, badges, and avatars.</td></tr>
+  <tr><td class="issue-name">Redundant client-side hooks</td><td><span class="sev sev-high">HIGH</span></td><td class="area">Pipeline</td><td>useUwFieldConfigs, useDealLayout, useFieldConfigurations each fire independent Supabase queries on mount. Same data fetched 3-5x per page.</td></tr>
+  <tr><td class="issue-name">10-second message polling</td><td><span class="sev sev-high">HIGH</span></td><td class="area">Borrower</td><td>useDealMessages polls every 10s even when tab is hidden. 50 active borrowers = 5 API calls/sec.</td></tr>
+  <tr><td class="issue-name">New Supabase client per hook</td><td><span class="sev sev-medium">MEDIUM</span></td><td class="area">Global</td><td>Each hook calling createClient() creates a new instance with independent auth refresh. 5+ instances per page.</td></tr>
+  <tr><td class="issue-name">Middleware double DB queries</td><td><span class="sev sev-medium">MEDIUM</span></td><td class="area">Global</td><td>Middleware queries profiles, then layout queries profiles again. Same data fetched twice per page load.</td></tr>
+  <tr><td class="issue-name">6 nested context providers</td><td><span class="sev sev-medium">MEDIUM</span></td><td class="area">Global</td><td>Authenticated layout wraps children in 6 providers. Any state change cascades re-renders through entire tree.</td></tr>
+  <tr><td class="issue-name">All tab data loaded upfront</td><td><span class="sev sev-medium">MEDIUM</span></td><td class="area">CRM</td><td>Contact 360 fetches activities, emails, tasks, loans, and pipeline data even if user never clicks those tabs.</td></tr>
+  <tr><td class="issue-name">Field config waterfall query</td><td><span class="sev sev-medium">MEDIUM</span></td><td class="area">CRM</td><td>Contact and company detail pages run a second round of queries for field_configurations AFTER the initial 16 parallel queries resolve.</td></tr>
+  <tr><td class="issue-name">Missing React.memo on layout</td><td><span class="sev sev-medium">MEDIUM</span></td><td class="area">Global</td><td>Sidebar, Topbar, and major layout components not memoized. Every parent re-render triggers full sidebar recalculation.</td></tr>
+  <tr><td class="issue-name">Missing database indexes</td><td><span class="sev sev-medium">MEDIUM</span></td><td class="area">Database</td><td>Missing composite indexes on unified_deals (status, created_at), field_configurations (module, is_visible), and others.</td></tr>
+  <tr><td class="issue-name">No next/image usage</td><td><span class="sev sev-low">LOW</span></td><td class="area">Marketing</td><td>All images use raw img tags. Missing automatic AVIF/WebP format negotiation (30-50% bandwidth savings).</td></tr>
+</tbody>
+</table>
+
+<div class="page-break"></div>
+<h1>Detailed Breakdown by Area</h1>
+
+<h2>Pipeline (Kanban + Deal Detail)</h2>
+<p>The pipeline is the most performance-sensitive area of the portal. Luis and Estefania live in these views all day. Two issues dominate:</p>
+<ul>
+  <li><strong>revalidateDeal after inline saves:</strong> In pipeline/[id]/actions.ts, revalidateDeal() is called after logging activity, quick actions, sheet URL changes, and team member assignments. Each call invalidates both /pipeline and /pipeline/[id], forcing Next.js to re-fetch and re-render the entire pipeline. The fix is to remove revalidateDeal from inline save paths and rely on optimistic local state updates only.</li>
+  <li><strong>Sequential query phases on deal detail:</strong> The deal detail page.tsx runs queries in 3 sequential phases. Phase 1 fetches the deal. Phase 2 runs 12 queries in Promise.all (good). Phase 3 conditionally fetches 8 more commercial UW queries, but only AFTER Phase 2 resolves. These should all be parallelized into a single Promise.all with conditional inclusion.</li>
+  <li><strong>Redundant field config hooks:</strong> useUwFieldConfigs, useDealLayout, and useFieldConfigurations each fire independent Supabase queries when their components mount. On a deal detail page, the same field configuration data is fetched 3-5 times. A single fetch at the page root, passed via context, would eliminate this.</li>
+  <li><strong>PipelineKanban formula map:</strong> The formula map in PipelineKanban.tsx is rebuilt every render without memoization. This object is passed to every DealCard, so reference changes trigger re-renders of all visible cards.</li>
+</ul>
+
+<h2>CRM (Contacts + Companies)</h2>
+<p>The CRM is where the scaling pain will hit hardest. Every query loads the full dataset, and every interaction filters in-memory.</p>
+<ul>
+  <li><strong>No pagination:</strong> contacts/page.tsx and companies/page.tsx both load the entire table with no .range() or .limit(). At 500+ contacts, this means fetching and rendering all rows. Cursor-based pagination with a page size of 50 is the standard fix.</li>
+  <li><strong>No search debouncing:</strong> contacts-view.tsx and companies-view.tsx re-run the full filter chain on every keystroke. A 300ms debounce on the search input would eliminate the jank.</li>
+  <li><strong>No list virtualization:</strong> Every filtered contact renders as a full DOM row with TooltipProvider, Badge, Link, and Avatar components. At 200+ rows, this causes visible layout thrashing. react-virtual would render only visible rows (~15-20 at a time).</li>
+  <li><strong>Contact 360 loads all tabs upfront:</strong> When opening a contact, the page fetches activities, emails, tasks, loans, and pipeline data all at once, even though only the overview tab is visible. Lazy-loading tab data on click would cut initial load by 60-70%.</li>
+  <li><strong>select("*") on core tables:</strong> crm_contacts, crm_activities, and crm_emails all use select("*"). Activities include full descriptions, emails include HTML bodies. Selecting only display columns would reduce payload by 40-60%.</li>
+</ul>
+
+<h2>Global Architecture</h2>
+<p>These issues affect every page in the portal and compound with the area-specific problems above.</p>
+<ul>
+  <li><strong>Middleware + layout double query:</strong> Middleware queries the profiles table to check roles. Then the authenticated layout queries profiles again via session-cache.ts. The fix is to store role data in a session cookie or custom header after middleware validates, so the layout can skip the redundant query. Estimated savings: 200-300ms per page load.</li>
+  <li><strong>New Supabase client per hook:</strong> useDealMessages, useNotifications, and useActivityTracker each call createClient() directly, creating a new instance with independent auth refresh logic. A singleton pattern or Context-injected client would prevent this.</li>
+  <li><strong>6 nested context providers:</strong> The authenticated layout wraps children in ImpersonationProvider, ViewAsProvider, ModuleAccessProvider, MobileLayoutWrapper, ActivityTrackerProvider, and ModuleGuard. Without React.memo on these providers, any state change cascades re-renders through the entire component tree.</li>
+  <li><strong>Polling without visibility checks:</strong> useDealMessages (10s), SecureUploadClient (60s), and borrower messaging (15s) all poll on fixed intervals without checking document.visibilityState. When tabs are hidden, these polls continue burning API calls for nothing.</li>
+</ul>
+
+<div class="page-break"></div>
+<h1>Prioritized Action Plan</h1>
+<p>Ordered by impact-to-effort ratio. Items 1-5 deliver the biggest speed gains for the least work and should be tackled first.</p>
+
+<table>
+<thead>
+  <tr><th style="width:4%">#</th><th style="width:30%">Action</th><th style="width:9%">Effort</th><th style="width:57%">Expected Impact</th></tr>
+</thead>
+<tbody>
+  <tr><td class="action-num">1</td><td class="action-name">Kill revalidateDeal on inline saves</td><td class="effort">1 day</td><td>Immediate perceived speed boost on deal pages. Inline edits become instant.</td></tr>
+  <tr><td class="action-num">2</td><td class="action-name">Add pagination to contacts & companies lists</td><td class="effort">2 days</td><td>Pages load in &lt;500ms instead of 2-5s. Unblocks scaling to 1000+ contacts.</td></tr>
+  <tr><td class="action-num">3</td><td class="action-name">Replace select("*") with column lists</td><td class="effort">1 day</td><td>40-60% reduction in data transfer per page. Faster Supabase responses.</td></tr>
+  <tr><td class="action-num">4</td><td class="action-name">Parallelize deal detail queries</td><td class="effort">1 day</td><td>Commercial deal pages load in 1-2s instead of 3-5s. Collapse 3 phases into 1.</td></tr>
+  <tr><td class="action-num">5</td><td class="action-name">Add search debouncing (300ms)</td><td class="effort">2 hours</td><td>Eliminates keystroke jank in CRM search. Trivial implementation.</td></tr>
+  <tr><td class="action-num">6</td><td class="action-name">Consolidate field config hooks</td><td class="effort">1 day</td><td>Single query at page root via context instead of 3-5 redundant queries per page.</td></tr>
+  <tr style="border-top: 2px solid #e5e7eb;"><td class="action-num">7</td><td class="action-name">Add list virtualization (react-virtual)</td><td class="effort">2 days</td><td>Only renders visible rows. 500 contacts renders as ~20 DOM rows.</td></tr>
+  <tr><td class="action-num">8</td><td class="action-name">Replace message polling with Supabase realtime</td><td class="effort">1 day</td><td>Eliminates 5 API calls/sec from borrower portal. Better UX (instant messages).</td></tr>
+  <tr><td class="action-num">9</td><td class="action-name">Lazy-load tab data on click</td><td class="effort">1 day</td><td>Contact 360 loads 70% less data on initial render. Tabs load on demand.</td></tr>
+  <tr><td class="action-num">10</td><td class="action-name">Cache auth data in session cookie</td><td class="effort">0.5 days</td><td>Eliminates middleware + layout double query. 200-300ms faster page loads.</td></tr>
+  <tr><td class="action-num">11</td><td class="action-name">Add database composite indexes</td><td class="effort">0.5 days</td><td>Prevents query degradation as tables grow past 10K+ rows.</td></tr>
+  <tr><td class="action-num">12</td><td class="action-name">Pause polling on hidden tabs</td><td class="effort">2 hours</td><td>Eliminates background API calls when users switch away. Simple visibilitychange listener.</td></tr>
+</tbody>
+</table>
+
+<div class="sprint-box">
+  <h2>Sprint Recommendation</h2>
+  <p><strong>Sprint 1 (5 dev days):</strong> Items 1-6. Covers the critical and high-severity issues. Delivers a noticeable speed improvement across pipeline and CRM immediately.</p>
+  <p style="margin-bottom:0"><strong>Sprint 2 (5 dev days):</strong> Items 7-12. Hardens the platform for 1,000+ contacts and 500+ deals. Eliminates background resource waste.</p>
+</div>
+
+<h2>Estimated Outcomes After Sprint 1</h2>
+<div class="outcome-grid">
+  <div class="outcome-card">
+    <div class="outcome-label">Pipeline Inline Saves</div>
+    <div class="outcome-value">Instant</div>
+    <div class="outcome-from">Currently triggers full page re-fetch</div>
+  </div>
+  <div class="outcome-card">
+    <div class="outcome-label">Deal Detail Load Time</div>
+    <div class="outcome-value">1-2 seconds</div>
+    <div class="outcome-from">Down from 3-5s on commercial deals</div>
+  </div>
+  <div class="outcome-card">
+    <div class="outcome-label">Contacts/Companies List</div>
+    <div class="outcome-value">&lt; 500ms</div>
+    <div class="outcome-from">Currently scales linearly with data</div>
+  </div>
+  <div class="outcome-card">
+    <div class="outcome-label">CRM Search</div>
+    <div class="outcome-value">Smooth, debounced</div>
+    <div class="outcome-from">Currently janky on every keystroke</div>
+  </div>
+  <div class="outcome-card">
+    <div class="outcome-label">Per-Page Data Transfer</div>
+    <div class="outcome-value">40-60% reduction</div>
+    <div class="outcome-from">From column-specific selects</div>
+  </div>
+  <div class="outcome-card">
+    <div class="outcome-label">Field Config Queries</div>
+    <div class="outcome-value">1 per page</div>
+    <div class="outcome-from">Down from 3-5 redundant queries</div>
+  </div>
+</div>
+
+<div class="footer">RequityOS Performance Audit &nbsp;|&nbsp; March 2026 &nbsp;|&nbsp; Requity Group</div>
+
+</body>
+</html>

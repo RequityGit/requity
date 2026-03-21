@@ -2,6 +2,7 @@
 
 import { useMemo } from "react";
 import { Landmark } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
 import { CollapsibleSectionCard } from "./collapsible-section-card";
 import { DetailBorrowerTab } from "../tabs/detail-borrower-tab";
 import { formatCurrency } from "@repo/lib";
@@ -24,10 +25,13 @@ interface Props {
   sectionOrder: SectionLayout[];
   sectionFields: Record<string, FieldLayout[]>;
   primaryBorrowerEntity: Record<string, unknown> | null;
+  loading?: boolean;
+  loanCount: number;
 }
 
 export function CollapsibleBorrowerSection(props: Props) {
-  const { borrower, loans } = props;
+  const { loading = false, loanCount, ...rest } = props;
+  const { borrower, loans } = rest;
 
   const summary = useMemo(() => {
     const parts: string[] = [];
@@ -42,14 +46,23 @@ export function CollapsibleBorrowerSection(props: Props) {
     return parts.join("  ·  ");
   }, [borrower, loans]);
 
+  const countBadge = loading ? loanCount : loans.length;
+
   return (
     <CollapsibleSectionCard
       icon={Landmark}
       title="Borrower"
       summary={summary || undefined}
-      count={loans.length || undefined}
+      count={countBadge || undefined}
     >
-      <DetailBorrowerTab {...props} />
+      {loading && loans.length === 0 ? (
+        <div className="px-5 pb-5 space-y-3">
+          <Skeleton className="h-24 w-full rounded-lg" />
+          <Skeleton className="h-32 w-full rounded-lg" />
+        </div>
+      ) : (
+        <DetailBorrowerTab {...rest} />
+      )}
     </CollapsibleSectionCard>
   );
 }

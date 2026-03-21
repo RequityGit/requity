@@ -1,8 +1,9 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
-import { requireAdmin } from "@/lib/auth/require-admin";
+import { requireAdmin, requireSuperAdmin } from "@/lib/auth/require-admin";
 import { revalidateDealPaths as revalidateDeal } from "@/lib/pipeline/revalidate-deal";
 import {
   getDealTeamContacts,
@@ -71,7 +72,7 @@ export async function logDealActivityRich(
         .eq("id" as never, primaryContactId as never);
     }
 
-    await revalidateDeal(dealId);
+    // No revalidation -- activity logging doesn't change deal display data
     return { success: true };
   } catch (err: unknown) {
     console.error("logDealActivityRich error:", err);
@@ -118,7 +119,7 @@ export async function logQuickActionV2(
       return { error: error.message };
     }
 
-    await revalidateDeal(dealId);
+    // No revalidation -- quick actions are activity log entries only
     return { success: true };
   } catch (err: unknown) {
     console.error("logQuickActionV2 error:", err);
@@ -173,7 +174,7 @@ export async function updateDealGoogleSheetAction(
       return { error: error.message };
     }
 
-    await revalidateDeal(dealId);
+    // No revalidation -- inline field save, optimistic update handles UI
     return { success: true };
   } catch (err: unknown) {
     console.error("updateDealGoogleSheet error:", err);
@@ -204,7 +205,7 @@ export async function clearDealGoogleSheetAction(
       return { error: error.message };
     }
 
-    await revalidateDeal(dealId);
+    // No revalidation -- inline field save, optimistic update handles UI
     return { success: true };
   } catch (err: unknown) {
     console.error("clearDealGoogleSheet error:", err);
@@ -245,7 +246,7 @@ export async function assignTeamMemberV2(
       created_by: auth.user.id,
     } as never);
 
-    await revalidateDeal(dealId);
+    // No revalidation -- inline assignment uses optimistic update
     return { success: true };
   } catch (err: unknown) {
     console.error("assignTeamMemberV2 error:", err);
@@ -1052,12 +1053,43 @@ export async function updateDealFieldV2(
       return { error: error.message };
     }
 
-    await revalidateDeal(dealId);
+    // No revalidation -- inline field saves use optimistic local state updates.
+    // Revalidating /pipeline here caused full kanban re-renders on every edit.
     return { success: true };
   } catch (err: unknown) {
     console.error("updateDealFieldV2 error:", err);
     return {
       error: err instanceof Error ? err.message : "An unexpected error occurred",
+    };
+  }
+}
+
+/** Permanently delete a pipeline deal. Super admin only. */
+export async function deleteUnifiedDealSuperAdmin(
+  dealId: string
+): Promise<{ success: true } | { error: string }> {
+  try {
+    const auth = await requireSuperAdmin();
+    if ("error" in auth) return { error: auth.error ?? "Not authorized" };
+
+    const admin = createAdminClient();
+
+    const { error } = await admin
+      .from("unified_deals" as never)
+      .delete()
+      .eq("id" as never, dealId as never);
+
+    if (error) {
+      console.error("deleteUnifiedDealSuperAdmin:", error);
+      return { error: error.message };
+    }
+
+    revalidatePath("/pipeline");
+    return { success: true };
+  } catch (err: unknown) {
+    console.error("deleteUnifiedDealSuperAdmin:", err);
+    return {
+      error: err instanceof Error ? err.message : "Failed to delete deal",
     };
   }
 }
@@ -1573,7 +1605,7 @@ export async function updateDealTeamContactAction(
     if ("error" in auth) return { error: auth.error ?? "Unauthorized", data: null };
     const admin = createAdminClient();
     const data = await updateDealTeamContactService(admin, id, updates);
-    await revalidateDeal(dealId);
+    // No revalidation -- inline contact field edit, optimistic update handles UI
     return { error: null, data };
   } catch (err) {
     console.error("updateDealTeamContact error:", err);

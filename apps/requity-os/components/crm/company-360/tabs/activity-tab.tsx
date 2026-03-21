@@ -26,6 +26,7 @@ import {
   CircleDot,
   Plus,
 } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
 import { DotPill, relTime } from "@/components/crm/contact-360/contact-detail-shared";
 import type { CompanyActivityData } from "../types";
 import { ACTIVITY_TYPE_CONFIG } from "@/components/crm/contact-360/types";
@@ -47,6 +48,7 @@ interface ActivityTabProps {
   activities: CompanyActivityData[];
   currentUserId: string;
   logCallTrigger?: number;
+  loading?: boolean;
 }
 
 export function CompanyActivityTab({
@@ -54,10 +56,11 @@ export function CompanyActivityTab({
   activities,
   currentUserId,
   logCallTrigger = 0,
+  loading: tabLoading = false,
 }: ActivityTabProps) {
   const [filter, setFilter] = useState("all");
   const [showForm, setShowForm] = useState(false);
-  const [loading, setLoading] = useState(false);
+  const [saving, setSaving] = useState(false);
   const router = useRouter();
   const { toast } = useToast();
 
@@ -89,7 +92,7 @@ export function CompanyActivityTab({
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    setLoading(true);
+    setSaving(true);
 
     try {
       const supabase = createClient();
@@ -120,8 +123,17 @@ export function CompanyActivityTab({
         variant: "destructive",
       });
     } finally {
-      setLoading(false);
+      setSaving(false);
     }
+  }
+
+  if (tabLoading && activities.length === 0) {
+    return (
+      <div className="space-y-2 px-4 py-6">
+        <Skeleton className="h-14 w-full rounded-lg" />
+        <Skeleton className="h-14 w-full rounded-lg" />
+      </div>
+    );
   }
 
   return (
@@ -218,10 +230,10 @@ export function CompanyActivityTab({
             <Button
               type="submit"
               size="sm"
-              disabled={loading}
+              disabled={saving}
               className="rounded-lg bg-foreground text-background hover:bg-foreground/90"
             >
-              {loading ? "Saving..." : "Save Activity"}
+              {saving ? "Saving..." : "Save Activity"}
             </Button>
           </div>
         </form>
