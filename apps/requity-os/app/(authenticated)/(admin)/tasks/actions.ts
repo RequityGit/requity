@@ -138,7 +138,7 @@ export async function submitTaskForApproval(
           priority: "normal",
           entity_type: "task",
           entity_id: taskId,
-          action_url: "/tasks",
+          action_url: `/tasks?task=${taskId}`,
         } as never);
       } catch {
         console.error("Failed to send approval notification");
@@ -224,7 +224,7 @@ export async function approveTask(
           priority: "normal",
           entity_type: "task",
           entity_id: taskId,
-          action_url: "/tasks",
+          action_url: `/tasks?task=${taskId}`,
         } as never);
       } catch {
         console.error("Failed to send approval notification");
@@ -242,7 +242,7 @@ export async function approveTask(
           priority: "normal",
           entity_type: "task",
           entity_id: taskId,
-          action_url: "/tasks",
+          action_url: `/tasks?task=${taskId}`,
         } as never);
       } catch {
         console.error("Failed to send override notification");
@@ -325,7 +325,7 @@ export async function requestTaskRevision(
           priority: "high",
           entity_type: "task",
           entity_id: taskId,
-          action_url: "/tasks",
+          action_url: `/tasks?task=${taskId}`,
         } as never);
       } catch {
         console.error("Failed to send revision notification");
@@ -409,7 +409,7 @@ export async function rejectTask(
           priority: "high",
           entity_type: "task",
           entity_id: taskId,
-          action_url: "/tasks",
+          action_url: `/tasks?task=${taskId}`,
         } as never);
       } catch {
         console.error("Failed to send rejection notification");
