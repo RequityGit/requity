@@ -90,7 +90,7 @@ export function TaskSheet({
   const { toast } = useToast();
   const fileRef = useRef<HTMLInputElement>(null);
   const [saving, setSaving] = useState(false);
-  const [commentsOpen, setCommentsOpen] = useState(false);
+  const [commentsOpen, setCommentsOpen] = useState(true);
 
   // Form state
   const [title, setTitle] = useState("");
