@@ -671,25 +671,46 @@ export const CRM_VENDOR_TYPES = [
 
 /** DB enum: company_type_enum */
 export const CRM_COMPANY_TYPES = [
-  { value: "brokerage", label: "Brokerage" },
-  { value: "lender", label: "Lender" },
-  { value: "title_company", label: "Title Company" },
-  { value: "law_firm", label: "Law Firm" },
-  { value: "insurance", label: "Insurance" },
-  { value: "appraisal", label: "Appraisal" },
+  { value: "borrower", label: "Borrower" },
+  { value: "brokerage", label: "Capital Markets Broker" },
+  { value: "bank", label: "Bank" },
+  { value: "agency_lender", label: "Agency Lender" },
+  { value: "lender", label: "Private / Non-bank Lender" },
+  { value: "correspondent", label: "Correspondent" },
   { value: "equity_investor", label: "Equity Investor" },
+  { value: "title_company", label: "Title Company" },
+  { value: "insurance", label: "Insurance" },
+  { value: "law_firm", label: "Attorney" },
+  { value: "amc", label: "AMC" },
+  { value: "appraisal", label: "Appraisal" },
   { value: "software", label: "Software" },
   { value: "accounting_firm", label: "Accounting Firm" },
   { value: "other", label: "Other" },
 ] as const;
 
-/** DB enum: company_subtype_enum */
-export const CRM_COMPANY_SUBTYPES = [
-  { value: "bank", label: "Bank" },
-  { value: "agency_lender", label: "Agency Lender" },
-  { value: "private_lender", label: "Private Lender" },
-  { value: "correspondent", label: "Correspondent" },
-  { value: "credit_union", label: "Credit Union" },
+/** Company capabilities — multi-select picklist */
+export const CRM_COMPANY_CAPABILITIES = [
+  { value: "agency_debt_placement", label: "Agency Debt Placement" },
+  { value: "bank_financing", label: "Bank Financing" },
+  { value: "dscr", label: "DSCR" },
+  { value: "equity_placement", label: "Equity Placement" },
+  { value: "guc", label: "GUC" },
+  { value: "hard_money_bridge", label: "Hard Money / Bridge Lending" },
+  { value: "cmbs", label: "CMBS" },
+  { value: "jv_equity", label: "JV Equity Investment" },
+  { value: "loan_servicing", label: "Loan Servicing" },
+  { value: "mortgage_brokerage", label: "Mortgage Brokerage" },
+  { value: "pref_equity", label: "Pref Equity Investment" },
+  { value: "rtl", label: "RTL" },
+  { value: "audit", label: "Audit" },
+  { value: "lender_finance", label: "Lender Finance" },
+  { value: "sba", label: "SBA" },
+  { value: "table_funding", label: "Table Funding" },
+  { value: "co_lending", label: "Co-Lending" },
+  { value: "warehouse", label: "Warehouse" },
+  { value: "note_buyer", label: "Note Buyer" },
+  { value: "direct", label: "Direct Lender" },
+  { value: "correspondent_lending", label: "Correspondent Lending" },
 ] as const;
 
 /** company_files.file_type check constraint */

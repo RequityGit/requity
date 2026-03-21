@@ -17616,12 +17616,17 @@ export type Database = {
         | "correspondent"
         | "credit_union"
       company_type_enum:
+        | "borrower"
         | "brokerage"
+        | "bank"
+        | "agency_lender"
         | "lender"
+        | "correspondent"
         | "title_company"
         | "law_firm"
         | "insurance"
         | "appraisal"
+        | "amc"
         | "other"
         | "equity_investor"
         | "software"
@@ -18105,12 +18110,17 @@ export const Constants = {
         "credit_union",
       ],
       company_type_enum: [
+        "borrower",
         "brokerage",
+        "bank",
+        "agency_lender",
         "lender",
+        "correspondent",
         "title_company",
         "law_firm",
         "insurance",
         "appraisal",
+        "amc",
         "other",
         "equity_investor",
         "software",

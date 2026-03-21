@@ -21,7 +21,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { CRM_COMPANY_TYPES, CRM_COMPANY_SUBTYPES, COMPANY_TYPE_COLORS, US_STATES } from "@/lib/constants";
+import { CRM_COMPANY_TYPES, COMPANY_TYPE_COLORS, US_STATES } from "@/lib/constants";
 import { useToast } from "@/components/ui/use-toast";
 import { addCompanyAction } from "@/app/(authenticated)/(admin)/companies/actions";
 import { Building2, X as XIcon, Sparkles, Loader2 } from "lucide-react";
@@ -327,27 +327,6 @@ export function AddCompanyDialog({
               <p className="text-xs text-red-500">{errors.company_type}</p>
             )}
 
-            {/* Lender subtype */}
-            {selectedTypes.includes("lender") && (
-              <div className="mt-2 pl-4 border-l-2 border-border">
-                <Label className="text-xs">Lender Subtype</Label>
-                <Select
-                  value={form.company_subtype}
-                  onValueChange={(v) => updateField("company_subtype", v)}
-                >
-                  <SelectTrigger className="mt-1">
-                    <SelectValue placeholder="Select subtype..." />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {CRM_COMPANY_SUBTYPES.map((s) => (
-                      <SelectItem key={s.value} value={s.value}>
-                        {s.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            )}
           </div>
 
           {/* Contact Info */}

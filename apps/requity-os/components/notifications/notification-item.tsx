@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Archive, ArchiveRestore } from "lucide-react";
 import type { Notification } from "@/lib/notifications";
 import { formatRelativeTime, getPriorityColor, getNotificationRoute } from "@/lib/notifications";
+import { stripMentionMarkup } from "@/lib/comment-utils";
 import { NotificationPriorityBadge } from "./notification-priority-badge";
 
 interface NotificationItemProps {
@@ -55,7 +56,7 @@ export function NotificationItem({
               </p>
               {notification.body && (
                 <p className="mt-1 text-sm text-muted-foreground line-clamp-2">
-                  {notification.body}
+                  {notification.body ? stripMentionMarkup(notification.body) : null}
                 </p>
               )}
               <div className="mt-2 flex items-center gap-2">
@@ -130,7 +131,7 @@ export function NotificationItem({
         </p>
         {notification.body && (
           <p className="mt-0.5 text-xs text-muted-foreground line-clamp-1">
-            {notification.body}
+            {stripMentionMarkup(notification.body)}
           </p>
         )}
         <div className="mt-1 flex items-center gap-2">

@@ -44,7 +44,6 @@ import type {
 } from "../types";
 import {
   COMPANY_TYPE_CONFIG,
-  SUBTYPE_LABELS,
   PROGRAM_LABELS,
   ASSET_LABELS,
   CAPABILITY_LABELS,
@@ -82,7 +81,7 @@ const DEFAULT_SECTION_ORDER: SectionLayout[] = [
   { section_key: "company_information", display_order: 0, is_visible: true, visibility_rule: null, section_type: "fields", section_label: "Company Information", section_icon: "building-2" },
   { section_key: "address", display_order: 2, is_visible: true, visibility_rule: null, section_type: "fields", section_label: "Address", section_icon: "map-pin" },
   { section_key: "lender_details", display_order: 3, is_visible: true, visibility_rule: "is_lender", section_type: "fields", section_label: "Lender Details", section_icon: "landmark" },
-  { section_key: "capabilities_coverage", display_order: 4, is_visible: true, visibility_rule: "not_lender", section_type: "fields", section_label: "Capabilities & Coverage", section_icon: "target" },
+  { section_key: "capabilities_coverage", display_order: 4, is_visible: true, visibility_rule: null, section_type: "fields", section_label: "Capabilities & Coverage", section_icon: "target" },
   { section_key: "wire_instructions", display_order: 5, is_visible: true, visibility_rule: null, section_type: "fields", section_label: "Wire Instructions", section_icon: "credit-card" },
   { section_key: "description", display_order: 6, is_visible: true, visibility_rule: null, section_type: "fields", section_label: "Description", section_icon: "file-text" },
 ];
@@ -228,10 +227,7 @@ export function CompanyOverviewTab({
     });
   }
 
-  const hasCapabilitiesCoverage = !isLender &&
-    ((company.company_capabilities ?? []).length > 0 ||
-      (company.asset_types ?? []).length > 0 ||
-      (company.geographies ?? []).length > 0);
+  const hasCapabilitiesCoverage = true; // always show for all companies
 
   const resolvedSections = useMemo(() => {
     if (isEditing && inlineLayout) {
@@ -526,6 +522,13 @@ export function CompanyOverviewTab({
               onChange={handleLenderArrayChange}
             />
           </div>
+        </div>
+      </SectionCard>
+    ) : null,
+
+    capabilities_coverage: hasCapabilitiesCoverage ? (
+      <SectionCard title="Capabilities & Coverage" icon={Target} key="capabilities_coverage">
+        <div className="flex flex-col gap-5">
           <div>
             <div className="rq-micro-label mb-2">Capabilities</div>
             <EditableChipGroup
@@ -537,31 +540,28 @@ export function CompanyOverviewTab({
               onChange={handleLenderArrayChange}
             />
           </div>
-        </div>
-      </SectionCard>
-    ) : null,
-
-    capabilities_coverage: hasCapabilitiesCoverage ? (
-      <SectionCard title="Capabilities & Coverage" icon={Target} key="capabilities_coverage">
-        <div className="flex flex-col gap-4">
-          {(company.company_capabilities ?? []).length > 0 && (
-            <div>
-              <div className="rq-micro-label mb-2">Capabilities</div>
-              <ChipGroup items={company.company_capabilities!} labelMap={CAPABILITY_LABELS} color="#8B5CF6" />
-            </div>
-          )}
-          {(company.asset_types ?? []).length > 0 && (
-            <div>
-              <div className="rq-micro-label mb-2">Asset Types</div>
-              <ChipGroup items={company.asset_types!} labelMap={ASSET_LABELS} color="#E5930E" />
-            </div>
-          )}
-          {(company.geographies ?? []).length > 0 && (
-            <div>
-              <div className="rq-micro-label mb-2">Geographies</div>
-              <ChipGroup items={company.geographies!} labelMap={{}} color="#22A861" />
-            </div>
-          )}
+          <div>
+            <div className="rq-micro-label mb-2">Asset Types</div>
+            <EditableChipGroup
+              field="asset_types"
+              selected={(localData.asset_types as string[]) ?? []}
+              options={ASSET_LABELS}
+              color="#E5930E"
+              disabled={pending}
+              onChange={handleLenderArrayChange}
+            />
+          </div>
+          <div>
+            <div className="rq-micro-label mb-2">Geographies</div>
+            <EditableChipGroup
+              field="geographies"
+              selected={(localData.geographies as string[]) ?? []}
+              options={GEOGRAPHY_OPTIONS}
+              color="#22A861"
+              disabled={pending}
+              onChange={handleLenderArrayChange}
+            />
+          </div>
         </div>
       </SectionCard>
     ) : null,

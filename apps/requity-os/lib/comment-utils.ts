@@ -43,6 +43,11 @@ export function parseComment(text: string): CommentSegment[] {
   return segments;
 }
 
+/** Strip @[Name](uuid) markup to plain @Name for display in previews */
+export function stripMentionMarkup(text: string): string {
+  return text.replace(/@\[([^\]]+)\]\([a-f0-9-]+\)/g, "@$1");
+}
+
 /** Format a relative time string */
 export function relativeTime(dateStr: string): string {
   const now = Date.now();

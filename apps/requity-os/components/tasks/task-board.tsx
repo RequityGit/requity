@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useCallback, useMemo, useEffect } from "react";
+import { useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -68,6 +69,19 @@ export function TaskBoard({
   const [showParkingLot, setShowParkingLot] = useState(false);
 
   const { toast } = useToast();
+  const searchParams = useSearchParams();
+
+  // Open a specific task from URL param (e.g., /tasks?task=<id>)
+  useEffect(() => {
+    const taskId = searchParams.get("task");
+    if (taskId && tasks.length > 0) {
+      const found = tasks.find((t) => t.id === taskId);
+      if (found) {
+        setEditingTask(found);
+        setSheetOpen(true);
+      }
+    }
+  }, [searchParams, tasks]);
 
   // Realtime subscription
   useEffect(() => {
