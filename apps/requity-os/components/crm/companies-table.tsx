@@ -110,35 +110,26 @@ export function CompaniesTable({ companies }: CompaniesTableProps) {
             href={`/companies/${row.company_number}`}
             className="flex items-center gap-3"
           >
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10">
+            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary/10">
               <Building2 className="h-4 w-4 text-muted-foreground" />
             </div>
-            <div>
-              <p className="text-sm font-medium text-foreground hover:underline">
+            <div className="min-w-0">
+              <p className="text-sm font-medium text-foreground hover:underline truncate">
                 {row.name}
               </p>
               {row.email && (
-                <p className="text-xs text-muted-foreground">{row.email}</p>
+                <p className="text-xs text-muted-foreground truncate">{row.email}</p>
               )}
             </div>
           </Link>
         ),
+        className: "min-w-[200px] max-w-[300px]",
       },
       {
         key: "company_type",
         header: "Type",
         cell: (row) => <CompanyTypeBadge type={row.company_type} />,
-      },
-      {
-        key: "location",
-        header: "Location",
-        cell: (row) => (
-          <span className="text-sm text-muted-foreground">
-            {row.city && row.state
-              ? `${row.city}, ${row.state}`
-              : row.city || row.state || "—"}
-          </span>
-        ),
+        className: "w-[130px]",
       },
       {
         key: "contact_count",
@@ -148,7 +139,7 @@ export function CompaniesTable({ companies }: CompaniesTableProps) {
             {row.contact_count}
           </span>
         ),
-        className: "text-center w-[80px]",
+        className: "text-center w-[90px]",
       },
       {
         key: "active_deals",
@@ -175,6 +166,18 @@ export function CompaniesTable({ companies }: CompaniesTableProps) {
           </div>
         ),
         className: "text-center w-[70px]",
+      },
+      {
+        key: "location",
+        header: "Location",
+        cell: (row) => (
+          <span className="text-sm text-muted-foreground whitespace-nowrap">
+            {row.city && row.state
+              ? `${row.city}, ${row.state}`
+              : row.city || row.state || "—"}
+          </span>
+        ),
+        className: "w-[140px]",
       },
     ],
     []

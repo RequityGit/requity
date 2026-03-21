@@ -170,11 +170,11 @@ export function getNotificationRoute(
         return "/servicing";
 
       case "contact":
-        if (isAdmin) return `/crm/${entity_id}?tab=notes`;
+        if (isAdmin) return `/contacts/${entity_id}?tab=notes`;
         return ROLE_DASHBOARDS[activeRole] ?? "/pipeline";
 
       case "company":
-        if (isAdmin) return `/crm/companies/${entity_id}?tab=notes`;
+        if (isAdmin) return `/companies/${entity_id}?tab=notes`;
         return ROLE_DASHBOARDS[activeRole] ?? "/pipeline";
 
       case "task":
