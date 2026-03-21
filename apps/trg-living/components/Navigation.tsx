@@ -22,7 +22,7 @@ export default function Navigation() {
   }, [supabase]);
 
   const navItems = [
-    { label: 'About Us', href: '/about' },
+    { label: 'About', href: '/about' },
     { label: 'For Sale', href: '/for-sale' },
     { label: 'Contact', href: '/contact' },
   ];

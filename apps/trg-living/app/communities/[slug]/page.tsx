@@ -90,21 +90,21 @@ export default async function CommunityPage({ params }: { params: { slug: string
         <div className="max-w-[1380px] mx-auto">
           <div className="max-w-[490px] space-y-10 text-left">
             <div className="space-y-4">
-               <h1 className="text-[3.75rem] font-black tracking-wide leading-[1] uppercase">{community.name}</h1>
+               <h1 className="text-[3.75rem] font-black tracking-wide leading-[1] capitalize">{community.name}</h1>
                <p className="text-xl text-blue-400 font-bold uppercase tracking-widest">{community.headline || 'Welcome to our community'}</p>
             </div>
             
             <div className="flex flex-col gap-3 pt-8 font-bold uppercase tracking-widest text-sm">
               <div className="flex items-center gap-4">
-                  <AmenityIcon iconPath="brand-assets/amenity-icons/playground-icon.svg" className="w-5 h-5 text-white" />
+                  <AmenityIcon iconPath="brand-assets/amenity-icons/bed-front.svg" className="w-5 h-5 text-white" />
                   <span>{community.beds_range || '2 - 4 Beds'}</span>
               </div>
               <div className="flex items-center gap-4">
-                  <AmenityIcon iconPath="brand-assets/amenity-icons/playground-icon.svg" className="w-5 h-5 text-white" />
+                  <AmenityIcon iconPath="brand-assets/amenity-icons/bath-icon.svg" className="w-5 h-5 text-white" />
                   <span>{community.baths_range || '1 - 2 Baths'}</span>
               </div>
               <div className="flex items-center gap-4">
-                  <AmenityIcon iconPath="brand-assets/amenity-icons/playground-icon.svg" className="w-5 h-5 text-white" />
+                  <AmenityIcon iconPath="brand-assets/amenity-icons/badge-dollar.svg" className="w-5 h-5 text-white" />
                   <span>
                     {community.starting_price || 'Starting at $550'}
                   </span>
