@@ -52,6 +52,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { UnifiedNotes } from "@/components/shared/UnifiedNotes";
 import { RecurrencePanel } from "@/app/(authenticated)/(admin)/tasks/recurrence-panel";
 import { LinkedEntitySelect } from "@/app/(authenticated)/(admin)/tasks/linked-entity-select";
@@ -757,6 +758,22 @@ export function TaskSplitPanel({
                 )}
               </div>
               <div className="flex items-center gap-2">
+                {/* Assignee avatar */}
+                {assigneeProfile && (
+                  <div className="flex items-center gap-1.5" title={`Assigned to ${assigneeProfile.full_name}`}>
+                    <Avatar className="h-6 w-6 rounded-full">
+                      <AvatarFallback className="rounded-full bg-foreground/[0.06] text-foreground text-[9px] font-semibold">
+                        {assigneeProfile.full_name
+                          .split(" ")
+                          .map((w) => w[0])
+                          .join("")
+                          .slice(0, 2)
+                          .toUpperCase()}
+                      </AvatarFallback>
+                    </Avatar>
+                    <span className="h-4 w-px bg-border" />
+                  </div>
+                )}
                 {!isNew && (
                   <button
                     type="button"
@@ -870,11 +887,12 @@ export function TaskSplitPanel({
               </>
             )}
 
-            {/* ── Two-column body ────────────────────────────────────── */}
-            <div className="flex flex-1 min-h-0 max-lg:flex-col max-lg:overflow-y-auto">
+            {/* ── Two-column body — unified scroll ────────────────── */}
+            <div className="flex-1 min-h-0 overflow-y-auto task-panel-feed">
+              <div className="flex min-h-full max-lg:flex-col">
               {/* ── Left column: task fields ────────────────────────── */}
-              <div className="lg:w-[56%] flex flex-col lg:overflow-hidden lg:border-r border-border">
-                <div className="flex-1 px-5 py-4 space-y-4 lg:overflow-hidden max-lg:overflow-visible">
+              <div className="lg:w-[56%] lg:border-r border-border">
+                <div className="px-5 py-4 space-y-4">
                   {/* Status / Priority / Due chips */}
                   <div className="flex items-center gap-2 flex-wrap">
                     <Select value={status} onValueChange={(v) => {
@@ -1211,7 +1229,7 @@ export function TaskSplitPanel({
                 </div>
 
                 {/* ── Footer ─────────────────────────────────────────── */}
-                <div className="flex items-center justify-between border-t border-border px-5 py-3 shrink-0 mt-auto">
+                <div className="flex items-center justify-between border-t border-border px-5 py-3">
                   {!isNew ? (
                     <div className="flex items-center gap-2">
                       <AlertDialog>
@@ -1252,17 +1270,18 @@ export function TaskSplitPanel({
               </div>
 
               {/* ── Right column: comments / activity ───────────────── */}
-              <div className="lg:w-[44%] flex flex-col min-h-0 max-lg:border-t max-lg:border-border">
+              <div className="lg:w-[44%] flex flex-col max-lg:border-t max-lg:border-border lg:min-h-full">
                 <div className="px-5 py-3 border-b border-border shrink-0">
                   <span className="text-sm font-semibold text-foreground">Activity</span>
                 </div>
 
                 {task ? (
-                  <div className="flex-1 min-h-0 overflow-y-auto task-panel-feed px-5 py-4">
+                  <div className="flex-1 px-5 py-4">
                     <UnifiedNotes
                       entityType="task"
                       entityId={task.id}
                       compact
+                      chatMode
                     />
                   </div>
                 ) : (
@@ -1272,6 +1291,7 @@ export function TaskSplitPanel({
                     </p>
                   </div>
                 )}
+              </div>
               </div>
             </div>
           </DialogPrimitive.Content>

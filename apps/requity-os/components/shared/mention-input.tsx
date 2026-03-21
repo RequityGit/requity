@@ -22,6 +22,8 @@ interface MentionInputProps {
   submitIcon?: React.ReactNode;
   /** Extra controls rendered between the textarea and submit button row */
   extraControls?: React.ReactNode;
+  /** When true, Enter sends and Shift+Enter inserts newline (chat-style) */
+  enterToSend?: boolean;
 }
 
 export function MentionInput({
@@ -34,6 +36,7 @@ export function MentionInput({
   submitLabel = "Post",
   submitIcon,
   extraControls,
+  enterToSend = false,
 }: MentionInputProps) {
   const [showDropdown, setShowDropdown] = useState(false);
   const [dropdownQuery, setDropdownQuery] = useState("");
@@ -97,7 +100,10 @@ export function MentionInput({
         e.preventDefault();
         setShowDropdown(false);
       }
-    } else if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
+    } else if (enterToSend && e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      handleSubmit();
+    } else if (!enterToSend && e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
       e.preventDefault();
       handleSubmit();
     }

@@ -24,6 +24,28 @@ function getInitials(name: string): string {
     .toUpperCase();
 }
 
+// Deterministic color for author names — consistent per user
+const AUTHOR_COLORS = [
+  "text-blue-600 dark:text-blue-400",
+  "text-violet-600 dark:text-violet-400",
+  "text-emerald-600 dark:text-emerald-400",
+  "text-amber-600 dark:text-amber-400",
+  "text-rose-600 dark:text-rose-400",
+  "text-cyan-600 dark:text-cyan-400",
+  "text-fuchsia-600 dark:text-fuchsia-400",
+  "text-orange-600 dark:text-orange-400",
+  "text-teal-600 dark:text-teal-400",
+  "text-indigo-600 dark:text-indigo-400",
+];
+
+function getAuthorColor(authorId: string): string {
+  let hash = 0;
+  for (let i = 0; i < authorId.length; i++) {
+    hash = (hash * 31 + authorId.charCodeAt(i)) | 0;
+  }
+  return AUTHOR_COLORS[Math.abs(hash) % AUTHOR_COLORS.length];
+}
+
 interface NoteCardProps {
   note: NoteData;
   currentUserId: string;
@@ -120,7 +142,7 @@ export function NoteCard({
 
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
-            <span className="rq-section-title">
+            <span className={cn("text-[13px] font-semibold", getAuthorColor(note.author_id))}>
               {note.author_name || "Unknown"}
             </span>
             <span className="text-[11px] font-mono text-muted-foreground num">
@@ -243,8 +265,19 @@ export function NoteCard({
       </div>
 
       {/* Hover actions (compact icon row) — kept for quick access */}
-      {showActions && (showPinning || canEdit || isOwn) && (
+      {showActions && (
         <div className="absolute -top-2 right-2 flex items-center gap-0.5 bg-background border border-border rounded-md shadow-sm px-0.5 py-0.5">
+          <button
+            type="button"
+            onClick={() => onToggleLike(note.id, isLiked)}
+            className={cn(
+              "p-1 rounded hover:bg-muted transition-colors",
+              isLiked ? "text-emerald-500" : "text-muted-foreground hover:text-foreground"
+            )}
+            title={isLiked ? "Unlike" : "Like"}
+          >
+            <ThumbsUp className="h-3 w-3" fill={isLiked ? "currentColor" : "none"} />
+          </button>
           {showPinning && (
             <button
               type="button"

@@ -11,6 +11,8 @@ interface NoteComposerProps {
   defaultInternal: boolean;
   compact: boolean;
   onPost: (body: string, isInternal: boolean, mentionIds: string[]) => Promise<void>;
+  /** When true, Enter sends and Shift+Enter inserts newline (chat-style) */
+  enterToSend?: boolean;
 }
 
 function getInitials(name: string): string {
@@ -28,6 +30,7 @@ export function NoteComposer({
   defaultInternal,
   compact,
   onPost,
+  enterToSend = false,
 }: NoteComposerProps) {
   const [text, setText] = useState("");
   const [isInternal, setIsInternal] = useState(defaultInternal);
@@ -66,7 +69,7 @@ export function NoteComposer({
             onSubmit={handleSubmit}
             placeholder="Write a note... use @mention to tag team members"
             disabled={posting}
-            submitLabel={posting ? "Posting..." : "Post Note"}
+            submitLabel={posting ? "Posting..." : enterToSend ? "Send" : "Post Note"}
             submitIcon={
               posting ? (
                 <Loader2 className="h-3 w-3 animate-spin" />
@@ -75,6 +78,7 @@ export function NoteComposer({
               )
             }
             rows={compact ? 2 : 3}
+            enterToSend={enterToSend}
             extraControls={
               showInternalToggle ? (
                 <button
@@ -96,6 +100,11 @@ export function NoteComposer({
               ) : undefined
             }
           />
+          {enterToSend && (
+            <p className="text-[10px] text-muted-foreground mt-1">
+              Enter to send, Shift+Enter for new line
+            </p>
+          )}
         </div>
       </div>
     </div>
