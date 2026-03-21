@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/components/shared/page-header";
 import { TaskColumn } from "./task-column";
 import { TaskFilters } from "./task-filters";
-import { TaskSheet } from "./task-sheet";
+import { TaskSplitPanel } from "./task-split-panel";
 import { ApprovalDrawer } from "./approval-drawer";
 import { RecurringTemplatesTable } from "./recurring-templates-table";
 import { TemplateSheet } from "./template-sheet";
@@ -559,8 +559,8 @@ export function TaskBoard({
         </div>
       )}
 
-      {/* Task Sheet */}
-      <TaskSheet
+      {/* Task Split Panel */}
+      <TaskSplitPanel
         open={sheetOpen}
         task={editingTask}
         profiles={profiles}

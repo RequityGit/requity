@@ -14,7 +14,7 @@ import {
 import { ContactDetailHeader } from "./contact-detail-header";
 import { ContactDetailSidebar } from "./contact-detail-sidebar";
 import { EmailComposeSheet } from "@/components/crm/email-compose-sheet";
-import { TaskSheet } from "@/components/tasks/task-sheet";
+import { TaskSplitPanel } from "@/components/tasks/task-split-panel";
 import { DetailOverviewTab } from "./tabs/detail-overview-tab";
 import { CrmInlineEditorWrapper } from "@/components/inline-layout-editor/CrmInlineEditorWrapper";
 import { CollapsiblePipelineDealsSection } from "./sections/collapsible-pipeline-deals-section";
@@ -285,7 +285,7 @@ export function ContactDetailClient({
         currentUserName={currentUserName}
       />
 
-      <TaskSheet
+      <TaskSplitPanel
         open={taskSheetOpen}
         task={null}
         profiles={taskProfiles}
