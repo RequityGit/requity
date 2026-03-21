@@ -335,6 +335,15 @@ export function DetailOverviewTab({
                 value={(localContactData.address_line1 as string) ?? ""}
                 onChange={(val) => setLocalContactData((prev) => ({ ...prev, address_line1: val }))}
                 onAddressSelect={handleAddressSelect}
+                onBlur={() => {
+                  const currentVal = localContactData.address_line1;
+                  const prevVal = (contact as unknown as Record<string, unknown>).address_line1;
+                  if (currentVal === prevVal) return;
+                  startTransition(async () => {
+                    const ok = await saveContactField("address_line1", currentVal);
+                    if (!ok) setLocalContactData((prev) => ({ ...prev, address_line1: prevVal }));
+                  });
+                }}
                 placeholder="Start typing an address..."
                 disabled={pending}
                 className="inline-field"

@@ -17,6 +17,7 @@ interface DetailTasksTabProps {
   contactName: string;
   profiles: Profile[];
   currentUserId: string;
+  onRefreshTasks?: () => void;
 }
 
 const STATUS_CONFIG: Record<string, { bg: string; text: string; label: string }> = {
@@ -37,6 +38,7 @@ export function DetailTasksTab({
   contactName,
   profiles,
   currentUserId,
+  onRefreshTasks,
 }: DetailTasksTabProps) {
   const openCount = tasks.filter((t) => t.status !== "Complete").length;
   const router = useRouter();
@@ -55,10 +57,12 @@ export function DetailTasksTab({
   }
 
   function handleSaved(_task: OpsTask) {
+    onRefreshTasks?.();
     router.refresh();
   }
 
   function handleDeleted(_taskId: string) {
+    onRefreshTasks?.();
     router.refresh();
   }
 
@@ -82,6 +86,7 @@ export function DetailTasksTab({
         toast({ title: "Task completed" });
       }
     }
+    onRefreshTasks?.();
     router.refresh();
   }
 

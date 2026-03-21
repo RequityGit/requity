@@ -244,6 +244,7 @@ export function ContactDetailClient({
               currentUserId={currentUserId}
               loading={tasksQ.loading}
               taskCount={tabCounts.tasks}
+              onRefreshTasks={tasksQ.refresh}
             />
 
             <TimelineSection
