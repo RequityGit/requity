@@ -22,9 +22,13 @@ type UnifiedDealInsert = Database["public"]["Tables"]["unified_deals"]["Insert"]
 type UnifiedDealUpdate = Database["public"]["Tables"]["unified_deals"]["Update"];
 
 async function revalidatePipeline(dealId?: string) {
-  revalidatePath("/pipeline");
   if (dealId) {
+    // Granular: only revalidate the specific deal + pipeline layout
+    revalidatePath("/pipeline", "layout");
     await revalidateDealPaths(dealId);
+  } else {
+    // Structural change (create/delete): full pipeline revalidation
+    revalidatePath("/pipeline");
   }
 }
 

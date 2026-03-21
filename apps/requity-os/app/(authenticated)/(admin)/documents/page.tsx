@@ -40,31 +40,35 @@ export default async function AdminDocumentsPage() {
     supabase
       .from("documents")
       .select(
-        "*, profiles:uploaded_by(full_name, email), funds(name), loans(property_address)"
+        "id, file_name, description, document_type, status, created_at, file_path, file_url, mime_type, profiles:uploaded_by(full_name, email), funds(name), loans(property_address)"
       )
       .is("deleted_at", null)
-      .order("created_at", { ascending: false }),
+      .order("created_at", { ascending: false })
+      .limit(500),
 
     // CRM contact files
     supabase
       .from("contact_files")
-      .select("*, crm_contacts(first_name, last_name)")
+      .select("id, file_name, notes, file_type, created_at, uploaded_at, storage_path, mime_type, crm_contacts(first_name, last_name)")
       .is("deleted_at", null)
-      .order("created_at", { ascending: false }),
+      .order("created_at", { ascending: false })
+      .limit(500),
 
     // CRM company files
     supabase
       .from("company_files")
-      .select("*, companies:company_id(name)")
+      .select("id, file_name, notes, file_type, created_at, uploaded_at, storage_path, mime_type, companies:company_id(name)")
       .is("deleted_at", null)
-      .order("created_at", { ascending: false }),
+      .order("created_at", { ascending: false })
+      .limit(500),
 
     // Pipeline deal documents
     supabase
       .from("unified_deal_documents")
-      .select("*, unified_deals(name)")
+      .select("id, document_name, category, review_status, created_at, storage_path, file_url, mime_type, unified_deals(name)")
       .is("deleted_at", null)
-      .order("created_at", { ascending: false }),
+      .order("created_at", { ascending: false })
+      .limit(500),
 
     // Metadata for upload form
     supabase

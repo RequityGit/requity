@@ -31,7 +31,7 @@ export default async function ContactsPage() {
     ] = await Promise.all([
       supabase
         .from("crm_contacts")
-        .select("*")
+        .select("id, contact_number, first_name, last_name, email, phone, company_id, company_name, lifecycle_stage, dnc, source, assigned_to, next_follow_up_date, last_contacted_at, created_at, notes, city, state")
         .is("deleted_at", null)
         .order("created_at", { ascending: false }),
       supabase

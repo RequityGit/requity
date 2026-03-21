@@ -21,7 +21,6 @@ export async function generateBillingCycleAction(billingMonth: string) {
     }
 
     revalidatePath("/servicing/billing");
-    revalidatePath("/servicing");
     return { success: true, billingCycleId: data };
   } catch (err: unknown) {
     console.error("Generate billing cycle error:", err);
@@ -45,7 +44,6 @@ export async function runReconciliationAction(billingCycleId: string) {
     }
 
     revalidatePath("/servicing/billing");
-    revalidatePath("/servicing");
     return { success: true, result: data };
   } catch (err: unknown) {
     console.error("Reconciliation error:", err);
@@ -88,7 +86,6 @@ export async function approveBillingCycleAction(billingCycleId: string) {
     }
 
     revalidatePath("/servicing/billing");
-    revalidatePath("/servicing");
     return { success: true, reconciliation: reconData };
   } catch (err: unknown) {
     console.error("Approve billing cycle error:", err);
@@ -112,7 +109,6 @@ export async function submitBillingCycleAction(billingCycleId: string) {
     }
 
     revalidatePath("/servicing/billing");
-    revalidatePath("/servicing");
     return { success: true };
   } catch (err: unknown) {
     console.error("Submit billing cycle error:", err);
@@ -151,7 +147,6 @@ export async function completeBillingCycleAction(billingCycleId: string) {
     }
 
     revalidatePath("/servicing/billing");
-    revalidatePath("/servicing");
     return { success: true };
   } catch (err: unknown) {
     console.error("Complete billing cycle error:", err);
@@ -175,7 +170,6 @@ export async function generateNachaAction(billingCycleId: string) {
     }
 
     revalidatePath("/servicing/billing");
-    revalidatePath("/servicing");
     return { success: true, nachaContent: data };
   } catch (err: unknown) {
     console.error("NACHA generation error:", err);
@@ -208,7 +202,6 @@ export async function applyPaymentAction(
     }
 
     revalidatePath("/servicing/billing");
-    revalidatePath("/servicing");
     return { success: true, result: data };
   } catch (err: unknown) {
     console.error("Apply payment error:", err);
@@ -236,7 +229,6 @@ export async function generatePayoffQuoteAction(
     }
 
     revalidatePath("/servicing/billing");
-    revalidatePath("/servicing");
     return { success: true, result: data };
   } catch (err: unknown) {
     console.error("Payoff quote error:", err);
@@ -258,7 +250,6 @@ export async function refreshDelinquencyAction() {
     }
 
     revalidatePath("/servicing/billing");
-    revalidatePath("/servicing");
     return { success: true, result: data };
   } catch (err: unknown) {
     console.error("Refresh delinquency error:", err);

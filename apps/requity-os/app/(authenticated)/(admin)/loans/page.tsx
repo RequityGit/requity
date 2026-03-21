@@ -29,7 +29,7 @@ export default async function AdminLoansPage({ searchParams }: PageProps) {
     await Promise.all([
       supabase
         .from("loans")
-        .select(`*`)
+        .select("id, loan_number, property_address, property_city, property_state, borrower_id, type, loan_amount, stage, stage_updated_at, created_at, next_action, originator_id, originator, processor_id, interest_rate, loan_term_months, ltv, appraised_value, property_type")
         .is("deleted_at", null)
         .order("created_at", { ascending: false }),
       supabase

@@ -17,16 +17,7 @@ async function assertCrmAccess(supabase: ReturnType<typeof createClient>) {
   } = await supabase.auth.getUser();
   if (!user) return { user: null as null, error: NextResponse.json({ error: "Unauthorized" }, { status: 401 }) };
 
-  const { data: superAdmin } = await supabase
-    .from("user_roles")
-    .select("id")
-    .eq("user_id", user.id)
-    .eq("role", "super_admin")
-    .eq("is_active", true)
-    .maybeSingle();
-
-  if (superAdmin) return { user, error: null as null };
-
+  // Single query instead of two separate role checks
   const { data: roleRow } = await supabase
     .from("user_roles")
     .select("role")
@@ -93,14 +84,16 @@ export async function GET(
             "id, activity_type, subject, description, call_disposition, direction, call_duration_seconds, performed_by, performed_by_name, created_at"
           )
           .eq("contact_id", contactId)
-          .order("created_at", { ascending: false }),
+          .order("created_at", { ascending: false })
+          .limit(200),
         admin
           .from("crm_emails")
           .select(
             "id, created_at, from_email, to_email, to_name, subject, body_text, body_html, cc_emails, bcc_emails, sent_by_name, postmark_status, delivered_at, opened_at, attachments"
           )
           .eq("linked_contact_id", contactId)
-          .order("created_at", { ascending: false }),
+          .order("created_at", { ascending: false })
+          .limit(200),
       ]);
 
       const activities = (activitiesResult.data ?? []).map((a) => ({
@@ -143,10 +136,11 @@ export async function GET(
     if (scope === "tasks") {
       const { data: raw } = await admin
         .from("ops_tasks")
-        .select("*")
+        .select("id, title, description, status, priority, assigned_to, assigned_to_name, project_id, due_date, completed_at, category, linked_entity_type, linked_entity_id, linked_entity_label, is_recurring, is_active_recurrence, recurrence_pattern, recurrence_repeat_interval, recurrence_days_of_week, recurrence_day_of_month, recurrence_monthly_when, recurrence_start_date, recurrence_end_date, next_recurrence_date, recurring_template_id, recurrence_period, previous_incomplete, recurring_series_id, source_task_id, parent_task_id, created_by, sort_order, updated_at, created_at, type, approval_status, active_party, requestor_user_id, requestor_name, amount, decision_note, approved_at, rejected_at, resubmitted_at, revision_count, requires_approval, approver_id, approval_instructions")
         .eq("linked_entity_type", "contact")
         .eq("linked_entity_id", contactId)
-        .order("created_at", { ascending: false });
+        .order("created_at", { ascending: false })
+        .limit(100);
 
       const tasks: OpsTask[] = (raw ?? []).map((t: Record<string, unknown>) => ({
         id: t.id as string,

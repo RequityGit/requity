@@ -9,7 +9,7 @@ const nextConfig = {
       bodySizeLimit: "10mb",
     },
     // Faster dev: tree-shake barrel imports so only used exports are compiled (lucide, recharts, etc.)
-    optimizePackageImports: ["lucide-react", "recharts"],
+    optimizePackageImports: ["lucide-react", "recharts", "@radix-ui/react-icons", "date-fns", "@tiptap/starter-kit", "@tiptap/react"],
   },
   images: {
     remotePatterns: [

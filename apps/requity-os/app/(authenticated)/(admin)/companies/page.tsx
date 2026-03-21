@@ -31,7 +31,7 @@ export default async function CompaniesPage() {
       .is("deleted_at", null),
     admin
       .from("companies")
-      .select("*")
+      .select("id, company_number, name, email, phone, website, company_type, company_types, company_subtype, city, state, is_active, notes, created_at")
       .eq("is_active", true)
       .is("deleted_at", null)
       .order("updated_at", { ascending: false }),

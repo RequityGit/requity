@@ -16,16 +16,7 @@ async function assertCrmAccess(supabase: ReturnType<typeof createClient>) {
   } = await supabase.auth.getUser();
   if (!user) return { user: null as null, error: NextResponse.json({ error: "Unauthorized" }, { status: 401 }) };
 
-  const { data: superAdmin } = await supabase
-    .from("user_roles")
-    .select("id")
-    .eq("user_id", user.id)
-    .eq("role", "super_admin")
-    .eq("is_active", true)
-    .maybeSingle();
-
-  if (superAdmin) return { user, error: null as null };
-
+  // Single query instead of two separate role checks
   const { data: roleRow } = await supabase
     .from("user_roles")
     .select("role")
@@ -88,7 +79,8 @@ export async function GET(
         )
         .eq("company_id", companyId)
         .is("deleted_at", null)
-        .order("created_at", { ascending: false });
+        .order("created_at", { ascending: false })
+        .limit(200);
 
       const activities = (rows ?? []).map((a) => ({
         id: a.id as string,
@@ -113,7 +105,8 @@ export async function GET(
           "id, file_name, file_type, file_size, mime_type, storage_path, uploaded_by, uploaded_at, notes"
         )
         .eq("company_id", companyId)
-        .order("uploaded_at", { ascending: false });
+        .order("uploaded_at", { ascending: false })
+        .limit(200);
 
       const files = (rows ?? []).map((f) => ({
         id: f.id as string,
@@ -200,7 +193,8 @@ export async function GET(
             "id, file_name, file_type, file_size, mime_type, storage_path, uploaded_by, uploaded_at, notes"
           )
           .eq("company_id", companyId)
-          .order("uploaded_at", { ascending: false }),
+          .order("uploaded_at", { ascending: false })
+          .limit(200),
       ]);
 
       const wireInstructions = wireResult.data
