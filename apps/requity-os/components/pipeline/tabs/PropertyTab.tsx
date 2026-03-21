@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useEffect, useCallback, useTransition, useMemo } from "react";
-import { updatePropertyDataAction } from "@/app/(authenticated)/(admin)/pipeline/actions";
+import { useState, useTransition, useMemo } from "react";
+import { updatePropertyDataAction, updateUwDataAction } from "@/app/(authenticated)/(admin)/pipeline/actions";
 import type { UwFieldDef } from "../pipeline-types";
 import { UwField } from "../UwField";
 import { useUwFieldConfigs } from "@/hooks/useUwFieldConfigs";
@@ -10,9 +10,6 @@ import type { VisibilityContext } from "@/lib/visibility-engine";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Loader2, Sparkles } from "lucide-react";
-import { cn } from "@/lib/utils";
-import { RentRollSubTab } from "./financials/RentRollSubTab";
-import { T12SubTab } from "./financials/T12SubTab";
 import { useOptionalInlineLayout } from "@/components/inline-layout-editor/InlineLayoutContext";
 import { EditableSection } from "@/components/inline-layout-editor/EditableSection";
 import { EditableFieldSlot } from "@/components/inline-layout-editor/EditableFieldSlot";
@@ -31,156 +28,19 @@ interface PropertyTabProps {
   dealId: string;
   propertyData: Record<string, unknown>;
   visibilityContext?: VisibilityContext | null;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  rentRoll?: any[];
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  income?: any[];
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  expenses?: any[];
-  uwId?: string | null;
-  purchasePrice?: number;
-  numUnits?: number;
-}
-
-const PROPERTY_SECTIONS = ["Property Info", "Rent Roll", "T12 / Historicals"];
-
-function sectionId(name: string) {
-  return name.toLowerCase().replace(/[\s\/]+/g, "-");
 }
 
 export function PropertyTab({
   dealId,
   propertyData,
   visibilityContext,
-  rentRoll = [],
-  income = [],
-  expenses = [],
-  uwId = null,
-  purchasePrice = 0,
-  numUnits = 0,
 }: PropertyTabProps) {
-  const [activeSection, setActiveSection] = useState(sectionId(PROPERTY_SECTIONS[0]));
-
-  const scrollToSection = useCallback((id: string) => {
-    const el = document.getElementById(id);
-    if (el) {
-      el.scrollIntoView({ behavior: "smooth", block: "start" });
-      setActiveSection(id);
-    }
-  }, []);
-
-  useEffect(() => {
-    const observer = new IntersectionObserver(
-      (entries) => {
-        for (const entry of entries) {
-          if (entry.isIntersecting) {
-            setActiveSection(entry.target.id);
-          }
-        }
-      },
-      { rootMargin: "-120px 0px -60% 0px", threshold: 0.1 }
-    );
-
-    const ids = PROPERTY_SECTIONS.map(sectionId);
-    ids.forEach((id) => {
-      const el = document.getElementById(id);
-      if (el) observer.observe(el);
-    });
-
-    return () => observer.disconnect();
-  }, []);
-
   return (
-    <div className="flex flex-col gap-0">
-      {/* Sticky jump nav */}
-      <div className="sticky top-0 z-20 bg-background/80 backdrop-blur-md border-b border-border/40 -mx-1 px-1 py-2 mb-4">
-        <div className="inline-flex gap-1 items-center">
-          {PROPERTY_SECTIONS.map((s) => {
-            const id = sectionId(s);
-            return (
-              <button
-                key={id}
-                onClick={() => scrollToSection(id)}
-                className={cn(
-                  "rounded-md px-2.5 py-1 text-[11px] font-medium cursor-pointer transition-colors",
-                  activeSection === id
-                    ? "bg-primary/10 text-primary"
-                    : "text-muted-foreground hover:text-foreground hover:bg-muted"
-                )}
-              >
-                {s}
-              </button>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* Section: Property Info */}
-      <div id="property-info" className="scroll-mt-16">
-        <PropertyDetailsContent
-          dealId={dealId}
-          propertyData={propertyData}
-          visibilityContext={visibilityContext}
-        />
-      </div>
-
-      {/* Section: Rent Roll */}
-      <div id="rent-roll" className="scroll-mt-16 mt-6">
-        <SectionHeader
-          title="Rent Roll"
-          action={
-            <div className="flex items-center gap-2">
-              <span className="text-[11px] text-muted-foreground">
-                {rentRoll.length} unit{rentRoll.length !== 1 ? "s" : ""}
-              </span>
-            </div>
-          }
-        />
-        <div className="mt-3">
-          <RentRollSubTab rentRoll={rentRoll} uwId={uwId} />
-        </div>
-      </div>
-
-      {/* Section: T12 / Historicals */}
-      <div id="t12---historicals" className="scroll-mt-16 mt-6 mb-8">
-        <SectionHeader title="T12 / Historicals" />
-        <div className="mt-3">
-          <T12SubTab
-            income={income}
-            expenses={expenses}
-            uwId={uwId}
-            purchasePrice={purchasePrice}
-            numUnits={numUnits}
-          />
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// ── Section Header ──
-
-function SectionHeader({
-  title,
-  badge,
-  action,
-}: {
-  title: string;
-  badge?: string;
-  action?: React.ReactNode;
-}) {
-  return (
-    <div className="flex items-center justify-between">
-      <div className="flex items-center gap-2.5">
-        <h3 className="text-sm font-semibold text-foreground">{title}</h3>
-        {badge && (
-          <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] font-medium text-muted-foreground">
-            {badge}
-          </span>
-        )}
-      </div>
-      {action}
-    </div>
+    <PropertyDetailsContent
+      dealId={dealId}
+      propertyData={propertyData}
+      visibilityContext={visibilityContext}
+    />
   );
 }
 
@@ -244,13 +104,19 @@ function PropertyDetailsContent({
     setLocalData((prev) => ({ ...prev, [key]: value }));
   }
 
+  // Fields that live in uw_data (shared with Overview tab) rather than property_data
+  const UW_DATA_FIELDS = new Set(["purchase_price", "appraised_value"]);
+
   function handleFieldBlur(key: string) {
     const currentVal = localData[key];
     const prevVal = propertyData[key];
     if (currentVal === prevVal) return;
 
     startTransition(async () => {
-      const result = await updatePropertyDataAction(dealId, key, currentVal);
+      const action = UW_DATA_FIELDS.has(key)
+        ? updateUwDataAction(dealId, key, currentVal)
+        : updatePropertyDataAction(dealId, key, currentVal);
+      const result = await action;
       if (result.error) {
         toast.error(`Failed to save ${key}: ${result.error}`);
         setLocalData((prev) => ({ ...prev, [key]: prevVal }));

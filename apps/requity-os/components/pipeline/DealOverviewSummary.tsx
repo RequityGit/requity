@@ -1,22 +1,72 @@
 "use client";
 
-import { useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback, useRef, useTransition } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import { InlineField } from "@/components/ui/inline-field";
+import { AddressAutocomplete, type ParsedAddress } from "@/components/ui/address-autocomplete";
 import { cn } from "@/lib/utils";
-import {
-  formatCurrency,
-  formatDate,
-  formatPercent,
-  formatFieldValue,
-} from "@/lib/format";
-import type { UnifiedDeal } from "./pipeline-types";
+import { formatCurrency, formatPercent } from "@/lib/format";
+import { updateUwDataAction, updateDealNameAction, updateContactFieldAction, linkDealContactAction, searchContactsForDealLink, quickCreateContactAction } from "@/app/(authenticated)/(admin)/pipeline/actions";
+import { Input } from "@/components/ui/input";
+import { useDebounce } from "@/hooks/useDebounce";
+import { Search, X, Loader2, Plus, UserPlus } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { type UnifiedDeal, ASSET_CLASS_LABELS, ACTIVE_ASSET_CLASS_OPTIONS } from "./pipeline-types";
+import { toast } from "sonner";
+
+// Asset class dropdown: active options only (excludes legacy keys)
+const ASSET_CLASS_DROPDOWN_LABELS = ACTIVE_ASSET_CLASS_OPTIONS.map((o) => o.label);
+const AC_LABEL_TO_KEY = Object.fromEntries(
+  ACTIVE_ASSET_CLASS_OPTIONS.map((o) => [o.label, o.key])
+);
+const AC_KEY_TO_LABEL = ASSET_CLASS_LABELS as Record<string, string>;
+
+// Funding channel dropdown
+const FUNDING_CHANNEL_MAP: Record<string, string> = {
+  balance_sheet: "Balance Sheet",
+  correspondent: "Correspondent",
+  brokered: "Brokered",
+};
+const FUNDING_CHANNEL_LABELS = Object.values(FUNDING_CHANNEL_MAP);
+const FUNDING_CHANNEL_LABEL_TO_KEY = Object.fromEntries(
+  Object.entries(FUNDING_CHANNEL_MAP).map(([k, v]) => [v, k])
+);
+const FUNDING_CHANNEL_KEY_TO_LABEL = FUNDING_CHANNEL_MAP;
+
+// Loan purpose dropdown: synced with field_configurations
+const LOAN_PURPOSE_MAP: Record<string, string> = {
+  purchase: "Purchase",
+  refinance: "Refinance",
+  new_construction: "New Construction",
+};
+const LOAN_PURPOSE_LABELS = Object.values(LOAN_PURPOSE_MAP);
+const LP_LABEL_TO_KEY = Object.fromEntries(
+  Object.entries(LOAN_PURPOSE_MAP).map(([k, v]) => [v, k])
+);
+const LP_KEY_TO_LABEL = LOAN_PURPOSE_MAP;
+
+// Lead source dropdown
+const LEAD_SOURCE_MAP: Record<string, string> = {
+  broker: "Broker",
+  direct: "Direct",
+  referral: "Referral",
+  website: "Website",
+  repeat_borrower: "Repeat Borrower",
+  marketing: "Marketing",
+  correspondent: "Correspondent",
+  other: "Other",
+};
+const LEAD_SOURCE_LABELS = Object.values(LEAD_SOURCE_MAP);
+const LS_LABEL_TO_KEY = Object.fromEntries(
+  Object.entries(LEAD_SOURCE_MAP).map(([k, v]) => [v, k])
+);
+const LS_KEY_TO_LABEL = LEAD_SOURCE_MAP;
+
 import {
   Building2,
-  FileText,
   BarChart3,
   Users,
-  Landmark,
   DollarSign,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
@@ -30,40 +80,6 @@ function daysAgo(dateString: string | null | undefined): number | null {
   return Math.floor((Date.now() - d.getTime()) / 86_400_000);
 }
 
-function uw(deal: UnifiedDeal, key: string): unknown {
-  return deal.uw_data?.[key] ?? null;
-}
-
-function uwNum(deal: UnifiedDeal, key: string): number | null {
-  const v = uw(deal, key);
-  if (v == null) return null;
-  const n = Number(v);
-  return isNaN(n) ? null : n;
-}
-
-function uwStr(deal: UnifiedDeal, key: string): string | null {
-  const v = uw(deal, key);
-  if (v == null || v === "") return null;
-  return String(v);
-}
-
-function prop(deal: UnifiedDeal, key: string): unknown {
-  return (deal.property_data as Record<string, unknown>)?.[key] ?? deal.uw_data?.[key] ?? null;
-}
-
-function propStr(deal: UnifiedDeal, key: string): string | null {
-  const v = prop(deal, key);
-  if (v == null || v === "") return null;
-  return String(v);
-}
-
-function propNum(deal: UnifiedDeal, key: string): number | null {
-  const v = prop(deal, key);
-  if (v == null) return null;
-  const n = Number(v);
-  return isNaN(n) ? null : n;
-}
-
 // ── Section label ──
 
 function SectionLabel({ icon: Icon, children }: { icon: LucideIcon; children: React.ReactNode }) {
@@ -75,30 +91,16 @@ function SectionLabel({ icon: Icon, children }: { icon: LucideIcon; children: Re
   );
 }
 
-// ── Field display ──
+// ── Read-only field (for computed values) ──
 
-function Field({ label, children, className }: { label: string; children: React.ReactNode; className?: string }) {
+function ReadOnlyField({ label, children, className }: { label: string; children: React.ReactNode; className?: string }) {
   return (
-    <div className={className}>
-      <div className="text-[11px] text-muted-foreground/70">{label}</div>
-      <div className="text-sm font-medium text-foreground mt-0.5">{children}</div>
+    <div className={cn("group/field min-w-0", className)}>
+      <span className="text-[11px] font-medium text-muted-foreground mb-0.5 block leading-tight">{label}</span>
+      <div className="w-full text-left text-sm min-h-[32px] flex items-center rounded-md px-2 py-1 -mx-0.5">
+        {children}
+      </div>
     </div>
-  );
-}
-
-function CurrencyField({ label, value, className }: { label: string; value: number | null; className?: string }) {
-  return (
-    <Field label={label} className={className}>
-      <span className="num">{value != null ? formatCurrency(value) : <Placeholder />}</span>
-    </Field>
-  );
-}
-
-function PercentField({ label, value, className }: { label: string; value: number | null; className?: string }) {
-  return (
-    <Field label={label} className={className}>
-      <span className="num">{value != null ? formatPercent(value) : <Placeholder />}</span>
-    </Field>
   );
 }
 
@@ -108,13 +110,7 @@ function Placeholder() {
 
 // ── Card wrapper ──
 
-function OverviewCard({
-  children,
-  className,
-}: {
-  children: React.ReactNode;
-  className?: string;
-}) {
+function OverviewCard({ children, className }: { children: React.ReactNode; className?: string }) {
   return (
     <div className={cn("rounded-lg border border-border bg-card p-4 px-5", className)}>
       {children}
@@ -145,58 +141,370 @@ function InitialsAvatar({ name, palette }: { name: string; palette: "green" | "a
   );
 }
 
+// ── Contact search input for linking borrower/broker ──
+
+type ContactResult = { id: string; first_name: string; last_name: string; email: string | null; phone: string | null };
+
+function ContactSearchInput({ onSelect, placeholder }: {
+  onSelect: (contact: ContactResult) => void;
+  placeholder?: string;
+}) {
+  const [query, setQuery] = useState("");
+  const [results, setResults] = useState<ContactResult[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [open, setOpen] = useState(false);
+  const [showCreate, setShowCreate] = useState(false);
+  const [creating, setCreating] = useState(false);
+  const [newFirst, setNewFirst] = useState("");
+  const [newLast, setNewLast] = useState("");
+  const [newEmail, setNewEmail] = useState("");
+  const [newPhone, setNewPhone] = useState("");
+  const debouncedQuery = useDebounce(query, 250);
+  const searchDone = useRef(false);
+
+  useEffect(() => {
+    if (debouncedQuery.length < 2) { setResults([]); setOpen(false); searchDone.current = false; return; }
+    let cancelled = false;
+    setLoading(true);
+    searchContactsForDealLink(debouncedQuery).then((res) => {
+      if (cancelled) return;
+      setResults(res.contacts);
+      setOpen(true);
+      setLoading(false);
+      searchDone.current = true;
+    });
+    return () => { cancelled = true; };
+  }, [debouncedQuery]);
+
+  function resetCreate() {
+    setShowCreate(false);
+    setNewFirst("");
+    setNewLast("");
+    setNewEmail("");
+    setNewPhone("");
+  }
+
+  async function handleCreate() {
+    if (!newFirst.trim()) { toast.error("First name is required"); return; }
+    setCreating(true);
+    const res = await quickCreateContactAction(newFirst, newLast, newEmail, newPhone);
+    setCreating(false);
+    if (res.error || !res.contact) {
+      toast.error(res.error ?? "Failed to create contact");
+      return;
+    }
+    toast.success(`Created ${res.contact.first_name} ${res.contact.last_name}`);
+    onSelect(res.contact);
+    setQuery("");
+    setResults([]);
+    setOpen(false);
+    resetCreate();
+  }
+
+  // Pre-fill first/last from search query when opening create form
+  function openCreateForm() {
+    const parts = query.trim().split(/\s+/);
+    setNewFirst(parts[0] ?? "");
+    setNewLast(parts.slice(1).join(" ") ?? "");
+    setNewEmail("");
+    setNewPhone("");
+    setShowCreate(true);
+    setOpen(false);
+  }
+
+  if (showCreate) {
+    return (
+      <div className="rounded-md border border-border bg-card p-3 space-y-2">
+        <div className="flex items-center justify-between mb-1">
+          <span className="text-xs font-medium text-foreground flex items-center gap-1.5">
+            <UserPlus className="h-3.5 w-3.5" />
+            New contact
+          </span>
+          <button type="button" onClick={resetCreate} className="text-muted-foreground hover:text-foreground p-0.5">
+            <X className="h-3.5 w-3.5" />
+          </button>
+        </div>
+        <div className="grid grid-cols-2 gap-2">
+          <Input
+            value={newFirst}
+            onChange={(e) => setNewFirst(e.target.value)}
+            placeholder="First name *"
+            className="h-8 text-sm"
+            autoFocus
+          />
+          <Input
+            value={newLast}
+            onChange={(e) => setNewLast(e.target.value)}
+            placeholder="Last name"
+            className="h-8 text-sm"
+          />
+        </div>
+        <div className="grid grid-cols-2 gap-2">
+          <Input
+            value={newEmail}
+            onChange={(e) => setNewEmail(e.target.value)}
+            placeholder="Email"
+            className="h-8 text-sm"
+            type="email"
+          />
+          <Input
+            value={newPhone}
+            onChange={(e) => setNewPhone(e.target.value)}
+            placeholder="Phone"
+            className="h-8 text-sm"
+          />
+        </div>
+        <div className="flex justify-end gap-2 pt-1">
+          <Button variant="ghost" size="sm" onClick={resetCreate} className="h-7 text-xs">
+            Cancel
+          </Button>
+          <Button size="sm" onClick={handleCreate} disabled={creating || !newFirst.trim()} className="h-7 text-xs">
+            {creating ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : <Plus className="h-3 w-3 mr-1" />}
+            Create & Link
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  const hasQuery = debouncedQuery.length >= 2;
+  const noResults = hasQuery && searchDone.current && !loading && results.length === 0;
+
+  return (
+    <div className="relative">
+      <div className="relative">
+        <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+        <Input
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          placeholder={placeholder ?? "Search contacts..."}
+          className="h-8 pl-8 text-sm"
+          onFocus={() => hasQuery && setOpen(true)}
+          onBlur={() => setTimeout(() => setOpen(false), 200)}
+        />
+        {loading && <Loader2 className="absolute right-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 animate-spin text-muted-foreground" />}
+      </div>
+      {open && (
+        <div className="absolute z-50 mt-1 w-full rounded-md border border-border bg-popover shadow-md max-h-56 overflow-y-auto">
+          {results.map((c) => (
+            <button
+              key={c.id}
+              type="button"
+              className="w-full text-left px-3 py-2 text-sm hover:bg-muted/60 transition-colors"
+              onMouseDown={(e) => {
+                e.preventDefault();
+                onSelect(c);
+                setQuery("");
+                setResults([]);
+                setOpen(false);
+              }}
+            >
+              <div className="font-medium">{c.first_name} {c.last_name}</div>
+              {c.email && <div className="text-xs text-muted-foreground">{c.email}</div>}
+            </button>
+          ))}
+          {noResults && (
+            <div className="px-3 py-2 text-sm text-muted-foreground">
+              No contacts found
+            </div>
+          )}
+          {/* Always show create option at bottom of dropdown */}
+          <button
+            type="button"
+            className="w-full text-left px-3 py-2 text-sm hover:bg-muted/60 transition-colors border-t border-border flex items-center gap-2 text-primary"
+            onMouseDown={(e) => {
+              e.preventDefault();
+              openCreateForm();
+            }}
+          >
+            <UserPlus className="h-3.5 w-3.5" />
+            Create new contact{hasQuery ? ` "${query.trim()}"` : ""}
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ── Props ──
 
 interface DealOverviewSummaryProps {
+  dealId: string;
   deal: UnifiedDeal;
 }
 
 // ── Main Component ──
 
-export function DealOverviewSummary({ deal }: DealOverviewSummaryProps) {
-  const loanPurpose = uwStr(deal, "purpose") ?? uwStr(deal, "loan_purpose");
-  const isRefi = loanPurpose?.toLowerCase().includes("refi") ?? false;
-  const isPurchase = loanPurpose?.toLowerCase().includes("purchase") ?? false;
+export function DealOverviewSummary({ dealId, deal }: DealOverviewSummaryProps) {
+  // Local state for optimistic updates
+  const [localUwData, setLocalUwData] = useState<Record<string, unknown>>(deal.uw_data ?? {});
+  const localUwRef = useRef(localUwData);
+  localUwRef.current = localUwData;
+
+  const [, startTransition] = useTransition();
+
+  // ── Field value accessors (use local state) ──
+
+  const uwVal = useCallback((key: string): unknown => localUwData[key] ?? null, [localUwData]);
+  const uwStr = useCallback((key: string): string | null => {
+    const v = localUwData[key];
+    if (v == null || v === "") return null;
+    return String(v);
+  }, [localUwData]);
+  const uwNum = useCallback((key: string): number | null => {
+    const v = localUwData[key];
+    if (v == null) return null;
+    const n = Number(v);
+    return isNaN(n) ? null : n;
+  }, [localUwData]);
+
+  // ── Save handler: writes to uw_data ──
+
+  const saveField = useCallback((key: string, value: string) => {
+    // Optimistic update
+    const next = { ...localUwRef.current, [key]: value };
+    localUwRef.current = next;
+    setLocalUwData(next);
+
+    // Fire server action in background
+    startTransition(async () => {
+      const result = await updateUwDataAction(dealId, key, value);
+      if (result.error) {
+        toast.error(`Failed to save: ${result.error}`);
+        // Rollback
+        const prev = { ...localUwRef.current, [key]: deal.uw_data?.[key] };
+        localUwRef.current = prev;
+        setLocalUwData(prev);
+      }
+    });
+  }, [dealId, deal.uw_data, startTransition]);
+
+  // ── Derived values ──
+
+  const loanPurpose = uwStr("loan_purpose");
+  const isRefi = ["refinance", "cash_out", "cash_out_refinance"].includes(loanPurpose ?? "") ||
+    (loanPurpose?.toLowerCase().includes("refi") ?? false) ||
+    (loanPurpose?.toLowerCase().includes("cash") ?? false);
+  const isPurchase = ["acquisition", "purchase"].includes(loanPurpose ?? "") ||
+    (loanPurpose?.toLowerCase().includes("purchase") ?? false);
+  const isConstruction = ["new_construction", "construction"].includes(loanPurpose ?? "") ||
+    (loanPurpose?.toLowerCase().includes("construction") ?? false);
   const isEarlyStage = ["lead", "awaiting_info"].includes(deal.stage);
   const showProposedTerms = !isEarlyStage;
 
-  // Build property address string
-  const address = useMemo(() => {
-    const parts = [
-      uwStr(deal, "property_address"),
-    ].filter(Boolean);
-    const cityState = [
-      uwStr(deal, "property_city"),
-      uwStr(deal, "property_state"),
-    ]
-      .filter(Boolean)
-      .join(", ");
-    const zip = uwStr(deal, "property_zip");
+  // Property name: falls back to address if no name set
+  const [localDealName, setLocalDealName] = useState(deal.name ?? "");
+  const addressLine = uwStr("property_address");
+
+  const saveDealName = useCallback((v: string) => {
+    setLocalDealName(v);
+    startTransition(async () => {
+      const result = await updateDealNameAction(dealId, v);
+      if (result.error) {
+        toast.error(`Failed to save name: ${result.error}`);
+        setLocalDealName(deal.name ?? "");
+      }
+    });
+  }, [dealId, deal.name, startTransition]);
+
+  // Build full address string for display
+  const fullAddress = useMemo(() => {
+    const street = uwStr("property_address");
+    const cityState = [uwStr("property_city"), uwStr("property_state")].filter(Boolean).join(", ");
+    const zip = uwStr("property_zip");
     const line2 = [cityState, zip].filter(Boolean).join(" ");
-    if (parts.length === 0 && !line2) return null;
-    return [parts.join(""), line2].filter(Boolean).join(", ");
-  }, [deal]);
+    if (!street && !line2) return null;
+    return [street, line2].filter(Boolean).join(", ");
+  }, [uwStr]);
 
-  // Borrower info
-  const borrowerName = deal.primary_contact
-    ? `${deal.primary_contact.first_name ?? ""} ${deal.primary_contact.last_name ?? ""}`.trim()
+  // Address editing state
+  const [addressDraft, setAddressDraft] = useState(fullAddress ?? "");
+
+  const handleAddressSelect = useCallback((parsed: ParsedAddress) => {
+    // Save all parsed address fields at once
+    const fields: Record<string, string> = {
+      property_address: parsed.address_line1,
+      property_city: parsed.city,
+      property_state: parsed.state,
+      property_zip: parsed.zip,
+    };
+    const next = { ...localUwRef.current, ...fields };
+    localUwRef.current = next;
+    setLocalUwData(next);
+    // Update draft to show the full formatted address
+    const newFull = [
+      parsed.address_line1,
+      [parsed.city, parsed.state].filter(Boolean).join(", "),
+      parsed.zip,
+    ].filter(Boolean).join(", ");
+    setAddressDraft(newFull);
+
+    // Save each field to the server
+    for (const [key, value] of Object.entries(fields)) {
+      startTransition(async () => {
+        const result = await updateUwDataAction(dealId, key, value);
+        if (result.error) {
+          toast.error(`Failed to save ${key}: ${result.error}`);
+        }
+      });
+    }
+  }, [dealId, startTransition]);
+
+  // Contact field save (2-way sync to crm_contacts)
+  const saveContactField = useCallback((contactId: string, field: string, value: string) => {
+    startTransition(async () => {
+      const result = await updateContactFieldAction(contactId, field, value);
+      if (result.error) {
+        toast.error(`Failed to save: ${result.error}`);
+      }
+    });
+  }, [startTransition]);
+
+  // Borrower + Broker contact state (local for optimistic linking)
+  type ContactData = { id: string; first_name: string; last_name: string; email: string | null; phone: string | null };
+  const [borrowerContact, setBorrowerContact] = useState<ContactData | null>(
+    deal.primary_contact ?? null
+  );
+  const [brokerContact, setBrokerContact] = useState<ContactData | null>(
+    deal.broker_contact ? { id: deal.broker_contact.id, first_name: deal.broker_contact.first_name, last_name: deal.broker_contact.last_name, email: deal.broker_contact.email, phone: deal.broker_contact.phone } : null
+  );
+  const brokerCompanyName = deal.broker_contact?.broker_company?.name ?? null;
+
+  const bc = borrowerContact;
+  const borrowerName = bc
+    ? `${bc.first_name ?? ""} ${bc.last_name ?? ""}`.trim()
     : null;
-  const borrowerEmail = uwStr(deal, "borrower_email");
-  const borrowerEntity = uwStr(deal, "entity_name") ?? uwStr(deal, "borrowing_entity");
-  const borrowerFico = uwNum(deal, "borrower_fico") ?? uwNum(deal, "fico_score");
-  const borrowerLiquidity = uwNum(deal, "liquid_reserves") ?? uwNum(deal, "borrower_liquidity");
-  const borrowerPhone = uwStr(deal, "borrower_phone");
 
-  // Broker info
-  const brokerName = uwStr(deal, "broker_name");
-  const brokerEmail = uwStr(deal, "broker_email");
-  const brokerCompany = uwStr(deal, "broker_company");
-  const brokerLicense = uwStr(deal, "broker_license");
-  const brokerFeePct = uwNum(deal, "broker_fee_pct");
-  const brokerFeeAmt = uwNum(deal, "broker_fee_amount");
-  const leadSource = uwStr(deal, "lead_source") ?? deal.source;
+  const bk = brokerContact;
+  const brokerName = bk
+    ? `${bk.first_name ?? ""} ${bk.last_name ?? ""}`.trim()
+    : null;
 
-  // Days in stage
+  const handleLinkContact = useCallback((role: "borrower" | "broker", contact: ContactData) => {
+    if (role === "borrower") setBorrowerContact(contact);
+    else setBrokerContact(contact);
+    startTransition(async () => {
+      const result = await linkDealContactAction(dealId, role, contact.id);
+      if (result.error) {
+        toast.error(`Failed to link: ${result.error}`);
+        if (role === "borrower") setBorrowerContact(deal.primary_contact ?? null);
+        else setBrokerContact(null);
+      }
+    });
+  }, [dealId, deal.primary_contact, startTransition]);
+
+  const handleUnlinkContact = useCallback((role: "borrower" | "broker") => {
+    if (role === "borrower") setBorrowerContact(null);
+    else setBrokerContact(null);
+    startTransition(async () => {
+      const result = await linkDealContactAction(dealId, role, null);
+      if (result.error) {
+        toast.error(`Failed to unlink: ${result.error}`);
+      }
+    });
+  }, [dealId, startTransition]);
+
+  // Days in stage (computed, read-only)
   const daysInStage = deal.days_in_stage ?? daysAgo(deal.stage_entered_at);
 
   return (
@@ -205,129 +513,224 @@ export function DealOverviewSummary({ deal }: DealOverviewSummaryProps) {
       <div>
         <SectionLabel icon={Building2}>Property</SectionLabel>
         <OverviewCard>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-x-6 gap-y-3">
-            <Field label="Property type">
-              {uwStr(deal, "property_type")
-                ? formatFieldValue(uwStr(deal, "property_type"), "select")
-                : <Placeholder />}
-            </Field>
-            <Field label="Units / lots">
-              <span className="num">
-                {uwNum(deal, "number_of_units") ?? uwNum(deal, "units_lots_sites") ?? <Placeholder />}
-              </span>
-            </Field>
-            <Field label="Total sq ft">
-              <span className="num">
-                {uwNum(deal, "total_sf") != null
-                  ? new Intl.NumberFormat("en-US").format(uwNum(deal, "total_sf")!)
-                  : <Placeholder />}
-              </span>
-            </Field>
-            <Field label="Year built">
-              {uwStr(deal, "year_built") ?? <Placeholder />}
-            </Field>
-            <Field label="Address" className="col-span-2 md:col-span-4">
-              {address ?? <Placeholder />}
-            </Field>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-x-6 gap-y-1">
+            <InlineField
+              label="Property name"
+              type="text"
+              value={localDealName || ""}
+              placeholder={fullAddress || "Enter property name..."}
+              onSave={saveDealName}
+            />
+            <InlineField
+              label="Asset class"
+              type="select"
+              value={AC_KEY_TO_LABEL[uwStr("property_type") ?? ""] ?? uwStr("property_type") ?? ""}
+              options={ASSET_CLASS_DROPDOWN_LABELS}
+              onSave={(v) => saveField("property_type", AC_LABEL_TO_KEY[v] ?? v)}
+            />
+            <div className="min-w-0">
+              <span className="text-[11px] font-medium text-muted-foreground mb-0.5 block leading-tight">Address</span>
+              <AddressAutocomplete
+                value={addressDraft}
+                onChange={setAddressDraft}
+                onAddressSelect={handleAddressSelect}
+                placeholder="Search address..."
+                className="h-auto min-h-[32px] bg-transparent px-2 py-1 border border-transparent rounded-md transition-colors hover:border-border hover:bg-muted/40 focus:border-primary/60 focus:bg-background focus:ring-1 focus:ring-primary/20 focus:ring-offset-0 focus:outline-none text-sm"
+              />
+            </div>
           </div>
         </OverviewCard>
       </div>
 
-      {/* ── Section 2: Deal Summary ── */}
+      {/* ── Section 2: Deal Summary (merged with Loan Terms) ── */}
       <div>
         <SectionLabel icon={DollarSign}>Deal Summary</SectionLabel>
-        <OverviewCard>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-x-6 gap-y-3">
-            <Field label="Loan purpose">
-              {loanPurpose
-                ? formatFieldValue(loanPurpose, "select")
-                : <Placeholder />}
-            </Field>
-            <CurrencyField
-              label="Target loan amount"
-              value={uwNum(deal, "loan_amount") ?? uwNum(deal, "total_loan_amount") ?? deal.amount}
-            />
-            <Field label="Target close date">
-              {uwStr(deal, "expected_close_date") ?? deal.expected_close_date
-                ? formatDate(uwStr(deal, "expected_close_date") ?? deal.expected_close_date)
-                : <Placeholder />}
-            </Field>
-            <Field label="Days in stage">
-              <span className="num">
-                {daysInStage != null ? `${daysInStage}d` : <Placeholder />}
-              </span>
-            </Field>
-          </div>
-
-          {/* Conditional: Refinance details */}
-          {isRefi && (
-            <>
-              <Separator className="my-3" />
-              <div className="text-xs font-medium text-blue-600 dark:text-blue-400 mb-2">
-                Refinance details
-              </div>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-x-6 gap-y-3">
-                <CurrencyField label="Original purchase price" value={uwNum(deal, "original_purchase_price")} />
-                <Field label="Purchase date">
-                  {uwStr(deal, "original_purchase_date")
-                    ? formatDate(uwStr(deal, "original_purchase_date"))
-                    : <Placeholder />}
-                </Field>
-                <CurrencyField label="Total invested to date" value={uwNum(deal, "total_invested")} />
-                <CurrencyField label="Rehab budget" value={uwNum(deal, "rehab_budget")} />
-              </div>
-            </>
-          )}
-
-          {/* Conditional: Purchase details */}
-          {isPurchase && (
-            <>
-              <Separator className="my-3" />
-              <div className="text-xs font-medium text-blue-600 dark:text-blue-400 mb-2">
-                Purchase details
-              </div>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-x-6 gap-y-3">
-                <CurrencyField label="Purchase price" value={uwNum(deal, "purchase_price")} />
-                <CurrencyField
-                  label="Down payment"
-                  value={(() => {
-                    const pp = uwNum(deal, "purchase_price");
-                    const la = uwNum(deal, "loan_amount");
-                    return pp != null && la != null ? pp - la : null;
-                  })()}
-                />
-                <CurrencyField label="Earnest money deposit" value={uwNum(deal, "earnest_money_deposit")} />
-                <Field label="Seller">
-                  {uwStr(deal, "seller_name") ?? <Placeholder />}
-                </Field>
-              </div>
-            </>
-          )}
-        </OverviewCard>
-      </div>
-
-      {/* ── Section 3: Loan Terms ── */}
-      <div>
-        <SectionLabel icon={FileText}>Loan Terms</SectionLabel>
         <div className={cn("grid gap-4", showProposedTerms ? "grid-cols-1 md:grid-cols-2" : "grid-cols-1")}>
-          {/* Borrower Ask */}
+          {/* Deal info */}
           <OverviewCard>
-            <div className="text-[11px] font-medium text-muted-foreground mb-3">Borrower ask</div>
-            <div className="grid grid-cols-2 gap-x-6 gap-y-3">
-              <CurrencyField label="Loan amount" value={uwNum(deal, "loan_amount") ?? deal.amount} />
-              <PercentField label="Interest rate" value={uwNum(deal, "interest_rate")} />
-              <Field label="Term (months)">
-                <span className="num">
-                  {uwNum(deal, "loan_term_months") ?? <Placeholder />}
-                </span>
-              </Field>
-              <PercentField label="LTV" value={uwNum(deal, "ltv")} />
-              <PercentField label="Origination fee %" value={uwNum(deal, "origination_fee_pct") ?? uwNum(deal, "origination_pts")} />
-              <Field label="IO vs amortizing">
-                {uwStr(deal, "amortization_type") ??
-                  (uw(deal, "is_io") === true ? "Interest only" :
-                   uw(deal, "is_io") === false ? "Amortizing" : <Placeholder />)}
-              </Field>
+            <div className="grid grid-cols-2 gap-x-6 gap-y-1">
+              {/* Always shown */}
+              <InlineField
+                label="Loan purpose"
+                type="select"
+                value={LP_KEY_TO_LABEL[loanPurpose ?? ""] ?? loanPurpose ?? ""}
+                options={LOAN_PURPOSE_LABELS}
+                onSave={(v) => saveField("loan_purpose", LP_LABEL_TO_KEY[v] ?? v)}
+              />
+              <InlineField
+                label="Target loan amount"
+                type="currency"
+                value={uwNum("loan_amount") ?? deal.amount}
+                onSave={(v) => saveField("loan_amount", v)}
+              />
+
+              {/* Purchase fields */}
+              {isPurchase && (
+                <>
+                  <InlineField
+                    label="Purchase price"
+                    type="currency"
+                    value={uwNum("purchase_price")}
+                    onSave={(v) => saveField("purchase_price", v)}
+                  />
+                  <InlineField
+                    label="Earnest money deposit"
+                    type="currency"
+                    value={uwNum("earnest_money_deposit")}
+                    onSave={(v) => saveField("earnest_money_deposit", v)}
+                  />
+                </>
+              )}
+
+              {/* Refinance fields */}
+              {isRefi && (
+                <>
+                  <InlineField
+                    label="Original purchase price"
+                    type="currency"
+                    value={uwNum("original_purchase_price")}
+                    onSave={(v) => saveField("original_purchase_price", v)}
+                  />
+                  <InlineField
+                    label="Original purchase date"
+                    type="date"
+                    value={uwStr("original_purchase_date")}
+                    onSave={(v) => saveField("original_purchase_date", v)}
+                  />
+                  <InlineField
+                    label="Capex investment to date"
+                    type="currency"
+                    value={uwNum("capex_investment_to_date")}
+                    onSave={(v) => saveField("capex_investment_to_date", v)}
+                  />
+                </>
+              )}
+
+              {/* New Construction fields */}
+              {isConstruction && (
+                <>
+                  <InlineField
+                    label="Land / lot cost"
+                    type="currency"
+                    value={uwNum("purchase_price")}
+                    onSave={(v) => saveField("purchase_price", v)}
+                  />
+                  <InlineField
+                    label="Construction budget"
+                    type="currency"
+                    value={uwNum("rehab_budget")}
+                    onSave={(v) => saveField("rehab_budget", v)}
+                  />
+                  <InlineField
+                    label="Construction holdback"
+                    type="currency"
+                    value={uwNum("rehab_holdback")}
+                    onSave={(v) => saveField("rehab_holdback", v)}
+                  />
+                  <InlineField
+                    label="Est. construction timeline (months)"
+                    type="number"
+                    value={uwNum("estimated_rehab_months")}
+                    onSave={(v) => saveField("estimated_rehab_months", v)}
+                  />
+                  <InlineField
+                    label="Total capitalization"
+                    type="currency"
+                    value={uwNum("total_capitalization")}
+                    onSave={(v) => saveField("total_capitalization", v)}
+                  />
+                </>
+              )}
+
+              {/* Always shown */}
+              <InlineField
+                label="As-is value"
+                type="currency"
+                value={uwNum("as_is_value")}
+                onSave={(v) => saveField("as_is_value", v)}
+              />
+              {!isConstruction && (
+                <InlineField
+                  label="Rehab budget"
+                  type="currency"
+                  value={uwNum("rehab_budget")}
+                  onSave={(v) => saveField("rehab_budget", v)}
+                />
+              )}
+              <InlineField
+                label="ARV"
+                type="currency"
+                value={uwNum("arv")}
+                onSave={(v) => saveField("arv", v)}
+              />
+              <InlineField
+                label="Exit strategy"
+                type="text"
+                value={uwStr("exit_strategy") ?? ""}
+                onSave={(v) => saveField("exit_strategy", v)}
+              />
+              <InlineField
+                label="Target close date"
+                type="date"
+                value={uwStr("expected_close_date") ?? deal.expected_close_date}
+                onSave={(v) => saveField("expected_close_date", v)}
+              />
+              <InlineField
+                label="Lead source"
+                type="select"
+                value={LS_KEY_TO_LABEL[uwStr("source") ?? ""] ?? uwStr("source") ?? ""}
+                options={LEAD_SOURCE_LABELS}
+                onSave={(v) => saveField("source", LS_LABEL_TO_KEY[v] ?? v)}
+              />
+            </div>
+
+            {/* Borrower & Broker contact lookup */}
+            <Separator className="my-3" />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-2">
+              <div className="min-w-0">
+                <span className="inline-field-label mb-1 block">Borrower</span>
+                {bc ? (
+                  <div className="flex items-center gap-2">
+                    <InitialsAvatar name={borrowerName || "?"} palette="green" />
+                    <span className="text-sm font-medium truncate flex-1">{borrowerName}</span>
+                    <button
+                      type="button"
+                      onClick={() => handleUnlinkContact("borrower")}
+                      className="text-muted-foreground hover:text-foreground transition-colors p-1 rounded"
+                      title="Unlink borrower"
+                    >
+                      <X className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
+                ) : (
+                  <ContactSearchInput
+                    placeholder="Search contacts..."
+                    onSelect={(c) => handleLinkContact("borrower", c)}
+                  />
+                )}
+              </div>
+              <div className="min-w-0">
+                <span className="inline-field-label mb-1 block">Broker</span>
+                {bk ? (
+                  <div className="flex items-center gap-2">
+                    <InitialsAvatar name={brokerName || "?"} palette="amber" />
+                    <span className="text-sm font-medium truncate flex-1">{brokerName}</span>
+                    <button
+                      type="button"
+                      onClick={() => handleUnlinkContact("broker")}
+                      className="text-muted-foreground hover:text-foreground transition-colors p-1 rounded"
+                      title="Unlink broker"
+                    >
+                      <X className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
+                ) : (
+                  <ContactSearchInput
+                    placeholder="Search contacts..."
+                    onSelect={(c) => handleLinkContact("broker", c)}
+                  />
+                )}
+              </div>
             </div>
           </OverviewCard>
 
@@ -338,21 +741,107 @@ export function DealOverviewSummary({ deal }: DealOverviewSummaryProps) {
                 <div className="text-[11px] font-medium text-muted-foreground">Proposed terms</div>
                 <Badge variant="secondary" className="text-[10px] px-1.5 py-0">Active</Badge>
               </div>
-              <div className="grid grid-cols-2 gap-x-6 gap-y-3">
-                <CurrencyField label="Loan amount" value={uwNum(deal, "proposed_loan_amount") ?? uwNum(deal, "loan_amount") ?? deal.amount} />
-                <PercentField label="Interest rate" value={uwNum(deal, "proposed_interest_rate") ?? uwNum(deal, "interest_rate")} />
-                <Field label="Term (months)">
-                  <span className="num">
-                    {uwNum(deal, "proposed_loan_term_months") ?? uwNum(deal, "loan_term_months") ?? <Placeholder />}
-                  </span>
-                </Field>
-                <PercentField label="LTV" value={uwNum(deal, "proposed_ltv") ?? uwNum(deal, "ltv")} />
-                <PercentField label="Origination fee %" value={uwNum(deal, "proposed_origination_fee_pct") ?? uwNum(deal, "origination_fee_pct") ?? uwNum(deal, "origination_pts")} />
-                <Field label="IO vs amortizing">
-                  {uwStr(deal, "proposed_amortization_type") ?? uwStr(deal, "amortization_type") ??
-                    (uw(deal, "is_io") === true ? "Interest only" :
-                     uw(deal, "is_io") === false ? "Amortizing" : <Placeholder />)}
-                </Field>
+              <div className="grid grid-cols-2 gap-x-6 gap-y-1">
+                {/* Left column: Loan structure */}
+                <InlineField
+                  label="Loan amount"
+                  type="currency"
+                  value={uwNum("total_loan")}
+                  onSave={(v) => saveField("total_loan", v)}
+                />
+                <InlineField
+                  label="Origination fee %"
+                  type="percent"
+                  value={uwNum("origination_fee_pct")}
+                  onSave={(v) => saveField("origination_fee_pct", v)}
+                />
+                <InlineField
+                  label="Construction holdback"
+                  type="currency"
+                  value={uwNum("rehab_holdback")}
+                  onSave={(v) => saveField("rehab_holdback", v)}
+                />
+                <InlineField
+                  label="Origination fee $"
+                  type="currency"
+                  value={uwNum("origination_fee_amount")}
+                  onSave={(v) => saveField("origination_fee_amount", v)}
+                />
+                <InlineField
+                  label="Term (months)"
+                  type="number"
+                  value={uwNum("term_months")}
+                  onSave={(v) => saveField("term_months", v)}
+                />
+                <InlineField
+                  label="Draw fee"
+                  type="currency"
+                  value={uwNum("draw_fee")}
+                  onSave={(v) => saveField("draw_fee", v)}
+                />
+                <InlineField
+                  label="Interest rate"
+                  type="percent"
+                  value={uwNum("interest_rate")}
+                  onSave={(v) => saveField("interest_rate", v)}
+                />
+                <InlineField
+                  label="Exit fee"
+                  type="currency"
+                  value={uwNum("exit_fee")}
+                  onSave={(v) => saveField("exit_fee", v)}
+                />
+                <InlineField
+                  label="Default rate"
+                  type="percent"
+                  value={uwNum("default_rate")}
+                  onSave={(v) => saveField("default_rate", v)}
+                />
+                <InlineField
+                  label="Legal / doc fee"
+                  type="currency"
+                  value={uwNum("legal_fee")}
+                  onSave={(v) => saveField("legal_fee", v)}
+                />
+                <InlineField
+                  label="Amortization (months)"
+                  type="number"
+                  value={uwNum("amortization_months")}
+                  onSave={(v) => saveField("amortization_months", v)}
+                />
+                <InlineField
+                  label="UW / processing fee"
+                  type="currency"
+                  value={uwNum("processing_fee")}
+                  onSave={(v) => saveField("processing_fee", v)}
+                />
+                <InlineField
+                  label="Interest reserve"
+                  type="currency"
+                  value={uwNum("interest_reserve")}
+                  onSave={(v) => saveField("interest_reserve", v)}
+                />
+                <InlineField
+                  label="Prepayment penalty %"
+                  type="percent"
+                  value={uwNum("prepayment_penalty_pct")}
+                  onSave={(v) => saveField("prepayment_penalty_pct", v)}
+                />
+                <InlineField
+                  label="Funding channel"
+                  type="select"
+                  value={FUNDING_CHANNEL_KEY_TO_LABEL[uwStr("funding_channel") ?? ""] ?? uwStr("funding_channel") ?? ""}
+                  options={FUNDING_CHANNEL_LABELS}
+                  onSave={(v) => saveField("funding_channel", FUNDING_CHANNEL_LABEL_TO_KEY[v] ?? v)}
+                />
+                {["correspondent", "brokered"].includes(uwStr("funding_channel") ?? "") && (
+                  <InlineField
+                    label="Lender"
+                    type="text"
+                    value={uwStr("lender_name") ?? ""}
+                    onSave={(v) => saveField("lender_name", v)}
+                  />
+                )}
               </div>
             </OverviewCard>
           )}
@@ -363,19 +852,52 @@ export function DealOverviewSummary({ deal }: DealOverviewSummaryProps) {
       <div>
         <SectionLabel icon={BarChart3}>Key Financials</SectionLabel>
         <OverviewCard>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-x-6 gap-y-3">
-            <Field label="DSCR">
-              <span className="num">
-                {uwNum(deal, "dscr") != null ? `${uwNum(deal, "dscr")!.toFixed(2)}x` : <Placeholder />}
-              </span>
-            </Field>
-            <PercentField label="Cap rate" value={uwNum(deal, "cap_rate_in") ?? uwNum(deal, "going_in_cap_rate")} />
-            <CurrencyField label="Annual cash flow" value={uwNum(deal, "annual_cash_flow")} />
-            <CurrencyField label="Annual debt service" value={uwNum(deal, "annual_debt_service")} />
-            <PercentField label="Cash-on-cash return" value={uwNum(deal, "cash_on_cash")} />
-            <CurrencyField label="Existing debt" value={uwNum(deal, "existing_debt")} />
-            <CurrencyField label="Seller financing" value={uwNum(deal, "seller_financing")} />
-            <PercentField label="LTV (proposed)" value={uwNum(deal, "proposed_ltv") ?? uwNum(deal, "ltv")} />
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-x-6 gap-y-1">
+            <ReadOnlyField label="NOI">
+              <span className="num">{uwNum("noi") != null ? formatCurrency(uwNum("noi")!) : <Placeholder />}</span>
+            </ReadOnlyField>
+            <InlineField
+              label="Current NOI (T12)"
+              type="currency"
+              value={uwNum("noi_current")}
+              onSave={(v) => saveField("noi_current", v)}
+            />
+            <InlineField
+              label="Stabilized NOI"
+              type="currency"
+              value={uwNum("noi_stabilized")}
+              onSave={(v) => saveField("noi_stabilized", v)}
+            />
+            <InlineField
+              label="Exit cap rate"
+              type="percent"
+              value={uwNum("exit_cap_rate")}
+              onSave={(v) => saveField("exit_cap_rate", v)}
+            />
+            <InlineField
+              label="Property value"
+              type="currency"
+              value={uwNum("property_value")}
+              onSave={(v) => saveField("property_value", v)}
+            />
+            <InlineField
+              label="Occupancy %"
+              type="percent"
+              value={uwNum("occupancy")}
+              onSave={(v) => saveField("occupancy", v)}
+            />
+            <InlineField
+              label="Avg rent / rate"
+              type="currency"
+              value={uwNum("avg_rent_rate")}
+              onSave={(v) => saveField("avg_rent_rate", v)}
+            />
+            <InlineField
+              label="Expense ratio %"
+              type="percent"
+              value={uwNum("operating_expense_ratio")}
+              onSave={(v) => saveField("operating_expense_ratio", v)}
+            />
           </div>
         </OverviewCard>
       </div>
@@ -386,100 +908,136 @@ export function DealOverviewSummary({ deal }: DealOverviewSummaryProps) {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {/* Borrower card */}
           <OverviewCard>
-            {borrowerName ? (
+            <div className="text-[11px] font-medium text-muted-foreground mb-3">Borrower</div>
+            {bc ? (
               <>
                 <div className="flex items-center gap-3 mb-3">
-                  <InitialsAvatar name={borrowerName} palette="green" />
-                  <div className="min-w-0">
+                  <InitialsAvatar name={borrowerName || "?"} palette="green" />
+                  <div className="min-w-0 flex-1">
                     <div className="text-sm font-medium text-foreground truncate">{borrowerName}</div>
-                    {borrowerEmail && (
-                      <div className="text-xs text-muted-foreground truncate">{borrowerEmail}</div>
+                    {bc.email && (
+                      <div className="text-xs text-muted-foreground truncate">{bc.email}</div>
                     )}
                   </div>
+                  <button
+                    type="button"
+                    onClick={() => handleUnlinkContact("borrower")}
+                    className="text-muted-foreground hover:text-foreground transition-colors p-1 rounded"
+                    title="Unlink borrower"
+                  >
+                    <X className="h-3.5 w-3.5" />
+                  </button>
                 </div>
                 <Separator className="mb-3" />
-                <div className="grid grid-cols-2 gap-x-6 gap-y-3">
-                  <Field label="Entity name">{borrowerEntity ?? <Placeholder />}</Field>
-                  <Field label="Credit score">
-                    <span className="num">{borrowerFico ?? <Placeholder />}</span>
-                  </Field>
-                  <CurrencyField label="Liquidity" value={borrowerLiquidity} />
-                  <Field label="Phone">{borrowerPhone ?? <Placeholder />}</Field>
+                <div className="grid grid-cols-2 gap-x-6 gap-y-1">
+                  <InlineField
+                    label="Email"
+                    type="text"
+                    value={bc.email ?? ""}
+                    onSave={(v) => saveContactField(bc.id, "email", v)}
+                  />
+                  <InlineField
+                    label="Phone"
+                    type="text"
+                    value={bc.phone ?? ""}
+                    onSave={(v) => saveContactField(bc.id, "phone", v)}
+                  />
+                  <InlineField
+                    label="FICO"
+                    type="number"
+                    value={uwNum("borrower_fico")}
+                    onSave={(v) => saveField("borrower_fico", v)}
+                  />
+                  <InlineField
+                    label="Experience"
+                    type="text"
+                    value={uwStr("borrower_experience") ?? ""}
+                    onSave={(v) => saveField("borrower_experience", v)}
+                  />
+                  <InlineField
+                    label="Combined liquidity"
+                    type="currency"
+                    value={uwNum("combined_liquidity")}
+                    onSave={(v) => saveField("combined_liquidity", v)}
+                  />
+                  <InlineField
+                    label="Combined net worth"
+                    type="currency"
+                    value={uwNum("combined_net_worth")}
+                    onSave={(v) => saveField("combined_net_worth", v)}
+                  />
                 </div>
               </>
             ) : (
-              <div className="py-6 text-center text-sm text-muted-foreground">
-                No borrower linked
+              <div className="py-3">
+                <ContactSearchInput
+                  placeholder="Search contacts to link as borrower..."
+                  onSelect={(c) => handleLinkContact("borrower", c)}
+                />
               </div>
             )}
           </OverviewCard>
 
-          {/* Broker / Source card */}
+          {/* Broker card */}
           <OverviewCard>
-            {brokerName ? (
+            <div className="text-[11px] font-medium text-muted-foreground mb-3">Broker</div>
+            {bk ? (
               <>
                 <div className="flex items-center gap-3 mb-3">
-                  <InitialsAvatar name={brokerName} palette="amber" />
-                  <div className="min-w-0">
+                  <InitialsAvatar name={brokerName || "?"} palette="amber" />
+                  <div className="min-w-0 flex-1">
                     <div className="text-sm font-medium text-foreground truncate">{brokerName}</div>
-                    {brokerEmail && (
-                      <div className="text-xs text-muted-foreground truncate">{brokerEmail}</div>
+                    {brokerCompanyName && (
+                      <div className="text-xs text-muted-foreground truncate">{brokerCompanyName}</div>
                     )}
                   </div>
+                  <button
+                    type="button"
+                    onClick={() => handleUnlinkContact("broker")}
+                    className="text-muted-foreground hover:text-foreground transition-colors p-1 rounded"
+                    title="Unlink broker"
+                  >
+                    <X className="h-3.5 w-3.5" />
+                  </button>
                 </div>
                 <Separator className="mb-3" />
-                <div className="grid grid-cols-2 gap-x-6 gap-y-3">
-                  <Field label="Company">{brokerCompany ?? <Placeholder />}</Field>
-                  <Field label="License #">{brokerLicense ?? <Placeholder />}</Field>
-                  <Field label="Broker fee">
-                    <span className="num">
-                      {brokerFeePct != null || brokerFeeAmt != null
-                        ? [
-                            brokerFeePct != null ? `${brokerFeePct}%` : null,
-                            brokerFeeAmt != null ? formatCurrency(brokerFeeAmt) : null,
-                          ].filter(Boolean).join(" / ")
-                        : <Placeholder />}
-                    </span>
-                  </Field>
-                  <Field label="Lead source">{leadSource ?? <Placeholder />}</Field>
+                <div className="grid grid-cols-2 gap-x-6 gap-y-1">
+                  <InlineField
+                    label="Email"
+                    type="text"
+                    value={bk.email ?? ""}
+                    onSave={(v) => saveContactField(bk.id, "email", v)}
+                  />
+                  <InlineField
+                    label="Phone"
+                    type="text"
+                    value={bk.phone ?? ""}
+                    onSave={(v) => saveContactField(bk.id, "phone", v)}
+                  />
+                  <InlineField
+                    label="Broker fee %"
+                    type="percent"
+                    value={uwNum("broker_fee_pct")}
+                    onSave={(v) => saveField("broker_fee_pct", v)}
+                  />
+                  <InlineField
+                    label="Broker fee $"
+                    type="currency"
+                    value={uwNum("broker_fee_amount")}
+                    onSave={(v) => saveField("broker_fee_amount", v)}
+                  />
                 </div>
               </>
             ) : (
-              <div className="py-6 text-center text-sm text-muted-foreground">
-                No broker linked
+              <div className="py-3">
+                <ContactSearchInput
+                  placeholder="Search contacts to link as broker..."
+                  onSelect={(c) => handleLinkContact("broker", c)}
+                />
               </div>
             )}
           </OverviewCard>
         </div>
-      </div>
-
-      {/* ── Section 6: Capital & Funding ── */}
-      <div>
-        <SectionLabel icon={Landmark}>Capital and Funding</SectionLabel>
-        <OverviewCard>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-x-6 gap-y-3">
-            <Field label="Funding channel">
-              {uwStr(deal, "funding_channel")
-                ? formatFieldValue(uwStr(deal, "funding_channel"), "select")
-                : <Placeholder />}
-            </Field>
-            <Field label="Funding source">
-              {uwStr(deal, "funding_source")
-                ? formatFieldValue(uwStr(deal, "funding_source"), "select")
-                : <Placeholder />}
-            </Field>
-            <Field label="Investment strategy">
-              {uwStr(deal, "strategy") ?? uwStr(deal, "investment_strategy")
-                ? formatFieldValue(uwStr(deal, "strategy") ?? uwStr(deal, "investment_strategy") ?? "", "select")
-                : <Placeholder />}
-            </Field>
-            <Field label="Loan type">
-              {uwStr(deal, "loan_type")
-                ? formatFieldValue(uwStr(deal, "loan_type"), "select")
-                : <Placeholder />}
-            </Field>
-          </div>
-        </OverviewCard>
       </div>
     </div>
   );

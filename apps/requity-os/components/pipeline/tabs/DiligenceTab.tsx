@@ -189,10 +189,13 @@ const CATEGORY_LABELS: Record<string, string> = {
   post_loan_payoff: "Post Loan Payoff",
 };
 
-const PHASE_FILTERS = [
+const STAGE_FILTERS = [
   { key: "all", label: "All" },
+  { key: "loan_intake", label: "Loan Intake" },
   { key: "processing", label: "Processing" },
-  { key: "post_closing", label: "Post Closing" },
+  { key: "closed_onboarding", label: "Closed / Onboarding" },
+  { key: "note_sell_process", label: "Note Sell Process" },
+  { key: "post_loan_payoff", label: "Post Loan Payoff" },
 ] as const;
 
 const CONDITION_STATUS_CONFIG: Record<
@@ -2320,9 +2323,7 @@ function ConditionsSection({
   onUnlinkDoc?: (docId: string) => void;
 }) {
   const router = useRouter();
-  const [phaseFilter, setPhaseFilter] = useState<
-    "all" | "processing" | "post_closing"
-  >("all");
+  const [stageFilter, setStageFilter] = useState<string>("all");
   const [expandedCategories, setExpandedCategories] = useState<Set<string>>(
     new Set()
   );
@@ -2350,22 +2351,20 @@ function ConditionsSection({
     });
   }, []);
 
-  // Filter conditions by phase
+  // Filter conditions by required_stage
   const filtered = conditions.filter((c) => {
-    const group = getCategoryGroup(c.category);
-    if (phaseFilter === "processing" && group === "post_closing") return false;
-    if (phaseFilter === "post_closing" && group !== "post_closing") return false;
-    return true;
+    if (stageFilter === "all") return true;
+    return c.required_stage === stageFilter;
   });
 
-  // Stats
-  const cleared = conditions.filter((c) =>
+  // Stats scoped to filtered conditions (stage-aware)
+  const cleared = filtered.filter((c) =>
     ["approved", "waived", "not_applicable"].includes(c.status)
   ).length;
-  const total = conditions.length;
+  const total = filtered.length;
   const pct = total > 0 ? Math.round((cleared / total) * 100) : 0;
-  const pendingCount = conditions.filter((c) => c.status === "pending").length;
-  const submittedCount = conditions.filter((c) =>
+  const pendingCount = filtered.filter((c) => c.status === "pending").length;
+  const submittedCount = filtered.filter((c) =>
     ["submitted", "under_review", "in_review"].includes(c.status)
   ).length;
 
@@ -2567,14 +2566,14 @@ function ConditionsSection({
 
       {/* Filters */}
       <div className="flex flex-wrap items-center gap-2">
-        {PHASE_FILTERS.map(({ key, label }) => (
+        {STAGE_FILTERS.map(({ key, label }) => (
           <button
             key={key}
             type="button"
-            onClick={() => setPhaseFilter(key)}
+            onClick={() => setStageFilter(key)}
             className={cn(
               "rounded-lg border px-3.5 py-1.5 text-xs font-medium transition-colors cursor-pointer",
-              phaseFilter === key
+              stageFilter === key
                 ? "border-primary bg-primary text-primary-foreground"
                 : "border-border bg-card text-muted-foreground hover:text-foreground"
             )}

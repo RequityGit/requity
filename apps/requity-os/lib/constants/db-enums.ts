@@ -214,12 +214,12 @@ export const LOAN_TYPE_CHECK_VALUES = [
 export const LOAN_PURPOSES = [
   { value: "purchase", label: "Purchase" },
   { value: "refinance", label: "Refinance" },
-  { value: "cash_out_refinance", label: "Cash-Out Refinance" },
+  { value: "new_construction", label: "New Construction" },
 ] as const;
 export const LOAN_PURPOSE_VALUES = [
   "purchase",
   "refinance",
-  "cash_out_refinance",
+  "new_construction",
 ] as const;
 export type LoanPurpose = (typeof LOAN_PURPOSE_VALUES)[number];
 
@@ -440,12 +440,14 @@ export type ConditionCategory = (typeof CONDITION_CATEGORY_VALUES)[number];
 
 /** DB enum: condition_stage */
 export const CONDITION_STAGES = [
+  { value: "loan_intake", label: "Loan Intake" },
   { value: "processing", label: "Processing" },
   { value: "closed_onboarding", label: "Closed / Onboarding" },
   { value: "note_sell_process", label: "Note Sell Process" },
   { value: "post_loan_payoff", label: "Post Loan Payoff" },
 ] as const;
 export const CONDITION_STAGE_VALUES = [
+  "loan_intake",
   "processing",
   "closed_onboarding",
   "note_sell_process",

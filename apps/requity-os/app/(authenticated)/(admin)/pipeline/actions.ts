@@ -544,6 +544,210 @@ async function updateUwDataJsonb(
   return { success: true };
 }
 
+// ─── Update Deal Name ───
+
+export async function updateDealNameAction(
+  dealId: string,
+  name: string
+) {
+  try {
+    const auth = await requireAdmin();
+    if ("error" in auth) return { error: auth.error };
+
+    const admin = createAdminClient();
+    const { error } = await admin
+      .from("unified_deals")
+      .update({ name } as never)
+      .eq("id", dealId);
+
+    if (error) return { error: error.message };
+    return { success: true };
+  } catch (err) {
+    return { error: err instanceof Error ? err.message : "Unknown error" };
+  }
+}
+
+// ─── Update Contact Field (2-way sync: edits from deal page write to crm_contacts) ───
+
+export async function updateContactFieldAction(
+  contactId: string,
+  field: string,
+  value: unknown
+) {
+  try {
+    const auth = await requireAdmin();
+    if ("error" in auth) return { error: auth.error };
+
+    const allowedFields = ["first_name", "last_name", "email", "phone"];
+    if (!allowedFields.includes(field)) return { error: `Field '${field}' not allowed` };
+
+    const admin = createAdminClient();
+    const { error } = await admin
+      .from("crm_contacts")
+      .update({ [field]: value } as never)
+      .eq("id", contactId);
+
+    if (error) return { error: error.message };
+    return { success: true };
+  } catch (err) {
+    return { error: err instanceof Error ? err.message : "Unknown error" };
+  }
+}
+
+// ─── Link/Unlink Contact to Deal (borrower or broker) ───
+
+export async function linkDealContactAction(
+  dealId: string,
+  role: "borrower" | "broker",
+  contactId: string | null
+) {
+  try {
+    const auth = await requireAdmin();
+    if ("error" in auth) return { error: auth.error };
+
+    const admin = createAdminClient();
+    const field = role === "borrower" ? "primary_contact_id" : "broker_contact_id";
+    const { error } = await admin
+      .from("unified_deals")
+      .update({ [field]: contactId } as never)
+      .eq("id", dealId);
+
+    if (error) return { error: error.message };
+
+    // Return the linked contact data so UI can update without refetch
+    if (contactId) {
+      const { data: contact } = await admin
+        .from("crm_contacts" as never)
+        .select("id, first_name, last_name, email, phone" as never)
+        .eq("id" as never, contactId as never)
+        .single();
+
+      // When linking a borrower, also ensure they appear in the Borrower tab's member table
+      if (role === "borrower") {
+        try {
+          // Ensure a borrowing entity exists (upsert)
+          const { data: existingEntity } = await admin
+            .from("deal_borrowing_entities")
+            .select("id")
+            .eq("deal_id", dealId)
+            .maybeSingle();
+
+          let entityId = existingEntity?.id;
+          if (!entityId) {
+            const { data: newEntity } = await admin
+              .from("deal_borrowing_entities")
+              .insert({ deal_id: dealId } as never)
+              .select("id")
+              .single();
+            entityId = newEntity?.id;
+          }
+
+          if (entityId) {
+            // Check if this contact is already a member
+            const { data: existingMember } = await admin
+              .from("deal_borrower_members")
+              .select("id")
+              .eq("borrowing_entity_id", entityId)
+              .eq("contact_id", contactId)
+              .maybeSingle();
+
+            if (!existingMember) {
+              // Get current max sort_order
+              const { data: members } = await admin
+                .from("deal_borrower_members")
+                .select("sort_order")
+                .eq("borrowing_entity_id", entityId)
+                .order("sort_order", { ascending: false })
+                .limit(1);
+
+              const nextOrder = (members?.[0]?.sort_order ?? -1) + 1;
+
+              await admin
+                .from("deal_borrower_members")
+                .insert({
+                  borrowing_entity_id: entityId,
+                  deal_id: dealId,
+                  contact_id: contactId,
+                  role: "member",
+                  sort_order: nextOrder,
+                } as never);
+            }
+          }
+        } catch (syncErr) {
+          // Non-blocking: don't fail the primary link if member sync fails
+          console.error("Failed to sync borrower to member table:", syncErr);
+        }
+      }
+
+      return { success: true, contact: contact as { id: string; first_name: string; last_name: string; email: string | null; phone: string | null } | null };
+    }
+    return { success: true, contact: null };
+  } catch (err) {
+    return { error: err instanceof Error ? err.message : "Unknown error" };
+  }
+}
+
+// ─── Search contacts for deal linking ───
+
+export async function searchContactsForDealLink(query: string) {
+  try {
+    const auth = await requireAdmin();
+    if ("error" in auth) return { error: auth.error, contacts: [] };
+
+    if (!query || query.length < 2) return { error: null, contacts: [] };
+
+    const admin = createAdminClient();
+    const pattern = `%${query}%`;
+    const { data, error } = await admin
+      .from("crm_contacts" as never)
+      .select("id, first_name, last_name, email, phone" as never)
+      .or(`first_name.ilike.${pattern},last_name.ilike.${pattern},email.ilike.${pattern}` as never)
+      .limit(8);
+
+    if (error) return { error: error.message, contacts: [] };
+    return { error: null, contacts: (data ?? []) as { id: string; first_name: string; last_name: string; email: string | null; phone: string | null }[] };
+  } catch (err) {
+    return { error: err instanceof Error ? err.message : "Search failed", contacts: [] };
+  }
+}
+
+// ─── Quick-create a CRM contact ───
+
+export async function quickCreateContactAction(
+  firstName: string,
+  lastName: string,
+  email?: string,
+  phone?: string,
+) {
+  try {
+    const auth = await requireAdmin();
+    if ("error" in auth) return { error: auth.error, contact: null };
+
+    if (!firstName.trim()) return { error: "First name is required", contact: null };
+
+    const admin = createAdminClient();
+    const { data, error } = await admin
+      .from("crm_contacts")
+      .insert({
+        first_name: firstName.trim(),
+        last_name: lastName.trim() || null,
+        email: email?.trim() || null,
+        phone: phone?.trim() || null,
+        contact_type: "lead" as never,
+      } as never)
+      .select("id, first_name, last_name, email, phone")
+      .single();
+
+    if (error) return { error: error.message, contact: null };
+    return {
+      error: null,
+      contact: data as unknown as { id: string; first_name: string; last_name: string; email: string | null; phone: string | null },
+    };
+  } catch (err) {
+    return { error: err instanceof Error ? err.message : "Failed to create contact", contact: null };
+  }
+}
+
 // ─── Update Property Data ───
 
 export async function updatePropertyDataAction(
@@ -671,7 +875,7 @@ export async function updateDealStatusAction(
       const uwData = (deal?.uw_data as Record<string, unknown>) || {};
       const { error: uwError } = await admin
         .from("unified_deals")
-        .update({ uw_data: { ...uwData, closing_date: closingDate } as Json })
+        .update({ uw_data: { ...uwData, closing_date: closingDate, expected_close_date: closingDate } as Json })
         .eq("id", dealId);
       if (uwError) {
         console.error("updateDealStatusAction uw_data closing_date error:", uwError);
