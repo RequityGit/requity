@@ -11,6 +11,7 @@ import {
   Phone,
   FileText,
   Users,
+  ClipboardCheck,
   type LucideIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -62,6 +63,13 @@ const SECTIONS: ToolboxSection[] = [
     id: "operations",
     label: "Operations",
     items: [
+      {
+        id: "conditions",
+        label: "Conditions Dashboard",
+        desc: "Outstanding conditions across all active loans.",
+        href: "/conditions",
+        icon: ClipboardCheck,
+      },
       {
         id: "servicing",
         label: "Servicing",

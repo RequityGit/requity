@@ -87,6 +87,7 @@ const adminNav: NavItem[] = [
     icon: Wrench,
     activePaths: [
       "/toolbox",
+      "/conditions",
       "/documents",
       "/servicing",
       "/funds",
