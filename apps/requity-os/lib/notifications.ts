@@ -178,6 +178,8 @@ export function getNotificationRoute(
         return ROLE_DASHBOARDS[activeRole] ?? "/pipeline";
 
       case "task":
+        if (isAdmin) return `/tasks?task=${entity_id}`;
+        return ROLE_DASHBOARDS[activeRole] ?? "/pipeline";
       case "project":
         if (isAdmin) return "/tasks";
         return ROLE_DASHBOARDS[activeRole] ?? "/pipeline";

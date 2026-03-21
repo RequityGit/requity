@@ -61,14 +61,12 @@ function CompanyTypeBadge({ type }: { type: string }) {
 
 function StatusDot({ active }: { active: boolean }) {
   return (
-    <div className="flex justify-center">
-      <div
-        className={cn(
-          "h-2.5 w-2.5 rounded-full",
-          active ? "bg-green-500" : "bg-red-400"
-        )}
-      />
-    </div>
+    <div
+      className={cn(
+        "h-2.5 w-2.5 rounded-full shrink-0",
+        active ? "bg-green-500" : "bg-red-400"
+      )}
+    />
   );
 }
 
@@ -108,12 +106,12 @@ export function CompaniesTable({ companies }: CompaniesTableProps) {
         cell: (row) => (
           <Link
             href={`/companies/${row.company_number}`}
-            className="flex items-center gap-3"
+            className="flex items-center gap-3 max-w-[280px]"
           >
             <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary/10">
               <Building2 className="h-4 w-4 text-muted-foreground" />
             </div>
-            <div className="min-w-0">
+            <div className="min-w-0 flex-1">
               <p className="text-sm font-medium text-foreground hover:underline truncate">
                 {row.name}
               </p>
@@ -123,7 +121,7 @@ export function CompaniesTable({ companies }: CompaniesTableProps) {
             </div>
           </Link>
         ),
-        className: "min-w-[200px] max-w-[300px]",
+        className: "min-w-[200px]",
       },
       {
         key: "company_type",
@@ -178,6 +176,17 @@ export function CompaniesTable({ companies }: CompaniesTableProps) {
           </span>
         ),
         className: "w-[140px]",
+      },
+      {
+        key: "is_active",
+        header: "Status",
+        cell: (row) => (
+          <div className="flex items-center gap-2">
+            <StatusDot active={row.is_active !== false} />
+            <span className="text-sm">{row.is_active !== false ? "Active" : "Inactive"}</span>
+          </div>
+        ),
+        className: "w-[100px]",
       },
     ],
     []
