@@ -112,9 +112,58 @@ interface DiligenceTabProps {
   conditions: DealCondition[];
   dealId: string;
   dealName?: string;
+  dealStage?: string;
   googleDriveFolderUrl?: string | null;
   currentUserId?: string;
   currentUserName?: string;
+}
+
+// ─── Cumulative Stage Filtering ───
+
+/** Condition stages in lifecycle order */
+const CONDITION_STAGE_ORDER = [
+  "loan_intake",
+  "processing",
+  "closed_onboarding",
+  "note_sell_process",
+  "post_loan_payoff",
+] as const;
+
+/** Maps deal pipeline stage to the latest condition stage visible by default */
+const DEAL_TO_CONDITION_CEILING: Record<string, string> = {
+  lead: "loan_intake",
+  analysis: "loan_intake",
+  negotiation: "processing",
+  execution: "closed_onboarding",
+  closed: "post_loan_payoff",
+};
+
+/** Get condition stage label */
+const CONDITION_STAGE_LABELS: Record<string, string> = {
+  loan_intake: "Loan Intake",
+  processing: "Processing",
+  closed_onboarding: "Closed / Onboarding",
+  note_sell_process: "Note Sell Process",
+  post_loan_payoff: "Post Loan Payoff",
+};
+
+function getCeilingStage(dealStage: string): string {
+  return DEAL_TO_CONDITION_CEILING[dealStage] ?? "post_loan_payoff";
+}
+
+function getVisibleStages(ceilingStage: string): string[] {
+  const idx = CONDITION_STAGE_ORDER.indexOf(ceilingStage as typeof CONDITION_STAGE_ORDER[number]);
+  if (idx === -1) return [...CONDITION_STAGE_ORDER];
+  return CONDITION_STAGE_ORDER.slice(0, idx + 1) as unknown as string[];
+}
+
+function getCeilingLabel(dealStage: string): string {
+  const ceiling = getCeilingStage(dealStage);
+  const visibleStages = getVisibleStages(ceiling);
+  if (visibleStages.length === 1) {
+    return `Due now (${CONDITION_STAGE_LABELS[ceiling] ?? ceiling})`;
+  }
+  return `Due now (through ${CONDITION_STAGE_LABELS[ceiling] ?? ceiling})`;
 }
 
 // ─── Shared Utilities ───
@@ -1750,6 +1799,7 @@ function ConditionRow({
   condDocs,
   isRowExpanded,
   isLinking,
+  isOverdue,
   noteCount,
   dealId,
   currentUserId,
@@ -1769,6 +1819,7 @@ function ConditionRow({
   condDocs: DealDocument[];
   isRowExpanded: boolean;
   isLinking: boolean;
+  isOverdue?: boolean;
   noteCount: number;
   dealId: string;
   currentUserId: string;
@@ -1853,6 +1904,11 @@ function ConditionRow({
           >
             {cond.condition_name}
           </span>
+          {isOverdue && !isClearedStatus && (
+            <span className="inline-flex items-center rounded-md bg-red-500/10 px-1.5 py-0.5 text-[10px] font-semibold text-red-600 dark:text-red-400 shrink-0">
+              Overdue
+            </span>
+          )}
           {cond.assigned_contact_id && (
             <span
               className="inline-flex items-center gap-0.5 rounded-full bg-violet-500/10 px-1.5 py-0.5 text-[10px] font-medium text-violet-600 dark:text-violet-400 shrink-0"
@@ -2311,6 +2367,7 @@ function ConditionsSection({
   conditions,
   documents,
   dealId,
+  dealStage,
   onPreviewDoc,
   onApprovalChange,
   onUnlinkDoc,
@@ -2318,12 +2375,13 @@ function ConditionsSection({
   conditions: DealCondition[];
   documents: DealDocument[];
   dealId: string;
+  dealStage?: string;
   onPreviewDoc?: (doc: DealDocument) => void;
   onApprovalChange?: (docId: string, status: "approved" | "denied") => Promise<void>;
   onUnlinkDoc?: (docId: string) => void;
 }) {
   const router = useRouter();
-  const [stageFilter, setStageFilter] = useState<string>("all");
+  const [stageFilter, setStageFilter] = useState<string>("through_current");
   const [expandedCategories, setExpandedCategories] = useState<Set<string>>(
     new Set()
   );
@@ -2351,11 +2409,25 @@ function ConditionsSection({
     });
   }, []);
 
-  // Filter conditions by required_stage
+  // Filter conditions by required_stage (cumulative or single)
+  const ceiling = dealStage ? getCeilingStage(dealStage) : "post_loan_payoff";
+  const cumulativeStages = getVisibleStages(ceiling);
+
   const filtered = conditions.filter((c) => {
     if (stageFilter === "all") return true;
+    if (stageFilter === "through_current") {
+      return cumulativeStages.includes(c.required_stage);
+    }
     return c.required_stage === stageFilter;
   });
+
+  // Determine which conditions are overdue (from prior stages relative to deal)
+  const priorStages = dealStage
+    ? (() => {
+        const ceilIdx = CONDITION_STAGE_ORDER.indexOf(ceiling as typeof CONDITION_STAGE_ORDER[number]);
+        return ceilIdx > 0 ? CONDITION_STAGE_ORDER.slice(0, ceilIdx) as unknown as string[] : [];
+      })()
+    : [];
 
   // Stats scoped to filtered conditions (stage-aware)
   const cleared = filtered.filter((c) =>
@@ -2564,9 +2636,44 @@ function ConditionsSection({
         </div>
       </div>
 
+      {/* Stage breakdown */}
+      <div className="flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
+        {(stageFilter === "through_current" ? cumulativeStages : CONDITION_STAGE_ORDER as unknown as string[]).map((stage) => {
+          const stageConditions = conditions.filter((c) => c.required_stage === stage);
+          if (stageConditions.length === 0) return null;
+          const stageCleared = stageConditions.filter((c) =>
+            ["approved", "waived", "not_applicable"].includes(c.status)
+          ).length;
+          return (
+            <button
+              key={stage}
+              type="button"
+              onClick={() => setStageFilter(stage)}
+              className="num hover:text-foreground transition-colors cursor-pointer"
+            >
+              {CONDITION_STAGE_LABELS[stage] ?? stage}: <span className="font-semibold">{stageCleared}/{stageConditions.length}</span>
+            </button>
+          );
+        })}
+      </div>
+
       {/* Filters */}
       <div className="flex flex-wrap items-center gap-2">
-        {STAGE_FILTERS.map(({ key, label }) => (
+        {dealStage && (
+          <button
+            type="button"
+            onClick={() => setStageFilter("through_current")}
+            className={cn(
+              "rounded-lg border px-3.5 py-1.5 text-xs font-medium transition-colors cursor-pointer",
+              stageFilter === "through_current"
+                ? "border-primary bg-primary text-primary-foreground"
+                : "border-border bg-card text-muted-foreground hover:text-foreground"
+            )}
+          >
+            {getCeilingLabel(dealStage)}
+          </button>
+        )}
+        {STAGE_FILTERS.filter(f => f.key !== "all").map(({ key, label }) => (
           <button
             key={key}
             type="button"
@@ -2581,6 +2688,18 @@ function ConditionsSection({
             {label}
           </button>
         ))}
+        <button
+          type="button"
+          onClick={() => setStageFilter("all")}
+          className={cn(
+            "rounded-lg border px-3.5 py-1.5 text-xs font-medium transition-colors cursor-pointer",
+            stageFilter === "all"
+              ? "border-primary bg-primary text-primary-foreground"
+              : "border-border bg-card text-muted-foreground hover:text-foreground"
+          )}
+        >
+          All
+        </button>
       </div>
 
       {filtered.length === 0 && (
@@ -2625,13 +2744,23 @@ function ConditionsSection({
 
             {isExpanded && (
               <div className="divide-y divide-border">
-                {items.map((cond) => (
+                {[...items].sort((a, b) => {
+                  // Sort overdue incomplete items to top
+                  const aOverdue = priorStages.includes(a.required_stage) && !["approved", "waived", "not_applicable"].includes(a.status);
+                  const bOverdue = priorStages.includes(b.required_stage) && !["approved", "waived", "not_applicable"].includes(b.status);
+                  if (aOverdue && !bOverdue) return -1;
+                  if (!aOverdue && bOverdue) return 1;
+                  return 0;
+                }).map((cond) => {
+                  const isOverdue = priorStages.includes(cond.required_stage) && !["approved", "waived", "not_applicable"].includes(cond.status);
+                  return (
                   <ConditionRow
                     key={cond.id}
                     condition={cond}
                     condDocs={docsByCondition.get(cond.id) ?? []}
                     isRowExpanded={expandedRows.has(cond.id)}
                     isLinking={linkingConditionId === cond.id}
+                    isOverdue={isOverdue}
                     noteCount={noteCounts[cond.id] ?? 0}
                     dealId={dealId}
                     currentUserId={currentUserId}
@@ -2647,7 +2776,8 @@ function ConditionsSection({
                     onApprovalChange={onApprovalChange}
                     onRequestRevision={handleRequestRevision}
                   />
-                ))}
+                  );
+                })}
               </div>
             )}
           </div>
@@ -2666,6 +2796,7 @@ export function DiligenceTab({
   conditions,
   dealId,
   dealName,
+  dealStage,
   googleDriveFolderUrl,
   currentUserId,
   currentUserName,
@@ -2748,6 +2879,7 @@ export function DiligenceTab({
         conditions={conditions}
         documents={documents}
         dealId={dealId}
+        dealStage={dealStage}
         onPreviewDoc={(doc) => {
           setPreviewDoc(doc);
           setPreviewOpen(true);
