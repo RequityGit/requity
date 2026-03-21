@@ -140,8 +140,12 @@ export function CreateDocumentDialog() {
   // Search records when query or type changes
   const doSearch = useCallback(async (type: typeof recordType, query: string) => {
     setLoadingRecords(true);
-    const { records: data } = await searchRecords(type, query);
-    setRecords(data);
+    try {
+      const result = await searchRecords(type, query);
+      setRecords(result?.records ?? []);
+    } catch {
+      setRecords([]);
+    }
     setLoadingRecords(false);
   }, []);
 
@@ -163,8 +167,12 @@ export function CreateDocumentDialog() {
     setSelectedRecord(record);
     setStep("template");
     setLoadingTemplates(true);
-    const { templates: data } = await fetchTemplatesForRecord(recordType);
-    setTemplates(data as Template[]);
+    try {
+      const result = await fetchTemplatesForRecord(recordType);
+      setTemplates((result?.templates ?? []) as Template[]);
+    } catch {
+      setTemplates([]);
+    }
     setLoadingTemplates(false);
   }
 
@@ -172,8 +180,12 @@ export function CreateDocumentDialog() {
     setSelectedTemplate(template);
     setStep("preview");
     setLoadingFields(true);
-    const { fields } = await resolveTemplateData(template.id, selectedRecord!.id);
-    setResolvedFields(fields);
+    try {
+      const result = await resolveTemplateData(template.id, selectedRecord!.id);
+      setResolvedFields(result?.fields ?? []);
+    } catch {
+      setResolvedFields([]);
+    }
     setLoadingFields(false);
   }
 

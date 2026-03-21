@@ -426,8 +426,8 @@ Key: onStructuralChange (add/remove) triggers re-fetch.
 | `draw_requests` | Construction draws | NOT `construction_draws` |
 | `equity_deals` | Equity pipeline | With `equity_deal_stage_history` |
 | `documents` | Document metadata | Supabase Storage is file storage layer |
-| `project_tracker` | Internal project tracking | Update when working on Requity projects |
-| `project_notes` | Project note log | Include timestamps |
+| `ops_projects` | Internal project tracking | Operational projects |
+| `ops_tasks` | Project tasks | Task board items |
 | `field_configurations` | **Master field registry** | Single source of truth for ALL field labels, types, options |
 | `unified_card_types` | Pipeline card type definitions | Uses `uw_field_refs` to reference `field_configurations` |
 | `unified_deals` | Pipeline deals | `uw_data` JSONB stores field values keyed by `field_key` |
@@ -567,18 +567,6 @@ When compacting conversation:
 - If dev docs are current, zero context is lost
 
 ---
-
-## Project Tracker Updates
-
-When working on any RequityOS task, update the Supabase `project_tracker` table:
-
-```sql
--- Log a note
-INSERT INTO project_notes (project_id, note, created_at)
-VALUES ('[project-id]', '[description of work done]', now());
-```
-
-Do this at the start and end of each significant work session.
 
 ---
 

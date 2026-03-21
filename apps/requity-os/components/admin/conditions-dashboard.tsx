@@ -82,7 +82,8 @@ export function ConditionsDashboard({
   const router = useRouter();
   const { toast } = useToast();
 
-  const today = new Date();
+  // Stable reference: initialized once on mount, reused during hydration
+  const [today] = useState(() => new Date());
 
   // Summary stats
   const stats = useMemo(() => {
@@ -106,7 +107,7 @@ export function ConditionsDashboard({
     const uniqueLoans = new Set(conditions.map((c: ConditionWithLoan) => c.loan_id)).size;
 
     return { total, approved, outstanding, overdue, criticalOutstanding, uniqueLoans };
-  }, [conditions]);
+  }, [conditions, today]);
 
   // Filtered conditions
   const filteredConditions = useMemo(() => {

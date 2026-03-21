@@ -242,7 +242,6 @@ export async function POST(request: NextRequest) {
             name: dealName,
             capital_side: "debt",
             stage: "lead",
-            card_type_id: cardTypeId,
             loan_type: loanTypeCode,
             primary_contact_id: crmContactId,
             property_id: propertyId,

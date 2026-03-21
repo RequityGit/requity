@@ -17,7 +17,7 @@ const ROLE_DASHBOARDS: Record<string, string> = {
  * Max number of automatic retries for PKCE exchange failures before showing
  * the error to the user. Each retry re-initiates the full Google OAuth flow.
  */
-const MAX_AUTH_RETRIES = 1;
+const MAX_AUTH_RETRIES = 2;
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);

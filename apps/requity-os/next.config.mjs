@@ -71,31 +71,34 @@ const nextConfig = {
     ];
   },
   async redirects() {
+    // Use temporary (302) redirects in dev to prevent browsers from caching
+    // stale 301s that can break OAuth flows and page navigation.
+    const perm = !isDev;
     return [
       {
         source: '/originations',
         destination: '/pipeline?tab=debt',
-        permanent: true,
+        permanent: perm,
       },
       {
         source: '/equity-pipeline/:id',
         destination: '/pipeline/:id',
-        permanent: true,
+        permanent: perm,
       },
       {
         source: '/equity-pipeline',
         destination: '/pipeline?tab=equity',
-        permanent: true,
+        permanent: perm,
       },
       {
         source: '/deals/:id',
         destination: '/pipeline/:id',
-        permanent: true,
+        permanent: perm,
       },
       {
         source: '/dscr',
         destination: '/models/dscr',
-        permanent: true,
+        permanent: perm,
       },
     ];
   },
