@@ -32,6 +32,7 @@ interface FilesTabProps {
   files: CompanyFileData[];
   companyId: string;
   loading?: boolean;
+  onRefresh?: () => void;
 }
 
 function formatBytes(bytes: number | null): string {
@@ -40,7 +41,7 @@ function formatBytes(bytes: number | null): string {
   return `${Math.round(bytes / 1000)} KB`;
 }
 
-export function CompanyFilesTab({ files, companyId, loading = false }: FilesTabProps) {
+export function CompanyFilesTab({ files, companyId, loading = false, onRefresh }: FilesTabProps) {
   const [filter, setFilter] = useState("all");
   const [showUpload, setShowUpload] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -108,7 +109,8 @@ export function CompanyFilesTab({ files, companyId, loading = false }: FilesTabP
         toast({ title: "Error deleting file", description: result.error, variant: "destructive" });
       } else {
         toast({ title: "File deleted" });
-        router.refresh();
+        if (onRefresh) onRefresh();
+        else router.refresh();
       }
     } finally {
       setDeletingId(null);
@@ -152,7 +154,8 @@ export function CompanyFilesTab({ files, companyId, loading = false }: FilesTabP
       setShowUpload(false);
       setSelectedFile(null);
       setFileType("other");
-      router.refresh();
+      if (onRefresh) onRefresh();
+      else router.refresh();
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : "Unknown error";
       toast({

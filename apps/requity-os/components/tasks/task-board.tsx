@@ -5,7 +5,7 @@ import { createClient } from "@/lib/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
-import { Plus, Repeat2, Shield } from "lucide-react";
+import { Plus, Repeat2, Shield, Archive } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/components/shared/page-header";
 import { TaskColumn } from "./task-column";
@@ -65,6 +65,7 @@ export function TaskBoard({
   const [priorityFilter, setPriorityFilter] = useState("all");
   const [typeFilter, setTypeFilter] = useState<TaskTypeFilter>("all");
   const [myApprovalsFilter, setMyApprovalsFilter] = useState(false);
+  const [showParkingLot, setShowParkingLot] = useState(false);
 
   const { toast } = useToast();
 
@@ -134,8 +135,12 @@ export function TaskBoard({
   }, [tasks, currentUserId]);
 
   // Filtered tasks
+  const parkingLotTasks = useMemo(() => tasks.filter((t) => t.status === "Parking Lot"), [tasks]);
+
   const filteredTasks = useMemo(() => {
     return tasks.filter((t) => {
+      // Parking Lot tasks are shown in their own section, not the kanban
+      if (t.status === "Parking Lot") return false;
       if (myApprovalsFilter) {
         if (!t.requires_approval || t.approver_id !== currentUserId) return false;
       }
@@ -375,6 +380,30 @@ export function TaskBoard({
             </button>
           </div>
 
+          {activeView === "kanban" && parkingLotTasks.length > 0 && (
+            <button
+              type="button"
+              onClick={() => setShowParkingLot(!showParkingLot)}
+              className={cn(
+                "flex items-center gap-1.5 px-3 py-2 md:py-1.5 rounded-md text-[12px] font-medium transition-colors border min-h-[36px]",
+                showParkingLot
+                  ? "bg-amber-500/10 border-amber-500/20 text-amber-600 dark:text-amber-400"
+                  : "bg-transparent border-border text-muted-foreground hover:bg-accent"
+              )}
+            >
+              <Archive className="h-3.5 w-3.5" strokeWidth={1.5} />
+              Parking Lot
+              <span className={cn(
+                "text-[10px] font-semibold px-1.5 py-0.5 rounded-full num",
+                showParkingLot
+                  ? "bg-amber-500/20 text-amber-600 dark:text-amber-400"
+                  : "bg-muted text-muted-foreground"
+              )}>
+                {parkingLotTasks.length}
+              </span>
+            </button>
+          )}
+
           {activeView === "kanban" && myApprovalsCount > 0 && (
             <button
               type="button"
@@ -477,6 +506,44 @@ export function TaskBoard({
               />
             );
           })}
+        </div>
+      )}
+
+      {/* Parking Lot Section */}
+      {activeView === "kanban" && showParkingLot && parkingLotTasks.length > 0 && (
+        <div className="mt-6 rounded-xl border border-border bg-card">
+          <div className="flex items-center justify-between px-5 py-3 border-b border-border">
+            <div className="flex items-center gap-2">
+              <Archive className="h-4 w-4 text-amber-600 dark:text-amber-400" strokeWidth={1.5} />
+              <span className="text-sm font-semibold text-foreground">Parking Lot</span>
+              <span className="text-xs text-muted-foreground">Good ideas, not right now</span>
+            </div>
+            <span className="text-xs text-muted-foreground num">{parkingLotTasks.length} items</span>
+          </div>
+          <div className="divide-y divide-border">
+            {parkingLotTasks.map((t) => (
+              <div
+                key={t.id}
+                className="flex items-center gap-3 px-5 py-3 hover:bg-muted/30 transition-colors cursor-pointer"
+                onClick={() => handleTaskClick(t)}
+              >
+                <span
+                  className="h-2 w-2 rounded-full shrink-0"
+                  style={{
+                    backgroundColor:
+                      t.priority === "High" ? "#E5453D" : t.priority === "Medium" ? "#E5930E" : "#8B8B8B",
+                  }}
+                />
+                <span className="text-[13px] font-medium text-foreground flex-1 truncate">{t.title}</span>
+                {t.category && (
+                  <span className="text-[11px] text-muted-foreground shrink-0">{t.category}</span>
+                )}
+                {t.assigned_to_name && (
+                  <span className="text-[11px] text-muted-foreground shrink-0">{t.assigned_to_name}</span>
+                )}
+              </div>
+            ))}
+          </div>
         </div>
       )}
 

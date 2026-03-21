@@ -261,6 +261,7 @@ export function CompanyDetailClient({
                 files={filesForTab}
                 companyId={company.id}
                 loading={filesQ.loading}
+                onRefresh={filesQ.refresh}
               />
             </div>
           )}
