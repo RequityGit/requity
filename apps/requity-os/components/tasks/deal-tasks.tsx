@@ -13,7 +13,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { PriorityDot } from "./priority-dot";
 import { AnimatedTask } from "./animated-task";
-import { TaskSheet } from "./task-sheet";
+import { TaskSplitPanel } from "./task-split-panel";
 import { relativeTime } from "@/lib/comment-utils";
 import type { OpsTask, Profile } from "@/lib/tasks";
 import {
@@ -313,7 +313,7 @@ export function DealTasks({
         </>
       )}
 
-      <TaskSheet
+      <TaskSplitPanel
         open={sheetOpen}
         task={editingTask}
         profiles={profiles}

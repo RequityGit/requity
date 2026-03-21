@@ -8,7 +8,7 @@ import { Plus, Check, CheckCircle2 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { DotPill } from "@/components/crm/contact-360/contact-detail-shared";
 import { formatDate } from "@/lib/format";
-import { TaskSheet } from "@/components/tasks/task-sheet";
+import { TaskSplitPanel } from "@/components/tasks/task-split-panel";
 import { completeTask, completeRecurringTask } from "@/lib/tasks";
 import type { OpsTask, Profile } from "@/lib/tasks";
 import type { CompanyTaskData } from "../types";
@@ -176,7 +176,7 @@ export function CompanyTasksTab({
         </Button>
       </div>
 
-      <TaskSheet
+      <TaskSplitPanel
         open={sheetOpen}
         task={editingTask}
         profiles={profiles}

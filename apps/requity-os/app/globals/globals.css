@@ -651,3 +651,12 @@
     transition-duration: 0.01ms !important;
   }
 }
+
+/* Task split-panel: hidden scrollbar on activity feed */
+.task-panel-feed::-webkit-scrollbar {
+  display: none;
+}
+.task-panel-feed {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}

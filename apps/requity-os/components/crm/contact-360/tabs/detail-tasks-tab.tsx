@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Plus, CheckCircle2 } from "lucide-react";
 import { formatDate } from "@/lib/format";
-import { TaskSheet } from "@/components/tasks/task-sheet";
+import { TaskSplitPanel } from "@/components/tasks/task-split-panel";
 import type { OpsTask, Profile } from "@/lib/tasks";
 import { completeTask, completeRecurringTask } from "@/lib/tasks";
 import { useToast } from "@/components/ui/use-toast";
@@ -107,7 +107,7 @@ export function DetailTasksTab({
         </Button>
       </div>
 
-      <TaskSheet
+      <TaskSplitPanel
         open={sheetOpen}
         task={editingTask}
         profiles={profiles}

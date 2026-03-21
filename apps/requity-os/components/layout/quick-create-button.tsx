@@ -13,7 +13,7 @@ import { fetchQuickCreateData } from "@/app/(authenticated)/(admin)/actions/quic
 import { NewDealDialog } from "@/components/pipeline/NewDealDialog";
 import { AddContactDialog } from "@/components/crm/add-contact-dialog";
 import { AddCompanyDialog } from "@/components/crm/add-company-dialog";
-import { TaskSheet } from "@/components/tasks/task-sheet";
+import { TaskSplitPanel } from "@/components/tasks/task-split-panel";
 import type { OpsTask } from "@/lib/tasks";
 
 interface QuickCreateButtonProps {
@@ -134,7 +134,7 @@ export function QuickCreateButton({ currentUserId, isSuperAdmin }: QuickCreateBu
       />
 
       {data && (
-        <TaskSheet
+        <TaskSplitPanel
           open={activeDialog === "task"}
           task={null}
           profiles={data.teamMembers}
