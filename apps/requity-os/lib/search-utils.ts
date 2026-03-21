@@ -172,7 +172,7 @@ export function getEntityUrl(
         ? `/i/funds/${id}`
         : `/funds/${id}`;
     case "crm_contact":
-      return `/crm/${id}`;
+      return `/contacts/${(metadata.contact_number as string) || id}`;
     case "document":
       if (metadata.loan_id) return `/pipeline/${(metadata.loan_number as string) || metadata.loan_id}`;
       if (metadata.fund_id) return `/funds/${metadata.fund_id}`;
