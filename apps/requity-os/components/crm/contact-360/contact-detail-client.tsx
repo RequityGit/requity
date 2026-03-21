@@ -14,6 +14,7 @@ import {
 import { ContactDetailHeader } from "./contact-detail-header";
 import { ContactDetailSidebar } from "./contact-detail-sidebar";
 import { EmailComposeSheet } from "@/components/crm/email-compose-sheet";
+import { TaskSheet } from "@/components/tasks/task-sheet";
 import { DetailOverviewTab } from "./tabs/detail-overview-tab";
 import { CrmInlineEditorWrapper } from "@/components/inline-layout-editor/CrmInlineEditorWrapper";
 import { CollapsiblePipelineDealsSection } from "./sections/collapsible-pipeline-deals-section";
@@ -95,6 +96,7 @@ export function ContactDetailClient({
     "Unnamed Contact";
 
   const [emailComposeOpen, setEmailComposeOpen] = useState(false);
+  const [taskSheetOpen, setTaskSheetOpen] = useState(false);
   const [logCallTrigger, setLogCallTrigger] = useState(0);
 
   const tasksRef = useRef<HTMLDivElement>(null);
@@ -139,7 +141,7 @@ export function ContactDetailClient({
   const handleTabChange = useCallback(
     (tab: string) => {
       if (tab === "tasks") {
-        scrollToSection(tasksRef);
+        setTaskSheetOpen(true);
       } else if (tab === "activity" || tab === "notes") {
         scrollToSection(timelineRef);
       }
@@ -281,6 +283,28 @@ export function ContactDetailClient({
         linkedContactId={contact.id}
         currentUserId={currentUserId}
         currentUserName={currentUserName}
+      />
+
+      <TaskSheet
+        open={taskSheetOpen}
+        task={null}
+        profiles={taskProfiles}
+        currentUserId={currentUserId}
+        isSuperAdmin={isSuperAdmin}
+        onClose={() => setTaskSheetOpen(false)}
+        onSaved={() => {
+          setTaskSheetOpen(false);
+          tasksQ.refresh();
+        }}
+        onDeleted={() => {
+          setTaskSheetOpen(false);
+          tasksQ.refresh();
+        }}
+        defaultLinkedEntity={{
+          type: "contact",
+          id: contact.id,
+          label: fullName,
+        }}
       />
     </div>
   );
