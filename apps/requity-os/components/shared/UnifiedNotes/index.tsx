@@ -24,6 +24,7 @@ export function UnifiedNotes({
   showFilters,
   showPinning = true,
   compact = false,
+  chatMode = false,
 }: UnifiedNotesProps) {
   // Defaults based on entity type
   const isConditionType = entityType === "condition" || entityType === "unified_condition";
@@ -423,53 +424,80 @@ export function UnifiedNotes({
         ? notes.filter((n) => !n.is_internal)
         : notes;
 
-  const maxHeight = isCompact ? "max-h-[300px]" : "";
+  // In chatMode, reverse to show oldest first (newest at bottom)
+  const displayNotes = chatMode ? [...filteredNotes].reverse() : filteredNotes;
 
-  return (
-    <div className={`flex flex-col gap-2 ${isCompact ? "" : ""}`}>
-      {/* Composer */}
-      {currentUserId && (
-        <NoteComposer
-          currentUserName={currentUserName}
-          showInternalToggle={shouldShowInternalToggle}
-          defaultInternal={defaultInternal}
-          compact={isCompact}
-          onPost={handlePost}
+  const maxHeight = isCompact && !chatMode ? "max-h-[300px]" : "";
+
+  // Date divider helper
+  function getDateLabel(dateStr: string): string {
+    const d = new Date(dateStr);
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const noteDay = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+    const diffDays = Math.floor((today.getTime() - noteDay.getTime()) / (1000 * 60 * 60 * 24));
+    if (diffDays === 0) return "Today";
+    if (diffDays === 1) return "Yesterday";
+    return d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+  }
+
+  const composerElement = currentUserId ? (
+    <NoteComposer
+      currentUserName={currentUserName}
+      showInternalToggle={shouldShowInternalToggle}
+      defaultInternal={defaultInternal}
+      compact={isCompact}
+      onPost={handlePost}
+      enterToSend={chatMode}
+    />
+  ) : null;
+
+  const notesListElement = loading ? (
+    <div className="space-y-2">
+      <div className="h-14 rounded-xl bg-muted animate-pulse" />
+      <div className="h-14 rounded-xl bg-muted animate-pulse" />
+    </div>
+  ) : displayNotes.length === 0 ? (
+    <div className="flex flex-col items-center justify-center py-6 text-center">
+      <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-muted mb-2">
+        <MessageSquare
+          className="h-4 w-4 text-muted-foreground"
+          strokeWidth={1.5}
         />
-      )}
-
-      {/* Filters */}
-      {shouldShowFilters && notes.length > 0 && (
-        <NoteFilters filter={filter} onFilterChange={setFilter} notes={notes} />
-      )}
-
-      {/* Notes list */}
-      {loading ? (
-        <div className="space-y-2">
-          <div className="h-14 rounded-xl bg-muted animate-pulse" />
-          <div className="h-14 rounded-xl bg-muted animate-pulse" />
-        </div>
-      ) : filteredNotes.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-6 text-center">
-          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-muted mb-2">
-            <MessageSquare
-              className="h-4 w-4 text-muted-foreground"
-              strokeWidth={1.5}
-            />
-          </div>
-          <h3 className="text-sm font-semibold text-foreground mb-0.5">
-            No notes yet
-          </h3>
-          <p className="text-sm text-muted-foreground">
-            Add the first note about this{" "}
-            {entityType === "deal" ? "deal" : entityType === "unified_condition" ? "condition" : entityType}.
-          </p>
-        </div>
-      ) : (
-        <div className={`flex flex-col gap-2.5 ${maxHeight} ${isCompact ? "overflow-y-auto" : ""}`}>
-          {filteredNotes.map((note) => (
+      </div>
+      <h3 className="text-sm font-semibold text-foreground mb-0.5">
+        No notes yet
+      </h3>
+      <p className="text-sm text-muted-foreground">
+        Add the first note about this{" "}
+        {entityType === "deal" ? "deal" : entityType === "unified_condition" ? "condition" : entityType}.
+      </p>
+    </div>
+  ) : (
+    <div className={`flex flex-col gap-2.5 ${maxHeight} ${isCompact && !chatMode ? "overflow-y-auto" : ""}`}>
+      {displayNotes.map((note, idx) => {
+        // Date divider in chatMode
+        let dateDivider: React.ReactNode = null;
+        if (chatMode) {
+          const prevNote = idx > 0 ? displayNotes[idx - 1] : null;
+          const currentLabel = getDateLabel(note.created_at);
+          const prevLabel = prevNote ? getDateLabel(prevNote.created_at) : null;
+          if (currentLabel !== prevLabel) {
+            dateDivider = (
+              <div key={`divider-${note.id}`} className="flex items-center gap-3 py-2">
+                <div className="flex-1 border-t border-border" />
+                <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">
+                  {currentLabel}
+                </span>
+                <div className="flex-1 border-t border-border" />
+              </div>
+            );
+          }
+        }
+        return (
+          <div key={note.id}>
+            {dateDivider}
             <NoteCard
-              key={note.id}
               note={note}
               currentUserId={currentUserId}
               showPinning={showPinning}
@@ -479,9 +507,27 @@ export function UnifiedNotes({
               onDelete={handleDelete}
               onToggleLike={handleToggleLike}
             />
-          ))}
-        </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+
+  return (
+    <div className={`flex flex-col gap-2 ${isCompact ? "" : ""}`}>
+      {/* In chatMode, composer goes at the bottom */}
+      {!chatMode && composerElement}
+
+      {/* Filters */}
+      {shouldShowFilters && notes.length > 0 && (
+        <NoteFilters filter={filter} onFilterChange={setFilter} notes={notes} />
       )}
+
+      {/* Notes list */}
+      {notesListElement}
+
+      {/* In chatMode, composer is at the bottom (sticky handled by parent) */}
+      {chatMode && composerElement}
     </div>
   );
 }

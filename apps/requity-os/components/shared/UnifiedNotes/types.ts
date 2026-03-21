@@ -18,6 +18,8 @@ export interface UnifiedNotesProps {
   showFilters?: boolean;
   showPinning?: boolean;
   compact?: boolean;
+  /** Chat-style: newest at bottom, date dividers, Enter-to-send, composer at bottom */
+  chatMode?: boolean;
 }
 
 export interface NoteLike {
