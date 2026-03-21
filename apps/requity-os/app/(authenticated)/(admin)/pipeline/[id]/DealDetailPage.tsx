@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useCallback, useTransition, useMemo } from "react";
+import React, { useState, useCallback, useTransition, useMemo, lazy, Suspense } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
@@ -68,11 +68,14 @@ import { StageStepper } from "@/components/pipeline/StageStepper";
 import { EditableOverview } from "@/components/pipeline/EditableOverview";
 import { UnderwritingPanel } from "@/components/pipeline/UnderwritingPanel";
 import { DealTasks } from "@/components/tasks/deal-tasks";
-import { DiligenceTab } from "@/components/pipeline/tabs/DiligenceTab";
 import { UnifiedNotes } from "@/components/shared/UnifiedNotes";
-import { PropertyTab } from "@/components/pipeline/tabs/PropertyTab";
-import { BorrowerContactsTab } from "@/components/borrower";
-import { UnderwritingTab, type CommercialUWData } from "@/components/pipeline/tabs/UnderwritingTab";
+import type { CommercialUWData } from "@/components/pipeline/tabs/UnderwritingTab";
+
+// Lazy-load heavy tab components (only downloaded when user navigates to that tab)
+const DiligenceTab = lazy(() => import("@/components/pipeline/tabs/DiligenceTab").then(m => ({ default: m.DiligenceTab })));
+const PropertyTab = lazy(() => import("@/components/pipeline/tabs/PropertyTab").then(m => ({ default: m.PropertyTab })));
+const BorrowerContactsTab = lazy(() => import("@/components/borrower").then(m => ({ default: m.BorrowerContactsTab })));
+const UnderwritingTab = lazy(() => import("@/components/pipeline/tabs/UnderwritingTab").then(m => ({ default: m.UnderwritingTab })));
 import {
   InlineLayoutProvider,
   useInlineLayout,
@@ -100,10 +103,11 @@ import {
 } from "@/app/(authenticated)/(admin)/pipeline/actions";
 import { normalizeAssetClass, isCommercialDeal, type VisibilityContext } from "@/lib/visibility-engine";
 import { getDealDisplayConfig, getDealFlavor } from "@/lib/pipeline/deal-display-config";
-import { DealActivityTab } from "@/components/pipeline/tabs/DealActivityTab";
-import { DealMessagesPanel } from "@/components/pipeline/DealMessagesPanel";
-import { FormsTab } from "@/components/pipeline/tabs/FormsTab";
 import { ResidentialAnalysisTab } from "@/components/pipeline/tabs/ResidentialAnalysisTab";
+
+const DealActivityTab = lazy(() => import("@/components/pipeline/tabs/DealActivityTab").then(m => ({ default: m.DealActivityTab })));
+const DealMessagesPanel = lazy(() => import("@/components/pipeline/DealMessagesPanel").then(m => ({ default: m.DealMessagesPanel })));
+const FormsTab = lazy(() => import("@/components/pipeline/tabs/FormsTab").then(m => ({ default: m.FormsTab })));
 import { DealNotePreview } from "@/components/pipeline/DealNotePreview";
 import type { DealPreviewNote } from "@/components/pipeline/DealNotePreview";
 import {
@@ -117,6 +121,16 @@ import { SubmitForApprovalDialog } from "@/components/approvals/submit-for-appro
 import type { ApprovalEntityType } from "@/lib/approvals/types";
 import type { OpsTask, Profile } from "@/lib/tasks";
 import type { DealTeamContact } from "@/app/types/deal-team";
+
+// ─── Lazy Tab Loading Fallback ───
+
+function TabLoadingFallback() {
+  return (
+    <div className="flex items-center justify-center py-12">
+      <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+    </div>
+  );
+}
 
 // ─── Types ───
 
@@ -539,27 +553,31 @@ function DealDetailPageInner({
 
               {/* Activity feed */}
               <div className="mt-4">
-                <DealActivityTab
-                  dealId={deal.id}
-                  currentUserId={currentUserId}
-                  primaryContactId={deal.primary_contact_id ?? null}
-                />
+                <Suspense fallback={<TabLoadingFallback />}>
+                  <DealActivityTab
+                    dealId={deal.id}
+                    currentUserId={currentUserId}
+                    primaryContactId={deal.primary_contact_id ?? null}
+                  />
+                </Suspense>
               </div>
             </div>
           )}
           {loadedTabs.has("Property") && (
             <div className={activeTab !== "Property" ? "hidden" : undefined}>
-              <PropertyTab
-                dealId={deal.id}
-                propertyData={(deal.property_data as Record<string, unknown>) ?? {}}
-                visibilityContext={visibilityContext}
-                rentRoll={commercialUWData?.rentRoll ?? []}
-                income={commercialUWData?.income ?? []}
-                expenses={commercialUWData?.expenses ?? []}
-                uwId={(commercialUWData?.uw?.id as string) ?? null}
-                purchasePrice={Number(commercialUWData?.uw?.purchase_price) || 0}
-                numUnits={Number(commercialUWData?.uw?.num_units) || 0}
-              />
+              <Suspense fallback={<TabLoadingFallback />}>
+                <PropertyTab
+                  dealId={deal.id}
+                  propertyData={(deal.property_data as Record<string, unknown>) ?? {}}
+                  visibilityContext={visibilityContext}
+                  rentRoll={commercialUWData?.rentRoll ?? []}
+                  income={commercialUWData?.income ?? []}
+                  expenses={commercialUWData?.expenses ?? []}
+                  uwId={(commercialUWData?.uw?.id as string) ?? null}
+                  purchasePrice={Number(commercialUWData?.uw?.purchase_price) || 0}
+                  numUnits={Number(commercialUWData?.uw?.num_units) || 0}
+                />
+              </Suspense>
             </div>
           )}
           {loadedTabs.has("Analysis") && (
@@ -572,42 +590,52 @@ function DealDetailPageInner({
           )}
           {loadedTabs.has("Underwriting") && (
             <div className={activeTab !== "Underwriting" ? "hidden" : undefined}>
-              <UnderwritingContent
-                deal={deal}
-                commercialUWData={commercialUWData}
-                visibilityContext={visibilityContext}
-              />
+              <Suspense fallback={<TabLoadingFallback />}>
+                <UnderwritingContent
+                  deal={deal}
+                  commercialUWData={commercialUWData}
+                  visibilityContext={visibilityContext}
+                />
+              </Suspense>
             </div>
           )}
           {loadedTabs.has("Borrower") && (
             <div className={activeTab !== "Borrower" ? "hidden" : undefined}>
-              <BorrowerContactsTab dealId={deal.id} />
+              <Suspense fallback={<TabLoadingFallback />}>
+                <BorrowerContactsTab dealId={deal.id} />
+              </Suspense>
             </div>
           )}
           {loadedTabs.has("Forms") && (
             <div className={activeTab !== "Forms" ? "hidden" : undefined}>
-              <FormsTab dealId={deal.id} />
+              <Suspense fallback={<TabLoadingFallback />}>
+                <FormsTab dealId={deal.id} />
+              </Suspense>
             </div>
           )}
           {loadedTabs.has("Diligence") && (
             <div className={activeTab !== "Diligence" ? "hidden" : undefined}>
-              <DiligenceTab
-                documents={documents as unknown as { id: string; deal_id: string; document_name: string; file_url: string; file_size_bytes: number | null; mime_type: string | null; category: string | null; uploaded_by: string | null; created_at: string; review_status: string | null; storage_path: string | null; visibility?: string | null; _uploaded_by_name?: string | null; archived_at?: string | null; condition_id?: string | null }[]}
-                conditions={conditions}
-                dealId={deal.id}
-                dealName={(deal as { name?: string }).name ?? undefined}
-                googleDriveFolderUrl={(deal as unknown as Record<string, unknown>).google_drive_folder_url as string | null}
-                currentUserId={currentUserId}
-                currentUserName={currentUserName}
-              />
+              <Suspense fallback={<TabLoadingFallback />}>
+                <DiligenceTab
+                  documents={documents as unknown as { id: string; deal_id: string; document_name: string; file_url: string; file_size_bytes: number | null; mime_type: string | null; category: string | null; uploaded_by: string | null; created_at: string; review_status: string | null; storage_path: string | null; visibility?: string | null; _uploaded_by_name?: string | null; archived_at?: string | null; condition_id?: string | null }[]}
+                  conditions={conditions}
+                  dealId={deal.id}
+                  dealName={(deal as { name?: string }).name ?? undefined}
+                  googleDriveFolderUrl={(deal as unknown as Record<string, unknown>).google_drive_folder_url as string | null}
+                  currentUserId={currentUserId}
+                  currentUserName={currentUserName}
+                />
+              </Suspense>
             </div>
           )}
           {loadedTabs.has("Messages") && (
             <div className={activeTab !== "Messages" ? "hidden" : undefined}>
-              <DealMessagesPanel
-                dealId={deal.id}
-                currentUserId={currentUserId}
-              />
+              <Suspense fallback={<TabLoadingFallback />}>
+                <DealMessagesPanel
+                  dealId={deal.id}
+                  currentUserId={currentUserId}
+                />
+              </Suspense>
             </div>
           )}
         </div>

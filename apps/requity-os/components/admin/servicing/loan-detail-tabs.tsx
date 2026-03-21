@@ -1,5 +1,6 @@
 "use client";
 
+import { lazy, Suspense } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { DataTable, Column } from "@/components/shared/data-table";
 import { StatusBadge } from "@/components/shared/status-badge";
@@ -8,14 +9,25 @@ import {
   formatCurrencyDetailed,
   formatDate,
 } from "@/lib/format";
-import { PayoffStatementGenerator } from "@/components/admin/servicing/payoff-statement-generator";
 import {
   HardHat,
   CreditCard,
   ScrollText,
   FileText,
+  Loader2,
 } from "lucide-react";
-import { BudgetDrawsTab } from "@/components/admin/budget-draws/budget-draws-tab";
+
+// Lazy-load heavy tab components
+const PayoffStatementGenerator = lazy(() => import("@/components/admin/servicing/payoff-statement-generator").then(m => ({ default: m.PayoffStatementGenerator })));
+const BudgetDrawsTab = lazy(() => import("@/components/admin/budget-draws/budget-draws-tab").then(m => ({ default: m.BudgetDrawsTab })));
+
+function TabLoadingFallback() {
+  return (
+    <div className="flex items-center justify-center py-12">
+      <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+    </div>
+  );
+}
 import type {
   ConstructionBudget,
   BudgetLineItem,
@@ -94,18 +106,20 @@ export function ServicingLoanDetailTabs({
       </TabsList>
 
       <TabsContent value="budget-draws" className="mt-4">
-        <BudgetDrawsTab
-          loanId={loanUuid!}
-          budget={constructionBudget}
-          budgetLineItems={budgetLineItems}
-          drawRequests={drawRequests}
-          drawRequestLineItems={drawRequestLineItems}
-          changeRequests={budgetChangeRequests}
-          changeRequestLineItems={budgetChangeRequestLineItems}
-          auditLog={budgetAuditLog}
-          currentUserId={currentUserId}
-          totalUnits={totalUnits}
-        />
+        <Suspense fallback={<TabLoadingFallback />}>
+          <BudgetDrawsTab
+            loanId={loanUuid!}
+            budget={constructionBudget}
+            budgetLineItems={budgetLineItems}
+            drawRequests={drawRequests}
+            drawRequestLineItems={drawRequestLineItems}
+            changeRequests={budgetChangeRequests}
+            changeRequestLineItems={budgetChangeRequestLineItems}
+            auditLog={budgetAuditLog}
+            currentUserId={currentUserId}
+            totalUnits={totalUnits}
+          />
+        </Suspense>
       </TabsContent>
 
       <TabsContent value="payments" className="mt-4">
@@ -117,7 +131,9 @@ export function ServicingLoanDetailTabs({
       </TabsContent>
 
       <TabsContent value="payoff" className="mt-4">
-        <PayoffStatementGenerator loanId={loan?.loan_id} loan={loan} />
+        <Suspense fallback={<TabLoadingFallback />}>
+          <PayoffStatementGenerator loanId={loan?.loan_id} loan={loan} />
+        </Suspense>
       </TabsContent>
     </Tabs>
   );
