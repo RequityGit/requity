@@ -190,6 +190,13 @@ export function GenerateDocumentDialog({
         const err = await res.json().catch(() => null);
         const status = res.status;
         const detail = err?.error || err?.message || res.statusText;
+        // On 401, force a page reload to get a fresh session
+        if (status === 401) {
+          toast.error("Session expired. Reloading page...");
+          setGenerating(false);
+          setTimeout(() => window.location.reload(), 1500);
+          return;
+        }
         const message =
           status === 401
             ? `Authentication failed (${status}): ${detail || "session may have expired. Please reload and try again."}`
