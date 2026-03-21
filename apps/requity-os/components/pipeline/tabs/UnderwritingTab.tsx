@@ -154,6 +154,7 @@ export function UnderwritingTab({ data, dealId, sheetUrl }: UnderwritingTabProps
           <T12SubTab
             income={income}
             expenses={expenses}
+            rentRoll={rentRoll}
             uwId={uwId}
             purchasePrice={purchasePrice}
             numUnits={numUnits}

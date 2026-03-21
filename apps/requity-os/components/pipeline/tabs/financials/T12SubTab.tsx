@@ -64,6 +64,8 @@ import { getUnitLabel } from "@/lib/commercial-uw/asset-type-config";
 import { showOccupancySection } from "@/lib/commercial-uw/asset-type-config";
 import { OccupancyIncomeSection } from "./OccupancyIncomeSection";
 import { AncillaryIncomeSection } from "./AncillaryIncomeSection";
+import { UnitMixSection } from "./UnitMixSection";
+import { RentRollSubTab } from "./RentRollSubTab";
 import { PillNav, MetricBar, SectionCard, n, fmtCurrency } from "./shared";
 
 // ── Extended row types with new DB columns ──
@@ -85,6 +87,8 @@ interface T12SubTabProps {
   income: any[];
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   expenses: any[];
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  rentRoll?: any[];
   uwId: string | null;
   purchasePrice?: number;
   numUnits?: number;
@@ -94,7 +98,7 @@ interface T12SubTabProps {
   initialView?: "income" | "expenses";
 }
 
-type Mode = "manual" | "upload";
+type Mode = "overview" | "rentroll" | "manual" | "upload";
 
 // ── Category mapping from DB category names to benchmark keys ──
 
@@ -139,6 +143,7 @@ function matchBenchmarkCategory(category: string): ExpenseBenchmarkCategory | nu
 export function T12SubTab({
   income,
   expenses,
+  rentRoll = [],
   uwId,
   purchasePrice = 0,
   numUnits = 0,
@@ -149,7 +154,9 @@ export function T12SubTab({
   const [uploadOpen, setUploadOpen] = useState(false);
   const [editIncomeOpen, setEditIncomeOpen] = useState(false);
   const [editExpenseOpen, setEditExpenseOpen] = useState(false);
-  const [mode, setMode] = useState<Mode>("manual");
+  // For income view: "overview" (Unit Mix + Ancillary + Summary) or "rentroll" (Rent Roll table + upload)
+  // For expenses/full view: "manual" or "upload" (legacy behavior)
+  const [mode, setMode] = useState<Mode>(initialView === "income" ? "overview" : "manual");
   const [expandedNoteId, setExpandedNoteId] = useState<string | null>(null);
   const router = useRouter();
 
@@ -334,23 +341,140 @@ export function T12SubTab({
 
   const hasData = incomeRows.length > 0 || expenseRows.length > 0 || occupancyRows.length > 0 || ancillaryRows.length > 0;
 
-  const MODE_TABS = [
+  const showIncome = !initialView || initialView === "income";
+  const showExpenses = !initialView || initialView === "expenses";
+
+  // Income view gets new tabs: "Income Overview" / "Rent Roll"
+  // Expenses and full view keep legacy tabs: "Manual Entry" / "Upload & Map"
+  const INCOME_MODE_TABS = [
+    { key: "overview" as const, label: "Income Overview", icon: TrendingUp },
+    { key: "rentroll" as const, label: "Rent Roll", icon: FileUp },
+  ];
+
+  const LEGACY_MODE_TABS = [
     { key: "manual" as const, label: "Manual Entry", icon: Pencil },
     { key: "upload" as const, label: "Upload & Map", icon: FileUp },
   ];
 
-  const showIncome = !initialView || initialView === "income";
-  const showExpenses = !initialView || initialView === "expenses";
+  const isIncomeView = initialView === "income";
+  const isIncomeOverview = isIncomeView && mode === "overview";
+  const isRentRollView = isIncomeView && mode === "rentroll";
+  const isLegacyManual = !isIncomeView && mode === "manual";
+  const isLegacyUpload = !isIncomeView && mode === "upload";
 
   return (
     <div className="flex flex-col gap-4">
-      <PillNav tabs={MODE_TABS} active={mode} onChange={setMode} />
+      {/* Tab pills: income view vs legacy */}
+      {isIncomeView ? (
+        <PillNav tabs={INCOME_MODE_TABS} active={mode as "overview" | "rentroll"} onChange={(k) => setMode(k)} />
+      ) : (
+        <PillNav tabs={LEGACY_MODE_TABS} active={mode as "manual" | "upload"} onChange={(k) => setMode(k)} />
+      )}
 
-      {mode === "manual" ? (
+      {/* ─── INCOME OVERVIEW MODE ─── */}
+      {isIncomeOverview && (
+        <>
+          {/* 1. Unit Mix Summary (from rent roll) */}
+          <UnitMixSection rentRoll={rentRoll} uwId={uwId} />
+
+          {/* 2. Occupancy-Based Income (for transient asset types) */}
+          {showOccupancy && (
+            <OccupancyIncomeSection
+              rows={allIncomeRows}
+              uwId={uwId}
+              propertyType={propertyType}
+              numUnits={numUnits}
+            />
+          )}
+
+          {/* 3. Ancillary / Other Income */}
+          <AncillaryIncomeSection
+            rows={allIncomeRows}
+            uwId={uwId}
+            propertyType={propertyType}
+          />
+
+          {/* 4. Income Summary (GPR -> EGI) at the bottom */}
+          <IncomeCard
+            incomeRows={incomeRows}
+            netRevenue={leaseNetRevenue}
+            expandedNoteId={expandedNoteId}
+            onToggleNote={setExpandedNoteId}
+            onSaveNote={handleSaveNote}
+            onEdit={() => setEditIncomeOpen(true)}
+            title={showOccupancy ? "Lease-Based Income" : "Income"}
+          />
+
+          {/* GPI Summary (when multiple income sections) */}
+          {(showOccupancy || ancillaryRevenue > 0) && (
+            <div className="rounded-xl border bg-card overflow-hidden">
+              <div className="px-5 py-3.5 border-b">
+                <span className="rq-section-title">Gross Potential Income Summary</span>
+              </div>
+              <div className="p-5 space-y-2">
+                <div className="flex justify-between text-[13px]">
+                  <span className="text-muted-foreground">Lease-Based Net Revenue</span>
+                  <span className="num font-medium">{fmtCurrency(leaseNetRevenue)}</span>
+                </div>
+                {showOccupancy && (
+                  <div className="flex justify-between text-[13px]">
+                    <span className="text-muted-foreground">Occupancy-Based Revenue</span>
+                    <span className="num font-medium">{fmtCurrency(occupancyRevenue)}</span>
+                  </div>
+                )}
+                {showOccupancy && (
+                  <div className="flex justify-between text-[13px] border-t pt-2">
+                    <span className="text-muted-foreground">
+                      Primary Income (MAX)
+                    </span>
+                    <span className="num font-semibold">
+                      {fmtCurrency(Math.max(leaseNetRevenue, occupancyRevenue))}
+                      {occupancyRevenue > leaseNetRevenue && leaseNetRevenue > 0 && (
+                        <span className="ml-1.5 text-[10px] text-blue-500 uppercase tracking-wider">Occ wins</span>
+                      )}
+                      {leaseNetRevenue > occupancyRevenue && occupancyRevenue > 0 && (
+                        <span className="ml-1.5 text-[10px] text-blue-500 uppercase tracking-wider">Lease wins</span>
+                      )}
+                    </span>
+                  </div>
+                )}
+                {ancillaryRevenue > 0 && (
+                  <div className="flex justify-between text-[13px]">
+                    <span className="text-muted-foreground">+ Ancillary Income</span>
+                    <span className="num font-medium">{fmtCurrency(ancillaryRevenue)}</span>
+                  </div>
+                )}
+                <div className="flex justify-between text-sm font-bold border-t-2 pt-3 mt-2">
+                  <span>Effective Gross Income</span>
+                  <span className="num">{fmtCurrency(netRevenue)}</span>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Bottom metrics */}
+          <MetricBar
+            items={[
+              { label: "Net Operating Income", value: fmtCurrency(noi), accent: noi > 0 ? "text-green-500" : "text-red-500" },
+              { label: `NOI / ${getUnitLabel(propertyType)}`, value: noiPerUnit > 0 ? fmtCurrency(noiPerUnit) : "\u2014", sub: "/year" },
+              { label: "Cap Rate", value: capRate > 0 ? `${capRate.toFixed(1)}%` : "\u2014", sub: purchasePrice > 0 ? `@ ${fmtCurrency(purchasePrice)} PP` : undefined },
+              { label: "Expense Ratio", value: expenseRatio > 0 ? `${expenseRatio.toFixed(1)}%` : "\u2014" },
+            ]}
+          />
+        </>
+      )}
+
+      {/* ─── RENT ROLL MODE (within income view) ─── */}
+      {isRentRollView && (
+        <RentRollSubTab rentRoll={rentRoll} uwId={uwId} />
+      )}
+
+      {/* ─── LEGACY MANUAL MODE (expenses or full view) ─── */}
+      {isLegacyManual && (
         !hasData ? (
           <div className="rounded-xl border border-dashed p-8 text-center">
             <p className="text-sm text-muted-foreground mb-3">
-              No {initialView === "expenses" ? "expense" : initialView === "income" ? "income" : "T12"} data yet. Upload an operating statement or enter data manually.
+              No {initialView === "expenses" ? "expense" : "T12"} data yet. Upload an operating statement or enter data manually.
             </p>
             <div className="flex items-center gap-2 justify-center flex-wrap">
               <Button variant="outline" size="sm" onClick={() => setMode("upload")}>
@@ -379,7 +503,6 @@ export function T12SubTab({
           </div>
         ) : (
           <>
-            {/* When no initialView filter, show side-by-side. When filtered, show single column full width. */}
             {!initialView ? (
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                 <IncomeCard
@@ -406,18 +529,6 @@ export function T12SubTab({
                   totalBenchmark={totalBenchmark}
                 />
               </div>
-            ) : showIncome ? (
-              <>
-                <IncomeCard
-                  incomeRows={incomeRows}
-                  netRevenue={leaseNetRevenue}
-                  expandedNoteId={expandedNoteId}
-                  onToggleNote={setExpandedNoteId}
-                  onSaveNote={handleSaveNote}
-                  onEdit={() => setEditIncomeOpen(true)}
-                  title={showOccupancy ? "Lease-Based Income" : "Income"}
-                />
-              </>
             ) : (
               <ExpensesCard
                 expenseRows={expenseRows}
@@ -435,73 +546,7 @@ export function T12SubTab({
               />
             )}
 
-            {/* Occupancy-Based Income (shown for transient asset types, income view only) */}
-            {showIncome && showOccupancy && (
-              <OccupancyIncomeSection
-                rows={allIncomeRows}
-                uwId={uwId}
-                propertyType={propertyType}
-                numUnits={numUnits}
-              />
-            )}
-
-            {/* Ancillary / Other Income (income view only) */}
-            {showIncome && (
-              <AncillaryIncomeSection
-                rows={allIncomeRows}
-                uwId={uwId}
-                propertyType={propertyType}
-              />
-            )}
-
-            {/* GPI Summary (income view, when multiple income sections exist) */}
-            {showIncome && (showOccupancy || ancillaryRevenue > 0) && (
-              <div className="rounded-xl border bg-card overflow-hidden">
-                <div className="px-5 py-3.5 border-b">
-                  <span className="rq-section-title">Gross Potential Income Summary</span>
-                </div>
-                <div className="p-5 space-y-2">
-                  <div className="flex justify-between text-[13px]">
-                    <span className="text-muted-foreground">Lease-Based Net Revenue</span>
-                    <span className="num font-medium">{fmtCurrency(leaseNetRevenue)}</span>
-                  </div>
-                  {showOccupancy && (
-                    <div className="flex justify-between text-[13px]">
-                      <span className="text-muted-foreground">Occupancy-Based Revenue</span>
-                      <span className="num font-medium">{fmtCurrency(occupancyRevenue)}</span>
-                    </div>
-                  )}
-                  {showOccupancy && (
-                    <div className="flex justify-between text-[13px] border-t pt-2">
-                      <span className="text-muted-foreground">
-                        Primary Income (MAX)
-                      </span>
-                      <span className="num font-semibold">
-                        {fmtCurrency(Math.max(leaseNetRevenue, occupancyRevenue))}
-                        {occupancyRevenue > leaseNetRevenue && leaseNetRevenue > 0 && (
-                          <span className="ml-1.5 text-[10px] text-blue-500 uppercase tracking-wider">Occ wins</span>
-                        )}
-                        {leaseNetRevenue > occupancyRevenue && occupancyRevenue > 0 && (
-                          <span className="ml-1.5 text-[10px] text-blue-500 uppercase tracking-wider">Lease wins</span>
-                        )}
-                      </span>
-                    </div>
-                  )}
-                  {ancillaryRevenue > 0 && (
-                    <div className="flex justify-between text-[13px]">
-                      <span className="text-muted-foreground">+ Ancillary Income</span>
-                      <span className="num font-medium">{fmtCurrency(ancillaryRevenue)}</span>
-                    </div>
-                  )}
-                  <div className="flex justify-between text-sm font-bold border-t-2 pt-3 mt-2">
-                    <span>Effective Gross Income</span>
-                    <span className="num">{fmtCurrency(netRevenue)}</span>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Bottom metrics */}
+            {/* Bottom metrics (for expense/full view) */}
             <MetricBar
               items={[
                 { label: "Net Operating Income", value: fmtCurrency(noi), accent: noi > 0 ? "text-green-500" : "text-red-500" },
@@ -512,8 +557,10 @@ export function T12SubTab({
             />
           </>
         )
-      ) : (
-        /* Upload mode */
+      )}
+
+      {/* ─── LEGACY UPLOAD MODE (expenses or full view) ─── */}
+      {isLegacyUpload && (
         <SectionCard title="Upload T12 / P&L" icon={Upload}>
           <div
             onClick={() => setUploadOpen(true)}
