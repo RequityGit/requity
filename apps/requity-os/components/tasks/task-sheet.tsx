@@ -273,7 +273,8 @@ export function TaskSheet({
     const supabase = createClient();
 
     for (const file of files) {
-      const path = `tasks/${task.id}/${Date.now()}_${file.name}`;
+      const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
+      const path = `tasks/${task.id}/${Date.now()}_${safeName}`;
       const { error: uploadError } = await supabase.storage
         .from("loan-documents")
         .upload(path, file);
@@ -317,7 +318,8 @@ export function TaskSheet({
     const supabase = createClient();
 
     for (const file of Array.from(e.target.files)) {
-      const path = `tasks/${task.id}/${Date.now()}_${file.name}`;
+      const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
+      const path = `tasks/${task.id}/${Date.now()}_${safeName}`;
       const { error: uploadError } = await supabase.storage
         .from("loan-documents")
         .upload(path, file);
@@ -450,7 +452,8 @@ export function TaskSheet({
           // Upload staged files for new task
           if (stagedFiles.length > 0) {
             for (const file of stagedFiles) {
-              const path = `tasks/${newTask.id}/${Date.now()}_${file.name}`;
+              const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
+              const path = `tasks/${newTask.id}/${Date.now()}_${safeName}`;
               const { error: upErr } = await supabase.storage
                 .from("loan-documents")
                 .upload(path, file);

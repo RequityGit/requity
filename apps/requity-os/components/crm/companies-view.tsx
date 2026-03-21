@@ -171,10 +171,12 @@ export function CompaniesView({ companies, isSuperAdmin = false }: CompaniesView
     label,
     sortKey,
     className,
+    style,
   }: {
     label: string;
     sortKey: string;
     className?: string;
+    style?: React.CSSProperties;
   }) {
     const isActive = companySortKey === sortKey;
     return (
@@ -184,6 +186,7 @@ export function CompaniesView({ companies, isSuperAdmin = false }: CompaniesView
           "text-xs font-medium text-muted-foreground text-left px-4 py-2.5 cursor-pointer select-none whitespace-nowrap",
           className
         )}
+        style={style}
       >
         <span className="inline-flex items-center gap-1">
           {label}
@@ -236,13 +239,13 @@ export function CompaniesView({ companies, isSuperAdmin = false }: CompaniesView
             <table className="w-full border-collapse block">
               <thead className="sticky top-0 z-10 bg-card border-b">
                 <tr className="border-b" style={{ display: "table", width: "100%", tableLayout: "fixed" }}>
-                  <SortHeader label="Company" sortKey="name" />
-                  <SortHeader label="Type" sortKey="company_type" />
-                  <SortHeader label="Contacts" sortKey="contact_count" className="text-right" />
-                  <SortHeader label="Files" sortKey="file_count" className="text-right" />
-                  <th className="text-xs font-medium text-muted-foreground text-left px-4 py-2.5">Location</th>
-                  <SortHeader label="Status" sortKey="is_active" />
-                  <th className="text-xs font-medium text-muted-foreground text-center px-4 py-2.5 w-12" />
+                  <SortHeader label="Company" sortKey="name" style={{ width: "24%" }} />
+                  <SortHeader label="Type" sortKey="company_type" style={{ width: "18%" }} />
+                  <SortHeader label="Contacts" sortKey="contact_count" className="text-right" style={{ width: "10%" }} />
+                  <SortHeader label="Files" sortKey="file_count" className="text-right" style={{ width: "8%" }} />
+                  <th className="text-xs font-medium text-muted-foreground text-left px-4 py-2.5" style={{ width: "16%" }}>Location</th>
+                  <SortHeader label="Status" sortKey="is_active" style={{ width: "12%" }} />
+                  <th className="text-xs font-medium text-muted-foreground text-center px-4 py-2.5" style={{ width: "5%" }} />
                 </tr>
               </thead>
               <tbody
@@ -283,17 +286,17 @@ export function CompaniesView({ companies, isSuperAdmin = false }: CompaniesView
                         height: `${vi.size}px`,
                       }}
                     >
-                      <td className="px-4 py-3">
+                      <td className="px-4 py-3" style={{ width: "24%" }}>
                         <div className="flex items-center gap-2.5">
                           <div className="h-8 w-8 rounded-lg bg-muted flex items-center justify-center shrink-0">
                             <Building2 className="h-4 w-4 text-muted-foreground" />
                           </div>
-                          <span className="text-sm font-medium text-primary">
+                          <span className="text-sm font-medium text-primary truncate">
                             {c.name}
                           </span>
                         </div>
                       </td>
-                      <td className="px-4 py-3">
+                      <td className="px-4 py-3" style={{ width: "18%" }}>
                         <div className="flex flex-wrap gap-1">
                           {(c.company_types?.length ? c.company_types : [c.company_type]).map((ct) => (
                             <span key={ct} className="text-xs text-muted-foreground bg-muted px-2 py-0.5 rounded">
@@ -302,19 +305,19 @@ export function CompaniesView({ companies, isSuperAdmin = false }: CompaniesView
                           ))}
                         </div>
                       </td>
-                      <td className="px-4 py-3 num text-sm text-foreground text-right">
+                      <td className="px-4 py-3 num text-sm text-foreground text-right" style={{ width: "10%" }}>
                         {c.contact_count}
                       </td>
-                      <td className="px-4 py-3 num text-sm text-foreground text-right">
+                      <td className="px-4 py-3 num text-sm text-foreground text-right" style={{ width: "8%" }}>
                         {c.file_count}
                       </td>
-                      <td className="px-4 py-3 text-sm text-muted-foreground whitespace-nowrap">
+                      <td className="px-4 py-3 text-sm text-muted-foreground whitespace-nowrap" style={{ width: "16%" }}>
                         {c.city && c.state ? `${c.city}, ${c.state}` : c.city || c.state || "—"}
                       </td>
-                      <td className="px-4 py-3">
+                      <td className="px-4 py-3" style={{ width: "12%" }}>
                         <CompanyStatusDot isActive={c.is_active} />
                       </td>
-                      <td className="px-4 py-3 text-center" onClick={(e) => e.stopPropagation()}>
+                      <td className="px-4 py-3 text-center" style={{ width: "5%" }} onClick={(e) => e.stopPropagation()}>
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
                             <Button

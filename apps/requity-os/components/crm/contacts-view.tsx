@@ -227,10 +227,12 @@ export function ContactsView({
     label,
     sortKey,
     className,
+    style,
   }: {
     label: string;
     sortKey: string;
     className?: string;
+    style?: React.CSSProperties;
   }) {
     const isActive = contactSortKey === sortKey;
     return (
@@ -240,6 +242,7 @@ export function ContactsView({
           "text-xs font-medium text-muted-foreground text-left px-4 py-2.5 cursor-pointer select-none whitespace-nowrap",
           className
         )}
+        style={style}
       >
         <span className="inline-flex items-center gap-1">
           {label}
@@ -365,15 +368,15 @@ export function ContactsView({
             <table className="w-full border-collapse block">
               <thead className="sticky top-0 z-10 bg-card border-b">
                 <tr className="border-b" style={{ display: "table", width: "100%", tableLayout: "fixed" }}>
-                  <SortHeader label="Name" sortKey="first_name" />
-                  <th className="text-xs font-medium text-muted-foreground text-left px-4 py-2.5">Company</th>
-                  <th className="text-xs font-medium text-muted-foreground text-left px-4 py-2.5">Relationships</th>
-                  <th className="text-xs font-medium text-muted-foreground text-left px-4 py-2.5">Email</th>
-                  <SortHeader label="Phone" sortKey="phone" />
-                  <SortHeader label="Stage" sortKey="lifecycle_stage" />
-                  <th className="text-xs font-medium text-muted-foreground text-left px-4 py-2.5">Assigned</th>
-                  <SortHeader label="Last Contacted" sortKey="last_contacted_at" />
-                  <th className="text-xs font-medium text-muted-foreground text-center px-4 py-2.5 w-12" />
+                  <SortHeader label="Name" sortKey="first_name" style={{ width: "14%" }} />
+                  <th className="text-xs font-medium text-muted-foreground text-left px-4 py-2.5" style={{ width: "12%" }}>Company</th>
+                  <th className="text-xs font-medium text-muted-foreground text-left px-4 py-2.5" style={{ width: "12%" }}>Relationships</th>
+                  <th className="text-xs font-medium text-muted-foreground text-left px-4 py-2.5" style={{ width: "16%" }}>Email</th>
+                  <SortHeader label="Phone" sortKey="phone" style={{ width: "11%" }} />
+                  <SortHeader label="Stage" sortKey="lifecycle_stage" style={{ width: "9%" }} />
+                  <th className="text-xs font-medium text-muted-foreground text-left px-4 py-2.5" style={{ width: "10%" }}>Assigned</th>
+                  <SortHeader label="Last Contacted" sortKey="last_contacted_at" style={{ width: "12%" }} />
+                  <th className="text-xs font-medium text-muted-foreground text-center px-4 py-2.5" style={{ width: "4%" }} />
                 </tr>
               </thead>
               <tbody
@@ -427,16 +430,16 @@ export function ContactsView({
                         height: `${vi.size}px`,
                       }}
                     >
-                      <td className="px-4 py-2.5">
+                      <td className="px-4 py-2.5" style={{ width: "14%" }}>
                         <TooltipProvider>
                           <Tooltip>
                             <TooltipTrigger asChild>
                               <div className="flex items-center gap-2 min-w-0">
-                                <CrmAvatar 
-                                  text={getInitials(c.first_name || "", c.last_name || "")} 
-                                  size="sm" 
+                                <CrmAvatar
+                                  text={getInitials(c.first_name || "", c.last_name || "")}
+                                  size="sm"
                                 />
-                                <span className="text-sm font-medium text-primary truncate max-w-[180px]">
+                                <span className="text-sm font-medium text-primary truncate">
                                   {[c.first_name, c.last_name].filter(Boolean).join(" ") || "Unknown"}
                                 </span>
                               </div>
@@ -447,7 +450,7 @@ export function ContactsView({
                           </Tooltip>
                         </TooltipProvider>
                       </td>
-                      <td className="px-4 py-2.5 text-sm max-w-[200px] truncate">
+                      <td className="px-4 py-2.5 text-sm truncate" style={{ width: "12%" }}>
                         {c.company_number ? (
                           <Link
                             href={`/companies/${c.company_number}`}
@@ -460,7 +463,7 @@ export function ContactsView({
                           <span className="text-muted-foreground">{c.company_name || "—"}</span>
                         )}
                       </td>
-                      <td className="px-4 py-2.5">
+                      <td className="px-4 py-2.5" style={{ width: "12%" }}>
                         {c.relationships.length === 0 ? (
                           <span className="text-xs text-muted-foreground">—</span>
                         ) : c.relationships.length <= 2 ? (
@@ -497,16 +500,16 @@ export function ContactsView({
                           </TooltipProvider>
                         )}
                       </td>
-                      <td className="px-4 py-2.5 text-sm text-muted-foreground max-w-[220px] truncate">
+                      <td className="px-4 py-2.5 text-sm text-muted-foreground truncate" style={{ width: "16%" }}>
                         {c.email || "—"}
                       </td>
-                      <td className="px-4 py-2.5 text-sm text-muted-foreground whitespace-nowrap">
+                      <td className="px-4 py-2.5 text-sm text-muted-foreground whitespace-nowrap" style={{ width: "11%" }}>
                         <ClickToCallNumber number={c.phone} />
                       </td>
-                      <td className="px-4 py-2.5">
+                      <td className="px-4 py-2.5" style={{ width: "9%" }}>
                         <StageDot stage={c.lifecycle_stage} />
                       </td>
-                      <td className="px-4 py-2.5">
+                      <td className="px-4 py-2.5" style={{ width: "10%" }}>
                         {c.assigned_to_name ? (
                           <div className="flex items-center gap-1.5">
                             <CrmAvatar text={c.assigned_to_initials ?? c.assigned_to_name.split(" ").map((p: string) => p[0]).join("").toUpperCase()} size="sm" />
@@ -518,13 +521,13 @@ export function ContactsView({
                           <span className="text-xs text-muted-foreground italic">—</span>
                         )}
                       </td>
-                      <td className="px-4 py-2.5 num text-xs text-muted-foreground whitespace-nowrap">
+                      <td className="px-4 py-2.5 num text-xs text-muted-foreground whitespace-nowrap" style={{ width: "12%" }}>
                         {(() => {
                           const sd = smartDate(c.last_contacted_at);
                           return <span title={sd.title}>{sd.text}</span>;
                         })()}
                       </td>
-                      <td className="px-4 py-2.5 text-center" onClick={(e) => e.stopPropagation()}>
+                      <td className="px-4 py-2.5 text-center" style={{ width: "4%" }} onClick={(e) => e.stopPropagation()}>
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
                             <Button
