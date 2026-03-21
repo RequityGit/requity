@@ -54,7 +54,7 @@ export default async function DealDetailRoute({ params }: PageProps) {
   const dealRaw = await admin
     .from("unified_deals" as never)
     .select(
-      `*, primary_contact:crm_contacts(id, first_name, last_name), company:companies(id, name)`
+      `*, primary_contact:crm_contacts!primary_contact_id(id, first_name, last_name, email, phone), company:companies(id, name)`
     )
     .eq(lookupColumn as never, id as never)
     .single();
@@ -67,6 +67,23 @@ export default async function DealDetailRoute({ params }: PageProps) {
   if (dealResult.error || !dealResult.data) notFound();
   const deal = dealResult.data;
   const dealId = deal.id;
+
+  // Fetch broker contact separately (broker_contact_id may not exist yet pre-migration)
+  const brokerContactId = (deal as unknown as Record<string, unknown>).broker_contact_id as string | null;
+  if (brokerContactId) {
+    try {
+      const { data: brokerData } = await admin
+        .from("crm_contacts" as never)
+        .select("id, first_name, last_name, email, phone, broker_company:crm_companies(name)" as never)
+        .eq("id" as never, brokerContactId as never)
+        .single();
+      if (brokerData) {
+        (deal as unknown as Record<string, unknown>).broker_contact = brokerData;
+      }
+    } catch {
+      // Column may not exist yet - graceful fallback
+    }
+  }
 
   // Step 2: Single parallel batch -- all queries that depend only on deal fields
   const [

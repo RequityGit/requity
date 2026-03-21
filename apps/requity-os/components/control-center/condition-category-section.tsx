@@ -25,6 +25,11 @@ import {
   ArrowDown,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { CONDITION_STAGES } from "@/lib/constants/db-enums";
+
+const STAGE_LABEL_MAP: Record<string, string> = Object.fromEntries(
+  CONDITION_STAGES.map((s) => [s.value, s.label])
+);
 
 interface ConditionTemplate {
   id: string;
@@ -240,6 +245,9 @@ export function ConditionCategorySection({
                 <th className="text-center font-medium text-muted-foreground px-4 py-2 w-10" title="Per Borrower">
                   PB
                 </th>
+                <th className="text-left font-medium text-muted-foreground px-4 py-2 w-[120px]">
+                  Stage
+                </th>
                 <th className="text-right font-medium text-muted-foreground px-4 py-2 w-[140px]">
                   Actions
                 </th>
@@ -375,6 +383,11 @@ export function ConditionCategorySection({
                     ) : (
                       <span className="text-muted-foreground/30">-</span>
                     )}
+                  </td>
+                  <td className="px-4 py-2">
+                    <span className="inline-flex items-center rounded-md bg-muted px-2 py-0.5 text-[11px] font-medium text-muted-foreground">
+                      {STAGE_LABEL_MAP[item.required_stage] ?? item.required_stage}
+                    </span>
                   </td>
                   <td className="px-4 py-2 text-right">
                     <div className="flex items-center justify-end gap-1">

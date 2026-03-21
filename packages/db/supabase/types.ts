@@ -17644,6 +17644,7 @@ export type Database = {
         | "prior_to_approval"
         | "prior_to_funding"
       condition_stage:
+        | "loan_intake"
         | "processing"
         | "closed_onboarding"
         | "note_sell_process"
@@ -18134,6 +18135,7 @@ export const Constants = {
         "prior_to_funding",
       ],
       condition_stage: [
+        "loan_intake",
         "processing",
         "closed_onboarding",
         "note_sell_process",

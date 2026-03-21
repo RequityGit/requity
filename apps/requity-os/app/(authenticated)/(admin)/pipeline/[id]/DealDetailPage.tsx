@@ -516,21 +516,7 @@ function DealDetailPageInner({
         <div className="flex flex-col gap-4 min-w-0">
           {loadedTabs.has("Overview") && (
             <div className={activeTab !== "Overview" ? "hidden" : undefined}>
-              <DealOverviewSummary deal={deal} />
-
-              <div className="mt-4">
-              <EditableOverview
-                dealId={deal.id}
-                uwData={{
-                  ...deal.uw_data,
-                  date_created: deal.created_at,
-                  asset_class: deal.asset_class ?? undefined,
-                }}
-                propertyData={(deal.property_data as Record<string, unknown>) ?? {}}
-                visibilityContext={visibilityContext}
-                dealTeamContacts={dealTeamContacts}
-              />
-              </div>
+              <DealOverviewSummary dealId={deal.id} deal={deal} />
 
               {/* Tasks section */}
               <div className="mt-4">
@@ -573,14 +559,15 @@ function DealDetailPageInner({
               <Suspense fallback={<TabLoadingFallback />}>
                 <PropertyTab
                   dealId={deal.id}
-                  propertyData={(deal.property_data as Record<string, unknown>) ?? {}}
+                  propertyData={{
+                    ...((deal.property_data as Record<string, unknown>) ?? {}),
+                    ...Object.fromEntries(
+                      Object.entries(deal.uw_data ?? {}).filter(([k]) =>
+                        ["property_type", "property_address", "property_city", "property_state", "property_zip", "property_county", "number_of_units", "year_built", "total_sf", "parcel_id", "flood_zone_type", "purchase_price", "appraised_value"].includes(k)
+                      )
+                    ),
+                  }}
                   visibilityContext={visibilityContext}
-                  rentRoll={commercialUWData?.rentRoll ?? []}
-                  income={commercialUWData?.income ?? []}
-                  expenses={commercialUWData?.expenses ?? []}
-                  uwId={(commercialUWData?.uw?.id as string) ?? null}
-                  purchasePrice={Number(commercialUWData?.uw?.purchase_price) || 0}
-                  numUnits={Number(commercialUWData?.uw?.num_units) || 0}
                 />
               </Suspense>
             </div>
@@ -861,8 +848,9 @@ function DealHeader({
                 <span className="num">{days}</span> days in stage
               </span>
               {(() => {
-                const uwClosingDate = (deal.uw_data as Record<string, unknown> | null)?.closing_date;
-                if (!uwClosingDate) return null;
+                const uwData = deal.uw_data as Record<string, unknown> | null;
+                const closeDate = uwData?.expected_close_date ?? uwData?.closing_date ?? deal.expected_close_date;
+                if (!closeDate) return null;
                 return (
                   <>
                     <span className="text-border">|</span>
@@ -870,10 +858,11 @@ function DealHeader({
                       <CalendarDays className="h-3 w-3" />
                       Est. Close:{" "}
                       <span className="num text-foreground">
-                        {new Date(String(uwClosingDate)).toLocaleDateString("en-US", {
-                          month: "short",
-                          day: "numeric",
-                        })}
+                        {(() => {
+                          const [y, m, d] = String(closeDate).split("T")[0].split("-");
+                          const dt = new Date(Number(y), Number(m) - 1, Number(d));
+                          return dt.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+                        })()}
                       </span>
                     </span>
                   </>

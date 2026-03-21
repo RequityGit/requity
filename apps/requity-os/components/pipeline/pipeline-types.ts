@@ -10,12 +10,13 @@ export type DealStatus = "active" | "won" | "lost" | "on_hold";
 export type AlertLevel = "normal" | "warn" | "alert";
 
 export type AssetClass =
-  | "sfr"
-  | "duplex_fourplex"
+  | "residential_1_4"
+  | "sfr"            // legacy, maps to residential_1_4
+  | "duplex_fourplex" // legacy, maps to residential_1_4
   | "multifamily"
   | "mhc"
   | "rv_park"
-  | "campground"
+  | "campground"    // legacy, maps to rv_park
   | "commercial"
   | "mixed_use"
   | "land";
@@ -73,6 +74,7 @@ export interface UnifiedDeal {
   stage: UnifiedStage;
   stage_entered_at: string;
   primary_contact_id: string | null;
+  broker_contact_id: string | null;
   company_id: string | null;
   property_id: string | null;
   assigned_to: string | null;
@@ -92,7 +94,8 @@ export interface UnifiedDeal {
   google_sheet_id?: string | null;
   google_sheet_url?: string | null;
   // Joined
-  primary_contact?: { id: string; first_name: string; last_name: string } | null;
+  primary_contact?: { id: string; first_name: string; last_name: string; email: string | null; phone: string | null } | null;
+  broker_contact?: { id: string; first_name: string; last_name: string; email: string | null; phone: string | null; broker_company?: { name: string } | null } | null;
   company?: { id: string; name: string } | null;
   // Computed client-side
   days_in_stage?: number;
@@ -183,16 +186,28 @@ export const STAGES: { key: UnifiedStage; label: string }[] = [
 ];
 
 export const ASSET_CLASS_LABELS: Record<AssetClass, string> = {
-  sfr: "SFR",
-  duplex_fourplex: "Duplex/Fourplex",
+  residential_1_4: "Residential (1-4)",
+  sfr: "Residential (1-4)",       // legacy
+  duplex_fourplex: "Residential (1-4)", // legacy
   multifamily: "Multifamily",
   mhc: "MHC",
   rv_park: "RV Park",
-  campground: "Campground",
+  campground: "RV Park",          // legacy
   commercial: "Commercial",
   mixed_use: "Mixed Use",
   land: "Land",
 };
+
+/** Active asset class options for dropdowns (excludes legacy keys) */
+export const ACTIVE_ASSET_CLASS_OPTIONS = [
+  { key: "residential_1_4", label: "Residential (1-4)" },
+  { key: "multifamily", label: "Multifamily" },
+  { key: "mhc", label: "MHC" },
+  { key: "rv_park", label: "RV Park" },
+  { key: "commercial", label: "Commercial" },
+  { key: "mixed_use", label: "Mixed Use" },
+  { key: "land", label: "Land" },
+] as const;
 
 // DEPRECATED: CARD_TYPE_SHORT_LABELS removed. Use getDealShortLabel() from
 // lib/pipeline/deal-display-config.ts instead.

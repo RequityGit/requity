@@ -38,7 +38,7 @@ export default async function PipelinePage() {
     admin
       .from("unified_deals" as never)
       .select(
-        `*, primary_contact:crm_contacts(id, first_name, last_name), company:companies(id, name)`
+        `*, primary_contact:crm_contacts!primary_contact_id(id, first_name, last_name), company:companies(id, name)`
       )
       .in("status" as never, ["active", "on_hold"] as never)
       .order("created_at" as never, { ascending: false }),
