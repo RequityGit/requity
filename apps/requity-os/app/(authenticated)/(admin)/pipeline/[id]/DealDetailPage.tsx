@@ -65,6 +65,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { StageStepper } from "@/components/pipeline/StageStepper";
+import { DealOverviewSummary } from "@/components/pipeline/DealOverviewSummary";
 import { EditableOverview } from "@/components/pipeline/EditableOverview";
 import { UnderwritingPanel } from "@/components/pipeline/UnderwritingPanel";
 import { DealTasks } from "@/components/tasks/deal-tasks";
@@ -515,6 +516,9 @@ function DealDetailPageInner({
         <div className="flex flex-col gap-4 min-w-0">
           {loadedTabs.has("Overview") && (
             <div className={activeTab !== "Overview" ? "hidden" : undefined}>
+              <DealOverviewSummary deal={deal} />
+
+              <div className="mt-4">
               <EditableOverview
                 dealId={deal.id}
                 uwData={{
@@ -526,6 +530,7 @@ function DealDetailPageInner({
                 visibilityContext={visibilityContext}
                 dealTeamContacts={dealTeamContacts}
               />
+              </div>
 
               {/* Tasks section */}
               <div className="mt-4">

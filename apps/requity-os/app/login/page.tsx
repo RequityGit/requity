@@ -26,6 +26,19 @@ export default function LoginPage() {
   );
 }
 
+/**
+ * Normalise the origin to always use `localhost` on dev.
+ * Prevents cookie / redirect mismatches when the browser resolves
+ * 127.0.0.1 but the PKCE cookie was set on localhost (or vice-versa).
+ */
+function getStableOrigin(): string {
+  const raw = window.location.origin;
+  if (process.env.NODE_ENV === "development") {
+    return raw.replace("127.0.0.1", "localhost");
+  }
+  return raw;
+}
+
 function LoginContent() {
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState<"google" | "magic" | null>(null);
@@ -48,10 +61,10 @@ function LoginContent() {
   useEffect(() => {
     if (authRetry && !autoRetryFiredRef.current) {
       autoRetryFiredRef.current = true;
-      // Small delay so the page renders briefly (avoids a blank flash)
+      // Longer delay gives the browser time to settle cookies
       const timer = setTimeout(() => {
         handleGoogleLogin();
-      }, 300);
+      }, 600);
       return () => clearTimeout(timer);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -66,7 +79,7 @@ function LoginContent() {
       );
     } else if (errorParam === "auth_callback_failed") {
       setError(
-        "Authentication failed. Please try again or use a magic link."
+        "Google sign-in failed (session cookie was lost). Try again, or clear cookies for localhost and retry. You can also use a magic link below."
       );
     } else if (errorParam === "link_expired") {
       setError(
@@ -98,7 +111,7 @@ function LoginContent() {
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: "google",
         options: {
-          redirectTo: `${window.location.origin}/auth/callback`,
+          redirectTo: `${getStableOrigin()}/auth/callback`,
           skipBrowserRedirect: true,
         },
       });
@@ -138,7 +151,7 @@ function LoginContent() {
       const { error } = await supabase.auth.signInWithOtp({
         email,
         options: {
-          emailRedirectTo: `${window.location.origin}/auth/confirm`,
+          emailRedirectTo: `${getStableOrigin()}/auth/confirm`,
         },
       });
 

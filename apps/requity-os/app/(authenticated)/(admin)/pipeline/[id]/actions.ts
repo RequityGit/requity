@@ -1074,6 +1074,8 @@ export async function deleteUnifiedDealSuperAdmin(
 
     const admin = createAdminClient();
 
+    // All child tables use ON DELETE CASCADE or ON DELETE SET NULL at the DB level.
+    // No app-level cleanup needed — just delete the deal row.
     const { error } = await admin
       .from("unified_deals" as never)
       .delete()

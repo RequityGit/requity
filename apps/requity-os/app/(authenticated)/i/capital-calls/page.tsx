@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import { PageHeader } from "@/components/shared/page-header";
 import { getEffectiveAuth, getInvestorId } from "@/lib/impersonation";
 import { DataTable, type Column } from "@/components/shared/data-table";
@@ -189,11 +190,13 @@ export default async function ContributionsPage({
       </div>
 
       {/* Filters */}
-      <ContributionFilters
-        funds={uniqueFunds}
-        currentFund={searchParams.fund}
-        currentStatus={searchParams.status}
-      />
+      <Suspense fallback={null}>
+        <ContributionFilters
+          funds={uniqueFunds}
+          currentFund={searchParams.fund}
+          currentStatus={searchParams.status}
+        />
+      </Suspense>
 
       {/* Table */}
       <Card>

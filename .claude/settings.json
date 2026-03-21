@@ -9,6 +9,32 @@
           }
         ]
       }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/check-netlify-deploy.sh",
+            "asyncRewake": true,
+            "timeout": 660,
+            "statusMessage": "Waiting to check Netlify deploy..."
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/check-sentry-errors.sh",
+            "asyncRewake": true,
+            "timeout": 30
+          }
+        ]
+      }
     ]
   },
   "enableAllProjectMcpServers": true
