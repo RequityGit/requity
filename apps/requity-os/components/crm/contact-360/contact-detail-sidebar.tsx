@@ -33,6 +33,7 @@ import {
   Copy,
   Check,
   FileText,
+  X,
 } from "lucide-react";
 import { GenerateDocumentDialog } from "@/components/documents/GenerateDocumentDialog";
 import { cn } from "@/lib/utils";
@@ -135,6 +136,21 @@ export function ContactDetailSidebar({
     setNewLenderDir("");
     setNewVendorType("");
     setAddingRel(false);
+  }
+
+  async function removeRelationship(relId: string) {
+    setLocalRelationships((prev) => prev.filter((r) => r.id !== relId));
+    const { error } = await supabase
+      .from("contact_relationship_types")
+      .delete()
+      .eq("id", relId);
+    if (error) {
+      toast({ title: "Error removing relationship", description: error.message, variant: "destructive" });
+      setLocalRelationships(relationships); // rollback
+    } else {
+      toast({ title: "Relationship removed" });
+      onRelationshipAdded?.();
+    }
   }
 
   const quickActions = [
@@ -363,7 +379,7 @@ export function ContactDetailSidebar({
                   r.relationship_type.slice(1);
                 return (
                   <div key={r.id}>
-                    <div className="flex justify-between items-center py-2.5">
+                    <div className="flex justify-between items-center py-2.5 group/rel">
                       <div className="flex items-center gap-1.5 min-w-0">
                         {colors ? (
                           <Badge
@@ -396,9 +412,18 @@ export function ContactDetailSidebar({
                           </span>
                         )}
                       </div>
-                      <span className="text-[10px] text-muted-foreground shrink-0 ml-2">
-                        Since {formatDate(r.started_at)}
-                      </span>
+                      <div className="flex items-center gap-1 shrink-0 ml-2">
+                        <span className="text-[10px] text-muted-foreground">
+                          Since {formatDate(r.started_at)}
+                        </span>
+                        <button
+                          onClick={() => removeRelationship(r.id)}
+                          className="p-0.5 rounded hover:bg-muted text-muted-foreground/50 hover:text-destructive transition-colors opacity-0 group-hover/rel:opacity-100"
+                          title="Remove relationship"
+                        >
+                          <X size={12} strokeWidth={1.5} />
+                        </button>
+                      </div>
                     </div>
                     {i < localRelationships.length - 1 && (
                       <Separator className="bg-muted" />

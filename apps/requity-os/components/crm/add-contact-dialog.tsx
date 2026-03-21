@@ -298,7 +298,7 @@ export function AddContactDialog({
 
       if (contactError) throw contactError;
 
-      // Insert relationship types
+      // Insert relationship types (use upsert to avoid conflict with auto-derived trigger)
       const relationshipInserts = selectedRelationships.map((rt) => ({
         contact_id: newContact.id,
         relationship_type: rt as RelationshipType,
@@ -312,7 +312,10 @@ export function AddContactDialog({
       if (relationshipInserts.length > 0) {
         const { error: relError } = await supabase
           .from("contact_relationship_types")
-          .insert(relationshipInserts);
+          .upsert(relationshipInserts, {
+            onConflict: "contact_id,relationship_type",
+            ignoreDuplicates: true,
+          });
         if (relError) throw relError;
       }
 
@@ -325,9 +328,16 @@ export function AddContactDialog({
         router.push(`/contacts/${newContact.contact_number}`);
       }
     } catch (err: unknown) {
+      const message =
+        err instanceof Error
+          ? err.message
+          : typeof err === "object" && err !== null && "message" in err
+            ? String((err as { message: unknown }).message)
+            : JSON.stringify(err);
+      console.error("Error adding contact:", err);
       toast({
         title: "Error adding contact",
-        description: err instanceof Error ? err.message : "An unexpected error occurred",
+        description: message,
         variant: "destructive",
       });
     } finally {
