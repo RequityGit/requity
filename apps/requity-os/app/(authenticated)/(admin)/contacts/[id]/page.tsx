@@ -63,7 +63,7 @@ export default async function CrmContactDetailPage({ params }: PageProps) {
 
   const { data: contact } = await supabase
     .from("crm_contacts")
-    .select("*")
+    .select("id, contact_number, first_name, last_name, email, phone, company_name, company_id, source, assigned_to, next_follow_up_date, last_contacted_at, marketing_consent, created_at, updated_at, lifecycle_stage, dnc, address_line1, address_line2, city, state, zip, country, user_id, borrower_id, linked_investor_id, notes, contact_types, rating, status, user_function, language_preference")
     .eq("contact_number", contactNumber)
     .single();
 
@@ -91,7 +91,7 @@ export default async function CrmContactDetailPage({ params }: PageProps) {
     // Base data
     supabase
       .from("crm_activities")
-      .select("*")
+      .select("id, activity_type, subject, description, call_disposition, direction, call_duration_seconds, performed_by, performed_by_name, created_at")
       .eq("contact_id", contact.id)
       .order("created_at", { ascending: false }),
     supabase
@@ -100,12 +100,12 @@ export default async function CrmContactDetailPage({ params }: PageProps) {
       .order("full_name"),
     admin
       .from("crm_emails")
-      .select("*")
+      .select("id, created_at, from_email, to_email, to_name, subject, body_text, body_html, cc_emails, bcc_emails, sent_by_name, postmark_status, delivered_at, opened_at, attachments")
       .eq("linked_contact_id", contact.id)
       .order("created_at", { ascending: false }),
     admin
       .from("contact_relationship_types")
-      .select("*")
+      .select("id, contact_id, relationship_type, is_active, lender_direction, vendor_type, notes, started_at, ended_at, created_at")
       .eq("contact_id", contact.id)
       .order("created_at", { ascending: false }),
     contact.company_id
@@ -219,7 +219,7 @@ export default async function CrmContactDetailPage({ params }: PageProps) {
       activity_type: a.activity_type as string,
       subject: a.subject as string | null,
       description: a.description as string | null,
-      outcome: (a.outcome as string | null) ?? null,
+      outcome: (a.call_disposition as string | null) ?? null,
       direction: (a.direction as string | null) ?? null,
       call_duration_seconds: (a.call_duration_seconds as number | null) ?? null,
       created_by_name: a.performed_by

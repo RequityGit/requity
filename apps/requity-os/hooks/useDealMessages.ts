@@ -134,15 +134,33 @@ export function useDealMessages({ dealId, token, limit = 50 }: UseDealMessagesOp
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dealId, token]);
 
-  // Borrower polling fallback (every 10s)
+  // Borrower polling fallback (every 10s), paused when tab is hidden
   useEffect(() => {
     if (!token) return;
 
-    const interval = setInterval(() => {
-      fetchMessages();
-    }, 10000);
+    let interval: ReturnType<typeof setInterval> | null = null;
 
-    return () => clearInterval(interval);
+    function startPolling() {
+      if (interval) clearInterval(interval);
+      interval = setInterval(() => fetchMessages(), 10000);
+    }
+
+    function handleVisibility() {
+      if (document.visibilityState === "hidden") {
+        if (interval) { clearInterval(interval); interval = null; }
+      } else {
+        fetchMessages();
+        startPolling();
+      }
+    }
+
+    startPolling();
+    document.addEventListener("visibilitychange", handleVisibility);
+
+    return () => {
+      if (interval) clearInterval(interval);
+      document.removeEventListener("visibilitychange", handleVisibility);
+    };
   }, [token, fetchMessages]);
 
   // Send a message

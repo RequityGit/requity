@@ -60,7 +60,7 @@ export function PillNav<T extends string>({
   active,
   onChange,
 }: {
-  tabs: { key: T; label: string; icon: LucideIcon }[];
+  tabs: readonly { key: T; label: string; icon: LucideIcon }[];
   active: T;
   onChange: (key: T) => void;
 }) {

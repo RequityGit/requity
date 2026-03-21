@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
+import { useDebounce } from "@/hooks/useDebounce";
 import { useRouter } from "next/navigation";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -53,6 +54,7 @@ export function CompaniesView({ companies, isSuperAdmin = false }: CompaniesView
   const { toast } = useToast();
 
   const [companySearch, setCompanySearch] = useState("");
+  const debouncedSearch = useDebounce(companySearch, 300);
   const [dateAdded, setDateAdded] = useState("all");
   const [companySortKey, setCompanySortKey] = useState<string>("name");
   const [companySortDir, setCompanySortDir] = useState<"asc" | "desc">("asc");
@@ -81,8 +83,8 @@ export function CompaniesView({ companies, isSuperAdmin = false }: CompaniesView
   const filteredCompanies = useMemo(() => {
     let result = [...companies];
 
-    if (companySearch.trim()) {
-      const q = companySearch.toLowerCase();
+    if (debouncedSearch.trim()) {
+      const q = debouncedSearch.toLowerCase();
       result = result.filter(
         (c) =>
           c.name.toLowerCase().includes(q) ||
@@ -114,7 +116,7 @@ export function CompaniesView({ companies, isSuperAdmin = false }: CompaniesView
     });
 
     return result;
-  }, [companies, companySearch, dateAdded, companySortKey, companySortDir]);
+  }, [companies, debouncedSearch, dateAdded, companySortKey, companySortDir]);
 
   function handleCompanySort(key: string) {
     if (companySortKey === key) {

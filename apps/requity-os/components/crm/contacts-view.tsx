@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useMemo, useEffect } from "react";
+import { useDebounce } from "@/hooks/useDebounce";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Input } from "@/components/ui/input";
 import {
@@ -79,6 +80,7 @@ export function ContactsView({
   const { toast } = useToast();
 
   const [contactSearch, setContactSearch] = useState(searchParams.get("q") ?? "");
+  const debouncedSearch = useDebounce(contactSearch, 300);
   const [relFilter, setRelFilter] = useState(searchParams.get("rel") ?? "all");
   const [stageFilter, setStageFilter] = useState(searchParams.get("stage") ?? "all");
   const [dateAdded, setDateAdded] = useState(searchParams.get("date") ?? "all");
@@ -108,20 +110,20 @@ export function ContactsView({
 
   useEffect(() => {
     const params = new URLSearchParams();
-    if (contactSearch) params.set("q", contactSearch);
+    if (debouncedSearch) params.set("q", debouncedSearch);
     if (relFilter !== "all") params.set("rel", relFilter);
     if (stageFilter !== "all") params.set("stage", stageFilter);
     if (dateAdded !== "all") params.set("date", dateAdded);
     const str = params.toString();
     const newUrl = str ? `?${str}` : window.location.pathname;
     window.history.replaceState(null, "", newUrl);
-  }, [contactSearch, relFilter, stageFilter, dateAdded]);
+  }, [debouncedSearch, relFilter, stageFilter, dateAdded]);
 
   const filteredContacts = useMemo(() => {
     let result = [...contacts];
 
-    if (contactSearch.trim()) {
-      const q = contactSearch.toLowerCase();
+    if (debouncedSearch.trim()) {
+      const q = debouncedSearch.toLowerCase();
       result = result.filter(
         (c) =>
           `${c.first_name} ${c.last_name}`.toLowerCase().includes(q) ||
@@ -161,7 +163,7 @@ export function ContactsView({
     });
 
     return result;
-  }, [contacts, contactSearch, relFilter, stageFilter, dateAdded, contactSortKey, contactSortDir]);
+  }, [contacts, debouncedSearch, relFilter, stageFilter, dateAdded, contactSortKey, contactSortDir]);
 
   const hasContactFilters = contactSearch.trim() !== "" || relFilter !== "all" || stageFilter !== "all" || dateAdded !== "all";
 

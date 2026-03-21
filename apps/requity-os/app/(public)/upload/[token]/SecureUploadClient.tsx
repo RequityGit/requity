@@ -212,11 +212,25 @@ export function SecureUploadClient({ token }: { token: string }) {
     }
   }, [token]);
 
-  // Initial load + polling
+  // Initial load + polling (paused when tab is hidden)
   useEffect(() => {
     fetchLinkData();
-    const interval = setInterval(fetchLinkData, REFRESH_INTERVAL_MS);
-    return () => clearInterval(interval);
+    let interval: ReturnType<typeof setInterval> | null = setInterval(fetchLinkData, REFRESH_INTERVAL_MS);
+
+    function handleVisibility() {
+      if (document.visibilityState === "hidden") {
+        if (interval) { clearInterval(interval); interval = null; }
+      } else {
+        fetchLinkData();
+        interval = setInterval(fetchLinkData, REFRESH_INTERVAL_MS);
+      }
+    }
+
+    document.addEventListener("visibilitychange", handleVisibility);
+    return () => {
+      if (interval) clearInterval(interval);
+      document.removeEventListener("visibilitychange", handleVisibility);
+    };
   }, [fetchLinkData]);
 
   // Upload files as staged (for checklist conditions) or final (for general)
@@ -548,11 +562,25 @@ function BorrowerMessaging({ token, dealId, contactName, dealContacts }: { token
     }
   }, [dealId, token, expanded]);
 
-  // Initial fetch + polling
+  // Initial fetch + polling (paused when tab is hidden)
   useEffect(() => {
     fetchMessages();
-    const interval = setInterval(fetchMessages, 15000);
-    return () => clearInterval(interval);
+    let interval: ReturnType<typeof setInterval> | null = setInterval(fetchMessages, 15000);
+
+    function handleVisibility() {
+      if (document.visibilityState === "hidden") {
+        if (interval) { clearInterval(interval); interval = null; }
+      } else {
+        fetchMessages();
+        interval = setInterval(fetchMessages, 15000);
+      }
+    }
+
+    document.addEventListener("visibilitychange", handleVisibility);
+    return () => {
+      if (interval) clearInterval(interval);
+      document.removeEventListener("visibilitychange", handleVisibility);
+    };
   }, [fetchMessages]);
 
   // Scroll to bottom on expand or new messages
