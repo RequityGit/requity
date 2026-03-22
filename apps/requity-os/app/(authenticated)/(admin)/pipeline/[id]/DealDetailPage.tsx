@@ -542,7 +542,11 @@ function DealDetailPageInner({
         {/* Tab Content + Activity Sidebar — split pane */}
         <div className={cn("flex min-w-0 flex-1 overflow-hidden", sidebarOpen && "-mr-4 md:-mr-6 lg:-mr-8")}>
           {/* Left: scrollable tab content */}
-          <div className={cn("flex-1 min-w-0 overflow-y-auto flex flex-col gap-4 pb-8", sidebarOpen ? "pr-4 md:pr-6" : "pr-0")}>
+          <div className={cn(
+            "flex-1 min-w-0 flex flex-col gap-4",
+            activeTab === "Action Center" ? "overflow-hidden pb-0" : "overflow-y-auto pb-8",
+            sidebarOpen ? "pr-4 md:pr-6" : "pr-0"
+          )}>
           {loadedTabs.has("Action Center") && (
             <div className={activeTab !== "Action Center" ? "hidden" : undefined}>
               <SectionErrorBoundary fallbackTitle="Could not load action center">
