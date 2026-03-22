@@ -5,11 +5,14 @@ import type { Notification } from "@/lib/notifications";
 import { formatRelativeTime } from "@/lib/notifications";
 import { stripMentionMarkup } from "@/lib/comment-utils";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { CheckCheck, Archive } from "lucide-react";
 
 interface NotificationRowProps {
   notification: Notification;
   isSelected: boolean;
   onSelect: (id: string) => void;
+  onMarkAsRead?: (id: string) => void;
+  onArchive?: (id: string) => void;
 }
 
 // Avatar color palette (deterministic by name)
@@ -109,6 +112,8 @@ export function NotificationRow({
   notification,
   isSelected,
   onSelect,
+  onMarkAsRead,
+  onArchive,
 }: NotificationRowProps) {
   const isUnread = notification.read_at === null;
   const { actor, action } = parseTitle(notification.title);
@@ -120,13 +125,43 @@ export function NotificationRow({
     <div
       onClick={() => onSelect(notification.id)}
       className={cn(
-        "flex gap-2.5 px-3.5 py-2.5 cursor-pointer rq-transition relative",
+        "group flex gap-2.5 px-3.5 py-2.5 cursor-pointer rq-transition relative",
         "border-l-[3px] border-l-transparent",
         isSelected && "bg-blue-500/[0.06] border-l-blue-500",
         !isSelected && isUnread && "border-l-blue-500",
         !isSelected && "hover:bg-foreground/[0.02]"
       )}
     >
+      {/* Hover action toolbar */}
+      {(onMarkAsRead || onArchive) && (
+        <div className="absolute top-1.5 right-2 z-10 opacity-0 group-hover:opacity-100 rq-transition bg-card border border-border rounded-full shadow-lg px-1 py-0.5 flex items-center gap-0.5">
+          {isUnread && onMarkAsRead && (
+            <button
+              title="Mark as read"
+              onClick={(e) => {
+                e.stopPropagation();
+                onMarkAsRead(notification.id);
+              }}
+              className="h-6 w-6 rounded-full flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-foreground/[0.06] rq-transition"
+            >
+              <CheckCheck className="h-3.5 w-3.5" />
+            </button>
+          )}
+          {onArchive && (
+            <button
+              title="Archive"
+              onClick={(e) => {
+                e.stopPropagation();
+                onArchive(notification.id);
+              }}
+              className="h-6 w-6 rounded-full flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-foreground/[0.06] rq-transition"
+            >
+              <Archive className="h-3.5 w-3.5" />
+            </button>
+          )}
+        </div>
+      )}
+
       <Avatar className="h-7 w-7 rounded-lg flex-shrink-0">
         <AvatarFallback
           className={cn(

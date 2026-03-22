@@ -19,6 +19,8 @@ interface NotificationListPanelProps {
   onSelect: (id: string) => void;
   activeFilter: NotificationFilter;
   onFilterChange: (filter: NotificationFilter) => void;
+  onMarkAsRead?: (id: string) => void;
+  onArchive?: (id: string) => void;
 }
 
 function matchesFilter(
@@ -61,6 +63,8 @@ export function NotificationListPanel({
   onSelect,
   activeFilter,
   onFilterChange,
+  onMarkAsRead,
+  onArchive,
 }: NotificationListPanelProps) {
   // Compute filter counts
   const counts = useMemo(() => {
@@ -153,6 +157,8 @@ export function NotificationListPanel({
                   notification={notification}
                   isSelected={selectedId === notification.id}
                   onSelect={onSelect}
+                  onMarkAsRead={onMarkAsRead}
+                  onArchive={onArchive}
                 />
               ))}
             </div>

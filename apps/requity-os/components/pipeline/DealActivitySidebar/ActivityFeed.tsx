@@ -13,6 +13,10 @@ interface ActivityFeedProps {
   loading: boolean;
   filter: ActivityFilter;
   currentUserId: string;
+  onToggleLike: (noteId: string, isLiked: boolean) => void;
+  onEdit: (noteId: string, body: string, mentionIds: string[]) => void;
+  onDelete: (noteId: string) => void;
+  onPin: (noteId: string, isPinned: boolean) => void;
 }
 
 function getDateLabel(dateStr: string): string {
@@ -41,6 +45,10 @@ export function ActivityFeed({
   loading,
   filter,
   currentUserId,
+  onToggleLike,
+  onEdit,
+  onDelete,
+  onPin,
 }: ActivityFeedProps) {
   // Apply filter
   const filtered = useMemo(() => {
@@ -99,7 +107,7 @@ export function ActivityFeed({
 
   return (
     <ScrollArea className="flex-1">
-      <div className="py-1">
+      <div className="pt-3 pb-1">
         {grouped.map((group) => (
           <div key={group.label}>
             {/* Date divider */}
@@ -115,6 +123,10 @@ export function ActivityFeed({
                 key={item.id}
                 item={item}
                 currentUserId={currentUserId}
+                onToggleLike={onToggleLike}
+                onEdit={onEdit}
+                onDelete={onDelete}
+                onPin={onPin}
               />
             ))}
           </div>

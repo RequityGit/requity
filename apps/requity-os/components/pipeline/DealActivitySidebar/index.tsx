@@ -1,8 +1,9 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { cn } from "@/lib/utils";
+import { useState, useCallback } from "react";
 import { MessageSquare, ChevronsRight } from "lucide-react";
+import { createClient } from "@/lib/supabase/client";
+import { showSuccess, showError } from "@/lib/toast";
 import { useActivityFeed } from "@/hooks/useActivityFeed";
 import { ActivityFilters, type ActivityFilter } from "./ActivityFilters";
 import { ActivityFeed } from "./ActivityFeed";
@@ -29,11 +30,113 @@ export function DealActivitySidebar({
 }: DealActivitySidebarProps) {
   const [filter, setFilter] = useState<ActivityFilter>("all");
 
-  const { items, loading, counts, refetch } = useActivityFeed({
+  const { items, loading, counts, refetch, refetchNotes } = useActivityFeed({
     dealId,
     loanId,
     opportunityId,
   });
+
+  // ─── Note action handlers ───
+
+  const handleToggleLike = useCallback(
+    async (noteId: string, isCurrentlyLiked: boolean) => {
+      if (!currentUserId) return;
+      const supabase = createClient();
+
+      if (isCurrentlyLiked) {
+        const { error } = await supabase
+          .from("note_likes" as never)
+          .delete()
+          .eq("note_id" as never, noteId as never)
+          .eq("user_id" as never, currentUserId as never);
+        if (error) console.error("Failed to unlike note:", error);
+      } else {
+        const { error } = await supabase
+          .from("note_likes" as never)
+          .insert({ note_id: noteId, user_id: currentUserId } as never);
+        if (error) console.error("Failed to like note:", error);
+      }
+      refetchNotes();
+    },
+    [currentUserId, refetchNotes]
+  );
+
+  const handleEdit = useCallback(
+    async (noteId: string, body: string, mentionIds: string[]) => {
+      const supabase = createClient();
+      const { error } = await supabase
+        .from("notes" as never)
+        .update({
+          body,
+          mentions: mentionIds,
+          is_edited: true,
+          edited_at: new Date().toISOString(),
+        } as never)
+        .eq("id" as never, noteId as never);
+
+      if (error) {
+        showError("Could not update note", error.message);
+        return;
+      }
+      showSuccess("Note updated");
+      refetchNotes();
+    },
+    [refetchNotes]
+  );
+
+  const handleDelete = useCallback(
+    async (noteId: string) => {
+      const supabase = createClient();
+      const { error } = await supabase
+        .from("notes" as never)
+        .update({ deleted_at: new Date().toISOString() } as never)
+        .eq("id" as never, noteId as never);
+
+      if (error) {
+        showError("Could not delete note", error.message);
+        return;
+      }
+      showSuccess("Note deleted");
+      refetchNotes();
+    },
+    [refetchNotes]
+  );
+
+  const handlePin = useCallback(
+    async (noteId: string, isPinned: boolean) => {
+      const supabase = createClient();
+
+      // For deals, only one note can be pinned; unpin any existing first
+      if (!isPinned && dealId) {
+        await supabase
+          .from("notes" as never)
+          .update({ is_pinned: false, pinned_by: null, pinned_at: null } as never)
+          .eq("deal_id" as never, dealId as never)
+          .eq("is_pinned" as never, true as never);
+      }
+
+      const update = isPinned
+        ? { is_pinned: false, pinned_by: null, pinned_at: null }
+        : {
+            is_pinned: true,
+            pinned_by: currentUserId,
+            pinned_at: new Date().toISOString(),
+          };
+
+      const { error } = await supabase
+        .from("notes" as never)
+        .update(update as never)
+        .eq("id" as never, noteId as never);
+
+      if (error) {
+        showError("Could not update pin", error.message);
+        return;
+      }
+      showSuccess(isPinned ? "Note unpinned" : "Note pinned");
+      refetchNotes();
+    },
+    [dealId, currentUserId, refetchNotes]
+  );
 
   return (
     <aside className="w-[380px] border-l flex flex-col bg-background flex-shrink-0 h-full overflow-hidden rq-animate-slide-in-right">
@@ -63,6 +166,10 @@ export function DealActivitySidebar({
         loading={loading}
         filter={filter}
         currentUserId={currentUserId}
+        onToggleLike={handleToggleLike}
+        onEdit={handleEdit}
+        onDelete={handleDelete}
+        onPin={handlePin}
       />
 
       {/* Composer */}
