@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useState, useCallback, useTransition, useMemo, lazy, Suspense } from "react";
+import React, { useState, useCallback, useTransition, useMemo, useEffect, lazy, Suspense } from "react";
+import { SectionErrorBoundary } from "@/components/shared/SectionErrorBoundary";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
@@ -51,6 +52,7 @@ import {
   FolderOpen,
   Building2,
   Trash2,
+  MessageSquare,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -70,8 +72,8 @@ import { DealOverviewSummary } from "@/components/pipeline/DealOverviewSummary";
 import { EditableOverview } from "@/components/pipeline/EditableOverview";
 import { UnderwritingPanel } from "@/components/pipeline/UnderwritingPanel";
 import { DealTasks } from "@/components/tasks/deal-tasks";
-import { UnifiedNotes } from "@/components/shared/UnifiedNotes";
 import type { CommercialUWData } from "@/components/pipeline/tabs/UnderwritingTab";
+import { DealActivitySidebar } from "@/components/pipeline/DealActivitySidebar";
 
 // Lazy-load heavy tab components (only downloaded when user navigates to that tab)
 const DiligenceTab = lazy(() => import("@/components/pipeline/tabs/DiligenceTab").then(m => ({ default: m.DiligenceTab })));
@@ -237,6 +239,22 @@ function DealDetailPageInner({
     () => new Set([initialTab])
   );
 
+  // Activity sidebar state
+  const [sidebarOpen, setSidebarOpen] = useState(true);
+
+  // Auto-collapse sidebar on narrow screens
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth < 1200) {
+        setSidebarOpen(false);
+      }
+    };
+    // Check on mount
+    handleResize();
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
   // Backward compatibility: replace old tab params in URL
   React.useEffect(() => {
     if (typeof window === "undefined") return;
@@ -346,7 +364,7 @@ function DealDetailPageInner({
         </BreadcrumbList>
       </Breadcrumb>
 
-      <div className="max-w-[1280px] mx-auto">
+      <div className={cn("mx-auto", sidebarOpen ? "max-w-[1680px]" : "max-w-[1280px]")}>
         {/* Header */}
         <DealHeader
           deal={deal}
@@ -356,6 +374,8 @@ function DealDetailPageInner({
           teamMembers={teamMembers}
           currentUserId={currentUserId}
           isSuperAdmin={isSuperAdmin}
+          sidebarOpen={sidebarOpen}
+          onToggleSidebar={() => setSidebarOpen((prev) => !prev)}
         />
 
         {/* Stage Stepper */}
@@ -513,50 +533,43 @@ function DealDetailPageInner({
         {/* Inline Layout Toolbar (shown when editing) */}
         <InlineLayoutToolbar onSaveComplete={() => layout.refetch()} tabs={layout.tabs} />
 
-        {/* Tab Content */}
-        <div className="flex flex-col gap-4 min-w-0">
+        {/* Tab Content + Activity Sidebar */}
+        <div className="flex gap-0 min-w-0" style={{ minHeight: "calc(100vh - 280px)" }}>
+          {/* Left: Tab content */}
+          <div className="flex-1 min-w-0 flex flex-col gap-4">
           {loadedTabs.has("Overview") && (
             <div className={activeTab !== "Overview" ? "hidden" : undefined}>
-              <DealOverviewSummary dealId={deal.id} deal={deal} />
+              <SectionErrorBoundary fallbackTitle="Could not load overview">
+                <DealOverviewSummary dealId={deal.id} deal={deal} />
 
-              {/* Tasks section */}
-              <div className="mt-4">
-                <DealTasks
-                  dealId={deal.id}
-                  dealLabel={deal.deal_number ?? deal.name}
-                  dealEntityType="deal"
-                  tasks={tasks}
-                  profiles={teamMembers}
-                  currentUserId={currentUserId}
-                />
-              </div>
-
-              {/* Notes section */}
-              <div className="mt-4">
-                <UnifiedNotes
-                  entityType="deal"
-                  entityId={deal.id}
-                  dealId={deal.id}
-                  showInternalToggle={true}
-                  showFilters={true}
-                  showPinning={true}
-                />
-              </div>
-
-              {/* Activity feed */}
-              <div className="mt-4">
-                <Suspense fallback={<TabLoadingFallback />}>
-                  <DealActivityTab
+                {/* Tasks section */}
+                <div className="mt-4">
+                  <DealTasks
                     dealId={deal.id}
+                    dealLabel={deal.deal_number ?? deal.name}
+                    dealEntityType="deal"
+                    tasks={tasks}
+                    profiles={teamMembers}
                     currentUserId={currentUserId}
-                    primaryContactId={deal.primary_contact_id ?? null}
                   />
-                </Suspense>
-              </div>
+                </div>
+
+                {/* Activity feed */}
+                <div className="mt-4">
+                  <Suspense fallback={<TabLoadingFallback />}>
+                    <DealActivityTab
+                      dealId={deal.id}
+                      currentUserId={currentUserId}
+                      primaryContactId={deal.primary_contact_id ?? null}
+                    />
+                  </Suspense>
+                </div>
+              </SectionErrorBoundary>
             </div>
           )}
           {loadedTabs.has("Property") && (
             <div className={activeTab !== "Property" ? "hidden" : undefined}>
+              <SectionErrorBoundary fallbackTitle="Could not load property">
               <Suspense fallback={<TabLoadingFallback />}>
                 <PropertyTab
                   dealId={deal.id}
@@ -569,45 +582,56 @@ function DealDetailPageInner({
                     ),
                   }}
                   visibilityContext={visibilityContext}
+                  assetClass={deal.asset_class}
                 />
               </Suspense>
+              </SectionErrorBoundary>
             </div>
           )}
           {loadedTabs.has("Analysis") && (
             <div className={activeTab !== "Analysis" ? "hidden" : undefined}>
-              <ResidentialAnalysisTab
-                dealId={deal.id}
-                uwData={(deal.uw_data as Record<string, unknown>) ?? {}}
-              />
+              <SectionErrorBoundary fallbackTitle="Could not load analysis">
+                <ResidentialAnalysisTab
+                  dealId={deal.id}
+                  uwData={(deal.uw_data as Record<string, unknown>) ?? {}}
+                />
+              </SectionErrorBoundary>
             </div>
           )}
           {loadedTabs.has("Underwriting") && (
             <div className={activeTab !== "Underwriting" ? "hidden" : undefined}>
-              <Suspense fallback={<TabLoadingFallback />}>
-                <UnderwritingContent
-                  deal={deal}
-                  commercialUWData={commercialUWData}
-                  visibilityContext={visibilityContext}
-                />
-              </Suspense>
+              <SectionErrorBoundary fallbackTitle="Could not load underwriting">
+                <Suspense fallback={<TabLoadingFallback />}>
+                  <UnderwritingContent
+                    deal={deal}
+                    commercialUWData={commercialUWData}
+                    visibilityContext={visibilityContext}
+                  />
+                </Suspense>
+              </SectionErrorBoundary>
             </div>
           )}
           {loadedTabs.has("Borrower") && (
             <div className={activeTab !== "Borrower" ? "hidden" : undefined}>
-              <Suspense fallback={<TabLoadingFallback />}>
-                <BorrowerContactsTab dealId={deal.id} />
-              </Suspense>
+              <SectionErrorBoundary fallbackTitle="Could not load borrower">
+                <Suspense fallback={<TabLoadingFallback />}>
+                  <BorrowerContactsTab dealId={deal.id} />
+                </Suspense>
+              </SectionErrorBoundary>
             </div>
           )}
           {loadedTabs.has("Forms") && (
             <div className={activeTab !== "Forms" ? "hidden" : undefined}>
-              <Suspense fallback={<TabLoadingFallback />}>
-                <FormsTab dealId={deal.id} />
-              </Suspense>
+              <SectionErrorBoundary fallbackTitle="Could not load forms">
+                <Suspense fallback={<TabLoadingFallback />}>
+                  <FormsTab dealId={deal.id} />
+                </Suspense>
+              </SectionErrorBoundary>
             </div>
           )}
           {loadedTabs.has("Diligence") && (
             <div className={activeTab !== "Diligence" ? "hidden" : undefined}>
+              <SectionErrorBoundary fallbackTitle="Could not load diligence">
               <Suspense fallback={<TabLoadingFallback />}>
                 <DiligenceTab
                   documents={documents as unknown as { id: string; deal_id: string; document_name: string; file_url: string; file_size_bytes: number | null; mime_type: string | null; category: string | null; uploaded_by: string | null; created_at: string; review_status: string | null; storage_path: string | null; visibility?: string | null; _uploaded_by_name?: string | null; archived_at?: string | null; condition_id?: string | null }[]}
@@ -620,17 +644,35 @@ function DealDetailPageInner({
                   currentUserName={currentUserName}
                 />
               </Suspense>
+              </SectionErrorBoundary>
             </div>
           )}
           {loadedTabs.has("Messages") && (
             <div className={activeTab !== "Messages" ? "hidden" : undefined}>
+              <SectionErrorBoundary fallbackTitle="Could not load messages">
               <Suspense fallback={<TabLoadingFallback />}>
                 <DealMessagesPanel
                   dealId={deal.id}
                   currentUserId={currentUserId}
                 />
               </Suspense>
+              </SectionErrorBoundary>
             </div>
+          )}
+          </div>
+
+          {/* Right: Activity Sidebar */}
+          {sidebarOpen && (
+            <DealActivitySidebar
+              dealId={deal.id}
+              currentUserId={currentUserId}
+              currentUserName={currentUserName}
+              conditions={conditions.map((c) => ({
+                id: c.id,
+                condition_name: c.condition_name,
+              }))}
+              onClose={() => setSidebarOpen(false)}
+            />
           )}
         </div>
       </div>
@@ -649,6 +691,8 @@ function DealHeader({
   teamMembers,
   currentUserId,
   isSuperAdmin,
+  sidebarOpen,
+  onToggleSidebar,
 }: {
   deal: UnifiedDeal;
   shortLabel: string;
@@ -657,6 +701,8 @@ function DealHeader({
   teamMembers: Profile[];
   currentUserId: string;
   isSuperAdmin: boolean;
+  sidebarOpen: boolean;
+  onToggleSidebar: () => void;
 }) {
   const router = useRouter();
   const currentStageIndex = STAGES.findIndex((s) => s.key === deal.stage);
@@ -1063,6 +1109,17 @@ function DealHeader({
               )}
             </Button>
           )}
+
+          {/* Activity Sidebar Toggle */}
+          <Button
+            variant={sidebarOpen ? "default" : "outline"}
+            size="sm"
+            className="h-9 text-xs gap-1.5"
+            onClick={onToggleSidebar}
+          >
+            <MessageSquare className="h-3.5 w-3.5" />
+            Activity
+          </Button>
 
           {/* Actions Dropdown */}
           <DropdownMenu>

@@ -14,6 +14,7 @@ import { ModuleAccessProvider } from "@/contexts/module-access-context";
 import { ModuleGuard } from "@/components/layout/module-guard";
 import { SoftphoneWrapper } from "@/components/softphone/SoftphoneWrapper";
 import { ConfirmProvider } from "@/components/shared/ConfirmDialog";
+import { NotificationCenterWrapper } from "@/components/notifications/notification-center-wrapper";
 import { getSessionData } from "@/lib/auth/session-cache";
 
 // Never statically generate authenticated pages
@@ -59,41 +60,47 @@ export default async function AuthenticatedLayout({
             {(() => {
               const isAdmin = effectiveRole === "admin" || effectiveRole === "super_admin";
               const innerContent = (
-                <div className="flex flex-col h-screen overflow-hidden">
-                  <ImpersonationBanner />
-                  <div className="flex flex-1 overflow-hidden">
-                    {/* Desktop sidebar - hidden on mobile */}
-                    <div className="hidden md:block no-print">
-                      <Sidebar
-                        role={sidebarRole}
-                        isSuperAdmin={isSuperAdmin && !impersonation.isImpersonating}
-                        accessibleModules={accessibleModules}
-                      />
+                <NotificationCenterWrapper
+                  userId={user.id}
+                  activeRole={effectiveRole}
+                  currentUserName={(profile.full_name as string) || ""}
+                >
+                  <div className="flex flex-col h-screen overflow-hidden">
+                    <ImpersonationBanner />
+                    <div className="flex flex-1 overflow-hidden">
+                      {/* Desktop sidebar - hidden on mobile */}
+                      <div className="hidden md:block no-print">
+                        <Sidebar
+                          role={sidebarRole}
+                          isSuperAdmin={isSuperAdmin && !impersonation.isImpersonating}
+                          accessibleModules={accessibleModules}
+                        />
+                      </div>
+                      <div className="flex-1 flex flex-col overflow-hidden">
+                        <Topbar
+                          userName={(profile.full_name as string) || ""}
+                          role={effectiveRole}
+                          email={(profile.email as string) ?? ""}
+                          allowedRoles={allowedRoles}
+                          userId={user.id}
+                          isSuperAdmin={isSuperAdmin}
+                          avatarUrl={profile.avatar_url as string | undefined}
+                        />
+                        <main className="flex-1 overflow-y-auto bg-background p-4 md:p-6 lg:p-8 pb-20 md:pb-6 lg:pb-8">
+                          <ActivityTrackerProvider role={effectiveRole}>
+                            <ModuleGuard>
+                              <ConfirmProvider>
+                                {children}
+                              </ConfirmProvider>
+                            </ModuleGuard>
+                          </ActivityTrackerProvider>
+                        </main>
+                      </div>
                     </div>
-                    <div className="flex-1 flex flex-col overflow-hidden">
-                      <Topbar
-                        userName={(profile.full_name as string) || ""}
-                        role={effectiveRole}
-                        email={(profile.email as string) ?? ""}
-                        allowedRoles={allowedRoles}
-                        userId={user.id}
-                        isSuperAdmin={isSuperAdmin}
-                        avatarUrl={profile.avatar_url as string | undefined}
-                      />
-                      <main className="flex-1 overflow-y-auto bg-background p-4 md:p-6 lg:p-8 pb-20 md:pb-6 lg:pb-8">
-                        <ActivityTrackerProvider role={effectiveRole}>
-                          <ModuleGuard>
-                            <ConfirmProvider>
-                              {children}
-                            </ConfirmProvider>
-                          </ModuleGuard>
-                        </ActivityTrackerProvider>
-                      </main>
-                    </div>
+                    <Toaster />
+                    <SonnerToaster richColors closeButton />
                   </div>
-                  <Toaster />
-                  <SonnerToaster richColors closeButton />
-                </div>
+                </NotificationCenterWrapper>
               );
               return isAdmin ? (
                 <SoftphoneWrapper>{innerContent}</SoftphoneWrapper>

@@ -1,19 +1,21 @@
 "use client";
 
-import { useState, useTransition, useMemo } from "react";
+import { useState, useTransition, useMemo, useEffect } from "react";
 import { updatePropertyDataAction, updateUwDataAction } from "@/app/(authenticated)/(admin)/pipeline/actions";
 import type { UwFieldDef } from "../pipeline-types";
 import { UwField } from "../UwField";
 import { useUwFieldConfigs } from "@/hooks/useUwFieldConfigs";
 import { useDealLayout } from "@/hooks/useDealLayout";
+import type { LayoutSection } from "@/hooks/useDealLayout";
 import type { VisibilityContext } from "@/lib/visibility-engine";
 import { showSuccess, showError } from "@/lib/toast";
 import { Button } from "@/components/ui/button";
-import { Loader2, Sparkles } from "lucide-react";
+import { Loader2, Sparkles, ChevronRight } from "lucide-react";
 import { useOptionalInlineLayout } from "@/components/inline-layout-editor/InlineLayoutContext";
 import { EditableSection } from "@/components/inline-layout-editor/EditableSection";
 import { EditableFieldSlot } from "@/components/inline-layout-editor/EditableFieldSlot";
 import { FieldPicker } from "@/components/inline-layout-editor/FieldPicker";
+import { cn } from "@/lib/utils";
 
 // ── Column span mapping (static for Tailwind purging) ──
 
@@ -24,22 +26,45 @@ const SPAN_CLASS: Record<string, string> = {
   half: "col-span-12 sm:col-span-6",
 };
 
+// ── Section visibility rule matching ──
+
+function shouldShowSection(section: LayoutSection, rawAssetClass: string | null): boolean {
+  if (!section.visibility_rule) return true;
+
+  const colonIdx = section.visibility_rule.indexOf(":");
+  if (colonIdx === -1) return true;
+
+  const field = section.visibility_rule.slice(0, colonIdx);
+  const valuesStr = section.visibility_rule.slice(colonIdx + 1);
+
+  if (field === "asset_class") {
+    if (!rawAssetClass) return false;
+    const allowed = valuesStr.split(",");
+    return allowed.includes(rawAssetClass);
+  }
+
+  return true;
+}
+
 interface PropertyTabProps {
   dealId: string;
   propertyData: Record<string, unknown>;
   visibilityContext?: VisibilityContext | null;
+  assetClass?: string | null;
 }
 
 export function PropertyTab({
   dealId,
   propertyData,
   visibilityContext,
+  assetClass,
 }: PropertyTabProps) {
   return (
     <PropertyDetailsContent
       dealId={dealId}
       propertyData={propertyData}
       visibilityContext={visibilityContext}
+      assetClass={assetClass}
     />
   );
 }
@@ -50,10 +75,12 @@ function PropertyDetailsContent({
   dealId,
   propertyData,
   visibilityContext,
+  assetClass,
 }: {
   dealId: string;
   propertyData: Record<string, unknown>;
   visibilityContext?: VisibilityContext | null;
+  assetClass?: string | null;
 }) {
   const { byObject, fieldMap: uwFieldMap, loading: fieldsLoading, error: fieldsError } = useUwFieldConfigs(visibilityContext);
   const layout = useDealLayout();
@@ -65,8 +92,10 @@ function PropertyDetailsContent({
 
   const layoutSections = useMemo(() => {
     if (layout.loading) return [];
-    return layout.fieldSections.filter((s) => s.tab_key === "property");
-  }, [layout.loading, layout.fieldSections]);
+    return layout.fieldSections
+      .filter((s) => s.tab_key === "property")
+      .filter((s) => shouldShowSection(s, assetClass ?? null));
+  }, [layout.loading, layout.fieldSections, assetClass]);
 
   const useLayoutSections = layoutSections.length > 0;
 
@@ -183,6 +212,29 @@ function PropertyDetailsContent({
   const hasAddress = !!(localData.property_address ?? localData.address_line1);
   const hasState = !!(localData.property_state ?? localData.state);
 
+  // Section collapse state — initialized from default_collapsed when layout loads
+  const [collapsedSections, setCollapsedSections] = useState<Set<string>>(new Set());
+  const [collapsedInitialized, setCollapsedInitialized] = useState(false);
+
+  useEffect(() => {
+    if (layout.loading || collapsedInitialized) return;
+    const collapsed = new Set<string>();
+    for (const s of layout.fieldSections) {
+      if (s.default_collapsed) collapsed.add(s.id);
+    }
+    setCollapsedSections(collapsed);
+    setCollapsedInitialized(true);
+  }, [layout.loading, layout.fieldSections, collapsedInitialized]);
+
+  function toggleSection(sectionId: string) {
+    setCollapsedSections((prev) => {
+      const next = new Set(prev);
+      if (next.has(sectionId)) next.delete(sectionId);
+      else next.add(sectionId);
+      return next;
+    });
+  }
+
   // Inline layout editor support
   const inlineLayout = useOptionalInlineLayout();
   const isEditing = inlineLayout?.state.isEditing ?? false;
@@ -258,6 +310,8 @@ function PropertyDetailsContent({
             .sort((a, b) => a.display_order - b.display_order);
           if (layoutFields.length === 0 && !isEditing) return null;
 
+          const isCollapsed = !isEditing && collapsedSections.has(section.id);
+
           return (
             <EditableSection
               key={section.id}
@@ -266,47 +320,69 @@ function PropertyDetailsContent({
               totalSections={effectiveSections.length}
             >
               <div className="rounded-xl border bg-card p-4">
-                <h4 className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider mb-3">
-                  {section.section_label}
-                </h4>
-                <div className="grid grid-cols-12 gap-x-5 gap-y-2">
-                  {layoutFields.map((lf, idx) => {
-                    const fieldDef = uwFieldMap.get(lf.field_key);
-                    if (!fieldDef) return null;
-                    const spanClass = SPAN_CLASS[lf.column_span] || SPAN_CLASS.half;
-                    return (
-                      <div key={lf.id ?? lf.field_key} className={spanClass}>
-                        <EditableFieldSlot
-                          fieldId={lf.id}
-                          fieldLabel={fieldDef.label}
-                          columnSpan={lf.column_span || "half"}
-                          sectionId={section.id}
-                          fieldIndex={idx}
-                          totalFields={layoutFields.length}
-                          fieldConfigId={lf.field_config_id}
-                          fieldKey={lf.field_key}
-                        >
-                          <UwField
-                            field={fieldDef}
-                            value={localData[lf.field_key] ?? null}
-                            onChange={(val) => handleFieldChange(lf.field_key, val)}
-                            onBlur={() => handleFieldBlur(lf.field_key)}
-                            disabled={pending || isEditing}
-                            mode={editingFieldKey === lf.field_key && !isEditing ? "edit" : "read"}
-                            onStartEdit={() => !isEditing && setEditingFieldKey(lf.field_key)}
-                            onEndEdit={() => setEditingFieldKey(null)}
-                          />
-                        </EditableFieldSlot>
-                      </div>
-                    );
-                  })}
-                </div>
-                {isEditing && (
-                  <div className="mt-3 flex justify-center">
-                    <FieldPicker
-                      sectionId={section.id}
-                      usedFieldKeys={allUsedFieldKeys}
+                <button
+                  type="button"
+                  className={cn(
+                    "flex w-full items-center gap-1.5 text-left",
+                    !isEditing && "cursor-pointer"
+                  )}
+                  onClick={() => !isEditing && toggleSection(section.id)}
+                  disabled={isEditing}
+                >
+                  {!isEditing && (
+                    <ChevronRight
+                      className={cn(
+                        "h-3.5 w-3.5 text-muted-foreground rq-transition-transform",
+                        !isCollapsed && "rotate-90"
+                      )}
                     />
+                  )}
+                  <h4 className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider">
+                    {section.section_label}
+                  </h4>
+                </button>
+                {!isCollapsed && (
+                  <div className="mt-3">
+                    <div className="grid grid-cols-12 gap-x-5 gap-y-2">
+                      {layoutFields.map((lf, idx) => {
+                        const fieldDef = uwFieldMap.get(lf.field_key);
+                        if (!fieldDef) return null;
+                        const spanClass = SPAN_CLASS[lf.column_span] || SPAN_CLASS.half;
+                        return (
+                          <div key={lf.id ?? lf.field_key} className={spanClass}>
+                            <EditableFieldSlot
+                              fieldId={lf.id}
+                              fieldLabel={fieldDef.label}
+                              columnSpan={lf.column_span || "half"}
+                              sectionId={section.id}
+                              fieldIndex={idx}
+                              totalFields={layoutFields.length}
+                              fieldConfigId={lf.field_config_id}
+                              fieldKey={lf.field_key}
+                            >
+                              <UwField
+                                field={fieldDef}
+                                value={localData[lf.field_key] ?? null}
+                                onChange={(val) => handleFieldChange(lf.field_key, val)}
+                                onBlur={() => handleFieldBlur(lf.field_key)}
+                                disabled={pending || isEditing}
+                                mode={editingFieldKey === lf.field_key && !isEditing ? "edit" : "read"}
+                                onStartEdit={() => !isEditing && setEditingFieldKey(lf.field_key)}
+                                onEndEdit={() => setEditingFieldKey(null)}
+                              />
+                            </EditableFieldSlot>
+                          </div>
+                        );
+                      })}
+                    </div>
+                    {isEditing && (
+                      <div className="mt-3 flex justify-center">
+                        <FieldPicker
+                          sectionId={section.id}
+                          usedFieldKeys={allUsedFieldKeys}
+                        />
+                      </div>
+                    )}
                   </div>
                 )}
               </div>

@@ -20,7 +20,7 @@ interface FieldMergeRowProps {
 }
 
 function displayVal(v: unknown, format?: string): string {
-  if (isEmpty(v)) return "--";
+  if (isEmpty(v)) return "—";
   if (format === "currency") {
     const n = Number(v);
     if (isNaN(n)) return String(v);
@@ -102,7 +102,7 @@ export function FieldMergeRow({
           !isConflict && "opacity-60 cursor-default"
         )}
       >
-        {extEmpty ? "--" : extDisplay}
+        {extEmpty ? "—" : extDisplay}
       </Button>
 
       {/* Center: Both button or separator */}
@@ -143,7 +143,7 @@ export function FieldMergeRow({
           !isConflict && "opacity-60 cursor-default"
         )}
       >
-        {incEmpty ? "--" : incDisplay}
+        {incEmpty ? "—" : incDisplay}
       </Button>
     </div>
   );

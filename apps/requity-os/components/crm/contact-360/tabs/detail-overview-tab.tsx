@@ -437,6 +437,8 @@ export function DetailOverviewTab({
       tab_order: 0,
       tab_locked: false,
       card_type_id: null,
+      visibility_rule: null,
+      default_collapsed: false,
     };
   }
 

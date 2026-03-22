@@ -136,6 +136,33 @@ export function formatRatio(value: number | null | undefined): string {
   return `${Number(value).toFixed(2)}x`;
 }
 
+// ── Edit-mode helpers (used inside currency inputs) ──
+
+/** Format a number with commas for display inside edit inputs. No currency symbol, empty string for null. */
+export function formatEditNumber(val: unknown, maxDecimals = 2): string {
+  if (val == null || val === "") return "";
+  const n = Number(val);
+  if (isNaN(n)) return String(val);
+  return n.toLocaleString("en-US", { maximumFractionDigits: maxDecimals });
+}
+
+/** Parse a currency input string, stripping non-numeric chars. Returns null for empty/invalid. */
+export function parseEditCurrency(raw: string): number | null {
+  const stripped = raw.replace(/[^0-9.\-]/g, "");
+  if (stripped === "" || stripped === "-") return null;
+  const n = Number(stripped);
+  return isNaN(n) ? null : n;
+}
+
+/** Format an ISO date string (YYYY-MM-DD) for inline display without timezone shift. */
+export function formatDateInline(iso: string | null | undefined): string {
+  if (!iso) return "";
+  const parts = iso.split("-");
+  if (parts.length !== 3) return iso;
+  const [y, m, d] = parts;
+  return `${parseInt(m, 10)}/${parseInt(d, 10)}/${y}`;
+}
+
 // ── Field value formatting for read-mode display ──
 
 export function isFieldEmpty(value: unknown): boolean {

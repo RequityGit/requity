@@ -9,6 +9,7 @@ import { StatusBadge } from "@/components/shared/status-badge";
 import { formatCurrency, formatDate } from "@/lib/format";
 import { Mail, Phone, MapPin, Calendar, Shield } from "lucide-react";
 import { EmailActivityFeed } from "@/components/crm/email-activity-feed";
+import { SectionErrorBoundary } from "@/components/shared/SectionErrorBoundary";
 import { ClickToCallNumber } from "@/components/ui/ClickToCallNumber";
 
 interface PageProps {
@@ -309,46 +310,56 @@ export default async function AdminInvestorDetailPage({ params }: PageProps) {
         </TabsList>
 
         <TabsContent value="commitments" className="mt-4">
-          <DataTable
-            columns={commitmentColumns}
-            data={commitments}
-            emptyMessage="No commitments found for this investor."
-          />
+          <SectionErrorBoundary fallbackTitle="Could not load commitments">
+            <DataTable
+              columns={commitmentColumns}
+              data={commitments}
+              emptyMessage="No commitments found for this investor."
+            />
+          </SectionErrorBoundary>
         </TabsContent>
 
         <TabsContent value="contributions" className="mt-4">
-          <DataTable
-            columns={contributionColumns}
-            data={contributions}
-            emptyMessage="No contributions for this investor."
-          />
+          <SectionErrorBoundary fallbackTitle="Could not load contributions">
+            <DataTable
+              columns={contributionColumns}
+              data={contributions}
+              emptyMessage="No contributions for this investor."
+            />
+          </SectionErrorBoundary>
         </TabsContent>
 
         <TabsContent value="distributions" className="mt-4">
-          <DataTable
-            columns={distributionColumns}
-            data={distributions}
-            emptyMessage="No distributions for this investor."
-          />
+          <SectionErrorBoundary fallbackTitle="Could not load distributions">
+            <DataTable
+              columns={distributionColumns}
+              data={distributions}
+              emptyMessage="No distributions for this investor."
+            />
+          </SectionErrorBoundary>
         </TabsContent>
 
         <TabsContent value="documents" className="mt-4">
-          <DataTable
-            columns={documentColumns}
-            data={documents}
-            emptyMessage="No documents for this investor."
-          />
+          <SectionErrorBoundary fallbackTitle="Could not load documents">
+            <DataTable
+              columns={documentColumns}
+              data={documents}
+              emptyMessage="No documents for this investor."
+            />
+          </SectionErrorBoundary>
         </TabsContent>
 
         <TabsContent value="emails" className="mt-4">
-          <EmailActivityFeed
-            emails={emails}
-            defaultToEmail={inv.email || undefined}
-            defaultToName={investorName}
-            linkedInvestorId={investor.id}
-            currentUserId={user.id}
-            currentUserName={currentUserName}
-          />
+          <SectionErrorBoundary fallbackTitle="Could not load emails">
+            <EmailActivityFeed
+              emails={emails}
+              defaultToEmail={inv.email || undefined}
+              defaultToName={investorName}
+              linkedInvestorId={investor.id}
+              currentUserId={user.id}
+              currentUserName={currentUserName}
+            />
+          </SectionErrorBoundary>
         </TabsContent>
       </Tabs>
     </div>

@@ -121,7 +121,7 @@ self.addEventListener('notificationclick', (event) => {
       .then((clientList) => {
         // If portal is already open, focus it and navigate
         for (const client of clientList) {
-          if (client.url.includes('portal.requitygroup.com') && 'focus' in client) {
+          if (client.url.includes('app.requitygroup.com') && 'focus' in client) {
             client.focus();
             return client.navigate(targetUrl);
           }

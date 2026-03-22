@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useMemo, useCallback } from "react";
+import { SectionErrorBoundary } from "@/components/shared/SectionErrorBoundary";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
@@ -203,77 +204,91 @@ export function CompanyDetailClient({
 
           {loadedTabs.has("overview") && (
             <div className={activeTab !== "overview" ? "hidden" : undefined}>
-              <CrmInlineEditorWrapper pageType="company_detail" isSuperAdmin={isSuperAdmin}>
-                <CompanyOverviewTab
-                  company={company}
-                  wireInstructions={wireInstructions}
-                  files={overviewFiles}
-                  sectionOrder={sectionOrder}
-                  sectionFields={sectionFields}
-                />
-              </CrmInlineEditorWrapper>
+              <SectionErrorBoundary fallbackTitle="Could not load overview">
+                <CrmInlineEditorWrapper pageType="company_detail" isSuperAdmin={isSuperAdmin}>
+                  <CompanyOverviewTab
+                    company={company}
+                    wireInstructions={wireInstructions}
+                    files={overviewFiles}
+                    sectionOrder={sectionOrder}
+                    sectionFields={sectionFields}
+                  />
+                </CrmInlineEditorWrapper>
+              </SectionErrorBoundary>
             </div>
           )}
           {loadedTabs.has("contacts") && (
             <div className={activeTab !== "contacts" ? "hidden" : undefined}>
-              <CompanyContactsTab
-                contacts={contacts}
-                companyId={company.id}
-                companyName={company.name}
-                primaryContactId={company.primary_contact_id}
-                teamMembers={teamMembers}
-                currentUserId={currentUserId}
-              />
+              <SectionErrorBoundary fallbackTitle="Could not load contacts">
+                <CompanyContactsTab
+                  contacts={contacts}
+                  companyId={company.id}
+                  companyName={company.name}
+                  primaryContactId={company.primary_contact_id}
+                  teamMembers={teamMembers}
+                  currentUserId={currentUserId}
+                />
+              </SectionErrorBoundary>
             </div>
           )}
           {loadedTabs.has("notes") && (
             <div className={activeTab !== "notes" ? "hidden" : undefined}>
-              <UnifiedNotes
-                entityType="company"
-                entityId={company.id}
-              />
+              <SectionErrorBoundary fallbackTitle="Could not load notes">
+                <UnifiedNotes
+                  entityType="company"
+                  entityId={company.id}
+                />
+              </SectionErrorBoundary>
             </div>
           )}
           {loadedTabs.has("tasks") && (
             <div className={activeTab !== "tasks" ? "hidden" : undefined}>
-              <CompanyTasksTab
-                tasks={tasks}
-                companyId={company.id}
-                companyName={company.name}
-                currentUserId={currentUserId}
-                profiles={teamMembers.map((m) => ({
-                  id: m.id,
-                  full_name: m.full_name,
-                  avatar_url: null,
-                }))}
-                loading={tasksQ.loading}
-              />
+              <SectionErrorBoundary fallbackTitle="Could not load tasks">
+                <CompanyTasksTab
+                  tasks={tasks}
+                  companyId={company.id}
+                  companyName={company.name}
+                  currentUserId={currentUserId}
+                  profiles={teamMembers.map((m) => ({
+                    id: m.id,
+                    full_name: m.full_name,
+                    avatar_url: null,
+                  }))}
+                  loading={tasksQ.loading}
+                />
+              </SectionErrorBoundary>
             </div>
           )}
           {loadedTabs.has("deals") && (
             <div className={activeTab !== "deals" ? "hidden" : undefined}>
-              <CompanyDealsTab company={company} />
+              <SectionErrorBoundary fallbackTitle="Could not load deals">
+                <CompanyDealsTab company={company} />
+              </SectionErrorBoundary>
             </div>
           )}
           {loadedTabs.has("files") && (
             <div className={activeTab !== "files" ? "hidden" : undefined}>
-              <CompanyFilesTab
-                files={filesForTab}
-                companyId={company.id}
-                loading={filesQ.loading}
-                onRefresh={filesQ.refresh}
-              />
+              <SectionErrorBoundary fallbackTitle="Could not load files">
+                <CompanyFilesTab
+                  files={filesForTab}
+                  companyId={company.id}
+                  loading={filesQ.loading}
+                  onRefresh={filesQ.refresh}
+                />
+              </SectionErrorBoundary>
             </div>
           )}
           {loadedTabs.has("activity") && (
             <div className={activeTab !== "activity" ? "hidden" : undefined}>
-              <CompanyActivityTab
-                companyId={company.id}
-                activities={activities}
-                currentUserId={currentUserId}
-                logCallTrigger={logCallTrigger}
-                loading={activitiesQ.loading}
-              />
+              <SectionErrorBoundary fallbackTitle="Could not load activity">
+                <CompanyActivityTab
+                  companyId={company.id}
+                  activities={activities}
+                  currentUserId={currentUserId}
+                  logCallTrigger={logCallTrigger}
+                  loading={activitiesQ.loading}
+                />
+              </SectionErrorBoundary>
             </div>
           )}
         </div>

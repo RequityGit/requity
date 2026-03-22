@@ -87,7 +87,7 @@ function getDaysInStage(stageUpdatedAt: string): number {
 }
 
 function formatLoanType(type: string | null): string {
-  if (!type) return "--";
+  if (!type) return "—";
   const found = LOAN_TYPES.find((t) => t.value === type);
   return found ? found.label : type.replace(/_/g, " ");
 }
@@ -441,7 +441,7 @@ export function LendingPipelineTable({
                       <div>
                         <div>
                           <p className="font-medium text-foreground text-[13px] truncate max-w-[220px]">
-                            {row.property_address ?? "--"}
+                            {row.property_address ?? "—"}
                           </p>
                         </div>
                         {(row.property_city || row.property_state) && (

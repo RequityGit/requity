@@ -22,19 +22,9 @@ import {
   DialogTrigger,
   DialogFooter,
 } from "@/components/ui/dialog";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { showSuccess, showError } from "@/lib/toast";
+import { useConfirm } from "@/components/shared/ConfirmDialog";
 import { PlusCircle, Pencil, Trash2, Loader2, GripVertical } from "lucide-react";
 import {
   upsertRoutingRule,
@@ -74,6 +64,7 @@ const emptyForm: RuleFormState = {
 
 export function RoutingRulesManager({ rules, teamMembers }: RoutingRulesManagerProps) {
   const router = useRouter();
+  const confirm = useConfirm();
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState<RuleFormState>(emptyForm);
   const [loading, setLoading] = useState(false);
@@ -140,8 +131,16 @@ export function RoutingRulesManager({ rules, teamMembers }: RoutingRulesManagerP
     }
   }
 
-  async function handleDelete(ruleId: string) {
-    const result = await deleteRoutingRule(ruleId);
+  async function handleDelete(rule: ApprovalRoutingRule) {
+    const ok = await confirm({
+      title: "Delete routing rule?",
+      description: `This will permanently delete "${rule.name}". This action cannot be undone.`,
+      confirmLabel: "Delete",
+      destructive: true,
+    });
+    if (!ok) return;
+
+    const result = await deleteRoutingRule(rule.id);
     if (result.error) {
       showError("Could not delete rule", result.error);
     } else {
@@ -191,27 +190,9 @@ export function RoutingRulesManager({ rules, teamMembers }: RoutingRulesManagerP
                   <Button variant="ghost" size="sm" onClick={() => openEdit(rule)}>
                     <Pencil className="h-3.5 w-3.5" />
                   </Button>
-                  <AlertDialog>
-                    <AlertDialogTrigger asChild>
-                      <Button variant="ghost" size="sm">
-                        <Trash2 className="h-3.5 w-3.5 text-red-500" />
-                      </Button>
-                    </AlertDialogTrigger>
-                    <AlertDialogContent>
-                      <AlertDialogHeader>
-                        <AlertDialogTitle>Delete routing rule?</AlertDialogTitle>
-                        <AlertDialogDescription>
-                          This will permanently delete &ldquo;{rule.name}&rdquo;. This action cannot be undone.
-                        </AlertDialogDescription>
-                      </AlertDialogHeader>
-                      <AlertDialogFooter>
-                        <AlertDialogCancel>Cancel</AlertDialogCancel>
-                        <AlertDialogAction onClick={() => handleDelete(rule.id)} className="bg-red-600 hover:bg-red-700">
-                          Delete
-                        </AlertDialogAction>
-                      </AlertDialogFooter>
-                    </AlertDialogContent>
-                  </AlertDialog>
+                  <Button variant="ghost" size="sm" onClick={() => handleDelete(rule)}>
+                    <Trash2 className="h-3.5 w-3.5 text-red-500" />
+                  </Button>
                 </div>
               </div>
             ))}

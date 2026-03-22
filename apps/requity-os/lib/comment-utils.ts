@@ -4,6 +4,8 @@
  * Mention format in stored text: @[Display Name](user-uuid)
  */
 
+import { formatDateShort } from "@/lib/format";
+
 /** Extract mentioned user IDs from a comment string */
 export function extractMentionIds(text: string): string[] {
   const regex = /@\[([^\]]+)\]\(([a-f0-9-]+)\)/g;
@@ -63,8 +65,5 @@ export function relativeTime(dateStr: string): string {
   if (diffHr < 24) return `${diffHr}h ago`;
   if (diffDay < 7) return `${diffDay}d ago`;
 
-  return new Date(dateStr).toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-  });
+  return formatDateShort(dateStr);
 }

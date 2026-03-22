@@ -21,6 +21,8 @@ export interface LayoutSection {
   tab_order: number;
   tab_locked: boolean;
   card_type_id: string | null;
+  visibility_rule: string | null;
+  default_collapsed: boolean;
 }
 
 export interface LayoutField {
