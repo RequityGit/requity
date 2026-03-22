@@ -84,7 +84,7 @@ export function RailConditionItem({
             setExpanded(!expanded);
           }
         }}
-        className="flex w-full items-center gap-2.5 px-4 py-2.5 bg-transparent border-0 cursor-pointer hover:bg-muted/30 rq-transition text-left"
+        className="flex w-full items-center gap-2 px-3 py-2.5 bg-transparent border-0 cursor-pointer hover:bg-muted/30 rq-transition text-left"
       >
         {/* Status dot */}
         <span className={cn("h-2 w-2 rounded-full shrink-0", statusCfg.dotColor)} />
@@ -116,7 +116,7 @@ export function RailConditionItem({
 
       {/* Expanded details */}
       {expanded && (
-        <div className="px-4 pb-3 pt-1 space-y-3 bg-muted/20">
+        <div className="px-3 pb-3 pt-1 space-y-3 bg-muted/20">
           {/* Description */}
           {c.internal_description && (
             <p className="text-[12px] text-muted-foreground">{c.internal_description}</p>
