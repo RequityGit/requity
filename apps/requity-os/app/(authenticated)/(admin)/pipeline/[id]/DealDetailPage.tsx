@@ -91,6 +91,8 @@ import {
 import { normalizeAssetClass, isCommercialDeal, type VisibilityContext } from "@/lib/visibility-engine";
 import { getDealDisplayConfig, getDealFlavor } from "@/lib/pipeline/deal-display-config";
 import { ResidentialAnalysisTab } from "@/components/pipeline/tabs/ResidentialAnalysisTab";
+import { EmailComposeSheet } from "@/components/crm/email-compose-sheet";
+import { useSoftphoneMaybe } from "@/lib/twilio/softphone-context";
 
 const DealMessagesPanel = lazy(() => import("@/components/pipeline/DealMessagesPanel").then(m => ({ default: m.DealMessagesPanel })));
 const ActionCenterTab = lazy(() => import("@/components/pipeline/tabs/ActionCenterTab").then(m => ({ default: m.ActionCenterTab })));
@@ -494,9 +496,7 @@ function DealDetailPageInner({
                     primaryContactId={deal.primary_contact_id ?? null}
                     currentUserId={currentUserId}
                     currentUserName={currentUserName}
-                    loanAmount={(deal.uw_data as Record<string, unknown>)?.loan_amount as number | null ?? null}
-                    ltv={(deal.uw_data as Record<string, unknown>)?.ltv as number | null ?? null}
-                    closeDate={(deal.uw_data as Record<string, unknown>)?.estimated_close_date as string | null ?? null}
+                    dealStage={deal.stage ?? "lead"}
                   />
                 </Suspense>
               </SectionErrorBoundary>
@@ -666,6 +666,17 @@ function DealHeader({
   const [creatingDrive, setCreatingDrive] = useState(false);
   const [deleteDealOpen, setDeleteDealOpen] = useState(false);
   const [deleteDealLoading, setDeleteDealLoading] = useState(false);
+
+  // Email composer state (for contact popover)
+  const [emailComposeOpen, setEmailComposeOpen] = useState(false);
+  const [emailToContact, setEmailToContact] = useState<{
+    email: string;
+    name: string;
+    contactId: string;
+  } | null>(null);
+
+  // Softphone for click-to-call
+  const softphone = useSoftphoneMaybe();
 
   // Contact avatars for header
   const borrower = deal.primary_contact
@@ -989,22 +1000,43 @@ function DealHeader({
                         <div className="border-t border-border" />
                         <div className="space-y-1">
                           {contact.email && (
-                            <a
-                              href={`mailto:${contact.email}`}
-                              className="flex items-center gap-2.5 rounded-md px-2 py-1.5 text-xs text-foreground hover:bg-muted rq-transition"
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setEmailToContact({
+                                  email: contact.email!,
+                                  name: contact.name,
+                                  contactId: contact.id,
+                                });
+                                setEmailComposeOpen(true);
+                              }}
+                              className="flex w-full items-center gap-2.5 rounded-md px-2 py-1.5 text-xs text-foreground hover:bg-muted rq-transition text-left cursor-pointer border-0 bg-transparent"
                             >
                               <Mail className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
                               <span className="truncate">{contact.email}</span>
-                            </a>
+                            </button>
                           )}
                           {contact.phone && (
-                            <a
-                              href={`tel:${contact.phone}`}
-                              className="flex items-center gap-2.5 rounded-md px-2 py-1.5 text-xs text-foreground hover:bg-muted rq-transition"
+                            <button
+                              type="button"
+                              onClick={() => {
+                                if (softphone && softphone.status === "ready") {
+                                  const normalized = contact.phone!.startsWith("+")
+                                    ? contact.phone!
+                                    : `+1${contact.phone!.replace(/\D/g, "")}`;
+                                  softphone.makeOutboundCall(normalized);
+                                } else {
+                                  window.open(`tel:${contact.phone}`, "_self");
+                                }
+                              }}
+                              className="flex w-full items-center gap-2.5 rounded-md px-2 py-1.5 text-xs text-foreground hover:bg-muted rq-transition text-left cursor-pointer border-0 bg-transparent"
                             >
                               <Phone className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
                               <span>{formatPhoneNumber(contact.phone)}</span>
-                            </a>
+                              {softphone?.status === "ready" && (
+                                <span className="ml-auto text-[9px] text-emerald-500 font-medium">Softphone</span>
+                              )}
+                            </button>
                           )}
                           {!contact.email && !contact.phone && (
                             <span className="text-xs text-muted-foreground px-2 py-1">No contact info</span>
@@ -1384,6 +1416,22 @@ function DealHeader({
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Contact email composer (from header popover) */}
+      {emailToContact && (
+        <EmailComposeSheet
+          open={emailComposeOpen}
+          onOpenChange={(open) => {
+            setEmailComposeOpen(open);
+            if (!open) setEmailToContact(null);
+          }}
+          toEmail={emailToContact.email}
+          toName={emailToContact.name}
+          linkedContactId={emailToContact.contactId}
+          linkedLoanId={deal.id}
+          currentUserId={currentUserId}
+        />
+      )}
     </>
   );
 }
