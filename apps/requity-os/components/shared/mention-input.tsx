@@ -14,6 +14,7 @@ interface TeamMember {
 export interface MentionInputHandle {
   focus: () => void;
   insertAt: () => void;
+  insertText: (text: string) => void;
 }
 
 interface MentionInputProps {
@@ -72,6 +73,20 @@ export const MentionInput = forwardRef<MentionInputHandle, MentionInputProps>(fu
   useImperativeHandle(ref, () => ({
     focus() {
       textareaRef.current?.focus();
+    },
+    insertText(text: string) {
+      const ta = textareaRef.current;
+      if (!ta) return;
+      ta.focus();
+      const pos = ta.selectionStart ?? value.length;
+      const before = value.slice(0, pos);
+      const after = value.slice(pos);
+      const newValue = before + text + after;
+      onChange(newValue);
+      setTimeout(() => {
+        const newPos = pos + text.length;
+        ta.setSelectionRange(newPos, newPos);
+      }, 0);
     },
     insertAt() {
       const ta = textareaRef.current;

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef } from "react";
-import { Send, Lock, LockOpen, Loader2, Paperclip, AtSign } from "lucide-react";
+import { Send, Lock, LockOpen, Loader2, Paperclip, AtSign, Smile } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { MentionInput, MentionInputHandle } from "@/components/shared/mention-input";
 import {
@@ -9,6 +9,7 @@ import {
   AttachmentPreview,
   type UploadedAttachment,
 } from "@/components/shared/attachments";
+import { EmojiPicker } from "@/components/shared/EmojiPicker";
 import { showError } from "@/lib/toast";
 
 interface NoteComposerProps {
@@ -191,6 +192,17 @@ export function NoteComposer({
                 e.target.value = "";
               }}
             />
+            <EmojiPicker
+              onSelect={(emoji) => mentionInputRef.current?.insertText(emoji)}
+            >
+              <button
+                type="button"
+                className={iconBtnClass}
+                title="Add emoji"
+              >
+                <Smile className="h-3.5 w-3.5" strokeWidth={1.5} />
+              </button>
+            </EmojiPicker>
             <button
               type="button"
               className={iconBtnClass}
