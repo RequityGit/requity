@@ -2,6 +2,7 @@
   "name": "Requity Group Platform",
   "short_name": "Requity",
   "description": "Borrower and Investor Portal for Requity Group",
+  "id": "/",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#FFFFFF",
