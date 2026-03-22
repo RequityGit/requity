@@ -242,7 +242,7 @@ export function TemplateSheet({
   };
 
   return (
-    <Dialog open={open} onOpenChange={() => onClose()}>
+    <Dialog open={open} onOpenChange={(isOpen) => { if (!isOpen) onClose(); }}>
       <DialogContent className="sm:max-w-[560px] p-0 flex flex-col max-h-[90vh] overflow-hidden">
         <DialogHeader className="px-6 pt-4 pb-0">
           <div className="flex items-center gap-2.5">

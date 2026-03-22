@@ -10,6 +10,7 @@ import { ActivityFilters, type ActivityFilter } from "./ActivityFilters";
 import { ActivityFeed } from "./ActivityFeed";
 import { ActivityComposer } from "./ActivityComposer";
 import { TimelineTab } from "./TimelineTab";
+import { UnifiedNotes } from "@/components/shared/UnifiedNotes";
 
 // ── Sidebar tab types ──
 
@@ -210,9 +211,25 @@ export function DealActivitySidebar({
           primaryContactId={primaryContactId ?? null}
           onSwitchToNotes={() => setActiveTab("notes")}
         />
+      ) : activeTab === "notes" ? (
+        /* Notes tab uses UnifiedNotes for full threading support */
+        <div className="flex-1 flex flex-col overflow-hidden">
+          <div className="flex-1 overflow-y-auto px-2 pt-3 pb-1">
+            <UnifiedNotes
+              entityType="deal"
+              entityId={dealId}
+              dealId={dealId}
+              loanId={loanId}
+              opportunityId={opportunityId}
+              showPinning
+              compact
+              chatMode
+            />
+          </div>
+        </div>
       ) : (
         <>
-          {/* Existing notes/conditions/messages feed */}
+          {/* Existing conditions/messages feed */}
           <ActivityFeed
             items={items}
             loading={loading}
@@ -226,14 +243,16 @@ export function DealActivitySidebar({
         </>
       )}
 
-      {/* Composer (always visible) */}
-      <ActivityComposer
-        dealId={dealId}
-        currentUserId={currentUserId}
-        currentUserName={currentUserName}
-        conditions={conditions}
-        onNotePosted={refetch}
-      />
+      {/* Composer (visible for conditions/messages tabs, not for notes which has its own) */}
+      {activeTab !== "timeline" && activeTab !== "notes" && (
+        <ActivityComposer
+          dealId={dealId}
+          currentUserId={currentUserId}
+          currentUserName={currentUserName}
+          conditions={conditions}
+          onNotePosted={refetch}
+        />
+      )}
     </aside>
   );
 }
