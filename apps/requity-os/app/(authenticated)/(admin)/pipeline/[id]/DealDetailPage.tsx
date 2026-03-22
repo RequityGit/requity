@@ -110,6 +110,7 @@ import { getDealDisplayConfig, getDealFlavor } from "@/lib/pipeline/deal-display
 import { ResidentialAnalysisTab } from "@/components/pipeline/tabs/ResidentialAnalysisTab";
 
 const DealMessagesPanel = lazy(() => import("@/components/pipeline/DealMessagesPanel").then(m => ({ default: m.DealMessagesPanel })));
+const ActionCenterTab = lazy(() => import("@/components/pipeline/tabs/ActionCenterTab").then(m => ({ default: m.ActionCenterTab })));
 const FormsTab = lazy(() => import("@/components/pipeline/tabs/FormsTab").then(m => ({ default: m.FormsTab })));
 import { DealNotePreview } from "@/components/pipeline/DealNotePreview";
 import type { DealPreviewNote } from "@/components/pipeline/DealNotePreview";
@@ -200,6 +201,7 @@ function DealDetailPageInner({
   isSuperAdmin = false,
 }: DealDetailPageProps) {
   const UNIVERSAL_TABS = [
+    "Action Center",
     "Overview",
     "Property",
     "Analysis",
@@ -223,7 +225,7 @@ function DealDetailPageInner({
     const t = tabParam?.toLowerCase();
     if (t === "contacts") return "borrower";
     if (t === "conditions" || t === "documents") return "diligence";
-    if (t === "tasks" || t === "activity" || t === "notes") return "overview";
+    if (t === "tasks" || t === "activity" || t === "notes") return "action center";
     return tabParam;
   })();
   const initialTab =
@@ -251,6 +253,13 @@ function DealDetailPageInner({
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
   }, []);
+
+  // Auto-collapse sidebar when Action Center is active (it has its own activity stream)
+  useEffect(() => {
+    if (activeTab === "Action Center") {
+      setSidebarOpen(false);
+    }
+  }, [activeTab]);
 
   // Backward compatibility: replace old tab params in URL
   React.useEffect(() => {
@@ -534,6 +543,23 @@ function DealDetailPageInner({
         <div className={cn("flex min-w-0 flex-1 overflow-hidden", sidebarOpen && "-mr-4 md:-mr-6 lg:-mr-8")}>
           {/* Left: scrollable tab content */}
           <div className={cn("flex-1 min-w-0 overflow-y-auto flex flex-col gap-4 pb-8", sidebarOpen ? "pr-4 md:pr-6" : "pr-0")}>
+          {loadedTabs.has("Action Center") && (
+            <div className={activeTab !== "Action Center" ? "hidden" : undefined}>
+              <SectionErrorBoundary fallbackTitle="Could not load action center">
+                <Suspense fallback={<TabLoadingFallback />}>
+                  <ActionCenterTab
+                    dealId={deal.id}
+                    primaryContactId={deal.primary_contact_id ?? null}
+                    currentUserId={currentUserId}
+                    currentUserName={currentUserName}
+                    loanAmount={(deal.uw_data as Record<string, unknown>)?.loan_amount as number | null ?? null}
+                    ltv={(deal.uw_data as Record<string, unknown>)?.ltv as number | null ?? null}
+                    closeDate={(deal.uw_data as Record<string, unknown>)?.estimated_close_date as string | null ?? null}
+                  />
+                </Suspense>
+              </SectionErrorBoundary>
+            </div>
+          )}
           {loadedTabs.has("Overview") && (
             <div className={activeTab !== "Overview" ? "hidden" : undefined}>
               <SectionErrorBoundary fallbackTitle="Could not load overview">

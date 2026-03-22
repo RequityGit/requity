@@ -56,3 +56,13 @@ supabase/.temp
 # lock files (pnpm only)
 package-lock.json
 yarn.lock
+
+# scratch / mockup files (root-level prototypes, prompts, scripts)
+*.html
+!apps/**/*.html
+*.jsx
+!apps/**/*.jsx
+*.py
+deal-card-v4-prompt.md
+generate-icons.py
+apps/requity-os/dev/
