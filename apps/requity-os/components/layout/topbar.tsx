@@ -11,10 +11,12 @@ import {
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { LogOut, ShieldCheck, User, Eye, BookOpen, Sun, Moon, Menu } from "lucide-react";
-import { RoleSwitcher } from "./role-switcher";
+import { LogOut, ShieldCheck, User, Eye, BookOpen, Sun, Moon, Menu, Crown, Shield, Landmark, Building2, Check, Users } from "lucide-react";
 import { QuickCreateButton } from "./quick-create-button";
 import { ViewAsBanner } from "./view-as-banner";
 import { NotificationBell } from "@/components/notifications/notification-bell";
@@ -23,6 +25,7 @@ import { UserSearchModal } from "./user-search-modal";
 import { CommandSearch } from "@/components/search/CommandSearch";
 import { useTheme } from "@/components/theme-provider";
 import { useMobileNav } from "./mobile-layout-wrapper";
+import { useViewAs } from "@/contexts/view-as-context";
 
 interface TopbarProps {
   userName: string;
@@ -39,8 +42,22 @@ export function Topbar({ userName, role, email, allowedRoles, userId, isSuperAdm
   const supabase = createClient();
   const { isImpersonating, targetRole, targetUserName } = useImpersonation();
   const [userSearchOpen, setUserSearchOpen] = useState(false);
+  const [switching, setSwitching] = useState(false);
   const { theme, toggleTheme } = useTheme();
   const { openMobileSidebar } = useMobileNav();
+  const { isSuperAdmin: isSuperAdminViewAs, viewAsRole, setViewAsRole, isViewingAs, exitViewAs } = useViewAs();
+
+  const roleConfig = {
+    admin: { label: "Admin", icon: Shield },
+    investor: { label: "Investor", icon: Landmark },
+    borrower: { label: "Borrower", icon: Building2 },
+  } as const;
+
+  const viewAsRoles: { role: "admin" | "investor" | "borrower"; label: string; icon: React.ElementType }[] = [
+    { role: "admin", label: "Admin", icon: Shield },
+    { role: "investor", label: "Investor", icon: Landmark },
+    { role: "borrower", label: "Borrower", icon: Building2 },
+  ];
 
   async function handleLogout() {
     await supabase.auth.signOut();
@@ -48,8 +65,32 @@ export function Topbar({ userName, role, email, allowedRoles, userId, isSuperAdm
     router.refresh();
   }
 
+  async function handleSwitch(newRole: string) {
+    if (newRole === role || switching) return;
+    setSwitching(true);
+    try {
+      const res = await fetch("/api/switch-role", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ role: newRole }),
+      });
+      if (res.ok) {
+        const { redirect } = await res.json();
+        router.push(redirect);
+        router.refresh();
+      }
+    } finally {
+      setSwitching(false);
+    }
+  }
+
+  function handleViewAs(r: "admin" | "investor" | "borrower") {
+    setViewAsRole(r);
+  }
+
   // When impersonating, show the impersonated user's role in the badge
   const displayRole = isImpersonating && targetRole ? targetRole : role;
+  const showRoleSwitcher = !isImpersonating && (isSuperAdmin || allowedRoles.length > 1);
 
   return (
     <>
@@ -95,25 +136,6 @@ export function Topbar({ userName, role, email, allowedRoles, userId, isSuperAdm
         <div className="flex shrink-0 items-center gap-2 md:gap-4">
           <QuickCreateButton currentUserId={userId} isSuperAdmin={isSuperAdmin} />
           <NotificationBell userId={userId} activeRole={displayRole} />
-
-          {/* Role switcher - hidden on mobile */}
-          <div className="hidden md:block">
-            {isImpersonating ? (
-              <button
-                className="flex items-center justify-center h-9 w-9 rounded-md border border-amber-300 bg-amber-100 text-amber-800 dark:border-amber-700 dark:bg-amber-900/30 dark:text-amber-400 cursor-default"
-                aria-label={`Impersonating as ${displayRole}`}
-              >
-                <Eye className="h-4 w-4" />
-              </button>
-            ) : (
-              <RoleSwitcher
-                activeRole={role}
-                allowedRoles={allowedRoles}
-                isSuperAdmin={isSuperAdmin}
-                onViewAsUser={() => setUserSearchOpen(true)}
-              />
-            )}
-          </div>
 
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -176,6 +198,76 @@ export function Topbar({ userName, role, email, allowedRoles, userId, isSuperAdm
                       <ShieldCheck className="mr-2 h-4 w-4" />
                       User Management
                     </DropdownMenuItem>
+                  )}
+                  {showRoleSwitcher && (
+                    <DropdownMenuSub>
+                      <DropdownMenuSubTrigger className="cursor-pointer">
+                        <Crown className="mr-2 h-4 w-4" />
+                        Switch Role
+                      </DropdownMenuSubTrigger>
+                      <DropdownMenuSubContent className="w-48">
+                        {isSuperAdmin ? (
+                          <>
+                            <DropdownMenuItem
+                              onClick={() => exitViewAs()}
+                              className="cursor-pointer flex items-center justify-between"
+                            >
+                              <span className="flex items-center gap-2">
+                                <Crown className="h-4 w-4" />
+                                Super Admin
+                              </span>
+                              {!isViewingAs && <Check className="h-4 w-4 text-green-600" />}
+                            </DropdownMenuItem>
+                            {viewAsRoles.map(({ role: r, label, icon: Icon }) => {
+                              const isActive = isViewingAs && viewAsRole === r;
+                              return (
+                                <DropdownMenuItem
+                                  key={r}
+                                  onClick={() => handleViewAs(r)}
+                                  className="cursor-pointer flex items-center justify-between"
+                                >
+                                  <span className="flex items-center gap-2">
+                                    <Icon className="h-4 w-4" />
+                                    {label}
+                                  </span>
+                                  {isActive && <Check className="h-4 w-4 text-green-600" />}
+                                </DropdownMenuItem>
+                              );
+                            })}
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem
+                              onClick={() => setUserSearchOpen(true)}
+                              className="cursor-pointer flex items-center gap-2 text-amber-700"
+                            >
+                              <Users className="h-4 w-4" />
+                              View as specific user...
+                            </DropdownMenuItem>
+                          </>
+                        ) : (
+                          (["admin", "investor", "borrower"] as const)
+                            .filter((r) => allowedRoles.includes(r))
+                            .map((r) => {
+                              const config = roleConfig[r];
+                              const Icon = config.icon;
+                              const isActive = r === role;
+                              return (
+                                <DropdownMenuItem
+                                  key={r}
+                                  onClick={() => handleSwitch(r)}
+                                  className="cursor-pointer flex items-center justify-between"
+                                  disabled={switching}
+                                >
+                                  <span className="flex items-center gap-2">
+                                    <Icon className="h-4 w-4" />
+                                    {config.label}
+                                  </span>
+                                  {isActive && <Check className="h-4 w-4 text-green-600" />}
+                                </DropdownMenuItem>
+                              );
+                            })
+                        )}
+                      </DropdownMenuSubContent>
+                    </DropdownMenuSub>
                   )}
                   <DropdownMenuSeparator />
                 </>

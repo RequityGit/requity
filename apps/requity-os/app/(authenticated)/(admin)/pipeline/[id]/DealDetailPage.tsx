@@ -339,7 +339,7 @@ function DealDetailPageInner({
   );
 
   return (
-    <div className="min-h-screen">
+    <div className="flex flex-col h-full -mb-20 md:-mb-6 lg:-mb-8 overflow-hidden">
       {/* Breadcrumb */}
       <Breadcrumb className="mb-3 text-[13px]">
         <BreadcrumbList>
@@ -361,7 +361,7 @@ function DealDetailPageInner({
         </BreadcrumbList>
       </Breadcrumb>
 
-      <div className={cn("mx-auto", sidebarOpen ? "max-w-[1680px]" : "max-w-[1280px]")}>
+      <div className={cn("mx-auto flex flex-col flex-1 overflow-hidden", sidebarOpen ? "max-w-[1680px]" : "max-w-[1280px]")}>
         {/* Header */}
         <DealHeader
           deal={deal}
@@ -530,10 +530,10 @@ function DealDetailPageInner({
         {/* Inline Layout Toolbar (shown when editing) */}
         <InlineLayoutToolbar onSaveComplete={() => layout.refetch()} tabs={layout.tabs} />
 
-        {/* Tab Content + Activity Sidebar */}
-        <div className="flex gap-0 min-w-0">
-          {/* Left: Tab content */}
-          <div className="flex-1 min-w-0 flex flex-col gap-4">
+        {/* Tab Content + Activity Sidebar — split pane */}
+        <div className="flex min-w-0 flex-1 overflow-hidden -mr-4 md:-mr-6 lg:-mr-8">
+          {/* Left: scrollable tab content */}
+          <div className="flex-1 min-w-0 overflow-y-auto flex flex-col gap-4 pr-4 md:pr-6 lg:pr-8 pb-8">
           {loadedTabs.has("Overview") && (
             <div className={activeTab !== "Overview" ? "hidden" : undefined}>
               <SectionErrorBoundary fallbackTitle="Could not load overview">
@@ -635,8 +635,8 @@ function DealDetailPageInner({
           )}
           </div>
 
-          {/* Right: Activity Sidebar (sticky) */}
-          <div className="sticky top-0 self-start h-[calc(100vh-16px)] flex-shrink-0">
+          {/* Right: Activity Sidebar (fixed height, non-scrolling) */}
+          <div className="flex-shrink-0 h-full">
             {sidebarOpen ? (
               <DealActivitySidebar
                 dealId={deal.id}
@@ -652,7 +652,7 @@ function DealDetailPageInner({
             ) : (
               <button
                 onClick={() => setSidebarOpen(true)}
-                className="sticky top-20 h-fit flex flex-col items-center gap-2 py-3 px-1.5 rounded-l-lg border border-r-0 border-border bg-muted/50 hover:bg-muted rq-transition cursor-pointer"
+                className="mt-4 h-fit flex flex-col items-center gap-2 py-3 px-1.5 rounded-l-lg border border-r-0 border-border bg-muted/50 hover:bg-muted rq-transition cursor-pointer"
                 title="Open Activity"
               >
                 <ChevronsLeft className="h-4 w-4 text-muted-foreground" />

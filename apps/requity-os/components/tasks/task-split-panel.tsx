@@ -655,7 +655,7 @@ export function TaskSplitPanel({
 
   return (
     <>
-      <DialogPrimitive.Root open={open} onOpenChange={() => onClose()}>
+      <DialogPrimitive.Root open={open} onOpenChange={(isOpen) => { if (!isOpen) onClose(); }}>
         <DialogPrimitive.Portal>
           {/* Overlay */}
           <DialogPrimitive.Overlay className="fixed inset-0 z-50 bg-black/60 backdrop-blur-[2px] data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0" />
