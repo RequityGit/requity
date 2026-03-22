@@ -66,7 +66,6 @@ const FIELD_OPTIONS: { value: string; label: string }[] = [
   { value: "company_id", label: "Company" },
   { value: "expected_close_date", label: "Expected Close Date" },
   { value: "capital_side", label: "Capital Side" },
-  { value: "card_type_id", label: "Card Type" },
   // Common uw_data fields
   { value: "uw:loan_amount", label: "UW — Loan Amount" },
   { value: "uw:property_value", label: "UW — Property Value" },
