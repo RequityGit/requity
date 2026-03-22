@@ -11,7 +11,8 @@ import {
   Activity,
   UserPlus,
 } from "lucide-react";
-import { StagePill, EmptyState, MonoValue, TimelineEvent } from "../shared";
+import { EmptyState } from "@/components/shared/EmptyState";
+import { StagePill, MonoValue, TimelineEvent } from "../shared";
 import { formatCurrency } from "@/lib/format";
 import type {
   ContactData,
@@ -265,9 +266,11 @@ function RecentActivityCard({ activities }: { activities: ActivityData[] }) {
       </CardHeader>
       <CardContent>
         {recent.length === 0 ? (
-          <p className="text-sm text-muted-foreground text-center py-4">
-            No recent activity.
-          </p>
+          <EmptyState
+            icon={Activity}
+            title="No recent activity"
+            compact
+          />
         ) : (
           <div className="space-y-0">
             {recent.map((act, i) => {

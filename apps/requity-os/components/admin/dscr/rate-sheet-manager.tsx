@@ -24,7 +24,7 @@ import {
 } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/components/ui/use-toast";
-import { Upload, FileText, Eye, CheckCircle, AlertCircle, Loader2 } from "lucide-react";
+import { Upload, FileText, Eye, CheckCircle, AlertCircle, Loader2, Building2, Table } from "lucide-react";
 import {
   createRateSheetUploadAction,
   parseRateSheetAction,
@@ -33,6 +33,7 @@ import {
 import { formatDate } from "@/lib/format";
 import { createClient } from "@/lib/supabase/client";
 import { RateSheetReview } from "./rate-sheet-review";
+import { EmptyState } from "@/components/shared/EmptyState";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
@@ -224,14 +225,12 @@ export function RateSheetManager({
             {/* Current rate sheet status per lender */}
             {lenders.length === 0 ? (
               <Card>
-                <CardContent className="py-12 text-center">
-                  <p className="text-muted-foreground">
-                    No lenders configured.{" "}
-                    <a href="/models/dscr?tab=lenders" className="text-teal-600 hover:underline">
-                      Add lenders first
-                    </a>
-                    .
-                  </p>
+                <CardContent>
+                  <EmptyState
+                    icon={Building2}
+                    title="No lenders configured"
+                    description="Add lenders first before uploading rate sheets."
+                  />
                 </CardContent>
               </Card>
             ) : (
@@ -284,7 +283,11 @@ export function RateSheetManager({
               </CardHeader>
               <CardContent>
                 {uploads.length === 0 ? (
-                  <p className="text-muted-foreground text-sm">No rate sheets uploaded yet.</p>
+                  <EmptyState
+                    icon={Table}
+                    title="No rate sheets uploaded yet"
+                    compact
+                  />
                 ) : (
                   <div className="space-y-2">
                     {uploads.map((u: any) => (

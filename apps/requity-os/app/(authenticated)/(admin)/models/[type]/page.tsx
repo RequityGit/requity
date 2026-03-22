@@ -10,6 +10,7 @@ import {
   Plus,
   LinkIcon,
 } from "lucide-react";
+import { EmptyState } from "@/components/shared/EmptyState";
 import { PageHeader } from "@/components/shared/page-header";
 import { requireAdmin } from "@/lib/auth/require-admin";
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -195,17 +196,12 @@ export default async function ModelTypePage({
         </div>
 
         {(!scenarios || scenarios.length === 0) ? (
-          <div className="rounded-lg border border-dashed border-border py-10 flex flex-col items-center gap-3">
-            <GitBranch size={20} className="text-muted-foreground" strokeWidth={1.5} />
-            <p className="text-sm text-muted-foreground">
-              No scenarios yet. Create your first one to start underwriting.
-            </p>
-            <Button size="sm" className="h-8 text-[12px]" asChild>
-              <Link href={`/models/${type}/scenarios`}>
-                <Plus size={13} className="mr-1" />
-                New Scenario
-              </Link>
-            </Button>
+          <div className="rounded-lg border border-dashed border-border">
+            <EmptyState
+              icon={GitBranch}
+              title="No scenarios yet"
+              description="Create your first one to start underwriting."
+            />
           </div>
         ) : (
           <div className="flex flex-col gap-1.5">

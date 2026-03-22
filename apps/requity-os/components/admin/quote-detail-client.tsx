@@ -58,7 +58,9 @@ import {
   Trash2,
   Save,
   DollarSign,
+  Activity,
 } from "lucide-react";
+import { EmptyState } from "@/components/shared/EmptyState";
 // lender_quotes table may not be in generated types
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type LenderQuote = Record<string, any>;
@@ -609,9 +611,7 @@ export function QuoteDetailClient({
           </CardHeader>
           <CardContent>
             {activities.length === 0 ? (
-              <p className="text-sm text-muted-foreground text-center py-4">
-                No activity yet.
-              </p>
+              <EmptyState icon={Activity} title="No activity yet" compact />
             ) : (
               <div className="space-y-4">
                 {activities.map((activity) => (

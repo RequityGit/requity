@@ -12,7 +12,9 @@ import {
   X,
   Check,
   Plus,
+  BarChart2,
 } from "lucide-react";
+import { EmptyState } from "@/components/shared/EmptyState";
 import { sopClient } from "@/lib/sops/client";
 import { formatDate } from "@/lib/format";
 
@@ -241,10 +243,8 @@ export function SOPAdminClient({
               </table>
             </div>
           ) : (
-            <div className="rounded-xl border border-border bg-card p-6 text-center">
-              <p className="text-muted-foreground">
-                No open staleness flags. All SOPs are up to date.
-              </p>
+            <div className="rounded-xl border border-border bg-card">
+              <EmptyState icon={AlertTriangle} title="No open staleness flags" description="All SOPs are up to date." compact />
             </div>
           )}
         </section>
@@ -297,10 +297,8 @@ export function SOPAdminClient({
               </table>
             </div>
           ) : (
-            <div className="rounded-xl border border-border bg-card p-6 text-center">
-              <p className="text-muted-foreground">
-                All questions have SOP coverage. Great job!
-              </p>
+            <div className="rounded-xl border border-border bg-card">
+              <EmptyState icon={HelpCircle} title="All questions have SOP coverage" description="Great job!" compact />
             </div>
           )}
         </section>
@@ -346,11 +344,8 @@ export function SOPAdminClient({
               </table>
             </div>
           ) : (
-            <div className="rounded-xl border border-border bg-card p-6 text-center">
-              <p className="text-muted-foreground">
-                No SOP view data yet. Views will appear as users browse the
-                Knowledge Base.
-              </p>
+            <div className="rounded-xl border border-border bg-card">
+              <EmptyState icon={BarChart2} title="No SOP view data yet" description="Views will appear as users browse the Knowledge Base." compact />
             </div>
           )}
         </section>

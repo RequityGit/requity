@@ -12,9 +12,10 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/components/ui/use-toast";
 import { updateTermSheetTemplate } from "@/app/(authenticated)/control-center/term-sheets/actions";
-import { Save, Loader2, Settings, PanelRightOpen, PanelRightClose } from "lucide-react";
+import { Save, Loader2, Settings, PanelRightOpen, PanelRightClose, FileText } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { formatDateTime } from "@/lib/format";
+import { EmptyState } from "@/components/shared/EmptyState";
 import {
   TERM_SHEET_SECTIONS,
   mergeFieldVisibility,
@@ -245,8 +246,12 @@ export function TermSheetTemplateEditor({ templates: initial }: Props) {
   if (!current) {
     return (
       <Card>
-        <CardContent className="py-12 text-center text-muted-foreground">
-          No term sheet templates found. Please seed the database first.
+        <CardContent>
+          <EmptyState
+            icon={FileText}
+            title="No term sheet templates found"
+            description="Please seed the database first."
+          />
         </CardContent>
       </Card>
     );

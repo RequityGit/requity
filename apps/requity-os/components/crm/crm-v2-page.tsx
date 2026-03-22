@@ -13,7 +13,8 @@ import {
 import { KpiCard } from "@/components/shared/kpi-card";
 import { AddContactDialog } from "@/components/crm/add-contact-dialog";
 import { AddCompanyDialog } from "@/components/crm/add-company-dialog";
-import { DeleteContactButton } from "@/components/crm/delete-contact-button";
+import { useConfirm } from "@/components/shared/ConfirmDialog";
+import { deleteCrmContactAction, deleteCrmCompanyAction } from "@/app/(authenticated)/(admin)/contacts/actions";
 import {
   CRM_RELATIONSHIP_TYPES,
   CRM_LIFECYCLE_STAGES,
@@ -21,6 +22,7 @@ import {
 } from "@/lib/constants";
 import { formatDate } from "@/lib/format";
 import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
 import {
   Users,
   Building2,
@@ -34,9 +36,10 @@ import {
   TrendingUp,
   CheckCircle2,
   DollarSign,
+  Trash2,
 } from "lucide-react";
 import { CrmAvatar, RelPill, StageDot, CompanyStatusDot, getInitials } from "./crm-primitives";
-import { DeleteCompanyButton } from "./delete-company-button";
+import { toast } from "sonner";
 import { ClickToCallNumber } from "@/components/ui/ClickToCallNumber";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Badge } from "@/components/ui/badge";
@@ -116,6 +119,7 @@ export function CrmV2Page({
 }: CrmV2PageProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const confirm = useConfirm();
 
   // View state
   const [activeView, setActiveView] = useState<"contacts" | "companies">(initialView);
@@ -663,11 +667,29 @@ export function CrmV2Page({
                         </td>
                         {isSuperAdmin && (
                           <td className="px-4 py-2.5 text-center" onClick={(e) => e.stopPropagation()}>
-                            <DeleteContactButton
-                              contactId={c.id}
-                              contactName={`${c.first_name} ${c.last_name}`}
-                              variant="icon"
-                            />
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-7 w-7 p-0 text-red-600 hover:text-red-700"
+                              onClick={async () => {
+                                const ok = await confirm({
+                                  title: "Delete contact?",
+                                  description: `This will remove "${c.first_name} ${c.last_name}" from the CRM. This action cannot be undone.`,
+                                  confirmLabel: "Delete",
+                                  destructive: true,
+                                });
+                                if (!ok) return;
+                                const result = await deleteCrmContactAction(c.id);
+                                if (result.error) {
+                                  toast.error(result.error);
+                                } else {
+                                  toast.success("Contact deleted");
+                                  router.refresh();
+                                }
+                              }}
+                            >
+                              <Trash2 className="h-3.5 w-3.5" />
+                            </Button>
                           </td>
                         )}
                       </tr>
@@ -775,11 +797,29 @@ export function CrmV2Page({
                         </td>
                         {isSuperAdmin && (
                           <td className="px-4 py-3 text-center" onClick={(e) => e.stopPropagation()}>
-                            <DeleteCompanyButton
-                              companyId={c.id}
-                              companyName={c.name}
-                              variant="icon"
-                            />
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-7 w-7 p-0 text-red-600 hover:text-red-700"
+                              onClick={async () => {
+                                const ok = await confirm({
+                                  title: "Delete company?",
+                                  description: `This will remove "${c.name}" from the CRM. This action cannot be undone.`,
+                                  confirmLabel: "Delete",
+                                  destructive: true,
+                                });
+                                if (!ok) return;
+                                const result = await deleteCrmCompanyAction(c.id);
+                                if (result.error) {
+                                  toast.error(result.error);
+                                } else {
+                                  toast.success("Company deleted");
+                                  router.refresh();
+                                }
+                              }}
+                            >
+                              <Trash2 className="h-3.5 w-3.5" />
+                            </Button>
                           </td>
                         )}
                       </tr>

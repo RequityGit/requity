@@ -22,6 +22,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Skeleton } from "@/components/ui/skeleton";
 import { FileText, Upload, Download, MoreHorizontal, X, Eye, Trash2, Loader2 } from "lucide-react";
+import { EmptyState } from "@/components/shared/EmptyState";
 import { relTime } from "@/components/crm/contact-360/contact-detail-shared";
 import { COMPANY_FILE_TYPES } from "@/lib/constants";
 import { deleteCompanyFileAction } from "@/app/(authenticated)/(admin)/companies/actions";
@@ -262,22 +263,15 @@ export function CompanyFilesTab({ files, companyId, loading = false, onRefresh }
 
       {/* Files list */}
       {filtered.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-12 text-center">
-          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-muted mb-4">
-            <FileText
-              className="h-6 w-6 text-muted-foreground"
-              strokeWidth={1.5}
-            />
-          </div>
-          <h3 className="text-sm font-semibold text-foreground mb-1">
-            No files
-          </h3>
-          <p className="text-sm text-muted-foreground">
-            {filter !== "all"
+        <EmptyState
+          icon={FileText}
+          title="No files"
+          description={
+            filter !== "all"
               ? `No ${FILE_TYPE_LABELS[filter] || filter} files. Try changing the filter.`
-              : "Upload your first file to get started."}
-          </p>
-        </div>
+              : "Upload your first file to get started."
+          }
+        />
       ) : (
         <div className="flex flex-col gap-2">
           {filtered.map((f) => {

@@ -42,6 +42,7 @@ import {
   Eye,
   Trash2,
 } from "lucide-react";
+import { EmptyState } from "@/components/shared/EmptyState";
 import { CompanyStatusDot } from "./crm-primitives";
 import type { CompanyRowV2 } from "./crm-v2-page";
 import {
@@ -261,9 +262,12 @@ export function CompaniesView({ companies, isSuperAdmin = false }: CompaniesView
               >
                 {paginatedCompanies.length === 0 ? (
                   <tr>
-                    <td colSpan={7} className="text-center py-16">
-                      <Building2 className="h-8 w-8 text-muted-foreground/40 mx-auto mb-2" />
-                      <p className="text-sm font-medium text-muted-foreground">No companies found</p>
+                    <td colSpan={7}>
+                      <EmptyState
+                        icon={Building2}
+                        title="No companies found"
+                        compact
+                      />
                     </td>
                   </tr>
                 ) : (

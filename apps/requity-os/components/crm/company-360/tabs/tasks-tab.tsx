@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
 import { Plus, Check, CheckCircle2 } from "lucide-react";
+import { EmptyState } from "@/components/shared/EmptyState";
 import { Skeleton } from "@/components/ui/skeleton";
 import { DotPill } from "@/components/crm/contact-360/contact-detail-shared";
 import { formatDate } from "@/lib/format";
@@ -192,29 +193,12 @@ export function CompanyTasksTab({
       />
 
       {tasks.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-12 text-center">
-          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-muted mb-4">
-            <CheckCircle2
-              className="h-6 w-6 text-muted-foreground"
-              strokeWidth={1.5}
-            />
-          </div>
-          <h3 className="text-sm font-semibold text-foreground mb-1">
-            No tasks
-          </h3>
-          <p className="text-sm text-muted-foreground mb-3">
-            Create a task to track to-dos for this company.
-          </p>
-          <Button
-            variant="outline"
-            size="sm"
-            className="gap-1.5 rounded-lg border-border text-xs"
-            onClick={handleNewTask}
-          >
-            <Plus className="h-3.5 w-3.5" strokeWidth={1.5} />
-            New Task
-          </Button>
-        </div>
+        <EmptyState
+          icon={CheckCircle2}
+          title="No tasks"
+          description="Create a task to track to-dos for this company."
+          action={{ label: "New Task", onClick: handleNewTask, icon: Plus }}
+        />
       ) : (
         tasks.map((t) => {
           const sc =

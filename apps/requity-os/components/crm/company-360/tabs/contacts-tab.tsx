@@ -4,7 +4,8 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Plus, Mail, Phone, ChevronRight } from "lucide-react";
+import { Plus, Mail, Phone, ChevronRight, Users } from "lucide-react";
+import { EmptyState } from "@/components/shared/EmptyState";
 import { DotPill, relTime } from "@/components/crm/contact-360/contact-detail-shared";
 import { ClickToCallNumber } from "@/components/ui/ClickToCallNumber";
 import { AddContactDialog } from "@/components/crm/add-contact-dialog";
@@ -63,17 +64,11 @@ export function CompanyContactsTab({
       </div>
 
       {contacts.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-12 text-center">
-          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-muted mb-4">
-            <Phone className="h-6 w-6 text-muted-foreground" strokeWidth={1.5} />
-          </div>
-          <h3 className="text-sm font-semibold text-foreground mb-1">
-            No contacts
-          </h3>
-          <p className="text-sm text-muted-foreground">
-            Link contacts to this company to track your relationships.
-          </p>
-        </div>
+        <EmptyState
+          icon={Users}
+          title="No contacts"
+          description="Link contacts to this company to track your relationships."
+        />
       ) : (
         <div className="flex flex-col gap-2">
           {sorted.map((ct) => {

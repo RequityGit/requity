@@ -30,6 +30,7 @@ import { DocumentReviewPanel } from "@/components/pipeline/DocumentReviewPanel";
 import { useDocumentReviewStatus } from "@/hooks/useDocumentReviewStatus";
 import { GenerateDocumentDialog } from "@/components/documents/GenerateDocumentDialog";
 import { formatDate } from "@/lib/format";
+import { EmptyState } from "@/components/shared/EmptyState";
 
 interface DealDocument {
   id: string;
@@ -324,11 +325,20 @@ export function DocumentsTab({
         </div>
 
         {filteredDocs.length === 0 && (
-          <div className="px-5 rq-empty-state">
-            {documents.length === 0
-              ? "No documents uploaded yet."
-              : `No ${visibilityFilter} documents.`}
-          </div>
+          <EmptyState
+            icon={FileText}
+            title={
+              documents.length === 0
+                ? "No documents uploaded yet"
+                : `No ${visibilityFilter} documents`
+            }
+            description={
+              documents.length === 0
+                ? "Upload files using the drop zone below."
+                : undefined
+            }
+            compact
+          />
         )}
 
         {filteredDocs.map((doc, i) => {

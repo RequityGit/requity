@@ -15,7 +15,8 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Search, ExternalLink, MoreHorizontal } from "lucide-react";
+import { Plus, Search, ExternalLink, MoreHorizontal, FileText } from "lucide-react";
+import { EmptyState } from "@/components/shared/EmptyState";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -172,8 +173,8 @@ export default function FormsListPage() {
               </TableRow>
             ) : filtered.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={6} className="rq-empty-state">
-                  No forms found.
+                <TableCell colSpan={6}>
+                  <EmptyState icon={FileText} title="No forms found." compact />
                 </TableCell>
               </TableRow>
             ) : (

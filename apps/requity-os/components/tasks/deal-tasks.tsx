@@ -11,6 +11,7 @@ import {
   CheckCircle2,
   ListChecks,
 } from "lucide-react";
+import { EmptyState } from "@/components/shared/EmptyState";
 import { Button } from "@/components/ui/button";
 import { PriorityDot } from "./priority-dot";
 import { AnimatedTask } from "./animated-task";
@@ -228,22 +229,12 @@ export function DealTasks({
 
       {/* Open tasks */}
       {openTasks.length === 0 && completedTasks.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-5 text-center">
-          <ListChecks
-            className="h-7 w-7 text-muted-foreground/30 mb-1.5"
-            strokeWidth={1.5}
-          />
-          <p className="text-sm text-muted-foreground">No tasks for this deal</p>
-          <Button
-            onClick={handleNewTask}
-            size="sm"
-            variant="outline"
-            className="mt-2"
-          >
-            <Plus className="h-3.5 w-3.5 mr-1" strokeWidth={1.5} />
-            Add first task
-          </Button>
-        </div>
+        <EmptyState
+          icon={ListChecks}
+          title="No tasks for this deal"
+          action={{ label: "Add first task", onClick: handleNewTask, icon: Plus }}
+          compact
+        />
       ) : (
         <>
           <div className="space-y-0.5">

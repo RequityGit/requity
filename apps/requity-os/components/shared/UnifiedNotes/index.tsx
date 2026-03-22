@@ -5,6 +5,7 @@ import { formatDateShort } from "@/lib/format";
 import { createClient } from "@/lib/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
 import { MessageSquare } from "lucide-react";
+import { EmptyState } from "@/components/shared/EmptyState";
 import { NoteComposer } from "./NoteComposer";
 import { NoteCard } from "./NoteCard";
 import { NoteFilters } from "./NoteFilters";
@@ -459,21 +460,12 @@ export function UnifiedNotes({
       <div className="h-14 rounded-xl bg-muted animate-pulse" />
     </div>
   ) : displayNotes.length === 0 ? (
-    <div className="flex flex-col items-center justify-center py-6 text-center">
-      <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-muted mb-2">
-        <MessageSquare
-          className="h-4 w-4 text-muted-foreground"
-          strokeWidth={1.5}
-        />
-      </div>
-      <h3 className="text-sm font-semibold text-foreground mb-0.5">
-        No notes yet
-      </h3>
-      <p className="text-sm text-muted-foreground">
-        Add the first note about this{" "}
-        {entityType === "deal" ? "deal" : entityType === "unified_condition" ? "condition" : entityType}.
-      </p>
-    </div>
+    <EmptyState
+      icon={MessageSquare}
+      title="No notes yet"
+      description={`Add the first note about this ${entityType === "deal" ? "deal" : entityType === "unified_condition" ? "condition" : entityType}.`}
+      compact
+    />
   ) : (
     <div className={`flex flex-col gap-0 ${maxHeight} ${isCompact && !chatMode ? "overflow-y-auto" : ""}`}>
       {displayNotes.map((note, idx) => {

@@ -18,6 +18,7 @@ import {
 import { useToast } from "@/components/ui/use-toast";
 import { Plus, Building2 } from "lucide-react";
 import { addLenderAction, toggleLenderActiveAction } from "@/app/(authenticated)/(admin)/models/dscr/actions";
+import { EmptyState } from "@/components/shared/EmptyState";
 import Link from "next/link";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
@@ -145,13 +146,11 @@ export function LendersList({ lenders }: { lenders: any[] }) {
       </CardHeader>
       <CardContent>
         {lenders.length === 0 ? (
-          <div className="text-center py-12">
-            <Building2 className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-            <p className="text-muted-foreground">No lender partners yet</p>
-            <p className="text-sm text-muted-foreground mt-1">
-              Add your first wholesale lender to get started
-            </p>
-          </div>
+          <EmptyState
+            icon={Building2}
+            title="No lender partners yet"
+            description="Add your first wholesale lender to get started."
+          />
         ) : (
           <div className="space-y-3">
             {lenders.map((l) => (

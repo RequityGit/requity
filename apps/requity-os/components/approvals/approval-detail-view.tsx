@@ -29,6 +29,7 @@ import {
   FileText,
   Loader2,
 } from "lucide-react";
+import { EmptyState } from "@/components/shared/EmptyState";
 import { cn } from "@/lib/utils";
 import { formatCurrency, formatDate, formatDateTime, formatPercent } from "@/lib/format";
 import { formatRelativeTime } from "@/lib/notifications";
@@ -453,7 +454,7 @@ export function ApprovalDetailView({
         </CardHeader>
         <CardContent>
           {auditLog.length === 0 ? (
-            <p className="text-sm text-muted-foreground">No audit entries yet.</p>
+            <EmptyState icon={FileText} title="No audit entries yet." compact />
           ) : (
             <div className="space-y-3">
               {auditLog.map((entry) => {

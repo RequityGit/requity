@@ -30,6 +30,8 @@ import { formatCompactCurrency } from "@/lib/format";
 import { getDealDisplayConfig } from "@/lib/pipeline/deal-display-config";
 import { useUwFieldConfigs } from "@/hooks/useUwFieldConfigs";
 import type { IntakeItem } from "@/lib/intake/types";
+import { EmptyState } from "@/components/shared/EmptyState";
+import { Layers } from "lucide-react";
 
 interface PipelineKanbanProps {
   deals: UnifiedDeal[];
@@ -219,9 +221,11 @@ export function PipelineKanban({
 
                   {/* Regular deal cards */}
                   {stageDeals.length === 0 && (!isLead || intakeItems.length === 0) ? (
-                    <p className="text-xs text-muted-foreground text-center py-8">
-                      No deals
-                    </p>
+                    <EmptyState
+                      icon={Layers}
+                      title="No deals"
+                      compact
+                    />
                   ) : (
                     stageDeals.map((deal) => {
                       const stageConfig = stageConfigMap.get(stage.key);

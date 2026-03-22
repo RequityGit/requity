@@ -11,6 +11,7 @@ import {
   ChevronDown,
   ChevronUp,
 } from "lucide-react";
+import { EmptyState } from "@/components/shared/EmptyState";
 import { formatDate } from "@/lib/format";
 import type { EmailData } from "../types";
 import { EmailComposeSheet } from "@/components/crm/email-compose-sheet";
@@ -58,20 +59,12 @@ export function RecentEmailsSidebar({
       </CardHeader>
       <CardContent>
         {emails.length === 0 ? (
-          <div className="text-center py-4">
-            <p className="text-sm text-muted-foreground mb-2">No emails yet.</p>
-            {contactEmail && (
-              <Button
-                variant="outline"
-                size="sm"
-                className="gap-1 text-xs rounded-lg border-border"
-                onClick={() => setComposeOpen(true)}
-              >
-                <Send className="h-3 w-3" strokeWidth={1.5} />
-                Send First Email
-              </Button>
-            )}
-          </div>
+          <EmptyState
+            icon={Mail}
+            title="No emails yet"
+            action={contactEmail ? { label: "Send First Email", onClick: () => setComposeOpen(true), icon: Send } : undefined}
+            compact
+          />
         ) : (
           <div className="space-y-2">
             {emails.map((email) => {

@@ -51,6 +51,7 @@ import {
   Eye,
   Trash2,
 } from "lucide-react";
+import { EmptyState } from "@/components/shared/EmptyState";
 import { CrmAvatar, RelPill, StageDot, getInitials } from "./crm-primitives";
 import { ClickToCallNumber } from "@/components/ui/ClickToCallNumber";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
@@ -392,21 +393,21 @@ export function ContactsView({
               >
                 {paginatedContacts.length === 0 ? (
                   <tr>
-                    <td colSpan={9} className="text-center py-16">
+                    <td colSpan={9}>
                       {hasContactFilters ? (
-                        <div>
-                          <Users className="h-8 w-8 text-muted-foreground/40 mx-auto mb-2" />
-                          <p className="text-sm font-medium text-muted-foreground">No contacts match your filters</p>
-                          <button onClick={clearAllFilters} className="text-xs text-primary mt-1 hover:underline">
-                            Clear Filters
-                          </button>
-                        </div>
+                        <EmptyState
+                          icon={Users}
+                          title="No contacts match your filters"
+                          action={{ label: "Clear Filters", onClick: clearAllFilters }}
+                          compact
+                        />
                       ) : (
-                        <div>
-                          <Users className="h-8 w-8 text-muted-foreground/40 mx-auto mb-2" />
-                          <p className="text-sm font-medium text-muted-foreground">No contacts yet</p>
-                          <p className="text-xs text-muted-foreground mt-1">Add your first contact to start building your CRM</p>
-                        </div>
+                        <EmptyState
+                          icon={Users}
+                          title="No contacts yet"
+                          description="Add your first contact to start building your CRM"
+                          compact
+                        />
                       )}
                     </td>
                   </tr>

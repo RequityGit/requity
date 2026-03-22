@@ -34,7 +34,8 @@ import {
   ChevronUp,
   Paperclip,
 } from "lucide-react";
-import { TimelineEvent, EmptyState } from "../shared";
+import { TimelineEvent } from "../shared";
+import { EmptyState } from "@/components/shared/EmptyState";
 import type { ActivityData, EmailData } from "../types";
 import { ACTIVITY_TYPE_CONFIG } from "../types";
 

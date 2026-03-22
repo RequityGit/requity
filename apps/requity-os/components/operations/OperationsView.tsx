@@ -42,6 +42,7 @@ import {
   Trash2,
   GripVertical,
 } from "lucide-react";
+import { EmptyState } from "@/components/shared/EmptyState";
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -640,10 +641,12 @@ function AllTasksView({
 
   if (Object.keys(grouped).length === 0) {
     return (
-      <div className="bg-card rounded-xl border border-border py-12 px-5 text-center">
-        <Inbox size={36} className="mx-auto text-muted-foreground" />
-        <div className="text-[15px] font-semibold text-foreground mt-3">No tasks match filters</div>
-        <div className="text-[13px] text-muted-foreground mt-1">Try adjusting your filters to see more results.</div>
+      <div className="bg-card rounded-xl border border-border">
+        <EmptyState
+          icon={Inbox}
+          title="No tasks match filters"
+          description="Try adjusting your filters to see more results."
+        />
       </div>
     );
   }
@@ -687,10 +690,12 @@ function ApprovalsView({
 
   if (pending.length === 0) {
     return (
-      <div className="bg-card rounded-xl border border-border py-12 px-5 text-center">
-        <Shield size={36} className="mx-auto text-muted-foreground" />
-        <div className="text-[15px] font-semibold text-foreground mt-3">No pending approvals</div>
-        <div className="text-[13px] text-muted-foreground mt-1">All caught up. New approval requests will appear here.</div>
+      <div className="bg-card rounded-xl border border-border">
+        <EmptyState
+          icon={Shield}
+          title="No pending approvals"
+          description="All caught up. New approval requests will appear here."
+        />
       </div>
     );
   }
@@ -1186,10 +1191,12 @@ export function OperationsView({
           >
             <div className="flex flex-col gap-2">
               {filteredProjects.length === 0 ? (
-                <div className="bg-card rounded-xl border border-border py-12 px-5 text-center">
-                  <Inbox size={36} className="mx-auto text-muted-foreground" />
-                  <div className="text-[15px] font-semibold text-foreground mt-3">No projects match filters</div>
-                  <div className="text-[13px] text-muted-foreground mt-1">Try adjusting your filters or create a new project.</div>
+                <div className="bg-card rounded-xl border border-border">
+                  <EmptyState
+                    icon={Inbox}
+                    title="No projects match filters"
+                    description="Try adjusting your filters or create a new project."
+                  />
                 </div>
               ) : (
                 filteredProjects.map((p) => (

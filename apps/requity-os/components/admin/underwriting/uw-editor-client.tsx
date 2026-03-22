@@ -18,6 +18,7 @@ import {
   FlaskConical,
   HardHat,
   Landmark,
+  History,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -33,6 +34,7 @@ import { DEFAULT_INPUTS } from "@/lib/underwriting/types";
 import type { CommercialUWState } from "@/components/commercial-uw/types";
 import type { UWModelType } from "@/lib/constants/uw-model-types";
 import { UW_MODEL_LABELS } from "@/lib/constants/uw-model-types";
+import { EmptyState } from "@/components/shared/EmptyState";
 import { formatDate } from "@/lib/format";
 
 export interface UWVersionData {
@@ -339,9 +341,7 @@ export function UWEditorClient({
                 />
               ))}
               {versions.length === 0 && (
-                <div className="py-8 text-center text-xs text-muted-foreground">
-                  No versions yet
-                </div>
+                <EmptyState icon={History} title="No versions yet" compact />
               )}
             </div>
           </div>

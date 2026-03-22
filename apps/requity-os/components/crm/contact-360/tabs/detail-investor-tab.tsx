@@ -4,6 +4,7 @@ import { useState, useMemo, useCallback, useTransition, type ReactNode } from "r
 import { createClient } from "@/lib/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
 import { TrendingUp, Building2, Check, X } from "lucide-react";
+import { EmptyState } from "@/components/shared/EmptyState";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -308,8 +309,12 @@ export function DetailInvestorTab({
           </CardTitle>
         </CardHeader>
         {commitments.length === 0 ? (
-          <CardContent className="rq-empty-state">
-            No investor commitments found.
+          <CardContent>
+            <EmptyState
+              icon={TrendingUp}
+              title="No investor commitments found"
+              compact
+            />
           </CardContent>
         ) : (
           <div className="overflow-x-auto">

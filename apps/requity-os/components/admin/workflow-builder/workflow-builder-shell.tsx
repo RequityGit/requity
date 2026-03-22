@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
 import { cn } from "@/lib/utils";
 import { Plus, Workflow } from "lucide-react";
+import { EmptyState } from "@/components/shared/EmptyState";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { PageHeader } from "@/components/shared/page-header";
@@ -129,12 +130,7 @@ export function WorkflowBuilderShell({
           </div>
           <div className="p-1.5 space-y-0.5">
             {workflows.length === 0 && (
-              <div className="py-8 text-center">
-                <Workflow className="h-8 w-8 text-muted-foreground/30 mx-auto mb-2" strokeWidth={1.5} />
-                <p className="text-sm text-muted-foreground/60">
-                  No workflows yet
-                </p>
-              </div>
+              <EmptyState icon={Workflow} title="No workflows yet" compact />
             )}
             {workflows.map((w) => (
               <button

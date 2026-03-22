@@ -22,7 +22,8 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { useToast } from "@/components/ui/use-toast";
-import { ArrowLeft, CheckCircle, Loader2 } from "lucide-react";
+import { ArrowLeft, CheckCircle, Loader2, Table as TableIcon } from "lucide-react";
+import { EmptyState } from "@/components/shared/EmptyState";
 import { commitRateSheetAction } from "@/app/(authenticated)/(admin)/models/dscr/actions";
 import { LTV_BANDS } from "@/lib/dscr/constants";
 
@@ -179,12 +180,12 @@ export function RateSheetReview({
   if (!parsedData || parsedProducts.length === 0) {
     return (
       <Card>
-        <CardContent className="py-12 text-center">
-          <p className="text-muted-foreground">No parsed data available.</p>
-          <Button variant="outline" onClick={onClose} className="mt-4">
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Go Back
-          </Button>
+        <CardContent>
+          <EmptyState
+            icon={TableIcon}
+            title="No parsed data available"
+            action={{ label: "Go Back", onClick: onClose, icon: ArrowLeft }}
+          />
         </CardContent>
       </Card>
     );

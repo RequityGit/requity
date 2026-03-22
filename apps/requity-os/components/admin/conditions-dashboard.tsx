@@ -32,7 +32,9 @@ import {
   ExternalLink,
   Filter,
   X,
+  ClipboardCheck,
 } from "lucide-react";
+import { EmptyState } from "@/components/shared/EmptyState";
 
 interface ConditionWithLoan {
   id: string;
@@ -529,10 +531,12 @@ export function ConditionsDashboard({
 
       {filteredConditions.length === 0 && (
         <Card>
-          <CardContent className="py-8 text-center text-muted-foreground">
-            {hasFilters
-              ? "No conditions match the current filters."
-              : "No conditions found across active loans."}
+          <CardContent>
+            <EmptyState
+              icon={ClipboardCheck}
+              title={hasFilters ? "No conditions match the current filters." : "No conditions found across active loans."}
+              compact
+            />
           </CardContent>
         </Card>
       )}

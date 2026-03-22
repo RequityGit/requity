@@ -16,7 +16,8 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { useToast } from "@/components/ui/use-toast";
-import { Plus, FileText } from "lucide-react";
+import { Plus, FileText, Table } from "lucide-react";
+import { EmptyState } from "@/components/shared/EmptyState";
 import {
   addProductAction,
   toggleProductActiveAction,
@@ -262,8 +263,12 @@ export function LenderDetail({
 
         {products.length === 0 ? (
           <Card>
-            <CardContent className="py-12 text-center">
-              <p className="text-muted-foreground">No products configured for this lender yet.</p>
+            <CardContent>
+              <EmptyState
+                icon={Table}
+                title="No products configured for this lender yet"
+                compact
+              />
             </CardContent>
           </Card>
         ) : (
@@ -326,13 +331,12 @@ export function LenderDetail({
           </CardHeader>
           <CardContent>
             {uploads.length === 0 ? (
-              <p className="text-muted-foreground text-sm">
-                No rate sheets uploaded yet.{" "}
-                <a href="/models/dscr?tab=rate-sheets" className="text-teal-600 hover:underline">
-                  Upload a rate sheet
-                </a>
-                .
-              </p>
+              <EmptyState
+                icon={Table}
+                title="No rate sheets uploaded yet"
+                description="Upload a rate sheet to view history here."
+                compact
+              />
             ) : (
               <div className="space-y-2">
                 {uploads.map((u) => (

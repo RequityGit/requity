@@ -39,6 +39,8 @@ import {
 import { UnifiedNotes } from "@/components/shared/UnifiedNotes";
 import { createClient } from "@/lib/supabase/client";
 import { formatDate } from "@/lib/format";
+import { EmptyState } from "@/components/shared/EmptyState";
+import { ClipboardCheck } from "lucide-react";
 
 // ─── Category grouping ───
 
@@ -214,8 +216,12 @@ export function ConditionsTab({ conditions, dealId }: ConditionsTabProps) {
 
       {/* Condition cards grouped by category */}
       {filtered.length === 0 && (
-        <div className="rounded-xl border bg-card px-5 rq-empty-state">
-          No conditions match the current filter.
+        <div className="rounded-xl border bg-card">
+          <EmptyState
+            icon={ClipboardCheck}
+            title="No conditions match the current filter"
+            compact
+          />
         </div>
       )}
 
@@ -602,7 +608,12 @@ function ConditionDocuments({
       {loading ? (
         <div className="h-10 rounded-lg bg-muted animate-pulse" />
       ) : docs.length === 0 ? (
-        <p className="text-xs text-muted-foreground py-3">No documents attached.</p>
+        <EmptyState
+          icon={FileText}
+          title="No documents attached"
+          compact
+          className="py-3"
+        />
       ) : (
         <div className="space-y-1.5">
           {docs.map((doc) => (

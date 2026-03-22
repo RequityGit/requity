@@ -42,6 +42,7 @@ import {
   fetchDealContacts,
 } from "@/app/(authenticated)/(admin)/pipeline/[id]/actions";
 import { EmailComposeSheet } from "@/components/crm/email-compose-sheet";
+import { EmptyState } from "@/components/shared/EmptyState";
 
 /** Draft body for "Send by email" when sharing a secure upload link. */
 function buildUploadLinkEmailBody(
@@ -332,16 +333,15 @@ export function SecureUploadLinkDialog({
               </div>
             )}
             {!loadingLinks && activeLinks.length === 0 && (
-              <div className="py-6 text-center text-sm text-muted-foreground">
-                No active upload links.
-                <button
-                  type="button"
-                  onClick={() => setView("create")}
-                  className="ml-1 text-foreground underline underline-offset-2"
-                >
-                  Create one
-                </button>
-              </div>
+              <EmptyState
+                icon={LinkIcon}
+                title="No active upload links"
+                action={{
+                  label: "Create one",
+                  onClick: () => setView("create"),
+                }}
+                compact
+              />
             )}
             {activeLinks.map((link) => (
               <LinkCard
