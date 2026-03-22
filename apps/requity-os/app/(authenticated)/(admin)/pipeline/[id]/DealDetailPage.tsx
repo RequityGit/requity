@@ -53,6 +53,7 @@ import {
   Building2,
   Trash2,
   MessageSquare,
+  ChevronsLeft,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -662,7 +663,7 @@ function DealDetailPageInner({
           </div>
 
           {/* Right: Activity Sidebar */}
-          {sidebarOpen && (
+          {sidebarOpen ? (
             <DealActivitySidebar
               dealId={deal.id}
               currentUserId={currentUserId}
@@ -673,6 +674,17 @@ function DealDetailPageInner({
               }))}
               onClose={() => setSidebarOpen(false)}
             />
+          ) : (
+            <button
+              onClick={() => setSidebarOpen(true)}
+              className="sticky top-20 h-fit flex flex-col items-center gap-2 py-3 px-1.5 rounded-l-lg border border-r-0 border-border bg-muted/50 hover:bg-muted rq-transition cursor-pointer"
+              title="Open Activity"
+            >
+              <ChevronsLeft className="h-4 w-4 text-muted-foreground" />
+              <span className="text-[11px] font-medium text-muted-foreground [writing-mode:vertical-lr]">
+                Activity
+              </span>
+            </button>
           )}
         </div>
       </div>

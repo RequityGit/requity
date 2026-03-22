@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useMemo, useCallback } from "react";
-import { Bell, Check, Settings } from "lucide-react";
+import { Bell, Check, Archive, Settings } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useNotificationCenter } from "@/hooks/use-notification-center";
 import { useNotifications } from "@/hooks/use-notifications";
@@ -61,10 +61,39 @@ export function NotificationCenter({
     [notifications, selectNotification, markAsRead, refetchCount]
   );
 
+  const handleMarkAsRead = useCallback(
+    async (id: string) => {
+      await markAsRead(id);
+      refetchCount();
+    },
+    [markAsRead, refetchCount]
+  );
+
+  const handleArchive = useCallback(
+    async (id: string) => {
+      // If archiving the selected notification, auto-select the next one
+      if (selectedNotificationId === id) {
+        const idx = notifications.findIndex((n) => n.id === id);
+        const next = notifications[idx + 1] ?? notifications[idx - 1];
+        selectNotification(next?.id ?? null);
+      }
+      await archiveNotification(id);
+      refetchCount();
+    },
+    [archiveNotification, refetchCount, notifications, selectedNotificationId, selectNotification]
+  );
+
+  const handleMarkAllRead = useCallback(async () => {
+    const unread = notifications.filter((n) => n.read_at === null);
+    await Promise.all(unread.map((n) => markAsRead(n.id)));
+    refetchCount();
+  }, [notifications, markAsRead, refetchCount]);
+
   const handleArchiveAll = useCallback(async () => {
     await archiveAll();
+    selectNotification(null);
     refetchCount();
-  }, [archiveAll, refetchCount]);
+  }, [archiveAll, refetchCount, selectNotification]);
 
   const selectedNotification = useMemo(
     () => notifications.find((n) => n.id === selectedNotificationId) ?? null,
@@ -104,13 +133,22 @@ export function NotificationCenter({
             )}
           </div>
           <div className="flex items-center gap-1.5">
+            {notifications.some((n) => n.read_at === null) && (
+              <button
+                onClick={handleMarkAllRead}
+                className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-md text-[11px] font-medium text-muted-foreground hover:text-foreground hover:bg-foreground/[0.04] rq-transition"
+              >
+                <Check className="h-3 w-3" />
+                Mark all read
+              </button>
+            )}
             {notifications.length > 0 && (
               <button
                 onClick={handleArchiveAll}
                 className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-md text-[11px] font-medium text-muted-foreground hover:text-foreground hover:bg-foreground/[0.04] rq-transition"
               >
-                <Check className="h-3 w-3" />
-                Mark all read
+                <Archive className="h-3 w-3" />
+                Archive all
               </button>
             )}
             <span className="text-[10px] font-medium text-muted-foreground/40 bg-foreground/[0.03] border border-border px-1.5 py-0.5 rounded">
@@ -128,6 +166,8 @@ export function NotificationCenter({
             onSelect={handleSelect}
             activeFilter={filter}
             onFilterChange={setFilter}
+            onMarkAsRead={handleMarkAsRead}
+            onArchive={handleArchive}
           />
           <NotificationDetailPanel
             notification={selectedNotification}

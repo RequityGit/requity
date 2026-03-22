@@ -15,7 +15,7 @@ interface NotificationCenterState {
   selectedNotificationId: string | null;
   open: (notificationId?: string) => void;
   close: () => void;
-  selectNotification: (id: string) => void;
+  selectNotification: (id: string | null) => void;
 }
 
 const NotificationCenterContext = createContext<NotificationCenterState | null>(
@@ -44,7 +44,7 @@ export function NotificationCenterProvider({
     setSelectedNotificationId(null);
   }, []);
 
-  const selectNotification = useCallback((id: string) => {
+  const selectNotification = useCallback((id: string | null) => {
     setSelectedNotificationId(id);
   }, []);
 
