@@ -120,12 +120,10 @@ function getCloseDateStatus(dateStr: string | null): "normal" | "soon" | "overdu
   return "normal";
 }
 
-function getConditionsBarState(progress: { completed: number; total: number } | null): "normal" | "done" | "warn" {
-  if (!progress || progress.total === 0) return "normal";
-  if (progress.completed === progress.total) return "done";
-  const incompletePct = (progress.total - progress.completed) / progress.total;
-  if (incompletePct > 0.7) return "warn";
-  return "normal";
+function getConditionsBarColor(progress: { completed: number; total: number }): string {
+  if (progress.completed === progress.total) return "bg-emerald-500";
+  const pct = (progress.completed / progress.total) * 100;
+  return pct > 50 ? "bg-blue-500" : "bg-amber-500";
 }
 
 // ─── Shared card content (used by both DealCard and DealCardOverlay) ───
@@ -157,10 +155,10 @@ function CardContent({
   const displayAddress = address || (isCommercial ? "" : deal.name);
   const loanType = getLoanTypeLabel(deal);
   const closeDateStatus = getCloseDateStatus(deal.expected_close_date);
-  const condState = getConditionsBarState(conditionsProgress ?? null);
   const condPct = conditionsProgress && conditionsProgress.total > 0
     ? Math.round((conditionsProgress.completed / conditionsProgress.total) * 100)
     : 0;
+  const condAllDone = conditionsProgress != null && conditionsProgress.total > 0 && conditionsProgress.completed === conditionsProgress.total;
 
   return (
     <>
@@ -310,13 +308,11 @@ function CardContent({
         {conditionsProgress && conditionsProgress.total > 0 && (
           <div className="mt-2.5 flex items-center gap-2">
             <div className="flex-1">
-              <div className="w-full h-1 rounded-full bg-border overflow-hidden dark:bg-[#2A2A2A]">
+              <div className="w-full h-1 rounded-full bg-border overflow-hidden">
                 <div
                   className={cn(
-                    "h-full rounded-full rq-transition-transform",
-                    condState === "done" && "bg-emerald-500 dark:bg-emerald-400",
-                    condState === "warn" && "bg-amber-500 dark:bg-amber-400",
-                    condState === "normal" && "bg-blue-500 dark:bg-blue-400"
+                    "h-full rounded-full rq-transition",
+                    getConditionsBarColor(conditionsProgress)
                   )}
                   style={{ width: `${condPct}%` }}
                 />
@@ -325,9 +321,9 @@ function CardContent({
             <span
               className={cn(
                 "text-[10px] font-semibold num whitespace-nowrap shrink-0",
-                condState === "done" && "text-emerald-600 dark:text-emerald-400",
-                condState === "warn" && "text-amber-600 dark:text-amber-400",
-                condState === "normal" && "text-muted-foreground"
+                condAllDone
+                  ? "text-emerald-600 dark:text-emerald-400"
+                  : "text-muted-foreground"
               )}
             >
               {conditionsProgress.completed}/{conditionsProgress.total}
