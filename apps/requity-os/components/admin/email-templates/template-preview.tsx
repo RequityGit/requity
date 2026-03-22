@@ -1,10 +1,12 @@
 "use client";
 
 import { useMemo } from "react";
+import { FileText } from "lucide-react";
 import {
   MERGE_VARIABLES,
   type TemplateVariable,
 } from "@/app/(authenticated)/(admin)/email-templates/types";
+import { EmptyState } from "@/components/shared/EmptyState";
 
 interface TemplatePreviewProps {
   subject: string;
@@ -69,8 +71,8 @@ export function TemplatePreview({
 
   if (!htmlBody.trim()) {
     return (
-      <div className="rounded-md border bg-card p-8 text-center text-muted-foreground">
-        No content to preview. Switch to the Editor tab to add HTML content.
+      <div className="rounded-md border bg-card">
+        <EmptyState icon={FileText} title="No content to preview." description="Switch to the Editor tab to add HTML content." />
       </div>
     );
   }

@@ -8,16 +8,7 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
+import { useConfirm } from "@/components/shared/ConfirmDialog";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
@@ -119,8 +110,7 @@ export function TabEditPopover({
   const [label, setLabel] = useState(tabLabel);
   const [icon, setIcon] = useState(tabIcon || "");
   const [saving, startSave] = useTransition();
-  const [deleteOpen, setDeleteOpen] = useState(false);
-  const [deleting, startDelete] = useTransition();
+  const confirm = useConfirm();
 
   function handleSave() {
     if (!label.trim()) return;
@@ -139,22 +129,26 @@ export function TabEditPopover({
     });
   }
 
-  function handleDelete() {
-    startDelete(async () => {
-      const result = await deleteTab(pageType, tabKey);
-      if (result.error) {
-        toast.error(`Failed to delete tab: ${result.error}`);
-      } else {
-        setDeleteOpen(false);
-        setOpen(false);
-        onUpdated();
-        toast.success("Tab deleted");
-      }
+  async function handleDelete() {
+    const ok = await confirm({
+      title: "Delete Tab",
+      description: `This will permanently delete the "${tabLabel}" tab and all sections within it. Field placements will be removed but the field definitions will remain.`,
+      confirmLabel: "Delete",
+      destructive: true,
     });
+    if (!ok) return;
+
+    const result = await deleteTab(pageType, tabKey);
+    if (result.error) {
+      toast.error(`Failed to delete tab: ${result.error}`);
+    } else {
+      setOpen(false);
+      onUpdated();
+      toast.success("Tab deleted");
+    }
   }
 
   return (
-    <>
       <Popover open={open} onOpenChange={setOpen}>
         <PopoverTrigger asChild>{children}</PopoverTrigger>
         <PopoverContent className="w-72 p-3" align="start" side="bottom">
@@ -201,7 +195,7 @@ export function TabEditPopover({
                   variant="ghost"
                   size="sm"
                   className="h-7 text-[10px] text-destructive hover:text-destructive gap-1"
-                  onClick={() => setDeleteOpen(true)}
+                  onClick={handleDelete}
                   disabled={saving}
                 >
                   <Trash2 className="h-3 w-3" />
@@ -222,30 +216,6 @@ export function TabEditPopover({
           </div>
         </PopoverContent>
       </Popover>
-
-      <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Delete Tab</AlertDialogTitle>
-            <AlertDialogDescription>
-              This will permanently delete the &quot;{tabLabel}&quot; tab and all sections within it.
-              Field placements will be removed but the field definitions will remain.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel disabled={deleting}>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleDelete}
-              disabled={deleting}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-            >
-              {deleting ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : null}
-              Delete Tab
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-    </>
   );
 }
 

@@ -32,6 +32,7 @@ import {
   AlertDialogFooter,
 } from "@/components/ui/alert-dialog";
 import { useToast } from "@/components/ui/use-toast";
+import { useConfirm } from "@/components/shared/ConfirmDialog";
 import {
   formatCurrency,
   formatCurrencyDetailed,
@@ -138,13 +139,12 @@ export function QuoteDetailClient({
 }: QuoteDetailClientProps) {
   const router = useRouter();
   const { toast } = useToast();
+  const confirm = useConfirm();
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
   const [statusLoading, setStatusLoading] = useState(false);
   const [declineDialogOpen, setDeclineDialogOpen] = useState(false);
   const [declineReason, setDeclineReason] = useState("");
-  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [deleteLoading, setDeleteLoading] = useState(false);
 
   // Activity form state
   const [activityType, setActivityType] = useState("note");
@@ -341,7 +341,14 @@ export function QuoteDetailClient({
   }
 
   async function handleDelete() {
-    setDeleteLoading(true);
+    const ok = await confirm({
+      title: "Delete quote?",
+      description: `This will permanently delete "${quote.quote_name}" and all associated activity. This cannot be undone.`,
+      confirmLabel: "Delete",
+      destructive: true,
+    });
+    if (!ok) return;
+
     try {
       const result = await deleteLenderQuote(quote.id);
       if (result.error) {
@@ -362,8 +369,6 @@ export function QuoteDetailClient({
           err instanceof Error ? err.message : "An unexpected error occurred",
         variant: "destructive",
       });
-    } finally {
-      setDeleteLoading(false);
     }
   }
 
@@ -551,7 +556,7 @@ export function QuoteDetailClient({
             variant="destructive"
             size="sm"
             className="gap-1"
-            onClick={() => setDeleteDialogOpen(true)}
+            onClick={handleDelete}
           >
             <Trash2 className="h-3.5 w-3.5" />
             Delete
@@ -726,40 +731,6 @@ export function QuoteDetailClient({
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* Delete Dialog */}
-      <AlertDialog
-        open={deleteDialogOpen}
-        onOpenChange={setDeleteDialogOpen}
-      >
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Delete Quote</AlertDialogTitle>
-            <AlertDialogDescription>
-              This will permanently delete &quot;{quote.quote_name}&quot; and
-              all associated activity. This cannot be undone.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => setDeleteDialogOpen(false)}
-              disabled={deleteLoading}
-            >
-              Cancel
-            </Button>
-            <Button
-              variant="destructive"
-              onClick={handleDelete}
-              disabled={deleteLoading}
-            >
-              {deleteLoading && (
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              )}
-              Delete Permanently
-            </Button>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
     </div>
   );
 }

@@ -10,7 +10,9 @@ import {
   AlertTriangle,
   Phone,
   Loader2,
+  Users,
 } from "lucide-react";
+import { EmptyState } from "@/components/shared/EmptyState";
 import { Checkbox } from "@/components/ui/checkbox";
 import { cn } from "@/lib/utils";
 import { createDialerList } from "@/lib/dialer/dialer-api";
@@ -302,9 +304,7 @@ export function DialerListBuilder({ contacts, teamMembers, currentUserId }: Prop
         {/* Contact list */}
         <div className="max-h-[400px] overflow-y-auto">
           {filtered.length === 0 ? (
-            <div className="rq-empty-state">
-              No contacts match your filters.
-            </div>
+            <EmptyState icon={Users} title="No contacts match your filters." compact />
           ) : (
             filtered.map((contact) => {
               const isSelected = selectedIds.has(contact.id);

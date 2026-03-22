@@ -12,6 +12,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Search, User, Loader2, Link2 } from "lucide-react";
+import { EmptyState } from "@/components/shared/EmptyState";
 import { useDebounce } from "@/hooks/useDebounce";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -171,9 +172,7 @@ export function AddBorrowerDialog({
                 </div>
               )}
               {debouncedQuery.length >= 2 && results.length === 0 && !searching && (
-                <div className="px-3 py-4 text-center text-sm text-muted-foreground">
-                  No contacts found
-                </div>
+                <EmptyState icon={Search} title="No contacts found" compact />
               )}
               {results.map((contact) => (
                 <button

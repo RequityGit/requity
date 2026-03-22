@@ -12,7 +12,8 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { AlertCircle, Eye, CheckCircle, XCircle } from "lucide-react";
+import { AlertCircle, Eye, CheckCircle, XCircle, FileText } from "lucide-react";
+import { EmptyState } from "@/components/shared/EmptyState";
 import { formatDistanceToNow } from "date-fns";
 import { FormSubmissionReviewModal } from "@/components/forms/FormSubmissionReviewModal";
 import type { Database } from "@/lib/supabase/types";
@@ -102,8 +103,8 @@ export default function FormSubmissionsReviewPage() {
               </TableRow>
             ) : submissions.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={6} className="rq-empty-state">
-                  No submissions pending review.
+                <TableCell colSpan={6}>
+                  <EmptyState icon={FileText} title="No submissions pending review." compact />
                 </TableCell>
               </TableRow>
             ) : (

@@ -20,6 +20,7 @@ import {
   Upload,
 } from "lucide-react";
 import { UnifiedNotes } from "@/components/shared/UnifiedNotes";
+import { EmptyState } from "@/components/shared/EmptyState";
 import {
   uploadConditionDocument,
 } from "@/app/(authenticated)/b/loans/[id]/actions";
@@ -51,13 +52,11 @@ export function BorrowerConditionsTab({
 
   if (conditions.length === 0) {
     return (
-      <div className="py-10 text-center text-muted-foreground">
-        <ClipboardList className="h-10 w-10 mx-auto mb-3 opacity-30" />
-        <p className="text-sm font-medium">No conditions yet</p>
-        <p className="text-xs mt-1">
-          Conditions will appear here once your loan processor sets them up.
-        </p>
-      </div>
+      <EmptyState
+        icon={ClipboardList}
+        title="No conditions yet"
+        description="Conditions will appear here once your loan processor sets them up."
+      />
     );
   }
 

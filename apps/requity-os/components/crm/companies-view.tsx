@@ -7,16 +7,7 @@ import { useRouter } from "next/navigation";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { AddCompanyDialog } from "@/components/crm/add-company-dialog";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
+import { useConfirm } from "@/components/shared/ConfirmDialog";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -68,15 +59,19 @@ export function CompaniesView({ companies, isSuperAdmin = false }: CompaniesView
   const [companySortKey, setCompanySortKey] = useState<string>("name");
   const [companySortDir, setCompanySortDir] = useState<"asc" | "desc">("asc");
   const [page, setPage] = useState(1);
-  const [deleteTarget, setDeleteTarget] = useState<{ id: string; name: string } | null>(null);
-  const [deleting, setDeleting] = useState(false);
+  const confirm = useConfirm();
   const tableScrollRef = useRef<HTMLDivElement>(null);
 
-  async function handleDelete() {
-    if (!deleteTarget) return;
-    setDeleting(true);
+  async function handleDelete(id: string, name: string) {
+    const ok = await confirm({
+      title: "Delete company?",
+      description: `This will remove "${name}" from the CRM. This action cannot be undone.`,
+      confirmLabel: "Delete",
+      destructive: true,
+    });
+    if (!ok) return;
     try {
-      const result = await deleteCrmCompanyAction(deleteTarget.id);
+      const result = await deleteCrmCompanyAction(id);
       if (result.error) {
         toast({ title: "Error deleting company", description: result.error, variant: "destructive" });
       } else {
@@ -85,9 +80,6 @@ export function CompaniesView({ companies, isSuperAdmin = false }: CompaniesView
       }
     } catch {
       toast({ title: "Error deleting company", description: "An unexpected error occurred", variant: "destructive" });
-    } finally {
-      setDeleting(false);
-      setDeleteTarget(null);
     }
   }
 
@@ -344,7 +336,7 @@ export function CompaniesView({ companies, isSuperAdmin = false }: CompaniesView
                               <>
                                 <DropdownMenuSeparator />
                                 <DropdownMenuItem
-                                  onClick={() => setDeleteTarget({ id: c.id, name: c.name })}
+                                  onClick={() => handleDelete(c.id, c.name)}
                                   className="gap-2 text-xs text-red-600 focus:text-red-600"
                                 >
                                   <Trash2 className="h-3.5 w-3.5" />
@@ -413,28 +405,6 @@ export function CompaniesView({ companies, isSuperAdmin = false }: CompaniesView
           </div>
         </div>
 
-      {/* Delete confirmation dialog */}
-      <AlertDialog open={!!deleteTarget} onOpenChange={(open) => { if (!open) setDeleteTarget(null); }}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Delete Company</AlertDialogTitle>
-            <AlertDialogDescription>
-              Are you sure you want to delete &quot;{deleteTarget?.name}&quot;? This
-              company will be removed from the CRM. This action cannot be undone.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleDelete}
-              disabled={deleting}
-              className="bg-red-600 hover:bg-red-700"
-            >
-              {deleting ? "Deleting..." : "Delete"}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
     </div>
   );
 }

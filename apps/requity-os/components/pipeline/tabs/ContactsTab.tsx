@@ -12,6 +12,7 @@ import {
   Loader2,
   Shield,
 } from "lucide-react";
+import { EmptyState } from "@/components/shared/EmptyState";
 import Link from "next/link";
 import { updateUwDataAction } from "@/app/(authenticated)/(admin)/pipeline/actions";
 import type {
@@ -197,9 +198,7 @@ function ContactSearchCombobox({
         </div>
         <div className="max-h-[220px] overflow-y-auto p-1">
           {results.length === 0 && query.length >= 2 && !searching && (
-            <div className="px-3 py-4 text-center text-xs text-muted-foreground">
-              No contacts found
-            </div>
+            <EmptyState icon={Search} title="No contacts found" compact />
           )}
           {results.length === 0 && query.length < 2 && (
             <div className="px-3 py-4 text-center text-xs text-muted-foreground">

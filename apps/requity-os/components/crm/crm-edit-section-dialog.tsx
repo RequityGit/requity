@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useCallback } from "react";
-import { Loader2, X, Check, ChevronsUpDown, Plus } from "lucide-react";
+import { Loader2, X, Check, ChevronsUpDown, Plus, Search } from "lucide-react";
+import { EmptyState } from "@/components/shared/EmptyState";
 import {
   Dialog,
   DialogContent,
@@ -393,9 +394,7 @@ function SelectWithCreateNew({
               {/* Options list */}
               <div className="max-h-[200px] overflow-y-auto p-1">
                 {filtered.length === 0 && (
-                  <div className="py-4 text-center text-sm text-muted-foreground">
-                    No results found.
-                  </div>
+                  <EmptyState icon={Search} title="No results found." compact />
                 )}
                 {filtered.map((opt) => (
                   <button

@@ -3,16 +3,7 @@
 import { useState, useCallback } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
+import { useConfirm } from "@/components/shared/ConfirmDialog";
 import { Users, UserPlus } from "lucide-react";
 import { toast } from "sonner";
 import { removeDealTeamContactAction } from "@/app/(authenticated)/(admin)/pipeline/[id]/actions";
@@ -29,8 +20,7 @@ export function DealTeamSection({ dealId, initialContacts }: DealTeamSectionProp
   const [contacts, setContacts] = useState<DealTeamContact[]>(initialContacts);
   const [isAdding, setIsAdding] = useState(false);
   const [editingContact, setEditingContact] = useState<DealTeamContact | null>(null);
-  const [deleteId, setDeleteId] = useState<string | null>(null);
-  const [removing, setRemoving] = useState(false);
+  const confirm = useConfirm();
 
   const handleAdd = useCallback((newContact: DealTeamContact) => {
     setContacts((prev) => [...prev, newContact]);
@@ -53,26 +43,27 @@ export function DealTeamSection({ dealId, initialContacts }: DealTeamSectionProp
     setEditingContact(null);
   }, []);
 
-  const handleDeleteClick = useCallback((id: string) => {
-    setDeleteId(id);
-  }, []);
+  const handleDeleteClick = useCallback(async (id: string) => {
+    const ok = await confirm({
+      title: "Remove deal team contact?",
+      description: "This will remove the contact from the deal team. They will not be deleted from the CRM.",
+      confirmLabel: "Remove",
+      destructive: true,
+    });
+    if (!ok) return;
 
-  const handleConfirmDelete = useCallback(async () => {
-    if (!deleteId) return;
-    setRemoving(true);
     try {
-      const result = await removeDealTeamContactAction(deleteId, dealId);
+      const result = await removeDealTeamContactAction(id, dealId);
       if (result.error) {
         toast.error(result.error);
       } else {
-        setContacts((prev) => prev.filter((c) => c.id !== deleteId));
+        setContacts((prev) => prev.filter((c) => c.id !== id));
         toast.success("Deal team contact removed");
       }
-    } finally {
-      setRemoving(false);
-      setDeleteId(null);
+    } catch {
+      toast.error("Failed to remove contact");
     }
-  }, [deleteId, dealId]);
+  }, [confirm, dealId]);
 
   return (
     <>
@@ -141,26 +132,6 @@ export function DealTeamSection({ dealId, initialContacts }: DealTeamSectionProp
         onEditDone={handleEditDone}
       />
 
-      <AlertDialog open={!!deleteId} onOpenChange={(o) => !o && setDeleteId(null)}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Remove deal team contact?</AlertDialogTitle>
-            <AlertDialogDescription>
-              This will remove the contact from the deal team. They will not be deleted from the CRM.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel disabled={removing}>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleConfirmDelete}
-              disabled={removing}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-            >
-              {removing ? "Removing..." : "Remove"}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
     </>
   );
 }

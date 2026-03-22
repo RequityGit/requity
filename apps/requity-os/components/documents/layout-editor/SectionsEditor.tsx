@@ -10,17 +10,7 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
+import { useConfirm } from "@/components/shared/ConfirmDialog";
 import { SectionTypeSelect } from "./SectionTypeSelect";
 import { TermTableEditor } from "./section-editors/TermTableEditor";
 import { BulletListEditor } from "./section-editors/BulletListEditor";
@@ -62,6 +52,7 @@ export function SectionsEditor({
   onChange,
 }: SectionsEditorProps) {
   const [openSections, setOpenSections] = useState<Record<number, boolean>>({});
+  const confirm = useConfirm();
 
   const toggleOpen = (index: number) => {
     setOpenSections((prev) => ({ ...prev, [index]: !prev[index] }));
@@ -196,33 +187,24 @@ export function SectionsEditor({
                 >
                   <ChevronDown size={12} />
                 </Button>
-                <AlertDialog>
-                  <AlertDialogTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-6 w-6 text-muted-foreground hover:text-destructive"
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      <Trash2 size={12} />
-                    </Button>
-                  </AlertDialogTrigger>
-                  <AlertDialogContent>
-                    <AlertDialogHeader>
-                      <AlertDialogTitle>Delete section</AlertDialogTitle>
-                      <AlertDialogDescription>
-                        Are you sure you want to delete &quot;{getSectionTitle(section)}&quot;?
-                        This cannot be undone.
-                      </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                      <AlertDialogCancel>Cancel</AlertDialogCancel>
-                      <AlertDialogAction onClick={() => removeSection(i)}>
-                        Delete
-                      </AlertDialogAction>
-                    </AlertDialogFooter>
-                  </AlertDialogContent>
-                </AlertDialog>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-6 w-6 text-muted-foreground hover:text-destructive"
+                  onClick={async (e) => {
+                    e.stopPropagation();
+                    const ok = await confirm({
+                      title: "Delete section",
+                      description: `Are you sure you want to delete "${getSectionTitle(section)}"? This cannot be undone.`,
+                      confirmLabel: "Delete",
+                      destructive: true,
+                    });
+                    if (!ok) return;
+                    removeSection(i);
+                  }}
+                >
+                  <Trash2 size={12} />
+                </Button>
               </div>
             </div>
             <CollapsibleContent className="px-3 pb-3 pt-1 border-t">

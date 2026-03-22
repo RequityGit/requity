@@ -20,16 +20,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
+import { useConfirm } from "@/components/shared/ConfirmDialog";
 import {
   Plus,
   MoreHorizontal,
@@ -65,9 +56,9 @@ export function UserEmailTemplateListPage({
 }: TemplateListPageProps) {
   const router = useRouter();
   const { toast } = useToast();
+  const confirm = useConfirm();
   const [templates, setTemplates] = useState(initialTemplates);
   const [activeCategory, setActiveCategory] = useState<string>("all");
-  const [deleteId, setDeleteId] = useState<string | null>(null);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
 
   const filtered =
@@ -101,17 +92,23 @@ export function UserEmailTemplateListPage({
     setActionLoading(null);
   }
 
-  async function handleDelete() {
-    if (!deleteId) return;
-    setActionLoading(deleteId);
-    const result = await deleteUserEmailTemplateAction(deleteId);
+  async function handleDelete(id: string) {
+    const ok = await confirm({
+      title: "Delete template?",
+      description:
+        "This action cannot be undone. The template and all its version history will be permanently deleted.",
+      confirmLabel: "Delete",
+      destructive: true,
+    });
+    if (!ok) return;
+    setActionLoading(id);
+    const result = await deleteUserEmailTemplateAction(id);
     if ("error" in result) {
       toast({ title: "Error", description: result.error, variant: "destructive" });
     } else {
-      setTemplates((prev) => prev.filter((t) => t.id !== deleteId));
+      setTemplates((prev) => prev.filter((t) => t.id !== id));
       toast({ title: "Template deleted" });
     }
-    setDeleteId(null);
     setActionLoading(null);
   }
 
@@ -282,7 +279,7 @@ export function UserEmailTemplateListPage({
                           className="text-destructive"
                           onClick={(e) => {
                             e.stopPropagation();
-                            setDeleteId(template.id);
+                            handleDelete(template.id);
                           }}
                         >
                           <Trash2 className="h-3.5 w-3.5 mr-2" />
@@ -297,28 +294,6 @@ export function UserEmailTemplateListPage({
           </Table>
         </div>
       )}
-
-      {/* Delete confirmation dialog */}
-      <AlertDialog open={!!deleteId} onOpenChange={() => setDeleteId(null)}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Delete template?</AlertDialogTitle>
-            <AlertDialogDescription>
-              This action cannot be undone. The template and all its version
-              history will be permanently deleted.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleDelete}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-            >
-              Delete
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
     </div>
   );
 }

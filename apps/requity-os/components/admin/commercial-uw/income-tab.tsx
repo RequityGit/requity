@@ -13,7 +13,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Plus, Trash2, Building2, Upload } from "lucide-react";
+import { Plus, Trash2, Building2, Upload, Home } from "lucide-react";
+import { EmptyState } from "@/components/shared/EmptyState";
 import { formatCurrency } from "@/lib/format";
 import type {
   CommercialPropertyType,
@@ -393,8 +394,8 @@ export function IncomeTab({
                   ))}
                   {rentRoll.length === 0 && (
                     <tr>
-                      <td colSpan={13} className="text-center py-6 text-muted-foreground">
-                        No units added. Click &quot;Add Unit&quot; to start.
+                      <td colSpan={13}>
+                        <EmptyState icon={Home} title="No units added." description='Click "Add Unit" to start.' compact />
                       </td>
                     </tr>
                   )}
@@ -529,8 +530,8 @@ export function IncomeTab({
                   ))}
                   {occupancyRows.length === 0 && (
                     <tr>
-                      <td colSpan={8} className="text-center py-6 text-muted-foreground">
-                        No space types added.
+                      <td colSpan={8}>
+                        <EmptyState icon={Building2} title="No space types added." compact />
                       </td>
                     </tr>
                   )}
@@ -633,8 +634,8 @@ export function IncomeTab({
                 ))}
                 {ancillaryRows.length === 0 && (
                   <tr>
-                    <td colSpan={4} className="text-center py-4 text-muted-foreground">
-                      No ancillary income sources.
+                    <td colSpan={4}>
+                      <EmptyState icon={Building2} title="No ancillary income sources." compact />
                     </td>
                   </tr>
                 )}

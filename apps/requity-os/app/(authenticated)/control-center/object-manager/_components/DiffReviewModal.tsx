@@ -1,6 +1,7 @@
 "use client";
 
-import { X, Plus, Trash2, PenLine, ArrowRight, Check, Loader2, LayoutGrid } from "lucide-react";
+import { X, Plus, Trash2, PenLine, ArrowRight, Check, Loader2, LayoutGrid, GitBranch } from "lucide-react";
+import { EmptyState } from "@/components/shared/EmptyState";
 import { Button } from "@/components/ui/button";
 import { cn } from "@repo/lib";
 import type { FieldConfig } from "../actions";
@@ -227,9 +228,7 @@ export function DiffReviewModal({
           )}
 
           {totalChanges === 0 && (
-            <div className="text-center py-8 text-muted-foreground">
-              <p className="text-sm">No pending changes</p>
-            </div>
+            <EmptyState icon={GitBranch} title="No pending changes" compact />
           )}
         </div>
 

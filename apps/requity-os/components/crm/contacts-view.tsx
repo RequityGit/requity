@@ -14,16 +14,7 @@ import {
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { AddContactDialog } from "@/components/crm/add-contact-dialog";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
+import { useConfirm } from "@/components/shared/ConfirmDialog";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -96,15 +87,19 @@ export function ContactsView({
   const [contactSortKey, setContactSortKey] = useState<string>("last_contacted_at");
   const [contactSortDir, setContactSortDir] = useState<"asc" | "desc">("desc");
   const [page, setPage] = useState(1);
-  const [deleteTarget, setDeleteTarget] = useState<{ id: string; name: string } | null>(null);
-  const [deleting, setDeleting] = useState(false);
+  const confirm = useConfirm();
   const tableScrollRef = useRef<HTMLDivElement>(null);
 
-  async function handleDelete() {
-    if (!deleteTarget) return;
-    setDeleting(true);
+  async function handleDelete(id: string, name: string) {
+    const ok = await confirm({
+      title: "Delete contact?",
+      description: `This will remove "${name}" from the CRM. This action cannot be undone.`,
+      confirmLabel: "Delete",
+      destructive: true,
+    });
+    if (!ok) return;
     try {
-      const result = await deleteCrmContactAction(deleteTarget.id);
+      const result = await deleteCrmContactAction(id);
       if (result.error) {
         toast({ title: "Error deleting contact", description: result.error, variant: "destructive" });
       } else {
@@ -113,9 +108,6 @@ export function ContactsView({
       }
     } catch {
       toast({ title: "Error deleting contact", description: "An unexpected error occurred", variant: "destructive" });
-    } finally {
-      setDeleting(false);
-      setDeleteTarget(null);
     }
   }
 
@@ -551,7 +543,7 @@ export function ContactsView({
                               <>
                                 <DropdownMenuSeparator />
                                 <DropdownMenuItem
-                                  onClick={() => setDeleteTarget({ id: c.id, name: `${c.first_name} ${c.last_name}` })}
+                                  onClick={() => handleDelete(c.id, `${c.first_name} ${c.last_name}`)}
                                   className="gap-2 text-xs text-red-600 focus:text-red-600"
                                 >
                                   <Trash2 className="h-3.5 w-3.5" />
@@ -620,28 +612,6 @@ export function ContactsView({
           </div>
         </div>
 
-      {/* Delete confirmation dialog */}
-      <AlertDialog open={!!deleteTarget} onOpenChange={(open) => { if (!open) setDeleteTarget(null); }}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Delete Contact</AlertDialogTitle>
-            <AlertDialogDescription>
-              Are you sure you want to delete &quot;{deleteTarget?.name}&quot;? This
-              contact will be removed from the CRM. This action cannot be undone.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleDelete}
-              disabled={deleting}
-              className="bg-red-600 hover:bg-red-700"
-            >
-              {deleting ? "Deleting..." : "Delete"}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
     </div>
   );
 }

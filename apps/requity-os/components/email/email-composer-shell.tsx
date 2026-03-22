@@ -3,16 +3,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
+import { useConfirm } from "@/components/shared/ConfirmDialog";
 import { Minus, Maximize2, Minimize2, X } from "lucide-react";
 
 type ComposerMode = "normal" | "minimized" | "expanded";
@@ -40,7 +31,7 @@ export function EmailComposerShell({
   containerClassName,
 }: EmailComposerShellProps) {
   const [mode, setMode] = useState<ComposerMode>("normal");
-  const [showCloseConfirm, setShowCloseConfirm] = useState(false);
+  const confirm = useConfirm();
   const containerRef = useRef<HTMLDivElement>(null);
 
   // Reset mode when opened
@@ -48,18 +39,19 @@ export function EmailComposerShell({
     if (open) setMode("normal");
   }, [open]);
 
-  const handleClose = useCallback(() => {
+  const handleClose = useCallback(async () => {
     if (isDirty) {
-      setShowCloseConfirm(true);
-    } else {
-      onClose();
+      const ok = await confirm({
+        title: "Discard email?",
+        description: "You have unsaved changes. Are you sure you want to discard this email?",
+        confirmLabel: "Discard",
+        cancelLabel: "Keep editing",
+        destructive: true,
+      });
+      if (!ok) return;
     }
-  }, [isDirty, onClose]);
-
-  const handleConfirmClose = useCallback(() => {
-    setShowCloseConfirm(false);
     onClose();
-  }, [onClose]);
+  }, [isDirty, onClose, confirm]);
 
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent) => {
@@ -161,27 +153,6 @@ export function EmailComposerShell({
         )}
       </div>
 
-      {/* Close confirmation */}
-      <AlertDialog open={showCloseConfirm} onOpenChange={setShowCloseConfirm}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Discard email?</AlertDialogTitle>
-            <AlertDialogDescription>
-              You have unsaved changes. Are you sure you want to discard this
-              email?
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Keep editing</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleConfirmClose}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-            >
-              Discard
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
     </>
   );
 }

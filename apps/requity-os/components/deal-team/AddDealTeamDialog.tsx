@@ -25,6 +25,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { Search, Loader2, User } from "lucide-react";
+import { EmptyState } from "@/components/shared/EmptyState";
 import { cn } from "@/lib/utils";
 import { useDebounce } from "@/hooks/useDebounce";
 import { searchContactsForDeal } from "@/app/(authenticated)/(admin)/pipeline/[id]/actions";
@@ -282,9 +283,7 @@ export function AddDealTeamDialog({
                     </button>
                   ))}
                   {searchQuery.length >= 2 && searchResults.length === 0 && !searching && (
-                    <div className="px-3 py-4 text-center text-xs text-muted-foreground">
-                      No contacts found
-                    </div>
+                    <EmptyState icon={Search} title="No contacts found" compact />
                   )}
                 </div>
                 {contactPreview && (
