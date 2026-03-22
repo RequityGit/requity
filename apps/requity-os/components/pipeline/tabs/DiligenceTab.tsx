@@ -24,7 +24,6 @@ import {
   ChevronRight,
   CheckCircle2,
   MessageSquare,
-  Send,
   Search,
   Archive,
   Link2,
@@ -76,15 +75,12 @@ import {
   type ConditionCriterionResult,
 } from "@/app/(authenticated)/(admin)/pipeline/[id]/actions";
 import { createClient } from "@/lib/supabase/client";
-import { parseComment, relativeTime } from "@/lib/comment-utils";
-import { MentionInput } from "@/components/shared/mention-input";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { UnifiedNotes } from "@/components/shared/UnifiedNotes";
 import { ReviewStatusBadge } from "@/components/pipeline/ReviewStatusBadge";
 import { DocumentReviewPanel } from "@/components/pipeline/DocumentReviewPanel";
 import { useDocumentReviewStatus } from "@/hooks/useDocumentReviewStatus";
 import { GenerateDocumentDialog } from "@/components/documents/GenerateDocumentDialog";
 import { SecureUploadLinkDialog } from "@/components/pipeline/SecureUploadLinkDialog";
-import type { NoteData } from "@/components/shared/UnifiedNotes/types";
 import { formatDate } from "@/lib/format";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { ClipboardCheck } from "lucide-react";
@@ -927,237 +923,6 @@ function DocPreviewModal({
   );
 }
 
-// ─── Condition Note Thread ───
-
-function ConditionNoteThread({
-  conditionId,
-  dealId,
-  noteCount,
-  currentUserId,
-  currentUserName,
-}: {
-  conditionId: string;
-  dealId: string;
-  noteCount: number;
-  currentUserId: string;
-  currentUserName: string;
-}) {
-  const [notes, setNotes] = useState<NoteData[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [text, setText] = useState("");
-  const [isInternal, setIsInternal] = useState(true);
-  const [posting, setPosting] = useState(false);
-  const supabase = createClient();
-
-  const fetchNotes = useCallback(async () => {
-    const { data, error } = await supabase
-      .from("notes" as never)
-      .select("*, note_likes(user_id, profiles(full_name))" as never)
-      .eq("unified_condition_id" as never, conditionId as never)
-      .is("deleted_at" as never, null)
-      .order("created_at" as never, { ascending: false });
-    if (error) setNotes([]);
-    else setNotes((data as unknown as NoteData[]) ?? []);
-    setLoading(false);
-  }, [conditionId, supabase]);
-
-  useEffect(() => {
-    fetchNotes();
-  }, [fetchNotes]);
-
-  useEffect(() => {
-    const channel = supabase
-      .channel(`notes-condition-${conditionId}`)
-      .on(
-        "postgres_changes",
-        {
-          event: "*",
-          schema: "public",
-          table: "notes",
-          filter: `unified_condition_id=eq.${conditionId}`,
-        },
-        () => fetchNotes()
-      )
-      .subscribe();
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [conditionId, fetchNotes, supabase]);
-
-  async function handlePost(body: string, mentionIds: string[]) {
-    if (!body.trim() || posting) return;
-    setPosting(true);
-    const row = {
-      body,
-      author_id: currentUserId,
-      author_name: currentUserName,
-      mentions: mentionIds,
-      is_internal: isInternal,
-      unified_condition_id: conditionId,
-      deal_id: dealId,
-    };
-    const { data, error } = await supabase
-      .from("notes" as never)
-      .insert(row as never)
-      .select()
-      .single();
-    if (error) {
-      showError("Could not post note", error.message);
-      setPosting(false);
-      return;
-    }
-    if (data) {
-      setNotes((prev) => [
-        { ...(data as unknown as NoteData), note_likes: [] },
-        ...prev,
-      ]);
-      setText("");
-    }
-    if (data && mentionIds.length > 0) {
-      const noteId = (data as unknown as NoteData).id;
-      await supabase
-        .from("note_mentions" as never)
-        .insert(
-          mentionIds.map((userId: string) => ({
-            note_id: noteId,
-            mentioned_user_id: userId,
-          })) as never
-        );
-    }
-    showSuccess(isInternal ? "Internal note posted" : "Note posted");
-    setPosting(false);
-  }
-
-  function getInitials(name: string) {
-    return name
-      .split(" ")
-      .map((w) => w[0])
-      .join("")
-      .slice(0, 2)
-      .toUpperCase();
-  }
-
-  const segmentsToNodes = (body: string) => {
-    const segs = parseComment(body);
-    return segs.map((s, i) =>
-      s.type === "mention" ? (
-        <span key={i} className="font-semibold text-foreground rounded bg-info/10 px-0.5">
-          @{s.value}
-        </span>
-      ) : (
-        <span key={i}>{s.value}</span>
-      )
-    );
-  };
-
-  return (
-    <div className="flex flex-col gap-3">
-      <div className="flex items-center justify-between">
-        <span className="rq-micro-label">
-          Condition Notes
-        </span>
-        <span className="text-xs text-muted-foreground num">{noteCount}</span>
-      </div>
-      {loading ? (
-        <div className="h-24 rounded-lg bg-muted animate-pulse" />
-      ) : notes.length === 0 ? (
-        <div className="rounded-lg border border-dashed border-border">
-          <EmptyState
-            icon={MessageSquare}
-            title="No notes on this condition yet"
-            compact
-          />
-        </div>
-      ) : (
-        <div className="rounded-lg border border-border bg-card overflow-hidden">
-          {notes.map((note, idx) => (
-            <div
-              key={note.id}
-              className={cn(
-                "flex gap-3 px-3 py-2.5",
-                idx < notes.length - 1 && "border-b border-border"
-              )}
-            >
-              <Avatar className="h-7 w-7 shrink-0">
-                <AvatarFallback className="text-[10px] font-semibold text-muted-foreground bg-muted">
-                  {note.author_name ? getInitials(note.author_name) : "?"}
-                </AvatarFallback>
-              </Avatar>
-              <div className="min-w-0 flex-1">
-                <div className="flex flex-wrap items-center justify-between gap-1">
-                  <span className="text-xs font-semibold text-foreground">
-                    {note.author_name ?? "Unknown"}
-                  </span>
-                  <span className="text-[10px] text-muted-foreground">
-                    {relativeTime(note.created_at)}
-                  </span>
-                  {note.is_internal ? (
-                    <span className="inline-flex items-center gap-0.5 rounded bg-warning/10 px-1.5 py-0.5 text-[9px] font-medium text-warning">
-                      <Lock className="h-2.5 w-2.5" />
-                      Internal
-                    </span>
-                  ) : (
-                    <span className="inline-flex items-center gap-0.5 rounded bg-success/10 px-1.5 py-0.5 text-[9px] font-medium text-success">
-                      <Globe className="h-2.5 w-2.5" />
-                      Borrower Visible
-                    </span>
-                  )}
-                </div>
-                <p className="mt-0.5 text-sm leading-relaxed text-muted-foreground">
-                  {segmentsToNodes(note.body)}
-                </p>
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
-      {currentUserId && (
-        <div>
-              <MentionInput
-                value={text}
-                onChange={setText}
-                onSubmit={handlePost}
-                placeholder="Write a note... use @ to mention"
-                disabled={posting}
-                submitLabel={posting ? "Posting..." : "Post"}
-                submitIcon={
-                  posting ? (
-                    <Loader2 className="h-3 w-3 animate-spin" />
-                  ) : (
-                    <Send className="h-3 w-3" strokeWidth={1.5} />
-                  )
-                }
-                rows={2}
-                extraControls={
-                  <button
-                    type="button"
-                    onClick={() => setIsInternal(!isInternal)}
-                    className={cn(
-                      "inline-flex items-center gap-1 rounded px-2 py-1 text-[10px] font-medium transition-colors",
-                      isInternal
-                        ? "bg-warning/10 text-warning"
-                        : "bg-success/10 text-success"
-                    )}
-                  >
-                    {isInternal ? (
-                      <>
-                        <Lock className="h-3 w-3" strokeWidth={2} />
-                        Internal
-                      </>
-                    ) : (
-                      <>
-                        <Globe className="h-3 w-3" strokeWidth={2} />
-                        Borrower Visible
-                      </>
-                    )}
-                  </button>
-                }
-              />
-        </div>
-      )}
-    </div>
-  );
-}
 
 // ─── Link Document Popover ───
 
@@ -2339,13 +2104,18 @@ function ConditionRow({
             )}
 
             {/* Condition notes */}
-            <ConditionNoteThread
-              conditionId={cond.id}
-              dealId={dealId}
-              noteCount={noteCount}
-              currentUserId={currentUserId}
-              currentUserName={currentUserName}
-            />
+            <div className="flex flex-col gap-3">
+              <div className="flex items-center justify-between">
+                <span className="rq-micro-label">Condition Notes</span>
+                <span className="text-xs text-muted-foreground num">{noteCount}</span>
+              </div>
+              <UnifiedNotes
+                entityType="unified_condition"
+                entityId={cond.id}
+                dealId={dealId}
+                compact
+              />
+            </div>
           </div>
         </div>
       )}
