@@ -1,9 +1,11 @@
 "use client";
 
+import { useMemo } from "react";
 import { SectionErrorBoundary } from "@/components/shared/SectionErrorBoundary";
 import { ActionCenterStream } from "./ActionCenterStream";
 import { ActionCenterRail } from "./ActionCenterRail";
 import { useActionCenterData } from "./useActionCenterData";
+import type { NoteHandlers } from "./ActionCenterStreamItem";
 
 interface ActionCenterTabProps {
   dealId: string;
@@ -31,7 +33,12 @@ export function ActionCenterTab({
     filterCounts,
     activeFilter,
     setActiveFilter,
-    addNote,
+    postNote,
+    replyToNote,
+    editNote,
+    deleteNote,
+    toggleLike,
+    pinNote,
     conditions,
     conditionDocs,
     tasks,
@@ -45,8 +52,21 @@ export function ActionCenterTab({
     currentUserName,
   });
 
+  const noteHandlers: NoteHandlers = useMemo(
+    () => ({
+      currentUserId,
+      currentUserName,
+      onPin: pinNote,
+      onEdit: editNote,
+      onDelete: deleteNote,
+      onToggleLike: toggleLike,
+      onReply: replyToNote,
+    }),
+    [currentUserId, currentUserName, pinNote, editNote, deleteNote, toggleLike, replyToNote]
+  );
+
   return (
-    <div className="flex gap-4 h-[calc(100vh-340px)] min-h-[500px]">
+    <div className="flex gap-4 h-full min-h-0">
       {/* Left: Activity Stream */}
       <div className="flex-1 min-w-0">
         <SectionErrorBoundary fallbackTitle="Could not load activity stream">
@@ -56,7 +76,10 @@ export function ActionCenterTab({
             filterCounts={filterCounts}
             activeFilter={activeFilter}
             onFilterChange={setActiveFilter}
-            onPost={addNote}
+            currentUserId={currentUserId}
+            currentUserName={currentUserName}
+            onPost={postNote}
+            noteHandlers={noteHandlers}
           />
         </SectionErrorBoundary>
       </div>

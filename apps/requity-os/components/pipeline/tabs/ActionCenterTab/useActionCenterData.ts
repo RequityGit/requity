@@ -6,6 +6,8 @@ import { fetchActivityTabData } from "@/app/(authenticated)/(admin)/pipeline/[id
 import type { DealActivity } from "@/components/pipeline/pipeline-types";
 import type { ActivityData, EmailData } from "@/components/crm/contact-360/types";
 import type { NoteData } from "@/components/shared/UnifiedNotes/types";
+import type { UploadedAttachment } from "@/components/shared/attachments";
+import { showSuccess, showError } from "@/lib/toast";
 
 // ── Stream item types ──
 
@@ -18,6 +20,7 @@ export type StreamItemType =
   | "meeting"
   | "stage_change"
   | "system"
+  | "system_group"
   | "document_upload";
 
 export type StreamFilterType = "all" | "notes" | "emails" | "calls" | "system";
@@ -27,6 +30,7 @@ export interface StreamItem {
   type: StreamItemType;
   timestamp: string;
   author: {
+    id?: string;
     name: string;
     initials: string;
   };
@@ -35,6 +39,7 @@ export interface StreamItem {
   description?: string;
   // Note-specific
   noteData?: NoteData;
+  noteReplies?: NoteData[];
   // Email-specific
   subject?: string;
   bodyPreview?: string;
@@ -47,6 +52,9 @@ export interface StreamItem {
   // Stage change
   fromStage?: string;
   toStage?: string;
+  // System group
+  groupedFields?: string[];
+  groupCount?: number;
   // Raw source for pass-through rendering
   dealActivity?: DealActivity;
   crmActivity?: ActivityData;
@@ -154,6 +162,61 @@ function getInitials(name: string | null | undefined): string {
     .slice(0, 2);
 }
 
+// ── Group rapid system events ──
+
+function groupSystemEvents(items: StreamItem[]): StreamItem[] {
+  const result: StreamItem[] = [];
+  let i = 0;
+
+  while (i < items.length) {
+    const item = items[i];
+
+    // Only group system-type field updates (not stage changes)
+    if (item.type === "system" && item.dealActivity) {
+      const group: StreamItem[] = [item];
+      let j = i + 1;
+
+      while (j < items.length) {
+        const next = items[j];
+        if (
+          next.type === "system" &&
+          next.dealActivity &&
+          next.author.id === item.author.id &&
+          Math.abs(new Date(next.timestamp).getTime() - new Date(item.timestamp).getTime()) < 60000
+        ) {
+          group.push(next);
+          j++;
+        } else {
+          break;
+        }
+      }
+
+      if (group.length > 1) {
+        const titles = group.map((g) => g.title).filter(Boolean);
+        result.push({
+          ...item,
+          id: `group-${item.id}`,
+          type: "system_group",
+          title: `${titles.length} updates`,
+          description: titles.join(", "),
+          groupedFields: titles as string[],
+          groupCount: group.length,
+          timestamp: group[group.length - 1].timestamp,
+        });
+      } else {
+        result.push(item);
+      }
+
+      i = j;
+    } else {
+      result.push(item);
+      i++;
+    }
+  }
+
+  return result;
+}
+
 // ── Main hook ──
 
 interface UseActionCenterDataOptions {
@@ -176,7 +239,7 @@ export function useActionCenterData({
   const [dealActivities, setDealActivities] = useState<DealActivity[]>([]);
   const [crmActivities, setCrmActivities] = useState<ActivityData[]>([]);
   const [crmEmails, setCrmEmails] = useState<EmailData[]>([]);
-  const [notes, setNotes] = useState<NoteData[]>([]);
+  const [allNotes, setAllNotes] = useState<NoteData[]>([]);
   const [streamLoading, setStreamLoading] = useState(true);
 
   // Rail data
@@ -188,6 +251,30 @@ export function useActionCenterData({
   // Filter
   const [activeFilter, setActiveFilter] = useState<StreamFilterType>("all");
 
+  // ── Separate top-level notes from replies ──
+
+  const { topNotes, repliesByParent } = useMemo(() => {
+    const top: NoteData[] = [];
+    const replies = new Map<string, NoteData[]>();
+
+    for (const n of allNotes) {
+      if (n.parent_note_id) {
+        const arr = replies.get(n.parent_note_id) ?? [];
+        arr.push(n);
+        replies.set(n.parent_note_id, arr);
+      } else {
+        top.push(n);
+      }
+    }
+
+    // Sort replies ascending
+    replies.forEach((arr) => {
+      arr.sort((a: NoteData, b: NoteData) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
+    });
+
+    return { topNotes: top, repliesByParent: replies };
+  }, [allNotes]);
+
   // ── Fetch stream data ──
 
   const fetchStream = useCallback(
@@ -196,19 +283,17 @@ export function useActionCenterData({
       if (!silent) setStreamLoading(true);
 
       try {
-        // Fetch timeline data (deal activities + CRM activities + emails)
         const timelineResult = await fetchActivityTabData(dealId, primaryContactId);
 
-        // Fetch notes for this deal
+        // Fetch ALL notes for this deal (including replies) with likes and attachments
         const { data: notesData } = await supabase
           .from("notes" as never)
-          .select("*, note_likes(user_id), note_attachments(id, file_name, file_type, file_size_bytes, storage_path)" as never)
+          .select("*, note_likes(user_id, profiles(full_name)), note_attachments(id, file_name, file_type, file_size_bytes, storage_path)" as never)
           .eq("deal_id" as never, dealId as never)
           .is("deleted_at" as never, null)
-          .is("parent_note_id" as never, null)
           .is("condition_id" as never, null)
           .order("created_at" as never, { ascending: false })
-          .limit(100);
+          .limit(200);
 
         if (fetchRef.current !== id) return;
 
@@ -218,7 +303,7 @@ export function useActionCenterData({
           setCrmEmails(timelineResult.crmEmails as unknown as EmailData[]);
         }
 
-        setNotes((notesData ?? []) as unknown as NoteData[]);
+        setAllNotes((notesData ?? []) as unknown as NoteData[]);
       } catch {
         // Data stays stale on error
       } finally {
@@ -285,7 +370,11 @@ export function useActionCenterData({
           id: `deal-${da.id}`,
           type,
           timestamp: da.created_at,
-          author: { name: "System", initials: "SY" },
+          author: {
+            id: da.created_by ?? undefined,
+            name: "System",
+            initials: "SY",
+          },
           title: da.title,
           description: da.description ?? undefined,
           fromStage: type === "stage_change" ? ((da.metadata as Record<string, string>)?.from_stage ?? undefined) : undefined,
@@ -334,25 +423,29 @@ export function useActionCenterData({
       });
     }
 
-    // Notes
-    for (const n of notes) {
+    // Notes (top-level only; replies are nested inside)
+    for (const n of topNotes) {
+      const replies = repliesByParent.get(n.id) ?? [];
       result.push({
         id: `note-${n.id}`,
         type: "note",
         timestamp: n.created_at,
         author: {
+          id: n.author_id,
           name: n.author_name ?? "Unknown",
           initials: getInitials(n.author_name),
         },
         noteData: n,
+        noteReplies: replies.length > 0 ? replies : undefined,
       });
     }
 
     // Sort ascending (oldest first, newest at bottom)
     result.sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
 
-    return result;
-  }, [dealActivities, crmActivities, crmEmails, notes]);
+    // Group rapid system events
+    return groupSystemEvents(result);
+  }, [dealActivities, crmActivities, crmEmails, topNotes, repliesByParent]);
 
   // ── Filter counts ──
 
@@ -373,10 +466,15 @@ export function useActionCenterData({
     return streamItems.filter((item) => mapToFilterType(item.type) === activeFilter);
   }, [streamItems, activeFilter]);
 
-  // ── Add note (optimistic) ──
+  // ── Note CRUD operations ──
 
-  const addNote = useCallback(
-    async (body: string, isInternal: boolean) => {
+  const postNote = useCallback(
+    async (
+      body: string,
+      isInternal: boolean,
+      mentionIds: string[],
+      attachments?: UploadedAttachment[]
+    ) => {
       const optimisticNote: NoteData = {
         id: `temp-${Date.now()}`,
         created_at: new Date().toISOString(),
@@ -385,7 +483,7 @@ export function useActionCenterData({
         author_name: currentUserName,
         body,
         parent_note_id: null,
-        mentions: [],
+        mentions: mentionIds,
         is_internal: isInternal,
         is_pinned: false,
         pinned_by: null,
@@ -397,8 +495,7 @@ export function useActionCenterData({
         note_attachments: [],
       };
 
-      // Optimistic add
-      setNotes((prev) => [optimisticNote, ...prev]);
+      setAllNotes((prev) => [optimisticNote, ...prev]);
 
       const row: Record<string, unknown> = {
         body,
@@ -406,7 +503,7 @@ export function useActionCenterData({
         author_name: currentUserName,
         is_internal: isInternal,
         deal_id: dealId,
-        mentions: [],
+        mentions: mentionIds.length > 0 ? mentionIds : [],
       };
 
       const { data, error } = await supabase
@@ -416,15 +513,31 @@ export function useActionCenterData({
         .single();
 
       if (error) {
-        // Rollback
-        setNotes((prev) => prev.filter((n) => n.id !== optimisticNote.id));
-        return { error: error.message };
+        setAllNotes((prev) => prev.filter((n) => n.id !== optimisticNote.id));
+        showError("Could not post note", error.message);
+        return;
+      }
+
+      // Upload attachments if any
+      if (data && attachments && attachments.length > 0) {
+        const noteId = (data as unknown as NoteData).id;
+        await supabase
+          .from("note_attachments" as never)
+          .insert(
+            attachments.map((a) => ({
+              note_id: noteId,
+              file_name: a.fileName,
+              file_type: a.fileType,
+              file_size_bytes: a.fileSizeBytes,
+              storage_path: a.storagePath,
+            })) as never
+          );
       }
 
       // Replace temp with real
       if (data) {
         const real = data as unknown as NoteData;
-        setNotes((prev) =>
+        setAllNotes((prev) =>
           prev.map((n) =>
             n.id === optimisticNote.id
               ? { ...real, note_likes: [], note_attachments: [] }
@@ -432,10 +545,178 @@ export function useActionCenterData({
           )
         );
       }
-
-      return { success: true };
     },
     [currentUserId, currentUserName, dealId, supabase]
+  );
+
+  const replyToNote = useCallback(
+    async (
+      parentNoteId: string,
+      body: string,
+      isInternal: boolean,
+      mentionIds: string[],
+      attachments?: UploadedAttachment[]
+    ) => {
+      const row: Record<string, unknown> = {
+        body,
+        author_id: currentUserId,
+        author_name: currentUserName,
+        is_internal: isInternal,
+        deal_id: dealId,
+        parent_note_id: parentNoteId,
+        mentions: mentionIds.length > 0 ? mentionIds : [],
+      };
+
+      const { data, error } = await supabase
+        .from("notes" as never)
+        .insert(row as never)
+        .select()
+        .single();
+
+      if (error) {
+        showError("Could not post reply", error.message);
+        return;
+      }
+
+      if (data && attachments && attachments.length > 0) {
+        const noteId = (data as unknown as NoteData).id;
+        await supabase
+          .from("note_attachments" as never)
+          .insert(
+            attachments.map((a) => ({
+              note_id: noteId,
+              file_name: a.fileName,
+              file_type: a.fileType,
+              file_size_bytes: a.fileSizeBytes,
+              storage_path: a.storagePath,
+            })) as never
+          );
+      }
+
+      if (data) {
+        const real = { ...(data as unknown as NoteData), note_likes: [], note_attachments: [] };
+        setAllNotes((prev) => [real, ...prev]);
+      }
+    },
+    [currentUserId, currentUserName, dealId, supabase]
+  );
+
+  const editNote = useCallback(
+    async (noteId: string, body: string, mentionIds: string[]) => {
+      // Optimistic
+      setAllNotes((prev) =>
+        prev.map((n) =>
+          n.id === noteId
+            ? { ...n, body, mentions: mentionIds, is_edited: true, edited_at: new Date().toISOString() }
+            : n
+        )
+      );
+
+      const { error } = await supabase
+        .from("notes" as never)
+        .update({
+          body,
+          mentions: mentionIds.length > 0 ? mentionIds : null,
+          is_edited: true,
+          edited_at: new Date().toISOString(),
+        } as never)
+        .eq("id" as never, noteId as never);
+
+      if (error) {
+        showError("Could not update note", error.message);
+        fetchStream(true);
+      }
+    },
+    [supabase, fetchStream]
+  );
+
+  const deleteNote = useCallback(
+    async (noteId: string) => {
+      // Optimistic
+      setAllNotes((prev) => prev.filter((n) => n.id !== noteId));
+
+      const { error } = await supabase
+        .from("notes" as never)
+        .update({ deleted_at: new Date().toISOString() } as never)
+        .eq("id" as never, noteId as never);
+
+      if (error) {
+        showError("Could not delete note", error.message);
+        fetchStream(true);
+      } else {
+        showSuccess("Note deleted");
+      }
+    },
+    [supabase, fetchStream]
+  );
+
+  const toggleLike = useCallback(
+    async (noteId: string, isCurrentlyLiked: boolean) => {
+      // Optimistic
+      setAllNotes((prev) =>
+        prev.map((n) => {
+          if (n.id !== noteId) return n;
+          const likes = isCurrentlyLiked
+            ? n.note_likes.filter((l) => l.user_id !== currentUserId)
+            : [...n.note_likes, { user_id: currentUserId, profiles: { full_name: currentUserName } }];
+          return { ...n, note_likes: likes };
+        })
+      );
+
+      if (isCurrentlyLiked) {
+        await supabase
+          .from("note_likes" as never)
+          .delete()
+          .eq("note_id" as never, noteId as never)
+          .eq("user_id" as never, currentUserId as never);
+      } else {
+        await supabase
+          .from("note_likes" as never)
+          .insert({ note_id: noteId, user_id: currentUserId } as never);
+      }
+    },
+    [supabase, currentUserId, currentUserName]
+  );
+
+  const pinNote = useCallback(
+    async (noteId: string, isPinned: boolean) => {
+      // Optimistic: if pinning, unpin others
+      setAllNotes((prev) =>
+        prev.map((n) => {
+          if (n.id === noteId) {
+            return {
+              ...n,
+              is_pinned: !isPinned,
+              pinned_by: !isPinned ? currentUserId : null,
+              pinned_at: !isPinned ? new Date().toISOString() : null,
+            };
+          }
+          if (!isPinned && n.is_pinned) {
+            return { ...n, is_pinned: false, pinned_by: null, pinned_at: null };
+          }
+          return n;
+        })
+      );
+
+      // Unpin existing pinned note if we're pinning
+      if (!isPinned) {
+        await supabase
+          .from("notes" as never)
+          .update({ is_pinned: false, pinned_by: null, pinned_at: null } as never)
+          .eq("deal_id" as never, dealId as never)
+          .eq("is_pinned" as never, true as never);
+      }
+
+      await supabase
+        .from("notes" as never)
+        .update({
+          is_pinned: !isPinned,
+          pinned_by: !isPinned ? currentUserId : null,
+          pinned_at: !isPinned ? new Date().toISOString() : null,
+        } as never)
+        .eq("id" as never, noteId as never);
+    },
+    [supabase, dealId, currentUserId]
   );
 
   // ── Toggle task ──
@@ -444,7 +725,6 @@ export function useActionCenterData({
     async (taskId: string, currentStatus: string) => {
       const newStatus = currentStatus === "completed" ? "pending" : "completed";
 
-      // Optimistic update
       setTasks((prev) =>
         prev.map((t) => (t.id === taskId ? { ...t, status: newStatus } : t))
       );
@@ -455,7 +735,6 @@ export function useActionCenterData({
         .eq("id" as never, taskId as never);
 
       if (error) {
-        // Rollback
         setTasks((prev) =>
           prev.map((t) => (t.id === taskId ? { ...t, status: currentStatus } : t))
         );
@@ -486,8 +765,15 @@ export function useActionCenterData({
     filterCounts,
     activeFilter,
     setActiveFilter,
-    addNote,
     refetchStream: fetchStream,
+
+    // Note CRUD
+    postNote,
+    replyToNote,
+    editNote,
+    deleteNote,
+    toggleLike,
+    pinNote,
 
     // Rail
     conditions,

@@ -5,8 +5,10 @@ import { Loader2, MessageSquarePlus } from "lucide-react";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { StreamFilters } from "./StreamFilters";
 import { ActionCenterStreamItem, DateDivider } from "./ActionCenterStreamItem";
+import type { NoteHandlers } from "./ActionCenterStreamItem";
 import { ActionCenterComposer } from "./ActionCenterComposer";
 import type { StreamItem, StreamFilterType, StreamFilterCounts } from "./useActionCenterData";
+import type { UploadedAttachment } from "@/components/shared/attachments";
 
 interface ActionCenterStreamProps {
   items: StreamItem[];
@@ -14,7 +16,12 @@ interface ActionCenterStreamProps {
   filterCounts: StreamFilterCounts;
   activeFilter: StreamFilterType;
   onFilterChange: (filter: StreamFilterType) => void;
-  onPost: (body: string, isInternal: boolean) => Promise<{ error?: string; success?: boolean }>;
+  // Composer
+  currentUserId: string;
+  currentUserName: string;
+  onPost: (body: string, isInternal: boolean, mentionIds: string[], attachments?: UploadedAttachment[]) => Promise<void>;
+  // Note handlers
+  noteHandlers: NoteHandlers;
 }
 
 // Group items by date for dividers
@@ -40,7 +47,10 @@ export function ActionCenterStream({
   filterCounts,
   activeFilter,
   onFilterChange,
+  currentUserId,
+  currentUserName,
   onPost,
+  noteHandlers,
 }: ActionCenterStreamProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const isFirstLoad = useRef(true);
@@ -84,7 +94,11 @@ export function ActionCenterStream({
               <div key={group.date}>
                 <DateDivider date={group.date} />
                 {group.items.map((item) => (
-                  <ActionCenterStreamItem key={item.id} item={item} />
+                  <ActionCenterStreamItem
+                    key={item.id}
+                    item={item}
+                    noteHandlers={noteHandlers}
+                  />
                 ))}
               </div>
             ))}
@@ -93,7 +107,11 @@ export function ActionCenterStream({
       </div>
 
       {/* Composer */}
-      <ActionCenterComposer onPost={onPost} />
+      <ActionCenterComposer
+        currentUserId={currentUserId}
+        currentUserName={currentUserName}
+        onPost={onPost}
+      />
     </div>
   );
 }
