@@ -33,6 +33,10 @@ interface MentionInputProps {
   enterToSend?: boolean;
   /** Controls padding density */
   compact?: boolean;
+  /** Content rendered between textarea and toolbar (e.g. staged file chips) */
+  middleContent?: React.ReactNode;
+  /** When true, allow submit even if text is empty (e.g. attachment-only posts) */
+  canSubmitEmpty?: boolean;
 }
 
 export const MentionInput = forwardRef<MentionInputHandle, MentionInputProps>(function MentionInput({
@@ -47,6 +51,8 @@ export const MentionInput = forwardRef<MentionInputHandle, MentionInputProps>(fu
   toolbarButtons,
   enterToSend = false,
   compact = false,
+  middleContent,
+  canSubmitEmpty = false,
 }, ref) {
   const [showDropdown, setShowDropdown] = useState(false);
   const [dropdownQuery, setDropdownQuery] = useState("");
@@ -206,7 +212,7 @@ export const MentionInput = forwardRef<MentionInputHandle, MentionInputProps>(fu
   }
 
   function handleSubmit() {
-    if (!value.trim() || disabled) return;
+    if ((!value.trim() && !canSubmitEmpty) || disabled) return;
 
     // Reconstruct markup format from display text
     let markupText = value;
@@ -288,7 +294,7 @@ export const MentionInput = forwardRef<MentionInputHandle, MentionInputProps>(fu
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  const hasText = value.trim().length > 0;
+  const hasText = value.trim().length > 0 || canSubmitEmpty;
   const textareaPadding = compact ? "px-3 pt-3 pb-2" : "px-4 pt-3.5 pb-2";
   const toolbarPadding = compact ? "px-3 py-2" : "px-3.5 py-2.5";
 
@@ -351,6 +357,7 @@ export const MentionInput = forwardRef<MentionInputHandle, MentionInputProps>(fu
           </div>
         )}
       </div>
+      {middleContent}
       <div className={`comment-toolbar ${toolbarPadding}`}>
         <div className="flex items-center gap-1">
           {extraControls}
