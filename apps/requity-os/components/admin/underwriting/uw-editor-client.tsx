@@ -33,6 +33,7 @@ import { DEFAULT_INPUTS } from "@/lib/underwriting/types";
 import type { CommercialUWState } from "@/components/commercial-uw/types";
 import type { UWModelType } from "@/lib/constants/uw-model-types";
 import { UW_MODEL_LABELS } from "@/lib/constants/uw-model-types";
+import { formatDate } from "@/lib/format";
 
 export interface UWVersionData {
   id: string;
@@ -504,11 +505,3 @@ function parseCommercialState(
   return { ...defaults, ...raw, dealId, versionId } as CommercialUWState;
 }
 
-function formatDate(d: string | null | undefined): string {
-  if (!d) return "—";
-  return new Date(d).toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  });
-}

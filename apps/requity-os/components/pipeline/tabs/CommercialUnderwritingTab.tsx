@@ -12,6 +12,7 @@ import {
   Target,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { formatTime } from "@/lib/format";
 import {
   computeProForma,
   computeDealAnalysis,
@@ -224,7 +225,7 @@ export function CommercialUnderwritingTab({ data, dealId }: CommercialUnderwriti
       <div className="flex items-center justify-between">
         <PillNav tabs={UW_TABS} active={activeTab} onChange={setActiveTab} />
         <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
-          <Clock className="h-3 w-3" /> Last saved {uw?.updated_at ? new Date(String(uw.updated_at)).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" }) : "—"}
+          <Clock className="h-3 w-3" /> Last saved {formatTime(uw?.updated_at ? String(uw.updated_at) : null)}
         </div>
       </div>
 

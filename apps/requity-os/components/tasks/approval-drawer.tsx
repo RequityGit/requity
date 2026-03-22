@@ -2,6 +2,7 @@
 
 import { useState, useCallback } from "react";
 import { cn } from "@/lib/utils";
+import { formatDateShort } from "@/lib/format";
 import { useToast } from "@/components/ui/use-toast";
 import {
   Sheet,
@@ -252,12 +253,7 @@ export function ApprovalDrawer({
                         isDueOverdue(task.due_date) && "text-destructive"
                       )}
                     >
-                      {new Date(
-                        task.due_date + "T00:00:00"
-                      ).toLocaleDateString("en-US", {
-                        month: "short",
-                        day: "numeric",
-                      })}
+                      {formatDateShort(task.due_date)}
                     </p>
                   </div>
                 )}

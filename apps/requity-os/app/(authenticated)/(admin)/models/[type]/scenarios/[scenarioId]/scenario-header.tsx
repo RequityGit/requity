@@ -33,6 +33,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useToast } from "@/components/ui/use-toast";
+import { formatDate } from "@/lib/format";
 import {
   linkScenarioToDeal,
   unlinkScenarioFromDeal,
@@ -310,13 +311,4 @@ export function ScenarioHeader({
       </Dialog>
     </div>
   );
-}
-
-function formatDate(d: string | null | undefined): string {
-  if (!d) return "—";
-  return new Date(d).toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  });
 }

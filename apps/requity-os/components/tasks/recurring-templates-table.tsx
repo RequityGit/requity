@@ -4,6 +4,7 @@ import { useState, useMemo, useCallback } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
 import { cn } from "@/lib/utils";
+import { formatDate } from "@/lib/format";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -364,10 +365,7 @@ export function RecurringTemplatesTable({
 
                 {/* Next Due */}
                 <span className="text-xs font-medium text-right num">
-                  {new Date(t.next_due_date + "T00:00:00").toLocaleDateString(
-                    "en-US",
-                    { month: "short", day: "numeric", year: "numeric" }
-                  )}
+                  {formatDate(t.next_due_date)}
                 </span>
 
                 {/* Actions */}

@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { History, RotateCcw, FileSpreadsheet } from "lucide-react";
 import type { RentRollRow } from "@/lib/commercial-uw/types";
+import { formatDate } from "@/lib/format";
 
 export interface UploadVersion {
   id: string;
@@ -18,17 +19,6 @@ export interface UploadVersion {
 interface Props {
   versions: UploadVersion[];
   onRestore: (rows: RentRollRow[]) => void;
-}
-
-function formatDate(dateStr: string): string {
-  const d = new Date(dateStr);
-  return d.toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-    hour: "numeric",
-    minute: "2-digit",
-  });
 }
 
 export function RentRollVersionHistory({ versions, onRestore }: Props) {

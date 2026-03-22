@@ -471,12 +471,7 @@ export function PayoffStatementGenerator({ loanId, loan }: PayoffStatementGenera
               />
               <p className="text-xs text-muted-foreground">
                 Statement valid through:{" "}
-                {goodThroughDate.toLocaleDateString("en-US", {
-                  weekday: "short",
-                  month: "short",
-                  day: "numeric",
-                  year: "numeric",
-                })}
+                {formatDate(goodThroughDate.toISOString())}
                 {goodThroughDays > 0 && ` (${goodThroughDays} day${goodThroughDays !== 1 ? "s" : ""} from today)`}
               </p>
             </div>

@@ -6,6 +6,7 @@ import { Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
+import { formatDate } from "@/lib/format";
 
 interface MergeFieldDef {
   key: string;
@@ -187,7 +188,7 @@ export function EditorSidebar({
                   <div>
                     <span className="text-muted-foreground">Date:</span>{" "}
                     <span className="num">
-                      {new Date(documentInfo.generatedAt).toLocaleDateString()}
+                      {formatDate(documentInfo.generatedAt)}
                     </span>
                   </div>
                 )}

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useCallback, useRef, useEffect } from "react";
+import { formatTime } from "@/lib/format";
 import { useEditor, EditorContent } from "@tiptap/react";
 import { StarterKit } from "@tiptap/starter-kit";
 import { Underline } from "@tiptap/extension-underline";
@@ -349,7 +350,7 @@ export function DocumentEditor({
             <>
               <span className="h-1.5 w-1.5 rounded-full bg-green-500" />
               <span>
-                Saved {lastSaved.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                Saved {formatTime(lastSaved)}
               </span>
             </>
           )}

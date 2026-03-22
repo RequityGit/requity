@@ -36,6 +36,13 @@
 
     --radius: 0.5rem;
 
+    /* ─── Motion tokens ─── */
+    --duration-fast: 120ms;
+    --duration-normal: 200ms;
+    --duration-slow: 350ms;
+    --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+    --ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
+
     /* Sidebar — light secondary surface */
     --sidebar-bg: 240 5% 97%;
     --sidebar-fg: 0 0% 10%;
@@ -638,17 +645,15 @@
   letter-spacing: -0.025em;
 }
 
-/* Reduced motion support */
+/* ─── Reduced motion: respect user preference ─── */
 @media (prefers-reduced-motion: reduce) {
-  .skeleton-shimmer,
-  .swipe-hint,
-  .bottom-sheet-enter,
-  .bottom-sheet-exit {
-    animation: none !important;
-  }
-
-  * {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
   }
 }
 
@@ -689,4 +694,91 @@
 }
 .comment-composer:focus-within {
   @apply border-primary/30 bg-card;
+}
+
+/* ============================
+   Motion utility classes
+   ============================ */
+@layer utilities {
+  /* Standard transition for hover states (color, background, border changes) */
+  .rq-transition {
+    transition-property: color, background-color, border-color, opacity;
+    transition-duration: var(--duration-fast);
+    transition-timing-function: var(--ease-out);
+  }
+
+  /* Transition for elements that move or resize (panels, cards, drawers) */
+  .rq-transition-transform {
+    transition-property: transform, opacity;
+    transition-duration: var(--duration-normal);
+    transition-timing-function: var(--ease-out);
+  }
+
+  /* Transition for modals, sheets, and full panels */
+  .rq-transition-panel {
+    transition-property: transform, opacity;
+    transition-duration: var(--duration-slow);
+    transition-timing-function: var(--ease-out);
+  }
+
+  /* Transition for all properties (use sparingly — prefer specific properties) */
+  .rq-transition-all {
+    transition-property: all;
+    transition-duration: var(--duration-normal);
+    transition-timing-function: var(--ease-out);
+  }
+}
+
+/* ============================
+   Reusable keyframes
+   ============================ */
+
+/* Fade in (modals, toasts, overlays) */
+@keyframes rq-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* Fade out */
+@keyframes rq-fade-out {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+
+/* Slide in from right (peek panel, drawers) */
+@keyframes rq-slide-in-right {
+  from { transform: translateX(100%); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+
+/* Slide out to right */
+@keyframes rq-slide-out-right {
+  from { transform: translateX(0); opacity: 1; }
+  to { transform: translateX(100%); opacity: 0; }
+}
+
+/* Scale in (popovers, dropdowns) */
+@keyframes rq-scale-in {
+  from { transform: scale(0.95); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+
+/* Pulse once (alert attention, deal alert state) */
+@keyframes rq-pulse-once {
+  0%, 100% { box-shadow: 0 0 0 0 transparent; }
+  50% { box-shadow: 0 0 0 4px hsl(var(--primary) / 0.15); }
+}
+
+/* ─── Animation utility classes ─── */
+.rq-animate-fade-in {
+  animation: rq-fade-in var(--duration-normal) var(--ease-out) forwards;
+}
+.rq-animate-slide-in-right {
+  animation: rq-slide-in-right var(--duration-slow) var(--ease-out) forwards;
+}
+.rq-animate-scale-in {
+  animation: rq-scale-in var(--duration-normal) var(--ease-out) forwards;
+}
+.rq-animate-pulse-once {
+  animation: rq-pulse-once var(--duration-slow) var(--ease-in-out) 1;
 }

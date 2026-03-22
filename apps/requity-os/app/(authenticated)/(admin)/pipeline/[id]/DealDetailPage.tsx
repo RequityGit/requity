@@ -31,6 +31,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
+import { formatDateShort } from "@/lib/format";
 import { toast } from "sonner";
 import {
   Layers,
@@ -862,7 +863,7 @@ function DealHeader({
                         {(() => {
                           const [y, m, d] = String(closeDate).split("T")[0].split("-");
                           const dt = new Date(Number(y), Number(m) - 1, Number(d));
-                          return dt.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+                          return formatDateShort(dt.toISOString());
                         })()}
                       </span>
                     </span>

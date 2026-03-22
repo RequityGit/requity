@@ -20,6 +20,7 @@ import { SOPContent } from "@/components/sops/SOPContent";
 import { SOPVersionHistory } from "@/components/sops/SOPVersionHistory";
 import { sopClient } from "@/lib/sops/client";
 import type { SOP, SOPVersion } from "@/lib/sops/types";
+import { formatDate } from "@/lib/format";
 
 interface SOPDetailClientProps {
   sop: SOP;
@@ -27,14 +28,6 @@ interface SOPDetailClientProps {
   versions: SOPVersion[];
   relatedSops: { id: string; title: string; slug: string }[];
   isAdmin: boolean;
-}
-
-function formatDate(dateStr: string) {
-  return new Date(dateStr).toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  });
 }
 
 function StatusBadge({ status }: { status: string }) {

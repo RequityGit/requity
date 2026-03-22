@@ -2,6 +2,7 @@
 
 import { useState, useCallback } from "react";
 import { cn } from "@/lib/utils";
+import { formatDateShort } from "@/lib/format";
 import { Calendar, Repeat2, Check, AlertTriangle, Shield } from "lucide-react";
 import { PriorityDot } from "./priority-dot";
 import { CategoryPill } from "./category-pill";
@@ -152,10 +153,7 @@ export function TaskCard({
                   )}
                 >
                   <Calendar className="h-3 w-3" strokeWidth={1.5} />
-                  {new Date(task.due_date + "T00:00:00").toLocaleDateString(
-                    "en-US",
-                    { month: "short", day: "numeric" }
-                  )}
+                  {formatDateShort(task.due_date)}
                 </span>
               )}
             </div>

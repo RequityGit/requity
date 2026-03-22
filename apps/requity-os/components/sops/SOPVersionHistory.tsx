@@ -3,19 +3,10 @@
 import { useState } from "react";
 import { ChevronDown, ChevronUp, Clock } from "lucide-react";
 import type { SOPVersion } from "@/lib/sops/types";
+import { formatDate } from "@/lib/format";
 
 interface SOPVersionHistoryProps {
   versions: SOPVersion[];
-}
-
-function formatDate(dateStr: string) {
-  return new Date(dateStr).toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-    hour: "numeric",
-    minute: "2-digit",
-  });
 }
 
 export function SOPVersionHistory({ versions }: SOPVersionHistoryProps) {

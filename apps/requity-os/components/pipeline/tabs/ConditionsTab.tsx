@@ -38,6 +38,7 @@ import {
 } from "@/app/(authenticated)/(admin)/pipeline/[id]/actions";
 import { UnifiedNotes } from "@/components/shared/UnifiedNotes";
 import { createClient } from "@/lib/supabase/client";
+import { formatDate } from "@/lib/format";
 
 // ─── Category grouping ───
 
@@ -104,15 +105,6 @@ const STATUS_CONFIG: Record<string, { label: string; color: string; icon: typeof
 };
 
 const STATUS_OPTIONS = ["pending", "submitted", "under_review", "approved", "waived", "not_applicable", "rejected"];
-
-function formatDate(d: string | null | undefined): string {
-  if (!d) return "\u2014";
-  return new Date(d).toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  });
-}
 
 interface ConditionsTabProps {
   conditions: DealCondition[];

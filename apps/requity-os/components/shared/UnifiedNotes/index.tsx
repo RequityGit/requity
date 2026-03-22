@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { formatDateShort } from "@/lib/format";
 import { createClient } from "@/lib/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
 import { MessageSquare } from "lucide-react";
@@ -438,7 +439,7 @@ export function UnifiedNotes({
     const diffDays = Math.floor((today.getTime() - noteDay.getTime()) / (1000 * 60 * 60 * 24));
     if (diffDays === 0) return "Today";
     if (diffDays === 1) return "Yesterday";
-    return d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+    return formatDateShort(dateStr);
   }
 
   const composerElement = currentUserId ? (

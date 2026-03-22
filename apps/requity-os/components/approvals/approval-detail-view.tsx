@@ -30,7 +30,7 @@ import {
   Loader2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { formatCurrency, formatDate, formatPercent } from "@/lib/format";
+import { formatCurrency, formatDate, formatDateTime, formatPercent } from "@/lib/format";
 import { formatRelativeTime } from "@/lib/notifications";
 import {
   approveRequest,
@@ -479,7 +479,7 @@ export function ApprovalDetailView({
                         </p>
                       )}
                       <p className="text-xs text-muted-foreground mt-0.5">
-                        {formatDate(entry.created_at)} · {new Date(entry.created_at).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}
+                        {formatDateTime(entry.created_at)}
                       </p>
                     </div>
                   </div>

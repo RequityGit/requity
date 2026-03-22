@@ -1,6 +1,7 @@
 "use client";
 
 import { cn } from "@/lib/utils";
+import { formatDate } from "@/lib/format";
 import type { LucideIcon } from "lucide-react";
 import { Pencil } from "lucide-react";
 
@@ -226,5 +227,5 @@ export function relTime(iso: string | null | undefined): string {
   if (diff === 1) return "Yesterday";
   if (diff < 7) return `${diff}d ago`;
   if (diff < 30) return `${Math.floor(diff / 7)}w ago`;
-  return d.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+  return formatDate(iso);
 }

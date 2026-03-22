@@ -18,6 +18,7 @@ import { createClient } from "@/lib/supabase/server";
 import { PageHeader } from "@/components/shared/page-header";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { formatDate } from "@/lib/format";
 import { NewScenarioButton } from "./new-scenario-button";
 
 export const dynamic = "force-dynamic";
@@ -255,13 +256,4 @@ interface ScenarioRow {
   opportunity_id: string | null;
   loan_id: string | null;
   active_version_id: string | null;
-}
-
-function formatDate(d: string | null | undefined): string {
-  if (!d) return "—";
-  return new Date(d).toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  });
 }

@@ -4,6 +4,12 @@
 
 import { evaluateFormula } from "@/lib/formula-engine";
 import type { AssetClassKey, AnyAssetClassKey } from "@/lib/constants/asset-classes";
+import {
+  formatCurrency as _formatCurrency,
+  formatPercent as _formatPercent,
+  formatCompactCurrency,
+  formatRatio as _formatRatio,
+} from "@/lib/format";
 
 export type CapitalSide = "debt" | "equity";
 export type UnifiedStage = "lead" | "analysis" | "negotiation" | "execution" | "closed";
@@ -192,31 +198,11 @@ export const CAPITAL_SIDE_COLORS: Record<CapitalSide, string> = {
   equity: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400",
 };
 
-// ─── Formatters ───
+// ─── Formatters (re-exported from lib/format.ts) ───
 
-export function formatCurrency(value: number | null | undefined, compact?: boolean): string {
-  if (value == null) return "--";
-  if (compact) {
-    if (value >= 1_000_000) return `$${(value / 1_000_000).toFixed(1)}M`;
-    if (value >= 1_000) return `$${(value / 1_000).toFixed(0)}K`;
-  }
-  return new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: "USD",
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  }).format(value);
-}
-
-export function formatPercent(value: number | null | undefined): string {
-  if (value == null) return "--";
-  return `${Number(value).toFixed(2)}%`;
-}
-
-export function formatRatio(value: number | null | undefined): string {
-  if (value == null) return "--";
-  return `${Number(value).toFixed(2)}x`;
-}
+export const formatCurrency = _formatCurrency;
+export const formatPercent = _formatPercent;
+export const formatRatio = _formatRatio;
 
 export function daysInStage(stageEnteredAt: string): number {
   const entered = new Date(stageEnteredAt);
@@ -252,10 +238,10 @@ export function getCardMetricValue(
     value = typeof raw === "number" ? raw : null;
   }
 
-  if (value == null) return "--";
+  if (value == null) return "—";
 
   if (metric.format === "compact") {
-    return `${metric.prefix ?? ""}${formatCurrency(value, true).replace("$", "")}`;
+    return `${metric.prefix ?? ""}${formatCompactCurrency(value).replace("$", "")}`;
   }
 
   const formatted = Number(value).toFixed(

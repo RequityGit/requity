@@ -14,6 +14,7 @@ import {
   Plus,
 } from "lucide-react";
 import { sopClient } from "@/lib/sops/client";
+import { formatDate } from "@/lib/format";
 
 interface FlagWithSOP {
   id: string;
@@ -45,14 +46,6 @@ interface SOPAdminClientProps {
   flags: FlagWithSOP[];
   uncoveredQuestions: UncoveredQuestion[];
   topViewed: TopViewedSOP[];
-}
-
-function formatDate(dateStr: string) {
-  return new Date(dateStr).toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  });
 }
 
 function MetricCard({

@@ -4,17 +4,10 @@ import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import type { SOP } from "@/lib/sops/types";
+import { formatDate } from "@/lib/format";
 
 interface SOPCardProps {
   sop: SOP;
-}
-
-function formatDate(dateStr: string) {
-  return new Date(dateStr).toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  });
 }
 
 const STATUS_STYLES: Record<string, string> = {
