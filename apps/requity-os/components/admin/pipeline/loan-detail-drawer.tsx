@@ -42,7 +42,7 @@ function getDaysInStage(stageUpdatedAt: string): number {
 }
 
 function formatLoanType(type: string | null): string {
-  if (!type) return "--";
+  if (!type) return "—";
   const found = LOAN_TYPES.find((t) => t.value === type);
   return found ? found.label : type.replace(/_/g, " ");
 }
@@ -67,7 +67,7 @@ function DetailRow({
       <span
         className={`text-[13px] font-medium text-foreground text-right max-w-[55%] truncate ${mono ? "num" : ""}`}
       >
-        {value ?? "--"}
+        {value ?? "—"}
       </span>
     </div>
   );
@@ -142,7 +142,7 @@ export function LoanDetailDrawer({
               <DetailRow
                 icon={MapPin}
                 label="Address"
-                value={fullAddress || "--"}
+                value={fullAddress || "—"}
               />
               <DetailRow
                 icon={Building2}
@@ -150,7 +150,7 @@ export function LoanDetailDrawer({
                 value={
                   loan.property_type
                     ? loan.property_type.replace(/_/g, " ").toUpperCase()
-                    : "--"
+                    : "—"
                 }
               />
               {loan.appraised_value != null && (

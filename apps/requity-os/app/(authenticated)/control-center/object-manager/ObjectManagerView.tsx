@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { cn } from "@repo/lib";
+import { formatTime } from "@/lib/format";
 import type {
   ObjectDefinition,
   FieldConfig,
@@ -264,7 +265,7 @@ export function ObjectManagerView({ objects, fieldCounts, relationshipCounts }: 
         console.error("Publish failed:", result.error);
       } else {
         draft.clearAfterPublish();
-        setLastPublished(new Date().toLocaleTimeString());
+        setLastPublished(formatTime(new Date()));
         setShowDiffReview(false);
         // Reload fresh data from DB
         loadData();

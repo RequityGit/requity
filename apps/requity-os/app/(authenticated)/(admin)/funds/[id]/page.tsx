@@ -8,6 +8,7 @@ import { DataTable, Column } from "@/components/shared/data-table";
 import { StatusBadge } from "@/components/shared/status-badge";
 import { Separator } from "@/components/ui/separator";
 import { formatCurrency, formatDate, formatPercent } from "@/lib/format";
+import { SectionErrorBoundary } from "@/components/shared/SectionErrorBoundary";
 import {
   Landmark,
   Users,
@@ -439,81 +440,89 @@ export default async function AdminFundDetailPage({ params }: PageProps) {
         </TabsList>
 
         <TabsContent value="commitments" className="mt-4">
-          <Card>
-            <CardContent className="p-0">
-              <DataTable
-                columns={commitmentColumns}
-                data={commitments}
-                emptyMessage="No commitments for this investment."
-              />
-            </CardContent>
-          </Card>
+          <SectionErrorBoundary fallbackTitle="Could not load commitments">
+            <Card>
+              <CardContent className="p-0">
+                <DataTable
+                  columns={commitmentColumns}
+                  data={commitments}
+                  emptyMessage="No commitments for this investment."
+                />
+              </CardContent>
+            </Card>
+          </SectionErrorBoundary>
         </TabsContent>
 
         <TabsContent value="contributions" className="mt-4">
-          <Card>
-            <CardContent className="p-0">
-              <DataTable
-                columns={contributionColumns}
-                data={contributions}
-                emptyMessage="No contributions for this investment."
-              />
-            </CardContent>
-          </Card>
-          {contributions.length > 0 && (
-            <Card className="mt-4">
-              <CardContent className="py-4 px-6">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium text-muted-foreground">
-                    Total Contributions ({contributions.length} contribution
-                    {contributions.length !== 1 ? "s" : ""})
-                  </span>
-                  <span className="text-lg font-bold text-foreground">
-                    {formatCurrency(totalContributions)}
-                  </span>
-                </div>
+          <SectionErrorBoundary fallbackTitle="Could not load contributions">
+            <Card>
+              <CardContent className="p-0">
+                <DataTable
+                  columns={contributionColumns}
+                  data={contributions}
+                  emptyMessage="No contributions for this investment."
+                />
               </CardContent>
             </Card>
-          )}
+            {contributions.length > 0 && (
+              <Card className="mt-4">
+                <CardContent className="py-4 px-6">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium text-muted-foreground">
+                      Total Contributions ({contributions.length} contribution
+                      {contributions.length !== 1 ? "s" : ""})
+                    </span>
+                    <span className="text-lg font-bold text-foreground">
+                      {formatCurrency(totalContributions)}
+                    </span>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+          </SectionErrorBoundary>
         </TabsContent>
 
         <TabsContent value="distributions" className="mt-4">
-          <Card>
-            <CardContent className="p-0">
-              <DataTable
-                columns={distributionColumns}
-                data={distributions}
-                emptyMessage="No distributions for this investment."
-              />
-            </CardContent>
-          </Card>
-          {distributions.length > 0 && (
-            <Card className="mt-4">
-              <CardContent className="py-4 px-6">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium text-muted-foreground">
-                    Total Distributions ({distributions.length} distribution
-                    {distributions.length !== 1 ? "s" : ""})
-                  </span>
-                  <span className="text-lg font-bold text-foreground">
-                    {formatCurrency(totalDistributed)}
-                  </span>
-                </div>
+          <SectionErrorBoundary fallbackTitle="Could not load distributions">
+            <Card>
+              <CardContent className="p-0">
+                <DataTable
+                  columns={distributionColumns}
+                  data={distributions}
+                  emptyMessage="No distributions for this investment."
+                />
               </CardContent>
             </Card>
-          )}
+            {distributions.length > 0 && (
+              <Card className="mt-4">
+                <CardContent className="py-4 px-6">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium text-muted-foreground">
+                      Total Distributions ({distributions.length} distribution
+                      {distributions.length !== 1 ? "s" : ""})
+                    </span>
+                    <span className="text-lg font-bold text-foreground">
+                      {formatCurrency(totalDistributed)}
+                    </span>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+          </SectionErrorBoundary>
         </TabsContent>
 
         <TabsContent value="documents" className="mt-4">
-          <Card>
-            <CardContent className="p-0">
-              <DataTable
-                columns={documentColumns}
-                data={documents}
-                emptyMessage="No documents for this investment."
-              />
-            </CardContent>
-          </Card>
+          <SectionErrorBoundary fallbackTitle="Could not load documents">
+            <Card>
+              <CardContent className="p-0">
+                <DataTable
+                  columns={documentColumns}
+                  data={documents}
+                  emptyMessage="No documents for this investment."
+                />
+              </CardContent>
+            </Card>
+          </SectionErrorBoundary>
         </TabsContent>
       </Tabs>
     </div>

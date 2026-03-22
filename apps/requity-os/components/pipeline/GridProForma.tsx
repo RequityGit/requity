@@ -26,7 +26,7 @@ import { GRID_PERIODS, GRID_PERIOD_LABELS } from "./pipeline-types";
 // ---------------------------------------------------------------------------
 
 function formatValue(value: number | null, type: GridRowType): string {
-  if (value == null) return "--";
+  if (value == null) return "—";
   switch (type) {
     case "currency":
       return fmtCurrency(value);

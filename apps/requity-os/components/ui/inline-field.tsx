@@ -17,6 +17,7 @@ import {
 } from "@/components/ui/select";
 import { Check } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { formatDateInline } from "@/lib/format";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -208,17 +209,6 @@ function InlineTextField({
 
 // ─── Date ─────────────────────────────────────────────────────────────────
 
-/**
- * Formats an ISO date string (YYYY-MM-DD) for display without timezone shift.
- * Splits the string directly instead of using new Date() to avoid UTC issues.
- */
-function formatDateDisplay(iso: string | null | undefined): string {
-  if (!iso) return "";
-  const parts = iso.split("-");
-  if (parts.length !== 3) return iso;
-  const [y, m, d] = parts;
-  return `${parseInt(m, 10)}/${parseInt(d, 10)}/${y}`;
-}
 
 function InlineDateField({
   label,
@@ -233,7 +223,7 @@ function InlineDateField({
   const [justSaved, setJustSaved] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  const displayValue = formatDateDisplay(value);
+  const displayValue = formatDateInline(value);
 
   useEffect(() => {
     if (editing && inputRef.current) {

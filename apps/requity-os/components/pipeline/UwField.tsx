@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/select";
 import { Check } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { formatEditNumber, parseEditCurrency } from "@/lib/format";
 import type { UwFieldDef } from "./pipeline-types";
 import { ReadValue } from "./ReadValue";
 
@@ -27,19 +28,6 @@ function formatSelectLabel(opt: string): string {
     .join(" ");
 }
 
-function formatCurrencyDisplay(val: unknown): string {
-  if (val == null || val === "") return "";
-  const n = Number(val);
-  if (isNaN(n)) return String(val);
-  return n.toLocaleString("en-US", { maximumFractionDigits: 2 });
-}
-
-function parseCurrencyInput(raw: string): number | null {
-  const stripped = raw.replace(/[^0-9.\-]/g, "");
-  if (stripped === "" || stripped === "-") return null;
-  const n = Number(stripped);
-  return isNaN(n) ? null : n;
-}
 
 const FLOOD_RISK_OPTIONS = [
   { value: "none", label: "None", className: "bg-emerald-500/15 text-emerald-500 border-emerald-500/30" },
@@ -120,7 +108,7 @@ function CurrencyEditInput({
 
   const handleFocus = useCallback(() => {
     setEditing(true);
-    setRawText(value != null && value !== "" ? formatCurrencyDisplay(value) : "");
+    setRawText(value != null && value !== "" ? formatEditNumber(value) : "");
   }, [value]);
 
   const handleBlur = useCallback(() => {
@@ -131,8 +119,8 @@ function CurrencyEditInput({
   const handleChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
       const text = e.target.value;
-      const parsed = parseCurrencyInput(text);
-      const display = parsed != null ? formatCurrencyDisplay(parsed) : text.replace(/[^0-9.\-]/g, "");
+      const parsed = parseEditCurrency(text);
+      const display = parsed != null ? formatEditNumber(parsed) : text.replace(/[^0-9.\-]/g, "");
       setRawText(display);
       onChange(parsed);
     },
@@ -148,7 +136,7 @@ function CurrencyEditInput({
         ref={inputRef}
         type="text"
         inputMode="decimal"
-        value={editing ? rawText : formatCurrencyDisplay(value)}
+        value={editing ? rawText : formatEditNumber(value)}
         onChange={handleChange}
         onFocus={handleFocus}
         onBlur={handleBlur}

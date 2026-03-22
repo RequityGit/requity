@@ -27,6 +27,7 @@ import {
 import { formatDistanceToNow } from "date-fns";
 import { createClient } from "@/lib/supabase/client";
 import { showSuccess, showError } from "@/lib/toast";
+import { formatEditNumber } from "@/lib/format";
 import { EntityMergeSection } from "./EntityMergeSection";
 import { processIntakeItemAction } from "@/app/(authenticated)/(admin)/pipeline/actions";
 import { ACTIVE_ASSET_CLASS_OPTIONS, type AssetClass } from "./pipeline-types";
@@ -164,13 +165,6 @@ function CurrencyFieldInput({ label, value, onChange, placeholder, aiPrefilled, 
   const [editing, setEditing] = useState(false);
   const [rawText, setRawText] = useState("");
 
-  const formatCurrencyDisplay = (val: string | number | null | undefined): string => {
-    if (val == null || val === "") return "";
-    const n = Number(val);
-    if (isNaN(n)) return String(val);
-    return n.toLocaleString("en-US", { maximumFractionDigits: 0 });
-  };
-
   const parseCurrencyInput = (raw: string): string => {
     const stripped = raw.replace(/[^0-9]/g, "");
     if (stripped === "") return "";
@@ -198,7 +192,7 @@ function CurrencyFieldInput({ label, value, onChange, placeholder, aiPrefilled, 
     onChange(parsed);
   };
 
-  const displayValue = editing ? rawText : (value ? formatCurrencyDisplay(value) : "");
+  const displayValue = editing ? rawText : (value ? formatEditNumber(value) : "");
 
   return (
     <div className={className}>

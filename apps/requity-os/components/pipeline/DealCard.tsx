@@ -98,7 +98,7 @@ function DealCardInner({
         <span className="text-xs text-muted-foreground">
           {deal.asset_class
             ? (ASSET_CLASS_LABELS[deal.asset_class as AssetClass] ?? deal.asset_class)
-            : "--"}
+            : "—"}
         </span>
       </div>
 
@@ -194,7 +194,7 @@ export function DealCardOverlay({
         <span className="text-xs text-muted-foreground">
           {deal.asset_class
             ? (ASSET_CLASS_LABELS[deal.asset_class as AssetClass] ?? deal.asset_class)
-            : "--"}
+            : "—"}
         </span>
       </div>
       <p className={cn("text-sm font-semibold num mt-1", deal.amount == null && "text-muted-foreground/50")}>

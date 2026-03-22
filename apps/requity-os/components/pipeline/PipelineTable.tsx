@@ -100,7 +100,7 @@ export function PipelineTable({
                   <TableCell className="text-sm text-muted-foreground">
                     {deal.asset_class
                       ? ASSET_CLASS_LABELS[deal.asset_class as AssetClass]
-                      : "--"}
+                      : "—"}
                   </TableCell>
                   <TableCell className="text-right text-sm font-medium num">
                     {formatCurrency(deal.amount)}

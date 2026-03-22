@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { NAV_GROUPS, type NavItem } from "../_config/nav";
+import { EmptyState } from "@/components/shared/EmptyState";
 
 function isSoon(item: NavItem) {
   return item.badge?.type === "soon";
@@ -95,9 +96,7 @@ export function ControlCenterSidebar() {
                 ))}
               </div>
             ) : (
-              <p className="text-xs text-muted-foreground text-center py-6">
-                No settings found.
-              </p>
+              <EmptyState title="No settings found" compact />
             )
           ) : (
             // Normal nav groups

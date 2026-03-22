@@ -34,6 +34,7 @@ import { AddFieldDialog } from "./AddFieldDialog";
 import { ConditionBadge } from "./ConditionBadge";
 import { ConditionEditorModal } from "./ConditionEditorModal";
 import { hasCondition } from "@/lib/visibility-engine";
+import { EmptyState } from "@/components/shared/EmptyState";
 import type { VisibilityCondition } from "@/lib/visibility-engine";
 
 // Module mapping
@@ -344,10 +345,12 @@ export function FieldsTab({
       {/* Field Rows */}
       <div className="flex-1 overflow-y-auto">
         {filteredFields.length === 0 && (
-          <div className="flex flex-col items-center justify-center py-16 gap-2">
-            <Search size={24} className="text-muted-foreground" strokeWidth={1} />
-            <span className="text-xs text-muted-foreground">No fields found</span>
-          </div>
+          <EmptyState
+            icon={Search}
+            title="No fields found"
+            description="Try a different search term."
+            compact
+          />
         )}
         {filteredFields.map((field) => {
           const ft = getFieldType(field.field_type);

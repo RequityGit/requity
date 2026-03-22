@@ -798,11 +798,11 @@ export function ProFormaSection({
         />
         <ProFormaHighlightRow
           label="Equity Multiple"
-          values={[...Array(colCount - 1).fill(""), returns.equityMultiple != null ? fmtX(returns.equityMultiple) : "--"]}
+          values={[...Array(colCount - 1).fill(""), returns.equityMultiple != null ? fmtX(returns.equityMultiple) : "—"]}
         />
         <ProFormaHighlightRow
           label="Levered IRR"
-          values={[...Array(colCount - 1).fill(""), returns.irr != null ? fmtPct(returns.irr * 100) : "--"]}
+          values={[...Array(colCount - 1).fill(""), returns.irr != null ? fmtPct(returns.irr * 100) : "—"]}
         />
       </div>
     </div>

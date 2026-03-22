@@ -65,22 +65,24 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(url, 301);
   }
 
-  // -----------------------------------------------------------------------
-  // Root path → redirect to /login
-  // -----------------------------------------------------------------------
-  if (pathname === "/") {
-    const url = request.nextUrl.clone();
-    url.pathname = "/login";
-    return NextResponse.redirect(url);
-  }
-
   const isPublicRoute = PUBLIC_ROUTES.some((route) =>
     pathname.startsWith(route)
   );
 
   // Fast path: on public routes, skip Supabase entirely when there's no auth cookie.
   // This avoids a slow getUser() round-trip for every unauthenticated /login visit.
-  if (isPublicRoute && !request.cookies.get(SUPABASE_AUTH_COOKIE_NAME)?.value) {
+  // Use prefix scan to handle chunked cookies (sb-...-auth-token.0, .1, etc.)
+  const hasAuthCookie = request.cookies
+    .getAll()
+    .some((c) => c.name.startsWith(SUPABASE_AUTH_COOKIE_NAME));
+
+  if (isPublicRoute && !hasAuthCookie) {
+    // Root path with no auth cookie → /login
+    if (pathname === "/") {
+      const url = request.nextUrl.clone();
+      url.pathname = "/login";
+      return NextResponse.redirect(url);
+    }
     return NextResponse.next();
   }
 
@@ -122,6 +124,21 @@ export async function middleware(request: NextRequest) {
     });
     res.cookies.set(AUTH_SNAPSHOT_COOKIE, "", { maxAge: 0, path: "/" });
     response = res;
+  }
+
+  // -----------------------------------------------------------------------
+  // Root path → redirect based on auth state (after session refresh)
+  // -----------------------------------------------------------------------
+  if (pathname === "/") {
+    const url = request.nextUrl.clone();
+    url.pathname = user ? "/pipeline" : "/login";
+    const redirectRes = NextResponse.redirect(url);
+    if (user) {
+      response.cookies.getAll().forEach((c) => {
+        redirectRes.cookies.set(c.name, c.value, c);
+      });
+    }
+    return redirectRes;
   }
 
   // -----------------------------------------------------------------------
@@ -167,7 +184,11 @@ export async function middleware(request: NextRequest) {
         ROLE_DASHBOARDS[effectiveRole] || "/b/dashboard";
       const url = request.nextUrl.clone();
       url.pathname = dashboardPath;
-      return NextResponse.redirect(url);
+      const redirectRes = NextResponse.redirect(url);
+      response.cookies.getAll().forEach((c) => {
+        redirectRes.cookies.set(c.name, c.value, c);
+      });
+      return redirectRes;
     }
   }
 
@@ -196,7 +217,11 @@ export async function middleware(request: NextRequest) {
           }
           const url = request.nextUrl.clone();
           url.pathname = ROLE_DASHBOARDS[impersonateRole] || "/pipeline";
-          return NextResponse.redirect(url);
+          const redirectRes = NextResponse.redirect(url);
+          response.cookies.getAll().forEach((c) => {
+            redirectRes.cookies.set(c.name, c.value, c);
+          });
+          return redirectRes;
         }
       }
 
@@ -210,7 +235,11 @@ export async function middleware(request: NextRequest) {
         const url = request.nextUrl.clone();
         url.pathname = "/login";
         url.searchParams.set("error", "no_access");
-        return NextResponse.redirect(url);
+        const redirectRes = NextResponse.redirect(url);
+        response.cookies.getAll().forEach((c) => {
+          redirectRes.cookies.set(c.name, c.value, c);
+        });
+        return redirectRes;
       }
 
       if (profile.role) {
@@ -236,7 +265,11 @@ export async function middleware(request: NextRequest) {
           const url = request.nextUrl.clone();
           url.pathname =
             ROLE_DASHBOARDS[effectiveRole] || "/b/dashboard";
-          return NextResponse.redirect(url);
+          const redirectRes = NextResponse.redirect(url);
+          response.cookies.getAll().forEach((c) => {
+            redirectRes.cookies.set(c.name, c.value, c);
+          });
+          return redirectRes;
         }
       }
     }

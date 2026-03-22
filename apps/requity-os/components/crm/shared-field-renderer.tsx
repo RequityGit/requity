@@ -23,7 +23,7 @@ import type {
   CrmSectionField,
   CrmFieldType,
 } from "@/components/crm/crm-edit-section-dialog";
-import { formatCurrency, formatDate, formatPhoneNumber, formatPhoneInput, formatPercent } from "@/lib/format";
+import { formatCurrency, formatDate, formatPhoneNumber, formatPhoneInput, formatPercent, formatEditNumber, parseEditCurrency } from "@/lib/format";
 import { evaluateFormula } from "@/lib/formula-engine";
 import type { FieldLayout } from "./contact-360/types";
 import { EditableFieldSlot } from "@/components/inline-layout-editor/EditableFieldSlot";
@@ -316,19 +316,6 @@ export function buildEditFields(
  *   .inline-field-label — on labels above inline fields (text-[11px] font-medium text-muted-foreground)
  */
 
-function formatCurrencyDisplay(val: unknown): string {
-  if (val == null || val === "") return "";
-  const n = Number(val);
-  if (isNaN(n)) return String(val);
-  return n.toLocaleString("en-US", { maximumFractionDigits: 2 });
-}
-
-function parseCurrencyInput(raw: string): number | null {
-  const stripped = raw.replace(/[^0-9.\-]/g, "");
-  if (stripped === "" || stripped === "-") return null;
-  const n = Number(stripped);
-  return isNaN(n) ? null : n;
-}
 
 function CurrencyInput({
   label,
@@ -348,7 +335,7 @@ function CurrencyInput({
 
   const handleFocus = useCallback(() => {
     setEditing(true);
-    setRawText(value != null && value !== "" ? formatCurrencyDisplay(value) : "");
+    setRawText(value != null && value !== "" ? formatEditNumber(value) : "");
   }, [value]);
 
   const handleBlur = useCallback(() => {
@@ -359,8 +346,8 @@ function CurrencyInput({
   const handleChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
       const text = e.target.value;
-      const parsed = parseCurrencyInput(text);
-      const display = parsed != null ? formatCurrencyDisplay(parsed) : text.replace(/[^0-9.\-]/g, "");
+      const parsed = parseEditCurrency(text);
+      const display = parsed != null ? formatEditNumber(parsed) : text.replace(/[^0-9.\-]/g, "");
       setRawText(display);
       onChange(parsed);
     },
@@ -375,7 +362,7 @@ function CurrencyInput({
         <Input
           type="text"
           inputMode="decimal"
-          value={editing ? rawText : formatCurrencyDisplay(value)}
+          value={editing ? rawText : formatEditNumber(value)}
           onChange={handleChange}
           onFocus={handleFocus}
           onBlur={handleBlur}
