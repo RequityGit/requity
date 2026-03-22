@@ -68,6 +68,7 @@
     "exceljs": "^4.4.0",
     "file-saver": "^2.0.5",
     "html2pdf.js": "^0.14.0",
+    "immer": "^11.1.4",
     "input-otp": "^1.4.2",
     "lucide-react": "^0.468.0",
     "mathjs": "^15.1.1",

@@ -29,6 +29,7 @@ import {
 } from "./pipeline-types";
 import { getDealDisplayConfig } from "@/lib/pipeline/deal-display-config";
 import { useUwFieldConfigs } from "@/hooks/useUwFieldConfigs";
+import { usePipelineStore } from "@/stores/pipeline-store";
 import type { IntakeItem } from "@/lib/intake/types";
 
 interface PipelineKanbanProps {
@@ -72,9 +73,9 @@ export function PipelineKanban({
 }: PipelineKanbanProps) {
   const { toast } = useToast();
   const [activeId, setActiveId] = useState<string | null>(null);
-  const [dealOverrides, setDealOverrides] = useState<Map<string, UnifiedStage>>(
-    () => new Map()
-  );
+
+  // Use store's moveDeal for optimistic updates instead of local dealOverrides
+  const moveDeal = usePipelineStore((s) => s.moveDeal);
 
   const { allFields } = useUwFieldConfigs();
   const formulaMap = useMemo(() => {
@@ -113,40 +114,33 @@ export function PipelineKanban({
       const deal = deals.find((d) => d.id === dealId);
       if (!deal) return;
 
-      const currentStage = dealOverrides.get(dealId) ?? deal.stage;
-      if (currentStage === newStage) return;
+      if (deal.stage === newStage) return;
 
-      // Optimistic update
-      setDealOverrides((prev) => new Map(prev).set(dealId, newStage));
+      // Save original stage for potential revert
+      const originalStage = deal.stage;
 
+      // Optimistic update via store (UI re-renders instantly)
+      moveDeal(dealId, newStage);
+
+      // Fire server action (realtime will confirm/correct)
       const result = await advanceStageAction(dealId, newStage);
 
       if (result.error) {
         // Revert on error
-        setDealOverrides((prev) => {
-          const next = new Map(prev);
-          next.delete(dealId);
-          return next;
-        });
+        moveDeal(dealId, originalStage);
         toast({
           variant: "destructive",
           title: "Failed to move deal",
           description: result.error,
         });
       } else {
-        // Clear override — server revalidation provides fresh data
-        setDealOverrides((prev) => {
-          const next = new Map(prev);
-          next.delete(dealId);
-          return next;
-        });
         const stageLabel = STAGES.find((s) => s.key === newStage)?.label ?? newStage;
         toast({
           title: `${deal.name} moved to ${stageLabel}`,
         });
       }
     },
-    [deals, dealOverrides, toast]
+    [deals, moveDeal, toast]
   );
 
   const handleDragCancel = useCallback(() => {
@@ -160,21 +154,19 @@ export function PipelineKanban({
   const stageData = useMemo(() => {
     return STAGES.map((stage) => {
       const stageDeals = deals
-        .filter(
-          (d) => (dealOverrides.get(d.id) ?? d.stage) === stage.key
-        )
+        .filter((d) => d.stage === stage.key)
         .sort((a, b) => (b.amount ?? -Infinity) - (a.amount ?? -Infinity));
-      
+
       const totalAmount = stageDeals.reduce(
         (sum, d) => sum + (d.amount ?? 0),
         0
       );
       const isLead = stage.key === "lead";
       const columnCount = stageDeals.length + (isLead ? intakeItems.length : 0);
-      
+
       return { stage, stageDeals, totalAmount, isLead, columnCount };
     });
-  }, [deals, dealOverrides, intakeItems.length]);
+  }, [deals, intakeItems.length]);
 
   return (
     <DndContext
