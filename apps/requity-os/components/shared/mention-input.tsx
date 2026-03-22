@@ -37,6 +37,8 @@ interface MentionInputProps {
   middleContent?: React.ReactNode;
   /** When true, allow submit even if text is empty (e.g. attachment-only posts) */
   canSubmitEmpty?: boolean;
+  /** Called when user pastes files (e.g. images from clipboard) */
+  onFilePaste?: (files: File[]) => void;
 }
 
 export const MentionInput = forwardRef<MentionInputHandle, MentionInputProps>(function MentionInput({
@@ -53,6 +55,7 @@ export const MentionInput = forwardRef<MentionInputHandle, MentionInputProps>(fu
   compact = false,
   middleContent,
   canSubmitEmpty = false,
+  onFilePaste,
 }, ref) {
   const [showDropdown, setShowDropdown] = useState(false);
   const [dropdownQuery, setDropdownQuery] = useState("");
@@ -302,6 +305,25 @@ export const MentionInput = forwardRef<MentionInputHandle, MentionInputProps>(fu
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
+  function handlePaste(e: React.ClipboardEvent<HTMLTextAreaElement>) {
+    if (!onFilePaste) return;
+    const items = e.clipboardData?.items;
+    if (!items) return;
+
+    const files: File[] = [];
+    for (let i = 0; i < items.length; i++) {
+      const item = items[i];
+      if (item.kind === "file") {
+        const file = item.getAsFile();
+        if (file) files.push(file);
+      }
+    }
+    if (files.length > 0) {
+      e.preventDefault();
+      onFilePaste(files);
+    }
+  }
+
   const hasText = value.trim().length > 0 || canSubmitEmpty;
   const textareaPadding = compact ? "px-3 pt-3 pb-2" : "px-4 pt-3.5 pb-2";
   const toolbarPadding = compact ? "px-3 py-2" : "px-3.5 py-2.5";
@@ -314,6 +336,7 @@ export const MentionInput = forwardRef<MentionInputHandle, MentionInputProps>(fu
           value={value}
           onChange={handleChange}
           onKeyDown={handleKeyDown}
+          onPaste={handlePaste}
           placeholder={placeholder}
           rows={rows}
           disabled={disabled}
