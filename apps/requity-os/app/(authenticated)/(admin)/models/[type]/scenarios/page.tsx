@@ -12,6 +12,7 @@ import {
   CheckCircle2,
   GitBranch,
 } from "lucide-react";
+import { EmptyState } from "@/components/shared/EmptyState";
 import { requireAdmin } from "@/lib/auth/require-admin";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
@@ -152,12 +153,12 @@ export default async function ScenariosPage({
 
       {/* Scenarios list */}
       {(!scenarios || scenarios.length === 0) ? (
-        <div className="rounded-lg border border-border bg-muted/30 py-16 flex flex-col items-center gap-3">
-          <GitBranch size={24} className="text-muted-foreground" strokeWidth={1.5} />
-          <p className="text-sm text-muted-foreground">
-            No scenarios yet. Create one to start underwriting.
-          </p>
-          <NewScenarioButton modelType={type} />
+        <div className="rounded-lg border border-border bg-muted/30">
+          <EmptyState
+            icon={GitBranch}
+            title="No scenarios yet"
+            description="Create one to start underwriting."
+          />
         </div>
       ) : (
         <div className="flex flex-col gap-2">

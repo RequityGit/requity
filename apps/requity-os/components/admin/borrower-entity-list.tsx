@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { formatDate } from "@/lib/format";
 import { Building2, Plus, Pencil, Trash2, MapPin } from "lucide-react";
 import { BorrowerEntityDialog } from "@/components/admin/borrower-entity-dialog";
+import { EmptyState } from "@/components/shared/EmptyState";
 import { deleteEntityAction } from "@/app/(authenticated)/(admin)/borrowers/new/actions";
 import { useToast } from "@/components/ui/use-toast";
 import type { Tables } from "@/lib/supabase/types";
@@ -73,18 +74,13 @@ export function BorrowerEntityList({
 
   if (entities.length === 0 && !dialogOpen) {
     return (
-      <div className="rounded-md border bg-card p-8 text-center">
-        <Building2 className="mx-auto h-10 w-10 text-muted-foreground mb-3" />
-        <h3 className="text-sm font-semibold text-foreground mb-1">
-          No entities yet
-        </h3>
-        <p className="text-sm text-muted-foreground mb-4">
-          Add an LLC, Corporation, or other entity for this borrower.
-        </p>
-        <Button size="sm" onClick={handleAdd} className="gap-2">
-          <Plus className="h-4 w-4" />
-          Add Entity
-        </Button>
+      <div className="rounded-md border bg-card">
+        <EmptyState
+          icon={Building2}
+          title="No entities yet"
+          description="Add an LLC, Corporation, or other entity for this borrower."
+          action={{ label: "Add Entity", onClick: handleAdd, icon: Plus }}
+        />
         <BorrowerEntityDialog
           borrowerId={borrowerId}
           entity={editingEntity}

@@ -12,6 +12,7 @@ import {
   BanknoteIcon,
   File,
 } from "lucide-react";
+import { EmptyState } from "@/components/shared/EmptyState";
 import { DocumentFilters } from "./filters";
 
 // Document type groupings for display
@@ -238,14 +239,12 @@ export default async function DocumentsPage({
       {/* Grouped Document Lists */}
       {rows.length === 0 ? (
         <Card>
-          <CardContent className="py-12 text-center text-muted-foreground">
-            <FileText className="h-12 w-12 mx-auto mb-3 text-muted-foreground/40" />
-            <p className="text-lg font-medium text-foreground">
-              No documents found
-            </p>
-            <p className="text-sm mt-1">
-              Adjust your filters or check back later for new documents.
-            </p>
+          <CardContent>
+            <EmptyState
+              icon={FileText}
+              title="No documents found"
+              description="Adjust your filters or check back later for new documents."
+            />
           </CardContent>
         </Card>
       ) : (

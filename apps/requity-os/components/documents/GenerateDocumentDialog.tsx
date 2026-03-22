@@ -7,6 +7,7 @@ import {
   ChevronRight,
   Loader2,
 } from "lucide-react";
+import { EmptyState } from "@/components/shared/EmptyState";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
@@ -267,9 +268,7 @@ export function GenerateDocumentDialog({
                 <Skeleton className="h-16 w-full" />
               </div>
             ) : templates.length === 0 ? (
-              <p className="text-sm text-muted-foreground text-center py-8">
-                No active templates found for this record type.
-              </p>
+              <EmptyState icon={FileText} title="No active templates found for this record type." compact />
             ) : (
               templates.map((t) => (
                 <button

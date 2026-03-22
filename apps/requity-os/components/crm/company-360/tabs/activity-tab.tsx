@@ -27,6 +27,7 @@ import {
   Plus,
 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
+import { EmptyState } from "@/components/shared/EmptyState";
 import { DotPill, relTime } from "@/components/crm/contact-360/contact-detail-shared";
 import type { CompanyActivityData } from "../types";
 import { ACTIVITY_TYPE_CONFIG } from "@/components/crm/contact-360/types";
@@ -241,22 +242,15 @@ export function CompanyActivityTab({
 
       {/* Timeline */}
       {filtered.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-12 text-center">
-          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-muted mb-4">
-            <Activity
-              className="h-6 w-6 text-muted-foreground"
-              strokeWidth={1.5}
-            />
-          </div>
-          <h3 className="text-sm font-semibold text-foreground mb-1">
-            No activities
-          </h3>
-          <p className="text-sm text-muted-foreground">
-            {filter !== "all"
+        <EmptyState
+          icon={Activity}
+          title="No activities"
+          description={
+            filter !== "all"
               ? `No ${filter} activities. Try changing the filter.`
-              : "Log your first activity to start the timeline."}
-          </p>
-        </div>
+              : "Log your first activity to start the timeline."
+          }
+        />
       ) : (
         <div className="flex flex-col gap-0">
           {filtered.map((a, i) => {

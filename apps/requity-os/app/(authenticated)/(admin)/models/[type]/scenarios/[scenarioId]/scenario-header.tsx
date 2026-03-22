@@ -13,7 +13,9 @@ import {
   Trash2,
   MoreHorizontal,
   Archive,
+  Building2,
 } from "lucide-react";
+import { EmptyState } from "@/components/shared/EmptyState";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -225,9 +227,7 @@ export function ScenarioHeader({
                 </div>
                 <div className="max-h-[300px] overflow-y-auto flex flex-col gap-1">
                   {filteredDeals.length === 0 ? (
-                    <p className="py-6 text-center text-xs text-muted-foreground">
-                      No matching deals found
-                    </p>
+                    <EmptyState icon={Building2} title="No matching deals found" compact />
                   ) : (
                     filteredDeals.map((deal) => (
                       <button

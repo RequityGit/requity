@@ -12,6 +12,8 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { updateMarketRentByUnitType } from "@/app/(authenticated)/(admin)/pipeline/[id]/commercial-uw-actions";
 import { SectionCard, n, fmtCurrency } from "./shared";
+import { EmptyState } from "@/components/shared/EmptyState";
+import { Building2 } from "lucide-react";
 
 // ── Types ──
 
@@ -234,12 +236,12 @@ export function UnitMixSection({ rentRoll, uwId }: UnitMixSectionProps) {
   if (rentRoll.length === 0) {
     return (
       <SectionCard title="Unit Mix" icon={LayoutGrid}>
-        <div className="rq-empty-state">
-          <p className="text-sm text-muted-foreground">
-            Upload or enter a rent roll on the Rent Roll tab to see the unit mix
-            summary.
-          </p>
-        </div>
+        <EmptyState
+          icon={Building2}
+          title="No unit mix data"
+          description="Upload or enter a rent roll on the Rent Roll tab to see the unit mix summary."
+          compact
+        />
       </SectionCard>
     );
   }

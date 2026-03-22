@@ -25,8 +25,9 @@ import {
   EQUITY_STAGE_COLORS,
   EQUITY_DEAL_STAGES,
 } from "@/lib/constants";
-import { Search, ArrowUpDown } from "lucide-react";
+import { Search, ArrowUpDown, FileText } from "lucide-react";
 import type { EquityDealRow } from "./equity-kanban";
+import { EmptyState } from "@/components/shared/EmptyState";
 
 interface EquityListViewProps {
   data: EquityDealRow[];
@@ -182,11 +183,8 @@ export function EquityListView({ data }: EquityListViewProps) {
           <TableBody>
             {filtered.length === 0 && (
               <TableRow>
-                <TableCell
-                  colSpan={11}
-                  className="text-center text-muted-foreground py-8"
-                >
-                  No deals found
+                <TableCell colSpan={11}>
+                  <EmptyState icon={FileText} title="No deals found" compact />
                 </TableCell>
               </TableRow>
             )}

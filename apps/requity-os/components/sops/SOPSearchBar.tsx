@@ -1,8 +1,9 @@
 "use client";
 
-import { Search, Loader2 } from "lucide-react";
+import { Search, Loader2, FileText } from "lucide-react";
 import Link from "next/link";
 import { useSOPSearch } from "@/hooks/useSOPSearch";
+import { EmptyState } from "@/components/shared/EmptyState";
 
 export function SOPSearchBar() {
   const { query, setQuery, results, loading } = useSOPSearch();
@@ -46,10 +47,8 @@ export function SOPSearchBar() {
       )}
 
       {query.trim() && !loading && results.length === 0 && (
-        <div className="absolute z-50 mt-2 w-full rounded-xl border border-border bg-card p-4 text-center shadow-lg">
-          <p className="text-sm text-muted-foreground">
-            No SOPs found for &ldquo;{query}&rdquo;
-          </p>
+        <div className="absolute z-50 mt-2 w-full rounded-xl border border-border bg-card shadow-lg">
+          <EmptyState icon={FileText} title={`No SOPs found for "${query}"`} compact />
         </div>
       )}
     </div>

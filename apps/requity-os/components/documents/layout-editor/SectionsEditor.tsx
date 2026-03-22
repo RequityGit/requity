@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { ChevronDown, ChevronUp, Trash2, GripVertical } from "lucide-react";
+import { ChevronDown, ChevronUp, Trash2, GripVertical, Layout } from "lucide-react";
+import { EmptyState } from "@/components/shared/EmptyState";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -147,8 +148,8 @@ export function SectionsEditor({
   return (
     <div className="space-y-3">
       {sections.length === 0 && (
-        <div className="text-center py-8 text-sm text-muted-foreground border border-dashed rounded-lg">
-          No sections yet. Add your first section below.
+        <div className="border border-dashed rounded-lg">
+          <EmptyState icon={Layout} title="No sections yet" description="Add your first section below." compact />
         </div>
       )}
 

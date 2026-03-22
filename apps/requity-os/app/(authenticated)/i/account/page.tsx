@@ -14,7 +14,8 @@ import { StatusBadge } from "@/components/shared/status-badge";
 import { formatCurrency, formatDate, formatPhoneInput } from "@/lib/format";
 import { useToast } from "@/components/ui/use-toast";
 import { PhoneVerifyDialog } from "@/components/investor/phone-verify-dialog";
-import { Save, Loader2, Building2, ShieldCheck } from "lucide-react";
+import { Save, Loader2, Building2, ShieldCheck, Landmark } from "lucide-react";
+import { EmptyState } from "@/components/shared/EmptyState";
 import { resilientProfileUpdate } from "@/lib/supabase/resilient-profile-update";
 import { ProfilePhotoUpload } from "@/components/shared/profile-photo-upload";
 
@@ -379,9 +380,7 @@ export default function InvestorAccountPage() {
           </CardHeader>
           <CardContent>
             {commitments.length === 0 ? (
-              <p className="text-sm text-muted-foreground py-8 text-center">
-                No investment commitments on record.
-              </p>
+              <EmptyState icon={Landmark} title="No investment commitments on record." compact />
             ) : (
               <div className="space-y-4">
                 {commitments.map((commitment) => {

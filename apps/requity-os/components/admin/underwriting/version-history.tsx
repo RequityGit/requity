@@ -1,11 +1,12 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Clock, Check, FileText, ChevronRight } from "lucide-react";
+import { Clock, Check, FileText, ChevronRight, History } from "lucide-react";
 import type { UnderwritingModelType } from "@/lib/underwriting/resolver";
 import { getModelConfig } from "@/lib/underwriting/resolver";
 import { createClient } from "@/lib/supabase/client";
 import { formatDate } from "@/lib/format";
+import { EmptyState } from "@/components/shared/EmptyState";
 
 const supabase = createClient();
 
@@ -71,11 +72,11 @@ export function VersionHistory({
       </div>
 
       {loading && (
-        <div className="py-6 text-center text-[13px] text-[#71717a]">Loading...</div>
+        <EmptyState title="Loading..." compact className="text-[#71717a]" />
       )}
 
       {!loading && versions.length === 0 && (
-        <div className="py-6 text-center text-[13px] text-[#71717a]">No versions yet.</div>
+        <EmptyState icon={History} title="No versions yet" compact />
       )}
 
       <div className="divide-y divide-[#1e1e22]">

@@ -24,6 +24,7 @@ import {
   Upload,
 } from "lucide-react";
 import Link from "next/link";
+import { EmptyState } from "@/components/shared/EmptyState";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
@@ -63,20 +64,12 @@ export function DscrPricingManager({
         <div className="space-y-6">
           {lenders.length === 0 ? (
             <Card>
-              <CardContent className="py-12 text-center">
-                <Building2 className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-                <p className="text-muted-foreground">
-                  No lender partners configured.
-                </p>
-                <p className="text-sm text-muted-foreground mt-1">
-                  <Link
-                    href="/dscr/lenders"
-                    className="text-teal-600 hover:underline"
-                  >
-                    Add lenders
-                  </Link>{" "}
-                  to get started with DSCR pricing.
-                </p>
+              <CardContent>
+                <EmptyState
+                  icon={Building2}
+                  title="No lender partners configured"
+                  description="Add lenders to get started with DSCR pricing."
+                />
               </CardContent>
             </Card>
           ) : (
@@ -330,16 +323,12 @@ function LlpaPanel({
       </CardHeader>
       <CardContent>
         {filteredAdjustments.length === 0 ? (
-          <p className="text-muted-foreground text-sm py-8 text-center">
-            No LLPAs configured.{" "}
-            <Link
-              href="/dscr/rate-sheets"
-              className="text-teal-600 hover:underline"
-            >
-              Upload a rate sheet
-            </Link>{" "}
-            to populate adjustments.
-          </p>
+          <EmptyState
+            icon={FileText}
+            title="No LLPAs configured"
+            description="Upload a rate sheet to populate adjustments."
+            compact
+          />
         ) : (
           <div className="space-y-6">
             {Object.entries(grouped)

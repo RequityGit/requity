@@ -12,7 +12,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Copy, Trash2 } from "lucide-react";
+import { Copy, Trash2, Mail } from "lucide-react";
+import { EmptyState } from "@/components/shared/EmptyState";
 import { cn } from "@/lib/utils";
 import type { EmailTemplate } from "@/app/(authenticated)/(admin)/email-templates/types";
 import { formatCategory } from "@/app/(authenticated)/(admin)/email-templates/types";
@@ -21,7 +22,7 @@ import {
   duplicateTemplateAction,
   toggleTemplateActiveAction,
 } from "@/app/(authenticated)/(admin)/email-templates/actions-extra";
-import { DeleteConfirmDialog } from "./delete-confirm-dialog";
+import { useConfirm } from "@/components/shared/ConfirmDialog";
 import { TemplateFilters } from "./template-filters";
 
 interface TemplateListProps {
@@ -33,7 +34,7 @@ export function TemplateList({ templates: initial }: TemplateListProps) {
   const [templates, setTemplates] = useState(initial);
   const [search, setSearch] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("all");
-  const [deleteId, setDeleteId] = useState<string | null>(null);
+  const confirm = useConfirm();
 
   const filtered = templates.filter((t) => {
     const matchesSearch =
@@ -62,13 +63,18 @@ export function TemplateList({ templates: initial }: TemplateListProps) {
     }
   }
 
-  async function handleDelete() {
-    if (!deleteId) return;
-    const result = await deleteTemplateAction(deleteId);
+  async function handleDelete(id: string) {
+    const ok = await confirm({
+      title: "Delete template?",
+      description: "This will permanently delete this email template and all its version history. This action cannot be undone.",
+      confirmLabel: "Delete",
+      destructive: true,
+    });
+    if (!ok) return;
+    const result = await deleteTemplateAction(id);
     if ("success" in result) {
-      setTemplates((prev) => prev.filter((t) => t.id !== deleteId));
+      setTemplates((prev) => prev.filter((t) => t.id !== id));
     }
-    setDeleteId(null);
   }
 
   return (
@@ -94,11 +100,8 @@ export function TemplateList({ templates: initial }: TemplateListProps) {
           <TableBody>
             {filtered.length === 0 ? (
               <TableRow>
-                <TableCell
-                  colSpan={5}
-                  className="h-24 text-center text-muted-foreground"
-                >
-                  No templates found.
+                <TableCell colSpan={5}>
+                  <EmptyState icon={Mail} title="No templates found" compact />
                 </TableCell>
               </TableRow>
             ) : (
@@ -155,7 +158,7 @@ export function TemplateList({ templates: initial }: TemplateListProps) {
                         size="sm"
                         onClick={(e) => {
                           e.stopPropagation();
-                          setDeleteId(t.id);
+                          handleDelete(t.id);
                         }}
                         title="Delete"
                         className="text-red-600 hover:text-red-700"
@@ -171,11 +174,6 @@ export function TemplateList({ templates: initial }: TemplateListProps) {
         </Table>
       </div>
 
-      <DeleteConfirmDialog
-        open={!!deleteId}
-        onOpenChange={(open) => !open && setDeleteId(null)}
-        onConfirm={handleDelete}
-      />
     </>
   );
 }

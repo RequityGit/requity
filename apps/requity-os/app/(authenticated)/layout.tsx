@@ -13,6 +13,7 @@ import { MobileLayoutWrapper } from "@/components/layout/mobile-layout-wrapper";
 import { ModuleAccessProvider } from "@/contexts/module-access-context";
 import { ModuleGuard } from "@/components/layout/module-guard";
 import { SoftphoneWrapper } from "@/components/softphone/SoftphoneWrapper";
+import { ConfirmProvider } from "@/components/shared/ConfirmDialog";
 import { getSessionData } from "@/lib/auth/session-cache";
 
 // Never statically generate authenticated pages
@@ -82,7 +83,9 @@ export default async function AuthenticatedLayout({
                       <main className="flex-1 overflow-y-auto bg-background p-4 md:p-6 lg:p-8 pb-20 md:pb-6 lg:pb-8">
                         <ActivityTrackerProvider role={effectiveRole}>
                           <ModuleGuard>
-                            {children}
+                            <ConfirmProvider>
+                              {children}
+                            </ConfirmProvider>
                           </ModuleGuard>
                         </ActivityTrackerProvider>
                       </main>

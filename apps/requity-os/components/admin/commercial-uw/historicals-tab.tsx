@@ -21,6 +21,7 @@ import {
   History,
 } from "lucide-react";
 import { formatCurrency } from "@/lib/format";
+import { EmptyState } from "@/components/shared/EmptyState";
 import {
   T12_STANDARDIZED_INCOME_CATEGORIES,
   T12_STANDARDIZED_EXPENSE_CATEGORIES,
@@ -329,20 +330,13 @@ export function HistoricalsTab({
       {/* No data state */}
       {!hasData && (
         <Card>
-          <CardContent className="py-12 text-center">
-            <Upload className="h-10 w-10 text-muted-foreground mx-auto mb-3" />
-            <h3 className="text-sm font-medium mb-1">No T12 Data</h3>
-            <p className="text-xs text-muted-foreground mb-4">
-              Upload a trailing 12-month income statement to populate the
-              historicals view.
-            </p>
-            <Button
-              size="sm"
-              onClick={() => setUploadDialogOpen(true)}
-            >
-              <Upload className="h-3 w-3 mr-1" />
-              Upload T12
-            </Button>
+          <CardContent>
+            <EmptyState
+              icon={Upload}
+              title="No T12 Data"
+              description="Upload a trailing 12-month income statement to populate the historicals view."
+              action={{ label: "Upload T12", onClick: () => setUploadDialogOpen(true), icon: Upload }}
+            />
           </CardContent>
         </Card>
       )}

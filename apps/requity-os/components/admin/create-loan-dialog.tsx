@@ -27,7 +27,8 @@ import {
 } from "@/components/ui/select";
 import { LOAN_DB_TYPES, LOAN_PURPOSES } from "@/lib/constants";
 import { useToast } from "@/components/ui/use-toast";
-import { PlusCircle, Search, Check, X, UserPlus } from "lucide-react";
+import { PlusCircle, Search, Check, X, UserPlus, Users } from "lucide-react";
+import { EmptyState } from "@/components/shared/EmptyState";
 import { createLoanSchema } from "@/lib/schemas/loan";
 
 interface TeamMember {
@@ -361,9 +362,7 @@ export function CreateLoanDialog({
                   >
                     <div className="max-h-[200px] overflow-y-auto p-1">
                       {filteredBorrowers.length === 0 ? (
-                        <div className="py-4 text-center text-sm text-muted-foreground">
-                          No borrowers found
-                        </div>
+                        <EmptyState icon={Users} title="No borrowers found" compact />
                       ) : (
                         filteredBorrowers.map((b) => (
                           <button

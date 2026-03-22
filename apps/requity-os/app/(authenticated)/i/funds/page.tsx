@@ -6,6 +6,7 @@ import { formatCurrency, formatPercent } from "@/lib/format";
 import { Landmark, ArrowRight } from "lucide-react";
 import Link from "next/link";
 import { InvestmentTabs } from "@/components/investor/investment-tabs";
+import { EmptyState } from "@/components/shared/EmptyState";
 
 type CommitmentWithFund = {
   id: string;
@@ -55,14 +56,12 @@ export default async function InvestorFundsPage() {
 
       {commitments.length === 0 ? (
         <Card>
-          <CardContent className="py-12 text-center text-muted-foreground">
-            <Landmark className="h-12 w-12 mx-auto mb-3 text-muted-foreground/40" />
-            <p className="text-lg font-medium text-foreground">
-              No investment commitments found
-            </p>
-            <p className="text-sm mt-1">
-              Contact your administrator for more information.
-            </p>
+          <CardContent>
+            <EmptyState
+              icon={Landmark}
+              title="No investment commitments found"
+              description="Contact your administrator for more information."
+            />
           </CardContent>
         </Card>
       ) : (

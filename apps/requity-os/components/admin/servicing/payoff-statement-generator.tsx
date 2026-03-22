@@ -23,6 +23,7 @@ import {
   Calculator,
   CalendarDays,
 } from "lucide-react";
+import { EmptyState } from "@/components/shared/EmptyState";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
@@ -391,11 +392,13 @@ export function PayoffStatementGenerator({ loanId, loan }: PayoffStatementGenera
   if (!loan) {
     return (
       <Card>
-        <CardContent className="py-8 text-center">
-          <FileText className="h-8 w-8 mx-auto text-muted-foreground mb-2" />
-          <p className="text-sm text-muted-foreground">
-            This loan is not in the servicing system. Payoff statements are only available for servicing loans.
-          </p>
+        <CardContent>
+          <EmptyState
+            icon={FileText}
+            title="Loan not in servicing system"
+            description="Payoff statements are only available for servicing loans."
+            compact
+          />
         </CardContent>
       </Card>
     );

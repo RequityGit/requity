@@ -52,6 +52,7 @@ import {
   Plus,
   Loader2,
 } from "lucide-react";
+import { EmptyState } from "@/components/shared/EmptyState";
 import { cn } from "@/lib/utils";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
@@ -552,9 +553,7 @@ export function NewDealForm({
                     </div>
                     <div className="max-h-[200px] overflow-y-auto p-1">
                       {filteredBorrowers.length === 0 ? (
-                        <div className="py-4 text-center text-sm text-muted-foreground">
-                          No borrowers found.
-                        </div>
+                        <EmptyState icon={Users} title="No borrowers found." compact />
                       ) : (
                         filteredBorrowers.map((b) => (
                           <button

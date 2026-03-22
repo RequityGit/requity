@@ -16,6 +16,7 @@ import {
   ChevronDown,
   ChevronUp,
 } from "lucide-react";
+import { EmptyState } from "@/components/shared/EmptyState";
 import { EmailComposeSheet } from "./email-compose-sheet";
 
 export interface EmailRecord {
@@ -97,9 +98,11 @@ export function EmailActivityFeed({
         </CardHeader>
         <CardContent>
           {emails.length === 0 ? (
-            <p className="text-sm text-muted-foreground text-center py-6">
-              No emails sent yet.
-            </p>
+            <EmptyState
+              icon={Mail}
+              title="No emails sent yet"
+              compact
+            />
           ) : (
             <div className="space-y-3">
               {emails.map((email) => {

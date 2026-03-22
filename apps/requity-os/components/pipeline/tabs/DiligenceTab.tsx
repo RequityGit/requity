@@ -86,6 +86,8 @@ import { GenerateDocumentDialog } from "@/components/documents/GenerateDocumentD
 import { SecureUploadLinkDialog } from "@/components/pipeline/SecureUploadLinkDialog";
 import type { NoteData } from "@/components/shared/UnifiedNotes/types";
 import { formatDate } from "@/lib/format";
+import { EmptyState } from "@/components/shared/EmptyState";
+import { ClipboardCheck } from "lucide-react";
 
 // ─── Types ───
 
@@ -912,10 +914,10 @@ function DocPreviewModal({
                 />
               )}
               {!isPdf && !isImage && (
-                <div className="flex flex-col items-center justify-center gap-2 py-12 text-center text-sm text-muted-foreground">
-                  <FileText className="h-12 w-12" strokeWidth={1.5} />
-                  <p>Preview not available for this file type.</p>
-                </div>
+                <EmptyState
+                  icon={FileText}
+                  title="Preview not available for this file type"
+                />
               )}
             </>
           ) : null}
@@ -1059,9 +1061,12 @@ function ConditionNoteThread({
       {loading ? (
         <div className="h-24 rounded-lg bg-muted animate-pulse" />
       ) : notes.length === 0 ? (
-        <div className="flex flex-col items-center justify-center rounded-lg border border-dashed border-border py-4 text-center">
-          <MessageSquare className="mb-1.5 h-5 w-5 text-muted-foreground/50" strokeWidth={1.5} />
-          <p className="text-xs text-muted-foreground">No notes on this condition yet</p>
+        <div className="rounded-lg border border-dashed border-border">
+          <EmptyState
+            icon={MessageSquare}
+            title="No notes on this condition yet"
+            compact
+          />
         </div>
       ) : (
         <div className="rounded-lg border border-border bg-card overflow-hidden">
@@ -1560,11 +1565,15 @@ function DocumentsSection({
 
       {/* Collapsible category groups */}
       {categoryOrder.length === 0 && (
-        <div className="px-4 rq-empty-state">
-          {documents.length === 0
-            ? "No documents uploaded yet."
-            : "No documents match your search."}
-        </div>
+        <EmptyState
+          icon={FileText}
+          title={
+            documents.length === 0
+              ? "No documents uploaded yet"
+              : "No documents match your search"
+          }
+          compact
+        />
       )}
 
       {categoryOrder.map((cat) => {
@@ -2696,8 +2705,12 @@ function ConditionsSection({
       </div>
 
       {filtered.length === 0 && (
-        <div className="rounded-xl border border-border bg-card px-5 rq-empty-state">
-          No conditions match the current filter.
+        <div className="rounded-xl border border-border bg-card">
+          <EmptyState
+            icon={ClipboardCheck}
+            title="No conditions match the current filter"
+            compact
+          />
         </div>
       )}
 

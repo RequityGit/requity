@@ -36,7 +36,9 @@ import {
   Eye,
   ChevronDown,
   ChevronUp,
+  FileText,
 } from "lucide-react";
+import { EmptyState } from "@/components/shared/EmptyState";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { FormEngine } from "@/components/forms/FormEngine";
@@ -1056,8 +1058,8 @@ export default function FormEditorPage() {
                   </TableRow>
                 ) : submissions.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={4} className="rq-empty-state">
-                      No submissions yet.
+                    <TableCell colSpan={4}>
+                      <EmptyState icon={FileText} title="No submissions yet." compact />
                     </TableCell>
                   </TableRow>
                 ) : (

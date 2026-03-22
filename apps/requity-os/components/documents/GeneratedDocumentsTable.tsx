@@ -8,7 +8,9 @@ import {
   Download,
   Pencil,
   Loader2,
+  FileText,
 } from "lucide-react";
+import { EmptyState } from "@/components/shared/EmptyState";
 import { toast } from "sonner";
 import { createClient } from "@/lib/supabase/client";
 import { exportHtmlAsPdf } from "@/lib/export-pdf";
@@ -183,11 +185,8 @@ export function GeneratedDocumentsTable({ data, action }: Props) {
             <tbody>
               {filtered.length === 0 && (
                 <tr>
-                  <td
-                    colSpan={7}
-                    className="px-4 py-12 text-center text-muted-foreground"
-                  >
-                    No generated documents found.
+                  <td colSpan={7}>
+                    <EmptyState icon={FileText} title="No generated documents found." compact />
                   </td>
                 </tr>
               )}

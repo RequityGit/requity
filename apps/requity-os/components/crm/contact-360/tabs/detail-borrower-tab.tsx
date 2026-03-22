@@ -4,6 +4,7 @@ import { useState, useMemo, useCallback, useTransition, type ReactNode } from "r
 import { createClient } from "@/lib/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
 import { Landmark, Building2, Check, X } from "lucide-react";
+import { EmptyState } from "@/components/shared/EmptyState";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -367,8 +368,12 @@ export function DetailBorrowerTab({
           </CardTitle>
         </CardHeader>
         {loans.length === 0 ? (
-          <CardContent className="rq-empty-state">
-            No loans or deals found.
+          <CardContent>
+            <EmptyState
+              icon={Landmark}
+              title="No loans or deals found"
+              compact
+            />
           </CardContent>
         ) : (
           <div className="overflow-x-auto">

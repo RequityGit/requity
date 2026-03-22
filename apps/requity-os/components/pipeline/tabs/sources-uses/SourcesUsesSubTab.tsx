@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+import { EmptyState } from "@/components/shared/EmptyState";
 import {
   upsertDebtTranches,
   upsertClosingCosts,
@@ -650,20 +651,24 @@ export function SourcesUsesSubTab({
               })}
 
               {vaCategories.length === 0 && (
-                <div className="text-center py-4">
-                  <p className="text-sm text-muted-foreground mb-2">No value-add items yet.</p>
-                  <button onClick={() => {
-                    const newItem: ScopeOfWorkRow = {
-                      item_name: "New item", description: null, estimated_cost: 0,
-                      category: "Interior Renovations", qty: 1, unit_cost: 0, timeline: "Yr 1",
-                      budget_type: "value_add", sort_order: 0,
-                    };
-                    setSowItems((prev) => [...prev, newItem]);
-                    setTimeout(saveSOW, 0);
-                  }} className="rq-action-btn-sm">
-                    <Plus className="w-3 h-3" strokeWidth={2} /> Add Item
-                  </button>
-                </div>
+                <EmptyState
+                  icon={Hammer}
+                  title="No value-add items yet"
+                  action={{
+                    label: "Add Item",
+                    icon: Plus,
+                    onClick: () => {
+                      const newItem: ScopeOfWorkRow = {
+                        item_name: "New item", description: null, estimated_cost: 0,
+                        category: "Interior Renovations", qty: 1, unit_cost: 0, timeline: "Yr 1",
+                        budget_type: "value_add", sort_order: 0,
+                      };
+                      setSowItems((prev) => [...prev, newItem]);
+                      setTimeout(saveSOW, 0);
+                    },
+                  }}
+                  compact
+                />
               )}
 
               <div className="flex items-center justify-between py-2 px-3 rounded-lg bg-muted/30 border">
@@ -748,20 +753,24 @@ export function SourcesUsesSubTab({
               })}
 
               {guCategories.length === 0 && (
-                <div className="text-center py-4">
-                  <p className="text-sm text-muted-foreground mb-2">No ground-up items yet.</p>
-                  <button onClick={() => {
-                    const newItem: ScopeOfWorkRow = {
-                      item_name: "New item", description: null, estimated_cost: 0,
-                      category: "Hard Costs", qty: 1, unit_cost: 0, timeline: null,
-                      budget_type: "ground_up", sort_order: 0,
-                    };
-                    setSowItems((prev) => [...prev, newItem]);
-                    setTimeout(saveSOW, 0);
-                  }} className="rq-action-btn-sm">
-                    <Plus className="w-3 h-3" strokeWidth={2} /> Add Item
-                  </button>
-                </div>
+                <EmptyState
+                  icon={Hammer}
+                  title="No ground-up items yet"
+                  action={{
+                    label: "Add Item",
+                    icon: Plus,
+                    onClick: () => {
+                      const newItem: ScopeOfWorkRow = {
+                        item_name: "New item", description: null, estimated_cost: 0,
+                        category: "Hard Costs", qty: 1, unit_cost: 0, timeline: null,
+                        budget_type: "ground_up", sort_order: 0,
+                      };
+                      setSowItems((prev) => [...prev, newItem]);
+                      setTimeout(saveSOW, 0);
+                    },
+                  }}
+                  compact
+                />
               )}
 
               {(() => {

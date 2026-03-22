@@ -39,6 +39,7 @@ import {
   Play,
   Trash2,
 } from "lucide-react";
+import { EmptyState } from "@/components/shared/EmptyState";
 import { CategoryPill } from "./category-pill";
 import type { Profile } from "@/lib/tasks";
 import { getInitials, TASK_CATEGORIES } from "@/lib/tasks";
@@ -283,9 +284,12 @@ export function RecurringTemplatesTable({
 
         {/* Rows */}
         {filteredTemplates.length === 0 ? (
-          <div className="px-4 py-10 text-center text-sm text-muted-foreground">
-            No templates found.
-          </div>
+          <EmptyState
+            icon={Repeat2}
+            title="No templates found"
+            description="Try adjusting your filters."
+            compact
+          />
         ) : (
           filteredTemplates.map((t) => {
             const assignee = t.assigned_to

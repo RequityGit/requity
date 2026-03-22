@@ -34,7 +34,9 @@ import {
   ArrowUpDown,
   ArrowUp,
   ArrowDown,
+  FileText,
 } from "lucide-react";
+import { EmptyState } from "@/components/shared/EmptyState";
 import { LoanDetailDrawer } from "./loan-detail-drawer";
 
 export interface LendingPipelineRow {
@@ -421,11 +423,8 @@ export function LendingPipelineTable({
           <TableBody>
             {sorted.length === 0 ? (
               <TableRow>
-                <TableCell
-                  colSpan={8}
-                  className="h-24 text-center text-muted-foreground"
-                >
-                  No loans found.
+                <TableCell colSpan={8}>
+                  <EmptyState icon={FileText} title="No loans found" compact />
                 </TableCell>
               </TableRow>
             ) : (

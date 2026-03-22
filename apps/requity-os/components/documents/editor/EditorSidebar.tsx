@@ -2,11 +2,12 @@
 
 import { useState } from "react";
 import { type Editor } from "@tiptap/react";
-import { Search } from "lucide-react";
+import { Search, FileText } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
 import { formatDate } from "@/lib/format";
+import { EmptyState } from "@/components/shared/EmptyState";
 
 interface MergeFieldDef {
   key: string;
@@ -120,9 +121,7 @@ export function EditorSidebar({
             ))}
 
             {Object.keys(grouped).length === 0 && (
-              <p className="text-xs text-muted-foreground text-center py-4">
-                No fields match your search.
-              </p>
+              <EmptyState icon={FileText} title="No fields match your search." compact />
             )}
           </div>
         </ScrollArea>

@@ -12,6 +12,7 @@ import {
   FileText,
   Users,
 } from "lucide-react";
+import { EmptyState } from "@/components/shared/EmptyState";
 import { cn } from "@/lib/utils";
 import type { DialerList } from "@/lib/dialer/types";
 
@@ -89,14 +90,12 @@ export function DialerListsPage({ lists, teamMembers }: DialerListsPageProps) {
 
       {/* Lists table */}
       {filtered.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-16 text-center">
-          <Phone className="h-8 w-8 text-muted-foreground/40 mb-3" strokeWidth={1.5} />
-          <p className="text-sm text-muted-foreground">
-            {filter === "all"
-              ? "No dialer lists yet. Create one to get started."
-              : `No ${filter} lists.`}
-          </p>
-        </div>
+        <EmptyState
+          icon={Phone}
+          title={filter === "all" ? "No dialer lists yet" : `No ${filter} lists`}
+          description={filter === "all" ? "Create a list to get started." : undefined}
+          compact
+        />
       ) : (
         <div className="rounded-xl border border-border bg-card overflow-hidden">
           <table className="w-full">
