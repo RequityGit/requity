@@ -52,7 +52,7 @@ export function NoteComposer({
   }
 
   return (
-    <div className={`rounded-xl border border-border bg-card ${compact ? "p-3" : "p-4"}`}>
+    <div className={`comment-composer ${compact ? "p-3" : "p-4"}`}>
       <div className="flex gap-2.5">
         <Avatar className={`${avatarSize} rounded-lg flex-shrink-0`}>
           <AvatarFallback
