@@ -9,7 +9,7 @@ import {
   AttachmentPreview,
   type UploadedAttachment,
 } from "@/components/shared/attachments";
-import { useToast } from "@/components/ui/use-toast";
+import { showError } from "@/lib/toast";
 
 interface NoteComposerProps {
   currentUserName: string;
@@ -51,13 +51,10 @@ export function NoteComposer({
   const [dragOver, setDragOver] = useState(false);
   const mentionInputRef = useRef<MentionInputHandle>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const { toast } = useToast();
-
   const { stagedFiles, uploading, addFiles, removeStaged, uploadAll, clearStaged } =
     useAttachmentUpload({
       pathPrefix: `notes/staged/${currentUserId}`,
-      onError: (msg) =>
-        toast({ title: "Upload failed", description: msg, variant: "destructive" }),
+      onError: (msg) => showError("Could not upload file", msg),
     });
 
   const initials = getInitials(currentUserName || "?");

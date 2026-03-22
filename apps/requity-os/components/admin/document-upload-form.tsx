@@ -22,7 +22,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { FileUpload } from "@/components/shared/file-upload";
-import { useToast } from "@/components/ui/use-toast";
+import { showSuccess, showError, showWarning } from "@/lib/toast";
 import { DOCUMENT_TYPES } from "@/lib/constants";
 import { Plus, Loader2 } from "lucide-react";
 
@@ -56,16 +56,11 @@ export function DocumentUploadForm({
   const [file, setFile] = useState<File | null>(null);
 
   const router = useRouter();
-  const { toast } = useToast();
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!ownerId || !documentType || !file) {
-      toast({
-        title: "Missing fields",
-        description: "Please fill all required fields and select a file.",
-        variant: "destructive",
-      });
+      showWarning("Please fill all required fields and select a file");
       return;
     }
 
@@ -99,16 +94,12 @@ export function DocumentUploadForm({
 
       if (dbError) throw dbError;
 
-      toast({ title: "Document uploaded successfully" });
+      showSuccess("Document uploaded");
       setOpen(false);
       resetForm();
       router.refresh();
     } catch (err: any) {
-      toast({
-        title: "Error uploading document",
-        description: err.message,
-        variant: "destructive",
-      });
+      showError("Could not upload document", err.message);
     } finally {
       setLoading(false);
     }

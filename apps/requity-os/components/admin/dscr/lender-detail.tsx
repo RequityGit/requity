@@ -15,7 +15,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { useToast } from "@/components/ui/use-toast";
+import { showSuccess, showError, showWarning } from "@/lib/toast";
 import { Plus, FileText, Table } from "lucide-react";
 import { EmptyState } from "@/components/shared/EmptyState";
 import {
@@ -38,7 +38,6 @@ export function LenderDetail({
   uploads: any[];
 }) {
   const router = useRouter();
-  const { toast } = useToast();
   const [productOpen, setProductOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState<Partial<ProductInput>>({
@@ -55,7 +54,7 @@ export function LenderDetail({
 
   async function handleAddProduct() {
     if (!form.product_name) {
-      toast({ title: "Error", description: "Product name is required", variant: "destructive" });
+      showWarning("Product name is required");
       return;
     }
     setSaving(true);
@@ -82,10 +81,10 @@ export function LenderDetail({
         eligible_borrower_types: form.eligible_borrower_types,
       });
       if ("error" in result) {
-        toast({ title: "Error", description: result.error, variant: "destructive" });
+        showError("Could not add product", result.error);
         return;
       }
-      toast({ title: "Product added" });
+      showSuccess("Product added");
       setProductOpen(false);
       router.refresh();
     } finally {
@@ -96,7 +95,7 @@ export function LenderDetail({
   async function toggleProduct(id: string, current: boolean) {
     const result = await toggleProductActiveAction(id, !current);
     if ("error" in result) {
-      toast({ title: "Error", description: result.error, variant: "destructive" });
+      showError("Could not toggle product", result.error);
       return;
     }
     router.refresh();

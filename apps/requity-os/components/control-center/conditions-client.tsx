@@ -10,7 +10,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useToast } from "@/components/ui/use-toast";
+import { showSuccess, showError } from "@/lib/toast";
 import { Plus, FileText } from "lucide-react";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -93,7 +93,6 @@ CATEGORY_LABELS["post_closing_items"] = "Post Closing Items";
 
 export function ConditionsClient({ templates }: ConditionsClientProps) {
   const router = useRouter();
-  const { toast } = useToast();
 
   // Optimistic local state — badges update instantly, server syncs in background
   const [localTemplates, setLocalTemplates] = useState(templates);
@@ -205,10 +204,10 @@ export function ConditionsClient({ templates }: ConditionsClientProps) {
   async function handleSave(data: ConditionFormData) {
     const result = await saveCondition(data);
     if (result.error) {
-      toast({ title: "Error", description: result.error, variant: "destructive" });
+      showError("Could not save", result.error);
       return false;
     }
-    toast({ title: result.message || "Saved" });
+    showSuccess(result.message || "Saved");
     setSlideOverOpen(false);
     router.refresh();
     return true;
@@ -217,9 +216,9 @@ export function ConditionsClient({ templates }: ConditionsClientProps) {
   async function handleDeactivate(id: string) {
     const result = await deactivateCondition(id);
     if (result.error) {
-      toast({ title: "Error", description: result.error, variant: "destructive" });
+      showError("Could not save", result.error);
     } else {
-      toast({ title: "Condition deactivated" });
+      showSuccess("Condition deactivated");
       router.refresh();
     }
   }
@@ -227,9 +226,9 @@ export function ConditionsClient({ templates }: ConditionsClientProps) {
   async function handleReactivate(id: string) {
     const result = await reactivateCondition(id);
     if (result.error) {
-      toast({ title: "Error", description: result.error, variant: "destructive" });
+      showError("Could not save", result.error);
     } else {
-      toast({ title: "Condition reactivated" });
+      showSuccess("Condition reactivated");
       router.refresh();
     }
   }
@@ -262,17 +261,13 @@ export function ConditionsClient({ templates }: ConditionsClientProps) {
             prev.map((t) => (t.id === id ? oldTemplate : t))
           );
         }
-        toast({
-          title: "Error",
-          description: result.error,
-          variant: "destructive",
-        });
+        showError("Could not update condition", result.error);
         return false;
       }
       // No router.refresh() needed — local state already reflects the change
       return true;
     },
-    [toast]
+    []
   );
 
   const handleReorder = useCallback(
@@ -283,16 +278,12 @@ export function ConditionsClient({ templates }: ConditionsClientProps) {
       }));
       const result = await reorderConditions(updates);
       if (result.error) {
-        toast({
-          title: "Error",
-          description: result.error,
-          variant: "destructive",
-        });
+        showError("Could not reorder conditions", result.error);
       } else {
         router.refresh();
       }
     },
-    [toast, router]
+    [router]
   );
 
   return (

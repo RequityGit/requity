@@ -13,7 +13,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { toast } from "sonner";
+import { showSuccess, showError } from "@/lib/toast";
 import { cn } from "@/lib/utils";
 import {
   upsertIncomeBySectionRows,
@@ -92,9 +92,9 @@ export function AncillaryIncomeSection({
       }));
       const result = await upsertIncomeBySectionRows(uwId, "ancillary", templateRows);
       if (result.error) {
-        toast.error(`Failed to apply templates: ${result.error}`);
+        showError("Could not apply templates", result.error);
       } else {
-        toast.success("Ancillary income categories applied");
+        showSuccess("Ancillary income categories applied");
         router.refresh();
       }
     } finally {
@@ -119,7 +119,7 @@ export function AncillaryIncomeSection({
         }));
         const result = await upsertIncomeBySectionRows(uwId, "ancillary", toSave);
         if (result.error) {
-          toast.error(`Failed to save: ${result.error}`);
+          showError("Could not save ancillary income", result.error);
         } else {
           router.refresh();
         }
@@ -135,7 +135,7 @@ export function AncillaryIncomeSection({
     async (rowId: string, notes: string) => {
       const result = await updateIncomeNotes(rowId, notes || null);
       if (result.error) {
-        toast.error("Failed to save note");
+        showError("Could not save note");
       } else {
         router.refresh();
       }

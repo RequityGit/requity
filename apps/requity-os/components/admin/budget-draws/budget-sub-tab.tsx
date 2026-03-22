@@ -18,7 +18,7 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
-import { useToast } from "@/components/ui/use-toast";
+import { showSuccess, showError } from "@/lib/toast";
 import { formatCurrency } from "@/lib/format";
 import {
   Plus,
@@ -121,7 +121,6 @@ function CreateBudgetModal({
   currentUserId: string;
   onRefresh: () => void;
 }) {
-  const { toast } = useToast();
   const [loading, setLoading] = useState(false);
   const [notes, setNotes] = useState("");
   const [lineItems, setLineItems] = useState<LineItemDraft[]>(
@@ -163,10 +162,7 @@ function CreateBudgetModal({
     );
 
     if (validItems.length === 0) {
-      toast({
-        title: "At least one line item with a budget amount is required",
-        variant: "destructive",
-      });
+      showError("At least one line item with a budget amount is required");
       return;
     }
 
@@ -210,16 +206,12 @@ function CreateBudgetModal({
 
       if (itemsError) throw itemsError;
 
-      toast({ title: "Budget created successfully" });
+      showSuccess("Budget created");
       onOpenChange(false);
       onRefresh();
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : "Unknown error";
-      toast({
-        title: "Error creating budget",
-        description: message,
-        variant: "destructive",
-      });
+      showError("Could not create budget", message);
     } finally {
       setLoading(false);
     }
@@ -343,7 +335,6 @@ function ActiveBudgetView({
   onToggleEdit: () => void;
   onRefresh: () => void;
 }) {
-  const { toast } = useToast();
   const [activating, setActivating] = useState(false);
   const [editValues, setEditValues] = useState<
     Record<string, { description: string; notes: string; budgetAmount: string }>
@@ -368,11 +359,11 @@ function ActiveBudgetView({
         .eq("id", budget.id);
 
       if (error) throw error;
-      toast({ title: "Budget activated" });
+      showSuccess("Budget activated");
       onRefresh();
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : "Unknown error";
-      toast({ title: "Error activating budget", description: message, variant: "destructive" });
+      showError("Could not activate budget", message);
     } finally {
       setActivating(false);
     }
@@ -425,13 +416,13 @@ function ActiveBudgetView({
           .eq("id", budget.id);
       }
 
-      toast({ title: "Budget updated" });
+      showSuccess("Budget updated");
       setEditValues({});
       onToggleEdit();
       onRefresh();
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : "Unknown error";
-      toast({ title: "Error saving edits", description: message, variant: "destructive" });
+      showError("Could not save edits", message);
     }
   }
 

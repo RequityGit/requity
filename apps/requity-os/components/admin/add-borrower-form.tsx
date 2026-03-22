@@ -22,7 +22,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useToast } from "@/components/ui/use-toast";
+import { showSuccess, showError } from "@/lib/toast";
 import { addBorrowerAction } from "@/app/(authenticated)/(admin)/borrowers/new/actions";
 import { Loader2, ChevronRight, ChevronLeft, Check } from "lucide-react";
 import { US_STATES } from "@/lib/constants";
@@ -45,7 +45,6 @@ export function AddBorrowerForm({ borrower }: AddBorrowerFormProps) {
   const [step, setStep] = useState(0);
   const [loading, setLoading] = useState(false);
   const router = useRouter();
-  const { toast } = useToast();
 
   // Step 1: Personal Information
   const [firstName, setFirstName] = useState(borrower?.first_name ?? "");
@@ -121,22 +120,14 @@ export function AddBorrowerForm({ borrower }: AddBorrowerFormProps) {
       });
 
       if (result.error) {
-        toast({
-          title: "Error adding borrower",
-          description: result.error,
-          variant: "destructive",
-        });
+        showError("Could not add borrower", result.error);
         return;
       }
 
-      toast({ title: "Borrower added successfully" });
+      showSuccess("Borrower added");
       router.push(`/borrowers/${result.borrowerId}`);
     } catch (err: any) {
-      toast({
-        title: "Error adding borrower",
-        description: err.message,
-        variant: "destructive",
-      });
+      showError("Could not add borrower", err.message);
     } finally {
       setLoading(false);
     }

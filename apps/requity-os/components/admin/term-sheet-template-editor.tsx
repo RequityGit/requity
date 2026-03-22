@@ -10,7 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Switch } from "@/components/ui/switch";
-import { useToast } from "@/components/ui/use-toast";
+import { showSuccess, showError } from "@/lib/toast";
 import { updateTermSheetTemplate } from "@/app/(authenticated)/control-center/term-sheets/actions";
 import { Save, Loader2, Settings, PanelRightOpen, PanelRightClose, FileText } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -132,7 +132,6 @@ export function TermSheetTemplateEditor({ templates: initial }: Props) {
   const [dirty, setDirty] = useState<Set<string>>(new Set());
   const [showPreview, setShowPreview] = useState(true);
   const router = useRouter();
-  const { toast } = useToast();
 
   const current = templates.find((t) => t.loan_type === activeLoanType);
 
@@ -225,13 +224,9 @@ export function TermSheetTemplateEditor({ templates: initial }: Props) {
     const result = await updateTermSheetTemplate(current.id, payload);
 
     if (result.error) {
-      toast({
-        title: "Error saving template",
-        description: result.error,
-        variant: "destructive",
-      });
+      showError("Could not save template", result.error);
     } else {
-      toast({ title: "Template saved successfully" });
+      showSuccess("Template saved");
       setDirty((prev) => {
         const next = new Set(prev);
         next.delete(current.id);

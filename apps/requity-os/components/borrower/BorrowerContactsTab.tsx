@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { Loader2 } from "lucide-react";
-import { toast } from "sonner";
+import { showError } from "@/lib/toast";
 import type { DealBorrowingEntity, DealBorrowerMember } from "@/app/types/borrower";
 import { fetchBorrowingEntity, fetchBorrowerMembers } from "@/app/(authenticated)/(admin)/pipeline/[id]/borrower-actions";
 import { BorrowingEntityCard } from "./BorrowingEntityCard";
@@ -24,9 +24,9 @@ export function BorrowerContactsTab({ dealId }: BorrowerContactsTabProps) {
         fetchBorrowingEntity(dealId),
         fetchBorrowerMembers(dealId),
       ]);
-      if (entityRes.error) toast.error(entityRes.error);
+      if (entityRes.error) showError(entityRes.error);
       else setEntity(entityRes.data);
-      if (membersRes.error) toast.error(membersRes.error);
+      if (membersRes.error) showError(membersRes.error);
       else setMembers(membersRes.data);
     } finally {
       if (!silent) setLoading(false);

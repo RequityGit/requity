@@ -27,7 +27,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
-import { toast } from "sonner";
+import { showSuccess, showError } from "@/lib/toast";
 import { type DealCondition } from "@/components/pipeline/pipeline-types";
 import { updateConditionStatusAction } from "@/app/(authenticated)/(admin)/pipeline/actions";
 import {
@@ -317,10 +317,10 @@ function ConditionRow({
       const result = await updateConditionStatusAction(c.id, newStatus, dealId);
       if (result.error) {
         setOptimisticStatus(c.status); // revert on failure
-        toast.error(`Failed to update: ${result.error}`);
+        showError("Could not update condition", result.error);
       } else {
         const msg = (result as { message?: string }).message;
-        toast.success(msg ?? "Condition updated");
+        showSuccess(msg ?? "Condition updated");
         router.refresh();
       }
     });
@@ -498,7 +498,7 @@ function ConditionDocuments({
       // 1. Get a signed upload URL from the server
       const urlResult = await createDealDocumentUploadUrl(dealId, file.name, conditionId);
       if (urlResult.error || !urlResult.signedUrl || !urlResult.storagePath || !urlResult.token) {
-        toast.error(`Upload failed: ${urlResult.error ?? "Could not create upload URL"}`);
+        showError("Could not upload file", urlResult.error ?? "Could not create upload URL");
         return;
       }
 
@@ -513,7 +513,7 @@ function ConditionDocuments({
 
       if (!uploadRes.ok) {
         const errorText = await uploadRes.text().catch(() => "Unknown error");
-        toast.error(`Upload failed: ${errorText}`);
+        showError("Could not upload file", errorText);
         return;
       }
 
@@ -528,15 +528,13 @@ function ConditionDocuments({
       });
 
       if (saveResult.error) {
-        toast.error(`Upload failed: ${saveResult.error}`);
+        showError("Could not save upload", saveResult.error);
       } else {
-        toast.success(`${file.name} uploaded`);
+        showSuccess(`${file.name} uploaded`);
         fetchDocs();
       }
     } catch (err) {
-      toast.error(
-        `Upload failed: ${err instanceof Error ? err.message : "Upload failed"}`
-      );
+      showError("Could not upload file", err instanceof Error ? err.message : "Upload failed");
     } finally {
       setUploading(false);
       e.target.value = "";
@@ -552,16 +550,16 @@ function ConditionDocuments({
     if (result.url) {
       window.open(result.url, "_blank");
     } else {
-      toast.error("Failed to generate download link");
+      showError("Could not generate download link");
     }
   }
 
   async function handleDelete(docId: string) {
     const result = await deleteDealDocumentV2(docId);
     if (result.error) {
-      toast.error(`Delete failed: ${result.error}`);
+      showError("Could not delete document", result.error);
     } else {
-      toast.success("Document deleted");
+      showSuccess("Document deleted");
       setDocs((prev) => prev.filter((d) => d.id !== docId));
     }
   }

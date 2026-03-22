@@ -20,7 +20,7 @@ import {
   Mail,
   X,
 } from "lucide-react";
-import { toast } from "sonner";
+import { showSuccess, showError } from "@/lib/toast";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -153,9 +153,9 @@ export function DocumentEditor({
     // Simple highlight approach — just scroll to first occurrence
     const content = editor.getHTML();
     if (content.includes(findText)) {
-      toast.success(`Found "${findText}" in document`);
+      showSuccess(`Found "${findText}" in document`);
     } else {
-      toast.error(`"${findText}" not found`);
+      showError(`"${findText}" not found`);
     }
   }, [editor, findText]);
 
@@ -164,7 +164,7 @@ export function DocumentEditor({
     const content = editor.getHTML();
     const updated = content.replaceAll(findText, replaceText);
     editor.commands.setContent(updated);
-    toast.success(`Replaced all occurrences`);
+    showSuccess(`Replaced all occurrences`);
   }, [editor, findText, replaceText]);
 
   // Handle manual save
@@ -172,7 +172,7 @@ export function DocumentEditor({
     if (!editor || !onSave) return;
     onSave(editor.getHTML());
     setLastSaved(new Date());
-    toast.success("Document saved");
+    showSuccess("Document saved");
   }, [editor, onSave]);
 
   // Handle PDF export

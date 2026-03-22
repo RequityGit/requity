@@ -3,7 +3,7 @@
 import { useState, useCallback } from "react";
 import { cn } from "@/lib/utils";
 import { formatDateShort } from "@/lib/format";
-import { useToast } from "@/components/ui/use-toast";
+import { showSuccess, showError, showWarning } from "@/lib/toast";
 import {
   Sheet,
   SheetContent,
@@ -53,7 +53,6 @@ export function ApprovalDrawer({
   onClose,
   onUpdated,
 }: ApprovalDrawerProps) {
-  const { toast } = useToast();
   const confirm = useConfirm();
   const [note, setNote] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -71,11 +70,7 @@ export function ApprovalDrawer({
     async (decision: "approve" | "reject" | "resubmit") => {
       if (!task) return;
       if (decision === "reject" && !note.trim()) {
-        toast({
-          title: "Note required",
-          description: "Please provide a reason when rejecting.",
-          variant: "destructive",
-        });
+        showWarning("Please provide a reason when rejecting");
         return;
       }
 
@@ -88,11 +83,7 @@ export function ApprovalDrawer({
       );
 
       if (!result.success) {
-        toast({
-          title: "Decision failed",
-          description: result.error ?? "Unknown error",
-          variant: "destructive",
-        });
+        showError("Could not process decision", result.error ?? "Unknown error");
       } else {
         const decisionLabel =
           decision === "approve"
@@ -100,7 +91,7 @@ export function ApprovalDrawer({
             : decision === "reject"
               ? "Rejected"
               : "Resubmitted";
-        toast({ title: `${decisionLabel} successfully` });
+        showSuccess(decisionLabel);
 
         const newStatus =
           decision === "approve"
@@ -119,7 +110,7 @@ export function ApprovalDrawer({
       }
       setSubmitting(false);
     },
-    [task, note, currentUserId, toast, onUpdated]
+    [task, note, currentUserId, onUpdated]
   );
 
   const handleOpenChange = useCallback(

@@ -31,7 +31,7 @@ import {
   relTime,
 } from "@/components/crm/contact-360/contact-detail-shared";
 import { formatDate } from "@/lib/format";
-import { useToast } from "@/components/ui/use-toast";
+import { showError } from "@/lib/toast";
 import Link from "next/link";
 import {
   addCompanyFollowerAction,
@@ -65,7 +65,6 @@ export function CompanyDetailSidebar({
   onLogCall,
 }: CompanyDetailSidebarProps) {
   const router = useRouter();
-  const { toast } = useToast();
   const [followerPopoverOpen, setFollowerPopoverOpen] = useState(false);
   const [loadingFollower, setLoadingFollower] = useState<string | null>(null);
 
@@ -77,7 +76,7 @@ export function CompanyDetailSidebar({
     const result = await addCompanyFollowerAction(company.id, userId);
     setLoadingFollower(null);
     if (result.error) {
-      toast({ title: "Error", description: result.error, variant: "destructive" });
+      showError("Could not add follower", result.error);
     } else {
       setFollowerPopoverOpen(false);
       router.refresh();
@@ -89,7 +88,7 @@ export function CompanyDetailSidebar({
     const result = await removeCompanyFollowerAction(followerId);
     setLoadingFollower(null);
     if (result.error) {
-      toast({ title: "Error", description: result.error, variant: "destructive" });
+      showError("Could not remove follower", result.error);
     } else {
       router.refresh();
     }

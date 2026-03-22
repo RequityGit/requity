@@ -24,7 +24,7 @@ import {
   completeTask,
   completeRecurringTask,
 } from "@/lib/tasks";
-import { useToast } from "@/components/ui/use-toast";
+import { showError } from "@/lib/toast";
 
 interface DealTaskRowProps {
   task: OpsTask;
@@ -128,7 +128,6 @@ export function DealTasks({
   const [showCompleted, setShowCompleted] = useState(false);
   const [sheetOpen, setSheetOpen] = useState(false);
   const [editingTask, setEditingTask] = useState<OpsTask | null>(null);
-  const { toast } = useToast();
 
   const openTasks = tasks
     .filter((t) => t.status !== "Complete")
@@ -172,14 +171,10 @@ export function DealTasks({
       const hasError = "error" in result && result.error;
       if (hasError) {
         setTasks((prev) => prev.map((t) => (t.id === taskId ? task : t)));
-        toast({
-          title: "Failed to complete task",
-          description: String(hasError),
-          variant: "destructive",
-        });
+        showError("Could not complete task", String(hasError));
       }
     },
-    [tasks, toast]
+    [tasks]
   );
 
   const handleTaskClick = useCallback((task: OpsTask) => {

@@ -34,7 +34,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { useToast } from "@/components/ui/use-toast";
+import { showSuccess, showError } from "@/lib/toast";
 import { formatDate } from "@/lib/format";
 import {
   linkScenarioToDeal,
@@ -77,7 +77,6 @@ export function ScenarioHeader({
   authorName,
 }: ScenarioHeaderProps) {
   const router = useRouter();
-  const { toast } = useToast();
 
   const [linkOpen, setLinkOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
@@ -96,9 +95,9 @@ export function ScenarioHeader({
     try {
       const result = await linkScenarioToDeal(scenario.id, dealId, dealType);
       if (result.error) {
-        toast({ title: "Error", description: result.error, variant: "destructive" });
+        showError("Could not complete action", result.error);
       } else {
-        toast({ title: "Linked", description: "Scenario linked to deal. Versions are now visible on the deal." });
+        showSuccess("Scenario linked to deal");
         setLinkOpen(false);
         router.refresh();
       }
@@ -112,9 +111,9 @@ export function ScenarioHeader({
     try {
       const result = await unlinkScenarioFromDeal(scenario.id);
       if (result.error) {
-        toast({ title: "Error", description: result.error, variant: "destructive" });
+        showError("Could not complete action", result.error);
       } else {
-        toast({ title: "Unlinked", description: "Scenario is now standalone." });
+        showSuccess("Scenario unlinked");
         router.refresh();
       }
     } finally {
@@ -128,9 +127,9 @@ export function ScenarioHeader({
     try {
       const result = await updateScenario(scenario.id, { name: editName.trim() });
       if (result.error) {
-        toast({ title: "Error", description: result.error, variant: "destructive" });
+        showError("Could not complete action", result.error);
       } else {
-        toast({ title: "Renamed" });
+        showSuccess("Renamed");
         setRenameOpen(false);
         router.refresh();
       }
@@ -142,9 +141,9 @@ export function ScenarioHeader({
   const handleArchive = async () => {
     const result = await updateScenario(scenario.id, { status: "archived" });
     if (result.error) {
-      toast({ title: "Error", description: result.error, variant: "destructive" });
+      showError("Could not archive scenario", result.error);
     } else {
-      toast({ title: "Archived" });
+      showSuccess("Archived");
       router.push(`/models/${modelType}/scenarios`);
     }
   };
@@ -152,9 +151,9 @@ export function ScenarioHeader({
   const handleDelete = async () => {
     const result = await deleteScenario(scenario.id);
     if (result.error) {
-      toast({ title: "Error", description: result.error, variant: "destructive" });
+      showError("Could not delete scenario", result.error);
     } else {
-      toast({ title: "Deleted" });
+      showSuccess("Deleted");
       router.push(`/models/${modelType}/scenarios`);
     }
   };

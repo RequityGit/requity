@@ -16,7 +16,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { deleteCrmCompanyAction } from "@/app/(authenticated)/(admin)/contacts/actions";
-import { useToast } from "@/components/ui/use-toast";
+import { showSuccess, showError } from "@/lib/toast";
 import {
   CRM_COMPANY_TYPES,
 } from "@/lib/constants";
@@ -51,7 +51,6 @@ interface CompaniesViewProps {
 
 export function CompaniesView({ companies, isSuperAdmin = false }: CompaniesViewProps) {
   const router = useRouter();
-  const { toast } = useToast();
 
   const [companySearch, setCompanySearch] = useState("");
   const debouncedSearch = useDebounce(companySearch, 300);
@@ -73,13 +72,13 @@ export function CompaniesView({ companies, isSuperAdmin = false }: CompaniesView
     try {
       const result = await deleteCrmCompanyAction(id);
       if (result.error) {
-        toast({ title: "Error deleting company", description: result.error, variant: "destructive" });
+        showError("Could not delete company", result.error);
       } else {
-        toast({ title: "Company deleted" });
+        showSuccess("Company deleted");
         router.refresh();
       }
     } catch {
-      toast({ title: "Error deleting company", description: "An unexpected error occurred", variant: "destructive" });
+      showError("Could not delete company", "An unexpected error occurred");
     }
   }
 

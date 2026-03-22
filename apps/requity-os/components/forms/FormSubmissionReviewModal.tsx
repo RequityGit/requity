@@ -22,7 +22,7 @@ import {
 } from "@/components/ui/select";
 import { AlertCircle, CheckCircle, Loader2, AlertTriangle } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
-import { useToast } from "@/components/ui/use-toast";
+import { showSuccess, showError } from "@/lib/toast";
 import { processFormSubmissionAction } from "@/app/(authenticated)/control-center/forms/review/actions";
 import type { Database } from "@/lib/supabase/types";
 
@@ -42,7 +42,6 @@ export function FormSubmissionReviewModal({
   onOpenChange,
 }: FormSubmissionReviewModalProps) {
   const router = useRouter();
-  const { toast } = useToast();
   const [isPending, startTransition] = useTransition();
   const formData = (submission.data as Record<string, unknown>) || {};
   const entityIds = (submission.entity_ids as Record<string, string | undefined>) || {};
@@ -60,10 +59,7 @@ export function FormSubmissionReviewModal({
 
   const handleCreateOpportunity = () => {
     if (!dealName.trim()) {
-      toast({
-        title: "Deal name is required",
-        variant: "destructive",
-      });
+      showError("Deal name is required");
       return;
     }
 
@@ -78,16 +74,9 @@ export function FormSubmissionReviewModal({
       });
 
       if (result.error) {
-        toast({
-          title: "Failed to create opportunity",
-          description: result.error,
-          variant: "destructive",
-        });
+        showError("Could not create opportunity", result.error);
       } else {
-        toast({
-          title: "Opportunity created successfully",
-          description: `Deal "${dealName}" has been created and linked to this submission.`,
-        });
+        showSuccess(`Opportunity "${dealName}" created`);
         onOpenChange(false);
         router.push(`/originations/${result.opportunityId}`);
       }
@@ -102,15 +91,9 @@ export function FormSubmissionReviewModal({
       });
 
       if (result.error) {
-        toast({
-          title: "Failed to update submission",
-          description: result.error,
-          variant: "destructive",
-        });
+        showError("Could not update submission", result.error);
       } else {
-        toast({
-          title: "Submission marked as reviewed",
-        });
+        showSuccess("Submission marked as reviewed");
         onOpenChange(false);
       }
     });

@@ -22,7 +22,7 @@ import type {
 import { UwField } from "../UwField";
 import { useUwFieldConfigs } from "@/hooks/useUwFieldConfigs";
 import type { VisibilityContext } from "@/lib/visibility-engine";
-import { toast } from "sonner";
+import { showSuccess, showError } from "@/lib/toast";
 import { cn } from "@/lib/utils";
 import { useDebounce } from "@/hooks/useDebounce";
 import {
@@ -125,9 +125,9 @@ function ContactSearchCombobox({
       const result = await addDealContact(dealId, contact.id, "co_borrower");
       setAdding(null);
       if (result.error) {
-        toast.error(result.error);
+        showError("Could not add contact", result.error);
       } else {
-        toast.success(`Added ${contactDisplayName(contact)}`);
+        showSuccess(`Added ${contactDisplayName(contact)}`);
         setQuery("");
         setResults([]);
         setOpen(false);
@@ -276,9 +276,9 @@ function DealContactCard({
     startRemove(async () => {
       const result = await removeDealContact(dealId, dc.contact_id);
       if (result.error) {
-        toast.error(result.error);
+        showError("Could not remove contact", result.error);
       } else {
-        toast.success(`Removed ${name}`);
+        showSuccess(`Removed ${name}`);
         onUpdated();
       }
     });
@@ -291,7 +291,7 @@ function DealContactCard({
         role: newRole,
       });
       if (result.error) {
-        toast.error(result.error);
+        showError("Could not update contact role", result.error);
       } else {
         onUpdated();
       }
@@ -304,7 +304,7 @@ function DealContactCard({
         is_guarantor: checked,
       });
       if (result.error) {
-        toast.error(result.error);
+        showError("Could not update guarantor status", result.error);
       } else {
         onUpdated();
       }
@@ -416,7 +416,7 @@ export function ContactsTab({
   const loadContacts = useCallback(async () => {
     const { dealContacts: contacts, error } = await fetchDealContacts(dealId);
     if (error) {
-      toast.error(`Failed to load contacts: ${error}`);
+      showError("Could not load contacts", error);
     }
     setDealContacts(contacts);
     setLoading(false);
@@ -438,7 +438,7 @@ export function ContactsTab({
     startTransition(async () => {
       const result = await updateUwDataAction(dealId, key, currentVal);
       if (result.error) {
-        toast.error(`Failed to save ${key}: ${result.error}`);
+        showError(`Could not save ${key}`, result.error);
         setLocalData((prev) => ({ ...prev, [key]: prevVal }));
       }
     });

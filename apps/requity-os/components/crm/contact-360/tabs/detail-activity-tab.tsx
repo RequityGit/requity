@@ -16,7 +16,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useToast } from "@/components/ui/use-toast";
+import { showSuccess, showError, showWarning } from "@/lib/toast";
 import { CRM_ACTIVITY_TYPES } from "@/lib/constants";
 import {
   Mail,
@@ -117,7 +117,6 @@ export function DetailActivityTab({
   const [loading, setLoading] = useState(false);
   const [expandedEmailId, setExpandedEmailId] = useState<string | null>(null);
   const router = useRouter();
-  const { toast } = useToast();
 
   const [form, setForm] = useState({
     activity_type: "note",
@@ -185,7 +184,7 @@ export function DetailActivityTab({
     e.preventDefault();
 
     if (form.activity_type === "call" && !form.description.trim()) {
-      toast({ title: "Call notes are required", variant: "destructive" });
+      showWarning("Call notes are required");
       return;
     }
 
@@ -208,18 +207,14 @@ export function DetailActivityTab({
         .update({ last_contacted_at: new Date().toISOString() })
         .eq("id", contactId);
 
-      toast({ title: "Activity logged" });
+      showSuccess("Activity logged");
       setShowForm(false);
       setForm({ activity_type: "note", subject: "", description: "" });
       onRefreshTimeline?.();
       router.refresh();
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : "Unknown error";
-      toast({
-        title: "Error logging activity",
-        description: message,
-        variant: "destructive",
-      });
+      showError("Could not log activity", message);
     } finally {
       setLoading(false);
     }

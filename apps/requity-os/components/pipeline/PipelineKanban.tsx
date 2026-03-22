@@ -14,7 +14,7 @@ import {
   type DragStartEvent,
   type DragEndEvent,
 } from "@dnd-kit/core";
-import { useToast } from "@/components/ui/use-toast";
+import { showSuccess, showError } from "@/lib/toast";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
 import { DealCard, DealCardOverlay } from "./DealCard";
@@ -72,7 +72,6 @@ export function PipelineKanban({
   intakeItems = [],
   onIntakeClick,
 }: PipelineKanbanProps) {
-  const { toast } = useToast();
   const [activeId, setActiveId] = useState<string | null>(null);
   const [dealOverrides, setDealOverrides] = useState<Map<string, UnifiedStage>>(
     () => new Map()
@@ -130,11 +129,7 @@ export function PipelineKanban({
           next.delete(dealId);
           return next;
         });
-        toast({
-          variant: "destructive",
-          title: "Failed to move deal",
-          description: result.error,
-        });
+        showError("Could not move deal", result.error);
       } else {
         // Clear override — server revalidation provides fresh data
         setDealOverrides((prev) => {
@@ -143,12 +138,10 @@ export function PipelineKanban({
           return next;
         });
         const stageLabel = STAGES.find((s) => s.key === newStage)?.label ?? newStage;
-        toast({
-          title: `${deal.name} moved to ${stageLabel}`,
-        });
+        showSuccess(`${deal.name} moved to ${stageLabel}`);
       }
     },
-    [deals, dealOverrides, toast]
+    [deals, dealOverrides]
   );
 
   const handleDragCancel = useCallback(() => {

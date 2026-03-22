@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useToast } from "@/components/ui/use-toast";
+import { showSuccess, showError } from "@/lib/toast";
 import { Loader2, Save, Check } from "lucide-react";
 import type { Tables } from "@/lib/supabase/types";
 
@@ -21,7 +21,6 @@ import { ACCENT_COLOR_PRESETS } from "@/lib/user-colors";
 import { cn } from "@/lib/utils";
 
 export default function AdminAccountPage() {
-  const { toast } = useToast();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [profile, setProfile] = useState<Profile | null>(null);
@@ -82,11 +81,7 @@ export default function AdminAccountPage() {
       } = await supabase.auth.getUser();
 
       if (!user) {
-        toast({
-          title: "Error",
-          description: "You must be logged in to update your profile.",
-          variant: "destructive",
-        });
+        showError("You must be logged in to update your profile");
         return;
       }
 
@@ -100,24 +95,13 @@ export default function AdminAccountPage() {
       });
 
       if (result.error) {
-        toast({
-          title: "Error",
-          description: result.error,
-          variant: "destructive",
-        });
+        showError("Could not update profile", result.error);
         return;
       }
 
-      toast({
-        title: "Profile updated",
-        description: "Your profile information has been saved successfully.",
-      });
+      showSuccess("Profile updated");
     } catch {
-      toast({
-        title: "Error",
-        description: "An unexpected error occurred. Please try again.",
-        variant: "destructive",
-      });
+      showError("An unexpected error occurred", "Please try again.");
     } finally {
       setSaving(false);
     }

@@ -40,7 +40,7 @@ import {
 } from "lucide-react";
 import { CrmAvatar, RelPill, StageDot, CompanyStatusDot, getInitials } from "./crm-primitives";
 import { EmptyState } from "@/components/shared/EmptyState";
-import { toast } from "sonner";
+import { showSuccess, showError } from "@/lib/toast";
 import { ClickToCallNumber } from "@/components/ui/ClickToCallNumber";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Badge } from "@/components/ui/badge";
@@ -682,9 +682,9 @@ export function CrmV2Page({
                                 if (!ok) return;
                                 const result = await deleteCrmContactAction(c.id);
                                 if (result.error) {
-                                  toast.error(result.error);
+                                  showError("Could not delete contact", result.error);
                                 } else {
-                                  toast.success("Contact deleted");
+                                  showSuccess("Contact deleted");
                                   router.refresh();
                                 }
                               }}
@@ -815,9 +815,9 @@ export function CrmV2Page({
                                 if (!ok) return;
                                 const result = await deleteCrmCompanyAction(c.id);
                                 if (result.error) {
-                                  toast.error(result.error);
+                                  showError("Could not delete company", result.error);
                                 } else {
-                                  toast.success("Company deleted");
+                                  showSuccess("Company deleted");
                                   router.refresh();
                                 }
                               }}

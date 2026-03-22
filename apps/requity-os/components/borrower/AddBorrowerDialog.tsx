@@ -14,7 +14,7 @@ import { Input } from "@/components/ui/input";
 import { Search, User, Loader2, Link2 } from "lucide-react";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { useDebounce } from "@/hooks/useDebounce";
-import { toast } from "sonner";
+import { showSuccess, showError } from "@/lib/toast";
 import { cn } from "@/lib/utils";
 import { addBorrowerMemberAction, searchContactsForBorrower } from "@/app/(authenticated)/(admin)/pipeline/[id]/borrower-actions";
 
@@ -78,7 +78,7 @@ export function AddBorrowerDialog({
       ({ contacts, error }) => {
         if (cancelled) return;
         if (error) {
-          toast.error(error);
+          showError(error);
           setResults([]);
         } else {
           setResults(contacts as ContactOption[]);
@@ -105,9 +105,9 @@ export function AddBorrowerDialog({
         selected.id
       );
       if (result.error) {
-        toast.error(result.error);
+        showError(result.error);
       } else {
-        toast.success(`Linked ${contactDisplayName(selected)}`);
+        showSuccess(`Linked ${contactDisplayName(selected)}`);
         setOpen(false);
         onAdded();
       }

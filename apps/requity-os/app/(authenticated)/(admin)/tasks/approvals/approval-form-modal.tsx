@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
-import { useToast } from "@/components/ui/use-toast";
+import { showSuccess, showError } from "@/lib/toast";
 import {
   Dialog,
   DialogContent,
@@ -52,7 +52,6 @@ export function ApprovalFormModal({
   onClose,
   onSaved,
 }: ApprovalFormModalProps) {
-  const { toast } = useToast();
   const [saving, setSaving] = useState(false);
 
   const [entityType, setEntityType] = useState("loan");
@@ -89,11 +88,7 @@ export function ApprovalFormModal({
       .single();
 
     if (error) {
-      toast({
-        title: "Failed to create approval",
-        description: error.message,
-        variant: "destructive",
-      });
+      showError("Could not create approval", error.message);
     } else if (data) {
       const enriched: EnrichedApproval = {
         ...(data as unknown as Record<string, unknown>),

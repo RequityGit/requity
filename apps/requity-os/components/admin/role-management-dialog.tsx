@@ -20,7 +20,7 @@ import {
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 import { Plus, X, Loader2 } from "lucide-react";
-import { useToast } from "@/components/ui/use-toast";
+import { showSuccess, showError, showWarning } from "@/lib/toast";
 import {
   addRoleAction,
   removeRoleAction,
@@ -65,8 +65,6 @@ export function RoleManagementDialog({
     { id: string; first_name: string; last_name: string; email: string | null }[]
   >([]);
   const [entityLoading, setEntityLoading] = useState(false);
-  const { toast } = useToast();
-
   // Fetch entity data when role selection changes
   useEffect(() => {
     setSelectedInvestorId("");
@@ -126,13 +124,9 @@ export function RoleManagementDialog({
       newRole === "borrower" ? selectedBorrowerId : undefined
     );
     if ("error" in result) {
-      toast({
-        title: "Failed to add role",
-        description: result.error,
-        variant: "destructive",
-      });
+      showError("Could not add role", result.error);
     } else {
-      toast({ title: `Added ${newRole} role to ${user.full_name ?? user.email}` });
+      showSuccess(`Added ${newRole} role to ${user.full_name ?? user.email}`);
       setNewRole("");
       setSelectedInvestorId("");
       setSelectedBorrowerId("");
@@ -143,26 +137,16 @@ export function RoleManagementDialog({
 
   const handleRemoveRole = async (role: AppRole) => {
     if (currentRoles.size <= 1) {
-      toast({
-        title: "Cannot remove last role",
-        description: "A user must have at least one role.",
-        variant: "destructive",
-      });
+      showWarning("A user must have at least one role");
       return;
     }
 
     setLoading(true);
     const result = await removeRoleAction(user.id, role);
     if ("error" in result) {
-      toast({
-        title: "Failed to remove role",
-        description: result.error,
-        variant: "destructive",
-      });
+      showError("Could not remove role", result.error);
     } else {
-      toast({
-        title: `Removed ${role} role from ${user.full_name ?? user.email}`,
-      });
+      showSuccess(`Removed ${role} role from ${user.full_name ?? user.email}`);
       onSuccess();
     }
     setLoading(false);

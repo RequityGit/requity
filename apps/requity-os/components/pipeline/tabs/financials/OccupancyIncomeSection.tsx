@@ -18,7 +18,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { toast } from "sonner";
+import { showSuccess, showError } from "@/lib/toast";
 import { cn } from "@/lib/utils";
 import {
   upsertIncomeBySectionRows,
@@ -149,9 +149,9 @@ export function OccupancyIncomeSection({
       }));
       const result = await upsertIncomeBySectionRows(uwId, "occupancy", presetRows);
       if (result.error) {
-        toast.error(`Failed to apply presets: ${result.error}`);
+        showError("Could not apply presets", result.error);
       } else {
-        toast.success(`${unitLabel} type presets applied`);
+        showSuccess(`${unitLabel} type presets applied`);
         router.refresh();
       }
     } finally {
@@ -181,7 +181,7 @@ export function OccupancyIncomeSection({
         });
         const result = await upsertIncomeBySectionRows(uwId, "occupancy", toSave);
         if (result.error) {
-          toast.error(`Failed to save: ${result.error}`);
+          showError("Could not save occupancy income", result.error);
         } else {
           router.refresh();
         }
@@ -197,7 +197,7 @@ export function OccupancyIncomeSection({
     async (rowId: string, notes: string) => {
       const result = await updateIncomeNotes(rowId, notes || null);
       if (result.error) {
-        toast.error("Failed to save note");
+        showError("Could not save note");
       } else {
         router.refresh();
       }

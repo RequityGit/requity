@@ -13,7 +13,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useToast } from "@/components/ui/use-toast";
+import { showSuccess, showError } from "@/lib/toast";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -49,7 +49,6 @@ export function CompanyFilesTab({ files, companyId, loading = false, onRefresh }
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [fileType, setFileType] = useState("other");
   const router = useRouter();
-  const { toast } = useToast();
 
   const [downloadingId, setDownloadingId] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
@@ -67,7 +66,7 @@ export function CompanyFilesTab({ files, companyId, loading = false, onRefresh }
         .createSignedUrl(file.storage_path, 3600, { download: file.file_name });
 
       if (error || !data?.signedUrl) {
-        toast({ title: "Error generating download link", variant: "destructive" });
+        showError("Could not generate download link");
         return;
       }
 
@@ -78,7 +77,7 @@ export function CompanyFilesTab({ files, companyId, loading = false, onRefresh }
       a.click();
       document.body.removeChild(a);
     } catch {
-      toast({ title: "Error downloading file", variant: "destructive" });
+      showError("Could not download file");
     } finally {
       setDownloadingId(null);
     }
@@ -92,13 +91,13 @@ export function CompanyFilesTab({ files, companyId, loading = false, onRefresh }
         .createSignedUrl(file.storage_path, 3600);
 
       if (error || !data?.signedUrl) {
-        toast({ title: "Error generating file link", variant: "destructive" });
+        showError("Could not generate file link");
         return;
       }
 
       window.open(data.signedUrl, "_blank");
     } catch {
-      toast({ title: "Error opening file", variant: "destructive" });
+      showError("Could not open file");
     }
   }
 
@@ -107,9 +106,9 @@ export function CompanyFilesTab({ files, companyId, loading = false, onRefresh }
     try {
       const result = await deleteCompanyFileAction(file.id, file.storage_path);
       if ("error" in result && result.error) {
-        toast({ title: "Error deleting file", description: result.error, variant: "destructive" });
+        showError("Could not delete file", result.error);
       } else {
-        toast({ title: "File deleted" });
+        showSuccess("File deleted");
         if (onRefresh) onRefresh();
         else router.refresh();
       }
@@ -151,7 +150,7 @@ export function CompanyFilesTab({ files, companyId, loading = false, onRefresh }
 
       if (insertError) throw insertError;
 
-      toast({ title: "File uploaded successfully" });
+      showSuccess("File uploaded");
       setShowUpload(false);
       setSelectedFile(null);
       setFileType("other");
@@ -159,11 +158,7 @@ export function CompanyFilesTab({ files, companyId, loading = false, onRefresh }
       else router.refresh();
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : "Unknown error";
-      toast({
-        title: "Upload failed",
-        description: message,
-        variant: "destructive",
-      });
+      showError("Upload failed", message);
     } finally {
       setUploading(false);
     }

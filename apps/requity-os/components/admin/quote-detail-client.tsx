@@ -31,7 +31,7 @@ import {
   AlertDialogDescription,
   AlertDialogFooter,
 } from "@/components/ui/alert-dialog";
-import { useToast } from "@/components/ui/use-toast";
+import { showSuccess, showError } from "@/lib/toast";
 import { useConfirm } from "@/components/shared/ConfirmDialog";
 import {
   formatCurrency,
@@ -138,7 +138,6 @@ export function QuoteDetailClient({
   currentUserId,
 }: QuoteDetailClientProps) {
   const router = useRouter();
-  const { toast } = useToast();
   const confirm = useConfirm();
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -215,24 +214,15 @@ export function QuoteDetailClient({
       });
 
       if (result.error) {
-        toast({
-          title: "Error",
-          description: result.error,
-          variant: "destructive",
-        });
+        showError("Could not complete action", result.error);
         return;
       }
 
-      toast({ title: "Quote updated" });
+      showSuccess("Quote updated");
       setEditing(false);
       router.refresh();
     } catch (err: unknown) {
-      toast({
-        title: "Error",
-        description:
-          err instanceof Error ? err.message : "An unexpected error occurred",
-        variant: "destructive",
-      });
+      showError("An unexpected error occurred", err instanceof Error ? err.message : undefined);
     } finally {
       setSaving(false);
     }
@@ -247,25 +237,14 @@ export function QuoteDetailClient({
     try {
       const result = await changeQuoteStatus(quote.id, nextStatus);
       if (result.error) {
-        toast({
-          title: "Error",
-          description: result.error,
-          variant: "destructive",
-        });
+        showError("Could not complete action", result.error);
         return;
       }
 
-      toast({
-        title: `Status updated to ${STATUS_LABELS[nextStatus] ?? nextStatus}`,
-      });
+      showSuccess(`Status updated to ${STATUS_LABELS[nextStatus] ?? nextStatus}`);
       router.refresh();
     } catch (err: unknown) {
-      toast({
-        title: "Error",
-        description:
-          err instanceof Error ? err.message : "An unexpected error occurred",
-        variant: "destructive",
-      });
+      showError("An unexpected error occurred", err instanceof Error ? err.message : undefined);
     } finally {
       setStatusLoading(false);
     }
@@ -280,25 +259,16 @@ export function QuoteDetailClient({
         declineReason || undefined
       );
       if (result.error) {
-        toast({
-          title: "Error",
-          description: result.error,
-          variant: "destructive",
-        });
+        showError("Could not complete action", result.error);
         return;
       }
 
-      toast({ title: "Quote declined" });
+      showSuccess("Quote declined");
       setDeclineDialogOpen(false);
       setDeclineReason("");
       router.refresh();
     } catch (err: unknown) {
-      toast({
-        title: "Error",
-        description:
-          err instanceof Error ? err.message : "An unexpected error occurred",
-        variant: "destructive",
-      });
+      showError("An unexpected error occurred", err instanceof Error ? err.message : undefined);
     } finally {
       setStatusLoading(false);
     }
@@ -317,24 +287,15 @@ export function QuoteDetailClient({
       });
 
       if (result.error) {
-        toast({
-          title: "Error",
-          description: result.error,
-          variant: "destructive",
-        });
+        showError("Could not complete action", result.error);
         return;
       }
 
-      toast({ title: "Activity logged" });
+      showSuccess("Activity logged");
       setActivityDescription("");
       router.refresh();
     } catch (err: unknown) {
-      toast({
-        title: "Error",
-        description:
-          err instanceof Error ? err.message : "An unexpected error occurred",
-        variant: "destructive",
-      });
+      showError("An unexpected error occurred", err instanceof Error ? err.message : undefined);
     } finally {
       setActivityLoading(false);
     }
@@ -352,23 +313,14 @@ export function QuoteDetailClient({
     try {
       const result = await deleteLenderQuote(quote.id);
       if (result.error) {
-        toast({
-          title: "Error",
-          description: result.error,
-          variant: "destructive",
-        });
+        showError("Could not complete action", result.error);
         return;
       }
 
-      toast({ title: "Quote deleted" });
+      showSuccess("Quote deleted");
       router.push(`/pipeline/${loanNumber || loanId}`);
     } catch (err: unknown) {
-      toast({
-        title: "Error",
-        description:
-          err instanceof Error ? err.message : "An unexpected error occurred",
-        variant: "destructive",
-      });
+      showError("An unexpected error occurred", err instanceof Error ? err.message : undefined);
     }
   }
 

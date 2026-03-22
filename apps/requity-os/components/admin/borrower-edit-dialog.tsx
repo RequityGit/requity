@@ -22,7 +22,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useToast } from "@/components/ui/use-toast";
+import { showSuccess, showError } from "@/lib/toast";
 import { updateBorrowerAction } from "@/app/(authenticated)/(admin)/borrowers/new/actions";
 import { Loader2, Pencil } from "lucide-react";
 import { US_STATES } from "@/lib/constants";
@@ -38,7 +38,6 @@ export function BorrowerEditDialog({ borrower }: BorrowerEditDialogProps) {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const router = useRouter();
-  const { toast } = useToast();
 
   const [firstName, setFirstName] = useState(borrower.first_name || "");
   const [lastName, setLastName] = useState(borrower.last_name || "");
@@ -103,23 +102,15 @@ export function BorrowerEditDialog({ borrower }: BorrowerEditDialogProps) {
       });
 
       if (result.error) {
-        toast({
-          title: "Error updating borrower",
-          description: result.error,
-          variant: "destructive",
-        });
+        showError("Could not update borrower", result.error);
         return;
       }
 
-      toast({ title: "Borrower updated successfully" });
+      showSuccess("Borrower updated");
       setOpen(false);
       router.refresh();
     } catch (err: any) {
-      toast({
-        title: "Error updating borrower",
-        description: err.message,
-        variant: "destructive",
-      });
+      showError("Could not update borrower", err.message);
     } finally {
       setLoading(false);
     }

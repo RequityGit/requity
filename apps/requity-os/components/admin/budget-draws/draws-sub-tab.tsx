@@ -23,7 +23,7 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
-import { useToast } from "@/components/ui/use-toast";
+import { showSuccess, showError, showWarning } from "@/lib/toast";
 import { formatCurrency, formatDate } from "@/lib/format";
 import {
   Plus,
@@ -309,7 +309,6 @@ function CreateDrawSheet({
   currentUserId: string;
   onRefresh: () => void;
 }) {
-  const { toast } = useToast();
   const [loading, setLoading] = useState(false);
   const [description, setDescription] = useState("");
   const [requestedAmounts, setRequestedAmounts] = useState<Record<string, string>>({});
@@ -355,7 +354,7 @@ function CreateDrawSheet({
 
   async function handleSubmit(asDraft: boolean) {
     if (totalRequested <= 0) {
-      toast({ title: "Enter amounts for at least one line item", variant: "destructive" });
+      showWarning("Enter amounts for at least one line item");
       return;
     }
 
@@ -364,10 +363,7 @@ function CreateDrawSheet({
       const error = validateLineItem(liId, amount);
       if (error) {
         const li = budgetLineItems.find((l) => l.id === liId);
-        toast({
-          title: `${li?.category}: ${error}`,
-          variant: "destructive",
-        });
+        showError(`${li?.category}: ${error}`);
         return;
       }
     }
@@ -415,16 +411,12 @@ function CreateDrawSheet({
         if (liError) throw liError;
       }
 
-      toast({
-        title: asDraft
-          ? "Draw request saved as draft"
-          : "Draw request submitted",
-      });
+      showSuccess(asDraft ? "Draw request saved as draft" : "Draw request submitted");
       onOpenChange(false);
       onRefresh();
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : "Unknown error";
-      toast({ title: "Error creating draw request", description: message, variant: "destructive" });
+      showError("Could not create draw request", message);
     } finally {
       setLoading(false);
     }
@@ -855,7 +847,6 @@ function ApproveDrawDialog({
   currentUserId: string;
   onRefresh: () => void;
 }) {
-  const { toast } = useToast();
   const [loading, setLoading] = useState(false);
   const [approvedAmounts, setApprovedAmounts] = useState<Record<string, string>>(
     Object.fromEntries(
@@ -947,11 +938,11 @@ function ApproveDrawDialog({
           .eq("id", draw.construction_budget_id);
       }
 
-      toast({ title: "Draw request approved" });
+      showSuccess("Draw request approved");
       onRefresh();
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : "Unknown error";
-      toast({ title: "Error approving draw", description: message, variant: "destructive" });
+      showError("Could not approve draw", message);
     } finally {
       setLoading(false);
     }
@@ -1056,13 +1047,12 @@ function RejectDrawDialog({
   currentUserId: string;
   onRefresh: () => void;
 }) {
-  const { toast } = useToast();
   const [loading, setLoading] = useState(false);
   const [reason, setReason] = useState("");
 
   async function handleReject() {
     if (!reason.trim()) {
-      toast({ title: "Rejection reason is required", variant: "destructive" });
+      showWarning("Rejection reason is required");
       return;
     }
 
@@ -1081,11 +1071,11 @@ function RejectDrawDialog({
 
       if (error) throw error;
 
-      toast({ title: "Draw request rejected" });
+      showSuccess("Draw request rejected");
       onRefresh();
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : "Unknown error";
-      toast({ title: "Error rejecting draw", description: message, variant: "destructive" });
+      showError("Could not reject draw", message);
     } finally {
       setLoading(false);
     }
@@ -1138,7 +1128,6 @@ function OrderInspectionDialog({
   onOpenChange: (v: boolean) => void;
   onRefresh: () => void;
 }) {
-  const { toast } = useToast();
   const [loading, setLoading] = useState(false);
   const [inspectorName, setInspectorName] = useState("");
   const [inspectionDate, setInspectionDate] = useState("");
@@ -1159,11 +1148,11 @@ function OrderInspectionDialog({
 
       if (error) throw error;
 
-      toast({ title: "Inspection ordered" });
+      showSuccess("Inspection ordered");
       onRefresh();
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : "Unknown error";
-      toast({ title: "Error ordering inspection", description: message, variant: "destructive" });
+      showError("Could not order inspection", message);
     } finally {
       setLoading(false);
     }
@@ -1220,7 +1209,6 @@ function RecordWireDialog({
   currentUserId: string;
   onRefresh: () => void;
 }) {
-  const { toast } = useToast();
   const [loading, setLoading] = useState(false);
   const [wireDate, setWireDate] = useState(
     new Date().toISOString().split("T")[0]
@@ -1248,11 +1236,11 @@ function RecordWireDialog({
 
       if (error) throw error;
 
-      toast({ title: "Wire recorded — draw funded" });
+      showSuccess("Wire recorded, draw funded");
       onRefresh();
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : "Unknown error";
-      toast({ title: "Error recording wire", description: message, variant: "destructive" });
+      showError("Could not record wire", message);
     } finally {
       setLoading(false);
     }

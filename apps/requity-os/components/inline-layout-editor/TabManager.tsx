@@ -34,7 +34,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { toast } from "sonner";
+import { showSuccess, showError } from "@/lib/toast";
 import {
   addTab,
   updateTab,
@@ -120,11 +120,11 @@ export function TabEditPopover({
         tab_icon: icon || undefined,
       });
       if (result.error) {
-        toast.error(`Failed to update tab: ${result.error}`);
+        showError(`Failed to update tab: ${result.error}`);
       } else {
         setOpen(false);
         onUpdated();
-        toast.success("Tab updated");
+        showSuccess("Tab updated");
       }
     });
   }
@@ -140,11 +140,11 @@ export function TabEditPopover({
 
     const result = await deleteTab(pageType, tabKey);
     if (result.error) {
-      toast.error(`Failed to delete tab: ${result.error}`);
+      showError(`Failed to delete tab: ${result.error}`);
     } else {
       setOpen(false);
       onUpdated();
-      toast.success("Tab deleted");
+      showSuccess("Tab deleted");
     }
   }
 
@@ -247,12 +247,12 @@ function AddTabDialog({ open, onOpenChange, pageType, onCreated }: AddTabDialogP
         tab_label: label.trim(),
       });
       if (result.error) {
-        toast.error(`Failed to create tab: ${result.error}`);
+        showError(`Failed to create tab: ${result.error}`);
       } else {
         setLabel("");
         onOpenChange(false);
         onCreated();
-        toast.success(`Tab "${label.trim()}" created`);
+        showSuccess(`Tab "${label.trim()}" created`);
       }
     });
   }

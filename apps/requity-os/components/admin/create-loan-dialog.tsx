@@ -26,7 +26,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { LOAN_DB_TYPES, LOAN_PURPOSES } from "@/lib/constants";
-import { useToast } from "@/components/ui/use-toast";
+import { showSuccess, showError } from "@/lib/toast";
 import { PlusCircle, Search, Check, X, UserPlus, Users } from "lucide-react";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { createLoanSchema } from "@/lib/schemas/loan";
@@ -79,7 +79,6 @@ export function CreateLoanDialog({
   const borrowerRef = useRef<HTMLDivElement>(null);
   const dropdownMenuRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
-  const { toast } = useToast();
 
   const filteredBorrowers = useMemo(() => {
     if (!borrowerSearch.trim()) return borrowers;
@@ -275,17 +274,13 @@ export function CreateLoanDialog({
         console.error("Failed to log loan creation activity:", logError);
       }
 
-      toast({ title: "Loan created successfully" });
+      showSuccess("Loan created");
       setOpen(false);
       resetForm();
       router.push(`/pipeline/${newLoan.id}`);
     } catch (err: any) {
       console.error("Loan creation error:", err);
-      toast({
-        title: "Error creating loan",
-        description: err.details || err.message || "An unexpected error occurred.",
-        variant: "destructive",
-      });
+      showError("Could not create loan", err.details || err.message || "An unexpected error occurred.");
     } finally {
       setLoading(false);
     }

@@ -10,6 +10,7 @@ import {
   ThumbsUp,
   FileCheck,
   MoreHorizontal,
+  Reply,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { parseComment, relativeTime } from "@/lib/comment-utils";
@@ -42,6 +43,8 @@ interface NoteCardProps {
   onEdit: (noteId: string, body: string, mentionIds: string[]) => void;
   onDelete: (noteId: string) => void;
   onToggleLike: (noteId: string, isLiked: boolean) => void;
+  /** Only passed for top-level notes (not replies) */
+  onReply?: () => void;
 }
 
 export function NoteCard({
@@ -53,6 +56,7 @@ export function NoteCard({
   onEdit,
   onDelete,
   onToggleLike,
+  onReply,
 }: NoteCardProps) {
   const [editing, setEditing] = useState(false);
   const [editText, setEditText] = useState("");
@@ -250,6 +254,12 @@ export function NoteCard({
 
       {/* Floating hover toolbar */}
       <div className="hover-toolbar absolute -top-2 right-3 flex items-center gap-px bg-card border border-border rounded-lg shadow-md p-0.5 z-10">
+        {onReply && (
+          <HoverToolbarButton onClick={onReply} title="Reply">
+            <Reply className="h-3.5 w-3.5" strokeWidth={1.5} />
+          </HoverToolbarButton>
+        )}
+
         <HoverToolbarButton
           onClick={() => onToggleLike(note.id, isLiked)}
           title={isLiked ? "Unlike" : "Like"}

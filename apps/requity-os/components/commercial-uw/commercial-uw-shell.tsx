@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useToast } from "@/components/ui/use-toast";
+import { showError } from "@/lib/toast";
 import {
   Home,
   DollarSign,
@@ -43,7 +43,6 @@ export function CommercialUWShell({ dealId, dealName = "123 Test Deal" }: Commer
   const { state, activeTab, setActiveTab } = useCommercialUWStore();
   const calcs = useCommercialUWCalcs(state);
   const [exporting, setExporting] = useState(false);
-  const { toast } = useToast();
 
   const handleExportExcel = async () => {
     if (exporting) return;
@@ -51,7 +50,7 @@ export function CommercialUWShell({ dealId, dealName = "123 Test Deal" }: Commer
     try {
       await exportToExcel(state, calcs, dealName);
     } catch {
-      toast({ title: "Export failed", description: "Failed to export Excel file. Please try again.", variant: "destructive" });
+      showError("Could not export Excel file", "Please try again.");
     } finally {
       setExporting(false);
     }

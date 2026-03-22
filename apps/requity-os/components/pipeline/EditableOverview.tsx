@@ -14,7 +14,7 @@ import { useDealLayout } from "@/hooks/useDealLayout";
 import type { VisibilityContext } from "@/lib/visibility-engine";
 import { evaluateFormula } from "@/lib/formula-engine";
 import { formatFieldValue, isFieldEmpty } from "@/lib/format";
-import { toast } from "sonner";
+import { showError } from "@/lib/toast";
 import {
   SectionCard,
   MetricCard,
@@ -229,7 +229,7 @@ export function EditableOverview({
         : await updateUwDataAction(dealId, key, currentVal);
 
       if (result.error) {
-        toast.error(`Failed to save ${uwFieldMap.get(key)?.label ?? key}: ${result.error}`);
+        showError(`Could not save ${uwFieldMap.get(key)?.label ?? key}`, result.error);
         if (source === "property") {
           localPropertyDataRef.current = { ...localPropertyDataRef.current, [key]: prevVal };
           setLocalPropertyData((prev) => ({ ...prev, [key]: prevVal }));

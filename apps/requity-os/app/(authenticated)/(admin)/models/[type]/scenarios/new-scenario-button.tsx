@@ -15,12 +15,11 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { useToast } from "@/components/ui/use-toast";
+import { showSuccess, showError } from "@/lib/toast";
 import { createScenario } from "./actions";
 
 export function NewScenarioButton({ modelType }: { modelType: string }) {
   const router = useRouter();
-  const { toast } = useToast();
   const [open, setOpen] = useState(false);
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
@@ -32,9 +31,9 @@ export function NewScenarioButton({ modelType }: { modelType: string }) {
     try {
       const result = await createScenario(name.trim(), modelType, description.trim() || undefined);
       if (result.error) {
-        toast({ title: "Error", description: result.error, variant: "destructive" });
+        showError("Could not create scenario", result.error);
       } else if (result.scenarioId) {
-        toast({ title: "Scenario Created", description: `"${name}" is ready` });
+        showSuccess(`Scenario "${name}" created`);
         setOpen(false);
         setName("");
         setDescription("");

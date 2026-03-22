@@ -36,7 +36,7 @@ import {
 } from "./pipeline-types";
 import { AddressAutocomplete } from "@/components/ui/address-autocomplete";
 import { useUwFieldConfigs } from "@/hooks/useUwFieldConfigs";
-import { toast } from "sonner";
+import { showSuccess, showError } from "@/lib/toast";
 import { Loader2, Upload, Home, Building2 } from "lucide-react";
 
 type Step = 1 | 2 | 3 | 4;
@@ -157,12 +157,12 @@ export function NewDealDialog({
       });
 
       if (result.error) {
-        toast.error(`Failed to create deal: ${result.error}`);
+        showError("Could not create deal", result.error);
       } else {
         const deal = result.deal as
           | { id: string; deal_number: string }
           | undefined;
-        toast.success(`Deal ${deal?.deal_number ?? ""} created`);
+        showSuccess(`Deal ${deal?.deal_number ?? ""} created`);
         handleClose(false);
       }
     });
@@ -239,10 +239,9 @@ export function NewDealDialog({
       setStep(4);
     } catch (err) {
       console.error("Document extraction failed:", err);
-      toast.error(
-        err instanceof Error
-          ? err.message
-          : "Failed to extract data from document"
+      showError(
+        "Could not extract data from document",
+        err instanceof Error ? err.message : undefined
       );
       // Clean up temp file on failure
       if (uploadedPath) {
@@ -270,7 +269,7 @@ export function NewDealDialog({
       ? String(accepted.dealFields.name)
       : dealDisplayName;
     if (!capitalSide || !addressLine1.trim()) {
-      toast.error("Deal address is required");
+      showError("Deal address is required");
       return;
     }
 
@@ -299,7 +298,7 @@ export function NewDealDialog({
       });
 
       if (result.error) {
-        toast.error(`Failed to create deal: ${result.error}`);
+        showError("Could not create deal", result.error);
       } else {
         const deal = result.deal as
           | { id: string; deal_number: string }
@@ -309,7 +308,7 @@ export function NewDealDialog({
             (err) => console.error("Failed to save deal note:", err)
           );
         }
-        toast.success(`Deal ${deal?.deal_number ?? ""} created`);
+        showSuccess(`Deal ${deal?.deal_number ?? ""} created`);
         handleClose(false);
       }
     });

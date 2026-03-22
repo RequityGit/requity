@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
-import { useToast } from "@/components/ui/use-toast";
+import { showError } from "@/lib/toast";
 import {
   Dialog,
   DialogContent,
@@ -36,7 +36,6 @@ export function NewWorkflowDialog({
   const [name, setName] = useState("");
   const [entityType, setEntityType] = useState("loan");
   const [saving, setSaving] = useState(false);
-  const { toast } = useToast();
 
   const handleCreate = async () => {
     if (!name.trim()) return;
@@ -53,11 +52,7 @@ export function NewWorkflowDialog({
       .single();
 
     if (error) {
-      toast({
-        title: "Failed to create workflow",
-        description: error.message,
-        variant: "destructive",
-      });
+      showError("Could not create workflow", error.message);
     } else if (data) {
       onCreated(data as unknown as WorkflowDefinition);
       setName("");

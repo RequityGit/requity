@@ -15,7 +15,7 @@ import {
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
-import { toast } from "sonner";
+import { showSuccess, showError } from "@/lib/toast";
 import {
   createDealDocumentUploadUrl,
   saveDealDocumentRecord,
@@ -99,16 +99,14 @@ export function DocumentsTab({
 
   async function handleViewOrDownload(doc: DealDocument, download: boolean) {
     if (!doc.storage_path) {
-      toast.error("No storage path for this document");
+      showError("No storage path for this document");
       return;
     }
     setDownloadingId(doc.id);
     const result = await getDocumentSignedUrl(doc.storage_path);
     setDownloadingId(null);
     if (result.error || !result.url) {
-      toast.error(
-        `Failed to get download link: ${result.error ?? "Unknown error"}`
-      );
+      showError("Could not get download link", result.error ?? "Unknown error");
       return;
     }
     if (download) {
@@ -137,9 +135,7 @@ export function DocumentsTab({
             !urlResult.storagePath ||
             !urlResult.token
           ) {
-            toast.error(
-              `Failed to upload ${file.name}: ${urlResult.error ?? "Could not create upload URL"}`
-            );
+            showError(`Could not upload ${file.name}`, urlResult.error ?? "Could not create upload URL");
             continue;
           }
 
@@ -155,7 +151,7 @@ export function DocumentsTab({
             const errorText = await uploadRes
               .text()
               .catch(() => "Unknown error");
-            toast.error(`Failed to upload ${file.name}: ${errorText}`);
+            showError(`Could not upload ${file.name}`, errorText);
             continue;
           }
 
@@ -169,25 +165,21 @@ export function DocumentsTab({
           });
 
           if (saveResult.error) {
-            toast.error(`Failed to save ${file.name}: ${saveResult.error}`);
+            showError(`Could not save ${file.name}`, saveResult.error);
           } else {
-            toast.success(`Uploaded ${file.name}`);
+            showSuccess(`Uploaded ${file.name}`);
             if (saveResult.documentId) {
               triggerDocumentAnalysis(saveResult.documentId, dealId).then(
                 (result: { error: string | null }) => {
                   if (result.error) {
-                    toast.error(
-                      `AI review failed for ${file.name}: ${result.error}`
-                    );
+                    showError(`AI review failed for ${file.name}`, result.error);
                   }
                 }
               );
             }
           }
         } catch (err) {
-          toast.error(
-            `Failed to upload ${file.name}: ${err instanceof Error ? err.message : "Upload failed"}`
-          );
+          showError(`Could not upload ${file.name}`, err instanceof Error ? err.message : "Upload failed");
         }
       }
     });
@@ -216,9 +208,9 @@ export function DocumentsTab({
     setDeletingId(docId);
     const result = await deleteDealDocumentV2(docId);
     if (result.error) {
-      toast.error(`Failed to delete: ${result.error}`);
+      showError("Could not delete document", result.error);
     } else {
-      toast.success(`Deleted ${docName}`);
+      showSuccess(`Deleted ${docName}`);
     }
     setDeletingId(null);
   }
@@ -231,9 +223,9 @@ export function DocumentsTab({
   async function handleRetryReview(docId: string) {
     const result = await retriggerDocumentReview(docId);
     if ("error" in result && result.error) {
-      toast.error(`Failed to retry: ${result.error}`);
+      showError("Could not retry review", result.error);
     } else {
-      toast.success("Review retriggered");
+      showSuccess("Review retriggered");
     }
   }
 
@@ -244,9 +236,9 @@ export function DocumentsTab({
     const result = await updateDocumentVisibility(doc.id, dealId, next);
     setTogglingVisId(null);
     if (result.error) {
-      toast.error(`Failed to update visibility: ${result.error}`);
+      showError("Could not update visibility", result.error);
     } else {
-      toast.success(
+      showSuccess(
         next === "external" ? "Marked as shared" : "Marked as internal"
       );
     }

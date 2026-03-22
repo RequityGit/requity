@@ -10,7 +10,7 @@ import { formatDate } from "@/lib/format";
 import { TaskSplitPanel } from "@/components/tasks/task-split-panel";
 import type { OpsTask, Profile } from "@/lib/tasks";
 import { completeTask, completeRecurringTask } from "@/lib/tasks";
-import { useToast } from "@/components/ui/use-toast";
+import { showSuccess, showError } from "@/lib/toast";
 
 interface DetailTasksTabProps {
   tasks: OpsTask[];
@@ -43,7 +43,6 @@ export function DetailTasksTab({
 }: DetailTasksTabProps) {
   const openCount = tasks.filter((t) => t.status !== "Complete").length;
   const router = useRouter();
-  const { toast } = useToast();
   const [sheetOpen, setSheetOpen] = useState(false);
   const [editingTask, setEditingTask] = useState<OpsTask | null>(null);
 
@@ -71,20 +70,18 @@ export function DetailTasksTab({
     if (task.is_recurring) {
       const result = await completeRecurringTask(task.id);
       if (result.error) {
-        toast({ title: `Failed to complete task: ${result.error}`, variant: "destructive" });
+        showError(`Could not complete task`, result.error);
       } else {
-        toast({
-          title: result.next_created
-            ? "Task completed — next occurrence created"
-            : "Recurring task completed",
-        });
+        showSuccess(result.next_created
+            ? "Task completed, next occurrence created"
+            : "Recurring task completed");
       }
     } else {
       const result = await completeTask(task.id);
       if (result.error) {
-        toast({ title: `Failed to complete task: ${result.error}`, variant: "destructive" });
+        showError("Could not complete task", result.error);
       } else {
-        toast({ title: "Task completed" });
+        showSuccess("Task completed");
       }
     }
     onRefreshTasks?.();

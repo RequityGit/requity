@@ -7,7 +7,7 @@ import { UwField } from "../UwField";
 import { useUwFieldConfigs } from "@/hooks/useUwFieldConfigs";
 import { useDealLayout } from "@/hooks/useDealLayout";
 import type { VisibilityContext } from "@/lib/visibility-engine";
-import { toast } from "sonner";
+import { showSuccess, showError } from "@/lib/toast";
 import { Button } from "@/components/ui/button";
 import { Loader2, Sparkles } from "lucide-react";
 import { useOptionalInlineLayout } from "@/components/inline-layout-editor/InlineLayoutContext";
@@ -118,7 +118,7 @@ function PropertyDetailsContent({
         : updatePropertyDataAction(dealId, key, currentVal);
       const result = await action;
       if (result.error) {
-        toast.error(`Failed to save ${key}: ${result.error}`);
+        showError(`Could not save ${key}`, result.error);
         setLocalData((prev) => ({ ...prev, [key]: prevVal }));
       }
     });
@@ -129,7 +129,7 @@ function PropertyDetailsContent({
     const state = localData.property_state ?? localData.state;
 
     if (!address || !state) {
-      toast.error("Address and state are required for enrichment");
+      showError("Address and state are required for enrichment");
       return;
     }
 
@@ -171,12 +171,10 @@ function PropertyDetailsContent({
       setLocalData(updatedData);
       await Promise.all(savePromises);
 
-      toast.success(`Enriched ${data.field_count ?? 0} fields: ${data.summary ?? ""}`);
+      showSuccess(`Enriched ${data.field_count ?? 0} fields: ${data.summary ?? ""}`);
     } catch (err) {
       console.warn("Property enrichment failed:", err);
-      toast.error(
-        err instanceof Error ? err.message : "Failed to enrich property"
-      );
+      showError("Could not enrich property", err instanceof Error ? err.message : undefined);
     } finally {
       setEnriching(false);
     }

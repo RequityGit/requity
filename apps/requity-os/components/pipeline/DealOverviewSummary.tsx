@@ -13,7 +13,7 @@ import { useDebounce } from "@/hooks/useDebounce";
 import { Search, X, Loader2, Plus, UserPlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { type UnifiedDeal, ASSET_CLASS_LABELS, ACTIVE_ASSET_CLASS_OPTIONS } from "./pipeline-types";
-import { toast } from "sonner";
+import { showSuccess, showError } from "@/lib/toast";
 
 // Asset class dropdown: active options only (excludes legacy keys)
 const ASSET_CLASS_DROPDOWN_LABELS = ACTIVE_ASSET_CLASS_OPTIONS.map((o) => o.label);
@@ -185,15 +185,15 @@ function ContactSearchInput({ onSelect, placeholder }: {
   }
 
   async function handleCreate() {
-    if (!newFirst.trim()) { toast.error("First name is required"); return; }
+    if (!newFirst.trim()) { showError("First name is required"); return; }
     setCreating(true);
     const res = await quickCreateContactAction(newFirst, newLast, newEmail, newPhone);
     setCreating(false);
     if (res.error || !res.contact) {
-      toast.error(res.error ?? "Failed to create contact");
+      showError("Could not create contact", res.error);
       return;
     }
-    toast.success(`Created ${res.contact.first_name} ${res.contact.last_name}`);
+    showSuccess(`Created ${res.contact.first_name} ${res.contact.last_name}`);
     onSelect(res.contact);
     setQuery("");
     setResults([]);
@@ -370,7 +370,7 @@ export function DealOverviewSummary({ dealId, deal }: DealOverviewSummaryProps) 
     startTransition(async () => {
       const result = await updateUwDataAction(dealId, key, value);
       if (result.error) {
-        toast.error(`Failed to save: ${result.error}`);
+        showError("Could not save field", result.error);
         // Rollback
         const prev = { ...localUwRef.current, [key]: deal.uw_data?.[key] };
         localUwRef.current = prev;
@@ -401,7 +401,7 @@ export function DealOverviewSummary({ dealId, deal }: DealOverviewSummaryProps) 
     startTransition(async () => {
       const result = await updateDealNameAction(dealId, v);
       if (result.error) {
-        toast.error(`Failed to save name: ${result.error}`);
+        showError("Could not save name", result.error);
         setLocalDealName(deal.name ?? "");
       }
     });
@@ -444,7 +444,7 @@ export function DealOverviewSummary({ dealId, deal }: DealOverviewSummaryProps) 
       startTransition(async () => {
         const result = await updateUwDataAction(dealId, key, value);
         if (result.error) {
-          toast.error(`Failed to save ${key}: ${result.error}`);
+          showError(`Could not save ${key}`, result.error);
         }
       });
     }
@@ -455,7 +455,7 @@ export function DealOverviewSummary({ dealId, deal }: DealOverviewSummaryProps) 
     startTransition(async () => {
       const result = await updateContactFieldAction(contactId, field, value);
       if (result.error) {
-        toast.error(`Failed to save: ${result.error}`);
+        showError("Could not save field", result.error);
       }
     });
   }, [startTransition]);
@@ -486,7 +486,7 @@ export function DealOverviewSummary({ dealId, deal }: DealOverviewSummaryProps) 
     startTransition(async () => {
       const result = await linkDealContactAction(dealId, role, contact.id);
       if (result.error) {
-        toast.error(`Failed to link: ${result.error}`);
+        showError("Could not link contact", result.error);
         if (role === "borrower") setBorrowerContact(deal.primary_contact ?? null);
         else setBrokerContact(null);
       }
@@ -499,7 +499,7 @@ export function DealOverviewSummary({ dealId, deal }: DealOverviewSummaryProps) 
     startTransition(async () => {
       const result = await linkDealContactAction(dealId, role, null);
       if (result.error) {
-        toast.error(`Failed to unlink: ${result.error}`);
+        showError("Could not unlink contact", result.error);
       }
     });
   }, [dealId, startTransition]);

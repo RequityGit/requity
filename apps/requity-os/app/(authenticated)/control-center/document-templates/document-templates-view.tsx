@@ -13,7 +13,7 @@ import {
   X,
   FileEdit,
 } from "lucide-react";
-import { toast } from "sonner";
+import { showSuccess, showError } from "@/lib/toast";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -113,9 +113,9 @@ export function DocumentTemplatesView({ templates }: Props) {
     setLoading(id);
     const result = await toggleTemplateActive(id, !currentActive);
     if (result.error) {
-      toast.error(`Failed to update template: ${result.error}`);
+      showError(`Failed to update template: ${result.error}`);
     } else {
-      toast.success(currentActive ? "Template deactivated" : "Template activated");
+      showSuccess(currentActive ? "Template deactivated" : "Template activated");
       router.refresh();
     }
     setLoading(null);
@@ -125,9 +125,9 @@ export function DocumentTemplatesView({ templates }: Props) {
     setLoading(id);
     const result = await duplicateTemplate(id);
     if (result.error) {
-      toast.error(`Failed to duplicate: ${result.error}`);
+      showError(`Failed to duplicate: ${result.error}`);
     } else {
-      toast.success("Template duplicated");
+      showSuccess("Template duplicated");
       router.refresh();
     }
     setLoading(null);
@@ -144,9 +144,9 @@ export function DocumentTemplatesView({ templates }: Props) {
     setLoading(id);
     const result = await deleteTemplate(id);
     if (result.error) {
-      toast.error(`Failed to delete: ${result.error}`);
+      showError(`Failed to delete: ${result.error}`);
     } else {
-      toast.success("Template deleted");
+      showSuccess("Template deleted");
       router.refresh();
     }
     setLoading(null);

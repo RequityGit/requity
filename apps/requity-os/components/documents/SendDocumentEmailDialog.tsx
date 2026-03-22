@@ -3,7 +3,7 @@
 import { useState, useCallback, useEffect } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { SUPABASE_URL } from "@/lib/supabase/constants";
-import { toast } from "sonner";
+import { showLoading, resolveLoading, rejectLoading } from "@/lib/toast";
 import { generatePdfBlob } from "@/lib/export-pdf";
 import { EmailComposeSheet } from "@/components/crm/email-compose-sheet";
 import { resolveRecipientForRecord, fetchLinkedEmailTemplateId } from "./actions";
@@ -64,7 +64,7 @@ export function SendDocumentEmailDialog({
 
   const handleSendViaEmail = useCallback(async () => {
     setPreparing(true);
-    const toastId = toast.loading("Preparing email...");
+    const toastId = showLoading("Preparing email...");
 
     try {
       // 1. Resolve recipient from the record
@@ -128,10 +128,10 @@ export function SendDocumentEmailDialog({
 
       // 4. Open the email composer
       setComposerReady(true);
-      toast.success("Email ready to send", { id: toastId });
+      resolveLoading(toastId, "Email ready to send");
     } catch (err) {
       console.error("Failed to prepare email:", err);
-      toast.error("Failed to prepare email", { id: toastId });
+      rejectLoading(toastId, "Could not prepare email");
     } finally {
       setPreparing(false);
     }

@@ -39,7 +39,7 @@ import {
   Users,
 } from "lucide-react";
 import { EmptyState } from "@/components/shared/EmptyState";
-import { useToast } from "@/components/ui/use-toast";
+import { showSuccess, showError } from "@/lib/toast";
 import { RoleManagementDialog } from "@/components/admin/role-management-dialog";
 import {
   updateActivationStatusAction,
@@ -82,8 +82,6 @@ export function UserListTable({
   const [sortDir, setSortDir] = useState<SortDir>("desc");
   const [roleDialogUser, setRoleDialogUser] = useState<UserRow | null>(null);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
-  const { toast } = useToast();
-
   const toggleSort = (field: SortField) => {
     if (sortField === field) {
       setSortDir(sortDir === "asc" ? "desc" : "asc");
@@ -159,13 +157,9 @@ export function UserListTable({
     setActionLoading(user.id);
     const result = await resendInviteAction(user.id);
     if ("error" in result) {
-      toast({
-        title: "Failed to send invite",
-        description: result.error,
-        variant: "destructive",
-      });
+      showError("Could not send invite", result.error);
     } else {
-      toast({ title: `Invite sent to ${user.email}` });
+      showSuccess(`Invite sent to ${user.email}`);
       onRefresh();
     }
     setActionLoading(null);
@@ -177,18 +171,13 @@ export function UserListTable({
     setActionLoading(user.id);
     const result = await updateActivationStatusAction(user.id, newStatus);
     if ("error" in result) {
-      toast({
-        title: "Failed to update status",
-        description: result.error,
-        variant: "destructive",
-      });
+      showError("Could not update status", result.error);
     } else {
-      toast({
-        title:
-          newStatus === "activated"
-            ? `${user.full_name ?? user.email} activated`
-            : `${user.full_name ?? user.email} deactivated`,
-      });
+      showSuccess(
+        newStatus === "activated"
+          ? `${user.full_name ?? user.email} activated`
+          : `${user.full_name ?? user.email} deactivated`
+      );
       onRefresh();
     }
     setActionLoading(null);

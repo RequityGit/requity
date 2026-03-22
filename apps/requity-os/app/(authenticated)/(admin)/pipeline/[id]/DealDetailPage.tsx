@@ -32,7 +32,7 @@ import {
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 import { formatDateShort } from "@/lib/format";
-import { toast } from "sonner";
+import { showSuccess, showError } from "@/lib/toast";
 import {
   Layers,
   Clock,
@@ -304,17 +304,17 @@ function DealDetailPageInner({
         if (targetIdx < currentIdx) {
           const res = await regressStageAction(deal.id, targetStage);
           if (res.error) {
-            toast.error(`Cannot move stage: ${res.error}`);
+            showError(`Cannot move stage: ${res.error}`);
           } else {
-            toast.success(`Moved to ${label}`);
+            showSuccess(`Moved to ${label}`);
             router.refresh();
           }
         } else {
           const res = await advanceStageAction(deal.id, targetStage);
           if (res.error) {
-            toast.error(`Cannot advance: ${res.error}`);
+            showError(`Cannot advance: ${res.error}`);
           } else {
-            toast.success(`Advanced to ${label}`);
+            showSuccess(`Advanced to ${label}`);
             router.refresh();
           }
         }
@@ -422,7 +422,7 @@ function DealDetailPageInner({
                     });
                     const result = await reorderTabs("deal_detail", newOrders);
                     if (result.error) {
-                      toast.error(`Failed to reorder tabs: ${result.error}`);
+                      showError(`Failed to reorder tabs: ${result.error}`);
                     } else {
                       layout.refetch();
                     }
@@ -689,9 +689,9 @@ function DealHeader({
     try {
       const result = await createDealDriveFolder(deal.id);
       if (result.error) {
-        toast.error(result.error);
+        showError(result.error);
       } else {
-        toast.success("Google Drive folder created");
+        showSuccess("Google Drive folder created");
         router.refresh();
       }
     } finally {
@@ -710,7 +710,7 @@ function DealHeader({
       setLogCallOpen(false);
       setCallContact("");
       setCallNotes("");
-      toast.success("Call logged");
+      showSuccess("Call logged");
       router.refresh();
     } finally {
       setActionLoading(false);
@@ -728,7 +728,7 @@ function DealHeader({
       setSendEmailOpen(false);
       setEmailSubject("");
       setEmailNotes("");
-      toast.success("Email logged");
+      showSuccess("Email logged");
       router.refresh();
     } finally {
       setActionLoading(false);
@@ -740,9 +740,9 @@ function DealHeader({
     try {
       const result = await addDealTeamMember(deal.id, selectedProfileId, selectedRole);
       if (result.error) {
-        toast.error(`Failed to add: ${result.error}`);
+        showError(`Failed to add: ${result.error}`);
       } else {
-        toast.success("Team member added");
+        showSuccess("Team member added");
         router.refresh();
       }
       setTeamAssignOpen(false);
@@ -758,9 +758,9 @@ function DealHeader({
     try {
       const result = await removeDealTeamMember(deal.id, memberId);
       if (result.error) {
-        toast.error(`Failed to remove: ${result.error}`);
+        showError(`Failed to remove: ${result.error}`);
       } else {
-        toast.success("Team member removed");
+        showSuccess("Team member removed");
         router.refresh();
       }
     } finally {
@@ -773,10 +773,10 @@ function DealHeader({
     try {
       const result = await deleteUnifiedDealSuperAdmin(deal.id);
       if ("error" in result) {
-        toast.error(result.error);
+        showError(result.error);
         return;
       }
-      toast.success("Deal deleted");
+      showSuccess("Deal deleted");
       setDeleteDealOpen(false);
       router.push("/pipeline");
       router.refresh();

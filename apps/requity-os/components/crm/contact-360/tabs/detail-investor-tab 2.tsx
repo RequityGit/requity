@@ -2,7 +2,7 @@
 
 import { useState, useMemo, useCallback, useTransition, type ReactNode } from "react";
 import { createClient } from "@/lib/supabase/client";
-import { useToast } from "@/components/ui/use-toast";
+import { showError } from "@/lib/toast";
 import { TrendingUp, Building2, Check, X } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -92,7 +92,6 @@ export function DetailInvestorTab({
   userRole,
   sectionFields,
 }: DetailInvestorTabProps) {
-  const { toast } = useToast();
   const supabase = createClient();
   const [pending, startTransition] = useTransition();
 
@@ -106,11 +105,11 @@ export function DetailInvestorTab({
       .update({ [field]: value })
       .eq("id", investor.id);
     if (error) {
-      toast({ title: "Error saving", description: error.message, variant: "destructive" });
+      showError("Could not save", error.message);
       return false;
     }
     return true;
-  }, [investor.id, supabase, toast]);
+  }, [investor.id, supabase]);
 
   const sourceRegistry = useMemo(() => ({
     investor: {

@@ -19,7 +19,7 @@ import type {
   DealTokenData,
   SubmissionType,
 } from "@/lib/form-engine/types";
-import { toast } from "sonner";
+import { showSuccess, showInfo } from "@/lib/toast";
 
 export function FormEngine({
   formId,
@@ -249,7 +249,7 @@ export function FormEngine({
                 ...(result.entity_name && !s.data.entity_name ? { entity_name: result.entity_name } : {}),
               },
             }));
-            toast.success("Welcome back! We've filled in your details.");
+            showSuccess("Welcome back! We've filled in your details.");
           }
         });
       }
@@ -332,9 +332,7 @@ export function FormEngine({
       
       // Show warning if submission requires review
       if (result.warning || result.requires_review) {
-        toast("Your submission was received and is being reviewed. We'll contact you soon.", {
-          description: result.warning || "This submission requires manual review before an opportunity can be created.",
-        });
+        showInfo("Your submission was received and is being reviewed. We'll contact you soon.");
       }
       
       if (onComplete && result.submission_id) {

@@ -40,7 +40,7 @@ import { cn } from "@/lib/utils";
 import { MonoValue, relTime } from "./contact-detail-shared";
 import { formatDate } from "@/lib/format";
 import { createClient } from "@/lib/supabase/client";
-import { useToast } from "@/components/ui/use-toast";
+import { showSuccess, showError } from "@/lib/toast";
 import { CRM_CONTACT_SOURCES, CRM_RELATIONSHIP_TYPES, CRM_LENDER_DIRECTIONS, CRM_VENDOR_TYPES } from "@/lib/constants/db-enums";
 import {
   Popover,
@@ -93,7 +93,6 @@ export function ContactDetailSidebar({
   const [addingRel, setAddingRel] = useState(false);
   const [, startTransition] = useTransition();
   const supabase = createClient();
-  const { toast } = useToast();
 
   const saveField = useCallback(async (field: string, value: unknown) => {
     const { error } = await supabase
@@ -101,11 +100,11 @@ export function ContactDetailSidebar({
       .update({ [field]: value })
       .eq("id", contact.id);
     if (error) {
-      toast({ title: "Error saving", description: error.message, variant: "destructive" });
+      showError("Could not save", error.message);
       return false;
     }
     return true;
-  }, [contact.id, supabase, toast]);
+  }, [contact.id, supabase]);
 
   async function addRelationship() {
     if (!newRelType) return;
@@ -125,10 +124,10 @@ export function ContactDetailSidebar({
       .single();
 
     if (error) {
-      toast({ title: "Error adding relationship", description: error.message, variant: "destructive" });
+      showError("Could not add relationship", error.message);
     } else if (data) {
       setLocalRelationships((prev) => [data as unknown as RelationshipData, ...prev]);
-      toast({ title: "Relationship added" });
+      showSuccess("Relationship added");
       onRelationshipAdded?.();
     }
     setAddRelOpen(false);
@@ -145,10 +144,10 @@ export function ContactDetailSidebar({
       .delete()
       .eq("id", relId);
     if (error) {
-      toast({ title: "Error removing relationship", description: error.message, variant: "destructive" });
+      showError("Could not remove relationship", error.message);
       setLocalRelationships(relationships); // rollback
     } else {
-      toast({ title: "Relationship removed" });
+      showSuccess("Relationship removed");
       onRelationshipAdded?.();
     }
   }

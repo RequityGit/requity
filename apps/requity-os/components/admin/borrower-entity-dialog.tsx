@@ -21,7 +21,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useToast } from "@/components/ui/use-toast";
+import { showSuccess, showError } from "@/lib/toast";
 import {
   addEntityAction,
   updateEntityAction,
@@ -47,7 +47,6 @@ export function BorrowerEntityDialog({
 }: BorrowerEntityDialogProps) {
   const [loading, setLoading] = useState(false);
   const router = useRouter();
-  const { toast } = useToast();
 
   const [entityName, setEntityName] = useState("");
   const [entityType, setEntityType] = useState("");
@@ -130,15 +129,9 @@ export function BorrowerEntityDialog({
     }
 
     if (result.error) {
-      toast({
-        title: entity ? "Error updating entity" : "Error adding entity",
-        description: result.error,
-        variant: "destructive",
-      });
+      showError(entity ? "Could not update entity" : "Could not add entity", result.error);
     } else {
-      toast({
-        title: entity ? "Entity updated" : "Entity added",
-      });
+      showSuccess(entity ? "Entity updated" : "Entity added");
       router.refresh();
       onClose();
     }

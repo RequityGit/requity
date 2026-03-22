@@ -27,7 +27,7 @@ import {
   Trash2,
   ChevronRight,
 } from "lucide-react";
-import { toast } from "sonner";
+import { showSuccess, showError } from "@/lib/toast";
 import { cn } from "@/lib/utils";
 import {
   fetchObjectRelationships,
@@ -139,9 +139,9 @@ export function InlineRelationshipDialog({
 
       const result = await createRelationship(input);
       if (result.error) {
-        toast.error(`Failed to create relationship: ${result.error}`);
+        showError(`Failed to create relationship: ${result.error}`);
       } else {
-        toast.success("Relationship created");
+        showSuccess("Relationship created");
         setShowAddForm(false);
         setNewChildObject("");
         setNewCardinality("one_to_many");
@@ -156,7 +156,7 @@ export function InlineRelationshipDialog({
     startTransition(async () => {
       const result = await updateRelationship(relId, { allow_quick_create: !current });
       if (result.error) {
-        toast.error(`Failed to update: ${result.error}`);
+        showError(`Failed to update: ${result.error}`);
       } else {
         setRelationships((prev) =>
           prev.map((r) => (r.id === relId ? { ...r, allow_quick_create: !current } : r))
@@ -169,9 +169,9 @@ export function InlineRelationshipDialog({
     startTransition(async () => {
       const result = await deleteRelationship(relId);
       if (result.error) {
-        toast.error(`Failed to delete: ${result.error}`);
+        showError(`Failed to delete: ${result.error}`);
       } else {
-        toast.success("Relationship deleted");
+        showSuccess("Relationship deleted");
         setRelationships((prev) => prev.filter((r) => r.id !== relId));
       }
     });

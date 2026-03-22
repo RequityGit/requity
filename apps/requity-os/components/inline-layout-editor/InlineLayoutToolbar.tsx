@@ -11,7 +11,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Save, X, Plus, Loader2, Network } from "lucide-react";
-import { toast } from "sonner";
+import { showSuccess, showError } from "@/lib/toast";
 import { useInlineLayout } from "./InlineLayoutContext";
 import { TabManager } from "./TabManager";
 import { InlineRelationshipDialog } from "./InlineRelationshipDialog";
@@ -113,11 +113,11 @@ export function InlineLayoutToolbar({ onSaveComplete, tabs, pageType = "deal_det
           await reorderLayoutFields(changes.reorderedFields);
         }
 
-        toast.success("Layout saved");
+        showSuccess("Layout saved");
         cancelEditing();
         onSaveComplete();
       } catch (err) {
-        toast.error(`Failed to save layout: ${err instanceof Error ? err.message : "Unknown error"}`);
+        showError(`Failed to save layout: ${err instanceof Error ? err.message : "Unknown error"}`);
       }
     });
   }
@@ -127,7 +127,7 @@ export function InlineLayoutToolbar({ onSaveComplete, tabs, pageType = "deal_det
     addNewSection(activeTabKey, newSectionLabel.trim());
     setNewSectionLabel("");
     setAddSectionOpen(false);
-    toast.success(`Section "${newSectionLabel.trim()}" added`);
+    showSuccess(`Section "${newSectionLabel.trim()}" added`);
   }
 
   return (

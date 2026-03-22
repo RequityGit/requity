@@ -2,7 +2,7 @@
 
 import { useState, useCallback } from "react";
 import { createClient } from "@/lib/supabase/client";
-import { useToast } from "@/components/ui/use-toast";
+import { showError } from "@/lib/toast";
 import { cn } from "@/lib/utils";
 import { Plus, Workflow } from "lucide-react";
 import { EmptyState } from "@/components/shared/EmptyState";
@@ -36,7 +36,6 @@ export function WorkflowBuilderShell({
     initialWorkflows[0]?.id ?? null
   );
   const [showNewDialog, setShowNewDialog] = useState(false);
-  const { toast } = useToast();
 
   const selectedWorkflow = workflows.find((w) => w.id === selectedId) ?? null;
   const workflowStages = stages
@@ -62,14 +61,10 @@ export function WorkflowBuilderShell({
             w.id === workflowId ? { ...w, is_active: !active } : w
           )
         );
-        toast({
-          title: "Failed to update workflow",
-          description: error.message,
-          variant: "destructive",
-        });
+        showError("Could not update workflow", error.message);
       }
     },
-    [toast]
+    []
   );
 
   const handleWorkflowCreated = useCallback(

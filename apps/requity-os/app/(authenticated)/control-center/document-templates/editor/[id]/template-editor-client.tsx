@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useCallback, useState } from "react";
-import { toast } from "sonner";
+import { showSuccess, showError } from "@/lib/toast";
 import { LayoutGrid, FileText } from "lucide-react";
 import { DocumentEditor } from "@/components/documents/editor/DocumentEditor";
 import { LayoutEditor } from "@/components/documents/layout-editor/LayoutEditor";
@@ -51,7 +51,7 @@ export function TemplateEditorClient({
     async (content: string) => {
       const result = await saveTemplateContent(templateId, content);
       if (result.error) {
-        toast.error(`Failed to save template: ${result.error}`);
+        showError(`Failed to save template: ${result.error}`);
       }
     },
     [templateId]
@@ -61,10 +61,10 @@ export function TemplateEditorClient({
     setSwitching(true);
     const result = await enableLayoutEditor(templateId);
     if (result.error) {
-      toast.error(`Failed to enable layout editor: ${result.error}`);
+      showError(`Failed to enable layout editor: ${result.error}`);
       setSwitching(false);
     } else {
-      toast.success("Layout Editor enabled");
+      showSuccess("Layout Editor enabled");
       router.refresh();
     }
   }, [templateId, router]);
@@ -80,10 +80,10 @@ export function TemplateEditorClient({
     setSwitching(true);
     const result = await disableLayoutEditor(templateId);
     if (result.error) {
-      toast.error(`Failed to disable layout editor: ${result.error}`);
+      showError(`Failed to disable layout editor: ${result.error}`);
       setSwitching(false);
     } else {
-      toast.success("Switched to rich text editor");
+      showSuccess("Switched to rich text editor");
       router.refresh();
     }
   }, [templateId, router, confirm]);

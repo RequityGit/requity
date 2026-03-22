@@ -23,7 +23,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { deleteCrmContactAction } from "@/app/(authenticated)/(admin)/contacts/actions";
-import { useToast } from "@/components/ui/use-toast";
+import { showSuccess, showError } from "@/lib/toast";
 import {
   CRM_RELATIONSHIP_TYPES,
   CRM_LIFECYCLE_STAGES,
@@ -77,7 +77,6 @@ export function ContactsView({
 }: ContactsViewProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { toast } = useToast();
 
   const [contactSearch, setContactSearch] = useState(searchParams.get("q") ?? "");
   const debouncedSearch = useDebounce(contactSearch, 300);
@@ -101,13 +100,13 @@ export function ContactsView({
     try {
       const result = await deleteCrmContactAction(id);
       if (result.error) {
-        toast({ title: "Error deleting contact", description: result.error, variant: "destructive" });
+        showError("Could not delete contact", result.error);
       } else {
-        toast({ title: "Contact deleted" });
+        showSuccess("Contact deleted");
         router.refresh();
       }
     } catch {
-      toast({ title: "Error deleting contact", description: "An unexpected error occurred", variant: "destructive" });
+      showError("Could not delete contact", "An unexpected error occurred");
     }
   }
 

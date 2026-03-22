@@ -40,7 +40,7 @@ import {
 } from "lucide-react";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { cn } from "@/lib/utils";
-import { toast } from "sonner";
+import { showSuccess, showError } from "@/lib/toast";
 import { FormEngine } from "@/components/forms/FormEngine";
 import { IconPicker } from "@/components/forms/IconPicker";
 import type {
@@ -114,7 +114,7 @@ export default function FormEditorPage() {
         .single();
 
       if (error || !data) {
-        toast.error("Form not found");
+        showError("Form not found");
         router.push("/control-center/forms");
         return;
       }
@@ -174,9 +174,9 @@ export default function FormEditorPage() {
 
     setSaving(false);
     if (error) {
-      toast.error("Failed to save: " + error.message);
+      showError("Failed to save: " + error.message);
     } else {
-      toast.success("Form saved");
+      showSuccess("Form saved");
     }
   }, [formDef, formId]);
 

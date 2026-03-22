@@ -23,7 +23,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useToast } from "@/components/ui/use-toast";
+import { showSuccess, showError, showWarning } from "@/lib/toast";
 import { DISTRIBUTION_TYPES } from "@/lib/constants";
 import { formatCurrency } from "@/lib/format";
 import { Plus, Loader2 } from "lucide-react";
@@ -52,7 +52,6 @@ export function DistributionForm({ funds }: DistributionFormProps) {
   const [proRataTotal, setProRataTotal] = useState("");
 
   const router = useRouter();
-  const { toast } = useToast();
 
   useEffect(() => {
     if (!fundId) {
@@ -84,11 +83,7 @@ export function DistributionForm({ funds }: DistributionFormProps) {
   function applyProRata() {
     const total = parseFloat(proRataTotal);
     if (isNaN(total) || total <= 0) {
-      toast({
-        title: "Invalid amount",
-        description: "Enter a valid pro-rata total.",
-        variant: "destructive",
-      });
+      showWarning("Enter a valid pro-rata total");
       return;
     }
 
@@ -97,11 +92,7 @@ export function DistributionForm({ funds }: DistributionFormProps) {
       0
     );
     if (totalFunded <= 0) {
-      toast({
-        title: "No funded amounts",
-        description: "No investors have funded amounts to distribute.",
-        variant: "destructive",
-      });
+      showWarning("No investors have funded amounts to distribute");
       return;
     }
 
@@ -116,11 +107,7 @@ export function DistributionForm({ funds }: DistributionFormProps) {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!fundId || !distributionType || !distributionDate) {
-      toast({
-        title: "Missing fields",
-        description: "Fill all required fields.",
-        variant: "destructive",
-      });
+      showWarning("Fill all required fields");
       return;
     }
 
@@ -145,11 +132,7 @@ export function DistributionForm({ funds }: DistributionFormProps) {
     }));
 
     if (dists.length === 0) {
-      toast({
-        title: "No amounts entered",
-        description: "Enter at least one distribution amount.",
-        variant: "destructive",
-      });
+      showWarning("Enter at least one distribution amount");
       return;
     }
 
@@ -158,15 +141,9 @@ export function DistributionForm({ funds }: DistributionFormProps) {
     const { error } = await supabase.from("distributions").insert(dists);
 
     if (error) {
-      toast({
-        title: "Error recording distributions",
-        description: error.message,
-        variant: "destructive",
-      });
+      showError("Could not record distributions", error.message);
     } else {
-      toast({
-        title: `Recorded ${dists.length} distribution(s)`,
-      });
+      showSuccess(`Recorded ${dists.length} distribution(s)`);
       setOpen(false);
       resetForm();
       router.refresh();

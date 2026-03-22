@@ -5,7 +5,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useConfirm } from "@/components/shared/ConfirmDialog";
 import { Users, UserPlus } from "lucide-react";
-import { toast } from "sonner";
+import { showSuccess, showError } from "@/lib/toast";
 import { removeDealTeamContactAction } from "@/app/(authenticated)/(admin)/pipeline/[id]/actions";
 import { DealTeamRow } from "./DealTeamRow";
 import { AddDealTeamDialog } from "./AddDealTeamDialog";
@@ -55,13 +55,13 @@ export function DealTeamSection({ dealId, initialContacts }: DealTeamSectionProp
     try {
       const result = await removeDealTeamContactAction(id, dealId);
       if (result.error) {
-        toast.error(result.error);
+        showError(result.error);
       } else {
         setContacts((prev) => prev.filter((c) => c.id !== id));
-        toast.success("Deal team contact removed");
+        showSuccess("Deal team contact removed");
       }
     } catch {
-      toast.error("Failed to remove contact");
+      showError("Failed to remove contact");
     }
   }, [confirm, dealId]);
 

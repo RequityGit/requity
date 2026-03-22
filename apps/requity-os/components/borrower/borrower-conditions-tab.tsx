@@ -7,7 +7,7 @@ import { StatusBadge } from "@/components/shared/status-badge";
 import { FileUpload } from "@/components/shared/file-upload";
 import { DocumentDownload } from "@/components/borrower/document-download";
 import { formatDate } from "@/lib/format";
-import { useToast } from "@/components/ui/use-toast";
+import { showSuccess, showError } from "@/lib/toast";
 import {
   ClipboardList,
   CheckCircle2,
@@ -141,7 +141,6 @@ function BorrowerConditionCard({
   const [showUpload, setShowUpload] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  const { toast } = useToast();
 
   const isComplete = COMPLETE_STATUSES.includes(condition.status);
   const isOverdue =
@@ -179,16 +178,12 @@ function BorrowerConditionCard({
 
       const result = await uploadConditionDocument(formData);
       if (result.error) {
-        toast({
-          title: "Upload failed",
-          description: result.error,
-          variant: "destructive",
-        });
+        showError("Could not upload document", result.error);
       } else {
         await loadData();
         setSelectedFile(null);
         setShowUpload(false);
-        toast({ title: "Document uploaded successfully" });
+        showSuccess("Document uploaded");
       }
     } finally {
       setLoading(false);

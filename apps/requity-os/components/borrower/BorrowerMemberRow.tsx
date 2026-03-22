@@ -12,7 +12,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { Trash2, Loader2, Link2 } from "lucide-react";
-import { toast } from "sonner";
+import { showError } from "@/lib/toast";
 import type { DealBorrowerMember } from "@/app/types/borrower";
 import { BORROWER_ROLES } from "./constants";
 import {
@@ -67,7 +67,7 @@ export function BorrowerMemberRow({
       );
       if (result.error) {
         onOptimisticUpdate(member.id, { [field]: current });
-        toast.error(result.error);
+        showError(result.error);
       }
       // No onUpdated/re-fetch on success: optimistic state is already correct
     },
@@ -90,7 +90,7 @@ export function BorrowerMemberRow({
             first_name: member.first_name,
             last_name: member.last_name,
           });
-          toast.error(result.error);
+          showError(result.error);
         }
       });
     },
@@ -101,7 +101,7 @@ export function BorrowerMemberRow({
     setRemoving(true);
     try {
       const result = await removeBorrowerMemberAction(member.id, dealId);
-      if (result.error) toast.error(result.error);
+      if (result.error) showError(result.error);
       else {
         setRemoveOpen(false);
         onRemoved();
@@ -232,7 +232,7 @@ export function BorrowerMemberRow({
             );
             if (result.error) {
               onOptimisticUpdate(member.id, { is_guarantor: previous });
-              toast.error(result.error);
+              showError(result.error);
             }
           }}
         />

@@ -2,7 +2,7 @@
 
 import { useState, useCallback } from "react";
 import { createClient } from "@/lib/supabase/client";
-import { useToast } from "@/components/ui/use-toast";
+import { showError } from "@/lib/toast";
 import { Plus, GripVertical, Trash2, Flag, Workflow } from "lucide-react";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { Button } from "@/components/ui/button";
@@ -31,7 +31,6 @@ export function StagesTab({
 }: StagesTabProps) {
   const [adding, setAdding] = useState(false);
   const [newName, setNewName] = useState("");
-  const { toast } = useToast();
   const confirm = useConfirm();
 
   const handleAddStage = useCallback(async () => {
@@ -54,17 +53,13 @@ export function StagesTab({
       .single();
 
     if (error) {
-      toast({
-        title: "Failed to add stage",
-        description: error.message,
-        variant: "destructive",
-      });
+      showError("Could not add stage", error.message);
     } else if (data) {
       onStagesChanged([...stages, data as unknown as WorkflowStage]);
       setNewName("");
     }
     setAdding(false);
-  }, [newName, stages, workflowId, onStagesChanged, toast]);
+  }, [newName, stages, workflowId, onStagesChanged]);
 
   const handleUpdateField = useCallback(
     async (
@@ -89,14 +84,10 @@ export function StagesTab({
       if (error) {
         // Rollback
         onStagesChanged(stages);
-        toast({
-          title: "Failed to update stage",
-          description: error.message,
-          variant: "destructive",
-        });
+        showError("Could not update stage", error.message);
       }
     },
-    [stages, onStagesChanged, toast]
+    [stages, onStagesChanged]
   );
 
   const handleDeleteStage = useCallback(
@@ -108,16 +99,12 @@ export function StagesTab({
         .eq("id", stageId);
 
       if (error) {
-        toast({
-          title: "Failed to delete stage",
-          description: error.message,
-          variant: "destructive",
-        });
+        showError("Could not delete stage", error.message);
       } else {
         onStagesChanged(stages.filter((s) => s.id !== stageId));
       }
     },
-    [stages, onStagesChanged, toast]
+    [stages, onStagesChanged]
   );
 
   return (

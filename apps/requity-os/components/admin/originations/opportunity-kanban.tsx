@@ -32,7 +32,7 @@ import {
   APPROVAL_STATUS_COLORS,
   LOSS_REASONS,
 } from "@/lib/constants";
-import { useToast } from "@/components/ui/use-toast";
+import { showSuccess, showError, showWarning } from "@/lib/toast";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { moveOpportunityStageAction } from "@/app/(authenticated)/(admin)/originations/actions";
 import {
@@ -95,7 +95,6 @@ export function OpportunityKanban({ data, stageThresholds = [] }: OpportunityKan
   const [lossReason, setLossReason] = useState("");
   const isMobile = useIsMobile();
   const router = useRouter();
-  const { toast } = useToast();
 
   // Filter quoting column — only show if brokered deals exist
   const hasBrokered = opportunities.some(
@@ -135,11 +134,7 @@ export function OpportunityKanban({ data, stageThresholds = [] }: OpportunityKan
     const result = await moveOpportunityStageAction(oppId, newStage);
 
     if (result.error) {
-      toast({
-        title: "Error moving deal",
-        description: result.error,
-        variant: "destructive",
-      });
+      showError("Could not move deal", result.error);
     } else {
       setOpportunities((prev) =>
         prev.map((o) =>
@@ -152,19 +147,14 @@ export function OpportunityKanban({ data, stageThresholds = [] }: OpportunityKan
             : o
         )
       );
-      toast({
-        title: `Deal moved to ${OPPORTUNITY_STAGE_LABELS[newStage] || newStage}`,
-      });
+      showSuccess(`Deal moved to ${OPPORTUNITY_STAGE_LABELS[newStage] || newStage}`);
     }
     setMovingId(null);
   }
 
   async function handleCloseLost() {
     if (!lossReason) {
-      toast({
-        title: "Loss reason required",
-        variant: "destructive",
-      });
+      showWarning("Loss reason is required");
       return;
     }
     setMovingId(lossDialog.oppId);
@@ -174,11 +164,7 @@ export function OpportunityKanban({ data, stageThresholds = [] }: OpportunityKan
       lossReason
     );
     if (result.error) {
-      toast({
-        title: "Error",
-        description: result.error,
-        variant: "destructive",
-      });
+      showError("Could not close deal", result.error);
     } else {
       setOpportunities((prev) =>
         prev.map((o) =>
@@ -187,7 +173,7 @@ export function OpportunityKanban({ data, stageThresholds = [] }: OpportunityKan
             : o
         )
       );
-      toast({ title: "Deal moved to Closed Lost" });
+      showSuccess("Deal moved to Closed Lost");
     }
     setMovingId(null);
     setLossDialog({ open: false, oppId: "" });

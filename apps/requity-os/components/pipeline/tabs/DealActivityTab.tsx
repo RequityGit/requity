@@ -15,7 +15,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useToast } from "@/components/ui/use-toast";
+import { showSuccess, showError } from "@/lib/toast";
 import { CRM_ACTIVITY_TYPES } from "@/lib/constants";
 import {
   Mail,
@@ -142,7 +142,6 @@ export function DealActivityTab({
   const [loading, setLoading] = useState(false);
   const [expandedEmailId, setExpandedEmailId] = useState<string | null>(null);
   const router = useRouter();
-  const { toast } = useToast();
 
   const [dealActivities, setDealActivities] = useState<DealActivity[]>([]);
   const [crmActivities, setCrmActivities] = useState<ActivityData[]>([]);
@@ -241,7 +240,7 @@ export function DealActivityTab({
 
       if (result.error) throw new Error(result.error);
 
-      toast({ title: "Activity logged" });
+      showSuccess("Activity logged");
       setShowForm(false);
       setForm({ activity_type: "note", subject: "", description: "" });
       router.refresh();
@@ -254,11 +253,7 @@ export function DealActivityTab({
       });
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : "Unknown error";
-      toast({
-        title: "Error logging activity",
-        description: message,
-        variant: "destructive",
-      });
+      showError("Could not log activity", message);
     } finally {
       setLoading(false);
     }

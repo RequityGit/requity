@@ -15,7 +15,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useToast } from "@/components/ui/use-toast";
+import { showSuccess, showError, showWarning } from "@/lib/toast";
 import { createEquityDealAction } from "@/app/(authenticated)/(admin)/equity-pipeline/actions";
 import {
   EQUITY_DEAL_SOURCES,
@@ -53,7 +53,6 @@ export function NewEquityDealForm({
   const [step, setStep] = useState(0);
   const [saving, setSaving] = useState(false);
   const router = useRouter();
-  const { toast } = useToast();
 
   // Deal info state
   const [dealInfo, setDealInfo] = useState({
@@ -84,10 +83,7 @@ export function NewEquityDealForm({
 
   async function handleSubmit() {
     if (!dealInfo.deal_name.trim()) {
-      toast({
-        title: "Deal name is required",
-        variant: "destructive",
-      });
+      showWarning("Deal name is required");
       return;
     }
 
@@ -128,16 +124,12 @@ export function NewEquityDealForm({
     const result = await createEquityDealAction(input);
 
     if (result.error) {
-      toast({
-        title: "Error creating deal",
-        description: result.error,
-        variant: "destructive",
-      });
+      showError("Could not create deal", result.error);
       setSaving(false);
       return;
     }
 
-    toast({ title: "Equity deal created successfully" });
+    showSuccess("Equity deal created");
     router.push(`/pipeline/${result.id}`);
   }
 
