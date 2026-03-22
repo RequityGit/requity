@@ -672,8 +672,8 @@
 
 .activity-message {
   position: relative;
-  padding: 10px 12px;
-  border-radius: 10px;
+  padding: 6px 10px;
+  border-radius: 8px;
   transition: background 0.1s ease;
 }
 .activity-message:hover {

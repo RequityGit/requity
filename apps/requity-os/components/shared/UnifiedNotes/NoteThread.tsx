@@ -60,7 +60,7 @@ export function NoteThread({
   onToggleLike,
   onReply,
 }: NoteThreadProps) {
-  const [expanded, setExpanded] = useState(replies.length > 0 && replies.length <= 2);
+  const [expanded, setExpanded] = useState(false);
   const replyComposerRef = useRef<MentionInputHandle>(null);
 
   // Auto-expand when replies go from 0 to having some (first reply just posted)
