@@ -9,35 +9,30 @@ import { PipelineKanban } from "./PipelineKanban";
 import { PipelineTable } from "./PipelineTable";
 import { NewDealDialog } from "./NewDealDialog";
 import { IntakeReviewModal } from "./IntakeReviewModal";
-import type {
-  UnifiedDeal,
-  StageConfig,
-  DealActivity,
-} from "./pipeline-types";
+import type { UnifiedDeal } from "./pipeline-types";
 import { getDealFlavor } from "@/lib/pipeline/deal-display-config";
+import {
+  useAllDeals,
+  useStageConfigs,
+  useRelationshipDealIds,
+  useTeamMembers,
+  useIntakeItems,
+  useCurrentUserId,
+} from "@/hooks/usePipelineStore";
 import type { IntakeItem } from "@/lib/intake/types";
 
-interface PipelineViewProps {
-  deals: UnifiedDeal[];
-  stageConfigs: StageConfig[];
-  activities: DealActivity[];
-  relationshipDealIds: Set<string>;
-  teamMembers: { id: string; full_name: string }[];
-  intakeItems?: IntakeItem[];
-  currentUserId?: string;
-}
-
-export function PipelineView({
-  deals,
-  stageConfigs,
-  activities,
-  relationshipDealIds,
-  teamMembers,
-  intakeItems = [],
-  currentUserId,
-}: PipelineViewProps) {
+export function PipelineView() {
   const router = useRouter();
   const isMobile = useIsMobile();
+
+  // Read all data from Zustand store
+  const deals = useAllDeals();
+  const stageConfigs = useStageConfigs();
+  const relationshipDealIds = useRelationshipDealIds();
+  const teamMembers = useTeamMembers();
+  const intakeItems = useIntakeItems();
+  const currentUserId = useCurrentUserId();
+
   const [filters, setFilters] = useState<FilterState>({
     search: "",
     capitalSide: "all",
@@ -124,7 +119,7 @@ export function PipelineView({
         open={newDealOpen}
         onOpenChange={setNewDealOpen}
         teamMembers={teamMembers}
-        currentUserId={currentUserId}
+        currentUserId={currentUserId ?? undefined}
       />
 
       <IntakeReviewModal

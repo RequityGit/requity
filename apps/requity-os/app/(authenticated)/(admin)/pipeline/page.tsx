@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { redirect } from "next/navigation";
 import { PipelineView } from "@/components/pipeline/PipelineView";
+import { PipelineProvider } from "@/components/pipeline/PipelineProvider";
 import { PipelineHeader } from "./PipelineHeader";
 import {
   daysInStage,
@@ -147,7 +148,7 @@ export default async function PipelinePage() {
   return (
     <div className="space-y-6">
       <PipelineHeader intakeCount={intakeItems.length} />
-      <PipelineView
+      <PipelineProvider
         deals={deals}
         stageConfigs={stageConfigs}
         activities={activities}
@@ -155,7 +156,9 @@ export default async function PipelinePage() {
         teamMembers={teamMembers}
         intakeItems={intakeItems}
         currentUserId={session.user.id}
-      />
+      >
+        <PipelineView />
+      </PipelineProvider>
     </div>
   );
 }

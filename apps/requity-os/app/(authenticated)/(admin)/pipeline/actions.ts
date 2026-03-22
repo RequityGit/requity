@@ -309,7 +309,9 @@ export async function advanceStageAction(
       return { error: error.message };
     }
 
-    await revalidatePipeline(dealId);
+    // No revalidatePath — Supabase Realtime handles sync to all clients.
+    // Still revalidate the deal detail page so navigation cache is fresh.
+    await revalidateDealPaths(dealId);
     return { success: true };
   } catch (err: unknown) {
     console.error("advanceStageAction error:", err);
@@ -340,7 +342,8 @@ export async function regressStageAction(
       return { error: error.message };
     }
 
-    await revalidatePipeline(dealId);
+    // No revalidatePath — Supabase Realtime handles sync to all clients.
+    await revalidateDealPaths(dealId);
     return { success: true };
   } catch (err: unknown) {
     console.error("regressStageAction error:", err);
@@ -490,7 +493,9 @@ export async function updateUwDataAction(
       console.error("Failed to log activity:", activityErr);
     }
 
-    await revalidatePipeline(dealId);
+    // No pipeline revalidation — Realtime handles board sync.
+    // Revalidate deal detail page only.
+    await revalidateDealPaths(dealId);
     return { success: true };
   } catch (err: unknown) {
     console.error("updateUwDataAction error:", err);
