@@ -3,23 +3,15 @@
 // ═══════════════════════════════════════════════════════════
 
 import { evaluateFormula } from "@/lib/formula-engine";
+import type { AssetClassKey, AnyAssetClassKey } from "@/lib/constants/asset-classes";
 
 export type CapitalSide = "debt" | "equity";
 export type UnifiedStage = "lead" | "analysis" | "negotiation" | "execution" | "closed";
 export type DealStatus = "active" | "won" | "lost" | "on_hold";
 export type AlertLevel = "normal" | "warn" | "alert";
 
-export type AssetClass =
-  | "residential_1_4"
-  | "sfr"            // legacy, maps to residential_1_4
-  | "duplex_fourplex" // legacy, maps to residential_1_4
-  | "multifamily"
-  | "mhc"
-  | "rv_park"
-  | "campground"    // legacy, maps to rv_park
-  | "commercial"
-  | "mixed_use"
-  | "land";
+/** @deprecated Use AssetClassKey from @/lib/constants/asset-classes instead */
+export type AssetClass = AnyAssetClassKey;
 
 export type UwFieldObject = "deal" | "property" | "borrower";
 
@@ -185,29 +177,12 @@ export const STAGES: { key: UnifiedStage; label: string }[] = [
   { key: "closed", label: "Closed" },
 ];
 
-export const ASSET_CLASS_LABELS: Record<AssetClass, string> = {
-  residential_1_4: "Residential (1-4)",
-  sfr: "Residential (1-4)",       // legacy
-  duplex_fourplex: "Residential (1-4)", // legacy
-  multifamily: "Multifamily",
-  mhc: "MHC",
-  rv_park: "RV Park",
-  campground: "RV Park",          // legacy
-  commercial: "Commercial",
-  mixed_use: "Mixed Use",
-  land: "Land",
-};
-
-/** Active asset class options for dropdowns (excludes legacy keys) */
-export const ACTIVE_ASSET_CLASS_OPTIONS = [
-  { key: "residential_1_4", label: "Residential (1-4)" },
-  { key: "multifamily", label: "Multifamily" },
-  { key: "mhc", label: "MHC" },
-  { key: "rv_park", label: "RV Park" },
-  { key: "commercial", label: "Commercial" },
-  { key: "mixed_use", label: "Mixed Use" },
-  { key: "land", label: "Land" },
-] as const;
+export {
+  ASSET_CLASS_LABELS,
+  ASSET_CLASS_OPTIONS as ACTIVE_ASSET_CLASS_OPTIONS,
+  getAssetClassLabel,
+} from "@/lib/constants/asset-classes";
+export type { AssetClassKey } from "@/lib/constants/asset-classes";
 
 // DEPRECATED: CARD_TYPE_SHORT_LABELS removed. Use getDealShortLabel() from
 // lib/pipeline/deal-display-config.ts instead.

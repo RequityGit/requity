@@ -79,12 +79,19 @@ const CONFIGS: Record<DealFlavor, DealDisplayConfig> = {
 // Everything else is residential.
 
 const COMMERCIAL_ASSET_CLASSES: Set<string> = new Set([
+  "multifamily",
+  "mixed_use",
+  "retail",
+  "office",
+  "industrial",
   "mhc",
   "rv_park",
+  "self_storage",
+  "hospitality",
+  "marina",
+  // Legacy keys
   "campground",
-  "multifamily",
   "commercial",
-  "mixed_use",
 ]);
 
 // ─── RTL loan type values ────────────────────────────────

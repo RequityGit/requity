@@ -1184,20 +1184,23 @@ export const SNAPSHOT_SOURCES = [
 // Property — Asset Types & Classification
 // ============================================
 
+export { ASSET_CLASS_OPTIONS as ASSET_TYPES_UNIFIED } from "@/lib/constants/asset-classes";
+
+/** Asset types for dropdowns. Canonical source: @/lib/constants/asset-classes */
 export const ASSET_TYPES = [
-  { value: "Residential", label: "Residential" },
-  { value: "Multifamily", label: "Multifamily" },
-  { value: "MHC", label: "MHC" },
-  { value: "RV Campground", label: "RV Campground" },
-  { value: "Industrial", label: "Industrial" },
-  { value: "Land", label: "Land" },
-  { value: "Retail", label: "Retail" },
-  { value: "Self-storage", label: "Self-storage" },
-  { value: "Hotels & Hospitality", label: "Hotels & Hospitality" },
-  { value: "Healthcare", label: "Healthcare" },
-  { value: "Mixed Use", label: "Mixed Use" },
-  { value: "Office", label: "Office" },
-  { value: "Other", label: "Other" },
+  { value: "residential_1_4", label: "Residential (1-4)" },
+  { value: "multifamily", label: "Multifamily (5+)" },
+  { value: "mixed_use", label: "Mixed Use" },
+  { value: "retail", label: "Retail" },
+  { value: "office", label: "Office" },
+  { value: "industrial", label: "Industrial" },
+  { value: "mhc", label: "MHC" },
+  { value: "land", label: "Land" },
+  { value: "rv_park", label: "RV Park" },
+  { value: "self_storage", label: "Self-Storage" },
+  { value: "hospitality", label: "Hospitality" },
+  { value: "marina", label: "Marina" },
+  { value: "other", label: "Other" },
 ] as const;
 
 export const BUILDING_CLASSES = [
