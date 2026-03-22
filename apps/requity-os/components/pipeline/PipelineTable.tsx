@@ -22,6 +22,8 @@ import {
   getAlertLevel,
 } from "./pipeline-types";
 import { getDealDisplayConfig } from "@/lib/pipeline/deal-display-config";
+import { EmptyState } from "@/components/shared/EmptyState";
+import { Layers } from "lucide-react";
 
 interface PipelineTableProps {
   deals: UnifiedDeal[];
@@ -53,8 +55,8 @@ export function PipelineTable({
         <TableBody>
           {deals.length === 0 ? (
             <TableRow>
-              <TableCell colSpan={6} className="text-center text-muted-foreground py-8">
-                No deals found
+              <TableCell colSpan={6}>
+                <EmptyState icon={Layers} title="No deals found" compact />
               </TableCell>
             </TableRow>
           ) : (

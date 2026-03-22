@@ -10,7 +10,9 @@ import {
   AlertTriangle,
   Loader2,
   Trash2,
+  Receipt,
 } from "lucide-react";
+import { EmptyState } from "@/components/shared/EmptyState";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -62,16 +64,18 @@ export function ClosingCostsSubTab({ sourcesUses, uwId, loanAmount, purchasePric
 
   if (sourcesUses.length === 0) {
     return (
-      <div className="rounded-xl border border-dashed p-8 text-center">
-        <p className="text-sm text-muted-foreground mb-3">
-          No sources & uses entered yet.
-        </p>
-        <Button variant="outline" size="sm" onClick={() => setEditOpen(true)}>
-          <Plus className="h-3.5 w-3.5 mr-1.5" />
-          Add Sources & Uses
-        </Button>
+      <>
+        <EmptyState
+          icon={Receipt}
+          title="No sources & uses entered yet"
+          action={{
+            label: "Add Sources & Uses",
+            icon: Plus,
+            onClick: () => setEditOpen(true),
+          }}
+        />
         <EditSourcesUsesDialog open={editOpen} onOpenChange={setEditOpen} sourcesUses={sourcesUses} uwId={uwId} />
-      </div>
+      </>
     );
   }
 

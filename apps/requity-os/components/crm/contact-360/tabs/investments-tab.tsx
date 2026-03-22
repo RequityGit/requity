@@ -3,7 +3,8 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { TrendingUp } from "lucide-react";
-import { StagePill, EmptyState, MonoValue } from "../shared";
+import { StagePill, MonoValue } from "../shared";
+import { EmptyState } from "@/components/shared/EmptyState";
 import { formatCurrency } from "@/lib/format";
 import type { InvestorCommitmentData } from "../types";
 

@@ -3,6 +3,7 @@
 import { useState, useCallback, useRef, useMemo } from "react";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
+import { SectionErrorBoundary } from "@/components/shared/SectionErrorBoundary";
 import {
   Breadcrumb,
   BreadcrumbList,
@@ -190,72 +191,84 @@ export function ContactDetailClient({
 
           <div className="mt-4 flex flex-col gap-5">
             <CrmInlineEditorWrapper pageType="contact_detail" isSuperAdmin={isSuperAdmin}>
-            <DetailOverviewTab
-              contact={contact}
-              isSuperAdmin={isSuperAdmin}
-              userRole={userRole}
-              sectionOrder={sectionOrder}
-              sectionFields={sectionFields}
-              teamMembers={teamMembers}
-              allCompanies={allCompanies}
-            />
-
-            <CollapsiblePipelineDealsSection
-              deals={pipelineDeals}
-              loading={pipelineQ.loading}
-              dealCount={tabCounts.pipelineDeals}
-            />
-
-            {borrower && (
-              <CollapsibleBorrowerSection
+            <SectionErrorBoundary fallbackTitle="Could not load overview">
+              <DetailOverviewTab
                 contact={contact}
-                borrower={borrower}
-                loans={loans}
-                entities={borrowerEntities}
                 isSuperAdmin={isSuperAdmin}
                 userRole={userRole}
                 sectionOrder={sectionOrder}
                 sectionFields={sectionFields}
-                primaryBorrowerEntity={primaryBorrowerEntity}
-                loading={borrowerQ.loading}
-                loanCount={tabCounts.loans}
+                teamMembers={teamMembers}
+                allCompanies={allCompanies}
               />
+            </SectionErrorBoundary>
+
+            <SectionErrorBoundary fallbackTitle="Could not load pipeline deals">
+              <CollapsiblePipelineDealsSection
+                deals={pipelineDeals}
+                loading={pipelineQ.loading}
+                dealCount={tabCounts.pipelineDeals}
+              />
+            </SectionErrorBoundary>
+
+            {borrower && (
+              <SectionErrorBoundary fallbackTitle="Could not load borrower details">
+                <CollapsibleBorrowerSection
+                  contact={contact}
+                  borrower={borrower}
+                  loans={loans}
+                  entities={borrowerEntities}
+                  isSuperAdmin={isSuperAdmin}
+                  userRole={userRole}
+                  sectionOrder={sectionOrder}
+                  sectionFields={sectionFields}
+                  primaryBorrowerEntity={primaryBorrowerEntity}
+                  loading={borrowerQ.loading}
+                  loanCount={tabCounts.loans}
+                />
+              </SectionErrorBoundary>
             )}
 
             {investor && (
-              <CollapsibleInvestorSection
-                contact={contact}
-                investor={investor}
-                commitments={investorCommitments}
-                entities={investingEntities}
-                isSuperAdmin={isSuperAdmin}
-                userRole={userRole}
-                sectionOrder={sectionOrder}
-                sectionFields={sectionFields}
-                loading={investorQ.loading}
-                commitmentCount={tabCounts.investorCommitments}
-              />
+              <SectionErrorBoundary fallbackTitle="Could not load investor details">
+                <CollapsibleInvestorSection
+                  contact={contact}
+                  investor={investor}
+                  commitments={investorCommitments}
+                  entities={investingEntities}
+                  isSuperAdmin={isSuperAdmin}
+                  userRole={userRole}
+                  sectionOrder={sectionOrder}
+                  sectionFields={sectionFields}
+                  loading={investorQ.loading}
+                  commitmentCount={tabCounts.investorCommitments}
+                />
+              </SectionErrorBoundary>
             )}
 
-            <CollapsibleTasksSection
-              ref={tasksRef}
-              tasks={tasks}
-              contactId={contact.id}
-              contactName={fullName}
-              profiles={taskProfiles}
-              currentUserId={currentUserId}
-              loading={tasksQ.loading}
-              taskCount={tabCounts.tasks}
-              onRefreshTasks={tasksQ.refresh}
-            />
+            <SectionErrorBoundary fallbackTitle="Could not load tasks">
+              <CollapsibleTasksSection
+                ref={tasksRef}
+                tasks={tasks}
+                contactId={contact.id}
+                contactName={fullName}
+                profiles={taskProfiles}
+                currentUserId={currentUserId}
+                loading={tasksQ.loading}
+                taskCount={tabCounts.tasks}
+                onRefreshTasks={tasksQ.refresh}
+              />
+            </SectionErrorBoundary>
 
-            <TimelineSection
-              ref={timelineRef}
-              contactId={contact.id}
-              currentUserId={currentUserId}
-              onComposeEmail={() => setEmailComposeOpen(true)}
-              logCallTrigger={logCallTrigger}
-            />
+            <SectionErrorBoundary fallbackTitle="Could not load timeline">
+              <TimelineSection
+                ref={timelineRef}
+                contactId={contact.id}
+                currentUserId={currentUserId}
+                onComposeEmail={() => setEmailComposeOpen(true)}
+                logCallTrigger={logCallTrigger}
+              />
+            </SectionErrorBoundary>
             </CrmInlineEditorWrapper>
           </div>
         </div>

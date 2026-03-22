@@ -1,7 +1,8 @@
 "use client";
 
 import { Briefcase } from "lucide-react";
-import { StagePill, EmptyState, MonoValue } from "../shared";
+import { StagePill, MonoValue } from "../shared";
+import { EmptyState } from "@/components/shared/EmptyState";
 import { formatCurrency } from "@/lib/format";
 import type { LoanData } from "../types";
 import Link from "next/link";

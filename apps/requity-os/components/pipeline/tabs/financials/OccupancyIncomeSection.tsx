@@ -9,6 +9,7 @@ import {
   Hotel,
   MessageSquare,
 } from "lucide-react";
+import { EmptyState } from "@/components/shared/EmptyState";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -208,15 +209,17 @@ export function OccupancyIncomeSection({
   if (occRows.length === 0) {
     return (
       <SectionCard title="Occupancy-Based Income" icon={Hotel}>
-        <div className="py-8 text-center">
-          <p className="text-sm text-muted-foreground mb-3">
-            No occupancy income data yet. Apply presets for {propertyType.replace(/_/g, " ")} to get started.
-          </p>
-          <Button variant="outline" size="sm" onClick={handleApplyPresets} disabled={saving}>
-            {saving ? <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" /> : <Plus className="h-3.5 w-3.5 mr-1.5" />}
-            Apply {unitLabel} Type Presets
-          </Button>
-        </div>
+        <EmptyState
+          icon={Hotel}
+          title="No occupancy income data yet"
+          description={`Apply presets for ${propertyType.replace(/_/g, " ")} to get started.`}
+          action={{
+            label: `Apply ${unitLabel} Type Presets`,
+            icon: Plus,
+            onClick: handleApplyPresets,
+          }}
+          compact
+        />
       </SectionCard>
     );
   }

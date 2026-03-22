@@ -167,7 +167,7 @@ export default function FormsListPage() {
           <TableBody>
             {loading ? (
               <TableRow>
-                <TableCell colSpan={6} className="rq-empty-state">
+                <TableCell colSpan={6} className="py-8 text-center text-sm text-muted-foreground">
                   Loading...
                 </TableCell>
               </TableRow>

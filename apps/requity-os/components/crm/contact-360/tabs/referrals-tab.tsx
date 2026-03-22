@@ -1,7 +1,7 @@
 "use client";
 
 import { Users } from "lucide-react";
-import { EmptyState } from "../shared";
+import { EmptyState } from "@/components/shared/EmptyState";
 
 export function ReferralsTab() {
   return (

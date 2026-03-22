@@ -3,6 +3,7 @@
 import { useState, useMemo, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { Plus, Hammer, Loader2, Trash2 } from "lucide-react";
+import { EmptyState } from "@/components/shared/EmptyState";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -35,15 +36,15 @@ export function ScopeOfWorkSubTab({ scopeOfWork, uwId, numUnits }: ScopeOfWorkSu
   if (scopeOfWork.length === 0) {
     return (
       <div className="flex flex-col gap-4">
-        <div className="rounded-xl border border-dashed p-8 text-center">
-          <p className="text-sm text-muted-foreground mb-3">
-            No scope of work items yet.
-          </p>
-          <Button variant="outline" size="sm" onClick={() => setEditOpen(true)}>
-            <Plus className="h-3.5 w-3.5 mr-1.5" />
-            Add Items
-          </Button>
-        </div>
+        <EmptyState
+          icon={Hammer}
+          title="No scope of work items yet"
+          action={{
+            label: "Add Items",
+            icon: Plus,
+            onClick: () => setEditOpen(true),
+          }}
+        />
         <EditScopeDialog open={editOpen} onOpenChange={setEditOpen} scopeOfWork={scopeOfWork} uwId={uwId} />
       </div>
     );

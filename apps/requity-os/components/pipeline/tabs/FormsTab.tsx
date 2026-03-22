@@ -18,6 +18,7 @@ import {
   Plus,
   Link2,
 } from "lucide-react";
+import { EmptyState } from "@/components/shared/EmptyState";
 import {
   Dialog,
   DialogContent,
@@ -173,7 +174,7 @@ function SubmissionCard({ submission }: { submission: FormSubmissionRow }) {
       {expanded && (
         <div className="border-t px-4 pb-4">
           {stepsWithData.length === 0 ? (
-            <p className="text-sm text-muted-foreground py-4">No data submitted yet.</p>
+            <EmptyState icon={FileText} title="No data submitted yet" compact />
           ) : (
             stepsWithData.map((step) => (
               <div key={step.id} className="mt-4">
@@ -525,25 +526,22 @@ export function FormsTab({ dealId }: FormsTabProps) {
 
       {/* Empty State */}
       {isEmpty && (
-        <div className="border rounded-lg bg-muted/20 py-12 flex flex-col items-center justify-center text-center">
-          <div className="h-12 w-12 rounded-full bg-muted flex items-center justify-center mb-3">
-            <FileText className="h-6 w-6 text-muted-foreground" />
-          </div>
-          <p className="text-sm font-medium mb-1">No forms sent yet</p>
-          <p className="text-xs text-muted-foreground max-w-xs mb-4">
-            Send a loan application or other form to the borrower. Their
-            responses will appear here, linked to this deal.
-          </p>
-          <Button
-            variant="outline"
-            size="sm"
-            className="gap-1.5"
-            onClick={() => setSendModalOpen(true)}
-          >
-            <Plus className="h-3.5 w-3.5" />
-            Send First Form
-          </Button>
-        </div>
+        <EmptyState
+          icon={FileText}
+          title="No forms sent yet"
+          description="Send a loan application or other form to the borrower. Their responses will appear here, linked to this deal."
+          action={
+            <Button
+              variant="outline"
+              size="sm"
+              className="gap-1.5"
+              onClick={() => setSendModalOpen(true)}
+            >
+              <Plus className="h-3.5 w-3.5" />
+              Send First Form
+            </Button>
+          }
+        />
       )}
 
       {/* Send Form Modal */}

@@ -13,6 +13,7 @@ import {
   ChevronRight,
   Loader2,
 } from "lucide-react";
+import { EmptyState } from "@/components/shared/EmptyState";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { showSuccess, showError } from "@/lib/toast";
@@ -190,7 +191,7 @@ export function AssumptionsSubTab({ uw, uwId, propertyType }: AssumptionsSubTabP
               </tbody>
             </table>
           ) : (
-            <p className="text-[13px] text-muted-foreground">No expense benchmarks found for this property type.</p>
+            <EmptyState icon={PieChart} title="No expense benchmarks found for this property type" compact />
           )
         ) : (
           <p className="text-[13px] text-muted-foreground">

@@ -1052,7 +1052,7 @@ export default function FormEditorPage() {
               <TableBody>
                 {submissionsLoading ? (
                   <TableRow>
-                    <TableCell colSpan={4} className="rq-empty-state">
+                    <TableCell colSpan={4} className="py-8 text-center text-sm text-muted-foreground">
                       Loading...
                     </TableCell>
                   </TableRow>

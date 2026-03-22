@@ -17,7 +17,9 @@ import {
   AlertTriangle,
   ArrowDown,
   ArrowUp,
+  FileSpreadsheet,
 } from "lucide-react";
+import { EmptyState } from "@/components/shared/EmptyState";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -472,35 +474,37 @@ export function T12SubTab({
       {/* ─── LEGACY MANUAL MODE (expenses or full view) ─── */}
       {isLegacyManual && (
         !hasData ? (
-          <div className="rounded-xl border border-dashed p-8 text-center">
-            <p className="text-sm text-muted-foreground mb-3">
-              No {initialView === "expenses" ? "expense" : "T12"} data yet. Upload an operating statement or enter data manually.
-            </p>
-            <div className="flex items-center gap-2 justify-center flex-wrap">
-              <Button variant="outline" size="sm" onClick={() => setMode("upload")}>
-                <Upload className="h-3.5 w-3.5 mr-1.5" />
-                Upload T12
-              </Button>
-              {showIncome && (
-                <Button variant="outline" size="sm" onClick={() => setEditIncomeOpen(true)}>
-                  <Plus className="h-3.5 w-3.5 mr-1.5" />
-                  Enter Income Manually
+          <EmptyState
+            icon={FileSpreadsheet}
+            title={`No ${initialView === "expenses" ? "expense" : "T12"} data yet`}
+            description="Upload an operating statement or enter data manually."
+            action={
+              <div className="flex items-center gap-2 justify-center flex-wrap">
+                <Button variant="outline" size="sm" onClick={() => setMode("upload")}>
+                  <Upload className="h-3.5 w-3.5 mr-1.5" />
+                  Upload T12
                 </Button>
-              )}
-              {showExpenses && benchmarks && (
-                <Button variant="outline" size="sm" onClick={handleApplyGuidance}>
-                  <Zap className="h-3.5 w-3.5 mr-1.5" />
-                  Apply Expense Guidance
-                </Button>
-              )}
-              {showExpenses && (
-                <Button variant="outline" size="sm" onClick={() => setEditExpenseOpen(true)}>
-                  <Plus className="h-3.5 w-3.5 mr-1.5" />
-                  Enter Expenses Manually
-                </Button>
-              )}
-            </div>
-          </div>
+                {showIncome && (
+                  <Button variant="outline" size="sm" onClick={() => setEditIncomeOpen(true)}>
+                    <Plus className="h-3.5 w-3.5 mr-1.5" />
+                    Enter Income Manually
+                  </Button>
+                )}
+                {showExpenses && benchmarks && (
+                  <Button variant="outline" size="sm" onClick={handleApplyGuidance}>
+                    <Zap className="h-3.5 w-3.5 mr-1.5" />
+                    Apply Expense Guidance
+                  </Button>
+                )}
+                {showExpenses && (
+                  <Button variant="outline" size="sm" onClick={() => setEditExpenseOpen(true)}>
+                    <Plus className="h-3.5 w-3.5 mr-1.5" />
+                    Enter Expenses Manually
+                  </Button>
+                )}
+              </div>
+            }
+          />
         ) : (
           <>
             {!initialView ? (
