@@ -26,6 +26,8 @@ import { TaskPreviewCard } from "./previews/task-preview-card";
 import { ConditionPreviewCard } from "./previews/condition-preview-card";
 import { ApprovalPreviewCard } from "./previews/approval-preview-card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { getUserColor, colorVariants } from "@/lib/user-colors";
+import { StackedAvatars } from "@/components/shared/UnifiedNotes/NoteCard";
 
 interface NotificationDetailPanelProps {
   notification: Notification | null;
@@ -345,7 +347,7 @@ export function NotificationDetailPanel({
           const isReply = !!note.parent_note_id;
           const authorName = note.author_name ?? "Unknown";
           const initials = getInitials(authorName);
-          const color = getAvatarColor(authorName);
+          const noteColor = getUserColor({ id: note.author_id, accent_color: null });
 
           return (
             <div
@@ -358,21 +360,23 @@ export function NotificationDetailPanel({
                 isReply && !isHighlighted && "pl-10"
               )}
             >
-              <Avatar className="h-7 w-7 rounded-lg flex-shrink-0">
-                <AvatarFallback
-                  className={cn(
-                    "rounded-lg text-[10px] font-semibold",
-                    color.bg,
-                    color.text
-                  )}
-                >
-                  {initials}
-                </AvatarFallback>
-              </Avatar>
+              <div
+                className="flex-shrink-0 rounded-full flex items-center justify-center text-[10px] font-semibold"
+                style={{
+                  width: 28,
+                  height: 28,
+                  backgroundColor: `${noteColor}14`,
+                  border: `1.5px solid ${noteColor}30`,
+                  color: noteColor,
+                  letterSpacing: "-0.03em",
+                }}
+              >
+                {initials}
+              </div>
 
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-1.5 mb-1">
-                  <span className="text-[12px] font-semibold text-foreground">
+                  <span className="text-[12px] font-semibold" style={{ color: noteColor }}>
                     {authorName}
                   </span>
                   <span className="text-[10px] text-muted-foreground/50">
@@ -403,19 +407,36 @@ export function NotificationDetailPanel({
                   </div>
                 )}
 
-                {/* Likes */}
-                {note.note_likes && note.note_likes.length > 0 && (
-                  <div className="flex items-center gap-1 mt-1.5">
-                    {note.note_likes.map((like, i) => (
+                {/* Likes — unified with NoteCard design */}
+                {note.note_likes && note.note_likes.length > 0 && (() => {
+                  const noteAuthorColor = getUserColor({ id: note.author_id, accent_color: null });
+                  const noteAC = colorVariants(noteAuthorColor);
+                  const noteLikerData = note.note_likes.map((l) => ({
+                    user_id: l.user_id,
+                    name: l.profiles?.full_name ?? "Unknown",
+                  }));
+                  return (
+                    <div className="flex items-center gap-0.5 mt-1.5">
                       <span
-                        key={i}
-                        className="inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded-full bg-foreground/[0.04] border border-border text-muted-foreground"
+                        className="inline-flex items-center gap-[5px] rounded-full px-2 py-[2px] text-[10px] font-medium"
+                        style={{
+                          border: `1px solid ${noteAC.border}`,
+                          background: noteAC.bg,
+                          color: noteAC.base,
+                        }}
                       >
-                        <span>&#128077;</span> {like.profiles?.full_name ?? ""}
+                        <svg width={10} height={10} viewBox="0 0 20 20" fill="none">
+                          <path
+                            d="M3 9.5C3 9.22 3.22 9 3.5 9H5.5C5.78 9 6 9.22 6 9.5V16.5C6 16.78 5.78 17 5.5 17H3.5C3.22 17 3 16.78 3 16.5V9.5ZM7.5 8.2L10.5 3.5C10.65 3.27 10.95 3.1 11.25 3.1C12.22 3.1 13 3.88 13 4.85V7.5H16.1C16.95 7.5 17.65 8.3 17.5 9.15L16.3 16.15C16.18 16.85 15.57 17 15.1 17H8.5C7.95 17 7.5 16.55 7.5 16V8.2Z"
+                            fill={noteAC.base}
+                          />
+                        </svg>
+                        <span className="num">{note.note_likes.length}</span>
                       </span>
-                    ))}
-                  </div>
-                )}
+                      <StackedAvatars likes={noteLikerData} />
+                    </div>
+                  );
+                })()}
               </div>
             </div>
           );

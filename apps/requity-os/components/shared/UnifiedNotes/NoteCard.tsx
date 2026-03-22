@@ -1,13 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
   Pin,
   PinOff,
   Pencil,
   Trash2,
   Lock,
-  ThumbsUp,
   FileCheck,
   MoreHorizontal,
   Reply,
@@ -22,7 +21,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import type { NoteData } from "./types";
-import { getUserColor } from "@/lib/user-colors";
+import { getUserColor, colorVariants } from "@/lib/user-colors";
 import { AttachmentList } from "@/components/shared/attachments";
 
 function getInitials(name: string): string {
@@ -32,6 +31,160 @@ function getInitials(name: string): string {
     .join("")
     .slice(0, 2)
     .toUpperCase();
+}
+
+/* ─── Custom Geometric Thumb Icon ─── */
+function ThumbGeo({
+  size = 14,
+  filled = false,
+  color = "currentColor",
+}: {
+  size?: number;
+  filled?: boolean;
+  color?: string;
+}) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 20 20" fill="none">
+      {filled ? (
+        <path
+          d="M3 9.5C3 9.22 3.22 9 3.5 9H5.5C5.78 9 6 9.22 6 9.5V16.5C6 16.78 5.78 17 5.5 17H3.5C3.22 17 3 16.78 3 16.5V9.5ZM7.5 8.2L10.5 3.5C10.65 3.27 10.95 3.1 11.25 3.1C12.22 3.1 13 3.88 13 4.85V7.5H16.1C16.95 7.5 17.65 8.3 17.5 9.15L16.3 16.15C16.18 16.85 15.57 17 15.1 17H8.5C7.95 17 7.5 16.55 7.5 16V8.2Z"
+          fill={color}
+        />
+      ) : (
+        <path
+          d="M3.5 9.5H5.5V16.5H3.5V9.5ZM7.5 8.2L10.5 3.5C10.65 3.27 10.95 3.1 11.25 3.1C12.22 3.1 13 3.88 13 4.85V7.5H16.1C16.95 7.5 17.65 8.3 17.5 9.15L16.3 16.15C16.18 16.85 15.57 17 15.1 17H8.5C7.95 17 7.5 16.55 7.5 16V8.2Z"
+          stroke={color}
+          strokeWidth="1.3"
+          strokeLinejoin="round"
+        />
+      )}
+    </svg>
+  );
+}
+
+/* ─── Particle Burst (6 dots that burst outward on like) ─── */
+function ParticleBurst({ active, color }: { active: boolean; color: string }) {
+  const [particles, setParticles] = useState<
+    { tx: number; ty: number; delay: number; size: number }[] | null
+  >(null);
+
+  useEffect(() => {
+    if (active) {
+      const pts = Array.from({ length: 6 }, (_, i) => {
+        const angle = (i / 6) * Math.PI * 2 - Math.PI / 2;
+        const dist = 14 + Math.random() * 6;
+        return {
+          tx: Math.cos(angle) * dist,
+          ty: Math.sin(angle) * dist,
+          delay: i * 15,
+          size: 3 + Math.random() * 2,
+        };
+      });
+      setParticles(pts);
+      const timer = setTimeout(() => setParticles(null), 500);
+      return () => clearTimeout(timer);
+    }
+  }, [active]);
+
+  if (!particles) return null;
+
+  return (
+    <div className="absolute inset-0 pointer-events-none overflow-visible">
+      {particles.map((p, i) => (
+        <div
+          key={i}
+          className="absolute left-1/2 top-1/2 rounded-full"
+          style={{
+            width: p.size,
+            height: p.size,
+            background: color,
+            marginLeft: -p.size / 2,
+            marginTop: -p.size / 2,
+            "--tx": `${p.tx}px`,
+            "--ty": `${p.ty}px`,
+            animation: `particle-burst 400ms ${p.delay}ms ease-out forwards`,
+          } as React.CSSProperties}
+        />
+      ))}
+    </div>
+  );
+}
+
+/* ─── Animated Count (slides up/down on change) ─── */
+function AnimatedCount({ count }: { count: number }) {
+  const [displayCount, setDisplayCount] = useState(count);
+  const [anim, setAnim] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (count !== displayCount) {
+      setAnim(count > displayCount ? "count-up" : "count-down");
+      const timer = setTimeout(() => {
+        setDisplayCount(count);
+        setAnim(null);
+      }, 200);
+      return () => clearTimeout(timer);
+    }
+  }, [count, displayCount]);
+
+  return (
+    <span
+      className="num inline-block"
+      style={{
+        animation: anim ? `${anim} 200ms ease forwards` : "none",
+      }}
+    >
+      {displayCount}
+    </span>
+  );
+}
+
+/* ─── Stacked Avatars (each liker in their own color) ─── */
+export function StackedAvatars({
+  likes,
+  max = 3,
+}: {
+  likes: { user_id: string; name: string }[];
+  max?: number;
+}) {
+  const shown = likes.slice(0, max);
+  const extra = likes.length - max;
+
+  return (
+    <div className="flex items-center ml-1">
+      {shown.map((l, i) => {
+        const likerColor = getUserColor({ id: l.user_id, accent_color: null });
+        const initials = l.name
+          .split(" ")
+          .map((w) => w[0])
+          .join("")
+          .slice(0, 2)
+          .toUpperCase();
+        return (
+          <div
+            key={l.user_id}
+            title={l.name}
+            className="rounded-full flex items-center justify-center text-[7px] font-bold"
+            style={{
+              width: 18,
+              height: 18,
+              backgroundColor: `${likerColor}20`,
+              border: `1.5px solid ${likerColor}40`,
+              color: likerColor,
+              letterSpacing: "-0.03em",
+              marginLeft: i > 0 ? -5 : 0,
+              zIndex: max - i,
+              position: "relative",
+            }}
+          >
+            {initials}
+          </div>
+        );
+      })}
+      {extra > 0 && (
+        <span className="text-[9px] text-muted-foreground ml-1">+{extra}</span>
+      )}
+    </div>
+  );
 }
 
 interface NoteCardProps {
@@ -60,6 +213,8 @@ export function NoteCard({
 }: NoteCardProps) {
   const [editing, setEditing] = useState(false);
   const [editText, setEditText] = useState("");
+  const [animating, setAnimating] = useState(false);
+  const animKey = useRef(0);
 
   const isOwn = note.author_id === currentUserId;
   const canEdit = isOwn;
@@ -69,18 +224,29 @@ export function NoteCard({
   const likes = note.note_likes ?? [];
   const isLiked = likes.some((l) => l.user_id === currentUserId);
   const likeCount = likes.length;
-  const likeNames = likes
-    .map((l) => l.profiles?.full_name ?? "Unknown")
-    .join(", ");
 
   // Accent color for author name and avatar
   const authorColor = getUserColor({
     id: note.author_id,
-    accent_color: null, // Will use hash fallback; accent_color would come from profile if fetched
+    accent_color: null,
   });
+  const aC = colorVariants(authorColor);
+
+  // Liker data for stacked avatars
+  const likerData = likes.map((l) => ({
+    user_id: l.user_id,
+    name: l.profiles?.full_name ?? "Unknown",
+  }));
 
   const avatarSize = compact ? 24 : 32;
   const bodyText = compact ? "text-[12px]" : "text-[13px]";
+
+  function handleToggleLike() {
+    animKey.current += 1;
+    setAnimating(true);
+    setTimeout(() => setAnimating(false), 450);
+    onToggleLike(note.id, isLiked);
+  }
 
   if (editing) {
     return (
@@ -220,31 +386,53 @@ export function NoteCard({
             />
           )}
 
-          {/* Reaction pills */}
+          {/* Reaction pill — author-colored thumb + count, liker-colored avatars */}
           {likeCount > 0 && (
-            <div className="flex gap-1.5 mt-2 flex-wrap">
+            <div
+              className="flex items-center gap-0.5 mt-2"
+              style={{ animation: "pill-in 250ms ease" }}
+            >
               <button
                 type="button"
-                onClick={() => onToggleLike(note.id, isLiked)}
-                className={cn(
-                  "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium transition-colors cursor-pointer",
-                  isLiked
-                    ? "bg-primary/10 border border-primary/20 text-primary"
-                    : "bg-muted/60 border border-border text-muted-foreground hover:text-foreground"
-                )}
+                onClick={handleToggleLike}
+                className="inline-flex items-center gap-[5px] rounded-full px-2.5 py-[3px] text-[11px] font-medium cursor-pointer rq-transition"
+                style={{
+                  border: `1px solid ${isLiked ? aC.border : "hsl(var(--border))"}`,
+                  background: isLiked ? aC.bg : "hsl(var(--foreground) / 0.03)",
+                  color: isLiked ? aC.base : "hsl(var(--muted-foreground))",
+                }}
+                onMouseEnter={(e) => {
+                  if (!isLiked) {
+                    e.currentTarget.style.borderColor = aC.border;
+                    e.currentTarget.style.color = aC.base;
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (!isLiked) {
+                    e.currentTarget.style.borderColor = "hsl(var(--border))";
+                    e.currentTarget.style.color = "hsl(var(--muted-foreground))";
+                  }
+                }}
               >
-                <ThumbsUp
-                  className="h-3 w-3"
-                  strokeWidth={1.5}
-                  fill={isLiked ? "currentColor" : "none"}
-                />
-                <span className="num">{likeCount}</span>
-              </button>
-              {likeCount > 0 && (
-                <span className="text-[10px] text-muted-foreground/40 self-center">
-                  {likeNames}
+                <span
+                  className="inline-flex relative"
+                  style={{
+                    animation: animating ? "like-pulse 300ms ease" : "none",
+                  }}
+                >
+                  <ThumbGeo
+                    size={12}
+                    filled={isLiked}
+                    color={isLiked ? aC.base : "currentColor"}
+                  />
+                  <ParticleBurst
+                    active={animating && isLiked}
+                    color={aC.base}
+                  />
                 </span>
-              )}
+                <AnimatedCount count={likeCount} />
+              </button>
+              <StackedAvatars likes={likerData} />
             </div>
           )}
         </div>
@@ -253,15 +441,30 @@ export function NoteCard({
       {/* Floating hover toolbar */}
       <div className="hover-toolbar absolute -top-2 right-3 flex items-center gap-px bg-card border border-border rounded-lg shadow-md p-0.5 z-10">
         <HoverToolbarButton
-          onClick={() => onToggleLike(note.id, isLiked)}
+          onClick={handleToggleLike}
           title={isLiked ? "Unlike" : "Like"}
           active={isLiked}
+          activeColor={aC.base}
+          activeBg={aC.bg}
+          hoverColor={aC.base}
+          hoverBg={aC.hover}
         >
-          <ThumbsUp
-            className="h-3.5 w-3.5"
-            strokeWidth={1.5}
-            fill={isLiked ? "currentColor" : "none"}
-          />
+          <span
+            className="inline-flex relative"
+            style={{
+              animation: animating ? "like-pulse 300ms ease" : "none",
+            }}
+          >
+            <ThumbGeo
+              size={14}
+              filled={isLiked}
+              color={isLiked ? aC.base : "currentColor"}
+            />
+            <ParticleBurst
+              active={animating && isLiked}
+              color={aC.base}
+            />
+          </span>
         </HoverToolbarButton>
 
         {onReply && (
@@ -330,11 +533,19 @@ function HoverToolbarButton({
   onClick,
   title,
   active,
+  activeColor,
+  activeBg,
+  hoverColor,
+  hoverBg,
 }: {
   children: React.ReactNode;
   onClick: () => void;
   title: string;
   active?: boolean;
+  activeColor?: string;
+  activeBg?: string;
+  hoverColor?: string;
+  hoverBg?: string;
 }) {
   return (
     <button
@@ -343,10 +554,31 @@ function HoverToolbarButton({
       title={title}
       className={cn(
         "flex items-center justify-center h-7 w-7 rounded-md transition-colors",
-        active
-          ? "text-primary"
-          : "text-muted-foreground hover:text-foreground hover:bg-muted"
+        !activeColor &&
+          (active
+            ? "text-primary"
+            : "text-muted-foreground hover:text-foreground hover:bg-muted")
       )}
+      style={
+        activeColor
+          ? {
+              color: active ? activeColor : undefined,
+              backgroundColor: active ? activeBg : undefined,
+            }
+          : undefined
+      }
+      onMouseEnter={(e) => {
+        if (hoverColor && !active) {
+          e.currentTarget.style.color = hoverColor;
+          e.currentTarget.style.backgroundColor = hoverBg || "";
+        }
+      }}
+      onMouseLeave={(e) => {
+        if (hoverColor && !active) {
+          e.currentTarget.style.color = "";
+          e.currentTarget.style.backgroundColor = "";
+        }
+      }}
     >
       {children}
     </button>

@@ -2,17 +2,40 @@
 
 import { useState, useCallback } from "react";
 import { MessageSquare, ChevronsRight } from "lucide-react";
+import { cn } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/client";
 import { showSuccess, showError } from "@/lib/toast";
 import { useActivityFeed } from "@/hooks/useActivityFeed";
 import { ActivityFilters, type ActivityFilter } from "./ActivityFilters";
 import { ActivityFeed } from "./ActivityFeed";
 import { ActivityComposer } from "./ActivityComposer";
+import { TimelineTab } from "./TimelineTab";
+
+// ── Sidebar tab types ──
+
+type SidebarTab = "timeline" | "notes" | "conditions" | "messages";
+
+const SIDEBAR_TABS: { key: SidebarTab; label: string }[] = [
+  { key: "timeline", label: "Timeline" },
+  { key: "notes", label: "Notes" },
+  { key: "conditions", label: "Conditions" },
+  { key: "messages", label: "Messages" },
+];
+
+// Map sidebar tab to activity filter for the existing notes/conditions/messages feed
+const TAB_TO_FILTER: Record<string, ActivityFilter> = {
+  notes: "notes",
+  conditions: "conditions",
+  messages: "messages",
+};
+
+// ── Props ──
 
 interface DealActivitySidebarProps {
   dealId: string;
   loanId?: string;
   opportunityId?: string;
+  primaryContactId?: string | null;
   currentUserId: string;
   currentUserName: string;
   conditions: { id: string; condition_name: string }[];
@@ -23,20 +46,24 @@ export function DealActivitySidebar({
   dealId,
   loanId,
   opportunityId,
+  primaryContactId = null,
   currentUserId,
   currentUserName,
   conditions,
   onClose,
 }: DealActivitySidebarProps) {
-  const [filter, setFilter] = useState<ActivityFilter>("all");
+  const [activeTab, setActiveTab] = useState<SidebarTab>("timeline");
 
+  // Existing activity feed hook (notes, conditions, messages)
   const { items, loading, counts, refetch, refetchNotes } = useActivityFeed({
     dealId,
     loanId,
     opportunityId,
+    // Only fetch when on a tab that uses it
+    enabled: activeTab !== "timeline",
   });
 
-  // ─── Note action handlers ───
+  // ─── Note action handlers (unchanged) ───
 
   const handleToggleLike = useCallback(
     async (noteId: string, isCurrentlyLiked: boolean) => {
@@ -106,7 +133,6 @@ export function DealActivitySidebar({
     async (noteId: string, isPinned: boolean) => {
       const supabase = createClient();
 
-      // For deals, only one note can be pinned; unpin any existing first
       if (!isPinned && dealId) {
         await supabase
           .from("notes" as never)
@@ -145,9 +171,6 @@ export function DealActivitySidebar({
         <div className="flex items-center gap-2">
           <MessageSquare className="h-4 w-4 text-muted-foreground" />
           <span className="text-[13px] font-semibold">Activity</span>
-          <span className="text-[11px] text-muted-foreground bg-foreground/[0.06] px-1.5 py-0.5 rounded-full">
-            {counts.all}
-          </span>
         </div>
         <button
           onClick={onClose}
@@ -157,22 +180,53 @@ export function DealActivitySidebar({
         </button>
       </div>
 
-      {/* Filters */}
-      <ActivityFilters active={filter} onChange={setFilter} counts={counts} />
+      {/* Top-level tab bar */}
+      <div className="flex items-center border-b flex-shrink-0">
+        {SIDEBAR_TABS.map((tab) => (
+          <button
+            key={tab.key}
+            onClick={() => setActiveTab(tab.key)}
+            className={cn(
+              "flex-1 px-1 py-2 text-[11px] font-medium text-center border-b-2 rq-transition cursor-pointer",
+              activeTab === tab.key
+                ? "text-foreground border-foreground font-semibold"
+                : "text-muted-foreground border-transparent hover:text-foreground hover:border-muted-foreground/30"
+            )}
+          >
+            {tab.label}
+            {tab.key !== "timeline" && (
+              <span className="ml-1 text-[9px] text-muted-foreground/60">
+                {counts[TAB_TO_FILTER[tab.key] ?? "all"]}
+              </span>
+            )}
+          </button>
+        ))}
+      </div>
 
-      {/* Feed */}
-      <ActivityFeed
-        items={items}
-        loading={loading}
-        filter={filter}
-        currentUserId={currentUserId}
-        onToggleLike={handleToggleLike}
-        onEdit={handleEdit}
-        onDelete={handleDelete}
-        onPin={handlePin}
-      />
+      {/* Tab content */}
+      {activeTab === "timeline" ? (
+        <TimelineTab
+          dealId={dealId}
+          primaryContactId={primaryContactId ?? null}
+          onSwitchToNotes={() => setActiveTab("notes")}
+        />
+      ) : (
+        <>
+          {/* Existing notes/conditions/messages feed */}
+          <ActivityFeed
+            items={items}
+            loading={loading}
+            filter={TAB_TO_FILTER[activeTab] ?? "all"}
+            currentUserId={currentUserId}
+            onToggleLike={handleToggleLike}
+            onEdit={handleEdit}
+            onDelete={handleDelete}
+            onPin={handlePin}
+          />
+        </>
+      )}
 
-      {/* Composer */}
+      {/* Composer (always visible) */}
       <ActivityComposer
         dealId={dealId}
         currentUserId={currentUserId}

@@ -38,6 +38,24 @@ export function getUserColor(profile: {
  * Same as getUserColor but returns a Tailwind class pair for text coloring.
  * Used when inline style is not desirable (e.g., existing NoteCard pattern).
  */
+/**
+ * Derives opacity variants from a hex color string for tinted UI elements.
+ * Used by like pills, toolbar buttons, and particle bursts.
+ */
+export function colorVariants(hex: string): {
+  base: string;
+  bg: string;
+  border: string;
+  hover: string;
+} {
+  return {
+    base: hex,
+    bg: `${hex}1a`,       // ~10% opacity
+    border: `${hex}33`,   // ~20% opacity
+    hover: `${hex}14`,    // ~8% opacity
+  };
+}
+
 export function getUserColorClass(authorId: string): string {
   const AUTHOR_COLORS = [
     "text-blue-600 dark:text-blue-400",
