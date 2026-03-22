@@ -3,7 +3,8 @@
 import { useState, useCallback } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
-import { Plus, GripVertical, Trash2, Flag } from "lucide-react";
+import { Plus, GripVertical, Trash2, Flag, Workflow } from "lucide-react";
+import { EmptyState } from "@/components/shared/EmptyState";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
@@ -131,9 +132,7 @@ export function StagesTab({
   return (
     <div className="space-y-2">
       {stages.length === 0 && (
-        <p className="text-sm text-muted-foreground py-4 text-center">
-          No stages defined. Add your first stage below.
-        </p>
+        <EmptyState icon={Workflow} title="No stages defined" description="Add your first stage below." compact />
       )}
 
       {stages.map((stage, idx) => (

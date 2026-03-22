@@ -11,6 +11,7 @@ import {
   CalendarClock,
   FileText,
 } from "lucide-react";
+import { EmptyState } from "@/components/shared/EmptyState";
 import { getEffectiveAuth, getBorrowerId } from "@/lib/impersonation";
 
 export default async function BorrowerDashboardPage() {
@@ -117,12 +118,12 @@ export default async function BorrowerDashboardPage() {
 
       {activeLoans.length === 0 ? (
         <Card>
-          <CardContent className="py-12 text-center text-muted-foreground">
-            <Building2 className="h-10 w-10 mx-auto mb-3 text-muted-foreground/40" />
-            <p className="font-medium">No active loans</p>
-            <p className="text-sm mt-1">
-              Your loans will appear here once they are created.
-            </p>
+          <CardContent>
+            <EmptyState
+              icon={Building2}
+              title="No active loans"
+              description="Your loans will appear here once they are created."
+            />
           </CardContent>
         </Card>
       ) : (

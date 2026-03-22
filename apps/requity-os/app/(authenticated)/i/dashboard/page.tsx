@@ -14,8 +14,10 @@ import {
   FileText,
   BanknoteIcon,
   CircleDollarSign,
+  Landmark,
 } from "lucide-react";
 import Link from "next/link";
+import { EmptyState } from "@/components/shared/EmptyState";
 
 type CommitmentWithFund = {
   id: string;
@@ -250,9 +252,7 @@ export default async function InvestorDashboardPage() {
           </CardHeader>
           <CardContent>
             {recentActivity.length === 0 ? (
-              <p className="text-sm text-muted-foreground py-8 text-center">
-                No recent activity to display.
-              </p>
+              <EmptyState title="No recent activity to display." compact />
             ) : (
               <div className="space-y-4">
                 {recentActivity.map((item) => (
@@ -301,9 +301,7 @@ export default async function InvestorDashboardPage() {
           </CardHeader>
           <CardContent>
             {commitments.length === 0 ? (
-              <p className="text-sm text-muted-foreground py-8 text-center">
-                No investment commitments found.
-              </p>
+              <EmptyState icon={Landmark} title="No investment commitments found." compact />
             ) : (
               <div className="space-y-4">
                 {commitments.map((commitment) => {

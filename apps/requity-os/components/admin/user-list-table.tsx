@@ -36,7 +36,9 @@ import {
   Mail,
   UserCheck,
   UserX,
+  Users,
 } from "lucide-react";
+import { EmptyState } from "@/components/shared/EmptyState";
 import { useToast } from "@/components/ui/use-toast";
 import { RoleManagementDialog } from "@/components/admin/role-management-dialog";
 import {
@@ -292,11 +294,8 @@ export function UserListTable({
             <TableBody>
               {filtered.length === 0 ? (
                 <TableRow>
-                  <TableCell
-                    colSpan={7}
-                    className="h-24 text-center text-muted-foreground"
-                  >
-                    No users found.
+                  <TableCell colSpan={7}>
+                    <EmptyState icon={Users} title="No users found." compact />
                   </TableCell>
                 </TableRow>
               ) : (

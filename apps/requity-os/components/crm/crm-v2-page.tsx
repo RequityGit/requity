@@ -39,6 +39,7 @@ import {
   Trash2,
 } from "lucide-react";
 import { CrmAvatar, RelPill, StageDot, CompanyStatusDot, getInitials } from "./crm-primitives";
+import { EmptyState } from "@/components/shared/EmptyState";
 import { toast } from "sonner";
 import { ClickToCallNumber } from "@/components/ui/ClickToCallNumber";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
@@ -543,21 +544,21 @@ export function CrmV2Page({
                 <tbody>
                   {filteredContacts.length === 0 ? (
                     <tr>
-                      <td colSpan={isSuperAdmin ? 9 : 8} className="text-center py-16">
+                      <td colSpan={isSuperAdmin ? 9 : 8}>
                         {hasContactFilters ? (
-                          <div>
-                            <Users className="h-8 w-8 text-muted-foreground/40 mx-auto mb-2" />
-                            <p className="text-sm font-medium text-muted-foreground">No contacts match your filters</p>
-                            <button onClick={clearAllFilters} className="text-xs text-primary mt-1 hover:underline">
-                              Clear Filters
-                            </button>
-                          </div>
+                          <EmptyState
+                            icon={Users}
+                            title="No contacts match your filters"
+                            action={{ label: "Clear Filters", onClick: clearAllFilters }}
+                            compact
+                          />
                         ) : (
-                          <div>
-                            <Users className="h-8 w-8 text-muted-foreground/40 mx-auto mb-2" />
-                            <p className="text-sm font-medium text-muted-foreground">No contacts yet</p>
-                            <p className="text-xs text-muted-foreground mt-1">Add your first contact to start building your CRM</p>
-                          </div>
+                          <EmptyState
+                            icon={Users}
+                            title="No contacts yet"
+                            description="Add your first contact to start building your CRM"
+                            compact
+                          />
                         )}
                       </td>
                     </tr>
@@ -753,9 +754,12 @@ export function CrmV2Page({
                 <tbody>
                   {filteredCompanies.length === 0 ? (
                     <tr>
-                      <td colSpan={isSuperAdmin ? 8 : 7} className="text-center py-16">
-                        <Building2 className="h-8 w-8 text-muted-foreground/40 mx-auto mb-2" />
-                        <p className="text-sm font-medium text-muted-foreground">No companies found</p>
+                      <td colSpan={isSuperAdmin ? 8 : 7}>
+                        <EmptyState
+                          icon={Building2}
+                          title="No companies found"
+                          compact
+                        />
                       </td>
                     </tr>
                   ) : (
