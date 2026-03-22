@@ -2565,3 +2565,59 @@ export async function processIntakeItemAction(
     return { error: err instanceof Error ? err.message : "Failed to process intake item" };
   }
 }
+
+// ─── Add Deal Condition ───
+
+/** Maps deal stages back to condition stages for DB storage */
+const DEAL_STAGE_TO_CONDITION_STAGE: Record<string, string> = {
+  lead: "loan_intake",
+  analysis: "loan_intake",
+  negotiation: "processing",
+  execution: "closed_onboarding",
+  closed: "post_loan_payoff",
+};
+
+export async function addDealConditionAction(
+  dealId: string,
+  conditionName: string,
+  category: string,
+  dealStage: string,
+  options?: {
+    internalDescription?: string;
+    responsibleParty?: string;
+    criticalPathItem?: boolean;
+  }
+) {
+  try {
+    const auth = await requireAdmin();
+    if ("error" in auth) return { error: auth.error };
+
+    const admin = createAdminClient();
+    const requiredStage =
+      DEAL_STAGE_TO_CONDITION_STAGE[dealStage] ?? "loan_intake";
+
+    const { data, error } = await admin
+      .from("unified_deal_conditions")
+      .insert({
+        deal_id: dealId,
+        condition_name: conditionName,
+        category,
+        required_stage: requiredStage,
+        status: "pending",
+        is_required: true,
+        critical_path_item: options?.criticalPathItem ?? false,
+        internal_description: options?.internalDescription ?? null,
+        responsible_party: options?.responsibleParty ?? null,
+      } as never)
+      .select("id")
+      .single();
+
+    if (error) return { error: error.message };
+    return { id: (data as { id: string }).id };
+  } catch (err: unknown) {
+    return {
+      error:
+        err instanceof Error ? err.message : "Failed to add condition",
+    };
+  }
+}

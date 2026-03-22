@@ -1,21 +1,18 @@
 "use client";
 
-import { useMemo } from "react";
 import { SectionErrorBoundary } from "@/components/shared/SectionErrorBoundary";
 import { ActionCenterStream } from "./ActionCenterStream";
 import { ActionCenterRail } from "./ActionCenterRail";
 import { useActionCenterData } from "./useActionCenterData";
 import type { NoteHandlers } from "./ActionCenterStreamItem";
+import { useMemo } from "react";
 
 interface ActionCenterTabProps {
   dealId: string;
   primaryContactId: string | null;
   currentUserId: string;
   currentUserName: string;
-  // KPI pass-through from deal data
-  loanAmount?: number | null;
-  ltv?: number | null;
-  closeDate?: string | null;
+  dealStage: string;
 }
 
 export function ActionCenterTab({
@@ -23,9 +20,7 @@ export function ActionCenterTab({
   primaryContactId,
   currentUserId,
   currentUserName,
-  loanAmount,
-  ltv,
-  closeDate,
+  dealStage,
 }: ActionCenterTabProps) {
   const {
     streamItems,
@@ -43,8 +38,8 @@ export function ActionCenterTab({
     conditionDocs,
     tasks,
     railLoading,
-    toggleTask,
     updateConditionStatus,
+    refetchRail,
   } = useActionCenterData({
     dealId,
     primaryContactId,
@@ -89,14 +84,11 @@ export function ActionCenterTab({
         <ActionCenterRail
           conditions={conditions}
           conditionDocs={conditionDocs}
-          tasks={tasks}
           loading={railLoading}
           dealId={dealId}
-          loanAmount={loanAmount}
-          ltv={ltv}
-          closeDate={closeDate}
-          onToggleTask={toggleTask}
+          dealStage={dealStage}
           onConditionStatusChange={updateConditionStatus}
+          onConditionAdded={() => refetchRail(true)}
         />
       </SectionErrorBoundary>
     </div>
