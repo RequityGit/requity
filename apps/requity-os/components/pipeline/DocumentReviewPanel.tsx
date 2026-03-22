@@ -23,7 +23,7 @@ import {
   RotateCcw,
   Loader2,
 } from "lucide-react";
-import { toast } from "sonner";
+import { showSuccess, showError } from "@/lib/toast";
 import {
   getDocumentReview,
   submitDocumentReview,
@@ -107,7 +107,7 @@ export function DocumentReviewPanel({
     try {
       const result = await getDocumentReview(documentId);
       if ("error" in result && result.error) {
-        toast.error(`Failed to load review: ${result.error}`);
+        showError("Could not load review", result.error);
         return;
       }
 
@@ -186,11 +186,11 @@ export function DocumentReviewPanel({
       );
 
       if ("error" in result && result.error) {
-        toast.error(`Failed to apply review: ${result.error}`);
+        showError("Could not apply review", result.error);
       } else {
         const data = result.data as { applied_count?: number; rejected_count?: number } | undefined;
-        toast.success(
-          `Applied ${data?.applied_count ?? 0} update(s), rejected ${data?.rejected_count ?? 0}.`
+        showSuccess(
+          `Applied ${data?.applied_count ?? 0} update(s), rejected ${data?.rejected_count ?? 0}`
         );
         onApplied?.();
         onOpenChange(false);
@@ -203,9 +203,9 @@ export function DocumentReviewPanel({
     startRetry(async () => {
       const result = await retriggerDocumentReview(documentId);
       if ("error" in result && result.error) {
-        toast.error(`Failed to retrigger review: ${result.error}`);
+        showError("Could not retrigger review", result.error);
       } else {
-        toast.success("Review retriggered");
+        showSuccess("Review retriggered");
         onOpenChange(false);
       }
     });

@@ -12,7 +12,7 @@ import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 import { StatusBadge } from "@/components/shared/status-badge";
 import { formatCurrency, formatDate, formatPhoneInput } from "@/lib/format";
-import { useToast } from "@/components/ui/use-toast";
+import { showSuccess, showError, showWarning, showInfo } from "@/lib/toast";
 import { PhoneVerifyDialog } from "@/components/investor/phone-verify-dialog";
 import { Save, Loader2, Building2, ShieldCheck, Landmark } from "lucide-react";
 import { EmptyState } from "@/components/shared/EmptyState";
@@ -40,7 +40,7 @@ type CommitmentData = {
 
 export default function InvestorAccountPage() {
   const supabase = createClient();
-  const { toast } = useToast();
+
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -150,12 +150,7 @@ export default function InvestorAccountPage() {
     // If sensitive changes and OTP not verified, require verification first
     if (requiresOtp) {
       if (!originalPhone) {
-        toast({
-          title: "Phone number required",
-          description:
-            "A phone number on file is required for identity verification. Contact your administrator.",
-          variant: "destructive",
-        });
+        showWarning("Phone number required", "A phone number on file is required for identity verification. Contact your administrator.");
         return;
       }
       setShowOtpDialog(true);
@@ -173,11 +168,7 @@ export default function InvestorAccountPage() {
       });
 
       if (result.error) {
-        toast({
-          title: "Error",
-          description: "Failed to update profile. Please try again.",
-          variant: "destructive",
-        });
+        showError("Could not update profile");
         return;
       }
 
@@ -186,17 +177,10 @@ export default function InvestorAccountPage() {
       setOriginalPhone(formatPhoneInput(phone));
       setOtpVerified(false);
 
-      toast({
-        title: "Profile updated",
-        description: "Your profile information has been saved successfully.",
-      });
+      showSuccess("Profile updated");
     } catch (err) {
       console.error("Save failed:", err);
-      toast({
-        title: "Error",
-        description: "An unexpected error occurred. Please try again.",
-        variant: "destructive",
-      });
+      showError("Could not update profile");
     } finally {
       setSaving(false);
     }
@@ -204,10 +188,7 @@ export default function InvestorAccountPage() {
 
   const handleOtpVerified = () => {
     setOtpVerified(true);
-    toast({
-      title: "Identity verified",
-      description: "You can now save your profile changes.",
-    });
+    showInfo("Identity verified");
   };
 
   if (!userId) {

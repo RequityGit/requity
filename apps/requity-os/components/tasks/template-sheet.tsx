@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo } from "react";
 import { createClient } from "@/lib/supabase/client";
-import { useToast } from "@/components/ui/use-toast";
+import { showSuccess, showError } from "@/lib/toast";
 import { cn } from "@/lib/utils";
 import {
   Dialog,
@@ -58,7 +58,6 @@ export function TemplateSheet({
   onSaved,
 }: TemplateSheetProps) {
   const isNew = !template;
-  const { toast } = useToast();
   const [saving, setSaving] = useState(false);
 
   // Form state
@@ -234,17 +233,10 @@ export function TemplateSheet({
         if (error) throw error;
         if (data) onSaved(data as unknown as RecurringTaskTemplate);
       }
-      toast({
-        title: isNew ? "Template created" : "Template updated",
-        description: `"${title.trim()}" saved successfully.`,
-      });
+      showSuccess(isNew ? "Template created" : "Template updated");
       onClose();
     } catch (err: unknown) {
-      toast({
-        title: "Failed to save template",
-        description: (err as Error).message,
-        variant: "destructive",
-      });
+      showError("Could not save template", (err as Error).message);
     }
     setSaving(false);
   };

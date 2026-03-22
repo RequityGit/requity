@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
-import { useToast } from "@/components/ui/use-toast";
+import { showSuccess, showError, showWarning } from "@/lib/toast";
 import { useConfirm } from "@/components/shared/ConfirmDialog";
 import {
   ArrowLeft,
@@ -82,7 +82,6 @@ export function ApprovalDetailView({
   isSubmitter,
 }: ApprovalDetailViewProps) {
   const router = useRouter();
-  const { toast } = useToast();
   const confirm = useConfirm();
   const [decisionNotes, setDecisionNotes] = useState("");
   const [loading, setLoading] = useState(false);
@@ -102,16 +101,16 @@ export function ApprovalDetailView({
     setLoading(false);
     setActiveAction(null);
     if (result.error) {
-      toast({ title: "Error", description: result.error, variant: "destructive" });
+      showError("Could not approve", result.error);
     } else {
-      toast({ title: "Approved", description: "The approval has been granted." });
+      showSuccess("Approval granted");
       router.refresh();
     }
   }
 
   async function handleRequestChanges() {
     if (!decisionNotes.trim()) {
-      toast({ title: "Notes required", description: "Please provide notes explaining what changes are needed.", variant: "destructive" });
+      showWarning("Please provide notes explaining what changes are needed");
       return;
     }
     setLoading(true);
@@ -120,16 +119,16 @@ export function ApprovalDetailView({
     setLoading(false);
     setActiveAction(null);
     if (result.error) {
-      toast({ title: "Error", description: result.error, variant: "destructive" });
+      showError("Could not request changes", result.error);
     } else {
-      toast({ title: "Changes Requested", description: "The submitter has been notified." });
+      showSuccess("Changes requested");
       router.refresh();
     }
   }
 
   async function handleDecline() {
     if (!decisionNotes.trim()) {
-      toast({ title: "Reason required", description: "Please provide a decline reason.", variant: "destructive" });
+      showWarning("Please provide a decline reason");
       return;
     }
     setLoading(true);
@@ -138,9 +137,9 @@ export function ApprovalDetailView({
     setLoading(false);
     setActiveAction(null);
     if (result.error) {
-      toast({ title: "Error", description: result.error, variant: "destructive" });
+      showError("Could not decline", result.error);
     } else {
-      toast({ title: "Declined", description: "The approval has been declined." });
+      showSuccess("Approval declined");
       router.refresh();
     }
   }
@@ -152,9 +151,9 @@ export function ApprovalDetailView({
     setLoading(false);
     setActiveAction(null);
     if (result.error) {
-      toast({ title: "Error", description: result.error, variant: "destructive" });
+      showError("Could not cancel approval", result.error);
     } else {
-      toast({ title: "Cancelled", description: "The approval has been cancelled." });
+      showSuccess("Approval cancelled");
       router.push("/tasks/approvals");
     }
   }

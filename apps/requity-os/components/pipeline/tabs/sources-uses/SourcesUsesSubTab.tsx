@@ -14,7 +14,7 @@ import {
   Plus,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { toast } from "sonner";
+import { showError } from "@/lib/toast";
 import { EmptyState } from "@/components/shared/EmptyState";
 import {
   upsertDebtTranches,
@@ -186,7 +186,7 @@ export function SourcesUsesSubTab({
         if (!uwId) return;
         const result = await saveFn();
         if (result.error) {
-          toast.error(`Save failed: ${result.error}`);
+          showError("Could not save", result.error);
         } else {
           router.refresh();
         }

@@ -18,7 +18,7 @@ import {
 import { useCallback, useMemo, useState } from "react";
 import { UserPlus, Shield, Loader2, TrendingUp, DollarSign, CreditCard } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { toast } from "sonner";
+import { showSuccess, showError } from "@/lib/toast";
 import { formatCurrency } from "@/lib/format";
 import type { DealBorrowingEntity, DealBorrowerMember } from "@/app/types/borrower";
 import { BorrowerMemberRow } from "./BorrowerMemberRow";
@@ -71,9 +71,9 @@ export function BorrowerMemberTable({
     try {
       const result = await addDirectBorrowerMemberAction(dealId, entity?.id ?? null, {});
       if (result.error) {
-        toast.error(result.error);
+        showError(result.error);
       } else {
-        toast.success("Borrower added");
+        showSuccess("Borrower added");
         onStructuralChange();
       }
     } finally {

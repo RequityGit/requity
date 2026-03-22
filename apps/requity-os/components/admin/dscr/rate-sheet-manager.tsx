@@ -23,7 +23,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useToast } from "@/components/ui/use-toast";
+import { showSuccess, showError, showWarning } from "@/lib/toast";
 import { Upload, FileText, Eye, CheckCircle, AlertCircle, Loader2, Building2, Table } from "lucide-react";
 import {
   createRateSheetUploadAction,
@@ -47,7 +47,6 @@ export function RateSheetManager({
   uploads: any[];
 }) {
   const router = useRouter();
-  const { toast } = useToast();
   const [uploadOpen, setUploadOpen] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [parsing, setParsing] = useState<string | null>(null);
@@ -64,7 +63,7 @@ export function RateSheetManager({
 
   async function handleUpload() {
     if (!selectedLender || !file) {
-      toast({ title: "Error", description: "Select a lender and file", variant: "destructive" });
+      showWarning("Select a lender and file");
       return;
     }
 
@@ -79,7 +78,7 @@ export function RateSheetManager({
         .upload(filePath, file, { upsert: true });
 
       if (storageErr) {
-        toast({ title: "Error", description: `Upload failed: ${storageErr.message}`, variant: "destructive" });
+        showError("Could not upload rate sheet", storageErr.message);
         return;
       }
 
@@ -92,11 +91,11 @@ export function RateSheetManager({
       );
 
       if ("error" in result) {
-        toast({ title: "Error", description: result.error, variant: "destructive" });
+        showError("Could not upload rate sheet", result.error);
         return;
       }
 
-      toast({ title: "Rate sheet uploaded successfully" });
+      showSuccess("Rate sheet uploaded");
       setUploadOpen(false);
       setFile(null);
       setSelectedLender("");
@@ -104,7 +103,7 @@ export function RateSheetManager({
       setEffectiveDate("");
       router.refresh();
     } catch (err: any) {
-      toast({ title: "Error", description: err?.message || "Upload failed", variant: "destructive" });
+      showError("Could not upload rate sheet", err?.message || "Upload failed");
     } finally {
       setUploading(false);
     }
@@ -115,14 +114,14 @@ export function RateSheetManager({
     try {
       const result = await parseRateSheetAction(uploadId);
       if ("error" in result) {
-        toast({ title: "Parse Error", description: result.error, variant: "destructive" });
+        showError("Could not parse rate sheet", result.error);
         return;
       }
-      toast({ title: "Rate sheet parsed successfully" });
+      showSuccess("Rate sheet parsed");
       setReviewData({ uploadId, data: result.parsedData });
       router.refresh();
     } catch (err: any) {
-      toast({ title: "Error", description: err?.message || "Parse failed", variant: "destructive" });
+      showError("Could not parse rate sheet", err?.message || "Parse failed");
     } finally {
       setParsing(null);
     }

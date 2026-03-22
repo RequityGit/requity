@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import { Plus, Trash2, Search, Check } from "lucide-react";
-import { toast } from "sonner";
+import { showSuccess, showError } from "@/lib/toast";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -294,7 +294,7 @@ export function TemplateSheet({ open, onOpenChange, template, onSuccess }: Props
 
   async function handleSave() {
     if (!name.trim()) {
-      toast.error("Template name is required");
+      showError("Template name is required");
       return;
     }
 
@@ -302,7 +302,7 @@ export function TemplateSheet({ open, onOpenChange, template, onSuccess }: Props
     const keys = mergeFields.map((f) => f.key).filter(Boolean);
     const dupes = keys.filter((k, i) => keys.indexOf(k) !== i);
     if (dupes.length > 0) {
-      toast.error(`Duplicate merge field keys: ${dupes.join(", ")}`);
+      showError(`Duplicate merge field keys: ${dupes.join(", ")}`);
       return;
     }
 
@@ -322,9 +322,9 @@ export function TemplateSheet({ open, onOpenChange, template, onSuccess }: Props
       : await createTemplate(formData);
 
     if (result.error) {
-      toast.error(`Failed to save: ${result.error}`);
+      showError(`Failed to save: ${result.error}`);
     } else {
-      toast.success(isEditing ? "Template updated" : "Template created");
+      showSuccess(isEditing ? "Template updated" : "Template created");
       onSuccess();
     }
     setSaving(false);

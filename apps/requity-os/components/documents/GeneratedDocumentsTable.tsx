@@ -11,7 +11,7 @@ import {
   FileText,
 } from "lucide-react";
 import { EmptyState } from "@/components/shared/EmptyState";
-import { toast } from "sonner";
+import { showError } from "@/lib/toast";
 import { createClient } from "@/lib/supabase/client";
 import { exportHtmlAsPdf } from "@/lib/export-pdf";
 import { Badge } from "@/components/ui/badge";
@@ -86,13 +86,13 @@ export function GeneratedDocumentsTable({ data, action }: Props) {
         .single();
 
       if (error || !row?.content) {
-        toast.error("Could not load document content");
+        showError("Could not load document content");
         return;
       }
 
       await exportHtmlAsPdf(row.content, doc.file_name);
     } catch {
-      toast.error("Failed to download PDF");
+      showError("Failed to download PDF");
     } finally {
       setDownloadingId(null);
     }

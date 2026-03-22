@@ -11,7 +11,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
-import { useToast } from "@/components/ui/use-toast";
+import { showSuccess, showError } from "@/lib/toast";
 import { Upload, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -33,7 +33,6 @@ export function CompanyFileUpload({
   companyId,
   onUploaded,
 }: CompanyFileUploadProps) {
-  const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [dragging, setDragging] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -54,12 +53,12 @@ export function CompanyFileUpload({
   const handleFile = useCallback((file: File) => {
     const error = validateFile(file);
     if (error) {
-      toast({ title: "Invalid file", description: error, variant: "destructive" });
+      showError("Invalid file", error);
       return;
     }
     setSelectedFile(file);
     setFileType("");
-  }, [toast]);
+  }, []);
 
   const handleDrop = useCallback(
     (e: React.DragEvent) => {
@@ -93,7 +92,7 @@ export function CompanyFileUpload({
       } = await supabase.auth.getUser();
 
       if (!user) {
-        toast({ title: "Not authenticated", variant: "destructive" });
+        showError("Not authenticated");
         return;
       }
 
@@ -128,16 +127,12 @@ export function CompanyFileUpload({
       if (dbError) throw dbError;
 
       setProgress(100);
-      toast({ title: "File uploaded successfully" });
+      showSuccess("File uploaded");
       setSelectedFile(null);
       setFileType("");
       onUploaded();
     } catch (err: unknown) {
-      toast({
-        title: "Upload failed",
-        description: err instanceof Error ? err.message : "An unexpected error occurred",
-        variant: "destructive",
-      });
+      showError("Upload failed", err instanceof Error ? err.message : "An unexpected error occurred");
     } finally {
       setUploading(false);
       setProgress(0);

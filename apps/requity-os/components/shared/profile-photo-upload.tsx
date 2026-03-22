@@ -3,7 +3,7 @@
 import { useState, useRef, useCallback } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import { useToast } from "@/components/ui/use-toast";
+import { showSuccess, showError, showWarning } from "@/lib/toast";
 import { Camera, Loader2, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -33,7 +33,6 @@ export function ProfilePhotoUpload({
   fullName,
   onAvatarChange,
 }: ProfilePhotoUploadProps) {
-  const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
   const [currentUrl, setCurrentUrl] = useState<string | null>(avatarUrl);
@@ -48,21 +47,13 @@ export function ProfilePhotoUpload({
 
       // Validate file type
       if (!ACCEPTED_TYPES.includes(file.type)) {
-        toast({
-          title: "Invalid file type",
-          description: "Please upload a JPEG, PNG, or WebP image.",
-          variant: "destructive",
-        });
+        showWarning("Please upload a JPEG, PNG, or WebP image");
         return;
       }
 
       // Validate file size
       if (file.size > MAX_FILE_SIZE) {
-        toast({
-          title: "File too large",
-          description: "Please upload an image smaller than 5MB.",
-          variant: "destructive",
-        });
+        showWarning("Please upload an image smaller than 5MB");
         return;
       }
 
@@ -121,10 +112,7 @@ export function ProfilePhotoUpload({
         setCurrentUrl(urlWithCacheBust);
         onAvatarChange?.(urlWithCacheBust);
 
-        toast({
-          title: "Photo updated",
-          description: "Your profile photo has been updated successfully.",
-        });
+        showSuccess("Photo updated");
       } catch (err: unknown) {
         console.error("Photo upload failed:", err);
 
@@ -171,16 +159,12 @@ export function ProfilePhotoUpload({
             "Could not upload your photo. Please ensure your image is a JPEG, PNG, or WebP file under 5MB and try again.";
         }
 
-        toast({
-          title: "Upload failed",
-          description,
-          variant: "destructive",
-        });
+        showError("Could not upload photo", description);
       } finally {
         setUploading(false);
       }
     },
-    [userId, toast, onAvatarChange]
+    [userId, onAvatarChange]
   );
 
   const handleRemove = useCallback(async () => {
@@ -217,21 +201,14 @@ export function ProfilePhotoUpload({
       setCurrentUrl(null);
       onAvatarChange?.(null);
 
-      toast({
-        title: "Photo removed",
-        description: "Your profile photo has been removed.",
-      });
+      showSuccess("Photo removed");
     } catch (err) {
       console.error("Photo removal failed:", err);
-      toast({
-        title: "Removal failed",
-        description: "Could not remove your photo. Please try again.",
-        variant: "destructive",
-      });
+      showError("Could not remove photo", "Please try again.");
     } finally {
       setUploading(false);
     }
-  }, [userId, toast, onAvatarChange]);
+  }, [userId, onAvatarChange]);
 
   return (
     <div className="flex flex-col items-center gap-3">

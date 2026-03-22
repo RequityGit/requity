@@ -22,7 +22,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { CRM_COMPANY_TYPES, COMPANY_TYPE_COLORS, US_STATES } from "@/lib/constants";
-import { useToast } from "@/components/ui/use-toast";
+import { showSuccess, showError } from "@/lib/toast";
 import { addCompanyAction } from "@/app/(authenticated)/(admin)/companies/actions";
 import { Building2, X as XIcon, Sparkles, Loader2 } from "lucide-react";
 import { formatPhoneInput } from "@/lib/format";
@@ -49,7 +49,6 @@ export function AddCompanyDialog({
   const [loading, setLoading] = useState(false);
   const [enriching, setEnriching] = useState(false);
   const router = useRouter();
-  const { toast } = useToast();
 
   const [form, setForm] = useState({
     name: "",
@@ -132,11 +131,7 @@ export function AddCompanyDialog({
 
       if (!res.ok) {
         const err = await res.json().catch(() => null);
-        toast({
-          title: "Could not enrich",
-          description: err?.error || "Failed to fetch website data",
-          variant: "destructive",
-        });
+        showError("Could not enrich", err?.error || "Failed to fetch website data");
         return;
       }
       const data = await res.json();
@@ -159,11 +154,7 @@ export function AddCompanyDialog({
         );
       }
     } catch {
-      toast({
-        title: "Could not enrich",
-        description: "Something went wrong. Try again.",
-        variant: "destructive",
-      });
+      showError("Could not enrich", "Something went wrong. Try again.");
     } finally {
       setEnriching(false);
     }
@@ -201,23 +192,15 @@ export function AddCompanyDialog({
       });
 
       if ("error" in result && result.error) {
-        toast({
-          title: "Error adding company",
-          description: result.error,
-          variant: "destructive",
-        });
+        showError("Could not add company", result.error);
       } else {
-        toast({ title: "Company added successfully" });
+        showSuccess("Company added");
         setOpen(false);
         resetForm();
         router.push(`/companies/${result.company_number}`);
       }
     } catch (err: unknown) {
-      toast({
-        title: "Error adding company",
-        description: err instanceof Error ? err.message : "An unexpected error occurred",
-        variant: "destructive",
-      });
+      showError("Could not add company", err instanceof Error ? err.message : "An unexpected error occurred");
     } finally {
       setLoading(false);
     }

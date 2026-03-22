@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { useToast } from "@/components/ui/use-toast";
+import { showSuccess, showError } from "@/lib/toast";
 import { Plus, Check, CheckCircle2 } from "lucide-react";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -34,7 +34,6 @@ export function CompanyTasksTab({
 }: TasksTabProps) {
   const openCount = tasks.filter((t) => t.status !== "completed").length;
   const router = useRouter();
-  const { toast } = useToast();
   const [sheetOpen, setSheetOpen] = useState(false);
   const [editingTask, setEditingTask] = useState<OpsTask | null>(null);
 
@@ -125,27 +124,25 @@ export function CompanyTasksTab({
         })
         .eq("id", task.id);
       if (error) {
-        toast({ title: "Error reopening task", variant: "destructive" });
+        showError("Could not reopen task");
       } else {
-        toast({ title: "Task reopened" });
+        showSuccess("Task reopened");
       }
     } else if (isRecurring) {
       const result = await completeRecurringTask(task.id);
       if (result.error) {
-        toast({ title: `Failed to complete task: ${result.error}`, variant: "destructive" });
+        showError("Could not complete task", result.error);
       } else {
-        toast({
-          title: result.next_created
-            ? "Task completed — next occurrence created"
-            : "Recurring task completed",
-        });
+        showSuccess(result.next_created
+            ? "Task completed, next occurrence created"
+            : "Recurring task completed");
       }
     } else {
       const result = await completeTask(task.id);
       if (result.error) {
-        toast({ title: `Failed to complete task: ${result.error}`, variant: "destructive" });
+        showError("Could not complete task", result.error);
       } else {
-        toast({ title: "Task completed" });
+        showSuccess("Task completed");
       }
     }
     router.refresh();

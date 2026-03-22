@@ -34,7 +34,7 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
-import { toast } from "sonner";
+import { showSuccess, showError } from "@/lib/toast";
 import { cn } from "@/lib/utils";
 import {
   upsertIncomeRows,
@@ -281,9 +281,9 @@ export function T12SubTab({
       ]);
 
       if (incRes.error || expRes.error) {
-        toast.error(`Failed to import T12: ${incRes.error || expRes.error}`);
+        showError("Could not import T12", incRes.error || expRes.error);
       } else {
-        toast.success("T12 data imported successfully");
+        showSuccess("T12 data imported");
         setMode("manual");
         router.refresh();
       }
@@ -318,9 +318,9 @@ export function T12SubTab({
 
     const result = await upsertExpenseRows(uwId, [mgmtFeeRow, ...guidanceRows]);
     if (result.error) {
-      toast.error(`Failed to apply guidance: ${result.error}`);
+      showError("Could not apply guidance", result.error);
     } else {
-      toast.success("Expense guidance applied");
+      showSuccess("Expense guidance applied");
       router.refresh();
     }
   }, [uwId, benchmarks, benchmarkInfo, netRevenue, router]);
@@ -331,7 +331,7 @@ export function T12SubTab({
       const fn = type === "expense" ? updateExpenseNotes : updateIncomeNotes;
       const result = await fn(rowId, notes || null);
       if (result.error) {
-        toast.error("Failed to save note");
+        showError("Could not save note");
       } else {
         router.refresh();
       }
@@ -958,9 +958,9 @@ function EditIncomeDialog({
     try {
       const result = await upsertIncomeRows(uwId, rows.map((r, i) => ({ ...r, sort_order: i })));
       if (result.error) {
-        toast.error(`Failed to save income: ${result.error}`);
+        showError("Could not save income", result.error);
       } else {
-        toast.success("Income data saved");
+        showSuccess("Income data saved");
         router.refresh();
         onOpenChange(false);
       }
@@ -1080,9 +1080,9 @@ function EditExpenseDialog({
         source: r.source === "guidance" && r.t12_amount !== r.year_1_amount ? "manual" : (r.source ?? "manual"),
       })));
       if (result.error) {
-        toast.error(`Failed to save expenses: ${result.error}`);
+        showError("Could not save expenses", result.error);
       } else {
-        toast.success("Expense data saved");
+        showSuccess("Expense data saved");
         router.refresh();
         onOpenChange(false);
       }

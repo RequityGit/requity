@@ -13,7 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Loader2 } from "lucide-react";
-import { toast } from "sonner";
+import { showSuccess, showError, showWarning } from "@/lib/toast";
 import { createContactAndAddAsBorrowerAction } from "@/app/(authenticated)/(admin)/pipeline/[id]/borrower-actions";
 
 interface CreateContactDialogProps {
@@ -54,7 +54,7 @@ export function CreateContactDialog({
       const first = form.first_name.trim();
       const last = form.last_name.trim();
       if (!first && !last) {
-        toast.error("First name or last name is required.");
+        showWarning("First name or last name is required");
         return;
       }
       setSubmitting(true);
@@ -66,9 +66,9 @@ export function CreateContactDialog({
           phone: form.phone.trim() || undefined,
         });
         if (result.error) {
-          toast.error(result.error);
+          showError(result.error);
         } else {
-          toast.success("Contact created and added as borrower");
+          showSuccess("Contact created and added as borrower");
           onOpenChange(false);
           onSuccess();
         }

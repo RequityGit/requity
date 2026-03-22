@@ -2,7 +2,7 @@
 
 import { useState, useMemo, useCallback } from "react";
 import { createClient } from "@/lib/supabase/client";
-import { useToast } from "@/components/ui/use-toast";
+import { showSuccess, showError } from "@/lib/toast";
 import { cn } from "@/lib/utils";
 import { formatDate } from "@/lib/format";
 import { Input } from "@/components/ui/input";
@@ -88,7 +88,6 @@ export function RecurringTemplatesTable({
   onEdit,
   onTemplatesChange,
 }: RecurringTemplatesTableProps) {
-  const { toast } = useToast();
   const confirm = useConfirm();
   const [search, setSearch] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("all");
@@ -152,11 +151,7 @@ export function RecurringTemplatesTable({
         .eq("id" as never, template.id as never);
 
       if (error) {
-        toast({
-          title: "Failed to update template",
-          description: error.message,
-          variant: "destructive",
-        });
+        showError("Could not update template", error.message);
         return;
       }
 
@@ -165,12 +160,9 @@ export function RecurringTemplatesTable({
           t.id === template.id ? { ...t, is_active: newActive } : t
         )
       );
-      toast({
-        title: newActive ? "Template resumed" : "Template paused",
-        description: `"${template.title}" is now ${newActive ? "active" : "paused"}.`,
-      });
+      showSuccess(newActive ? "Template resumed" : "Template paused");
     },
-    [templates, onTemplatesChange, toast]
+    [templates, onTemplatesChange]
   );
 
   const handleDelete = useCallback(async (template: RecurringTaskTemplate) => {
@@ -190,19 +182,12 @@ export function RecurringTemplatesTable({
       .eq("id" as never, template.id as never);
 
     if (error) {
-      toast({
-        title: "Failed to delete template",
-        description: error.message,
-        variant: "destructive",
-      });
+      showError("Could not delete template", error.message);
     } else {
       onTemplatesChange(templates.filter((t) => t.id !== template.id));
-      toast({
-        title: "Template deleted",
-        description: `"${template.title}" has been removed.`,
-      });
+      showSuccess("Template deleted");
     }
-  }, [confirm, templates, onTemplatesChange, toast]);
+  }, [confirm, templates, onTemplatesChange]);
 
   return (
     <div>

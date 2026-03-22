@@ -21,7 +21,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { useToast } from "@/components/ui/use-toast";
+import { showSuccess, showError, showWarning } from "@/lib/toast";
 import { ArrowLeft, CheckCircle, Loader2, Table as TableIcon } from "lucide-react";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { commitRateSheetAction } from "@/app/(authenticated)/(admin)/models/dscr/actions";
@@ -61,7 +61,6 @@ export function RateSheetReview({
   onClose: () => void;
 }) {
   const router = useRouter();
-  const { toast } = useToast();
   const [committing, setCommitting] = useState(false);
   const [selectedProductId, setSelectedProductId] = useState("");
   const [selectedParsedProduct, setSelectedParsedProduct] = useState(0);
@@ -71,16 +70,12 @@ export function RateSheetReview({
 
   async function handleCommit() {
     if (!selectedProductId) {
-      toast({
-        title: "Error",
-        description: "Select a product to commit this rate sheet to",
-        variant: "destructive",
-      });
+      showWarning("Select a product to commit this rate sheet to");
       return;
     }
 
     if (!currentParsed) {
-      toast({ title: "Error", description: "No parsed data available", variant: "destructive" });
+      showError("No parsed data available");
       return;
     }
 
@@ -163,15 +158,15 @@ export function RateSheetReview({
       });
 
       if ("error" in result) {
-        toast({ title: "Error", description: result.error, variant: "destructive" });
+        showError("Could not commit rate sheet", result.error);
         return;
       }
 
-      toast({ title: "Rate sheet committed successfully" });
+      showSuccess("Rate sheet committed");
       router.refresh();
       onClose();
     } catch (err: any) {
-      toast({ title: "Error", description: err?.message || "Commit failed", variant: "destructive" });
+      showError("Could not commit rate sheet", err?.message || "Commit failed");
     } finally {
       setCommitting(false);
     }

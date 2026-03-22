@@ -12,7 +12,7 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
-import { toast } from "sonner";
+import { showSuccess, showError } from "@/lib/toast";
 import { upsertScopeOfWork } from "@/app/(authenticated)/(admin)/pipeline/[id]/commercial-uw-actions";
 import { MetricBar, SectionCard, n, fmtCurrency } from "./shared";
 
@@ -143,9 +143,9 @@ function EditScopeDialog({
         rows.filter((r) => r.item_name.trim()).map((r, i) => ({ ...r, sort_order: i }))
       );
       if (result.error) {
-        toast.error(`Failed to save: ${result.error}`);
+        showError("Could not save scope of work", result.error);
       } else {
-        toast.success("Scope of work saved");
+        showSuccess("Scope of work saved");
         router.refresh();
         onOpenChange(false);
       }

@@ -13,7 +13,7 @@ import { useUwFieldConfigs } from "@/hooks/useUwFieldConfigs";
 import type { VisibilityContext } from "@/lib/visibility-engine";
 import { evaluateFormula } from "@/lib/formula-engine";
 import { Badge } from "@/components/ui/badge";
-import { toast } from "sonner";
+import { showError } from "@/lib/toast";
 
 const OBJECT_LABELS: Record<string, { label: string; color: string }> = {
   deal: { label: "Deal", color: "bg-blue-500/10 text-blue-600" },
@@ -57,7 +57,7 @@ export function UnderwritingPanel({
     startTransition(async () => {
       const result = await updateUwDataAction(dealId, key, currentVal);
       if (result.error) {
-        toast.error(`Failed to save ${key}: ${result.error}`);
+        showError(`Could not save ${key}`, result.error);
         setLocalData((prev) => ({ ...prev, [key]: prevVal }));
       }
     });

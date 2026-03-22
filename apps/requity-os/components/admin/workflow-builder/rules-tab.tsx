@@ -2,7 +2,7 @@
 
 import { useState, useCallback } from "react";
 import { createClient } from "@/lib/supabase/client";
-import { useToast } from "@/components/ui/use-toast";
+import { showError } from "@/lib/toast";
 import { cn } from "@/lib/utils";
 import {
   Plus,
@@ -53,7 +53,6 @@ export function RulesTab({
   rules,
   onRulesChanged,
 }: RulesTabProps) {
-  const { toast } = useToast();
 
   // Group rules by stage
   const globalRules = rules.filter((r) => !r.trigger_stage_id);
@@ -86,14 +85,10 @@ export function RulesTab({
 
       if (error) {
         onRulesChanged(rules);
-        toast({
-          title: "Failed to update rule",
-          description: error.message,
-          variant: "destructive",
-        });
+        showError("Could not update rule", error.message);
       }
     },
-    [rules, onRulesChanged, toast]
+    [rules, onRulesChanged]
   );
 
   const handleAddRule = useCallback(
@@ -120,16 +115,12 @@ export function RulesTab({
         .single();
 
       if (error) {
-        toast({
-          title: "Failed to add rule",
-          description: error.message,
-          variant: "destructive",
-        });
+        showError("Could not add rule", error.message);
       } else if (data) {
         onRulesChanged([...rules, data as unknown as WorkflowRule]);
       }
     },
-    [workflowId, rules, onRulesChanged, toast]
+    [workflowId, rules, onRulesChanged]
   );
 
   const handleDeleteRule = useCallback(
@@ -141,16 +132,12 @@ export function RulesTab({
         .eq("id", ruleId);
 
       if (error) {
-        toast({
-          title: "Failed to delete rule",
-          description: error.message,
-          variant: "destructive",
-        });
+        showError("Could not delete rule", error.message);
       } else {
         onRulesChanged(rules.filter((r) => r.id !== ruleId));
       }
     },
-    [rules, onRulesChanged, toast]
+    [rules, onRulesChanged]
   );
 
   return (

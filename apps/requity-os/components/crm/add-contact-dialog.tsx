@@ -34,7 +34,7 @@ import {
   CRM_COMPANY_TYPES,
   US_STATES,
 } from "@/lib/constants";
-import { useToast } from "@/components/ui/use-toast";
+import { showSuccess, showError } from "@/lib/toast";
 import { UserPlus, X, Plus, Building2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { formatPhoneInput } from "@/lib/format";
@@ -90,7 +90,6 @@ export function AddContactDialog({
     : setInternalOpen;
   const [loading, setLoading] = useState(false);
   const router = useRouter();
-  const { toast } = useToast();
 
   // Company search state
   const [companies, setCompanies] = useState<CompanyOption[]>([]);
@@ -319,7 +318,7 @@ export function AddContactDialog({
         if (relError) throw relError;
       }
 
-      toast({ title: "Contact added successfully" });
+      showSuccess("Contact added");
       setOpen(false);
       resetForm();
       if (onSuccess) {
@@ -335,11 +334,7 @@ export function AddContactDialog({
             ? String((err as { message: unknown }).message)
             : JSON.stringify(err);
       console.error("Error adding contact:", err);
-      toast({
-        title: "Error adding contact",
-        description: message,
-        variant: "destructive",
-      });
+      showError("Could not add contact", message);
     } finally {
       setLoading(false);
     }

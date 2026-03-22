@@ -16,7 +16,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
-import { toast } from "sonner";
+import { showSuccess, showError } from "@/lib/toast";
 import {
   createNewVersion,
   activateVersion,
@@ -82,9 +82,9 @@ export function FinancialsTab({
     try {
       const result = await createNewVersion(dealId, currentUserId);
       if (result.error) {
-        toast.error(`Failed to create version: ${result.error}`);
+        showError("Could not create version", result.error);
       } else {
-        toast.success(`Version ${result.data?.version} created`);
+        showSuccess(`Version ${result.data?.version} created`);
         router.refresh();
       }
     } finally {
@@ -98,9 +98,9 @@ export function FinancialsTab({
       try {
         const result = await activateVersion(versionId, dealId);
         if (result.error) {
-          toast.error(`Failed to activate: ${result.error}`);
+          showError("Could not activate version", result.error);
         } else {
-          toast.success("Version activated");
+          showSuccess("Version activated");
           router.refresh();
         }
       } finally {

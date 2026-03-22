@@ -28,7 +28,7 @@ import {
   DialogDescription,
   DialogFooter,
 } from "@/components/ui/dialog";
-import { useToast } from "@/components/ui/use-toast";
+import { showSuccess, showError } from "@/lib/toast";
 import { createOpportunityAction } from "@/app/(authenticated)/(admin)/originations/actions";
 import { addBorrowerAction } from "@/app/(authenticated)/(admin)/borrowers/new/actions";
 import {
@@ -78,7 +78,6 @@ export function NewDealForm({
   const [step, setStep] = useState(0);
   const [saving, setSaving] = useState(false);
   const router = useRouter();
-  const { toast } = useToast();
 
   // Property state
   const [property, setProperty] = useState({
@@ -189,11 +188,7 @@ export function NewDealForm({
     });
 
     if (result.error) {
-      toast({
-        title: "Error creating borrower",
-        description: result.error,
-        variant: "destructive",
-      });
+      showError("Could not create borrower", result.error);
       setAddingNewBorrower(false);
       return;
     }
@@ -215,7 +210,7 @@ export function NewDealForm({
     setNewBorrowerPhone("");
     setAddingNewBorrower(false);
 
-    toast({ title: `Borrower "${fullName}" created` });
+    showSuccess(`Borrower "${fullName}" created`);
   }
 
   async function handleSubmit() {
@@ -270,16 +265,12 @@ export function NewDealForm({
     const result = await createOpportunityAction(input);
 
     if (result.error) {
-      toast({
-        title: "Error creating deal",
-        description: result.error,
-        variant: "destructive",
-      });
+      showError("Could not create deal", result.error);
       setSaving(false);
       return;
     }
 
-    toast({ title: "Deal created successfully" });
+    showSuccess("Deal created");
     router.push(`/pipeline/${result.opportunityId}`);
   }
 

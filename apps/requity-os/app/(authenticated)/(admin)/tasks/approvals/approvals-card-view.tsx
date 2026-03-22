@@ -3,7 +3,7 @@
 import { useState, useMemo, useCallback, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
-import { useToast } from "@/components/ui/use-toast";
+import { showSuccess, showError } from "@/lib/toast";
 import { cn } from "@/lib/utils";
 import { PageHeader } from "@/components/shared/page-header";
 import { Button } from "@/components/ui/button";
@@ -75,7 +75,6 @@ export function ApprovalsCardView({
   const [personFilter, setPersonFilter] = useState<string[]>([]);
   const [statusFilter, setStatusFilter] = useState<string[]>(["pending"]);
   const [showNewModal, setShowNewModal] = useState(false);
-  const { toast } = useToast();
   const router = useRouter();
 
   // Realtime subscription
@@ -145,11 +144,7 @@ export function ApprovalsCardView({
         .eq("id" as never, approvalId as never);
 
       if (error) {
-        toast({
-          title: "Failed to update approval",
-          description: error.message,
-          variant: "destructive",
-        });
+        showError("Could not update approval", error.message);
       } else {
         setApprovals((prev) =>
           prev.map((a) =>
@@ -180,13 +175,10 @@ export function ApprovalsCardView({
           deal_snapshot: {},
         } as never);
 
-        toast({
-          title: newStatus === "approved" ? "Approved" : "Declined",
-          description: `Approval has been ${newStatus}.`,
-        });
+        showSuccess(newStatus === "approved" ? "Approved" : "Declined");
       }
     },
-    [currentUserId, toast]
+    [currentUserId]
   );
 
   const handleApprovalSaved = useCallback(

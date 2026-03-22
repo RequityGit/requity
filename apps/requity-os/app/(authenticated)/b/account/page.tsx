@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useToast } from "@/components/ui/use-toast";
+import { showSuccess, showError } from "@/lib/toast";
 import { Loader2, Save } from "lucide-react";
 import type { Tables } from "@/lib/supabase/types";
 
@@ -19,7 +19,7 @@ import { ProfilePhotoUpload } from "@/components/shared/profile-photo-upload";
 import { formatPhoneInput } from "@/lib/format";
 
 export default function BorrowerAccountPage() {
-  const { toast } = useToast();
+
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [profile, setProfile] = useState<Profile | null>(null);
@@ -78,11 +78,7 @@ export default function BorrowerAccountPage() {
       } = await supabase.auth.getUser();
 
       if (!user) {
-        toast({
-          title: "Error",
-          description: "You must be logged in to update your profile.",
-          variant: "destructive",
-        });
+        showError("Could not update profile", "You must be logged in");
         return;
       }
 
@@ -95,24 +91,13 @@ export default function BorrowerAccountPage() {
       });
 
       if (result.error) {
-        toast({
-          title: "Error",
-          description: result.error,
-          variant: "destructive",
-        });
+        showError("Could not update profile", result.error);
         return;
       }
 
-      toast({
-        title: "Profile updated",
-        description: "Your profile information has been saved successfully.",
-      });
+      showSuccess("Profile updated");
     } catch {
-      toast({
-        title: "Error",
-        description: "An unexpected error occurred. Please try again.",
-        variant: "destructive",
-      });
+      showError("Could not update profile");
     } finally {
       setSaving(false);
     }

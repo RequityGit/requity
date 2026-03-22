@@ -4,7 +4,7 @@ import { useState, useCallback, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
-import { useToast } from "@/components/ui/use-toast";
+import { showSuccess, showError } from "@/lib/toast";
 import { Save, Send, CheckCircle2, XCircle } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -184,7 +184,6 @@ export function CommercialUWClient({
   existingT12PreviousMappings,
 }: Props) {
   const router = useRouter();
-  const { toast } = useToast();
   const [saving, setSaving] = useState(false);
   const [uwId, setUwId] = useState<string | null>(
     (existingUW?.id as string) ?? null
@@ -379,9 +378,9 @@ export function CommercialUWClient({
         },
         ...prev,
       ]);
-      toast({ title: "Imported", description: `${metadata.rowCount} units imported from ${metadata.filename}` });
+      showSuccess(`${metadata.rowCount} units imported from ${metadata.filename}`);
     },
-    [toast]
+    []
   );
 
   const handleT12Import = useCallback(
@@ -397,17 +396,17 @@ export function CommercialUWClient({
           parsedData: [metadata.parsedData as unknown as Record<string, unknown>],
         },
       ]);
-      toast({ title: "Imported", description: `T12 data imported from ${metadata.filename}` });
+      showSuccess(`T12 data imported from ${metadata.filename}`);
     },
-    [toast]
+    []
   );
 
   const handleRestoreVersion = useCallback(
     (rows: RentRollRow[]) => {
       setRentRoll(rows);
-      toast({ title: "Restored", description: "Rent roll restored from previous version. Click Save Draft to persist." });
+      showSuccess("Rent roll restored from previous version. Click Save Draft to persist.");
     },
-    [toast]
+    []
   );
 
   // ---- T12 Historicals Handlers ----
@@ -424,7 +423,7 @@ export function CommercialUWClient({
           data.sourceLabel || null
         );
         if (uploadResult.error || !uploadResult.uploadId) {
-          toast({ title: "Error", description: uploadResult.error ?? "Failed to create upload", variant: "destructive" });
+          showError("Could not create upload", uploadResult.error ?? "Failed to create upload");
           return;
         }
         const uploadId = uploadResult.uploadId;
@@ -432,7 +431,7 @@ export function CommercialUWClient({
         // 2. Save line items
         const lineItemsResult = await saveT12LineItems(uploadId, data.lineItems);
         if (lineItemsResult.error || !lineItemsResult.ids) {
-          toast({ title: "Error", description: lineItemsResult.error ?? "Failed to save line items", variant: "destructive" });
+          showError("Could not save line items", lineItemsResult.error ?? "Failed to save line items");
           return;
         }
         const lineItemIds = lineItemsResult.ids;
@@ -446,7 +445,7 @@ export function CommercialUWClient({
         }));
         const mappingsResult = await saveT12Mappings(uploadId, mappingsToSave);
         if (mappingsResult.error) {
-          toast({ title: "Error", description: mappingsResult.error, variant: "destructive" });
+          showError("Could not save mappings", mappingsResult.error);
           return;
         }
 
@@ -535,16 +534,13 @@ export function CommercialUWClient({
         const t12Data = buildT12DataFromHistoricals(newLineItems, newMappings, []);
         setT12(t12Data);
 
-        toast({
-          title: "T12 Imported",
-          description: `${data.lineItems.length} rows imported and mapped from ${data.fileName}`,
-        });
+        showSuccess(`T12 imported: ${data.lineItems.length} rows from ${data.fileName}`);
       } catch (err) {
         console.error("T12 import error:", err);
-        toast({ title: "Error", description: "Failed to import T12 data", variant: "destructive" });
+        showError("Could not import T12 data");
       }
     },
-    [loanId, toast]
+    [loanId]
   );
 
   const handleActivateT12Version = useCallback(
@@ -554,14 +550,14 @@ export function CommercialUWClient({
 
       const result = await activateT12Version(loanId, versionId);
       if (result.error) {
-        toast({ title: "Error", description: result.error, variant: "destructive" });
+        showError("Could not complete action", result.error);
         return;
       }
 
       // Fetch data for this version's upload
       const uploadData = await getT12UploadData(version.t12_upload_id);
       if (uploadData.error) {
-        toast({ title: "Error", description: uploadData.error, variant: "destructive" });
+        showError("Could not load upload data", uploadData.error);
         return;
       }
 
@@ -581,9 +577,9 @@ export function CommercialUWClient({
       );
       setT12(t12Data);
 
-      toast({ title: "Version Activated", description: "T12 version switched successfully." });
+      showSuccess("T12 version activated");
     },
-    [loanId, t12Versions, toast]
+    [loanId, t12Versions]
   );
 
   const handleT12OverrideChange = useCallback(
@@ -725,11 +721,7 @@ export function CommercialUWClient({
       if (!currentUwId) {
         const result = await createUnderwriting(loanId, propertyType);
         if (result.error || !result.id) {
-          toast({
-            title: "Error",
-            description: result.error ?? "Failed to create underwriting",
-            variant: "destructive",
-          });
+          showError("Could not create underwriting", result.error ?? "Failed to create underwriting");
           setSaving(false);
           return;
         }
@@ -873,23 +865,15 @@ export function CommercialUWClient({
 
       const hasError = results.some((r) => "error" in r && r.error);
       if (hasError) {
-        toast({
-          title: "Save Error",
-          description: results.find((r) => "error" in r && r.error)?.error as string,
-          variant: "destructive",
-        });
+        showError("Could not save underwriting", results.find((r) => "error" in r && r.error)?.error as string);
       } else {
         // Clear pending uploads after successful save
         setPendingUploads([]);
-        toast({ title: "Saved", description: "Underwriting saved successfully." });
+        showSuccess("Underwriting saved");
       }
     } catch (err) {
       console.error("Save error:", err);
-      toast({
-        title: "Error",
-        description: "An unexpected error occurred",
-        variant: "destructive",
-      });
+      showError("An unexpected error occurred");
     } finally {
       setSaving(false);
     }
@@ -898,7 +882,7 @@ export function CommercialUWClient({
     leaseIncome, occRevenue, ancIncome, t12, expenseOverrides, assumptions,
     financing, purchasePrice, goingInCapRate, computedGoingInCap, exitCapRate,
     dispositionCostPct, equityInvested, pohRentalIncome, pohExpenseRatio,
-    rentRoll, occupancyRows, ancillaryRows, proforma, toast, pendingUploads,
+    rentRoll, occupancyRows, ancillaryRows, proforma, pendingUploads,
     t12Upload, t12Overrides,
   ]);
 
@@ -908,30 +892,30 @@ export function CommercialUWClient({
       const result = await updateUWStatus(uwId, "in_review");
       if (!result.error) {
         setStatus("in_review");
-        toast({ title: "Submitted", description: "Underwriting submitted for review." });
+        showSuccess("Underwriting submitted for review");
       }
     }
-  }, [handleSave, uwId, toast]);
+  }, [handleSave, uwId]);
 
   const handleApprove = useCallback(async () => {
     if (uwId) {
       const result = await updateUWStatus(uwId, "approved");
       if (!result.error) {
         setStatus("approved");
-        toast({ title: "Approved", description: "Underwriting approved." });
+        showSuccess("Underwriting approved");
       }
     }
-  }, [uwId, toast]);
+  }, [uwId]);
 
   const handleReject = useCallback(async () => {
     if (uwId) {
       const result = await updateUWStatus(uwId, "rejected");
       if (!result.error) {
         setStatus("rejected");
-        toast({ title: "Rejected", description: "Underwriting rejected." });
+        showSuccess("Underwriting rejected");
       }
     }
-  }, [uwId, toast]);
+  }, [uwId]);
 
   return (
     <div className="space-y-4">

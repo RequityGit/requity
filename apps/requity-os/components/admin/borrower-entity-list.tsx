@@ -10,7 +10,7 @@ import { Building2, Plus, Pencil, Trash2, MapPin } from "lucide-react";
 import { BorrowerEntityDialog } from "@/components/admin/borrower-entity-dialog";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { deleteEntityAction } from "@/app/(authenticated)/(admin)/borrowers/new/actions";
-import { useToast } from "@/components/ui/use-toast";
+import { showSuccess, showError } from "@/lib/toast";
 import type { Tables } from "@/lib/supabase/types";
 
 type BorrowerEntity = Tables<"borrower_entities">;
@@ -40,7 +40,6 @@ export function BorrowerEntityList({
     null
   );
   const router = useRouter();
-  const { toast } = useToast();
 
   function handleAdd() {
     setEditingEntity(null);
@@ -56,13 +55,9 @@ export function BorrowerEntityList({
     const result = await deleteEntityAction(entityId);
 
     if (result.error) {
-      toast({
-        title: "Error deleting entity",
-        description: result.error,
-        variant: "destructive",
-      });
+      showError("Could not delete entity", result.error);
     } else {
-      toast({ title: "Entity deleted" });
+      showSuccess("Entity deleted");
       router.refresh();
     }
   }

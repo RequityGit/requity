@@ -9,7 +9,7 @@ import {
 } from "lucide-react";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { useRouter } from "next/navigation";
-import { toast } from "sonner";
+import { showSuccess, showError } from "@/lib/toast";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -154,7 +154,7 @@ export function GenerateDocumentDialog({
       if (needsRefresh) {
         const { data: refreshed, error: refreshError } = await supabase.auth.refreshSession();
         if (refreshError || !refreshed.session) {
-          toast.error("Session expired. Please sign in again.");
+          showError("Session expired. Please sign in again.");
           setGenerating(false);
           return;
         }
@@ -164,7 +164,7 @@ export function GenerateDocumentDialog({
       }
 
       if (!session) {
-        toast.error("Session expired. Please sign in again.");
+        showError("Session expired. Please sign in again.");
         setGenerating(false);
         return;
       }
@@ -193,7 +193,7 @@ export function GenerateDocumentDialog({
         const detail = err?.error || err?.message || res.statusText;
         // On 401, force a page reload to get a fresh session
         if (status === 401) {
-          toast.error("Session expired. Reloading page...");
+          showError("Session expired. Reloading page...");
           setGenerating(false);
           setTimeout(() => window.location.reload(), 1500);
           return;
@@ -206,7 +206,7 @@ export function GenerateDocumentDialog({
               : status === 404
                 ? `Not found (${status}): ${detail || "template or record not found"}`
                 : `Generation failed (${status}): ${detail || "unknown error"}`;
-        toast.error(message);
+        showError(message);
         setGenerating(false);
         return;
       }
@@ -219,9 +219,9 @@ export function GenerateDocumentDialog({
       setStep("result");
 
       if (data.missing_fields?.length > 0) {
-        toast.success(`Document generated with ${data.missing_fields.length} missing field(s).`);
+        showSuccess(`Document generated with ${data.missing_fields.length} missing field(s).`);
       } else {
-        toast.success("Document generated successfully.");
+        showSuccess("Document generated");
       }
     } catch (err) {
       console.error("Generate document error:", err);
@@ -229,7 +229,7 @@ export function GenerateDocumentDialog({
         err instanceof TypeError && err.message.includes("fetch")
           ? "Network error: could not reach the document generation service. Check your connection."
           : `Failed to generate document: ${err instanceof Error ? err.message : "unknown error"}`;
-      toast.error(message);
+      showError(message);
     }
 
     setGenerating(false);

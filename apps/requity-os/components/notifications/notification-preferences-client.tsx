@@ -7,7 +7,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Switch } from "@/components/ui/switch";
 import { ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useToast } from "@/components/ui/use-toast";
+import { showSuccess } from "@/lib/toast";
 import type { NotificationCategory } from "@/lib/notifications";
 import { categoryDisplayNames } from "@/lib/notifications";
 
@@ -42,7 +42,6 @@ export function NotificationPreferencesClient({
   const [collapsedCategories, setCollapsedCategories] = useState<Set<string>>(
     new Set()
   );
-  const { toast } = useToast();
 
   // Group types by category
   const grouped = types.reduce(
@@ -81,10 +80,7 @@ export function NotificationPreferencesClient({
     value: boolean
   ) {
     updatePreference(typeId, field, value);
-    toast({
-      title: "Preference updated",
-      description: "Your notification preference has been saved.",
-    });
+    showSuccess("Preference updated");
   }
 
   function handleCategoryToggle(
@@ -93,10 +89,7 @@ export function NotificationPreferencesClient({
     value: boolean
   ) {
     updateCategoryPreferences(category, field, value);
-    toast({
-      title: "Preferences updated",
-      description: `All ${categoryDisplayNames[category as NotificationCategory]} ${field === "email_enabled" ? "email" : "in-app"} notifications ${value ? "enabled" : "disabled"}.`,
-    });
+    showSuccess(`${categoryDisplayNames[category as NotificationCategory]} ${field === "email_enabled" ? "email" : "in-app"} notifications ${value ? "enabled" : "disabled"}`);
   }
 
   function isCategoryAllEnabled(

@@ -26,7 +26,7 @@ import {
 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { createClient } from "@/lib/supabase/client";
-import { useToast } from "@/components/ui/use-toast";
+import { showSuccess, showError } from "@/lib/toast";
 import { EntityMergeSection } from "./EntityMergeSection";
 import { processIntakeItemAction } from "@/app/(authenticated)/(admin)/pipeline/actions";
 import { ACTIVE_ASSET_CLASS_OPTIONS, type AssetClass } from "./pipeline-types";
@@ -314,7 +314,6 @@ function SectionHeader({ title, count }: { title: string; count?: number }) {
 
 export function IntakeReviewModal({ item, open, onOpenChange }: IntakeReviewModalProps) {
   const router = useRouter();
-  const { toast } = useToast();
   const [entityModes, setEntityModes] = useState<Partial<Record<IntakeEntityKey, EntityMode>>>({});
   const [fieldChoices, setFieldChoices] = useState<Partial<Record<IntakeEntityKey, Record<string, FieldChoice>>>>({});
   const [manualMatches, setManualMatches] = useState<Partial<Record<IntakeEntityKey, EntityMatchResult>>>({});
@@ -506,13 +505,10 @@ export function IntakeReviewModal({ item, open, onOpenChange }: IntakeReviewModa
     startTransition(async () => {
       const result = await processIntakeItemAction(item.id, decisions, formOverrides);
       if (result?.error) {
-        toast({ title: "Processing failed", description: result.error, variant: "destructive" });
+        showError("Could not process intake", result.error);
       } else {
         const deal = result.deal as { id?: string; deal_number?: string } | undefined;
-        toast({
-          title: "Intake processed",
-          description: deal?.deal_number ? `Deal ${deal.deal_number} created.` : "Deal created.",
-        });
+        showSuccess(deal?.deal_number ? `Deal ${deal.deal_number} created` : "Deal created");
         onOpenChange(false);
         setEntityModes({});
         setFieldChoices({});

@@ -22,7 +22,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { useToast } from "@/components/ui/use-toast";
+import { showSuccess, showError, showInfo } from "@/lib/toast";
 import { RTLDSCRForm } from "./rtl-dscr-form";
 import { CommercialTabs } from "./commercial-tabs";
 import { ModelHealthPanel } from "./model-health-panel";
@@ -117,8 +117,6 @@ export function UWEditorClient({
   linkedDealType,
 }: UWEditorClientProps) {
   const router = useRouter();
-  const { toast } = useToast();
-
   // Find initial version to edit: latest draft or active version
   const latestDraft = versions.find((v) => v.status === "draft");
   const activeVersion = versions.find((v) => v.id === activeVersionId);
@@ -170,18 +168,15 @@ export function UWEditorClient({
         isOpportunity
       );
       if (result.error) {
-        toast({ title: "Error", description: result.error, variant: "destructive" });
+        showError("Could not save version", result.error);
       } else {
-        toast({
-          title: markActive ? "Saved & Activated" : "Draft Saved",
-          description: `v${selectedVersion.version_number} ${markActive ? "is now the active version" : "saved as draft"}`,
-        });
+        showSuccess(markActive ? "Saved & activated" : "Draft saved");
         router.refresh();
       }
     } finally {
       setSaving(false);
     }
-  }, [selectedVersion, isEditable, inputs, isCommercial, dealId, currentUserId, currentUserName, saveVersionAction, isOpportunity, toast, router]);
+  }, [selectedVersion, isEditable, inputs, isCommercial, dealId, currentUserId, currentUserName, saveVersionAction, isOpportunity, router]);
 
   const handleClone = useCallback(async (sourceVersion: UWVersionData) => {
     setCloning(true);
@@ -194,33 +189,30 @@ export function UWEditorClient({
         isOpportunity
       );
       if (result.error) {
-        toast({ title: "Error", description: result.error, variant: "destructive" });
+        showError("Could not clone version", result.error);
       } else {
-        toast({
-          title: "Version Cloned",
-          description: `New draft created from v${sourceVersion.version_number}`,
-        });
+        showSuccess(`Version cloned from v${sourceVersion.version_number}`);
         router.refresh();
       }
     } finally {
       setCloning(false);
     }
-  }, [dealId, currentUserId, modelType, cloneVersionAction, isOpportunity, toast, router]);
+  }, [dealId, currentUserId, modelType, cloneVersionAction, isOpportunity, router]);
 
   const handleCreate = useCallback(async () => {
     setCreating(true);
     try {
       const result = await createVersionAction(dealId, currentUserId, modelType, isOpportunity);
       if (result.error) {
-        toast({ title: "Error", description: result.error, variant: "destructive" });
+        showError("Could not create scenario", result.error);
       } else {
-        toast({ title: "New Scenario", description: "Empty draft created" });
+        showSuccess("New scenario created");
         router.refresh();
       }
     } finally {
       setCreating(false);
     }
-  }, [dealId, currentUserId, modelType, createVersionAction, isOpportunity, toast, router]);
+  }, [dealId, currentUserId, modelType, createVersionAction, isOpportunity, router]);
 
   const ModelIcon = MODEL_ICONS[modelType];
 
@@ -242,11 +234,7 @@ export function UWEditorClient({
                 variant="ghost"
                 size="sm"
                 onClick={() =>
-                  toast({
-                    title: "Not linked to a deal",
-                    description:
-                      'This model is not linked to a deal yet. Use the "Link to Deal" button in the header above to connect it.',
-                  })
+                  showInfo("Not linked to a deal", 'Use the "Link to Deal" button in the header above to connect it.')
                 }
               >
                 <ArrowLeft className="h-4 w-4 mr-1" />

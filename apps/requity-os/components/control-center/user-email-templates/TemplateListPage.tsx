@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { useToast } from "@/components/ui/use-toast";
+import { showSuccess, showError } from "@/lib/toast";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -55,7 +55,6 @@ export function UserEmailTemplateListPage({
   initialTemplates,
 }: TemplateListPageProps) {
   const router = useRouter();
-  const { toast } = useToast();
   const confirm = useConfirm();
   const [templates, setTemplates] = useState(initialTemplates);
   const [activeCategory, setActiveCategory] = useState<string>("all");
@@ -70,12 +69,12 @@ export function UserEmailTemplateListPage({
     setActionLoading(id);
     const result = await toggleUserEmailTemplateActiveAction(id, !currentActive);
     if ("error" in result) {
-      toast({ title: "Error", description: result.error, variant: "destructive" });
+      showError("Could not update template", result.error);
     } else {
       setTemplates((prev) =>
         prev.map((t) => (t.id === id ? { ...t, is_active: !currentActive } : t))
       );
-      toast({ title: currentActive ? "Template deactivated" : "Template activated" });
+      showSuccess(currentActive ? "Template deactivated" : "Template activated");
     }
     setActionLoading(null);
   }
@@ -84,10 +83,10 @@ export function UserEmailTemplateListPage({
     setActionLoading(id);
     const result = await duplicateUserEmailTemplateAction(id);
     if ("error" in result) {
-      toast({ title: "Error", description: result.error, variant: "destructive" });
+      showError("Could not duplicate template", result.error);
     } else {
       setTemplates((prev) => [...prev, result.template]);
-      toast({ title: "Template duplicated" });
+      showSuccess("Template duplicated");
     }
     setActionLoading(null);
   }
@@ -104,10 +103,10 @@ export function UserEmailTemplateListPage({
     setActionLoading(id);
     const result = await deleteUserEmailTemplateAction(id);
     if ("error" in result) {
-      toast({ title: "Error", description: result.error, variant: "destructive" });
+      showError("Could not delete template", result.error);
     } else {
       setTemplates((prev) => prev.filter((t) => t.id !== id));
-      toast({ title: "Template deleted" });
+      showSuccess("Template deleted");
     }
     setActionLoading(null);
   }

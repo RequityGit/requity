@@ -8,7 +8,7 @@ import {
   ChevronUp,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
-import { toast } from "sonner";
+import { showSuccess, showError } from "@/lib/toast";
 import { cn } from "@/lib/utils";
 import { updateMarketRentByUnitType } from "@/app/(authenticated)/(admin)/pipeline/[id]/commercial-uw-actions";
 import { SectionCard, n, fmtCurrency } from "./shared";
@@ -209,9 +209,9 @@ export function UnitMixSection({ rentRoll, uwId }: UnitMixSectionProps) {
           newRent
         );
         if (result.error) {
-          toast.error(`Failed to update market rent: ${result.error}`);
+          showError("Could not update market rent", result.error);
         } else {
-          toast.success(`Market rent updated for ${unitType}`);
+          showSuccess(`Market rent updated for ${unitType}`);
           router.refresh();
         }
       } finally {

@@ -20,7 +20,7 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
-import { toast } from "sonner";
+import { showSuccess, showError } from "@/lib/toast";
 import { cn } from "@/lib/utils";
 import { upsertSourcesUses } from "@/app/(authenticated)/(admin)/pipeline/[id]/commercial-uw-actions";
 import { SectionCard, n, fmtCurrency } from "./shared";
@@ -198,9 +198,9 @@ function EditSourcesUsesDialog({
     try {
       const result = await upsertSourcesUses(uwId, rows.map((r, i) => ({ ...r, sort_order: i })));
       if (result.error) {
-        toast.error(`Failed to save: ${result.error}`);
+        showError("Could not save closing costs", result.error);
       } else {
-        toast.success("Sources & Uses saved");
+        showSuccess("Sources & Uses saved");
         router.refresh();
         onOpenChange(false);
       }

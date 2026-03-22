@@ -7,7 +7,7 @@ import { DataTable, Column } from "@/components/shared/data-table";
 import { StatusBadge } from "@/components/shared/status-badge";
 import { formatCurrency, formatDate } from "@/lib/format";
 import { Button } from "@/components/ui/button";
-import { useToast } from "@/components/ui/use-toast";
+import { showSuccess, showError } from "@/lib/toast";
 import { Check } from "lucide-react";
 
 interface ContributionRow {
@@ -27,7 +27,6 @@ interface ContributionListTableProps {
 
 export function ContributionListTable({ data }: ContributionListTableProps) {
   const router = useRouter();
-  const { toast } = useToast();
   const [processing, setProcessing] = useState<string | null>(null);
 
   async function markAsPaid(contributionId: string) {
@@ -44,14 +43,10 @@ export function ContributionListTable({ data }: ContributionListTableProps) {
 
       if (error) throw error;
 
-      toast({ title: "Contribution marked as paid" });
+      showSuccess("Contribution marked as paid");
       router.refresh();
     } catch (err: any) {
-      toast({
-        title: "Error",
-        description: err.message,
-        variant: "destructive",
-      });
+      showError("Could not mark contribution as paid", err.message);
     } finally {
       setProcessing(null);
     }

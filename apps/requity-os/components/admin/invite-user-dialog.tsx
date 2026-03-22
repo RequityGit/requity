@@ -20,7 +20,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Loader2, Send } from "lucide-react";
-import { useToast } from "@/components/ui/use-toast";
+import { showSuccess, showError } from "@/lib/toast";
 import {
   inviteUserAction,
   fetchInvestorsAction,
@@ -58,8 +58,6 @@ export function InviteUserDialog({
     { id: string; first_name: string; last_name: string; email: string | null }[]
   >([]);
   const [linkDataLoading, setLinkDataLoading] = useState(false);
-
-  const { toast } = useToast();
 
   // Reset form when dialog opens/closes
   useEffect(() => {
@@ -135,13 +133,9 @@ export function InviteUserDialog({
     });
 
     if ("error" in result) {
-      toast({
-        title: "Failed to invite user",
-        description: result.error,
-        variant: "destructive",
-      });
+      showError("Could not invite user", result.error);
     } else {
-      toast({ title: `Invitation sent to ${email}` });
+      showSuccess(`Invitation sent to ${email}`);
       onSuccess();
     }
     setLoading(false);

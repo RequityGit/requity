@@ -57,7 +57,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { toast } from "sonner";
+import { showSuccess, showError } from "@/lib/toast";
 import { type DealCondition } from "@/components/pipeline/pipeline-types";
 import { updateConditionStatusAction } from "@/app/(authenticated)/(admin)/pipeline/actions";
 import {
@@ -1002,7 +1002,7 @@ function ConditionNoteThread({
       .select()
       .single();
     if (error) {
-      toast.error(`Failed to post note: ${error.message}`);
+      showError("Could not post note", error.message);
       setPosting(false);
       return;
     }
@@ -1024,7 +1024,7 @@ function ConditionNoteThread({
           })) as never
         );
     }
-    toast.success(isInternal ? "Internal note posted" : "Note posted");
+    showSuccess(isInternal ? "Internal note posted" : "Note posted");
     setPosting(false);
   }
 
@@ -1332,14 +1332,14 @@ function DocumentsSection({
 
   async function handleViewOrDownload(doc: DealDocument, download: boolean) {
     if (!doc.storage_path) {
-      toast.error("No storage path for this document");
+      showError("No storage path for this document");
       return;
     }
     setDownloadingId(doc.id);
     const result = await getDocumentSignedUrl(doc.storage_path);
     setDownloadingId(null);
     if (result.error || !result.url) {
-      toast.error(`Failed to get download link: ${result.error ?? "Unknown error"}`);
+      showError("Could not get download link", result.error ?? "Unknown error");
       return;
     }
     if (download) {
@@ -1364,7 +1364,7 @@ function DocumentsSection({
             !urlResult.storagePath ||
             !urlResult.token
           ) {
-            toast.error(`Failed to upload ${file.name}: ${urlResult.error ?? "Could not create upload URL"}`);
+            showError(`Could not upload ${file.name}`, urlResult.error ?? "Could not create upload URL");
             continue;
           }
           const uploadRes = await fetch(urlResult.signedUrl, {
@@ -1374,7 +1374,7 @@ function DocumentsSection({
           });
           if (!uploadRes.ok) {
             const errorText = await uploadRes.text().catch(() => "Unknown error");
-            toast.error(`Failed to upload ${file.name}: ${errorText}`);
+            showError(`Could not upload ${file.name}`, errorText);
             continue;
           }
           const saveResult = await saveDealDocumentRecord({
@@ -1386,14 +1386,12 @@ function DocumentsSection({
             visibility: "internal",
           });
           if (saveResult.error) {
-            toast.error(`Failed to save ${file.name}: ${saveResult.error}`);
+            showError(`Could not save ${file.name}`, saveResult.error);
           } else {
-            toast.success(`Uploaded ${file.name}`);
+            showSuccess(`Uploaded ${file.name}`);
           }
         } catch (err) {
-          toast.error(
-            `Failed to upload ${file.name}: ${err instanceof Error ? err.message : "Upload failed"}`
-          );
+          showError(`Could not upload ${file.name}`, err instanceof Error ? err.message : "Upload failed");
         }
       }
     });
@@ -1422,9 +1420,9 @@ function DocumentsSection({
     setDeletingId(docId);
     const result = await deleteDealDocumentV2(docId);
     if (result.error) {
-      toast.error(`Failed to delete: ${result.error}`);
+      showError("Could not delete document", result.error);
     } else {
-      toast.success(`Deleted ${docName}`);
+      showSuccess(`Deleted ${docName}`);
     }
     setDeletingId(null);
   }
@@ -1436,9 +1434,9 @@ function DocumentsSection({
       .update({ archived_at: archived ? new Date().toISOString() : null } as never)
       .eq("id" as never, docId as never);
     if (error) {
-      toast.error(`Failed to ${archived ? "archive" : "unarchive"}: ${error.message}`);
+      showError(`Could not ${archived ? "archive" : "unarchive"} document`, error.message);
     } else {
-      toast.success(archived ? "Document archived" : "Document restored");
+      showSuccess(archived ? "Document archived" : "Document restored");
     }
   }
 
@@ -1449,9 +1447,9 @@ function DocumentsSection({
     const result = await updateDocumentVisibility(doc.id, dealId, next);
     setTogglingVisId(null);
     if (result.error) {
-      toast.error(`Failed to update visibility: ${result.error}`);
+      showError("Could not update visibility", result.error);
     } else {
-      toast.success(next === "external" ? "Marked as shared" : "Marked as internal");
+      showSuccess(next === "external" ? "Marked as shared" : "Marked as internal");
     }
   }
 
@@ -1655,9 +1653,9 @@ function DocumentsSection({
                             const result = await triggerDocumentAnalysis(doc.id, dealId);
                             setRunningAiReviewId(null);
                             if (result?.error) {
-                              toast.error(result.error);
+                              showError("Could not start AI review", result.error);
                             } else {
-                              toast.success("AI review started for this document.");
+                              showSuccess("AI review started for this document");
                             }
                           }}
                           className="inline-flex items-center gap-1 rounded-full border border-border px-1.5 py-0 text-[9px] font-medium text-muted-foreground transition-colors hover:bg-muted/50 hover:text-foreground cursor-pointer shrink-0 disabled:opacity-50 disabled:pointer-events-none"
@@ -2499,9 +2497,9 @@ function ConditionsSection({
       .update({ condition_id: condId } as never)
       .eq("id" as never, docId as never);
     if (error) {
-      toast.error(`Failed to link document: ${error.message}`);
+      showError("Could not link document", error.message);
     } else {
-      toast.success("Document linked to condition");
+      showSuccess("Document linked to condition");
       router.refresh();
     }
     setLinkingConditionId(null);
@@ -2519,9 +2517,9 @@ function ConditionsSection({
       dealId
     );
     if (result.error) {
-      toast.error(`Failed to update: ${result.error}`);
+      showError("Could not update condition", result.error);
     } else {
-      toast.success("Condition updated");
+      showSuccess("Condition updated");
       router.refresh();
     }
   }
@@ -2535,9 +2533,9 @@ function ConditionsSection({
       null // primaryContactId not available here; action logs without it
     );
     if (result.error) {
-      toast.error(`Failed to request revision: ${result.error}`);
+      showError("Could not request revision", result.error);
     } else {
-      toast.success("Revision requested - borrower will see feedback on their upload portal");
+      showSuccess("Revision requested - borrower will see feedback on their upload portal");
       router.refresh();
     }
   }
@@ -2555,7 +2553,7 @@ function ConditionsSection({
       !urlResult.storagePath ||
       !urlResult.token
     ) {
-      toast.error(urlResult.error ?? "Could not create upload URL");
+      showError("Could not create upload URL", urlResult.error);
       return;
     }
     const uploadRes = await fetch(urlResult.signedUrl, {
@@ -2564,7 +2562,7 @@ function ConditionsSection({
       body: file,
     });
     if (!uploadRes.ok) {
-      toast.error("Upload failed");
+      showError("Could not upload file");
       return;
     }
     const saveResult = await saveDealDocumentRecord({
@@ -2576,10 +2574,10 @@ function ConditionsSection({
       conditionId: condId,
     });
     if (saveResult.error) {
-      toast.error(saveResult.error);
+      showError("Could not save document", saveResult.error);
       return;
     }
-    toast.success(`${file.name} uploaded`);
+    showSuccess(`${file.name} uploaded`);
     router.refresh();
   }
 
@@ -2815,9 +2813,9 @@ export function DiligenceTab({
   ) {
     const result = await updateConditionDocumentApproval(docId, status);
     if (result.error) {
-      toast.error(result.error);
+      showError("Could not update approval status", result.error);
     } else {
-      toast.success(
+      showSuccess(
         status === "approved" ? "Document approved" : "Document denied"
       );
       router.refresh();
@@ -2827,9 +2825,9 @@ export function DiligenceTab({
   async function handleRevisionFromPreview(conditionId: string, feedback: string) {
     const result = await requestConditionRevision(conditionId, dealId, feedback, null);
     if (result.error) {
-      toast.error(`Failed to request revision: ${result.error}`);
+      showError("Could not request revision", result.error);
     } else {
-      toast.success("Revision requested - borrower will see feedback on their upload portal");
+      showSuccess("Revision requested - borrower will see feedback on their upload portal");
       router.refresh();
     }
   }
@@ -2841,9 +2839,9 @@ export function DiligenceTab({
       .update({ condition_id: null } as never)
       .eq("id" as never, docId as never);
     if (error) {
-      toast.error(`Failed to unlink document: ${error.message}`);
+      showError("Could not unlink document", error.message);
     } else {
-      toast.success("Document unlinked");
+      showSuccess("Document unlinked");
       router.refresh();
     }
   }

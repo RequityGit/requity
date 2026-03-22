@@ -1,4 +1,4 @@
-import { toast } from "sonner";
+import { showLoading, resolveLoading, rejectLoading } from "@/lib/toast";
 
 /**
  * Detect whether a CSS color value is "light" (close to white).
@@ -238,7 +238,7 @@ export async function exportHtmlAsPdf(
   htmlContent: string,
   filename: string
 ): Promise<void> {
-  const toastId = toast.loading("Generating PDF...");
+  const toastId = showLoading("Generating PDF...");
 
   let iframe: HTMLIFrameElement | null = null;
 
@@ -256,10 +256,10 @@ export async function exportHtmlAsPdf(
       .from(result.body)
       .save();
 
-    toast.success("PDF downloaded", { id: toastId });
+    resolveLoading(toastId, "PDF downloaded");
   } catch (err) {
     console.error("PDF export failed:", err);
-    toast.error("Failed to generate PDF", { id: toastId });
+    rejectLoading(toastId, "Could not generate PDF");
   } finally {
     if (iframe && iframe.parentNode) {
       iframe.parentNode.removeChild(iframe);

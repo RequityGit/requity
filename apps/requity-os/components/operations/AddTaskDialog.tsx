@@ -23,7 +23,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useToast } from "@/components/ui/use-toast";
+import { showSuccess, showError, showWarning } from "@/lib/toast";
 import { DatePicker } from "@/components/ui/date-picker";
 import { Switch } from "@/components/ui/switch";
 import { PlusCircle, Loader2, Shield, AlertCircle, Paperclip, X, FileText, Upload } from "lucide-react";
@@ -70,7 +70,6 @@ export function AddTaskDialog({ projects, teamMembers, externalOpen, onExternalO
   const [loading, setLoading] = useState(false);
   const [form, setForm] = useState(INITIAL_FORM);
   const router = useRouter();
-  const { toast } = useToast();
 
   // Approval state
   const [requiresApproval, setRequiresApproval] = useState(false);
@@ -141,17 +140,17 @@ export function AddTaskDialog({ projects, teamMembers, externalOpen, onExternalO
     e.preventDefault();
 
     if (!form.title.trim()) {
-      toast({ title: "Task title is required", variant: "destructive" });
+      showWarning("Task title is required");
       return;
     }
 
     if (requiresApproval && !approverId) {
-      toast({ title: "Approver is required when approval is enabled", variant: "destructive" });
+      showWarning("Approver is required when approval is enabled");
       return;
     }
 
     if (requiresApproval && approverId && selectedAssigneeId && approverId === selectedAssigneeId) {
-      toast({ title: "Approver cannot be the same as assignee", variant: "destructive" });
+      showWarning("Approver cannot be the same as assignee");
       return;
     }
 
@@ -163,7 +162,7 @@ export function AddTaskDialog({ projects, teamMembers, externalOpen, onExternalO
       } = await supabase.auth.getUser();
 
       if (!user) {
-        toast({ title: "You must be logged in", variant: "destructive" });
+        showError("You must be logged in");
         return;
       }
 
@@ -199,11 +198,7 @@ export function AddTaskDialog({ projects, teamMembers, externalOpen, onExternalO
       }).select("id").single();
 
       if (error) {
-        toast({
-          title: "Error creating task",
-          description: error.message,
-          variant: "destructive",
-        });
+        showError("Could not create task", error.message);
         return;
       }
 
@@ -228,7 +223,7 @@ export function AddTaskDialog({ projects, teamMembers, externalOpen, onExternalO
             .upload(path, file);
 
           if (uploadError) {
-            toast({ title: "Upload failed", description: `${file.name}: ${uploadError.message}`, variant: "destructive" });
+            showError("Could not upload file", `${file.name}: ${uploadError.message}`);
             continue;
           }
 
@@ -245,12 +240,12 @@ export function AddTaskDialog({ projects, teamMembers, externalOpen, onExternalO
         }
       }
 
-      toast({ title: "Task created successfully" });
+      showSuccess("Task created");
       setOpen(false);
       resetForm();
       router.refresh();
     } catch {
-      toast({ title: "An unexpected error occurred", variant: "destructive" });
+      showError("An unexpected error occurred");
     } finally {
       setLoading(false);
     }

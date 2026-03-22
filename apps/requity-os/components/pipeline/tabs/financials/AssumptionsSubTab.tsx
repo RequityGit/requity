@@ -15,7 +15,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { toast } from "sonner";
+import { showSuccess, showError } from "@/lib/toast";
 import { cn } from "@/lib/utils";
 import {
   updateCommercialUW,
@@ -77,9 +77,9 @@ export function AssumptionsSubTab({ uw, uwId, propertyType }: AssumptionsSubTabP
         sale_costs_pct: fields.sale_costs_pct / 100,
       });
       if (result.error) {
-        toast.error(`Failed to save assumptions: ${result.error}`);
+        showError("Could not save assumptions", result.error);
       } else {
-        toast.success("Assumptions saved");
+        showSuccess("Assumptions saved");
         router.refresh();
       }
     } finally {

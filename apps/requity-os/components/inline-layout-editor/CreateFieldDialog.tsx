@@ -18,7 +18,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Loader2, Plus, X } from "lucide-react";
-import { toast } from "sonner";
+import { showSuccess, showError } from "@/lib/toast";
 import { createField } from "@/app/(authenticated)/control-center/object-manager/actions";
 import { useInlineLayout } from "./InlineLayoutContext";
 
@@ -114,7 +114,7 @@ export function CreateFieldDialog({
 
       const result = await createField(input);
       if (result.error) {
-        toast.error(`Failed to create field: ${result.error}`);
+        showError(`Failed to create field: ${result.error}`);
         return;
       }
 
@@ -129,7 +129,7 @@ export function CreateFieldDialog({
         // (imported from FieldPicker would be circular, so we use a global event)
         window.dispatchEvent(new CustomEvent("inline-editor:field-created"));
 
-        toast.success(`Field "${label.trim()}" created and added to layout`);
+        showSuccess(`Field "${label.trim()}" created and added to layout`);
         reset();
         onOpenChange(false);
       }

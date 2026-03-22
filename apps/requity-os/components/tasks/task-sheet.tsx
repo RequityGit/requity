@@ -2,7 +2,7 @@
 
 import { useState, useRef, useCallback, useEffect } from "react";
 import { createClient } from "@/lib/supabase/client";
-import { useToast } from "@/components/ui/use-toast";
+import { showSuccess, showError, showWarning, showInfo } from "@/lib/toast";
 import { formatDateTime } from "@/lib/format";
 import {
   Dialog,
@@ -78,7 +78,6 @@ export function TaskSheet({
   defaultLinkedEntity,
 }: TaskSheetProps) {
   const isNew = !task;
-  const { toast } = useToast();
   const confirm = useConfirm();
   const fileRef = useRef<HTMLInputElement>(null);
   const [saving, setSaving] = useState(false);
@@ -271,7 +270,7 @@ export function TaskSheet({
         .upload(path, file);
 
       if (uploadError) {
-        toast({ title: "Upload failed", description: uploadError.message, variant: "destructive" });
+        showError("Could not upload file", uploadError.message);
         continue;
       }
 
@@ -289,7 +288,7 @@ export function TaskSheet({
         .single();
 
       if (insertError) {
-        toast({ title: "Failed to save attachment", description: insertError.message, variant: "destructive" });
+        showError("Could not save attachment", insertError.message);
       } else if (inserted) {
         setAttachments((prev) => [...prev, inserted as never]);
       }
@@ -316,11 +315,7 @@ export function TaskSheet({
         .upload(path, file);
 
       if (uploadError) {
-        toast({
-          title: "Upload failed",
-          description: uploadError.message,
-          variant: "destructive",
-        });
+        showError("Could not upload file", uploadError.message);
         continue;
       }
 
@@ -338,11 +333,7 @@ export function TaskSheet({
         .single();
 
       if (insertError) {
-        toast({
-          title: "Failed to save attachment",
-          description: insertError.message,
-          variant: "destructive",
-        });
+        showError("Could not save attachment", insertError.message);
       } else if (inserted) {
         setAttachments((prev) => [...prev, inserted as never]);
       }
@@ -364,12 +355,12 @@ export function TaskSheet({
     if (!title.trim()) return;
 
     if (isNew && requiresApproval && !newApproverId) {
-      toast({ title: "Approver is required when approval is enabled", variant: "destructive" });
+      showWarning("Approver is required when approval is enabled");
       return;
     }
 
     if (isNew && requiresApproval && newApproverId && assignedTo && newApproverId === assignedTo) {
-      toast({ title: "Approver cannot be the same as assignee", variant: "destructive" });
+      showWarning("Approver cannot be the same as assignee");
       return;
     }
 
@@ -476,11 +467,7 @@ export function TaskSheet({
       }
       onClose();
     } catch (err: unknown) {
-      toast({
-        title: "Failed to save task",
-        description: (err as Error).message,
-        variant: "destructive",
-      });
+      showError("Could not save task", (err as Error).message);
     }
     setSaving(false);
   };
@@ -502,11 +489,7 @@ export function TaskSheet({
       .eq("id", task.id);
 
     if (error) {
-      toast({
-        title: "Failed to delete task",
-        description: error.message,
-        variant: "destructive",
-      });
+      showError("Could not delete task", error.message);
     } else {
       onDeleted(task.id);
       onClose();
@@ -563,7 +546,7 @@ export function TaskSheet({
 
     const prompt = lines.join("\n");
     await navigator.clipboard.writeText(prompt);
-    toast({ title: "Copied to clipboard", description: "Paste into Claude Code to start working on this task." });
+    showInfo("Copied to clipboard");
   };
 
   const handlePreviewAttachment = async (att: { file_name: string; storage_path: string; file_type: string | null }) => {
@@ -579,7 +562,7 @@ export function TaskSheet({
         window.open(data.signedUrl, "_blank");
       }
     } else {
-      toast({ title: "Could not load file", variant: "destructive" });
+      showError("Could not load file");
     }
   };
 
@@ -595,11 +578,11 @@ export function TaskSheet({
     setApprovalActionLoading(true);
     const result = await approveTask(task.id);
     if (result.success) {
-      toast({ title: "Task approved" });
+      showSuccess("Task approved");
       onSaved({ ...task, status: "Complete", completed_at: new Date().toISOString() });
       onClose();
     } else {
-      toast({ title: "Failed to approve", description: result.error, variant: "destructive" });
+      showError("Could not approve task", result.error);
     }
     setApprovalActionLoading(false);
   };
@@ -609,11 +592,11 @@ export function TaskSheet({
     setApprovalActionLoading(true);
     const result = await requestTaskRevision(task.id, revisionNote.trim());
     if (result.success) {
-      toast({ title: "Revision requested" });
+      showSuccess("Revision requested");
       onSaved({ ...task, status: "In Progress" });
       onClose();
     } else {
-      toast({ title: "Failed to request revision", description: result.error, variant: "destructive" });
+      showError("Could not request revision", result.error);
     }
     setApprovalActionLoading(false);
   };
@@ -623,11 +606,11 @@ export function TaskSheet({
     setApprovalActionLoading(true);
     const result = await rejectTask(task.id, rejectionReason.trim());
     if (result.success) {
-      toast({ title: "Task rejected" });
+      showSuccess("Task rejected");
       onSaved({ ...task, status: "Complete", completed_at: new Date().toISOString() });
       onClose();
     } else {
-      toast({ title: "Failed to reject", description: result.error, variant: "destructive" });
+      showError("Could not reject task", result.error);
     }
     setApprovalActionLoading(false);
   };
@@ -645,11 +628,11 @@ export function TaskSheet({
     setApprovalActionLoading(true);
     const result = await submitTaskForApproval(task.id);
     if (result.success) {
-      toast({ title: "Submitted for approval" });
+      showSuccess("Submitted for approval");
       onSaved({ ...task, status: "Pending Approval" });
       setStatus("Pending Approval");
     } else {
-      toast({ title: "Failed to submit", description: result.error, variant: "destructive" });
+      showError("Could not submit for approval", result.error);
     }
     setApprovalActionLoading(false);
   };

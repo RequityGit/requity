@@ -18,7 +18,7 @@ import {
   LoanStage,
   getDaysInStageBg,
 } from "@/lib/constants";
-import { useToast } from "@/components/ui/use-toast";
+import { showSuccess, showError } from "@/lib/toast";
 import { useIsMobile } from "@/hooks/use-mobile";
 import {
   ChevronRight,
@@ -62,7 +62,6 @@ export function LoanKanban({ data, currentUserId }: LoanKanbanProps) {
   const [movingLoanId, setMovingLoanId] = useState<string | null>(null);
   const isMobile = useIsMobile();
   const router = useRouter();
-  const { toast } = useToast();
 
   function getDaysInStage(stageUpdatedAt: string): number {
     const updated = new Date(stageUpdatedAt);
@@ -91,13 +90,9 @@ export function LoanKanban({ data, currentUserId }: LoanKanbanProps) {
 
     if (error) {
       const isSchemaError = error.message?.includes("schema cache") || error.message?.includes("Could not find the");
-      toast({
-        title: "Error moving loan",
-        description: isSchemaError
-          ? "Database schema needs to be refreshed. Please contact your administrator to reload the Supabase schema cache."
-          : error.message,
-        variant: "destructive",
-      });
+      showError("Could not move loan", isSchemaError
+        ? "Database schema needs to be refreshed. Please contact your administrator to reload the Supabase schema cache."
+        : error.message);
       setMovingLoanId(null);
       return;
     }
@@ -118,9 +113,7 @@ export function LoanKanban({ data, currentUserId }: LoanKanbanProps) {
       )
     );
     setMovingLoanId(null);
-    toast({
-      title: `Loan moved to ${LOAN_STAGE_LABELS[newStage as LoanStage] || newStage}`,
-    });
+    showSuccess(`Loan moved to ${LOAN_STAGE_LABELS[newStage as LoanStage] || newStage}`);
   }
 
   function handleDragStart(e: React.DragEvent, loanId: string) {

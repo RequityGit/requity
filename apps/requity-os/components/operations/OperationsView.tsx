@@ -3,7 +3,7 @@
 import { useMemo, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
-import { useToast } from "@/components/ui/use-toast";
+import { showSuccess, showError, showWarning } from "@/lib/toast";
 import { cn } from "@/lib/utils";
 import { formatDateShort, formatDate } from "@/lib/format";
 import {
@@ -787,7 +787,6 @@ export function OperationsView({
 }: OperationsViewProps) {
   const router = useRouter();
   const supabase = createClient();
-  const { toast } = useToast();
 
   const [view, setView] = useState<"projects" | "tasks" | "approvals">("projects");
   const [statusFilter, setStatusFilter] = useState("all");
@@ -899,7 +898,7 @@ export function OperationsView({
 
     if (toggleError) {
       console.error("Failed to update task status:", toggleError);
-      toast({ title: "Error", description: "Failed to update task status. Please try again.", variant: "destructive" });
+      showError("Could not update task status", "Please try again.");
       return;
     }
 
@@ -913,12 +912,9 @@ export function OperationsView({
         );
 
         if (rpcError) {
-          toast({ title: "Task completed", description: "Could not generate next occurrence." });
+          showWarning("Task completed", "Could not generate next occurrence.");
         } else if ((data as Record<string, unknown>)?.success) {
-          toast({
-            title: "Task completed",
-            description: `Next occurrence scheduled for ${formatDate((data as Record<string, unknown>).next_due_date as string)}`,
-          });
+          showSuccess(`Task completed, next occurrence scheduled for ${formatDate((data as Record<string, unknown>).next_due_date as string)}`);
         }
       }
     }
@@ -931,10 +927,10 @@ export function OperationsView({
       const description = error.message?.includes("foreign key constraint")
         ? "Failed to delete task. It has related records that must be removed first."
         : "Could not delete task.";
-      toast({ title: "Failed to delete task", description, variant: "destructive" });
+      showError("Could not delete task", description);
       return;
     }
-    toast({ title: "Task deleted" });
+    showSuccess("Task deleted");
     router.refresh();
   }
 
@@ -942,15 +938,15 @@ export function OperationsView({
     const { error: unlinkError } = await supabase.from("ops_tasks").update({ project_id: null }).eq("project_id", projectId);
     if (unlinkError) {
       console.error("Failed to unlink tasks from project:", unlinkError);
-      toast({ title: "Error", description: "Failed to unlink tasks from project. Please try again.", variant: "destructive" });
+      showError("Could not unlink tasks from project", "Please try again.");
       return;
     }
     const { error } = await supabase.from("ops_projects").delete().eq("id", projectId);
     if (error) {
-      toast({ title: "Error", description: "Could not delete project.", variant: "destructive" });
+      showError("Could not delete project");
       return;
     }
-    toast({ title: "Project deleted" });
+    showSuccess("Project deleted");
     router.refresh();
   }
 
@@ -959,7 +955,7 @@ export function OperationsView({
     const { error: stopError } = await supabase.from("ops_tasks").update({ is_active_recurrence: false }).eq("id", taskId);
     if (stopError) {
       console.error("Failed to stop recurrence:", stopError);
-      toast({ title: "Error", description: "Failed to stop recurrence. Please try again.", variant: "destructive" });
+      showError("Could not stop recurrence", "Please try again.");
       return;
     }
     if (task?.recurring_series_id) {
@@ -969,12 +965,12 @@ export function OperationsView({
         .neq("status", "Complete");
       if (seriesError) {
         console.error("Failed to stop series recurrence:", seriesError);
-        toast({ title: "Warning", description: "Recurrence stopped for this task but failed for related tasks.", variant: "destructive" });
+        showWarning("Recurrence stopped for this task but could not stop for related tasks");
         router.refresh();
         return;
       }
     }
-    toast({ title: "Recurrence stopped", description: "No further tasks will be generated." });
+    showSuccess("Recurrence stopped");
     router.refresh();
   }
 
@@ -994,13 +990,13 @@ export function OperationsView({
       const failed = results.filter((r) => r.error);
       if (failed.length > 0) {
         console.error("Failed to persist project order:", failed.map((r) => r.error));
-        toast({ title: "Error", description: "Failed to save project order. Please refresh and try again.", variant: "destructive" });
+        showError("Could not save project order", "Please refresh and try again.");
       }
     } catch (err) {
       console.error("Failed to persist project order:", err);
-      toast({ title: "Error", description: "Failed to save project order.", variant: "destructive" });
+      showError("Could not save project order");
     }
-  }, [supabase, toast]);
+  }, [supabase]);
 
   const persistTaskOrder = useCallback(async (taskIds: string[]) => {
     try {
@@ -1011,13 +1007,13 @@ export function OperationsView({
       const failed = results.filter((r) => r.error);
       if (failed.length > 0) {
         console.error("Failed to persist task order:", failed.map((r) => r.error));
-        toast({ title: "Error", description: "Failed to save task order. Please refresh and try again.", variant: "destructive" });
+        showError("Could not save task order", "Please refresh and try again.");
       }
     } catch (err) {
       console.error("Failed to persist task order:", err);
-      toast({ title: "Error", description: "Failed to save task order.", variant: "destructive" });
+      showError("Could not save task order");
     }
-  }, [supabase, toast]);
+  }, [supabase]);
 
   function handleProjectDragEnd(event: DragEndEvent) {
     const { active, over } = event;

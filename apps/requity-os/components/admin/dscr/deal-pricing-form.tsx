@@ -13,7 +13,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useToast } from "@/components/ui/use-toast";
+import { showSuccess, showError, showWarning } from "@/lib/toast";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Calculator, Loader2 } from "lucide-react";
 import { runPricingAction, type PricingRunInput } from "@/app/(authenticated)/(admin)/models/dscr/actions";
@@ -34,7 +34,6 @@ import { PricingResults } from "./pricing-results";
 
 export function DealPricingForm() {
   const router = useRouter();
-  const { toast } = useToast();
   const [running, setRunning] = useState(false);
   const [results, setResults] = useState<any>(null);
   const [pricingRunId, setPricingRunId] = useState<string | null>(null);
@@ -99,27 +98,23 @@ export function DealPricingForm() {
 
   async function handleRunPricing() {
     if (!form.property_state) {
-      toast({ title: "Error", description: "Property state is required", variant: "destructive" });
+      showWarning("Property state is required");
       return;
     }
     if (REQUITY_EXCLUDED_STATES.includes(form.property_state)) {
-      toast({
-        title: "Error",
-        description: `Requity does not lend in ${form.property_state}`,
-        variant: "destructive",
-      });
+      showError("Could not run pricing", `Requity does not lend in ${form.property_state}`);
       return;
     }
     if (!form.loan_amount || form.loan_amount <= 0) {
-      toast({ title: "Error", description: "Loan amount is required", variant: "destructive" });
+      showWarning("Loan amount is required");
       return;
     }
     if (!form.property_value || form.property_value <= 0) {
-      toast({ title: "Error", description: "Property value is required", variant: "destructive" });
+      showWarning("Property value is required");
       return;
     }
     if (!form.fico_score || form.fico_score < 300) {
-      toast({ title: "Error", description: "Valid FICO score is required", variant: "destructive" });
+      showWarning("Valid FICO score is required");
       return;
     }
 
@@ -127,14 +122,14 @@ export function DealPricingForm() {
     try {
       const result = await runPricingAction(form);
       if ("error" in result) {
-        toast({ title: "Pricing Error", description: result.error, variant: "destructive" });
+        showError("Pricing error", result.error);
         return;
       }
       setResults(result.result);
       setPricingRunId(result.pricingRunId || null);
-      toast({ title: "Pricing complete" });
+      showSuccess("Pricing complete");
     } catch (err: any) {
-      toast({ title: "Error", description: err?.message || "Pricing failed", variant: "destructive" });
+      showError("Could not run pricing", err?.message || "Pricing failed");
     } finally {
       setRunning(false);
     }

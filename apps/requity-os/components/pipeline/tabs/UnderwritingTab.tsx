@@ -30,7 +30,7 @@ import { SourcesUsesSubTab } from "./sources-uses/SourcesUsesSubTab";
 import { T12SubTab } from "./financials/T12SubTab";
 import { CommercialUnderwritingTab } from "./CommercialUnderwritingTab";
 import { updateDealGoogleSheetAction, clearDealGoogleSheetAction } from "@/app/(authenticated)/(admin)/pipeline/[id]/actions";
-import { toast } from "sonner";
+import { showSuccess, showError } from "@/lib/toast";
 
 // ── Types ──
 
@@ -108,17 +108,17 @@ export function UnderwritingTab({ data, dealId, sheetUrl }: UnderwritingTabProps
   const handleLinkSheetSubmit = useCallback(async () => {
     const value = linkSheetInput.trim();
     if (!value) {
-      toast.error("Enter a Google Sheet URL or sheet ID");
+      showError("Enter a Google Sheet URL or sheet ID");
       return;
     }
     setLinkSheetSaving(true);
     try {
       const result = await updateDealGoogleSheetAction(dealId, value);
       if ("error" in result && result.error) {
-        toast.error(result.error);
+        showError("Could not link Google Sheet", result.error);
         return;
       }
-      toast.success("Google Sheet linked");
+      showSuccess("Google Sheet linked");
       setLinkSheetOpen(false);
       setLinkSheetInput("");
       router.refresh();
@@ -132,10 +132,10 @@ export function UnderwritingTab({ data, dealId, sheetUrl }: UnderwritingTabProps
     try {
       const result = await clearDealGoogleSheetAction(dealId);
       if ("error" in result && result.error) {
-        toast.error(result.error);
+        showError("Could not unlink Google Sheet", result.error);
         return;
       }
-      toast.success("Google Sheet unlinked");
+      showSuccess("Google Sheet unlinked");
       setLinkSheetOpen(false);
       setLinkSheetInput("");
       router.refresh();

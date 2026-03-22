@@ -32,7 +32,7 @@ import {
   Trash2,
   AlertTriangle,
 } from "lucide-react";
-import { toast } from "sonner";
+import { showSuccess, showError } from "@/lib/toast";
 import { cn } from "@/lib/utils";
 import {
   updateFieldConfig,
@@ -449,7 +449,7 @@ export function FieldConfigPopover({
 
       const result = await updateFieldConfig(fieldConfigId, updates);
       if (result.error) {
-        toast.error(`Failed to update field: ${result.error}`);
+        showError(`Failed to update field: ${result.error}`);
       } else {
         const updated: FieldConfigData = {
           ...(config ?? ({ id: fieldConfigId } as FieldConfigData)),
@@ -475,7 +475,7 @@ export function FieldConfigPopover({
         fieldConfigCache.set(fieldConfigId, updated);
         setConfig(updated);
         setOpen(false);
-        toast.success("Field updated. Changes apply across all layouts.");
+        showSuccess("Field updated. Changes apply across all layouts.");
       }
     });
   }
@@ -486,10 +486,10 @@ export function FieldConfigPopover({
     startSave(async () => {
       const result = await archiveField(fieldConfigId);
       if (result.error) {
-        toast.error(`Failed to archive: ${result.error}`);
+        showError(`Failed to archive: ${result.error}`);
       } else {
         fieldConfigCache.delete(fieldConfigId);
-        toast.success("Field archived.");
+        showSuccess("Field archived.");
         setOpen(false);
         window.dispatchEvent(new CustomEvent("inline-editor:field-created")); // triggers picker cache invalidation
       }
@@ -502,10 +502,10 @@ export function FieldConfigPopover({
     startSave(async () => {
       const result = await deleteFieldPermanently(fieldConfigId);
       if (result.error) {
-        toast.error(`Failed to delete: ${result.error}`);
+        showError(`Failed to delete: ${result.error}`);
       } else {
         fieldConfigCache.delete(fieldConfigId);
-        toast.success("Field permanently deleted.");
+        showSuccess("Field permanently deleted.");
         setOpen(false);
         window.dispatchEvent(new CustomEvent("inline-editor:field-created"));
       }
@@ -516,7 +516,7 @@ export function FieldConfigPopover({
   function addOption() {
     if (!newOption.trim()) return;
     if (dropdownOptions.includes(newOption.trim())) {
-      toast.error("This option already exists");
+      showError("This option already exists");
       return;
     }
     setDropdownOptions((prev) => [...prev, newOption.trim()]);

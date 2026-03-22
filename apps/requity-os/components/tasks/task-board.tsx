@@ -3,7 +3,7 @@
 import { useState, useCallback, useMemo, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
-import { useToast } from "@/components/ui/use-toast";
+import { showError } from "@/lib/toast";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
 import { Plus, Repeat2, Shield, Archive } from "lucide-react";
@@ -68,7 +68,6 @@ export function TaskBoard({
   const [myApprovalsFilter, setMyApprovalsFilter] = useState(false);
   const [showParkingLot, setShowParkingLot] = useState(false);
 
-  const { toast } = useToast();
   const searchParams = useSearchParams();
 
   // Open a specific task from URL param (e.g., /tasks?task=<id>)
@@ -190,25 +189,17 @@ export function TaskBoard({
         const result = await completeRecurringTask(taskId);
         if (result.error) {
           setTasks((prev) => prev.map((t) => (t.id === taskId ? task : t)));
-          toast({
-            title: "Failed to complete task",
-            description: result.error,
-            variant: "destructive",
-          });
+          showError("Could not complete task", result.error);
         }
       } else {
         const result = await completeTask(taskId);
         if (!result.success) {
           setTasks((prev) => prev.map((t) => (t.id === taskId ? task : t)));
-          toast({
-            title: "Failed to complete task",
-            description: result.error ?? "Unknown error",
-            variant: "destructive",
-          });
+          showError("Could not complete task", result.error ?? "Unknown error");
         }
       }
     },
-    [tasks, toast]
+    [tasks]
   );
 
   // Drag handlers
@@ -251,14 +242,10 @@ export function TaskBoard({
       const result = await updateTaskStatus(taskId, columnId);
       if (!result.success) {
         setTasks((prev) => prev.map((t) => (t.id === taskId ? task : t)));
-        toast({
-          title: "Failed to update task",
-          description: result.error ?? "Unknown error",
-          variant: "destructive",
-        });
+        showError("Could not update task", result.error ?? "Unknown error");
       }
     },
-    [tasks, toast]
+    [tasks]
   );
 
   // Task saved/deleted handlers

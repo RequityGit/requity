@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
-import { useToast } from "@/components/ui/use-toast";
+import { showSuccess, showError } from "@/lib/toast";
 import { deleteCompanyFileAction } from "@/app/(authenticated)/(admin)/companies/actions";
 import { COMPANY_FILE_TYPES } from "@/lib/constants";
 import { formatDate } from "@/lib/format";
@@ -33,7 +33,6 @@ function formatFileSize(bytes: number | null): string {
 }
 
 export function CompanyFileList({ files, onDeleted }: CompanyFileListProps) {
-  const { toast } = useToast();
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
   const handleView = async (storagePath: string) => {
@@ -47,7 +46,7 @@ export function CompanyFileList({ files, onDeleted }: CompanyFileListProps) {
         window.open(data.signedUrl, "_blank");
       }
     } catch {
-      toast({ title: "Error getting file URL", variant: "destructive" });
+      showError("Could not get file URL");
     }
   };
 
@@ -62,7 +61,7 @@ export function CompanyFileList({ files, onDeleted }: CompanyFileListProps) {
         window.open(data.signedUrl, "_blank");
       }
     } catch {
-      toast({ title: "Error downloading file", variant: "destructive" });
+      showError("Could not download file");
     }
   };
 
@@ -71,13 +70,9 @@ export function CompanyFileList({ files, onDeleted }: CompanyFileListProps) {
     try {
       const result = await deleteCompanyFileAction(file.id, file.storage_path);
       if ("error" in result && result.error) {
-        toast({
-          title: "Error deleting file",
-          description: result.error,
-          variant: "destructive",
-        });
+        showError("Could not delete file", result.error);
       } else {
-        toast({ title: "File deleted" });
+        showSuccess("File deleted");
         onDeleted();
       }
     } finally {

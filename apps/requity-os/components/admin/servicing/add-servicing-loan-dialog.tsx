@@ -23,7 +23,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useToast } from "@/components/ui/use-toast";
+import { showSuccess, showError } from "@/lib/toast";
 import { PlusCircle, Lock } from "lucide-react";
 import {
   addLoanToServicingAction,
@@ -128,7 +128,6 @@ export function AddServicingLoanDialog({
   const [loading, setLoading] = useState(false);
   const [form, setForm] = useState<ServicingLoanFormData>({ ...emptyForm });
   const router = useRouter();
-  const { toast } = useToast();
 
   // Fields locked for non-super-admins
   const financialLocked = !isSuperAdmin;
@@ -150,25 +149,17 @@ export function AddServicingLoanDialog({
       const result = await addLoanToServicingAction(form);
 
       if ("error" in result && result.error) {
-        toast({
-          title: "Error adding loan to servicing",
-          description: result.error,
-          variant: "destructive",
-        });
+        showError("Could not add loan to servicing", result.error);
         return;
       }
 
-      toast({ title: "Loan added to servicing", description: `${form.loan_id} has been boarded.` });
+      showSuccess("Loan added to servicing");
       setOpen(false);
       resetForm();
       router.refresh();
     } catch (err: unknown) {
       console.error("Add to servicing error:", err);
-      toast({
-        title: "Error",
-        description: "An unexpected error occurred.",
-        variant: "destructive",
-      });
+      showError("Could not add loan to servicing", "An unexpected error occurred.");
     } finally {
       setLoading(false);
     }

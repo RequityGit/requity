@@ -35,7 +35,7 @@ import {
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { toast } from "sonner";
+import { showSuccess, showError } from "@/lib/toast";
 import type { FormStep } from "@/lib/form-engine/types";
 
 // ─── Types ───
@@ -211,7 +211,7 @@ function ApplicationLinkCard({ link }: { link: DealApplicationLinkRow }) {
 
   const handleCopy = () => {
     navigator.clipboard.writeText(formUrl);
-    toast.success("Link copied to clipboard");
+    showSuccess("Link copied to clipboard");
   };
 
   const contactName = (() => {
@@ -313,10 +313,10 @@ function SendFormModal({
       const selectedForm = forms.find((f) => f.id === selectedFormId);
       const url = `${window.location.origin}/forms/${selectedForm?.slug ?? "unknown"}?dt=${data.token}`;
       setGeneratedUrl(url);
-      toast.success("Application link generated");
+      showSuccess("Application link generated");
       onSent();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Failed to generate link");
+      showError("Could not generate link", err instanceof Error ? err.message : undefined);
     } finally {
       setLoading(false);
     }
@@ -325,7 +325,7 @@ function SendFormModal({
   const handleCopyUrl = () => {
     if (generatedUrl) {
       navigator.clipboard.writeText(generatedUrl);
-      toast.success("Link copied to clipboard");
+      showSuccess("Link copied to clipboard");
     }
   };
 

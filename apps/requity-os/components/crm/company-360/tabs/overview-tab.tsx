@@ -32,7 +32,7 @@ import {
   renderDynamicFieldsInline,
   type LayoutEditConfig,
 } from "@/components/crm/shared-field-renderer";
-import { useToast } from "@/components/ui/use-toast";
+import { showError } from "@/lib/toast";
 import { formatDate } from "@/lib/format";
 import { US_STATES } from "@/lib/constants";
 import { updateCompanyAction } from "@/app/(authenticated)/(admin)/companies/actions";
@@ -176,7 +176,6 @@ export function CompanyOverviewTab({
   sectionOrder,
   sectionFields,
 }: OverviewTabProps) {
-  const { toast } = useToast();
   const [localData, setLocalData] = useState<Record<string, unknown>>(
     () => company as unknown as Record<string, unknown>
   );
@@ -209,7 +208,7 @@ export function CompanyOverviewTab({
       }
       const result = await updateCompanyAction(updates as any);
       if ("error" in result && result.error) {
-        toast({ title: "Error saving", description: result.error, variant: "destructive" });
+        showError("Could not save", result.error);
         setLocalData((prev) => ({ ...prev, [field]: prevVal }));
       }
     });
@@ -221,7 +220,7 @@ export function CompanyOverviewTab({
     startTransition(async () => {
       const result = await updateCompanyAction({ id: company.id, [field]: value } as any);
       if ("error" in result && result.error) {
-        toast({ title: "Error saving", description: result.error, variant: "destructive" });
+        showError("Could not save", result.error);
         setLocalData((prev) => ({ ...prev, [field]: prevVal }));
       }
     });
@@ -392,7 +391,7 @@ export function CompanyOverviewTab({
     startTransition(async () => {
       const result = await updateCompanyAction({ id: company.id, ...updates } as any);
       if ("error" in result && result.error) {
-        toast({ title: "Error saving address", description: result.error, variant: "destructive" });
+        showError("Could not save address", result.error);
       }
     });
   }

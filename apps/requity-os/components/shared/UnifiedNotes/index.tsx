@@ -1,14 +1,14 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { formatDateShort } from "@/lib/format";
 import { createClient } from "@/lib/supabase/client";
-import { useToast } from "@/components/ui/use-toast";
+import { showSuccess, showError } from "@/lib/toast";
 import { MessageSquare } from "lucide-react";
 import { EmptyState } from "@/components/shared/EmptyState";
 import type { UploadedAttachment } from "@/components/shared/attachments";
 import { NoteComposer } from "./NoteComposer";
-import { NoteCard } from "./NoteCard";
+import { NoteThread } from "./NoteThread";
 import { NoteFilters } from "./NoteFilters";
 import {
   getEntityColumn,
@@ -44,7 +44,6 @@ export function UnifiedNotes({
   const [filter, setFilter] = useState<NoteFilter>("all");
   const [currentUserId, setCurrentUserId] = useState<string>("");
   const [currentUserName, setCurrentUserName] = useState<string>("");
-  const { toast } = useToast();
 
   // Get current user on mount
   useEffect(() => {
@@ -238,11 +237,7 @@ export function UnifiedNotes({
       .single();
 
     if (error) {
-      toast({
-        title: "Failed to post note",
-        description: error.message,
-        variant: "destructive",
-      });
+      showError("Could not post note", error.message);
       return;
     }
 
@@ -290,9 +285,7 @@ export function UnifiedNotes({
       }
     }
 
-    toast({
-      title: isInternal ? "Internal note posted" : "Note posted",
-    });
+    showSuccess(isInternal ? "Internal note posted" : "Note posted");
   }
 
   // Pin/unpin. For deals, only one note can be pinned; unpin any existing pinned note first.
@@ -321,11 +314,7 @@ export function UnifiedNotes({
       .eq("id" as never, noteId as never);
 
     if (error) {
-      toast({
-        title: "Failed to update pin",
-        description: error.message,
-        variant: "destructive",
-      });
+      showError("Could not update pin", error.message);
       return;
     }
 
@@ -336,7 +325,7 @@ export function UnifiedNotes({
       }
       return next;
     });
-    toast({ title: isPinned ? "Note unpinned" : "Note pinned" });
+    showSuccess(isPinned ? "Note unpinned" : "Note pinned");
   }
 
   // Edit
@@ -357,11 +346,7 @@ export function UnifiedNotes({
       .eq("id" as never, noteId as never);
 
     if (error) {
-      toast({
-        title: "Failed to update note",
-        description: error.message,
-        variant: "destructive",
-      });
+      showError("Could not update note", error.message);
       return;
     }
 
@@ -378,7 +363,7 @@ export function UnifiedNotes({
           : n
       )
     );
-    toast({ title: "Note updated" });
+    showSuccess("Note updated");
   }
 
   // Soft delete
@@ -390,16 +375,12 @@ export function UnifiedNotes({
       .eq("id" as never, noteId as never);
 
     if (error) {
-      toast({
-        title: "Failed to delete note",
-        description: error.message,
-        variant: "destructive",
-      });
+      showError("Could not delete note", error.message);
       return;
     }
 
     setNotes((prev) => prev.filter((n) => n.id !== noteId));
-    toast({ title: "Note deleted" });
+    showSuccess("Note deleted");
   }
 
   // Like/unlike
@@ -447,6 +428,90 @@ export function UnifiedNotes({
     }
   }
 
+  // Post a reply to an existing note
+  async function handleReply(
+    parentNoteId: string,
+    body: string,
+    isInternal: boolean,
+    mentionIds: string[]
+  ) {
+    const supabase = createClient();
+
+    const row: Record<string, unknown> = {
+      body,
+      author_id: currentUserId,
+      author_name: currentUserName,
+      mentions: mentionIds,
+      is_internal: isInternal,
+      parent_note_id: parentNoteId,
+    };
+
+    switch (entityType) {
+      case "contact":
+        row.contact_id = entityId;
+        break;
+      case "company":
+        row.company_id = entityId;
+        break;
+      case "deal":
+        if (dealId) row.deal_id = dealId;
+        if (loanId) row.loan_id = loanId;
+        if (opportunityId) row.opportunity_id = opportunityId;
+        break;
+      case "condition":
+        row.condition_id = entityId;
+        if (loanId) row.loan_id = loanId;
+        break;
+      case "unified_condition":
+        row.unified_condition_id = entityId;
+        if (dealId) row.deal_id = dealId;
+        if (loanId) row.loan_id = loanId;
+        break;
+      case "task":
+        row.task_id = entityId;
+        break;
+      case "project":
+        row.project_id = entityId;
+        break;
+      case "approval":
+        row.approval_id = entityId;
+        break;
+    }
+
+    const { data, error } = await supabase
+      .from("notes" as never)
+      .insert(row as never)
+      .select()
+      .single();
+
+    if (error) {
+      showError("Could not post reply", error.message);
+      return;
+    }
+
+    if (data) {
+      const newNote = {
+        ...(data as unknown as NoteData),
+        note_likes: [],
+        note_attachments: [],
+      };
+      setNotes((prev) => [...prev, newNote]);
+
+      // Insert note_mentions
+      const noteId = newNote.id;
+      if (mentionIds.length > 0) {
+        await supabase.from("note_mentions" as never).insert(
+          mentionIds.map((userId) => ({
+            note_id: noteId,
+            mentioned_user_id: userId,
+          })) as never
+        );
+      }
+    }
+
+    showSuccess("Reply posted");
+  }
+
   // Filter notes client-side
   const filteredNotes =
     filter === "internal"
@@ -455,8 +520,38 @@ export function UnifiedNotes({
         ? notes.filter((n) => !n.is_internal)
         : notes;
 
+  // Group notes into top-level and replies
+  const { topLevelNotes, replyMap } = useMemo(() => {
+    const topLevel = filteredNotes.filter((n) => !n.parent_note_id);
+    const replies = new Map<string, NoteData[]>();
+
+    for (const note of filteredNotes) {
+      if (note.parent_note_id) {
+        // Only include reply if its parent exists in the filtered set
+        const parentExists = filteredNotes.some(
+          (n) => n.id === note.parent_note_id && !n.parent_note_id
+        );
+        if (!parentExists) continue;
+
+        const existing = replies.get(note.parent_note_id) || [];
+        existing.push(note);
+        replies.set(note.parent_note_id, existing);
+      }
+    }
+
+    // Sort replies oldest-first (chronological)
+    replies.forEach((replyList) => {
+      replyList.sort(
+        (a: NoteData, b: NoteData) =>
+          new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+      );
+    });
+
+    return { topLevelNotes: topLevel, replyMap: replies };
+  }, [filteredNotes]);
+
   // In chatMode, reverse to show oldest first (newest at bottom)
-  const displayNotes = chatMode ? [...filteredNotes].reverse() : filteredNotes;
+  const displayNotes = chatMode ? [...topLevelNotes].reverse() : topLevelNotes;
 
   const maxHeight = isCompact && !chatMode ? "max-h-[300px]" : "";
 
@@ -520,15 +615,20 @@ export function UnifiedNotes({
         return (
           <div key={note.id}>
             {dateDivider}
-            <NoteCard
+            <NoteThread
               note={note}
+              replies={replyMap.get(note.id) || []}
               currentUserId={currentUserId}
+              currentUserName={currentUserName}
               showPinning={showPinning}
+              showInternalToggle={shouldShowInternalToggle}
+              defaultInternal={defaultInternal}
               compact={isCompact}
               onPin={handlePin}
               onEdit={handleEdit}
               onDelete={handleDelete}
               onToggleLike={handleToggleLike}
+              onReply={handleReply}
             />
           </div>
         );

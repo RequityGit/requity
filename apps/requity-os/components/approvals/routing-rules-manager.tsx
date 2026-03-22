@@ -34,7 +34,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Textarea } from "@/components/ui/textarea";
-import { useToast } from "@/components/ui/use-toast";
+import { showSuccess, showError } from "@/lib/toast";
 import { PlusCircle, Pencil, Trash2, Loader2, GripVertical } from "lucide-react";
 import {
   upsertRoutingRule,
@@ -74,7 +74,6 @@ const emptyForm: RuleFormState = {
 
 export function RoutingRulesManager({ rules, teamMembers }: RoutingRulesManagerProps) {
   const router = useRouter();
-  const { toast } = useToast();
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState<RuleFormState>(emptyForm);
   const [loading, setLoading] = useState(false);
@@ -105,7 +104,7 @@ export function RoutingRulesManager({ rules, teamMembers }: RoutingRulesManagerP
 
   async function handleSave() {
     if (!form.name || !form.approver_id) {
-      toast({ title: "Error", description: "Name and approver are required.", variant: "destructive" });
+      showError("Name and approver are required");
       return;
     }
 
@@ -113,7 +112,7 @@ export function RoutingRulesManager({ rules, teamMembers }: RoutingRulesManagerP
     try {
       conditions = JSON.parse(form.conditions);
     } catch {
-      toast({ title: "Error", description: "Invalid JSON in conditions field.", variant: "destructive" });
+      showError("Invalid JSON in conditions field");
       return;
     }
 
@@ -133,9 +132,9 @@ export function RoutingRulesManager({ rules, teamMembers }: RoutingRulesManagerP
     setLoading(false);
 
     if (result.error) {
-      toast({ title: "Error", description: result.error, variant: "destructive" });
+      showError("Could not save rule", result.error);
     } else {
-      toast({ title: form.id ? "Rule updated" : "Rule created" });
+      showSuccess(form.id ? "Rule updated" : "Rule created");
       setOpen(false);
       router.refresh();
     }
@@ -144,9 +143,9 @@ export function RoutingRulesManager({ rules, teamMembers }: RoutingRulesManagerP
   async function handleDelete(ruleId: string) {
     const result = await deleteRoutingRule(ruleId);
     if (result.error) {
-      toast({ title: "Error", description: result.error, variant: "destructive" });
+      showError("Could not delete rule", result.error);
     } else {
-      toast({ title: "Rule deleted" });
+      showSuccess("Rule deleted");
       router.refresh();
     }
   }

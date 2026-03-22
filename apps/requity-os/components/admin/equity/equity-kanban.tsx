@@ -31,7 +31,7 @@ import {
   EQUITY_STAGE_COLORS,
   EQUITY_LOSS_REASONS,
 } from "@/lib/constants";
-import { useToast } from "@/components/ui/use-toast";
+import { showSuccess, showError, showWarning } from "@/lib/toast";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { moveEquityStageAction } from "@/app/(authenticated)/(admin)/equity-pipeline/actions";
 import {
@@ -100,7 +100,6 @@ export function EquityKanban({ data }: EquityKanbanProps) {
   const [lossReason, setLossReason] = useState("");
   const isMobile = useIsMobile();
   const router = useRouter();
-  const { toast } = useToast();
 
   function getDaysInStage(changedAt: string | null): number {
     if (!changedAt) return 0;
@@ -127,11 +126,7 @@ export function EquityKanban({ data }: EquityKanbanProps) {
     const result = await moveEquityStageAction(dealId, newStage);
 
     if (result.error) {
-      toast({
-        title: "Error moving deal",
-        description: result.error,
-        variant: "destructive",
-      });
+      showError("Could not move deal", result.error);
     } else {
       setDeals((prev) =>
         prev.map((d) =>
@@ -144,16 +139,14 @@ export function EquityKanban({ data }: EquityKanbanProps) {
             : d
         )
       );
-      toast({
-        title: `Deal moved to ${EQUITY_STAGE_LABELS[newStage] || newStage}`,
-      });
+      showSuccess(`Deal moved to ${EQUITY_STAGE_LABELS[newStage] || newStage}`);
     }
     setMovingId(null);
   }
 
   async function handleMarkDead() {
     if (!lossReason) {
-      toast({ title: "Loss reason required", variant: "destructive" });
+      showWarning("Loss reason is required");
       return;
     }
     setMovingId(deadDialog.dealId);
@@ -163,18 +156,14 @@ export function EquityKanban({ data }: EquityKanbanProps) {
       lossReason
     );
     if (result.error) {
-      toast({
-        title: "Error",
-        description: result.error,
-        variant: "destructive",
-      });
+      showError("Could not close deal", result.error);
     } else {
       setDeals((prev) =>
         prev.map((d) =>
           d.id === deadDialog.dealId ? { ...d, stage: "closed_lost" } : d
         )
       );
-      toast({ title: "Deal marked as Closed Lost" });
+      showSuccess("Deal marked as Closed Lost");
     }
     setMovingId(null);
     setDeadDialog({ open: false, dealId: "" });

@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { useToast } from "@/components/ui/use-toast";
+import { showError } from "@/lib/toast";
 import {
   Tag,
   User,
@@ -33,7 +33,6 @@ export function ContactDetailsSidebar({
   );
   const [updating, setUpdating] = useState(false);
   const router = useRouter();
-  const { toast } = useToast();
 
   async function toggleConsent() {
     const newValue = !marketingConsent;
@@ -50,10 +49,7 @@ export function ContactDetailsSidebar({
       router.refresh();
     } catch {
       setMarketingConsent(!newValue); // revert
-      toast({
-        title: "Error updating consent",
-        variant: "destructive",
-      });
+      showError("Could not update consent");
     } finally {
       setUpdating(false);
     }

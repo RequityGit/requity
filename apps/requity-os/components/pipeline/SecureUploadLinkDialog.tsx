@@ -33,7 +33,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
-import { toast } from "sonner";
+import { showSuccess, showError } from "@/lib/toast";
 import type { DealCondition } from "@/components/pipeline/pipeline-types";
 import {
   createSecureUploadLink,
@@ -224,11 +224,11 @@ export function SecureUploadLinkDialog({
       });
 
       if (result.error) {
-        toast.error(result.error);
+        showError("Could not create upload link", result.error);
       } else if (result.url) {
         setGeneratedUrl(result.url);
         setGeneratedExpiresAt(result.expiresAt ?? null);
-        toast.success("Upload link created");
+        showSuccess("Upload link created");
         loadLinks();
       }
     });
@@ -238,7 +238,7 @@ export function SecureUploadLinkDialog({
     if (!generatedUrl) return;
     navigator.clipboard.writeText(generatedUrl);
     setCopied(true);
-    toast.success("Link copied to clipboard");
+    showSuccess("Link copied to clipboard");
     setTimeout(() => setCopied(false), 2000);
   }
 
@@ -246,9 +246,9 @@ export function SecureUploadLinkDialog({
     startRevoking(async () => {
       const result = await revokeSecureUploadLink(linkId);
       if (result.error) {
-        toast.error(result.error);
+        showError("Could not revoke upload link", result.error);
       } else {
-        toast.success("Upload link revoked");
+        showSuccess("Upload link revoked");
         loadLinks();
       }
     });
@@ -645,7 +645,7 @@ export function SecureUploadLinkDialog({
           currentUserName={currentUserName}
           onSendSuccess={() => {
             setEmailSheetOpen(false);
-            toast.success("Email sent");
+            showSuccess("Email sent");
           }}
         />
       )}
@@ -678,7 +678,7 @@ function LinkCard({
   function handleCopy() {
     navigator.clipboard.writeText(url);
     setCopied(true);
-    toast.success("Link copied");
+    showSuccess("Link copied");
     setTimeout(() => setCopied(false), 2000);
   }
 

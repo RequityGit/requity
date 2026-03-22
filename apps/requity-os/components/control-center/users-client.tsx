@@ -23,7 +23,7 @@ import {
 import { useConfirm } from "@/components/shared/ConfirmDialog";
 import { Label } from "@/components/ui/label";
 import { RoleBadge } from "@/components/control-center/role-badge";
-import { useToast } from "@/components/ui/use-toast";
+import { showSuccess, showError } from "@/lib/toast";
 import { Search, Plus, Eye, EyeOff, UserPlus, Blocks, Check, Users } from "lucide-react";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { cn } from "@/lib/utils";
@@ -121,7 +121,6 @@ export function UsersClient({
   modules,
 }: UsersClientProps) {
   const router = useRouter();
-  const { toast } = useToast();
   const { startImpersonation } = useImpersonation();
 
   const confirm = useConfirm();
@@ -207,9 +206,9 @@ export function UsersClient({
     setGrantLoading(false);
 
     if (result.error) {
-      toast({ title: "Error", description: result.error, variant: "destructive" });
+      showError("Could not grant role", result.error);
     } else {
-      toast({ title: "Role granted successfully" });
+      showSuccess("Role granted");
       setGrantModalOpen(false);
       router.refresh();
     }
@@ -229,9 +228,9 @@ export function UsersClient({
     setRevokeLoading(false);
 
     if (result.error) {
-      toast({ title: "Error", description: result.error, variant: "destructive" });
+      showError("Could not revoke role", result.error);
     } else {
-      toast({ title: "Role revoked successfully" });
+      showSuccess("Role revoked");
       router.refresh();
     }
   }
@@ -239,9 +238,9 @@ export function UsersClient({
   async function handleReactivateRole(roleId: string) {
     const result = await reactivateRole(roleId);
     if (result.error) {
-      toast({ title: "Error", description: result.error, variant: "destructive" });
+      showError("Could not reactivate role", result.error);
     } else {
-      toast({ title: "Role reactivated successfully" });
+      showSuccess("Role reactivated");
       router.refresh();
     }
   }
@@ -280,7 +279,7 @@ export function UsersClient({
         }
         return next;
       });
-      toast({ title: "Error", description: result.error, variant: "destructive" });
+      showError("Could not update module access", result.error);
     }
   }
 
@@ -291,10 +290,10 @@ export function UsersClient({
     setModuleLoading(null);
 
     if (result.error) {
-      toast({ title: "Error", description: result.error, variant: "destructive" });
+      showError("Could not update module access", result.error);
     } else {
       setPendingModuleIds(new Set(modules.map((m) => m.id)));
-      toast({ title: "All modules granted" });
+      showSuccess("All modules granted");
     }
   }
 
@@ -305,10 +304,10 @@ export function UsersClient({
     setModuleLoading(null);
 
     if (result.error) {
-      toast({ title: "Error", description: result.error, variant: "destructive" });
+      showError("Could not update module access", result.error);
     } else {
       setPendingModuleIds(new Set());
-      toast({ title: "All modules revoked" });
+      showSuccess("All modules revoked");
     }
   }
 

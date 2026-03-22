@@ -9,7 +9,7 @@ import {
 } from "@/components/ui/popover";
 import { InlineField } from "@/components/ui/inline-field";
 import { Building2, Trash2, Loader2 } from "lucide-react";
-import { toast } from "sonner";
+import { showSuccess, showError } from "@/lib/toast";
 import type { DealBorrowingEntity } from "@/app/types/borrower";
 import { ENTITY_TYPES, US_STATES } from "./constants";
 import {
@@ -53,7 +53,7 @@ export function BorrowingEntityCard({
           payload as Partial<DealBorrowingEntity> & { deal_id: string }
         );
         if (result.error) {
-          toast.error(result.error);
+          showError(result.error);
           if (entity) setLocal(entity);
         } else {
           if (result.data) setLocal(result.data);
@@ -70,9 +70,9 @@ export function BorrowingEntityCard({
     try {
       const result = await deleteBorrowingEntityAction(entity.id, dealId);
       if (result.error) {
-        toast.error(result.error);
+        showError(result.error);
       } else {
-        toast.success("Borrowing entity removed");
+        showSuccess("Borrowing entity removed");
         setLocal({});
         setDeleteOpen(false);
         onDeleted?.();

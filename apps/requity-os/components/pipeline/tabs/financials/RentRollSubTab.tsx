@@ -20,7 +20,7 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
-import { toast } from "sonner";
+import { showSuccess, showError } from "@/lib/toast";
 import { cn } from "@/lib/utils";
 import { upsertRentRoll } from "@/app/(authenticated)/(admin)/pipeline/[id]/commercial-uw-actions";
 import { UploadRentRollDialog } from "@/components/admin/commercial-uw/upload-rent-roll-dialog";
@@ -80,9 +80,9 @@ export function RentRollSubTab({ rentRoll, uwId }: RentRollSubTabProps) {
         }))
       );
       if (result.error) {
-        toast.error(`Failed to import rent roll: ${result.error}`);
+        showError("Could not import rent roll", result.error);
       } else {
-        toast.success(`Imported ${rows.length} units from rent roll`);
+        showSuccess(`Imported ${rows.length} units from rent roll`);
         router.refresh();
       }
     },
@@ -353,9 +353,9 @@ function RentRollEditDialog({
         }))
       );
       if (result.error) {
-        toast.error(`Failed to save rent roll: ${result.error}`);
+        showError("Could not save rent roll", result.error);
       } else {
-        toast.success(`Rent roll saved (${rows.length} units)`);
+        showSuccess(`Rent roll saved (${rows.length} units)`);
         router.refresh();
         onOpenChange(false);
       }

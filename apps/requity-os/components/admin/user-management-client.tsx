@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { UserPlus } from "lucide-react";
 import { UserListTable } from "@/components/admin/user-list-table";
 import { InviteUserDialog } from "@/components/admin/invite-user-dialog";
-import { useToast } from "@/components/ui/use-toast";
+import { showError } from "@/lib/toast";
 import {
   fetchUsersAction,
   type UserRow,
@@ -23,22 +23,16 @@ export function UserManagementClient({
   const [users, setUsers] = useState<UserRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [inviteOpen, setInviteOpen] = useState(false);
-  const { toast } = useToast();
-
   const loadUsers = useCallback(async () => {
     setLoading(true);
     const result = await fetchUsersAction();
     if ("error" in result) {
-      toast({
-        title: "Failed to load users",
-        description: result.error,
-        variant: "destructive",
-      });
+      showError("Could not load users", result.error);
     } else {
       setUsers(result.users);
     }
     setLoading(false);
-  }, [toast]);
+  }, []);
 
   useEffect(() => {
     loadUsers();

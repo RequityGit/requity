@@ -30,7 +30,7 @@ import {
   Download,
   Trash2,
 } from "lucide-react";
-import { toast } from "sonner";
+import { showSuccess, showError } from "@/lib/toast";
 import { getDocumentPreviewUrl, deleteDocumentAction } from "@/app/(authenticated)/(admin)/documents/actions";
 import { DocumentRenameDialog } from "@/components/admin/document-rename-dialog";
 import { useConfirm } from "@/components/shared/ConfirmDialog";
@@ -107,7 +107,7 @@ export function DocumentListTable({ data, action, isSuperAdmin }: DocumentListTa
   async function handleDownload(row: DocumentRow) {
     const result = await getDocumentPreviewUrl(row.id, row.source);
     if ("error" in result) {
-      toast.error(result.error);
+      showError(result.error);
       return;
     }
     const a = window.document.createElement("a");
@@ -207,9 +207,9 @@ export function DocumentListTable({ data, action, isSuperAdmin }: DocumentListTa
                     if (!ok) return;
                     const result = await deleteDocumentAction(row.id, row.source);
                     if ("error" in result && result.error) {
-                      toast.error(result.error);
+                      showError(result.error);
                     } else {
-                      toast.success("Document deleted");
+                      showSuccess("Document deleted");
                       router.refresh();
                     }
                   }}

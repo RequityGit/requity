@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { toast } from "sonner";
+import { showError } from "@/lib/toast";
 import {
   Dialog,
   DialogContent,
@@ -40,7 +40,7 @@ export function DocumentPreviewDialog({
     getDocumentPreviewUrl(document.id, document.source)
       .then((result) => {
         if ("error" in result) {
-          toast.error(result.error);
+          showError(result.error);
           setUrl(null);
         } else {
           setUrl(result.url);

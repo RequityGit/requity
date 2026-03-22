@@ -23,7 +23,7 @@ import {
   EyeOff,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { toast } from "sonner";
+import { showSuccess, showError } from "@/lib/toast";
 import {
   updateSection,
   deleteSection,
@@ -81,7 +81,7 @@ export function SectionConfigPopover({
       // For temp sections, just update local state
       onSectionUpdated(sectionId, label.trim(), icon);
       setOpen(false);
-      toast.success("Section updated");
+      showSuccess("Section updated");
       return;
     }
 
@@ -91,11 +91,11 @@ export function SectionConfigPopover({
         section_icon: icon,
       });
       if (result.error) {
-        toast.error(`Failed to update section: ${result.error}`);
+        showError(`Failed to update section: ${result.error}`);
       } else {
         onSectionUpdated(sectionId, label.trim(), icon);
         setOpen(false);
-        toast.success("Section updated");
+        showSuccess("Section updated");
       }
     });
   }
@@ -112,17 +112,17 @@ export function SectionConfigPopover({
     if (isTempSection) {
       onSectionDeleted(sectionId);
       setOpen(false);
-      toast.success("Section removed");
+      showSuccess("Section removed");
       return;
     }
 
     const result = await deleteSection(sectionId);
     if (result.error) {
-      toast.error(`Failed to delete section: ${result.error}`);
+      showError(`Failed to delete section: ${result.error}`);
     } else {
       onSectionDeleted(sectionId);
       setOpen(false);
-      toast.success("Section deleted");
+      showSuccess("Section deleted");
     }
   }
 

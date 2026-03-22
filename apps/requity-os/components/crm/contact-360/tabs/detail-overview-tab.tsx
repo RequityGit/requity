@@ -2,7 +2,7 @@
 
 import { useState, useMemo, useCallback, useTransition, type ReactNode } from "react";
 import { createClient } from "@/lib/supabase/client";
-import { useToast } from "@/components/ui/use-toast";
+import { showError } from "@/lib/toast";
 import { cn } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -90,7 +90,6 @@ export function DetailOverviewTab({
   teamMembers,
   allCompanies,
 }: DetailOverviewTabProps) {
-  const { toast } = useToast();
   const supabase = createClient();
   const [pending, startTransition] = useTransition();
 
@@ -117,11 +116,11 @@ export function DetailOverviewTab({
       .update(updates)
       .eq("id", contact.id);
     if (error) {
-      toast({ title: "Error saving", description: error.message, variant: "destructive" });
+      showError("Could not save", error.message);
       return false;
     }
     return true;
-  }, [contact.id, localCompanies, supabase, toast]);
+  }, [contact.id, localCompanies, supabase]);
 
   const teamMemberLookup = useMemo(() => {
     const map: Record<string, string> = {};
@@ -319,7 +318,7 @@ export function DetailOverviewTab({
         .update(updates)
         .eq("id", contact.id);
       if (error) {
-        toast({ title: "Error saving address", description: error.message, variant: "destructive" });
+        showError("Could not save address", error.message);
       }
     });
   }
