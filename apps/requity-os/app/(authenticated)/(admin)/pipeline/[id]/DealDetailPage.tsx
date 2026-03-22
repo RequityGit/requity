@@ -72,7 +72,6 @@ import { StageStepper } from "@/components/pipeline/StageStepper";
 import { DealOverviewSummary } from "@/components/pipeline/DealOverviewSummary";
 import { EditableOverview } from "@/components/pipeline/EditableOverview";
 import { UnderwritingPanel } from "@/components/pipeline/UnderwritingPanel";
-import { DealTasks } from "@/components/tasks/deal-tasks";
 import type { CommercialUWData } from "@/components/pipeline/tabs/UnderwritingTab";
 import { DealActivitySidebar } from "@/components/pipeline/DealActivitySidebar";
 
@@ -110,7 +109,6 @@ import { normalizeAssetClass, isCommercialDeal, type VisibilityContext } from "@
 import { getDealDisplayConfig, getDealFlavor } from "@/lib/pipeline/deal-display-config";
 import { ResidentialAnalysisTab } from "@/components/pipeline/tabs/ResidentialAnalysisTab";
 
-const DealActivityTab = lazy(() => import("@/components/pipeline/tabs/DealActivityTab").then(m => ({ default: m.DealActivityTab })));
 const DealMessagesPanel = lazy(() => import("@/components/pipeline/DealMessagesPanel").then(m => ({ default: m.DealMessagesPanel })));
 const FormsTab = lazy(() => import("@/components/pipeline/tabs/FormsTab").then(m => ({ default: m.FormsTab })));
 import { DealNotePreview } from "@/components/pipeline/DealNotePreview";
@@ -124,7 +122,7 @@ import {
 } from "./actions";
 import { SubmitForApprovalDialog } from "@/components/approvals/submit-for-approval-dialog";
 import type { ApprovalEntityType } from "@/lib/approvals/types";
-import type { OpsTask, Profile } from "@/lib/tasks";
+import type { Profile } from "@/lib/tasks";
 import type { DealTeamContact } from "@/app/types/deal-team";
 
 // ─── Lazy Tab Loading Fallback ───
@@ -170,7 +168,6 @@ interface DealDetailPageProps {
   currentUserId: string;
   currentUserName: string;
   documents: Record<string, unknown>[];
-  tasks: OpsTask[];
   commercialUWData: CommercialUWData | null;
   pinnedNote: DealPreviewNote | null;
   recentNote: DealPreviewNote | null;
@@ -197,7 +194,6 @@ function DealDetailPageInner({
   currentUserId,
   currentUserName,
   documents,
-  tasks,
   commercialUWData,
   pinnedNote,
   recentNote,
@@ -535,36 +531,13 @@ function DealDetailPageInner({
         <InlineLayoutToolbar onSaveComplete={() => layout.refetch()} tabs={layout.tabs} />
 
         {/* Tab Content + Activity Sidebar */}
-        <div className="flex gap-0 min-w-0" style={{ minHeight: "calc(100vh - 280px)" }}>
+        <div className="flex gap-0 min-w-0">
           {/* Left: Tab content */}
           <div className="flex-1 min-w-0 flex flex-col gap-4">
           {loadedTabs.has("Overview") && (
             <div className={activeTab !== "Overview" ? "hidden" : undefined}>
               <SectionErrorBoundary fallbackTitle="Could not load overview">
                 <DealOverviewSummary dealId={deal.id} deal={deal} />
-
-                {/* Tasks section */}
-                <div className="mt-4">
-                  <DealTasks
-                    dealId={deal.id}
-                    dealLabel={deal.deal_number ?? deal.name}
-                    dealEntityType="deal"
-                    tasks={tasks}
-                    profiles={teamMembers}
-                    currentUserId={currentUserId}
-                  />
-                </div>
-
-                {/* Activity feed */}
-                <div className="mt-4">
-                  <Suspense fallback={<TabLoadingFallback />}>
-                    <DealActivityTab
-                      dealId={deal.id}
-                      currentUserId={currentUserId}
-                      primaryContactId={deal.primary_contact_id ?? null}
-                    />
-                  </Suspense>
-                </div>
               </SectionErrorBoundary>
             </div>
           )}
@@ -662,30 +635,33 @@ function DealDetailPageInner({
           )}
           </div>
 
-          {/* Right: Activity Sidebar */}
-          {sidebarOpen ? (
-            <DealActivitySidebar
-              dealId={deal.id}
-              currentUserId={currentUserId}
-              currentUserName={currentUserName}
-              conditions={conditions.map((c) => ({
-                id: c.id,
-                condition_name: c.condition_name,
-              }))}
-              onClose={() => setSidebarOpen(false)}
-            />
-          ) : (
-            <button
-              onClick={() => setSidebarOpen(true)}
-              className="sticky top-20 h-fit flex flex-col items-center gap-2 py-3 px-1.5 rounded-l-lg border border-r-0 border-border bg-muted/50 hover:bg-muted rq-transition cursor-pointer"
-              title="Open Activity"
-            >
-              <ChevronsLeft className="h-4 w-4 text-muted-foreground" />
-              <span className="text-[11px] font-medium text-muted-foreground [writing-mode:vertical-lr]">
-                Activity
-              </span>
-            </button>
-          )}
+          {/* Right: Activity Sidebar (sticky) */}
+          <div className="sticky top-0 self-start h-[calc(100vh-16px)] flex-shrink-0">
+            {sidebarOpen ? (
+              <DealActivitySidebar
+                dealId={deal.id}
+                primaryContactId={deal.primary_contact_id ?? null}
+                currentUserId={currentUserId}
+                currentUserName={currentUserName}
+                conditions={conditions.map((c) => ({
+                  id: c.id,
+                  condition_name: c.condition_name,
+                }))}
+                onClose={() => setSidebarOpen(false)}
+              />
+            ) : (
+              <button
+                onClick={() => setSidebarOpen(true)}
+                className="sticky top-20 h-fit flex flex-col items-center gap-2 py-3 px-1.5 rounded-l-lg border border-r-0 border-border bg-muted/50 hover:bg-muted rq-transition cursor-pointer"
+                title="Open Activity"
+              >
+                <ChevronsLeft className="h-4 w-4 text-muted-foreground" />
+                <span className="text-[11px] font-medium text-muted-foreground [writing-mode:vertical-lr]">
+                  Activity
+                </span>
+              </button>
+            )}
+          </div>
         </div>
       </div>
 

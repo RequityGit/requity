@@ -9,7 +9,7 @@ import {
   type StageConfig,
   type DealCondition,
 } from "@/components/pipeline/pipeline-types";
-import type { OpsTask, Profile } from "@/lib/tasks";
+import type { Profile } from "@/lib/tasks";
 import {
   mergeUwData,
   getPropertySelectColumns,
@@ -91,7 +91,6 @@ export default async function DealDetailRoute({ params }: PageProps) {
     teamResult,
     conditionsRaw,
     documentsRaw,
-    tasksRaw,
     dealTeamMembersRaw,
     dealTeamContactsRaw,
     commercialUwRaw,
@@ -118,11 +117,6 @@ export default async function DealDetailRoute({ params }: PageProps) {
       .from("unified_deal_documents" as never)
       .select("id, deal_id, document_name, document_type, category, subcategory, storage_path, file_url, file_size, file_size_bytes, mime_type, uploaded_by, status, notes, condition_id, condition_approval_status, review_status, archived_at, visibility, version, created_at, updated_at")
       .eq("deal_id" as never, dealId as never)
-      .order("created_at" as never, { ascending: false }),
-    admin
-      .from("ops_tasks" as never)
-      .select("*" as never)
-      .eq("linked_entity_id" as never, dealId as never)
       .order("created_at" as never, { ascending: false }),
     admin
       .from("deal_team_members" as never)
@@ -168,7 +162,6 @@ export default async function DealDetailRoute({ params }: PageProps) {
     };
   }) as unknown as DealCondition[];
   const documents = ((documentsRaw as unknown as { data: Record<string, unknown>[] | null }).data ?? []);
-  const tasks = ((tasksRaw as unknown as { data: OpsTask[] | null }).data ?? []);
   const dealTeamMembers: DealTeamMemberRow[] =
     ((dealTeamMembersRaw as unknown as { data: DealTeamMemberRow[] | null }).data ?? []);
   const dealTeamContacts: DealTeamContact[] = Array.isArray(dealTeamContactsRaw)
@@ -310,7 +303,6 @@ export default async function DealDetailRoute({ params }: PageProps) {
       currentUserName={currentUserName}
       conditions={conditions}
       documents={documents}
-      tasks={tasks}
       dealTeamMembers={dealTeamMembers}
       dealTeamContacts={dealTeamContacts}
       commercialUWData={commercialUWData}
