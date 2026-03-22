@@ -118,6 +118,14 @@ export const MentionInput = forwardRef<MentionInputHandle, MentionInputProps>(fu
         m.full_name.toLowerCase().includes(q) ||
         (m.email && m.email.toLowerCase().includes(q))
     );
+    // Prioritize name matches over email-only matches
+    filtered.sort((a, b) => {
+      const aNameMatch = a.full_name.toLowerCase().includes(q);
+      const bNameMatch = b.full_name.toLowerCase().includes(q);
+      if (aNameMatch && !bNameMatch) return -1;
+      if (!aNameMatch && bNameMatch) return 1;
+      return a.full_name.localeCompare(b.full_name);
+    });
     setFilteredMembers(filtered.slice(0, 8));
     setDropdownIndex(0);
   }, [dropdownQuery, teamMembers, showDropdown]);
