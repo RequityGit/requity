@@ -118,7 +118,6 @@ export function ActionCenterRail({
               </div>
             ) : (
               <div>
-
                 {conditions.length === 0 ? (
                   <EmptyState
                     icon={ClipboardCheck}
