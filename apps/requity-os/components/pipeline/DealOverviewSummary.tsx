@@ -23,6 +23,21 @@ const AC_LABEL_TO_KEY = Object.fromEntries(
 );
 const AC_KEY_TO_LABEL = ASSET_CLASS_LABELS as Record<string, string>;
 
+// Loan type dropdown: synced with opportunities.loan_type constraint
+const LOAN_TYPE_MAP: Record<string, string> = {
+  commercial_bridge: "Commercial Bridge",
+  commercial_perm: "Commercial Perm",
+  dscr: "DSCR",
+  guc: "Ground-Up Construction",
+  rtl: "Fix & Flip / RTL",
+  transactional: "Transactional",
+};
+const LOAN_TYPE_LABELS = Object.values(LOAN_TYPE_MAP);
+const LT_LABEL_TO_KEY = Object.fromEntries(
+  Object.entries(LOAN_TYPE_MAP).map(([k, v]) => [v, k])
+);
+const LT_KEY_TO_LABEL = LOAN_TYPE_MAP;
+
 // Funding channel dropdown
 const FUNDING_CHANNEL_MAP: Record<string, string> = {
   balance_sheet: "Balance Sheet",
@@ -762,6 +777,16 @@ export function DealOverviewSummary({ dealId, deal }: DealOverviewSummaryProps) 
                 <Badge variant="secondary" className="text-[10px] px-1.5 py-0">Active</Badge>
               </div>
               <div className="grid grid-cols-2 gap-x-6 gap-y-1">
+                {/* Loan type spans first row left */}
+                <InlineField
+                  label="Loan type"
+                  type="select"
+                  value={LT_KEY_TO_LABEL[uwStr("loan_type") ?? ""] ?? uwStr("loan_type") ?? ""}
+                  options={LOAN_TYPE_LABELS}
+                  onSave={(v) => saveField("loan_type", LT_LABEL_TO_KEY[v] ?? v)}
+                />
+                {/* Spacer for right column alignment */}
+                <div />
                 {/* Left column: Loan structure */}
                 <InlineField
                   label="Loan amount"

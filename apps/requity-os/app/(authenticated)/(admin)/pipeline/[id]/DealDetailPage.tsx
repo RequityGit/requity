@@ -361,7 +361,7 @@ function DealDetailPageInner({
         </BreadcrumbList>
       </Breadcrumb>
 
-      <div className={cn("mx-auto flex flex-col flex-1 overflow-hidden", sidebarOpen ? "max-w-[1680px]" : "max-w-[1280px]")}>
+      <div className="flex flex-col flex-1 overflow-hidden max-w-[1680px]">
         {/* Header */}
         <DealHeader
           deal={deal}
@@ -531,9 +531,9 @@ function DealDetailPageInner({
         <InlineLayoutToolbar onSaveComplete={() => layout.refetch()} tabs={layout.tabs} />
 
         {/* Tab Content + Activity Sidebar — split pane */}
-        <div className="flex min-w-0 flex-1 overflow-hidden -mr-4 md:-mr-6 lg:-mr-8">
+        <div className={cn("flex min-w-0 flex-1 overflow-hidden", sidebarOpen && "-mr-4 md:-mr-6 lg:-mr-8")}>
           {/* Left: scrollable tab content */}
-          <div className="flex-1 min-w-0 overflow-y-auto flex flex-col gap-4 pr-4 md:pr-6 lg:pr-8 pb-8">
+          <div className={cn("flex-1 min-w-0 overflow-y-auto flex flex-col gap-4 pb-8", sidebarOpen ? "pr-4 md:pr-6" : "pr-0")}>
           {loadedTabs.has("Overview") && (
             <div className={activeTab !== "Overview" ? "hidden" : undefined}>
               <SectionErrorBoundary fallbackTitle="Could not load overview">
@@ -652,10 +652,10 @@ function DealDetailPageInner({
             ) : (
               <button
                 onClick={() => setSidebarOpen(true)}
-                className="mt-4 h-fit flex flex-col items-center gap-2 py-3 px-1.5 rounded-l-lg border border-r-0 border-border bg-muted/50 hover:bg-muted rq-transition cursor-pointer"
+                className="ml-2 mt-4 h-fit flex flex-col items-center gap-2 py-3 px-2 rounded-lg border border-border bg-muted/50 hover:bg-muted rq-transition cursor-pointer"
                 title="Open Activity"
               >
-                <ChevronsLeft className="h-4 w-4 text-muted-foreground" />
+                <MessageSquare className="h-4 w-4 text-muted-foreground" />
                 <span className="text-[11px] font-medium text-muted-foreground [writing-mode:vertical-lr]">
                   Activity
                 </span>
