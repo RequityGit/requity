@@ -36,19 +36,6 @@ const ASSET_TYPE_MAP: Record<string, string> = {
   Multifamily: "multifamily",
 };
 
-/* ── Map loan type to unified_card_types.id ── */
-const CARD_TYPE_MAP: Record<string, string> = {
-  // Residential Fix & Flip / RTL
-  rtl: "6ea336bf-3325-44e9-b83b-26aef2fd0005",
-  guc: "6ea336bf-3325-44e9-b83b-26aef2fd0005",
-  // Residential DSCR
-  dscr: "977496b1-5109-4298-83bb-f8b1735d9d16",
-  // Commercial Bridge (CRE, MHC, RV, Multifamily)
-  cre_bridge: "33ae24e4-3969-4e6e-bd4f-4b007bdcfcaa",
-  mhc: "33ae24e4-3969-4e6e-bd4f-4b007bdcfcaa",
-  rv_park: "33ae24e4-3969-4e6e-bd4f-4b007bdcfcaa",
-  multifamily: "33ae24e4-3969-4e6e-bd4f-4b007bdcfcaa",
-};
 
 export async function POST(request: NextRequest) {
   try {
@@ -190,7 +177,6 @@ export async function POST(request: NextRequest) {
         // ── 3. Create unified_deal (pipeline deal) ──
         const loanAmountNum = parseCurrency(loanAmount);
         const loanTypeCode = LOAN_TYPE_CODES[loanType] || null;
-        const cardTypeId = loanTypeCode ? CARD_TYPE_MAP[loanTypeCode] || null : null;
 
         const addressPart = propertyAddress
           ? propertyAddress.split(",")[0].trim()
