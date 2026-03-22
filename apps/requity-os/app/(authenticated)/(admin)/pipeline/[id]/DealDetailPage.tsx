@@ -24,7 +24,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
-import { formatDateShort, formatCompactCurrency } from "@/lib/format";
+import { formatDateShort, formatCompactCurrency, formatPhoneNumber } from "@/lib/format";
+import { getUserColor, colorVariants } from "@/lib/user-colors";
 import { showSuccess, showError } from "@/lib/toast";
 import {
   Layers,
@@ -666,6 +667,46 @@ function DealHeader({
   const [deleteDealOpen, setDeleteDealOpen] = useState(false);
   const [deleteDealLoading, setDeleteDealLoading] = useState(false);
 
+  // Contact avatars for header
+  const borrower = deal.primary_contact
+    ? {
+        id: deal.primary_contact.id,
+        name: `${deal.primary_contact.first_name ?? ""} ${deal.primary_contact.last_name ?? ""}`.trim(),
+        email: deal.primary_contact.email,
+        phone: deal.primary_contact.phone,
+        role: "Borrower" as const,
+      }
+    : null;
+
+  const brokerRaw = (deal as unknown as Record<string, unknown>).broker_contact as {
+    id: string;
+    first_name: string;
+    last_name: string;
+    email: string | null;
+    phone: string | null;
+    broker_company?: { name: string } | null;
+  } | null;
+
+  const broker = brokerRaw
+    ? {
+        id: brokerRaw.id,
+        name: `${brokerRaw.first_name ?? ""} ${brokerRaw.last_name ?? ""}`.trim(),
+        email: brokerRaw.email,
+        phone: brokerRaw.phone,
+        role: "Broker" as const,
+        company: brokerRaw.broker_company?.name ?? null,
+      }
+    : null;
+
+  const headerContacts = [borrower, broker].filter(Boolean) as Array<{
+    id: string;
+    name: string;
+    email: string | null;
+    phone: string | null;
+    role: "Borrower" | "Broker";
+    company?: string | null;
+  }>;
+
   const resolvedMembers = dealTeamMembers.map((dtm) => {
     const profile = teamMembers.find((t) => t.id === dtm.profile_id);
     return { ...dtm, full_name: profile?.full_name ?? "Unknown" };
@@ -880,7 +921,104 @@ function DealHeader({
         </div>
 
         {/* F. Separator */}
-        <div className="w-px h-8 bg-border shrink-0" />
+        {headerContacts.length === 0 && <div className="w-px h-8 bg-border shrink-0" />}
+
+        {/* F2. Borrower & Broker contact chips */}
+        {headerContacts.length > 0 && (
+          <>
+            <div className="w-px h-8 bg-border shrink-0" />
+            <div className="flex items-center gap-1.5 shrink-0">
+              {headerContacts.map((contact) => {
+                const initials = contact.name
+                  .split(" ")
+                  .map((w) => w[0])
+                  .join("")
+                  .slice(0, 2)
+                  .toUpperCase();
+                const color = getUserColor({ id: contact.id, accent_color: null });
+                const variants = colorVariants(color);
+                const roleLabel = contact.role === "Borrower" ? "B" : "BK";
+                const roleBg = contact.role === "Borrower"
+                  ? "bg-blue-500 text-white"
+                  : "bg-amber-500 text-white";
+
+                return (
+                  <Popover key={contact.id}>
+                    <PopoverTrigger asChild>
+                      <button
+                        className="relative flex h-[30px] w-[30px] items-center justify-center rounded-lg text-[10px] font-semibold cursor-pointer rq-transition border-0"
+                        style={{
+                          backgroundColor: `${color}14`,
+                          border: `1.5px solid ${color}30`,
+                          color: color,
+                        }}
+                        title={`${contact.role}: ${contact.name}`}
+                      >
+                        {initials}
+                        <span
+                          className={cn(
+                            "absolute -bottom-0.5 -right-0.5 flex items-center justify-center rounded-[4px] text-[7px] font-bold leading-none px-[3px] py-[1px] ring-1 ring-background",
+                            roleBg
+                          )}
+                        >
+                          {roleLabel}
+                        </span>
+                      </button>
+                    </PopoverTrigger>
+                    <PopoverContent align="center" className="w-64 p-0">
+                      <div className="p-3 space-y-2.5">
+                        <div className="flex items-center gap-2.5">
+                          <div
+                            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-[12px] font-semibold"
+                            style={{
+                              backgroundColor: variants.bg,
+                              border: `1.5px solid ${variants.border}`,
+                              color: variants.base,
+                            }}
+                          >
+                            {initials}
+                          </div>
+                          <div className="min-w-0">
+                            <div className="text-sm font-medium truncate">{contact.name}</div>
+                            <div className="text-[10px] uppercase tracking-wider text-muted-foreground">
+                              {contact.role}
+                              {contact.company ? ` · ${contact.company}` : ""}
+                            </div>
+                          </div>
+                        </div>
+                        <div className="border-t border-border" />
+                        <div className="space-y-1">
+                          {contact.email && (
+                            <a
+                              href={`mailto:${contact.email}`}
+                              className="flex items-center gap-2.5 rounded-md px-2 py-1.5 text-xs text-foreground hover:bg-muted rq-transition"
+                            >
+                              <Mail className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                              <span className="truncate">{contact.email}</span>
+                            </a>
+                          )}
+                          {contact.phone && (
+                            <a
+                              href={`tel:${contact.phone}`}
+                              className="flex items-center gap-2.5 rounded-md px-2 py-1.5 text-xs text-foreground hover:bg-muted rq-transition"
+                            >
+                              <Phone className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                              <span>{formatPhoneNumber(contact.phone)}</span>
+                            </a>
+                          )}
+                          {!contact.email && !contact.phone && (
+                            <span className="text-xs text-muted-foreground px-2 py-1">No contact info</span>
+                          )}
+                        </div>
+                      </div>
+                    </PopoverContent>
+                  </Popover>
+                );
+              })}
+            </div>
+            <div className="w-px h-8 bg-border shrink-0" />
+          </>
+        )}
 
         {/* G. Actions (ml-auto pushes to right) */}
         <div className="flex items-center gap-2 ml-auto shrink-0">
