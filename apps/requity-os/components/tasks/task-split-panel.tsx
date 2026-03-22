@@ -41,7 +41,6 @@ import {
   RotateCcw,
   AlertCircle,
   Upload,
-  Terminal,
   Eye,
   Image,
   Download,
@@ -517,53 +516,6 @@ export function TaskSplitPanel({
       onDeleted(task.id);
       onClose();
     }
-  };
-
-  const handleSendToClaudeCode = async () => {
-    if (!task) return;
-    const supabase = createClient();
-    const lines: string[] = [];
-
-    lines.push(`# Task: ${task.title}`);
-    if (task.category) lines.push(`Category: ${task.category}`);
-    if (task.priority) lines.push(`Priority: ${task.priority}`);
-    if (task.linked_entity_label) lines.push(`Linked to: ${task.linked_entity_label} (${task.linked_entity_type})`);
-    lines.push("");
-    if (task.description) {
-      lines.push("## Description");
-      lines.push(task.description);
-      lines.push("");
-    }
-
-    const imageAttachments = attachments.filter((a) => a.file_type?.startsWith("image/"));
-    if (imageAttachments.length > 0) {
-      lines.push("## Screenshots");
-      for (const att of imageAttachments) {
-        const { data } = await supabase.storage
-          .from("loan-documents")
-          .createSignedUrl(att.storage_path, 3600);
-        if (data?.signedUrl) {
-          lines.push(`- ![${att.file_name}](${data.signedUrl})`);
-        }
-      }
-      lines.push("");
-    }
-
-    const docAttachments = attachments.filter((a) => !a.file_type?.startsWith("image/"));
-    if (docAttachments.length > 0) {
-      lines.push("## Attached Files");
-      for (const att of docAttachments) {
-        lines.push(`- ${att.file_name} (${att.file_type ?? "unknown"})`);
-      }
-      lines.push("");
-    }
-
-    lines.push("## Instructions");
-    lines.push("Please investigate and fix this issue. Read any screenshots above for visual context.");
-
-    const prompt = lines.join("\n");
-    await navigator.clipboard.writeText(prompt);
-    toast({ title: "Copied to clipboard", description: "Paste into Claude Code to start working on this task." });
   };
 
   const handlePreviewAttachment = async (att: { file_name: string; storage_path: string; file_type: string | null }) => {
@@ -1255,10 +1207,6 @@ export function TaskSplitPanel({
                           </AlertDialogFooter>
                         </AlertDialogContent>
                       </AlertDialog>
-                      <Button variant="outline" size="sm" className="gap-1.5 text-xs h-7" onClick={handleSendToClaudeCode} title="Copy task as prompt for Claude Code">
-                        <Terminal className="h-3.5 w-3.5" strokeWidth={1.5} />
-                        Send to Claude Code
-                      </Button>
                     </div>
                   ) : (
                     <div />

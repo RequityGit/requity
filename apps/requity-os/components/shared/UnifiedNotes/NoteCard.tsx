@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import type { NoteData } from "./types";
+import { getUserColorClass } from "@/lib/user-colors";
 
 function getInitials(name: string): string {
   return name
@@ -22,28 +23,6 @@ function getInitials(name: string): string {
     .join("")
     .slice(0, 2)
     .toUpperCase();
-}
-
-// Deterministic color for author names — consistent per user
-const AUTHOR_COLORS = [
-  "text-blue-600 dark:text-blue-400",
-  "text-violet-600 dark:text-violet-400",
-  "text-emerald-600 dark:text-emerald-400",
-  "text-amber-600 dark:text-amber-400",
-  "text-rose-600 dark:text-rose-400",
-  "text-cyan-600 dark:text-cyan-400",
-  "text-fuchsia-600 dark:text-fuchsia-400",
-  "text-orange-600 dark:text-orange-400",
-  "text-teal-600 dark:text-teal-400",
-  "text-indigo-600 dark:text-indigo-400",
-];
-
-function getAuthorColor(authorId: string): string {
-  let hash = 0;
-  for (let i = 0; i < authorId.length; i++) {
-    hash = (hash * 31 + authorId.charCodeAt(i)) | 0;
-  }
-  return AUTHOR_COLORS[Math.abs(hash) % AUTHOR_COLORS.length];
 }
 
 interface NoteCardProps {
@@ -142,7 +121,7 @@ export function NoteCard({
 
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
-            <span className={cn("text-[13px] font-semibold", getAuthorColor(note.author_id))}>
+            <span className={cn("text-[13px] font-semibold", getUserColorClass(note.author_id))}>
               {note.author_name || "Unknown"}
             </span>
             <span className="text-[11px] font-mono text-muted-foreground num">
