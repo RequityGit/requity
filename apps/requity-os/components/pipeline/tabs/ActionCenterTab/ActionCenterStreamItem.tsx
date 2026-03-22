@@ -44,7 +44,7 @@ const TYPE_CONFIG: Record<
 
 export function DateDivider({ date }: { date: string }) {
   return (
-    <div className="flex items-center gap-3 py-2 px-4">
+    <div className="flex items-center gap-3 py-1.5 px-3">
       <div className="flex-1 border-t border-border/50" />
       <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">
         {formatDate(date)}
@@ -119,7 +119,7 @@ export function ActionCenterStreamItem({ item, noteHandlers }: ActionCenterStrea
   // Note: use NoteThread
   if (item.type === "note" && item.noteData && noteHandlers) {
     return (
-      <div className="px-3 py-1 border-b border-border/20">
+      <div className="px-2 py-0.5 border-b border-border/20">
         <NoteThread
           note={item.noteData}
           replies={item.noteReplies ?? []}
@@ -159,11 +159,11 @@ export function ActionCenterStreamItem({ item, noteHandlers }: ActionCenterStrea
   const Icon = config.icon;
 
   return (
-    <div className="flex gap-3 px-4 py-2.5 border-b border-border/20 hover:bg-muted/30 rq-transition">
+    <div className="flex gap-2.5 px-3 py-2 border-b border-border/20 hover:bg-muted/30 rq-transition">
       <ColoredAvatar authorId={item.author.id} initials={item.author.initials} />
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2 mb-0.5">
-          <span className="text-[13px] font-medium">{item.author.name}</span>
+          <span className="text-[12px] font-medium">{item.author.name}</span>
           <Badge variant="outline" className={cn("text-[10px] px-1.5 py-0", config.color)}>
             <Icon className="h-2.5 w-2.5 mr-0.5" />
             {config.label}
@@ -187,11 +187,11 @@ function EmailItem({ item }: { item: StreamItem }) {
   const config = TYPE_CONFIG[item.type];
   const Icon = config.icon;
   return (
-    <div className="flex gap-3 px-4 py-2.5 border-b border-border/20 hover:bg-muted/30 rq-transition">
+    <div className="flex gap-2.5 px-3 py-2 border-b border-border/20 hover:bg-muted/30 rq-transition">
       <ColoredAvatar authorId={item.author.id} initials={item.author.initials} />
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2 mb-1">
-          <span className="text-[13px] font-medium">{item.author.name}</span>
+          <span className="text-[12px] font-medium">{item.author.name}</span>
           <Badge variant="outline" className={cn("text-[10px] px-1.5 py-0", config.color)}>
             <Icon className="h-2.5 w-2.5 mr-0.5" />
             {config.label}
@@ -200,14 +200,14 @@ function EmailItem({ item }: { item: StreamItem }) {
             {timeAgo(item.timestamp)}
           </span>
         </div>
-        <div className="rounded-lg border bg-card p-3 mt-0.5">
+        <div className="rounded-lg border bg-card p-2.5 mt-0.5">
           {item.subject && <p className="text-[13px] font-medium mb-1">{item.subject}</p>}
           <div className="flex items-center gap-2 text-[11px] text-muted-foreground mb-1.5">
             {item.fromEmail && <span>From: {item.fromEmail}</span>}
             {item.toEmail && <span>To: {item.toEmail}</span>}
           </div>
           {item.bodyPreview && (
-            <p className="text-[12px] text-muted-foreground line-clamp-3">{item.bodyPreview}</p>
+            <p className="text-[12px] text-muted-foreground line-clamp-2">{item.bodyPreview}</p>
           )}
           {item.emailAttachments && item.emailAttachments.length > 0 && (
             <div className="flex items-center gap-1 mt-2 text-[11px] text-muted-foreground">
@@ -232,11 +232,11 @@ function CallItem({ item }: { item: StreamItem }) {
     : null;
 
   return (
-    <div className="flex gap-3 px-4 py-2.5 border-b border-border/20 hover:bg-muted/30 rq-transition">
+    <div className="flex gap-2.5 px-3 py-2 border-b border-border/20 hover:bg-muted/30 rq-transition">
       <ColoredAvatar authorId={item.author.id} initials={item.author.initials} />
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2 mb-0.5">
-          <span className="text-[13px] font-medium">{item.author.name}</span>
+          <span className="text-[12px] font-medium">{item.author.name}</span>
           <Badge
             variant="outline"
             className={cn(
@@ -264,11 +264,11 @@ function CallItem({ item }: { item: StreamItem }) {
 function SmsItem({ item }: { item: StreamItem }) {
   const isOutbound = item.callDirection === "outbound";
   return (
-    <div className="flex gap-3 px-4 py-2.5 border-b border-border/20 hover:bg-muted/30 rq-transition">
+    <div className="flex gap-2.5 px-3 py-2 border-b border-border/20 hover:bg-muted/30 rq-transition">
       <ColoredAvatar authorId={item.author.id} initials={item.author.initials} />
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2 mb-1">
-          <span className="text-[13px] font-medium">{item.author.name}</span>
+          <span className="text-[12px] font-medium">{item.author.name}</span>
           <Badge variant="outline" className="text-[10px] px-1.5 py-0 text-cyan-600 dark:text-cyan-400">
             <MessageSquare className="h-2.5 w-2.5 mr-0.5" />
             SMS

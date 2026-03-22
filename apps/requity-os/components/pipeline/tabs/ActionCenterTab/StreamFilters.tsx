@@ -19,13 +19,13 @@ interface StreamFiltersProps {
 
 export function StreamFilters({ active, counts, onChange }: StreamFiltersProps) {
   return (
-    <div className="flex items-center gap-1.5 px-4 py-2.5 border-b">
+    <div className="flex items-center gap-1 px-3 py-1.5 border-b">
       {FILTERS.map(({ key, label }) => (
         <button
           key={key}
           onClick={() => onChange(key)}
           className={cn(
-            "flex items-center gap-1.5 rounded-lg border px-3 py-1 text-xs font-medium rq-transition cursor-pointer",
+            "flex items-center gap-1 rounded-md border px-2 py-0.5 text-[11px] font-medium rq-transition cursor-pointer",
             active === key
               ? "bg-primary text-primary-foreground border-primary"
               : "bg-transparent text-muted-foreground border-border hover:text-foreground hover:bg-muted/50"

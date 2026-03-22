@@ -89,13 +89,24 @@ export function ActionCenterRail({
         />
       ) : (
         <>
-          {/* Header */}
-          <div className="px-4 py-3 border-b">
-            <div className="flex items-center justify-between">
-              <h3 className="text-[13px] font-semibold">Execution</h3>
-              <span className="text-[11px] text-muted-foreground tabular-nums">
+          {/* Header - single row */}
+          <div className="flex items-center justify-between px-3 py-2.5 border-b">
+            <div className="flex items-center gap-2">
+              <h3 className="text-[13px] font-semibold">Conditions</h3>
+              <span className="text-[11px] font-medium tabular-nums text-muted-foreground">
                 {clearedConditions}/{conditions.length}
               </span>
+              <div className="w-16 h-1 rounded-full bg-border overflow-hidden">
+                <div
+                  className="h-full rounded-full bg-emerald-500 transition-all duration-normal"
+                  style={{
+                    width:
+                      conditions.length > 0
+                        ? `${Math.round((clearedConditions / conditions.length) * 100)}%`
+                        : "0%",
+                  }}
+                />
+              </div>
             </div>
           </div>
 
@@ -107,27 +118,6 @@ export function ActionCenterRail({
               </div>
             ) : (
               <div>
-                {/* Conditions section header with inline progress */}
-                <div className="flex items-center justify-between px-4 py-2 border-b">
-                  <div className="flex items-center gap-2">
-                    <span className="rq-micro-label">CONDITIONS</span>
-                    <span className="text-[11px] font-medium tabular-nums text-muted-foreground">
-                      {clearedConditions}/{conditions.length}
-                    </span>
-                    <div className="w-16 h-1 rounded-full bg-border overflow-hidden">
-                      <div
-                        className="h-full rounded-full bg-emerald-500 transition-all duration-normal"
-                        style={{
-                          width:
-                            conditions.length > 0
-                              ? `${Math.round((clearedConditions / conditions.length) * 100)}%`
-                              : "0%",
-                        }}
-                      />
-                    </div>
-                  </div>
-                </div>
-
                 {conditions.length === 0 ? (
                   <EmptyState
                     icon={ClipboardCheck}
