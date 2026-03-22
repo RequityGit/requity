@@ -11,6 +11,7 @@ import {
   Building2,
   Download,
 } from "lucide-react";
+import { EmptyState } from "@/components/shared/EmptyState";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -123,21 +124,23 @@ export function RentRollSubTab({ rentRoll, uwId }: RentRollSubTabProps) {
 
       {/* Rent Roll Table */}
       {rentRoll.length === 0 ? (
-        <div className="rounded-xl border border-dashed p-8 text-center">
-          <p className="text-sm text-muted-foreground mb-3">
-            No rent roll data yet. Upload a spreadsheet or enter units manually.
-          </p>
-          <div className="flex items-center gap-2 justify-center">
-            <Button variant="outline" size="sm" onClick={() => setUploadOpen(true)}>
-              <Upload className="h-3.5 w-3.5 mr-1.5" />
-              Upload Rent Roll
-            </Button>
-            <Button variant="outline" size="sm" onClick={() => setEditOpen(true)}>
-              <Plus className="h-3.5 w-3.5 mr-1.5" />
-              Add Manually
-            </Button>
-          </div>
-        </div>
+        <EmptyState
+          icon={Building2}
+          title="No rent roll data yet"
+          description="Upload a spreadsheet or enter units manually."
+          action={
+            <div className="flex items-center gap-2 justify-center">
+              <Button variant="outline" size="sm" onClick={() => setUploadOpen(true)}>
+                <Upload className="h-3.5 w-3.5 mr-1.5" />
+                Upload Rent Roll
+              </Button>
+              <Button variant="outline" size="sm" onClick={() => setEditOpen(true)}>
+                <Plus className="h-3.5 w-3.5 mr-1.5" />
+                Add Manually
+              </Button>
+            </div>
+          }
+        />
       ) : (
         <>
           <SectionCard

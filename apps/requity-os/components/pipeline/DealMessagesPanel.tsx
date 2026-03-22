@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 import { useDealMessages, type DealMessage } from "@/hooks/useDealMessages";
 import { cn } from "@/lib/utils";
+import { EmptyState } from "@/components/shared/EmptyState";
 
 // ── Source badge icon ──
 
@@ -188,13 +189,11 @@ export function DealMessagesPanel({
             ))}
           </div>
         ) : messages.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-full py-12 text-center">
-            <MessageSquare className="h-10 w-10 text-muted-foreground/40 mb-3" />
-            <p className="text-sm text-muted-foreground">No messages yet</p>
-            <p className="text-xs text-muted-foreground/60 mt-1">
-              Send a message to start a conversation with the borrower
-            </p>
-          </div>
+          <EmptyState
+            icon={MessageSquare}
+            title="No messages yet"
+            description="Send a message to start a conversation with the borrower"
+          />
         ) : (
           <div className="py-4 space-y-1">
             {/* Load older button */}

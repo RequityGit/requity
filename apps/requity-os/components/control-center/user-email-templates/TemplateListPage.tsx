@@ -29,7 +29,9 @@ import {
   Trash2,
   ToggleLeft,
   ToggleRight,
+  Mail,
 } from "lucide-react";
+import { EmptyState } from "@/components/shared/EmptyState";
 import { formatDate } from "@/lib/format";
 import type { UserEmailTemplate } from "@/lib/types/user-email-templates";
 import { USER_TEMPLATE_CATEGORIES } from "@/lib/types/user-email-templates";
@@ -160,11 +162,11 @@ export function UserEmailTemplateListPage({
 
       {/* Templates table */}
       {filtered.length === 0 ? (
-        <div className="text-center py-12 border rounded-lg">
-          <p className="text-muted-foreground text-sm">
-            No templates found. Create your first template to get started.
-          </p>
-        </div>
+        <EmptyState
+          icon={Mail}
+          title="No templates found"
+          description="Create your first template to get started."
+        />
       ) : (
         <div className="border rounded-lg">
           <Table>

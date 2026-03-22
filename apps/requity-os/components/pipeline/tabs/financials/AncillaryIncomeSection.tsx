@@ -10,6 +10,7 @@ import {
   Pencil,
   MessageSquare,
 } from "lucide-react";
+import { EmptyState } from "@/components/shared/EmptyState";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -146,36 +147,38 @@ export function AncillaryIncomeSection({
   if (ancRows.length === 0) {
     return (
       <SectionCard title="Other / Ancillary Income" icon={Coins}>
-        <div className="py-6 text-center">
-          <p className="text-sm text-muted-foreground mb-3">
-            No ancillary income items yet.
-          </p>
-          <div className="flex items-center gap-2 justify-center">
-            <Button variant="outline" size="sm" onClick={handleApplyTemplates} disabled={saving}>
-              {saving ? <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" /> : <Plus className="h-3.5 w-3.5 mr-1.5" />}
-              Apply {propertyType.replace(/_/g, " ")} Templates
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => {
-                const newRow: AncillaryRow = {
-                  line_item: "",
-                  t12_amount: 0,
-                  year_1_amount: 0,
-                  growth_rate: 0,
-                  is_deduction: false,
-                  sort_order: 0,
-                  section: "ancillary",
-                };
-                handleSaveRows([newRow]);
-              }}
-            >
-              <Plus className="h-3.5 w-3.5 mr-1.5" />
-              Add Custom
-            </Button>
-          </div>
-        </div>
+        <EmptyState
+          icon={Coins}
+          title="No ancillary income items yet"
+          action={
+            <div className="flex items-center gap-2 justify-center">
+              <Button variant="outline" size="sm" onClick={handleApplyTemplates} disabled={saving}>
+                {saving ? <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" /> : <Plus className="h-3.5 w-3.5 mr-1.5" />}
+                Apply {propertyType.replace(/_/g, " ")} Templates
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  const newRow: AncillaryRow = {
+                    line_item: "",
+                    t12_amount: 0,
+                    year_1_amount: 0,
+                    growth_rate: 0,
+                    is_deduction: false,
+                    sort_order: 0,
+                    section: "ancillary",
+                  };
+                  handleSaveRows([newRow]);
+                }}
+              >
+                <Plus className="h-3.5 w-3.5 mr-1.5" />
+                Add Custom
+              </Button>
+            </div>
+          }
+          compact
+        />
       </SectionCard>
     );
   }

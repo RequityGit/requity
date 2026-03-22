@@ -8,6 +8,7 @@ import { deleteCompanyFileAction } from "@/app/(authenticated)/(admin)/companies
 import { COMPANY_FILE_TYPES } from "@/lib/constants";
 import { formatDate } from "@/lib/format";
 import { FileText, Eye, ExternalLink, Trash2 } from "lucide-react";
+import { EmptyState } from "@/components/shared/EmptyState";
 
 interface CompanyFile {
   id: string;
@@ -82,9 +83,11 @@ export function CompanyFileList({ files, onDeleted }: CompanyFileListProps) {
 
   if (files.length === 0) {
     return (
-      <p className="text-sm text-muted-foreground py-4 text-center">
-        No files uploaded yet.
-      </p>
+      <EmptyState
+        icon={FileText}
+        title="No files uploaded yet"
+        compact
+      />
     );
   }
 

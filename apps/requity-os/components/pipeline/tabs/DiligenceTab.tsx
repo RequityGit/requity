@@ -1210,9 +1210,7 @@ function LinkDocumentPopover({
         </div>
         <div className="max-h-48 overflow-y-auto space-y-0.5">
           {filtered.length === 0 ? (
-            <div className="text-xs text-muted-foreground py-3 text-center">
-              No documents available to link.
-            </div>
+            <EmptyState icon={FileText} title="No documents available to link" compact />
           ) : (
             filtered.slice(0, 10).map((doc) => (
               <button

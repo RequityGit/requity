@@ -201,9 +201,7 @@ function ContactSearchCombobox({
             <EmptyState icon={Search} title="No contacts found" compact />
           )}
           {results.length === 0 && query.length < 2 && (
-            <div className="px-3 py-4 text-center text-xs text-muted-foreground">
-              Type at least 2 characters to search
-            </div>
+            <EmptyState icon={Search} title="Type at least 2 characters to search" compact />
           )}
           {results.map((contact, index) => {
             const alreadyLinked = existingContactIds.has(contact.id);
@@ -520,15 +518,11 @@ export function ContactsTab({
             ))}
           </div>
         ) : dealContacts.length === 0 ? (
-          <div className="rounded-xl border border-dashed p-8 text-center">
-            <User className="mx-auto h-6 w-6 text-muted-foreground/40 mb-2" />
-            <p className="text-sm text-muted-foreground">
-              No contacts linked to this deal yet.
-            </p>
-            <p className="text-xs text-muted-foreground/60 mt-1">
-              Add up to 5 borrowers or signers using the button above.
-            </p>
-          </div>
+          <EmptyState
+            icon={User}
+            title="No contacts linked to this deal yet"
+            description="Add up to 5 borrowers or signers using the button above."
+          />
         ) : (
           <div className="space-y-2">
             {dealContacts.map((dc) => (

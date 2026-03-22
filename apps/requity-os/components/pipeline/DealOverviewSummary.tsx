@@ -11,6 +11,7 @@ import { updateUwDataAction, updateDealNameAction, updateContactFieldAction, lin
 import { Input } from "@/components/ui/input";
 import { useDebounce } from "@/hooks/useDebounce";
 import { Search, X, Loader2, Plus, UserPlus } from "lucide-react";
+import { EmptyState } from "@/components/shared/EmptyState";
 import { Button } from "@/components/ui/button";
 import { type UnifiedDeal, ASSET_CLASS_LABELS, ACTIVE_ASSET_CLASS_OPTIONS } from "./pipeline-types";
 import { showSuccess, showError } from "@/lib/toast";
@@ -304,9 +305,7 @@ function ContactSearchInput({ onSelect, placeholder }: {
             </button>
           ))}
           {noResults && (
-            <div className="px-3 py-2 text-sm text-muted-foreground">
-              No contacts found
-            </div>
+            <EmptyState icon={Search} title="No contacts found" compact />
           )}
           {/* Always show create option at bottom of dropdown */}
           <button

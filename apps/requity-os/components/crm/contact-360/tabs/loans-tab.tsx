@@ -5,7 +5,8 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { DollarSign, ChevronDown, ChevronUp } from "lucide-react";
-import { StagePill, EmptyState, MonoValue } from "../shared";
+import { StagePill, MonoValue } from "../shared";
+import { EmptyState } from "@/components/shared/EmptyState";
 import { formatCurrency } from "@/lib/format";
 import type { LoanData } from "../types";
 
