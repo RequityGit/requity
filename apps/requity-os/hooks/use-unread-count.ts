@@ -23,6 +23,17 @@ export function useUnreadCount(userId: string | undefined) {
   // Keep ref in sync so the realtime handler always calls the latest version
   fetchCountRef.current = fetchCount;
 
+  // Sync badge count to PWA app badge (dock icon badge like Monday.com)
+  useEffect(() => {
+    if ("setAppBadge" in navigator) {
+      if (count > 0) {
+        navigator.setAppBadge(count).catch(() => {});
+      } else {
+        navigator.clearAppBadge().catch(() => {});
+      }
+    }
+  }, [count]);
+
   // Initial fetch
   useEffect(() => {
     fetchCount();
