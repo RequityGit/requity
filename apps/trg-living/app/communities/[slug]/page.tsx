@@ -139,7 +139,7 @@ export default async function CommunityPage({ params }: { params: { slug: string
                                 className="w-6 h-6 bg-[#2563eb]"
                             />
                         </div>
-                        <p className="text-sm font-black uppercase tracking-widest text-[#333333]">
+                        <p className="tracking-widest text-[#333333]">
                             {item.pm_amenities.name}
                         </p>
                     </div>
