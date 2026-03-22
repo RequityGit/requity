@@ -897,11 +897,11 @@ export function TaskSheet({
                 </Select>
               </div>
 
-              <div className="space-y-2">
-                <Label className="text-xs font-semibold text-foreground">
+              <div className="space-y-0">
+                <span className="inline-field-label">
                   Due Date
-                </Label>
-                <DatePicker value={dueDate} onChange={setDueDate} />
+                </span>
+                <DatePicker value={dueDate} onChange={setDueDate} className="inline-field" />
               </div>
             </div>
 
@@ -926,11 +926,11 @@ export function TaskSheet({
                 </Select>
               </div>
 
-              <div className="space-y-2">
-                <Label className="text-xs font-semibold text-foreground flex items-center gap-1">
+              <div className="space-y-0">
+                <span className="inline-field-label flex items-center gap-1">
                   <Link2 className="h-3 w-3" strokeWidth={1.5} />
                   Linked
-                </Label>
+                </span>
                 <LinkedEntitySelect
                   entityType={linkedEntityType}
                   entityId={linkedEntityId}

@@ -125,7 +125,7 @@ export function LinkedEntitySelect({
     <Select value={currentValue} onValueChange={handleChange} onOpenChange={(open) => {
       if (open) loadOptions();
     }}>
-      <SelectTrigger>
+      <SelectTrigger className="inline-field">
         <SelectValue placeholder="None">
           {entityLabel || "None"}
         </SelectValue>
