@@ -46,27 +46,39 @@ function getFirstName(fullName: string): string {
 }
 
 function getDealAddress(deal: UnifiedDeal): string {
+  // Check property_data first
   const pd = deal.property_data;
-  if (!pd) return "";
-  if (typeof pd.address === "string" && pd.address) return pd.address;
-  // Assemble from parts
-  const parts = [
-    pd.street_address,
-    pd.city,
-    pd.state,
-  ].filter(Boolean);
-  if (parts.length === 0) return "";
-  let addr = parts.join(", ");
-  if (pd.zip) addr += ` ${pd.zip}`;
-  return addr;
+  if (pd) {
+    if (typeof pd.address === "string" && pd.address) return pd.address;
+    const pdParts = [pd.street_address, pd.city, pd.state].filter(Boolean);
+    if (pdParts.length > 0) {
+      let addr = pdParts.join(", ");
+      if (pd.zip) addr += ` ${pd.zip}`;
+      return addr;
+    }
+  }
+  // Fall back to uw_data address fields
+  const uw = deal.uw_data;
+  if (uw) {
+    const uwParts = [uw.property_address, uw.property_city, uw.property_state].filter(Boolean);
+    if (uwParts.length > 0) {
+      let addr = uwParts.join(", ");
+      if (uw.property_zip) addr += ` ${uw.property_zip}`;
+      return addr;
+    }
+  }
+  return "";
 }
 
 function getPropertyName(deal: UnifiedDeal): string | null {
+  // For commercial deals, deal.name IS the property name
+  // Check property_data.property_name first, then fall back to deal.name
   const pd = deal.property_data;
   if (pd && typeof pd.property_name === "string" && pd.property_name) {
     return pd.property_name;
   }
-  return null;
+  // deal.name is the property name for commercial deals (set at creation)
+  return deal.name || null;
 }
 
 function getLoanTypeLabel(deal: UnifiedDeal): string | null {
@@ -137,9 +149,12 @@ function CardContent({
 }: CardContentProps) {
   const isCommercial = isCommercialAssetClass(deal.asset_class);
   const isEquity = deal.capital_side === "equity";
-  const propertyName = getPropertyName(deal);
-  const address = getDealAddress(deal) || deal.name;
-  const hasNamedProperty = isCommercial && !!propertyName;
+  const address = getDealAddress(deal);
+  // Commercial deals: show deal.name as property name headline + address below
+  // Residential: show address as headline, fall back to deal.name if no address
+  const hasNamedProperty = isCommercial;
+  const propertyName = deal.name;
+  const displayAddress = address || (isCommercial ? "" : deal.name);
   const loanType = getLoanTypeLabel(deal);
   const closeDateStatus = getCloseDateStatus(deal.expected_close_date);
   const condState = getConditionsBarState(conditionsProgress ?? null);
@@ -193,13 +208,15 @@ function CardContent({
               <span className="text-sm font-bold leading-tight truncate block">
                 {propertyName}
               </span>
-              <span className="text-xs text-muted-foreground truncate block mt-px">
-                {address}
-              </span>
+              {displayAddress && (
+                <span className="text-xs text-muted-foreground truncate block mt-px">
+                  {displayAddress}
+                </span>
+              )}
             </div>
           ) : (
             <span className="text-[13.5px] font-semibold text-foreground leading-tight truncate flex-1 min-w-0">
-              {address}
+              {displayAddress || deal.name}
             </span>
           )}
           {loanType ? (
