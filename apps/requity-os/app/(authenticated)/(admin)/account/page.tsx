@@ -10,13 +10,15 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/components/ui/use-toast";
-import { Loader2, Save } from "lucide-react";
+import { Loader2, Save, Check } from "lucide-react";
 import type { Tables } from "@/lib/supabase/types";
 
 type Profile = Tables<"profiles">;
 import { resilientProfileUpdate } from "@/lib/supabase/resilient-profile-update";
 import { ProfilePhotoUpload } from "@/components/shared/profile-photo-upload";
 import { formatPhoneInput } from "@/lib/format";
+import { ACCENT_COLOR_PRESETS } from "@/lib/user-colors";
+import { cn } from "@/lib/utils";
 
 export default function AdminAccountPage() {
   const { toast } = useToast();
@@ -31,6 +33,7 @@ export default function AdminAccountPage() {
   const [phone, setPhone] = useState("");
   const [company, setCompany] = useState("");
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+  const [accentColor, setAccentColor] = useState<string | null>(null);
 
   useEffect(() => {
     loadProfile();
@@ -61,6 +64,7 @@ export default function AdminAccountPage() {
         setPhone(formatPhoneInput(data.phone ?? ""));
         setCompany(data.company_name ?? "");
         setAvatarUrl(data.avatar_url ?? null);
+        setAccentColor((data as any).accent_color ?? null);
       }
     } finally {
       setLoading(false);
@@ -91,6 +95,7 @@ export default function AdminAccountPage() {
         email,
         phone: phone || null,
         company_name: company || null,
+        accent_color: accentColor,
         updated_at: new Date().toISOString(),
       });
 
@@ -212,6 +217,38 @@ export default function AdminAccountPage() {
                     onChange={(e) => setCompany(e.target.value)}
                     placeholder="Your company name"
                   />
+                </div>
+              </div>
+
+              {/* Accent Color Picker */}
+              <div className="space-y-2">
+                <Label>Accent Color</Label>
+                <p className="text-xs text-muted-foreground">
+                  Choose your display color for notes and activity feeds
+                </p>
+                <div className="flex flex-wrap gap-2 pt-1">
+                  {ACCENT_COLOR_PRESETS.map((color) => (
+                    <button
+                      key={color}
+                      type="button"
+                      onClick={() => setAccentColor(color)}
+                      className={cn(
+                        "h-8 w-8 rounded-full transition-all flex items-center justify-center",
+                        accentColor === color
+                          ? "ring-2 ring-offset-2 ring-offset-background"
+                          : "hover:scale-110"
+                      )}
+                      style={{
+                        backgroundColor: color,
+                        ...(accentColor === color ? { ringColor: color } : {}),
+                      }}
+                      title={color}
+                    >
+                      {accentColor === color && (
+                        <Check className="h-4 w-4 text-white" strokeWidth={3} />
+                      )}
+                    </button>
+                  ))}
                 </div>
               </div>
 
