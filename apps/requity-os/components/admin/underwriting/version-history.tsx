@@ -5,6 +5,7 @@ import { Clock, Check, FileText, ChevronRight } from "lucide-react";
 import type { UnderwritingModelType } from "@/lib/underwriting/resolver";
 import { getModelConfig } from "@/lib/underwriting/resolver";
 import { createClient } from "@/lib/supabase/client";
+import { formatDate } from "@/lib/format";
 
 const supabase = createClient();
 
@@ -112,11 +113,7 @@ export function VersionHistory({
                   )}
                 </div>
                 <div className="text-[10px] text-[#71717a] num">
-                  {new Date(v.created_at).toLocaleDateString("en-US", {
-                    month: "short",
-                    day: "numeric",
-                    year: "numeric",
-                  })}
+                  {formatDate(v.created_at)}
                 </div>
               </div>
               {isActive && (

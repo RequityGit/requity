@@ -2,6 +2,7 @@
 
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
+import { formatDateShort } from "@/lib/format";
 
 // --- Priority Badge ---
 const priorityConfig: Record<string, { className: string }> = {
@@ -191,10 +192,7 @@ export function DueDateLabel({ dueDate }: { dueDate: string | null }) {
     label = `${diffDays}d`;
     colorClass = "text-amber-600";
   } else {
-    label = due.toLocaleDateString("en-US", {
-      month: "short",
-      day: "numeric",
-    });
+    label = formatDateShort(dueDate);
     colorClass = "text-muted-foreground";
   }
 

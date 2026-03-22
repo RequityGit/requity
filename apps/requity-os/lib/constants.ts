@@ -108,23 +108,31 @@ export type {
 export { LOAN_ACTIVITY_TYPES as ACTIVITY_TYPES } from "@/lib/constants/db-enums";
 
 // ---------------------------------------------------------------------------
-// Property type labels (human-readable)
+// Property type / asset class labels (human-readable)
+// Canonical source: @/lib/constants/asset-classes
 // ---------------------------------------------------------------------------
 
+export {
+  ASSET_CLASS_OPTIONS,
+  ASSET_CLASS_LABELS,
+  getAssetClassLabel,
+} from "@/lib/constants/asset-classes";
+export type { AssetClassKey } from "@/lib/constants/asset-classes";
+
+/** Property type options in {value, label} shape for backward compat */
 export const PROPERTY_TYPE_OPTIONS: { value: string; label: string }[] = [
-  { value: "sfr", label: "Single Family (SFR)" },
-  { value: "condo", label: "Condo" },
-  { value: "townhouse", label: "Townhouse" },
-  { value: "duplex", label: "Duplex" },
-  { value: "triplex", label: "Triplex" },
-  { value: "fourplex", label: "Fourplex" },
-  { value: "multifamily_5_plus", label: "Multifamily (5+)" },
+  { value: "residential_1_4", label: "Residential (1-4)" },
+  { value: "multifamily", label: "Multifamily (5+)" },
   { value: "mixed_use", label: "Mixed Use" },
   { value: "retail", label: "Retail" },
   { value: "office", label: "Office" },
   { value: "industrial", label: "Industrial" },
-  { value: "mobile_home_park", label: "Mobile Home Park" },
+  { value: "mhc", label: "MHC" },
   { value: "land", label: "Land" },
+  { value: "rv_park", label: "RV Park" },
+  { value: "self_storage", label: "Self-Storage" },
+  { value: "hospitality", label: "Hospitality" },
+  { value: "marina", label: "Marina" },
   { value: "other", label: "Other" },
 ];
 

@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
 import { cn } from "@/lib/utils";
+import { formatDateShort, formatDate } from "@/lib/format";
 import {
   DndContext,
   closestCenter,
@@ -156,10 +157,6 @@ function getInitials(name: string | null): string {
   return parts[0][0]?.toUpperCase() ?? "?";
 }
 
-function formatDateShort(d: string | null): string {
-  if (!d) return "—";
-  return new Date(d).toLocaleDateString("en-US", { month: "short", day: "numeric" });
-}
 
 function daysUntil(d: string | null): number | null {
   if (!d) return null;
@@ -915,7 +912,7 @@ export function OperationsView({
         } else if ((data as Record<string, unknown>)?.success) {
           toast({
             title: "Task completed",
-            description: `Next occurrence scheduled for ${new Date((data as Record<string, unknown>).next_due_date as string).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}`,
+            description: `Next occurrence scheduled for ${formatDate((data as Record<string, unknown>).next_due_date as string)}`,
           });
         }
       }

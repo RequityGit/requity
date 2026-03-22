@@ -2,6 +2,7 @@
 
 import { useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
+import { formatDateShort } from "@/lib/format";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -350,7 +351,7 @@ export function ActivityTab({
                       <div className="flex items-center gap-1.5 text-xs text-muted-foreground mt-0.5">
                         <span>{isOutbound ? `To: ${e.to_name || e.to_email}` : `From: ${e.from_email}`}</span>
                         <span className="text-muted-foreground/50">&middot;</span>
-                        <span>{new Date(e.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric" })}</span>
+                        <span>{formatDateShort(e.created_at)}</span>
                         {isOutbound && e.sent_by_name && (
                           <>
                             <span className="text-muted-foreground/50">&middot;</span>

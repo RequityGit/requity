@@ -248,7 +248,7 @@ export function LendingPipelineTable({
       l.originator_name ?? "",
       l.processor_name ?? "",
       l.next_action ?? "",
-      l.created_at ? new Date(l.created_at).toLocaleDateString() : "",
+      l.created_at ? formatDate(l.created_at) : "",
     ]);
     const csv = [headers, ...rows]
       .map((row) =>

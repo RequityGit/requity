@@ -167,22 +167,20 @@ export interface CommercialOutputs {
   proforma: ProFormaYear[];
 }
 
-/** Property type options matching commercial_uw_assumptions seed data */
+/** Property type options for commercial underwriting.
+ * Uses the unified asset class list, filtered to commercial-relevant types. */
 export const PROPERTY_TYPES = [
-  { value: "multifamily", label: "Multifamily" },
-  { value: "office", label: "Office" },
-  { value: "retail", label: "Retail" },
-  { value: "industrial", label: "Industrial" },
-  { value: "self_storage", label: "Self Storage" },
-  { value: "hospitality", label: "Hospitality" },
-  { value: "healthcare", label: "Healthcare" },
-  { value: "mobile_home_park", label: "Mobile Home Park" },
-  { value: "rv_campground", label: "RV / Campground" },
-  { value: "marina", label: "Marina" },
-  { value: "vacation_rental", label: "Vacation Rental" },
+  { value: "multifamily", label: "Multifamily (5+)" },
   { value: "mixed_use", label: "Mixed Use" },
-  { value: "warehouse", label: "Warehouse" },
-  { value: "specialty", label: "Specialty" },
+  { value: "retail", label: "Retail" },
+  { value: "office", label: "Office" },
+  { value: "industrial", label: "Industrial" },
+  { value: "mhc", label: "MHC" },
+  { value: "rv_park", label: "RV Park" },
+  { value: "self_storage", label: "Self-Storage" },
+  { value: "hospitality", label: "Hospitality" },
+  { value: "marina", label: "Marina" },
+  { value: "land", label: "Land" },
   { value: "other", label: "Other" },
 ] as const;
 
@@ -204,14 +202,12 @@ export const PROPERTY_TYPE_DEFAULTS: Record<string, {
   industrial: { vacancy_pct: 5, stabilized_vacancy_pct: 5, bad_debt_pct: 0.5, mgmt_fee_pct: 6, rent_growth: [3, 3, 3, 3, 3], expense_growth: [2, 2, 2, 2, 2], going_in_cap_rate: 5.5, exit_cap_rate: 6.0, disposition_cost_pct: 1.5 },
   self_storage: { vacancy_pct: 10, stabilized_vacancy_pct: 8, bad_debt_pct: 1, mgmt_fee_pct: 8, rent_growth: [3, 3, 3, 3, 3], expense_growth: [2.5, 2.5, 2.5, 2.5, 2.5], going_in_cap_rate: 6.0, exit_cap_rate: 6.5, disposition_cost_pct: 2 },
   hospitality: { vacancy_pct: 30, stabilized_vacancy_pct: 25, bad_debt_pct: 2, mgmt_fee_pct: 10, rent_growth: [3, 3, 3, 3, 3], expense_growth: [3, 3, 3, 3, 3], going_in_cap_rate: 8.0, exit_cap_rate: 8.5, disposition_cost_pct: 2.5 },
-  healthcare: { vacancy_pct: 5, stabilized_vacancy_pct: 5, bad_debt_pct: 0.5, mgmt_fee_pct: 6, rent_growth: [2, 2, 2, 2, 2], expense_growth: [2, 2, 2, 2, 2], going_in_cap_rate: 7.0, exit_cap_rate: 7.5, disposition_cost_pct: 2 },
-  mobile_home_park: { vacancy_pct: 5, stabilized_vacancy_pct: 5, bad_debt_pct: 1, mgmt_fee_pct: 8, rent_growth: [3, 3, 3, 3, 3], expense_growth: [2, 2, 2, 2, 2], going_in_cap_rate: 6.0, exit_cap_rate: 6.5, disposition_cost_pct: 2 },
-  rv_campground: { vacancy_pct: 25, stabilized_vacancy_pct: 20, bad_debt_pct: 1.5, mgmt_fee_pct: 10, rent_growth: [3, 3, 3, 3, 3], expense_growth: [2.5, 2.5, 2.5, 2.5, 2.5], going_in_cap_rate: 7.5, exit_cap_rate: 8.0, disposition_cost_pct: 2 },
+  mhc: { vacancy_pct: 5, stabilized_vacancy_pct: 5, bad_debt_pct: 1, mgmt_fee_pct: 8, rent_growth: [3, 3, 3, 3, 3], expense_growth: [2, 2, 2, 2, 2], going_in_cap_rate: 6.0, exit_cap_rate: 6.5, disposition_cost_pct: 2 },
+  rv_park: { vacancy_pct: 25, stabilized_vacancy_pct: 20, bad_debt_pct: 1.5, mgmt_fee_pct: 10, rent_growth: [3, 3, 3, 3, 3], expense_growth: [2.5, 2.5, 2.5, 2.5, 2.5], going_in_cap_rate: 7.5, exit_cap_rate: 8.0, disposition_cost_pct: 2 },
   marina: { vacancy_pct: 10, stabilized_vacancy_pct: 8, bad_debt_pct: 1, mgmt_fee_pct: 8, rent_growth: [2.5, 2.5, 2.5, 2.5, 2.5], expense_growth: [2, 2, 2, 2, 2], going_in_cap_rate: 7.0, exit_cap_rate: 7.5, disposition_cost_pct: 2 },
-  vacation_rental: { vacancy_pct: 30, stabilized_vacancy_pct: 25, bad_debt_pct: 2, mgmt_fee_pct: 10, rent_growth: [3, 3, 3, 3, 3], expense_growth: [3, 3, 3, 3, 3], going_in_cap_rate: 8.0, exit_cap_rate: 8.5, disposition_cost_pct: 2.5 },
+  // vacation_rental removed: classified as SFR or Hospitality
   mixed_use: { vacancy_pct: 8, stabilized_vacancy_pct: 6, bad_debt_pct: 1, mgmt_fee_pct: 8, rent_growth: [2.5, 2.5, 2.5, 2.5, 2.5], expense_growth: [2, 2, 2, 2, 2], going_in_cap_rate: 6.5, exit_cap_rate: 7.0, disposition_cost_pct: 2 },
-  warehouse: { vacancy_pct: 5, stabilized_vacancy_pct: 5, bad_debt_pct: 0.5, mgmt_fee_pct: 6, rent_growth: [2.5, 2.5, 2.5, 2.5, 2.5], expense_growth: [2, 2, 2, 2, 2], going_in_cap_rate: 6.0, exit_cap_rate: 6.5, disposition_cost_pct: 1.5 },
-  specialty: { vacancy_pct: 10, stabilized_vacancy_pct: 8, bad_debt_pct: 1, mgmt_fee_pct: 8, rent_growth: [2, 2, 2, 2, 2], expense_growth: [2, 2, 2, 2, 2], going_in_cap_rate: 8.0, exit_cap_rate: 8.5, disposition_cost_pct: 2 },
+  // warehouse merged into industrial; specialty merged into other
   other: { vacancy_pct: 10, stabilized_vacancy_pct: 8, bad_debt_pct: 1, mgmt_fee_pct: 8, rent_growth: [2, 2, 2, 2, 2], expense_growth: [2, 2, 2, 2, 2], going_in_cap_rate: 7.5, exit_cap_rate: 8.0, disposition_cost_pct: 2 },
 };
 

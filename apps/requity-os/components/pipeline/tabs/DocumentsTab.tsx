@@ -29,6 +29,7 @@ import { ReviewStatusBadge } from "@/components/pipeline/ReviewStatusBadge";
 import { DocumentReviewPanel } from "@/components/pipeline/DocumentReviewPanel";
 import { useDocumentReviewStatus } from "@/hooks/useDocumentReviewStatus";
 import { GenerateDocumentDialog } from "@/components/documents/GenerateDocumentDialog";
+import { formatDate } from "@/lib/format";
 
 interface DealDocument {
   id: string;
@@ -59,15 +60,6 @@ function formatFileSize(bytes: number | null | undefined): string {
   if (bytes >= 1048576) return (bytes / 1048576).toFixed(1) + " MB";
   if (bytes >= 1024) return Math.round(bytes / 1024) + " KB";
   return bytes + " B";
-}
-
-function formatDate(d: string | null | undefined): string {
-  if (!d) return "\u2014";
-  return new Date(d).toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  });
 }
 
 export function DocumentsTab({

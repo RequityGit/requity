@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { formatDate } from "@/lib/format";
 import {
   Plus,
   Phone,
@@ -180,7 +181,7 @@ export function DialerListsPage({ lists, teamMembers }: DialerListsPageProps) {
                       </div>
                     </td>
                     <td className="px-4 py-3 text-xs text-muted-foreground">
-                      {new Date(list.created_at).toLocaleDateString()}
+                      {formatDate(list.created_at)}
                     </td>
                     <td className="px-4 py-3 text-right">
                       {(list.status === "draft" || list.status === "paused") && (

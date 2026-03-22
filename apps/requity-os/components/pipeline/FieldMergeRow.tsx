@@ -1,6 +1,7 @@
 "use client";
 
 import { cn } from "@/lib/utils";
+import { formatCurrency } from "@/lib/format";
 import { ArrowLeftRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -23,12 +24,7 @@ function displayVal(v: unknown, format?: string): string {
   if (format === "currency") {
     const n = Number(v);
     if (isNaN(n)) return String(v);
-    return new Intl.NumberFormat("en-US", {
-      style: "currency",
-      currency: "USD",
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0,
-    }).format(n);
+    return formatCurrency(n);
   }
   if (format === "percent") {
     const n = Number(v);

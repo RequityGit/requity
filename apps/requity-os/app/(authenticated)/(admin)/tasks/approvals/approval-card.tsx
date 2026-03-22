@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { cn } from "@/lib/utils";
+import { formatDateShort } from "@/lib/format";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -222,10 +223,7 @@ export function ApprovalCard({
               className="h-[11px] w-[11px] inline mr-1"
               strokeWidth={1.5}
             />
-            {new Date(approval.created_at).toLocaleDateString("en-US", {
-              month: "short",
-              day: "numeric",
-            })}
+            {formatDateShort(approval.created_at)}
           </span>
         </div>
       </div>

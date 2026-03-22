@@ -179,26 +179,7 @@ export const PROGRAM_LABELS: Record<string, string> = {
   sba: "SBA",
 };
 
-export const ASSET_LABELS: Record<string, string> = {
-  sfr: "SFR",
-  condo: "Condo",
-  townhouse: "Townhouse",
-  duplex: "Duplex",
-  triplex: "Triplex",
-  fourplex: "Fourplex",
-  multifamily_5_plus: "Multifamily (5+)",
-  mixed_use: "Mixed-Use",
-  retail: "Retail",
-  office: "Office",
-  industrial: "Industrial",
-  mobile_home_park: "MHC",
-  land: "Land",
-  rv_campground: "RV Park",
-  self_storage: "Self-Storage",
-  hotel_hospitality: "Hospitality",
-  healthcare: "Healthcare",
-  other: "Other",
-};
+export { ASSET_CLASS_RECORD as ASSET_LABELS } from "@/lib/constants/asset-classes";
 
 export const CAPABILITY_LABELS: Record<string, string> = {
   agency_debt_placement: "Agency Debt Placement",

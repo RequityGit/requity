@@ -3,6 +3,7 @@
 import { useState, useRef, useCallback, useEffect } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
+import { formatDateTime } from "@/lib/format";
 import {
   Dialog,
   DialogContent,
@@ -759,7 +760,7 @@ export function TaskSheet({
                 <span className="text-sm">Approved by {approverProfile?.full_name || "approver"}</span>
                 {taskApproval.responded_at && (
                   <span className="text-xs text-muted-foreground ml-auto">
-                    {new Date(taskApproval.responded_at).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric", hour: "numeric", minute: "2-digit" })}
+                    {formatDateTime(taskApproval.responded_at)}
                   </span>
                 )}
               </div>

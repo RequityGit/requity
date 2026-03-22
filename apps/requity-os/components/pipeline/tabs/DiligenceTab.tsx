@@ -85,6 +85,7 @@ import { useDocumentReviewStatus } from "@/hooks/useDocumentReviewStatus";
 import { GenerateDocumentDialog } from "@/components/documents/GenerateDocumentDialog";
 import { SecureUploadLinkDialog } from "@/components/pipeline/SecureUploadLinkDialog";
 import type { NoteData } from "@/components/shared/UnifiedNotes/types";
+import { formatDate } from "@/lib/format";
 
 // ─── Types ───
 
@@ -173,14 +174,6 @@ function formatFileSize(bytes: number | null | undefined): string {
   if (bytes >= 1048576) return (bytes / 1048576).toFixed(1) + " MB";
   if (bytes >= 1024) return Math.round(bytes / 1024) + " KB";
   return bytes + " B";
-}
-
-function formatDate(d: string | null | undefined): string {
-  if (!d) return "--";
-  return new Date(d).toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-  });
 }
 
 function getFileExt(name: string): string {

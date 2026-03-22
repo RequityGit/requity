@@ -119,22 +119,9 @@ function numStr(v: number | null | undefined): string {
   return String(v);
 }
 
-const PROPERTY_TYPES = [
-  "Single Family",
-  "Duplex/Fourplex",
-  "Multifamily",
-  "Mixed Use",
-  "Commercial",
-  "Industrial",
-  "Retail",
-  "Office",
-  "Warehouse",
-  "Land",
-  "Mobile Home/MHC",
-  "RV Park",
-  "Campground",
-  "Self Storage",
-];
+import { ASSET_CLASS_OPTIONS } from "@/lib/constants/asset-classes";
+
+const PROPERTY_TYPES = ASSET_CLASS_OPTIONS.map((o) => o.label);
 
 const BASE_ENTITY_KEYS: IntakeEntityKey[] = ["contact", "company", "property", "opportunity"];
 

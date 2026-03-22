@@ -101,6 +101,41 @@ export function getMonthLabel(date: Date): string {
   return date.toLocaleDateString("en-US", { month: "short" });
 }
 
+export function formatDateShort(date: string | null | undefined): string {
+  if (!date) return "—";
+  return new Date(date).toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+  });
+}
+
+export function formatDateTime(date: string | null | undefined): string {
+  if (!date) return "—";
+  const d = new Date(date);
+  return `${d.toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  })} at ${d.toLocaleTimeString("en-US", {
+    hour: "numeric",
+    minute: "2-digit",
+  })}`;
+}
+
+export function formatTime(date: string | Date | null | undefined): string {
+  if (!date) return "—";
+  const d = typeof date === "string" ? new Date(date) : date;
+  return d.toLocaleTimeString("en-US", {
+    hour: "numeric",
+    minute: "2-digit",
+  });
+}
+
+export function formatRatio(value: number | null | undefined): string {
+  if (value == null) return "—";
+  return `${Number(value).toFixed(2)}x`;
+}
+
 // ── Field value formatting for read-mode display ──
 
 export function isFieldEmpty(value: unknown): boolean {

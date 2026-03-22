@@ -3,23 +3,21 @@
 // ═══════════════════════════════════════════════════════════
 
 import { evaluateFormula } from "@/lib/formula-engine";
+import type { AssetClassKey, AnyAssetClassKey } from "@/lib/constants/asset-classes";
+import {
+  formatCurrency as _formatCurrency,
+  formatPercent as _formatPercent,
+  formatCompactCurrency,
+  formatRatio as _formatRatio,
+} from "@/lib/format";
 
 export type CapitalSide = "debt" | "equity";
 export type UnifiedStage = "lead" | "analysis" | "negotiation" | "execution" | "closed";
 export type DealStatus = "active" | "won" | "lost" | "on_hold";
 export type AlertLevel = "normal" | "warn" | "alert";
 
-export type AssetClass =
-  | "residential_1_4"
-  | "sfr"            // legacy, maps to residential_1_4
-  | "duplex_fourplex" // legacy, maps to residential_1_4
-  | "multifamily"
-  | "mhc"
-  | "rv_park"
-  | "campground"    // legacy, maps to rv_park
-  | "commercial"
-  | "mixed_use"
-  | "land";
+/** @deprecated Use AssetClassKey from @/lib/constants/asset-classes instead */
+export type AssetClass = AnyAssetClassKey;
 
 export type UwFieldObject = "deal" | "property" | "borrower";
 
@@ -185,29 +183,12 @@ export const STAGES: { key: UnifiedStage; label: string }[] = [
   { key: "closed", label: "Closed" },
 ];
 
-export const ASSET_CLASS_LABELS: Record<AssetClass, string> = {
-  residential_1_4: "Residential (1-4)",
-  sfr: "Residential (1-4)",       // legacy
-  duplex_fourplex: "Residential (1-4)", // legacy
-  multifamily: "Multifamily",
-  mhc: "MHC",
-  rv_park: "RV Park",
-  campground: "RV Park",          // legacy
-  commercial: "Commercial",
-  mixed_use: "Mixed Use",
-  land: "Land",
-};
-
-/** Active asset class options for dropdowns (excludes legacy keys) */
-export const ACTIVE_ASSET_CLASS_OPTIONS = [
-  { key: "residential_1_4", label: "Residential (1-4)" },
-  { key: "multifamily", label: "Multifamily" },
-  { key: "mhc", label: "MHC" },
-  { key: "rv_park", label: "RV Park" },
-  { key: "commercial", label: "Commercial" },
-  { key: "mixed_use", label: "Mixed Use" },
-  { key: "land", label: "Land" },
-] as const;
+export {
+  ASSET_CLASS_LABELS,
+  ASSET_CLASS_OPTIONS as ACTIVE_ASSET_CLASS_OPTIONS,
+  getAssetClassLabel,
+} from "@/lib/constants/asset-classes";
+export type { AssetClassKey } from "@/lib/constants/asset-classes";
 
 // DEPRECATED: CARD_TYPE_SHORT_LABELS removed. Use getDealShortLabel() from
 // lib/pipeline/deal-display-config.ts instead.
@@ -217,31 +198,11 @@ export const CAPITAL_SIDE_COLORS: Record<CapitalSide, string> = {
   equity: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400",
 };
 
-// ─── Formatters ───
+// ─── Formatters (re-exported from lib/format.ts) ───
 
-export function formatCurrency(value: number | null | undefined, compact?: boolean): string {
-  if (value == null) return "--";
-  if (compact) {
-    if (value >= 1_000_000) return `$${(value / 1_000_000).toFixed(1)}M`;
-    if (value >= 1_000) return `$${(value / 1_000).toFixed(0)}K`;
-  }
-  return new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: "USD",
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  }).format(value);
-}
-
-export function formatPercent(value: number | null | undefined): string {
-  if (value == null) return "--";
-  return `${Number(value).toFixed(2)}%`;
-}
-
-export function formatRatio(value: number | null | undefined): string {
-  if (value == null) return "--";
-  return `${Number(value).toFixed(2)}x`;
-}
+export const formatCurrency = _formatCurrency;
+export const formatPercent = _formatPercent;
+export const formatRatio = _formatRatio;
 
 export function daysInStage(stageEnteredAt: string): number {
   const entered = new Date(stageEnteredAt);
@@ -277,10 +238,10 @@ export function getCardMetricValue(
     value = typeof raw === "number" ? raw : null;
   }
 
-  if (value == null) return "--";
+  if (value == null) return "—";
 
   if (metric.format === "compact") {
-    return `${metric.prefix ?? ""}${formatCurrency(value, true).replace("$", "")}`;
+    return `${metric.prefix ?? ""}${formatCompactCurrency(value).replace("$", "")}`;
   }
 
   const formatted = Number(value).toFixed(

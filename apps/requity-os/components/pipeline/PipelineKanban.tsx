@@ -25,8 +25,8 @@ import {
   type StageConfig,
   type UnifiedStage,
   STAGES,
-  formatCurrency,
 } from "./pipeline-types";
+import { formatCompactCurrency } from "@/lib/format";
 import { getDealDisplayConfig } from "@/lib/pipeline/deal-display-config";
 import { useUwFieldConfigs } from "@/hooks/useUwFieldConfigs";
 import { usePipelineStore } from "@/stores/pipeline-store";
@@ -192,7 +192,7 @@ export function PipelineKanban({
                   </div>
                   {totalAmount > 0 && (
                     <span className="text-xs text-muted-foreground num">
-                      {formatCurrency(totalAmount, true)}
+                      {formatCompactCurrency(totalAmount)}
                     </span>
                   )}
                 </div>

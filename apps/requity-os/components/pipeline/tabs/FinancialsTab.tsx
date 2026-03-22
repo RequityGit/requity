@@ -2,6 +2,7 @@
 
 import { useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
+import { formatDate } from "@/lib/format";
 import {
   Clock,
   Plus,
@@ -278,11 +279,7 @@ function VersionHistoryCard({
                       )}
                     </div>
                     <div className="text-[11px] num text-muted-foreground">
-                      {new Date(v.created_at).toLocaleDateString("en-US", {
-                        month: "short",
-                        day: "numeric",
-                        year: "numeric",
-                      })}
+                      {formatDate(v.created_at)}
                     </div>
                   </div>
                   <div className="flex items-center gap-2 shrink-0">

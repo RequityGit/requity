@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useTransition } from "react";
+import { formatDate } from "@/lib/format";
 import {
   Link2,
   Copy,
@@ -50,12 +51,7 @@ function buildUploadLinkEmailBody(
 ): string {
   const expiryLine =
     expiresAt &&
-    `This link expires on ${new Date(expiresAt).toLocaleDateString("en-US", {
-      weekday: "short",
-      year: "numeric",
-      month: "short",
-      day: "numeric",
-    })}.`;
+    `This link expires on ${formatDate(expiresAt)}.`;
   return [
     "Hello,",
     "",

@@ -14,6 +14,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { updateTermSheetTemplate } from "@/app/(authenticated)/control-center/term-sheets/actions";
 import { Save, Loader2, Settings, PanelRightOpen, PanelRightClose } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { formatDateTime } from "@/lib/format";
 import {
   TERM_SHEET_SECTIONS,
   mergeFieldVisibility,
@@ -544,16 +545,7 @@ export function TermSheetTemplateEditor({ templates: initial }: Props) {
                   {current.last_edited_at && (
                     <p className="text-xs text-muted-foreground">
                       Last edited{" "}
-                      {new Date(current.last_edited_at).toLocaleDateString(
-                        "en-US",
-                        {
-                          month: "short",
-                          day: "numeric",
-                          year: "numeric",
-                          hour: "numeric",
-                          minute: "2-digit",
-                        }
-                      )}
+                      {formatDateTime(current.last_edited_at)}
                     </p>
                   )}
                 </CardContent>

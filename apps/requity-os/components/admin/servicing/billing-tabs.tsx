@@ -208,10 +208,7 @@ function BillingCyclesTab({ cycles }: { cycles: any[] }) {
       header: "Month",
       cell: (r) => (
         <span className="num font-medium">
-          {new Date(r.billing_month + "T00:00:00").toLocaleDateString("en-US", {
-            year: "numeric",
-            month: "short",
-          })}
+          {formatDate(r.billing_month + "T00:00:00")}
         </span>
       ),
     },
@@ -351,12 +348,7 @@ function BillingCyclesTab({ cycles }: { cycles: any[] }) {
             <div className="flex items-center justify-between">
               <div>
                 <CardTitle className="text-lg">
-                  {new Date(
-                    selectedCycle.billing_month + "T00:00:00"
-                  ).toLocaleDateString("en-US", {
-                    year: "numeric",
-                    month: "long",
-                  })}{" "}
+                  {formatDate(selectedCycle.billing_month + "T00:00:00")}{" "}
                   Billing
                 </CardTitle>
                 <CardDescription>

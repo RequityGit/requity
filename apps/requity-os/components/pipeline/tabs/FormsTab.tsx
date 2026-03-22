@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState, useCallback } from "react";
 import { createClient } from "@/lib/supabase/client";
+import { formatDate, formatDateShort } from "@/lib/format";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -155,11 +156,7 @@ function SubmissionCard({ submission }: { submission: FormSubmissionRow }) {
             </p>
             <p className="text-xs text-muted-foreground">
               {submitterName} &middot;{" "}
-              {new Date(submission.created_at).toLocaleDateString("en-US", {
-                month: "short",
-                day: "numeric",
-                year: "numeric",
-              })}
+              {formatDate(submission.created_at)}
             </p>
           </div>
         </div>
@@ -238,10 +235,7 @@ function ApplicationLinkCard({ link }: { link: DealApplicationLinkRow }) {
           <p className="text-xs text-muted-foreground">
             {isActive ? "Active" : isExpired ? "Expired" : link.status}
             {" &middot; Expires "}
-            {new Date(link.expires_at).toLocaleDateString("en-US", {
-              month: "short",
-              day: "numeric",
-            })}
+            {formatDateShort(link.expires_at)}
           </p>
         </div>
       </div>

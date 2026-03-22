@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { formatDateTime } from "@/lib/format";
 import {
   Table,
   TableBody,
@@ -87,13 +88,7 @@ export function VersionHistory({
                   )}
                 </TableCell>
                 <TableCell className="text-sm text-muted-foreground">
-                  {new Date(v.created_at).toLocaleDateString("en-US", {
-                    month: "short",
-                    day: "numeric",
-                    year: "numeric",
-                    hour: "numeric",
-                    minute: "2-digit",
-                  })}
+                  {formatDateTime(v.created_at)}
                 </TableCell>
                 <TableCell className="text-right">
                   <Button
@@ -119,14 +114,7 @@ export function VersionHistory({
             <DialogTitle>Version {selected?.version}</DialogTitle>
             <DialogDescription>
               Saved on{" "}
-              {selected &&
-                new Date(selected.created_at).toLocaleDateString("en-US", {
-                  month: "long",
-                  day: "numeric",
-                  year: "numeric",
-                  hour: "numeric",
-                  minute: "2-digit",
-                })}
+              {selected && formatDateTime(selected.created_at)}
             </DialogDescription>
           </DialogHeader>
           {selected && (

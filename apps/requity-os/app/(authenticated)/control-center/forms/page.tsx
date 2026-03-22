@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import { formatDate } from "@/lib/format";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -213,7 +214,7 @@ export default function FormsListPage() {
                     {form.steps.length}
                   </TableCell>
                   <TableCell className="text-sm text-muted-foreground">
-                    {new Date(form.updated_at).toLocaleDateString()}
+                    {formatDate(form.updated_at)}
                   </TableCell>
                   <TableCell>
                     <DropdownMenu>
