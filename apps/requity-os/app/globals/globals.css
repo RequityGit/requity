@@ -660,3 +660,33 @@
   -ms-overflow-style: none;
   scrollbar-width: none;
 }
+
+/* ── Activity Feed ── */
+.activity-feed::-webkit-scrollbar { display: none; }
+.activity-feed { -ms-overflow-style: none; scrollbar-width: none; }
+
+.activity-message {
+  position: relative;
+  padding: 10px 12px;
+  border-radius: 10px;
+  transition: background 0.1s ease;
+}
+.activity-message:hover {
+  @apply bg-muted/40;
+}
+.activity-message .hover-toolbar {
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.1s ease;
+}
+.activity-message:hover .hover-toolbar {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.comment-composer {
+  @apply rounded-xl border border-border bg-card transition-colors;
+}
+.comment-composer:focus-within {
+  @apply border-primary/30 bg-card;
+}

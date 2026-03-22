@@ -474,7 +474,7 @@ export function UnifiedNotes({
       </p>
     </div>
   ) : (
-    <div className={`flex flex-col gap-2.5 ${maxHeight} ${isCompact && !chatMode ? "overflow-y-auto" : ""}`}>
+    <div className={`flex flex-col gap-0 ${maxHeight} ${isCompact && !chatMode ? "overflow-y-auto" : ""}`}>
       {displayNotes.map((note, idx) => {
         // Date divider in chatMode
         let dateDivider: React.ReactNode = null;
@@ -484,12 +484,12 @@ export function UnifiedNotes({
           const prevLabel = prevNote ? getDateLabel(prevNote.created_at) : null;
           if (currentLabel !== prevLabel) {
             dateDivider = (
-              <div key={`divider-${note.id}`} className="flex items-center gap-3 py-2">
-                <div className="flex-1 border-t border-border" />
-                <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">
+              <div key={`divider-${note.id}`} className="flex items-center gap-3 py-3 px-3">
+                <div className="flex-1 h-px bg-border/50" />
+                <span className="text-[10px] font-semibold text-muted-foreground/40 uppercase tracking-[0.06em]">
                   {currentLabel}
                 </span>
-                <div className="flex-1 border-t border-border" />
+                <div className="flex-1 h-px bg-border/50" />
               </div>
             );
           }
