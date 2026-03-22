@@ -1,12 +1,10 @@
 "use client";
 
 import { useMemo, useState, useRef, useCallback } from "react";
-import { ClipboardCheck, ListTodo, Loader2 } from "lucide-react";
+import { ClipboardCheck, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { formatCompactCurrency, formatPercent, formatDate } from "@/lib/format";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { RailConditionItem } from "./RailConditionItem";
-import { RailTaskItem } from "./RailTaskItem";
 import { ConditionDetailPanel } from "./ConditionDetailPanel";
 import type {
   DealConditionRow,
@@ -14,37 +12,32 @@ import type {
   DealTask,
 } from "./useActionCenterData";
 
-type RailView = "all" | "conditions" | "tasks";
-
 interface ActionCenterRailProps {
   conditions: DealConditionRow[];
   conditionDocs: ConditionDocument[];
   tasks: DealTask[];
   loading: boolean;
   dealId: string;
-  // KPI data
   loanAmount?: number | null;
   ltv?: number | null;
   closeDate?: string | null;
-  // Callbacks
-  onToggleTask: (taskId: string, currentStatus: string) => Promise<{ error?: string; success?: boolean }>;
+  onToggleTask: (
+    taskId: string,
+    currentStatus: string
+  ) => Promise<{ error?: string; success?: boolean }>;
   onConditionStatusChange: (conditionId: string, newStatus: string) => void;
 }
 
 export function ActionCenterRail({
   conditions,
   conditionDocs,
-  tasks,
   loading,
   dealId,
-  loanAmount,
-  ltv,
-  closeDate,
-  onToggleTask,
   onConditionStatusChange,
 }: ActionCenterRailProps) {
-  const [view, setView] = useState<RailView>("all");
-  const [selectedConditionId, setSelectedConditionId] = useState<string | null>(null);
+  const [selectedConditionId, setSelectedConditionId] = useState<string | null>(
+    null
+  );
   const scrollRef = useRef<HTMLDivElement>(null);
   const savedScrollTop = useRef(0);
 
@@ -53,7 +46,6 @@ export function ActionCenterRail({
     [conditions, selectedConditionId]
   );
 
-  // Open detail panel (save scroll position first)
   const handleConditionClick = useCallback((conditionId: string) => {
     if (scrollRef.current) {
       savedScrollTop.current = scrollRef.current.scrollTop;
@@ -61,10 +53,8 @@ export function ActionCenterRail({
     setSelectedConditionId(conditionId);
   }, []);
 
-  // Close detail panel (restore scroll position)
   const handleBack = useCallback(() => {
     setSelectedConditionId(null);
-    // Restore scroll after React re-renders the list
     requestAnimationFrame(() => {
       if (scrollRef.current) {
         scrollRef.current.scrollTop = savedScrollTop.current;
@@ -72,18 +62,16 @@ export function ActionCenterRail({
     });
   }, []);
 
-  // Progress counts
   const clearedConditions = useMemo(
-    () => conditions.filter((c) => c.status === "approved" || c.status === "waived" || c.status === "not_applicable").length,
+    () =>
+      conditions.filter(
+        (c) =>
+          c.status === "approved" ||
+          c.status === "waived" ||
+          c.status === "not_applicable"
+      ).length,
     [conditions]
   );
-  const completedTasks = useMemo(
-    () => tasks.filter((t) => t.status === "completed").length,
-    [tasks]
-  );
-
-  const showConditions = view === "all" || view === "conditions";
-  const showTasks = view === "all" || view === "tasks";
 
   return (
     <div
@@ -93,7 +81,6 @@ export function ActionCenterRail({
       )}
     >
       {selectedCondition ? (
-        /* ── Detail Panel Mode ── */
         <ConditionDetailPanel
           condition={selectedCondition}
           dealId={dealId}
@@ -101,60 +88,14 @@ export function ActionCenterRail({
           onStatusChange={onConditionStatusChange}
         />
       ) : (
-        /* ── List Mode ── */
         <>
           {/* Header */}
           <div className="px-4 py-3 border-b">
-            <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center justify-between">
               <h3 className="text-[13px] font-semibold">Execution</h3>
-              <span className="text-[11px] text-muted-foreground num">
-                {clearedConditions + completedTasks}/{conditions.length + tasks.length}
+              <span className="text-[11px] text-muted-foreground tabular-nums">
+                {clearedConditions}/{conditions.length}
               </span>
-            </div>
-
-            {/* View toggle */}
-            <div className="flex gap-1">
-              {(["all", "conditions", "tasks"] as RailView[]).map((v) => (
-                <button
-                  key={v}
-                  onClick={() => setView(v)}
-                  className={cn(
-                    "rounded-md px-2.5 py-1 text-[11px] font-medium rq-transition cursor-pointer border",
-                    view === v
-                      ? "bg-primary text-primary-foreground border-primary"
-                      : "bg-transparent text-muted-foreground border-transparent hover:bg-muted/50"
-                  )}
-                >
-                  {v === "all" ? "All" : v === "conditions" ? "Conditions" : "Tasks"}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Progress bar */}
-          <div className="px-4 py-2.5 border-b">
-            <div className="flex items-center gap-3 text-[11px] text-muted-foreground mb-1.5">
-              {showConditions && (
-                <span className="num">
-                  Conditions: {clearedConditions}/{conditions.length}
-                </span>
-              )}
-              {showTasks && (
-                <span className="num">
-                  Tasks: {completedTasks}/{tasks.length}
-                </span>
-              )}
-            </div>
-            <div className="h-1 rounded-full bg-muted overflow-hidden">
-              <div
-                className="h-full rounded-full bg-green-500 rq-transition"
-                style={{
-                  width:
-                    conditions.length + tasks.length > 0
-                      ? `${Math.round(((clearedConditions + completedTasks) / (conditions.length + tasks.length)) * 100)}%`
-                      : "0%",
-                }}
-              />
             </div>
           </div>
 
@@ -165,81 +106,48 @@ export function ActionCenterRail({
                 <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
               </div>
             ) : (
-              <>
-                {/* Conditions section */}
-                {showConditions && (
-                  <div>
-                    <div className="px-4 py-2 border-b">
-                      <span className="rq-micro-label">
-                        Conditions ({conditions.length})
-                      </span>
-                    </div>
-                    {conditions.length === 0 ? (
-                      <EmptyState
-                        icon={ClipboardCheck}
-                        title="No conditions"
-                        compact
-                      />
-                    ) : (
-                      conditions.map((c) => (
-                        <RailConditionItem
-                          key={c.id}
-                          condition={c}
-                          documents={conditionDocs}
-                          dealId={dealId}
-                          onStatusChange={onConditionStatusChange}
-                          onOpenDetail={handleConditionClick}
-                        />
-                      ))
-                    )}
-                  </div>
-                )}
-
-                {/* Tasks section */}
-                {showTasks && (
-                  <div>
-                    <div className="px-4 py-2 border-b">
-                      <span className="rq-micro-label">
-                        Tasks ({tasks.length})
-                      </span>
-                    </div>
-                    {tasks.length === 0 ? (
-                      <EmptyState
-                        icon={ListTodo}
-                        title="No tasks"
-                        compact
-                      />
-                    ) : (
-                      tasks.map((t) => (
-                        <RailTaskItem
-                          key={t.id}
-                          task={t}
-                          onToggle={onToggleTask}
-                        />
-                      ))
-                    )}
-                  </div>
-                )}
-              </>
-            )}
-          </div>
-
-          {/* KPI strip */}
-          <div className="border-t px-4 py-2.5 bg-muted/30">
-            <div className="flex items-center justify-between">
               <div>
-                <span className="inline-field-label">Loan Amount</span>
-                <p className="text-[13px] font-semibold num">{formatCompactCurrency(loanAmount)}</p>
+                {/* Conditions section header with inline progress */}
+                <div className="flex items-center justify-between px-4 py-2 border-b">
+                  <div className="flex items-center gap-2">
+                    <span className="rq-micro-label">CONDITIONS</span>
+                    <span className="text-[11px] font-medium tabular-nums text-muted-foreground">
+                      {clearedConditions}/{conditions.length}
+                    </span>
+                    <div className="w-16 h-1 rounded-full bg-border overflow-hidden">
+                      <div
+                        className="h-full rounded-full bg-emerald-500 transition-all duration-normal"
+                        style={{
+                          width:
+                            conditions.length > 0
+                              ? `${Math.round((clearedConditions / conditions.length) * 100)}%`
+                              : "0%",
+                        }}
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {conditions.length === 0 ? (
+                  <EmptyState
+                    icon={ClipboardCheck}
+                    title="No conditions"
+                    compact
+                  />
+                ) : (
+                  conditions.map((c) => (
+                    <RailConditionItem
+                      key={c.id}
+                      condition={c}
+                      documents={conditionDocs}
+                      dealId={dealId}
+                      onStatusChange={onConditionStatusChange}
+                      onOpenDetail={handleConditionClick}
+                    />
+                  ))
+                )}
               </div>
-              <div className="text-center">
-                <span className="inline-field-label">LTV</span>
-                <p className="text-[13px] font-semibold num">{ltv ? formatPercent(ltv) : "\u2014"}</p>
-              </div>
-              <div className="text-right">
-                <span className="inline-field-label">Close Date</span>
-                <p className="text-[13px] font-semibold">{closeDate ? formatDate(closeDate) : "\u2014"}</p>
-              </div>
-            </div>
+            )}
           </div>
         </>
       )}

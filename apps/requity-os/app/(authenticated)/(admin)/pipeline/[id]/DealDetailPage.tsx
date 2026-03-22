@@ -4,14 +4,6 @@ import React, { useState, useCallback, useTransition, useMemo, useEffect, lazy, 
 import { SectionErrorBoundary } from "@/components/shared/SectionErrorBoundary";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import {
-  Breadcrumb,
-  BreadcrumbList,
-  BreadcrumbItem,
-  BreadcrumbLink,
-  BreadcrumbPage,
-  BreadcrumbSeparator,
-} from "@/components/ui/breadcrumb";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -32,21 +24,17 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
-import { formatDateShort } from "@/lib/format";
+import { formatDateShort, formatCompactCurrency } from "@/lib/format";
 import { showSuccess, showError } from "@/lib/toast";
 import {
   Layers,
-  Clock,
   Phone,
   Mail,
   Shield,
   Users,
-  CalendarDays,
   Plus,
   Loader2,
-  FileText,
   X,
-  ExternalLink,
   MoreHorizontal,
   ChevronDown,
   FolderOpen,
@@ -66,9 +54,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { StageStepper } from "@/components/pipeline/StageStepper";
 import { DealOverviewSummary } from "@/components/pipeline/DealOverviewSummary";
-import { EditableOverview } from "@/components/pipeline/EditableOverview";
 import { UnderwritingPanel } from "@/components/pipeline/UnderwritingPanel";
 import type { CommercialUWData } from "@/components/pipeline/tabs/UnderwritingTab";
 
@@ -95,7 +81,6 @@ import {
   CAPITAL_SIDE_COLORS,
   ASSET_CLASS_LABELS,
   type AssetClass,
-  formatCurrency,
   daysInStage,
 } from "@/components/pipeline/pipeline-types";
 import {
@@ -109,7 +94,6 @@ import { ResidentialAnalysisTab } from "@/components/pipeline/tabs/ResidentialAn
 const DealMessagesPanel = lazy(() => import("@/components/pipeline/DealMessagesPanel").then(m => ({ default: m.DealMessagesPanel })));
 const ActionCenterTab = lazy(() => import("@/components/pipeline/tabs/ActionCenterTab").then(m => ({ default: m.ActionCenterTab })));
 const FormsTab = lazy(() => import("@/components/pipeline/tabs/FormsTab").then(m => ({ default: m.FormsTab })));
-import { DealNotePreview } from "@/components/pipeline/DealNotePreview";
 import type { DealPreviewNote } from "@/components/pipeline/DealNotePreview";
 import {
   logQuickActionV2,
@@ -322,31 +306,21 @@ function DealDetailPageInner({
     [deal.id, deal.stage, router]
   );
 
+  // Derive metrics for condensed header
+  const currentStageIndex = STAGES.findIndex((s) => s.key === deal.stage);
+  const currentStageName = STAGES[currentStageIndex]?.label ?? deal.stage;
+  const uwData = deal.uw_data as Record<string, unknown> | null;
+  const loanAmount = (uwData?.loan_amount as number | null) ?? deal.amount ?? null;
+  const assetClass = deal.asset_class
+    ? (ASSET_CLASS_LABELS[deal.asset_class as AssetClass] ?? deal.asset_class)
+    : null;
+  const expectedClose = uwData?.expected_close_date ?? uwData?.closing_date ?? deal.expected_close_date;
+
   return (
     <div className="flex flex-col h-full -mb-20 md:-mb-6 lg:-mb-8 overflow-hidden">
-      {/* Breadcrumb */}
-      <Breadcrumb className="mb-3 text-[13px]">
-        <BreadcrumbList>
-          <BreadcrumbItem>
-            <BreadcrumbLink asChild>
-              <Link href="/pipeline">Pipeline</Link>
-            </BreadcrumbLink>
-          </BreadcrumbItem>
-          <BreadcrumbSeparator />
-          <BreadcrumbItem>
-            <BreadcrumbLink asChild>
-              <Link href="/pipeline">{dealConfig.label}</Link>
-            </BreadcrumbLink>
-          </BreadcrumbItem>
-          <BreadcrumbSeparator />
-          <BreadcrumbItem>
-            <BreadcrumbPage>{displayId}</BreadcrumbPage>
-          </BreadcrumbItem>
-        </BreadcrumbList>
-      </Breadcrumb>
-
       <div className="flex flex-col flex-1 min-h-0 overflow-hidden max-w-[1680px]">
-        {/* Header */}
+
+        {/* ── Condensed Deal Header ── */}
         <DealHeader
           deal={deal}
           shortLabel={shortLabel}
@@ -355,27 +329,19 @@ function DealDetailPageInner({
           teamMembers={teamMembers}
           currentUserId={currentUserId}
           isSuperAdmin={isSuperAdmin}
-        />
-
-        {/* Stage Stepper */}
-        <div className="mt-6 rounded-xl border bg-card px-5 py-4">
-          <StageStepper
-            currentStage={deal.stage}
-            interactive
-            loading={stageJumping}
-            onStageDoubleClick={handleStageDoubleClick}
-          />
-        </div>
-
-        {/* Pinned / recent note preview strip — visible on all tabs */}
-        <DealNotePreview
-          pinnedNote={pinnedNote}
-          recentNote={recentNote}
-          onClickGoToNotes={() => handleTabChange("Overview")}
+          displayId={displayId}
+          dealLabel={dealConfig.label}
+          currentStageIndex={currentStageIndex}
+          currentStageName={currentStageName}
+          stageJumping={stageJumping}
+          onStageDoubleClick={handleStageDoubleClick}
+          assetClass={assetClass}
+          loanAmount={loanAmount}
+          expectedClose={expectedClose as string | null | undefined}
         />
 
         {/* Tab Bar */}
-        <div className="mt-6 mb-6 flex items-center justify-between">
+        <div className="flex items-center justify-between px-6 py-1.5 border-b flex-shrink-0">
           <div className="inline-flex gap-0.5 rounded-[10px] p-[3px] bg-muted border">
             {tabs.map((tab) => {
               const tabButton = (
@@ -653,6 +619,15 @@ function DealHeader({
   teamMembers,
   currentUserId,
   isSuperAdmin,
+  displayId,
+  dealLabel,
+  currentStageIndex,
+  currentStageName,
+  stageJumping,
+  onStageDoubleClick,
+  assetClass,
+  loanAmount,
+  expectedClose,
 }: {
   deal: UnifiedDeal;
   shortLabel: string;
@@ -661,9 +636,17 @@ function DealHeader({
   teamMembers: Profile[];
   currentUserId: string;
   isSuperAdmin: boolean;
+  displayId: string;
+  dealLabel: string;
+  currentStageIndex: number;
+  currentStageName: string;
+  stageJumping: boolean;
+  onStageDoubleClick: (stage: string) => void;
+  assetClass: string | null;
+  loanAmount: number | null;
+  expectedClose: string | null | undefined;
 }) {
   const router = useRouter();
-  const currentStageIndex = STAGES.findIndex((s) => s.key === deal.stage);
 
   // Dialog state (moved from old sidebar)
   const [logCallOpen, setLogCallOpen] = useState(false);
@@ -816,70 +799,91 @@ function DealHeader({
 
   return (
     <>
-      <div className="flex items-start justify-between gap-5">
-        {/* Left: Deal Identity */}
-        <div className="flex gap-4 items-start">
-          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10">
-            <Layers className="h-5 w-5 text-primary" />
+      <div className="flex items-center gap-4 px-6 py-2.5 border-b flex-shrink-0">
+        {/* A. Icon */}
+        <div className="h-9 w-9 rounded-[10px] bg-primary/5 border flex items-center justify-center flex-shrink-0">
+          <Layers className="h-[18px] w-[18px] text-muted-foreground" />
+        </div>
+
+        {/* B. Identity */}
+        <div className="flex flex-col min-w-0">
+          <div className="text-[11px] text-muted-foreground leading-tight">
+            <Link href="/pipeline" className="hover:underline">Pipeline</Link>
+            {" / "}
+            <Link href="/pipeline" className="hover:underline">{dealLabel}</Link>
+            {" / "}
+            <span className="text-foreground/70">{displayId}</span>
           </div>
-          <div>
-            <div className="flex items-center gap-2.5 mb-1">
-              <h1 className="m-0 text-[22px] font-bold tracking-tight">
-                {deal.name}
-              </h1>
-              <Badge
-                variant="outline"
-                className={cn(
-                  "text-[10px] uppercase",
-                  CAPITAL_SIDE_COLORS[deal.capital_side]
-                )}
-              >
-                {shortLabel}
-              </Badge>
-            </div>
-            <div className="flex items-center gap-4 text-[13px] text-muted-foreground">
-              {deal.asset_class && (
-                <span>
-                  {ASSET_CLASS_LABELS[deal.asset_class as AssetClass] ??
-                    deal.asset_class}
-                </span>
+          <div className="flex items-center gap-2">
+            <h1 className="text-[17px] font-bold leading-tight truncate m-0">
+              {deal.name || "Untitled Deal"}
+            </h1>
+            <Badge
+              variant="outline"
+              className={cn(
+                "text-[9.5px] px-2 py-0 uppercase tracking-wide shrink-0",
+                CAPITAL_SIDE_COLORS[deal.capital_side]
               )}
-              {deal.amount != null && (
-                <span className="num font-medium text-foreground">
-                  {formatCurrency(deal.amount)}
-                </span>
-              )}
-              <span className="flex items-center gap-1">
-                <Clock className="h-3 w-3" />
-                <span className="num">{days}</span> days in stage
-              </span>
-              {(() => {
-                const uwData = deal.uw_data as Record<string, unknown> | null;
-                const closeDate = uwData?.expected_close_date ?? uwData?.closing_date ?? deal.expected_close_date;
-                if (!closeDate) return null;
-                return (
-                  <>
-                    <span className="text-border">|</span>
-                    <span className="flex items-center gap-1">
-                      <CalendarDays className="h-3 w-3" />
-                      Est. Close:{" "}
-                      <span className="num text-foreground">
-                        {(() => {
-                          const [y, m, d] = String(closeDate).split("T")[0].split("-");
-                          const dt = new Date(Number(y), Number(m) - 1, Number(d));
-                          return formatDateShort(dt.toISOString());
-                        })()}
-                      </span>
-                    </span>
-                  </>
-                );
-              })()}
-            </div>
+            >
+              {shortLabel}
+            </Badge>
           </div>
         </div>
 
-        {/* Right: Team Avatars + Actions + Advance CTA */}
-        <div className="flex items-center gap-3 shrink-0">
+        {/* C. Stage dots */}
+        <div className="flex items-center gap-1 px-4 shrink-0">
+          {STAGES.map((stage, i) => (
+            <div
+              key={stage.key}
+              className={cn(
+                "h-2 w-2 rounded-full",
+                currentStageIndex > i && "bg-emerald-500",
+                currentStageIndex === i && "bg-foreground ring-2 ring-foreground/15",
+                currentStageIndex < i && "bg-muted border border-border"
+              )}
+              title={stage.label}
+              onDoubleClick={() => onStageDoubleClick(stage.key)}
+            />
+          ))}
+          <span className="text-xs font-semibold ml-1.5">{currentStageName}</span>
+          <span className="text-[10.5px] text-muted-foreground ml-0.5">({days}d)</span>
+          {stageJumping && <Loader2 className="h-3 w-3 animate-spin text-muted-foreground ml-1" />}
+        </div>
+
+        {/* D. Separator */}
+        <div className="w-px h-8 bg-border shrink-0" />
+
+        {/* E. Metrics */}
+        <div className="flex items-center gap-5 shrink-0">
+          {assetClass && (
+            <div className="flex flex-col items-center">
+              <span className="text-sm font-semibold">{assetClass}</span>
+              <span className="rq-micro-label">Asset</span>
+            </div>
+          )}
+          <div className="flex flex-col items-center">
+            <span className="text-sm font-semibold num">{formatCompactCurrency(loanAmount)}</span>
+            <span className="rq-micro-label">Loan</span>
+          </div>
+          {expectedClose && (
+            <div className="flex flex-col items-center">
+              <span className="text-sm font-semibold num">
+                {(() => {
+                  const [y, m, d] = String(expectedClose).split("T")[0].split("-");
+                  const dt = new Date(Number(y), Number(m) - 1, Number(d));
+                  return formatDateShort(dt.toISOString());
+                })()}
+              </span>
+              <span className="rq-micro-label">Close</span>
+            </div>
+          )}
+        </div>
+
+        {/* F. Separator */}
+        <div className="w-px h-8 bg-border shrink-0" />
+
+        {/* G. Actions (ml-auto pushes to right) */}
+        <div className="flex items-center gap-2 ml-auto shrink-0">
           {/* Team Avatar Stack with Popover */}
           <Popover>
             <PopoverTrigger asChild>
@@ -888,7 +892,7 @@ function DealHeader({
                   {resolvedMembers.slice(0, 3).map((m) => (
                     <div
                       key={m.id}
-                      className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground text-xs font-medium ring-2 ring-background"
+                      className="flex h-[30px] w-[30px] items-center justify-center rounded-lg bg-primary text-primary-foreground text-[10px] font-medium ring-2 ring-background"
                       title={`${m.full_name} (${m.role})`}
                     >
                       {m.full_name
@@ -900,12 +904,12 @@ function DealHeader({
                     </div>
                   ))}
                   {resolvedMembers.length > 3 && (
-                    <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-muted text-muted-foreground text-xs font-medium ring-2 ring-background">
+                    <div className="flex h-[30px] w-[30px] items-center justify-center rounded-lg bg-muted text-muted-foreground text-[10px] font-medium ring-2 ring-background">
                       +{resolvedMembers.length - 3}
                     </div>
                   )}
                   {resolvedMembers.length === 0 && (
-                    <div className="flex h-8 w-8 items-center justify-center rounded-lg border border-dashed border-border">
+                    <div className="flex h-[30px] w-[30px] items-center justify-center rounded-lg border border-dashed border-border">
                       <Users className="h-3.5 w-3.5 text-muted-foreground" />
                     </div>
                   )}
