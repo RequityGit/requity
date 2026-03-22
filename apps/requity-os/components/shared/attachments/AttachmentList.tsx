@@ -18,7 +18,7 @@ export function AttachmentList({ attachments, onRemove, compact = false }: Attac
   if (attachments.length === 0) return null;
 
   return (
-    <div className={compact ? "flex flex-wrap gap-1.5 mt-2" : "flex flex-col gap-1.5"}>
+    <div className={compact ? "flex flex-wrap gap-2 mt-2" : "flex flex-wrap gap-2"}>
       {attachments.map((a) => (
         <AttachmentPreview
           key={a.id}

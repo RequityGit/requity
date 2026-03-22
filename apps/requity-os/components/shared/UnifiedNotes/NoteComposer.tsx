@@ -90,6 +90,7 @@ export function NoteComposer({
             fileType={sf.file.type}
             fileSize={sf.file.size}
             storagePath=""
+            previewUrl={sf.preview}
             onRemove={() => removeStaged(sf.id)}
             compact
           />
@@ -126,6 +127,7 @@ export function NoteComposer({
         value={text}
         onChange={setText}
         onSubmit={handleSubmit}
+        onFilePaste={(files) => addFiles(files)}
         placeholder="Write a note... use @mention to tag team members"
         disabled={posting || uploading}
         canSubmitEmpty={stagedFiles.length > 0}

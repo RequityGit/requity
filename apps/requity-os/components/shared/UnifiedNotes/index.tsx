@@ -433,7 +433,8 @@ export function UnifiedNotes({
     parentNoteId: string,
     body: string,
     isInternal: boolean,
-    mentionIds: string[]
+    mentionIds: string[],
+    attachments?: UploadedAttachment[]
   ) {
     const supabase = createClient();
 
@@ -490,15 +491,38 @@ export function UnifiedNotes({
     }
 
     if (data) {
+      const noteId = (data as unknown as NoteData).id;
+      const noteAttachments: NoteData["note_attachments"] = [];
+
+      // Insert attachments if any
+      if (attachments && attachments.length > 0) {
+        const { data: insertedAttachments } = await supabase
+          .from("note_attachments" as never)
+          .insert(
+            attachments.map((a) => ({
+              note_id: noteId,
+              file_name: a.fileName,
+              file_type: a.fileType,
+              file_size_bytes: a.fileSizeBytes,
+              storage_path: a.storagePath,
+              uploaded_by: currentUserId,
+            })) as never
+          )
+          .select() as { data: NoteData["note_attachments"] | null };
+
+        if (insertedAttachments) {
+          noteAttachments.push(...insertedAttachments);
+        }
+      }
+
       const newNote = {
         ...(data as unknown as NoteData),
         note_likes: [],
-        note_attachments: [],
+        note_attachments: noteAttachments,
       };
       setNotes((prev) => [...prev, newNote]);
 
       // Insert note_mentions
-      const noteId = newNote.id;
       if (mentionIds.length > 0) {
         await supabase.from("note_mentions" as never).insert(
           mentionIds.map((userId) => ({

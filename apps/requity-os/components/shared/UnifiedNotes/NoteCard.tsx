@@ -62,9 +62,7 @@ export function NoteCard({
   const [editText, setEditText] = useState("");
 
   const isOwn = note.author_id === currentUserId;
-  const canEdit =
-    isOwn &&
-    Date.now() - new Date(note.created_at).getTime() < 15 * 60 * 1000;
+  const canEdit = isOwn;
   const segments = parseComment(note.body);
   const initials = note.author_name ? getInitials(note.author_name) : "??";
 
@@ -254,12 +252,6 @@ export function NoteCard({
 
       {/* Floating hover toolbar */}
       <div className="hover-toolbar absolute -top-2 right-3 flex items-center gap-px bg-card border border-border rounded-lg shadow-md p-0.5 z-10">
-        {onReply && (
-          <HoverToolbarButton onClick={onReply} title="Reply">
-            <Reply className="h-3.5 w-3.5" strokeWidth={1.5} />
-          </HoverToolbarButton>
-        )}
-
         <HoverToolbarButton
           onClick={() => onToggleLike(note.id, isLiked)}
           title={isLiked ? "Unlike" : "Like"}
@@ -271,6 +263,12 @@ export function NoteCard({
             fill={isLiked ? "currentColor" : "none"}
           />
         </HoverToolbarButton>
+
+        {onReply && (
+          <HoverToolbarButton onClick={onReply} title="Reply">
+            <Reply className="h-3.5 w-3.5" strokeWidth={1.5} />
+          </HoverToolbarButton>
+        )}
 
         {showPinning && (
           <HoverToolbarButton
