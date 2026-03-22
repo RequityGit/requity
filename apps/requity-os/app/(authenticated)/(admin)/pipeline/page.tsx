@@ -35,11 +35,12 @@ export default async function PipelinePage() {
     activitiesResult,
     teamResult,
     intakeResult,
+    conditionsResult,
   ] = await Promise.all([
     admin
       .from("unified_deals" as never)
       .select(
-        `*, primary_contact:crm_contacts!primary_contact_id(id, first_name, last_name), company:companies(id, name)`
+        `*, primary_contact:crm_contacts!primary_contact_id(id, first_name, last_name, email, phone), broker_contact:crm_contacts!broker_contact_id(id, first_name, last_name, email, phone, broker_company:crm_companies(name)), company:crm_companies!company_id(id, name)`
       )
       .in("status" as never, ["active", "on_hold"] as never)
       .order("created_at" as never, { ascending: false }),
@@ -65,6 +66,9 @@ export default async function PipelinePage() {
       .select("id, email_intake_queue_id, received_at, from_email, from_name, subject, raw_body, parsed_data, auto_matches, status, processed_at, processed_by, decisions, created_deal_id, created_contact_id, created_company_id, created_property_id, created_at, updated_at")
       .in("status" as never, ["pending", "auto_matched"] as never)
       .order("received_at" as never, { ascending: false }),
+    admin
+      .from("deal_conditions" as never)
+      .select("deal_id, status" as never),
   ]);
 
   const stageConfigs = (stageConfigsResult.data ?? []) as unknown as StageConfig[];
@@ -145,6 +149,17 @@ export default async function PipelinePage() {
 
   const intakeItems = (intakeResult.data ?? []) as unknown as IntakeItem[];
 
+  // Build conditions progress map: deal_id -> {completed, total}
+  const conditionsMap = new Map<string, { completed: number; total: number }>();
+  for (const cond of (conditionsResult.data ?? []) as { deal_id: string; status: string }[]) {
+    const entry = conditionsMap.get(cond.deal_id) ?? { completed: 0, total: 0 };
+    entry.total++;
+    if (cond.status === "satisfied" || cond.status === "waived") {
+      entry.completed++;
+    }
+    conditionsMap.set(cond.deal_id, entry);
+  }
+
   return (
     <div className="space-y-6">
       <PipelineHeader intakeCount={intakeItems.length} />
@@ -156,6 +171,7 @@ export default async function PipelinePage() {
         teamMembers={teamMembers}
         intakeItems={intakeItems}
         currentUserId={session.user.id}
+        conditionsMap={conditionsMap}
       >
         <PipelineView />
       </PipelineProvider>

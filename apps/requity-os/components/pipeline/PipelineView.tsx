@@ -18,6 +18,7 @@ import {
   useTeamMembers,
   useIntakeItems,
   useCurrentUserId,
+  useConditionsMap,
 } from "@/hooks/usePipelineStore";
 import type { IntakeItem } from "@/lib/intake/types";
 
@@ -32,6 +33,7 @@ export function PipelineView() {
   const teamMembers = useTeamMembers();
   const intakeItems = useIntakeItems();
   const currentUserId = useCurrentUserId();
+  const conditionsMap = useConditionsMap();
 
   const [filters, setFilters] = useState<FilterState>({
     search: "",
@@ -106,6 +108,8 @@ export function PipelineView() {
           onDealClick={handleDealClick}
           intakeItems={intakeItems}
           onIntakeClick={handleIntakeClick}
+          teamMembers={teamMembers}
+          conditionsMap={conditionsMap}
         />
       ) : (
         <PipelineTable
