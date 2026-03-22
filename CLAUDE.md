@@ -48,6 +48,8 @@ pnpm test:watch             # Watch mode
 14. **All animations and transitions use motion tokens from `globals.css`.** Never hardcode `duration-150`, `duration-200`, `duration-300`, or `ease-in`, `ease-out` directly. Use the token-based classes: `duration-fast` (120ms), `duration-normal` (200ms), `duration-slow` (350ms), `ease-out-rq`, `ease-in-out-rq`. For common patterns, use the utility classes: `.rq-transition` (hover states), `.rq-transition-transform` (movement), `.rq-transition-panel` (modals/sheets). Available animation classes: `.rq-animate-fade-in`, `.rq-animate-slide-in-right`, `.rq-animate-scale-in`, `.rq-animate-pulse-once`. All animations respect `prefers-reduced-motion` automatically.
 15. **All confirmation dialogs use `useConfirm()` hook.** Import from `@/components/shared/ConfirmDialog`. Never build inline AlertDialog JSX for confirmations. Call `const ok = await confirm({ title, description, confirmLabel, destructive })` and check the boolean return. The `<ConfirmProvider>` in the authenticated layout handles rendering. AlertDialog is still used directly for complex dialogs with custom content (input fields, textareas, multi-step flows).
 16. **All toast notifications use `lib/toast.ts` helpers.** Never import `useToast` from shadcn or `toast` from sonner directly. Import `showSuccess`, `showError`, `showWarning`, `showInfo`, `showLoading`, `resolveLoading`, `rejectLoading` from `@/lib/toast`. Success messages use past tense ("[Object] [verb]ed"). Error messages use "Could not [verb] [object]". Loading messages use "[Verb]ing [object]...". Never put error details in the message; pass them as the second argument to `showError`. Never use "successfully" in success messages (it's redundant). Never use generic "Error" as a toast title.
+17. **Every route has `error.tsx` and `loading.tsx`.** When creating a new route, always create both files. Error pages use `<ErrorFallback>` from `@/components/shared/ErrorFallback` with a context-specific title, description, and back link. Loading pages use shared skeletons from `@/components/shared/skeletons`. Lazy-loaded tab panels and card sections should be wrapped in `<SectionErrorBoundary>` so crashes are isolated. Never let a component crash take down an entire page.
+18. **All empty collection states use the `<EmptyState>` component.** Import from `@/components/shared/EmptyState`. Never write inline "No X found" text with ad-hoc styling. Use `compact` prop for cards, drawers, and table cells. Use `icon` prop for full-tab and full-page empty states. DataTable's `emptyMessage` string prop auto-renders through EmptyState. For richer empty states in tables, use the `emptyState` prop with a full `<EmptyState>` component.
 
 ---
 
@@ -248,7 +250,7 @@ All reusable UI patterns are defined as global CSS classes in `apps/requity-os/a
 | `.rq-numeric-input` | Editable number cell in financial tables | `rounded-lg border border-border bg-accent/50 px-[7px] py-[5px] text-xs tabular-nums outline-none` |
 | `.rq-action-btn` | Ghost-style action button (add/edit/remove) | `inline-flex items-center gap-1.5 px-3.5 py-[7px] rounded-lg border text-xs font-medium...` |
 | `.rq-action-btn-sm` | Small variant of action button | Same but `px-2.5 py-[5px] text-[11px]` |
-| `.rq-empty-state` | Centered empty content placeholder | `py-12 text-center text-muted-foreground` |
+| `.rq-empty-state` | **DEPRECATED** — use `<EmptyState>` component instead | `py-12 text-center text-muted-foreground` |
 | `.rq-value-positive` | Green text for positive financial values | `text-emerald-600 dark:text-emerald-400` |
 | `.rq-value-negative` | Red text for negative financial values | `text-red-600 dark:text-red-400` |
 | `.rq-value-warn` | Amber text for warning/caution values | `text-amber-600 dark:text-amber-400` |
@@ -356,6 +358,18 @@ Saved:   Brief green checkmark flash, then back to rest state.
 - `revalidateDeal`/`revalidatePath` after inline saves (causes loading flash)
 - `new Date()` on date-only strings (timezone shift bug; split ISO strings directly)
 - Blanket "$0" placeholder for non-currency fields
+
+### Resilience Components
+
+| Component | Purpose | Import |
+|-----------|---------|--------|
+| `<ErrorFallback>` | Error state for pages and sections | `@/components/shared/ErrorFallback` |
+| `<SectionErrorBoundary>` | Client error boundary wrapper for tabs/cards | `@/components/shared/SectionErrorBoundary` |
+| `<KanbanSkeleton>` | Loading skeleton for kanban boards | `@/components/shared/skeletons` |
+| `<TableSkeleton>` | Loading skeleton for data tables | `@/components/shared/skeletons` |
+| `<CardGridSkeleton>` | Loading skeleton for card grids | `@/components/shared/skeletons` |
+| `<DetailPageSkeleton>` | Loading skeleton for detail pages | `@/components/shared/skeletons` |
+| `<PageHeaderSkeleton>` | Loading skeleton for page headers | `@/components/shared/skeletons` |
 
 ### Pipeline Component Map
 

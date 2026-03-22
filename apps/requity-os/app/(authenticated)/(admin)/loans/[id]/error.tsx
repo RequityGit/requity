@@ -2,7 +2,7 @@
 
 import { ErrorFallback } from "@/components/shared/ErrorFallback";
 
-export default function InvestorsError({
+export default function LoanDetailError({
   error,
   reset,
 }: {
@@ -11,9 +11,10 @@ export default function InvestorsError({
 }) {
   return (
     <ErrorFallback
-      title="Could not load investors"
-      description="There was a problem loading the investors page. This is usually temporary."
+      title="Could not load loan"
+      description="This loan may have been deleted, or there was a problem loading it."
       reset={reset}
+      backTo={{ label: "Back to loans", href: "/loans" }}
     />
   );
 }
