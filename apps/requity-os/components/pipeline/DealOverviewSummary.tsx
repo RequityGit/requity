@@ -513,7 +513,7 @@ export function DealOverviewSummary({ dealId, deal }: DealOverviewSummaryProps) 
       <div>
         <SectionLabel icon={Building2}>Property</SectionLabel>
         <OverviewCard>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-x-6 gap-y-1">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-x-6 gap-y-1">
             <InlineField
               label="Property name"
               type="text"
@@ -528,7 +528,25 @@ export function DealOverviewSummary({ dealId, deal }: DealOverviewSummaryProps) 
               options={ASSET_CLASS_DROPDOWN_LABELS}
               onSave={(v) => saveField("property_type", AC_LABEL_TO_KEY[v] ?? v)}
             />
-            <div className="min-w-0">
+            <InlineField
+              label="Units / lots"
+              type="number"
+              value={uwNum("units")}
+              onSave={(v) => saveField("units", v)}
+            />
+            <InlineField
+              label="Total sq ft"
+              type="number"
+              value={uwNum("total_sqft")}
+              onSave={(v) => saveField("total_sqft", v)}
+            />
+            <InlineField
+              label="Year built"
+              type="number"
+              value={uwNum("year_built")}
+              onSave={(v) => saveField("year_built", v)}
+            />
+            <div className="min-w-0 md:col-span-3">
               <span className="text-[11px] font-medium text-muted-foreground mb-0.5 block leading-tight">Address</span>
               <AddressAutocomplete
                 value={addressDraft}
@@ -682,6 +700,9 @@ export function DealOverviewSummary({ dealId, deal }: DealOverviewSummaryProps) 
                 options={LEAD_SOURCE_LABELS}
                 onSave={(v) => saveField("source", LS_LABEL_TO_KEY[v] ?? v)}
               />
+              <ReadOnlyField label="Days in stage">
+                <span className="num">{daysInStage != null ? daysInStage : <Placeholder />}</span>
+              </ReadOnlyField>
             </div>
 
             {/* Borrower & Broker contact lookup */}
