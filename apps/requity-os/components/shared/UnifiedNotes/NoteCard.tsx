@@ -82,7 +82,7 @@ export function NoteCard({
   if (editing) {
     return (
       <div className="activity-message">
-        <div className="rounded-xl border border-border bg-card p-3">
+        <div>
           <MentionInput
             value={editText}
             onChange={setEditText}

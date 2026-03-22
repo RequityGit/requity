@@ -689,11 +689,33 @@
   pointer-events: auto;
 }
 
+/* Note composer: outer layout (avatar + surface side by side) */
 .comment-composer {
-  @apply rounded-xl border border-border bg-card transition-colors;
+  @apply flex gap-3 items-start;
 }
-.comment-composer:focus-within {
-  @apply border-primary/30 bg-card;
+
+/* Unified input surface (textarea + toolbar in one container) */
+.comment-surface {
+  @apply flex-1 min-w-0 rounded-xl border border-border bg-card transition-all duration-normal;
+}
+.comment-surface:hover {
+  @apply border-border/80;
+}
+.comment-surface:focus-within {
+  @apply border-primary/40 bg-background shadow-sm;
+  box-shadow: 0 0 0 1px hsl(var(--primary) / 0.15), 0 2px 8px rgba(0,0,0,0.08);
+}
+
+/* Borderless textarea inside the surface */
+.comment-surface-textarea {
+  @apply w-full bg-transparent border-0 outline-none resize-none
+    text-xs text-foreground placeholder:text-muted-foreground
+    focus:ring-0 focus:outline-none;
+}
+
+/* Toolbar row at the bottom of the surface */
+.comment-toolbar {
+  @apply flex items-center justify-between gap-2 border-t border-border/50;
 }
 
 /* ============================

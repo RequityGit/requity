@@ -1,9 +1,9 @@
 "use client";
 
-import { useState } from "react";
-import { Send, Lock, LockOpen, Loader2 } from "lucide-react";
+import { useState, useRef } from "react";
+import { Send, Lock, LockOpen, Loader2, Paperclip, AtSign } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { MentionInput } from "@/components/shared/mention-input";
+import { MentionInput, MentionInputHandle } from "@/components/shared/mention-input";
 
 interface NoteComposerProps {
   currentUserName: string;
@@ -35,6 +35,7 @@ export function NoteComposer({
   const [text, setText] = useState("");
   const [isInternal, setIsInternal] = useState(defaultInternal);
   const [posting, setPosting] = useState(false);
+  const mentionInputRef = useRef<MentionInputHandle>(null);
 
   const initials = getInitials(currentUserName || "?");
   const avatarSize = compact ? "h-6 w-6" : "h-8 w-8";
@@ -51,62 +52,77 @@ export function NoteComposer({
     }
   }
 
-  return (
-    <div className={`comment-composer ${compact ? "p-3" : "p-4"}`}>
-      <div className="flex gap-2.5">
-        <Avatar className={`${avatarSize} rounded-lg flex-shrink-0`}>
-          <AvatarFallback
-            className={`rounded-lg bg-foreground/[0.06] text-foreground ${avatarText} font-semibold`}
-          >
-            {initials}
-          </AvatarFallback>
-        </Avatar>
+  const iconBtnClass =
+    "inline-flex items-center justify-center rounded-md h-7 w-7 text-muted-foreground hover:text-foreground hover:bg-muted/50 rq-transition cursor-pointer";
 
-        <div className="flex-1 min-w-0">
-          <MentionInput
-            value={text}
-            onChange={setText}
-            onSubmit={handleSubmit}
-            placeholder="Write a note... use @mention to tag team members"
-            disabled={posting}
-            submitLabel={posting ? "Posting..." : enterToSend ? "Send" : "Post Note"}
-            submitIcon={
-              posting ? (
-                <Loader2 className="h-3 w-3 animate-spin" />
+  return (
+    <div className="comment-composer">
+      <Avatar className={`${avatarSize} rounded-lg flex-shrink-0`}>
+        <AvatarFallback
+          className={`rounded-lg bg-foreground/[0.06] text-foreground ${avatarText} font-semibold`}
+        >
+          {initials}
+        </AvatarFallback>
+      </Avatar>
+
+      <MentionInput
+        ref={mentionInputRef}
+        value={text}
+        onChange={setText}
+        onSubmit={handleSubmit}
+        placeholder="Write a note... use @mention to tag team members"
+        disabled={posting}
+        submitIcon={
+          posting ? (
+            <Loader2 className="h-3 w-3 animate-spin" />
+          ) : (
+            <Send className="h-3 w-3" />
+          )
+        }
+        rows={compact ? 2 : 3}
+        enterToSend={enterToSend}
+        compact={compact}
+        extraControls={
+          showInternalToggle ? (
+            <button
+              type="button"
+              onClick={() => setIsInternal(!isInternal)}
+              className={`inline-flex items-center gap-1 rounded-md px-2 py-1 text-[11px] font-medium cursor-pointer rq-transition ${
+                isInternal
+                  ? "text-amber-600 dark:text-amber-400 hover:bg-amber-500/10"
+                  : "text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/10"
+              }`}
+            >
+              {isInternal ? (
+                <Lock className="h-3 w-3" strokeWidth={2} />
               ) : (
-                <Send className="h-3 w-3" />
-              )
-            }
-            rows={compact ? 2 : 3}
-            enterToSend={enterToSend}
-            extraControls={
-              showInternalToggle ? (
-                <button
-                  type="button"
-                  onClick={() => setIsInternal(!isInternal)}
-                  className={`inline-flex items-center gap-1.5 rounded-md border px-2 py-1 text-xs font-medium cursor-pointer transition-colors ${
-                    isInternal
-                      ? "border-amber-500/30 bg-amber-500/10 text-amber-600"
-                      : "border-emerald-500/30 bg-emerald-500/10 text-emerald-600"
-                  }`}
-                >
-                  {isInternal ? (
-                    <Lock className="h-3 w-3" strokeWidth={2} />
-                  ) : (
-                    <LockOpen className="h-3 w-3" strokeWidth={2} />
-                  )}
-                  {isInternal ? "Internal Only" : "Visible to Borrower"}
-                </button>
-              ) : undefined
-            }
-          />
-          {enterToSend && (
-            <p className="text-[10px] text-muted-foreground mt-1">
-              Enter to send, Shift+Enter for new line
-            </p>
-          )}
-        </div>
-      </div>
+                <LockOpen className="h-3 w-3" strokeWidth={2} />
+              )}
+              {isInternal ? "Internal" : "Visible"}
+            </button>
+          ) : undefined
+        }
+        toolbarButtons={
+          <>
+            <button
+              type="button"
+              className={iconBtnClass}
+              title="Attach file"
+              disabled
+            >
+              <Paperclip className="h-3.5 w-3.5" strokeWidth={1.5} />
+            </button>
+            <button
+              type="button"
+              className={iconBtnClass}
+              title="Mention someone"
+              onClick={() => mentionInputRef.current?.insertAt()}
+            >
+              <AtSign className="h-3.5 w-3.5" strokeWidth={1.5} />
+            </button>
+          </>
+        }
+      />
     </div>
   );
 }

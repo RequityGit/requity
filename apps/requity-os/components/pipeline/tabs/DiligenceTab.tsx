@@ -1112,9 +1112,7 @@ function ConditionNoteThread({
         </div>
       )}
       {currentUserId && (
-        <div className="rounded-lg border border-border bg-muted p-2">
-          <div className="flex gap-2">
-            <div className="flex flex-1 flex-col gap-1.5">
+        <div>
               <MentionInput
                 value={text}
                 onChange={setText}
@@ -1155,8 +1153,6 @@ function ConditionNoteThread({
                   </button>
                 }
               />
-            </div>
-          </div>
         </div>
       )}
     </div>
