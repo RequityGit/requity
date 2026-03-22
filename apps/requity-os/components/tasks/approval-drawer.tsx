@@ -15,17 +15,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
+import { useConfirm } from "@/components/shared/ConfirmDialog";
 import {
   Shield,
   Check,
@@ -64,6 +54,7 @@ export function ApprovalDrawer({
   onUpdated,
 }: ApprovalDrawerProps) {
   const { toast } = useToast();
+  const confirm = useConfirm();
   const [note, setNote] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
@@ -347,36 +338,24 @@ export function ApprovalDrawer({
                 {submitting ? "Approving..." : "Approve"}
               </Button>
 
-              <AlertDialog>
-                <AlertDialogTrigger asChild>
-                  <Button
-                    variant="outline"
-                    className="flex-1 gap-1.5 border-destructive text-destructive hover:bg-destructive/10"
-                    disabled={submitting || !isAssignee}
-                  >
-                    <ThumbsDown className="h-3.5 w-3.5" strokeWidth={2} />
-                    Reject
-                  </Button>
-                </AlertDialogTrigger>
-                <AlertDialogContent>
-                  <AlertDialogHeader>
-                    <AlertDialogTitle>Reject approval</AlertDialogTitle>
-                    <AlertDialogDescription>
-                      This will send the approval back to the requestor for
-                      revision. A note is required.
-                    </AlertDialogDescription>
-                  </AlertDialogHeader>
-                  <AlertDialogFooter>
-                    <AlertDialogCancel>Cancel</AlertDialogCancel>
-                    <AlertDialogAction
-                      onClick={() => handleDecision("reject")}
-                      className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                    >
-                      Reject
-                    </AlertDialogAction>
-                  </AlertDialogFooter>
-                </AlertDialogContent>
-              </AlertDialog>
+              <Button
+                variant="outline"
+                className="flex-1 gap-1.5 border-destructive text-destructive hover:bg-destructive/10"
+                disabled={submitting || !isAssignee}
+                onClick={async () => {
+                  const ok = await confirm({
+                    title: "Reject approval",
+                    description: "This will send the approval back to the requestor for revision. A note is required.",
+                    confirmLabel: "Reject",
+                    destructive: true,
+                  });
+                  if (!ok) return;
+                  handleDecision("reject");
+                }}
+              >
+                <ThumbsDown className="h-3.5 w-3.5" strokeWidth={2} />
+                Reject
+              </Button>
             </div>
           )}
         </div>

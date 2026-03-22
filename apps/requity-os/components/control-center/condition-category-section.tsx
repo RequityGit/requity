@@ -3,16 +3,7 @@
 import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
+import { useConfirm } from "@/components/shared/ConfirmDialog";
 import { LoanTypeBadge } from "./loan-type-badge";
 import {
   ChevronDown,
@@ -175,7 +166,7 @@ export function ConditionCategorySection({
   onReorder,
   onInlineUpdate,
 }: ConditionCategorySectionProps) {
-  const [deactivateTarget, setDeactivateTarget] = useState<string | null>(null);
+  const confirm = useConfirm();
   const [reordering, setReordering] = useState(false);
 
   function moveItem(index: number, direction: "up" | "down") {
@@ -346,7 +337,7 @@ export function ConditionCategorySection({
                     {item.responsible_party
                       ? RP_ABBREVIATIONS[item.responsible_party] ||
                         item.responsible_party
-                      : "—"}
+                      : "\u2014"}
                   </td>
                   <td className="px-4 py-2 text-center">
                     <button
@@ -405,7 +396,17 @@ export function ConditionCategorySection({
                           variant="ghost"
                           size="sm"
                           className="h-7 w-7 p-0 text-muted-foreground hover:text-red-600"
-                          onClick={() => setDeactivateTarget(item.id)}
+                          onClick={async () => {
+                            const ok = await confirm({
+                              title: "Deactivate Condition",
+                              description:
+                                "This will remove this condition from new loan checklists. Existing loan conditions will not be affected. You can reactivate it later.",
+                              confirmLabel: "Deactivate",
+                              destructive: true,
+                            });
+                            if (!ok) return;
+                            onDeactivate(item.id);
+                          }}
                           title="Deactivate"
                         >
                           <Archive className="h-3.5 w-3.5" />
@@ -429,34 +430,6 @@ export function ConditionCategorySection({
           </table>
         </div>
       )}
-
-      {/* Deactivate Confirmation */}
-      <AlertDialog
-        open={!!deactivateTarget}
-        onOpenChange={() => setDeactivateTarget(null)}
-      >
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Deactivate Condition</AlertDialogTitle>
-            <AlertDialogDescription>
-              This will remove this condition from new loan checklists. Existing
-              loan conditions will not be affected. You can reactivate it later.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={() => {
-                if (deactivateTarget) onDeactivate(deactivateTarget);
-                setDeactivateTarget(null);
-              }}
-              className="bg-red-600 hover:bg-red-700"
-            >
-              Deactivate
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
     </div>
   );
 }

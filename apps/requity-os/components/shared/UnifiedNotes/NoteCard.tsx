@@ -22,6 +22,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import type { NoteData } from "./types";
 import { getUserColor } from "@/lib/user-colors";
+import { AttachmentList } from "@/components/shared/attachments";
 
 function getInitials(name: string): string {
   return name
@@ -82,7 +83,7 @@ export function NoteCard({
   if (editing) {
     return (
       <div className="activity-message">
-        <div className="rounded-xl border border-border bg-card p-3">
+        <div>
           <MentionInput
             value={editText}
             onChange={setEditText}
@@ -202,6 +203,20 @@ export function NoteCard({
               )
             )}
           </div>
+
+          {/* Attachments */}
+          {note.note_attachments && note.note_attachments.length > 0 && (
+            <AttachmentList
+              attachments={note.note_attachments.map((a) => ({
+                id: a.id,
+                fileName: a.file_name,
+                fileType: a.file_type,
+                fileSize: a.file_size_bytes,
+                storagePath: a.storage_path,
+              }))}
+              compact
+            />
+          )}
 
           {/* Reaction pills */}
           {likeCount > 0 && (

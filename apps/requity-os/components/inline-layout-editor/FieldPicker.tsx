@@ -9,6 +9,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { Plus, Search, DollarSign, Building2, User, FileText, ChevronRight, Sparkles } from "lucide-react";
+import { EmptyState } from "@/components/shared/EmptyState";
 import { useInlineLayout } from "./InlineLayoutContext";
 import { CreateFieldDialog } from "./CreateFieldDialog";
 import { cn } from "@/lib/utils";
@@ -141,9 +142,7 @@ export function FieldPicker({ sectionId, usedFieldKeys }: FieldPickerProps) {
         </div>
         <div className="max-h-[320px] overflow-y-auto py-1">
           {groupedFields.length === 0 ? (
-            <div className="px-3 py-6 text-center text-xs text-muted-foreground">
-              {allPickerFields.length === 0 ? "Loading fields..." : "No available fields"}
-            </div>
+            <EmptyState icon={Search} title={allPickerFields.length === 0 ? "Loading fields..." : "No available fields"} compact />
           ) : (
             groupedFields.map(group => (
               <div key={group.key}>

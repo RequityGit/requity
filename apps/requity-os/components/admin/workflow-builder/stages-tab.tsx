@@ -8,17 +8,7 @@ import { EmptyState } from "@/components/shared/EmptyState";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
+import { useConfirm } from "@/components/shared/ConfirmDialog";
 import type { WorkflowStage } from "./types";
 
 function slugify(name: string): string {
@@ -42,6 +32,7 @@ export function StagesTab({
   const [adding, setAdding] = useState(false);
   const [newName, setNewName] = useState("");
   const { toast } = useToast();
+  const confirm = useConfirm();
 
   const handleAddStage = useCallback(async () => {
     if (!newName.trim()) return;
@@ -215,34 +206,26 @@ export function StagesTab({
           </div>
 
           {/* Delete */}
-          <AlertDialog>
-            <AlertDialogTrigger asChild>
-              <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                <Trash2
-                  className="h-3.5 w-3.5 text-muted-foreground hover:text-destructive"
-                  strokeWidth={1.5}
-                />
-              </Button>
-            </AlertDialogTrigger>
-            <AlertDialogContent>
-              <AlertDialogHeader>
-                <AlertDialogTitle>Delete stage</AlertDialogTitle>
-                <AlertDialogDescription>
-                  This will delete &ldquo;{stage.name}&rdquo; and any rules
-                  that reference it. This cannot be undone.
-                </AlertDialogDescription>
-              </AlertDialogHeader>
-              <AlertDialogFooter>
-                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                <AlertDialogAction
-                  onClick={() => handleDeleteStage(stage.id)}
-                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                >
-                  Delete
-                </AlertDialogAction>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-8 w-8 p-0"
+            onClick={async () => {
+              const ok = await confirm({
+                title: "Delete stage",
+                description: `This will delete \u201c${stage.name}\u201d and any rules that reference it. This cannot be undone.`,
+                confirmLabel: "Delete",
+                destructive: true,
+              });
+              if (!ok) return;
+              handleDeleteStage(stage.id);
+            }}
+          >
+            <Trash2
+              className="h-3.5 w-3.5 text-muted-foreground hover:text-destructive"
+              strokeWidth={1.5}
+            />
+          </Button>
         </div>
       ))}
 

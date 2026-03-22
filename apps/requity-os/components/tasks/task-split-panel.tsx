@@ -16,17 +16,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
+import { useConfirm } from "@/components/shared/ConfirmDialog";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
@@ -106,6 +96,7 @@ export function TaskSplitPanel({
 }: TaskSplitPanelProps) {
   const isNew = !task;
   const { toast } = useToast();
+  const confirm = useConfirm();
   const fileRef = useRef<HTMLInputElement>(null);
   const [saving, setSaving] = useState(false);
 
@@ -137,7 +128,6 @@ export function TaskSplitPanel({
   const [rejectionReason, setRejectionReason] = useState("");
   const [showRevisionInput, setShowRevisionInput] = useState(false);
   const [showRejectionInput, setShowRejectionInput] = useState(false);
-  const [showSubmitConfirm, setShowSubmitConfirm] = useState(false);
 
   // New task approval form state
   const [requiresApproval, setRequiresApproval] = useState(false);
@@ -505,6 +495,14 @@ export function TaskSplitPanel({
 
   const handleDelete = async () => {
     if (!task) return;
+    const ok = await confirm({
+      title: "Delete task",
+      description: `This will permanently delete "${task.title}". This action cannot be undone.`,
+      confirmLabel: "Delete",
+      destructive: true,
+    });
+    if (!ok) return;
+
     const supabase = createClient();
     const { error } = await supabase
       .from("ops_tasks")
@@ -594,6 +592,14 @@ export function TaskSplitPanel({
 
   const handleSubmitForApproval = async () => {
     if (!task) return;
+    const ok = await confirm({
+      title: "Submit for Approval",
+      description: `This will notify ${approverProfile?.full_name || "the approver"} to review this task. Continue?`,
+      confirmLabel: "Submit",
+      destructive: false,
+    });
+    if (!ok) return;
+
     setApprovalActionLoading(true);
     const result = await submitTaskForApproval(task.id);
     if (result.success) {
@@ -604,7 +610,6 @@ export function TaskSplitPanel({
       toast({ title: "Failed to submit", description: result.error, variant: "destructive" });
     }
     setApprovalActionLoading(false);
-    setShowSubmitConfirm(false);
   };
 
   const availableStatuses = (() => {
@@ -853,7 +858,7 @@ export function TaskSplitPanel({
                   <div className="flex items-center gap-2 flex-wrap">
                     <Select value={status} onValueChange={(v) => {
                       if (v === "Pending Approval" && task?.requires_approval) {
-                        setShowSubmitConfirm(true);
+                        handleSubmitForApproval();
                       } else {
                         setStatus(v);
                       }
@@ -1188,26 +1193,10 @@ export function TaskSplitPanel({
                 <div className="flex items-center justify-between border-t border-border px-5 py-3">
                   {!isNew ? (
                     <div className="flex items-center gap-2">
-                      <AlertDialog>
-                        <AlertDialogTrigger asChild>
-                          <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive h-7 text-xs">
-                            <Trash2 className="h-3.5 w-3.5 mr-1" strokeWidth={1.5} />
-                            Delete
-                          </Button>
-                        </AlertDialogTrigger>
-                        <AlertDialogContent>
-                          <AlertDialogHeader>
-                            <AlertDialogTitle>Delete task</AlertDialogTitle>
-                            <AlertDialogDescription>
-                              This will permanently delete &ldquo;{task.title}&rdquo;. This action cannot be undone.
-                            </AlertDialogDescription>
-                          </AlertDialogHeader>
-                          <AlertDialogFooter>
-                            <AlertDialogCancel>Cancel</AlertDialogCancel>
-                            <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">Delete</AlertDialogAction>
-                          </AlertDialogFooter>
-                        </AlertDialogContent>
-                      </AlertDialog>
+                      <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive h-7 text-xs" onClick={handleDelete}>
+                        <Trash2 className="h-3.5 w-3.5 mr-1" strokeWidth={1.5} />
+                        Delete
+                      </Button>
                     </div>
                   ) : (
                     <div />
@@ -1284,23 +1273,6 @@ export function TaskSplitPanel({
         </div>
       )}
 
-      {/* Submit for Approval confirmation */}
-      <AlertDialog open={showSubmitConfirm} onOpenChange={setShowSubmitConfirm}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Submit for Approval</AlertDialogTitle>
-            <AlertDialogDescription>
-              This will notify {approverProfile?.full_name || "the approver"} to review this task. Continue?
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleSubmitForApproval} disabled={approvalActionLoading}>
-              Submit
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
     </>
   );
 }

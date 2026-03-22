@@ -6,6 +6,7 @@ import { createClient } from "@/lib/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
 import { MessageSquare } from "lucide-react";
 import { EmptyState } from "@/components/shared/EmptyState";
+import type { UploadedAttachment } from "@/components/shared/attachments";
 import { NoteComposer } from "./NoteComposer";
 import { NoteCard } from "./NoteCard";
 import { NoteFilters } from "./NoteFilters";
@@ -68,7 +69,7 @@ export function UnifiedNotes({
     const supabase = createClient();
     let query = supabase
       .from("notes" as never)
-      .select("*, note_likes(user_id, profiles(full_name))" as never)
+      .select("*, note_likes(user_id, profiles(full_name)), note_attachments(id, file_name, file_type, file_size_bytes, storage_path)" as never)
       .is("deleted_at" as never, null);
 
     if (entityType === "deal") {
@@ -185,7 +186,8 @@ export function UnifiedNotes({
   async function handlePost(
     body: string,
     isInternal: boolean,
-    mentionIds: string[]
+    mentionIds: string[],
+    attachments?: UploadedAttachment[]
   ) {
     const supabase = createClient();
 
@@ -244,21 +246,48 @@ export function UnifiedNotes({
       return;
     }
 
-    // Optimistic: prepend new note with empty likes
+    // Optimistic: prepend new note with empty likes and attachments
     if (data) {
-      const newNote = { ...(data as unknown as NoteData), note_likes: [] };
-      setNotes((prev) => [newNote, ...prev]);
-    }
-
-    // Insert note_mentions
-    if (data && mentionIds.length > 0) {
       const noteId = (data as unknown as NoteData).id;
-      await supabase.from("note_mentions" as never).insert(
-        mentionIds.map((userId) => ({
-          note_id: noteId,
-          mentioned_user_id: userId,
-        })) as never
-      );
+      const noteAttachments: NoteData["note_attachments"] = [];
+
+      // Insert attachments if any
+      if (attachments && attachments.length > 0) {
+        const { data: insertedAttachments } = await supabase
+          .from("note_attachments" as never)
+          .insert(
+            attachments.map((a) => ({
+              note_id: noteId,
+              file_name: a.fileName,
+              file_type: a.fileType,
+              file_size_bytes: a.fileSizeBytes,
+              storage_path: a.storagePath,
+              uploaded_by: currentUserId,
+            })) as never
+          )
+          .select() as { data: NoteData["note_attachments"] | null };
+
+        if (insertedAttachments) {
+          noteAttachments.push(...insertedAttachments);
+        }
+      }
+
+      const newNote = {
+        ...(data as unknown as NoteData),
+        note_likes: [],
+        note_attachments: noteAttachments,
+      };
+      setNotes((prev) => [newNote, ...prev]);
+
+      // Insert note_mentions
+      if (mentionIds.length > 0) {
+        await supabase.from("note_mentions" as never).insert(
+          mentionIds.map((userId) => ({
+            note_id: noteId,
+            mentioned_user_id: userId,
+          })) as never
+        );
+      }
     }
 
     toast({
@@ -446,6 +475,7 @@ export function UnifiedNotes({
   const composerElement = currentUserId ? (
     <NoteComposer
       currentUserName={currentUserName}
+      currentUserId={currentUserId}
       showInternalToggle={shouldShowInternalToggle}
       defaultInternal={defaultInternal}
       compact={isCompact}

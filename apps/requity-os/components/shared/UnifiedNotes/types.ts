@@ -44,6 +44,13 @@ export interface NoteData {
   edited_at: string | null;
   deleted_at: string | null;
   note_likes: NoteLike[];
+  note_attachments?: Array<{
+    id: string;
+    file_name: string;
+    file_type: string | null;
+    file_size_bytes: number | null;
+    storage_path: string;
+  }>;
   unified_condition_id?: string | null;
   condition_name?: string | null;
   deal_id?: string | null;

@@ -11,7 +11,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useToast } from "@/components/ui/use-toast";
-import { Plus } from "lucide-react";
+import { Plus, FileText } from "lucide-react";
+import { EmptyState } from "@/components/shared/EmptyState";
 import { Checkbox } from "@/components/ui/checkbox";
 import { cn } from "@/lib/utils";
 import { CONDITION_CATEGORIES, CONDITION_STAGES } from "@/lib/constants";
@@ -392,9 +393,7 @@ export function ConditionsClient({ templates }: ConditionsClientProps) {
           />
         ))}
         {grouped.length === 0 && (
-          <div className="py-12 text-center text-muted-foreground">
-            No condition templates match your filters.
-          </div>
+          <EmptyState icon={FileText} title="No condition templates match your filters." />
         )}
       </div>
 

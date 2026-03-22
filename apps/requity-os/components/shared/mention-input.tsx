@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect, useCallback } from "react";
+import { useState, useRef, useEffect, useCallback, useImperativeHandle, forwardRef } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { extractMentionIds } from "@/lib/comment-utils";
 
@@ -9,6 +9,11 @@ interface TeamMember {
   full_name: string;
   email: string | null;
   avatar_url: string | null;
+}
+
+export interface MentionInputHandle {
+  focus: () => void;
+  insertAt: () => void;
 }
 
 interface MentionInputProps {
@@ -20,24 +25,35 @@ interface MentionInputProps {
   rows?: number;
   submitLabel?: string;
   submitIcon?: React.ReactNode;
-  /** Extra controls rendered between the textarea and submit button row */
+  /** Extra controls rendered on the left side of the toolbar */
   extraControls?: React.ReactNode;
+  /** Additional icon buttons rendered after extraControls in the toolbar */
+  toolbarButtons?: React.ReactNode;
   /** When true, Enter sends and Shift+Enter inserts newline (chat-style) */
   enterToSend?: boolean;
+  /** Controls padding density */
+  compact?: boolean;
+  /** Content rendered between textarea and toolbar (e.g. staged file chips) */
+  middleContent?: React.ReactNode;
+  /** When true, allow submit even if text is empty (e.g. attachment-only posts) */
+  canSubmitEmpty?: boolean;
 }
 
-export function MentionInput({
+export const MentionInput = forwardRef<MentionInputHandle, MentionInputProps>(function MentionInput({
   value,
   onChange,
   onSubmit,
   placeholder = "Add a comment...",
   disabled = false,
   rows = 2,
-  submitLabel = "Post",
   submitIcon,
   extraControls,
+  toolbarButtons,
   enterToSend = false,
-}: MentionInputProps) {
+  compact = false,
+  middleContent,
+  canSubmitEmpty = false,
+}, ref) {
   const [showDropdown, setShowDropdown] = useState(false);
   const [dropdownQuery, setDropdownQuery] = useState("");
   const [dropdownIndex, setDropdownIndex] = useState(0);
@@ -49,6 +65,33 @@ export function MentionInput({
   const mentionStartRef = useRef<number>(-1);
   const mentionsRef = useRef<Map<string, string>>(new Map());
   const initializedRef = useRef(false);
+
+  useImperativeHandle(ref, () => ({
+    focus() {
+      textareaRef.current?.focus();
+    },
+    insertAt() {
+      const ta = textareaRef.current;
+      if (!ta) return;
+      ta.focus();
+      const pos = ta.selectionStart ?? value.length;
+      const before = value.slice(0, pos);
+      const after = value.slice(pos);
+      const needsSpace = before.length > 0 && !/\s$/.test(before);
+      const insert = (needsSpace ? " " : "") + "@";
+      const newValue = before + insert + after;
+      onChange(newValue);
+      setTimeout(() => {
+        const newPos = pos + insert.length;
+        ta.setSelectionRange(newPos, newPos);
+        // Trigger mention dropdown
+        mentionStartRef.current = newPos - 1;
+        setDropdownQuery("");
+        setShowDropdown(true);
+        loadTeamMembers();
+      }, 0);
+    },
+  }));
 
   // Load team members once
   const loadTeamMembers = useCallback(async () => {
@@ -169,7 +212,7 @@ export function MentionInput({
   }
 
   function handleSubmit() {
-    if (!value.trim() || disabled) return;
+    if ((!value.trim() && !canSubmitEmpty) || disabled) return;
 
     // Reconstruct markup format from display text
     let markupText = value;
@@ -251,8 +294,12 @@ export function MentionInput({
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
+  const hasText = value.trim().length > 0 || canSubmitEmpty;
+  const textareaPadding = compact ? "px-3 pt-3 pb-2" : "px-4 pt-3.5 pb-2";
+  const toolbarPadding = compact ? "px-3 py-2" : "px-3.5 py-2.5";
+
   return (
-    <div className="space-y-2">
+    <div className="comment-surface">
       <div className="relative">
         <textarea
           ref={textareaRef}
@@ -262,7 +309,7 @@ export function MentionInput({
           placeholder={placeholder}
           rows={rows}
           disabled={disabled}
-          className="flex w-full rounded-md border border-input bg-background px-3 py-2 text-xs ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 resize-none"
+          className={`comment-surface-textarea ${textareaPadding} disabled:cursor-not-allowed disabled:opacity-50`}
         />
         {showDropdown && filteredMembers.length > 0 && (
           <div
@@ -310,18 +357,30 @@ export function MentionInput({
           </div>
         )}
       </div>
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">{extraControls}</div>
+      {middleContent}
+      <div className={`comment-toolbar ${toolbarPadding}`}>
+        <div className="flex items-center gap-1">
+          {extraControls}
+          {toolbarButtons}
+          {enterToSend && (
+            <span className="text-[10px] text-muted-foreground/60 ml-1">
+              Enter to send, Shift+Enter for new line
+            </span>
+          )}
+        </div>
         <button
           type="button"
           onClick={handleSubmit}
-          disabled={disabled || !value.trim()}
-          className="inline-flex items-center justify-center rounded-md text-xs font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-7 px-3 gap-1"
+          disabled={disabled || !hasText}
+          className={`inline-flex items-center justify-center rounded-lg h-7 w-7 transition-colors ${
+            hasText && !disabled
+              ? "bg-primary text-primary-foreground hover:bg-primary/90"
+              : "bg-muted text-muted-foreground"
+          } disabled:pointer-events-none`}
         >
           {submitIcon}
-          {submitLabel}
         </button>
       </div>
     </div>
   );
-}
+});

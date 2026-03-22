@@ -8,16 +8,7 @@ import {
 } from "@/components/ui/popover";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
+import { useConfirm } from "@/components/shared/ConfirmDialog";
 import {
   LayoutGrid,
   FileText,
@@ -81,8 +72,7 @@ export function SectionConfigPopover({
   const [label, setLabel] = useState(sectionLabel);
   const [icon, setIcon] = useState(sectionIcon || "LayoutGrid");
   const [saving, startSave] = useTransition();
-  const [deleteOpen, setDeleteOpen] = useState(false);
-  const [deleting, startDelete] = useTransition();
+  const confirm = useConfirm();
 
   function handleSave() {
     if (!label.trim()) return;
@@ -110,30 +100,33 @@ export function SectionConfigPopover({
     });
   }
 
-  function handleDelete() {
+  async function handleDelete() {
+    const ok = await confirm({
+      title: "Delete Section",
+      description: `This will permanently delete the "${sectionLabel}" section and remove all field placements within it. The fields themselves will not be deleted, only their placement on this page.`,
+      confirmLabel: "Delete",
+      destructive: true,
+    });
+    if (!ok) return;
+
     if (isTempSection) {
       onSectionDeleted(sectionId);
-      setDeleteOpen(false);
       setOpen(false);
       toast.success("Section removed");
       return;
     }
 
-    startDelete(async () => {
-      const result = await deleteSection(sectionId);
-      if (result.error) {
-        toast.error(`Failed to delete section: ${result.error}`);
-      } else {
-        onSectionDeleted(sectionId);
-        setDeleteOpen(false);
-        setOpen(false);
-        toast.success("Section deleted");
-      }
-    });
+    const result = await deleteSection(sectionId);
+    if (result.error) {
+      toast.error(`Failed to delete section: ${result.error}`);
+    } else {
+      onSectionDeleted(sectionId);
+      setOpen(false);
+      toast.success("Section deleted");
+    }
   }
 
   return (
-    <>
       <Popover open={open} onOpenChange={setOpen}>
         <PopoverTrigger asChild>{children}</PopoverTrigger>
         <PopoverContent className="w-72 p-3" align="start" side="bottom">
@@ -199,7 +192,7 @@ export function SectionConfigPopover({
                   variant="ghost"
                   size="sm"
                   className="h-7 text-[10px] text-destructive hover:text-destructive gap-1"
-                  onClick={() => setDeleteOpen(true)}
+                  onClick={handleDelete}
                   disabled={saving}
                 >
                   <Trash2 className="h-3 w-3" />
@@ -220,31 +213,6 @@ export function SectionConfigPopover({
           </div>
         </PopoverContent>
       </Popover>
-
-      <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Delete Section</AlertDialogTitle>
-            <AlertDialogDescription>
-              This will permanently delete the &quot;{sectionLabel}&quot; section and remove all
-              field placements within it. The fields themselves will not be deleted, only their
-              placement on this page.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel disabled={deleting}>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleDelete}
-              disabled={deleting}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-            >
-              {deleting ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : null}
-              Delete Section
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-    </>
   );
 }
 

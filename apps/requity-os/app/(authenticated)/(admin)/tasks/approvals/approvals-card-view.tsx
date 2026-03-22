@@ -19,6 +19,7 @@ import {
   FileText,
   Calendar,
 } from "lucide-react";
+import { EmptyState } from "@/components/shared/EmptyState";
 import { ApprovalCard } from "./approval-card";
 import { ApprovalFormModal } from "./approval-form-modal";
 import { AssigneeFilter } from "@/components/shared/assignee-filter";
@@ -232,16 +233,7 @@ export function ApprovalsCardView({
       {/* Approval cards */}
       <div className="flex flex-col gap-3 max-w-[760px]">
         {filtered.length === 0 && (
-          <div className="text-center py-12 text-muted-foreground">
-            <CheckCircle2
-              className="h-8 w-8 mx-auto mb-2 opacity-40"
-              strokeWidth={1.5}
-            />
-            <div className="text-sm font-semibold">All clear</div>
-            <div className="text-xs mt-1">
-              No approvals matching these filters.
-            </div>
-          </div>
+          <EmptyState icon={CheckCircle2} title="All clear" description="No approvals matching these filters." />
         )}
         {filtered.map((approval) => (
           <ApprovalCard

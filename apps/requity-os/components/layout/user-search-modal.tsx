@@ -9,7 +9,8 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Search, Eye, Loader2 } from "lucide-react";
+import { Search, Eye, Loader2, Users } from "lucide-react";
+import { EmptyState } from "@/components/shared/EmptyState";
 import { useImpersonation } from "./impersonation-context";
 
 interface UserForSearch {
@@ -105,9 +106,11 @@ export function UserSearchModal({ open, onOpenChange }: UserSearchModalProps) {
               <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
             </div>
           ) : filtered.length === 0 ? (
-            <div className="text-center py-12 text-muted-foreground text-sm">
-              {search ? "No users match your search." : "No users found."}
-            </div>
+            <EmptyState
+              icon={Users}
+              title={search ? "No users match your search." : "No users found."}
+              compact
+            />
           ) : (
             <div className="space-y-1 py-2">
               {filtered.map((user) => {
