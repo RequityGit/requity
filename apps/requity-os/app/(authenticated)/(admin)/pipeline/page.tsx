@@ -40,7 +40,7 @@ export default async function PipelinePage() {
     admin
       .from("unified_deals" as never)
       .select(
-        `*, primary_contact:crm_contacts!primary_contact_id(id, first_name, last_name, email, phone), broker_contact:crm_contacts!broker_contact_id(id, first_name, last_name, email, phone, broker_company:crm_companies(name)), company:crm_companies!company_id(id, name)`
+        `*, primary_contact:crm_contacts!primary_contact_id(id, first_name, last_name, email, phone), company:companies(id, name)`
       )
       .in("status" as never, ["active", "on_hold"] as never)
       .order("created_at" as never, { ascending: false }),
@@ -87,20 +87,24 @@ export default async function PipelinePage() {
   // Resolve UW data from real tables (properties, borrowers) and merge with JSONB
   const rawDeals = (dealsResult.data ?? []) as unknown as UnifiedDeal[];
 
-  // Collect unique property/contact IDs for bulk fetch
+  // Collect unique property/contact/broker IDs for bulk fetch
   const propertyIdSet = new Set<string>();
   const contactIdSet = new Set<string>();
+  const brokerIdSet = new Set<string>();
   for (const d of rawDeals) {
     if (d.property_id) propertyIdSet.add(d.property_id);
     if (d.primary_contact_id) contactIdSet.add(d.primary_contact_id);
+    const brokerId = (d as unknown as Record<string, unknown>).broker_contact_id as string | null;
+    if (brokerId) brokerIdSet.add(brokerId);
   }
   const propertyIds = Array.from(propertyIdSet);
   const contactIds = Array.from(contactIdSet);
+  const brokerIds = Array.from(brokerIdSet);
 
   type Row = Record<string, unknown>;
 
-  // Bulk fetch linked properties and borrowers
-  const [propertiesRes, borrowersRes] = await Promise.all([
+  // Bulk fetch linked properties, borrowers, and broker contacts
+  const [propertiesRes, borrowersRes, brokersRes] = await Promise.all([
     propertyIds.length > 0
       ? admin
           .from("properties" as never)
@@ -112,6 +116,12 @@ export default async function PipelinePage() {
           .from("borrowers" as never)
           .select(getBorrowerSelectColumns() as never)
           .in("crm_contact_id" as never, contactIds as never)
+      : Promise.resolve({ data: [] }),
+    brokerIds.length > 0
+      ? admin
+          .from("crm_contacts" as never)
+          .select("id, first_name, last_name, email, phone, broker_company:crm_companies(name)" as never)
+          .in("id" as never, brokerIds as never)
       : Promise.resolve({ data: [] }),
   ]);
 
@@ -125,16 +135,24 @@ export default async function PipelinePage() {
     borrowerMap.set(b.crm_contact_id as string, b);
   }
 
+  const brokerMap = new Map<string, Row>();
+  for (const br of ((brokersRes.data ?? []) as unknown as Row[])) {
+    brokerMap.set(br.id as string, br);
+  }
+
   // Enrich deals with computed fields + resolved UW data
   const deals: UnifiedDeal[] = rawDeals.map((deal) => {
     const days = daysInStage(deal.stage_entered_at);
     const config = stageConfigMap.get(deal.stage);
     const property = deal.property_id ? propertyMap.get(deal.property_id) ?? null : null;
     const borrower = deal.primary_contact_id ? borrowerMap.get(deal.primary_contact_id) ?? null : null;
+    const brokerId = (deal as unknown as Record<string, unknown>).broker_contact_id as string | null;
+    const broker = brokerId ? brokerMap.get(brokerId) ?? null : null;
 
     return {
       ...deal,
       uw_data: mergeUwData(deal.uw_data, property, borrower),
+      broker_contact: broker as UnifiedDeal["broker_contact"],
       days_in_stage: days,
       alert_level: getAlertLevel(days, config),
     };
