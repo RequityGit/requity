@@ -46,6 +46,7 @@ interface RailConditionItemProps {
   documents: ConditionDocument[];
   dealId: string;
   onStatusChange: (conditionId: string, newStatus: string) => void;
+  onOpenDetail?: (conditionId: string) => void;
 }
 
 export function RailConditionItem({
@@ -53,6 +54,7 @@ export function RailConditionItem({
   documents,
   dealId,
   onStatusChange,
+  onOpenDetail,
 }: RailConditionItemProps) {
   const [expanded, setExpanded] = useState(false);
   const statusCfg = STATUS_CONFIG[c.status] ?? STATUS_CONFIG.pending;
@@ -75,7 +77,13 @@ export function RailConditionItem({
     <div className="border-b last:border-b-0">
       {/* Collapsed row */}
       <button
-        onClick={() => setExpanded(!expanded)}
+        onClick={() => {
+          if (onOpenDetail) {
+            onOpenDetail(c.id);
+          } else {
+            setExpanded(!expanded);
+          }
+        }}
         className="flex w-full items-center gap-2.5 px-4 py-2.5 bg-transparent border-0 cursor-pointer hover:bg-muted/30 rq-transition text-left"
       >
         {/* Status dot */}
@@ -97,7 +105,9 @@ export function RailConditionItem({
           {statusCfg.label}
         </Badge>
 
-        {expanded ? (
+        {onOpenDetail ? (
+          <ChevronRight className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+        ) : expanded ? (
           <ChevronDown className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
         ) : (
           <ChevronRight className="h-3.5 w-3.5 text-muted-foreground shrink-0" />

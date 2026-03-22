@@ -52,8 +52,6 @@ import {
   FolderOpen,
   Building2,
   Trash2,
-  MessageSquare,
-  ChevronsLeft,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -73,7 +71,6 @@ import { DealOverviewSummary } from "@/components/pipeline/DealOverviewSummary";
 import { EditableOverview } from "@/components/pipeline/EditableOverview";
 import { UnderwritingPanel } from "@/components/pipeline/UnderwritingPanel";
 import type { CommercialUWData } from "@/components/pipeline/tabs/UnderwritingTab";
-import { DealActivitySidebar } from "@/components/pipeline/DealActivitySidebar";
 
 // Lazy-load heavy tab components (only downloaded when user navigates to that tab)
 const DiligenceTab = lazy(() => import("@/components/pipeline/tabs/DiligenceTab").then(m => ({ default: m.DiligenceTab })));
@@ -238,28 +235,6 @@ function DealDetailPageInner({
     () => new Set([initialTab])
   );
 
-  // Activity sidebar state
-  const [sidebarOpen, setSidebarOpen] = useState(true);
-
-  // Auto-collapse sidebar on narrow screens
-  useEffect(() => {
-    const handleResize = () => {
-      if (window.innerWidth < 1200) {
-        setSidebarOpen(false);
-      }
-    };
-    // Check on mount
-    handleResize();
-    window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
-  }, []);
-
-  // Auto-collapse sidebar when Action Center is active (it has its own activity stream)
-  useEffect(() => {
-    if (activeTab === "Action Center") {
-      setSidebarOpen(false);
-    }
-  }, [activeTab]);
 
   // Backward compatibility: replace old tab params in URL
   React.useEffect(() => {
@@ -370,7 +345,7 @@ function DealDetailPageInner({
         </BreadcrumbList>
       </Breadcrumb>
 
-      <div className="flex flex-col flex-1 overflow-hidden max-w-[1680px]">
+      <div className="flex flex-col flex-1 min-h-0 overflow-hidden max-w-[1680px]">
         {/* Header */}
         <DealHeader
           deal={deal}
@@ -380,8 +355,6 @@ function DealDetailPageInner({
           teamMembers={teamMembers}
           currentUserId={currentUserId}
           isSuperAdmin={isSuperAdmin}
-          sidebarOpen={sidebarOpen}
-          onToggleSidebar={() => setSidebarOpen((prev) => !prev)}
         />
 
         {/* Stage Stepper */}
@@ -539,16 +512,14 @@ function DealDetailPageInner({
         {/* Inline Layout Toolbar (shown when editing) */}
         <InlineLayoutToolbar onSaveComplete={() => layout.refetch()} tabs={layout.tabs} />
 
-        {/* Tab Content + Activity Sidebar — split pane */}
-        <div className={cn("flex min-w-0 flex-1 overflow-hidden", sidebarOpen && "-mr-4 md:-mr-6 lg:-mr-8")}>
-          {/* Left: scrollable tab content */}
+        {/* Tab Content */}
+        <div className="flex-1 min-h-0 overflow-hidden">
           <div className={cn(
-            "flex-1 min-w-0 flex flex-col gap-4",
-            activeTab === "Action Center" ? "overflow-hidden pb-0" : "overflow-y-auto pb-8",
-            sidebarOpen ? "pr-4 md:pr-6" : "pr-0"
+            "h-full min-h-0 min-w-0 flex flex-col",
+            activeTab === "Action Center" ? "overflow-hidden" : "overflow-y-auto pb-8 gap-4"
           )}>
           {loadedTabs.has("Action Center") && (
-            <div className={activeTab !== "Action Center" ? "hidden" : undefined}>
+            <div className={activeTab !== "Action Center" ? "hidden" : "flex-1 min-h-0 flex flex-col"}>
               <SectionErrorBoundary fallbackTitle="Could not load action center">
                 <Suspense fallback={<TabLoadingFallback />}>
                   <ActionCenterTab
@@ -665,33 +636,6 @@ function DealDetailPageInner({
           )}
           </div>
 
-          {/* Right: Activity Sidebar (fixed height, non-scrolling) */}
-          <div className="flex-shrink-0 h-full">
-            {sidebarOpen ? (
-              <DealActivitySidebar
-                dealId={deal.id}
-                primaryContactId={deal.primary_contact_id ?? null}
-                currentUserId={currentUserId}
-                currentUserName={currentUserName}
-                conditions={conditions.map((c) => ({
-                  id: c.id,
-                  condition_name: c.condition_name,
-                }))}
-                onClose={() => setSidebarOpen(false)}
-              />
-            ) : (
-              <button
-                onClick={() => setSidebarOpen(true)}
-                className="ml-2 mt-4 h-fit flex flex-col items-center gap-2 py-3 px-2 rounded-lg border border-border bg-muted/50 hover:bg-muted rq-transition cursor-pointer"
-                title="Open Activity"
-              >
-                <MessageSquare className="h-4 w-4 text-muted-foreground" />
-                <span className="text-[11px] font-medium text-muted-foreground [writing-mode:vertical-lr]">
-                  Activity
-                </span>
-              </button>
-            )}
-          </div>
         </div>
       </div>
 
@@ -709,8 +653,6 @@ function DealHeader({
   teamMembers,
   currentUserId,
   isSuperAdmin,
-  sidebarOpen,
-  onToggleSidebar,
 }: {
   deal: UnifiedDeal;
   shortLabel: string;
@@ -719,8 +661,6 @@ function DealHeader({
   teamMembers: Profile[];
   currentUserId: string;
   isSuperAdmin: boolean;
-  sidebarOpen: boolean;
-  onToggleSidebar: () => void;
 }) {
   const router = useRouter();
   const currentStageIndex = STAGES.findIndex((s) => s.key === deal.stage);
@@ -1127,17 +1067,6 @@ function DealHeader({
               )}
             </Button>
           )}
-
-          {/* Activity Sidebar Toggle */}
-          <Button
-            variant={sidebarOpen ? "default" : "outline"}
-            size="sm"
-            className="h-9 text-xs gap-1.5"
-            onClick={onToggleSidebar}
-          >
-            <MessageSquare className="h-3.5 w-3.5" />
-            Activity
-          </Button>
 
           {/* Actions Dropdown */}
           <DropdownMenu>
