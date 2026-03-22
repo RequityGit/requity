@@ -33,6 +33,7 @@ import { usePipelineStore } from "@/stores/pipeline-store";
 import type { IntakeItem } from "@/lib/intake/types";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { Layers } from "lucide-react";
+import type { ConditionsProgress } from "@/stores/pipeline-store";
 
 interface PipelineKanbanProps {
   deals: UnifiedDeal[];
@@ -41,6 +42,8 @@ interface PipelineKanbanProps {
   onDealClick: (deal: UnifiedDeal) => void;
   intakeItems?: IntakeItem[];
   onIntakeClick?: (item: IntakeItem) => void;
+  teamMembers: { id: string; full_name: string }[];
+  conditionsMap: Map<string, ConditionsProgress>;
 }
 
 function StageColumn({
@@ -72,11 +75,22 @@ export function PipelineKanban({
   onDealClick,
   intakeItems = [],
   onIntakeClick,
+  teamMembers,
+  conditionsMap,
 }: PipelineKanbanProps) {
   const [activeId, setActiveId] = useState<string | null>(null);
 
   // Use store's moveDeal for optimistic updates instead of local dealOverrides
   const moveDeal = usePipelineStore((s) => s.moveDeal);
+
+  // Build assignee name lookup map
+  const assigneeMap = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const m of teamMembers) {
+      map.set(m.id, m.full_name);
+    }
+    return map;
+  }, [teamMembers]);
 
   const { allFields } = useUwFieldConfigs();
   const formulaMap = useMemo(() => {
@@ -221,6 +235,8 @@ export function PipelineKanban({
                           stageConfig={stageConfig}
                           hasRelationships={relationshipDealIds.has(deal.id)}
                           formulaMap={formulaMap}
+                          conditionsProgress={conditionsMap.get(deal.id) ?? null}
+                          assigneeName={deal.assigned_to ? assigneeMap.get(deal.assigned_to) ?? null : null}
                           onClick={() => onDealClick(deal)}
                         />
                       );
@@ -241,6 +257,8 @@ export function PipelineKanban({
             stageConfig={stageConfigMap.get(activeDeal.stage)}
             hasRelationships={relationshipDealIds.has(activeDeal.id)}
             formulaMap={formulaMap}
+            conditionsProgress={conditionsMap.get(activeDeal.id) ?? null}
+            assigneeName={activeDeal.assigned_to ? assigneeMap.get(activeDeal.assigned_to) ?? null : null}
           />
         ) : null}
       </DragOverlay>

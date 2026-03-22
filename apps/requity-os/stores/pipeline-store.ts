@@ -12,6 +12,11 @@ import type { IntakeItem } from "@/lib/intake/types";
 
 // ─── Hydration Payload ───
 
+export interface ConditionsProgress {
+  completed: number;
+  total: number;
+}
+
 export interface PipelineHydratePayload {
   deals: UnifiedDeal[];
   stageConfigs: StageConfig[];
@@ -20,6 +25,7 @@ export interface PipelineHydratePayload {
   teamMembers: { id: string; full_name: string }[];
   intakeItems: IntakeItem[];
   currentUserId: string | null;
+  conditionsMap: Map<string, ConditionsProgress>;
 }
 
 // ─── Store Shape ───
@@ -33,6 +39,7 @@ interface PipelineState {
   teamMembers: { id: string; full_name: string }[];
   intakeItems: IntakeItem[];
   currentUserId: string | null;
+  conditionsMap: Map<string, ConditionsProgress>;
 
   // Hydration flag
   hydrated: boolean;
@@ -61,6 +68,7 @@ export const usePipelineStore = create<PipelineState>()(
     teamMembers: [],
     intakeItems: [],
     currentUserId: null,
+    conditionsMap: new Map(),
     hydrated: false,
 
     hydrate: (data) =>
@@ -72,6 +80,7 @@ export const usePipelineStore = create<PipelineState>()(
         state.teamMembers = data.teamMembers;
         state.intakeItems = data.intakeItems;
         state.currentUserId = data.currentUserId;
+        state.conditionsMap = data.conditionsMap;
         state.hydrated = true;
       }),
 

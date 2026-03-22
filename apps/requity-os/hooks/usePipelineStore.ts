@@ -9,6 +9,7 @@ import type {
   DealActivity,
 } from "@/components/pipeline/pipeline-types";
 import type { IntakeItem } from "@/lib/intake/types";
+import type { ConditionsProgress } from "@/stores/pipeline-store";
 
 /** All deals as an array (for filtering in PipelineView) */
 export function useAllDeals(): UnifiedDeal[] {
@@ -84,6 +85,11 @@ export function useTeamMembers(): { id: string; full_name: string }[] {
 /** Intake items from store */
 export function useIntakeItems(): IntakeItem[] {
   return usePipelineStore((s) => s.intakeItems);
+}
+
+/** Conditions progress map (deal_id -> {completed, total}) */
+export function useConditionsMap(): Map<string, ConditionsProgress> {
+  return usePipelineStore((s) => s.conditionsMap);
 }
 
 /** Current user ID */
