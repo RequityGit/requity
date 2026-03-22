@@ -1,0 +1,501 @@
+"use client";
+
+import { useState, useMemo, useEffect, useCallback, useRef } from "react";
+import { createClient } from "@/lib/supabase/client";
+import { fetchActivityTabData } from "@/app/(authenticated)/(admin)/pipeline/[id]/actions";
+import type { DealActivity } from "@/components/pipeline/pipeline-types";
+import type { ActivityData, EmailData } from "@/components/crm/contact-360/types";
+import type { NoteData } from "@/components/shared/UnifiedNotes/types";
+
+// ── Stream item types ──
+
+export type StreamItemType =
+  | "note"
+  | "email_in"
+  | "email_out"
+  | "call"
+  | "sms"
+  | "meeting"
+  | "stage_change"
+  | "system"
+  | "document_upload";
+
+export type StreamFilterType = "all" | "notes" | "emails" | "calls" | "system";
+
+export interface StreamItem {
+  id: string;
+  type: StreamItemType;
+  timestamp: string;
+  author: {
+    name: string;
+    initials: string;
+  };
+  // Shared
+  title?: string;
+  description?: string;
+  // Note-specific
+  noteData?: NoteData;
+  // Email-specific
+  subject?: string;
+  bodyPreview?: string;
+  fromEmail?: string;
+  toEmail?: string;
+  emailAttachments?: unknown[];
+  // Call-specific
+  callDuration?: number;
+  callDirection?: string;
+  // Stage change
+  fromStage?: string;
+  toStage?: string;
+  // Raw source for pass-through rendering
+  dealActivity?: DealActivity;
+  crmActivity?: ActivityData;
+  crmEmail?: EmailData;
+}
+
+export interface StreamFilterCounts {
+  all: number;
+  notes: number;
+  emails: number;
+  calls: number;
+  system: number;
+}
+
+// ── Task type ──
+
+export interface DealTask {
+  id: string;
+  deal_id: string;
+  title: string;
+  description: string | null;
+  assigned_to: string | null;
+  due_date: string | null;
+  status: string;
+  priority: string;
+  created_at: string;
+  updated_at: string;
+  created_by: string | null;
+}
+
+// ── Condition type ──
+
+export interface DealConditionRow {
+  id: string;
+  deal_id: string;
+  condition_name: string;
+  category: string;
+  status: string;
+  required_stage: string;
+  due_date: string | null;
+  assigned_to: string | null;
+  responsible_party: string | null;
+  critical_path_item: boolean | null;
+  internal_description: string | null;
+  borrower_description: string | null;
+  notes: string | null;
+  created_at: string | null;
+  updated_at: string | null;
+  requires_approval: boolean | null;
+  is_required: boolean | null;
+  sort_order: number | null;
+  submitted_at: string | null;
+  reviewed_at: string | null;
+  reviewed_by: string | null;
+  document_urls: string[] | null;
+}
+
+// ── Condition document type ──
+
+export interface ConditionDocument {
+  id: string;
+  document_name: string;
+  file_url: string;
+  storage_path: string | null;
+  file_size_bytes: number | null;
+  created_at: string;
+  condition_id: string | null;
+}
+
+// ── System activity type detection ──
+
+const SYSTEM_ACTIVITY_TYPES = new Set([
+  "stage_change",
+  "team_updated",
+  "approval_requested",
+  "closing_scheduled",
+]);
+
+// ── Map activity type to stream item type ──
+
+function mapActivityType(type: string): StreamItemType {
+  if (SYSTEM_ACTIVITY_TYPES.has(type)) return type === "stage_change" ? "stage_change" : "system";
+  if (type === "call" || type === "call_logged") return "call";
+  if (type === "email" || type === "email_sent") return "email_out";
+  if (type === "text_message") return "sms";
+  if (type === "meeting" || type === "event") return "meeting";
+  if (type === "note") return "note";
+  return "system";
+}
+
+function mapToFilterType(type: StreamItemType): StreamFilterType {
+  if (type === "note") return "notes";
+  if (type === "email_in" || type === "email_out") return "emails";
+  if (type === "call" || type === "sms" || type === "meeting") return "calls";
+  return "system";
+}
+
+function getInitials(name: string | null | undefined): string {
+  if (!name) return "?";
+  return name
+    .split(" ")
+    .map((w) => w[0])
+    .join("")
+    .toUpperCase()
+    .slice(0, 2);
+}
+
+// ── Main hook ──
+
+interface UseActionCenterDataOptions {
+  dealId: string;
+  primaryContactId: string | null;
+  currentUserId: string;
+  currentUserName: string;
+}
+
+export function useActionCenterData({
+  dealId,
+  primaryContactId,
+  currentUserId,
+  currentUserName,
+}: UseActionCenterDataOptions) {
+  const supabase = createClient();
+  const fetchRef = useRef(0);
+
+  // Stream data
+  const [dealActivities, setDealActivities] = useState<DealActivity[]>([]);
+  const [crmActivities, setCrmActivities] = useState<ActivityData[]>([]);
+  const [crmEmails, setCrmEmails] = useState<EmailData[]>([]);
+  const [notes, setNotes] = useState<NoteData[]>([]);
+  const [streamLoading, setStreamLoading] = useState(true);
+
+  // Rail data
+  const [conditions, setConditions] = useState<DealConditionRow[]>([]);
+  const [conditionDocs, setConditionDocs] = useState<ConditionDocument[]>([]);
+  const [tasks, setTasks] = useState<DealTask[]>([]);
+  const [railLoading, setRailLoading] = useState(true);
+
+  // Filter
+  const [activeFilter, setActiveFilter] = useState<StreamFilterType>("all");
+
+  // ── Fetch stream data ──
+
+  const fetchStream = useCallback(
+    async (silent?: boolean) => {
+      const id = ++fetchRef.current;
+      if (!silent) setStreamLoading(true);
+
+      try {
+        // Fetch timeline data (deal activities + CRM activities + emails)
+        const timelineResult = await fetchActivityTabData(dealId, primaryContactId);
+
+        // Fetch notes for this deal
+        const { data: notesData } = await supabase
+          .from("notes" as never)
+          .select("*, note_likes(user_id), note_attachments(id, file_name, file_type, file_size_bytes, storage_path)" as never)
+          .eq("deal_id" as never, dealId as never)
+          .is("deleted_at" as never, null)
+          .is("parent_note_id" as never, null)
+          .is("condition_id" as never, null)
+          .order("created_at" as never, { ascending: false })
+          .limit(100);
+
+        if (fetchRef.current !== id) return;
+
+        if (!("error" in timelineResult) || !timelineResult.error) {
+          setDealActivities(timelineResult.dealActivities as unknown as DealActivity[]);
+          setCrmActivities(timelineResult.crmActivities as unknown as ActivityData[]);
+          setCrmEmails(timelineResult.crmEmails as unknown as EmailData[]);
+        }
+
+        setNotes((notesData ?? []) as unknown as NoteData[]);
+      } catch {
+        // Data stays stale on error
+      } finally {
+        if (fetchRef.current === id) setStreamLoading(false);
+      }
+    },
+    [dealId, primaryContactId, supabase]
+  );
+
+  // ── Fetch rail data ──
+
+  const fetchRail = useCallback(
+    async (silent?: boolean) => {
+      if (!silent) setRailLoading(true);
+
+      try {
+        const [condResult, docsResult, taskResult] = await Promise.all([
+          supabase
+            .from("unified_deal_conditions" as never)
+            .select("*" as never)
+            .eq("deal_id" as never, dealId as never)
+            .order("sort_order" as never, { ascending: true }),
+          supabase
+            .from("unified_deal_documents" as never)
+            .select("id, document_name, file_url, storage_path, file_size_bytes, created_at, condition_id" as never)
+            .eq("deal_id" as never, dealId as never)
+            .is("deleted_at" as never, null),
+          supabase
+            .from("unified_deal_tasks" as never)
+            .select("*" as never)
+            .eq("deal_id" as never, dealId as never)
+            .order("created_at" as never, { ascending: true }),
+        ]);
+
+        setConditions((condResult.data ?? []) as unknown as DealConditionRow[]);
+        setConditionDocs((docsResult.data ?? []) as unknown as ConditionDocument[]);
+        setTasks((taskResult.data ?? []) as unknown as DealTask[]);
+      } catch {
+        // Data stays stale
+      } finally {
+        setRailLoading(false);
+      }
+    },
+    [dealId, supabase]
+  );
+
+  // ── Initial fetch ──
+
+  useEffect(() => {
+    fetchStream();
+    fetchRail();
+  }, [fetchStream, fetchRail]);
+
+  // ── Build unified stream ──
+
+  const streamItems = useMemo<StreamItem[]>(() => {
+    const result: StreamItem[] = [];
+
+    // Deal activities (system events)
+    for (const da of dealActivities) {
+      if (SYSTEM_ACTIVITY_TYPES.has(da.activity_type) || crmActivities.length === 0) {
+        const type = mapActivityType(da.activity_type);
+        result.push({
+          id: `deal-${da.id}`,
+          type,
+          timestamp: da.created_at,
+          author: { name: "System", initials: "SY" },
+          title: da.title,
+          description: da.description ?? undefined,
+          fromStage: type === "stage_change" ? ((da.metadata as Record<string, string>)?.from_stage ?? undefined) : undefined,
+          toStage: type === "stage_change" ? ((da.metadata as Record<string, string>)?.to_stage ?? undefined) : undefined,
+          dealActivity: da,
+        });
+      }
+    }
+
+    // CRM activities (calls, meetings, notes logged via CRM)
+    for (const a of crmActivities) {
+      const type = mapActivityType(a.activity_type);
+      result.push({
+        id: `crm-${a.id}`,
+        type,
+        timestamp: a.created_at,
+        author: {
+          name: a.created_by_name ?? "Unknown",
+          initials: getInitials(a.created_by_name),
+        },
+        title: a.subject ?? a.activity_type.replace(/_/g, " "),
+        description: (a as unknown as Record<string, string>).description ?? undefined,
+        callDuration: a.call_duration_seconds ?? undefined,
+        callDirection: a.direction ?? undefined,
+        crmActivity: a,
+      });
+    }
+
+    // CRM emails
+    for (const e of crmEmails) {
+      const isInbound = (e as unknown as Record<string, string>).direction === "inbound";
+      result.push({
+        id: `email-${e.id}`,
+        type: isInbound ? "email_in" : "email_out",
+        timestamp: e.created_at,
+        author: {
+          name: e.sent_by_name ?? e.from_email ?? "Unknown",
+          initials: getInitials(e.sent_by_name ?? e.from_email),
+        },
+        subject: e.subject ?? undefined,
+        bodyPreview: e.body_text?.slice(0, 200) ?? undefined,
+        fromEmail: e.from_email ?? undefined,
+        toEmail: e.to_email ?? undefined,
+        emailAttachments: (e.attachments as unknown[]) ?? undefined,
+        crmEmail: e,
+      });
+    }
+
+    // Notes
+    for (const n of notes) {
+      result.push({
+        id: `note-${n.id}`,
+        type: "note",
+        timestamp: n.created_at,
+        author: {
+          name: n.author_name ?? "Unknown",
+          initials: getInitials(n.author_name),
+        },
+        noteData: n,
+      });
+    }
+
+    // Sort ascending (oldest first, newest at bottom)
+    result.sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
+
+    return result;
+  }, [dealActivities, crmActivities, crmEmails, notes]);
+
+  // ── Filter counts ──
+
+  const filterCounts = useMemo<StreamFilterCounts>(() => {
+    const c: StreamFilterCounts = { all: 0, notes: 0, emails: 0, calls: 0, system: 0 };
+    for (const item of streamItems) {
+      c.all++;
+      const cat = mapToFilterType(item.type);
+      c[cat]++;
+    }
+    return c;
+  }, [streamItems]);
+
+  // ── Filtered items ──
+
+  const filteredItems = useMemo(() => {
+    if (activeFilter === "all") return streamItems;
+    return streamItems.filter((item) => mapToFilterType(item.type) === activeFilter);
+  }, [streamItems, activeFilter]);
+
+  // ── Add note (optimistic) ──
+
+  const addNote = useCallback(
+    async (body: string, isInternal: boolean) => {
+      const optimisticNote: NoteData = {
+        id: `temp-${Date.now()}`,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        author_id: currentUserId,
+        author_name: currentUserName,
+        body,
+        parent_note_id: null,
+        mentions: [],
+        is_internal: isInternal,
+        is_pinned: false,
+        pinned_by: null,
+        pinned_at: null,
+        is_edited: false,
+        edited_at: null,
+        deleted_at: null,
+        note_likes: [],
+        note_attachments: [],
+      };
+
+      // Optimistic add
+      setNotes((prev) => [optimisticNote, ...prev]);
+
+      const row: Record<string, unknown> = {
+        body,
+        author_id: currentUserId,
+        author_name: currentUserName,
+        is_internal: isInternal,
+        deal_id: dealId,
+        mentions: [],
+      };
+
+      const { data, error } = await supabase
+        .from("notes" as never)
+        .insert(row as never)
+        .select()
+        .single();
+
+      if (error) {
+        // Rollback
+        setNotes((prev) => prev.filter((n) => n.id !== optimisticNote.id));
+        return { error: error.message };
+      }
+
+      // Replace temp with real
+      if (data) {
+        const real = data as unknown as NoteData;
+        setNotes((prev) =>
+          prev.map((n) =>
+            n.id === optimisticNote.id
+              ? { ...real, note_likes: [], note_attachments: [] }
+              : n
+          )
+        );
+      }
+
+      return { success: true };
+    },
+    [currentUserId, currentUserName, dealId, supabase]
+  );
+
+  // ── Toggle task ──
+
+  const toggleTask = useCallback(
+    async (taskId: string, currentStatus: string) => {
+      const newStatus = currentStatus === "completed" ? "pending" : "completed";
+
+      // Optimistic update
+      setTasks((prev) =>
+        prev.map((t) => (t.id === taskId ? { ...t, status: newStatus } : t))
+      );
+
+      const { error } = await supabase
+        .from("unified_deal_tasks" as never)
+        .update({ status: newStatus, updated_at: new Date().toISOString() } as never)
+        .eq("id" as never, taskId as never);
+
+      if (error) {
+        // Rollback
+        setTasks((prev) =>
+          prev.map((t) => (t.id === taskId ? { ...t, status: currentStatus } : t))
+        );
+        return { error: error.message };
+      }
+
+      return { success: true };
+    },
+    [supabase]
+  );
+
+  // ── Update condition status (optimistic) ──
+
+  const updateConditionStatus = useCallback(
+    (conditionId: string, newStatus: string) => {
+      setConditions((prev) =>
+        prev.map((c) => (c.id === conditionId ? { ...c, status: newStatus } : c))
+      );
+    },
+    []
+  );
+
+  return {
+    // Stream
+    streamItems: filteredItems,
+    allStreamItems: streamItems,
+    streamLoading,
+    filterCounts,
+    activeFilter,
+    setActiveFilter,
+    addNote,
+    refetchStream: fetchStream,
+
+    // Rail
+    conditions,
+    conditionDocs,
+    tasks,
+    railLoading,
+    toggleTask,
+    updateConditionStatus,
+    refetchRail: fetchRail,
+  };
+}
