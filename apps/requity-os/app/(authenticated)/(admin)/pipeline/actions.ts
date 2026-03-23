@@ -2617,15 +2617,6 @@ export async function processIntakeItemAction(
 
 // ─── Add Deal Condition ───
 
-/** Maps deal stages back to condition stages for DB storage */
-const DEAL_STAGE_TO_CONDITION_STAGE: Record<string, string> = {
-  lead: "loan_intake",
-  analysis: "loan_intake",
-  negotiation: "processing",
-  execution: "closed_onboarding",
-  closed: "post_loan_payoff",
-};
-
 export async function addDealConditionAction(
   dealId: string,
   conditionName: string,
@@ -2642,8 +2633,8 @@ export async function addDealConditionAction(
     if ("error" in auth) return { error: auth.error };
 
     const admin = createAdminClient();
-    const requiredStage =
-      DEAL_STAGE_TO_CONDITION_STAGE[dealStage] ?? "loan_intake";
+    // Condition stages are now aligned 1:1 with deal stages
+    const requiredStage = dealStage;
 
     const { data, error } = await admin
       .from("unified_deal_conditions")

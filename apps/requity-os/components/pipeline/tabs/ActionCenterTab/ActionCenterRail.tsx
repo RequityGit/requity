@@ -48,22 +48,6 @@ const DEAL_STAGES = [
   { key: "closed", label: "Closed" },
 ] as const;
 
-/**
- * Maps each condition's required_stage to the deal stage it belongs to.
- * Conditions use granular stages (loan_intake, processing, etc.),
- * but we filter by the 5 deal stages.
- */
-const CONDITION_STAGE_TO_DEAL_STAGE: Record<string, string> = {
-  loan_intake: "lead",
-  processing: "negotiation",
-  closed_onboarding: "execution",
-  note_sell_process: "closed",
-  post_loan_payoff: "closed",
-  prior_to_approval: "analysis",
-  prior_to_funding: "execution",
-  fundraising: "negotiation",
-};
-
 const STAGE_KEYS = DEAL_STAGES.map((s) => s.key);
 
 /** Default to ALL stages so the full condition picture is always visible. */
@@ -136,11 +120,7 @@ export function ActionCenterRail({
 
   const filteredConditions = useMemo(() => {
     if (selectedStages.size === DEAL_STAGES.length) return conditions;
-    return conditions.filter((c) => {
-      const mapped =
-        CONDITION_STAGE_TO_DEAL_STAGE[c.required_stage] ?? "lead";
-      return selectedStages.has(mapped);
-    });
+    return conditions.filter((c) => selectedStages.has(c.required_stage));
   }, [conditions, selectedStages]);
 
   const selectedCondition = useMemo(

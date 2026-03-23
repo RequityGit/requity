@@ -80,7 +80,7 @@ export function ConditionSlideOver({
   const [formData, setFormData] = useState<ConditionFormData>({
     condition_name: "",
     category: "",
-    required_stage: "processing",
+    required_stage: "execution",
     applies_to_commercial: true,
     applies_to_rtl: true,
     applies_to_dscr: true,
@@ -141,7 +141,7 @@ export function ConditionSlideOver({
       setFormData({
         condition_name: "",
         category: cat,
-        required_stage: "processing",
+        required_stage: "execution",
         applies_to_commercial: true,
         applies_to_rtl: true,
         applies_to_dscr: true,

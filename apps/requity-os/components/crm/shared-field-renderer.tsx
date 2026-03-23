@@ -436,6 +436,7 @@ export interface CrmInlineFieldProps {
   disabled?: boolean;
   options?: { label: string; value: string }[];
   showYearNavigation?: boolean;
+  onAddNew?: () => void;
 }
 
 export function CrmInlineField({
@@ -446,6 +447,7 @@ export function CrmInlineField({
   disabled,
   options: optionsProp,
   showYearNavigation,
+  onAddNew,
 }: CrmInlineFieldProps) {
   const options = optionsProp ?? field.dropdown_options ?? [];
 
@@ -522,6 +524,10 @@ export function CrmInlineField({
           <Select
             value={value != null ? String(value) : ""}
             onValueChange={(val) => {
+              if (val === "__add_new__") {
+                onAddNew?.();
+                return;
+              }
               onChange(val || null);
               setTimeout(onBlur, 0);
             }}
@@ -531,6 +537,14 @@ export function CrmInlineField({
               <SelectValue placeholder="Select..." />
             </SelectTrigger>
             <SelectContent>
+              {onAddNew && (
+                <>
+                  <SelectItem value="__add_new__" className="text-primary font-medium">
+                    + Add New Company
+                  </SelectItem>
+                  <div className="rq-divider my-1" />
+                </>
+              )}
               {options.map((opt) => (
                 <SelectItem key={opt.value} value={opt.value}>
                   {opt.label}
@@ -616,6 +630,7 @@ export function renderDynamicFieldsInline(
     onBlur: (fieldKey: string) => void;
     disabled?: boolean;
     optionsOverrides?: Record<string, { label: string; value: string }[]>;
+    onAddNewCompany?: () => void;
   },
   hiddenFieldKeys?: Set<string>,
   readOnlyFieldKeys?: Set<string>,
@@ -659,6 +674,7 @@ export function renderDynamicFieldsInline(
               disabled={callbacks.disabled}
               options={options ?? undefined}
               showYearNavigation={f.field_key === "date_of_birth"}
+              onAddNew={f.field_key === "company_id" ? callbacks.onAddNewCompany : undefined}
             />
           );
         }
