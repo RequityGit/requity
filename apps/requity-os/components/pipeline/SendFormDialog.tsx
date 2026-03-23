@@ -73,6 +73,7 @@ interface SendFormDialogProps {
   conditions?: ConditionOption[];
   onLinkGenerated?: () => void;
   onConditionsMarked?: (conditionIds: string[]) => void;
+  recipients?: Array<{ id: string; name: string; email: string }>;
 }
 
 // -- Component --
@@ -84,6 +85,7 @@ export function SendFormDialog({
   conditions = [],
   onLinkGenerated,
   onConditionsMarked,
+  recipients = [],
 }: SendFormDialogProps) {
   const [links, setLinks] = useState<ApplicationLink[]>([]);
   const [forms, setForms] = useState<FormOption[]>([]);
@@ -95,6 +97,8 @@ export function SendFormDialog({
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [selectedConditionIds, setSelectedConditionIds] = useState<string[]>([]);
   const [showNewForm, setShowNewForm] = useState(false);
+  const [linkMode, setLinkMode] = useState<"individual" | "shared">("individual");
+  const [generatedUrls, setGeneratedUrls] = useState<Array<{ name: string; url: string }>>([]);
 
   // Fetch existing links + published forms when dialog opens
   const fetchData = useCallback(async () => {
@@ -132,14 +136,16 @@ export function SendFormDialog({
   useEffect(() => {
     if (!open) {
       setGeneratedUrl(null);
+      setGeneratedUrls([]);
       setSelectedFormId("");
       setExpiryDays("7");
       setShowNewForm(false);
       setSelectedConditionIds([]);
+      setLinkMode("individual");
     }
   }, [open]);
 
-  // Generate new link
+  // Generate new link(s)
   const handleGenerate = async () => {
     if (!selectedFormId) return;
     setGenerating(true);
@@ -147,25 +153,58 @@ export function SendFormDialog({
       const supabase = createClient();
       const expiresAt = new Date();
       expiresAt.setDate(expiresAt.getDate() + parseInt(expiryDays));
-      const token = crypto.randomUUID();
-
-      const { data, error } = await supabase
-        .from("deal_application_links")
-        .insert({
-          token,
-          deal_id: dealId,
-          form_id: selectedFormId,
-          status: "active",
-          expires_at: expiresAt.toISOString(),
-        })
-        .select("id, token")
-        .single();
-
-      if (error) throw error;
-
       const selectedForm = forms.find((f) => f.id === selectedFormId);
-      const url = `${window.location.origin}/forms/${selectedForm?.slug ?? "unknown"}?dt=${data.token}`;
-      setGeneratedUrl(url);
+      const formSlug = selectedForm?.slug ?? "unknown";
+
+      // Individual links for each recipient
+      if (linkMode === "individual" && recipients.length > 1) {
+        const urls: Array<{ name: string; url: string }> = [];
+        for (const recipient of recipients) {
+          const token = crypto.randomUUID();
+          const { data, error } = await supabase
+            .from("deal_application_links")
+            .insert({
+              token,
+              deal_id: dealId,
+              form_id: selectedFormId,
+              contact_id: recipient.id,
+              status: "active",
+              expires_at: expiresAt.toISOString(),
+            })
+            .select("id, token")
+            .single();
+          if (error) throw error;
+          urls.push({
+            name: recipient.name,
+            url: `${window.location.origin}/forms/${formSlug}?dt=${data.token}`,
+          });
+        }
+        setGeneratedUrls(urls);
+        setGeneratedUrl(urls[0]?.url ?? null);
+      } else {
+        // Single shared link (or no recipients / 1 recipient)
+        const token = crypto.randomUUID();
+        const contactId = recipients.length === 1 ? recipients[0].id : null;
+
+        const { data, error } = await supabase
+          .from("deal_application_links")
+          .insert({
+            token,
+            deal_id: dealId,
+            form_id: selectedFormId,
+            contact_id: contactId,
+            status: "active",
+            expires_at: expiresAt.toISOString(),
+          })
+          .select("id, token")
+          .single();
+
+        if (error) throw error;
+
+        const url = `${window.location.origin}/forms/${formSlug}?dt=${data.token}`;
+        setGeneratedUrl(url);
+        setGeneratedUrls([]);
+      }
 
       // Mark selected conditions as "requested"
       if (selectedConditionIds.length > 0) {
@@ -182,9 +221,12 @@ export function SendFormDialog({
         }
       }
 
-      showSuccess("Application link generated");
+      showSuccess(
+        linkMode === "individual" && recipients.length > 1
+          ? `${recipients.length} application links generated`
+          : "Application link generated"
+      );
       onLinkGenerated?.();
-      // Refresh links list to show the new one
       fetchData();
     } catch (err) {
       showError("Could not generate link", err instanceof Error ? err.message : undefined);
@@ -346,19 +388,50 @@ export function SendFormDialog({
                 </Button>
               ) : generatedUrl ? (
                 <div className="space-y-3">
-                  <h4 className="rq-micro-label">Generated Link</h4>
-                  <div className="flex gap-2">
-                    <Input
-                      value={generatedUrl}
-                      readOnly
-                      className="text-xs font-mono"
-                    />
-                    <Button variant="outline" size="sm" onClick={handleCopyGenerated}>
-                      <Copy className="h-4 w-4" />
-                    </Button>
-                  </div>
+                  <h4 className="rq-micro-label">
+                    {generatedUrls.length > 1 ? `Generated Links (${generatedUrls.length})` : "Generated Link"}
+                  </h4>
+                  {generatedUrls.length > 1 ? (
+                    <div className="space-y-2">
+                      {generatedUrls.map((gu, i) => (
+                        <div key={i} className="space-y-1">
+                          <span className="text-xs font-medium">{gu.name}</span>
+                          <div className="flex gap-2">
+                            <Input
+                              value={gu.url}
+                              readOnly
+                              className="text-xs font-mono"
+                            />
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => {
+                                navigator.clipboard.writeText(gu.url);
+                                showSuccess(`Link for ${gu.name} copied`);
+                              }}
+                            >
+                              <Copy className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="flex gap-2">
+                      <Input
+                        value={generatedUrl}
+                        readOnly
+                        className="text-xs font-mono"
+                      />
+                      <Button variant="outline" size="sm" onClick={handleCopyGenerated}>
+                        <Copy className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  )}
                   <p className="text-xs text-muted-foreground">
-                    Share this link with the borrower. It expires in {expiryDays} days.
+                    {generatedUrls.length > 1
+                      ? `Share these links with the recipients. They expire in ${expiryDays} days.`
+                      : `Share this link with the borrower. It expires in ${expiryDays} days.`}
                   </p>
                   <Button
                     variant="ghost"
@@ -366,6 +439,7 @@ export function SendFormDialog({
                     className="text-xs"
                     onClick={() => {
                       setGeneratedUrl(null);
+                      setGeneratedUrls([]);
                       setShowNewForm(false);
                       setSelectedConditionIds([]);
                     }}
@@ -410,6 +484,42 @@ export function SendFormDialog({
                       </Select>
                     </div>
                   </div>
+
+                  {/* Recipients indicator + link mode toggle */}
+                  {recipients.length > 0 && (
+                    <div className="space-y-2">
+                      <span className="inline-field-label">
+                        Recipients ({recipients.length})
+                      </span>
+                      <div className="flex flex-wrap gap-1">
+                        {recipients.map((r) => (
+                          <Badge key={r.id} variant="secondary" className="text-xs">
+                            {r.name}
+                          </Badge>
+                        ))}
+                      </div>
+                      {recipients.length > 1 && (
+                        <div className="flex gap-2 pt-1">
+                          <Button
+                            variant={linkMode === "individual" ? "default" : "outline"}
+                            size="sm"
+                            className="text-xs h-7"
+                            onClick={() => setLinkMode("individual")}
+                          >
+                            Individual links ({recipients.length})
+                          </Button>
+                          <Button
+                            variant={linkMode === "shared" ? "default" : "outline"}
+                            size="sm"
+                            className="text-xs h-7"
+                            onClick={() => setLinkMode("shared")}
+                          >
+                            Single shared link
+                          </Button>
+                        </div>
+                      )}
+                    </div>
+                  )}
 
                   {/* Mark Conditions as Requested */}
                   {pendingConditions.length > 0 && (

@@ -114,6 +114,9 @@ import { GenerateDocumentDialog } from "@/components/documents/GenerateDocumentD
 import type { ApprovalEntityType } from "@/lib/approvals/types";
 import type { Profile } from "@/lib/tasks";
 import type { DealTeamContact } from "@/app/types/deal-team";
+import type { SelectableContact } from "@/components/pipeline/deal-header/types";
+import { useContactSelection } from "@/components/pipeline/deal-header/useContactSelection";
+import { ContactSelectionBar } from "@/components/pipeline/deal-header/ContactSelectionBar";
 
 // ─── Lazy Tab Loading Fallback ───
 
@@ -334,6 +337,7 @@ function DealDetailPageInner({
           shortLabel={shortLabel}
           days={days}
           dealTeamMembers={dealTeamMembers}
+          dealTeamContacts={dealTeamContacts}
           teamMembers={teamMembers}
           currentUserId={currentUserId}
           isSuperAdmin={isSuperAdmin}
@@ -635,6 +639,7 @@ function DealHeader({
   shortLabel,
   days,
   dealTeamMembers,
+  dealTeamContacts,
   teamMembers,
   currentUserId,
   isSuperAdmin,
@@ -652,6 +657,7 @@ function DealHeader({
   shortLabel: string;
   days: number;
   dealTeamMembers: DealTeamMember[];
+  dealTeamContacts: DealTeamContact[];
   teamMembers: Profile[];
   currentUserId: string;
   isSuperAdmin: boolean;
@@ -691,13 +697,16 @@ function DealHeader({
   const [generateDocOpen, setGenerateDocOpen] = useState(false);
   const [dealConditions, setDealConditions] = useState<Array<{ id: string; condition_name: string; status: string }>>([]);
 
-  // Email composer state (for contact popover)
+  // Email composer state (for contact popover and selection-based send)
   const [emailComposeOpen, setEmailComposeOpen] = useState(false);
   const [emailToContact, setEmailToContact] = useState<{
     email: string;
     name: string;
     contactId: string;
   } | null>(null);
+
+  // Form recipients from contact selection
+  const [formRecipients, setFormRecipients] = useState<Array<{ id: string; name: string; email: string }>>([]);
 
   // Fetch deal conditions for Send Form dialog
   useEffect(() => {
@@ -758,6 +767,107 @@ function DealHeader({
     const profile = teamMembers.find((t) => t.id === dtm.profile_id);
     return { ...dtm, full_name: profile?.full_name ?? "Unknown" };
   });
+
+  // Build unified selectable contacts list
+  const allContacts = useMemo<SelectableContact[]>(() => {
+    const list: SelectableContact[] = [];
+    const getInitials = (name: string) =>
+      (name || "??").split(" ").map((w: string) => w[0]).join("").slice(0, 2).toUpperCase();
+
+    // Primary borrower
+    if (deal.primary_contact) {
+      const pc = deal.primary_contact;
+      const name = `${pc.first_name ?? ""} ${pc.last_name ?? ""}`.trim() || "Unknown";
+      list.push({
+        id: pc.id,
+        name,
+        initials: getInitials(name),
+        email: pc.email ?? null,
+        phone: pc.phone ?? null,
+        role: "Borrower",
+        category: "external",
+        source: "borrower",
+        crmContactId: pc.id,
+        colorSeed: pc.id,
+      });
+    }
+
+    // Broker
+    if (brokerRaw) {
+      const name = `${brokerRaw.first_name ?? ""} ${brokerRaw.last_name ?? ""}`.trim() || "Unknown";
+      list.push({
+        id: `broker-${brokerRaw.id}`,
+        name,
+        initials: getInitials(name),
+        email: brokerRaw.email ?? null,
+        phone: brokerRaw.phone ?? null,
+        role: "Broker",
+        category: "external",
+        source: "broker",
+        crmContactId: brokerRaw.id,
+        colorSeed: brokerRaw.id,
+      });
+    }
+
+    // External deal team contacts
+    if (dealTeamContacts) {
+      for (const dtc of dealTeamContacts) {
+        const contact = dtc.contact;
+        const name = contact
+          ? `${contact.first_name ?? ""} ${contact.last_name ?? ""}`.trim()
+          : dtc.manual_name || "Unknown";
+        const email = contact?.email ?? dtc.manual_email ?? null;
+        // Skip duplicates with borrower or broker
+        if (deal.primary_contact && contact?.id === deal.primary_contact.id) continue;
+        if (brokerRaw && contact?.id === brokerRaw.id) continue;
+
+        list.push({
+          id: dtc.id,
+          name: name || "Unknown",
+          initials: getInitials(name || "Unknown"),
+          email,
+          phone: contact?.phone ?? dtc.manual_phone ?? null,
+          role: dtc.role || "Team",
+          category: "external",
+          source: "deal_team",
+          crmContactId: contact?.id ?? undefined,
+          colorSeed: dtc.id,
+        });
+      }
+    }
+
+    // Internal team members
+    for (const dtm of resolvedMembers) {
+      const profile = teamMembers.find((t) => t.id === dtm.profile_id);
+      list.push({
+        id: dtm.profile_id,
+        name: dtm.full_name || "Unknown",
+        initials: getInitials(dtm.full_name || "Unknown"),
+        email: profile?.email ?? null,
+        phone: null,
+        role: dtm.role || "Team",
+        category: "internal",
+        source: "internal_team",
+        colorSeed: dtm.profile_id,
+      });
+    }
+
+    return list;
+  }, [deal.primary_contact, brokerRaw, dealTeamContacts, resolvedMembers, teamMembers]);
+
+  // Contact selection state
+  const contactSelection = useContactSelection(allContacts);
+
+  // Escape key clears contact selection
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && contactSelection.hasSelection) {
+        contactSelection.clearSelection();
+      }
+    };
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [contactSelection.hasSelection, contactSelection.clearSelection]);
 
   const handleCreateDriveFolder = useCallback(async () => {
     setCreatingDrive(true);
@@ -967,166 +1077,32 @@ function DealHeader({
           )}
         </div>
 
-        {/* F. Separator */}
-        {headerContacts.length === 0 && <div className="w-px h-8 bg-border shrink-0" />}
-
-        {/* F2. Borrower & Broker contact chips */}
-        {headerContacts.length > 0 && (
-          <>
-            <div className="w-px h-8 bg-border shrink-0" />
-            <div className="flex items-center gap-1.5 shrink-0">
-              {headerContacts.map((contact) => {
-                const initials = contact.name
-                  .split(" ")
-                  .map((w) => w[0])
-                  .join("")
-                  .slice(0, 2)
-                  .toUpperCase();
-                const color = getUserColor({ id: contact.id, accent_color: null });
-                const variants = colorVariants(color);
-                const roleLabel = contact.role === "Borrower" ? "B" : "BK";
-                const roleBg = contact.role === "Borrower"
-                  ? "bg-blue-500 text-white"
-                  : "bg-amber-500 text-white";
-
-                return (
-                  <Popover key={contact.id}>
-                    <PopoverTrigger asChild>
-                      <button
-                        className="relative flex h-[30px] w-[30px] items-center justify-center rounded-lg text-[10px] font-semibold cursor-pointer rq-transition border-0"
-                        style={{
-                          backgroundColor: `${color}14`,
-                          border: `1.5px solid ${color}30`,
-                          color: color,
-                        }}
-                        title={`${contact.role}: ${contact.name}`}
-                      >
-                        {initials}
-                        <span
-                          className={cn(
-                            "absolute -bottom-0.5 -right-0.5 flex items-center justify-center rounded-[4px] text-[7px] font-bold leading-none px-[3px] py-[1px] ring-1 ring-background",
-                            roleBg
-                          )}
-                        >
-                          {roleLabel}
-                        </span>
-                      </button>
-                    </PopoverTrigger>
-                    <PopoverContent align="center" className="w-64 p-0">
-                      <div className="p-3 space-y-2.5">
-                        <div className="flex items-center gap-2.5">
-                          <div
-                            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-[12px] font-semibold"
-                            style={{
-                              backgroundColor: variants.bg,
-                              border: `1.5px solid ${variants.border}`,
-                              color: variants.base,
-                            }}
-                          >
-                            {initials}
-                          </div>
-                          <div className="min-w-0">
-                            <div className="text-sm font-medium truncate">{contact.name}</div>
-                            <div className="text-[10px] uppercase tracking-wider text-muted-foreground">
-                              {contact.role}
-                              {contact.company ? ` · ${contact.company}` : ""}
-                            </div>
-                          </div>
-                        </div>
-                        <div className="border-t border-border" />
-                        <div className="space-y-1">
-                          {contact.email && (
-                            <button
-                              type="button"
-                              onClick={() => {
-                                setEmailToContact({
-                                  email: contact.email!,
-                                  name: contact.name,
-                                  contactId: contact.id,
-                                });
-                                setEmailComposeOpen(true);
-                              }}
-                              className="flex w-full items-center gap-2.5 rounded-md px-2 py-1.5 text-xs text-foreground hover:bg-muted rq-transition text-left cursor-pointer border-0 bg-transparent"
-                            >
-                              <Mail className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
-                              <span className="truncate">{contact.email}</span>
-                            </button>
-                          )}
-                          {contact.phone && (
-                            <button
-                              type="button"
-                              onClick={() => {
-                                if (softphone && softphone.status === "ready") {
-                                  const normalized = contact.phone!.startsWith("+")
-                                    ? contact.phone!
-                                    : `+1${contact.phone!.replace(/\D/g, "")}`;
-                                  softphone.makeOutboundCall(normalized);
-                                } else {
-                                  window.open(`tel:${contact.phone}`, "_self");
-                                }
-                              }}
-                              className="flex w-full items-center gap-2.5 rounded-md px-2 py-1.5 text-xs text-foreground hover:bg-muted rq-transition text-left cursor-pointer border-0 bg-transparent"
-                            >
-                              <Phone className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
-                              <span>{formatPhoneNumber(contact.phone)}</span>
-                              {softphone?.status === "ready" && (
-                                <span className="ml-auto text-[9px] text-emerald-500 font-medium">Softphone</span>
-                              )}
-                            </button>
-                          )}
-                          {!contact.email && !contact.phone && (
-                            <span className="text-xs text-muted-foreground px-2 py-1">No contact info</span>
-                          )}
-                        </div>
-                      </div>
-                    </PopoverContent>
-                  </Popover>
-                );
-              })}
-            </div>
-            <div className="w-px h-8 bg-border shrink-0" />
-          </>
-        )}
+        {/* F. Separator + Contact Selection Bar */}
+        <div className="w-px h-8 bg-border shrink-0" />
 
         {/* G. Actions (ml-auto pushes to right) */}
         <div className="flex items-center gap-2 ml-auto shrink-0">
-          {/* Team Avatar Stack with Popover */}
-          <Popover>
-            <PopoverTrigger asChild>
-              <button className="flex items-center gap-2 rounded-lg px-2 py-1.5 transition-colors hover:bg-muted border-0 bg-transparent cursor-pointer">
-                <div className="flex -space-x-1.5">
-                  {resolvedMembers.slice(0, 3).map((m) => (
-                    <div
-                      key={m.id}
-                      className="flex h-[30px] w-[30px] items-center justify-center rounded-lg bg-primary text-primary-foreground text-[10px] font-medium ring-2 ring-background"
-                      title={`${m.full_name} (${m.role})`}
-                    >
-                      {m.full_name
-                        .split(" ")
-                        .map((w) => w[0])
-                        .join("")
-                        .slice(0, 2)
-                        .toUpperCase()}
-                    </div>
-                  ))}
-                  {resolvedMembers.length > 3 && (
-                    <div className="flex h-[30px] w-[30px] items-center justify-center rounded-lg bg-muted text-muted-foreground text-[10px] font-medium ring-2 ring-background">
-                      +{resolvedMembers.length - 3}
-                    </div>
-                  )}
-                  {resolvedMembers.length === 0 && (
-                    <div className="flex h-[30px] w-[30px] items-center justify-center rounded-lg border border-dashed border-border">
-                      <Users className="h-3.5 w-3.5 text-muted-foreground" />
-                    </div>
-                  )}
+          {/* Contact Selection Bar + Team Management */}
+          <div className="flex items-center gap-1.5">
+            <ContactSelectionBar
+              contacts={allContacts}
+              selectedIds={contactSelection.selectedIds}
+              onToggle={contactSelection.toggle}
+              onClearSelection={contactSelection.clearSelection}
+              hasSelection={contactSelection.hasSelection}
+            />
+
+            {/* Team management popover */}
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button variant="ghost" size="sm" className="h-7 w-7 p-0">
+                  <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent align="end" className="w-80 p-0">
+                <div className="px-4 py-3 border-b">
+                  <h4 className="text-sm font-medium">Deal Team</h4>
                 </div>
-                <ChevronDown className="h-3 w-3 text-muted-foreground" />
-              </button>
-            </PopoverTrigger>
-            <PopoverContent align="end" className="w-80 p-0">
-              <div className="px-4 py-3 border-b">
-                <h4 className="text-sm font-medium">Deal Team</h4>
-              </div>
               <div className="py-2 px-2 max-h-[320px] overflow-y-auto">
                 {/* Key role slots */}
                 {KEY_ROLES.map((role) => {
@@ -1245,6 +1221,7 @@ function DealHeader({
               </div>
             </PopoverContent>
           </Popover>
+          </div>
 
           {/* Google Drive Button */}
           {googleDriveUrl ? (
@@ -1284,6 +1261,11 @@ function DealHeader({
               <Button variant="outline" size="sm" className="gap-1.5">
                 <MoreHorizontal className="h-4 w-4" />
                 Actions
+                {contactSelection.hasSelection && (
+                  <Badge variant="secondary" className="ml-1 h-5 px-1.5 text-[10px]">
+                    {contactSelection.selectedContacts.length}
+                  </Badge>
+                )}
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-56">
@@ -1294,15 +1276,53 @@ function DealHeader({
                 <Phone className="h-4 w-4 mr-2" />
                 Log Call
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => setSendEmailOpen(true)}>
+              <DropdownMenuItem onClick={() => {
+                if (contactSelection.hasSelection) {
+                  // Open EmailComposeSheet with first external contact in To, internal in CC
+                  const firstExternal = contactSelection.selectedExternal.find((c) => c.email);
+                  if (firstExternal) {
+                    setEmailToContact({
+                      email: firstExternal.email!,
+                      name: firstExternal.name,
+                      contactId: firstExternal.crmContactId ?? firstExternal.id,
+                    });
+                    setEmailComposeOpen(true);
+                  } else {
+                    // No external contacts with email, fall back to log email
+                    setSendEmailOpen(true);
+                  }
+                } else {
+                  setSendEmailOpen(true);
+                }
+              }}>
                 <Mail className="h-4 w-4 mr-2" />
                 Send Email
+                {contactSelection.hasSelection && (
+                  <span className="ml-auto text-[10px] text-muted-foreground">
+                    {contactSelection.selectedContacts.length} selected
+                  </span>
+                )}
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuLabel className="text-[10px] uppercase tracking-wider text-muted-foreground font-normal">
                 Forms
               </DropdownMenuLabel>
-              <DropdownMenuItem onClick={() => setSendFormOpen(true)}>
+              <DropdownMenuItem onClick={() => {
+                if (contactSelection.hasSelection) {
+                  setFormRecipients(
+                    contactSelection.selectedExternal
+                      .filter((c) => c.email)
+                      .map((c) => ({
+                        id: c.crmContactId ?? c.id,
+                        name: c.name,
+                        email: c.email!,
+                      }))
+                  );
+                } else {
+                  setFormRecipients([]);
+                }
+                setSendFormOpen(true);
+              }}>
                 <Send className="h-4 w-4 mr-2" />
                 Send Form
               </DropdownMenuItem>
@@ -1432,6 +1452,7 @@ function DealHeader({
         onOpenChange={setSendFormOpen}
         dealId={deal.id}
         conditions={dealConditions}
+        recipients={formRecipients}
         onConditionsMarked={(ids) => {
           setDealConditions((prev) =>
             prev.map((c) => ids.includes(c.id) ? { ...c, status: "requested" } : c)
