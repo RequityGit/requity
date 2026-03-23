@@ -1336,6 +1336,22 @@ function DealHeader({
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuLabel className="text-[10px] uppercase tracking-wider text-muted-foreground font-normal">
+                Forms
+              </DropdownMenuLabel>
+              <DropdownMenuItem onClick={() => setSendFormOpen(true)}>
+                <Send className="h-4 w-4 mr-2" />
+                Send Form
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuLabel className="text-[10px] uppercase tracking-wider text-muted-foreground font-normal">
+                Documents
+              </DropdownMenuLabel>
+              <DropdownMenuItem onClick={() => setGenerateDocOpen(true)}>
+                <FileText className="h-4 w-4 mr-2" />
+                Generate Document
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuLabel className="text-[10px] uppercase tracking-wider text-muted-foreground font-normal">
                 Approvals
               </DropdownMenuLabel>
               <SubmitForApprovalDialog
