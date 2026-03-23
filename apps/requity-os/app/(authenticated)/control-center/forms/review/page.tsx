@@ -110,8 +110,10 @@ export default function FormSubmissionsReviewPage() {
             ) : (
               submissions.map((submission) => {
                 const entityIds = (submission.entity_ids as Record<string, unknown>) || {};
-                const hasError = !!submission.internal_notes;
-                
+                const changesObj = (submission.changes as Record<string, unknown>) || {};
+                const internalNotes = (changesObj.internal_notes as string) || null;
+                const hasError = !!internalNotes;
+
                 return (
                   <TableRow key={submission.id} className="hover:bg-accent/50">
                     <TableCell>
@@ -142,8 +144,8 @@ export default function FormSubmissionsReviewPage() {
                       {hasError ? (
                         <div className="flex items-center gap-1.5 text-xs text-destructive">
                           <AlertCircle size={12} />
-                          <span className="truncate max-w-[200px]" title={submission.internal_notes || undefined}>
-                            {submission.internal_notes?.substring(0, 50) || "Error occurred"}
+                          <span className="truncate max-w-[200px]" title={internalNotes || undefined}>
+                            {internalNotes?.substring(0, 50) || "Error occurred"}
                           </span>
                         </div>
                       ) : (

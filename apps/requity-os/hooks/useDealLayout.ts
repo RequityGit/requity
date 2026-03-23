@@ -18,11 +18,11 @@ export interface LayoutSection {
   tab_key: string | null;
   tab_label: string | null;
   tab_icon: string | null;
-  tab_order: number;
-  tab_locked: boolean;
-  card_type_id: string | null;
+  tab_order: number | null;
+  tab_locked: boolean | null;
+  relationship_id: string | null;
   visibility_rule: string | null;
-  default_collapsed: boolean;
+  default_collapsed: boolean | null;
 }
 
 export interface LayoutField {

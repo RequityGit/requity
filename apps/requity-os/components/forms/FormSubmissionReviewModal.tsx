@@ -130,17 +130,20 @@ export function FormSubmissionReviewModal({
               </div>
             )}
 
-            {submission.internal_notes && (
-              <div className="rounded-md bg-destructive/10 border border-destructive/20 p-3">
-                <div className="flex items-start gap-2">
-                  <AlertCircle size={16} className="text-destructive mt-0.5 shrink-0" />
-                  <div className="flex-1">
-                    <p className="text-xs font-semibold text-destructive mb-1">Error Details</p>
-                    <p className="text-xs text-destructive/80">{submission.internal_notes}</p>
+            {(() => {
+              const internalNotes = ((submission.changes as Record<string, unknown>)?.internal_notes as string) || null;
+              return internalNotes ? (
+                <div className="rounded-md bg-destructive/10 border border-destructive/20 p-3">
+                  <div className="flex items-start gap-2">
+                    <AlertCircle size={16} className="text-destructive mt-0.5 shrink-0" />
+                    <div className="flex-1">
+                      <p className="text-xs font-semibold text-destructive mb-1">Error Details</p>
+                      <p className="text-xs text-destructive/80">{internalNotes}</p>
+                    </div>
                   </div>
                 </div>
-              </div>
-            )}
+              ) : null;
+            })()}
           </div>
 
           {/* Entities Created */}

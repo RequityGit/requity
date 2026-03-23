@@ -61,7 +61,11 @@ export async function GET(request: NextRequest) {
   // Exchange authorization code for tokens
   const clientId = process.env.GMAIL_CLIENT_ID;
   const clientSecret = process.env.GMAIL_CLIENT_SECRET;
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL || origin;
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL;
+  if (!appUrl) {
+    console.error("NEXT_PUBLIC_APP_URL is not set - Gmail OAuth redirect_uri will be unreliable");
+  }
+  const effectiveAppUrl = appUrl || origin;
 
   if (!clientId || !clientSecret) {
     return NextResponse.redirect(
@@ -69,7 +73,7 @@ export async function GET(request: NextRequest) {
     );
   }
 
-  const redirectUri = `${appUrl}/api/gmail/auth/callback`;
+  const redirectUri = `${effectiveAppUrl}/api/gmail/auth/callback`;
 
   let tokenData: {
     access_token: string;
@@ -93,10 +97,19 @@ export async function GET(request: NextRequest) {
     });
 
     if (!tokenRes.ok) {
-      const err = await tokenRes.text();
-      console.error("Google token exchange failed:", err);
+      const errBody = await tokenRes.text();
+      console.error("Google token exchange failed:", tokenRes.status, errBody);
+
+      let detail = "Unknown error";
+      try {
+        const parsed = JSON.parse(errBody);
+        detail = parsed.error_description || parsed.error || errBody.slice(0, 200);
+      } catch {
+        detail = errBody.slice(0, 200);
+      }
+
       return NextResponse.redirect(
-        `${fallbackRedirect}?gmail=error&message=${encodeURIComponent("Failed to exchange authorization code.")}`
+        `${fallbackRedirect}?gmail=error&message=${encodeURIComponent(`Token exchange failed: ${detail}`)}`
       );
     }
 
@@ -137,24 +150,69 @@ export async function GET(request: NextRequest) {
     ? tokenData.scope.split(" ")
     : [];
 
-  // Upsert the token (gmail_tokens has a UNIQUE constraint on user_id)
-  const { error: insertError } = await adminSupabase
-    .from("gmail_tokens")
-    .upsert(
-      {
-        user_id: user.id,
+  // Store tokens: Google only returns refresh_token on first authorization.
+  // On re-auth we must preserve the existing stored refresh_token.
+  const expiresAt = new Date(
+    Date.now() + tokenData.expires_in * 1000
+  ).toISOString();
+  const now = new Date().toISOString();
+
+  let insertError: { message: string } | null = null;
+
+  if (tokenData.refresh_token) {
+    // First auth or re-auth with refresh_token: full upsert
+    const result = await adminSupabase
+      .from("gmail_tokens")
+      .upsert(
+        {
+          user_id: user.id,
+          email: gmailEmail,
+          access_token: tokenData.access_token,
+          refresh_token: tokenData.refresh_token,
+          token_expires_at: expiresAt,
+          is_active: true,
+          scopes: grantedScopes,
+          connected_at: now,
+        },
+        { onConflict: "user_id" }
+      );
+    insertError = result.error;
+  } else {
+    // Re-auth without refresh_token: update everything except refresh_token
+    const result = await adminSupabase
+      .from("gmail_tokens")
+      .update({
         email: gmailEmail,
         access_token: tokenData.access_token,
-        refresh_token: tokenData.refresh_token || "",
-        token_expires_at: new Date(
-          Date.now() + tokenData.expires_in * 1000
-        ).toISOString(),
+        token_expires_at: expiresAt,
         is_active: true,
         scopes: grantedScopes,
-        connected_at: new Date().toISOString(),
-      },
-      { onConflict: "user_id" }
-    );
+        connected_at: now,
+      })
+      .eq("user_id", user.id);
+
+    // If no row existed to update, insert with empty refresh_token
+    if (!result.error && result.count === 0) {
+      const upsertResult = await adminSupabase
+        .from("gmail_tokens")
+        .upsert(
+          {
+            user_id: user.id,
+            email: gmailEmail,
+            access_token: tokenData.access_token,
+            refresh_token: "",
+            token_expires_at: expiresAt,
+            is_active: true,
+            scopes: grantedScopes,
+            connected_at: now,
+          },
+          { onConflict: "user_id" }
+        );
+      insertError = upsertResult.error;
+    } else {
+      insertError = result.error;
+    }
+  }
 
   if (insertError) {
     console.error("Failed to store Gmail token:", insertError);
