@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useRef, useTransition, useEffect, useMemo } from "react";
+import React, { useState, useRef, useTransition, useEffect, useMemo, useCallback } from "react";
 import {
   Upload,
   FileText,
@@ -258,6 +258,27 @@ export function DocumentsSection({
     dragCounter.current -= 1;
     if (dragCounter.current === 0) setIsDragging(false);
   }
+
+  const handlePaste = useCallback(
+    (e: React.ClipboardEvent) => {
+      const items = e.clipboardData?.items;
+      if (!items) return;
+
+      const files: File[] = [];
+      for (let i = 0; i < items.length; i++) {
+        const item = items[i];
+        if (item.kind === "file") {
+          const file = item.getAsFile();
+          if (file) files.push(file);
+        }
+      }
+      if (files.length === 0) return;
+      e.preventDefault();
+      uploadFiles(files);
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    []
+  );
 
   async function handleDelete(docId: string, docName: string) {
     setDeletingId(docId);
@@ -621,9 +642,11 @@ export function DocumentsSection({
 
       {/* Drop zone indicator */}
       <div
+        tabIndex={0}
         onClick={() => fileInputRef.current?.click()}
+        onPaste={handlePaste}
         className={cn(
-          "w-full cursor-pointer border-t border-dashed border-border/50 px-4 py-3 text-center transition-colors hover:bg-muted/50",
+          "w-full cursor-pointer border-t border-dashed border-border/50 px-4 py-3 text-center transition-colors hover:bg-muted/50 outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/20",
           isDragging && "border-primary/50 bg-primary/5"
         )}
       >
@@ -637,7 +660,7 @@ export function DocumentsSection({
             <Upload className="h-3.5 w-3.5" strokeWidth={1.5} />
           )}
           <span className="text-[11px] font-medium">
-            {uploading ? "Uploading..." : isDragging ? "Drop files to upload" : "Drop files here or click to upload"}
+            {uploading ? "Uploading..." : isDragging ? "Drop files to upload" : "Drop files or paste (Ctrl+V) here"}
           </span>
         </div>
       </div>

@@ -220,6 +220,44 @@ export function TaskSheet({
       });
   }, [task]);
 
+  // Global paste handler for the entire task sheet
+  useEffect(() => {
+    if (!open) return;
+
+    function onGlobalPaste(e: ClipboardEvent) {
+      const sheetEl = document.querySelector("[data-task-sheet]");
+      if (
+        !sheetEl?.contains(document.activeElement) &&
+        !sheetEl?.contains(e.target as Node)
+      )
+        return;
+
+      const items = e.clipboardData?.items;
+      if (!items) return;
+
+      const files: File[] = [];
+      for (let i = 0; i < items.length; i++) {
+        const item = items[i];
+        if (item.kind === "file") {
+          const file = item.getAsFile();
+          if (file) files.push(file);
+        }
+      }
+      if (files.length === 0) return;
+      e.preventDefault();
+
+      if (isNew) {
+        setStagedFiles((prev) => [...prev, ...files]);
+      } else {
+        uploadFiles(files);
+      }
+    }
+
+    document.addEventListener("paste", onGlobalPaste);
+    return () => document.removeEventListener("paste", onGlobalPaste);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, isNew, task?.id]);
+
   const handleLinkedEntityChange = useCallback(
     (type: string, id: string, label: string) => {
       setLinkedEntityType(type);
@@ -251,6 +289,32 @@ export function TaskSheet({
         setStagedFiles((prev) => [...prev, ...Array.from(e.dataTransfer.files)]);
       } else {
         uploadFiles(Array.from(e.dataTransfer.files));
+      }
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [isNew]
+  );
+
+  const handlePaste = useCallback(
+    (e: React.ClipboardEvent) => {
+      const items = e.clipboardData?.items;
+      if (!items) return;
+
+      const files: File[] = [];
+      for (let i = 0; i < items.length; i++) {
+        const item = items[i];
+        if (item.kind === "file") {
+          const file = item.getAsFile();
+          if (file) files.push(file);
+        }
+      }
+      if (files.length === 0) return;
+      e.preventDefault();
+
+      if (isNew) {
+        setStagedFiles((prev) => [...prev, ...files]);
+      } else {
+        uploadFiles(files);
       }
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -651,7 +715,7 @@ export function TaskSheet({
 
   return (
     <Dialog open={open} onOpenChange={(isOpen) => { if (!isOpen) onClose(); }}>
-      <DialogContent className="sm:max-w-[540px] p-0 md:p-0 gap-0 flex flex-col max-h-[85vh] md:max-h-[85vh] overflow-hidden">
+      <DialogContent data-task-sheet className="sm:max-w-[540px] p-0 md:p-0 gap-0 flex flex-col max-h-[85vh] md:max-h-[85vh] overflow-hidden">
         <DialogHeader className="px-6 pt-5 pb-3 border-b border-border shrink-0">
           <DialogTitle className="text-base font-bold tracking-tight">
             {isNew ? "New Task" : "Edit Task"}
@@ -819,6 +883,7 @@ export function TaskSheet({
               <Textarea
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
+                onPaste={handlePaste}
                 placeholder="Add details..."
                 rows={3}
                 className="resize-y"
@@ -1095,11 +1160,13 @@ export function TaskSheet({
                 className="hidden"
               />
               <div
+                tabIndex={0}
                 onDragOver={handleDragOver}
                 onDragLeave={handleDragLeave}
                 onDrop={handleDrop}
+                onPaste={handlePaste}
                 onClick={() => fileRef.current?.click()}
-                className={`flex flex-col items-center justify-center gap-1 py-3 rounded-md border border-dashed cursor-pointer transition-colors ${
+                className={`flex flex-col items-center justify-center gap-1 py-3 rounded-md border border-dashed cursor-pointer transition-colors outline-none focus:border-primary focus:ring-1 focus:ring-primary/20 ${
                   isDragging
                     ? "border-primary bg-primary/5"
                     : "border-border hover:border-ring/50"
@@ -1107,7 +1174,7 @@ export function TaskSheet({
               >
                 <Upload className="h-4 w-4 text-muted-foreground" strokeWidth={1.5} />
                 <span className="text-[12px] text-muted-foreground">
-                  {uploading ? "Uploading..." : "Drop files here or click to browse"}
+                  {uploading ? "Uploading..." : "Drop files or paste (Ctrl+V) here"}
                 </span>
               </div>
               {/* Staged files for new tasks */}
