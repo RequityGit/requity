@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState, useRef, useCallback } from "react";
-import { ChevronDown, ClipboardCheck, Loader2, Plus } from "lucide-react";
+import { ChevronDown, ClipboardCheck, Link2, Loader2, Plus } from "lucide-react";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { RailConditionItem } from "./RailConditionItem";
 import { ConditionDetailPanel } from "./ConditionDetailPanel";
@@ -30,6 +30,8 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { addDealConditionAction } from "@/app/(authenticated)/(admin)/pipeline/actions";
 import { showSuccess, showError } from "@/lib/toast";
+import { SecureUploadLinkDialog } from "@/components/pipeline/SecureUploadLinkDialog";
+import type { DealCondition } from "@/components/pipeline/pipeline-types";
 import type {
   DealConditionRow,
   ConditionDocument,
@@ -285,6 +287,29 @@ export function ActionCenterRail({
                     ))}
                   </DropdownMenuContent>
                 </DropdownMenu>
+
+                {/* Upload Links button */}
+                <SecureUploadLinkDialog
+                  dealId={dealId}
+                  conditions={conditions.map((c) => ({
+                    ...c,
+                    template_id: null,
+                    is_borrower_facing: true,
+                    critical_path_item: c.critical_path_item ?? false,
+                    requires_approval: c.requires_approval ?? false,
+                    is_required: c.is_required ?? true,
+                    sort_order: c.sort_order ?? 0,
+                  } as DealCondition))}
+                  trigger={
+                    <button
+                      type="button"
+                      className="flex items-center justify-center h-6 w-6 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted/50 rq-transition"
+                      title="Upload Links"
+                    >
+                      <Link2 className="h-3.5 w-3.5" />
+                    </button>
+                  }
+                />
 
                 {/* Add condition button */}
                 <button

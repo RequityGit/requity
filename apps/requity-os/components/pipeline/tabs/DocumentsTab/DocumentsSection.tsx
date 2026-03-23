@@ -79,6 +79,7 @@ export function DocumentsSection({
   dealName,
   googleDriveFolderUrl,
   onPreviewDoc,
+  onUploadComplete,
   currentUserId,
   currentUserName,
 }: {
@@ -88,6 +89,7 @@ export function DocumentsSection({
   dealName?: string;
   googleDriveFolderUrl?: string | null;
   onPreviewDoc: (doc: DealDocument) => void;
+  onUploadComplete?: () => void;
   currentUserId?: string;
   currentUserName?: string;
 }) {
@@ -211,6 +213,7 @@ export function DocumentsSection({
             showError(`Could not save ${file.name}`, saveResult.error);
           } else {
             showSuccess(`Uploaded ${file.name}`);
+            onUploadComplete?.();
           }
         } catch (err) {
           showError(`Could not upload ${file.name}`, err instanceof Error ? err.message : "Upload failed");
@@ -245,6 +248,7 @@ export function DocumentsSection({
       showError("Could not delete document", result.error);
     } else {
       showSuccess(`Deleted ${docName}`);
+      onUploadComplete?.();
     }
     setDeletingId(null);
   }
@@ -260,6 +264,7 @@ export function DocumentsSection({
       showError(`Could not ${archived ? "archive" : "unarchive"} document`, error.message);
     } else {
       showSuccess(archived ? "Document archived" : "Document restored");
+      onUploadComplete?.();
     }
   }
 
