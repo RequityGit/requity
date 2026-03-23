@@ -187,6 +187,60 @@ async function uploadFileToDrive(
   return res.json();
 }
 
+async function listFilesInFolder(
+  accessToken: string,
+  folderId: string
+): Promise<Array<{ id: string; name: string; mimeType: string; size: string }>> {
+  const allFiles: Array<{ id: string; name: string; mimeType: string; size: string }> = [];
+  let pageToken: string | undefined;
+
+  do {
+    const params = new URLSearchParams({
+      q: `'${folderId}' in parents and trashed = false and mimeType != 'application/vnd.google-apps.folder'`,
+      fields: "nextPageToken, files(id, name, mimeType, size)",
+      pageSize: "100",
+      supportsAllDrives: "true",
+      includeItemsFromAllDrives: "true",
+    });
+    if (pageToken) params.set("pageToken", pageToken);
+
+    const res = await fetch(
+      `https://www.googleapis.com/drive/v3/files?${params.toString()}`,
+      { headers: { Authorization: `Bearer ${accessToken}` } }
+    );
+
+    if (!res.ok) {
+      const err = await res.text();
+      throw new Error(`Drive list files failed: ${err}`);
+    }
+
+    const data = await res.json();
+    allFiles.push(...(data.files ?? []));
+    pageToken = data.nextPageToken;
+  } while (pageToken);
+
+  return allFiles;
+}
+
+async function downloadFileFromDrive(
+  accessToken: string,
+  fileId: string
+): Promise<{ bytes: Uint8Array; mimeType: string }> {
+  const res = await fetch(
+    `https://www.googleapis.com/drive/v3/files/${fileId}?alt=media&supportsAllDrives=true`,
+    { headers: { Authorization: `Bearer ${accessToken}` } }
+  );
+
+  if (!res.ok) {
+    const err = await res.text();
+    throw new Error(`Drive download failed: ${err}`);
+  }
+
+  const mimeType = res.headers.get("content-type") ?? "application/octet-stream";
+  const bytes = new Uint8Array(await res.arrayBuffer());
+  return { bytes, mimeType };
+}
+
 async function verifyFolderAccess(
   accessToken: string,
   folderId: string
@@ -501,6 +555,117 @@ Deno.serve(async (req: Request) => {
         }
       }
 
+      // ── Reverse sync: Drive → Portal ──
+      let imported = 0;
+      const importErrors: string[] = [];
+
+      const GOOGLE_NATIVE_MIMETYPES = new Set([
+        "application/vnd.google-apps.document",
+        "application/vnd.google-apps.spreadsheet",
+        "application/vnd.google-apps.presentation",
+        "application/vnd.google-apps.form",
+        "application/vnd.google-apps.drawing",
+      ]);
+
+      const MAX_IMPORT_SIZE = 100 * 1024 * 1024;
+
+      try {
+        const { data: knownDocs } = await admin
+          .from("unified_deal_documents")
+          .select("google_drive_file_id")
+          .eq("deal_id", deal_id)
+          .not("google_drive_file_id", "is", null);
+
+        const knownDriveIds = new Set(
+          (knownDocs ?? []).map((d: { google_drive_file_id: string }) => d.google_drive_file_id)
+        );
+
+        const foldersToScan: Array<{ folderId: string; visibility: string }> = [
+          { folderId: deal.google_drive_folder_id!, visibility: "internal" },
+        ];
+        if (deal.google_drive_shared_folder_id) {
+          foldersToScan.push({
+            folderId: deal.google_drive_shared_folder_id,
+            visibility: "external",
+          });
+        }
+
+        for (const { folderId, visibility } of foldersToScan) {
+          let driveFiles: Array<{ id: string; name: string; mimeType: string; size: string }>;
+          try {
+            driveFiles = await listFilesInFolder(accessToken, folderId);
+          } catch (listErr) {
+            const msg = listErr instanceof Error ? listErr.message : String(listErr);
+            importErrors.push(`List folder ${folderId}: ${msg}`);
+            continue;
+          }
+
+          const newFiles = driveFiles.filter(
+            (f) => !knownDriveIds.has(f.id) && !GOOGLE_NATIVE_MIMETYPES.has(f.mimeType)
+          );
+
+          for (const driveFile of newFiles) {
+            try {
+              if (driveFile.size && parseInt(driveFile.size, 10) > MAX_IMPORT_SIZE) {
+                importErrors.push(`${driveFile.name}: skipped (${Math.round(parseInt(driveFile.size, 10) / 1024 / 1024)}MB exceeds 100MB limit)`);
+                continue;
+              }
+
+              const { bytes, mimeType } = await downloadFileFromDrive(
+                accessToken,
+                driveFile.id
+              );
+
+              const timestamp = Date.now();
+              const safeName = driveFile.name.replace(/[^a-zA-Z0-9._-]/g, "_");
+              const storagePath = `deals/${deal_id}/${timestamp}-${safeName}`;
+
+              const { error: uploadErr } = await admin.storage
+                .from("loan-documents")
+                .upload(storagePath, bytes, {
+                  contentType: mimeType,
+                  upsert: false,
+                });
+
+              if (uploadErr) {
+                importErrors.push(`${driveFile.name}: storage upload failed - ${uploadErr.message}`);
+                continue;
+              }
+
+              const { error: insertErr } = await admin
+                .from("unified_deal_documents")
+                .insert({
+                  deal_id: deal_id,
+                  document_name: driveFile.name,
+                  category: "general",
+                  storage_path: storagePath,
+                  google_drive_file_id: driveFile.id,
+                  file_size_bytes: driveFile.size ? parseInt(driveFile.size, 10) : null,
+                  mime_type: mimeType,
+                  visibility: visibility,
+                  review_status: "pending",
+                });
+
+              if (insertErr) {
+                importErrors.push(`${driveFile.name}: DB insert failed - ${insertErr.message}`);
+                await admin.storage.from("loan-documents").remove([storagePath]);
+                continue;
+              }
+
+              imported++;
+              knownDriveIds.add(driveFile.id);
+            } catch (fileErr) {
+              const msg = fileErr instanceof Error ? fileErr.message : String(fileErr);
+              importErrors.push(`${driveFile.name}: ${msg}`);
+            }
+          }
+        }
+      } catch (reverseErr) {
+        const msg = reverseErr instanceof Error ? reverseErr.message : String(reverseErr);
+        importErrors.push(`Reverse sync error: ${msg}`);
+        console.error("Reverse sync failed:", reverseErr);
+      }
+
       return new Response(
         JSON.stringify({
           success: true,
@@ -508,6 +673,8 @@ Deno.serve(async (req: Request) => {
           folder_id: deal.google_drive_folder_id,
           documents_synced: synced,
           documents_failed: errors.length,
+          documents_imported: imported,
+          import_errors: importErrors.length > 0 ? importErrors : undefined,
           errors: errors.length > 0 ? errors : undefined,
         }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }

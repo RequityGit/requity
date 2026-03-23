@@ -8,6 +8,7 @@ const FILTERS: { key: StreamFilterType; label: string }[] = [
   { key: "notes", label: "Notes" },
   { key: "emails", label: "Emails" },
   { key: "calls", label: "Calls" },
+  { key: "messages", label: "Messages" },
   { key: "system", label: "System" },
 ];
 

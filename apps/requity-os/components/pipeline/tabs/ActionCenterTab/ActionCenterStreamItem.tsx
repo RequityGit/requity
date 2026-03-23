@@ -14,6 +14,8 @@ import {
   ArrowRight,
   Zap,
   Send,
+  Eye,
+  MessageCircle,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
@@ -43,6 +45,7 @@ const TYPE_CONFIG: Record<
   form_link_sent: { icon: Send, label: "Form Sent", color: "text-teal-600 dark:text-teal-400" },
   form_submission: { icon: FileCheck, label: "Form", color: "text-teal-600 dark:text-teal-400" },
   document_generated: { icon: FileText, label: "Document", color: "text-orange-600 dark:text-orange-400" },
+  message: { icon: MessageCircle, label: "Message", color: "text-orange-600 dark:text-orange-400" },
 };
 
 // ── Date divider ──
@@ -236,6 +239,11 @@ export function ActionCenterStreamItem({ item, noteHandlers }: ActionCenterStrea
     return <SmsItem item={item} />;
   }
 
+  // Message (deal room message - borrower-visible)
+  if (item.type === "message") {
+    return <MessageItem item={item} />;
+  }
+
   // Default: generic activity item
   const config = TYPE_CONFIG[item.type] ?? TYPE_CONFIG.system;
   const Icon = config.icon;
@@ -400,6 +408,67 @@ function SystemItem({ item }: { item: StreamItem }) {
       <Zap className="h-3 w-3 shrink-0 text-muted-foreground/60" />
       <span className="truncate">{item.title ?? item.description}</span>
       <span className="ml-auto text-[10px] shrink-0 num">{timeAgo(item.timestamp)}</span>
+    </div>
+  );
+}
+
+// ── Message item (deal room message) ──
+
+function MessageItem({ item }: { item: StreamItem }) {
+  const senderType = item.messageSenderType ?? "admin";
+  const source = item.messageSource;
+
+  // System messages: centered italic muted text
+  if (senderType === "system") {
+    return (
+      <div className="flex justify-center py-1.5 px-3">
+        <p className="text-xs italic text-muted-foreground">{item.description}</p>
+      </div>
+    );
+  }
+
+  const isBorrower = senderType === "borrower";
+
+  return (
+    <div className="flex gap-2.5 px-3 py-2 border-b border-border/20 hover:bg-muted/30 rq-transition">
+      <ColoredAvatar authorId={item.author.id} initials={item.author.initials} />
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center gap-2 mb-1">
+          <span className="text-[12px] font-medium">{item.author.name}</span>
+          {isBorrower && (
+            <Badge
+              variant="secondary"
+              className="text-[10px] px-1.5 py-0 bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400"
+            >
+              Borrower
+            </Badge>
+          )}
+          {source && source !== "portal" && (
+            <Badge variant="outline" className="text-[10px] px-1.5 py-0 text-muted-foreground">
+              {source === "email" ? "via Email" : "via SMS"}
+            </Badge>
+          )}
+          <span className="text-[11px] text-muted-foreground ml-auto shrink-0">
+            {timeAgo(item.timestamp)}
+          </span>
+        </div>
+        <div
+          className={cn(
+            "inline-block max-w-[85%] rounded-xl px-3 py-2 text-[13px]",
+            isBorrower
+              ? "bg-orange-50 dark:bg-orange-950/20 text-foreground"
+              : "bg-muted text-foreground"
+          )}
+        >
+          {item.description}
+        </div>
+        {!isBorrower && (
+          <div className="flex items-center gap-1 mt-1 text-[10px] text-muted-foreground/60">
+            <Eye className="h-2.5 w-2.5" />
+            <span>Visible to borrower</span>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
