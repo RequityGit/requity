@@ -105,7 +105,7 @@ export default async function DealDetailRoute({ params }: PageProps) {
       .order("sort_order" as never),
     admin
       .from("profiles" as never)
-      .select("id, full_name, avatar_url" as never)
+      .select("id, full_name, avatar_url, email" as never)
       .eq("role" as never, "admin" as never)
       .order("full_name" as never),
     admin
