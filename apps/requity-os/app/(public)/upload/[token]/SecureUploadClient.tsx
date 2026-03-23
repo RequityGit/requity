@@ -933,6 +933,23 @@ function ConditionUploadCard({
     if (files.length > 0) onUpload(files);
   }
 
+  function handlePaste(e: React.ClipboardEvent) {
+    const items = e.clipboardData?.items;
+    if (!items) return;
+
+    const files: File[] = [];
+    for (let i = 0; i < items.length; i++) {
+      const item = items[i];
+      if (item.kind === "file") {
+        const file = item.getAsFile();
+        if (file) files.push(file);
+      }
+    }
+    if (files.length === 0) return;
+    e.preventDefault();
+    onUpload(files);
+  }
+
   function handleFileSelect(e: React.ChangeEvent<HTMLInputElement>) {
     const files = e.target.files;
     if (!files || files.length === 0) return;
@@ -1128,13 +1145,15 @@ function ConditionUploadCard({
           />
           <button
             type="button"
+            tabIndex={0}
             onClick={() => fileInputRef.current?.click()}
             onDrop={handleDrop}
             onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
             onDragLeave={() => setDragOver(false)}
+            onPaste={handlePaste}
             disabled={isUploading}
             className={cn(
-              "flex w-full items-center justify-center gap-1.5 border-t border-dashed px-4 py-2.5 text-xs transition-colors",
+              "flex w-full items-center justify-center gap-1.5 border-t border-dashed px-4 py-2.5 text-xs transition-colors outline-none focus:ring-1 focus:ring-blue-500/20",
               needsRevision
                 ? "border-red-200 text-red-600 hover:bg-red-50"
                 : hasStagedFiles
@@ -1188,6 +1207,23 @@ function GeneralUploadZone({
     if (files.length > 0) onUpload(files);
   }
 
+  function handlePaste(e: React.ClipboardEvent) {
+    const items = e.clipboardData?.items;
+    if (!items) return;
+
+    const files: File[] = [];
+    for (let i = 0; i < items.length; i++) {
+      const item = items[i];
+      if (item.kind === "file") {
+        const file = item.getAsFile();
+        if (file) files.push(file);
+      }
+    }
+    if (files.length === 0) return;
+    e.preventDefault();
+    onUpload(files);
+  }
+
   function handleFileSelect(e: React.ChangeEvent<HTMLInputElement>) {
     const files = e.target.files;
     if (!files || files.length === 0) return;
@@ -1200,13 +1236,15 @@ function GeneralUploadZone({
       <input ref={fileInputRef} type="file" multiple accept=".pdf,.doc,.docx,.xls,.xlsx,.csv,.png,.jpg,.jpeg,.zip" className="hidden" onChange={handleFileSelect} />
       <button
         type="button"
+        tabIndex={0}
         onClick={() => fileInputRef.current?.click()}
         onDrop={handleDrop}
         onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
         onDragLeave={() => setDragOver(false)}
+        onPaste={handlePaste}
         disabled={isUploading}
         className={cn(
-          "flex w-full flex-col items-center gap-2 rounded-t-lg px-6 py-10 text-center transition-colors",
+          "flex w-full flex-col items-center gap-2 rounded-t-lg px-6 py-10 text-center transition-colors outline-none focus:ring-1 focus:ring-blue-500/20",
           dragOver ? "bg-blue-50" : "hover:bg-gray-50",
           isUploading && "pointer-events-none opacity-50"
         )}
@@ -1219,7 +1257,7 @@ function GeneralUploadZone({
           )}
         </div>
         <div>
-          <p className="text-sm font-medium text-gray-900">{isUploading ? "Uploading..." : "Drop files here or click to browse"}</p>
+          <p className="text-sm font-medium text-gray-900">{isUploading ? "Uploading..." : "Drop files or paste (Ctrl+V) here"}</p>
           <p className="mt-1 text-xs text-gray-700">PDF, Word, Excel, images, or ZIP up to 50 MB</p>
         </div>
       </button>

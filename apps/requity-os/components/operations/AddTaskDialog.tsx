@@ -120,6 +120,26 @@ export function AddTaskDialog({ projects, teamMembers, externalOpen, onExternalO
     [addFiles]
   );
 
+  const handlePaste = useCallback(
+    (e: React.ClipboardEvent) => {
+      const items = e.clipboardData?.items;
+      if (!items) return;
+
+      const files: File[] = [];
+      for (let i = 0; i < items.length; i++) {
+        const item = items[i];
+        if (item.kind === "file") {
+          const file = item.getAsFile();
+          if (file) files.push(file);
+        }
+      }
+      if (files.length === 0) return;
+      e.preventDefault();
+      addFiles(files);
+    },
+    [addFiles]
+  );
+
   function resetForm() {
     setForm(INITIAL_FORM);
     setRequiresApproval(false);
@@ -420,6 +440,7 @@ export function AddTaskDialog({ projects, teamMembers, externalOpen, onExternalO
               onChange={(e) =>
                 setForm({ ...form, description: e.target.value })
               }
+              onPaste={handlePaste}
               rows={2}
             />
           </div>
@@ -439,11 +460,13 @@ export function AddTaskDialog({ projects, teamMembers, externalOpen, onExternalO
               className="hidden"
             />
             <div
+              tabIndex={0}
               onDragOver={handleDragOver}
               onDragLeave={handleDragLeave}
               onDrop={handleDrop}
+              onPaste={handlePaste}
               onClick={() => fileRef.current?.click()}
-              className={`flex flex-col items-center justify-center gap-1 py-3 rounded-md border border-dashed cursor-pointer transition-colors ${
+              className={`flex flex-col items-center justify-center gap-1 py-3 rounded-md border border-dashed cursor-pointer transition-colors outline-none focus:border-primary focus:ring-1 focus:ring-primary/20 ${
                 isDragging
                   ? "border-primary bg-primary/5"
                   : "border-border hover:border-ring/50"
@@ -451,7 +474,7 @@ export function AddTaskDialog({ projects, teamMembers, externalOpen, onExternalO
             >
               <Upload className="h-4 w-4 text-muted-foreground" strokeWidth={1.5} />
               <span className="text-[12px] text-muted-foreground">
-                Drop files here or click to browse
+                Drop files or paste (Ctrl+V) here
               </span>
             </div>
             {stagedFiles.length > 0 && (
