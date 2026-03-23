@@ -9,6 +9,16 @@ export default async function NewCommunityPage() {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) redirect('/login');
 
+    const { data: userRole } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', user.id)
+        .single();
+
+        if (userRole?.role !== 'admin' && userRole?.role !== 'super_admin') {
+            redirect('/');
+        }
+
     // fetch data for the form
     const { data: regions } = await supabase
         .from('pm_regions')

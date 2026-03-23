@@ -1,10 +1,23 @@
 import { createClient } from '@/lib/supabase/server';
-import { notFound } from 'next/navigation';
+import { notFound, redirect } from 'next/navigation';
 import EditCommunityClient from './EditCommunityClient';
 
 export default async function ManageCommunityPage({ params }: { params: Promise<{ id: string }> }) {
     const { id } = await params; // Await the promise
     const supabase = createClient();
+
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) redirect('/login');
+
+    const { data: userRole } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', user.id)
+        .single();
+
+        if (userRole?.role !== 'admin' && userRole?.role !== 'super_admin') {
+            redirect('/');
+        }
     
     const { data: regions } = await supabase.from('pm_regions').select('id, name').order('name');
     const { data: allAmenities } = await supabase.from('pm_amenities').select('id, name, icon_slug').order('name');
@@ -14,6 +27,7 @@ export default async function ManageCommunityPage({ params }: { params: Promise<
             id, name, slug, region_id, headline, description_html, 
             address_display, city, state_code, zip_code,
             beds_range, baths_range, starting_price, featured_media_id,
+            appfolio_listing_url, appfolio_portal_url,
             pm_community_amenities (amenity_id),
             pm_gallery (
                 id,
