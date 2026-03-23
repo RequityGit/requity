@@ -6,6 +6,8 @@ import {
   getBorrowerMembersByDealId,
 } from "@/app/services/borrower.server";
 import { getDealTeamContacts } from "@/app/services/deal-team.server";
+import type { DealBorrowerMember } from "@/app/types/borrower";
+import type { DealTeamContact } from "@/app/types/deal-team";
 
 export async function GET(
   _request: NextRequest,
@@ -21,9 +23,9 @@ export async function GET(
 
   try {
     const [entity, members, thirdParties] = await Promise.all([
-      getBorrowingEntityByDealId(admin, dealId),
-      getBorrowerMembersByDealId(admin, dealId),
-      getDealTeamContacts(admin, dealId),
+      getBorrowingEntityByDealId(admin, dealId).catch(() => null),
+      getBorrowerMembersByDealId(admin, dealId).catch(() => [] as DealBorrowerMember[]),
+      getDealTeamContacts(admin, dealId).catch(() => [] as DealTeamContact[]),
     ]);
 
     // Broker contact: fetched from unified_deals.broker_contact_id -> crm_contacts join
@@ -48,7 +50,7 @@ export async function GET(
     if (brokerContactId) {
       const { data: brokerData } = await admin
         .from("crm_contacts" as never)
-        .select("id, first_name, last_name, email, phone, broker_company:crm_companies(name)" as never)
+        .select("id, first_name, last_name, email, phone, broker_company:companies!crm_contacts_company_id_fkey(name)" as never)
         .eq("id" as never, brokerContactId as never)
         .single();
       if (brokerData) {

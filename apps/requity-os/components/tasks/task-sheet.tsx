@@ -1025,6 +1025,18 @@ export function TaskSheet({
                 <div className="space-y-0">
                   <span className="inline-field-label">Created By</span>
                   <p className="text-sm px-2 py-1">{creatorProfile.full_name}</p>
+                  {task.created_at && (
+                    <p className="text-xs text-muted-foreground px-2">
+                      {new Date(task.created_at).toLocaleString("en-US", {
+                        timeZone: "America/New_York",
+                        month: "short",
+                        day: "numeric",
+                        year: "numeric",
+                        hour: "numeric",
+                        minute: "2-digit",
+                      })} EST
+                    </p>
+                  )}
                 </div>
               ) : null;
             })()}

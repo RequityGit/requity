@@ -51,6 +51,7 @@ function getNotesEntityColumn(
 function isNoteRelated(slug: string): boolean {
   return (
     slug.includes("mention") ||
+    slug.includes("comment") ||
     slug.includes("reply") ||
     slug.includes("like") ||
     slug.includes("reaction")
@@ -429,7 +430,8 @@ export function NotificationDetailPanel({
 
   // Determine which preview to render for non-note notifications
   function renderContent() {
-    if (slug.includes("task")) {
+    // For non-note entity notifications, show only the preview card
+    if (slug.includes("task") && !noteRelated) {
       return (
         <TaskPreviewCard
           notification={notification!}
@@ -438,7 +440,7 @@ export function NotificationDetailPanel({
         />
       );
     }
-    if (slug.includes("condition")) {
+    if (slug.includes("condition") && !noteRelated) {
       return (
         <ConditionPreviewCard
           notification={notification!}
@@ -449,7 +451,7 @@ export function NotificationDetailPanel({
         />
       );
     }
-    if (slug.includes("approval")) {
+    if (slug.includes("approval") && !noteRelated) {
       return (
         <ApprovalPreviewCard
           notification={notification!}
@@ -458,9 +460,35 @@ export function NotificationDetailPanel({
       );
     }
 
-    // Note-related: render thread
+    // Note-related: show optional preview card at top + thread below
     if (noteRelated) {
-      return renderThreadView();
+      return (
+        <>
+          {slug.includes("task") && (
+            <TaskPreviewCard
+              notification={notification!}
+              activeRole={activeRole}
+              onNavigate={handleGoToEntity}
+            />
+          )}
+          {slug.includes("condition") && (
+            <ConditionPreviewCard
+              notification={notification!}
+              activeRole={activeRole}
+              onNavigate={handleGoToEntity}
+              currentUserId={currentUserId}
+              currentUserName={currentUserName}
+            />
+          )}
+          {slug.includes("approval") && (
+            <ApprovalPreviewCard
+              notification={notification!}
+              onNavigate={handleGoToEntity}
+            />
+          )}
+          {renderThreadView()}
+        </>
+      );
     }
 
     // Generic fallback
