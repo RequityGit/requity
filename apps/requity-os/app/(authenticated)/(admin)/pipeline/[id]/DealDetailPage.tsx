@@ -107,6 +107,9 @@ import {
   removeDealTeamMember,
   createDealDriveFolder,
   deleteUnifiedDealSuperAdmin,
+  removeDealContact,
+  assignBrokerContact,
+  removeDealTeamContactAction,
 } from "./actions";
 import { SubmitForApprovalDialog } from "@/components/approvals/submit-for-approval-dialog";
 import { SendFormDialog } from "@/components/pipeline/SendFormDialog";
@@ -117,6 +120,8 @@ import type { DealTeamContact } from "@/app/types/deal-team";
 import type { SelectableContact } from "@/components/pipeline/deal-header/types";
 import { useContactSelection } from "@/components/pipeline/deal-header/useContactSelection";
 import { ContactSelectionBar } from "@/components/pipeline/deal-header/ContactSelectionBar";
+import { AssignPartyDialog } from "@/components/pipeline/deal-header/AssignPartyDialog";
+import { AddDealTeamDialog } from "@/components/deal-team/AddDealTeamDialog";
 
 // ─── Lazy Tab Loading Fallback ───
 
@@ -149,6 +154,23 @@ const TEAM_ROLE_OPTIONS = [
 
 const KEY_ROLES = ["Originator", "Processor", "Underwriter"] as const;
 
+export interface DealContactRow {
+  id: string;
+  deal_id: string;
+  contact_id: string;
+  role: "primary" | "co_borrower";
+  is_guarantor: boolean;
+  sort_order: number;
+  contact?: {
+    id: string;
+    first_name: string | null;
+    last_name: string | null;
+    email: string | null;
+    phone: string | null;
+    company_name: string | null;
+  } | null;
+}
+
 // ─── Props ───
 
 interface DealDetailPageProps {
@@ -158,6 +180,7 @@ interface DealDetailPageProps {
   teamMembers: Profile[];
   dealTeamMembers: DealTeamMember[];
   dealTeamContacts: DealTeamContact[];
+  dealContacts: DealContactRow[];
   currentUserId: string;
   currentUserName: string;
   documents: Record<string, unknown>[];
@@ -184,6 +207,7 @@ function DealDetailPageInner({
   teamMembers,
   dealTeamMembers,
   dealTeamContacts,
+  dealContacts,
   currentUserId,
   currentUserName,
   documents,
@@ -338,6 +362,7 @@ function DealDetailPageInner({
           days={days}
           dealTeamMembers={dealTeamMembers}
           dealTeamContacts={dealTeamContacts}
+          dealContacts={dealContacts}
           teamMembers={teamMembers}
           currentUserId={currentUserId}
           isSuperAdmin={isSuperAdmin}
@@ -470,21 +495,6 @@ function DealDetailPageInner({
             })}
           </div>
 
-          {/* Edit Layout toggle (super_admin only) */}
-          {isSuperAdmin && !inlineLayout.state.isEditing && (
-            <Button
-              variant="ghost"
-              size="sm"
-              className="h-8 text-xs gap-1.5 text-muted-foreground hover:text-foreground"
-              onClick={() => {
-                inlineLayout.setActiveTabKey(activeTab.toLowerCase());
-                inlineLayout.startEditing(layout.sections, layout.fields);
-              }}
-            >
-              <Pencil className="h-3 w-3" />
-              Edit Layout
-            </Button>
-          )}
         </div>
 
         {/* Inline Layout Toolbar (shown when editing) */}
@@ -640,6 +650,7 @@ function DealHeader({
   days,
   dealTeamMembers,
   dealTeamContacts,
+  dealContacts,
   teamMembers,
   currentUserId,
   isSuperAdmin,
@@ -658,6 +669,7 @@ function DealHeader({
   days: number;
   dealTeamMembers: DealTeamMember[];
   dealTeamContacts: DealTeamContact[];
+  dealContacts: DealContactRow[];
   teamMembers: Profile[];
   currentUserId: string;
   isSuperAdmin: boolean;
@@ -685,7 +697,14 @@ function DealHeader({
   const [emailNotes, setEmailNotes] = useState("");
   const [selectedProfileId, setSelectedProfileId] = useState("");
   const [selectedRole, setSelectedRole] = useState<string>("Team Member");
+  const [roleLocked, setRoleLocked] = useState(false);
   const [actionLoading, setActionLoading] = useState(false);
+
+  // Deal Parties dialog state
+  const [assignPartyOpen, setAssignPartyOpen] = useState(false);
+  const [assignPartyType, setAssignPartyType] = useState<"borrower" | "broker">("borrower");
+  const [assignDealTeamOpen, setAssignDealTeamOpen] = useState(false);
+  const [assignDealTeamRole, setAssignDealTeamRole] = useState<string>("");
 
   const [creatingDrive, setCreatingDrive] = useState(false);
   const [deleteDealOpen, setDeleteDealOpen] = useState(false);
@@ -792,6 +811,26 @@ function DealHeader({
       });
     }
 
+    // Co-borrowers from deal_contacts
+    for (const dc of dealContacts) {
+      if (dc.contact_id === deal.primary_contact?.id) continue; // skip primary (already added above)
+      const c = dc.contact;
+      if (!c) continue;
+      const name = `${c.first_name ?? ""} ${c.last_name ?? ""}`.trim() || "Unknown";
+      list.push({
+        id: dc.id,
+        name,
+        initials: getInitials(name),
+        email: c.email ?? null,
+        phone: c.phone ?? null,
+        role: dc.role === "primary" ? "Borrower" : "Co-Borrower",
+        category: "external",
+        source: "borrower",
+        crmContactId: c.id,
+        colorSeed: c.id,
+      });
+    }
+
     // Broker
     if (brokerRaw) {
       const name = `${brokerRaw.first_name ?? ""} ${brokerRaw.last_name ?? ""}`.trim() || "Unknown";
@@ -853,7 +892,7 @@ function DealHeader({
     }
 
     return list;
-  }, [deal.primary_contact, brokerRaw, dealTeamContacts, resolvedMembers, teamMembers]);
+  }, [deal.primary_contact, dealContacts, brokerRaw, dealTeamContacts, resolvedMembers, teamMembers]);
 
   // Contact selection state
   const contactSelection = useContactSelection(allContacts);
@@ -946,6 +985,53 @@ function DealHeader({
         showError(`Failed to remove: ${result.error}`);
       } else {
         showSuccess("Team member removed");
+        router.refresh();
+      }
+    } finally {
+      setActionLoading(false);
+    }
+  }, [deal.id, router]);
+
+  // ─── Deal Parties Handlers ───
+
+  const handleRemoveBorrower = useCallback(async (contactId: string) => {
+    setActionLoading(true);
+    try {
+      const result = await removeDealContact(deal.id, contactId);
+      if (result.error) {
+        showError(`Could not remove borrower: ${result.error}`);
+      } else {
+        showSuccess("Borrower removed");
+        router.refresh();
+      }
+    } finally {
+      setActionLoading(false);
+    }
+  }, [deal.id, router]);
+
+  const handleRemoveBroker = useCallback(async () => {
+    setActionLoading(true);
+    try {
+      const result = await assignBrokerContact(deal.id, null);
+      if (result.error) {
+        showError(`Could not remove broker: ${result.error}`);
+      } else {
+        showSuccess("Broker removed");
+        router.refresh();
+      }
+    } finally {
+      setActionLoading(false);
+    }
+  }, [deal.id, router]);
+
+  const handleRemoveDealParty = useCallback(async (dtcId: string) => {
+    setActionLoading(true);
+    try {
+      const result = await removeDealTeamContactAction(dtcId, deal.id);
+      if (result.error) {
+        showError(`Could not remove: ${result.error}`);
+      } else {
+        showSuccess("Contact removed");
         router.refresh();
       }
     } finally {
@@ -1103,7 +1189,7 @@ function DealHeader({
                 <div className="px-4 py-3 border-b">
                   <h4 className="text-sm font-medium">Deal Team</h4>
                 </div>
-              <div className="py-2 px-2 max-h-[320px] overflow-y-auto">
+              <div className="py-2 px-2 max-h-[480px] overflow-y-auto">
                 {/* Key role slots */}
                 {KEY_ROLES.map((role) => {
                   const member = resolvedMembers.find((m) => m.role === role);
@@ -1148,6 +1234,7 @@ function DealHeader({
                             onClick={() => {
                               setSelectedProfileId("");
                               setSelectedRole(role);
+                              setRoleLocked(true);
                               setTeamAssignOpen(true);
                             }}
                           >
@@ -1203,6 +1290,186 @@ function DealHeader({
                       ))}
                   </>
                 )}
+
+                {/* ─── Deal Parties Section ─── */}
+                <div className="border-t mt-2 pt-2">
+                  <div className="px-2 pb-1">
+                    <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium">
+                      Deal Parties
+                    </p>
+                  </div>
+
+                  {/* Borrowers (up to 4) */}
+                  {dealContacts.map((dc) => {
+                    const c = dc.contact;
+                    const name = c
+                      ? `${c.first_name ?? ""} ${c.last_name ?? ""}`.trim() || "Unknown"
+                      : "Unknown";
+                    const roleLabel = dc.role === "primary" ? "Borrower" : "Co-Borrower";
+                    return (
+                      <div
+                        key={dc.id}
+                        className="group flex items-center gap-2.5 rounded-lg px-2 py-1.5 transition-colors hover:bg-muted"
+                      >
+                        <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-emerald-600 text-white text-[10px] font-medium">
+                          {name.split(" ").map((w) => w[0]).join("").slice(0, 2).toUpperCase()}
+                        </div>
+                        <div className="text-left min-w-0 flex-1">
+                          <div className="text-xs font-medium text-foreground truncate">{name}</div>
+                          <div className="text-[10px] uppercase tracking-wider text-muted-foreground">{roleLabel}</div>
+                        </div>
+                        <button
+                          className="opacity-0 group-hover:opacity-100 transition-opacity p-0.5 rounded hover:bg-destructive/10 bg-transparent border-0 cursor-pointer"
+                          onClick={() => handleRemoveBorrower(dc.contact_id)}
+                          disabled={actionLoading}
+                        >
+                          <X className="h-3 w-3 text-muted-foreground hover:text-destructive" />
+                        </button>
+                      </div>
+                    );
+                  })}
+                  {dealContacts.length < 4 && (
+                    <div className="flex items-center gap-2.5 rounded-lg px-2 py-1.5 transition-colors hover:bg-muted">
+                      <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border border-dashed border-border">
+                        <Plus className="h-3 w-3 text-muted-foreground" />
+                      </div>
+                      <button
+                        className="text-left min-w-0 flex-1 bg-transparent border-0 cursor-pointer p-0"
+                        onClick={() => {
+                          setAssignPartyType("borrower");
+                          setAssignPartyOpen(true);
+                        }}
+                      >
+                        <div className="text-xs text-muted-foreground">Assign Borrower</div>
+                      </button>
+                    </div>
+                  )}
+
+                  {/* Broker (1) */}
+                  {brokerRaw ? (
+                    <div className="group flex items-center gap-2.5 rounded-lg px-2 py-1.5 transition-colors hover:bg-muted">
+                      <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-amber-600 text-white text-[10px] font-medium">
+                        {`${brokerRaw.first_name ?? ""} ${brokerRaw.last_name ?? ""}`.trim().split(" ").map((w) => w[0]).join("").slice(0, 2).toUpperCase()}
+                      </div>
+                      <div className="text-left min-w-0 flex-1">
+                        <div className="text-xs font-medium text-foreground truncate">
+                          {`${brokerRaw.first_name ?? ""} ${brokerRaw.last_name ?? ""}`.trim() || "Unknown"}
+                        </div>
+                        <div className="text-[10px] uppercase tracking-wider text-muted-foreground">Broker</div>
+                      </div>
+                      <button
+                        className="opacity-0 group-hover:opacity-100 transition-opacity p-0.5 rounded hover:bg-destructive/10 bg-transparent border-0 cursor-pointer"
+                        onClick={() => handleRemoveBroker()}
+                        disabled={actionLoading}
+                      >
+                        <X className="h-3 w-3 text-muted-foreground hover:text-destructive" />
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-2.5 rounded-lg px-2 py-1.5 transition-colors hover:bg-muted">
+                      <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border border-dashed border-border">
+                        <Plus className="h-3 w-3 text-muted-foreground" />
+                      </div>
+                      <button
+                        className="text-left min-w-0 flex-1 bg-transparent border-0 cursor-pointer p-0"
+                        onClick={() => {
+                          setAssignPartyType("broker");
+                          setAssignPartyOpen(true);
+                        }}
+                      >
+                        <div className="text-xs text-muted-foreground">Assign Broker</div>
+                      </button>
+                    </div>
+                  )}
+
+                  {/* Title Co Rep (1) */}
+                  {(() => {
+                    const titleContact = dealTeamContacts.find((c) => c.role === "Title Company");
+                    if (titleContact) {
+                      const name = titleContact.contact
+                        ? `${titleContact.contact.first_name ?? ""} ${titleContact.contact.last_name ?? ""}`.trim()
+                        : titleContact.manual_name || "Unknown";
+                      return (
+                        <div className="group flex items-center gap-2.5 rounded-lg px-2 py-1.5 transition-colors hover:bg-muted">
+                          <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-sky-600 text-white text-[10px] font-medium">
+                            {(name || "Unknown").split(" ").map((w) => w[0]).join("").slice(0, 2).toUpperCase()}
+                          </div>
+                          <div className="text-left min-w-0 flex-1">
+                            <div className="text-xs font-medium text-foreground truncate">{name || "Unknown"}</div>
+                            <div className="text-[10px] uppercase tracking-wider text-muted-foreground">Title Co</div>
+                          </div>
+                          <button
+                            className="opacity-0 group-hover:opacity-100 transition-opacity p-0.5 rounded hover:bg-destructive/10 bg-transparent border-0 cursor-pointer"
+                            onClick={() => handleRemoveDealParty(titleContact.id)}
+                            disabled={actionLoading}
+                          >
+                            <X className="h-3 w-3 text-muted-foreground hover:text-destructive" />
+                          </button>
+                        </div>
+                      );
+                    }
+                    return (
+                      <div className="flex items-center gap-2.5 rounded-lg px-2 py-1.5 transition-colors hover:bg-muted">
+                        <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border border-dashed border-border">
+                          <Plus className="h-3 w-3 text-muted-foreground" />
+                        </div>
+                        <button
+                          className="text-left min-w-0 flex-1 bg-transparent border-0 cursor-pointer p-0"
+                          onClick={() => {
+                            setAssignDealTeamRole("Title Company");
+                            setAssignDealTeamOpen(true);
+                          }}
+                        >
+                          <div className="text-xs text-muted-foreground">Assign Title Co Rep</div>
+                        </button>
+                      </div>
+                    );
+                  })()}
+
+                  {/* Insurance Agent (1) */}
+                  {(() => {
+                    const insuranceContact = dealTeamContacts.find((c) => c.role === "Insurance Agent");
+                    if (insuranceContact) {
+                      const name = insuranceContact.contact
+                        ? `${insuranceContact.contact.first_name ?? ""} ${insuranceContact.contact.last_name ?? ""}`.trim()
+                        : insuranceContact.manual_name || "Unknown";
+                      return (
+                        <div className="group flex items-center gap-2.5 rounded-lg px-2 py-1.5 transition-colors hover:bg-muted">
+                          <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-violet-600 text-white text-[10px] font-medium">
+                            {(name || "Unknown").split(" ").map((w) => w[0]).join("").slice(0, 2).toUpperCase()}
+                          </div>
+                          <div className="text-left min-w-0 flex-1">
+                            <div className="text-xs font-medium text-foreground truncate">{name || "Unknown"}</div>
+                            <div className="text-[10px] uppercase tracking-wider text-muted-foreground">Insurance</div>
+                          </div>
+                          <button
+                            className="opacity-0 group-hover:opacity-100 transition-opacity p-0.5 rounded hover:bg-destructive/10 bg-transparent border-0 cursor-pointer"
+                            onClick={() => handleRemoveDealParty(insuranceContact.id)}
+                            disabled={actionLoading}
+                          >
+                            <X className="h-3 w-3 text-muted-foreground hover:text-destructive" />
+                          </button>
+                        </div>
+                      );
+                    }
+                    return (
+                      <div className="flex items-center gap-2.5 rounded-lg px-2 py-1.5 transition-colors hover:bg-muted">
+                        <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border border-dashed border-border">
+                          <Plus className="h-3 w-3 text-muted-foreground" />
+                        </div>
+                        <button
+                          className="text-left min-w-0 flex-1 bg-transparent border-0 cursor-pointer p-0"
+                          onClick={() => {
+                            setAssignDealTeamRole("Insurance Agent");
+                            setAssignDealTeamOpen(true);
+                          }}
+                        >
+                          <div className="text-xs text-muted-foreground">Assign Insurance Agent</div>
+                        </button>
+                      </div>
+                    );
+                  })()}
+                </div>
               </div>
               <div className="border-t px-3 py-2.5">
                 <Button
@@ -1212,6 +1479,7 @@ function DealHeader({
                   onClick={() => {
                     setSelectedProfileId("");
                     setSelectedRole("Team Member");
+                    setRoleLocked(false);
                     setTeamAssignOpen(true);
                   }}
                 >
@@ -1376,6 +1644,17 @@ function DealHeader({
                     <Trash2 className="h-4 w-4 mr-2" />
                     Delete
                   </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem
+                    disabled={inlineLayout.state.isEditing}
+                    onClick={() => {
+                      inlineLayout.setActiveTabKey(activeTab.toLowerCase());
+                      inlineLayout.startEditing(layout.sections, layout.fields);
+                    }}
+                  >
+                    <Pencil className="h-4 w-4 mr-2" />
+                    Edit Layout
+                  </DropdownMenuItem>
                 </>
               )}
             </DropdownMenuContent>
@@ -1492,7 +1771,7 @@ function DealHeader({
       />
 
       {/* Team Assignment */}
-      <Dialog open={teamAssignOpen} onOpenChange={setTeamAssignOpen}>
+      <Dialog open={teamAssignOpen} onOpenChange={(open) => { setTeamAssignOpen(open); if (!open) setRoleLocked(false); }}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Add Team Member</DialogTitle>
@@ -1514,7 +1793,7 @@ function DealHeader({
             </div>
             <div>
               <label className="text-xs font-medium text-muted-foreground mb-1.5 block">Role</label>
-              <Select value={selectedRole} onValueChange={setSelectedRole}>
+              <Select value={selectedRole} onValueChange={setSelectedRole} disabled={roleLocked}>
                 <SelectTrigger><SelectValue placeholder="Select role..." /></SelectTrigger>
                 <SelectContent>
                   {TEAM_ROLE_OPTIONS.map((role) => (
@@ -1533,6 +1812,27 @@ function DealHeader({
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Assign Borrower / Broker Dialog */}
+      <AssignPartyDialog
+        dealId={deal.id}
+        open={assignPartyOpen}
+        onClose={() => { setAssignPartyOpen(false); router.refresh(); }}
+        partyType={assignPartyType}
+        existingBorrowerCount={dealContacts.length}
+        excludeContactIds={dealContacts.map((dc) => dc.contact_id)}
+      />
+
+      {/* Assign Title Co / Insurance Agent Dialog */}
+      <AddDealTeamDialog
+        dealId={deal.id}
+        open={assignDealTeamOpen}
+        onClose={() => { setAssignDealTeamOpen(false); router.refresh(); }}
+        onAdd={() => { setAssignDealTeamOpen(false); router.refresh(); }}
+        editContact={null}
+        initialRole={assignDealTeamRole}
+        roleLocked
+      />
 
       {/* Contact email composer (from header popover) */}
       {emailToContact && (

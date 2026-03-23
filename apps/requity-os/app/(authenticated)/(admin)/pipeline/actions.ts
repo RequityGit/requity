@@ -942,9 +942,24 @@ export async function updateConditionStatusAction(
         const dealInfo = deal as { name: string; deal_number: string } | null;
 
         // Set to under_review instead of approved
+        // Also determine approver for the condition avatar badge
+        const { determineApprover } = await import(
+          "@/app/(authenticated)/(admin)/tasks/approvals/actions"
+        );
+        const routing = await determineApprover("condition", {
+          condition_name: cond.condition_name,
+          category: cond.category,
+          deal_id: cond.deal_id,
+          borrower_name: dealInfo?.name ?? "Unknown Deal",
+          deal_number: dealInfo?.deal_number ?? "",
+        });
+
         const { error: updateErr } = await admin
           .from("unified_deal_conditions" as never)
-          .update({ status: "under_review" } as never)
+          .update({
+            status: "under_review",
+            approver_id: routing.approver_id ?? null,
+          } as never)
           .eq("id" as never, conditionId as never);
 
         if (updateErr) {
@@ -1042,6 +1057,37 @@ export async function updateConditionStatusAction(
     return { success: true };
   } catch (err: unknown) {
     console.error("updateConditionStatusAction error:", err);
+    return { error: err instanceof Error ? err.message : "An unexpected error occurred" };
+  }
+}
+
+// ─── Update Condition Assigned To ───
+
+export async function updateConditionAssignedToAction(
+  conditionId: string,
+  assignedTo: string | null,
+  dealId: string
+) {
+  try {
+    const auth = await requireAdmin();
+    if ("error" in auth) return { error: auth.error };
+
+    const admin = createAdminClient();
+
+    const { error } = await admin
+      .from("unified_deal_conditions" as never)
+      .update({ assigned_to: assignedTo } as never)
+      .eq("id" as never, conditionId as never);
+
+    if (error) {
+      console.error("updateConditionAssignedToAction error:", error);
+      return { error: error.message };
+    }
+
+    await revalidatePipeline(dealId);
+    return { success: true };
+  } catch (err: unknown) {
+    console.error("updateConditionAssignedToAction error:", err);
     return { error: err instanceof Error ? err.message : "An unexpected error occurred" };
   }
 }

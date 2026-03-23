@@ -23,7 +23,6 @@ import {
   Banknote,
   ScrollText,
 } from "lucide-react";
-import { EmptyState } from "@/components/shared/EmptyState";
 import type { BudgetLineItemHistory, DrawRequest } from "./types";
 
 interface AuditLogSubTabProps {
@@ -121,11 +120,14 @@ export function AuditLogSubTab({
   if (entries.length === 0) {
     return (
       <Card>
-        <CardContent>
-          <EmptyState
-            icon={ScrollText}
-            title="No audit entries for this loan"
+        <CardContent className="py-16 flex flex-col items-center justify-center text-center">
+          <ScrollText
+            className="h-12 w-12 text-muted-foreground/50 mb-4"
+            strokeWidth={1.5}
           />
+          <p className="text-muted-foreground">
+            No audit entries for this loan.
+          </p>
         </CardContent>
       </Card>
     );

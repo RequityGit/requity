@@ -8,7 +8,6 @@ import { deleteContactFileAction } from "@/app/(authenticated)/(admin)/contacts/
 import { CONTACT_FILE_TYPES } from "@/lib/constants";
 import { formatDate } from "@/lib/format";
 import { FileText, Eye, ExternalLink, Trash2 } from "lucide-react";
-import { EmptyState } from "@/components/shared/EmptyState";
 
 interface ContactFile {
   id: string;
@@ -83,11 +82,9 @@ export function ContactFileList({ files, onDeleted }: ContactFileListProps) {
 
   if (files.length === 0) {
     return (
-      <EmptyState
-        icon={FileText}
-        title="No files uploaded yet"
-        compact
-      />
+      <p className="text-sm text-muted-foreground py-4 text-center">
+        No files uploaded yet.
+      </p>
     );
   }
 

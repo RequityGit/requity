@@ -53,6 +53,9 @@ interface AddDealTeamDialogProps {
   onAdd: (contact: DealTeamContact) => void;
   editContact: DealTeamContact | null;
   onEditDone?: () => void;
+  /** Pre-select and optionally lock the role (e.g. when assigning from popover slot) */
+  initialRole?: string;
+  roleLocked?: boolean;
 }
 
 export function AddDealTeamDialog({
@@ -62,6 +65,8 @@ export function AddDealTeamDialog({
   onAdd,
   editContact,
   onEditDone,
+  initialRole,
+  roleLocked = false,
 }: AddDealTeamDialogProps) {
   const isEdit = !!editContact;
   const [role, setRole] = useState("");
@@ -105,7 +110,7 @@ export function AddDealTeamDialog({
       }
       setNotes(editContact.notes);
     } else {
-      setRole("");
+      setRole(initialRole ?? "");
       setContactId(null);
       setContactPreview(null);
       setManualName("");
@@ -115,7 +120,7 @@ export function AddDealTeamDialog({
       setNotes("");
     }
     setError(null);
-  }, [open, isEdit, editContact]);
+  }, [open, isEdit, editContact, initialRole]);
 
   useEffect(() => {
     if (!debouncedQuery || debouncedQuery.trim().length < 2) {
@@ -216,7 +221,7 @@ export function AddDealTeamDialog({
         <div className="space-y-4 py-2">
           <div>
             <Label>Role</Label>
-            <Select value={role} onValueChange={setRole}>
+            <Select value={role} onValueChange={setRole} disabled={roleLocked}>
               <SelectTrigger>
                 <SelectValue placeholder="Select role..." />
               </SelectTrigger>

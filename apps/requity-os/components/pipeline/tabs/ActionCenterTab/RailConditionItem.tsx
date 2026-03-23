@@ -26,7 +26,8 @@ import { cn } from "@/lib/utils";
 import { formatDate } from "@/lib/format";
 import { showSuccess, showError } from "@/lib/toast";
 import { updateConditionStatusAction } from "@/app/(authenticated)/(admin)/pipeline/actions";
-import type { DealConditionRow, ConditionDocument } from "./useActionCenterData";
+import type { DealConditionRow, ConditionDocument, ConditionProfile } from "./useActionCenterData";
+import { ConditionAvatar } from "./ConditionAvatar";
 
 // ── Status config ──
 
@@ -49,6 +50,8 @@ interface RailConditionItemProps {
   dealId: string;
   onStatusChange: (conditionId: string, newStatus: string) => void;
   onOpenDetail?: (conditionId: string) => void;
+  assignedProfile?: ConditionProfile | null;
+  approverProfile?: ConditionProfile | null;
 }
 
 export function RailConditionItem({
@@ -57,10 +60,18 @@ export function RailConditionItem({
   dealId,
   onStatusChange,
   onOpenDetail,
+  assignedProfile,
+  approverProfile,
 }: RailConditionItemProps) {
   const [expanded, setExpanded] = useState(false);
   const statusCfg = STATUS_CONFIG[c.status] ?? STATUS_CONFIG.pending;
   const condDocs = documents.filter((d) => d.condition_id === c.id);
+
+  // Determine which avatar to show: approver when awaiting approval, otherwise collector
+  const isAwaitingApproval = c.status === "under_review" && c.requires_approval;
+  const showApprover = isAwaitingApproval && approverProfile && approverProfile.id !== assignedProfile?.id;
+  const displayProfile = showApprover ? approverProfile : (assignedProfile ?? null);
+  const avatarRole = showApprover ? "Approver" as const : "Collector" as const;
 
   const handleStatusChange = async (newStatus: string) => {
     const oldStatus = c.status;
@@ -106,6 +117,10 @@ export function RailConditionItem({
         <Badge variant="outline" className={cn("text-[10px] px-1.5 py-0 shrink-0", statusCfg.color)}>
           {statusCfg.label}
         </Badge>
+
+        {displayProfile && (
+          <ConditionAvatar profile={displayProfile} role={avatarRole} />
+        )}
 
         {onOpenDetail ? (
           <ChevronRight className="h-3.5 w-3.5 text-muted-foreground shrink-0" />

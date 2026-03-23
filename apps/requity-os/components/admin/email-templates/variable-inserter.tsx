@@ -5,7 +5,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Search, Code } from "lucide-react";
-import { EmptyState } from "@/components/shared/EmptyState";
 import {
   MERGE_FIELD_REGISTRY,
   searchFields,
@@ -82,7 +81,9 @@ export function VariableInserter({ onInsert }: VariableInserterProps) {
               </div>
             ))}
             {filtered.length === 0 && (
-              <EmptyState title="No matching variables found" compact />
+              <p className="text-xs text-muted-foreground py-2">
+                No matching variables found.
+              </p>
             )}
           </div>
         </div>

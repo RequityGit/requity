@@ -2,7 +2,6 @@
 
 import { createAdminClient } from "@/lib/supabase/admin";
 import { requireAdmin } from "@/lib/auth/require-admin";
-import { revalidateDealPaths as revalidateDeal } from "@/lib/pipeline/revalidate-deal";
 import type { Json } from "@/lib/supabase/types";
 import {
   getBorrowingEntityByDealId,
@@ -104,7 +103,8 @@ export async function addBorrowerMemberAction(
       contact_id: contactId,
       role,
     });
-    await revalidateDeal(dealId);
+    // Skip revalidateDeal — the onStructuralChange callback in BorrowerContactsTab
+    // already does a silent re-fetch, avoiding full-page revalidation.
     return { error: null, data };
   } catch (err) {
     const msg = err instanceof Error ? err.message : "Failed to add borrower";

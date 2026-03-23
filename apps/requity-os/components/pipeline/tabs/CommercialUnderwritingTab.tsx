@@ -10,9 +10,7 @@ import {
   ArrowRight,
   Clock,
   Target,
-  TableProperties,
 } from "lucide-react";
-import { EmptyState } from "@/components/shared/EmptyState";
 import { cn } from "@/lib/utils";
 import { formatTime } from "@/lib/format";
 import {
@@ -546,7 +544,7 @@ function ProFormaTable({ proForma, holdYears }: { proForma: ProFormaYearResult[]
   const firstYear = t12 || years[0];
 
   if (!firstYear) {
-    return <EmptyState icon={TableProperties} title="No pro forma data available" compact />;
+    return <p className="text-sm text-muted-foreground py-4 text-center">No pro forma data available</p>;
   }
 
   const incomeLabels = firstYear.incomeRows.map((r) => r.label);

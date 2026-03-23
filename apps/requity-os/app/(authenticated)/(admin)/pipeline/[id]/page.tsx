@@ -1,6 +1,6 @@
 import { createAdminClient } from "@/lib/supabase/admin";
 import { redirect, notFound } from "next/navigation";
-import { DealDetailPage } from "./DealDetailPage";
+import { DealDetailPage, type DealContactRow } from "./DealDetailPage";
 import { ensureCommercialUW } from "./commercial-uw-actions";
 import {
   daysInStage,
@@ -93,6 +93,7 @@ export default async function DealDetailRoute({ params }: PageProps) {
     documentsRaw,
     dealTeamMembersRaw,
     dealTeamContactsRaw,
+    dealContactsRaw,
     commercialUwRaw,
     propRes,
     borrowerRes,
@@ -124,6 +125,11 @@ export default async function DealDetailRoute({ params }: PageProps) {
       .eq("deal_id" as never, dealId as never)
       .order("created_at" as never),
     getDealTeamContacts(admin, dealId),
+    admin
+      .from("deal_contacts" as never)
+      .select("id, deal_id, contact_id, role, is_guarantor, sort_order, contact:crm_contacts(id, first_name, last_name, email, phone, company_name)" as never)
+      .eq("deal_id" as never, dealId as never)
+      .order("sort_order" as never),
     admin
       .from("deal_commercial_uw" as never)
       .select("*")
@@ -167,6 +173,7 @@ export default async function DealDetailRoute({ params }: PageProps) {
   const dealTeamContacts: DealTeamContact[] = Array.isArray(dealTeamContactsRaw)
     ? dealTeamContactsRaw
     : [];
+  const dealContacts = ((dealContactsRaw as unknown as { data: DealContactRow[] | null }).data ?? []);
 
   // Step 3: Commercial UW sub-tables (only if commercial deal)
   let commercialUWData: {
@@ -305,6 +312,7 @@ export default async function DealDetailRoute({ params }: PageProps) {
       documents={documents}
       dealTeamMembers={dealTeamMembers}
       dealTeamContacts={dealTeamContacts}
+      dealContacts={dealContacts}
       commercialUWData={commercialUWData}
       pinnedNote={pinnedNote ?? null}
       recentNote={recentNote ?? null}

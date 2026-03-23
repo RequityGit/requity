@@ -4019,6 +4019,7 @@ export type Database = {
           status: string | null
           tenant_name: string | null
           unit_number: string
+          unit_type: string | null
           uw_id: string
         }
         Insert: {
@@ -4035,6 +4036,7 @@ export type Database = {
           status?: string | null
           tenant_name?: string | null
           unit_number: string
+          unit_type?: string | null
           uw_id: string
         }
         Update: {
@@ -4051,6 +4053,7 @@ export type Database = {
           status?: string | null
           tenant_name?: string | null
           unit_number?: string
+          unit_type?: string | null
           uw_id?: string
         }
         Relationships: [
@@ -6863,7 +6866,6 @@ export type Database = {
           resolved_deal_id: string | null
           status: string
           subject: string | null
-          suggested_card_type_id: string | null
           updated_at: string | null
         }
         Insert: {
@@ -6888,7 +6890,6 @@ export type Database = {
           resolved_deal_id?: string | null
           status?: string
           subject?: string | null
-          suggested_card_type_id?: string | null
           updated_at?: string | null
         }
         Update: {
@@ -6913,7 +6914,6 @@ export type Database = {
           resolved_deal_id?: string | null
           status?: string
           subject?: string | null
-          suggested_card_type_id?: string | null
           updated_at?: string | null
         }
         Relationships: [
@@ -6957,13 +6957,6 @@ export type Database = {
             columns: ["resolved_deal_id"]
             isOneToOne: false
             referencedRelation: "unified_deals"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "email_intake_queue_suggested_card_type_id_fkey"
-            columns: ["suggested_card_type_id"]
-            isOneToOne: false
-            referencedRelation: "unified_card_types"
             referencedColumns: ["id"]
           },
         ]
@@ -7621,7 +7614,6 @@ export type Database = {
           entity_ids: Json | null
           form_id: string
           id: string
-          internal_notes: string | null
           ip_address: unknown
           prefilled_by: string | null
           record_id: string | null
@@ -7646,7 +7638,6 @@ export type Database = {
           entity_ids?: Json | null
           form_id: string
           id?: string
-          internal_notes?: string | null
           ip_address?: unknown
           prefilled_by?: string | null
           record_id?: string | null
@@ -7671,7 +7662,6 @@ export type Database = {
           entity_ids?: Json | null
           form_id?: string
           id?: string
-          internal_notes?: string | null
           ip_address?: unknown
           prefilled_by?: string | null
           record_id?: string | null
@@ -7962,6 +7952,84 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      inbound_emails: {
+        Row: {
+          created_at: string
+          entity_id: string | null
+          entity_type: string | null
+          from_email: string
+          from_name: string | null
+          html_body: string | null
+          id: string
+          mailbox_hash: string | null
+          message_id: string | null
+          note_id: string | null
+          notification_id: string | null
+          processing_error: string | null
+          raw_payload: Json | null
+          resolved_user_id: string | null
+          status: string
+          subject: string | null
+          text_body: string | null
+          to_email: string
+        }
+        Insert: {
+          created_at?: string
+          entity_id?: string | null
+          entity_type?: string | null
+          from_email: string
+          from_name?: string | null
+          html_body?: string | null
+          id?: string
+          mailbox_hash?: string | null
+          message_id?: string | null
+          note_id?: string | null
+          notification_id?: string | null
+          processing_error?: string | null
+          raw_payload?: Json | null
+          resolved_user_id?: string | null
+          status?: string
+          subject?: string | null
+          text_body?: string | null
+          to_email: string
+        }
+        Update: {
+          created_at?: string
+          entity_id?: string | null
+          entity_type?: string | null
+          from_email?: string
+          from_name?: string | null
+          html_body?: string | null
+          id?: string
+          mailbox_hash?: string | null
+          message_id?: string | null
+          note_id?: string | null
+          notification_id?: string | null
+          processing_error?: string | null
+          raw_payload?: Json | null
+          resolved_user_id?: string | null
+          status?: string
+          subject?: string | null
+          text_body?: string | null
+          to_email?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "inbound_emails_note_id_fkey"
+            columns: ["note_id"]
+            isOneToOne: false
+            referencedRelation: "notes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "inbound_emails_notification_id_fkey"
+            columns: ["notification_id"]
+            isOneToOne: false
+            referencedRelation: "notifications"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       inspection_line_item_assessments: {
         Row: {
@@ -8912,6 +8980,78 @@ export type Database = {
           },
         ]
       }
+      loan_programs: {
+        Row: {
+          adjusters: Json | null
+          appraisal_required: boolean | null
+          citizenship_required: string | null
+          created_at: string
+          description: string | null
+          entity_type: string | null
+          id: string
+          interest_rate: number
+          is_active: boolean
+          max_ltc: number
+          max_ltp: number
+          max_ltv: number
+          max_property_age_years: number | null
+          min_experience_years: number | null
+          min_fico: number
+          name: string
+          origination_pts: number
+          property_types: Json | null
+          sort_order: number
+          type: Database["public"]["Enums"]["loan_program_type"]
+          updated_at: string
+        }
+        Insert: {
+          adjusters?: Json | null
+          appraisal_required?: boolean | null
+          citizenship_required?: string | null
+          created_at?: string
+          description?: string | null
+          entity_type?: string | null
+          id?: string
+          interest_rate: number
+          is_active?: boolean
+          max_ltc: number
+          max_ltp: number
+          max_ltv: number
+          max_property_age_years?: number | null
+          min_experience_years?: number | null
+          min_fico?: number
+          name: string
+          origination_pts: number
+          property_types?: Json | null
+          sort_order?: number
+          type: Database["public"]["Enums"]["loan_program_type"]
+          updated_at?: string
+        }
+        Update: {
+          adjusters?: Json | null
+          appraisal_required?: boolean | null
+          citizenship_required?: string | null
+          created_at?: string
+          description?: string | null
+          entity_type?: string | null
+          id?: string
+          interest_rate?: number
+          is_active?: boolean
+          max_ltc?: number
+          max_ltp?: number
+          max_ltv?: number
+          max_property_age_years?: number | null
+          min_experience_years?: number | null
+          min_fico?: number
+          name?: string
+          origination_pts?: number
+          property_types?: Json | null
+          sort_order?: number
+          type?: Database["public"]["Enums"]["loan_program_type"]
+          updated_at?: string
+        }
+        Relationships: []
+      }
       loan_stage_history: {
         Row: {
           changed_at: string
@@ -9749,6 +9889,47 @@ export type Database = {
         }
         Relationships: []
       }
+      note_attachments: {
+        Row: {
+          created_at: string | null
+          file_name: string
+          file_size_bytes: number | null
+          file_type: string | null
+          id: string
+          note_id: string
+          storage_path: string
+          uploaded_by: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          file_name: string
+          file_size_bytes?: number | null
+          file_type?: string | null
+          id?: string
+          note_id: string
+          storage_path: string
+          uploaded_by?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          file_name?: string
+          file_size_bytes?: number | null
+          file_type?: string | null
+          id?: string
+          note_id?: string
+          storage_path?: string
+          uploaded_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "note_attachments_note_id_fkey"
+            columns: ["note_id"]
+            isOneToOne: false
+            referencedRelation: "notes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       note_likes: {
         Row: {
           created_at: string
@@ -10246,6 +10427,7 @@ export type Database = {
           notification_slug: string
           notification_type_id: string | null
           priority: string
+          read_at: string | null
           title: string
           user_id: string
         }
@@ -10264,6 +10446,7 @@ export type Database = {
           notification_slug: string
           notification_type_id?: string | null
           priority?: string
+          read_at?: string | null
           title: string
           user_id: string
         }
@@ -10282,6 +10465,7 @@ export type Database = {
           notification_slug?: string
           notification_type_id?: string | null
           priority?: string
+          read_at?: string | null
           title?: string
           user_id?: string
         }
@@ -11083,7 +11267,6 @@ export type Database = {
       }
       page_layout_sections: {
         Row: {
-          card_type_id: string | null
           created_at: string
           default_collapsed: boolean | null
           display_order: number
@@ -11106,7 +11289,6 @@ export type Database = {
           visibility_rule: string | null
         }
         Insert: {
-          card_type_id?: string | null
           created_at?: string
           default_collapsed?: boolean | null
           display_order?: number
@@ -11129,7 +11311,6 @@ export type Database = {
           visibility_rule?: string | null
         }
         Update: {
-          card_type_id?: string | null
           created_at?: string
           default_collapsed?: boolean | null
           display_order?: number
@@ -11152,13 +11333,6 @@ export type Database = {
           visibility_rule?: string | null
         }
         Relationships: [
-          {
-            foreignKeyName: "page_layout_sections_card_type_id_fkey"
-            columns: ["card_type_id"]
-            isOneToOne: false
-            referencedRelation: "unified_card_types"
-            referencedColumns: ["id"]
-          },
           {
             foreignKeyName: "page_layout_sections_relationship_id_fkey"
             columns: ["relationship_id"]
@@ -11555,6 +11729,44 @@ export type Database = {
         }
         Relationships: []
       }
+      pm_pages: {
+        Row: {
+          content_html: string
+          created_at: string
+          hero_image_id: string | null
+          id: string
+          slug: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          content_html: string
+          created_at?: string
+          hero_image_id?: string | null
+          id?: string
+          slug: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          content_html?: string
+          created_at?: string
+          hero_image_id?: string | null
+          id?: string
+          slug?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pm_pages_hero_image_id_fkey"
+            columns: ["hero_image_id"]
+            isOneToOne: false
+            referencedRelation: "pm_media"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       pm_posts: {
         Row: {
           body_html: string
@@ -11754,6 +11966,7 @@ export type Database = {
       }
       profiles: {
         Row: {
+          accent_color: string | null
           activation_status: string | null
           allowed_roles: string[] | null
           avatar_url: string | null
@@ -11769,6 +11982,7 @@ export type Database = {
           updated_at: string | null
         }
         Insert: {
+          accent_color?: string | null
           activation_status?: string | null
           allowed_roles?: string[] | null
           avatar_url?: string | null
@@ -11784,6 +11998,7 @@ export type Database = {
           updated_at?: string | null
         }
         Update: {
+          accent_color?: string | null
           activation_status?: string | null
           allowed_roles?: string[] | null
           avatar_url?: string | null
@@ -14639,7 +14854,6 @@ export type Database = {
       }
       unified_checklist_templates: {
         Row: {
-          card_type_id: string
           created_at: string
           id: string
           is_active: boolean | null
@@ -14649,7 +14863,6 @@ export type Database = {
           stage: string
         }
         Insert: {
-          card_type_id: string
           created_at?: string
           id?: string
           is_active?: boolean | null
@@ -14659,7 +14872,6 @@ export type Database = {
           stage: string
         }
         Update: {
-          card_type_id?: string
           created_at?: string
           id?: string
           is_active?: boolean | null
@@ -14668,15 +14880,7 @@ export type Database = {
           sort_order?: number | null
           stage?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "unified_checklist_templates_card_type_id_fkey"
-            columns: ["card_type_id"]
-            isOneToOne: false
-            referencedRelation: "unified_card_types"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       unified_deal_activity: {
         Row: {
@@ -14775,6 +14979,7 @@ export type Database = {
       }
       unified_deal_conditions: {
         Row: {
+          approver_id: string | null
           assigned_contact_id: string | null
           assigned_to: string | null
           borrower_comment: string | null
@@ -14807,6 +15012,7 @@ export type Database = {
           updated_at: string | null
         }
         Insert: {
+          approver_id?: string | null
           assigned_contact_id?: string | null
           assigned_to?: string | null
           borrower_comment?: string | null
@@ -14839,6 +15045,7 @@ export type Database = {
           updated_at?: string | null
         }
         Update: {
+          approver_id?: string | null
           assigned_contact_id?: string | null
           assigned_to?: string | null
           borrower_comment?: string | null
@@ -15152,8 +15359,8 @@ export type Database = {
           amount: number | null
           asset_class: string | null
           assigned_to: string | null
+          broker_contact_id: string | null
           capital_side: string
-          card_type_id: string | null
           company_id: string | null
           created_at: string
           created_by: string | null
@@ -15187,8 +15394,8 @@ export type Database = {
           amount?: number | null
           asset_class?: string | null
           assigned_to?: string | null
+          broker_contact_id?: string | null
           capital_side: string
-          card_type_id?: string | null
           company_id?: string | null
           created_at?: string
           created_by?: string | null
@@ -15222,8 +15429,8 @@ export type Database = {
           amount?: number | null
           asset_class?: string | null
           assigned_to?: string | null
+          broker_contact_id?: string | null
           capital_side?: string
-          card_type_id?: string | null
           company_id?: string | null
           created_at?: string
           created_by?: string | null
@@ -15255,11 +15462,32 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "unified_deals_card_type_id_fkey"
-            columns: ["card_type_id"]
+            foreignKeyName: "unified_deals_broker_contact_id_fkey"
+            columns: ["broker_contact_id"]
             isOneToOne: false
-            referencedRelation: "unified_card_types"
+            referencedRelation: "crm_contacts"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "unified_deals_broker_contact_id_fkey"
+            columns: ["broker_contact_id"]
+            isOneToOne: false
+            referencedRelation: "crm_contacts_active"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "unified_deals_broker_contact_id_fkey"
+            columns: ["broker_contact_id"]
+            isOneToOne: false
+            referencedRelation: "crm_duplicate_candidates"
+            referencedColumns: ["contact_id"]
+          },
+          {
+            foreignKeyName: "unified_deals_broker_contact_id_fkey"
+            columns: ["broker_contact_id"]
+            isOneToOne: false
+            referencedRelation: "crm_duplicate_candidates"
+            referencedColumns: ["potential_duplicate_id"]
           },
           {
             foreignKeyName: "unified_deals_company_id_fkey"
@@ -16975,6 +17203,7 @@ export type Database = {
       }
       get_portal_context: { Args: never; Returns: Json }
       get_portfolio_draw_dashboard: { Args: never; Returns: Json }
+      get_unread_notification_count: { Args: never; Returns: number }
       grant_all_modules: {
         Args: { granter_id: string; target_user_id: string }
         Returns: undefined
@@ -17005,6 +17234,10 @@ export type Database = {
         }[]
       }
       lookup_contact_by_email: { Args: { p_email: string }; Returns: Json }
+      mark_notification_read: {
+        Args: { p_notification_id: string }
+        Returns: undefined
+      }
       match_email_to_entities: {
         Args: { lookup_email: string }
         Returns: {
@@ -17238,6 +17471,7 @@ export type Database = {
         | "prior_to_approval"
         | "prior_to_funding"
       condition_stage:
+        | "loan_intake"
         | "processing"
         | "closed_onboarding"
         | "note_sell_process"
@@ -17404,6 +17638,12 @@ export type Database = {
         | "payoff_received"
         | "adjustment"
         | "charge_off"
+      loan_program_type:
+        | "rtl_premier"
+        | "rtl_balance_sheet"
+        | "dscr_standard"
+        | "dscr_no_ratio"
+        | "guc"
       loan_purpose:
         | "purchase"
         | "refinance"
@@ -17728,6 +17968,7 @@ export const Constants = {
         "prior_to_funding",
       ],
       condition_stage: [
+        "loan_intake",
         "processing",
         "closed_onboarding",
         "note_sell_process",
@@ -17912,6 +18153,13 @@ export const Constants = {
         "adjustment",
         "charge_off",
       ],
+      loan_program_type: [
+        "rtl_premier",
+        "rtl_balance_sheet",
+        "dscr_standard",
+        "dscr_no_ratio",
+        "guc",
+      ],
       loan_purpose: [
         "purchase",
         "refinance",
@@ -18006,3 +18254,4 @@ export const Constants = {
     },
   },
 } as const
+

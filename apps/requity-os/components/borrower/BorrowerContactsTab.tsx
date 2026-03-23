@@ -4,7 +4,6 @@ import { useState, useEffect, useCallback } from "react";
 import { Loader2 } from "lucide-react";
 import { showError } from "@/lib/toast";
 import type { DealBorrowingEntity, DealBorrowerMember } from "@/app/types/borrower";
-import { fetchBorrowingEntity, fetchBorrowerMembers } from "@/app/(authenticated)/(admin)/pipeline/[id]/borrower-actions";
 import { BorrowingEntityCard } from "./BorrowingEntityCard";
 import { BorrowerMemberTable } from "./BorrowerMemberTable";
 
@@ -20,14 +19,17 @@ export function BorrowerContactsTab({ dealId }: BorrowerContactsTabProps) {
   const load = useCallback(async (silent = false) => {
     if (!silent) setLoading(true);
     try {
-      const [entityRes, membersRes] = await Promise.all([
-        fetchBorrowingEntity(dealId),
-        fetchBorrowerMembers(dealId),
-      ]);
-      if (entityRes.error) showError(entityRes.error);
-      else setEntity(entityRes.data);
-      if (membersRes.error) showError(membersRes.error);
-      else setMembers(membersRes.data);
+      const res = await fetch(`/api/pipeline/${dealId}/borrower`);
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        showError(body.error ?? "Failed to load borrower data");
+        return;
+      }
+      const data = await res.json();
+      setEntity(data.entity);
+      setMembers(data.members);
+    } catch {
+      showError("Failed to load borrower data");
     } finally {
       if (!silent) setLoading(false);
     }

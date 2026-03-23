@@ -649,6 +649,7 @@ export async function approveRequest(approvalId: string, decisionNotes?: string)
           status: "approved",
           reviewed_at: now,
           reviewed_by: auth.user.id,
+          approver_id: null,
         } as never)
         .eq("id" as never, approval.entity_id as never);
 
@@ -770,7 +771,7 @@ export async function requestChanges(approvalId: string, decisionNotes: string) 
     if (approval.entity_type === "condition") {
       const { error: condErr } = await admin
         .from("unified_deal_conditions" as never)
-        .update({ status: "pending" } as never)
+        .update({ status: "pending", approver_id: null } as never)
         .eq("id" as never, approval.entity_id as never);
 
       if (condErr) {
@@ -936,7 +937,7 @@ export async function declineRequest(approvalId: string, decisionNotes: string) 
     if (approval.entity_type === "condition") {
       const { error: condErr } = await admin
         .from("unified_deal_conditions" as never)
-        .update({ status: "rejected" } as never)
+        .update({ status: "rejected", approver_id: null } as never)
         .eq("id" as never, approval.entity_id as never);
 
       if (condErr) {

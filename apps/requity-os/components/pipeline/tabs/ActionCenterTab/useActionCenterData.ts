@@ -96,6 +96,14 @@ export interface DealTask {
   created_by: string | null;
 }
 
+// ── Condition profile type ──
+
+export interface ConditionProfile {
+  id: string;
+  full_name: string | null;
+  accent_color: string | null;
+}
+
 // ── Condition type ──
 
 export interface DealConditionRow {
@@ -121,6 +129,7 @@ export interface DealConditionRow {
   reviewed_at: string | null;
   reviewed_by: string | null;
   document_urls: string[] | null;
+  approver_id: string | null;
 }
 
 // ── Condition document type ──
@@ -262,6 +271,7 @@ export function useActionCenterData({
   const [conditionDocs, setConditionDocs] = useState<ConditionDocument[]>([]);
   const [tasks, setTasks] = useState<DealTask[]>([]);
   const [railLoading, setRailLoading] = useState(true);
+  const [conditionProfiles, setConditionProfiles] = useState<Record<string, ConditionProfile>>({});
 
   // Filter
   const [activeFilter, setActiveFilter] = useState<StreamFilterType>("all");
@@ -400,9 +410,30 @@ export function useActionCenterData({
             .order("created_at" as never, { ascending: true }),
         ]);
 
-        setConditions((condResult.data ?? []) as unknown as DealConditionRow[]);
+        const condRows = (condResult.data ?? []) as unknown as DealConditionRow[];
+        setConditions(condRows);
         setConditionDocs((docsResult.data ?? []) as unknown as ConditionDocument[]);
         setTasks((taskResult.data ?? []) as unknown as DealTask[]);
+
+        // Batch-fetch profiles for condition avatars
+        const userIds = new Set<string>();
+        for (const c of condRows) {
+          if (c.assigned_to) userIds.add(c.assigned_to);
+          if (c.approver_id) userIds.add(c.approver_id);
+        }
+        if (userIds.size > 0) {
+          const { data: profiles } = await supabase
+            .from("profiles")
+            .select("id, full_name, accent_color")
+            .in("id", Array.from(userIds));
+          if (profiles) {
+            const map: Record<string, ConditionProfile> = {};
+            for (const p of profiles) {
+              map[p.id] = { id: p.id, full_name: p.full_name, accent_color: p.accent_color };
+            }
+            setConditionProfiles(map);
+          }
+        }
       } catch {
         // Data stays stale
       } finally {
@@ -917,6 +948,7 @@ export function useActionCenterData({
     // Rail
     conditions,
     conditionDocs,
+    conditionProfiles,
     tasks,
     railLoading,
     toggleTask,
