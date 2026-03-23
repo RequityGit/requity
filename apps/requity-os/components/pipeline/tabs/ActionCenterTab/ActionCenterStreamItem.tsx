@@ -64,8 +64,8 @@ export function DateDivider({ date }: { date: string }) {
 
 // ── Colored avatar ──
 
-function ColoredAvatar({ authorId, initials }: { authorId?: string; initials: string }) {
-  const color = getUserColor({ id: authorId ?? "unknown", accent_color: null });
+function ColoredAvatar({ authorId, initials, accentColor }: { authorId?: string; initials: string; accentColor?: string | null }) {
+  const color = getUserColor({ id: authorId ?? "unknown", accent_color: accentColor ?? null });
   const variants = colorVariants(color);
 
   return (
@@ -181,7 +181,7 @@ export function ActionCenterStreamItem({ item, noteHandlers }: ActionCenterStrea
   if (item.type === "document_generated") {
     return (
       <div className="flex items-start gap-3 px-3 py-2.5">
-        <ColoredAvatar authorId={item.author.id} initials={item.author.initials} />
+        <ColoredAvatar authorId={item.author.id} initials={item.author.initials} accentColor={item.author.accent_color} />
         <div className="flex-1 min-w-0">
           <p className="text-sm">
             <span className="font-medium">{item.author.name}</span>
@@ -250,7 +250,7 @@ export function ActionCenterStreamItem({ item, noteHandlers }: ActionCenterStrea
 
   return (
     <div className="flex gap-2.5 px-3 py-2 border-b border-border/20 hover:bg-muted/30 rq-transition">
-      <ColoredAvatar authorId={item.author.id} initials={item.author.initials} />
+      <ColoredAvatar authorId={item.author.id} initials={item.author.initials} accentColor={item.author.accent_color} />
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2 mb-0.5">
           <span className="text-[12px] font-medium">{item.author.name}</span>
@@ -278,7 +278,7 @@ function EmailItem({ item }: { item: StreamItem }) {
   const Icon = config.icon;
   return (
     <div className="flex gap-2.5 px-3 py-2 border-b border-border/20 hover:bg-muted/30 rq-transition">
-      <ColoredAvatar authorId={item.author.id} initials={item.author.initials} />
+      <ColoredAvatar authorId={item.author.id} initials={item.author.initials} accentColor={item.author.accent_color} />
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2 mb-1">
           <span className="text-[12px] font-medium">{item.author.name}</span>
@@ -323,7 +323,7 @@ function CallItem({ item }: { item: StreamItem }) {
 
   return (
     <div className="flex gap-2.5 px-3 py-2 border-b border-border/20 hover:bg-muted/30 rq-transition">
-      <ColoredAvatar authorId={item.author.id} initials={item.author.initials} />
+      <ColoredAvatar authorId={item.author.id} initials={item.author.initials} accentColor={item.author.accent_color} />
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2 mb-0.5">
           <span className="text-[12px] font-medium">{item.author.name}</span>
@@ -355,7 +355,7 @@ function SmsItem({ item }: { item: StreamItem }) {
   const isOutbound = item.callDirection === "outbound";
   return (
     <div className="flex gap-2.5 px-3 py-2 border-b border-border/20 hover:bg-muted/30 rq-transition">
-      <ColoredAvatar authorId={item.author.id} initials={item.author.initials} />
+      <ColoredAvatar authorId={item.author.id} initials={item.author.initials} accentColor={item.author.accent_color} />
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2 mb-1">
           <span className="text-[12px] font-medium">{item.author.name}</span>
@@ -431,7 +431,7 @@ function MessageItem({ item }: { item: StreamItem }) {
 
   return (
     <div className="flex gap-2.5 px-3 py-2 border-b border-border/20 hover:bg-muted/30 rq-transition">
-      <ColoredAvatar authorId={item.author.id} initials={item.author.initials} />
+      <ColoredAvatar authorId={item.author.id} initials={item.author.initials} accentColor={item.author.accent_color} />
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2 mb-1">
           <span className="text-[12px] font-medium">{item.author.name}</span>

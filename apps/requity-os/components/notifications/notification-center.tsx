@@ -5,7 +5,6 @@ import { Bell, Check, Archive, Settings } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useNotificationCenter } from "@/hooks/use-notification-center";
 import { useNotifications } from "@/hooks/use-notifications";
-import { useUnreadCount } from "@/hooks/use-unread-count";
 import type { NotificationFilter } from "./notification-filter-tabs";
 import { NotificationListPanel } from "./notification-list-panel";
 import { NotificationDetailPanel } from "./notification-detail-panel";
@@ -26,6 +25,9 @@ export function NotificationCenter({
     close,
     selectedNotificationId,
     selectNotification,
+    unreadCount,
+    refetchCount,
+    setUnreadCount,
   } = useNotificationCenter();
 
   const {
@@ -35,8 +37,6 @@ export function NotificationCenter({
     archiveNotification,
     archiveAll,
   } = useNotifications(userId, { limit: 50 });
-
-  const { count: unreadCount, refetch: refetchCount } = useUnreadCount(userId);
 
   const [filter, setFilter] = useState<NotificationFilter>("all");
 
@@ -63,15 +63,19 @@ export function NotificationCenter({
 
   const handleMarkAsRead = useCallback(
     async (id: string) => {
+      setUnreadCount((prev: number) => Math.max(0, prev - 1));
       await markAsRead(id);
       refetchCount();
     },
-    [markAsRead, refetchCount]
+    [markAsRead, refetchCount, setUnreadCount]
   );
 
   const handleArchive = useCallback(
     async (id: string) => {
-      // If archiving the selected notification, auto-select the next one
+      const notif = notifications.find((n) => n.id === id);
+      if (notif && !notif.read_at) {
+        setUnreadCount((prev: number) => Math.max(0, prev - 1));
+      }
       if (selectedNotificationId === id) {
         const idx = notifications.findIndex((n) => n.id === id);
         const next = notifications[idx + 1] ?? notifications[idx - 1];
@@ -80,20 +84,22 @@ export function NotificationCenter({
       await archiveNotification(id);
       refetchCount();
     },
-    [archiveNotification, refetchCount, notifications, selectedNotificationId, selectNotification]
+    [archiveNotification, refetchCount, notifications, selectedNotificationId, selectNotification, setUnreadCount]
   );
 
   const handleMarkAllRead = useCallback(async () => {
     const unread = notifications.filter((n) => n.read_at === null);
+    setUnreadCount(0);
     await Promise.all(unread.map((n) => markAsRead(n.id)));
     refetchCount();
-  }, [notifications, markAsRead, refetchCount]);
+  }, [notifications, markAsRead, refetchCount, setUnreadCount]);
 
   const handleArchiveAll = useCallback(async () => {
+    setUnreadCount(0);
     await archiveAll();
     selectNotification(null);
     refetchCount();
-  }, [archiveAll, refetchCount, selectNotification]);
+  }, [archiveAll, refetchCount, selectNotification, setUnreadCount]);
 
   const selectedNotification = useMemo(
     () => notifications.find((n) => n.id === selectedNotificationId) ?? null,

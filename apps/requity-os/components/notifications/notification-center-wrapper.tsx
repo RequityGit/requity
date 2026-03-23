@@ -17,7 +17,7 @@ export function NotificationCenterWrapper({
   children,
 }: NotificationCenterWrapperProps) {
   return (
-    <NotificationCenterProvider>
+    <NotificationCenterProvider userId={userId}>
       {children}
       <NotificationCenter
         userId={userId}

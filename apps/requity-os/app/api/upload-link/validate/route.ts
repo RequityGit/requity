@@ -62,6 +62,8 @@ export async function POST(request: Request) {
       staged_count: number;
       borrower_feedback: string | null;
       feedback_updated_at: string | null;
+      template_file_url: string | null;
+      template_file_name: string | null;
     }[] = [];
 
     if (link.mode === "checklist") {
@@ -76,8 +78,8 @@ export async function POST(request: Request) {
 
         const { data: conditionRows } = await admin
           .from("unified_deal_conditions")
-          .select("id, condition_name, borrower_description, category, status, borrower_feedback, feedback_updated_at")
-          .in("id", conditionIds) as { data: { id: string; condition_name: string; borrower_description: string | null; category: string | null; status: string; borrower_feedback: string | null; feedback_updated_at: string | null }[] | null };
+          .select("id, condition_name, borrower_description, category, status, borrower_feedback, feedback_updated_at, template_file_url, template_file_name")
+          .in("id", conditionIds) as { data: { id: string; condition_name: string; borrower_description: string | null; category: string | null; status: string; borrower_feedback: string | null; feedback_updated_at: string | null; template_file_url: string | null; template_file_name: string | null }[] | null };
 
         // Fetch full document details (name + timestamp + submission_status)
         const { data: docRows } = await admin
@@ -120,6 +122,8 @@ export async function POST(request: Request) {
               staged_count: stagedCount,
               borrower_feedback: c.borrower_feedback ?? null,
               feedback_updated_at: c.feedback_updated_at ?? null,
+              template_file_url: c.template_file_url ?? null,
+              template_file_name: c.template_file_name ?? null,
             };
           })
           .sort((a, b) => (orderMap.get(a.id) || 0) - (orderMap.get(b.id) || 0));

@@ -37,6 +37,7 @@ export interface StreamItem {
     id?: string;
     name: string;
     initials: string;
+    accent_color?: string | null;
   };
   // Shared
   title?: string;
@@ -272,6 +273,7 @@ export function useActionCenterData({
   const [genDocProfiles, setGenDocProfiles] = useState<Record<string, string>>({});
   const [dealMessages, setDealMessages] = useState<Record<string, unknown>[]>([]);
   const [streamLoading, setStreamLoading] = useState(true);
+  const [profileColors, setProfileColors] = useState<Record<string, string | null>>({});
 
   // Rail data
   const [conditions, setConditions] = useState<DealConditionRow[]>([]);
@@ -375,19 +377,48 @@ export function useActionCenterData({
         setGeneratedDocs((genDocsData ?? []) as Record<string, unknown>[]);
         setDealMessages((messagesData ?? []) as Record<string, unknown>[]);
 
-        // Resolve author names for generated docs
-        const generatedByIds = Array.from(new Set((genDocsData ?? []).map((d: Record<string, unknown>) => d.generated_by as string).filter(Boolean)));
-        if (generatedByIds.length > 0) {
+        // Collect all user IDs for batch profile fetch (accent colors + names)
+        const allUserIds = new Set<string>();
+        for (const n of (notesData ?? []) as unknown as NoteData[]) {
+          if (n.author_id) allUserIds.add(n.author_id);
+          for (const l of n.note_likes ?? []) {
+            if (l.user_id) allUserIds.add(l.user_id);
+          }
+        }
+        for (const d of genDocsData ?? []) {
+          const gby = (d as Record<string, unknown>).generated_by as string;
+          if (gby) allUserIds.add(gby);
+        }
+        for (const m of messagesData ?? []) {
+          const sid = (m as Record<string, unknown>).sender_id as string;
+          if (sid) allUserIds.add(sid);
+        }
+
+        if (allUserIds.size > 0) {
           const { data: profiles } = await supabase
             .from("profiles")
-            .select("id, full_name")
-            .in("id", generatedByIds);
+            .select("id, full_name, accent_color")
+            .in("id", Array.from(allUserIds));
           if (profiles) {
+            const colorMap: Record<string, string | null> = {};
             const profileMap: Record<string, string> = {};
-            for (const p of profiles as unknown as Array<{ id: string; full_name: string | null }>) {
+            for (const p of profiles as unknown as Array<{ id: string; full_name: string | null; accent_color: string | null }>) {
+              colorMap[p.id] = p.accent_color;
               profileMap[p.id] = p.full_name || "Unknown";
             }
             setGenDocProfiles(profileMap);
+            setProfileColors(colorMap);
+
+            // Enrich notes with accent colors
+            const enrichedNotes = ((notesData ?? []) as unknown as NoteData[]).map((n) => ({
+              ...n,
+              author_accent_color: colorMap[n.author_id] ?? null,
+              note_likes: (n.note_likes ?? []).map((l) => ({
+                ...l,
+                profiles: { ...l.profiles, accent_color: colorMap[l.user_id] ?? null },
+              })),
+            }));
+            setAllNotes(enrichedNotes);
           }
         }
       } catch {
@@ -565,6 +596,7 @@ export function useActionCenterData({
           id: n.author_id,
           name: n.author_name ?? "Unknown",
           initials: getInitials(n.author_name),
+          accent_color: n.author_accent_color ?? profileColors[n.author_id] ?? null,
         },
         noteData: n,
         noteReplies: replies.length > 0 ? replies : undefined,
@@ -639,6 +671,7 @@ export function useActionCenterData({
           id: authorId,
           name: authorName,
           initials: authorName.split(" ").map((n: string) => n[0]).join("").toUpperCase().slice(0, 2) || "??",
+          accent_color: profileColors[authorId] ?? null,
         },
         title: `Generated ${templateName}`,
         description: doc.file_name as string,
@@ -659,6 +692,7 @@ export function useActionCenterData({
           id: (msg.sender_id as string) ?? undefined,
           name: senderName,
           initials: getInitials(senderName),
+          accent_color: profileColors[(msg.sender_id as string)] ?? null,
         },
         description: msg.body as string,
         messageSenderType: msg.sender_type as "admin" | "borrower" | "system",
@@ -671,7 +705,7 @@ export function useActionCenterData({
 
     // Group rapid system events
     return groupSystemEvents(result);
-  }, [dealActivities, crmActivities, crmEmails, topNotes, repliesByParent, formLinks, formSubmissions, generatedDocs, genDocProfiles, dealMessages]);
+  }, [dealActivities, crmActivities, crmEmails, topNotes, repliesByParent, formLinks, formSubmissions, generatedDocs, genDocProfiles, dealMessages, profileColors]);
 
   // ── Filter counts ──
 

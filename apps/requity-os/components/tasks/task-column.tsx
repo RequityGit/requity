@@ -47,7 +47,6 @@ export function TaskColumn({
     : 0;
 
   const handleDragOver = (e: React.DragEvent) => {
-    if (isComplete) return;
     e.preventDefault();
     setDragOver(true);
   };
@@ -55,7 +54,6 @@ export function TaskColumn({
   const handleDragLeave = () => setDragOver(false);
 
   const handleDrop = (e: React.DragEvent) => {
-    if (isComplete) return;
     e.preventDefault();
     setDragOver(false);
     onDrop(e, status);
@@ -82,7 +80,7 @@ export function TaskColumn({
       <div
         className={cn(
           "flex-1 flex flex-col gap-1.5 rounded-lg p-1 min-h-[60px] transition-colors",
-          dragOver && !isComplete && "bg-accent border border-dashed border-border"
+          dragOver && "bg-accent border border-dashed border-border"
         )}
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}

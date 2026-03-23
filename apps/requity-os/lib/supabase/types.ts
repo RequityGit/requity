@@ -8643,6 +8643,8 @@ export type Database = {
           requires_approval: boolean | null
           responsible_party: string | null
           sort_order: number | null
+          template_file_name: string | null
+          template_file_url: string | null
           updated_at: string
         }
         Insert: {
@@ -8666,6 +8668,8 @@ export type Database = {
           requires_approval?: boolean | null
           responsible_party?: string | null
           sort_order?: number | null
+          template_file_name?: string | null
+          template_file_url?: string | null
           updated_at?: string
         }
         Update: {
@@ -8689,6 +8693,8 @@ export type Database = {
           requires_approval?: boolean | null
           responsible_party?: string | null
           sort_order?: number | null
+          template_file_name?: string | null
+          template_file_url?: string | null
           updated_at?: string
         }
         Relationships: []
@@ -15008,6 +15014,8 @@ export type Database = {
           sort_order: number | null
           status: string
           submitted_at: string | null
+          template_file_name: string | null
+          template_file_url: string | null
           template_id: string | null
           updated_at: string | null
         }
@@ -15041,6 +15049,8 @@ export type Database = {
           sort_order?: number | null
           status?: string
           submitted_at?: string | null
+          template_file_name?: string | null
+          template_file_url?: string | null
           template_id?: string | null
           updated_at?: string | null
         }
@@ -15074,6 +15084,8 @@ export type Database = {
           sort_order?: number | null
           status?: string
           submitted_at?: string | null
+          template_file_name?: string | null
+          template_file_url?: string | null
           template_id?: string | null
           updated_at?: string | null
         }
