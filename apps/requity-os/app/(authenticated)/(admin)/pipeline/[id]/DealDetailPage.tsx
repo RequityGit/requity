@@ -601,8 +601,13 @@ function DealDetailPageInner({
               <Suspense fallback={<TabLoadingFallback />}>
                 <DocumentsTab
                   documents={documents as unknown as { id: string; deal_id: string; document_name: string; file_url: string; file_size_bytes: number | null; mime_type: string | null; category: string | null; uploaded_by: string | null; created_at: string; review_status: string | null; storage_path: string | null; visibility?: string | null; _uploaded_by_name?: string | null; archived_at?: string | null; condition_id?: string | null }[]}
+                  conditions={conditions}
                   dealId={deal.id}
+                  dealName={(deal as { name?: string }).name ?? undefined}
+                  dealStage={deal.stage}
                   googleDriveFolderUrl={(deal as unknown as Record<string, unknown>).google_drive_folder_url as string | null}
+                  currentUserId={currentUserId}
+                  currentUserName={currentUserName}
                 />
               </Suspense>
               </SectionErrorBoundary>
