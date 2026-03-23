@@ -757,6 +757,26 @@ Deno.serve(async (req: Request) => {
       console.error("Document backfill error (non-fatal):", backfillErr);
     }
 
+    // Sync borrower/entity shortcuts into the new deal folder (fire-and-forget)
+    try {
+      const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || token;
+      fetch(
+        `${supabaseUrl}/functions/v1/create-borrower-drive-folder`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${serviceRoleKey}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ action: "sync_deal_shortcuts", dealId: deal_id }),
+        }
+      ).catch((syncErr) => {
+        console.error("Shortcut sync failed (non-blocking):", syncErr);
+      });
+    } catch (syncErr) {
+      console.error("Shortcut sync trigger failed (non-blocking):", syncErr);
+    }
+
     return new Response(
       JSON.stringify({
         success: true,

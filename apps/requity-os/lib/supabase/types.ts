@@ -2819,6 +2819,8 @@ export type Database = {
           email: string | null
           entity_type: string | null
           first_name: string | null
+          google_drive_folder_id: string | null
+          google_drive_folder_url: string | null
           id: string
           investment_interests: string[] | null
           investment_timeline: string | null
@@ -2872,6 +2874,8 @@ export type Database = {
           email?: string | null
           entity_type?: string | null
           first_name?: string | null
+          google_drive_folder_id?: string | null
+          google_drive_folder_url?: string | null
           id?: string
           investment_interests?: string[] | null
           investment_timeline?: string | null
@@ -2925,6 +2929,8 @@ export type Database = {
           email?: string | null
           entity_type?: string | null
           first_name?: string | null
+          google_drive_folder_id?: string | null
+          google_drive_folder_url?: string | null
           id?: string
           investment_interests?: string[] | null
           investment_timeline?: string | null
@@ -3760,11 +3766,14 @@ export type Database = {
           city: string | null
           created_at: string
           created_by: string | null
+          crm_company_id: string | null
           date_of_formation: string | null
           deal_id: string
           ein: string | null
           entity_name: string
           entity_type: string
+          google_drive_folder_id: string | null
+          google_drive_folder_url: string | null
           id: string
           notes: string | null
           state: string | null
@@ -3779,11 +3788,14 @@ export type Database = {
           city?: string | null
           created_at?: string
           created_by?: string | null
+          crm_company_id?: string | null
           date_of_formation?: string | null
           deal_id: string
           ein?: string | null
           entity_name?: string
           entity_type?: string
+          google_drive_folder_id?: string | null
+          google_drive_folder_url?: string | null
           id?: string
           notes?: string | null
           state?: string | null
@@ -3798,11 +3810,14 @@ export type Database = {
           city?: string | null
           created_at?: string
           created_by?: string | null
+          crm_company_id?: string | null
           date_of_formation?: string | null
           deal_id?: string
           ein?: string | null
           entity_name?: string
           entity_type?: string
+          google_drive_folder_id?: string | null
+          google_drive_folder_url?: string | null
           id?: string
           notes?: string | null
           state?: string | null
@@ -3812,6 +3827,13 @@ export type Database = {
           zip?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "deal_borrowing_entities_crm_company_id_fkey"
+            columns: ["crm_company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "deal_borrowing_entities_deal_id_fkey"
             columns: ["deal_id"]
@@ -5521,6 +5543,13 @@ export type Database = {
             columns: ["deal_id"]
             isOneToOne: false
             referencedRelation: "unified_deals"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "document_reviews_document_id_fkey"
+            columns: ["document_id"]
+            isOneToOne: false
+            referencedRelation: "entity_document_portfolio"
             referencedColumns: ["id"]
           },
           {
@@ -7614,6 +7643,7 @@ export type Database = {
           entity_ids: Json | null
           form_id: string
           id: string
+          internal_notes: string | null
           ip_address: unknown
           prefilled_by: string | null
           record_id: string | null
@@ -7638,6 +7668,7 @@ export type Database = {
           entity_ids?: Json | null
           form_id: string
           id?: string
+          internal_notes?: string | null
           ip_address?: unknown
           prefilled_by?: string | null
           record_id?: string | null
@@ -7662,6 +7693,7 @@ export type Database = {
           entity_ids?: Json | null
           form_id?: string
           id?: string
+          internal_notes?: string | null
           ip_address?: unknown
           prefilled_by?: string | null
           record_id?: string | null
@@ -7952,6 +7984,44 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      google_drive_shortcuts: {
+        Row: {
+          created_at: string
+          deal_id: string
+          id: string
+          shortcut_drive_id: string
+          target_folder_id: string
+          target_id: string
+          target_type: string
+        }
+        Insert: {
+          created_at?: string
+          deal_id: string
+          id?: string
+          shortcut_drive_id: string
+          target_folder_id: string
+          target_id: string
+          target_type: string
+        }
+        Update: {
+          created_at?: string
+          deal_id?: string
+          id?: string
+          shortcut_drive_id?: string
+          target_folder_id?: string
+          target_id?: string
+          target_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "google_drive_shortcuts_deal_id_fkey"
+            columns: ["deal_id"]
+            isOneToOne: false
+            referencedRelation: "unified_deals"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       inbound_emails: {
         Row: {
@@ -11273,6 +11343,7 @@ export type Database = {
       }
       page_layout_sections: {
         Row: {
+          card_type_id: string | null
           created_at: string
           default_collapsed: boolean | null
           display_order: number
@@ -11295,6 +11366,7 @@ export type Database = {
           visibility_rule: string | null
         }
         Insert: {
+          card_type_id?: string | null
           created_at?: string
           default_collapsed?: boolean | null
           display_order?: number
@@ -11317,6 +11389,7 @@ export type Database = {
           visibility_rule?: string | null
         }
         Update: {
+          card_type_id?: string | null
           created_at?: string
           default_collapsed?: boolean | null
           display_order?: number
@@ -11339,6 +11412,13 @@ export type Database = {
           visibility_rule?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "page_layout_sections_card_type_id_fkey"
+            columns: ["card_type_id"]
+            isOneToOne: false
+            referencedRelation: "unified_card_types"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "page_layout_sections_relationship_id_fkey"
             columns: ["relationship_id"]
@@ -15138,12 +15218,16 @@ export type Database = {
         Row: {
           archived_at: string | null
           category: string | null
+          company_id: string | null
           condition_approval_status: string | null
           condition_id: string | null
+          contact_id: string | null
           created_at: string
           deal_id: string
           deleted_at: string | null
+          document_date: string | null
           document_name: string
+          document_type: string | null
           file_size_bytes: number | null
           file_url: string
           google_drive_file_id: string | null
@@ -15158,12 +15242,16 @@ export type Database = {
         Insert: {
           archived_at?: string | null
           category?: string | null
+          company_id?: string | null
           condition_approval_status?: string | null
           condition_id?: string | null
+          contact_id?: string | null
           created_at?: string
           deal_id: string
           deleted_at?: string | null
+          document_date?: string | null
           document_name: string
+          document_type?: string | null
           file_size_bytes?: number | null
           file_url: string
           google_drive_file_id?: string | null
@@ -15178,12 +15266,16 @@ export type Database = {
         Update: {
           archived_at?: string | null
           category?: string | null
+          company_id?: string | null
           condition_approval_status?: string | null
           condition_id?: string | null
+          contact_id?: string | null
           created_at?: string
           deal_id?: string
           deleted_at?: string | null
+          document_date?: string | null
           document_name?: string
+          document_type?: string | null
           file_size_bytes?: number | null
           file_url?: string
           google_drive_file_id?: string | null
@@ -15197,11 +15289,46 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "unified_deal_documents_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "unified_deal_documents_condition_id_fkey"
             columns: ["condition_id"]
             isOneToOne: false
             referencedRelation: "unified_deal_conditions"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "unified_deal_documents_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "crm_contacts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "unified_deal_documents_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "crm_contacts_active"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "unified_deal_documents_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "crm_duplicate_candidates"
+            referencedColumns: ["contact_id"]
+          },
+          {
+            foreignKeyName: "unified_deal_documents_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "crm_duplicate_candidates"
+            referencedColumns: ["potential_duplicate_id"]
           },
           {
             foreignKeyName: "unified_deal_documents_deal_id_fkey"
@@ -16134,6 +16261,25 @@ export type Database = {
       }
     }
     Views: {
+      borrower_document_portfolio: {
+        Row: {
+          condition_approval_status: string | null
+          contact_id: string | null
+          created_at: string | null
+          deal_id: string | null
+          deal_name: string | null
+          document_date: string | null
+          document_name: string | null
+          document_type: string | null
+          file_size_bytes: number | null
+          id: string | null
+          mime_type: string | null
+          source: string | null
+          storage_path: string | null
+          visibility: string | null
+        }
+        Relationships: []
+      }
       borrower_entities_safe: {
         Row: {
           address_line1: string | null
@@ -16617,6 +16763,40 @@ export type Database = {
           urgency: string | null
         }
         Relationships: []
+      }
+      entity_document_portfolio: {
+        Row: {
+          company_id: string | null
+          condition_approval_status: string | null
+          created_at: string | null
+          deal_id: string | null
+          deal_name: string | null
+          document_date: string | null
+          document_name: string | null
+          document_type: string | null
+          file_size_bytes: number | null
+          id: string | null
+          mime_type: string | null
+          source: string | null
+          storage_path: string | null
+          visibility: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "unified_deal_documents_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "unified_deal_documents_deal_id_fkey"
+            columns: ["deal_id"]
+            isOneToOne: false
+            referencedRelation: "unified_deals"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       investing_entities_portal: {
         Row: {
@@ -18266,4 +18446,3 @@ export const Constants = {
     },
   },
 } as const
-

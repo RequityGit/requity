@@ -116,7 +116,7 @@ export default async function DealDetailRoute({ params }: PageProps) {
       .order("sort_order" as never),
     admin
       .from("unified_deal_documents" as never)
-      .select("id, deal_id, document_name, category, storage_path, file_url, file_size_bytes, mime_type, uploaded_by, condition_id, condition_approval_status, review_status, archived_at, visibility, google_drive_file_id, submission_status, deleted_at, created_at")
+      .select("id, deal_id, document_name, category, storage_path, file_url, file_size_bytes, mime_type, uploaded_by, condition_id, condition_approval_status, review_status, archived_at, visibility, google_drive_file_id, submission_status, deleted_at, created_at, contact_id, company_id, document_type, document_date, contact:crm_contacts!unified_deal_documents_contact_id_fkey(id, first_name, last_name), company:companies!unified_deal_documents_company_id_fkey(id, name)")
       .eq("deal_id" as never, dealId as never)
       .is("deleted_at" as never, null as never)
       .order("created_at" as never, { ascending: false }),

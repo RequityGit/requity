@@ -17,6 +17,7 @@ import {
   Search,
   Archive,
   Link2,
+  Users,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
@@ -103,6 +104,7 @@ export function DocumentsSection({
   const [showArchived, setShowArchived] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   const dragCounter = useRef(0);
+  const [groupBy, setGroupBy] = useState<"category" | "person">("category");
   const [expandedCategories, setExpandedCategories] = useState<Set<string>>(
     () => new Set()
   );
@@ -138,6 +140,38 @@ export function DocumentsSection({
   }, [searchedDocs]);
 
   const categoryOrder = Object.keys(docsByCategory).sort();
+
+  // Group by person (borrower/entity)
+  const docsByPerson = useMemo(() => {
+    const groups: Record<string, { label: string; docs: DealDocument[] }> = {};
+    for (const d of searchedDocs) {
+      let key = "_unassigned";
+      let label = "Unassigned";
+      if (d.contact_id && d.contact) {
+        key = `contact:${d.contact_id}`;
+        label = [d.contact.first_name, d.contact.last_name].filter(Boolean).join(" ") || "Unknown Contact";
+      } else if (d.company_id && d.company) {
+        key = `company:${d.company_id}`;
+        label = d.company.name || "Unknown Entity";
+      }
+      if (!groups[key]) groups[key] = { label, docs: [] };
+      groups[key].docs.push(d);
+    }
+    return groups;
+  }, [searchedDocs]);
+
+  const personOrder = useMemo(() => {
+    return Object.keys(docsByPerson).sort((a, b) => {
+      if (a === "_unassigned") return 1;
+      if (b === "_unassigned") return -1;
+      return docsByPerson[a].label.localeCompare(docsByPerson[b].label);
+    });
+  }, [docsByPerson]);
+
+  // Determine which groups to render based on groupBy mode
+  const groupEntries = groupBy === "category"
+    ? categoryOrder.map((cat) => ({ key: cat, label: catLabel(cat), docs: docsByCategory[cat] }))
+    : personOrder.map((key) => ({ key, label: docsByPerson[key].label, docs: docsByPerson[key].docs }));
 
   // Auto-expand first 2 categories on initial render
   useEffect(() => {
@@ -420,9 +454,9 @@ export function DocumentsSection({
         </button>
       </div>
 
-      {/* Search */}
-      <div className="px-4 py-2 border-b border-border/30">
-        <div className="relative">
+      {/* Search + Group toggle */}
+      <div className="px-4 py-2 border-b border-border/30 flex items-center gap-2">
+        <div className="relative flex-1">
           <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3 w-3 text-muted-foreground" />
           <Input
             placeholder="Search documents..."
@@ -431,10 +465,23 @@ export function DocumentsSection({
             className="h-7 pl-8 text-xs"
           />
         </div>
+        <button
+          type="button"
+          onClick={() => setGroupBy(groupBy === "category" ? "person" : "category")}
+          className={cn(
+            "inline-flex items-center gap-1 rounded-md border px-2 py-1 text-[10px] font-medium rq-transition shrink-0 cursor-pointer",
+            groupBy === "person"
+              ? "border-primary/40 bg-primary/10 text-primary"
+              : "border-border text-muted-foreground hover:bg-muted/50"
+          )}
+        >
+          <Users className="h-3 w-3" />
+          By Person
+        </button>
       </div>
 
-      {/* Collapsible category groups */}
-      {categoryOrder.length === 0 && (
+      {/* Collapsible groups (by category or by person) */}
+      {groupEntries.length === 0 && (
         <EmptyState
           icon={FileText}
           title={
@@ -446,8 +493,7 @@ export function DocumentsSection({
         />
       )}
 
-      {categoryOrder.map((cat) => {
-        const docs = docsByCategory[cat];
+      {groupEntries.map(({ key: cat, label: groupLabel, docs }) => {
         const isOpen = expandedCategories.has(cat);
         return (
           <div key={cat} className="border-b border-border/30 last:border-b-0">
@@ -462,7 +508,7 @@ export function DocumentsSection({
                 <ChevronRight className="h-3.5 w-3.5 text-muted-foreground" strokeWidth={1.5} />
               )}
               <span className="text-xs font-medium text-foreground flex-1 text-left">
-                {catLabel(cat)}
+                {groupLabel}
               </span>
               <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-muted text-muted-foreground tabular-nums">
                 {docs.length}

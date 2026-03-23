@@ -403,8 +403,7 @@ export function DealOverviewSummary({ dealId, deal }: DealOverviewSummaryProps) 
     (loanPurpose?.toLowerCase().includes("purchase") ?? false);
   const isConstruction = ["new_construction", "construction"].includes(loanPurpose ?? "") ||
     (loanPurpose?.toLowerCase().includes("construction") ?? false);
-  const isEarlyStage = ["lead", "awaiting_info"].includes(deal.stage);
-  const showProposedTerms = !isEarlyStage;
+  const showProposedTerms = true;
 
   // Property name: falls back to address if no name set
   const [localDealName, setLocalDealName] = useState(deal.name ?? "");

@@ -555,17 +555,13 @@ export function IntakeReviewModal({ item, open, onOpenChange }: IntakeReviewModa
             <span>{item.from_name ? `${item.from_name} <${item.from_email}>` : item.from_email}</span>
           </div>
           {p.isForwarded && (
-            <div className="flex items-center gap-2 rounded-lg border border-blue-500/20 bg-blue-500/5 px-3 py-1.5 text-[11px] mt-2">
-              <Forward className="h-3.5 w-3.5 text-blue-500 shrink-0" />
-              <span className="text-muted-foreground">
-                Forwarded by <span className="font-medium text-foreground">{p.forwarderName || item.from_name || item.from_email}</span>
-                {(p.brokerName || p.contactName) && (
-                  <>{" - Original sender: "}<span className="font-medium text-foreground">{p.brokerName || p.contactName}</span>
-                    {(p.brokerEmail || p.contactEmail) && (
-                      <span className="text-muted-foreground/70"> ({p.brokerEmail || p.contactEmail})</span>
-                    )}
-                  </>
-                )}
+            <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground mt-1">
+              <Forward className="h-3 w-3 text-blue-500 shrink-0" />
+              <span>
+                Forwarded by{" "}
+                <span className="font-medium text-foreground">
+                  {p.forwarderName || item.from_name || item.from_email}
+                </span>
               </span>
             </div>
           )}

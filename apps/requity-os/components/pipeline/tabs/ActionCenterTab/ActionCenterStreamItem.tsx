@@ -24,6 +24,7 @@ import { getUserColor, colorVariants } from "@/lib/user-colors";
 import { NoteThread } from "@/components/shared/UnifiedNotes/NoteThread";
 import type { NoteData } from "@/components/shared/UnifiedNotes/types";
 import type { UploadedAttachment } from "@/components/shared/attachments";
+import { ExpandableText } from "@/components/shared/ExpandableText";
 import type { StreamItem, StreamItemType } from "./useActionCenterData";
 
 // ── Icon + color config per type ──
@@ -264,7 +265,7 @@ export function ActionCenterStreamItem({ item, noteHandlers }: ActionCenterStrea
         </div>
         {item.title && <p className="text-[13px] text-foreground">{item.title}</p>}
         {item.description && (
-          <p className="text-[12px] text-muted-foreground mt-0.5 line-clamp-2">{item.description}</p>
+          <ExpandableText text={item.description} maxLines={5} className="mt-0" />
         )}
       </div>
     </div>
@@ -297,7 +298,7 @@ function EmailItem({ item }: { item: StreamItem }) {
             {item.toEmail && <span>To: {item.toEmail}</span>}
           </div>
           {item.bodyPreview && (
-            <p className="text-[12px] text-muted-foreground line-clamp-2">{item.bodyPreview}</p>
+            <ExpandableText text={item.bodyPreview} maxLines={5} className="mt-0" />
           )}
           {item.emailAttachments && item.emailAttachments.length > 0 && (
             <div className="flex items-center gap-1 mt-2 text-[11px] text-muted-foreground">

@@ -8,14 +8,20 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { InlineField } from "@/components/ui/inline-field";
-import { Building2, Trash2, Loader2 } from "lucide-react";
+import { Building2, Trash2, Loader2, FolderOpen, Plus } from "lucide-react";
 import { showSuccess, showError } from "@/lib/toast";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import type { DealBorrowingEntity } from "@/app/types/borrower";
 import { ENTITY_TYPES, US_STATES } from "./constants";
 import {
   upsertBorrowingEntityAction,
   deleteBorrowingEntityAction,
 } from "@/app/(authenticated)/(admin)/pipeline/[id]/borrower-actions";
+import { createEntityDriveFolder } from "@/app/(authenticated)/(admin)/pipeline/[id]/actions";
 
 interface BorrowingEntityCardProps {
   dealId: string;
@@ -34,6 +40,7 @@ export function BorrowingEntityCard({
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [pending, startTransition] = useTransition();
+  const [creatingDriveFolder, setCreatingDriveFolder] = useState(false);
 
   useEffect(() => {
     if (entity) setLocal(entity);
@@ -95,6 +102,56 @@ export function BorrowingEntityCard({
             <Loader2 className="h-3 w-3 animate-spin text-muted-foreground" />
           )}
         </div>
+        <div className="flex items-center gap-1">
+          {/* GDrive folder button */}
+          {entity?.id && (
+            local.google_drive_folder_url ? (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <a
+                    href={local.google_drive_folder_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground hover:text-foreground hover:bg-muted/50 rq-transition"
+                  >
+                    <FolderOpen className="h-3.5 w-3.5" />
+                  </a>
+                </TooltipTrigger>
+                <TooltipContent side="bottom" className="text-xs">Open Drive folder</TooltipContent>
+              </Tooltip>
+            ) : (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8 text-muted-foreground hover:text-foreground"
+                    disabled={creatingDriveFolder}
+                    onClick={async () => {
+                      setCreatingDriveFolder(true);
+                      const result = await createEntityDriveFolder(entity.id, dealId);
+                      setCreatingDriveFolder(false);
+                      if (result.error) {
+                        showError("Could not create Drive folder", result.error);
+                      } else {
+                        if (result.folder_url) {
+                          setLocal((prev) => ({ ...prev, google_drive_folder_url: result.folder_url }));
+                        }
+                        showSuccess("Drive folder created");
+                      }
+                    }}
+                  >
+                    {creatingDriveFolder ? (
+                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                    ) : (
+                      <Plus className="h-3.5 w-3.5" />
+                    )}
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent side="bottom" className="text-xs">Create Drive folder</TooltipContent>
+              </Tooltip>
+            )
+          )}
         {entity?.id && (
           <Popover open={deleteOpen} onOpenChange={setDeleteOpen}>
             <PopoverTrigger asChild>
@@ -132,6 +189,7 @@ export function BorrowingEntityCard({
             </PopoverContent>
           </Popover>
         )}
+        </div>
       </div>
 
       {/* Inline-editable fields */}

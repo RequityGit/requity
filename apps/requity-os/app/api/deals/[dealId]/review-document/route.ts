@@ -297,7 +297,7 @@ async function classifyDocument(
             role: "user",
             content: [
               {
-                type: "document",
+                type: mediaType.startsWith("image/") ? "image" : "document",
                 source: {
                   type: "base64",
                   media_type: mediaType,
@@ -369,7 +369,7 @@ async function extractDocumentData(
             role: "user",
             content: [
               {
-                type: "document",
+                type: mediaType.startsWith("image/") ? "image" : "document",
                 source: {
                   type: "base64",
                   media_type: mediaType,

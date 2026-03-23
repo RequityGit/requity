@@ -24,6 +24,12 @@ export interface DealDocument {
   condition_id?: string | null;
   condition_approval_status?: string | null;
   archived_at?: string | null;
+  contact_id?: string | null;
+  company_id?: string | null;
+  document_type?: string | null;
+  document_date?: string | null;
+  contact?: { id: string; first_name: string | null; last_name: string | null } | null;
+  company?: { id: string; name: string } | null;
 }
 
 export interface DocumentsTabProps {
