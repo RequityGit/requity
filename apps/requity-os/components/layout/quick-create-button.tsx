@@ -10,6 +10,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Plus, Briefcase, UserPlus, Building2, ListTodo } from "lucide-react";
 import { fetchQuickCreateData } from "@/app/(authenticated)/(admin)/actions/quick-create";
+import { showError } from "@/lib/toast";
 import { NewDealDialog } from "@/components/pipeline/NewDealDialog";
 import { AddContactDialog } from "@/components/crm/add-contact-dialog";
 import { AddCompanyDialog } from "@/components/crm/add-company-dialog";
@@ -36,6 +37,9 @@ export function QuickCreateButton({ currentUserId, isSuperAdmin }: QuickCreateBu
       const result = await fetchQuickCreateData();
       setData(result);
       return result;
+    } catch {
+      showError("Could not load data for quick create");
+      return null;
     } finally {
       setLoading(false);
     }
@@ -46,7 +50,8 @@ export function QuickCreateButton({ currentUserId, isSuperAdmin }: QuickCreateBu
       setActiveDialog("company");
       return;
     }
-    await ensureData();
+    const result = await ensureData();
+    if (!result) return;
     setActiveDialog(type);
   }
 

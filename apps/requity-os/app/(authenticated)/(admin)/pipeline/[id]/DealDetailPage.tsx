@@ -24,6 +24,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import { formatDateShort, formatCompactCurrency, formatPhoneNumber } from "@/lib/format";
 import { getUserColor, colorVariants } from "@/lib/user-colors";
@@ -40,6 +46,7 @@ import {
   MoreHorizontal,
   ChevronDown,
   FolderOpen,
+  FolderPlus,
   Building2,
   Trash2,
   Send,
@@ -49,7 +56,6 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
@@ -1483,36 +1489,46 @@ function DealHeader({
           </div>
 
           {/* Google Drive Button */}
+          <TooltipProvider>
           {googleDriveUrl ? (
-            <Button
-              variant="outline"
-              size="icon"
-              className="h-9 w-9"
-              title="Open Google Drive Folder"
-              onClick={() => {
-                // Fire-and-forget: sync any unsynced docs to Drive
-                createDealDriveFolder(deal.id, { backfill: true }).catch(() => {});
-                window.open(googleDriveUrl, "_blank", "noopener,noreferrer");
-              }}
-            >
-              <FolderOpen className="h-4 w-4" />
-            </Button>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  className="h-9 w-9"
+                  onClick={() => {
+                    // Fire-and-forget: sync any unsynced docs to Drive
+                    createDealDriveFolder(deal.id, { backfill: true }).catch(() => {});
+                    window.open(googleDriveUrl, "_blank", "noopener,noreferrer");
+                  }}
+                >
+                  <FolderOpen className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Open Google Drive Folder</TooltipContent>
+            </Tooltip>
           ) : (
-            <Button
-              variant="outline"
-              size="icon"
-              className="h-9 w-9"
-              onClick={handleCreateDriveFolder}
-              disabled={creatingDrive}
-              title="Create Google Drive Folder"
-            >
-              {creatingDrive ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <FolderOpen className="h-4 w-4 text-muted-foreground" />
-              )}
-            </Button>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  className="h-9 w-9 border-dashed"
+                  onClick={handleCreateDriveFolder}
+                  disabled={creatingDrive}
+                >
+                  {creatingDrive ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <FolderPlus className="h-4 w-4 text-muted-foreground" />
+                  )}
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Create Google Drive Folder</TooltipContent>
+            </Tooltip>
           )}
+          </TooltipProvider>
 
           {/* Actions Dropdown */}
           <DropdownMenu>
@@ -1528,16 +1544,12 @@ function DealHeader({
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-56">
-              <DropdownMenuLabel className="text-[10px] uppercase tracking-wider text-muted-foreground font-normal">
-                Communication
-              </DropdownMenuLabel>
               <DropdownMenuItem onClick={() => setLogCallOpen(true)}>
                 <Phone className="h-4 w-4 mr-2" />
                 Log Call
               </DropdownMenuItem>
               <DropdownMenuItem onClick={() => {
                 if (contactSelection.hasSelection) {
-                  // Open EmailComposeSheet with first external contact in To, internal in CC
                   const firstExternal = contactSelection.selectedExternal.find((c) => c.email);
                   if (firstExternal) {
                     setEmailToContact({
@@ -1547,7 +1559,6 @@ function DealHeader({
                     });
                     setEmailComposeOpen(true);
                   } else {
-                    // No external contacts with email, fall back to log email
                     setSendEmailOpen(true);
                   }
                 } else {
@@ -1562,10 +1573,6 @@ function DealHeader({
                   </span>
                 )}
               </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuLabel className="text-[10px] uppercase tracking-wider text-muted-foreground font-normal">
-                Forms
-              </DropdownMenuLabel>
               <DropdownMenuItem onClick={() => {
                 if (contactSelection.hasSelection) {
                   setFormRecipients(
@@ -1585,34 +1592,10 @@ function DealHeader({
                 <Send className="h-4 w-4 mr-2" />
                 Send Form
               </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuLabel className="text-[10px] uppercase tracking-wider text-muted-foreground font-normal">
-                Documents
-              </DropdownMenuLabel>
               <DropdownMenuItem onClick={() => setGenerateDocOpen(true)}>
                 <FileText className="h-4 w-4 mr-2" />
                 Generate Document
               </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuLabel className="text-[10px] uppercase tracking-wider text-muted-foreground font-normal">
-                Forms
-              </DropdownMenuLabel>
-              <DropdownMenuItem onClick={() => setSendFormOpen(true)}>
-                <Send className="h-4 w-4 mr-2" />
-                Send Form
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuLabel className="text-[10px] uppercase tracking-wider text-muted-foreground font-normal">
-                Documents
-              </DropdownMenuLabel>
-              <DropdownMenuItem onClick={() => setGenerateDocOpen(true)}>
-                <FileText className="h-4 w-4 mr-2" />
-                Generate Document
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuLabel className="text-[10px] uppercase tracking-wider text-muted-foreground font-normal">
-                Approvals
-              </DropdownMenuLabel>
               <SubmitForApprovalDialog
                 entityType={approvalEntityType}
                 entityId={deal.id}

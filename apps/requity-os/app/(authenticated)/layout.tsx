@@ -76,26 +76,26 @@ export default async function AuthenticatedLayout({
                           accessibleModules={accessibleModules}
                         />
                       </div>
-                      <div className="flex-1 flex flex-col overflow-hidden">
-                        <Topbar
-                          userName={(profile.full_name as string) || ""}
-                          role={effectiveRole}
-                          email={(profile.email as string) ?? ""}
-                          allowedRoles={allowedRoles}
-                          userId={user.id}
-                          isSuperAdmin={isSuperAdmin}
-                          avatarUrl={profile.avatar_url as string | undefined}
-                        />
-                        <main className="flex-1 overflow-y-auto bg-background p-4 md:p-6 lg:p-8 pb-20 md:pb-6 lg:pb-8">
-                          <ActivityTrackerProvider role={effectiveRole}>
-                            <ModuleGuard>
-                              <ConfirmProvider>
+                      <ConfirmProvider>
+                        <div className="flex-1 flex flex-col overflow-hidden">
+                          <Topbar
+                            userName={(profile.full_name as string) || ""}
+                            role={effectiveRole}
+                            email={(profile.email as string) ?? ""}
+                            allowedRoles={allowedRoles}
+                            userId={user.id}
+                            isSuperAdmin={isSuperAdmin}
+                            avatarUrl={profile.avatar_url as string | undefined}
+                          />
+                          <main className="flex-1 overflow-y-auto bg-background p-4 md:p-6 lg:p-8 pb-20 md:pb-6 lg:pb-8">
+                            <ActivityTrackerProvider role={effectiveRole}>
+                              <ModuleGuard>
                                 {children}
-                              </ConfirmProvider>
-                            </ModuleGuard>
-                          </ActivityTrackerProvider>
-                        </main>
-                      </div>
+                              </ModuleGuard>
+                            </ActivityTrackerProvider>
+                          </main>
+                        </div>
+                      </ConfirmProvider>
                     </div>
                     <Toaster />
                     <SonnerToaster richColors closeButton />

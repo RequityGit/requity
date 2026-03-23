@@ -36,7 +36,7 @@ export async function saveCondition(data: ConditionFormData) {
     const payload = {
       condition_name: data.condition_name,
       category: data.category as "borrower_documents",
-      required_stage: data.required_stage as "processing",
+      required_stage: data.required_stage as "execution",
       applies_to_commercial: data.applies_to_commercial,
       applies_to_rtl: data.applies_to_rtl,
       applies_to_dscr: data.applies_to_dscr,
@@ -133,6 +133,7 @@ export async function updateConditionInline(
   id: string,
   fields: Partial<{
     condition_name: string;
+    required_stage: "lead" | "analysis" | "negotiation" | "execution" | "closed";
     applies_to_commercial: boolean;
     applies_to_rtl: boolean;
     applies_to_dscr: boolean;

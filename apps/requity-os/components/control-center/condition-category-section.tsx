@@ -3,6 +3,13 @@
 import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { useConfirm } from "@/components/shared/ConfirmDialog";
 import { LoanTypeBadge } from "./loan-type-badge";
 import {
@@ -72,6 +79,7 @@ interface ConditionCategorySectionProps {
     id: string,
     fields: Partial<{
       condition_name: string;
+      required_stage: "lead" | "analysis" | "negotiation" | "execution" | "closed";
       applies_to_commercial: boolean;
       applies_to_rtl: boolean;
       applies_to_dscr: boolean;
@@ -378,9 +386,28 @@ export function ConditionCategorySection({
                     )}
                   </td>
                   <td className="px-4 py-2">
-                    <span className="inline-flex items-center rounded-md bg-muted px-2 py-0.5 text-[11px] font-medium text-muted-foreground">
-                      {STAGE_LABEL_MAP[item.required_stage] ?? item.required_stage}
-                    </span>
+                    <Select
+                      value={item.required_stage}
+                      onValueChange={(v) =>
+                        onInlineUpdate(item.id, {
+                          required_stage: v as "lead" | "analysis" | "negotiation" | "execution" | "closed",
+                        })
+                      }
+                    >
+                      <SelectTrigger
+                        className="inline-field text-xs w-[110px]"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {CONDITION_STAGES.map((s) => (
+                          <SelectItem key={s.value} value={s.value}>
+                            {s.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </td>
                   <td className="px-4 py-2 text-right">
                     <div className="flex items-center justify-end gap-1">

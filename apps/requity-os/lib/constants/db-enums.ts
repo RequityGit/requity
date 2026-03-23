@@ -439,20 +439,20 @@ export type ConditionCategory = (typeof CONDITION_CATEGORY_VALUES)[number];
 // loan_conditions — stage (DB enum: condition_stage)
 // ============================================
 
-/** DB enum: condition_stage */
+/** DB enum: condition_stage (aligned with deal stages) */
 export const CONDITION_STAGES = [
-  { value: "loan_intake", label: "Loan Intake" },
-  { value: "processing", label: "Processing" },
-  { value: "closed_onboarding", label: "Closed / Onboarding" },
-  { value: "note_sell_process", label: "Note Sell Process" },
-  { value: "post_loan_payoff", label: "Post Loan Payoff" },
+  { value: "lead", label: "Lead" },
+  { value: "analysis", label: "Analysis" },
+  { value: "negotiation", label: "Negotiation" },
+  { value: "execution", label: "Execution" },
+  { value: "closed", label: "Closed" },
 ] as const;
 export const CONDITION_STAGE_VALUES = [
-  "loan_intake",
-  "processing",
-  "closed_onboarding",
-  "note_sell_process",
-  "post_loan_payoff",
+  "lead",
+  "analysis",
+  "negotiation",
+  "execution",
+  "closed",
 ] as const;
 export type ConditionStage = (typeof CONDITION_STAGE_VALUES)[number];
 

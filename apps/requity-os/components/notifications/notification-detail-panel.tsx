@@ -37,7 +37,8 @@ function getNotesEntityColumn(
   entityType: string | null
 ): string | null {
   const map: Record<string, string> = {
-    loan: "deal_id",
+    loan: "loan_id",
+    deal: "deal_id",
     contact: "contact_id",
     company: "company_id",
     task: "task_id",

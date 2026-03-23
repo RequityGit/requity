@@ -74,7 +74,7 @@ export default async function DealDetailRoute({ params }: PageProps) {
     try {
       const { data: brokerData } = await admin
         .from("crm_contacts" as never)
-        .select("id, first_name, last_name, email, phone, broker_company:crm_companies(name)" as never)
+        .select("id, first_name, last_name, email, phone" as never)
         .eq("id" as never, brokerContactId as never)
         .single();
       if (brokerData) {
@@ -125,7 +125,7 @@ export default async function DealDetailRoute({ params }: PageProps) {
       .select("id, deal_id, profile_id, role, created_at" as never)
       .eq("deal_id" as never, dealId as never)
       .order("created_at" as never),
-    getDealTeamContacts(admin, dealId),
+    getDealTeamContacts(admin, dealId).catch(() => [] as DealTeamContact[]),
     admin
       .from("deal_contacts" as never)
       .select("id, deal_id, contact_id, role, is_guarantor, sort_order, contact:crm_contacts(id, first_name, last_name, email, phone, company_name)" as never)
@@ -153,8 +153,8 @@ export default async function DealDetailRoute({ params }: PageProps) {
           .limit(1)
           .single()
       : Promise.resolve({ data: null }),
-    getPinnedNote(admin, dealId),
-    getMostRecentNote(admin, dealId),
+    getPinnedNote(admin, dealId).catch(() => null),
+    getMostRecentNote(admin, dealId).catch(() => null),
   ]);
 
   const stageConfigs = ((stageConfigsRaw as unknown as { data: StageConfig[] | null }).data ?? []);

@@ -162,7 +162,7 @@ export async function middleware(request: NextRequest) {
   // -----------------------------------------------------------------------
   // Authenticated user on a public route (e.g. /login) → redirect to dashboard
   // -----------------------------------------------------------------------
-  if (user && isPublicRoute) {
+  if (user && isPublicRoute && !pathname.startsWith("/api/")) {
     const { data: profile } = await supabase
       .from("profiles")
       .select("role, allowed_roles, activation_status")

@@ -295,6 +295,7 @@ export function DetailOverviewTab({
             onBlur: handleInlineBlur,
             disabled: pending,
             optionsOverrides,
+            onAddNewCompany: () => setQuickAddCompanyOpen(true),
           },
           hiddenFieldKeys,
           readOnlyFieldKeys,

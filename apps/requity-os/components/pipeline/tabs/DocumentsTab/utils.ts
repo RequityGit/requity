@@ -1,34 +1,40 @@
 // ─── Cumulative Stage Filtering ───
 
-/** Condition stages in lifecycle order */
+/**
+ * Condition stages aligned 1:1 with deal pipeline stages.
+ * Conditions use the same stage names as deals (lead, analysis, negotiation, execution, closed).
+ */
 export const CONDITION_STAGE_ORDER = [
-  "loan_intake",
-  "processing",
-  "closed_onboarding",
-  "note_sell_process",
-  "post_loan_payoff",
+  "lead",
+  "analysis",
+  "negotiation",
+  "execution",
+  "closed",
 ] as const;
 
-/** Maps deal pipeline stage to the latest condition stage visible by default */
+/**
+ * Maps deal pipeline stage to the latest condition stage visible by default.
+ * Since condition stages now match deal stages 1:1, the ceiling is the deal stage itself.
+ */
 export const DEAL_TO_CONDITION_CEILING: Record<string, string> = {
-  lead: "loan_intake",
-  analysis: "loan_intake",
-  negotiation: "processing",
-  execution: "closed_onboarding",
-  closed: "post_loan_payoff",
+  lead: "lead",
+  analysis: "analysis",
+  negotiation: "negotiation",
+  execution: "execution",
+  closed: "closed",
 };
 
 /** Get condition stage label */
 export const CONDITION_STAGE_LABELS: Record<string, string> = {
-  loan_intake: "Loan Intake",
-  processing: "Processing",
-  closed_onboarding: "Closed / Onboarding",
-  note_sell_process: "Note Sell Process",
-  post_loan_payoff: "Post Loan Payoff",
+  lead: "Lead",
+  analysis: "Analysis",
+  negotiation: "Negotiation",
+  execution: "Execution",
+  closed: "Closed",
 };
 
 export function getCeilingStage(dealStage: string): string {
-  return DEAL_TO_CONDITION_CEILING[dealStage] ?? "post_loan_payoff";
+  return DEAL_TO_CONDITION_CEILING[dealStage] ?? "closed";
 }
 
 export function getVisibleStages(ceilingStage: string): string[] {
@@ -112,11 +118,11 @@ export const CATEGORY_LABELS: Record<string, string> = {
 
 export const STAGE_FILTERS = [
   { key: "all", label: "All" },
-  { key: "loan_intake", label: "Loan Intake" },
-  { key: "processing", label: "Processing" },
-  { key: "closed_onboarding", label: "Closed / Onboarding" },
-  { key: "note_sell_process", label: "Note Sell Process" },
-  { key: "post_loan_payoff", label: "Post Loan Payoff" },
+  { key: "lead", label: "Lead" },
+  { key: "analysis", label: "Analysis" },
+  { key: "negotiation", label: "Negotiation" },
+  { key: "execution", label: "Execution" },
+  { key: "closed", label: "Closed" },
 ] as const;
 
 export const CONDITION_STATUS_CONFIG: Record<

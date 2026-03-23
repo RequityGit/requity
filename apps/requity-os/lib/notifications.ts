@@ -10,6 +10,7 @@ export type NotificationCategory =
   | "operations"
   | "system";
 export type EntityType =
+  | "deal"
   | "loan"
   | "borrower"
   | "investor"
@@ -134,9 +135,13 @@ export function getNotificationRoute(
 
   if (entity_type && entity_id) {
     switch (entity_type) {
-      case "loan":
+      case "deal":
         if (activeRole === "borrower") return `/b/loans/${entity_id}`;
         return `/pipeline/${entity_id}?tab=notes`;
+
+      case "loan":
+        if (activeRole === "borrower") return `/b/loans/${entity_id}`;
+        return `/servicing/${entity_id}?tab=notes`;
 
       case "borrower":
         if (isAdmin) return `/borrowers/${entity_id}`;
@@ -212,6 +217,7 @@ export function getNotificationRoute(
 
 // Entity type display labels
 const ENTITY_TYPE_LABELS: Record<string, string> = {
+  deal: "Deal",
   loan: "Loan",
   borrower: "Borrower",
   investor: "Investor",

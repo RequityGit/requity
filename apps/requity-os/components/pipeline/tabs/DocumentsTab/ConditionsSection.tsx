@@ -807,7 +807,7 @@ export function ConditionsSection({
   }, []);
 
   // Filter conditions by required_stage (cumulative or single)
-  const ceiling = dealStage ? getCeilingStage(dealStage) : "post_loan_payoff";
+  const ceiling = dealStage ? getCeilingStage(dealStage) : "closed";
   const cumulativeStages = getVisibleStages(ceiling);
 
   const filtered = conditions.filter((c) => {

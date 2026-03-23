@@ -240,6 +240,7 @@ export function ConditionsClient({ templates }: ConditionsClientProps) {
       id: string,
       fields: Partial<{
         condition_name: string;
+        required_stage: "lead" | "analysis" | "negotiation" | "execution" | "closed";
         applies_to_commercial: boolean;
         applies_to_rtl: boolean;
         applies_to_dscr: boolean;

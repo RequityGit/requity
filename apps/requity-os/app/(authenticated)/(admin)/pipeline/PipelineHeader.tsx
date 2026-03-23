@@ -36,7 +36,7 @@ export function PipelineHeader({ intakeCount }: PipelineHeaderProps) {
           </button>
         </p>
       </div>
-      {intakeCount > 0 ? (
+      {intakeCount > 0 && (
         <div className="flex items-center gap-2 rounded-lg border border-amber-500/20 bg-amber-500/5 px-3 py-2">
           <div className="flex h-5 w-5 shrink-0 items-center justify-center rounded bg-gradient-to-br from-amber-500 to-amber-600">
             <Mail className="h-3 w-3 text-black" />
@@ -45,10 +45,6 @@ export function PipelineHeader({ intakeCount }: PipelineHeaderProps) {
             <strong>{intakeCount} intake item{intakeCount > 1 ? "s" : ""}</strong> ready for review
           </span>
         </div>
-      ) : (
-        <p className="text-xs text-muted-foreground">
-          No pending intake. Processed items become deals in Lead. Forward another email to add one.
-        </p>
       )}
     </div>
   );
