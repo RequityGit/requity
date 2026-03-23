@@ -1,4 +1,5 @@
 import nodemailer from "nodemailer";
+import { stripMentionMarkup } from "@/lib/comment-utils";
 
 /* ------------------------------------------------------------------ */
 /*  Transporter (reusable)                                             */
@@ -121,7 +122,7 @@ function buildBody(params: TaskEmailParams): string {
       ${escapeHtml(params.taskTitle)}
     </p>
     <div style="background:#f8fafc;border-radius:8px;padding:16px;margin-bottom:20px;border-left:3px solid #cbd5e1">
-      <p style="margin:0;font-size:14px;color:#475569;line-height:1.5;white-space:pre-wrap">${escapeHtml(params.body)}</p>
+      <p style="margin:0;font-size:14px;color:#475569;line-height:1.5;white-space:pre-wrap">${formatBodyForEmail(params.body)}</p>
     </div>
     <div style="text-align:center;margin:24px 0 8px">
       <a href="${taskUrl}" style="display:inline-block;padding:12px 28px;background-color:#0f172a;color:#ffffff;text-decoration:none;border-radius:6px;font-weight:600;font-size:14px">
@@ -129,6 +130,15 @@ function buildBody(params: TaskEmailParams): string {
       </a>
     </div>
   `);
+}
+
+/** Strip @[Name](uuid) markup and render @Name as bold in email HTML */
+function formatBodyForEmail(body: string): string {
+  // First strip mention markup to plain text, then escape HTML,
+  // then bold the @mentions
+  const stripped = stripMentionMarkup(body);
+  const escaped = escapeHtml(stripped);
+  return escaped.replace(/@(\w[\w\s]*?)(?=\s|$|,|\.)/g, '<strong>@$1</strong>');
 }
 
 function escapeHtml(str: string): string {
