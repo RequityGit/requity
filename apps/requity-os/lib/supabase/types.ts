@@ -11270,6 +11270,7 @@ export type Database = {
       }
       page_layout_sections: {
         Row: {
+          card_type_id: string | null
           created_at: string
           default_collapsed: boolean | null
           display_order: number
@@ -11292,6 +11293,7 @@ export type Database = {
           visibility_rule: string | null
         }
         Insert: {
+          card_type_id?: string | null
           created_at?: string
           default_collapsed?: boolean | null
           display_order?: number
@@ -11314,6 +11316,7 @@ export type Database = {
           visibility_rule?: string | null
         }
         Update: {
+          card_type_id?: string | null
           created_at?: string
           default_collapsed?: boolean | null
           display_order?: number
@@ -11336,6 +11339,13 @@ export type Database = {
           visibility_rule?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "page_layout_sections_card_type_id_fkey"
+            columns: ["card_type_id"]
+            isOneToOne: false
+            referencedRelation: "unified_card_types"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "page_layout_sections_relationship_id_fkey"
             columns: ["relationship_id"]
