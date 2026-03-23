@@ -375,6 +375,11 @@ function DealDetailPageInner({
           assetClass={assetClass}
           loanAmount={loanAmount}
           expectedClose={expectedClose as string | null | undefined}
+          onEditLayout={() => {
+            inlineLayout.setActiveTabKey(activeTab.toLowerCase());
+            inlineLayout.startEditing(layout.sections, layout.fields);
+          }}
+          isEditingLayout={inlineLayout.state.isEditing}
         />
 
         {/* Tab Bar */}
@@ -663,6 +668,8 @@ function DealHeader({
   assetClass,
   loanAmount,
   expectedClose,
+  onEditLayout,
+  isEditingLayout,
 }: {
   deal: UnifiedDeal;
   shortLabel: string;
@@ -682,6 +689,8 @@ function DealHeader({
   assetClass: string | null;
   loanAmount: number | null;
   expectedClose: string | null | undefined;
+  onEditLayout: () => void;
+  isEditingLayout: boolean;
 }) {
   const router = useRouter();
 
@@ -1646,11 +1655,8 @@ function DealHeader({
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem
-                    disabled={inlineLayout.state.isEditing}
-                    onClick={() => {
-                      inlineLayout.setActiveTabKey(activeTab.toLowerCase());
-                      inlineLayout.startEditing(layout.sections, layout.fields);
-                    }}
+                    disabled={isEditingLayout}
+                    onClick={onEditLayout}
                   >
                     <Pencil className="h-4 w-4 mr-2" />
                     Edit Layout
