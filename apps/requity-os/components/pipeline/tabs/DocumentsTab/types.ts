@@ -17,6 +17,9 @@ export interface DealDocument {
   review_status: string | null;
   storage_path: string | null;
   visibility?: string | null;
+  google_drive_file_id?: string | null;
+  submission_status?: string | null;
+  deleted_at?: string | null;
   _uploaded_by_name?: string | null;
   condition_id?: string | null;
   condition_approval_status?: string | null;

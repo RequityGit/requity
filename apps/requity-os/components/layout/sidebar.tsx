@@ -205,9 +205,14 @@ export function Sidebar({
           className={cn("flex items-center", collapsed ? "justify-center" : "gap-2")}
         >
           <img
+            src={`${SUPABASE_URL}/storage/v1/object/public/brand-assets/Requity%20Logo%20Color.svg`}
+            alt="Requity"
+            className={cn("h-8 w-auto dark:hidden", collapsed ? "w-8 object-contain" : "")}
+          />
+          <img
             src={`${SUPABASE_URL}/storage/v1/object/public/brand-assets/Requity%20Logo%20White.svg?v=2`}
             alt="Requity"
-            className={cn("h-8 w-auto", collapsed ? "w-8 object-contain" : "")}
+            className={cn("h-8 w-auto hidden dark:block", collapsed ? "w-8 object-contain" : "")}
           />
         </Link>
         <button

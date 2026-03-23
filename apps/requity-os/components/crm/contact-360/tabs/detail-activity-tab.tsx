@@ -35,6 +35,7 @@ import {
   MessageSquare,
 } from "lucide-react";
 import { EmptyState } from "@/components/shared/EmptyState";
+import { ExpandableText } from "@/components/shared/ExpandableText";
 import { relTime } from "../contact-detail-shared";
 import type { ActivityData, EmailData } from "../types";
 import { ACTIVITY_TYPE_CONFIG } from "../types";
@@ -462,6 +463,9 @@ function ActivityTimelineItem({
             </Badge>
           )}
         </div>
+        {a.description && (
+          <ExpandableText text={a.description} />
+        )}
       </div>
     </div>
   );
