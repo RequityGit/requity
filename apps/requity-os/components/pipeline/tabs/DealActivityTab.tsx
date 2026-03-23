@@ -40,6 +40,7 @@ import { ACTIVITY_TYPE_CONFIG } from "@/components/crm/contact-360/types";
 import type { DealActivity } from "@/components/pipeline/pipeline-types";
 import { logDealActivityRich, fetchActivityTabData } from "@/app/(authenticated)/(admin)/pipeline/[id]/actions";
 import { Skeleton } from "@/components/ui/skeleton";
+import { ExpandableText } from "@/components/shared/ExpandableText";
 
 // ── Icon map for activity types ──
 
@@ -523,6 +524,9 @@ function CrmActivityTimelineItem({
             </Badge>
           )}
         </div>
+        {a.description && (
+          <ExpandableText text={a.description} />
+        )}
       </div>
     </div>
   );
@@ -565,7 +569,7 @@ function DealActivityTimelineItem({
           <span className="text-[11px] text-muted-foreground">
             {relTime(a.created_at)}
           </span>
-          {a.description && (
+          {a.description && a.description.length <= 100 && (
             <>
               <span className="text-[11px] text-muted-foreground/50">
                 &middot;
@@ -576,6 +580,9 @@ function DealActivityTimelineItem({
             </>
           )}
         </div>
+        {a.description && a.description.length > 100 && (
+          <ExpandableText text={a.description} />
+        )}
       </div>
     </div>
   );

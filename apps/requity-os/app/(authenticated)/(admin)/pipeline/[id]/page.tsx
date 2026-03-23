@@ -116,8 +116,9 @@ export default async function DealDetailRoute({ params }: PageProps) {
       .order("sort_order" as never),
     admin
       .from("unified_deal_documents" as never)
-      .select("id, deal_id, document_name, document_type, category, subcategory, storage_path, file_url, file_size, file_size_bytes, mime_type, uploaded_by, status, notes, condition_id, condition_approval_status, review_status, archived_at, visibility, version, created_at, updated_at")
+      .select("id, deal_id, document_name, category, storage_path, file_url, file_size_bytes, mime_type, uploaded_by, condition_id, condition_approval_status, review_status, archived_at, visibility, google_drive_file_id, submission_status, deleted_at, created_at")
       .eq("deal_id" as never, dealId as never)
+      .is("deleted_at" as never, null as never)
       .order("created_at" as never, { ascending: false }),
     admin
       .from("deal_team_members" as never)
@@ -167,7 +168,11 @@ export default async function DealDetailRoute({ params }: PageProps) {
       loan_condition_templates: undefined,
     };
   }) as unknown as DealCondition[];
-  const documents = ((documentsRaw as unknown as { data: Record<string, unknown>[] | null }).data ?? []);
+  const documentsResult = documentsRaw as unknown as { data: Record<string, unknown>[] | null; error: { message: string } | null };
+  if (documentsResult.error) {
+    console.error("Failed to fetch deal documents:", documentsResult.error.message);
+  }
+  const documents = documentsResult.data ?? [];
   const dealTeamMembers: DealTeamMemberRow[] =
     ((dealTeamMembersRaw as unknown as { data: DealTeamMemberRow[] | null }).data ?? []);
   const dealTeamContacts: DealTeamContact[] = Array.isArray(dealTeamContactsRaw)
