@@ -41,6 +41,8 @@ interface ConditionTemplate {
   per_borrower?: boolean | null;
   sort_order: number | null;
   is_active: boolean | null;
+  template_file_url: string | null;
+  template_file_name: string | null;
   created_at: string;
   updated_at: string;
 }

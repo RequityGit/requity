@@ -143,7 +143,7 @@ export function StackedAvatars({
   likes,
   max = 3,
 }: {
-  likes: { user_id: string; name: string }[];
+  likes: { user_id: string; name: string; accent_color?: string | null }[];
   max?: number;
 }) {
   const shown = likes.slice(0, max);
@@ -152,7 +152,7 @@ export function StackedAvatars({
   return (
     <div className="flex items-center ml-1">
       {shown.map((l, i) => {
-        const likerColor = getUserColor({ id: l.user_id, accent_color: null });
+        const likerColor = getUserColor({ id: l.user_id, accent_color: l.accent_color ?? null });
         const initials = l.name
           .split(" ")
           .map((w) => w[0])
@@ -228,7 +228,7 @@ export function NoteCard({
   // Accent color for author name and avatar
   const authorColor = getUserColor({
     id: note.author_id,
-    accent_color: null,
+    accent_color: note.author_accent_color ?? null,
   });
   const aC = colorVariants(authorColor);
 
@@ -236,6 +236,7 @@ export function NoteCard({
   const likerData = likes.map((l) => ({
     user_id: l.user_id,
     name: l.profiles?.full_name ?? "Unknown",
+    accent_color: l.profiles?.accent_color ?? null,
   }));
 
   const avatarSize = compact ? 24 : 32;

@@ -24,7 +24,7 @@ export interface UnifiedNotesProps {
 
 export interface NoteLike {
   user_id: string;
-  profiles: { full_name: string | null };
+  profiles: { full_name: string | null; accent_color?: string | null };
 }
 
 export interface NoteData {
@@ -33,6 +33,7 @@ export interface NoteData {
   updated_at: string;
   author_id: string;
   author_name: string | null;
+  author_accent_color?: string | null;
   body: string;
   parent_note_id: string | null;
   mentions: string[];

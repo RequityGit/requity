@@ -5,20 +5,17 @@ import { useRouter } from "next/navigation";
 import {
   Bell,
   ExternalLink,
-  Lock,
-  Loader2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/client";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import type { Notification } from "@/lib/notifications";
 import {
   getNotificationRoute,
   getEntityTypeLabel,
 } from "@/lib/notifications";
 import { parseComment, stripMentionMarkup } from "@/lib/comment-utils";
-import { relativeTime } from "@/lib/comment-utils";
 import { NoteComposer } from "@/components/shared/UnifiedNotes/NoteComposer";
+import { NoteThread } from "@/components/shared/UnifiedNotes/NoteThread";
 import type { NoteData } from "@/components/shared/UnifiedNotes/types";
 import type { UploadedAttachment } from "@/components/shared/attachments";
 import { showError } from "@/lib/toast";
@@ -26,8 +23,6 @@ import { TaskPreviewCard } from "./previews/task-preview-card";
 import { ConditionPreviewCard } from "./previews/condition-preview-card";
 import { ApprovalPreviewCard } from "./previews/approval-preview-card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { getUserColor, colorVariants } from "@/lib/user-colors";
-import { StackedAvatars } from "@/components/shared/UnifiedNotes/NoteCard";
 
 interface NotificationDetailPanelProps {
   notification: Notification | null;
@@ -59,33 +54,6 @@ function isNoteRelated(slug: string): boolean {
     slug.includes("like") ||
     slug.includes("reaction")
   );
-}
-
-function getInitials(name: string): string {
-  return name
-    .split(" ")
-    .map((w) => w[0])
-    .filter(Boolean)
-    .join("")
-    .slice(0, 2)
-    .toUpperCase();
-}
-
-const AVATAR_COLORS = [
-  { bg: "bg-[#2a1f3d]", text: "text-[#a78bfa]" },
-  { bg: "bg-[#1a3d2a]", text: "text-[#4ade80]" },
-  { bg: "bg-[#3d2a1f]", text: "text-[#fb923c]" },
-  { bg: "bg-[#1f2a3d]", text: "text-[#60a5fa]" },
-  { bg: "bg-[#3d1f2a]", text: "text-[#f472b6]" },
-  { bg: "bg-[#3d1f1f]", text: "text-[#f87171]" },
-];
-
-function getAvatarColor(name: string) {
-  let hash = 0;
-  for (let i = 0; i < name.length; i++) {
-    hash = name.charCodeAt(i) + ((hash << 5) - hash);
-  }
-  return AVATAR_COLORS[Math.abs(hash) % AVATAR_COLORS.length];
 }
 
 // Render body with @mention highlighting
@@ -144,7 +112,36 @@ export function NotificationDetailPanel({
         .limit(50);
 
       if (!error && data) {
-        setThreadNotes(data as unknown as NoteData[]);
+        let notes = data as unknown as NoteData[];
+        // Batch-fetch accent colors for note authors and likers
+        const userIds = new Set<string>();
+        for (const n of notes) {
+          if (n.author_id) userIds.add(n.author_id);
+          for (const l of n.note_likes ?? []) {
+            if (l.user_id) userIds.add(l.user_id);
+          }
+        }
+        if (userIds.size > 0) {
+          const { data: profiles } = await supabase
+            .from("profiles")
+            .select("id, accent_color")
+            .in("id", Array.from(userIds));
+          if (profiles) {
+            const colorMap = new Map<string, string | null>();
+            for (const p of profiles as { id: string; accent_color: string | null }[]) {
+              colorMap.set(p.id, p.accent_color);
+            }
+            notes = notes.map((n) => ({
+              ...n,
+              author_accent_color: colorMap.get(n.author_id) ?? null,
+              note_likes: (n.note_likes ?? []).map((l) => ({
+                ...l,
+                profiles: { ...l.profiles, accent_color: colorMap.get(l.user_id) ?? null },
+              })),
+            }));
+          }
+        }
+        setThreadNotes(notes);
       }
     } catch {
       // Silently fail - show notification body as fallback
@@ -172,8 +169,158 @@ export function NotificationDetailPanel({
     return match?.id ?? null;
   }, [notification?.body, threadNotes]);
 
-  // Post a reply
-  const handlePostReply = useCallback(
+  // Like/unlike a note
+  const handleToggleLike = useCallback(
+    async (noteId: string, isCurrentlyLiked: boolean) => {
+      const supabase = createClient();
+
+      // Optimistic update
+      setThreadNotes((prev) =>
+        prev.map((n) => {
+          if (n.id !== noteId) return n;
+          if (isCurrentlyLiked) {
+            return {
+              ...n,
+              note_likes: n.note_likes.filter((l) => l.user_id !== currentUserId),
+            };
+          }
+          return {
+            ...n,
+            note_likes: [
+              ...n.note_likes,
+              { user_id: currentUserId, profiles: { full_name: currentUserName } },
+            ],
+          };
+        })
+      );
+
+      if (isCurrentlyLiked) {
+        await supabase
+          .from("note_likes" as never)
+          .delete()
+          .eq("note_id" as never, noteId as never)
+          .eq("user_id" as never, currentUserId as never);
+      } else {
+        await supabase.from("note_likes" as never).insert({
+          note_id: noteId,
+          user_id: currentUserId,
+        } as never);
+      }
+    },
+    [currentUserId, currentUserName]
+  );
+
+  // Edit a note
+  const handleEdit = useCallback(
+    async (noteId: string, body: string, mentionIds: string[]) => {
+      const supabase = createClient();
+
+      // Optimistic update
+      setThreadNotes((prev) =>
+        prev.map((n) =>
+          n.id === noteId
+            ? { ...n, body, mentions: mentionIds, is_edited: true, edited_at: new Date().toISOString() }
+            : n
+        )
+      );
+
+      const { error } = await supabase
+        .from("notes" as never)
+        .update({ body, mentions: mentionIds, is_edited: true, edited_at: new Date().toISOString() } as never)
+        .eq("id" as never, noteId as never);
+
+      if (error) {
+        showError("Could not edit note", error.message);
+        fetchThread();
+      }
+    },
+    [fetchThread]
+  );
+
+  // Soft delete a note
+  const handleDelete = useCallback(
+    async (noteId: string) => {
+      const supabase = createClient();
+
+      // Optimistic: remove from local state
+      setThreadNotes((prev) => prev.filter((n) => n.id !== noteId));
+
+      const { error } = await supabase
+        .from("notes" as never)
+        .update({ deleted_at: new Date().toISOString() } as never)
+        .eq("id" as never, noteId as never);
+
+      if (error) {
+        showError("Could not delete note", error.message);
+        fetchThread();
+      }
+    },
+    [fetchThread]
+  );
+
+  // Pin stub (not relevant in notification context)
+  const handlePin = useCallback((_noteId: string, _isPinned: boolean) => {
+    // Pinning not supported in notification detail panel
+  }, []);
+
+  // Reply to a specific note in the thread
+  const handleReply = useCallback(
+    async (
+      parentNoteId: string,
+      body: string,
+      isInternal: boolean,
+      mentionIds: string[],
+      attachments?: UploadedAttachment[]
+    ) => {
+      if (!notification) return;
+
+      const column = getNotesEntityColumn(notification.entity_type);
+      if (!column || !notification.entity_id) return;
+
+      const supabase = createClient();
+      const notePayload: Record<string, unknown> = {
+        author_id: currentUserId,
+        author_name: currentUserName,
+        body,
+        is_internal: isInternal,
+        mentions: mentionIds,
+        parent_note_id: parentNoteId,
+        [column]: notification.entity_id,
+      };
+
+      const { data: newNote, error } = await supabase
+        .from("notes" as never)
+        .insert(notePayload as never)
+        .select("*, note_likes(user_id, profiles(full_name)), note_attachments(id, file_name, file_type, file_size_bytes, storage_path)" as never)
+        .single();
+
+      if (error) {
+        showError("Could not post reply", error.message);
+        return;
+      }
+
+      if (attachments && attachments.length > 0 && newNote) {
+        const noteId = (newNote as unknown as NoteData).id;
+        for (const att of attachments) {
+          await supabase.from("note_attachments" as never).insert({
+            note_id: noteId,
+            file_name: att.fileName,
+            file_type: att.fileType,
+            file_size_bytes: att.fileSizeBytes,
+            storage_path: att.storagePath,
+          } as never);
+        }
+      }
+
+      if (newNote) {
+        setThreadNotes((prev) => [...prev, newNote as unknown as NoteData]);
+      }
+    },
+    [notification, currentUserId, currentUserName]
+  );
+
+  // Post a top-level note from the bottom composer
+  const handlePostTopLevel = useCallback(
     async (
       body: string,
       isInternal: boolean,
@@ -195,7 +342,7 @@ export function NotificationDetailPanel({
         [column]: notification.entity_id,
       };
 
-      // If we found the highlighted note, make the reply a child of it
+      // If there's a highlighted note, make the reply a child of it
       if (highlightedNoteId) {
         notePayload.parent_note_id = highlightedNoteId;
       }
@@ -211,7 +358,6 @@ export function NotificationDetailPanel({
         return;
       }
 
-      // Handle attachments
       if (attachments && attachments.length > 0 && newNote) {
         const noteId = (newNote as unknown as NoteData).id;
         for (const att of attachments) {
@@ -225,13 +371,36 @@ export function NotificationDetailPanel({
         }
       }
 
-      // Append to thread
       if (newNote) {
         setThreadNotes((prev) => [...prev, newNote as unknown as NoteData]);
       }
     },
     [notification, currentUserId, currentUserName, highlightedNoteId]
   );
+
+  // Group notes into top-level + replies for NoteThread rendering
+  const { topLevelNotes, replyMap } = useMemo(() => {
+    const top = threadNotes.filter((n) => !n.parent_note_id);
+    const rMap = new Map<string, NoteData[]>();
+
+    for (const note of threadNotes) {
+      if (note.parent_note_id) {
+        const existing = rMap.get(note.parent_note_id) || [];
+        existing.push(note);
+        rMap.set(note.parent_note_id, existing);
+      }
+    }
+
+    // Sort replies oldest-first (chronological within thread)
+    rMap.forEach((reps) => {
+      reps.sort(
+        (a: NoteData, b: NoteData) =>
+          new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+      );
+    });
+
+    return { topLevelNotes: top, replyMap: rMap };
+  }, [threadNotes]);
 
   function handleGoToEntity() {
     if (!notification) return;
@@ -315,7 +484,6 @@ export function NotificationDetailPanel({
     }
 
     if (threadNotes.length === 0) {
-      // Fallback: show notification body
       return (
         <div className="p-4">
           <div className="text-sm text-muted-foreground leading-relaxed">
@@ -329,115 +497,38 @@ export function NotificationDetailPanel({
       );
     }
 
-    // Filter to only parent-level notes (no parent_note_id) and their replies
-    const topLevelNotes = threadNotes.filter((n) => !n.parent_note_id);
-    const replies = threadNotes.filter((n) => n.parent_note_id);
-
-    // If few top-level notes, show all. Otherwise show around the highlighted note.
-    const notesToShow =
-      threadNotes.length <= 20 ? threadNotes : threadNotes.slice(-20);
-
     return (
       <div className="p-3 space-y-0">
         <div className="text-[10px] text-muted-foreground/50 pb-2">
           {threadNotes.length} message{threadNotes.length !== 1 ? "s" : ""} in thread
         </div>
-        {notesToShow.map((note) => {
+        {topLevelNotes.map((note) => {
           const isHighlighted = note.id === highlightedNoteId;
-          const isReply = !!note.parent_note_id;
-          const authorName = note.author_name ?? "Unknown";
-          const initials = getInitials(authorName);
-          const noteColor = getUserColor({ id: note.author_id, accent_color: null });
+          const replies = replyMap.get(note.id) || [];
 
           return (
             <div
               key={note.id}
               className={cn(
-                "flex gap-2.5 py-2.5",
                 isHighlighted &&
-                  "bg-blue-500/[0.04] rounded-lg px-2.5 -mx-2.5 border-l-2 border-l-blue-500",
-                !isHighlighted && "border-t border-foreground/[0.03] first:border-t-0",
-                isReply && !isHighlighted && "pl-10"
+                  "bg-blue-500/[0.04] rounded-lg px-1 -mx-1 border-l-2 border-l-blue-500"
               )}
             >
-              <div
-                className="flex-shrink-0 rounded-full flex items-center justify-center text-[10px] font-semibold"
-                style={{
-                  width: 28,
-                  height: 28,
-                  backgroundColor: `${noteColor}14`,
-                  border: `1.5px solid ${noteColor}30`,
-                  color: noteColor,
-                  letterSpacing: "-0.03em",
-                }}
-              >
-                {initials}
-              </div>
-
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-1.5 mb-1">
-                  <span className="text-[12px] font-semibold" style={{ color: noteColor }}>
-                    {authorName}
-                  </span>
-                  <span className="text-[10px] text-muted-foreground/50">
-                    {relativeTime(note.created_at)}
-                  </span>
-                  {note.is_internal && (
-                    <span className="inline-flex items-center gap-0.5 text-[9px] font-semibold px-1.5 py-px rounded bg-amber-500/10 text-amber-500">
-                      <Lock className="h-2 w-2" />
-                      Internal
-                    </span>
-                  )}
-                </div>
-                <div className="text-[12px] text-muted-foreground leading-relaxed">
-                  <RenderBody body={note.body} />
-                </div>
-
-                {/* Attachments */}
-                {note.note_attachments && note.note_attachments.length > 0 && (
-                  <div className="flex flex-wrap gap-1.5 mt-1.5">
-                    {note.note_attachments.map((att) => (
-                      <span
-                        key={att.id}
-                        className="inline-flex items-center gap-1 text-[10px] font-medium px-2 py-1 rounded-md bg-emerald-500/10 text-emerald-500"
-                      >
-                        {att.file_name}
-                      </span>
-                    ))}
-                  </div>
-                )}
-
-                {/* Likes — unified with NoteCard design */}
-                {note.note_likes && note.note_likes.length > 0 && (() => {
-                  const noteAuthorColor = getUserColor({ id: note.author_id, accent_color: null });
-                  const noteAC = colorVariants(noteAuthorColor);
-                  const noteLikerData = note.note_likes.map((l) => ({
-                    user_id: l.user_id,
-                    name: l.profiles?.full_name ?? "Unknown",
-                  }));
-                  return (
-                    <div className="flex items-center gap-0.5 mt-1.5">
-                      <span
-                        className="inline-flex items-center gap-[5px] rounded-full px-2 py-[2px] text-[10px] font-medium"
-                        style={{
-                          border: `1px solid ${noteAC.border}`,
-                          background: noteAC.bg,
-                          color: noteAC.base,
-                        }}
-                      >
-                        <svg width={10} height={10} viewBox="0 0 20 20" fill="none">
-                          <path
-                            d="M3 9.5C3 9.22 3.22 9 3.5 9H5.5C5.78 9 6 9.22 6 9.5V16.5C6 16.78 5.78 17 5.5 17H3.5C3.22 17 3 16.78 3 16.5V9.5ZM7.5 8.2L10.5 3.5C10.65 3.27 10.95 3.1 11.25 3.1C12.22 3.1 13 3.88 13 4.85V7.5H16.1C16.95 7.5 17.65 8.3 17.5 9.15L16.3 16.15C16.18 16.85 15.57 17 15.1 17H8.5C7.95 17 7.5 16.55 7.5 16V8.2Z"
-                            fill={noteAC.base}
-                          />
-                        </svg>
-                        <span className="num">{note.note_likes.length}</span>
-                      </span>
-                      <StackedAvatars likes={noteLikerData} />
-                    </div>
-                  );
-                })()}
-              </div>
+              <NoteThread
+                note={note}
+                replies={replies}
+                currentUserId={currentUserId}
+                currentUserName={currentUserName}
+                showPinning={false}
+                showInternalToggle
+                defaultInternal
+                compact
+                onPin={handlePin}
+                onEdit={handleEdit}
+                onDelete={handleDelete}
+                onToggleLike={handleToggleLike}
+                onReply={handleReply}
+              />
             </div>
           );
         })}
@@ -498,7 +589,7 @@ export function NotificationDetailPanel({
             showInternalToggle
             defaultInternal
             compact
-            onPost={handlePostReply}
+            onPost={handlePostTopLevel}
             enterToSend
           />
         </div>

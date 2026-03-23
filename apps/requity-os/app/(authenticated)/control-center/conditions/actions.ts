@@ -22,6 +22,8 @@ export interface ConditionFormData {
   per_borrower: boolean;
   sort_order: number | null;
   is_active: boolean;
+  template_file_url: string | null;
+  template_file_name: string | null;
 }
 
 export async function saveCondition(data: ConditionFormData) {
@@ -49,6 +51,8 @@ export async function saveCondition(data: ConditionFormData) {
       per_borrower: data.per_borrower,
       sort_order: data.sort_order,
       is_active: data.is_active,
+      template_file_url: data.template_file_url,
+      template_file_name: data.template_file_name,
     };
 
     if (data.id) {

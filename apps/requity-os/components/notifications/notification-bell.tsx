@@ -2,7 +2,6 @@
 
 import { Bell } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useUnreadCount } from "@/hooks/use-unread-count";
 import { useNotificationCenter } from "@/hooks/use-notification-center";
 
 interface NotificationBellProps {
@@ -11,8 +10,7 @@ interface NotificationBellProps {
 }
 
 export function NotificationBell({ userId }: NotificationBellProps) {
-  const { count } = useUnreadCount(userId);
-  const { open, isOpen } = useNotificationCenter();
+  const { unreadCount: count, open, isOpen } = useNotificationCenter();
 
   return (
     <button

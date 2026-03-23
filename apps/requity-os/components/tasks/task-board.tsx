@@ -232,7 +232,7 @@ export function TaskBoard({
             ? {
                 ...t,
                 status: columnId,
-                completed_at: null,
+                completed_at: columnId === "Complete" ? new Date().toISOString() : null,
                 updated_at: new Date().toISOString(),
               }
             : t

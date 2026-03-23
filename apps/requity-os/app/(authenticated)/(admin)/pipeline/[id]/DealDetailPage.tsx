@@ -217,10 +217,10 @@ function DealDetailPageInner({
   const UNIVERSAL_TABS = [
     "Action Center",
     "Overview",
+    "People",
     "Property",
     "Analysis",
     "Underwriting",
-    "People",
     "Documents",
   ] as const;
   const tabs = UNIVERSAL_TABS;

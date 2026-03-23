@@ -44,6 +44,7 @@ export function UnifiedNotes({
   const [filter, setFilter] = useState<NoteFilter>("all");
   const [currentUserId, setCurrentUserId] = useState<string>("");
   const [currentUserName, setCurrentUserName] = useState<string>("");
+  const [currentUserAccentColor, setCurrentUserAccentColor] = useState<string | null>(null);
 
   // Get current user on mount
   useEffect(() => {
@@ -53,11 +54,12 @@ export function UnifiedNotes({
         setCurrentUserId(user.id);
         supabase
           .from("profiles")
-          .select("full_name")
+          .select("full_name, accent_color")
           .eq("id", user.id)
           .single()
           .then(({ data }) => {
             setCurrentUserName(data?.full_name ?? "Unknown");
+            setCurrentUserAccentColor((data as { accent_color?: string | null } | null)?.accent_color ?? null);
           });
       }
     });
@@ -130,6 +132,35 @@ export function UnifiedNotes({
               return n;
             });
           }
+        }
+      }
+
+      // Batch-fetch accent colors for all note authors and likers
+      const userIds = new Set<string>();
+      for (const n of fetchedNotes) {
+        if (n.author_id) userIds.add(n.author_id);
+        for (const l of n.note_likes ?? []) {
+          if (l.user_id) userIds.add(l.user_id);
+        }
+      }
+      if (userIds.size > 0) {
+        const { data: profiles } = await supabase
+          .from("profiles")
+          .select("id, accent_color")
+          .in("id", Array.from(userIds));
+        if (profiles) {
+          const colorMap = new Map<string, string | null>();
+          for (const p of profiles as { id: string; accent_color: string | null }[]) {
+            colorMap.set(p.id, p.accent_color);
+          }
+          fetchedNotes = fetchedNotes.map((n) => ({
+            ...n,
+            author_accent_color: colorMap.get(n.author_id) ?? null,
+            note_likes: (n.note_likes ?? []).map((l) => ({
+              ...l,
+              profiles: { ...l.profiles, accent_color: colorMap.get(l.user_id) ?? null },
+            })),
+          }));
         }
       }
 
@@ -269,6 +300,7 @@ export function UnifiedNotes({
 
       const newNote = {
         ...(data as unknown as NoteData),
+        author_accent_color: currentUserAccentColor,
         note_likes: [],
         note_attachments: noteAttachments,
       };
@@ -409,7 +441,7 @@ export function UnifiedNotes({
       }
     } else {
       // Optimistic: add like
-      const newLike = { user_id: currentUserId, profiles: { full_name: currentUserName } };
+      const newLike = { user_id: currentUserId, profiles: { full_name: currentUserName, accent_color: currentUserAccentColor } };
       setNotes((prev) =>
         prev.map((n) =>
           n.id === noteId
@@ -517,6 +549,7 @@ export function UnifiedNotes({
 
       const newNote = {
         ...(data as unknown as NoteData),
+        author_accent_color: currentUserAccentColor,
         note_likes: [],
         note_attachments: noteAttachments,
       };

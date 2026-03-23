@@ -18,6 +18,8 @@ import {
   Send,
   Trash2,
   MessageSquare,
+  Download,
+  Globe,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { SUPABASE_URL } from "@/lib/supabase/constants";
@@ -26,6 +28,7 @@ import {
   dealMessagesChannelName,
   DEAL_MESSAGES_BROADCAST_EVENT,
 } from "@/lib/realtime/deal-message-broadcast";
+import { t, type UploadLocale } from "@/lib/upload-translations";
 
 /* ------------------------------------------------------------------ */
 /*  Types                                                              */
@@ -49,6 +52,8 @@ interface ConditionItem {
   staged_count: number;
   borrower_feedback: string | null;
   feedback_updated_at: string | null;
+  template_file_url: string | null;
+  template_file_name: string | null;
 }
 
 interface LinkData {
@@ -98,7 +103,7 @@ function getStatusGroup(status: string): ConditionStatusGroup {
   }
 }
 
-function getStatusConfig(status: string): {
+function getStatusConfig(status: string, locale: UploadLocale = "en"): {
   label: string;
   bgClass: string;
   textClass: string;
@@ -106,20 +111,20 @@ function getStatusConfig(status: string): {
 } {
   switch (status) {
     case "pending":
-      return { label: "Pending", bgClass: "bg-gray-100", textClass: "text-gray-600", dotClass: "bg-gray-400" };
+      return { label: t("status.pending", locale), bgClass: "bg-gray-100", textClass: "text-gray-600", dotClass: "bg-gray-400" };
     case "submitted":
-      return { label: "Submitted", bgClass: "bg-blue-50", textClass: "text-blue-700", dotClass: "bg-blue-500" };
+      return { label: t("status.submitted", locale), bgClass: "bg-blue-50", textClass: "text-blue-700", dotClass: "bg-blue-500" };
     case "under_review":
-      return { label: "Under Review", bgClass: "bg-amber-50", textClass: "text-amber-700", dotClass: "bg-amber-500" };
+      return { label: t("status.under_review", locale), bgClass: "bg-amber-50", textClass: "text-amber-700", dotClass: "bg-amber-500" };
     case "approved":
-      return { label: "Approved", bgClass: "bg-emerald-50", textClass: "text-emerald-700", dotClass: "bg-emerald-500" };
+      return { label: t("status.approved", locale), bgClass: "bg-emerald-50", textClass: "text-emerald-700", dotClass: "bg-emerald-500" };
     case "waived":
-      return { label: "Waived", bgClass: "bg-slate-50", textClass: "text-slate-600", dotClass: "bg-slate-400" };
+      return { label: t("status.waived", locale), bgClass: "bg-slate-50", textClass: "text-slate-600", dotClass: "bg-slate-400" };
     case "not_applicable":
-      return { label: "Not Applicable", bgClass: "bg-slate-50", textClass: "text-slate-500", dotClass: "bg-slate-400" };
+      return { label: t("status.not_applicable", locale), bgClass: "bg-slate-50", textClass: "text-slate-500", dotClass: "bg-slate-400" };
     case "rejected":
     case "revision_requested":
-      return { label: "Needs Revision", bgClass: "bg-red-50", textClass: "text-red-700", dotClass: "bg-red-500" };
+      return { label: t("status.needs_revision", locale), bgClass: "bg-red-50", textClass: "text-red-700", dotClass: "bg-red-500" };
     default:
       return { label: status, bgClass: "bg-gray-100", textClass: "text-gray-600", dotClass: "bg-gray-400" };
   }
@@ -187,6 +192,16 @@ export function SecureUploadClient({ token }: { token: string }) {
   const [loading, setLoading] = useState(true);
   const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([]);
   const [showCleared, setShowCleared] = useState(false);
+  const [locale, setLocale] = useState<UploadLocale>(() => {
+    if (typeof window !== "undefined") {
+      return (localStorage.getItem("rq-upload-locale") as UploadLocale) || "en";
+    }
+    return "en";
+  });
+
+  useEffect(() => {
+    localStorage.setItem("rq-upload-locale", locale);
+  }, [locale]);
 
   const fetchLinkData = useCallback(async () => {
     try {
@@ -324,7 +339,7 @@ export function SecureUploadClient({ token }: { token: string }) {
   }
 
   if (!linkData?.valid) {
-    return <InvalidLinkPage reason={linkData?.reason} />;
+    return <InvalidLinkPage reason={linkData?.reason} locale={locale} />;
   }
 
   // Calculate progress for checklist mode
@@ -341,13 +356,23 @@ export function SecureUploadClient({ token }: { token: string }) {
   return (
     <div className="h-screen min-h-screen overflow-y-auto overflow-x-hidden bg-gray-50">
       {/* Header */}
-      <div className="bg-gray-900 px-4 pt-6 pb-5 text-center">
+      <div className="relative bg-gray-900 px-4 pt-6 pb-5 text-center">
+        <div className="absolute right-4 top-4">
+          <button
+            type="button"
+            onClick={() => setLocale(locale === "en" ? "es" : "en")}
+            className="inline-flex items-center gap-1 rounded-full border border-white/20 bg-white/10 px-2.5 py-1 text-xs font-medium text-white hover:bg-white/20 transition-colors"
+          >
+            <Globe className="h-3 w-3" />
+            {locale === "en" ? "Espanol" : "English"}
+          </button>
+        </div>
         <img
           src={`${SUPABASE_URL}/storage/v1/object/public/brand-assets/Requity%20Logo%20White.svg?v=2`}
           alt="Requity Group"
           className="mx-auto mb-4 h-10"
         />
-        <h1 className="text-xl font-semibold text-white">Document Upload Portal</h1>
+        <h1 className="text-xl font-semibold text-white">{t("header.title", locale)}</h1>
         <p className="mt-1 text-sm text-gray-300">{linkData.dealName}</p>
         {linkData.label && (
           <p className="mt-1 text-sm font-medium text-gray-200">{linkData.label}</p>
@@ -360,7 +385,7 @@ export function SecureUploadClient({ token }: { token: string }) {
           <div className="mx-auto max-w-2xl">
             <div className="flex items-center justify-between text-sm">
               <span className="font-semibold text-gray-900">
-                {clearedCount} of {totalCount} conditions cleared
+                {t("progress.conditions_cleared", locale, { cleared: clearedCount, total: totalCount })}
               </span>
               <span className="font-medium text-gray-700">
                 {totalCount > 0 ? Math.round((clearedCount / totalCount) * 100) : 0}%
@@ -374,7 +399,7 @@ export function SecureUploadClient({ token }: { token: string }) {
             </div>
             {actionNeeded.length > 0 && (
               <p className="mt-2 text-xs font-medium text-red-700">
-                {actionNeeded.length} item{actionNeeded.length === 1 ? "" : "s"} need{actionNeeded.length === 1 ? "s" : ""} your attention
+                {t("progress.items_attention", locale, { count: actionNeeded.length, s: actionNeeded.length === 1 ? "" : "s", verb: actionNeeded.length === 1 ? "s" : "" })}
               </p>
             )}
           </div>
@@ -392,7 +417,7 @@ export function SecureUploadClient({ token }: { token: string }) {
         {/* Remaining uploads notice */}
         {linkData.remainingUploads !== null && linkData.remainingUploads !== undefined && (
           <div className="mb-6 text-center text-xs text-gray-500">
-            {linkData.remainingUploads} upload{linkData.remainingUploads === 1 ? "" : "s"} remaining
+            {t("upload.remaining", locale, { count: linkData.remainingUploads, s: linkData.remainingUploads === 1 ? "" : "s" })}
           </div>
         )}
 
@@ -404,7 +429,7 @@ export function SecureUploadClient({ token }: { token: string }) {
               <div>
                 <h3 className="mb-2 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-red-600">
                   <AlertTriangle className="h-3.5 w-3.5" />
-                  Action Needed
+                  {t("section.action_needed", locale)}
                 </h3>
                 <div className="space-y-3">
                   {actionNeeded.map((condition) => (
@@ -412,6 +437,7 @@ export function SecureUploadClient({ token }: { token: string }) {
                       key={condition.id}
                       token={token}
                       condition={condition}
+                      locale={locale}
                       onUpload={(files) => uploadFiles(files, condition.id, true)}
                       onSubmit={submitCondition}
                       onRefresh={fetchLinkData}
@@ -429,7 +455,7 @@ export function SecureUploadClient({ token }: { token: string }) {
               <div>
                 <h3 className="mb-2 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-amber-600">
                   <Clock className="h-3.5 w-3.5" />
-                  In Review
+                  {t("section.in_review", locale)}
                 </h3>
                 <div className="space-y-3">
                   {inProgress.map((condition) => (
@@ -437,6 +463,7 @@ export function SecureUploadClient({ token }: { token: string }) {
                       key={condition.id}
                       token={token}
                       condition={condition}
+                      locale={locale}
                       onUpload={(files) => uploadFiles(files, condition.id, true)}
                       onSubmit={submitCondition}
                       onRefresh={fetchLinkData}
@@ -458,7 +485,7 @@ export function SecureUploadClient({ token }: { token: string }) {
                   className="mb-2 flex w-full items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-emerald-600 hover:text-emerald-700"
                 >
                   <CheckCircle2 className="h-3.5 w-3.5" />
-                  Cleared ({cleared.length})
+                  {t("section.cleared", locale)} ({cleared.length})
                   {showCleared ? <ChevronUp className="ml-auto h-3.5 w-3.5" /> : <ChevronDown className="ml-auto h-3.5 w-3.5" />}
                 </button>
                 {showCleared && (
@@ -468,6 +495,7 @@ export function SecureUploadClient({ token }: { token: string }) {
                         key={condition.id}
                         token={token}
                         condition={condition}
+                        locale={locale}
                         onUpload={(files) => uploadFiles(files, condition.id, true)}
                         onSubmit={submitCondition}
                         onRefresh={fetchLinkData}
@@ -486,7 +514,7 @@ export function SecureUploadClient({ token }: { token: string }) {
         {(linkData.mode === "general" || linkData.includeGeneralUpload) && (
           <div className={linkData.mode === "checklist" ? "mt-6" : ""}>
             {linkData.mode === "checklist" && (
-              <h3 className="mb-2 text-sm font-medium text-black">Other Documents</h3>
+              <h3 className="mb-2 text-sm font-medium text-black">{t("section.other_documents", locale)}</h3>
             )}
             <GeneralUploadZone
               onUpload={(files) => uploadFiles(files, null, false)}
@@ -497,13 +525,13 @@ export function SecureUploadClient({ token }: { token: string }) {
 
         {/* Messaging section */}
         {linkData.dealId && (
-          <BorrowerMessaging token={token} dealId={linkData.dealId} contactName={linkData.contactName ?? undefined} dealContacts={linkData.dealContacts ?? []} />
+          <BorrowerMessaging token={token} dealId={linkData.dealId} contactName={linkData.contactName ?? undefined} dealContacts={linkData.dealContacts ?? []} locale={locale} />
         )}
 
         {/* Footer */}
         <div className="mt-8 flex items-center justify-center gap-1.5 text-xs text-gray-400">
           <Shield className="h-3 w-3" />
-          <span>Secured by Requity Group</span>
+          <span>{t("header.secured_by", locale)}</span>
         </div>
       </div>
     </div>
@@ -523,7 +551,7 @@ interface BorrowerMessage {
   source: string;
 }
 
-function BorrowerMessaging({ token, dealId, contactName, dealContacts }: { token: string; dealId: string; contactName?: string; dealContacts: { id: string; name: string; role: string }[] }) {
+function BorrowerMessaging({ token, dealId, contactName, dealContacts, locale }: { token: string; dealId: string; contactName?: string; dealContacts: { id: string; name: string; role: string }[]; locale: UploadLocale }) {
   const [messages, setMessages] = useState<BorrowerMessage[]>([]);
   const [draft, setDraft] = useState("");
   const [sending, setSending] = useState(false);
@@ -663,9 +691,9 @@ function BorrowerMessaging({ token, dealId, contactName, dealContacts }: { token
       >
         <div className="flex items-center gap-2">
           <MessageSquare className="h-4 w-4 text-gray-500" />
-          <span className="text-sm font-medium text-gray-900">Messages</span>
+          <span className="text-sm font-medium text-gray-900">{t("messages.title", locale)}</span>
           {(selectedName || contactName) && (
-            <span className="text-xs text-gray-400">as {selectedName || contactName}</span>
+            <span className="text-xs text-gray-400">{t("messages.as", locale)} {selectedName || contactName}</span>
           )}
           {unreadHint && (
             <span className="flex h-2 w-2 rounded-full bg-blue-500" />
@@ -687,9 +715,7 @@ function BorrowerMessaging({ token, dealId, contactName, dealContacts }: { token
           <div className="flex items-start gap-2 px-4 py-2 bg-gray-50 text-xs text-gray-500">
             <Shield className="h-3.5 w-3.5 mt-0.5 shrink-0 text-gray-400" />
             <span>
-              This is a secure messaging channel for your loan with Requity Group.
-              Please do not share passwords, full Social Security numbers, or bank
-              login credentials here. Use the upload area above for sensitive documents.
+              {t("messages.disclaimer", locale)}
             </span>
           </div>
 
@@ -702,9 +728,9 @@ function BorrowerMessaging({ token, dealId, contactName, dealContacts }: { token
             ) : messages.length === 0 ? (
               <div className="text-center py-8">
                 <MessageSquare className="mx-auto h-8 w-8 text-gray-200 mb-2" />
-                <p className="text-sm text-gray-400">No messages yet</p>
+                <p className="text-sm text-gray-400">{t("messages.no_messages", locale)}</p>
                 <p className="text-xs text-gray-400 mt-1">
-                  Send a message to your loan team
+                  {t("messages.send_prompt", locale)}
                 </p>
               </div>
             ) : (
@@ -755,7 +781,7 @@ function BorrowerMessaging({ token, dealId, contactName, dealContacts }: { token
           {/* Identity picker - shown when multiple borrowers and no pre-set contact */}
           {showIdentityPicker && !selectedContactId && (
             <div className="border-t border-gray-100 px-4 py-3">
-              <p className="text-xs font-medium text-gray-700 mb-2">Who are you?</p>
+              <p className="text-xs font-medium text-gray-700 mb-2">{t("messages.who_are_you", locale)}</p>
               <div className="flex flex-wrap gap-2">
                 {dealContacts.map((c) => (
                   <button
@@ -777,14 +803,14 @@ function BorrowerMessaging({ token, dealId, contactName, dealContacts }: { token
             {/* Show selected identity with ability to change */}
             {showIdentityPicker && selectedContactId && (
               <div className="flex items-center gap-2 mb-2">
-                <span className="text-xs text-gray-500">Messaging as</span>
+                <span className="text-xs text-gray-500">{t("messages.messaging_as", locale)}</span>
                 <span className="text-xs font-medium text-gray-700">{selectedName}</span>
                 <button
                   type="button"
                   onClick={() => { setSelectedContactId(null); setSelectedName(null); }}
                   className="text-[10px] text-blue-600 hover:text-blue-800 underline underline-offset-2"
                 >
-                  Switch
+                  {t("messages.switch", locale)}
                 </button>
               </div>
             )}
@@ -801,7 +827,7 @@ function BorrowerMessaging({ token, dealId, contactName, dealContacts }: { token
                     handleSend();
                   }
                 }}
-                placeholder="Type a message..."
+                placeholder={t("messages.type_message", locale)}
                 rows={1}
                 className="flex-1 resize-none rounded-lg border border-gray-200 px-3 py-2 text-sm placeholder:text-gray-400 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
                 disabled={sending}
@@ -824,7 +850,7 @@ function BorrowerMessaging({ token, dealId, contactName, dealContacts }: { token
                 )}
               </button>
             </div>
-            <p className="mt-1 text-[10px] text-gray-400">Press Enter to send</p>
+            <p className="mt-1 text-[10px] text-gray-400">{t("messages.press_enter", locale)}</p>
           </div>
           )}
         </div>
@@ -837,15 +863,12 @@ function BorrowerMessaging({ token, dealId, contactName, dealContacts }: { token
 /*  Invalid link page                                                  */
 /* ------------------------------------------------------------------ */
 
-function InvalidLinkPage({ reason }: { reason?: string }) {
-  const messages: Record<string, { title: string; description: string }> = {
-    expired: { title: "This link has expired", description: "Please contact your loan officer to request a new upload link." },
-    revoked: { title: "This link is no longer active", description: "Please contact your loan officer to request a new upload link." },
-    max_uploads_reached: { title: "Upload limit reached", description: "The maximum number of files have been uploaded through this link." },
-    not_found: { title: "Link not found", description: "This upload link doesn't exist. Please check the URL or contact your loan officer." },
-    server_error: { title: "Something went wrong", description: "Please try again later or contact your loan officer." },
+function InvalidLinkPage({ reason, locale = "en" }: { reason?: string; locale?: UploadLocale }) {
+  const key = reason || "not_found";
+  const msg = {
+    title: t(`invalid.${key}`, locale),
+    description: t(`invalid.${key}_desc`, locale),
   };
-  const msg = messages[reason || "not_found"] || messages.not_found;
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-gray-50 px-4">
@@ -870,6 +893,7 @@ function InvalidLinkPage({ reason }: { reason?: string }) {
 function ConditionUploadCard({
   token,
   condition,
+  locale = "en",
   onUpload,
   onSubmit,
   onRefresh,
@@ -878,6 +902,7 @@ function ConditionUploadCard({
 }: {
   token: string;
   condition: ConditionItem;
+  locale?: UploadLocale;
   onUpload: (files: File[]) => void;
   onSubmit: (conditionId: string, comment: string) => Promise<unknown>;
   onRefresh: () => Promise<void>;
@@ -892,7 +917,7 @@ function ConditionUploadCard({
   const [removingDocId, setRemovingDocId] = useState<string | null>(null);
 
   const isUploading = uploadingFiles.length > 0;
-  const statusConfig = getStatusConfig(condition.status);
+  const statusConfig = getStatusConfig(condition.status, locale);
   const isCleared = getStatusGroup(condition.status) === "cleared";
   const needsRevision = condition.status === "rejected" || condition.status === "revision_requested";
 
@@ -973,6 +998,20 @@ function ConditionUploadCard({
           {condition.borrower_description && (
             <p className="mt-0.5 text-xs text-gray-500">{condition.borrower_description}</p>
           )}
+          {condition.template_file_url && (
+            <div className="mt-1.5 mb-1">
+              <a
+                href={condition.template_file_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                download={condition.template_file_name || "template"}
+                className="inline-flex items-center gap-1.5 rounded-md border border-gray-200 bg-gray-50 px-2.5 py-1 text-xs font-medium text-gray-700 hover:bg-gray-100 hover:border-gray-300 transition-colors"
+              >
+                <Download className="h-3 w-3" />
+                {t("upload.download_template", locale)}{condition.template_file_name ? `: ${condition.template_file_name}` : ""}
+              </a>
+            </div>
+          )}
         </div>
       </div>
 
@@ -982,7 +1021,7 @@ function ConditionUploadCard({
           <div className="flex items-start gap-2">
             <RotateCcw className="mt-0.5 h-3.5 w-3.5 shrink-0 text-red-500" />
             <div className="min-w-0 flex-1">
-              <p className="rq-micro-label text-red-400">Revision Requested</p>
+              <p className="rq-micro-label text-red-400">{t("revision.requested", locale)}</p>
               <p className="mt-0.5 text-xs leading-relaxed text-red-700">{condition.borrower_feedback}</p>
               {condition.feedback_updated_at && (
                 <p className="mt-1 text-[10px] text-red-400">{formatRelativeDate(condition.feedback_updated_at)}</p>
@@ -1009,7 +1048,7 @@ function ConditionUploadCard({
       {stagedDocs.length > 0 && (
         <div className={cn("border-t px-4 py-2", hasStagedFiles ? "border-amber-200 bg-amber-50/50" : "border-gray-100")}>
           <p className="rq-micro-label text-amber-600 mb-1">
-            Ready to submit ({stagedDocs.length} file{stagedDocs.length === 1 ? "" : "s"})
+            {t("docs.ready_to_submit", locale)} ({t("docs.files_count", locale, { count: stagedDocs.length, s: stagedDocs.length === 1 ? "" : "s" })})
           </p>
           {stagedDocs.map((doc) => (
             <div key={doc.id} className="flex items-center gap-2 py-1 text-xs text-amber-700">
@@ -1036,7 +1075,7 @@ function ConditionUploadCard({
             <textarea
               value={comment}
               onChange={(e) => setComment(e.target.value)}
-              placeholder="Add a note (optional) e.g. 'Jan, Feb, Mar statements attached'"
+              placeholder={t("upload.add_comment", locale)}
               className="w-full rounded-md border border-amber-200 bg-white px-3 py-2 text-xs text-black placeholder:text-gray-600 focus:border-amber-400 focus:outline-none focus:ring-1 focus:ring-amber-400 resize-none"
               rows={2}
             />
@@ -1055,7 +1094,7 @@ function ConditionUploadCard({
               ) : (
                 <Send className="h-3.5 w-3.5" />
               )}
-              Submit for Review
+              {t("upload.submit", locale)}
             </button>
             {submitError && (
               <p className="text-xs text-red-600">{submitError}</p>
@@ -1070,7 +1109,7 @@ function ConditionUploadCard({
           {uploadingFiles.map((f, i) => (
             <div key={i} className="flex items-center gap-1.5 py-1 text-xs text-gray-400">
               <Loader2 className="h-3 w-3 animate-spin" />
-              <span className="truncate">Uploading {f.name}...</span>
+              <span className="truncate">{t("upload.uploading", locale, { name: f.name })}</span>
             </div>
           ))}
         </div>
@@ -1112,12 +1151,12 @@ function ConditionUploadCard({
             )}
             <span>
               {isUploading
-                ? "Uploading..."
+                ? t("upload.submitting", locale)
                 : hasStagedFiles
-                  ? "Add more files"
+                  ? t("upload.add_more", locale)
                   : needsRevision
-                    ? "Upload revised document"
-                    : "Drop files or click to upload"}
+                    ? t("upload.upload_revised", locale)
+                    : t("upload.drop_or_click", locale)}
             </span>
           </button>
         </>
