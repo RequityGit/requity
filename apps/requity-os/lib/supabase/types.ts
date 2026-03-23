@@ -7614,6 +7614,7 @@ export type Database = {
           entity_ids: Json | null
           form_id: string
           id: string
+          internal_notes: string | null
           ip_address: unknown
           prefilled_by: string | null
           record_id: string | null
@@ -7638,6 +7639,7 @@ export type Database = {
           entity_ids?: Json | null
           form_id: string
           id?: string
+          internal_notes?: string | null
           ip_address?: unknown
           prefilled_by?: string | null
           record_id?: string | null
@@ -7662,6 +7664,7 @@ export type Database = {
           entity_ids?: Json | null
           form_id?: string
           id?: string
+          internal_notes?: string | null
           ip_address?: unknown
           prefilled_by?: string | null
           record_id?: string | null
@@ -18254,4 +18257,3 @@ export const Constants = {
     },
   },
 } as const
-
