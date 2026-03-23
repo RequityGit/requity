@@ -66,11 +66,9 @@ const CONDITION_STAGE_TO_DEAL_STAGE: Record<string, string> = {
 
 const STAGE_KEYS = DEAL_STAGES.map((s) => s.key);
 
-/** Returns a Set of all stage keys up to and including the given stage. */
-function getDefaultStages(dealStage: string): Set<string> {
-  const idx = STAGE_KEYS.indexOf(dealStage as (typeof STAGE_KEYS)[number]);
-  if (idx === -1) return new Set(STAGE_KEYS); // fallback: all stages
-  return new Set(STAGE_KEYS.slice(0, idx + 1));
+/** Default to ALL stages so the full condition picture is always visible. */
+function getDefaultStages(_dealStage: string): Set<string> {
+  return new Set(STAGE_KEYS);
 }
 
 interface ActionCenterRailProps {

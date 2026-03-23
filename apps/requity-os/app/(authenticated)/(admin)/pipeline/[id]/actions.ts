@@ -419,6 +419,10 @@ export async function saveDealDocumentRecord(params: {
   mimeType: string;
   conditionId?: string;
   visibility?: "internal" | "external";
+  contactId?: string;
+  companyId?: string;
+  documentType?: string;
+  documentDate?: string;
 }): Promise<{ error: string | null; documentId: string | null }> {
   try {
     const auth = await requireAdmin();
@@ -440,6 +444,10 @@ export async function saveDealDocumentRecord(params: {
       .insert({
         deal_id: params.dealId,
         ...(params.conditionId ? { condition_id: params.conditionId } : {}),
+        ...(params.contactId ? { contact_id: params.contactId } : {}),
+        ...(params.companyId ? { company_id: params.companyId } : {}),
+        ...(params.documentType ? { document_type: params.documentType } : {}),
+        ...(params.documentDate ? { document_date: params.documentDate } : {}),
         document_name: params.documentName,
         file_url: fileUrl,
         file_size_bytes: params.fileSizeBytes,
@@ -486,6 +494,32 @@ export async function saveDealDocumentRecord(params: {
   } catch (err: unknown) {
     console.error("saveDealDocumentRecord error:", err);
     return { error: err instanceof Error ? err.message : "Failed to save document record", documentId: null };
+  }
+}
+
+export async function assignDocumentOwner(
+  docId: string,
+  dealId: string,
+  owner: { contactId?: string | null; companyId?: string | null }
+): Promise<{ error?: string }> {
+  try {
+    const auth = await requireAdmin();
+    if ("error" in auth) return { error: auth.error ?? "Unauthorized" };
+
+    const admin = createAdminClient();
+    const { error } = await admin
+      .from("unified_deal_documents" as never)
+      .update({
+        contact_id: owner.contactId ?? null,
+        company_id: owner.companyId ?? null,
+      } as never)
+      .eq("id" as never, docId as never);
+
+    if (error) return { error: error.message };
+    await revalidateDeal(dealId);
+    return {};
+  } catch (err: unknown) {
+    return { error: err instanceof Error ? err.message : "Failed to assign document owner" };
   }
 }
 

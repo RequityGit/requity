@@ -1251,7 +1251,7 @@ async function classifyDocument(
             role: "user",
             content: [
               {
-                type: "document",
+                type: mediaType.startsWith("image/") ? "image" : "document",
                 source: { type: "base64", media_type: mediaType, data: base64 },
               },
               { type: "text", text: CLASSIFICATION_PROMPT },
@@ -1297,7 +1297,7 @@ async function extractDocumentData(
 
   const documentContent = [
     {
-      type: "document",
+      type: mediaType.startsWith("image/") ? "image" : "document",
       source: { type: "base64", media_type: mediaType, data: base64 },
     },
     { type: "text", text: prompt },

@@ -18,6 +18,7 @@ export interface DealBorrowingEntity {
   updated_by: string | null;
   google_drive_folder_id: string | null;
   google_drive_folder_url: string | null;
+  crm_company_id: string | null;
 }
 
 export interface DealBorrowerMember {

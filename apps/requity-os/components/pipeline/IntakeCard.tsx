@@ -2,7 +2,7 @@
 
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
-import { Mail, Info, Check, Plus } from "lucide-react";
+import { Mail, Info, Check, Plus, Forward } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import {
   type IntakeItem,
@@ -83,6 +83,14 @@ export function IntakeCard({ item, onClick }: IntakeCardProps) {
         {p.contactName || p.companyName || "Unknown"}
         {p.propertyAddress ? ` - ${p.propertyAddress.split(",")[0]}` : ""}
       </div>
+
+      {/* Forwarded indicator */}
+      {p.isForwarded && p.forwarderName && (
+        <div className="flex items-center gap-1 text-[10px] text-muted-foreground">
+          <Forward className="h-2.5 w-2.5 text-blue-500" />
+          <span>via {p.forwarderName.split(" ")[0]}</span>
+        </div>
+      )}
 
       {/* Row 3: Property type */}
       {p.propertyType && (
