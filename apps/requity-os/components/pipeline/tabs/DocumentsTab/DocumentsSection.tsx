@@ -101,6 +101,8 @@ export function DocumentsSection({
   const [runningAiReviewId, setRunningAiReviewId] = useState<string | null>(null);
   const [docSearch, setDocSearch] = useState("");
   const [showArchived, setShowArchived] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
+  const dragCounter = useRef(0);
   const [expandedCategories, setExpandedCategories] = useState<Set<string>>(
     () => new Set()
   );
@@ -232,6 +234,8 @@ export function DocumentsSection({
   function handleDrop(e: React.DragEvent<HTMLDivElement>) {
     e.preventDefault();
     e.stopPropagation();
+    dragCounter.current = 0;
+    setIsDragging(false);
     const files = Array.from(e.dataTransfer.files);
     if (files.length > 0) uploadFiles(files);
   }
@@ -239,6 +243,20 @@ export function DocumentsSection({
   function handleDragOver(e: React.DragEvent<HTMLDivElement>) {
     e.preventDefault();
     e.stopPropagation();
+  }
+
+  function handleDragEnter(e: React.DragEvent<HTMLDivElement>) {
+    e.preventDefault();
+    e.stopPropagation();
+    dragCounter.current += 1;
+    if (dragCounter.current === 1) setIsDragging(true);
+  }
+
+  function handleDragLeave(e: React.DragEvent<HTMLDivElement>) {
+    e.preventDefault();
+    e.stopPropagation();
+    dragCounter.current -= 1;
+    if (dragCounter.current === 0) setIsDragging(false);
   }
 
   async function handleDelete(docId: string, docName: string) {
@@ -285,7 +303,16 @@ export function DocumentsSection({
     cat === "general" ? "General" : cat.charAt(0).toUpperCase() + cat.slice(1);
 
   return (
-    <div className="rounded-xl border bg-card">
+    <div
+      className={cn(
+        "rounded-xl border bg-card transition-colors",
+        isDragging && "border-primary/50 bg-primary/5"
+      )}
+      onDrop={handleDrop}
+      onDragOver={handleDragOver}
+      onDragEnter={handleDragEnter}
+      onDragLeave={handleDragLeave}
+    >
       <input
         ref={fileInputRef}
         type="file"
@@ -592,21 +619,25 @@ export function DocumentsSection({
         );
       })}
 
-      {/* Drop zone */}
+      {/* Drop zone indicator */}
       <div
-        onDrop={handleDrop}
-        onDragOver={handleDragOver}
         onClick={() => fileInputRef.current?.click()}
-        className="w-full cursor-pointer border-t border-dashed border-border/50 px-4 py-3 text-center transition-colors hover:bg-muted/50"
+        className={cn(
+          "w-full cursor-pointer border-t border-dashed border-border/50 px-4 py-3 text-center transition-colors hover:bg-muted/50",
+          isDragging && "border-primary/50 bg-primary/5"
+        )}
       >
-        <div className="flex items-center justify-center gap-2 text-muted-foreground">
+        <div className={cn(
+          "flex items-center justify-center gap-2 text-muted-foreground",
+          isDragging && "text-primary"
+        )}>
           {uploading ? (
             <Loader2 className="h-3.5 w-3.5 animate-spin" />
           ) : (
             <Upload className="h-3.5 w-3.5" strokeWidth={1.5} />
           )}
           <span className="text-[11px] font-medium">
-            {uploading ? "Uploading..." : "Drop files here or click to upload"}
+            {uploading ? "Uploading..." : isDragging ? "Drop files to upload" : "Drop files here or click to upload"}
           </span>
         </div>
       </div>
