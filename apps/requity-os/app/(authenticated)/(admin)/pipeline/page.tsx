@@ -120,7 +120,7 @@ export default async function PipelinePage() {
     brokerIds.length > 0
       ? admin
           .from("crm_contacts" as never)
-          .select("id, first_name, last_name, email, phone, broker_company:crm_companies(name)" as never)
+          .select("id, first_name, last_name, email, phone, broker_company:companies!crm_contacts_company_id_fkey(name)" as never)
           .in("id" as never, brokerIds as never)
       : Promise.resolve({ data: [] }),
   ]);

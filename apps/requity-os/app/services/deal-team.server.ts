@@ -4,7 +4,7 @@ type AdminClient = ReturnType<typeof import("@/lib/supabase/admin").createAdminC
 
 const DEAL_TEAM_SELECT = `
   *,
-  contact:crm_contacts(id, first_name, last_name, email, phone, company_name)
+  contact:crm_contacts!deal_team_contacts_contact_id_fkey(id, first_name, last_name, email, phone, company_name)
 `;
 
 export async function getDealTeamContacts(
