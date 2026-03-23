@@ -24,9 +24,10 @@ export type StreamItemType =
   | "document_upload"
   | "form_link_sent"
   | "form_submission"
-  | "document_generated";
+  | "document_generated"
+  | "message";
 
-export type StreamFilterType = "all" | "notes" | "emails" | "calls" | "system";
+export type StreamFilterType = "all" | "notes" | "emails" | "calls" | "messages" | "system";
 
 export interface StreamItem {
   id: string;
@@ -58,6 +59,9 @@ export interface StreamItem {
   // System group
   groupedFields?: string[];
   groupCount?: number;
+  // Message-specific
+  messageSenderType?: "admin" | "borrower" | "system";
+  messageSource?: "portal" | "email" | "sms";
   // Raw source for pass-through rendering
   dealActivity?: DealActivity;
   crmActivity?: ActivityData;
@@ -77,6 +81,7 @@ export interface StreamFilterCounts {
   notes: number;
   emails: number;
   calls: number;
+  messages: number;
   system: number;
 }
 
@@ -169,6 +174,7 @@ function mapToFilterType(type: StreamItemType): StreamFilterType {
   if (type === "note") return "notes";
   if (type === "email_in" || type === "email_out") return "emails";
   if (type === "call" || type === "sms" || type === "meeting") return "calls";
+  if (type === "message") return "messages";
   return "system";
 }
 
@@ -264,6 +270,7 @@ export function useActionCenterData({
   const [formSubmissions, setFormSubmissions] = useState<Record<string, unknown>[]>([]);
   const [generatedDocs, setGeneratedDocs] = useState<Record<string, unknown>[]>([]);
   const [genDocProfiles, setGenDocProfiles] = useState<Record<string, string>>({});
+  const [dealMessages, setDealMessages] = useState<Record<string, unknown>[]>([]);
   const [streamLoading, setStreamLoading] = useState(true);
 
   // Rail data
@@ -311,7 +318,7 @@ export function useActionCenterData({
         const timelineResult = await fetchActivityTabData(dealId, primaryContactId);
 
         // Fetch ALL notes for this deal (including replies) with likes and attachments
-        const [{ data: notesData }, { data: formLinksData }, { data: formSubmissionsData }, { data: genDocsData }] = await Promise.all([
+        const [{ data: notesData }, { data: formLinksData }, { data: formSubmissionsData }, { data: genDocsData }, { data: messagesData }] = await Promise.all([
           supabase
             .from("notes" as never)
             .select("*, note_likes(user_id, profiles(full_name)), note_attachments(id, file_name, file_type, file_size_bytes, storage_path)" as never)
@@ -346,6 +353,12 @@ export function useActionCenterData({
             .eq("record_id", dealId)
             .eq("record_type", "deal")
             .order("generated_at", { ascending: false }),
+          supabase
+            .from("deal_messages" as never)
+            .select("id, deal_id, sender_type, sender_id, contact_id, source, body, metadata, created_at, sender_name" as never)
+            .eq("deal_id" as never, dealId as never)
+            .order("created_at" as never, { ascending: true })
+            .limit(200),
         ]);
 
         if (fetchRef.current !== id) return;
@@ -360,6 +373,7 @@ export function useActionCenterData({
         setFormLinks((formLinksData ?? []) as Record<string, unknown>[]);
         setFormSubmissions((formSubmissionsData ?? []) as Record<string, unknown>[]);
         setGeneratedDocs((genDocsData ?? []) as Record<string, unknown>[]);
+        setDealMessages((messagesData ?? []) as Record<string, unknown>[]);
 
         // Resolve author names for generated docs
         const generatedByIds = Array.from(new Set((genDocsData ?? []).map((d: Record<string, unknown>) => d.generated_by as string).filter(Boolean)));
@@ -610,17 +624,35 @@ export function useActionCenterData({
       });
     }
 
+    // Deal messages (borrower-facing chat)
+    for (const msg of dealMessages) {
+      const senderName = (msg.sender_name as string) || "Unknown";
+      result.push({
+        id: `msg-${msg.id}`,
+        type: "message",
+        timestamp: msg.created_at as string,
+        author: {
+          id: (msg.sender_id as string) ?? undefined,
+          name: senderName,
+          initials: getInitials(senderName),
+        },
+        description: msg.body as string,
+        messageSenderType: msg.sender_type as "admin" | "borrower" | "system",
+        messageSource: msg.source as "portal" | "email" | "sms",
+      });
+    }
+
     // Sort ascending (oldest first, newest at bottom)
     result.sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
 
     // Group rapid system events
     return groupSystemEvents(result);
-  }, [dealActivities, crmActivities, crmEmails, topNotes, repliesByParent, formLinks, formSubmissions, generatedDocs, genDocProfiles]);
+  }, [dealActivities, crmActivities, crmEmails, topNotes, repliesByParent, formLinks, formSubmissions, generatedDocs, genDocProfiles, dealMessages]);
 
   // ── Filter counts ──
 
   const filterCounts = useMemo<StreamFilterCounts>(() => {
-    const c: StreamFilterCounts = { all: 0, notes: 0, emails: 0, calls: 0, system: 0 };
+    const c: StreamFilterCounts = { all: 0, notes: 0, emails: 0, calls: 0, messages: 0, system: 0 };
     for (const item of streamItems) {
       c.all++;
       const cat = mapToFilterType(item.type);
@@ -717,6 +749,48 @@ export function useActionCenterData({
       }
     },
     [currentUserId, currentUserName, dealId, supabase]
+  );
+
+  // ── Send deal message (borrower-visible) ──
+
+  const sendMessage = useCallback(
+    async (body: string) => {
+      // Optimistic insert
+      const optimisticMsg: Record<string, unknown> = {
+        id: `temp-msg-${Date.now()}`,
+        deal_id: dealId,
+        sender_type: "admin",
+        sender_id: currentUserId,
+        contact_id: null,
+        source: "portal",
+        body,
+        metadata: null,
+        created_at: new Date().toISOString(),
+        sender_name: currentUserName,
+      };
+      setDealMessages((prev) => [...prev, optimisticMsg]);
+
+      try {
+        const res = await fetch("/api/deal-messages/send", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ dealId, body }),
+        });
+
+        if (!res.ok) {
+          const data = await res.json().catch(() => ({}));
+          throw new Error(data.error || "Failed to send message");
+        }
+
+        showSuccess("Message sent");
+        // Re-fetch to get the real message with server ID
+        fetchStream(true);
+      } catch (err) {
+        setDealMessages((prev) => prev.filter((m) => m.id !== optimisticMsg.id));
+        showError("Could not send message", err instanceof Error ? err.message : "Unknown error");
+      }
+    },
+    [dealId, currentUserId, currentUserName, fetchStream]
   );
 
   const replyToNote = useCallback(
@@ -940,6 +1014,7 @@ export function useActionCenterData({
     // Note CRUD
     postNote,
     replyToNote,
+    sendMessage,
     editNote,
     deleteNote,
     toggleLike,

@@ -84,7 +84,10 @@ export async function processFormSubmissionAction(
         .update({
           status: "reviewed",
           entity_ids: updatedEntityIds,
-          internal_notes: input.notes || submission.internal_notes || null,
+          changes: {
+            ...((submission.changes as Record<string, unknown>) || {}),
+            internal_notes: input.notes || ((submission.changes as Record<string, unknown>)?.internal_notes as string) || null,
+          },
         })
         .eq("id", input.submissionId);
 
@@ -102,7 +105,10 @@ export async function processFormSubmissionAction(
         .from("form_submissions")
         .update({
           status: "reviewed",
-          internal_notes: input.notes || submission.internal_notes || null,
+          changes: {
+            ...((submission.changes as Record<string, unknown>) || {}),
+            internal_notes: input.notes || ((submission.changes as Record<string, unknown>)?.internal_notes as string) || null,
+          },
         })
         .eq("id", input.submissionId);
 
