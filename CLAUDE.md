@@ -14,8 +14,8 @@
 ```bash
 # Development
 pnpm dev                    # Start all apps (Turbo)
-pnpm build                  # Production build (ALWAYS run after edits to catch TS errors)
-pnpm typecheck              # TypeScript check without full build
+pnpm typecheck              # TypeScript check (ALWAYS run after edits to catch TS errors)
+pnpm build                  # Full production build (run before PRs/deploys only)
 pnpm lint                   # ESLint
 
 # Supabase
@@ -170,7 +170,7 @@ After plan approval, create the three dev doc files before writing any code.
 ### Step 5: Implement in Chunks
 
 Implement one phase or section at a time. After each chunk:
-- Run `pnpm build` to catch TypeScript errors
+- Run `pnpm typecheck` to catch TypeScript errors
 - Update the task checklist
 - Pause for review if the chunk is substantial
 
@@ -189,7 +189,7 @@ After implementation is complete, review your own changes:
 
 ### After Every Set of Edits
 
-Run `pnpm build` (or `pnpm typecheck`) after completing a logical unit of work. Do not wait until the end of a session.
+Run `pnpm typecheck` after completing a logical unit of work. This catches all TypeScript errors without the overhead of a full Next.js production build. Do not wait until the end of a session. Reserve `pnpm build` for pre-PR verification and deploy readiness checks only.
 
 If errors are found:
 - **Under 5 errors:** Fix them immediately.

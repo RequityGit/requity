@@ -289,7 +289,7 @@ async function notifyDealTeamOfBorrowerMessage(
         entity_type: "deal",
         entity_id: dealId,
         entity_label: dealLabel,
-        action_url: `/pipeline/${dealRoute}?tab=messages`,
+        action_url: `/pipeline/${dealRoute}?tab=action+center`,
       });
     }
   }

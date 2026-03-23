@@ -719,54 +719,7 @@ export function DealOverviewSummary({ dealId, deal }: DealOverviewSummaryProps) 
               </ReadOnlyField>
             </div>
 
-            {/* Borrower & Broker contact lookup */}
-            <Separator className="my-3" />
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-2">
-              <div className="min-w-0">
-                <span className="inline-field-label mb-1 block">Borrower</span>
-                {bc ? (
-                  <div className="flex items-center gap-2">
-                    <InitialsAvatar name={borrowerName || "?"} palette="green" />
-                    <span className="text-sm font-medium truncate flex-1">{borrowerName}</span>
-                    <button
-                      type="button"
-                      onClick={() => handleUnlinkContact("borrower")}
-                      className="text-muted-foreground hover:text-foreground transition-colors p-1 rounded"
-                      title="Unlink borrower"
-                    >
-                      <X className="h-3.5 w-3.5" />
-                    </button>
-                  </div>
-                ) : (
-                  <ContactSearchInput
-                    placeholder="Search contacts..."
-                    onSelect={(c) => handleLinkContact("borrower", c)}
-                  />
-                )}
-              </div>
-              <div className="min-w-0">
-                <span className="inline-field-label mb-1 block">Broker</span>
-                {bk ? (
-                  <div className="flex items-center gap-2">
-                    <InitialsAvatar name={brokerName || "?"} palette="amber" />
-                    <span className="text-sm font-medium truncate flex-1">{brokerName}</span>
-                    <button
-                      type="button"
-                      onClick={() => handleUnlinkContact("broker")}
-                      className="text-muted-foreground hover:text-foreground transition-colors p-1 rounded"
-                      title="Unlink broker"
-                    >
-                      <X className="h-3.5 w-3.5" />
-                    </button>
-                  </div>
-                ) : (
-                  <ContactSearchInput
-                    placeholder="Search contacts..."
-                    onSelect={(c) => handleLinkContact("broker", c)}
-                  />
-                )}
-              </div>
-            </div>
+            {/* Borrower & Broker contact info moved to People tab */}
           </OverviewCard>
 
           {/* Proposed Terms (only if not early stage) */}

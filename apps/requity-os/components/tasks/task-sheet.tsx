@@ -940,6 +940,17 @@ export function TaskSheet({
               </div>
             </div>
 
+            {/* Created By (read-only, existing tasks only) */}
+            {!isNew && task.created_by && (() => {
+              const creatorProfile = profiles.find((p) => p.id === task.created_by);
+              return creatorProfile ? (
+                <div className="space-y-0">
+                  <span className="inline-field-label">Created By</span>
+                  <p className="text-sm px-2 py-1">{creatorProfile.full_name}</p>
+                </div>
+              ) : null;
+            })()}
+
             {/* Approval toggle for new tasks */}
             {isNew && (
               <div className="border-t border-border pt-3">

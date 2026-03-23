@@ -20,6 +20,7 @@ interface ActionCenterStreamProps {
   currentUserId: string;
   currentUserName: string;
   onPost: (body: string, isInternal: boolean, mentionIds: string[], attachments?: UploadedAttachment[]) => Promise<void>;
+  onSendMessage: (body: string) => Promise<void>;
   // Note handlers
   noteHandlers: NoteHandlers;
 }
@@ -50,6 +51,7 @@ export function ActionCenterStream({
   currentUserId,
   currentUserName,
   onPost,
+  onSendMessage,
   noteHandlers,
 }: ActionCenterStreamProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -138,6 +140,7 @@ export function ActionCenterStream({
         currentUserId={currentUserId}
         currentUserName={currentUserName}
         onPost={onPost}
+        onSendMessage={onSendMessage}
       />
     </div>
   );

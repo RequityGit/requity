@@ -63,9 +63,9 @@ import { UnderwritingPanel } from "@/components/pipeline/UnderwritingPanel";
 import type { CommercialUWData } from "@/components/pipeline/tabs/UnderwritingTab";
 
 // Lazy-load heavy tab components (only downloaded when user navigates to that tab)
-const DiligenceTab = lazy(() => import("@/components/pipeline/tabs/DiligenceTab").then(m => ({ default: m.DiligenceTab })));
+const DocumentsTab = lazy(() => import("@/components/pipeline/tabs/DocumentsTab").then(m => ({ default: m.DocumentsTab })));
 const PropertyTab = lazy(() => import("@/components/pipeline/tabs/PropertyTab").then(m => ({ default: m.PropertyTab })));
-const BorrowerContactsTab = lazy(() => import("@/components/borrower").then(m => ({ default: m.BorrowerContactsTab })));
+const PeopleTab = lazy(() => import("@/components/pipeline/tabs/PeopleTab").then(m => ({ default: m.default })));
 const UnderwritingTab = lazy(() => import("@/components/pipeline/tabs/UnderwritingTab").then(m => ({ default: m.UnderwritingTab })));
 import {
   InlineLayoutProvider,
@@ -97,9 +97,7 @@ import { ResidentialAnalysisTab } from "@/components/pipeline/tabs/ResidentialAn
 import { EmailComposeSheet } from "@/components/crm/email-compose-sheet";
 import { useSoftphoneMaybe } from "@/lib/twilio/softphone-context";
 
-const DealMessagesPanel = lazy(() => import("@/components/pipeline/DealMessagesPanel").then(m => ({ default: m.DealMessagesPanel })));
 const ActionCenterTab = lazy(() => import("@/components/pipeline/tabs/ActionCenterTab").then(m => ({ default: m.ActionCenterTab })));
-const FormsTab = lazy(() => import("@/components/pipeline/tabs/FormsTab").then(m => ({ default: m.FormsTab })));
 import type { DealPreviewNote } from "@/components/pipeline/DealNotePreview";
 import {
   logQuickActionV2,
@@ -222,10 +220,8 @@ function DealDetailPageInner({
     "Property",
     "Analysis",
     "Underwriting",
-    "Borrower",
-    "Forms",
-    "Diligence",
-    "Messages",
+    "People",
+    "Documents",
   ] as const;
   const tabs = UNIVERSAL_TABS;
 
@@ -239,9 +235,9 @@ function DealDetailPageInner({
   // Backward compatibility: redirect old tab params
   const resolvedTabParam = (() => {
     const t = tabParam?.toLowerCase();
-    if (t === "contacts") return "borrower";
-    if (t === "conditions" || t === "documents") return "diligence";
-    if (t === "tasks" || t === "activity" || t === "notes") return "action center";
+    if (t === "contacts" || t === "borrower") return "people";
+    if (t === "conditions" || t === "diligence" || t === "forms") return "documents";
+    if (t === "tasks" || t === "activity" || t === "notes" || t === "messages") return "action center";
     return tabParam;
   })();
   const initialTab =
@@ -260,9 +256,11 @@ function DealDetailPageInner({
     if (typeof window === "undefined") return;
     const tab = searchParams.get("tab")?.toLowerCase();
     const redirectMap: Record<string, string> = {
-      contacts: "borrower",
-      conditions: "diligence",
-      documents: "diligence",
+      contacts: "people",
+      borrower: "people",
+      conditions: "documents",
+      diligence: "documents",
+      forms: "documents",
     };
     if (tab && redirectMap[tab]) {
       const params = new URLSearchParams(window.location.search);
@@ -398,9 +396,9 @@ function DealDetailPageInner({
                     inlineLayout.state.isEditing && "hover:ring-1 hover:ring-primary/30"
                   )}
                 >
-                  {tab === "Borrower" ? (
+                  {tab === "People" ? (
                     <>
-                      <Building2 className="h-3.5 w-3.5 shrink-0" strokeWidth={1.5} />
+                      <Users className="h-3.5 w-3.5 shrink-0" strokeWidth={1.5} />
                       {tab}
                     </>
                   ) : (
@@ -456,7 +454,7 @@ function DealDetailPageInner({
                             "hover:ring-1 hover:ring-primary/30"
                           )}
                         >
-                          {tab === "Borrower" ? (
+                          {tab === "People" ? (
                             <>
                               <Building2 className="h-3.5 w-3.5 shrink-0" strokeWidth={1.5} />
                               {tab}
@@ -577,29 +575,25 @@ function DealDetailPageInner({
               </SectionErrorBoundary>
             </div>
           )}
-          {loadedTabs.has("Borrower") && (
-            <div className={activeTab !== "Borrower" ? "hidden" : undefined}>
-              <SectionErrorBoundary fallbackTitle="Could not load borrower">
+          {loadedTabs.has("People") && (
+            <div className={activeTab !== "People" ? "hidden" : undefined}>
+              <SectionErrorBoundary fallbackTitle="Could not load people">
                 <Suspense fallback={<TabLoadingFallback />}>
-                  <BorrowerContactsTab dealId={deal.id} />
+                  <PeopleTab
+                    dealId={deal.id}
+                    deal={deal}
+                    dealTeamMembers={dealTeamMembers}
+                    teamMembers={teamMembers}
+                  />
                 </Suspense>
               </SectionErrorBoundary>
             </div>
           )}
-          {loadedTabs.has("Forms") && (
-            <div className={activeTab !== "Forms" ? "hidden" : undefined}>
-              <SectionErrorBoundary fallbackTitle="Could not load forms">
-                <Suspense fallback={<TabLoadingFallback />}>
-                  <FormsTab dealId={deal.id} />
-                </Suspense>
-              </SectionErrorBoundary>
-            </div>
-          )}
-          {loadedTabs.has("Diligence") && (
-            <div className={activeTab !== "Diligence" ? "hidden" : undefined}>
-              <SectionErrorBoundary fallbackTitle="Could not load diligence">
+          {loadedTabs.has("Documents") && (
+            <div className={activeTab !== "Documents" ? "hidden" : undefined}>
+              <SectionErrorBoundary fallbackTitle="Could not load documents">
               <Suspense fallback={<TabLoadingFallback />}>
-                <DiligenceTab
+                <DocumentsTab
                   documents={documents as unknown as { id: string; deal_id: string; document_name: string; file_url: string; file_size_bytes: number | null; mime_type: string | null; category: string | null; uploaded_by: string | null; created_at: string; review_status: string | null; storage_path: string | null; visibility?: string | null; _uploaded_by_name?: string | null; archived_at?: string | null; condition_id?: string | null }[]}
                   conditions={conditions}
                   dealId={deal.id}
@@ -608,18 +602,6 @@ function DealDetailPageInner({
                   googleDriveFolderUrl={(deal as unknown as Record<string, unknown>).google_drive_folder_url as string | null}
                   currentUserId={currentUserId}
                   currentUserName={currentUserName}
-                />
-              </Suspense>
-              </SectionErrorBoundary>
-            </div>
-          )}
-          {loadedTabs.has("Messages") && (
-            <div className={activeTab !== "Messages" ? "hidden" : undefined}>
-              <SectionErrorBoundary fallbackTitle="Could not load messages">
-              <Suspense fallback={<TabLoadingFallback />}>
-                <DealMessagesPanel
-                  dealId={deal.id}
-                  currentUserId={currentUserId}
                 />
               </Suspense>
               </SectionErrorBoundary>

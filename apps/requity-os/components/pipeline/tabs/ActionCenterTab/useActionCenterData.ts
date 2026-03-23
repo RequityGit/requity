@@ -464,6 +464,30 @@ export function useActionCenterData({
     fetchRail();
   }, [fetchStream, fetchRail]);
 
+  // ── Realtime: listen for new deal messages ──
+
+  useEffect(() => {
+    const channel = supabase
+      .channel(`action-center-messages:${dealId}`)
+      .on(
+        "postgres_changes" as never,
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "deal_messages",
+          filter: `deal_id=eq.${dealId}`,
+        },
+        () => {
+          fetchStream(true);
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [dealId, supabase, fetchStream]);
+
   // ── Build unified stream ──
 
   const streamItems = useMemo<StreamItem[]>(() => {
@@ -755,7 +779,6 @@ export function useActionCenterData({
 
   const sendMessage = useCallback(
     async (body: string) => {
-      // Optimistic insert
       const optimisticMsg: Record<string, unknown> = {
         id: `temp-msg-${Date.now()}`,
         deal_id: dealId,
@@ -783,7 +806,6 @@ export function useActionCenterData({
         }
 
         showSuccess("Message sent");
-        // Re-fetch to get the real message with server ID
         fetchStream(true);
       } catch (err) {
         setDealMessages((prev) => prev.filter((m) => m.id !== optimisticMsg.id));

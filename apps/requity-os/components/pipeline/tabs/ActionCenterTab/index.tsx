@@ -30,6 +30,7 @@ export function ActionCenterTab({
     setActiveFilter,
     postNote,
     replyToNote,
+    sendMessage,
     editNote,
     deleteNote,
     toggleLike,
@@ -75,6 +76,7 @@ export function ActionCenterTab({
             currentUserId={currentUserId}
             currentUserName={currentUserName}
             onPost={postNote}
+            onSendMessage={sendMessage}
             noteHandlers={noteHandlers}
           />
         </SectionErrorBoundary>
