@@ -63,9 +63,13 @@ export function ConditionDocumentCard({
 
   return (
     <div
-      className="group flex items-center gap-2.5 rounded-lg border px-3 py-2 rq-transition hover:bg-muted/30"
+      className="group flex items-center gap-2.5 rounded-lg border px-3 py-2 rq-transition hover:bg-muted/30 cursor-pointer"
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
+      onClick={onPreview}
+      role="button"
+      tabIndex={0}
+      onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onPreview(); } }}
     >
       {/* File type icon */}
       <FileIcon className={cn("h-4 w-4 shrink-0", fileInfo.color)} />

@@ -359,10 +359,10 @@ export function SecureUploadClient({ token }: { token: string }) {
         <div className="border-b border-gray-200 bg-white px-4 py-4">
           <div className="mx-auto max-w-2xl">
             <div className="flex items-center justify-between text-sm">
-              <span className="font-medium text-gray-900">
+              <span className="font-semibold text-gray-900">
                 {clearedCount} of {totalCount} conditions cleared
               </span>
-              <span className="text-gray-500">
+              <span className="font-medium text-gray-700">
                 {totalCount > 0 ? Math.round((clearedCount / totalCount) * 100) : 0}%
               </span>
             </div>
@@ -373,7 +373,7 @@ export function SecureUploadClient({ token }: { token: string }) {
               />
             </div>
             {actionNeeded.length > 0 && (
-              <p className="mt-2 text-xs text-red-600">
+              <p className="mt-2 text-xs font-medium text-red-700">
                 {actionNeeded.length} item{actionNeeded.length === 1 ? "" : "s"} need{actionNeeded.length === 1 ? "s" : ""} your attention
               </p>
             )}
