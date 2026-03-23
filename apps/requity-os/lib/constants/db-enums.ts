@@ -368,6 +368,7 @@ export type AccreditationStatus = (typeof ACCREDITATION_STATUSES)[number];
  */
 export const CONDITION_STATUSES = [
   { value: "pending", label: "Pending" },
+  { value: "requested", label: "Requested" },
   { value: "submitted", label: "Submitted" },
   { value: "under_review", label: "Under Review" },
   { value: "approved", label: "Approved" },

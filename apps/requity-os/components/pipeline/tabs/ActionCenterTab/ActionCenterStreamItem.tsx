@@ -9,9 +9,11 @@ import {
   GitCommitHorizontal,
   Activity,
   FileText,
+  FileCheck,
   Calendar,
   ArrowRight,
   Zap,
+  Send,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
@@ -38,6 +40,9 @@ const TYPE_CONFIG: Record<
   system: { icon: Activity, label: "System", color: "text-muted-foreground" },
   system_group: { icon: Zap, label: "Updates", color: "text-muted-foreground" },
   document_upload: { icon: FileText, label: "Document", color: "text-orange-600 dark:text-orange-400" },
+  form_link_sent: { icon: Send, label: "Form Sent", color: "text-teal-600 dark:text-teal-400" },
+  form_submission: { icon: FileCheck, label: "Form", color: "text-teal-600 dark:text-teal-400" },
+  document_generated: { icon: FileText, label: "Document", color: "text-orange-600 dark:text-orange-400" },
 };
 
 // ── Date divider ──
@@ -114,6 +119,83 @@ export function ActionCenterStreamItem({ item, noteHandlers }: ActionCenterStrea
   // System group: compact grouped
   if (item.type === "system_group") {
     return <SystemGroupItem item={item} />;
+  }
+
+  // Form link sent: compact system-style row
+  if (item.type === "form_link_sent") {
+    const cfg = TYPE_CONFIG[item.type];
+    const Icon = cfg.icon;
+    return (
+      <div className="flex items-center gap-2 px-3 py-2 text-xs text-muted-foreground">
+        <Icon className={cn("h-3.5 w-3.5 shrink-0", cfg.color)} />
+        <span>{item.title}</span>
+        <span className="ml-auto shrink-0 text-[10px]">{timeAgo(item.timestamp)}</span>
+      </div>
+    );
+  }
+
+  // Form submission: card-style row with status badge
+  if (item.type === "form_submission") {
+    const cfg = TYPE_CONFIG[item.type];
+    const Icon = cfg.icon;
+    const statusColors: Record<string, string> = {
+      partial: "bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400",
+      submitted: "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400",
+      pending_borrower: "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400",
+    };
+    const statusLabels: Record<string, string> = {
+      partial: "In Progress",
+      submitted: "Submitted",
+      pending_borrower: "Pending",
+      reviewed: "Reviewed",
+      processed: "Processed",
+    };
+
+    return (
+      <div className="flex items-start gap-3 px-3 py-2.5">
+        <div className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-teal-100 dark:bg-teal-900/30">
+          <Icon className={cn("h-3.5 w-3.5", cfg.color)} />
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className="text-sm">{item.title}</p>
+          {item.formStatus && (
+            <Badge
+              variant="secondary"
+              className={cn("mt-1 text-[10px] px-1.5 py-0", statusColors[item.formStatus])}
+            >
+              {statusLabels[item.formStatus] ?? item.formStatus}
+            </Badge>
+          )}
+        </div>
+        <span className="shrink-0 text-[10px] text-muted-foreground mt-0.5">
+          {timeAgo(item.timestamp)}
+        </span>
+      </div>
+    );
+  }
+
+  // Document generated: user action with author avatar
+  if (item.type === "document_generated") {
+    return (
+      <div className="flex items-start gap-3 px-3 py-2.5">
+        <ColoredAvatar authorId={item.author.id} initials={item.author.initials} />
+        <div className="flex-1 min-w-0">
+          <p className="text-sm">
+            <span className="font-medium">{item.author.name}</span>
+            {" generated "}
+            <span className="font-medium">{item.docTemplateName ?? "a document"}</span>
+          </p>
+          {item.docFileName && (
+            <p className="text-xs text-muted-foreground mt-0.5 truncate">
+              {item.docFileName}
+            </p>
+          )}
+        </div>
+        <span className="shrink-0 text-[10px] text-muted-foreground mt-0.5">
+          {timeAgo(item.timestamp)}
+        </span>
+      </div>
+    );
   }
 
   // Note: use NoteThread

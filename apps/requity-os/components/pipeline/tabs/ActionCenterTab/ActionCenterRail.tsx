@@ -1,11 +1,17 @@
 "use client";
 
 import { useMemo, useState, useRef, useCallback } from "react";
-import { ClipboardCheck, Loader2, Plus } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { ChevronDown, ClipboardCheck, Loader2, Plus } from "lucide-react";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { RailConditionItem } from "./RailConditionItem";
 import { ConditionDetailPanel } from "./ConditionDetailPanel";
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuCheckboxItem,
+  DropdownMenuSeparator,
+} from "@/components/ui/dropdown-menu";
 import {
   Select,
   SelectContent,
@@ -55,13 +61,14 @@ const CONDITION_STAGE_TO_DEAL_STAGE: Record<string, string> = {
   fundraising: "negotiation",
 };
 
-type StageFilter =
-  | "lead"
-  | "analysis"
-  | "negotiation"
-  | "execution"
-  | "closed"
-  | "all";
+const STAGE_KEYS = DEAL_STAGES.map((s) => s.key);
+
+/** Returns a Set of all stage keys up to and including the given stage. */
+function getDefaultStages(dealStage: string): Set<string> {
+  const idx = STAGE_KEYS.indexOf(dealStage as (typeof STAGE_KEYS)[number]);
+  if (idx === -1) return new Set(STAGE_KEYS); // fallback: all stages
+  return new Set(STAGE_KEYS.slice(0, idx + 1));
+}
 
 interface ActionCenterRailProps {
   conditions: DealConditionRow[];
@@ -88,19 +95,50 @@ export function ActionCenterRail({
   const scrollRef = useRef<HTMLDivElement>(null);
   const savedScrollTop = useRef(0);
 
-  // ── Stage filter ──
-  const [stageFilter, setStageFilter] = useState<StageFilter>(
-    (dealStage as StageFilter) || "lead"
+  // ── Stage filter (multi-select) ──
+  const [selectedStages, setSelectedStages] = useState<Set<string>>(
+    () => getDefaultStages(dealStage)
   );
 
+  const toggleStage = useCallback((stageKey: string) => {
+    setSelectedStages((prev) => {
+      const next = new Set(prev);
+      if (next.has(stageKey)) {
+        next.delete(stageKey);
+        if (next.size === 0) return prev; // prevent empty selection
+      } else {
+        next.add(stageKey);
+      }
+      return next;
+    });
+  }, []);
+
+  const toggleAll = useCallback(() => {
+    setSelectedStages((prev) => {
+      if (prev.size === DEAL_STAGES.length) {
+        return getDefaultStages(dealStage);
+      }
+      return new Set(STAGE_KEYS);
+    });
+  }, [dealStage]);
+
+  const triggerLabel = useMemo(() => {
+    if (selectedStages.size === DEAL_STAGES.length) return "All stages";
+    if (selectedStages.size === 1) {
+      const key = Array.from(selectedStages)[0];
+      return DEAL_STAGES.find((s) => s.key === key)?.label ?? "1 stage";
+    }
+    return `${selectedStages.size} stages`;
+  }, [selectedStages]);
+
   const filteredConditions = useMemo(() => {
-    if (stageFilter === "all") return conditions;
+    if (selectedStages.size === DEAL_STAGES.length) return conditions;
     return conditions.filter((c) => {
       const mapped =
         CONDITION_STAGE_TO_DEAL_STAGE[c.required_stage] ?? "lead";
-      return mapped === stageFilter;
+      return selectedStages.has(mapped);
     });
-  }, [conditions, stageFilter]);
+  }, [conditions, selectedStages]);
 
   const selectedCondition = useMemo(
     () => conditions.find((c) => c.id === selectedConditionId) ?? null,
@@ -207,19 +245,31 @@ export function ActionCenterRail({
                 </div>
               </div>
               <div className="flex items-center gap-1">
-                {/* Stage filter dropdown */}
-                <Select
-                  value={stageFilter}
-                  onValueChange={(v) => setStageFilter(v as StageFilter)}
-                >
-                  <SelectTrigger className="h-6 w-auto min-w-0 gap-1 rounded-md border-border bg-transparent px-2 text-[10px] font-medium text-muted-foreground hover:bg-muted/40 focus:ring-0 focus:ring-offset-0 [&>svg]:h-3 [&>svg]:w-3">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent align="end">
+                {/* Stage filter dropdown (multi-select) */}
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <button
+                      type="button"
+                      className="flex items-center gap-1 h-6 rounded-md border border-border bg-transparent px-2 text-[10px] font-medium text-muted-foreground hover:bg-muted/40 rq-transition"
+                    >
+                      {triggerLabel}
+                      <ChevronDown className="h-3 w-3 opacity-50" />
+                    </button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-40">
+                    <DropdownMenuCheckboxItem
+                      checked={selectedStages.size === DEAL_STAGES.length}
+                      onCheckedChange={toggleAll}
+                      className="text-xs"
+                    >
+                      All stages
+                    </DropdownMenuCheckboxItem>
+                    <DropdownMenuSeparator />
                     {DEAL_STAGES.map((stage) => (
-                      <SelectItem
+                      <DropdownMenuCheckboxItem
                         key={stage.key}
-                        value={stage.key}
+                        checked={selectedStages.has(stage.key)}
+                        onCheckedChange={() => toggleStage(stage.key)}
                         className="text-xs"
                       >
                         {stage.label}
@@ -228,13 +278,10 @@ export function ActionCenterRail({
                             current
                           </span>
                         )}
-                      </SelectItem>
+                      </DropdownMenuCheckboxItem>
                     ))}
-                    <SelectItem value="all" className="text-xs">
-                      All stages
-                    </SelectItem>
-                  </SelectContent>
-                </Select>
+                  </DropdownMenuContent>
+                </DropdownMenu>
 
                 {/* Add condition button */}
                 <button
@@ -261,8 +308,8 @@ export function ActionCenterRail({
                       icon={ClipboardCheck}
                       title="No conditions"
                       description={
-                        stageFilter !== "all"
-                          ? "Try a different stage filter"
+                        selectedStages.size < DEAL_STAGES.length
+                          ? "Try selecting more stages"
                           : undefined
                       }
                       compact

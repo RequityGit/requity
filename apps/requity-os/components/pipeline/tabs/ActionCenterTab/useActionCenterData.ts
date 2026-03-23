@@ -21,7 +21,10 @@ export type StreamItemType =
   | "stage_change"
   | "system"
   | "system_group"
-  | "document_upload";
+  | "document_upload"
+  | "form_link_sent"
+  | "form_submission"
+  | "document_generated";
 
 export type StreamFilterType = "all" | "notes" | "emails" | "calls" | "system";
 
@@ -59,6 +62,14 @@ export interface StreamItem {
   dealActivity?: DealActivity;
   crmActivity?: ActivityData;
   crmEmail?: EmailData;
+  // Form-specific
+  formName?: string;
+  formStatus?: string;
+  formSubmitterName?: string;
+  // Document generation specific
+  docTemplateName?: string;
+  docFileName?: string;
+  docId?: string;
 }
 
 export interface StreamFilterCounts {
@@ -240,6 +251,10 @@ export function useActionCenterData({
   const [crmActivities, setCrmActivities] = useState<ActivityData[]>([]);
   const [crmEmails, setCrmEmails] = useState<EmailData[]>([]);
   const [allNotes, setAllNotes] = useState<NoteData[]>([]);
+  const [formLinks, setFormLinks] = useState<Record<string, unknown>[]>([]);
+  const [formSubmissions, setFormSubmissions] = useState<Record<string, unknown>[]>([]);
+  const [generatedDocs, setGeneratedDocs] = useState<Record<string, unknown>[]>([]);
+  const [genDocProfiles, setGenDocProfiles] = useState<Record<string, string>>({});
   const [streamLoading, setStreamLoading] = useState(true);
 
   // Rail data
@@ -286,14 +301,42 @@ export function useActionCenterData({
         const timelineResult = await fetchActivityTabData(dealId, primaryContactId);
 
         // Fetch ALL notes for this deal (including replies) with likes and attachments
-        const { data: notesData } = await supabase
-          .from("notes" as never)
-          .select("*, note_likes(user_id, profiles(full_name)), note_attachments(id, file_name, file_type, file_size_bytes, storage_path)" as never)
-          .eq("deal_id" as never, dealId as never)
-          .is("deleted_at" as never, null)
-          .is("condition_id" as never, null)
-          .order("created_at" as never, { ascending: false })
-          .limit(200);
+        const [{ data: notesData }, { data: formLinksData }, { data: formSubmissionsData }, { data: genDocsData }] = await Promise.all([
+          supabase
+            .from("notes" as never)
+            .select("*, note_likes(user_id, profiles(full_name)), note_attachments(id, file_name, file_type, file_size_bytes, storage_path)" as never)
+            .eq("deal_id" as never, dealId as never)
+            .is("deleted_at" as never, null)
+            .is("condition_id" as never, null)
+            .order("created_at" as never, { ascending: false })
+            .limit(200),
+          supabase
+            .from("deal_application_links")
+            .select(`
+              id, created_at, status,
+              form_definitions (name, slug),
+              crm_contacts (first_name, last_name)
+            `)
+            .eq("deal_id", dealId)
+            .order("created_at", { ascending: false }),
+          supabase
+            .from("form_submissions")
+            .select(`
+              id, status, created_at, updated_at, data, submitted_by_email,
+              form_definitions (name)
+            `)
+            .eq("deal_id", dealId)
+            .order("created_at", { ascending: false }),
+          supabase
+            .from("generated_documents")
+            .select(`
+              id, file_name, generated_at, generated_by, status,
+              document_templates (name, template_type)
+            `)
+            .eq("record_id", dealId)
+            .eq("record_type", "deal")
+            .order("generated_at", { ascending: false }),
+        ]);
 
         if (fetchRef.current !== id) return;
 
@@ -304,6 +347,25 @@ export function useActionCenterData({
         }
 
         setAllNotes((notesData ?? []) as unknown as NoteData[]);
+        setFormLinks((formLinksData ?? []) as Record<string, unknown>[]);
+        setFormSubmissions((formSubmissionsData ?? []) as Record<string, unknown>[]);
+        setGeneratedDocs((genDocsData ?? []) as Record<string, unknown>[]);
+
+        // Resolve author names for generated docs
+        const generatedByIds = Array.from(new Set((genDocsData ?? []).map((d: Record<string, unknown>) => d.generated_by as string).filter(Boolean)));
+        if (generatedByIds.length > 0) {
+          const { data: profiles } = await supabase
+            .from("profiles")
+            .select("id, full_name")
+            .in("id", generatedByIds);
+          if (profiles) {
+            const profileMap: Record<string, string> = {};
+            for (const p of profiles as unknown as Array<{ id: string; full_name: string | null }>) {
+              profileMap[p.id] = p.full_name || "Unknown";
+            }
+            setGenDocProfiles(profileMap);
+          }
+        }
       } catch {
         // Data stays stale on error
       } finally {
@@ -440,12 +502,89 @@ export function useActionCenterData({
       });
     }
 
+    // Form link sent events
+    for (const link of formLinks) {
+      const fd = link.form_definitions as { name?: string } | null;
+      const cc = link.crm_contacts as { first_name?: string; last_name?: string } | null;
+      const contactLabel = cc
+        ? [cc.first_name, cc.last_name].filter(Boolean).join(" ")
+        : undefined;
+      result.push({
+        id: `form-link-${link.id}`,
+        type: "form_link_sent",
+        timestamp: link.created_at as string,
+        author: { name: "System", initials: "SY" },
+        title: `Application link sent: ${fd?.name ?? "Unknown Form"}`,
+        description: contactLabel ? `To ${contactLabel}` : undefined,
+        formName: fd?.name ?? "Unknown Form",
+      });
+    }
+
+    // Form submission events
+    for (const sub of formSubmissions) {
+      const fd = sub.form_definitions as { name?: string } | null;
+      const d = sub.data as Record<string, unknown> | null;
+      const submitterName = (() => {
+        if (!d) return (sub.submitted_by_email as string) ?? "Unknown";
+        const first = ((d.borrower_first_name ?? d.first_name ?? "") as string);
+        const last = ((d.borrower_last_name ?? d.last_name ?? "") as string);
+        if (first || last) return `${first} ${last}`.trim();
+        return (sub.submitted_by_email as string) ?? "Unknown";
+      })();
+
+      const statusTitles: Record<string, string> = {
+        partial: "started",
+        pending_borrower: "is in progress on",
+        submitted: "submitted",
+        reviewed: "submitted",
+        processed: "submitted",
+      };
+      const action = statusTitles[(sub.status as string)] ?? (sub.status as string);
+
+      result.push({
+        id: `form-sub-${sub.id}`,
+        type: "form_submission",
+        timestamp: (sub.status as string) === "submitted"
+          ? ((sub.updated_at as string) ?? (sub.created_at as string))
+          : (sub.created_at as string),
+        author: { name: submitterName, initials: submitterName.slice(0, 2).toUpperCase() },
+        title: `${submitterName} ${action} ${fd?.name ?? "form"}`,
+        formName: fd?.name ?? "Unknown Form",
+        formStatus: sub.status as string,
+        formSubmitterName: submitterName,
+      });
+    }
+
+    // Document generated events
+    for (const doc of generatedDocs) {
+      const authorId = doc.generated_by as string;
+      const authorName = genDocProfiles[authorId] ?? "Unknown";
+      const tmpl = doc.document_templates as { name?: string; template_type?: string } | null;
+      const templateName = tmpl?.name ?? "document";
+
+      result.push({
+        id: `doc-gen-${doc.id}`,
+        type: "document_generated",
+        timestamp: doc.generated_at as string,
+        author: {
+          id: authorId,
+          name: authorName,
+          initials: authorName.split(" ").map((n: string) => n[0]).join("").toUpperCase().slice(0, 2) || "??",
+        },
+        title: `Generated ${templateName}`,
+        description: doc.file_name as string,
+        docTemplateName: templateName,
+        docFileName: doc.file_name as string,
+        docId: doc.id as string,
+      });
+    }
+
     // Sort ascending (oldest first, newest at bottom)
     result.sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
 
     // Group rapid system events
     return groupSystemEvents(result);
-  }, [dealActivities, crmActivities, crmEmails, topNotes, repliesByParent]);
+  }, [dealActivities, crmActivities, crmEmails, topNotes, repliesByParent, formLinks, formSubmissions, generatedDocs, genDocProfiles]);
 
   // ── Filter counts ──
 

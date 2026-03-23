@@ -20,6 +20,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { createClient } from "@/lib/supabase/client";
@@ -64,6 +65,10 @@ interface GenerateDocumentDialogProps {
   recordId: string;
   recordLabel?: string;
   trigger?: React.ReactNode;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+  conditions?: Array<{ id: string; condition_name: string; status: string }>;
+  onConditionsMarked?: (conditionIds: string[]) => void;
 }
 
 type Step = "select" | "preview" | "result";
@@ -73,10 +78,28 @@ export function GenerateDocumentDialog({
   recordId,
   recordLabel,
   trigger,
+  open: controlledOpen,
+  onOpenChange: controlledOnOpenChange,
+  conditions,
+  onConditionsMarked,
 }: GenerateDocumentDialogProps) {
   const router = useRouter();
   const navTimerRef = useRef<NodeJS.Timeout | null>(null);
-  const [open, setOpen] = useState(false);
+
+  // Support both controlled and uncontrolled modes
+  const [internalOpen, setInternalOpen] = useState(false);
+  const isControlled = controlledOpen !== undefined;
+  const open = isControlled ? controlledOpen : internalOpen;
+  const setOpen = useCallback(
+    (value: boolean) => {
+      if (isControlled) {
+        controlledOnOpenChange?.(value);
+      } else {
+        setInternalOpen(value);
+      }
+    },
+    [isControlled, controlledOnOpenChange]
+  );
   const [step, setStep] = useState<Step>("select");
   const [templates, setTemplates] = useState<Template[]>([]);
   const [loadingTemplates, setLoadingTemplates] = useState(false);
@@ -89,6 +112,7 @@ export function GenerateDocumentDialog({
     documentId: string;
     fileName: string;
   } | null>(null);
+  const [selectedConditionIds, setSelectedConditionIds] = useState<string[]>([]);
 
   const loadTemplates = useCallback(async () => {
     setLoadingTemplates(true);
@@ -104,6 +128,7 @@ export function GenerateDocumentDialog({
       setResolvedFields([]);
       setFieldOverrides({});
       setResult(null);
+      setSelectedConditionIds([]);
       loadTemplates();
     } else if (navTimerRef.current) {
       clearTimeout(navTimerRef.current);
@@ -218,6 +243,21 @@ export function GenerateDocumentDialog({
       });
       setStep("result");
 
+      // Mark selected conditions as submitted
+      if (selectedConditionIds.length > 0) {
+        const supabaseClient = createClient();
+        const { error: condError } = await supabaseClient
+          .from("unified_deal_conditions")
+          .update({ status: "submitted", submitted_at: new Date().toISOString() } as never)
+          .in("id" as never, selectedConditionIds as never);
+
+        if (condError) {
+          showError("Could not mark conditions", condError.message);
+        } else {
+          onConditionsMarked?.(selectedConditionIds);
+        }
+      }
+
       if (data.missing_fields?.length > 0) {
         showSuccess(`Document generated with ${data.missing_fields.length} missing field(s).`);
       } else {
@@ -241,14 +281,11 @@ export function GenerateDocumentDialog({
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        {trigger ?? (
-          <Button variant="outline" size="sm">
-            <FileText size={14} className="mr-1.5" />
-            Generate Document
-          </Button>
-        )}
-      </DialogTrigger>
+      {trigger && (
+        <DialogTrigger asChild>
+          {trigger}
+        </DialogTrigger>
+      )}
       <DialogContent className="max-w-lg">
         <DialogHeader>
           <DialogTitle>Generate Document</DialogTitle>
@@ -369,6 +406,35 @@ export function GenerateDocumentDialog({
                   </table>
                 </div>
               </>
+            )}
+
+            {/* Mark conditions as submitted */}
+            {conditions && conditions.filter((c) => c.status === "pending" || c.status === "requested").length > 0 && (
+              <div className="space-y-2 border-t pt-3">
+                <span className="inline-field-label">
+                  Mark conditions as submitted ({selectedConditionIds.length} selected)
+                </span>
+                <div className="max-h-28 overflow-y-auto space-y-1 rounded-md border border-border p-2">
+                  {conditions
+                    .filter((c) => c.status === "pending" || c.status === "requested")
+                    .map((c) => (
+                      <label
+                        key={c.id}
+                        className="flex items-center gap-2 py-1 px-1 rounded hover:bg-muted/50 cursor-pointer text-sm"
+                      >
+                        <Checkbox
+                          checked={selectedConditionIds.includes(c.id)}
+                          onCheckedChange={() =>
+                            setSelectedConditionIds((prev) =>
+                              prev.includes(c.id) ? prev.filter((id) => id !== c.id) : [...prev, c.id]
+                            )
+                          }
+                        />
+                        <span className="truncate">{c.condition_name}</span>
+                      </label>
+                    ))}
+                </div>
+              </div>
             )}
 
             <div className="flex justify-between">

@@ -81,7 +81,6 @@ const LS_KEY_TO_LABEL = LEAD_SOURCE_MAP;
 
 import {
   Building2,
-  BarChart3,
   Users,
   DollarSign,
 } from "lucide-react";
@@ -893,61 +892,7 @@ export function DealOverviewSummary({ dealId, deal }: DealOverviewSummaryProps) 
         </div>
       </div>
 
-      {/* ── Section 4: Key Financials ── */}
-      <div>
-        <SectionLabel icon={BarChart3}>Key Financials</SectionLabel>
-        <OverviewCard>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-x-6 gap-y-1">
-            <ReadOnlyField label="NOI">
-              <span className="num">{uwNum("noi") != null ? formatCurrency(uwNum("noi")!) : <Placeholder />}</span>
-            </ReadOnlyField>
-            <InlineField
-              label="Current NOI (T12)"
-              type="currency"
-              value={uwNum("noi_current")}
-              onSave={(v) => saveField("noi_current", v)}
-            />
-            <InlineField
-              label="Stabilized NOI"
-              type="currency"
-              value={uwNum("noi_stabilized")}
-              onSave={(v) => saveField("noi_stabilized", v)}
-            />
-            <InlineField
-              label="Exit cap rate"
-              type="percent"
-              value={uwNum("exit_cap_rate")}
-              onSave={(v) => saveField("exit_cap_rate", v)}
-            />
-            <InlineField
-              label="Property value"
-              type="currency"
-              value={uwNum("property_value")}
-              onSave={(v) => saveField("property_value", v)}
-            />
-            <InlineField
-              label="Occupancy %"
-              type="percent"
-              value={uwNum("occupancy")}
-              onSave={(v) => saveField("occupancy", v)}
-            />
-            <InlineField
-              label="Avg rent / rate"
-              type="currency"
-              value={uwNum("avg_rent_rate")}
-              onSave={(v) => saveField("avg_rent_rate", v)}
-            />
-            <InlineField
-              label="Expense ratio %"
-              type="percent"
-              value={uwNum("operating_expense_ratio")}
-              onSave={(v) => saveField("operating_expense_ratio", v)}
-            />
-          </div>
-        </OverviewCard>
-      </div>
-
-      {/* ── Section 5: People ── */}
+      {/* ── Section 4: People ── */}
       <div>
         <SectionLabel icon={Users}>People</SectionLabel>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
