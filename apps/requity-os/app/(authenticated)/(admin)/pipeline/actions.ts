@@ -1337,14 +1337,14 @@ export async function resolveIntakeItemAction(data: {
             contactId = newContact?.id;
           }
 
-          // Link contact to the deal
+          // Link broker contact to the deal
           if (contactId) {
             await admin
               .from("unified_deals")
               .update({
-                primary_contact_id: contactId,
+                broker_contact_id: contactId,
                 ...(companyId ? { company_id: companyId } : {}),
-              })
+              } as never)
               .eq("id", deal.id);
           }
         } catch (contactErr) {
@@ -2408,7 +2408,10 @@ export async function processIntakeItemAction(
       capital_side: capitalSide,
       amount: dealAmount,
       asset_class: overrideAssetClass || resolvedAssetClass,
-      primary_contact_id: contactId,
+      // When broker data exists, the "contact" entity is the broker (via getIncomingContactData),
+      // so use borrowerContactId as primary and contactId as broker.
+      primary_contact_id: hasBrokerData ? (borrowerContactId || null) : contactId,
+      broker_contact_id: hasBrokerData ? contactId : null,
       company_id: companyId,
       property_id: propertyId,
       created_by: auth.user.id,
