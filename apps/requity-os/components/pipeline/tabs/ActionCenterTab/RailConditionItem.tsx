@@ -11,6 +11,7 @@ import {
   ChevronDown,
   ChevronRight,
   Upload,
+  Send,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -31,6 +32,7 @@ import type { DealConditionRow, ConditionDocument } from "./useActionCenterData"
 
 const STATUS_CONFIG: Record<string, { label: string; color: string; dotColor: string; icon: React.ElementType }> = {
   pending: { label: "Pending", color: "text-muted-foreground", dotColor: "bg-muted-foreground", icon: Clock },
+  requested: { label: "Requested", color: "text-violet-600 dark:text-violet-400", dotColor: "bg-violet-500", icon: Send },
   submitted: { label: "Submitted", color: "text-blue-600 dark:text-blue-400", dotColor: "bg-blue-500", icon: FileText },
   under_review: { label: "In Review", color: "text-amber-600 dark:text-amber-400", dotColor: "bg-amber-500", icon: Eye },
   approved: { label: "Approved", color: "text-green-600 dark:text-green-400", dotColor: "bg-green-500", icon: CheckCircle2 },
@@ -39,7 +41,7 @@ const STATUS_CONFIG: Record<string, { label: string; color: string; dotColor: st
   rejected: { label: "Rejected", color: "text-red-600 dark:text-red-400", dotColor: "bg-red-500", icon: AlertTriangle },
 };
 
-const STATUS_OPTIONS = ["pending", "submitted", "under_review", "approved", "waived", "not_applicable", "rejected"];
+const STATUS_OPTIONS = ["pending", "requested", "submitted", "under_review", "approved", "waived", "not_applicable", "rejected"];
 
 interface RailConditionItemProps {
   condition: DealConditionRow;

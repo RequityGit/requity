@@ -34,19 +34,21 @@ export function ConditionActions({
   return (
     <div className="border-b px-4 py-3 flex flex-wrap gap-2">
       {/* Primary action based on current status */}
-      {(condition.status === "pending" || condition.status === "submitted") && (
+      {(condition.status === "pending" || condition.status === "requested" || condition.status === "submitted") && (
         <Button
           size="sm"
           className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs"
           onClick={() =>
             onStatusChange(
               condition.id,
-              condition.status === "pending" ? "submitted" : "approved"
+              condition.status === "pending" || condition.status === "requested"
+                ? "submitted"
+                : "approved"
             )
           }
         >
           <Check className="h-3.5 w-3.5 mr-1.5" />
-          {condition.status === "pending" ? "Mark Received" : "Approve"}
+          {condition.status === "pending" || condition.status === "requested" ? "Mark Received" : "Approve"}
         </Button>
       )}
 

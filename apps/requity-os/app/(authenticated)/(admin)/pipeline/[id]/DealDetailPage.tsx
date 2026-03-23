@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useCallback, useTransition, useMemo, useEffect, lazy, Suspense } from "react";
+import { createClient } from "@/lib/supabase/client";
 import { SectionErrorBoundary } from "@/components/shared/SectionErrorBoundary";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -41,6 +42,8 @@ import {
   FolderOpen,
   Building2,
   Trash2,
+  Send,
+  FileText,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -106,6 +109,8 @@ import {
   deleteUnifiedDealSuperAdmin,
 } from "./actions";
 import { SubmitForApprovalDialog } from "@/components/approvals/submit-for-approval-dialog";
+import { SendFormDialog } from "@/components/pipeline/SendFormDialog";
+import { GenerateDocumentDialog } from "@/components/documents/GenerateDocumentDialog";
 import type { ApprovalEntityType } from "@/lib/approvals/types";
 import type { Profile } from "@/lib/tasks";
 import type { DealTeamContact } from "@/app/types/deal-team";
@@ -612,6 +617,19 @@ function DealDetailPageInner({
 
 // ─── Header (expanded: team popover, actions dropdown, advance CTA) ───
 
+/** Builds a prefixed email subject for deal-context emails. */
+function buildDealEmailSubject(displayId: string, dealName: string | null): string {
+  if (!dealName) return `${displayId} `;
+  const MAX_NAME_LENGTH = 45;
+  let name = dealName;
+  if (name.length > MAX_NAME_LENGTH) {
+    const truncated = name.slice(0, MAX_NAME_LENGTH);
+    const lastBreak = Math.max(truncated.lastIndexOf(","), truncated.lastIndexOf(" "));
+    name = lastBreak > 20 ? truncated.slice(0, lastBreak) : truncated;
+  }
+  return `${displayId} ${name} - `;
+}
+
 function DealHeader({
   deal,
   shortLabel,
@@ -667,6 +685,12 @@ function DealHeader({
   const [deleteDealOpen, setDeleteDealOpen] = useState(false);
   const [deleteDealLoading, setDeleteDealLoading] = useState(false);
 
+  // Send Form dialog state
+  const [sendFormOpen, setSendFormOpen] = useState(false);
+  // Generate Document dialog state
+  const [generateDocOpen, setGenerateDocOpen] = useState(false);
+  const [dealConditions, setDealConditions] = useState<Array<{ id: string; condition_name: string; status: string }>>([]);
+
   // Email composer state (for contact popover)
   const [emailComposeOpen, setEmailComposeOpen] = useState(false);
   const [emailToContact, setEmailToContact] = useState<{
@@ -674,6 +698,18 @@ function DealHeader({
     name: string;
     contactId: string;
   } | null>(null);
+
+  // Fetch deal conditions for Send Form dialog
+  useEffect(() => {
+    const supabase = createClient();
+    supabase
+      .from("unified_deal_conditions")
+      .select("id, condition_name, status")
+      .eq("deal_id", deal.id)
+      .then(({ data }) => {
+        if (data) setDealConditions(data);
+      });
+  }, [deal.id]);
 
   // Softphone for click-to-call
   const softphone = useSoftphoneMaybe();
@@ -1264,6 +1300,22 @@ function DealHeader({
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuLabel className="text-[10px] uppercase tracking-wider text-muted-foreground font-normal">
+                Forms
+              </DropdownMenuLabel>
+              <DropdownMenuItem onClick={() => setSendFormOpen(true)}>
+                <Send className="h-4 w-4 mr-2" />
+                Send Form
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuLabel className="text-[10px] uppercase tracking-wider text-muted-foreground font-normal">
+                Documents
+              </DropdownMenuLabel>
+              <DropdownMenuItem onClick={() => setGenerateDocOpen(true)}>
+                <FileText className="h-4 w-4 mr-2" />
+                Generate Document
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuLabel className="text-[10px] uppercase tracking-wider text-muted-foreground font-normal">
                 Approvals
               </DropdownMenuLabel>
               <SubmitForApprovalDialog
@@ -1374,6 +1426,34 @@ function DealHeader({
         </DialogContent>
       </Dialog>
 
+      {/* Send Form */}
+      <SendFormDialog
+        open={sendFormOpen}
+        onOpenChange={setSendFormOpen}
+        dealId={deal.id}
+        conditions={dealConditions}
+        onConditionsMarked={(ids) => {
+          setDealConditions((prev) =>
+            prev.map((c) => ids.includes(c.id) ? { ...c, status: "requested" } : c)
+          );
+        }}
+      />
+
+      {/* Generate Document */}
+      <GenerateDocumentDialog
+        recordType="deal"
+        recordId={deal.id}
+        recordLabel={deal.name || undefined}
+        open={generateDocOpen}
+        onOpenChange={setGenerateDocOpen}
+        conditions={dealConditions}
+        onConditionsMarked={(ids) => {
+          setDealConditions((prev) =>
+            prev.map((c) => ids.includes(c.id) ? { ...c, status: "submitted" } : c)
+          );
+        }}
+      />
+
       {/* Team Assignment */}
       <Dialog open={teamAssignOpen} onOpenChange={setTeamAssignOpen}>
         <DialogContent>
@@ -1430,6 +1510,7 @@ function DealHeader({
           linkedContactId={emailToContact.contactId}
           linkedLoanId={deal.id}
           currentUserId={currentUserId}
+          initialSubject={buildDealEmailSubject(displayId, deal.name)}
         />
       )}
     </>

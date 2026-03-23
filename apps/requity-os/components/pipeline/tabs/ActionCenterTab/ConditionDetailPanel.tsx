@@ -30,6 +30,7 @@ import type { DealConditionRow, ConditionDocument } from "./useActionCenterData"
 
 const STATUS_CONFIG: Record<string, { label: string; color: string }> = {
   pending: { label: "Pending", color: "text-muted-foreground" },
+  requested: { label: "Requested", color: "text-violet-600 dark:text-violet-400" },
   submitted: { label: "Submitted", color: "text-blue-600 dark:text-blue-400" },
   under_review: { label: "In Review", color: "text-amber-600 dark:text-amber-400" },
   approved: { label: "Approved", color: "text-green-600 dark:text-green-400" },
@@ -38,7 +39,7 @@ const STATUS_CONFIG: Record<string, { label: string; color: string }> = {
   rejected: { label: "Rejected", color: "text-red-600 dark:text-red-400" },
 };
 
-const STATUS_OPTIONS = ["pending", "submitted", "under_review", "approved", "waived", "not_applicable", "rejected"];
+const STATUS_OPTIONS = ["pending", "requested", "submitted", "under_review", "approved", "waived", "not_applicable", "rejected"];
 
 function formatStageName(stage: string): string {
   return stage.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
