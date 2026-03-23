@@ -16,6 +16,8 @@ export interface DealBorrowingEntity {
   updated_at: string;
   created_by: string | null;
   updated_by: string | null;
+  google_drive_folder_id: string | null;
+  google_drive_folder_url: string | null;
 }
 
 export interface DealBorrowerMember {
@@ -43,6 +45,8 @@ export interface DealBorrowerMember {
     last_name: string;
     email: string;
     phone: string;
+    google_drive_folder_id: string | null;
+    google_drive_folder_url: string | null;
   } | null;
 }
 

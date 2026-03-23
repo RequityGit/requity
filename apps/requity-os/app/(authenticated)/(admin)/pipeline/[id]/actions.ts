@@ -1168,6 +1168,107 @@ export async function createDealDriveFolder(
   }
 }
 
+// ─── Borrower / Entity Drive Folders ───
+
+export async function createBorrowerDriveFolder(
+  contactId: string,
+  dealId?: string
+): Promise<{ success?: boolean; error?: string; folder_url?: string }> {
+  try {
+    const auth = await requireAdmin();
+    if ("error" in auth) return { error: auth.error ?? "Unauthorized" };
+
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+    if (!supabaseUrl || !serviceRoleKey) return { error: "Server configuration missing" };
+
+    const res = await fetch(`${supabaseUrl}/functions/v1/create-borrower-drive-folder`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${serviceRoleKey}`,
+      },
+      body: JSON.stringify({ action: "create_borrower_folder", contactId, dealId }),
+    });
+
+    if (!res.ok) {
+      const body = await res.json().catch(() => ({}));
+      return { error: body.error ?? `HTTP ${res.status}` };
+    }
+
+    const data = await res.json();
+    if (dealId) await revalidateDeal(dealId);
+    return { success: true, folder_url: data.folder_url };
+  } catch (err: unknown) {
+    return { error: err instanceof Error ? err.message : "An unexpected error occurred" };
+  }
+}
+
+export async function createEntityDriveFolder(
+  entityId: string,
+  dealId?: string
+): Promise<{ success?: boolean; error?: string; folder_url?: string }> {
+  try {
+    const auth = await requireAdmin();
+    if ("error" in auth) return { error: auth.error ?? "Unauthorized" };
+
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+    if (!supabaseUrl || !serviceRoleKey) return { error: "Server configuration missing" };
+
+    const res = await fetch(`${supabaseUrl}/functions/v1/create-borrower-drive-folder`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${serviceRoleKey}`,
+      },
+      body: JSON.stringify({ action: "create_entity_folder", entityId, dealId }),
+    });
+
+    if (!res.ok) {
+      const body = await res.json().catch(() => ({}));
+      return { error: body.error ?? `HTTP ${res.status}` };
+    }
+
+    const data = await res.json();
+    if (dealId) await revalidateDeal(dealId);
+    return { success: true, folder_url: data.folder_url };
+  } catch (err: unknown) {
+    return { error: err instanceof Error ? err.message : "An unexpected error occurred" };
+  }
+}
+
+export async function syncDealDriveShortcuts(
+  dealId: string
+): Promise<{ success?: boolean; error?: string }> {
+  try {
+    const auth = await requireAdmin();
+    if ("error" in auth) return { error: auth.error ?? "Unauthorized" };
+
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+    if (!supabaseUrl || !serviceRoleKey) return { error: "Server configuration missing" };
+
+    const res = await fetch(`${supabaseUrl}/functions/v1/create-borrower-drive-folder`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${serviceRoleKey}`,
+      },
+      body: JSON.stringify({ action: "sync_deal_shortcuts", dealId }),
+    });
+
+    if (!res.ok) {
+      const body = await res.json().catch(() => ({}));
+      return { error: body.error ?? `HTTP ${res.status}` };
+    }
+
+    return { success: true };
+  } catch (err: unknown) {
+    return { error: err instanceof Error ? err.message : "An unexpected error occurred" };
+  }
+}
+
 // ─── Deal Contacts (multi-borrower / signer) ───
 
 export interface DealContact {

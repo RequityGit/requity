@@ -11,14 +11,15 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { Trash2, Loader2, Link2 } from "lucide-react";
-import { showError } from "@/lib/toast";
+import { Trash2, Loader2, Link2, FolderOpen } from "lucide-react";
+import { showError, showSuccess } from "@/lib/toast";
 import type { DealBorrowerMember } from "@/app/types/borrower";
 import { BORROWER_ROLES } from "./constants";
 import {
   updateBorrowerMemberAction,
   removeBorrowerMemberAction,
 } from "@/app/(authenticated)/(admin)/pipeline/[id]/borrower-actions";
+import { createBorrowerDriveFolder } from "@/app/(authenticated)/(admin)/pipeline/[id]/actions";
 
 /** Display name: direct fields first, fall back to contact join */
 function memberDisplayName(m: DealBorrowerMember): string {
@@ -111,6 +112,11 @@ export function BorrowerMemberRow({
     }
   }, [member.id, dealId, onRemoved]);
 
+  const [driveFolderUrl, setDriveFolderUrl] = useState<string | null>(
+    member.contact?.google_drive_folder_url ?? null
+  );
+  const [creatingDrive, setCreatingDrive] = useState(false);
+
   const displayName = memberDisplayName(member);
   const hasContact = !!member.contact_id;
 
@@ -143,6 +149,42 @@ export function BorrowerMemberRow({
               onClick={() => onLinkContact(member.id)}
             >
               <Link2 className="h-3 w-3" />
+            </button>
+          )}
+          {hasContact && driveFolderUrl && (
+            <a
+              href={driveFolderUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-muted-foreground hover:text-primary shrink-0"
+              title="Open Drive folder"
+            >
+              <FolderOpen className="h-3 w-3" />
+            </a>
+          )}
+          {hasContact && !driveFolderUrl && (
+            <button
+              type="button"
+              className="text-muted-foreground/40 hover:text-primary shrink-0"
+              title="Create Drive folder"
+              disabled={creatingDrive}
+              onClick={async () => {
+                setCreatingDrive(true);
+                const result = await createBorrowerDriveFolder(member.contact_id!, dealId);
+                setCreatingDrive(false);
+                if (result.error) {
+                  showError("Could not create Drive folder", result.error);
+                } else {
+                  if (result.folder_url) setDriveFolderUrl(result.folder_url);
+                  showSuccess("Drive folder created");
+                }
+              }}
+            >
+              {creatingDrive ? (
+                <Loader2 className="h-3 w-3 animate-spin" />
+              ) : (
+                <FolderOpen className="h-3 w-3" />
+              )}
             </button>
           )}
         </div>

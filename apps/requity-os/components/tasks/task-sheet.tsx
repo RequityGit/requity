@@ -225,12 +225,23 @@ export function TaskSheet({
     if (!open) return;
 
     function onGlobalPaste(e: ClipboardEvent) {
+      // More robust check: if the task sheet dialog is open, accept paste
+      // unless the user is focused on an unrelated element outside the dialog
       const sheetEl = document.querySelector("[data-task-sheet]");
-      if (
-        !sheetEl?.contains(document.activeElement) &&
-        !sheetEl?.contains(e.target as Node)
-      )
-        return;
+      if (!sheetEl) return;
+
+      // Check if the event target or active element is inside the sheet,
+      // OR if activeElement is body/null (common when dialog overlay has focus)
+      const target = e.target as Node | null;
+      const active = document.activeElement;
+      const isInsideSheet =
+        (target && sheetEl.contains(target)) ||
+        (active && sheetEl.contains(active)) ||
+        active === document.body ||
+        active === null ||
+        (active as Element)?.closest?.("[data-task-sheet]");
+
+      if (!isInsideSheet) return;
 
       const items = e.clipboardData?.items;
       if (!items) return;
@@ -245,6 +256,7 @@ export function TaskSheet({
       }
       if (files.length === 0) return;
       e.preventDefault();
+      showInfo(`Pasting ${files.length} file${files.length > 1 ? "s" : ""}...`);
 
       if (isNew) {
         setStagedFiles((prev) => [...prev, ...files]);
@@ -310,6 +322,7 @@ export function TaskSheet({
       }
       if (files.length === 0) return;
       e.preventDefault();
+      showInfo(`Pasting ${files.length} file${files.length > 1 ? "s" : ""}...`);
 
       if (isNew) {
         setStagedFiles((prev) => [...prev, ...files]);
@@ -715,7 +728,7 @@ export function TaskSheet({
 
   return (
     <Dialog open={open} onOpenChange={(isOpen) => { if (!isOpen) onClose(); }}>
-      <DialogContent data-task-sheet className="sm:max-w-[540px] p-0 md:p-0 gap-0 flex flex-col max-h-[85vh] md:max-h-[85vh] overflow-hidden">
+      <DialogContent data-task-sheet onPaste={handlePaste} className="sm:max-w-[540px] p-0 md:p-0 gap-0 flex flex-col max-h-[85vh] md:max-h-[85vh] overflow-hidden">
         <DialogHeader className="px-6 pt-5 pb-3 border-b border-border shrink-0">
           <DialogTitle className="text-base font-bold tracking-tight">
             {isNew ? "New Task" : "Edit Task"}
@@ -1173,9 +1186,14 @@ export function TaskSheet({
                 }`}
               >
                 <Upload className="h-4 w-4 text-muted-foreground" strokeWidth={1.5} />
-                <span className="text-[12px] text-muted-foreground">
-                  {uploading ? "Uploading..." : "Drop files or paste (Ctrl+V) here"}
+                <span className="text-xs text-muted-foreground">
+                  {uploading ? "Uploading..." : "Drop files or click to browse"}
                 </span>
+                {!uploading && (
+                  <span className="text-[10px] text-muted-foreground/60 mt-0.5">
+                    Ctrl+V to paste screenshots
+                  </span>
+                )}
               </div>
               {/* Staged files for new tasks */}
               {isNew && stagedFiles.length > 0 && (
