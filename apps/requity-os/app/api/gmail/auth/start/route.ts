@@ -5,8 +5,11 @@ import crypto from "crypto";
 export async function POST(request: NextRequest) {
   const clientId = process.env.GMAIL_CLIENT_ID;
   const clientSecret = process.env.GMAIL_CLIENT_SECRET;
-  const appUrl =
-    process.env.NEXT_PUBLIC_APP_URL || new URL(request.url).origin;
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL;
+  if (!appUrl) {
+    console.error("NEXT_PUBLIC_APP_URL is not set - Gmail OAuth redirect_uri will be unreliable");
+  }
+  const effectiveAppUrl = appUrl || new URL(request.url).origin;
 
   if (!clientId || !clientSecret) {
     return NextResponse.json(
@@ -32,7 +35,7 @@ export async function POST(request: NextRequest) {
   });
   const state = Buffer.from(statePayload).toString("base64url");
 
-  const redirectUri = `${appUrl}/api/gmail/auth/callback`;
+  const redirectUri = `${effectiveAppUrl}/api/gmail/auth/callback`;
 
   const params = new URLSearchParams({
     client_id: clientId,

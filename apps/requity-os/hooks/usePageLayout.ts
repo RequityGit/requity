@@ -114,8 +114,8 @@ export function usePageLayout(pageType: string): DealLayoutResult {
           key,
           label: section.tab_label || "Overview",
           icon: section.tab_icon,
-          order: section.tab_order,
-          locked: section.tab_locked,
+          order: section.tab_order ?? 0,
+          locked: section.tab_locked ?? false,
           sections: [],
         });
       }

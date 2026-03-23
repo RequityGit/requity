@@ -5,12 +5,13 @@ CREATE TABLE IF NOT EXISTS gmail_tokens (
   user_id uuid NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
   email text NOT NULL,
   access_token text NOT NULL,
-  refresh_token text,
+  refresh_token text NOT NULL DEFAULT '',
   token_expires_at timestamptz,
   is_active boolean NOT NULL DEFAULT true,
+  scopes text[],
   connected_at timestamptz NOT NULL DEFAULT now(),
-  created_at timestamptz NOT NULL DEFAULT now(),
-  updated_at timestamptz NOT NULL DEFAULT now()
+  updated_at timestamptz NOT NULL DEFAULT now(),
+  UNIQUE(user_id)
 );
 
 -- Index for quick lookups by user
@@ -20,16 +21,16 @@ CREATE INDEX IF NOT EXISTS idx_gmail_tokens_user_active
 -- RLS
 ALTER TABLE gmail_tokens ENABLE ROW LEVEL SECURITY;
 
--- Admins can manage all tokens
+-- Admins (via service_role) can manage all tokens
 DO $$
 BEGIN
   IF NOT EXISTS (
-    SELECT 1 FROM pg_policies WHERE tablename = 'gmail_tokens' AND policyname = 'Admins can manage gmail_tokens'
+    SELECT 1 FROM pg_policies WHERE tablename = 'gmail_tokens' AND policyname = 'Service role can manage gmail_tokens'
   ) THEN
-    CREATE POLICY "Admins can manage gmail_tokens"
+    CREATE POLICY "Service role can manage gmail_tokens"
       ON gmail_tokens FOR ALL
-      USING (is_admin())
-      WITH CHECK (is_admin());
+      USING (auth.role() = 'service_role')
+      WITH CHECK (auth.role() = 'service_role');
   END IF;
 END $$;
 
