@@ -18,10 +18,13 @@ interface SelectableAvatarProps {
 
 const ROLE_BADGE: Record<string, string> = {
   Borrower: "B",
+  "Co-Borrower": "CB",
   Broker: "BK",
   Originator: "O",
   Processor: "P",
   Underwriter: "U",
+  "Title Company": "T",
+  "Insurance Agent": "IA",
 };
 
 export function SelectableAvatar({

@@ -34,7 +34,8 @@ interface UseConditionDocumentsReturn {
 
 export function useConditionDocuments(
   conditionId: string,
-  dealId: string
+  dealId: string,
+  onUploadComplete?: () => void
 ): UseConditionDocumentsReturn {
   const [conditionDocs, setConditionDocs] = useState<ConditionDocument[]>([]);
   const [unlinkedDealDocs, setUnlinkedDealDocs] = useState<ConditionDocument[]>([]);
@@ -174,7 +175,10 @@ export function useConditionDocuments(
       // 4. Refresh document list
       await refreshDocs();
 
-      // 5. Auto-trigger AI analysis
+      // 5. Notify parent to refresh page-level data (so Diligence tab sees the new doc)
+      onUploadComplete?.();
+
+      // 6. Auto-trigger AI analysis
       if (documentId) {
         setReviewStatuses((prev) => ({
           ...prev,
@@ -199,7 +203,7 @@ export function useConditionDocuments(
         }
       }
     },
-    [conditionId, dealId, refreshDocs]
+    [conditionId, dealId, refreshDocs, onUploadComplete]
   );
 
   const deleteDocument = useCallback(
@@ -220,8 +224,9 @@ export function useConditionDocuments(
       }
 
       showSuccess("Document deleted");
+      onUploadComplete?.();
     },
-    [refreshDocs]
+    [refreshDocs, onUploadComplete]
   );
 
   const linkDocument = useCallback(
@@ -239,8 +244,9 @@ export function useConditionDocuments(
 
       showSuccess("Document linked");
       await refreshDocs();
+      onUploadComplete?.();
     },
-    [conditionId, refreshDocs]
+    [conditionId, refreshDocs, onUploadComplete]
   );
 
   const triggerReviewForDoc = useCallback(

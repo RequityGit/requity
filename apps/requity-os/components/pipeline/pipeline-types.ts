@@ -58,9 +58,39 @@ export interface FieldGroupDef {
   fields: string[];
 }
 
-// DEPRECATED: UnifiedCardType interface removed. Deal display metadata is now
-// derived deterministically via getDealDisplayConfig() in
-// lib/pipeline/deal-display-config.ts using asset_class + capital_side + loan_type.
+// CardTypeStatus — status of a card type definition
+export type CardTypeStatus = "active" | "draft" | "planned" | "archived";
+
+// UnifiedCardType — row shape for the unified_card_types table
+export interface UnifiedCardType {
+  id: string;
+  slug: string;
+  label: string;
+  capital_side: CapitalSide;
+  category: string;
+  description: string | null;
+  uw_model_key: string;
+  uw_fields: UwFieldDef[];
+  uw_outputs: UwOutputDef[];
+  card_metrics: CardMetricDef[];
+  card_icon: string | null;
+  detail_tabs: string[];
+  detail_field_groups: FieldGroupDef[];
+  property_fields: UwFieldDef[];
+  property_field_groups: FieldGroupDef[];
+  contact_fields: UwFieldDef[];
+  contact_field_groups: FieldGroupDef[];
+  contact_roles: string[];
+  applicable_asset_classes: string[] | null;
+  uw_grid: GridTemplateDef | null;
+  uw_field_refs: CardTypeFieldRef[];
+  property_field_refs: CardTypeFieldRef[];
+  contact_field_refs: CardTypeFieldRef[];
+  status: CardTypeStatus;
+  sort_order: number | null;
+  created_at: string;
+  updated_at: string;
+}
 
 export interface UnifiedDeal {
   id: string;

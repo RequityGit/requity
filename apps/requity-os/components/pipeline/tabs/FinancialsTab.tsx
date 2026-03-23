@@ -13,7 +13,6 @@ import {
   Settings,
   Receipt,
 } from "lucide-react";
-import { EmptyState } from "@/components/shared/EmptyState";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
@@ -212,12 +211,9 @@ function VersionHistoryCard({
       </div>
 
       {allVersions.length === 0 ? (
-        <EmptyState
-          icon={FileSpreadsheet}
-          title="No versions yet"
-          description="Initialize underwriting to get started."
-          compact
-        />
+        <div className="px-5 py-4 text-[13px] text-muted-foreground">
+          No versions yet. Initialize underwriting to get started.
+        </div>
       ) : (
         <div>
           {allVersions.map(

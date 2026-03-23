@@ -40,7 +40,6 @@ import { ACTIVITY_TYPE_CONFIG } from "@/components/crm/contact-360/types";
 import type { DealActivity } from "@/components/pipeline/pipeline-types";
 import { logDealActivityRich, fetchActivityTabData } from "@/app/(authenticated)/(admin)/pipeline/[id]/actions";
 import { Skeleton } from "@/components/ui/skeleton";
-import { EmptyState } from "@/components/shared/EmptyState";
 
 // ── Icon map for activity types ──
 
@@ -387,15 +386,22 @@ export function DealActivityTab({
 
       {/* Unified Timeline */}
       {filtered.length === 0 ? (
-        <EmptyState
-          icon={Activity}
-          title="No activities"
-          description={
-            filter !== "all"
+        <div className="flex flex-col items-center justify-center py-12 text-center">
+          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-muted mb-4">
+            <Activity
+              className="h-6 w-6 text-muted-foreground"
+              strokeWidth={1.5}
+            />
+          </div>
+          <h3 className="text-sm font-semibold text-foreground mb-1">
+            No activities
+          </h3>
+          <p className="text-sm text-muted-foreground">
+            {filter !== "all"
               ? `No ${filter} activities. Try changing the filter.`
-              : "Log your first activity to start the timeline."
-          }
-        />
+              : "Log your first activity to start the timeline."}
+          </p>
+        </div>
       ) : (
         <div className="flex flex-col gap-0">
           {filtered.map((item, i) => {

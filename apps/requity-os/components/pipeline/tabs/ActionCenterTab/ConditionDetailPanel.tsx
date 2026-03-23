@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { useRouter } from "next/navigation";
 import {
   ArrowLeft,
   Flame,
@@ -19,14 +20,16 @@ import { formatDate } from "@/lib/format";
 import { showSuccess, showError } from "@/lib/toast";
 import { useConfirm } from "@/components/shared/ConfirmDialog";
 import { getDocumentSignedUrl } from "@/app/(authenticated)/(admin)/pipeline/[id]/actions";
-import { updateConditionStatusAction } from "@/app/(authenticated)/(admin)/pipeline/actions";
+import { updateConditionStatusAction, updateConditionAssignedToAction } from "@/app/(authenticated)/(admin)/pipeline/actions";
 import { UnifiedNotes } from "@/components/shared/UnifiedNotes";
+import { createClient } from "@/lib/supabase/client";
+import { ConditionAvatar } from "./ConditionAvatar";
 import { useConditionDocuments } from "./useConditionDocuments";
 import { ConditionInstructions } from "./ConditionInstructions";
 import { ConditionDocuments } from "./ConditionDocuments";
 import { ConditionAIReview } from "./ConditionAIReview";
 import { ConditionActions } from "./ConditionActions";
-import type { DealConditionRow, ConditionDocument } from "./useActionCenterData";
+import type { DealConditionRow, ConditionDocument, ConditionProfile } from "./useActionCenterData";
 
 const STATUS_CONFIG: Record<string, { label: string; color: string }> = {
   pending: { label: "Pending", color: "text-muted-foreground" },
@@ -66,6 +69,7 @@ export function ConditionDetailPanel({
   onBack,
   onStatusChange,
 }: ConditionDetailPanelProps) {
+  const router = useRouter();
   const confirm = useConfirm();
   const [isUploading, setIsUploading] = useState(false);
 
@@ -85,7 +89,46 @@ export function ConditionDetailPanel({
     linkDocument,
     triggerReviewForDoc,
     retriggerReviewForDoc,
-  } = useConditionDocuments(condition.id, dealId);
+  } = useConditionDocuments(condition.id, dealId, () => router.refresh());
+
+  // Fetch deal team members for the assigned_to selector
+  const [teamMembers, setTeamMembers] = useState<{ profile_id: string; full_name: string | null; accent_color: string | null }[]>([]);
+  const [assignedTo, setAssignedTo] = useState(condition.assigned_to ?? "");
+
+  useEffect(() => {
+    const supabase = createClient();
+    (async () => {
+      const { data: members } = await supabase
+        .from("deal_team_members" as never)
+        .select("profile_id" as never)
+        .eq("deal_id" as never, dealId as never);
+
+      if (members && members.length > 0) {
+        const profileIds = (members as { profile_id: string }[]).map((m) => m.profile_id);
+        const { data: profiles } = await supabase
+          .from("profiles")
+          .select("id, full_name, accent_color")
+          .in("id", profileIds);
+        if (profiles) {
+          setTeamMembers(
+            profiles.map((p) => ({ profile_id: p.id, full_name: p.full_name, accent_color: p.accent_color }))
+          );
+        }
+      }
+    })();
+  }, [dealId]);
+
+  const handleAssignedToChange = async (value: string) => {
+    const newVal = value === "unassigned" ? null : value;
+    setAssignedTo(newVal ?? "");
+    const result = await updateConditionAssignedToAction(condition.id, newVal, dealId);
+    if (result && "error" in result && result.error) {
+      setAssignedTo(condition.assigned_to ?? "");
+      showError("Could not update assignment", result.error);
+    } else {
+      showSuccess("Collector updated");
+    }
+  };
 
   // Find the most recent completed review for the AI review card
   const latestReview = (() => {
@@ -252,6 +295,34 @@ export function ConditionDetailPanel({
             >
               Due: {formatDate(condition.due_date)}
             </span>
+          )}
+        </div>
+
+        {/* Collector assignment */}
+        <div className="flex items-center gap-2 mt-2">
+          <span className="inline-field-label shrink-0">Collector</span>
+          <Select value={assignedTo || "unassigned"} onValueChange={handleAssignedToChange}>
+            <SelectTrigger className="inline-field h-7 text-[12px] w-[180px]">
+              <SelectValue placeholder="Unassigned" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="unassigned">
+                <span className="text-[12px] text-muted-foreground">Unassigned</span>
+              </SelectItem>
+              {teamMembers.map((m) => (
+                <SelectItem key={m.profile_id} value={m.profile_id}>
+                  <span className="text-[12px]">{m.full_name ?? "Unknown"}</span>
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          {assignedTo && (
+            <ConditionAvatar
+              profile={teamMembers.find((m) => m.profile_id === assignedTo)
+                ? { id: assignedTo, full_name: teamMembers.find((m) => m.profile_id === assignedTo)!.full_name, accent_color: teamMembers.find((m) => m.profile_id === assignedTo)!.accent_color }
+                : null}
+              role="Collector"
+            />
           )}
         </div>
       </div>

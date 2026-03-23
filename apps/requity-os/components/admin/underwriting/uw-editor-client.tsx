@@ -395,17 +395,15 @@ export function UWEditorClient({
               </div>
             )
           ) : (
-            <EmptyState
-              icon={History}
-              title="No scenario selected"
-              description="Create a new scenario to get started."
-              action={
-                <Button onClick={handleCreate} disabled={creating}>
-                  {creating ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : null}
-                  + New Scenario
-                </Button>
-              }
-            />
+            <div className="flex flex-col items-center justify-center py-20">
+              <p className="text-sm text-muted-foreground">
+                Create a new scenario to get started.
+              </p>
+              <Button className="mt-4" onClick={handleCreate} disabled={creating}>
+                {creating ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : null}
+                + New Scenario
+              </Button>
+            </div>
           )}
         </div>
       </div>

@@ -36,6 +36,7 @@ export function ActionCenterTab({
     pinNote,
     conditions,
     conditionDocs,
+    conditionProfiles,
     tasks,
     railLoading,
     updateConditionStatus,
@@ -84,6 +85,7 @@ export function ActionCenterTab({
         <ActionCenterRail
           conditions={conditions}
           conditionDocs={conditionDocs}
+          conditionProfiles={conditionProfiles}
           loading={railLoading}
           dealId={dealId}
           dealStage={dealStage}

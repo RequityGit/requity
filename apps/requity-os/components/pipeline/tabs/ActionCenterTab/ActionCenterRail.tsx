@@ -33,6 +33,7 @@ import { showSuccess, showError } from "@/lib/toast";
 import type {
   DealConditionRow,
   ConditionDocument,
+  ConditionProfile,
 } from "./useActionCenterData";
 
 // ── Stage filter constants (5 deal stages from kanban) ──
@@ -73,6 +74,7 @@ function getDefaultStages(dealStage: string): Set<string> {
 interface ActionCenterRailProps {
   conditions: DealConditionRow[];
   conditionDocs: ConditionDocument[];
+  conditionProfiles: Record<string, ConditionProfile>;
   loading: boolean;
   dealId: string;
   dealStage: string;
@@ -83,6 +85,7 @@ interface ActionCenterRailProps {
 export function ActionCenterRail({
   conditions,
   conditionDocs,
+  conditionProfiles,
   loading,
   dealId,
   dealStage,
@@ -323,6 +326,8 @@ export function ActionCenterRail({
                         dealId={dealId}
                         onStatusChange={onConditionStatusChange}
                         onOpenDetail={handleConditionClick}
+                        assignedProfile={c.assigned_to ? conditionProfiles[c.assigned_to] ?? null : null}
+                        approverProfile={c.approver_id ? conditionProfiles[c.approver_id] ?? null : null}
                       />
                     ))
                   )}

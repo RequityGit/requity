@@ -1064,6 +1064,27 @@ export async function updateDealFieldV2(
   }
 }
 
+// ─── Broker Assignment ───
+
+export async function assignBrokerContact(
+  dealId: string,
+  contactId: string | null
+) {
+  const auth = await requireAdmin();
+  if ("error" in auth) return { error: auth.error ?? "Unauthorized" };
+
+  const admin = createAdminClient();
+  const { error } = await admin
+    .from("unified_deals" as never)
+    .update({ broker_contact_id: contactId } as never)
+    .eq("id" as never, dealId as never);
+
+  if (error) return { error: error.message };
+
+  await revalidateDeal(dealId);
+  return { success: true };
+}
+
 /** Permanently delete a pipeline deal. Super admin only. */
 export async function deleteUnifiedDealSuperAdmin(
   dealId: string
