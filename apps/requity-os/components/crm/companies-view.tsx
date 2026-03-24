@@ -199,7 +199,7 @@ export function CompaniesView({ companies, isSuperAdmin = false }: CompaniesView
   return (
     <div className="space-y-3">
         <div className="flex items-center gap-2.5 flex-wrap">
-          <div className="relative flex-1 min-w-[240px] max-w-sm">
+          <div className="relative flex-1 min-w-0 sm:min-w-[240px] max-w-sm">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <Input
               value={companySearch}
@@ -226,18 +226,18 @@ export function CompaniesView({ companies, isSuperAdmin = false }: CompaniesView
         </div>
 
         <div className="rounded-xl border bg-card overflow-hidden">
-          <div className="overflow-x-auto">
+          <div className="overflow-x-auto mobile-scroll">
             <div ref={tableScrollRef} className="max-h-[min(70vh,560px)] overflow-y-auto">
-            <table className="w-full border-collapse block">
+            <table className="w-full border-collapse block mobile-table-sticky">
               <thead className="sticky top-0 z-10 bg-card border-b">
                 <tr className="border-b" style={{ display: "table", width: "100%", tableLayout: "fixed" }}>
-                  <SortHeader label="Company" sortKey="name" style={{ width: "24%" }} />
-                  <SortHeader label="Type" sortKey="company_type" style={{ width: "18%" }} />
-                  <SortHeader label="Contacts" sortKey="contact_count" className="text-right" style={{ width: "10%" }} />
-                  <SortHeader label="Files" sortKey="file_count" className="text-right" style={{ width: "8%" }} />
-                  <th className="text-xs font-medium text-muted-foreground text-left px-4 py-2.5" style={{ width: "16%" }}>Location</th>
-                  <SortHeader label="Status" sortKey="is_active" style={{ width: "12%" }} />
-                  <th className="text-xs font-medium text-muted-foreground text-center px-4 py-2.5" style={{ width: "5%" }} />
+                  <SortHeader label="Company" sortKey="name" className="w-[45%] md:w-[24%]" />
+                  <SortHeader label="Type" sortKey="company_type" className="w-[25%] md:w-[18%]" />
+                  <SortHeader label="Contacts" sortKey="contact_count" className="hidden md:table-cell text-right" style={{ width: "10%" }} />
+                  <SortHeader label="Files" sortKey="file_count" className="hidden md:table-cell text-right" style={{ width: "8%" }} />
+                  <th className="hidden md:table-cell text-xs font-medium text-muted-foreground text-left px-4 py-2.5" style={{ width: "16%" }}>Location</th>
+                  <SortHeader label="Status" sortKey="is_active" className="w-[18%] md:w-[12%]" />
+                  <th className="text-xs font-medium text-muted-foreground text-center px-4 py-2.5 w-[12%] md:w-[5%]" />
                 </tr>
               </thead>
               <tbody
@@ -269,7 +269,7 @@ export function CompaniesView({ companies, isSuperAdmin = false }: CompaniesView
                       key={c.id}
                       data-index={vi.index}
                       onClick={() => router.push(`/companies/${c.company_number}`)}
-                      className="cursor-pointer transition-colors hover:bg-muted/50 border-b border-border/50"
+                      className="cursor-pointer transition-colors hover:bg-muted/50 border-b border-border/50 mobile-press"
                       style={{
                         display: "table",
                         width: "100%",
@@ -281,8 +281,8 @@ export function CompaniesView({ companies, isSuperAdmin = false }: CompaniesView
                         height: `${vi.size}px`,
                       }}
                     >
-                      <td className="px-4 py-3" style={{ width: "24%" }}>
-                        <div className="flex items-center gap-2.5">
+                      <td className="px-4 py-3 w-[45%] md:w-[24%]">
+                        <div className="flex items-center gap-2.5 min-w-0">
                           <div className="h-8 w-8 rounded-lg bg-muted flex items-center justify-center shrink-0">
                             <Building2 className="h-4 w-4 text-muted-foreground" />
                           </div>
@@ -291,28 +291,28 @@ export function CompaniesView({ companies, isSuperAdmin = false }: CompaniesView
                           </span>
                         </div>
                       </td>
-                      <td className="px-4 py-3" style={{ width: "18%" }}>
-                        <div className="flex flex-wrap gap-1">
+                      <td className="px-4 py-3 w-[25%] md:w-[18%]">
+                        <div className="flex flex-wrap gap-1 overflow-hidden max-h-[40px]">
                           {(c.company_types?.length ? c.company_types : [c.company_type]).map((ct) => (
-                            <span key={ct} className="text-xs text-muted-foreground bg-muted px-2 py-0.5 rounded">
+                            <span key={ct} className="text-xs text-muted-foreground bg-muted px-2 py-0.5 rounded truncate max-w-full">
                               {CRM_COMPANY_TYPES.find((t) => t.value === ct)?.label ?? ct}
                             </span>
                           ))}
                         </div>
                       </td>
-                      <td className="px-4 py-3 num text-sm text-foreground text-right" style={{ width: "10%" }}>
+                      <td className="hidden md:table-cell px-4 py-3 num text-sm text-foreground text-right" style={{ width: "10%" }}>
                         {c.contact_count}
                       </td>
-                      <td className="px-4 py-3 num text-sm text-foreground text-right" style={{ width: "8%" }}>
+                      <td className="hidden md:table-cell px-4 py-3 num text-sm text-foreground text-right" style={{ width: "8%" }}>
                         {c.file_count}
                       </td>
-                      <td className="px-4 py-3 text-sm text-muted-foreground whitespace-nowrap" style={{ width: "16%" }}>
+                      <td className="hidden md:table-cell px-4 py-3 text-sm text-muted-foreground whitespace-nowrap" style={{ width: "16%" }}>
                         {c.city && c.state ? `${c.city}, ${c.state}` : c.city || c.state || "—"}
                       </td>
-                      <td className="px-4 py-3" style={{ width: "12%" }}>
+                      <td className="px-4 py-3 w-[18%] md:w-[12%]">
                         <CompanyStatusDot isActive={c.is_active} />
                       </td>
-                      <td className="px-4 py-3 text-center" style={{ width: "5%" }} onClick={(e) => e.stopPropagation()}>
+                      <td className="px-4 py-3 text-center w-[12%] md:w-[5%]" onClick={(e) => e.stopPropagation()}>
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
                             <Button
