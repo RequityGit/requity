@@ -278,6 +278,119 @@ export async function addDirectBorrowerMemberAction(
   }
 }
 
+/** Links an existing CRM contact to an existing borrower member row. */
+export async function linkContactToMemberAction(
+  memberId: string,
+  dealId: string,
+  contactId: string
+) {
+  try {
+    const auth = await requireAdmin();
+    if ("error" in auth) return { error: auth.error ?? "Unauthorized" };
+    const admin = createAdminClient();
+
+    // Pull defaults from borrower profile if available
+    const { data: profile } = await admin
+      .from("borrower_profiles" as never)
+      .select("*")
+      .eq("contact_id", contactId)
+      .maybeSingle();
+
+    // Get contact name for denormalized fields
+    const { data: contact } = await admin
+      .from("crm_contacts" as never)
+      .select("first_name, last_name, email, phone")
+      .eq("id", contactId)
+      .single();
+
+    const updates: Record<string, unknown> = {
+      contact_id: contactId,
+    };
+
+    // Denormalize contact name/email/phone onto the member
+    if (contact) {
+      const c = contact as { first_name: string | null; last_name: string | null; email: string | null; phone: string | null };
+      updates.first_name = c.first_name;
+      updates.last_name = c.last_name;
+      updates.email = c.email;
+      updates.phone = c.phone;
+    }
+
+    // Pull borrower profile defaults for empty fields
+    if (profile) {
+      const p = profile as { default_credit_score?: number; default_liquidity?: number; default_net_worth?: number; default_experience?: number };
+      if (p.default_credit_score) updates.credit_score = p.default_credit_score;
+      if (p.default_liquidity) updates.liquidity = p.default_liquidity;
+      if (p.default_net_worth) updates.net_worth = p.default_net_worth;
+      if (p.default_experience) updates.experience = p.default_experience;
+    }
+
+    await updateBorrowerMember(admin, memberId, updates as Partial<DealBorrowerMember>);
+    return { error: null };
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : "Failed to link contact";
+    if (msg.includes("duplicate") || msg.includes("unique") || msg.includes("23505"))
+      return { error: "This contact is already linked to this deal." };
+    console.error("linkContactToMember error:", err);
+    return { error: msg };
+  }
+}
+
+/** Creates a CRM contact and links them to an existing borrower member row. */
+export async function createContactAndLinkToMemberAction(
+  memberId: string,
+  dealId: string,
+  payload: { first_name: string; last_name: string; email?: string; phone?: string }
+) {
+  try {
+    const auth = await requireAdmin();
+    if ("error" in auth) return { error: auth.error ?? "Unauthorized" };
+
+    const first = (payload.first_name ?? "").trim();
+    const last = (payload.last_name ?? "").trim();
+    if (!first && !last) return { error: "First name or last name is required." };
+
+    const admin = createAdminClient();
+
+    const { data: newContact, error: contactError } = await admin
+      .from("crm_contacts" as never)
+      .insert({
+        first_name: first || null,
+        last_name: last || null,
+        name: `${first} ${last}`.trim(),
+        contact_type: "borrower",
+        contact_types: ["borrower"],
+        status: "active",
+        email: (payload.email ?? "").trim() || null,
+        phone: (payload.phone ?? "").trim() || null,
+      } as never)
+      .select("id, first_name, last_name, email, phone")
+      .single();
+
+    if (contactError) {
+      const msg = contactError.message ?? "Failed to create contact";
+      if (msg.includes("duplicate") || msg.includes("unique") || String(contactError.code) === "23505")
+        return { error: "A contact with this email already exists." };
+      return { error: msg };
+    }
+
+    const c = newContact as { id: string; first_name: string | null; last_name: string | null; email: string | null; phone: string | null };
+
+    await updateBorrowerMember(admin, memberId, {
+      contact_id: c.id,
+      first_name: c.first_name,
+      last_name: c.last_name,
+      email: c.email,
+      phone: c.phone,
+    } as Partial<DealBorrowerMember>);
+
+    return { error: null };
+  } catch (err) {
+    console.error("createContactAndLinkToMember error:", err);
+    return { error: err instanceof Error ? err.message : "Failed to create and link contact" };
+  }
+}
+
 export type CreateContactPayload = {
   first_name: string;
   last_name: string;

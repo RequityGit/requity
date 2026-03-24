@@ -166,8 +166,11 @@ export function BorrowerMemberTable({
                   key={m.id}
                   member={m}
                   dealId={dealId}
+                  borrowingEntityId={entity?.id ?? null}
+                  existingContactIds={members.filter((x) => x.contact_id).map((x) => x.contact_id as string)}
                   onOptimisticUpdate={onOptimisticUpdate}
                   onRemoved={onStructuralChange}
+                  onLinked={onStructuralChange}
                 />
               ))
             )}

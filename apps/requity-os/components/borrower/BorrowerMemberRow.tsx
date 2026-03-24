@@ -20,34 +20,31 @@ import {
   removeBorrowerMemberAction,
 } from "@/app/(authenticated)/(admin)/pipeline/[id]/borrower-actions";
 import { createBorrowerDriveFolder } from "@/app/(authenticated)/(admin)/pipeline/[id]/actions";
-
-/** Display name: direct fields first, fall back to contact join */
-function memberDisplayName(m: DealBorrowerMember): string {
-  const direct = [m.first_name, m.last_name].filter(Boolean).join(" ");
-  if (direct) return direct;
-  const c = m.contact;
-  if (c) return [c.first_name, c.last_name].filter(Boolean).join(" ") || "";
-  return "";
-}
+import { BorrowerContactPicker } from "./BorrowerContactPicker";
 
 interface BorrowerMemberRowProps {
   member: DealBorrowerMember;
   dealId: string;
+  borrowingEntityId: string | null;
+  existingContactIds: string[];
   onOptimisticUpdate: (
     memberId: string,
     updates: Partial<DealBorrowerMember>
   ) => void;
-  /** Called only for structural changes (remove) that need a full re-fetch */
+  /** Called only for structural changes (remove, link contact) that need a full re-fetch */
   onRemoved: () => void;
-  onLinkContact?: (memberId: string) => void;
+  /** Called when a contact is linked or created (structural change) */
+  onLinked: () => void;
 }
 
 export function BorrowerMemberRow({
   member,
   dealId,
+  borrowingEntityId,
+  existingContactIds,
   onOptimisticUpdate,
   onRemoved,
-  onLinkContact,
+  onLinked,
 }: BorrowerMemberRowProps) {
   const [removing, setRemoving] = useState(false);
   const [removeOpen, setRemoveOpen] = useState(false);
@@ -117,20 +114,20 @@ export function BorrowerMemberRow({
   );
   const [creatingDrive, setCreatingDrive] = useState(false);
 
-  const displayName = memberDisplayName(member);
   const hasContact = !!member.contact_id;
 
   return (
     <TableRow className="group/row hover:bg-muted/30 transition-colors">
-      {/* Name */}
+      {/* Name (contact-connected field) */}
       <TableCell className="font-medium py-1.5">
         <div className="flex items-center gap-1.5">
-          <InlineField
-            type="text"
-            value={displayName}
-            placeholder="Name"
-            onSave={saveName}
-            className="flex-1"
+          <BorrowerContactPicker
+            member={member}
+            dealId={dealId}
+            borrowingEntityId={borrowingEntityId}
+            existingContactIds={existingContactIds}
+            onLinked={onLinked}
+            onSaveName={saveName}
           />
           {hasContact && (
             <Link
@@ -140,16 +137,6 @@ export function BorrowerMemberRow({
             >
               <Link2 className="h-3 w-3" />
             </Link>
-          )}
-          {!hasContact && onLinkContact && (
-            <button
-              type="button"
-              className="text-muted-foreground/40 hover:text-primary shrink-0"
-              title="Link to CRM contact"
-              onClick={() => onLinkContact(member.id)}
-            >
-              <Link2 className="h-3 w-3" />
-            </button>
           )}
           {hasContact && driveFolderUrl && (
             <a
