@@ -84,6 +84,13 @@ export async function GET(request: NextRequest) {
   };
 
   try {
+    console.log("[Gmail OAuth] Token exchange request:", {
+      redirect_uri: redirectUri,
+      client_id_prefix: clientId.slice(0, 20) + "...",
+      has_client_secret: Boolean(clientSecret),
+      code_length: code.length,
+    });
+
     const tokenRes = await fetch("https://oauth2.googleapis.com/token", {
       method: "POST",
       headers: { "Content-Type": "application/x-www-form-urlencoded" },
@@ -98,18 +105,35 @@ export async function GET(request: NextRequest) {
 
     if (!tokenRes.ok) {
       const errBody = await tokenRes.text();
-      console.error("Google token exchange failed:", tokenRes.status, errBody);
+      console.error("Google token exchange failed:", {
+        status: tokenRes.status,
+        body: errBody,
+        redirect_uri: redirectUri,
+        client_id_prefix: clientId.slice(0, 20) + "...",
+      });
 
       let detail = "Unknown error";
+      let errorCode = "";
       try {
         const parsed = JSON.parse(errBody);
+        errorCode = parsed.error || "";
         detail = parsed.error_description || parsed.error || errBody.slice(0, 200);
       } catch {
         detail = errBody.slice(0, 200);
       }
 
+      // Include redirect_uri in the user-facing message for debugging
+      const debugHint =
+        errorCode === "unauthorized_client"
+          ? ` (Check: OAuth client type must be "Web application" in Google Cloud Console, and redirect URI "${redirectUri}" must be in Authorized redirect URIs)`
+          : errorCode === "invalid_client"
+            ? " (Check: GMAIL_CLIENT_ID and GMAIL_CLIENT_SECRET in your environment variables match Google Cloud Console)"
+            : errorCode === "redirect_uri_mismatch"
+              ? ` (The redirect URI "${redirectUri}" does not match any Authorized redirect URI in Google Cloud Console)`
+              : "";
+
       return NextResponse.redirect(
-        `${fallbackRedirect}?gmail=error&message=${encodeURIComponent(`Token exchange failed: ${detail}`)}`
+        `${fallbackRedirect}?gmail=error&message=${encodeURIComponent(`Token exchange failed: ${detail}${debugHint}`)}`
       );
     }
 
