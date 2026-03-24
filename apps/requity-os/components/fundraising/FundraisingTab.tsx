@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo, useCallback, useRef } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -39,11 +39,9 @@ import {
   Rocket,
   FileCheck,
   MessageSquare,
-  ImageIcon,
-  FileText,
-  X,
-  Upload,
 } from "lucide-react";
+import { FundraiseDropZone } from "./FundraiseDropZone";
+import { HeroCropModal } from "./HeroCropModal";
 import { formatCurrency, formatDate } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { showSuccess, showError } from "@/lib/toast";
@@ -148,107 +146,6 @@ async function uploadFundraiseFile(
   return `${publicUrl}?t=${Date.now()}`;
 }
 
-// ─── Reusable File Upload Field ───
-
-function FileUploadField({
-  label,
-  accept,
-  maxSize,
-  currentUrl,
-  currentFileName,
-  onUpload,
-  onClear,
-  icon: Icon,
-  hint,
-}: {
-  label: string;
-  accept: string;
-  maxSize: number;
-  currentUrl: string | null;
-  currentFileName?: string;
-  onUpload: (file: File) => Promise<void>;
-  onClear: () => void;
-  icon: typeof ImageIcon;
-  hint: string;
-}) {
-  const inputRef = useRef<HTMLInputElement>(null);
-  const [uploading, setUploading] = useState(false);
-
-  const handleChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    e.target.value = "";
-    if (!file) return;
-
-    if (file.size > maxSize) {
-      showError(`File too large (max ${Math.round(maxSize / 1024 / 1024)}MB)`);
-      return;
-    }
-
-    setUploading(true);
-    try {
-      await onUpload(file);
-    } catch (err) {
-      showError("Could not upload file", err);
-    } finally {
-      setUploading(false);
-    }
-  };
-
-  return (
-    <div className="space-y-1.5">
-      <Label>{label}</Label>
-      {currentUrl ? (
-        <div className="flex items-center gap-2 rounded-md border border-border bg-muted/30 px-3 py-2">
-          <Icon className="h-4 w-4 text-muted-foreground shrink-0" />
-          <span className="text-sm truncate flex-1">
-            {currentFileName ?? "Uploaded"}
-          </span>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-6 w-6 shrink-0"
-            onClick={() => inputRef.current?.click()}
-            disabled={uploading}
-          >
-            <Upload className="h-3.5 w-3.5" />
-          </Button>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-6 w-6 shrink-0 text-destructive"
-            onClick={onClear}
-            disabled={uploading}
-          >
-            <X className="h-3.5 w-3.5" />
-          </Button>
-        </div>
-      ) : (
-        <Button
-          variant="outline"
-          size="sm"
-          className="w-full justify-start gap-2"
-          onClick={() => inputRef.current?.click()}
-          disabled={uploading}
-        >
-          {uploading ? (
-            <Loader2 className="h-4 w-4 animate-spin" />
-          ) : (
-            <Icon className="h-4 w-4" />
-          )}
-          {uploading ? "Uploading..." : `Upload ${label}`}
-        </Button>
-      )}
-      <p className="text-xs text-muted-foreground">{hint}</p>
-      <input
-        ref={inputRef}
-        type="file"
-        accept={accept}
-        onChange={handleChange}
-        className="hidden"
-      />
-    </div>
-  );
-}
 
 // ─── Setup Screen (when fundraise_enabled = false) ───
 
@@ -279,18 +176,39 @@ function FundraiseSetupScreen({
   );
   const [heroImageUrl, setHeroImageUrl] = useState<string | null>(null);
   const [deckUrl, setDeckUrl] = useState<string | null>(null);
+  const [cropSrc, setCropSrc] = useState<string | null>(null);
+  const [heroUploading, setHeroUploading] = useState(false);
 
-  const handleHeroUpload = async (file: File) => {
+  const handleHeroFile = async (file: File) => {
     if (!IMAGE_TYPES.includes(file.type)) {
       showError("Please upload a JPEG, PNG, or WebP image");
       return;
     }
-    const url = await uploadFundraiseFile(dealId, file, "hero");
-    setHeroImageUrl(url);
-    showSuccess("Hero image uploaded");
+    // Open crop modal instead of uploading directly
+    const objectUrl = URL.createObjectURL(file);
+    setCropSrc(objectUrl);
   };
 
-  const handleDeckUpload = async (file: File) => {
+  const handleCropComplete = async (croppedFile: File) => {
+    setCropSrc(null);
+    setHeroUploading(true);
+    try {
+      const url = await uploadFundraiseFile(dealId, croppedFile, "hero");
+      setHeroImageUrl(url);
+      showSuccess("Hero image uploaded");
+    } catch {
+      showError("Could not upload hero image");
+    } finally {
+      setHeroUploading(false);
+    }
+  };
+
+  const handleCropCancel = () => {
+    if (cropSrc) URL.revokeObjectURL(cropSrc);
+    setCropSrc(null);
+  };
+
+  const handleDeckFile = async (file: File) => {
     if (file.type !== "application/pdf") {
       showError("Please upload a PDF file");
       return;
@@ -378,27 +296,36 @@ function FundraiseSetupScreen({
                 These appear as radio buttons on the public form. An &quot;Other&quot; option is always included.
               </p>
             </div>
-            <FileUploadField
-              label="Hero Image"
-              accept="image/jpeg,image/png,image/webp"
-              maxSize={MAX_IMAGE_SIZE}
-              currentUrl={heroImageUrl}
-              currentFileName="hero-image"
-              onUpload={handleHeroUpload}
-              onClear={() => setHeroImageUrl(null)}
-              icon={ImageIcon}
-              hint="Property photo shown at top of investor page. JPEG, PNG, or WebP (max 10MB)."
-            />
-            <FileUploadField
-              label="Investment Deck"
-              accept="application/pdf"
-              maxSize={MAX_PDF_SIZE}
-              currentUrl={deckUrl}
-              currentFileName="investment-deck.pdf"
-              onUpload={handleDeckUpload}
-              onClear={() => setDeckUrl(null)}
-              icon={FileText}
-              hint="PDF downloadable from investor page (max 25MB)."
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <FundraiseDropZone
+                label="Hero Image"
+                kind="hero"
+                accept="image/jpeg,image/png,image/webp"
+                maxSize={MAX_IMAGE_SIZE}
+                currentUrl={heroImageUrl}
+                currentFileName="hero-image"
+                hint="Property photo shown at top of investor page. Auto-cropped to 16:9."
+                onFile={handleHeroFile}
+                onClear={() => setHeroImageUrl(null)}
+                uploading={heroUploading}
+              />
+              <FundraiseDropZone
+                label="Investment Deck"
+                kind="deck"
+                accept="application/pdf"
+                maxSize={MAX_PDF_SIZE}
+                currentUrl={deckUrl}
+                currentFileName="investment-deck.pdf"
+                hint="PDF downloadable from investor page (max 25MB)."
+                onFile={handleDeckFile}
+                onClear={() => setDeckUrl(null)}
+              />
+            </div>
+            <HeroCropModal
+              open={!!cropSrc}
+              imageSrc={cropSrc}
+              onCropComplete={handleCropComplete}
+              onCancel={handleCropCancel}
             />
             <Button onClick={handleEnable} disabled={saving} className="w-full">
               {saving && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
@@ -946,28 +873,46 @@ function FundraiseConfigPanel({
   });
   const [currentHeroUrl, setCurrentHeroUrl] = useState(heroImageUrl);
   const [currentDeckUrl, setCurrentDeckUrl] = useState(deckUrl);
+  const [cropSrc, setCropSrc] = useState<string | null>(null);
+  const [heroUploading, setHeroUploading] = useState(false);
 
-  const handleHeroUpload = async (file: File) => {
+  const handleHeroFile = async (file: File) => {
     if (!IMAGE_TYPES.includes(file.type)) {
       showError("Please upload a JPEG, PNG, or WebP image");
       return;
     }
-    const url = await uploadFundraiseFile(dealId, file, "hero");
-    setCurrentHeroUrl(url);
-    // Save immediately
-    await updateFundraiseSettings(dealId, { fundraise_hero_image_url: url });
-    showSuccess("Hero image uploaded");
-    router.refresh();
+    const objectUrl = URL.createObjectURL(file);
+    setCropSrc(objectUrl);
   };
 
-  const handleDeckUpload = async (file: File) => {
+  const handleCropComplete = async (croppedFile: File) => {
+    setCropSrc(null);
+    setHeroUploading(true);
+    try {
+      const url = await uploadFundraiseFile(dealId, croppedFile, "hero");
+      setCurrentHeroUrl(url);
+      await updateFundraiseSettings(dealId, { fundraise_hero_image_url: url });
+      showSuccess("Hero image uploaded");
+      router.refresh();
+    } catch {
+      showError("Could not upload hero image");
+    } finally {
+      setHeroUploading(false);
+    }
+  };
+
+  const handleCropCancel = () => {
+    if (cropSrc) URL.revokeObjectURL(cropSrc);
+    setCropSrc(null);
+  };
+
+  const handleDeckFile = async (file: File) => {
     if (file.type !== "application/pdf") {
       showError("Please upload a PDF file");
       return;
     }
     const url = await uploadFundraiseFile(dealId, file, "deck");
     setCurrentDeckUrl(url);
-    // Save immediately
     await updateFundraiseSettings(dealId, { fundraise_deck_url: url });
     showSuccess("Investment deck uploaded");
     router.refresh();
@@ -1061,29 +1006,36 @@ function FundraiseConfigPanel({
           />
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <FileUploadField
+          <FundraiseDropZone
             label="Hero Image"
+            kind="hero"
             accept="image/jpeg,image/png,image/webp"
             maxSize={MAX_IMAGE_SIZE}
             currentUrl={currentHeroUrl}
             currentFileName="hero-image"
-            onUpload={handleHeroUpload}
+            hint="Auto-cropped to 1200x675 (16:9)."
+            onFile={handleHeroFile}
             onClear={handleClearHero}
-            icon={ImageIcon}
-            hint="JPEG, PNG, or WebP (max 10MB)."
+            uploading={heroUploading}
           />
-          <FileUploadField
+          <FundraiseDropZone
             label="Investment Deck"
+            kind="deck"
             accept="application/pdf"
             maxSize={MAX_PDF_SIZE}
             currentUrl={currentDeckUrl}
             currentFileName="investment-deck.pdf"
-            onUpload={handleDeckUpload}
-            onClear={handleClearDeck}
-            icon={FileText}
             hint="PDF (max 25MB)."
+            onFile={handleDeckFile}
+            onClear={handleClearDeck}
           />
         </div>
+        <HeroCropModal
+          open={!!cropSrc}
+          imageSrc={cropSrc}
+          onCropComplete={handleCropComplete}
+          onCancel={handleCropCancel}
+        />
         <div className="flex gap-2">
           <Button onClick={handleSave} disabled={saving} size="sm">
             {saving && <Loader2 className="h-4 w-4 animate-spin mr-2" />}

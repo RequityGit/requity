@@ -50,6 +50,8 @@ interface EmailComposeSheetProps {
   initialAttachments?: File[];
   /** Called after a successful email send with the crm_emails record ID */
   onSendSuccess?: (emailId: string) => void;
+  /** Pre-filled CC recipients (e.g. internal team members from deal selection) */
+  initialCc?: string[];
   /** Optional class for the composer container (e.g. z-[100] when opened from inside a dialog) */
   containerClassName?: string;
 }
@@ -68,6 +70,7 @@ export function EmailComposeSheet({
   initialSubject,
   initialBody,
   initialAttachments,
+  initialCc,
   onSendSuccess,
   containerClassName,
 }: EmailComposeSheetProps) {
@@ -75,7 +78,7 @@ export function EmailComposeSheet({
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [sending, setSending] = useState(false);
-  const [showCcBcc, setShowCcBcc] = useState(false);
+  const [showCcBcc, setShowCcBcc] = useState(!!(initialCc && initialCc.length > 0));
   const [gmailEmail, setGmailEmail] = useState<string | null>(null);
   const [appliedTemplate, setAppliedTemplate] = useState<{
     id: string;
@@ -106,7 +109,7 @@ export function EmailComposeSheet({
   const [form, setForm] = useState({
     to_email: toEmail,
     to_name: toName,
-    cc: "",
+    cc: initialCc?.join(", ") ?? "",
     bcc: "",
     subject: initialSubject ?? "",
     body: initialBody ?? "",
@@ -128,8 +131,10 @@ export function EmailComposeSheet({
             body: initialBody ?? prev.body,
           }
         : {}),
+      ...(initialCc?.length ? { cc: initialCc.join(", ") } : {}),
     }));
-  }, [open, toEmail, toName, initialSubject, initialBody]);
+    if (initialCc?.length) setShowCcBcc(true);
+  }, [open, toEmail, toName, initialSubject, initialBody, initialCc]);
   const [attachments, setAttachments] = useState<Attachment[]>(
     () => (initialAttachments ?? []).map((f) => ({ file: f, id: crypto.randomUUID() }))
   );

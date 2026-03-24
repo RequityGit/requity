@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 
+export const dynamic = "force-dynamic";
+
 /** Public GET: fetch deal fundraise info by slug (no auth required) */
 export async function GET(
   _request: Request,

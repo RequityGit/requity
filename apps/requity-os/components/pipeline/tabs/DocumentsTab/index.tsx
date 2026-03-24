@@ -1,8 +1,8 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, lazy, Suspense } from "react";
 import { useRouter } from "next/navigation";
-import { FileText, FolderOpen, ClipboardCheck } from "lucide-react";
+import { FileText, FolderOpen, ClipboardCheck, Loader2 } from "lucide-react";
 import { showSuccess, showError } from "@/lib/toast";
 import {
   updateConditionDocumentApproval,
@@ -10,12 +10,29 @@ import {
 } from "@/app/(authenticated)/(admin)/pipeline/[id]/actions";
 import { createClient } from "@/lib/supabase/client";
 import { DocumentReviewPanel } from "@/components/pipeline/DocumentReviewPanel";
+import { SectionErrorBoundary } from "@/components/shared/SectionErrorBoundary";
 import { FormsSection } from "./FormsSection";
 import { DocumentsSection } from "./DocumentsSection";
 import { ConditionsSection } from "./ConditionsSection";
 import { DocPreviewModal } from "./DocPreviewModal";
 import { CollapsibleSection } from "./CollapsibleSection";
 import type { DealDocument, DocumentsTabProps } from "./types";
+
+// Lazy-load document generation sections (heavy dependencies: pptxgenjs, docx)
+const InvestorDeckSection = lazy(() =>
+  import("./InvestorDeckSection").then((m) => ({ default: m.InvestorDeckSection }))
+);
+const CreditMemoSection = lazy(() =>
+  import("./CreditMemoSection").then((m) => ({ default: m.CreditMemoSection }))
+);
+
+function SectionLoader() {
+  return (
+    <div className="flex items-center justify-center py-8">
+      <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+    </div>
+  );
+}
 
 export function DocumentsTab({
   documents,
@@ -26,6 +43,7 @@ export function DocumentsTab({
   googleDriveFolderUrl,
   currentUserId,
   currentUserName,
+  dealDocData,
 }: DocumentsTabProps) {
   const router = useRouter();
   const [previewDoc, setPreviewDoc] = useState<DealDocument | null>(null);
@@ -134,6 +152,24 @@ export function DocumentsTab({
           onUnlinkDoc={unlinkDoc}
         />
       </CollapsibleSection>
+
+      {/* Document Generation: Investor Deck */}
+      {dealDocData && (
+        <SectionErrorBoundary fallbackTitle="Could not load investor deck editor">
+          <Suspense fallback={<SectionLoader />}>
+            <InvestorDeckSection dealId={dealId} dealDocData={dealDocData} />
+          </Suspense>
+        </SectionErrorBoundary>
+      )}
+
+      {/* Document Generation: Credit Memo */}
+      {dealDocData && (
+        <SectionErrorBoundary fallbackTitle="Could not load credit memo editor">
+          <Suspense fallback={<SectionLoader />}>
+            <CreditMemoSection dealId={dealId} dealDocData={dealDocData} />
+          </Suspense>
+        </SectionErrorBoundary>
+      )}
 
       {/* Preview modal */}
       <DocPreviewModal
