@@ -770,6 +770,20 @@
 }
 
 /* ============================
+   Scroll utilities
+   ============================ */
+
+.rq-scroll-x {
+  overflow-x: auto;
+  overflow-y: hidden;
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.rq-scroll-x::-webkit-scrollbar {
+  display: none;
+}
+
+/* ============================
    Reusable keyframes
    ============================ */
 

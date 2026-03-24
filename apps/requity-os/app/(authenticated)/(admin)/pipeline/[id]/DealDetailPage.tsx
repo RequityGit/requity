@@ -390,15 +390,15 @@ function DealDetailPageInner({
         />
 
         {/* Tab Bar */}
-        <div className="flex items-center justify-between px-6 py-1.5 border-b flex-shrink-0">
-          <div className="inline-flex gap-0.5 rounded-[10px] p-[3px] bg-muted border">
+        <div className="flex items-center justify-between px-3 md:px-6 py-1.5 border-b flex-shrink-0 overflow-hidden">
+          <div className="flex gap-0.5 rounded-[10px] p-[3px] bg-muted border rq-scroll-x">
             {tabs.map((tab) => {
               const tabButton = (
                 <button
                   key={tab}
                   onClick={() => handleTabChange(tab)}
                   className={cn(
-                    "flex items-center gap-1.5 rounded-lg border-none px-3.5 py-[7px] text-[13px] cursor-pointer transition-all duration-150",
+                    "flex items-center gap-1.5 rounded-lg border-none px-3.5 py-[7px] text-[13px] cursor-pointer transition-all duration-150 shrink-0 whitespace-nowrap",
                     activeTab === tab
                       ? "bg-background text-foreground font-medium shadow-sm"
                       : "bg-transparent text-muted-foreground hover:text-foreground",
@@ -456,7 +456,7 @@ function DealDetailPageInner({
                         <button
                           onClick={() => handleTabChange(tab)}
                           className={cn(
-                            "flex items-center gap-1.5 rounded-lg border-none px-3.5 py-[7px] text-[13px] cursor-pointer transition-all duration-150",
+                            "flex items-center gap-1.5 rounded-lg border-none px-3.5 py-[7px] text-[13px] cursor-pointer transition-all duration-150 shrink-0 whitespace-nowrap",
                             activeTab === tab
                               ? "bg-background text-foreground font-medium shadow-sm"
                               : "bg-transparent text-muted-foreground hover:text-foreground",
@@ -1114,7 +1114,7 @@ function DealHeader({
 
   return (
     <>
-      <div className="flex items-center gap-4 px-6 py-2.5 border-b flex-shrink-0">
+      <div className="flex flex-wrap items-center gap-2 md:gap-4 px-3 md:px-6 py-2.5 border-b flex-shrink-0">
         {/* A. Icon */}
         <div className="h-9 w-9 rounded-[10px] bg-primary/5 border flex items-center justify-center flex-shrink-0">
           <Layers className="h-[18px] w-[18px] text-muted-foreground" />
@@ -1160,16 +1160,16 @@ function DealHeader({
               onDoubleClick={() => onStageDoubleClick(stage.key)}
             />
           ))}
-          <span className="text-xs font-semibold ml-1.5">{currentStageName}</span>
-          <span className="text-[10.5px] text-muted-foreground ml-0.5">({days}d)</span>
+          <span className="text-xs font-semibold ml-1.5 hidden sm:inline">{currentStageName}</span>
+          <span className="text-[10.5px] text-muted-foreground ml-0.5 hidden sm:inline">({days}d)</span>
           {stageJumping && <Loader2 className="h-3 w-3 animate-spin text-muted-foreground ml-1" />}
         </div>
 
         {/* D. Separator */}
-        <div className="w-px h-8 bg-border shrink-0" />
+        <div className="w-px h-8 bg-border shrink-0 hidden md:block" />
 
         {/* E. Metrics */}
-        <div className="flex items-center gap-5 shrink-0">
+        <div className="hidden md:flex items-center gap-5 shrink-0">
           {assetClass && (
             <div className="flex flex-col items-center">
               <span className="text-sm font-semibold">{assetClass}</span>
@@ -1195,7 +1195,7 @@ function DealHeader({
         </div>
 
         {/* F. Separator + Contact Selection Bar */}
-        <div className="w-px h-8 bg-border shrink-0" />
+        <div className="w-px h-8 bg-border shrink-0 hidden md:block" />
 
         {/* G. Actions (ml-auto pushes to right) */}
         <div className="flex items-center gap-2 ml-auto shrink-0">
