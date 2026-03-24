@@ -197,7 +197,7 @@ export function ActionCenterRail({
   return (
     <>
       <div
-        className="flex flex-col h-full w-[520px] shrink-0 rounded-xl border bg-card overflow-hidden"
+        className="flex flex-col h-full w-full md:w-[520px] md:shrink-0 rounded-xl border bg-card overflow-hidden"
       >
         {selectedCondition ? (
           <ConditionDetailPanel
