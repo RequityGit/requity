@@ -40,8 +40,8 @@ export async function resilientProfileUpdate(
         .update(payload)
         .eq("id", userId);
       pgError = error;
-    } catch (thrown: any) {
-      pgError = { message: thrown?.message || String(thrown) };
+    } catch (thrown: unknown) {
+      pgError = { message: thrown instanceof Error ? thrown.message : String(thrown) };
     }
 
     if (!pgError) return { error: null };
@@ -80,8 +80,8 @@ export async function resilientProfileUpsert(
     try {
       const { error } = await client.from("profiles").upsert(payload);
       pgError = error;
-    } catch (thrown: any) {
-      pgError = { message: thrown?.message || String(thrown) };
+    } catch (thrown: unknown) {
+      pgError = { message: thrown instanceof Error ? thrown.message : String(thrown) };
     }
 
     if (!pgError) return { error: null };

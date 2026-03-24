@@ -128,9 +128,9 @@ export async function createOpportunityAction(input: CreateOpportunityInput) {
 
     revalidatePath("/originations");
     return { success: true, opportunityId: oppData.id };
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error("createOpportunityAction error:", err);
-    return { error: err?.message || "An unexpected error occurred" };
+    return { error: err instanceof Error ? err.message : "An unexpected error occurred" };
   }
 }
 
@@ -159,9 +159,9 @@ export async function updateOpportunityAction(input: UpdateOpportunityInput) {
     if (error) return { error: error.message };
     revalidatePath("/originations");
     return { success: true };
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error("updateOpportunityAction error:", err);
-    return { error: err?.message || "An unexpected error occurred" };
+    return { error: err instanceof Error ? err.message : "An unexpected error occurred" };
   }
 }
 
@@ -211,9 +211,9 @@ export async function moveOpportunityStageAction(
     if (error) return { error: error.message };
     revalidatePath("/originations");
     return { success: true };
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error("moveOpportunityStageAction error:", err);
-    return { error: err?.message || "An unexpected error occurred" };
+    return { error: err instanceof Error ? err.message : "An unexpected error occurred" };
   }
 }
 
@@ -294,9 +294,9 @@ export async function requestApprovalAction(opportunityId: string) {
 
     revalidatePath("/originations");
     return { success: true };
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error("requestApprovalAction error:", err);
-    return { error: err?.message || "An unexpected error occurred" };
+    return { error: err instanceof Error ? err.message : "An unexpected error occurred" };
   }
 }
 
@@ -351,9 +351,9 @@ export async function decideApprovalAction(
 
     revalidatePath("/originations");
     return { success: true };
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error("decideApprovalAction error:", err);
-    return { error: err?.message || "An unexpected error occurred" };
+    return { error: err instanceof Error ? err.message : "An unexpected error occurred" };
   }
 }
 
@@ -392,9 +392,9 @@ export async function addOpportunityBorrowerAction(
     if (error) return { error: error.message };
     revalidatePath("/originations");
     return { success: true };
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error("addOpportunityBorrowerAction error:", err);
-    return { error: err?.message || "An unexpected error occurred" };
+    return { error: err instanceof Error ? err.message : "An unexpected error occurred" };
   }
 }
 
@@ -421,9 +421,9 @@ export async function removeOpportunityBorrowerAction(
     if (error) return { error: error.message };
     revalidatePath("/originations");
     return { success: true };
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error("removeOpportunityBorrowerAction error:", err);
-    return { error: err?.message || "An unexpected error occurred" };
+    return { error: err instanceof Error ? err.message : "An unexpected error occurred" };
   }
 }
 
@@ -512,9 +512,9 @@ export async function createSnapshotAction(input: CreateSnapshotInput) {
     if (error) return { error: error.message };
     revalidatePath("/originations");
     return { success: true, snapshotId: data.id };
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error("createSnapshotAction error:", err);
-    return { error: err?.message || "An unexpected error occurred" };
+    return { error: err instanceof Error ? err.message : "An unexpected error occurred" };
   }
 }
 

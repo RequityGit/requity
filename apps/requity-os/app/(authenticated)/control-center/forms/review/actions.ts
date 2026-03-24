@@ -121,8 +121,8 @@ export async function processFormSubmissionAction(
     }
 
     return { error: "Invalid action" };
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error("processFormSubmissionAction error:", err);
-    return { error: err?.message || "An unexpected error occurred" };
+    return { error: err instanceof Error ? err.message : "An unexpected error occurred" };
   }
 }
