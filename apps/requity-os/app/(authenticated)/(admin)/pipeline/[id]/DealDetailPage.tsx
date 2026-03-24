@@ -1242,24 +1242,22 @@ function DealHeader({
                           </button>
                         </>
                       ) : (
-                        <>
+                        <button
+                          className="flex items-center gap-2.5 flex-1 min-w-0 bg-transparent border-0 cursor-pointer p-0"
+                          onClick={() => {
+                            setSelectedProfileId("");
+                            setSelectedRole(role);
+                            setRoleLocked(true);
+                            setTeamAssignOpen(true);
+                          }}
+                        >
                           <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border border-dashed border-border">
                             <Plus className="h-3 w-3 text-muted-foreground" />
                           </div>
-                          <button
-                            className="text-left min-w-0 flex-1 bg-transparent border-0 cursor-pointer p-0"
-                            onClick={() => {
-                              setSelectedProfileId("");
-                              setSelectedRole(role);
-                              setRoleLocked(true);
-                              setTeamAssignOpen(true);
-                            }}
-                          >
-                            <div className="text-xs text-muted-foreground">
-                              Assign {role}
-                            </div>
-                          </button>
-                        </>
+                          <div className="text-xs text-muted-foreground text-left">
+                            Assign {role}
+                          </div>
+                        </button>
                       )}
                     </div>
                   );
@@ -1346,20 +1344,18 @@ function DealHeader({
                     );
                   })}
                   {dealContacts.length < 4 && (
-                    <div className="flex items-center gap-2.5 rounded-lg px-2 py-1.5 transition-colors hover:bg-muted">
+                    <button
+                      className="flex items-center gap-2.5 rounded-lg px-2 py-1.5 transition-colors hover:bg-muted w-full bg-transparent border-0 cursor-pointer"
+                      onClick={() => {
+                        setAssignPartyType("borrower");
+                        setAssignPartyOpen(true);
+                      }}
+                    >
                       <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border border-dashed border-border">
                         <Plus className="h-3 w-3 text-muted-foreground" />
                       </div>
-                      <button
-                        className="text-left min-w-0 flex-1 bg-transparent border-0 cursor-pointer p-0"
-                        onClick={() => {
-                          setAssignPartyType("borrower");
-                          setAssignPartyOpen(true);
-                        }}
-                      >
-                        <div className="text-xs text-muted-foreground">Assign Borrower</div>
-                      </button>
-                    </div>
+                      <div className="text-xs text-muted-foreground text-left">Assign Borrower</div>
+                    </button>
                   )}
 
                   {/* Broker (1) */}
@@ -1383,20 +1379,18 @@ function DealHeader({
                       </button>
                     </div>
                   ) : (
-                    <div className="flex items-center gap-2.5 rounded-lg px-2 py-1.5 transition-colors hover:bg-muted">
+                    <button
+                      className="flex items-center gap-2.5 rounded-lg px-2 py-1.5 transition-colors hover:bg-muted w-full bg-transparent border-0 cursor-pointer"
+                      onClick={() => {
+                        setAssignPartyType("broker");
+                        setAssignPartyOpen(true);
+                      }}
+                    >
                       <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border border-dashed border-border">
                         <Plus className="h-3 w-3 text-muted-foreground" />
                       </div>
-                      <button
-                        className="text-left min-w-0 flex-1 bg-transparent border-0 cursor-pointer p-0"
-                        onClick={() => {
-                          setAssignPartyType("broker");
-                          setAssignPartyOpen(true);
-                        }}
-                      >
-                        <div className="text-xs text-muted-foreground">Assign Broker</div>
-                      </button>
-                    </div>
+                      <div className="text-xs text-muted-foreground text-left">Assign Broker</div>
+                    </button>
                   )}
 
                   {/* Title Co Rep (1) */}
@@ -1426,20 +1420,18 @@ function DealHeader({
                       );
                     }
                     return (
-                      <div className="flex items-center gap-2.5 rounded-lg px-2 py-1.5 transition-colors hover:bg-muted">
+                      <button
+                        className="flex items-center gap-2.5 rounded-lg px-2 py-1.5 transition-colors hover:bg-muted w-full bg-transparent border-0 cursor-pointer"
+                        onClick={() => {
+                          setAssignDealTeamRole("Title Company");
+                          setAssignDealTeamOpen(true);
+                        }}
+                      >
                         <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border border-dashed border-border">
                           <Plus className="h-3 w-3 text-muted-foreground" />
                         </div>
-                        <button
-                          className="text-left min-w-0 flex-1 bg-transparent border-0 cursor-pointer p-0"
-                          onClick={() => {
-                            setAssignDealTeamRole("Title Company");
-                            setAssignDealTeamOpen(true);
-                          }}
-                        >
-                          <div className="text-xs text-muted-foreground">Assign Title Co Rep</div>
-                        </button>
-                      </div>
+                        <div className="text-xs text-muted-foreground text-left">Assign Title Co Rep</div>
+                      </button>
                     );
                   })()}
 
@@ -1470,20 +1462,18 @@ function DealHeader({
                       );
                     }
                     return (
-                      <div className="flex items-center gap-2.5 rounded-lg px-2 py-1.5 transition-colors hover:bg-muted">
+                      <button
+                        className="flex items-center gap-2.5 rounded-lg px-2 py-1.5 transition-colors hover:bg-muted w-full bg-transparent border-0 cursor-pointer"
+                        onClick={() => {
+                          setAssignDealTeamRole("Insurance Agent");
+                          setAssignDealTeamOpen(true);
+                        }}
+                      >
                         <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border border-dashed border-border">
                           <Plus className="h-3 w-3 text-muted-foreground" />
                         </div>
-                        <button
-                          className="text-left min-w-0 flex-1 bg-transparent border-0 cursor-pointer p-0"
-                          onClick={() => {
-                            setAssignDealTeamRole("Insurance Agent");
-                            setAssignDealTeamOpen(true);
-                          }}
-                        >
-                          <div className="text-xs text-muted-foreground">Assign Insurance Agent</div>
-                        </button>
-                      </div>
+                        <div className="text-xs text-muted-foreground text-left">Assign Insurance Agent</div>
+                      </button>
                     );
                   })()}
                 </div>

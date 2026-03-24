@@ -146,6 +146,13 @@ export function DealPreviewModal({
   handleAdvanceRef.current = handleAdvanceStage;
   handleRegressRef.current = handleRegressStage;
 
+  // ── Open full deal page (close modal + navigate) ──
+  const handleOpenFullPage = useCallback(() => {
+    if (!data?.deal) return;
+    close();
+    router.push(`/pipeline/${data.deal.deal_number || data.deal.id}`);
+  }, [data, close, router]);
+
   // ── Keyboard shortcuts ──
   useEffect(() => {
     if (!isOpen) return;
@@ -163,7 +170,7 @@ export function DealPreviewModal({
         return;
       }
 
-      if (e.key === "Enter" && !isInput) {
+      if (e.key === " " && !isInput) {
         e.preventDefault();
         if (data?.deal) {
           close();
@@ -175,16 +182,16 @@ export function DealPreviewModal({
       // Disable other shortcuts when in input
       if (isInput) return;
 
-      if (e.key === "ArrowDown" || e.key === "j") {
+      if (e.key === "ArrowRight" || e.key === "j") {
         e.preventDefault();
         cycleNext();
-      } else if (e.key === "ArrowUp" || e.key === "k") {
+      } else if (e.key === "ArrowLeft" || e.key === "k") {
         e.preventDefault();
         cyclePrev();
-      } else if (e.key === "ArrowRight") {
+      } else if (e.key === "ArrowDown") {
         e.preventDefault();
         handleAdvanceRef.current();
-      } else if (e.key === "ArrowLeft") {
+      } else if (e.key === "ArrowUp") {
         e.preventDefault();
         handleRegressRef.current();
       } else if (e.key === "n" || e.key === "N") {
@@ -317,6 +324,7 @@ export function DealPreviewModal({
               onAdvanceStage={handleAdvanceStage}
               onRegressStage={handleRegressStage}
               onClose={close}
+              onOpenFullPage={handleOpenFullPage}
               stageLoading={stageLoading}
               teamMemberNames={teamMemberNames}
             />
@@ -342,12 +350,12 @@ export function DealPreviewModal({
             {/* Footer */}
             <div className="flex shrink-0 items-center justify-between border-t border-border bg-muted/30 px-5 py-[7px]">
               <div className="flex items-center gap-3.5 text-[10px] text-muted-foreground">
-                <span className="flex items-center gap-1"><Kbd>&uarr;</Kbd><Kbd>&darr;</Kbd> cycle deals</span>
-                <span className="flex items-center gap-1"><Kbd>&larr;</Kbd><Kbd>&rarr;</Kbd> change stage</span>
+                <span className="flex items-center gap-1"><Kbd>&larr;</Kbd><Kbd>&rarr;</Kbd> cycle deals</span>
+                <span className="flex items-center gap-1"><Kbd>&uarr;</Kbd><Kbd>&darr;</Kbd> change stage</span>
                 <span className="flex items-center gap-1"><Kbd>N</Kbd> note</span>
                 <span className="flex items-center gap-1"><Kbd>C</Kbd> condition</span>
                 <span className="flex items-center gap-1"><Kbd>Esc</Kbd> close</span>
-                <span className="flex items-center gap-1"><Kbd>Enter</Kbd> full page</span>
+                <span className="flex items-center gap-1"><Kbd>Space</Kbd> open</span>
               </div>
             </div>
           </>
