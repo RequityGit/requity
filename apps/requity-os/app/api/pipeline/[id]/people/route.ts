@@ -23,9 +23,18 @@ export async function GET(
 
   try {
     const [entity, members, thirdParties] = await Promise.all([
-      getBorrowingEntityByDealId(admin, dealId).catch(() => null),
-      getBorrowerMembersByDealId(admin, dealId).catch(() => [] as DealBorrowerMember[]),
-      getDealTeamContacts(admin, dealId).catch(() => [] as DealTeamContact[]),
+      getBorrowingEntityByDealId(admin, dealId).catch((e) => {
+        console.error("People API: getBorrowingEntityByDealId failed:", e);
+        return null;
+      }),
+      getBorrowerMembersByDealId(admin, dealId).catch((e) => {
+        console.error("People API: getBorrowerMembersByDealId failed:", e);
+        return [] as DealBorrowerMember[];
+      }),
+      getDealTeamContacts(admin, dealId).catch((e) => {
+        console.error("People API: getDealTeamContacts failed:", e);
+        return [] as DealTeamContact[];
+      }),
     ]);
 
     // Broker contact: fetched from unified_deals.broker_contact_id -> crm_contacts join
@@ -48,13 +57,19 @@ export async function GET(
     const uwData = (dealRow as Record<string, unknown> | null)?.uw_data as Record<string, unknown> | null;
 
     if (brokerContactId) {
-      const { data: brokerData } = await admin
-        .from("crm_contacts" as never)
-        .select("id, first_name, last_name, email, phone, broker_company:companies!crm_contacts_company_id_fkey(name)" as never)
-        .eq("id" as never, brokerContactId as never)
-        .single();
-      if (brokerData) {
-        broker = brokerData as typeof broker;
+      try {
+        const { data: brokerData, error: brokerErr } = await admin
+          .from("crm_contacts" as never)
+          .select("id, first_name, last_name, email, phone, broker_company:companies!crm_contacts_company_id_fkey(name)" as never)
+          .eq("id" as never, brokerContactId as never)
+          .single();
+        if (brokerErr) {
+          console.error("People API: broker contact query failed:", brokerErr);
+        } else if (brokerData) {
+          broker = brokerData as typeof broker;
+        }
+      } catch (e) {
+        console.error("People API: broker contact fetch error:", e);
       }
     }
 

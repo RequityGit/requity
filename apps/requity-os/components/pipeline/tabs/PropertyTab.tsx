@@ -170,6 +170,12 @@ function PropertyDetailsContent({
         body: JSON.stringify({
           address: String(address).trim(),
           state: String(state).trim(),
+          ...(localData.property_city ?? localData.city
+            ? { city: String(localData.property_city ?? localData.city).trim() }
+            : {}),
+          ...(localData.property_county ?? localData.county
+            ? { county: String(localData.property_county ?? localData.county).trim() }
+            : {}),
         }),
       });
 

@@ -296,11 +296,12 @@ export default async function DealDetailRoute({ params }: PageProps) {
     alert_level: getAlertLevel(days, stageConfigMap.get(deal.stage)),
   };
 
-  const teamMembers: Profile[] = ((teamResult as unknown as { data: { id: string; full_name: string | null; avatar_url: string | null }[] | null }).data ?? []).map(
+  const teamMembers: Profile[] = ((teamResult as unknown as { data: { id: string; full_name: string | null; avatar_url: string | null; email: string | null }[] | null }).data ?? []).map(
     (t) => ({
       id: t.id,
       full_name: t.full_name ?? "Unknown",
       avatar_url: t.avatar_url ?? null,
+      email: t.email ?? null,
     })
   );
 

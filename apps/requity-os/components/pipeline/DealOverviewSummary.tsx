@@ -13,6 +13,7 @@ import { useDebounce } from "@/hooks/useDebounce";
 import { Search, X, Loader2, Plus, UserPlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { type UnifiedDeal, ASSET_CLASS_LABELS, ACTIVE_ASSET_CLASS_OPTIONS } from "./pipeline-types";
+import { CostBasisSection } from "./CostBasisSection";
 import { showSuccess, showError } from "@/lib/toast";
 
 // Asset class dropdown: active options only (excludes legacy keys)
@@ -719,6 +720,9 @@ export function DealOverviewSummary({ dealId, deal }: DealOverviewSummaryProps) 
             </div>
 
             {/* Borrower & Broker contact info moved to People tab */}
+
+            {/* Cost Basis & Existing Loans (bottom half of deal summary) */}
+            <CostBasisSection dealId={dealId} loanPurpose={loanPurpose} />
           </OverviewCard>
 
           {/* Proposed Terms (only if not early stage) */}

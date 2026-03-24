@@ -1,11 +1,27 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { formatCurrency } from "@/lib/format";
 import type { CustomFieldComponentProps } from "./index";
+
+const MIN_AMOUNT = 25000;
+const INCREMENT = 5000;
+
+function snapToIncrement(raw: number): number {
+  if (raw < MIN_AMOUNT) return MIN_AMOUNT;
+  return Math.round(raw / INCREMENT) * INCREMENT;
+}
+
+function formatDisplayValue(raw: string): string {
+  const digits = raw.replace(/\D/g, "");
+  if (!digits) return "";
+  const num = parseInt(digits, 10);
+  if (isNaN(num) || num === 0) return "";
+  return formatCurrency(num);
+}
 
 export function InvestmentAmountSelector({
   field,
@@ -16,6 +32,8 @@ export function InvestmentAmountSelector({
 }: CustomFieldComponentProps) {
   const [isOther, setIsOther] = useState(false);
   const [customAmount, setCustomAmount] = useState("");
+  const [displayValue, setDisplayValue] = useState("");
+  const [validationError, setValidationError] = useState("");
 
   // Dynamic options: prefer deal-specific options from formData, fall back to component_config defaults
   const dealOptions = formData._deal_amount_options as number[] | undefined;
@@ -34,15 +52,49 @@ export function InvestmentAmountSelector({
     } else {
       setIsOther(false);
       setCustomAmount("");
+      setDisplayValue("");
+      setValidationError("");
       onChange(parseFloat(val));
     }
   };
 
-  const handleCustomAmountChange = (val: string) => {
-    setCustomAmount(val);
-    const num = parseFloat(val);
-    onChange(num > 0 ? num : "");
-  };
+  const handleCustomAmountChange = useCallback(
+    (val: string) => {
+      const digits = val.replace(/\D/g, "");
+      setCustomAmount(digits);
+      setDisplayValue(formatDisplayValue(digits));
+
+      const num = parseInt(digits, 10);
+      if (!digits || isNaN(num) || num === 0) {
+        setValidationError("");
+        onChange("");
+        return;
+      }
+
+      if (num < MIN_AMOUNT) {
+        setValidationError(`Minimum investment is ${formatCurrency(MIN_AMOUNT)}`);
+      } else if (num % INCREMENT !== 0) {
+        setValidationError(`Amount must be in ${formatCurrency(INCREMENT)} increments`);
+      } else {
+        setValidationError("");
+      }
+
+      onChange(num);
+    },
+    [onChange],
+  );
+
+  const handleCustomAmountBlur = useCallback(() => {
+    const num = parseInt(customAmount, 10);
+    if (!customAmount || isNaN(num) || num === 0) return;
+
+    const snapped = snapToIncrement(num);
+    const snappedStr = String(snapped);
+    setCustomAmount(snappedStr);
+    setDisplayValue(formatCurrency(snapped));
+    setValidationError("");
+    onChange(snapped);
+  }, [customAmount, onChange]);
 
   // Determine radio value: if value matches a preset use it, otherwise "other"
   const radioValue = isOther
@@ -61,6 +113,7 @@ export function InvestmentAmountSelector({
   ) {
     setIsOther(true);
     setCustomAmount(stringValue);
+    setDisplayValue(formatDisplayValue(stringValue));
   }
 
   return (
@@ -102,12 +155,16 @@ export function InvestmentAmountSelector({
       {isOther && (
         <div className="mt-2">
           <Input
-            type="number"
-            min={1}
-            placeholder="Enter amount"
-            value={customAmount}
+            type="text"
+            inputMode="numeric"
+            placeholder="$25,000 minimum, in $5,000 increments"
+            value={displayValue}
             onChange={(e) => handleCustomAmountChange(e.target.value)}
+            onBlur={handleCustomAmountBlur}
           />
+          {validationError && (
+            <p className="text-xs text-destructive mt-1">{validationError}</p>
+          )}
         </div>
       )}
       {error && <p className="text-xs text-destructive mt-1">{error}</p>}

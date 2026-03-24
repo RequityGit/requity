@@ -17,6 +17,7 @@ import { TemplatePicker } from "@/components/email/TemplatePicker";
 import { TemplateAppliedBanner } from "@/components/email/TemplateAppliedBanner";
 import type { UserEmailTemplate } from "@/lib/types/user-email-templates";
 import { ContactEmailCombobox } from "@/components/crm/contact-email-combobox";
+import { MultiEmailCombobox } from "@/components/crm/multi-email-combobox";
 
 interface Attachment {
   file: File;
@@ -527,22 +528,20 @@ export function EmailComposeSheet({
         <>
           <div className="space-y-1.5">
             <Label htmlFor="cc">CC</Label>
-            <Input
+            <MultiEmailCombobox
               id="cc"
-              type="text"
-              placeholder="cc1@example.com, cc2@example.com"
               value={form.cc}
-              onChange={(e) => updateField("cc", e.target.value)}
+              onChange={(val) => updateField("cc", val)}
+              placeholder="Search contacts or type an email..."
             />
           </div>
           <div className="space-y-1.5">
             <Label htmlFor="bcc">BCC</Label>
-            <Input
+            <MultiEmailCombobox
               id="bcc"
-              type="text"
-              placeholder="bcc@example.com"
               value={form.bcc}
-              onChange={(e) => updateField("bcc", e.target.value)}
+              onChange={(val) => updateField("bcc", val)}
+              placeholder="Search contacts or type an email..."
             />
           </div>
         </>
