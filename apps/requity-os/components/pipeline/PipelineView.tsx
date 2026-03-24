@@ -9,7 +9,7 @@ import { PipelineKanban } from "./PipelineKanban";
 import { PipelineTable } from "./PipelineTable";
 import { NewDealDialog } from "./NewDealDialog";
 import { IntakeReviewModal } from "./IntakeReviewModal";
-import type { UnifiedDeal } from "./pipeline-types";
+import { STAGES, type UnifiedDeal } from "./pipeline-types";
 import { getDealFlavor } from "@/lib/pipeline/deal-display-config";
 import {
   useAllDeals,
@@ -20,6 +20,7 @@ import {
   useCurrentUserId,
   useConditionsMap,
 } from "@/hooks/usePipelineStore";
+import { useDealPreview } from "./deal-preview/DealPreviewProvider";
 import type { IntakeItem } from "@/lib/intake/types";
 
 export function PipelineView() {
@@ -81,11 +82,37 @@ export function PipelineView() {
     });
   }, [deals, filters]);
 
+  // Build ordered deal IDs (stages left-to-right, by amount within stage)
+  const orderedDealIds = useMemo(() => {
+    const ids: string[] = [];
+    for (const stage of STAGES) {
+      const stageDeals = filteredDeals
+        .filter((d) => d.stage === stage.key)
+        .sort((a, b) => (b.amount ?? -Infinity) - (a.amount ?? -Infinity));
+      for (const d of stageDeals) ids.push(d.id);
+    }
+    return ids;
+  }, [filteredDeals]);
+
+  const { open: openPreview, setPrefetchDealId } = useDealPreview();
+
   const handleDealClick = useCallback(
-    (deal: UnifiedDeal) => {
-      router.push(`/pipeline/${deal.deal_number || deal.id}`);
+    (deal: UnifiedDeal, e?: React.MouseEvent) => {
+      // Modifier+click opens full page
+      if (e && (e.metaKey || e.ctrlKey || e.shiftKey)) {
+        router.push(`/pipeline/${deal.deal_number || deal.id}`);
+        return;
+      }
+      openPreview(deal.id, orderedDealIds);
     },
-    [router]
+    [router, openPreview, orderedDealIds]
+  );
+
+  const handleDealHover = useCallback(
+    (dealId: string) => {
+      setPrefetchDealId(dealId);
+    },
+    [setPrefetchDealId]
   );
 
   const handleIntakeClick = useCallback((item: IntakeItem) => {
@@ -106,6 +133,7 @@ export function PipelineView() {
           stageConfigs={stageConfigs}
           relationshipDealIds={relationshipDealIds}
           onDealClick={handleDealClick}
+          onDealHover={handleDealHover}
           intakeItems={intakeItems}
           onIntakeClick={handleIntakeClick}
           teamMembers={teamMembers}

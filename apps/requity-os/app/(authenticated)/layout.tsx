@@ -15,6 +15,7 @@ import { ModuleGuard } from "@/components/layout/module-guard";
 import { SoftphoneWrapper } from "@/components/softphone/SoftphoneWrapper";
 import { ConfirmProvider } from "@/components/shared/ConfirmDialog";
 import { NotificationCenterWrapper } from "@/components/notifications/notification-center-wrapper";
+import { DealPreviewWrapper } from "@/components/pipeline/deal-preview/DealPreviewWrapper";
 import { getSessionData } from "@/lib/auth/session-cache";
 
 // Never statically generate authenticated pages
@@ -65,6 +66,10 @@ export default async function AuthenticatedLayout({
                   activeRole={effectiveRole}
                   currentUserName={(profile.full_name as string) || ""}
                 >
+                  <DealPreviewWrapper
+                    currentUserId={user.id}
+                    currentUserName={(profile.full_name as string) || ""}
+                  >
                   <div className="flex flex-col h-screen overflow-hidden">
                     <ImpersonationBanner />
                     <div className="flex flex-1 overflow-hidden">
@@ -100,6 +105,7 @@ export default async function AuthenticatedLayout({
                     <Toaster />
                     <SonnerToaster richColors closeButton />
                   </div>
+                  </DealPreviewWrapper>
                 </NotificationCenterWrapper>
               );
               return isAdmin ? (

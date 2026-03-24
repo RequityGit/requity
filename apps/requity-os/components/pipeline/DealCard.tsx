@@ -29,7 +29,8 @@ interface DealCardProps {
   formulaMap?: Map<string, string>;
   conditionsProgress?: { completed: number; total: number } | null;
   assigneeName?: string | null;
-  onClick: () => void;
+  onClick: (e?: React.MouseEvent) => void;
+  onHover?: () => void;
 }
 
 // ─── Shared helpers ───
@@ -386,12 +387,14 @@ function DealCardInner({
   conditionsProgress,
   assigneeName,
   onClick,
+  onHover,
 }: DealCardProps) {
   const router = useRouter();
   const dealHref = `/pipeline/${deal.deal_number || deal.id}`;
   const prefetchDeal = useCallback(() => {
     router.prefetch(dealHref);
-  }, [router, dealHref]);
+    onHover?.();
+  }, [router, dealHref, onHover]);
 
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
     id: deal.id,
@@ -412,7 +415,7 @@ function DealCardInner({
       {...listeners}
       {...attributes}
       onPointerEnter={prefetchDeal}
-      onClick={onClick}
+      onClick={(e) => onClick(e)}
       onKeyDown={(e) => {
         if (e.key === "Enter" || e.key === " ") onClick();
       }}
