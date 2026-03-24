@@ -37,10 +37,17 @@ export async function generateCreditMemo({
   deal,
   memo,
 }: GenerateCreditMemoOptions): Promise<void> {
-  const [docx, { saveAs }] = await Promise.all([
+  const [docxModule, fileSaverModule] = await Promise.all([
     import("docx"),
     import("file-saver"),
   ]);
+  // Handle CJS/ESM interop for file-saver
+  const saveAs = (fileSaverModule as any).saveAs ?? (fileSaverModule as any).default?.saveAs ?? (fileSaverModule as any).default;
+  if (typeof saveAs !== "function") {
+    throw new Error(`file-saver saveAs import resolved to ${typeof saveAs}, not a function`);
+  }
+  // docx named exports may be on the module directly or under .default
+  const docx = (docxModule as any).Document ? docxModule : (docxModule as any).default ?? docxModule;
 
   const {
     Document,

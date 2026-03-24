@@ -33,10 +33,19 @@ export async function generateInvestorDeck({
   deck = null,
 }: GenerateInvestorDeckOptions): Promise<void> {
   // Dynamic imports to avoid loading these in the main bundle
-  const [PptxGenJS, { saveAs }] = await Promise.all([
-    import("pptxgenjs").then((m) => m.default),
+  const [pptxModule, fileSaverModule] = await Promise.all([
+    import("pptxgenjs"),
     import("file-saver"),
   ]);
+  // Handle CJS/ESM interop -- default may be double-wrapped
+  const PptxGenJS = (pptxModule as any).default?.default ?? (pptxModule as any).default ?? pptxModule;
+  const saveAs = (fileSaverModule as any).saveAs ?? (fileSaverModule as any).default?.saveAs ?? (fileSaverModule as any).default;
+  if (typeof PptxGenJS !== "function") {
+    throw new Error(`PptxGenJS import resolved to ${typeof PptxGenJS}, not a constructor`);
+  }
+  if (typeof saveAs !== "function") {
+    throw new Error(`file-saver saveAs import resolved to ${typeof saveAs}, not a function`);
+  }
 
   // Load logos in parallel
   let whiteLogo: LogoData | null = null;

@@ -13,6 +13,7 @@ import { showSuccess, showError } from "@/lib/toast";
 import {
   Tooltip,
   TooltipContent,
+  TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import type { DealBorrowingEntity } from "@/app/types/borrower";
@@ -105,7 +106,8 @@ export function BorrowingEntityCard({
         <div className="flex items-center gap-1">
           {/* GDrive folder button */}
           {entity?.id && (
-            local.google_drive_folder_url ? (
+            <TooltipProvider>
+            {local.google_drive_folder_url ? (
               <Tooltip>
                 <TooltipTrigger asChild>
                   <a
@@ -150,7 +152,8 @@ export function BorrowingEntityCard({
                 </TooltipTrigger>
                 <TooltipContent side="bottom" className="text-xs">Create Drive folder</TooltipContent>
               </Tooltip>
-            )
+            )}
+            </TooltipProvider>
           )}
         {entity?.id && (
           <Popover open={deleteOpen} onOpenChange={setDeleteOpen}>
