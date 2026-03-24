@@ -57,6 +57,11 @@ supabase/.temp
 package-lock.json
 yarn.lock
 
+# temp/lock artifacts from editors and OS
+_tmp_*
+.~lock.*
+~$*
+
 # scratch / mockup files (root-level prototypes, prompts, scripts)
 *.html
 !apps/**/*.html

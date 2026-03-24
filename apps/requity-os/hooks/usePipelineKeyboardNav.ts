@@ -224,8 +224,7 @@ export function usePipelineKeyboardNav({
         }
         case "?": {
           e.preventDefault();
-          // TODO: build full shortcut overlay
-          console.log("Pipeline keyboard shortcuts");
+          // AUDIT: build full shortcut overlay (keyboard shortcuts help modal)
           break;
         }
       }
