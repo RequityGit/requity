@@ -1,4 +1,5 @@
 import nodemailer from "nodemailer";
+import { SUPABASE_STORAGE_URL } from "@/lib/supabase/constants";
 
 /* ------------------------------------------------------------------ */
 /*  Transporter (reusable across calls)                                */
@@ -102,7 +103,7 @@ async function getBorrowerContext(
 /*  Email wrapper                                                      */
 /* ------------------------------------------------------------------ */
 
-const LOGO_URL = "https://edhlkknvlczhbowasjna.supabase.co/storage/v1/object/public/brand-assets/Requity%20Logo%20Color.svg";
+const LOGO_URL = `${SUPABASE_STORAGE_URL}/brand-assets/Requity%20Logo%20Color.svg`;
 
 function emailShell(innerContent: string): string {
   return `<!DOCTYPE html>

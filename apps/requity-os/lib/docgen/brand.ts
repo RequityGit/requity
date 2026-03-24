@@ -1,4 +1,5 @@
 import type { BrandConfig, LogoData } from "./types";
+import { SUPABASE_STORAGE_URL } from "@/lib/supabase/constants";
 
 // ─── Brand Constants (for generated PPTX/DOCX only, NOT portal UI) ───
 
@@ -16,9 +17,9 @@ export const BRAND: BrandConfig = {
 
 // Logo URLs from Supabase Storage
 const WHITE_LOGO_URL =
-  "https://edhlkknvlczhbowasjna.supabase.co/storage/v1/object/public/brand-assets/Requity%20Logo%20White.svg";
+  `${SUPABASE_STORAGE_URL}/brand-assets/Requity%20Logo%20White.svg`;
 const COLOR_LOGO_URL =
-  "https://edhlkknvlczhbowasjna.supabase.co/storage/v1/object/public/brand-assets/Requity%20Logo%20Color.svg";
+  `${SUPABASE_STORAGE_URL}/brand-assets/Requity%20Logo%20Color.svg`;
 
 /**
  * Convert an SVG URL to a PNG data URL via Canvas.

@@ -8,6 +8,7 @@ import { formatCurrency } from "@/lib/format";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { SUPABASE_STORAGE_URL } from "@/lib/supabase/constants";
 
 interface PropertyData {
   property_type?: string;
@@ -107,7 +108,7 @@ export function SoftCommitmentFormPage({ slug }: { slug: string }) {
       <header className="bg-[#0f1729] py-4 px-6">
         <div className="mx-auto max-w-4xl">
           <img
-            src="https://edhlkknvlczhbowasjna.supabase.co/storage/v1/object/public/brand-assets/Requity%20Logo%20White.svg"
+            src={`${SUPABASE_STORAGE_URL}/brand-assets/Requity%20Logo%20White.svg`}
             alt="Requity Group"
             style={{ height: 36, width: "auto" }}
           />
@@ -243,7 +244,7 @@ function Logo() {
   return (
     <div className="flex items-center justify-center py-2">
       <img
-        src="https://edhlkknvlczhbowasjna.supabase.co/storage/v1/object/public/brand-assets/Requity%20Logo%20Color.svg"
+        src={`${SUPABASE_STORAGE_URL}/brand-assets/Requity%20Logo%20Color.svg`}
         alt="Requity Group"
         style={{ height: 40, width: "auto" }}
       />
