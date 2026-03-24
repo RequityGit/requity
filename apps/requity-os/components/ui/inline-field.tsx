@@ -30,6 +30,8 @@ interface InlineFieldBaseProps {
   disabled?: boolean;
   /** Extra classes on the outermost wrapper */
   className?: string;
+  /** Text alignment within the field */
+  align?: "left" | "right" | "center";
 }
 
 interface InlineTextFieldProps extends InlineFieldBaseProps {
@@ -105,6 +107,7 @@ function InlineTextField({
   onSave,
   disabled,
   className,
+  align,
   min,
   max,
 }: InlineTextFieldProps) {
@@ -175,7 +178,7 @@ function InlineTextField({
             if (e.key === "Escape") cancel();
           }}
           placeholder={placeholder}
-          className="h-8 text-sm bg-transparent"
+          className={cn("h-8 text-sm bg-transparent", align === "right" && "text-right")}
           type={type === "number" || type === "currency" || type === "percent" ? "text" : "text"}
           inputMode={type === "number" || type === "currency" || type === "percent" ? "numeric" : "text"}
           disabled={disabled}
@@ -186,8 +189,9 @@ function InlineTextField({
           onClick={startEdit}
           disabled={disabled}
           className={cn(
-            "relative w-full text-left text-sm min-h-[32px] flex items-center rounded-md px-2 py-1 -mx-0.5 transition-colors",
+            "relative w-full text-sm min-h-[32px] flex items-center rounded-md px-2 py-1 -mx-0.5 transition-colors",
             "border border-transparent",
+            align === "right" ? "justify-end text-right" : "text-left",
             !disabled && "group-hover/field:border-border group-hover/field:bg-muted/40 cursor-pointer",
             disabled && "cursor-default opacity-60",
             (type === "currency" || type === "number" || type === "percent") && "num tabular-nums"

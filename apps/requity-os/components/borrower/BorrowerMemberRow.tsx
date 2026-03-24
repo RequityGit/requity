@@ -209,6 +209,7 @@ export function BorrowerMemberRow({
           placeholder="0%"
           min={0}
           max={100}
+          align="right"
           onSave={(v) => saveField("ownership_pct", parseFloat(v) || 0)}
         />
       </TableCell>
@@ -221,6 +222,7 @@ export function BorrowerMemberRow({
           placeholder="0"
           min={300}
           max={850}
+          align="right"
           onSave={(v) => saveField("credit_score", parseInt(v) || 0)}
         />
       </TableCell>
@@ -232,6 +234,7 @@ export function BorrowerMemberRow({
           value={Number(member.liquidity) > 0 ? member.liquidity : ""}
           placeholder="$0"
           min={0}
+          align="right"
           onSave={(v) => saveField("liquidity", parseFloat(v) || 0)}
         />
       </TableCell>
@@ -243,6 +246,7 @@ export function BorrowerMemberRow({
           value={Number(member.net_worth) > 0 ? member.net_worth : ""}
           placeholder="$0"
           min={0}
+          align="right"
           onSave={(v) => saveField("net_worth", parseFloat(v) || 0)}
         />
       </TableCell>
@@ -255,6 +259,7 @@ export function BorrowerMemberRow({
           placeholder="0"
           min={0}
           max={99}
+          align="right"
           onSave={(v) => saveField("experience", parseInt(v) || 0)}
         />
       </TableCell>
