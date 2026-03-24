@@ -611,6 +611,16 @@ function DealDetailPageInner({
                   googleDriveFolderUrl={(deal as unknown as Record<string, unknown>).google_drive_folder_url as string | null}
                   currentUserId={currentUserId}
                   currentUserName={currentUserName}
+                  dealDocData={{
+                    id: deal.id,
+                    name: (deal as { name?: string }).name ?? "Deal",
+                    amount: (deal as unknown as Record<string, unknown>).amount as number | undefined,
+                    asset_class: deal.asset_class ?? undefined,
+                    capital_side: deal.capital_side ?? undefined,
+                    stage: deal.stage,
+                    property_data: (deal as unknown as Record<string, unknown>).property_data as Record<string, unknown> | undefined,
+                    uw_data: (deal.uw_data ?? undefined) as Record<string, unknown> | undefined,
+                  }}
                 />
               </Suspense>
               </SectionErrorBoundary>
@@ -741,6 +751,7 @@ function DealHeader({
     email: string;
     name: string;
     contactId: string;
+    ccEmails?: string[];
   } | null>(null);
 
   // Form recipients from contact selection
@@ -1564,10 +1575,15 @@ function DealHeader({
                 if (contactSelection.hasSelection) {
                   const firstExternal = contactSelection.selectedExternal.find((c) => c.email);
                   if (firstExternal) {
+                    // Collect internal team member emails for CC
+                    const internalCcEmails = contactSelection.selectedInternal
+                      .filter((c) => c.email)
+                      .map((c) => c.email!);
                     setEmailToContact({
                       email: firstExternal.email!,
                       name: firstExternal.name,
                       contactId: firstExternal.crmContactId ?? firstExternal.id,
+                      ccEmails: internalCcEmails.length > 0 ? internalCcEmails : undefined,
                     });
                     setEmailComposeOpen(true);
                   } else {
@@ -1828,6 +1844,7 @@ function DealHeader({
           toEmail={emailToContact.email}
           toName={emailToContact.name}
           linkedContactId={emailToContact.contactId}
+          initialCc={emailToContact.ccEmails}
           linkedLoanId={deal.id}
           currentUserId={currentUserId}
           initialSubject={buildDealEmailSubject(displayId, deal.name)}

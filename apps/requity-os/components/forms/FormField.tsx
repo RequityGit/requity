@@ -219,6 +219,15 @@ export function FormField({ field, value, onChange, onBlur, error, formData = {}
     );
   }
 
+  // Custom components manage their own labels and errors
+  if (field.type === "custom") {
+    return (
+      <div className="w-full">
+        {renderField()}
+      </div>
+    );
+  }
+
   return (
     <div className={cn(field.width === "half" ? "w-full" : "w-full", "space-y-1.5")}>
       {field.label && (
