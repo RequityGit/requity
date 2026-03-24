@@ -1,13 +1,15 @@
-import { createClient } from '@/lib/supabase/server'; 
+import { createClient } from '@/lib/supabase/server';
+import sanitizeHtml from 'sanitize-html';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import CommunityGallery from '@/components/CommunityGallery';
 import ListingGrid from '@/components/ListingGrid';
 import AmenityIcon from '@/components/AmenityIcon'; 
 
-export const dynamic = 'force-dynamic';
+export const revalidate = 3600;
 
-export default async function CommunityPage({ params }: { params: { slug: string } }) {
+export default async function CommunityPage({ params }: { params: Promise<{ slug: string }> }) {
+  const { slug } = await params;
   const supabase = createClient();
 
   const { data: community } = await supabase
@@ -36,7 +38,7 @@ export default async function CommunityPage({ params }: { params: { slug: string
         )
       )
     `)
-    .eq('slug', params.slug)
+    .eq('slug', slug)
     .single();
 
   if (!community) notFound();
@@ -68,16 +70,36 @@ export default async function CommunityPage({ params }: { params: { slug: string
     alt_text: item.media?.alt_text
   })) || [];
 
+  const cleanDescriptionHtml = sanitizeHtml(community.description_html || '', {
+    allowedTags: sanitizeHtml.defaults.allowedTags.concat(['h1', 'h2', 'img']),
+    allowedAttributes: {
+      ...sanitizeHtml.defaults.allowedAttributes,
+      '*': ['class'],
+    },
+  });
+
+  const hasAmenities = community.pm_community_amenities && community.pm_community_amenities.length > 0;
+  // dynamic nav - only show links to sections that have content
+  const navItems = [
+        { label: 'ABOUT THE COMMUNITY', show: true },
+        { label: 'AMENITIES', show: hasAmenities },
+        { label: 'AVAILABLE LISTINGS', show: true },
+        { label: 'GALLERY', show: galleryImages.length > 0 },
+  ].filter(item => item.show);
   return (
     <div className="min-h-screen bg-white text-[#0f172a] font-sans leading-relaxed">
       
       {/* STICKY SUB-NAV */}
       <div className="sticky top-20 z-[90] bg-[#f8fafc] border-b border-slate-200">
         <div className="max-w-[1440px] mx-auto px-8 py-4 flex items-center gap-10 overflow-x-auto no-scrollbar">
-          {['ABOUT THE COMMUNITY', 'AMENITIES', 'AVAILABLE LISTINGS', 'GALLERY'].map((item) => (
-            <a key={item} href={`#${item.toLowerCase().replace(/ /g, '-')}`} className="text-xs font-black tracking-[1px] text-slate-400 hover:text-[#2563eb] transition-colors whitespace-nowrap">
-              {item}
-            </a>
+          {navItems.map((item) => (
+              <a
+                  key={item.label}
+                  href={`#${item.label.toLowerCase().replace(/ /g, '-')}`}
+                  className="text-xs font-black tracking-[1px] text-slate-400 hover:text-[#2563eb] transition-colors whitespace-nowrap"
+              >
+                  {item.label}
+              </a>
           ))}
         </div>
       </div>
@@ -90,8 +112,10 @@ export default async function CommunityPage({ params }: { params: { slug: string
         <div className="max-w-[1380px] mx-auto">
           <div className="max-w-[490px] space-y-10 text-left">
             <div className="space-y-4">
-               <h1 className="text-[3.75rem] font-black tracking-wide leading-[1] capitalize">{community.name}</h1>
-               <p className="text-xl text-blue-400 font-bold uppercase tracking-widest">{community.headline || 'Welcome to our community'}</p>
+              <h1 className="text-[3.75rem] font-black tracking-wide leading-[1] capitalize">{community.name}</h1>
+              <p className="text-xl text-blue-400 font-bold uppercase tracking-widest">
+                {community.headline || 'Welcome to our community'}
+              </p>
             </div>
             
             <div className="flex flex-col gap-3 pt-8 font-bold uppercase tracking-widest text-sm">
@@ -120,53 +144,75 @@ export default async function CommunityPage({ params }: { params: { slug: string
             
             {/* ABOUT */}
             <section id="about-the-community" className="scroll-mt-48">
-              <h2 className="text-[2.18rem] font-bold text-[#333333] uppercase tracking-tight">About Our Community</h2>
-              <div 
-                className="prose prose-slate max-w-none text-[#0f172a] text-lg leading-[1.8]"
-                dangerouslySetInnerHTML={{ __html: community.description_html || 'Information coming soon.' }} 
-              />
+              <h2 className="text-[2.18rem] font-bold text-[#333333] uppercase tracking-tight mb-8">About Our Community</h2>
+              {cleanDescriptionHtml ? (
+                <div 
+                  className="prose prose-slate max-w-none text-[#0f172a] text-lg leading-[1.8]"
+                  dangerouslySetInnerHTML={{ __html: cleanDescriptionHtml }}
+                />
+              ) : (
+                <p className="text-slate-400 text-lg">Information coming soon.</p>
+              )}              
             </section>
 
-            {/* DYNAMIC AMENITIES GRID */}
-            <section id="amenities" className="scroll-mt-48 border-t pt-24 border-slate-100">
-              <h2 className="text-[2.18rem] font-bold text-[#333333] mb-12 uppercase tracking-tight">Amenities</h2>
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-16">
-                {community.pm_community_amenities?.map((item: any) => (
-                    <div key={item.pm_amenities.name} className="flex items-center gap-3">
-                        <div className="w-12 h-12 bg-slate-100 rounded-xl flex items-center justify-center">
-                            <AmenityIcon 
-                                iconPath={item.pm_amenities.icon_slug} 
-                                className="w-6 h-6 bg-[#2563eb]"
-                            />
-                        </div>
-                        <p className="tracking-widest text-[#333333]">
-                            {item.pm_amenities.name}
-                        </p>
+            {/* AMENITIES */}
+            {hasAmenities && (
+                <section id="amenities" className="scroll-mt-48 border-t pt-24 border-slate-100">
+                    <h2 className="text-[2.18rem] font-bold text-[#333333] mb-12 uppercase tracking-tight">Amenities</h2>
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-16">
+                        {community.pm_community_amenities.map((item: any) => (
+                            <div key={item.pm_amenities.name} className="flex items-center gap-3">
+                                <div className="w-12 h-12 bg-slate-100 rounded-xl flex items-center justify-center">
+                                    <AmenityIcon
+                                        iconPath={item.pm_amenities.icon_slug}
+                                        className="w-6 h-6 text-[#2563eb]"
+                                    />
+                                </div>
+                                <p className="text-sm font-bold uppercase tracking-widest text-[#333333]">
+                                    {item.pm_amenities.name}
+                                </p>
+                            </div>
+                        ))}
                     </div>
-                ))}
-              </div>
-            </section>
+                </section>
+            )}
           </div>
 
-          {/* SIDEBARS */}
+          {/* SIDEBAR */}
           <div className="space-y-12">
-            <section className="bg-[#f8fafc] p-12 rounded-[1rem] border border-slate-100 shadow-sm">
-              <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400 mb-10 border-b border-slate-200 pb-4">Community News</h3>
-              <div className="space-y-10">
-                {publishedPosts.map((post: any) => (
-                  <Link href={`/communities/${community.slug}/posts/${post.slug}`} key={post.id} className="block group">
-                    <h4 className="font-bold text-[25px] text-[#333333] group-hover:text-[#2563eb] transition-colors leading-tight mb-2">{post.title}</h4>
-                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{new Date(post.created_at).toLocaleDateString()}</p>
-                  </Link>
-                ))}
-              </div>
-            </section>
+                        {publishedPosts.length > 0 && (
+                            <section className="bg-[#f8fafc] p-12 rounded-[1rem] border border-slate-100 shadow-sm">
+                                <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400 mb-10 border-b border-slate-200 pb-4">
+                                    Community News
+                                </h3>
+                                <div className="space-y-10">
+                                    {publishedPosts.map((post: any) => (
+                                        <Link
+                                            href={`/communities/${community.slug}/posts/${post.slug}`}
+                                            key={post.id}
+                                            className="block group"
+                                        >
+                                            <h4 className="font-bold text-[25px] text-[#333333] group-hover:text-[#2563eb] transition-colors leading-tight mb-2">
+                                                {post.title}
+                                            </h4>
+                                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                                                {new Date(post.created_at).toLocaleDateString()}
+                                            </p>
+                                        </Link>
+                                    ))}
+                                </div>
+                            </section>
+                        )}
 
             <section className="p-12 border-l-8 border-[#f8fafc]">
                <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400 mb-6">Location & Details</h3>
                <div className="space-y-2">
-                  <p className="text-[#333333] font-bold text-2xl tracking-tighter leading-tight">{community.address_display}</p>
-                  <p className="text-slate-500 font-medium text-lg italic">{community.city}, {community.state_code} {community.zip_code}</p>
+                  <p className="text-[#333333] font-bold text-2xl tracking-tighter leading-tight">
+                      {community.address_display}
+                  </p>
+                  <p className="text-slate-500 font-medium text-lg italic">
+                      {community.city}{community.state_code ? `, ${community.state_code}` : ''} {community.zip_code}
+                  </p>
                </div>
             </section>
           </div>
@@ -179,11 +225,12 @@ export default async function CommunityPage({ params }: { params: { slug: string
         </section>
 
         {/* GALLERY */}
-        <section id="gallery" className="scroll-mt-48 border-t pt-24 border-slate-100 pb-20 text-center">
-           <h2 className="text-[2.18rem] font-bold text-[#333333] mb-12 uppercase tracking-tight">Photo Gallery</h2>
-           <CommunityGallery images={galleryImages} />
-        </section>
-
+          {galleryImages.length > 0 && (
+              <section id="gallery" className="scroll-mt-48 border-t pt-24 border-slate-100 pb-20 text-center">
+                  <h2 className="text-[2.18rem] font-bold text-[#333333] mb-12 uppercase tracking-tight">Photo Gallery</h2>
+                  <CommunityGallery images={galleryImages} />
+              </section>
+          )}
       </main>
     </div>
   );

@@ -87,7 +87,7 @@ export default function EditCommunityClient({ community, regions, allAmenities, 
             if (error) throw error;
             
             router.refresh();
-            alert("Monolith synchronized successfully.");
+            alert("Update successful.");
         } catch (error: any) {
             alert("Update Failed: " + error.message);
         } finally {
