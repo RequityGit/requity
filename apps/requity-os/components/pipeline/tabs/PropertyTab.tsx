@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition, useMemo, useEffect } from "react";
+import { useState, useTransition, useMemo, useEffect, useCallback } from "react";
 import { updatePropertyDataAction, updateUwDataAction } from "@/app/(authenticated)/(admin)/pipeline/actions";
 import type { UwFieldDef } from "../pipeline-types";
 import { UwField } from "../UwField";
@@ -16,6 +16,8 @@ import { EditableSection } from "@/components/inline-layout-editor/EditableSecti
 import { EditableFieldSlot } from "@/components/inline-layout-editor/EditableFieldSlot";
 import { FieldPicker } from "@/components/inline-layout-editor/FieldPicker";
 import { cn } from "@/lib/utils";
+import { AddressAutocomplete, type ParsedAddress } from "@/components/ui/address-autocomplete";
+import { ReadValue } from "../ReadValue";
 
 // ── Column span mapping (static for Tailwind purging) ──
 
@@ -129,9 +131,42 @@ function PropertyDetailsContent({
     return map;
   }, [fallbackFieldMap, useLayoutSections, layoutSections, layout.fieldsBySectionId, uwFieldMap]);
 
+  // Address field keys — when Google autocomplete fills address, also populate these
+  const ADDRESS_FIELD_KEY = "property_address";
+  const ADDRESS_RELATED_FIELDS: Record<string, keyof ParsedAddress> = {
+    property_city: "city",
+    property_state: "state",
+    property_zip: "zip",
+    property_county: "county",
+  };
+
   function handleFieldChange(key: string, value: unknown) {
     setLocalData((prev) => ({ ...prev, [key]: value }));
   }
+
+  const handleAddressSelect = useCallback(
+    (parsed: ParsedAddress) => {
+      // Update address line
+      setLocalData((prev) => ({ ...prev, [ADDRESS_FIELD_KEY]: parsed.address_line1 }));
+      startTransition(async () => {
+        await updatePropertyDataAction(dealId, ADDRESS_FIELD_KEY, parsed.address_line1);
+      });
+
+      // Auto-fill related fields
+      for (const [fieldKey, parsedKey] of Object.entries(ADDRESS_RELATED_FIELDS)) {
+        const val = parsed[parsedKey];
+        if (!val) continue;
+        setLocalData((prev) => ({ ...prev, [fieldKey]: val }));
+        startTransition(async () => {
+          const result = await updatePropertyDataAction(dealId, fieldKey, val);
+          if (result.error) {
+            console.error(`Failed to save ${fieldKey}:`, result.error);
+          }
+        });
+      }
+    },
+    [dealId]
+  );
 
   // Fields that live in uw_data (shared with Overview tab) rather than property_data
   const UW_DATA_FIELDS = new Set(["purchase_price", "appraised_value"]);
@@ -283,6 +318,48 @@ function PropertyDetailsContent({
     );
   }
 
+  // Renders AddressAutocomplete for the property_address field
+  function renderAddressField(fieldDef: UwFieldDef, fieldKey: string) {
+    const isAddressField = fieldKey === ADDRESS_FIELD_KEY;
+    if (!isAddressField) return null;
+
+    const currentValue = localData[fieldKey];
+    const isEditing = editingFieldKey === fieldKey;
+
+    if (!isEditing) {
+      return (
+        <div className="space-y-0">
+          <span className="inline-field-label">{fieldDef.label}</span>
+          <div className="flex items-center -mx-0.5">
+            <ReadValue
+              value={currentValue}
+              fieldType="text"
+              onClick={() => setEditingFieldKey(fieldKey)}
+            />
+          </div>
+        </div>
+      );
+    }
+
+    return (
+      <div className="space-y-0">
+        <span className="inline-field-label">{fieldDef.label}</span>
+        <AddressAutocomplete
+          value={currentValue != null ? String(currentValue) : ""}
+          onChange={(val) => handleFieldChange(fieldKey, val || null)}
+          onAddressSelect={handleAddressSelect}
+          onBlur={() => {
+            handleFieldBlur(fieldKey);
+            setEditingFieldKey(null);
+          }}
+          placeholder="Start typing a property address..."
+          className="inline-field"
+          disabled={pending}
+        />
+      </div>
+    );
+  }
+
   const enrichButton = (
     <div className="flex items-center justify-between">
       <div />
@@ -366,16 +443,20 @@ function PropertyDetailsContent({
                               fieldConfigId={lf.field_config_id}
                               fieldKey={lf.field_key}
                             >
-                              <UwField
-                                field={fieldDef}
-                                value={localData[lf.field_key] ?? null}
-                                onChange={(val) => handleFieldChange(lf.field_key, val)}
-                                onBlur={() => handleFieldBlur(lf.field_key)}
-                                disabled={pending || isEditing}
-                                mode={editingFieldKey === lf.field_key && !isEditing ? "edit" : "read"}
-                                onStartEdit={() => !isEditing && setEditingFieldKey(lf.field_key)}
-                                onEndEdit={() => setEditingFieldKey(null)}
-                              />
+                              {lf.field_key === ADDRESS_FIELD_KEY ? (
+                                renderAddressField(fieldDef, lf.field_key)
+                              ) : (
+                                <UwField
+                                  field={fieldDef}
+                                  value={localData[lf.field_key] ?? null}
+                                  onChange={(val) => handleFieldChange(lf.field_key, val)}
+                                  onBlur={() => handleFieldBlur(lf.field_key)}
+                                  disabled={pending || isEditing}
+                                  mode={editingFieldKey === lf.field_key && !isEditing ? "edit" : "read"}
+                                  onStartEdit={() => !isEditing && setEditingFieldKey(lf.field_key)}
+                                  onEndEdit={() => setEditingFieldKey(null)}
+                                />
+                              )}
                             </EditableFieldSlot>
                           </div>
                         );
@@ -421,16 +502,20 @@ function PropertyDetailsContent({
           <div className="grid grid-cols-12 gap-x-5 gap-y-2">
             {fields.map((field) => (
               <div key={field.key} className="col-span-12 sm:col-span-6">
-                <UwField
-                  field={field}
-                  value={localData[field.key] ?? null}
-                  onChange={(val) => handleFieldChange(field.key, val)}
-                  onBlur={() => handleFieldBlur(field.key)}
-                  disabled={pending}
-                  mode={editingFieldKey === field.key ? "edit" : "read"}
-                  onStartEdit={() => setEditingFieldKey(field.key)}
-                  onEndEdit={() => setEditingFieldKey(null)}
-                />
+                {field.key === ADDRESS_FIELD_KEY ? (
+                  renderAddressField(field, field.key)
+                ) : (
+                  <UwField
+                    field={field}
+                    value={localData[field.key] ?? null}
+                    onChange={(val) => handleFieldChange(field.key, val)}
+                    onBlur={() => handleFieldBlur(field.key)}
+                    disabled={pending}
+                    mode={editingFieldKey === field.key ? "edit" : "read"}
+                    onStartEdit={() => setEditingFieldKey(field.key)}
+                    onEndEdit={() => setEditingFieldKey(null)}
+                  />
+                )}
               </div>
             ))}
           </div>

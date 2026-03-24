@@ -43,6 +43,7 @@ export interface ParsedAddress {
   city: string;
   state: string;
   zip: string;
+  county?: string;
 }
 
 export interface AddressAutocompleteProps {
@@ -113,6 +114,10 @@ function parsePlace(place: GooglePlaceResult): ParsedAddress {
       result.city = c.long_name;
     if (t.includes("administrative_area_level_1"))
       result.state = c.short_name;
+    if (t.includes("administrative_area_level_2")) {
+      // Google returns county as "Foo County" — strip the suffix
+      result.county = c.long_name.replace(/\s+County$/i, "");
+    }
     if (t.includes("postal_code")) result.zip = c.long_name;
   }
 
