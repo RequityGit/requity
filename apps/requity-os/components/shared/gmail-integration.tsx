@@ -34,6 +34,7 @@ export function GmailIntegration() {
   const [gmailToken, setGmailToken] = useState<GmailToken | null>(null);
   const [gmailConfigured, setGmailConfigured] = useState<boolean | null>(null);
   const [syncing, setSyncing] = useState(false);
+  const [tokenExpired, setTokenExpired] = useState(false);
   const [syncResult, setSyncResult] = useState<{
     messagesProcessed: number;
     errors: string[];
@@ -90,6 +91,23 @@ export function GmailIntegration() {
     }
   }, [searchParams, router, pathname]);
 
+  // Check token health (can it actually refresh?) after initial status load
+  const checkTokenHealth = useCallback(async () => {
+    if (!gmailToken) return;
+    try {
+      const res = await fetch("/api/gmail/status");
+      if (!res.ok) return;
+      const data = await res.json();
+      if (data.error === "expired") {
+        setTokenExpired(true);
+        // Token was deactivated server-side, refresh local state
+        setGmailToken(null);
+      }
+    } catch {
+      // Silently ignore — health check is best-effort
+    }
+  }, [gmailToken]);
+
   useEffect(() => {
     fetchGmailStatus();
   }, [fetchGmailStatus]);
@@ -98,9 +116,15 @@ export function GmailIntegration() {
   useEffect(() => {
     const gmailParam = searchParams.get("gmail");
     if (gmailParam === "connected") {
+      setTokenExpired(false);
       fetchGmailStatus();
     }
   }, [searchParams, fetchGmailStatus]);
+
+  // Run token health check once after token is loaded
+  useEffect(() => {
+    checkTokenHealth();
+  }, [checkTokenHealth]);
 
   async function handleConnect() {
     setConnecting(true);
@@ -393,6 +417,36 @@ export function GmailIntegration() {
                 )}
               </div>
             </div>
+          </div>
+        ) : tokenExpired ? (
+          <div className="space-y-4">
+            <div className="flex items-start gap-3 p-3 rounded-md bg-red-50 border border-red-200">
+              <AlertTriangle className="h-5 w-5 text-red-600 flex-shrink-0 mt-0.5" />
+              <div className="flex-1">
+                <p className="text-sm font-medium text-red-900">
+                  Gmail connection expired
+                </p>
+                <p className="text-xs text-red-700 mt-1">
+                  Your Gmail authorization has expired. This can happen when
+                  Google revokes access after a period of inactivity or if the
+                  app&apos;s OAuth configuration changed. Please reconnect to
+                  resume sending and syncing emails.
+                </p>
+              </div>
+            </div>
+            <Button onClick={handleConnect} disabled={connecting}>
+              {connecting ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Reconnecting...
+                </>
+              ) : (
+                <>
+                  <RefreshCw className="h-4 w-4 mr-2" />
+                  Reconnect Gmail Account
+                </>
+              )}
+            </Button>
           </div>
         ) : (
           <div className="space-y-4">

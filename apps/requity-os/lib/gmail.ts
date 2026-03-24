@@ -17,6 +17,15 @@ interface RefreshResult {
   expires_in: number;
 }
 
+/** Error thrown when a refresh token has been revoked or expired (e.g. Google
+ *  OAuth app in "Testing" mode expires refresh tokens after 7 days). */
+export class GmailTokenRevokedError extends Error {
+  constructor(detail: string) {
+    super(`Gmail refresh token revoked or expired: ${detail}`);
+    this.name = "GmailTokenRevokedError";
+  }
+}
+
 /**
  * Refresh a Google OAuth access token using the stored refresh token.
  */
@@ -28,6 +37,10 @@ async function refreshAccessToken(
 
   if (!clientId || !clientSecret) {
     throw new Error("Google OAuth is not configured on the server.");
+  }
+
+  if (!refreshToken) {
+    throw new GmailTokenRevokedError("No refresh token stored. User must re-authorize.");
   }
 
   const res = await fetch(GOOGLE_TOKEN_URL, {
@@ -44,6 +57,23 @@ async function refreshAccessToken(
   if (!res.ok) {
     const errText = await res.text();
     console.error("Gmail token refresh failed:", errText);
+
+    // Detect revoked/expired refresh tokens (common when Google OAuth app is in
+    // "Testing" mode, which expires refresh tokens after 7 days)
+    let errorCode = "";
+    try {
+      const parsed = JSON.parse(errText);
+      errorCode = parsed.error || "";
+    } catch {
+      // ignore parse errors
+    }
+
+    if (errorCode === "invalid_grant") {
+      throw new GmailTokenRevokedError(
+        "Refresh token expired or revoked. User must re-authorize Gmail."
+      );
+    }
+
     throw new Error("Failed to refresh Gmail access token.");
   }
 
@@ -84,22 +114,37 @@ export async function getValidGmailToken(
   }
 
   // Token expired or expiring soon — refresh it
-  const refreshed = await refreshAccessToken(record.refresh_token);
+  try {
+    const refreshed = await refreshAccessToken(record.refresh_token);
 
-  const newExpiresAt = new Date(
-    Date.now() + refreshed.expires_in * 1000
-  ).toISOString();
+    const newExpiresAt = new Date(
+      Date.now() + refreshed.expires_in * 1000
+    ).toISOString();
 
-  await admin
-    .from("gmail_tokens")
-    .update({
-      access_token: refreshed.access_token,
-      token_expires_at: newExpiresAt,
-      updated_at: new Date().toISOString(),
-    })
-    .eq("id", record.id);
+    await admin
+      .from("gmail_tokens")
+      .update({
+        access_token: refreshed.access_token,
+        token_expires_at: newExpiresAt,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", record.id);
 
-  return { accessToken: refreshed.access_token, email: record.email };
+    return { accessToken: refreshed.access_token, email: record.email };
+  } catch (err) {
+    // If the refresh token is revoked/expired, deactivate the stored token so
+    // the UI reflects the broken state and prompts re-authorization.
+    if (err instanceof GmailTokenRevokedError) {
+      console.error(
+        `Deactivating Gmail token for user ${userId}: ${err.message}`
+      );
+      await admin
+        .from("gmail_tokens")
+        .update({ is_active: false, updated_at: new Date().toISOString() })
+        .eq("id", record.id);
+    }
+    throw err;
+  }
 }
 
 export interface MimeAttachment {
