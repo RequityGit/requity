@@ -45,8 +45,8 @@ export function ContributionListTable({ data }: ContributionListTableProps) {
 
       showSuccess("Contribution marked as paid");
       router.refresh();
-    } catch (err: any) {
-      showError("Could not mark contribution as paid", err.message);
+    } catch (err: unknown) {
+      showError("Could not mark contribution as paid", err instanceof Error ? err.message : String(err));
     } finally {
       setProcessing(null);
     }
