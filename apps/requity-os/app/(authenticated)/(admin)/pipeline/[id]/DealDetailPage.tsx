@@ -104,6 +104,7 @@ import { EmailComposeSheet } from "@/components/crm/email-compose-sheet";
 import { useSoftphoneMaybe } from "@/lib/twilio/softphone-context";
 
 const ActionCenterTab = lazy(() => import("@/components/pipeline/tabs/ActionCenterTab").then(m => ({ default: m.ActionCenterTab })));
+const FundraisingTab = lazy(() => import("@/components/fundraising/FundraisingTab").then(m => ({ default: m.FundraisingTab })));
 import type { DealPreviewNote } from "@/components/pipeline/DealNotePreview";
 import {
   logQuickActionV2,
@@ -220,6 +221,7 @@ function DealDetailPageInner({
   recentNote,
   isSuperAdmin = false,
 }: DealDetailPageProps) {
+  const showFundraisingTab = deal.stage === "execution" || deal.stage === "closed";
   const UNIVERSAL_TABS = [
     "Action Center",
     "Overview",
@@ -228,6 +230,7 @@ function DealDetailPageInner({
     "Analysis",
     "Underwriting",
     "Documents",
+    ...(showFundraisingTab ? ["Fundraising"] : []),
   ] as const;
   const tabs = UNIVERSAL_TABS;
 
@@ -608,6 +611,23 @@ function DealDetailPageInner({
                   googleDriveFolderUrl={(deal as unknown as Record<string, unknown>).google_drive_folder_url as string | null}
                   currentUserId={currentUserId}
                   currentUserName={currentUserName}
+                />
+              </Suspense>
+              </SectionErrorBoundary>
+            </div>
+          )}
+          {showFundraisingTab && loadedTabs.has("Fundraising") && (
+            <div className={activeTab !== "Fundraising" ? "hidden" : undefined}>
+              <SectionErrorBoundary fallbackTitle="Could not load fundraising">
+              <Suspense fallback={<TabLoadingFallback />}>
+                <FundraisingTab
+                  dealId={deal.id}
+                  dealName={(deal as { name?: string }).name ?? ""}
+                  fundraiseSlug={deal.fundraise_slug ?? null}
+                  fundraiseEnabled={deal.fundraise_enabled ?? false}
+                  fundraiseTarget={deal.fundraise_target ?? null}
+                  fundraiseDescription={deal.fundraise_description ?? null}
+                  fundraiseAmountOptions={deal.fundraise_amount_options ?? null}
                 />
               </Suspense>
               </SectionErrorBoundary>

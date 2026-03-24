@@ -36,7 +36,6 @@ const SOURCE_COLORS: Record<string, string> = {
   loans: "bg-blue-500",
   crm_contacts: "bg-blue-500",
   companies: "bg-blue-500",
-  equity_deals: "bg-blue-500",
   _system: "bg-green-500",
   template_config: "bg-amber-500",
 };

@@ -121,6 +121,12 @@ export interface UnifiedDeal {
   updated_at: string;
   google_sheet_id?: string | null;
   google_sheet_url?: string | null;
+  // Fundraise
+  fundraise_slug?: string | null;
+  fundraise_enabled?: boolean | null;
+  fundraise_target?: number | null;
+  fundraise_description?: string | null;
+  fundraise_amount_options?: number[] | null;
   // Joined
   primary_contact?: { id: string; first_name: string; last_name: string; email: string | null; phone: string | null } | null;
   broker_contact?: { id: string; first_name: string; last_name: string; email: string | null; phone: string | null; broker_company?: { name: string } | null } | null;
