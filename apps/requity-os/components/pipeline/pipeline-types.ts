@@ -127,6 +127,8 @@ export interface UnifiedDeal {
   fundraise_target?: number | null;
   fundraise_description?: string | null;
   fundraise_amount_options?: number[] | null;
+  fundraise_hero_image_url?: string | null;
+  fundraise_deck_url?: string | null;
   // Joined
   primary_contact?: { id: string; first_name: string; last_name: string; email: string | null; phone: string | null } | null;
   broker_contact?: { id: string; first_name: string; last_name: string; email: string | null; phone: string | null; broker_company?: { name: string } | null } | null;

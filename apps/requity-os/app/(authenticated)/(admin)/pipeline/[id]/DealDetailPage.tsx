@@ -628,6 +628,8 @@ function DealDetailPageInner({
                   fundraiseTarget={deal.fundraise_target ?? null}
                   fundraiseDescription={deal.fundraise_description ?? null}
                   fundraiseAmountOptions={deal.fundraise_amount_options ?? null}
+                  fundraiseHeroImageUrl={deal.fundraise_hero_image_url ?? null}
+                  fundraiseDeckUrl={deal.fundraise_deck_url ?? null}
                 />
               </Suspense>
               </SectionErrorBoundary>

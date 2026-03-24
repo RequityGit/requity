@@ -39,6 +39,7 @@ import {
   FileCheck,
   BarChart3,
   Target,
+  MessageSquare,
 } from "lucide-react";
 import { formatCurrency, formatDate } from "@/lib/format";
 import { cn } from "@/lib/utils";
@@ -148,9 +149,9 @@ export function SoftCommitmentsClient({ commitments, deals }: Props) {
             <div className="text-xs text-muted-foreground">{row.email}</div>
           </div>
         );
-        return row.contact_id ? (
+        return row.contact_id && row.contact?.contact_number ? (
           <Link
-            href={`/admin/crm/contacts/${row.contact_id}`}
+            href={`/contacts/${row.contact.contact_number}`}
             className="hover:underline underline-offset-4"
           >
             {content}
@@ -213,6 +214,26 @@ export function SoftCommitmentsClient({ commitments, deals }: Props) {
         ),
     },
     {
+      key: "notes",
+      header: "Notes",
+      cell: (row) => (
+        <button
+          type="button"
+          onClick={() => setNotesDialog({ id: row.id, notes: row.notes ?? "" })}
+          className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground rq-transition max-w-[200px]"
+        >
+          {row.notes ? (
+            <span className="truncate" title={row.notes}>{row.notes}</span>
+          ) : (
+            <>
+              <MessageSquare className="h-3.5 w-3.5 shrink-0" />
+              <span className="text-xs">Add</span>
+            </>
+          )}
+        </button>
+      ),
+    },
+    {
       key: "submitted",
       header: "Submitted",
       cell: (row) => (
@@ -249,9 +270,9 @@ export function SoftCommitmentsClient({ commitments, deals }: Props) {
             >
               Edit Notes
             </DropdownMenuItem>
-            {row.contact_id && (
+            {row.contact_id && row.contact?.contact_number && (
               <DropdownMenuItem asChild>
-                <Link href={`/admin/crm/contacts/${row.contact_id}`}>
+                <Link href={`/contacts/${row.contact.contact_number}`}>
                   <ExternalLink className="h-3.5 w-3.5 mr-2" />
                   View Contact
                 </Link>

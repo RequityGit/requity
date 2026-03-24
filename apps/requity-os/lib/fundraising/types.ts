@@ -24,6 +24,7 @@ export interface SoftCommitment {
   updated_at: string;
   // Joined
   deal?: { id: string; name: string; fundraise_slug: string | null } | null;
+  contact?: { contact_number: string } | null;
 }
 
 export const COMMITMENT_STATUS_OPTIONS: { value: CommitmentStatus; label: string }[] = [

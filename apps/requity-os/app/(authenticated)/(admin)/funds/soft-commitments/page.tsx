@@ -17,7 +17,7 @@ export default async function SoftCommitmentsPage() {
   const { data: rawCommitments, error } = await admin
     .from("soft_commitments" as never)
     .select(
-      "*, deal:unified_deals!soft_commitments_deal_id_fkey(id, name, fundraise_slug)" as never
+      "*, deal:unified_deals!soft_commitments_deal_id_fkey(id, name, fundraise_slug), contact:crm_contacts!soft_commitments_contact_id_fkey(contact_number)" as never
     )
     .order("submitted_at" as never, { ascending: false } as never);
 

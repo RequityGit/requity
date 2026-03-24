@@ -12,7 +12,7 @@ export async function GET(
   const { data, error } = await admin
     .from("unified_deals" as never)
     .select(
-      "id, name, fundraise_slug, fundraise_enabled, fundraise_target, fundraise_description, fundraise_amount_options" as never
+      "id, name, amount, property_data, fundraise_slug, fundraise_enabled, fundraise_target, fundraise_description, fundraise_amount_options, fundraise_hero_image_url, fundraise_deck_url" as never
     )
     .eq("fundraise_slug" as never, slug as never)
     .eq("fundraise_enabled" as never, true as never)

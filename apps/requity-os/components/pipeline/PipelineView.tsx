@@ -177,7 +177,7 @@ export function PipelineView() {
           )}
         >
           <div className="flex items-center gap-3.5 text-[10px] text-muted-foreground">
-            <span className="flex items-center gap-1"><Kbd>&larr;</Kbd><Kbd>&rarr;</Kbd> select</span>
+            <span className="flex items-center gap-1"><Kbd>&larr;</Kbd><Kbd>&rarr;</Kbd> navigate</span>
             <span className="text-muted-foreground/40">&middot;</span>
             <span className="flex items-center gap-1"><Kbd>&uarr;</Kbd><Kbd>&darr;</Kbd> columns</span>
             <span className="text-muted-foreground/40">&middot;</span>
