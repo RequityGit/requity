@@ -189,10 +189,12 @@ export async function GET(request: NextRequest) {
         scopes: grantedScopes,
         connected_at: now,
       })
-      .eq("user_id", user.id);
+      .eq("user_id", user.id)
+      .select("id")
+      .maybeSingle();
 
     // If no row existed to update, insert with empty refresh_token
-    if (!result.error && result.count === 0) {
+    if (!result.error && !result.data) {
       const upsertResult = await adminSupabase
         .from("gmail_tokens")
         .upsert(
