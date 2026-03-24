@@ -4,21 +4,29 @@ import sanitizeHtml from 'sanitize-html';
 
 export const revalidate = 3600;
 
-export default async function StaticPage({ params }: { params: { pageSlug: string } }) {
+// reserved for system folders
+const RESERVED_SLUGS = ['login', 'admin', 'api', 'communities'];
+
+export default async function StaticPage({ params }: { params: Promise<{ pageSlug: string }> }) {
+    const { pageSlug } = await params;
+    if (RESERVED_SLUGS.includes(pageSlug.toLowerCase())) {
+        notFound();
+    }
     const supabase = createClient();
     const { data: page, error } = await supabase
         .from('pm_pages')
         .select('title, content_html, hero_image_id')
-        .eq('slug', params.pageSlug)
+        .eq('slug', pageSlug)
         .single();
     
     if (error || !page) notFound();
     // sanitize on the server before rendering to the user
     const cleanHTML = sanitizeHtml(page.content_html, {
-        allowedTags: sanitizeHtml.defaults.allowedTags.concat([ 'img', 'h1', 'h2' ]),
+        allowedTags: sanitizeHtml.defaults.allowedTags.concat([ 'img', 'h1', 'h2', 'span' ]),
         allowedAttributes: {
             ...sanitizeHtml.defaults.allowedAttributes,
-            '*': ['class', 'style'] //Allow Tailwind
+            '*': ['class'],
+            'img': ['src', 'alt', 'width', 'height']
         }
     });
 
@@ -39,17 +47,16 @@ export default async function StaticPage({ params }: { params: { pageSlug: strin
                                    prose-strong:text-[#2563eb]"
                         dangerouslySetInnerHTML={{ __html: cleanHTML }} 
                     />
-
                     {/* Sidebar / Sidebar CTA */}
                     <aside className="lg:col-span-1">
                         <div className="bg-[#f8fafc] p-10 rounded-[1rem] border border-slate-100 sticky top-32">
                             <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400 mb-6">
                                 Need Assistance?
-                                </h3>
+                            </h3>
                             <p className="text-[#0f172a] font-bold mb-8 text-lg">
                                 Our regional team is here to help you find the perfect community.
                                 </p>
-                            <a href="mailto:hello@trgliving.com" className="block text-center bg-[#2563eb] text-white font-black py-4 rounded-2xl uppercase tracking-widest text-xs hover:bg-blue-700 transition-all">
+                            <a href="mailto:hello@trgliving.com" className="block text-center bg-[#2563eb] text-white font-black py-4 rounded-2xl hover:bg-blue-700 transition-colors">
                                 Email Us
                             </a>
                         </div>

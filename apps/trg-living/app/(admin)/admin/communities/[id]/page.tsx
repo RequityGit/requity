@@ -3,7 +3,7 @@ import { notFound, redirect } from 'next/navigation';
 import EditCommunityClient from './EditCommunityClient';
 
 export default async function ManageCommunityPage({ params }: { params: Promise<{ id: string }> }) {
-    const { id } = await params; // Await the promise
+    const { id } = await params;
     const supabase = createClient();
 
     const { data: { user } } = await supabase.auth.getUser();
@@ -15,19 +15,18 @@ export default async function ManageCommunityPage({ params }: { params: Promise<
         .eq('user_id', user.id)
         .single();
 
-        if (userRole?.role !== 'admin' && userRole?.role !== 'super_admin') {
-            redirect('/');
-        }
-    
+    if (userRole?.role !== 'admin' && userRole?.role !== 'super_admin') {
+        redirect('/');
+    }
+
     const { data: regions } = await supabase.from('pm_regions').select('id, name').order('name');
     const { data: allAmenities } = await supabase.from('pm_amenities').select('id, name, icon_slug').order('name');
     const { data: community } = await supabase
         .from('pm_communities')
         .select(`
-            id, name, slug, region_id, headline, description_html, 
+            id, name, slug, region_id, headline, description_html,
             address_display, city, state_code, zip_code,
-            beds_range, baths_range, starting_price, featured_media_id,
-            appfolio_listing_url, appfolio_portal_url,
+            beds_range, baths_range, starting_price, status, featured_media_id,
             pm_community_amenities (amenity_id),
             pm_gallery (
                 id,
@@ -54,7 +53,7 @@ export default async function ManageCommunityPage({ params }: { params: Promise<
                 regions={regions ?? []}
                 allAmenities={allAmenities ?? []}
                 id={id}
-                />
+            />
         </div>
     );
 }

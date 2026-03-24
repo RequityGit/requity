@@ -1,13 +1,15 @@
 -- ===========================================================================
--- TRG LIVING MARKETING CMS ARCHITECTURE (V9)
+-- TRG LIVING MARKETING CMS ARCHITECTURE (V10)
 -- ===========================================================================
 
 -- 1. TABLES & BUCKETS
 -- ---------------------------------------------------------------------------
+
 -- Media Library
 CREATE TABLE IF NOT EXISTS public.pm_media (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
     file_path TEXT NOT NULL,
     file_name TEXT NOT NULL,
     file_type TEXT,
@@ -45,8 +47,7 @@ CREATE TABLE IF NOT EXISTS public.pm_communities (
     beds_range TEXT DEFAULT 'Studio - 3 Beds',
     baths_range TEXT DEFAULT '1 - 2 Baths',
     starting_price TEXT DEFAULT 'Starting at $1,200',
-    appfolio_listing_url TEXT, 
-    appfolio_portal_url TEXT,  
+    status TEXT DEFAULT 'draft' CHECK (status IN ('draft', 'published')),
     metadata JSONB DEFAULT '{}'::jsonb
 );
 
@@ -65,7 +66,7 @@ CREATE TABLE IF NOT EXISTS public.pm_posts (
     published_at TIMESTAMPTZ
 );
 
--- Static Content Pages (About, Contact, etc.)
+-- Static Content Pages
 CREATE TABLE IF NOT EXISTS public.pm_pages (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
@@ -90,7 +91,8 @@ CREATE TABLE IF NOT EXISTS public.pm_site_settings (
 -- Amenity Library
 CREATE TABLE IF NOT EXISTS public.pm_amenities (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now(),    
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
     name TEXT NOT NULL UNIQUE,
     icon_slug TEXT
 );
@@ -113,6 +115,20 @@ CREATE TABLE IF NOT EXISTS public.pm_gallery (
     sort_order INTEGER DEFAULT 0
 );
 
+-- Contact Form Leads
+CREATE TABLE IF NOT EXISTS public.pm_leads (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    community_id UUID REFERENCES public.pm_communities(id) ON DELETE SET NULL,
+    full_name TEXT NOT NULL,
+    email TEXT NOT NULL,
+    phone TEXT,
+    message TEXT,
+    source_url TEXT,
+    status TEXT DEFAULT 'new' CHECK (status IN ('new', 'contacted', 'closed'))
+);
+
 
 -- 2. SECURITY (RLS)
 -- ---------------------------------------------------------------------------
@@ -125,48 +141,61 @@ ALTER TABLE public.pm_site_settings ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.pm_amenities ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.pm_community_amenities ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.pm_gallery ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.pm_leads ENABLE ROW LEVEL SECURITY;
 
--- 2.1 SHARED ROLE HANDSHAKE
-DROP POLICY IF EXISTS "Users can view own roles" ON public.user_roles;
+-- 2.1 CLEANUP (Idempotency Guard)
+DO $$ 
+BEGIN
+    DROP POLICY IF EXISTS "Allow public read regions" ON public.pm_regions;
+    DROP POLICY IF EXISTS "Allow public read communities" ON public.pm_communities;
+    DROP POLICY IF EXISTS "Allow public read posts" ON public.pm_posts;
+    DROP POLICY IF EXISTS "Allow public read pages" ON public.pm_pages;
+    DROP POLICY IF EXISTS "Allow public read settings" ON public.pm_site_settings;
+    DROP POLICY IF EXISTS "Allow public read media" ON public.pm_media;
+    DROP POLICY IF EXISTS "Allow public read gallery" ON public.pm_gallery;
+    DROP POLICY IF EXISTS "Allow public read amenities" ON public.pm_amenities;
+    DROP POLICY IF EXISTS "Allow public read comm_amenities" ON public.pm_community_amenities;
+    DROP POLICY IF EXISTS "Allow public insert leads" ON public.pm_leads;
+    DROP POLICY IF EXISTS "Admins manage regions" ON public.pm_regions;
+    DROP POLICY IF EXISTS "Admins manage communities" ON public.pm_communities;
+    DROP POLICY IF EXISTS "Admins manage posts" ON public.pm_posts;
+    DROP POLICY IF EXISTS "Admins manage pages" ON public.pm_pages;
+    DROP POLICY IF EXISTS "Admins manage settings" ON public.pm_site_settings;
+    DROP POLICY IF EXISTS "Admins manage media" ON public.pm_media;
+    DROP POLICY IF EXISTS "Admins manage gallery" ON public.pm_gallery;
+    DROP POLICY IF EXISTS "Admins manage amenities" ON public.pm_amenities;
+    DROP POLICY IF EXISTS "Admins manage community_amenities" ON public.pm_community_amenities;
+    DROP POLICY IF EXISTS "Admins manage leads" ON public.pm_leads;
+    DROP POLICY IF EXISTS "Users can view own roles" ON public.user_roles;
+    DROP POLICY IF EXISTS "Public Read Pages" ON public.pm_pages;
+END $$;
+
+-- 2.2 SHARED ROLE HANDSHAKE
 CREATE POLICY "Users can view own roles" ON public.user_roles FOR SELECT TO authenticated USING (user_id = (SELECT auth.uid()));
 
--- 2.2 PUBLIC READ ACCESS (For Website Visitors)
-DROP POLICY IF EXISTS "Allow public read regions" ON public.pm_regions;
-CREATE POLICY "Allow public read regions" ON public.pm_regions FOR SELECT TO public USING (true);
-DROP POLICY IF EXISTS "Allow public read communities" ON public.pm_communities;
-CREATE POLICY "Allow public read communities" ON public.pm_communities FOR SELECT TO public USING (true);
-DROP POLICY IF EXISTS "Allow public read posts" ON public.pm_posts;
-CREATE POLICY "Allow public read posts" ON public.pm_posts FOR SELECT TO public USING (true);
-DROP POLICY IF EXISTS "Allow public read pages" ON public.pm_pages;
+-- 2.3 PUBLIC READ ACCESS
+CREATE POLICY "Allow public read regions" ON public.pm_regions FOR SELECT TO public USING (is_active = true);
+CREATE POLICY "Allow public read communities" ON public.pm_communities FOR SELECT TO public USING (status = 'published');
+CREATE POLICY "Allow public read posts" ON public.pm_posts FOR SELECT TO public USING (status = 'published');
 CREATE POLICY "Allow public read pages" ON public.pm_pages FOR SELECT TO public USING (true);
-DROP POLICY IF EXISTS "Allow public read settings" ON public.pm_site_settings;
 CREATE POLICY "Allow public read settings" ON public.pm_site_settings FOR SELECT TO public USING (true);
-DROP POLICY IF EXISTS "Allow public read media" ON public.pm_media;
 CREATE POLICY "Allow public read media" ON public.pm_media FOR SELECT TO public USING (true);
-DROP POLICY IF EXISTS "Allow public read gallery" ON public.pm_gallery;
 CREATE POLICY "Allow public read gallery" ON public.pm_gallery FOR SELECT TO public USING (true);
-DROP POLICY IF EXISTS "Allow public read amenities" ON public.pm_amenities;
 CREATE POLICY "Allow public read amenities" ON public.pm_amenities FOR SELECT TO public USING (true);
-DROP POLICY IF EXISTS "Allow public read comm_amenities" ON public.pm_community_amenities;
 CREATE POLICY "Allow public read comm_amenities" ON public.pm_community_amenities FOR SELECT TO public USING (true);
+CREATE POLICY "Allow public insert leads" ON public.pm_leads FOR INSERT TO public WITH CHECK (true);
 
--- 2.3 ADMIN WRITE ACCESS
-DROP POLICY IF EXISTS "Admins manage communities" ON public.pm_communities;
-CREATE POLICY "Admins manage communities" ON public.pm_communities FOR ALL TO authenticated USING (EXISTS (SELECT 1 FROM public.user_roles WHERE user_id = (SELECT auth.uid()) AND role IN ('admin', 'super_admin')));
-DROP POLICY IF EXISTS "Admins manage regions" ON public.pm_regions;
-CREATE POLICY "Admins manage regions" ON public.pm_regions FOR ALL TO authenticated USING (EXISTS (SELECT 1 FROM public.user_roles WHERE user_id = (SELECT auth.uid()) AND role IN ('admin', 'super_admin')));
-DROP POLICY IF EXISTS "Admins manage posts" ON public.pm_posts;
-CREATE POLICY "Admins manage posts" ON public.pm_posts FOR ALL TO authenticated USING (EXISTS (SELECT 1 FROM public.user_roles WHERE user_id = (SELECT auth.uid()) AND role IN ('admin', 'super_admin')));
-DROP POLICY IF EXISTS "Admins manage pages" ON public.pm_pages;
-CREATE POLICY "Admins manage pages" ON public.pm_pages FOR ALL TO authenticated USING (EXISTS (SELECT 1 FROM public.user_roles WHERE user_id = (SELECT auth.uid()) AND role IN ('admin', 'super_admin')));
-DROP POLICY IF EXISTS "Admins manage settings" ON public.pm_site_settings;
-CREATE POLICY "Admins manage settings" ON public.pm_site_settings FOR ALL TO authenticated USING (EXISTS (SELECT 1 FROM public.user_roles WHERE user_id = (SELECT auth.uid()) AND role IN ('admin', 'super_admin')));
-DROP POLICY IF EXISTS "Admins manage media" ON public.pm_media;
-CREATE POLICY "Admins manage media" ON public.pm_media FOR ALL TO authenticated USING (EXISTS (SELECT 1 FROM public.user_roles WHERE user_id = (SELECT auth.uid()) AND role IN ('admin', 'super_admin')));
-DROP POLICY IF EXISTS "Admins manage gallery" ON public.pm_gallery;
-CREATE POLICY "Admins manage gallery" ON public.pm_gallery FOR ALL TO authenticated USING (EXISTS (SELECT 1 FROM public.user_roles WHERE user_id = (SELECT auth.uid()) AND role IN ('admin', 'super_admin')));
-DROP POLICY IF EXISTS "Admins manage community_amenities" ON public.pm_community_amenities;
-CREATE POLICY "Admins manage community_amenities" ON public.pm_community_amenities FOR ALL TO authenticated USING (EXISTS (SELECT 1 FROM public.user_roles WHERE user_id = (SELECT auth.uid()) AND role IN ('admin', 'super_admin')));
+-- 2.4 UNIFIED ADMIN WRITE ACCESS
+CREATE POLICY "Admins manage regions" ON public.pm_regions FOR ALL TO authenticated USING (EXISTS (SELECT 1 FROM public.user_roles WHERE user_id = auth.uid() AND role IN ('admin', 'super_admin')));
+CREATE POLICY "Admins manage communities" ON public.pm_communities FOR ALL TO authenticated USING (EXISTS (SELECT 1 FROM public.user_roles WHERE user_id = auth.uid() AND role IN ('admin', 'super_admin')));
+CREATE POLICY "Admins manage posts" ON public.pm_posts FOR ALL TO authenticated USING (EXISTS (SELECT 1 FROM public.user_roles WHERE user_id = auth.uid() AND role IN ('admin', 'super_admin')));
+CREATE POLICY "Admins manage pages" ON public.pm_pages FOR ALL TO authenticated USING (EXISTS (SELECT 1 FROM public.user_roles WHERE user_id = auth.uid() AND role IN ('admin', 'super_admin')));
+CREATE POLICY "Admins manage settings" ON public.pm_site_settings FOR ALL TO authenticated USING (EXISTS (SELECT 1 FROM public.user_roles WHERE user_id = auth.uid() AND role IN ('admin', 'super_admin')));
+CREATE POLICY "Admins manage media" ON public.pm_media FOR ALL TO authenticated USING (EXISTS (SELECT 1 FROM public.user_roles WHERE user_id = auth.uid() AND role IN ('admin', 'super_admin')));
+CREATE POLICY "Admins manage gallery" ON public.pm_gallery FOR ALL TO authenticated USING (EXISTS (SELECT 1 FROM public.user_roles WHERE user_id = auth.uid() AND role IN ('admin', 'super_admin')));
+CREATE POLICY "Admins manage amenities" ON public.pm_amenities FOR ALL TO authenticated USING (EXISTS (SELECT 1 FROM public.user_roles WHERE user_id = auth.uid() AND role IN ('admin', 'super_admin')));
+CREATE POLICY "Admins manage community_amenities" ON public.pm_community_amenities FOR ALL TO authenticated USING (EXISTS (SELECT 1 FROM public.user_roles WHERE user_id = auth.uid() AND role IN ('admin', 'super_admin')));
+CREATE POLICY "Admins manage leads" ON public.pm_leads FOR ALL TO authenticated USING (EXISTS (SELECT 1 FROM public.user_roles WHERE user_id = auth.uid() AND role IN ('admin', 'super_admin')));
 
 
 -- 3. PERFORMANCE INDICES
@@ -174,25 +203,54 @@ CREATE POLICY "Admins manage community_amenities" ON public.pm_community_ameniti
 CREATE INDEX IF NOT EXISTS idx_pm_communities_region_id ON public.pm_communities(region_id);
 CREATE INDEX IF NOT EXISTS idx_pm_communities_featured_media ON public.pm_communities(featured_media_id);
 CREATE INDEX IF NOT EXISTS idx_pm_communities_slug ON public.pm_communities(slug);
+CREATE INDEX IF NOT EXISTS idx_pm_communities_status ON public.pm_communities(status);
 CREATE INDEX IF NOT EXISTS idx_pm_gallery_community_id ON public.pm_gallery(community_id);
 CREATE INDEX IF NOT EXISTS idx_pm_gallery_media_id ON public.pm_gallery(media_id);
 CREATE INDEX IF NOT EXISTS idx_pm_posts_community_id ON public.pm_posts(community_id);
 CREATE INDEX IF NOT EXISTS idx_pm_posts_slug ON public.pm_posts(slug);
 CREATE INDEX IF NOT EXISTS idx_pm_pages_slug ON public.pm_pages(slug);
+CREATE INDEX IF NOT EXISTS idx_pm_leads_community_id ON public.pm_leads(community_id);
+CREATE INDEX IF NOT EXISTS idx_pm_leads_email ON public.pm_leads(email);
+-- Junction index for amenity reverse lookups
+CREATE INDEX IF NOT EXISTS idx_pm_comm_amenities_amenity ON public.pm_community_amenities(amenity_id);
 
 
 -- 4. AUTOMATION (Triggers)
 -- ---------------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION public.handle_updated_at()
+RETURNS TRIGGER AS $$
+BEGIN
+    NEW.updated_at = NOW();
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+DROP TRIGGER IF EXISTS on_pm_media_updated ON public.pm_media;
+CREATE TRIGGER on_pm_media_updated BEFORE UPDATE ON public.pm_media FOR EACH ROW EXECUTE FUNCTION public.handle_updated_at();
+
+DROP TRIGGER IF EXISTS on_pm_regions_updated ON public.pm_regions;
+CREATE TRIGGER on_pm_regions_updated BEFORE UPDATE ON public.pm_regions FOR EACH ROW EXECUTE FUNCTION public.handle_updated_at();
+
 DROP TRIGGER IF EXISTS on_pm_communities_updated ON public.pm_communities;
 CREATE TRIGGER on_pm_communities_updated BEFORE UPDATE ON public.pm_communities FOR EACH ROW EXECUTE FUNCTION public.handle_updated_at();
+
 DROP TRIGGER IF EXISTS on_pm_posts_updated ON public.pm_posts;
 CREATE TRIGGER on_pm_posts_updated BEFORE UPDATE ON public.pm_posts FOR EACH ROW EXECUTE FUNCTION public.handle_updated_at();
+
 DROP TRIGGER IF EXISTS on_pm_pages_updated ON public.pm_pages;
 CREATE TRIGGER on_pm_pages_updated BEFORE UPDATE ON public.pm_pages FOR EACH ROW EXECUTE FUNCTION public.handle_updated_at();
+
 DROP TRIGGER IF EXISTS on_pm_site_settings_updated ON public.pm_site_settings;
 CREATE TRIGGER on_pm_site_settings_updated BEFORE UPDATE ON public.pm_site_settings FOR EACH ROW EXECUTE FUNCTION public.handle_updated_at();
+
+DROP TRIGGER IF EXISTS on_pm_amenities_updated ON public.pm_amenities;
+CREATE TRIGGER on_pm_amenities_updated BEFORE UPDATE ON public.pm_amenities FOR EACH ROW EXECUTE FUNCTION public.handle_updated_at();
+
 DROP TRIGGER IF EXISTS on_pm_gallery_updated ON public.pm_gallery;
 CREATE TRIGGER on_pm_gallery_updated BEFORE UPDATE ON public.pm_gallery FOR EACH ROW EXECUTE FUNCTION public.handle_updated_at();
+
+DROP TRIGGER IF EXISTS on_pm_leads_updated ON public.pm_leads;
+CREATE TRIGGER on_pm_leads_updated BEFORE UPDATE ON public.pm_leads FOR EACH ROW EXECUTE FUNCTION public.handle_updated_at();
 
 
 -- 5. INITIAL DATA

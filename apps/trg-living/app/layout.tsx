@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google"; // Import standard Enterprise font
+import { Inter } from "next/font/google";
 import "./globals.css";
 import Navigation from '@/components/Navigation';
 
@@ -27,7 +27,9 @@ export default function RootLayout({
         
         {children}
 
-        {/* 💡 Future Slot for the Footer we saw in the Camden screenshot */}
+        <footer className="bg-slate-900 text-slate-400 p-8 text-center text-xs font-medium">
+                © {new Date().getFullYear()} TRG Living. All rights reserved.
+        </footer>
       </body>
     </html>
   );

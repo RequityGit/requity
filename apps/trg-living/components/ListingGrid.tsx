@@ -24,7 +24,7 @@ export default function ListingGrid({ listings }: { listings: Listing[] }) {
     return ( 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {listings.map((item) => (
-                <div key={item.uid} className="bg-white rounded-[2rem] border border-slate-200 overflow-hidden shadow-sm hover:shadow-2xl transition-all group">
+                <div key={item.uid} className="bg-white rounded-[1rem] border border-slate-200 overflow-hidden shadow-sm hover:shadow-2xl transition-all group">
                     {/* Image Section */}
                     <div className="relative aspect-[4/3] overflow-hidden bg-slate-100">
                         <Image
