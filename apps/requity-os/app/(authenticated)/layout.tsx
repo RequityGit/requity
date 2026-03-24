@@ -16,6 +16,7 @@ import { SoftphoneWrapper } from "@/components/softphone/SoftphoneWrapper";
 import { ConfirmProvider } from "@/components/shared/ConfirmDialog";
 import { NotificationCenterWrapper } from "@/components/notifications/notification-center-wrapper";
 import { DealPreviewWrapper } from "@/components/pipeline/deal-preview/DealPreviewWrapper";
+import { TooltipProvider } from "@/components/ui/tooltip";
 import { getSessionData } from "@/lib/auth/session-cache";
 
 // Never statically generate authenticated pages
@@ -52,6 +53,7 @@ export default async function AuthenticatedLayout({
           accessibleModules={accessibleModules}
           isSuperAdmin={isSuperAdmin}
         >
+          <TooltipProvider>
           <MobileLayoutWrapper
             role={sidebarRole}
             isSuperAdmin={isSuperAdmin && !impersonation.isImpersonating}
@@ -115,6 +117,7 @@ export default async function AuthenticatedLayout({
               );
             })()}
           </MobileLayoutWrapper>
+          </TooltipProvider>
         </ModuleAccessProvider>
       </ViewAsProvider>
     </ImpersonationProvider>

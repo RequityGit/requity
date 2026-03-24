@@ -35,11 +35,11 @@ export async function POST(
     const isServiceRole = auth === `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`;
 
     if (!isServiceRole) {
-      const cookieHeader = req.headers.get("cookie") ?? "";
-      const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? "";
-      const userClient = createClient(SUPABASE_URL, anonKey, {
-        global: { headers: { cookie: cookieHeader } },
-      });
+      // Use SSR-compatible client for cookie-based auth (matches @/lib/supabase/server pattern)
+      const { createClient: createServerClient } = await import(
+        "@/lib/supabase/server"
+      );
+      const userClient = await createServerClient();
       const {
         data: { user },
       } = await userClient.auth.getUser();
@@ -140,7 +140,7 @@ export async function POST(
         "anthropic-version": "2023-06-01",
       },
       body: JSON.stringify({
-        model: "claude-sonnet-4-5-20250929",
+        model: "claude-sonnet-4-6",
         max_tokens: 4096,
         messages: [
           {
@@ -188,9 +188,10 @@ export async function POST(
       );
     }
   } catch (error) {
-    console.error("[draft-document] Unexpected error:", error);
+    const message = error instanceof Error ? error.message : "Unknown error";
+    console.error("[draft-document] Unexpected error:", message, error);
     return NextResponse.json(
-      { error: "Internal server error" },
+      { error: `Internal server error: ${message}` },
       { status: 500 }
     );
   }
