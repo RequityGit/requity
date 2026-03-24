@@ -129,15 +129,6 @@ const COMPANY_FIELDS: MergeFieldOption[] = [
   { key: "company_type", label: "Company Type", source: "companies", column: "type", format: null, category: "Company" },
 ];
 
-// -- Equity Deal fields ----------------------------------------------------
-const EQUITY_FIELDS: MergeFieldOption[] = [
-  { key: "deal_name", label: "Deal Name", source: "equity_deals", column: "name", format: null, category: "Equity Deal" },
-  { key: "deal_stage", label: "Deal Stage", source: "equity_deals", column: "stage", format: null, category: "Equity Deal" },
-  { key: "deal_amount", label: "Deal Amount", source: "equity_deals", column: "amount", format: "currency", category: "Equity Deal" },
-  { key: "target_return", label: "Target Return", source: "equity_deals", column: "target_return", format: "percentage", category: "Equity Deal" },
-  { key: "investment_type", label: "Investment Type", source: "equity_deals", column: "investment_type", format: null, category: "Equity Deal" },
-];
-
 // -- System fields ---------------------------------------------------------
 const SYSTEM_FIELDS: MergeFieldOption[] = [
   { key: "current_date", label: "Current Date", source: "_system", column: "current_date", format: "date", category: "System" },
@@ -153,7 +144,6 @@ export const MERGE_FIELD_REGISTRY: MergeFieldOption[] = [
   ...LOAN_FIELDS,
   ...CONTACT_FIELDS,
   ...COMPANY_FIELDS,
-  ...EQUITY_FIELDS,
   ...SYSTEM_FIELDS,
 ];
 

@@ -39,7 +39,8 @@ interface PipelineKanbanProps {
   deals: UnifiedDeal[];
   stageConfigs: StageConfig[];
   relationshipDealIds: Set<string>;
-  onDealClick: (deal: UnifiedDeal) => void;
+  onDealClick: (deal: UnifiedDeal, e?: React.MouseEvent) => void;
+  onDealHover?: (dealId: string) => void;
   intakeItems?: IntakeItem[];
   onIntakeClick?: (item: IntakeItem) => void;
   teamMembers: { id: string; full_name: string }[];
@@ -73,6 +74,7 @@ export function PipelineKanban({
   stageConfigs,
   relationshipDealIds,
   onDealClick,
+  onDealHover,
   intakeItems = [],
   onIntakeClick,
   teamMembers,
@@ -237,7 +239,8 @@ export function PipelineKanban({
                           formulaMap={formulaMap}
                           conditionsProgress={conditionsMap.get(deal.id) ?? null}
                           assigneeName={deal.assigned_to ? assigneeMap.get(deal.assigned_to) ?? null : null}
-                          onClick={() => onDealClick(deal)}
+                          onClick={(e) => onDealClick(deal, e)}
+                          onHover={() => onDealHover?.(deal.id)}
                         />
                       );
                     })

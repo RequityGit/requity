@@ -38,6 +38,7 @@ import { ServicingTab } from "./tabs/servicing-tab";
 import { ReferralsTab } from "./tabs/referrals-tab";
 import { DocumentsTab } from "./tabs/documents-tab";
 import { UnifiedNotes } from "@/components/shared/UnifiedNotes";
+import { ContactCommitmentsSection } from "@/components/fundraising/ContactCommitmentsSection";
 import { ActivityTab } from "./tabs/activity-tab";
 import { ContactDetailsSidebar } from "./sidebar/contact-details-sidebar";
 import { RecentEmailsSidebar } from "./sidebar/recent-emails-sidebar";
@@ -255,7 +256,7 @@ export function Contact360Client({
               })}
             </TabsList>
 
-            <TabsContent value="overview" className="mt-4">
+            <TabsContent value="overview" className="mt-4 space-y-6">
               <OverviewTab
                 contact={contact}
                 activeRelationships={activeRelationships}
@@ -263,6 +264,7 @@ export function Contact360Client({
                 investorCommitments={investorCommitments}
                 activities={activities}
               />
+              <ContactCommitmentsSection contactId={contact.id} />
             </TabsContent>
 
             {visibleTabs.some((t) => t.id === "loans") && (

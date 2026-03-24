@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Textarea } from "@/components/ui/textarea";
 import {
@@ -297,82 +296,72 @@ export function AddTaskDialog({ projects, teamMembers, externalOpen, onExternalO
         <form onSubmit={handleSubmit} className="flex flex-col flex-1 min-h-0">
         <div className="flex-1 min-h-0 overflow-y-auto px-4 md:px-6">
           <div className="space-y-3 py-2">
-          <div className="space-y-1.5">
-            <Label htmlFor="title">Title *</Label>
-            <Input
-              id="title"
-              placeholder="Enter task title"
-              value={form.title}
-              onChange={(e) => setForm({ ...form, title: e.target.value })}
-              required
-            />
-          </div>
-
-          <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-1.5">
-              <Label htmlFor="task_status">Status</Label>
-              <Select
-                value={form.status}
-                onValueChange={(v) => setForm({ ...form, status: v })}
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {STATUSES.filter((s) => s !== "Pending Approval").map((s) => (
-                    <SelectItem key={s} value={s}>
-                      {s}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-1.5">
-              <Label htmlFor="task_priority">Priority</Label>
-              <Select
-                value={form.priority}
-                onValueChange={(v) => setForm({ ...form, priority: v })}
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {PRIORITIES.map((p) => (
-                    <SelectItem key={p} value={p}>
-                      {p}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-
-          <div className="space-y-1.5">
-            <Label htmlFor="project">Project</Label>
+          {/* Status & Priority pill selectors */}
+          <div className="flex items-center gap-2">
             <Select
-              value={form.project_id}
-              onValueChange={(v) =>
-                setForm({ ...form, project_id: v === "none" ? "" : v })
-              }
+              value={form.status}
+              onValueChange={(v) => setForm({ ...form, status: v })}
             >
-              <SelectTrigger>
-                <SelectValue placeholder="Select a project (optional)" />
+              <SelectTrigger className="inline-field w-auto gap-1.5 text-xs">
+                <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="none">No project</SelectItem>
-                {projects.map((p) => (
-                  <SelectItem key={p.id} value={p.id}>
-                    {p.project_name}
+                {STATUSES.filter((s) => s !== "Pending Approval").map((s) => (
+                  <SelectItem key={s} value={s}>
+                    {s}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            <Select
+              value={form.priority}
+              onValueChange={(v) => setForm({ ...form, priority: v })}
+            >
+              <SelectTrigger className="inline-field w-auto gap-1.5 text-xs">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {PRIORITIES.map((p) => (
+                  <SelectItem key={p} value={p}>
+                    {p}
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-1.5">
-              <Label htmlFor="assigned_to_name">Assignee</Label>
+          {/* Title */}
+          <div className="space-y-0">
+            <Input
+              id="title"
+              placeholder="What needs to be done?"
+              value={form.title}
+              onChange={(e) => setForm({ ...form, title: e.target.value })}
+              className="inline-field text-base font-medium placeholder:text-muted-foreground/50"
+              required
+            />
+          </div>
+
+          {/* Description */}
+          <div className="space-y-0">
+            <Textarea
+              id="task_description"
+              placeholder="Add description..."
+              value={form.description}
+              onChange={(e) =>
+                setForm({ ...form, description: e.target.value })
+              }
+              onPaste={handlePaste}
+              className="inline-field min-h-[60px] resize-none placeholder:text-muted-foreground/50"
+              rows={2}
+            />
+          </div>
+
+          {/* Field grid — mirrors deal summary layout */}
+          <div className="rq-field-grid">
+            <div className="space-y-0">
+              <span className="inline-field-label">Assignee</span>
               <Select
                 value={selectedAssigneeId || "none"}
                 onValueChange={(v) => {
@@ -386,8 +375,8 @@ export function AddTaskDialog({ projects, teamMembers, externalOpen, onExternalO
                   }
                 }}
               >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select assignee" />
+                <SelectTrigger className="inline-field">
+                  <SelectValue placeholder="Unassigned" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="none">Unassigned</SelectItem>
@@ -400,19 +389,28 @@ export function AddTaskDialog({ projects, teamMembers, externalOpen, onExternalO
               </Select>
             </div>
 
-            <div className="space-y-1.5">
-              <Label htmlFor="task_category">Category</Label>
+            <div className="space-y-0">
+              <span className="inline-field-label">Due Date</span>
+              <DatePicker
+                value={form.due_date}
+                onChange={(v) => setForm({ ...form, due_date: v })}
+                className="inline-field"
+              />
+            </div>
+
+            <div className="space-y-0">
+              <span className="inline-field-label">Category</span>
               <Select
                 value={form.category || "none"}
                 onValueChange={(v) =>
                   setForm({ ...form, category: v === "none" ? "" : v })
                 }
               >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select category" />
+                <SelectTrigger className="inline-field">
+                  <SelectValue placeholder="None" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="none">No category</SelectItem>
+                  <SelectItem value="none">None</SelectItem>
                   {CATEGORIES.map((c) => (
                     <SelectItem key={c} value={c}>
                       {c}
@@ -421,33 +419,35 @@ export function AddTaskDialog({ projects, teamMembers, externalOpen, onExternalO
                 </SelectContent>
               </Select>
             </div>
+
+            <div className="space-y-0">
+              <span className="inline-field-label">Project</span>
+              <Select
+                value={form.project_id}
+                onValueChange={(v) =>
+                  setForm({ ...form, project_id: v === "none" ? "" : v })
+                }
+              >
+                <SelectTrigger className="inline-field">
+                  <SelectValue placeholder="None" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">No project</SelectItem>
+                  {projects.map((p) => (
+                    <SelectItem key={p.id} value={p.id}>
+                      {p.project_name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           </div>
 
-          <div className="space-y-1.5">
-            <Label htmlFor="task_due_date">Due Date</Label>
-            <DatePicker
-              value={form.due_date}
-              onChange={(v) => setForm({ ...form, due_date: v })}
-            />
-          </div>
-
-          <div className="space-y-1.5">
-            <Label htmlFor="task_description">Description</Label>
-            <Textarea
-              id="task_description"
-              placeholder="Task description..."
-              value={form.description}
-              onChange={(e) =>
-                setForm({ ...form, description: e.target.value })
-              }
-              onPaste={handlePaste}
-              rows={2}
-            />
-          </div>
+          <div className="rq-divider" />
 
           {/* Attachments — drag & drop zone */}
-          <div className="space-y-1.5">
-            <Label>Attachments</Label>
+          <div className="space-y-1">
+            <span className="inline-field-label">Attachments</span>
             <input
               ref={fileRef}
               type="file"
@@ -510,9 +510,9 @@ export function AddTaskDialog({ projects, teamMembers, externalOpen, onExternalO
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <Shield className={`h-4 w-4 transition-colors ${requiresApproval ? "text-emerald-500" : "text-muted-foreground"}`} />
-                <Label htmlFor="requires_approval" className="cursor-pointer text-sm font-medium">
+                <span className="cursor-pointer text-sm font-medium">
                   Requires Approval
-                </Label>
+                </span>
               </div>
               <Switch
                 id="requires_approval"
@@ -529,13 +529,13 @@ export function AddTaskDialog({ projects, teamMembers, externalOpen, onExternalO
               }}
             >
               <div className="mt-3 rounded-lg border border-border bg-muted/50 p-3 space-y-3">
-                <div className="space-y-1.5">
-                  <Label htmlFor="approver">Approver *</Label>
+                <div className="space-y-0">
+                  <span className="inline-field-label">Approver *</span>
                   <Select
                     value={approverId || "none"}
                     onValueChange={(v) => setApproverId(v === "none" ? "" : v)}
                   >
-                    <SelectTrigger>
+                    <SelectTrigger className="inline-field">
                       <SelectValue placeholder="Select approver" />
                     </SelectTrigger>
                     <SelectContent>
@@ -550,13 +550,14 @@ export function AddTaskDialog({ projects, teamMembers, externalOpen, onExternalO
                     </SelectContent>
                   </Select>
                 </div>
-                <div className="space-y-1.5">
-                  <Label htmlFor="approval_instructions">Approval Instructions</Label>
+                <div className="space-y-0">
+                  <span className="inline-field-label">Approval Instructions</span>
                   <Textarea
                     id="approval_instructions"
                     placeholder="What should the approver check for?"
                     value={approvalInstructions}
                     onChange={(e) => setApprovalInstructions(e.target.value)}
+                    className="inline-field min-h-[48px] resize-none"
                     rows={2}
                   />
                 </div>
@@ -583,9 +584,9 @@ export function AddTaskDialog({ projects, teamMembers, externalOpen, onExternalO
                   })
                 }
               />
-              <Label htmlFor="is_recurring" className="cursor-pointer">
+              <span className="cursor-pointer text-sm font-medium">
                 Recurring task
-              </Label>
+              </span>
             </div>
 
             {form.is_recurring && (

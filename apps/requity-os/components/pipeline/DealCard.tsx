@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useMemo, useCallback } from "react";
+import React, { useMemo, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { User, Users, Calendar, Mail, Pencil, ExternalLink } from "lucide-react";
@@ -29,7 +29,8 @@ interface DealCardProps {
   formulaMap?: Map<string, string>;
   conditionsProgress?: { completed: number; total: number } | null;
   assigneeName?: string | null;
-  onClick: () => void;
+  onClick: (e?: React.MouseEvent) => void;
+  onHover?: () => void;
 }
 
 // ─── Shared helpers ───
@@ -386,17 +387,48 @@ function DealCardInner({
   conditionsProgress,
   assigneeName,
   onClick,
+  onHover,
 }: DealCardProps) {
   const router = useRouter();
   const dealHref = `/pipeline/${deal.deal_number || deal.id}`;
   const prefetchDeal = useCallback(() => {
     router.prefetch(dealHref);
-  }, [router, dealHref]);
+    onHover?.();
+  }, [router, dealHref, onHover]);
 
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
     id: deal.id,
     data: { stage: deal.stage },
   });
+
+  // dnd-kit's onPointerDown calls preventDefault(), which suppresses the
+  // browser click event. Detect clicks manually via pointer position tracking.
+  const pointerStartRef = useRef<{ x: number; y: number } | null>(null);
+
+  const handlePointerDown = useCallback(
+    (e: React.PointerEvent) => {
+      pointerStartRef.current = { x: e.clientX, y: e.clientY };
+      // Forward to dnd-kit's handler so dragging still works
+      (listeners as Record<string, (e: React.PointerEvent) => void> | undefined)
+        ?.onPointerDown?.(e);
+    },
+    [listeners]
+  );
+
+  const handlePointerUp = useCallback(
+    (e: React.PointerEvent) => {
+      const start = pointerStartRef.current;
+      pointerStartRef.current = null;
+      if (!start) return;
+
+      const dx = e.clientX - start.x;
+      const dy = e.clientY - start.y;
+      if (Math.sqrt(dx * dx + dy * dy) < 8) {
+        onClick(e as unknown as React.MouseEvent);
+      }
+    },
+    [onClick]
+  );
 
   const { days, alertLevel } = useMemo(() => {
     const d = daysInStage(deal.stage_entered_at);
@@ -410,9 +442,10 @@ function DealCardInner({
     <div
       ref={setNodeRef}
       {...listeners}
+      onPointerDown={handlePointerDown}
+      onPointerUp={handlePointerUp}
       {...attributes}
       onPointerEnter={prefetchDeal}
-      onClick={onClick}
       onKeyDown={(e) => {
         if (e.key === "Enter" || e.key === " ") onClick();
       }}

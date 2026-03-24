@@ -83,16 +83,6 @@ export {
   LISTING_STATUSES,
   CONDO_STATUSES,
   ENTITY_OWNER_TITLES,
-  // Equity pipeline
-  EQUITY_DEAL_STAGES,
-  EQUITY_PIPELINE_STAGES,
-  EQUITY_STAGE_LABELS,
-  EQUITY_STAGE_COLORS,
-  EQUITY_DEAL_SOURCES,
-  EQUITY_TASK_STATUSES,
-  EQUITY_TASK_CATEGORIES,
-  EQUITY_RESPONSIBLE_PARTIES,
-  EQUITY_LOSS_REASONS,
   PROPERTY_TYPES,
 } from "@/lib/constants/db-enums";
 
@@ -101,7 +91,6 @@ export type {
   LoanStage,
   ConditionStatus,
   OpportunityStage,
-  EquityDealStage,
 } from "@/lib/constants/db-enums";
 
 // Loan activity types re-exported with legacy name

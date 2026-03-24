@@ -425,7 +425,7 @@ Deno.serve(async (req: Request) => {
           crm_companies: ["companies", "crm_companies"],
           companies: ["companies", "crm_companies"],
           loans: ["loans", "unified_deals"],
-          equity_deals: ["unified_deals", "equity_deals"],
+          equity_deals: ["unified_deals"],
           unified_deals: ["unified_deals", "loans"],
         };
 

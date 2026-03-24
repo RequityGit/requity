@@ -15493,6 +15493,84 @@ export type Database = {
           },
         ]
       }
+      soft_commitments: {
+        Row: {
+          id: string
+          deal_id: string
+          contact_id: string | null
+          name: string
+          email: string
+          phone: string | null
+          commitment_amount: number
+          custom_amount: number | null
+          is_accredited: boolean | null
+          questions: string | null
+          status: string
+          source: string
+          submitted_at: string
+          confirmed_at: string | null
+          subscribed_at: string | null
+          notes: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          deal_id: string
+          contact_id?: string | null
+          name: string
+          email: string
+          phone?: string | null
+          commitment_amount: number
+          custom_amount?: number | null
+          is_accredited?: boolean | null
+          questions?: string | null
+          status?: string
+          source?: string
+          submitted_at?: string
+          confirmed_at?: string | null
+          subscribed_at?: string | null
+          notes?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          deal_id?: string
+          contact_id?: string | null
+          name?: string
+          email?: string
+          phone?: string | null
+          commitment_amount?: number
+          custom_amount?: number | null
+          is_accredited?: boolean | null
+          questions?: string | null
+          status?: string
+          source?: string
+          submitted_at?: string
+          confirmed_at?: string | null
+          subscribed_at?: string | null
+          notes?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "soft_commitments_deal_id_fkey"
+            columns: ["deal_id"]
+            isOneToOne: false
+            referencedRelation: "unified_deals"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "soft_commitments_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "crm_contacts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       unified_deals: {
         Row: {
           amount: number | null
@@ -15528,6 +15606,11 @@ export type Database = {
           updated_at: string
           uw_data: Json | null
           uw_grid_overrides: Json | null
+          fundraise_slug: string | null
+          fundraise_enabled: boolean | null
+          fundraise_target: number | null
+          fundraise_description: string | null
+          fundraise_amount_options: Json | null
         }
         Insert: {
           amount?: number | null
@@ -15563,6 +15646,11 @@ export type Database = {
           updated_at?: string
           uw_data?: Json | null
           uw_grid_overrides?: Json | null
+          fundraise_slug?: string | null
+          fundraise_enabled?: boolean | null
+          fundraise_target?: number | null
+          fundraise_description?: string | null
+          fundraise_amount_options?: Json | null
         }
         Update: {
           amount?: number | null
@@ -15598,6 +15686,11 @@ export type Database = {
           updated_at?: string
           uw_data?: Json | null
           uw_grid_overrides?: Json | null
+          fundraise_slug?: string | null
+          fundraise_enabled?: boolean | null
+          fundraise_target?: number | null
+          fundraise_description?: string | null
+          fundraise_amount_options?: Json | null
         }
         Relationships: [
           {

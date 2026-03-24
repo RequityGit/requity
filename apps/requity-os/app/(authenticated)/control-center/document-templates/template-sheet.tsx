@@ -63,7 +63,6 @@ const SOURCE_TABLES = [
   { value: "loans", label: "Loans" },
   { value: "crm_contacts", label: "CRM Contacts" },
   { value: "companies", label: "Companies" },
-  { value: "equity_deals", label: "Equity Deals" },
   { value: "_system", label: "System" },
   { value: "template_config", label: "Template Config" },
 ];
