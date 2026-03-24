@@ -533,9 +533,9 @@ export async function deleteSnapshotAction(snapshotId: string) {
     if (error) return { error: error.message };
     revalidatePath("/originations");
     return { success: true };
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error("deleteSnapshotAction error:", err);
-    return { error: err?.message || "An unexpected error occurred" };
+    return { error: err instanceof Error ? err.message : "An unexpected error occurred" };
   }
 }
 
@@ -561,9 +561,9 @@ export async function updatePropertyAction(
     if (error) return { error: error.message };
     revalidatePath("/originations");
     return { success: true };
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error("updatePropertyAction error:", err);
-    return { error: err?.message || "An unexpected error occurred" };
+    return { error: err instanceof Error ? err.message : "An unexpected error occurred" };
   }
 }
 

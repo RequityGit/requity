@@ -102,8 +102,8 @@ export function RateSheetManager({
       setSelectedProduct("");
       setEffectiveDate("");
       router.refresh();
-    } catch (err: any) {
-      showError("Could not upload rate sheet", err?.message || "Upload failed");
+    } catch (err: unknown) {
+      showError("Could not upload rate sheet", err instanceof Error ? err.message : "Upload failed");
     } finally {
       setUploading(false);
     }
@@ -120,8 +120,8 @@ export function RateSheetManager({
       showSuccess("Rate sheet parsed");
       setReviewData({ uploadId, data: result.parsedData });
       router.refresh();
-    } catch (err: any) {
-      showError("Could not parse rate sheet", err?.message || "Parse failed");
+    } catch (err: unknown) {
+      showError("Could not parse rate sheet", err instanceof Error ? err.message : "Parse failed");
     } finally {
       setParsing(null);
     }

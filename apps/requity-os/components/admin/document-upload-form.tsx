@@ -98,8 +98,8 @@ export function DocumentUploadForm({
       setOpen(false);
       resetForm();
       router.refresh();
-    } catch (err: any) {
-      showError("Could not upload document", err.message);
+    } catch (err: unknown) {
+      showError("Could not upload document", err instanceof Error ? err.message : String(err));
     } finally {
       setLoading(false);
     }
