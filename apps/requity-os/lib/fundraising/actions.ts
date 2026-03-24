@@ -92,6 +92,8 @@ export async function updateFundraiseSettings(
     fundraise_target?: number | null;
     fundraise_description?: string | null;
     fundraise_amount_options?: number[];
+    fundraise_hero_image_url?: string | null;
+    fundraise_deck_url?: string | null;
   }
 ) {
   const auth = await requireAdmin();

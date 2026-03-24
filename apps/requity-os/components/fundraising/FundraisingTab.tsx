@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo, useCallback } from "react";
+import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -39,6 +39,10 @@ import {
   Rocket,
   FileCheck,
   MessageSquare,
+  ImageIcon,
+  FileText,
+  X,
+  Upload,
 } from "lucide-react";
 import { formatCurrency, formatDate } from "@/lib/format";
 import { cn } from "@/lib/utils";
@@ -72,6 +76,8 @@ interface FundraisingTabProps {
   fundraiseTarget: number | null;
   fundraiseDescription: string | null;
   fundraiseAmountOptions: number[] | null;
+  fundraiseHeroImageUrl: string | null;
+  fundraiseDeckUrl: string | null;
 }
 
 export function FundraisingTab({
@@ -82,6 +88,8 @@ export function FundraisingTab({
   fundraiseTarget,
   fundraiseDescription,
   fundraiseAmountOptions,
+  fundraiseHeroImageUrl,
+  fundraiseDeckUrl,
 }: FundraisingTabProps) {
   if (!fundraiseEnabled) {
     return (
@@ -104,7 +112,141 @@ export function FundraisingTab({
       fundraiseTarget={fundraiseTarget}
       fundraiseDescription={fundraiseDescription}
       fundraiseAmountOptions={fundraiseAmountOptions}
+      fundraiseHeroImageUrl={fundraiseHeroImageUrl}
+      fundraiseDeckUrl={fundraiseDeckUrl}
     />
+  );
+}
+
+// ─── File Upload Helper ───
+
+const BUCKET = "brand-assets";
+const MAX_IMAGE_SIZE = 10 * 1024 * 1024; // 10MB
+const MAX_PDF_SIZE = 25 * 1024 * 1024; // 25MB
+const IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp"];
+
+async function uploadFundraiseFile(
+  dealId: string,
+  file: File,
+  kind: "hero" | "deck"
+): Promise<string> {
+  const supabase = createClient();
+  const ext = file.name.split(".").pop()?.toLowerCase() ?? "bin";
+  const filePath = `fundraise/${dealId}/${kind}.${ext}`;
+
+  const { error } = await supabase.storage
+    .from(BUCKET)
+    .upload(filePath, file, { upsert: true, contentType: file.type });
+
+  if (error) throw error;
+
+  const {
+    data: { publicUrl },
+  } = supabase.storage.from(BUCKET).getPublicUrl(filePath);
+
+  // Cache-bust so browser loads new file
+  return `${publicUrl}?t=${Date.now()}`;
+}
+
+// ─── Reusable File Upload Field ───
+
+function FileUploadField({
+  label,
+  accept,
+  maxSize,
+  currentUrl,
+  currentFileName,
+  onUpload,
+  onClear,
+  icon: Icon,
+  hint,
+}: {
+  label: string;
+  accept: string;
+  maxSize: number;
+  currentUrl: string | null;
+  currentFileName?: string;
+  onUpload: (file: File) => Promise<void>;
+  onClear: () => void;
+  icon: typeof ImageIcon;
+  hint: string;
+}) {
+  const inputRef = useRef<HTMLInputElement>(null);
+  const [uploading, setUploading] = useState(false);
+
+  const handleChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file) return;
+
+    if (file.size > maxSize) {
+      showError(`File too large (max ${Math.round(maxSize / 1024 / 1024)}MB)`);
+      return;
+    }
+
+    setUploading(true);
+    try {
+      await onUpload(file);
+    } catch (err) {
+      showError("Could not upload file", err);
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  return (
+    <div className="space-y-1.5">
+      <Label>{label}</Label>
+      {currentUrl ? (
+        <div className="flex items-center gap-2 rounded-md border border-border bg-muted/30 px-3 py-2">
+          <Icon className="h-4 w-4 text-muted-foreground shrink-0" />
+          <span className="text-sm truncate flex-1">
+            {currentFileName ?? "Uploaded"}
+          </span>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-6 w-6 shrink-0"
+            onClick={() => inputRef.current?.click()}
+            disabled={uploading}
+          >
+            <Upload className="h-3.5 w-3.5" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-6 w-6 shrink-0 text-destructive"
+            onClick={onClear}
+            disabled={uploading}
+          >
+            <X className="h-3.5 w-3.5" />
+          </Button>
+        </div>
+      ) : (
+        <Button
+          variant="outline"
+          size="sm"
+          className="w-full justify-start gap-2"
+          onClick={() => inputRef.current?.click()}
+          disabled={uploading}
+        >
+          {uploading ? (
+            <Loader2 className="h-4 w-4 animate-spin" />
+          ) : (
+            <Icon className="h-4 w-4" />
+          )}
+          {uploading ? "Uploading..." : `Upload ${label}`}
+        </Button>
+      )}
+      <p className="text-xs text-muted-foreground">{hint}</p>
+      <input
+        ref={inputRef}
+        type="file"
+        accept={accept}
+        onChange={handleChange}
+        className="hidden"
+      />
+    </div>
   );
 }
 
@@ -135,6 +277,28 @@ function FundraiseSetupScreen({
   const [amountOptions, setAmountOptions] = useState(
     (initialAmountOptions ?? [25000, 50000, 100000, 250000]).join(", ")
   );
+  const [heroImageUrl, setHeroImageUrl] = useState<string | null>(null);
+  const [deckUrl, setDeckUrl] = useState<string | null>(null);
+
+  const handleHeroUpload = async (file: File) => {
+    if (!IMAGE_TYPES.includes(file.type)) {
+      showError("Please upload a JPEG, PNG, or WebP image");
+      return;
+    }
+    const url = await uploadFundraiseFile(dealId, file, "hero");
+    setHeroImageUrl(url);
+    showSuccess("Hero image uploaded");
+  };
+
+  const handleDeckUpload = async (file: File) => {
+    if (file.type !== "application/pdf") {
+      showError("Please upload a PDF file");
+      return;
+    }
+    const url = await uploadFundraiseFile(dealId, file, "deck");
+    setDeckUrl(url);
+    showSuccess("Investment deck uploaded");
+  };
 
   const handleEnable = async () => {
     if (!slug.trim()) {
@@ -151,6 +315,8 @@ function FundraiseSetupScreen({
         .split(",")
         .map((s) => parseFloat(s.trim()))
         .filter((n) => !isNaN(n) && n > 0),
+      fundraise_hero_image_url: heroImageUrl,
+      fundraise_deck_url: deckUrl,
     });
     if (result.error) {
       showError("Could not enable fundraising", result.error);
@@ -212,6 +378,28 @@ function FundraiseSetupScreen({
                 These appear as radio buttons on the public form. An &quot;Other&quot; option is always included.
               </p>
             </div>
+            <FileUploadField
+              label="Hero Image"
+              accept="image/jpeg,image/png,image/webp"
+              maxSize={MAX_IMAGE_SIZE}
+              currentUrl={heroImageUrl}
+              currentFileName="hero-image"
+              onUpload={handleHeroUpload}
+              onClear={() => setHeroImageUrl(null)}
+              icon={ImageIcon}
+              hint="Property photo shown at top of investor page. JPEG, PNG, or WebP (max 10MB)."
+            />
+            <FileUploadField
+              label="Investment Deck"
+              accept="application/pdf"
+              maxSize={MAX_PDF_SIZE}
+              currentUrl={deckUrl}
+              currentFileName="investment-deck.pdf"
+              onUpload={handleDeckUpload}
+              onClear={() => setDeckUrl(null)}
+              icon={FileText}
+              hint="PDF downloadable from investor page (max 25MB)."
+            />
             <Button onClick={handleEnable} disabled={saving} className="w-full">
               {saving && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
               Enable Fundraising
@@ -232,6 +420,8 @@ function FundraiseDashboard({
   fundraiseTarget,
   fundraiseDescription,
   fundraiseAmountOptions,
+  fundraiseHeroImageUrl,
+  fundraiseDeckUrl,
 }: {
   dealId: string;
   dealName: string;
@@ -239,6 +429,8 @@ function FundraiseDashboard({
   fundraiseTarget: number | null;
   fundraiseDescription: string | null;
   fundraiseAmountOptions: number[] | null;
+  fundraiseHeroImageUrl: string | null;
+  fundraiseDeckUrl: string | null;
 }) {
   const router = useRouter();
   const [commitments, setCommitments] = useState<SoftCommitment[]>([]);
@@ -256,7 +448,7 @@ function FundraiseDashboard({
     const supabase = createClient();
     supabase
       .from("soft_commitments" as never)
-      .select("*" as never)
+      .select("*, contact:crm_contacts!soft_commitments_contact_id_fkey(contact_number)" as never)
       .eq("deal_id" as never, dealId as never)
       .order("submitted_at" as never, { ascending: false } as never)
       .then(({ data }) => {
@@ -382,7 +574,7 @@ function FundraiseDashboard({
     const supabase = createClient();
     supabase
       .from("soft_commitments" as never)
-      .select("*" as never)
+      .select("*, contact:crm_contacts!soft_commitments_contact_id_fkey(contact_number)" as never)
       .eq("deal_id" as never, dealId as never)
       .order("submitted_at" as never, { ascending: false } as never)
       .then(({ data }) => {
@@ -401,9 +593,9 @@ function FundraiseDashboard({
             <div className="text-xs text-muted-foreground">{row.email}</div>
           </div>
         );
-        return row.contact_id ? (
+        return row.contact_id && row.contact?.contact_number ? (
           <Link
-            href={`/admin/crm/contacts/${row.contact_id}`}
+            href={`/contacts/${row.contact.contact_number}`}
             className="hover:underline underline-offset-4"
           >
             {content}
@@ -524,9 +716,9 @@ function FundraiseDashboard({
             >
               Edit Notes
             </DropdownMenuItem>
-            {row.contact_id && (
+            {row.contact_id && row.contact?.contact_number && (
               <DropdownMenuItem asChild>
-                <Link href={`/admin/crm/contacts/${row.contact_id}`}>
+                <Link href={`/contacts/${row.contact.contact_number}`}>
                   <ExternalLink className="h-3.5 w-3.5 mr-2" />
                   View Contact
                 </Link>
@@ -674,6 +866,8 @@ function FundraiseDashboard({
             target={fundraiseTarget}
             description={fundraiseDescription}
             amountOptions={fundraiseAmountOptions}
+            heroImageUrl={fundraiseHeroImageUrl}
+            deckUrl={fundraiseDeckUrl}
           />
         </CollapsibleContent>
       </Collapsible>
@@ -731,12 +925,16 @@ function FundraiseConfigPanel({
   target,
   description,
   amountOptions,
+  heroImageUrl,
+  deckUrl,
 }: {
   dealId: string;
   slug: string;
   target: number | null;
   description: string | null;
   amountOptions: number[] | null;
+  heroImageUrl: string | null;
+  deckUrl: string | null;
 }) {
   const router = useRouter();
   const [saving, setSaving] = useState(false);
@@ -746,6 +944,48 @@ function FundraiseConfigPanel({
     description: description ?? "",
     amountOptions: (amountOptions ?? []).join(", "),
   });
+  const [currentHeroUrl, setCurrentHeroUrl] = useState(heroImageUrl);
+  const [currentDeckUrl, setCurrentDeckUrl] = useState(deckUrl);
+
+  const handleHeroUpload = async (file: File) => {
+    if (!IMAGE_TYPES.includes(file.type)) {
+      showError("Please upload a JPEG, PNG, or WebP image");
+      return;
+    }
+    const url = await uploadFundraiseFile(dealId, file, "hero");
+    setCurrentHeroUrl(url);
+    // Save immediately
+    await updateFundraiseSettings(dealId, { fundraise_hero_image_url: url });
+    showSuccess("Hero image uploaded");
+    router.refresh();
+  };
+
+  const handleDeckUpload = async (file: File) => {
+    if (file.type !== "application/pdf") {
+      showError("Please upload a PDF file");
+      return;
+    }
+    const url = await uploadFundraiseFile(dealId, file, "deck");
+    setCurrentDeckUrl(url);
+    // Save immediately
+    await updateFundraiseSettings(dealId, { fundraise_deck_url: url });
+    showSuccess("Investment deck uploaded");
+    router.refresh();
+  };
+
+  const handleClearHero = async () => {
+    setCurrentHeroUrl(null);
+    await updateFundraiseSettings(dealId, { fundraise_hero_image_url: null });
+    showSuccess("Hero image removed");
+    router.refresh();
+  };
+
+  const handleClearDeck = async () => {
+    setCurrentDeckUrl(null);
+    await updateFundraiseSettings(dealId, { fundraise_deck_url: null });
+    showSuccess("Investment deck removed");
+    router.refresh();
+  };
 
   const handleSave = async () => {
     setSaving(true);
@@ -820,6 +1060,30 @@ function FundraiseConfigPanel({
             }
           />
         </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <FileUploadField
+            label="Hero Image"
+            accept="image/jpeg,image/png,image/webp"
+            maxSize={MAX_IMAGE_SIZE}
+            currentUrl={currentHeroUrl}
+            currentFileName="hero-image"
+            onUpload={handleHeroUpload}
+            onClear={handleClearHero}
+            icon={ImageIcon}
+            hint="JPEG, PNG, or WebP (max 10MB)."
+          />
+          <FileUploadField
+            label="Investment Deck"
+            accept="application/pdf"
+            maxSize={MAX_PDF_SIZE}
+            currentUrl={currentDeckUrl}
+            currentFileName="investment-deck.pdf"
+            onUpload={handleDeckUpload}
+            onClear={handleClearDeck}
+            icon={FileText}
+            hint="PDF (max 25MB)."
+          />
+        </div>
         <div className="flex gap-2">
           <Button onClick={handleSave} disabled={saving} size="sm">
             {saving && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
@@ -838,4 +1102,3 @@ function FundraiseConfigPanel({
     </Card>
   );
 }
-

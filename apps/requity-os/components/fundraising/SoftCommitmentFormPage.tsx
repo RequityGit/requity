@@ -2,16 +2,35 @@
 
 import { useState, useEffect } from "react";
 import { FormEngine } from "@/components/forms/FormEngine";
-import { Loader2 } from "lucide-react";
+import { Loader2, MapPin, Building2, FileDown } from "lucide-react";
 import Image from "next/image";
+import { formatCurrency } from "@/lib/format";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+
+interface PropertyData {
+  property_type?: string;
+  property_city?: string;
+  property_state?: string;
+  number_of_units?: string | number;
+  unit_breakdown?: string;
+  acreage?: string | number;
+  amenities?: string;
+  property_name?: string;
+}
 
 interface DealInfo {
   id: string;
   name: string;
+  amount: number | null;
+  property_data: PropertyData | null;
   fundraise_slug: string;
   fundraise_description: string | null;
   fundraise_target: number | null;
   fundraise_amount_options: number[] | null;
+  fundraise_hero_image_url: string | null;
+  fundraise_deck_url: string | null;
 }
 
 export function SoftCommitmentFormPage({ slug }: { slug: string }) {
@@ -54,8 +73,29 @@ export function SoftCommitmentFormPage({ slug }: { slug: string }) {
     );
   }
 
-  // Pass deal-specific data to the form engine via prefillData.
-  // The _deal_amount_options key is read by the InvestmentAmountSelector custom component.
+  const property = deal.property_data;
+  const location =
+    property?.property_city && property?.property_state
+      ? `${property.property_city}, ${property.property_state}`
+      : property?.property_state ?? null;
+
+  const propertyType = property?.property_type
+    ? property.property_type
+        .replace(/_/g, " ")
+        .replace(/\b\w/g, (c) => c.toUpperCase())
+    : null;
+
+  const metrics: { label: string; value: string }[] = [];
+  if (deal.amount) metrics.push({ label: "Loan Amount", value: formatCurrency(deal.amount) });
+  if (propertyType) metrics.push({ label: "Property Type", value: propertyType });
+  if (property?.number_of_units) {
+    const units = String(property.number_of_units);
+    const breakdown = property.unit_breakdown ? ` (${property.unit_breakdown})` : "";
+    metrics.push({ label: "Units", value: `${units}${breakdown}` });
+  }
+  if (location) metrics.push({ label: "Location", value: location });
+  if (property?.acreage) metrics.push({ label: "Acreage", value: `${property.acreage} ac` });
+
   const prefillData: Record<string, unknown> = {
     _deal_amount_options: deal.fundraise_amount_options,
     _deal_name: deal.name,
@@ -63,37 +103,138 @@ export function SoftCommitmentFormPage({ slug }: { slug: string }) {
 
   return (
     <div className="fixed inset-0 bg-background overflow-y-auto">
-      <div className="mx-auto max-w-2xl px-4 py-8 pb-24">
-        {/* Branded header */}
-        <div className="text-center mb-8">
-          <Logo />
-          <h1 className="text-2xl font-bold text-foreground mt-6">
+      {/* Header */}
+      <header className="bg-[#0f1729] py-4 px-6">
+        <div className="mx-auto max-w-4xl">
+          <img
+            src="https://edhlkknvlczhbowasjna.supabase.co/storage/v1/object/public/brand-assets/Requity%20Logo%20White.svg"
+            alt="Requity Group"
+            style={{ height: 36, width: "auto" }}
+          />
+        </div>
+      </header>
+
+      <main className="mx-auto max-w-4xl px-4 sm:px-6 py-8 pb-24">
+        {/* Hero Image */}
+        {deal.fundraise_hero_image_url && (
+          <div className="relative w-full aspect-[21/9] rounded-xl overflow-hidden mb-8">
+            <Image
+              src={deal.fundraise_hero_image_url}
+              alt={deal.name}
+              fill
+              className="object-cover"
+              sizes="(max-width: 896px) 100vw, 896px"
+              priority
+            />
+          </div>
+        )}
+
+        {/* Deal Header */}
+        <div className="mb-6">
+          <h1 className="text-3xl sm:text-4xl font-bold text-foreground tracking-tight">
             {deal.name}
           </h1>
-          {deal.fundraise_description && (
-            <p className="text-muted-foreground mt-3 text-sm leading-relaxed">
-              {deal.fundraise_description}
-            </p>
-          )}
+          <div className="flex flex-wrap items-center gap-2 mt-3">
+            {propertyType && (
+              <Badge variant="secondary" className="text-xs font-medium">
+                <Building2 className="h-3 w-3 mr-1" />
+                {propertyType}
+              </Badge>
+            )}
+            {location && (
+              <Badge variant="outline" className="text-xs font-medium">
+                <MapPin className="h-3 w-3 mr-1" />
+                {location}
+              </Badge>
+            )}
+            {property?.number_of_units && (
+              <Badge variant="outline" className="text-xs font-medium">
+                {property.number_of_units} Units
+              </Badge>
+            )}
+          </div>
         </div>
 
-        {/* Form engine renders the soft-commitment form definition */}
-        <FormEngine
-          formSlug="soft-commitment"
-          context="page"
-          dealId={deal.id}
-          prefillData={prefillData}
-        />
+        {/* Description */}
+        {deal.fundraise_description && (
+          <p className="text-muted-foreground text-base leading-relaxed mb-8">
+            {deal.fundraise_description}
+          </p>
+        )}
 
-        <p className="text-xs text-muted-foreground text-center mt-8 leading-relaxed">
-          This is a non-binding expression of interest. Submitting this form does not obligate
-          you to invest or create any binding agreement.
-        </p>
+        {/* Key Metrics */}
+        {metrics.length > 0 && (
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-8">
+            {metrics.map((m) => (
+              <Card key={m.label}>
+                <CardContent className="p-4">
+                  <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">
+                    {m.label}
+                  </p>
+                  <p className="text-lg font-semibold text-foreground mt-1 num">
+                    {m.value}
+                  </p>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        )}
 
-        <p className="text-xs text-muted-foreground/60 text-center mt-6">
-          &copy; {new Date().getFullYear()} Requity Group. All rights reserved.
-        </p>
-      </div>
+        {/* Deck Download */}
+        {deal.fundraise_deck_url && (
+          <div className="mb-10">
+            <Button asChild variant="outline" size="lg" className="gap-2">
+              <a
+                href={deal.fundraise_deck_url}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <FileDown className="h-4 w-4" />
+                Download Investment Overview
+              </a>
+            </Button>
+          </div>
+        )}
+
+        {/* Divider */}
+        <div className="rq-divider mb-10" />
+
+        {/* Form Section */}
+        <div className="max-w-2xl mx-auto">
+          <h2 className="text-xl font-semibold text-foreground text-center mb-6">
+            Express Your Interest
+          </h2>
+
+          <FormEngine
+            formSlug="soft-commitment"
+            context="page"
+            dealId={deal.id}
+            prefillData={prefillData}
+          />
+
+          <p className="text-xs text-muted-foreground text-center mt-8 leading-relaxed">
+            This is a non-binding expression of interest. Submitting this form does not obligate
+            you to invest or create any binding agreement.
+          </p>
+        </div>
+      </main>
+
+      {/* Footer */}
+      <footer className="border-t border-border py-6 px-6">
+        <div className="mx-auto max-w-4xl flex items-center justify-between">
+          <a
+            href="https://requitygroup.com"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-xs text-muted-foreground hover:text-foreground rq-transition"
+          >
+            requitygroup.com
+          </a>
+          <span className="text-xs text-muted-foreground/60">
+            &copy; {new Date().getFullYear()} Requity Group
+          </span>
+        </div>
+      </footer>
     </div>
   );
 }
@@ -101,12 +242,10 @@ export function SoftCommitmentFormPage({ slug }: { slug: string }) {
 function Logo() {
   return (
     <div className="flex items-center justify-center py-2">
-      <Image
-        src="/requity-logo-color.svg"
+      <img
+        src="https://edhlkknvlczhbowasjna.supabase.co/storage/v1/object/public/brand-assets/Requity%20Logo%20Color.svg"
         alt="Requity Group"
-        width={200}
-        height={39}
-        priority
+        style={{ height: 40, width: "auto" }}
       />
     </div>
   );
