@@ -4,6 +4,40 @@ const isDev = process.env.NODE_ENV === "development";
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  webpack: (config, { isServer }) => {
+    // pptxgenjs ships an ES module that references node:fs / node:https.
+    // These are never called in the browser, but webpack 5 throws
+    // UnhandledSchemeError for the "node:" URI scheme on client builds.
+    // Register a custom plugin to resolve "node:" imports to empty modules.
+    if (!isServer) {
+      config.resolve.fallback = {
+        ...config.resolve.fallback,
+        fs: false,
+        https: false,
+        http: false,
+        net: false,
+        tls: false,
+        stream: false,
+        zlib: false,
+        path: false,
+        crypto: false,
+      };
+
+      // Strip "node:" prefix so bare specifiers hit resolve.fallback above
+      config.plugins.push({
+        apply(compiler) {
+          compiler.hooks.normalModuleFactory.tap("NodeSchemePlugin", (nmf) => {
+            nmf.hooks.beforeResolve.tap("NodeSchemePlugin", (resolveData) => {
+              if (resolveData.request?.startsWith("node:")) {
+                resolveData.request = resolveData.request.slice(5);
+              }
+            });
+          });
+        },
+      });
+    }
+    return config;
+  },
   experimental: {
     serverActions: {
       bodySizeLimit: "10mb",
