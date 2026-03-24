@@ -81,6 +81,11 @@ const DEFAULT_SECTION_ORDER: SectionLayout[] = [
   { section_key: "address", display_order: 1, is_visible: true, visibility_rule: null, section_type: "address", section_label: "Address", section_icon: "map-pin" },
 ];
 
+const ADDRESS_SECTION: SectionLayout = {
+  section_key: "address", display_order: 99, is_visible: true,
+  visibility_rule: null, section_type: "address", section_label: "Address", section_icon: "map-pin",
+};
+
 export function DetailOverviewTab({
   contact,
   isSuperAdmin,
@@ -201,11 +206,6 @@ export function DetailOverviewTab({
 
   // --- Resolve visible sections (only contact_profile + address) ---
 
-  const ADDRESS_SECTION: SectionLayout = {
-    section_key: "address", display_order: 99, is_visible: true,
-    visibility_rule: null, section_type: "address", section_label: "Address", section_icon: "map-pin",
-  };
-
   // When editing, use inline layout state for sections; when not, use server-provided data
   const resolvedSections = useMemo(() => {
     if (isEditing && inlineLayout) {
@@ -235,7 +235,7 @@ export function DetailOverviewTab({
     }
 
     return filtered;
-  }, [sectionOrder, isEditing, inlineLayout?.state.sections]);
+  }, [sectionOrder, isEditing, inlineLayout]);
 
   function handleInlineChange(fieldKey: string, value: unknown) {
     setLocalContactData((prev) => ({ ...prev, [fieldKey]: value }));
@@ -414,7 +414,7 @@ export function DetailOverviewTab({
     const keys = new Set<string>();
     for (const f of inlineLayout.state.fields) keys.add(f.field_key);
     return keys;
-  }, [isEditing, inlineLayout?.state.fields]);
+  }, [isEditing, inlineLayout]);
 
   // Convert SectionLayout (CRM type) to LayoutSection for EditableSection compatibility
   function toLayoutSection(section: SectionLayout | LayoutSection, idx: number): LayoutSection {

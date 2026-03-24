@@ -255,7 +255,7 @@ function PropertyDetailsContent({
         .sort((a, b) => a.display_order - b.display_order);
     }
     return layoutSections;
-  }, [isEditing, inlineLayout?.state.sections, layoutSections]);
+  }, [isEditing, inlineLayout, layoutSections]);
 
   const effectiveFieldsBySection = isEditing && inlineLayout
     ? inlineLayout.state.fieldsBySectionId

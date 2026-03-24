@@ -431,7 +431,7 @@ function DocPreviewModal({
       }
       // If no review found, that's fine - user can trigger one
     });
-  }, [open, doc?.id, linkedCondition?.conditionId]);
+  }, [open, doc, linkedCondition?.conditionId]);
 
   async function handleRunAiReview() {
     if (!doc || !linkedCondition?.conditionId) return;

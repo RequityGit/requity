@@ -155,7 +155,7 @@ export function ConditionsDashboard({
     }
 
     return result;
-  }, [conditions, viewMode, filterCategory, filterParty, filterStatus, search]);
+  }, [conditions, viewMode, filterCategory, filterParty, filterStatus, search, today]);
 
   // Group by loan
   const groupedByLoan = useMemo(() => {

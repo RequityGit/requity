@@ -107,7 +107,7 @@ export function DocPreviewModal({
         setAiReview(res.data);
       }
     });
-  }, [open, doc?.id, linkedCondition?.conditionId]);
+  }, [open, doc, linkedCondition?.conditionId]);
 
   async function handleRunAiReview() {
     if (!doc || !linkedCondition?.conditionId) return;

@@ -157,7 +157,7 @@ export function NotificationDetailPanel({
       setThreadNotes([]);
       fetchThread();
     }
-  }, [notification?.id, fetchThread]);
+  }, [notification, fetchThread]);
 
   // Find the highlighted note (the one that triggered the notification)
   const highlightedNoteId = useMemo(() => {

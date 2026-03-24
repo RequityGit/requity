@@ -252,7 +252,7 @@ export function CompanyOverviewTab({
       })
       .sort((a, b) => a.display_order - b.display_order)
       .map((s) => s.section_key);
-  }, [sectionOrder, isLender, wireInstructions, isEditing, inlineLayout?.state.sections]);
+  }, [sectionOrder, isLender, wireInstructions, isEditing, inlineLayout]);
 
   const inlineCallbacks = useMemo(() => ({
     onChange: handleChange,
@@ -660,7 +660,7 @@ export function CompanyOverviewTab({
     const keys = new Set<string>();
     for (const f of inlineLayout.state.fields) keys.add(f.field_key);
     return keys;
-  }, [isEditing, inlineLayout?.state.fields]);
+  }, [isEditing, inlineLayout]);
 
   return (
     <div className="flex flex-col gap-5">

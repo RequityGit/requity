@@ -159,8 +159,7 @@ export function EditableOverview({
     });
   }, [
     isEditing,
-    inlineLayout?.state.sections,
-    inlineLayout?.state.fieldsBySectionId,
+    inlineLayout,
     layout.loading,
     layout.fieldSections,
     layout.fieldsBySectionId,
