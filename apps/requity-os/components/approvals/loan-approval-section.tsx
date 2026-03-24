@@ -209,7 +209,7 @@ export function LoanApprovalSection({
               size="sm"
               variant="ghost"
               className="gap-1.5 text-xs"
-              onClick={() => router.push(`/admin/operations/approvals/${latestApproval.id}`)}
+              onClick={() => router.push(`/tasks/approvals/${latestApproval.id}`)}
             >
               <ExternalLink className="h-3.5 w-3.5" />
               View Details

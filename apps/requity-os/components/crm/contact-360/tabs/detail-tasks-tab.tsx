@@ -5,11 +5,12 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Plus, CheckCircle2 } from "lucide-react";
+import { EmptyState } from "@/components/shared/EmptyState";
 import { formatDate } from "@/lib/format";
-import { TaskSheet } from "@/components/tasks/task-sheet";
+import { TaskSplitPanel } from "@/components/tasks/task-split-panel";
 import type { OpsTask, Profile } from "@/lib/tasks";
 import { completeTask, completeRecurringTask } from "@/lib/tasks";
-import { useToast } from "@/components/ui/use-toast";
+import { showSuccess, showError } from "@/lib/toast";
 
 interface DetailTasksTabProps {
   tasks: OpsTask[];
@@ -17,6 +18,7 @@ interface DetailTasksTabProps {
   contactName: string;
   profiles: Profile[];
   currentUserId: string;
+  onRefreshTasks?: () => void;
 }
 
 const STATUS_CONFIG: Record<string, { bg: string; text: string; label: string }> = {
@@ -37,10 +39,10 @@ export function DetailTasksTab({
   contactName,
   profiles,
   currentUserId,
+  onRefreshTasks,
 }: DetailTasksTabProps) {
   const openCount = tasks.filter((t) => t.status !== "Complete").length;
   const router = useRouter();
-  const { toast } = useToast();
   const [sheetOpen, setSheetOpen] = useState(false);
   const [editingTask, setEditingTask] = useState<OpsTask | null>(null);
 
@@ -55,10 +57,12 @@ export function DetailTasksTab({
   }
 
   function handleSaved(_task: OpsTask) {
+    onRefreshTasks?.();
     router.refresh();
   }
 
   function handleDeleted(_taskId: string) {
+    onRefreshTasks?.();
     router.refresh();
   }
 
@@ -66,22 +70,21 @@ export function DetailTasksTab({
     if (task.is_recurring) {
       const result = await completeRecurringTask(task.id);
       if (result.error) {
-        toast({ title: `Failed to complete task: ${result.error}`, variant: "destructive" });
+        showError(`Could not complete task`, result.error);
       } else {
-        toast({
-          title: result.next_created
-            ? "Task completed — next occurrence created"
-            : "Recurring task completed",
-        });
+        showSuccess(result.next_created
+            ? "Task completed, next occurrence created"
+            : "Recurring task completed");
       }
     } else {
       const result = await completeTask(task.id);
       if (result.error) {
-        toast({ title: `Failed to complete task: ${result.error}`, variant: "destructive" });
+        showError("Could not complete task", result.error);
       } else {
-        toast({ title: "Task completed" });
+        showSuccess("Task completed");
       }
     }
+    onRefreshTasks?.();
     router.refresh();
   }
 
@@ -102,7 +105,7 @@ export function DetailTasksTab({
         </Button>
       </div>
 
-      <TaskSheet
+      <TaskSplitPanel
         open={sheetOpen}
         task={editingTask}
         profiles={profiles}
@@ -118,24 +121,12 @@ export function DetailTasksTab({
       />
 
       {tasks.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-12 text-center">
-          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-muted mb-4">
-            <CheckCircle2 className="h-6 w-6 text-muted-foreground" strokeWidth={1.5} />
-          </div>
-          <h3 className="text-sm font-semibold text-foreground mb-1">No tasks</h3>
-          <p className="text-sm text-muted-foreground mb-3">
-            Create a task to track to-dos for this contact.
-          </p>
-          <Button
-            variant="outline"
-            size="sm"
-            className="gap-1.5 rounded-lg border-border text-xs"
-            onClick={handleNewTask}
-          >
-            <Plus className="h-3.5 w-3.5" strokeWidth={1.5} />
-            New Task
-          </Button>
-        </div>
+        <EmptyState
+          icon={CheckCircle2}
+          title="No tasks"
+          description="Create a task to track to-dos for this contact."
+          action={{ label: "New Task", onClick: handleNewTask, icon: Plus }}
+        />
       ) : (
         tasks.map((t) => {
           const sc = STATUS_CONFIG[t.status] || STATUS_CONFIG["To Do"];

@@ -7,7 +7,7 @@ import { StatusBadge } from "@/components/shared/status-badge";
 import { FileUpload } from "@/components/shared/file-upload";
 import { DocumentDownload } from "@/components/borrower/document-download";
 import { formatDate } from "@/lib/format";
-import { useToast } from "@/components/ui/use-toast";
+import { showSuccess, showError } from "@/lib/toast";
 import {
   ClipboardList,
   CheckCircle2,
@@ -20,9 +20,10 @@ import {
   Upload,
 } from "lucide-react";
 import { UnifiedNotes } from "@/components/shared/UnifiedNotes";
+import { EmptyState } from "@/components/shared/EmptyState";
 import {
   uploadConditionDocument,
-} from "@/app/(authenticated)/borrower/loans/[id]/actions";
+} from "@/app/(authenticated)/b/loans/[id]/actions";
 import type { Tables } from "@/lib/supabase/types";
 
 type LoanCondition = Tables<"loan_conditions">;
@@ -51,13 +52,11 @@ export function BorrowerConditionsTab({
 
   if (conditions.length === 0) {
     return (
-      <div className="py-10 text-center text-muted-foreground">
-        <ClipboardList className="h-10 w-10 mx-auto mb-3 opacity-30" />
-        <p className="text-sm font-medium">No conditions yet</p>
-        <p className="text-xs mt-1">
-          Conditions will appear here once your loan processor sets them up.
-        </p>
-      </div>
+      <EmptyState
+        icon={ClipboardList}
+        title="No conditions yet"
+        description="Conditions will appear here once your loan processor sets them up."
+      />
     );
   }
 
@@ -142,7 +141,6 @@ function BorrowerConditionCard({
   const [showUpload, setShowUpload] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  const { toast } = useToast();
 
   const isComplete = COMPLETE_STATUSES.includes(condition.status);
   const isOverdue =
@@ -180,16 +178,12 @@ function BorrowerConditionCard({
 
       const result = await uploadConditionDocument(formData);
       if (result.error) {
-        toast({
-          title: "Upload failed",
-          description: result.error,
-          variant: "destructive",
-        });
+        showError("Could not upload document", result.error);
       } else {
         await loadData();
         setSelectedFile(null);
         setShowUpload(false);
-        toast({ title: "Document uploaded successfully" });
+        showSuccess("Document uploaded");
       }
     } finally {
       setLoading(false);

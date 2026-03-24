@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { AddressAutocomplete } from "@/components/ui/address-autocomplete";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import {
@@ -14,8 +15,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useToast } from "@/components/ui/use-toast";
-import { createEquityDealAction } from "@/app/(authenticated)/admin/equity-pipeline/actions";
+import { showSuccess, showError, showWarning } from "@/lib/toast";
+import { createEquityDealAction } from "@/app/(authenticated)/(admin)/equity-pipeline/actions";
 import {
   EQUITY_DEAL_SOURCES,
   ASSET_TYPES,
@@ -52,7 +53,6 @@ export function NewEquityDealForm({
   const [step, setStep] = useState(0);
   const [saving, setSaving] = useState(false);
   const router = useRouter();
-  const { toast } = useToast();
 
   // Deal info state
   const [dealInfo, setDealInfo] = useState({
@@ -83,10 +83,7 @@ export function NewEquityDealForm({
 
   async function handleSubmit() {
     if (!dealInfo.deal_name.trim()) {
-      toast({
-        title: "Deal name is required",
-        variant: "destructive",
-      });
+      showWarning("Deal name is required");
       return;
     }
 
@@ -127,17 +124,13 @@ export function NewEquityDealForm({
     const result = await createEquityDealAction(input);
 
     if (result.error) {
-      toast({
-        title: "Error creating deal",
-        description: result.error,
-        variant: "destructive",
-      });
+      showError("Could not create deal", result.error);
       setSaving(false);
       return;
     }
 
-    toast({ title: "Equity deal created successfully" });
-    router.push(`/admin/pipeline/${result.id}`);
+    showSuccess("Equity deal created");
+    router.push(`/pipeline/${result.id}`);
   }
 
   return (
@@ -243,7 +236,7 @@ export function NewEquityDealForm({
                       investment_thesis: e.target.value,
                     })
                   }
-                  placeholder="Describe the investment opportunity and value-add strategy..."
+                  placeholder="Describe the investment deal and value-add strategy..."
                   rows={3}
                 />
               </div>
@@ -267,10 +260,19 @@ export function NewEquityDealForm({
             <div className="grid grid-cols-2 gap-3">
               <div className="col-span-2">
                 <Label>Address</Label>
-                <Input
+                <AddressAutocomplete
                   value={property.address_line1}
-                  onChange={(e) =>
-                    setProperty({ ...property, address_line1: e.target.value })
+                  onChange={(v) =>
+                    setProperty({ ...property, address_line1: v })
+                  }
+                  onAddressSelect={(addr) =>
+                    setProperty((prev) => ({
+                      ...prev,
+                      address_line1: addr.address_line1,
+                      city: addr.city,
+                      state: addr.state,
+                      zip: addr.zip,
+                    }))
                   }
                   placeholder="123 Main St"
                 />

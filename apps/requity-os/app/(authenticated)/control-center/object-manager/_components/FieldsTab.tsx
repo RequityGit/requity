@@ -34,6 +34,7 @@ import { AddFieldDialog } from "./AddFieldDialog";
 import { ConditionBadge } from "./ConditionBadge";
 import { ConditionEditorModal } from "./ConditionEditorModal";
 import { hasCondition } from "@/lib/visibility-engine";
+import { EmptyState } from "@/components/shared/EmptyState";
 import type { VisibilityCondition } from "@/lib/visibility-engine";
 
 // Module mapping
@@ -57,6 +58,15 @@ interface Props {
   loading: boolean;
   objectKey: string;
   onFieldsChange: () => void;
+  /** Optimistically update a single field's visibility_condition without refetching */
+  onFieldConditionUpdate?: (fieldId: string, condition: Record<string, unknown> | null) => void;
+  /** Draft-aware callbacks (optional — when provided, uses draft instead of direct DB) */
+  isFieldDirty?: (fieldId: string) => boolean;
+  isFieldNew?: (fieldId: string) => boolean;
+  isFieldArchived?: (fieldId: string) => boolean;
+  onDraftFieldCreate?: (tempId: string, data: Partial<FieldConfig>) => void;
+  onDraftFieldArchive?: (field: FieldConfig) => void;
+  onDraftFieldUpdate?: (field: FieldConfig, updates: Partial<FieldConfig>) => void;
 }
 
 export function FieldsTab({
@@ -66,6 +76,13 @@ export function FieldsTab({
   loading,
   objectKey,
   onFieldsChange,
+  onFieldConditionUpdate,
+  isFieldDirty,
+  isFieldNew,
+  isFieldArchived,
+  onDraftFieldCreate,
+  onDraftFieldArchive,
+  onDraftFieldUpdate,
 }: Props) {
   const [query, setQuery] = useState("");
   const [typeFilter, setTypeFilter] = useState("all");
@@ -125,6 +142,21 @@ export function FieldsTab({
     field_type: string;
   }) => {
     const fieldModule = OBJECT_MODULE_MAP[objectKey] || objectKey;
+
+    if (onDraftFieldCreate) {
+      // Draft mode: create locally
+      const tempId = `temp_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+      onDraftFieldCreate(tempId, {
+        module: fieldModule,
+        field_key: input.field_key,
+        field_label: input.field_label,
+        field_type: input.field_type,
+      });
+      setShowAddDialog(false);
+      return;
+    }
+
+    // Legacy direct DB mode
     const result = await createField({
       module: fieldModule,
       field_key: input.field_key,
@@ -140,6 +172,14 @@ export function FieldsTab({
   };
 
   const handleArchive = async (fieldId: string) => {
+    if (onDraftFieldArchive) {
+      // Draft mode: mark as archived locally
+      const field = fields.find((f) => f.id === fieldId);
+      if (field) onDraftFieldArchive(field);
+      return;
+    }
+
+    // Legacy direct DB mode
     const result = await archiveField(fieldId);
     if (result.error) {
       console.error("Failed to archive field:", result.error);
@@ -150,16 +190,30 @@ export function FieldsTab({
 
   const handleSaveCondition = async (condition: VisibilityCondition | null) => {
     if (!editCondFieldId) return;
-    const result = await updateFieldVisibilityCondition(editCondFieldId, condition);
-    if (result.error) {
-      console.error("Failed to update visibility condition:", result.error);
+    const fieldId = editCondFieldId;
+    setEditCondFieldId(null);
+
+    if (onDraftFieldUpdate && editCondField) {
+      // Draft mode: store condition change as a draft update
+      onDraftFieldUpdate(editCondField, { visibility_condition: condition });
       return;
     }
-    setEditCondFieldId(null);
-    onFieldsChange();
+
+    // Optimistically update local state to avoid scroll-resetting refetch
+    if (onFieldConditionUpdate) {
+      onFieldConditionUpdate(fieldId, condition as Record<string, unknown> | null);
+    }
+
+    // Legacy direct DB mode
+    const result = await updateFieldVisibilityCondition(fieldId, condition);
+    if (result.error) {
+      console.error("Failed to update visibility condition:", result.error);
+      // Revert on failure by refetching
+      onFieldsChange();
+    }
   };
 
-  // Whether this object supports two-axis visibility (only Opportunity/unified_deal)
+  // Whether this object supports two-axis visibility (only Deal/unified_deal)
   const isAxisObject = objectKey === "unified_deal";
 
   if (loading) {
@@ -242,7 +296,7 @@ export function FieldsTab({
         </Button>
       </div>
 
-      {/* Axis Indicator Banners (Opportunity only) */}
+      {/* Axis Indicator Banners (Deal only) */}
       {isAxisObject && (
         <div className="flex gap-2 px-3.5 py-2 border-b border-border">
           <div className="flex-1 flex items-center gap-2 px-3 py-1.5 rounded-md bg-amber-500/[0.04] border border-amber-500/10">
@@ -291,10 +345,12 @@ export function FieldsTab({
       {/* Field Rows */}
       <div className="flex-1 overflow-y-auto">
         {filteredFields.length === 0 && (
-          <div className="flex flex-col items-center justify-center py-16 gap-2">
-            <Search size={24} className="text-muted-foreground" strokeWidth={1} />
-            <span className="text-xs text-muted-foreground">No fields found</span>
-          </div>
+          <EmptyState
+            icon={Search}
+            title="No fields found"
+            description="Try a different search term."
+            compact
+          />
         )}
         {filteredFields.map((field) => {
           const ft = getFieldType(field.field_type);
@@ -305,6 +361,8 @@ export function FieldsTab({
           const fieldCond = field.visibility_condition as VisibilityCondition | null;
           const isAxisField =
             field.field_key === "asset_class" || field.field_key === "loan_type";
+          const isDirty = isFieldDirty?.(field.id) ?? false;
+          const isNew = isFieldNew?.(field.id) ?? false;
 
           return (
             <div
@@ -319,6 +377,10 @@ export function FieldsTab({
                   : "grid-cols-[22px_1fr_95px_95px_50px_50px_30px]",
                 isActive
                   ? "bg-blue-500/5 border-l-2 border-l-blue-500"
+                  : isDirty && !isNew
+                  ? "bg-amber-500/5 border-l-2 border-l-amber-500 hover:bg-amber-500/10"
+                  : isNew
+                  ? "bg-green-500/5 border-l-2 border-l-green-500 hover:bg-green-500/10"
                   : "border-l-2 border-l-transparent hover:bg-muted/50"
               )}
             >
@@ -484,6 +546,7 @@ export function FieldsTab({
           }}
           condition={editCondField.visibility_condition as VisibilityCondition | null}
           onSave={handleSaveCondition}
+          allFields={fields}
         />
       )}
     </div>

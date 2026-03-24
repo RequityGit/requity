@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import { formatDate } from "@/lib/format";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -14,7 +15,8 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Search, ExternalLink, MoreHorizontal } from "lucide-react";
+import { Plus, Search, ExternalLink, MoreHorizontal, FileText } from "lucide-react";
+import { EmptyState } from "@/components/shared/EmptyState";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -165,14 +167,14 @@ export default function FormsListPage() {
           <TableBody>
             {loading ? (
               <TableRow>
-                <TableCell colSpan={6} className="text-center text-sm text-muted-foreground py-12">
+                <TableCell colSpan={6} className="py-8 text-center text-sm text-muted-foreground">
                   Loading...
                 </TableCell>
               </TableRow>
             ) : filtered.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={6} className="text-center text-sm text-muted-foreground py-12">
-                  No forms found.
+                <TableCell colSpan={6}>
+                  <EmptyState icon={FileText} title="No forms found." compact />
                 </TableCell>
               </TableRow>
             ) : (
@@ -188,7 +190,17 @@ export default function FormsListPage() {
                       {form.status === "published" && (
                         <div className="flex items-center gap-1 mt-0.5">
                           <span className="text-xs text-muted-foreground">/forms/{form.slug}</span>
-                          <ExternalLink size={10} strokeWidth={1.5} className="text-muted-foreground" />
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              window.open(`/forms/${form.slug}`, "_blank");
+                            }}
+                            className="inline-flex items-center justify-center hover:text-foreground transition-colors"
+                            aria-label={`Open live form: ${form.name}`}
+                          >
+                            <ExternalLink size={10} strokeWidth={1.5} className="text-muted-foreground" />
+                          </button>
                         </div>
                       )}
                     </div>
@@ -203,7 +215,7 @@ export default function FormsListPage() {
                     {form.steps.length}
                   </TableCell>
                   <TableCell className="text-sm text-muted-foreground">
-                    {new Date(form.updated_at).toLocaleDateString()}
+                    {formatDate(form.updated_at)}
                   </TableCell>
                   <TableCell>
                     <DropdownMenu>

@@ -289,44 +289,22 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // Step 4: Auto-detect card type based on extracted fields
-    let suggestedCardTypeId: string | null = null;
+    // Step 4: Auto-detect deal type based on extracted fields (no DB lookup needed)
+    const suggestedCardTypeId: string | null = null; // deprecated, kept for schema compat
     const dealTypeIndicators = mergedDealFields.deal_type_indicators?.value?.toString().toLowerCase() || "";
     const hasRehabBudget = !!mergedUwFields.rehab_budget;
     const hasArv = !!mergedUwFields.arv;
-    const hasDscr = !!mergedUwFields.dscr;
-    const hasNoi = !!mergedUwFields.net_operating_income;
 
-    // Fetch card types for matching
-    const { data: cardTypes } = await admin
-      .from("unified_card_types")
-      .select("id, label, slug");
-
-    if (cardTypes && cardTypes.length > 0) {
-      // Simple heuristic matching
-      const labelMatch = (keywords: string[]) =>
-        cardTypes.find((ct) =>
-          keywords.some((kw) =>
-            ct.label.toLowerCase().includes(kw) || ct.slug?.toLowerCase().includes(kw)
-          )
-        );
-
-      if (dealTypeIndicators.includes("fix") || dealTypeIndicators.includes("flip") || (hasRehabBudget && hasArv)) {
-        suggestedCardTypeId = labelMatch(["fix", "flip"])?.id || null;
-      } else if (dealTypeIndicators.includes("construction") || dealTypeIndicators.includes("ground-up") || dealTypeIndicators.includes("ground up")) {
-        suggestedCardTypeId = labelMatch(["construction", "ground"])?.id || null;
-      } else if (dealTypeIndicators.includes("bridge")) {
-        suggestedCardTypeId = labelMatch(["bridge"])?.id || null;
-      } else if (dealTypeIndicators.includes("dscr") || dealTypeIndicators.includes("rental") || hasDscr) {
-        suggestedCardTypeId = labelMatch(["dscr", "rental"])?.id || null;
-      } else if (dealTypeIndicators.includes("multifamily") || hasNoi) {
-        suggestedCardTypeId = labelMatch(["multifamily", "commercial"])?.id || null;
-      }
-
-      // Fallback: if no match, pick the first card type
-      if (!suggestedCardTypeId && cardTypes.length > 0) {
-        suggestedCardTypeId = null; // Leave it for the admin to choose
-      }
+    // Detect loan_type from extracted data for flavor derivation
+    let detectedLoanType: string | null = null;
+    if (dealTypeIndicators.includes("fix") || dealTypeIndicators.includes("flip") || (hasRehabBudget && hasArv)) {
+      detectedLoanType = "rtl";
+    } else if (dealTypeIndicators.includes("dscr") || dealTypeIndicators.includes("rental")) {
+      detectedLoanType = "dscr";
+    }
+    // Store detected loan_type in uw fields so it's available downstream
+    if (detectedLoanType && !mergedUwFields.loan_type) {
+      mergedUwFields.loan_type = { value: detectedLoanType, confidence: 0.6, source: "auto-detect" };
     }
 
     // Step 5: Contact matching (if not already matched during sync)

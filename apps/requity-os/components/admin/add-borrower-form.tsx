@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { DatePicker } from "@/components/ui/date-picker";
+import { AddressAutocomplete } from "@/components/ui/address-autocomplete";
 import { Textarea } from "@/components/ui/textarea";
 import {
   Card,
@@ -21,8 +22,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useToast } from "@/components/ui/use-toast";
-import { addBorrowerAction } from "@/app/(authenticated)/admin/borrowers/new/actions";
+import { showSuccess, showError } from "@/lib/toast";
+import { addBorrowerAction } from "@/app/(authenticated)/(admin)/borrowers/new/actions";
 import { Loader2, ChevronRight, ChevronLeft, Check } from "lucide-react";
 import { US_STATES } from "@/lib/constants";
 import { formatPhoneInput } from "@/lib/format";
@@ -44,7 +45,6 @@ export function AddBorrowerForm({ borrower }: AddBorrowerFormProps) {
   const [step, setStep] = useState(0);
   const [loading, setLoading] = useState(false);
   const router = useRouter();
-  const { toast } = useToast();
 
   // Step 1: Personal Information
   const [firstName, setFirstName] = useState(borrower?.first_name ?? "");
@@ -120,22 +120,14 @@ export function AddBorrowerForm({ borrower }: AddBorrowerFormProps) {
       });
 
       if (result.error) {
-        toast({
-          title: "Error adding borrower",
-          description: result.error,
-          variant: "destructive",
-        });
+        showError("Could not add borrower", result.error);
         return;
       }
 
-      toast({ title: "Borrower added successfully" });
-      router.push(`/admin/borrowers/${result.borrowerId}`);
+      showSuccess("Borrower added");
+      router.push(`/borrowers/${result.borrowerId}`);
     } catch (err: any) {
-      toast({
-        title: "Error adding borrower",
-        description: err.message,
-        variant: "destructive",
-      });
+      showError("Could not add borrower", err.message);
     } finally {
       setLoading(false);
     }
@@ -280,10 +272,16 @@ export function AddBorrowerForm({ borrower }: AddBorrowerFormProps) {
             <div className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="address1">Address Line 1</Label>
-                <Input
+                <AddressAutocomplete
                   id="address1"
                   value={addressLine1}
-                  onChange={(e) => setAddressLine1(e.target.value)}
+                  onChange={setAddressLine1}
+                  onAddressSelect={(addr) => {
+                    setAddressLine1(addr.address_line1);
+                    setCity(addr.city);
+                    setState(addr.state);
+                    setZip(addr.zip);
+                  }}
                   placeholder="123 Main St"
                 />
               </div>
@@ -418,7 +416,7 @@ export function AddBorrowerForm({ borrower }: AddBorrowerFormProps) {
               <Button
                 type="button"
                 variant="outline"
-                onClick={() => router.push("/admin/borrowers")}
+                onClick={() => router.push("/contacts")}
               >
                 Cancel
               </Button>

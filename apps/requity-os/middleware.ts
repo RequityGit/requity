@@ -1,51 +1,146 @@
 import { NextResponse, type NextRequest } from "next/server";
+import { SUPABASE_AUTH_COOKIE_NAME } from "@/lib/supabase/constants";
 import { updateSession } from "@/lib/supabase/middleware";
+import {
+  AUTH_SNAPSHOT_COOKIE,
+  AUTH_SNAPSHOT_HEADER,
+  buildAuthSnapshot,
+  decodeAuthSnapshot,
+  encodeAuthSnapshot,
+  isSnapshotFresh,
+  toSnapshotPayload,
+} from "@/lib/auth/auth-snapshot";
 
-// Role-based route prefixes
+// Role-based route prefixes (admin routes are now top-level, guarded by layout)
 const ROLE_ROUTES: Record<string, string> = {
-  admin: "/admin",
-  borrower: "/borrower",
-  investor: "/investor",
+  borrower: "/b",
+  investor: "/i",
 };
 
-// Default dashboards for each role
 const ROLE_DASHBOARDS: Record<string, string> = {
-  admin: "/admin/dashboard",
-  borrower: "/borrower/dashboard",
-  investor: "/investor/dashboard",
+  admin: "/pipeline",
+  super_admin: "/pipeline",
+  borrower: "/b/dashboard",
+  investor: "/i/dashboard",
 };
 
-// Routes that don't require authentication
 const PUBLIC_ROUTES = [
   "/login",
   "/auth/callback",
   "/auth/confirm",
+  "/upload",
+  "/api/upload-link", // token-based upload (no auth required)
+  "/api/deal-messages", // token-based borrower messaging (auth handled in route)
+  "/api/gmail/auth/callback", // OAuth redirect - handles own auth via state param
 ];
 
 export async function middleware(request: NextRequest) {
-  const { supabase, user, supabaseResponse } = await updateSession(request);
+  if (process.env.NODE_ENV === "production") {
+    const proto = request.headers.get("x-forwarded-proto")?.split(",")[0]?.trim();
+    if (proto === "http") {
+      const httpsUrl = request.nextUrl.clone();
+      httpsUrl.protocol = "https";
+      return NextResponse.redirect(httpsUrl, 301);
+    }
+  }
+
   const { pathname } = request.nextUrl;
 
-  // If Supabase is not configured, let requests through
-  if (!supabase) {
-    return supabaseResponse;
-  }
-
   // -----------------------------------------------------------------------
-  // Root path → redirect to /login (marketing site lives on a separate domain)
+  // Legacy URL redirects: /admin/*, /borrower/*, /investor/*
   // -----------------------------------------------------------------------
-  if (pathname === "/") {
+  if (pathname.startsWith("/admin/") || pathname === "/admin") {
+    const newPath = pathname.replace(/^\/admin/, "") || "/pipeline";
     const url = request.nextUrl.clone();
-    url.pathname = "/login";
-    return NextResponse.redirect(url);
+    url.pathname = newPath;
+    return NextResponse.redirect(url, 301);
+  }
+  if (pathname.startsWith("/borrower/") || pathname === "/borrower") {
+    const url = request.nextUrl.clone();
+    url.pathname = pathname.replace(/^\/borrower/, "/b");
+    return NextResponse.redirect(url, 301);
+  }
+  if (pathname.startsWith("/investor/") || pathname === "/investor") {
+    const url = request.nextUrl.clone();
+    url.pathname = pathname.replace(/^\/investor/, "/i");
+    return NextResponse.redirect(url, 301);
   }
 
-  // -----------------------------------------------------------------------
-  // Check if the current route is public
-  // -----------------------------------------------------------------------
   const isPublicRoute = PUBLIC_ROUTES.some((route) =>
     pathname.startsWith(route)
   );
+
+  // Fast path: on public routes, skip Supabase entirely when there's no auth cookie.
+  // This avoids a slow getUser() round-trip for every unauthenticated /login visit.
+  // Use prefix scan to handle chunked cookies (sb-...-auth-token.0, .1, etc.)
+  const hasAuthCookie = request.cookies
+    .getAll()
+    .some((c) => c.name.startsWith(SUPABASE_AUTH_COOKIE_NAME));
+
+  if (isPublicRoute && !hasAuthCookie) {
+    // Root path with no auth cookie → /login
+    if (pathname === "/") {
+      const url = request.nextUrl.clone();
+      url.pathname = "/login";
+      return NextResponse.redirect(url);
+    }
+    return NextResponse.next();
+  }
+
+  const { supabase, user, supabaseResponse } = await updateSession(request);
+
+  let response = supabaseResponse;
+
+  if (user) {
+    const snapRaw = request.cookies.get(AUTH_SNAPSHOT_COOKIE)?.value;
+    const parsed = snapRaw ? decodeAuthSnapshot(snapRaw) : null;
+    const needsRefresh =
+      !parsed || parsed.uid !== user.id || !isSnapshotFresh(parsed);
+
+    if (needsRefresh) {
+      const partial = await buildAuthSnapshot(supabase, user.id);
+      const payload = toSnapshotPayload(partial);
+      const encoded = encodeAuthSnapshot(payload);
+      const requestHeaders = new Headers(request.headers);
+      requestHeaders.set(AUTH_SNAPSHOT_HEADER, encoded);
+      const res = NextResponse.next({
+        request: { headers: requestHeaders },
+      });
+      supabaseResponse.cookies.getAll().forEach((c) => {
+        res.cookies.set(c.name, c.value, c);
+      });
+      res.cookies.set(AUTH_SNAPSHOT_COOKIE, encoded, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "lax",
+        maxAge: 300,
+        path: "/",
+      });
+      response = res;
+    }
+  } else if (request.cookies.get(AUTH_SNAPSHOT_COOKIE)?.value) {
+    const res = NextResponse.next();
+    supabaseResponse.cookies.getAll().forEach((c) => {
+      res.cookies.set(c.name, c.value, c);
+    });
+    res.cookies.set(AUTH_SNAPSHOT_COOKIE, "", { maxAge: 0, path: "/" });
+    response = res;
+  }
+
+  // -----------------------------------------------------------------------
+  // Root path → redirect based on auth state (after session refresh)
+  // -----------------------------------------------------------------------
+  if (pathname === "/") {
+    const url = request.nextUrl.clone();
+    url.pathname = user ? "/pipeline" : "/login";
+    const redirectRes = NextResponse.redirect(url);
+    if (user) {
+      response.cookies.getAll().forEach((c) => {
+        redirectRes.cookies.set(c.name, c.value, c);
+      });
+    }
+    return redirectRes;
+  }
 
   // -----------------------------------------------------------------------
   // Unauthenticated user trying to access a protected route → /login
@@ -54,26 +149,31 @@ export async function middleware(request: NextRequest) {
     const url = request.nextUrl.clone();
     url.pathname = "/login";
     url.searchParams.set("redirectedFrom", pathname);
-    return NextResponse.redirect(url);
+    const redirectRes = NextResponse.redirect(url);
+    response.cookies.getAll().forEach((c) => {
+      redirectRes.cookies.set(c.name, c.value, c);
+    });
+    if (request.cookies.get(AUTH_SNAPSHOT_COOKIE)?.value) {
+      redirectRes.cookies.set(AUTH_SNAPSHOT_COOKIE, "", { maxAge: 0, path: "/" });
+    }
+    return redirectRes;
   }
 
   // -----------------------------------------------------------------------
   // Authenticated user on a public route (e.g. /login) → redirect to dashboard
   // -----------------------------------------------------------------------
-  if (user && isPublicRoute) {
+  if (user && isPublicRoute && !pathname.startsWith("/api/")) {
     const { data: profile } = await supabase
       .from("profiles")
       .select("role, allowed_roles, activation_status")
       .eq("id", user.id)
       .single();
 
-    // Don't redirect unauthorized users to dashboard — let them stay on login
     if (!profile || profile.activation_status === "unauthorized") {
-      return supabaseResponse;
+      return response;
     }
 
     if (profile.role) {
-      // Use the active_role cookie if it's valid, otherwise use the default role
       const activeRoleCookie = request.cookies.get("active_role")?.value;
       const allowedRoles: string[] = profile.allowed_roles || [profile.role];
       const effectiveRole =
@@ -82,16 +182,20 @@ export async function middleware(request: NextRequest) {
           : profile.role;
 
       const dashboardPath =
-        ROLE_DASHBOARDS[effectiveRole] || "/borrower/dashboard";
+        ROLE_DASHBOARDS[effectiveRole] || "/b/dashboard";
       const url = request.nextUrl.clone();
       url.pathname = dashboardPath;
-      return NextResponse.redirect(url);
+      const redirectRes = NextResponse.redirect(url);
+      response.cookies.getAll().forEach((c) => {
+        redirectRes.cookies.set(c.name, c.value, c);
+      });
+      return redirectRes;
     }
   }
 
   // -----------------------------------------------------------------------
-  // Authenticated user accessing a role-restricted route
-  // Validate against allowed_roles (supports role switching)
+  // Authenticated user accessing /b/* or /i/* role-restricted routes
+  // Admin routes are guarded by the (admin) layout, not middleware.
   // -----------------------------------------------------------------------
   if (user) {
     const isRoleRoute = Object.values(ROLE_ROUTES).some((prefix) =>
@@ -99,27 +203,26 @@ export async function middleware(request: NextRequest) {
     );
 
     if (isRoleRoute) {
-      // Check if user is impersonating — super_admins impersonating can
-      // access any role route matching the impersonated user's role
       const impersonateUserId = request.cookies.get("impersonate_user_id")?.value;
       const impersonateRole = request.cookies.get("impersonate_role")?.value;
 
       if (impersonateUserId && impersonateRole) {
-        // The impersonating super_admin can access the impersonated user's role routes
         const targetRoleEntry = Object.entries(ROLE_ROUTES).find(([, prefix]) =>
           pathname.startsWith(prefix)
         );
 
         if (targetRoleEntry) {
           const targetRole = targetRoleEntry[0];
-          // Allow access if the route matches the impersonated role
           if (targetRole === impersonateRole) {
-            return supabaseResponse;
+            return response;
           }
-          // Otherwise redirect to the impersonated role's dashboard
           const url = request.nextUrl.clone();
-          url.pathname = ROLE_DASHBOARDS[impersonateRole] || "/admin/dashboard";
-          return NextResponse.redirect(url);
+          url.pathname = ROLE_DASHBOARDS[impersonateRole] || "/pipeline";
+          const redirectRes = NextResponse.redirect(url);
+          response.cookies.getAll().forEach((c) => {
+            redirectRes.cookies.set(c.name, c.value, c);
+          });
+          return redirectRes;
         }
       }
 
@@ -129,18 +232,20 @@ export async function middleware(request: NextRequest) {
         .eq("id", user.id)
         .single();
 
-      // Block unauthorized profiles from accessing any role routes
       if (!profile || profile.activation_status === "unauthorized") {
         const url = request.nextUrl.clone();
         url.pathname = "/login";
         url.searchParams.set("error", "no_access");
-        return NextResponse.redirect(url);
+        const redirectRes = NextResponse.redirect(url);
+        response.cookies.getAll().forEach((c) => {
+          redirectRes.cookies.set(c.name, c.value, c);
+        });
+        return redirectRes;
       }
 
       if (profile.role) {
         const allowedRoles: string[] = profile.allowed_roles || [profile.role];
 
-        // Determine which role prefix the user is trying to access
         const targetRoleEntry = Object.entries(ROLE_ROUTES).find(([, prefix]) =>
           pathname.startsWith(prefix)
         );
@@ -148,12 +253,10 @@ export async function middleware(request: NextRequest) {
         if (targetRoleEntry) {
           const targetRole = targetRoleEntry[0];
 
-          // Allow if the target role is in the user's allowed_roles
           if (allowedRoles.includes(targetRole)) {
-            return supabaseResponse;
+            return response;
           }
 
-          // Otherwise redirect to the effective role's dashboard
           const activeRoleCookie = request.cookies.get("active_role")?.value;
           const effectiveRole =
             activeRoleCookie && allowedRoles.includes(activeRoleCookie)
@@ -162,25 +265,22 @@ export async function middleware(request: NextRequest) {
 
           const url = request.nextUrl.clone();
           url.pathname =
-            ROLE_DASHBOARDS[effectiveRole] || "/borrower/dashboard";
-          return NextResponse.redirect(url);
+            ROLE_DASHBOARDS[effectiveRole] || "/b/dashboard";
+          const redirectRes = NextResponse.redirect(url);
+          response.cookies.getAll().forEach((c) => {
+            redirectRes.cookies.set(c.name, c.value, c);
+          });
+          return redirectRes;
         }
       }
     }
   }
 
-  return supabaseResponse;
+  return response;
 }
 
 export const config = {
   matcher: [
-    /*
-     * Match all request paths except for:
-     * - _next/static (static files)
-     * - _next/image (image optimization files)
-     * - favicon.ico (favicon file)
-     * - public folder assets (images, svgs, etc.)
-     */
-    "/((?!_next/static|_next/image|favicon\\.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
+    "/((?!_next/static|_next/image|favicon\\.ico|sw\\.js|manifest\\.json|offline\\.html|icons/|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico|woff2?|ttf)$).*)",
   ],
 };

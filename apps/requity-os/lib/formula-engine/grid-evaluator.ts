@@ -11,8 +11,8 @@ import type {
   GridResult,
   GridPeriod,
   GridRowDef,
-} from "@/components/pipeline-v2/pipeline-types";
-import { GRID_PERIODS, GRID_PERIOD_INDEX } from "@/components/pipeline-v2/pipeline-types";
+} from "@/components/pipeline/pipeline-types";
+import { GRID_PERIODS, GRID_PERIOD_INDEX } from "@/components/pipeline/pipeline-types";
 
 /**
  * Topologically sort grid rows so that dependencies are evaluated first.

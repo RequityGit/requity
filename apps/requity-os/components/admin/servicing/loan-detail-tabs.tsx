@@ -1,6 +1,8 @@
 "use client";
 
+import { lazy, Suspense } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { SectionErrorBoundary } from "@/components/shared/SectionErrorBoundary";
 import { DataTable, Column } from "@/components/shared/data-table";
 import { StatusBadge } from "@/components/shared/status-badge";
 import {
@@ -8,14 +10,25 @@ import {
   formatCurrencyDetailed,
   formatDate,
 } from "@/lib/format";
-import { PayoffStatementGenerator } from "@/components/admin/servicing/payoff-statement-generator";
 import {
   HardHat,
   CreditCard,
   ScrollText,
   FileText,
+  Loader2,
 } from "lucide-react";
-import { BudgetDrawsTab } from "@/components/admin/budget-draws/budget-draws-tab";
+
+// Lazy-load heavy tab components
+const PayoffStatementGenerator = lazy(() => import("@/components/admin/servicing/payoff-statement-generator").then(m => ({ default: m.PayoffStatementGenerator })));
+const BudgetDrawsTab = lazy(() => import("@/components/admin/budget-draws/budget-draws-tab").then(m => ({ default: m.BudgetDrawsTab })));
+
+function TabLoadingFallback() {
+  return (
+    <div className="flex items-center justify-center py-12">
+      <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+    </div>
+  );
+}
 import type {
   ConstructionBudget,
   BudgetLineItem,
@@ -94,30 +107,42 @@ export function ServicingLoanDetailTabs({
       </TabsList>
 
       <TabsContent value="budget-draws" className="mt-4">
-        <BudgetDrawsTab
-          loanId={loanUuid!}
-          budget={constructionBudget}
-          budgetLineItems={budgetLineItems}
-          drawRequests={drawRequests}
-          drawRequestLineItems={drawRequestLineItems}
-          changeRequests={budgetChangeRequests}
-          changeRequestLineItems={budgetChangeRequestLineItems}
-          auditLog={budgetAuditLog}
-          currentUserId={currentUserId}
-          totalUnits={totalUnits}
-        />
+        <SectionErrorBoundary fallbackTitle="Could not load budget & draws">
+          <Suspense fallback={<TabLoadingFallback />}>
+            <BudgetDrawsTab
+              loanId={loanUuid!}
+              budget={constructionBudget}
+              budgetLineItems={budgetLineItems}
+              drawRequests={drawRequests}
+              drawRequestLineItems={drawRequestLineItems}
+              changeRequests={budgetChangeRequests}
+              changeRequestLineItems={budgetChangeRequestLineItems}
+              auditLog={budgetAuditLog}
+              currentUserId={currentUserId}
+              totalUnits={totalUnits}
+            />
+          </Suspense>
+        </SectionErrorBoundary>
       </TabsContent>
 
       <TabsContent value="payments" className="mt-4">
-        <PaymentsTab payments={payments} />
+        <SectionErrorBoundary fallbackTitle="Could not load payments">
+          <PaymentsTab payments={payments} />
+        </SectionErrorBoundary>
       </TabsContent>
 
       <TabsContent value="audit" className="mt-4">
-        <AuditLogTab auditLog={auditLog} />
+        <SectionErrorBoundary fallbackTitle="Could not load audit log">
+          <AuditLogTab auditLog={auditLog} />
+        </SectionErrorBoundary>
       </TabsContent>
 
       <TabsContent value="payoff" className="mt-4">
-        <PayoffStatementGenerator loanId={loan?.loan_id} loan={loan} />
+        <SectionErrorBoundary fallbackTitle="Could not load payoff">
+          <Suspense fallback={<TabLoadingFallback />}>
+            <PayoffStatementGenerator loanId={loan?.loan_id} loan={loan} />
+          </Suspense>
+        </SectionErrorBoundary>
       </TabsContent>
     </Tabs>
   );

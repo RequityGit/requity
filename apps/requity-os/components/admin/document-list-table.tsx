@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
+import { useRouter } from "next/navigation";
 import { DataTable, Column } from "@/components/shared/data-table";
 import { StatusBadge } from "@/components/shared/status-badge";
 import { formatDate } from "@/lib/format";
@@ -29,10 +30,10 @@ import {
   Download,
   Trash2,
 } from "lucide-react";
-import { toast } from "sonner";
-import { getDocumentPreviewUrl } from "@/app/(authenticated)/admin/documents/actions";
+import { showSuccess, showError } from "@/lib/toast";
+import { getDocumentPreviewUrl, deleteDocumentAction } from "@/app/(authenticated)/(admin)/documents/actions";
 import { DocumentRenameDialog } from "@/components/admin/document-rename-dialog";
-import { DocumentDeleteDialog } from "@/components/admin/document-delete-dialog";
+import { useConfirm } from "@/components/shared/ConfirmDialog";
 import { DocumentPreviewDialog } from "@/components/admin/document-preview-dialog";
 
 export interface DocumentRow {
@@ -72,6 +73,8 @@ const SOURCE_LABELS: Record<DocumentRow["source"], string> = {
 };
 
 export function DocumentListTable({ data, action, isSuperAdmin }: DocumentListTableProps) {
+  const router = useRouter();
+  const confirm = useConfirm();
   const [search, setSearch] = useState("");
   const [typeFilter, setTypeFilter] = useState("all");
   const [sourceFilter, setSourceFilter] = useState("all");
@@ -79,7 +82,6 @@ export function DocumentListTable({ data, action, isSuperAdmin }: DocumentListTa
   // Dialog state
   const [previewDoc, setPreviewDoc] = useState<DocumentRow | null>(null);
   const [renameDoc, setRenameDoc] = useState<DocumentRow | null>(null);
-  const [deleteDoc, setDeleteDoc] = useState<DocumentRow | null>(null);
 
   const filtered = useMemo(() => {
     let result = data;
@@ -105,7 +107,7 @@ export function DocumentListTable({ data, action, isSuperAdmin }: DocumentListTa
   async function handleDownload(row: DocumentRow) {
     const result = await getDocumentPreviewUrl(row.id, row.source);
     if ("error" in result) {
-      toast.error(result.error);
+      showError(result.error);
       return;
     }
     const a = window.document.createElement("a");
@@ -195,7 +197,22 @@ export function DocumentListTable({ data, action, isSuperAdmin }: DocumentListTa
               <>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem
-                  onClick={() => setDeleteDoc(row)}
+                  onClick={async () => {
+                    const ok = await confirm({
+                      title: "Delete document?",
+                      description: `This will remove "${row.file_name}" from the document center.`,
+                      confirmLabel: "Delete",
+                      destructive: true,
+                    });
+                    if (!ok) return;
+                    const result = await deleteDocumentAction(row.id, row.source);
+                    if ("error" in result && result.error) {
+                      showError(result.error);
+                    } else {
+                      showSuccess("Document deleted");
+                      router.refresh();
+                    }
+                  }}
                   className="text-red-600 focus:text-red-600"
                 >
                   <Trash2 className="h-4 w-4 mr-2" />
@@ -268,11 +285,6 @@ export function DocumentListTable({ data, action, isSuperAdmin }: DocumentListTa
         open={!!renameDoc}
         onOpenChange={(open) => { if (!open) setRenameDoc(null); }}
         document={renameDoc}
-      />
-      <DocumentDeleteDialog
-        open={!!deleteDoc}
-        onOpenChange={(open) => { if (!open) setDeleteDoc(null); }}
-        document={deleteDoc}
       />
     </div>
   );

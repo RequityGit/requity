@@ -14,7 +14,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useToast } from "@/components/ui/use-toast";
+import { showSuccess, showError } from "@/lib/toast";
 import { CRM_ACTIVITY_TYPES } from "@/lib/constants";
 import {
   Mail,
@@ -26,6 +26,8 @@ import {
   CircleDot,
   Plus,
 } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
+import { EmptyState } from "@/components/shared/EmptyState";
 import { DotPill, relTime } from "@/components/crm/contact-360/contact-detail-shared";
 import type { CompanyActivityData } from "../types";
 import { ACTIVITY_TYPE_CONFIG } from "@/components/crm/contact-360/types";
@@ -47,6 +49,7 @@ interface ActivityTabProps {
   activities: CompanyActivityData[];
   currentUserId: string;
   logCallTrigger?: number;
+  loading?: boolean;
 }
 
 export function CompanyActivityTab({
@@ -54,12 +57,12 @@ export function CompanyActivityTab({
   activities,
   currentUserId,
   logCallTrigger = 0,
+  loading: tabLoading = false,
 }: ActivityTabProps) {
   const [filter, setFilter] = useState("all");
   const [showForm, setShowForm] = useState(false);
-  const [loading, setLoading] = useState(false);
+  const [saving, setSaving] = useState(false);
   const router = useRouter();
-  const { toast } = useToast();
 
   const [form, setForm] = useState({
     activity_type: "note",
@@ -89,7 +92,7 @@ export function CompanyActivityTab({
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    setLoading(true);
+    setSaving(true);
 
     try {
       const supabase = createClient();
@@ -103,7 +106,7 @@ export function CompanyActivityTab({
 
       if (error) throw error;
 
-      toast({ title: "Activity logged" });
+      showSuccess("Activity logged");
       setShowForm(false);
       setForm({ activity_type: "note", subject: "", description: "" });
       router.refresh();
@@ -114,14 +117,19 @@ export function CompanyActivityTab({
           : typeof err === "object" && err !== null && "message" in err
             ? String((err as { message: unknown }).message)
             : "Unknown error";
-      toast({
-        title: "Error logging activity",
-        description: message,
-        variant: "destructive",
-      });
+      showError("Could not log activity", message);
     } finally {
-      setLoading(false);
+      setSaving(false);
     }
+  }
+
+  if (tabLoading && activities.length === 0) {
+    return (
+      <div className="space-y-2 px-4 py-6">
+        <Skeleton className="h-14 w-full rounded-lg" />
+        <Skeleton className="h-14 w-full rounded-lg" />
+      </div>
+    );
   }
 
   return (
@@ -218,10 +226,10 @@ export function CompanyActivityTab({
             <Button
               type="submit"
               size="sm"
-              disabled={loading}
+              disabled={saving}
               className="rounded-lg bg-foreground text-background hover:bg-foreground/90"
             >
-              {loading ? "Saving..." : "Save Activity"}
+              {saving ? "Saving..." : "Save Activity"}
             </Button>
           </div>
         </form>
@@ -229,22 +237,15 @@ export function CompanyActivityTab({
 
       {/* Timeline */}
       {filtered.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-12 text-center">
-          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-muted mb-4">
-            <Activity
-              className="h-6 w-6 text-muted-foreground"
-              strokeWidth={1.5}
-            />
-          </div>
-          <h3 className="text-sm font-semibold text-foreground mb-1">
-            No activities
-          </h3>
-          <p className="text-sm text-muted-foreground">
-            {filter !== "all"
+        <EmptyState
+          icon={Activity}
+          title="No activities"
+          description={
+            filter !== "all"
               ? `No ${filter} activities. Try changing the filter.`
-              : "Log your first activity to start the timeline."}
-          </p>
-        </div>
+              : "Log your first activity to start the timeline."
+          }
+        />
       ) : (
         <div className="flex flex-col gap-0">
           {filtered.map((a, i) => {

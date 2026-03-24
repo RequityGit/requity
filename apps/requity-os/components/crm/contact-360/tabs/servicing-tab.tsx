@@ -1,7 +1,8 @@
 "use client";
 
 import { Briefcase } from "lucide-react";
-import { StagePill, EmptyState, MonoValue } from "../shared";
+import { StagePill, MonoValue } from "../shared";
+import { EmptyState } from "@/components/shared/EmptyState";
 import { formatCurrency } from "@/lib/format";
 import type { LoanData } from "../types";
 import Link from "next/link";
@@ -62,7 +63,7 @@ export function ServicingTab({ loans }: ServicingTabProps) {
         {servicingLoans.map((loan) => (
           <Link
             key={loan.id}
-            href={`/admin/pipeline/${loan.id}`}
+            href={`/pipeline/${loan.loan_number || loan.id}`}
             className="block rounded-xl border border-border bg-card p-4 hover:bg-muted transition-colors"
           >
             <div className="flex items-start justify-between mb-2">

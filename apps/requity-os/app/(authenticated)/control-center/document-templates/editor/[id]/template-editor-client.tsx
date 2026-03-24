@@ -2,22 +2,13 @@
 
 import { useRouter } from "next/navigation";
 import { useCallback, useState } from "react";
-import { toast } from "sonner";
+import { showSuccess, showError } from "@/lib/toast";
 import { LayoutGrid, FileText } from "lucide-react";
 import { DocumentEditor } from "@/components/documents/editor/DocumentEditor";
 import { LayoutEditor } from "@/components/documents/layout-editor/LayoutEditor";
 import { saveTemplateContent, enableLayoutEditor, disableLayoutEditor } from "../../actions";
 import { Button } from "@/components/ui/button";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
+import { useConfirm } from "@/components/shared/ConfirmDialog";
 import type { StyledLayout } from "@/components/documents/styled-doc-parts/types";
 
 interface Props {
@@ -50,17 +41,17 @@ export function TemplateEditorClient({
   styledLayout,
 }: Props) {
   const router = useRouter();
+  const confirm = useConfirm();
   const [editorMode, setEditorMode] = useState<"tiptap" | "layout">(
     styledLayout ? "layout" : "tiptap"
   );
   const [switching, setSwitching] = useState(false);
-  const [confirmDisable, setConfirmDisable] = useState(false);
 
   const handleSave = useCallback(
     async (content: string) => {
       const result = await saveTemplateContent(templateId, content);
       if (result.error) {
-        toast.error(`Failed to save template: ${result.error}`);
+        showError(`Failed to save template: ${result.error}`);
       }
     },
     [templateId]
@@ -70,26 +61,32 @@ export function TemplateEditorClient({
     setSwitching(true);
     const result = await enableLayoutEditor(templateId);
     if (result.error) {
-      toast.error(`Failed to enable layout editor: ${result.error}`);
+      showError(`Failed to enable layout editor: ${result.error}`);
       setSwitching(false);
     } else {
-      toast.success("Layout Editor enabled");
+      showSuccess("Layout Editor enabled");
       router.refresh();
     }
   }, [templateId, router]);
 
   const handleDisableLayout = useCallback(async () => {
+    const ok = await confirm({
+      title: "Switch to Rich Text Editor?",
+      description: "This will clear the styled layout data for this template. You can re-enable the Layout Editor later, but you will need to rebuild the layout from scratch.",
+      confirmLabel: "Switch Editor",
+      destructive: true,
+    });
+    if (!ok) return;
     setSwitching(true);
-    setConfirmDisable(false);
     const result = await disableLayoutEditor(templateId);
     if (result.error) {
-      toast.error(`Failed to disable layout editor: ${result.error}`);
+      showError(`Failed to disable layout editor: ${result.error}`);
       setSwitching(false);
     } else {
-      toast.success("Switched to rich text editor");
+      showSuccess("Switched to rich text editor");
       router.refresh();
     }
-  }, [templateId, router]);
+  }, [templateId, router, confirm]);
 
   const goBack = () => router.push("/control-center/document-templates");
 
@@ -110,31 +107,13 @@ export function TemplateEditorClient({
               size="sm"
               className="h-7 text-xs text-muted-foreground"
               disabled={switching}
-              onClick={() => setConfirmDisable(true)}
+              onClick={handleDisableLayout}
             >
               <FileText size={12} className="mr-1" />
               Switch to Rich Text
             </Button>
           }
         />
-        <AlertDialog open={confirmDisable} onOpenChange={setConfirmDisable}>
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle>Switch to Rich Text Editor?</AlertDialogTitle>
-              <AlertDialogDescription>
-                This will clear the styled layout data for this template. You can
-                re-enable the Layout Editor later, but you will need to rebuild
-                the layout from scratch.
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel>Cancel</AlertDialogCancel>
-              <AlertDialogAction onClick={handleDisableLayout}>
-                Switch Editor
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
       </>
     );
   }

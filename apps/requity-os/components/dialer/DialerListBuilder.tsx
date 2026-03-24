@@ -10,7 +10,9 @@ import {
   AlertTriangle,
   Phone,
   Loader2,
+  Users,
 } from "lucide-react";
+import { EmptyState } from "@/components/shared/EmptyState";
 import { Checkbox } from "@/components/ui/checkbox";
 import { cn } from "@/lib/utils";
 import { createDialerList } from "@/lib/dialer/dialer-api";
@@ -115,7 +117,7 @@ export function DialerListBuilder({ contacts, teamMembers, currentUserId }: Prop
         settings: settings as unknown as Record<string, unknown>,
         contactIds: nonDncIds,
       });
-      router.push(`/admin/dialer/${res.data.id}`);
+      router.push(`/dialer/${res.data.id}`);
     } catch (err) {
       console.error("Failed to create list:", err);
     } finally {
@@ -302,9 +304,7 @@ export function DialerListBuilder({ contacts, teamMembers, currentUserId }: Prop
         {/* Contact list */}
         <div className="max-h-[400px] overflow-y-auto">
           {filtered.length === 0 ? (
-            <div className="py-8 text-center text-sm text-muted-foreground">
-              No contacts match your filters.
-            </div>
+            <EmptyState icon={Users} title="No contacts match your filters." compact />
           ) : (
             filtered.map((contact) => {
               const isSelected = selectedIds.has(contact.id);
@@ -378,7 +378,7 @@ export function DialerListBuilder({ contacts, teamMembers, currentUserId }: Prop
       {/* Create button */}
       <div className="flex items-center justify-end gap-3">
         <button
-          onClick={() => router.push("/admin/dialer")}
+          onClick={() => router.push("/dialer")}
           className="px-4 py-2 text-sm font-medium rounded-lg border border-border text-muted-foreground hover:bg-muted transition-colors"
         >
           Cancel

@@ -60,6 +60,7 @@ export function NotificationsPageClient({
     loading,
     hasMore,
     loadMore,
+    markAsRead,
     archiveNotification,
     archiveAll,
     unarchiveNotification,
@@ -357,6 +358,7 @@ export function NotificationsPageClient({
                   activeRole={activeRole}
                   onArchive={view === "active" ? archiveNotification : undefined}
                   onUnarchive={view === "archived" ? unarchiveNotification : undefined}
+                  onMarkAsRead={markAsRead}
                   variant="full"
                 />
               ))}

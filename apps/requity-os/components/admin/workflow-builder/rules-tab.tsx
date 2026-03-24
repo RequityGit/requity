@@ -2,7 +2,7 @@
 
 import { useState, useCallback } from "react";
 import { createClient } from "@/lib/supabase/client";
-import { useToast } from "@/components/ui/use-toast";
+import { showError } from "@/lib/toast";
 import { cn } from "@/lib/utils";
 import {
   Plus,
@@ -31,17 +31,7 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
+import { useConfirm } from "@/components/shared/ConfirmDialog";
 import type { WorkflowStage, WorkflowRule } from "./types";
 import {
   TRIGGER_TYPES,
@@ -63,7 +53,6 @@ export function RulesTab({
   rules,
   onRulesChanged,
 }: RulesTabProps) {
-  const { toast } = useToast();
 
   // Group rules by stage
   const globalRules = rules.filter((r) => !r.trigger_stage_id);
@@ -96,14 +85,10 @@ export function RulesTab({
 
       if (error) {
         onRulesChanged(rules);
-        toast({
-          title: "Failed to update rule",
-          description: error.message,
-          variant: "destructive",
-        });
+        showError("Could not update rule", error.message);
       }
     },
-    [rules, onRulesChanged, toast]
+    [rules, onRulesChanged]
   );
 
   const handleAddRule = useCallback(
@@ -130,16 +115,12 @@ export function RulesTab({
         .single();
 
       if (error) {
-        toast({
-          title: "Failed to add rule",
-          description: error.message,
-          variant: "destructive",
-        });
+        showError("Could not add rule", error.message);
       } else if (data) {
         onRulesChanged([...rules, data as unknown as WorkflowRule]);
       }
     },
-    [workflowId, rules, onRulesChanged, toast]
+    [workflowId, rules, onRulesChanged]
   );
 
   const handleDeleteRule = useCallback(
@@ -151,16 +132,12 @@ export function RulesTab({
         .eq("id", ruleId);
 
       if (error) {
-        toast({
-          title: "Failed to delete rule",
-          description: error.message,
-          variant: "destructive",
-        });
+        showError("Could not delete rule", error.message);
       } else {
         onRulesChanged(rules.filter((r) => r.id !== ruleId));
       }
     },
-    [rules, onRulesChanged, toast]
+    [rules, onRulesChanged]
   );
 
   return (
@@ -284,6 +261,8 @@ function RuleRow({
   ) => void;
   onDelete: (ruleId: string) => void;
 }) {
+  const confirm = useConfirm();
+
   return (
     <div className="border border-border rounded-lg p-3 bg-background space-y-3">
       {/* Row 1: Name + active toggle + delete */}
@@ -298,33 +277,26 @@ function RuleRow({
           checked={rule.is_active ?? true}
           onCheckedChange={(v) => onUpdateField(rule.id, "is_active", v)}
         />
-        <AlertDialog>
-          <AlertDialogTrigger asChild>
-            <Button variant="ghost" size="sm" className="h-7 w-7 p-0">
-              <Trash2
-                className="h-3.5 w-3.5 text-muted-foreground hover:text-destructive"
-                strokeWidth={1.5}
-              />
-            </Button>
-          </AlertDialogTrigger>
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle>Delete rule</AlertDialogTitle>
-              <AlertDialogDescription>
-                This will permanently delete &ldquo;{rule.name}&rdquo;.
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel>Cancel</AlertDialogCancel>
-              <AlertDialogAction
-                onClick={() => onDelete(rule.id)}
-                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-              >
-                Delete
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
+        <Button
+          variant="ghost"
+          size="sm"
+          className="h-7 w-7 p-0"
+          onClick={async () => {
+            const ok = await confirm({
+              title: "Delete rule",
+              description: `This will permanently delete \u201c${rule.name}\u201d.`,
+              confirmLabel: "Delete",
+              destructive: true,
+            });
+            if (!ok) return;
+            onDelete(rule.id);
+          }}
+        >
+          <Trash2
+            className="h-3.5 w-3.5 text-muted-foreground hover:text-destructive"
+            strokeWidth={1.5}
+          />
+        </Button>
       </div>
 
       {/* Row 2: Trigger + Action */}

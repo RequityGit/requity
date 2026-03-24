@@ -15,13 +15,14 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { useToast } from "@/components/ui/use-toast";
-import { Plus, FileText } from "lucide-react";
+import { showSuccess, showError, showWarning } from "@/lib/toast";
+import { Plus, FileText, Table } from "lucide-react";
+import { EmptyState } from "@/components/shared/EmptyState";
 import {
   addProductAction,
   toggleProductActiveAction,
   type ProductInput,
-} from "@/app/(authenticated)/admin/models/dscr/actions";
+} from "@/app/(authenticated)/(admin)/models/dscr/actions";
 import { formatDate, formatCurrency } from "@/lib/format";
 import { US_STATES } from "@/lib/constants";
 
@@ -37,7 +38,6 @@ export function LenderDetail({
   uploads: any[];
 }) {
   const router = useRouter();
-  const { toast } = useToast();
   const [productOpen, setProductOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState<Partial<ProductInput>>({
@@ -54,7 +54,7 @@ export function LenderDetail({
 
   async function handleAddProduct() {
     if (!form.product_name) {
-      toast({ title: "Error", description: "Product name is required", variant: "destructive" });
+      showWarning("Product name is required");
       return;
     }
     setSaving(true);
@@ -81,10 +81,10 @@ export function LenderDetail({
         eligible_borrower_types: form.eligible_borrower_types,
       });
       if ("error" in result) {
-        toast({ title: "Error", description: result.error, variant: "destructive" });
+        showError("Could not add product", result.error);
         return;
       }
-      toast({ title: "Product added" });
+      showSuccess("Product added");
       setProductOpen(false);
       router.refresh();
     } finally {
@@ -95,7 +95,7 @@ export function LenderDetail({
   async function toggleProduct(id: string, current: boolean) {
     const result = await toggleProductActiveAction(id, !current);
     if ("error" in result) {
-      toast({ title: "Error", description: result.error, variant: "destructive" });
+      showError("Could not toggle product", result.error);
       return;
     }
     router.refresh();
@@ -262,8 +262,12 @@ export function LenderDetail({
 
         {products.length === 0 ? (
           <Card>
-            <CardContent className="py-12 text-center">
-              <p className="text-muted-foreground">No products configured for this lender yet.</p>
+            <CardContent>
+              <EmptyState
+                icon={Table}
+                title="No products configured for this lender yet"
+                compact
+              />
             </CardContent>
           </Card>
         ) : (
@@ -326,13 +330,12 @@ export function LenderDetail({
           </CardHeader>
           <CardContent>
             {uploads.length === 0 ? (
-              <p className="text-muted-foreground text-sm">
-                No rate sheets uploaded yet.{" "}
-                <a href="/admin/models/dscr?tab=rate-sheets" className="text-teal-600 hover:underline">
-                  Upload a rate sheet
-                </a>
-                .
-              </p>
+              <EmptyState
+                icon={Table}
+                title="No rate sheets uploaded yet"
+                description="Upload a rate sheet to view history here."
+                compact
+              />
             ) : (
               <div className="space-y-2">
                 {uploads.map((u) => (

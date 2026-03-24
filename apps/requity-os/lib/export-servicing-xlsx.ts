@@ -221,7 +221,7 @@ export async function exportServicingWorkbook(
 
   // 2. Create workbook
   const wb = new ExcelJS.Workbook();
-  wb.creator = "Requity Group Portal";
+  wb.creator = "Requity Group Platform";
   wb.created = new Date();
 
   // Track row positions for each sheet

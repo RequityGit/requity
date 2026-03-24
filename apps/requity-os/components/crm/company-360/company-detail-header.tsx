@@ -15,7 +15,7 @@ import { relTime } from "@/components/crm/contact-360/contact-detail-shared";
 import { formatDate } from "@/lib/format";
 import { ClickToCallNumber } from "@/components/ui/ClickToCallNumber";
 import type { CompanyDetailData } from "./types";
-import { COMPANY_TYPE_CONFIG, SUBTYPE_LABELS } from "./types";
+import { COMPANY_TYPE_CONFIG } from "./types";
 
 interface CompanyDetailHeaderProps {
   company: CompanyDetailData;
@@ -86,18 +86,6 @@ export function CompanyDetailHeader({
               const cfg = COMPANY_TYPE_CONFIG[t] || COMPANY_TYPE_CONFIG.other;
               return <DotPill key={t} color={cfg.color} label={cfg.label} small />;
             })}
-            {company.company_subtype && (
-              <span
-                className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium whitespace-nowrap"
-                style={{
-                  backgroundColor: `${typeCfg.color}14`,
-                  color: typeCfg.color,
-                }}
-              >
-                {SUBTYPE_LABELS[company.company_subtype] ||
-                  company.company_subtype}
-              </span>
-            )}
             <DotPill
               color={company.is_active ? "#22A861" : "#8B8B8B"}
               label={company.is_active ? "Active" : "Inactive"}
@@ -131,7 +119,7 @@ export function CompanyDetailHeader({
                 }
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center gap-1.5 text-[13px] text-[#3B82F6] hover:underline"
+                className="flex items-center gap-1.5 text-[13px] text-primary hover:underline"
               >
                 <Globe size={13} strokeWidth={1.5} />{" "}
                 {company.website.replace(/^https?:\/\//, "")}{" "}

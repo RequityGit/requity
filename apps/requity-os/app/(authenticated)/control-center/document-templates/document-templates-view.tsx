@@ -13,7 +13,8 @@ import {
   X,
   FileEdit,
 } from "lucide-react";
-import { toast } from "sonner";
+import { showSuccess, showError } from "@/lib/toast";
+import { EmptyState } from "@/components/shared/EmptyState";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -23,16 +24,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
+import { useConfirm } from "@/components/shared/ConfirmDialog";
 import {
   toggleTemplateActive,
   duplicateTemplate,
@@ -102,9 +94,9 @@ interface Props {
 
 export function DocumentTemplatesView({ templates }: Props) {
   const router = useRouter();
+  const confirm = useConfirm();
   const [sheetOpen, setSheetOpen] = useState(false);
   const [editingTemplate, setEditingTemplate] = useState<Template | null>(null);
-  const [deleteId, setDeleteId] = useState<string | null>(null);
   const [loading, setLoading] = useState<string | null>(null);
 
   function handleEdit(template: Template) {
@@ -121,9 +113,9 @@ export function DocumentTemplatesView({ templates }: Props) {
     setLoading(id);
     const result = await toggleTemplateActive(id, !currentActive);
     if (result.error) {
-      toast.error(`Failed to update template: ${result.error}`);
+      showError(`Failed to update template: ${result.error}`);
     } else {
-      toast.success(currentActive ? "Template deactivated" : "Template activated");
+      showSuccess(currentActive ? "Template deactivated" : "Template activated");
       router.refresh();
     }
     setLoading(null);
@@ -133,26 +125,31 @@ export function DocumentTemplatesView({ templates }: Props) {
     setLoading(id);
     const result = await duplicateTemplate(id);
     if (result.error) {
-      toast.error(`Failed to duplicate: ${result.error}`);
+      showError(`Failed to duplicate: ${result.error}`);
     } else {
-      toast.success("Template duplicated");
+      showSuccess("Template duplicated");
       router.refresh();
     }
     setLoading(null);
   }
 
-  async function handleDelete() {
-    if (!deleteId) return;
-    setLoading(deleteId);
-    const result = await deleteTemplate(deleteId);
+  async function handleDelete(id: string) {
+    const ok = await confirm({
+      title: "Delete template?",
+      description: "This will permanently delete this template. Generated documents that used this template will not be affected.",
+      confirmLabel: "Delete",
+      destructive: true,
+    });
+    if (!ok) return;
+    setLoading(id);
+    const result = await deleteTemplate(id);
     if (result.error) {
-      toast.error(`Failed to delete: ${result.error}`);
+      showError(`Failed to delete: ${result.error}`);
     } else {
-      toast.success("Template deleted");
+      showSuccess("Template deleted");
       router.refresh();
     }
     setLoading(null);
-    setDeleteId(null);
   }
 
   return (
@@ -191,15 +188,8 @@ export function DocumentTemplatesView({ templates }: Props) {
             <tbody>
               {templates.length === 0 && (
                 <tr>
-                  <td
-                    colSpan={8}
-                    className="px-4 py-12 text-center text-muted-foreground"
-                  >
-                    <FileText
-                      size={32}
-                      className="mx-auto mb-2 opacity-40"
-                    />
-                    No templates yet. Create your first template to get started.
+                  <td colSpan={8}>
+                    <EmptyState icon={FileText} title="No templates yet." description="Create your first template to get started." compact />
                   </td>
                 </tr>
               )}
@@ -304,7 +294,7 @@ export function DocumentTemplatesView({ templates }: Props) {
                           <DropdownMenuSeparator />
                           <DropdownMenuItem
                             className="text-destructive"
-                            onClick={() => setDeleteId(t.id)}
+                            onClick={() => handleDelete(t.id)}
                           >
                             <Trash2 size={14} className="mr-2" />
                             Delete
@@ -333,30 +323,6 @@ export function DocumentTemplatesView({ templates }: Props) {
         }}
       />
 
-      {/* Delete confirmation */}
-      <AlertDialog
-        open={!!deleteId}
-        onOpenChange={(open) => !open && setDeleteId(null)}
-      >
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Delete template?</AlertDialogTitle>
-            <AlertDialogDescription>
-              This will permanently delete this template. Generated documents
-              that used this template will not be affected.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleDelete}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-            >
-              Delete
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
     </div>
   );
 }

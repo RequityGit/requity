@@ -11,7 +11,8 @@ import {
   Activity,
   UserPlus,
 } from "lucide-react";
-import { StagePill, EmptyState, MonoValue, TimelineEvent } from "../shared";
+import { EmptyState } from "@/components/shared/EmptyState";
+import { StagePill, MonoValue, TimelineEvent } from "../shared";
 import { formatCurrency } from "@/lib/format";
 import type {
   ContactData,
@@ -75,7 +76,7 @@ function ActiveLoansCard({ loans }: { loans: LoanData[] }) {
         {activeLoans.slice(0, 3).map((loan) => (
           <Link
             key={loan.id}
-            href={`/admin/pipeline/${loan.id}`}
+            href={`/pipeline/${loan.loan_number || loan.id}`}
             className="block rounded-lg border border-border p-3 hover:bg-muted transition-colors"
           >
             <div className="flex items-center justify-between mb-1">
@@ -265,9 +266,11 @@ function RecentActivityCard({ activities }: { activities: ActivityData[] }) {
       </CardHeader>
       <CardContent>
         {recent.length === 0 ? (
-          <p className="text-sm text-muted-foreground text-center py-4">
-            No recent activity.
-          </p>
+          <EmptyState
+            icon={Activity}
+            title="No recent activity"
+            compact
+          />
         ) : (
           <div className="space-y-0">
             {recent.map((act, i) => {

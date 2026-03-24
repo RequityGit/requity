@@ -3,8 +3,9 @@
 import { useMemo, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
-import { useToast } from "@/components/ui/use-toast";
+import { showSuccess, showError, showWarning } from "@/lib/toast";
 import { cn } from "@/lib/utils";
+import { formatDateShort, formatDate } from "@/lib/format";
 import {
   DndContext,
   closestCenter,
@@ -41,6 +42,7 @@ import {
   Trash2,
   GripVertical,
 } from "lucide-react";
+import { EmptyState } from "@/components/shared/EmptyState";
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -156,10 +158,6 @@ function getInitials(name: string | null): string {
   return parts[0][0]?.toUpperCase() ?? "?";
 }
 
-function formatDateShort(d: string | null): string {
-  if (!d) return "—";
-  return new Date(d).toLocaleDateString("en-US", { month: "short", day: "numeric" });
-}
 
 function daysUntil(d: string | null): number | null {
   if (!d) return null;
@@ -643,10 +641,12 @@ function AllTasksView({
 
   if (Object.keys(grouped).length === 0) {
     return (
-      <div className="bg-card rounded-xl border border-border py-12 px-5 text-center">
-        <Inbox size={36} className="mx-auto text-muted-foreground" />
-        <div className="text-[15px] font-semibold text-foreground mt-3">No tasks match filters</div>
-        <div className="text-[13px] text-muted-foreground mt-1">Try adjusting your filters to see more results.</div>
+      <div className="bg-card rounded-xl border border-border">
+        <EmptyState
+          icon={Inbox}
+          title="No tasks match filters"
+          description="Try adjusting your filters to see more results."
+        />
       </div>
     );
   }
@@ -690,10 +690,12 @@ function ApprovalsView({
 
   if (pending.length === 0) {
     return (
-      <div className="bg-card rounded-xl border border-border py-12 px-5 text-center">
-        <Shield size={36} className="mx-auto text-muted-foreground" />
-        <div className="text-[15px] font-semibold text-foreground mt-3">No pending approvals</div>
-        <div className="text-[13px] text-muted-foreground mt-1">All caught up. New approval requests will appear here.</div>
+      <div className="bg-card rounded-xl border border-border">
+        <EmptyState
+          icon={Shield}
+          title="No pending approvals"
+          description="All caught up. New approval requests will appear here."
+        />
       </div>
     );
   }
@@ -785,7 +787,6 @@ export function OperationsView({
 }: OperationsViewProps) {
   const router = useRouter();
   const supabase = createClient();
-  const { toast } = useToast();
 
   const [view, setView] = useState<"projects" | "tasks" | "approvals">("projects");
   const [statusFilter, setStatusFilter] = useState("all");
@@ -897,7 +898,7 @@ export function OperationsView({
 
     if (toggleError) {
       console.error("Failed to update task status:", toggleError);
-      toast({ title: "Error", description: "Failed to update task status. Please try again.", variant: "destructive" });
+      showError("Could not update task status", "Please try again.");
       return;
     }
 
@@ -911,12 +912,9 @@ export function OperationsView({
         );
 
         if (rpcError) {
-          toast({ title: "Task completed", description: "Could not generate next occurrence." });
+          showWarning("Task completed", "Could not generate next occurrence.");
         } else if ((data as Record<string, unknown>)?.success) {
-          toast({
-            title: "Task completed",
-            description: `Next occurrence scheduled for ${new Date((data as Record<string, unknown>).next_due_date as string).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}`,
-          });
+          showSuccess(`Task completed, next occurrence scheduled for ${formatDate((data as Record<string, unknown>).next_due_date as string)}`);
         }
       }
     }
@@ -926,10 +924,13 @@ export function OperationsView({
   async function handleDeleteTask(taskId: string) {
     const { error } = await supabase.from("ops_tasks").delete().eq("id", taskId);
     if (error) {
-      toast({ title: "Error", description: "Could not delete task.", variant: "destructive" });
+      const description = error.message?.includes("foreign key constraint")
+        ? "Failed to delete task. It has related records that must be removed first."
+        : "Could not delete task.";
+      showError("Could not delete task", description);
       return;
     }
-    toast({ title: "Task deleted" });
+    showSuccess("Task deleted");
     router.refresh();
   }
 
@@ -937,15 +938,15 @@ export function OperationsView({
     const { error: unlinkError } = await supabase.from("ops_tasks").update({ project_id: null }).eq("project_id", projectId);
     if (unlinkError) {
       console.error("Failed to unlink tasks from project:", unlinkError);
-      toast({ title: "Error", description: "Failed to unlink tasks from project. Please try again.", variant: "destructive" });
+      showError("Could not unlink tasks from project", "Please try again.");
       return;
     }
     const { error } = await supabase.from("ops_projects").delete().eq("id", projectId);
     if (error) {
-      toast({ title: "Error", description: "Could not delete project.", variant: "destructive" });
+      showError("Could not delete project");
       return;
     }
-    toast({ title: "Project deleted" });
+    showSuccess("Project deleted");
     router.refresh();
   }
 
@@ -954,7 +955,7 @@ export function OperationsView({
     const { error: stopError } = await supabase.from("ops_tasks").update({ is_active_recurrence: false }).eq("id", taskId);
     if (stopError) {
       console.error("Failed to stop recurrence:", stopError);
-      toast({ title: "Error", description: "Failed to stop recurrence. Please try again.", variant: "destructive" });
+      showError("Could not stop recurrence", "Please try again.");
       return;
     }
     if (task?.recurring_series_id) {
@@ -964,12 +965,12 @@ export function OperationsView({
         .neq("status", "Complete");
       if (seriesError) {
         console.error("Failed to stop series recurrence:", seriesError);
-        toast({ title: "Warning", description: "Recurrence stopped for this task but failed for related tasks.", variant: "destructive" });
+        showWarning("Recurrence stopped for this task but could not stop for related tasks");
         router.refresh();
         return;
       }
     }
-    toast({ title: "Recurrence stopped", description: "No further tasks will be generated." });
+    showSuccess("Recurrence stopped");
     router.refresh();
   }
 
@@ -989,13 +990,13 @@ export function OperationsView({
       const failed = results.filter((r) => r.error);
       if (failed.length > 0) {
         console.error("Failed to persist project order:", failed.map((r) => r.error));
-        toast({ title: "Error", description: "Failed to save project order. Please refresh and try again.", variant: "destructive" });
+        showError("Could not save project order", "Please refresh and try again.");
       }
     } catch (err) {
       console.error("Failed to persist project order:", err);
-      toast({ title: "Error", description: "Failed to save project order.", variant: "destructive" });
+      showError("Could not save project order");
     }
-  }, [supabase, toast]);
+  }, [supabase]);
 
   const persistTaskOrder = useCallback(async (taskIds: string[]) => {
     try {
@@ -1006,13 +1007,13 @@ export function OperationsView({
       const failed = results.filter((r) => r.error);
       if (failed.length > 0) {
         console.error("Failed to persist task order:", failed.map((r) => r.error));
-        toast({ title: "Error", description: "Failed to save task order. Please refresh and try again.", variant: "destructive" });
+        showError("Could not save task order", "Please refresh and try again.");
       }
     } catch (err) {
       console.error("Failed to persist task order:", err);
-      toast({ title: "Error", description: "Failed to save task order.", variant: "destructive" });
+      showError("Could not save task order");
     }
-  }, [supabase, toast]);
+  }, [supabase]);
 
   function handleProjectDragEnd(event: DragEndEvent) {
     const { active, over } = event;
@@ -1186,10 +1187,12 @@ export function OperationsView({
           >
             <div className="flex flex-col gap-2">
               {filteredProjects.length === 0 ? (
-                <div className="bg-card rounded-xl border border-border py-12 px-5 text-center">
-                  <Inbox size={36} className="mx-auto text-muted-foreground" />
-                  <div className="text-[15px] font-semibold text-foreground mt-3">No projects match filters</div>
-                  <div className="text-[13px] text-muted-foreground mt-1">Try adjusting your filters or create a new project.</div>
+                <div className="bg-card rounded-xl border border-border">
+                  <EmptyState
+                    icon={Inbox}
+                    title="No projects match filters"
+                    description="Try adjusting your filters or create a new project."
+                  />
                 </div>
               ) : (
                 filteredProjects.map((p) => (
@@ -1232,7 +1235,7 @@ export function OperationsView({
       {view === "approvals" && (
         <ApprovalsView
           approvals={approvals}
-          onNavigateToApproval={(id) => router.push(`/admin/operations/approvals/${id}`)}
+          onNavigateToApproval={(id) => router.push(`/tasks/approvals/${id}`)}
         />
       )}
 

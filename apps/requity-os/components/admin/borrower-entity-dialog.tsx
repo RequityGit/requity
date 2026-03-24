@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { AddressAutocomplete } from "@/components/ui/address-autocomplete";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import {
@@ -20,11 +21,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useToast } from "@/components/ui/use-toast";
+import { showSuccess, showError } from "@/lib/toast";
 import {
   addEntityAction,
   updateEntityAction,
-} from "@/app/(authenticated)/admin/borrowers/new/actions";
+} from "@/app/(authenticated)/(admin)/borrowers/new/actions";
 import { Loader2 } from "lucide-react";
 import { US_STATES, ENTITY_TYPES } from "@/lib/constants";
 import type { Tables } from "@/lib/supabase/types";
@@ -46,7 +47,6 @@ export function BorrowerEntityDialog({
 }: BorrowerEntityDialogProps) {
   const [loading, setLoading] = useState(false);
   const router = useRouter();
-  const { toast } = useToast();
 
   const [entityName, setEntityName] = useState("");
   const [entityType, setEntityType] = useState("");
@@ -129,15 +129,9 @@ export function BorrowerEntityDialog({
     }
 
     if (result.error) {
-      toast({
-        title: entity ? "Error updating entity" : "Error adding entity",
-        description: result.error,
-        variant: "destructive",
-      });
+      showError(entity ? "Could not update entity" : "Could not add entity", result.error);
     } else {
-      toast({
-        title: entity ? "Entity updated" : "Entity added",
-      });
+      showSuccess(entity ? "Entity updated" : "Entity added");
       router.refresh();
       onClose();
     }
@@ -211,10 +205,16 @@ export function BorrowerEntityDialog({
 
           <div className="space-y-2">
             <Label htmlFor="entAddr1">Address Line 1</Label>
-            <Input
+            <AddressAutocomplete
               id="entAddr1"
               value={addressLine1}
-              onChange={(e) => setAddressLine1(e.target.value)}
+              onChange={setAddressLine1}
+              onAddressSelect={(addr) => {
+                setAddressLine1(addr.address_line1);
+                setCity(addr.city);
+                setState(addr.state);
+                setZip(addr.zip);
+              }}
               placeholder="123 Business Ave"
             />
           </div>

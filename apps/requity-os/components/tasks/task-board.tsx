@@ -1,15 +1,17 @@
 "use client";
 
 import { useState, useCallback, useMemo, useEffect } from "react";
+import { useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
-import { useToast } from "@/components/ui/use-toast";
+import { showError } from "@/lib/toast";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
-import { Plus, Repeat2, Shield } from "lucide-react";
+import { Plus, Repeat2, Shield, Archive } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/components/shared/page-header";
 import { TaskColumn } from "./task-column";
 import { TaskFilters } from "./task-filters";
-import { TaskSheet } from "./task-sheet";
+import { TaskSplitPanel } from "./task-split-panel";
 import { ApprovalDrawer } from "./approval-drawer";
 import { RecurringTemplatesTable } from "./recurring-templates-table";
 import { TemplateSheet } from "./template-sheet";
@@ -51,6 +53,8 @@ export function TaskBoard({
   const [editingTask, setEditingTask] = useState<OpsTask | null>(null);
   const [approvalDrawerTask, setApprovalDrawerTask] = useState<OpsTask | null>(null);
   const [activeView, setActiveView] = useState<ViewTab>("kanban");
+  const [mobileColumn, setMobileColumn] = useState<string>("To Do");
+  const isMobile = useIsMobile();
 
   // Template sheet state
   const [templateSheetOpen, setTemplateSheetOpen] = useState(false);
@@ -62,8 +66,21 @@ export function TaskBoard({
   const [priorityFilter, setPriorityFilter] = useState("all");
   const [typeFilter, setTypeFilter] = useState<TaskTypeFilter>("all");
   const [myApprovalsFilter, setMyApprovalsFilter] = useState(false);
+  const [showParkingLot, setShowParkingLot] = useState(false);
 
-  const { toast } = useToast();
+  const searchParams = useSearchParams();
+
+  // Open a specific task from URL param (e.g., /tasks?task=<id>)
+  useEffect(() => {
+    const taskId = searchParams.get("task");
+    if (taskId && tasks.length > 0) {
+      const found = tasks.find((t) => t.id === taskId);
+      if (found) {
+        setEditingTask(found);
+        setSheetOpen(true);
+      }
+    }
+  }, [searchParams, tasks]);
 
   // Realtime subscription
   useEffect(() => {
@@ -131,12 +148,17 @@ export function TaskBoard({
   }, [tasks, currentUserId]);
 
   // Filtered tasks
+  const parkingLotTasks = useMemo(() => tasks.filter((t) => t.status === "Parking Lot"), [tasks]);
+
   const filteredTasks = useMemo(() => {
     return tasks.filter((t) => {
+      // Parking Lot tasks are shown in their own section, not the kanban
+      if (t.status === "Parking Lot") return false;
       if (myApprovalsFilter) {
         if (!t.requires_approval || t.approver_id !== currentUserId) return false;
       }
-      if (typeFilter !== "all" && t.type !== typeFilter) return false;
+      if (typeFilter === "approval" && t.type !== "approval" && !t.requires_approval) return false;
+      if (typeFilter === "task" && (t.type !== "task" || t.requires_approval)) return false;
       if (assigneeFilter !== "all" && t.assigned_to !== assigneeFilter) return false;
       if (categoryFilter !== "all" && t.category !== categoryFilter) return false;
       if (priorityFilter !== "all" && t.priority !== priorityFilter) return false;
@@ -167,25 +189,17 @@ export function TaskBoard({
         const result = await completeRecurringTask(taskId);
         if (result.error) {
           setTasks((prev) => prev.map((t) => (t.id === taskId ? task : t)));
-          toast({
-            title: "Failed to complete task",
-            description: result.error,
-            variant: "destructive",
-          });
+          showError("Could not complete task", result.error);
         }
       } else {
         const result = await completeTask(taskId);
         if (!result.success) {
           setTasks((prev) => prev.map((t) => (t.id === taskId ? task : t)));
-          toast({
-            title: "Failed to complete task",
-            description: result.error ?? "Unknown error",
-            variant: "destructive",
-          });
+          showError("Could not complete task", result.error ?? "Unknown error");
         }
       }
     },
-    [tasks, toast]
+    [tasks]
   );
 
   // Drag handlers
@@ -212,15 +226,13 @@ export function TaskBoard({
       // Prevent approval tasks from being dragged directly to Complete (must go through approval)
       if (columnId === "Complete" && task.requires_approval) return;
 
-      if (columnId === "Complete") return;
-
       setTasks((prev) =>
         prev.map((t) =>
           t.id === taskId
             ? {
                 ...t,
                 status: columnId,
-                completed_at: null,
+                completed_at: columnId === "Complete" ? new Date().toISOString() : null,
                 updated_at: new Date().toISOString(),
               }
             : t
@@ -230,14 +242,10 @@ export function TaskBoard({
       const result = await updateTaskStatus(taskId, columnId);
       if (!result.success) {
         setTasks((prev) => prev.map((t) => (t.id === taskId ? task : t)));
-        toast({
-          title: "Failed to update task",
-          description: result.error ?? "Unknown error",
-          variant: "destructive",
-        });
+        showError("Could not update task", result.error ?? "Unknown error");
       }
     },
-    [tasks, toast]
+    [tasks]
   );
 
   // Task saved/deleted handlers
@@ -314,7 +322,7 @@ export function TaskBoard({
   const activeTemplateCount = templates.filter((t) => t.is_active).length;
 
   return (
-    <div className="p-6 md:p-8">
+    <div>
       <PageHeader
         title="Operations"
         description="Tasks & approvals to keep the business running."
@@ -330,69 +338,95 @@ export function TaskBoard({
       />
 
       {/* Tab bar + Filters */}
-      <div className="flex items-center gap-4 mb-5 flex-wrap">
-        {/* View tabs: Kanban vs Recurring */}
-        <div className="flex items-center gap-1">
-          <button
-            type="button"
-            onClick={() => setActiveView("kanban")}
-            className={cn(
-              "px-3.5 py-1.5 rounded-md text-[13px] font-medium transition-colors",
-              activeView === "kanban"
-                ? "bg-primary text-primary-foreground"
-                : "text-muted-foreground hover:bg-accent"
-            )}
-          >
-            Tasks
-          </button>
-          <button
-            type="button"
-            onClick={() => setActiveView("recurring")}
-            className={cn(
-              "px-3.5 py-1.5 rounded-md text-[13px] font-medium transition-colors flex items-center gap-1.5",
-              activeView === "recurring"
-                ? "bg-primary text-primary-foreground"
-                : "text-muted-foreground hover:bg-accent"
-            )}
-          >
-            <Repeat2 className="h-3.5 w-3.5" strokeWidth={1.5} />
-            Recurring
-            <span
+      <div className="flex flex-col gap-3 md:flex-row md:items-center md:gap-4 mb-5">
+        <div className="flex items-center gap-2 flex-wrap">
+          {/* View tabs: Kanban vs Recurring */}
+          <div className="flex items-center gap-1">
+            <button
+              type="button"
+              onClick={() => setActiveView("kanban")}
               className={cn(
-                "text-[10px] font-semibold px-1.5 py-0.5 rounded-full num",
-                activeView === "recurring"
-                  ? "bg-primary-foreground/10 text-primary-foreground"
-                  : "bg-muted text-muted-foreground"
+                "px-3.5 py-2 md:py-1.5 rounded-md text-[13px] font-medium transition-colors min-h-[36px]",
+                activeView === "kanban"
+                  ? "bg-primary text-primary-foreground"
+                  : "text-muted-foreground hover:bg-accent"
               )}
             >
-              {activeTemplateCount}
-            </span>
-          </button>
-        </div>
+              Tasks
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveView("recurring")}
+              className={cn(
+                "px-3.5 py-2 md:py-1.5 rounded-md text-[13px] font-medium transition-colors flex items-center gap-1.5 min-h-[36px]",
+                activeView === "recurring"
+                  ? "bg-primary text-primary-foreground"
+                  : "text-muted-foreground hover:bg-accent"
+              )}
+            >
+              <Repeat2 className="h-3.5 w-3.5" strokeWidth={1.5} />
+              Recurring
+              <span
+                className={cn(
+                  "text-[10px] font-semibold px-1.5 py-0.5 rounded-full num",
+                  activeView === "recurring"
+                    ? "bg-primary-foreground/10 text-primary-foreground"
+                    : "bg-muted text-muted-foreground"
+                )}
+              >
+                {activeTemplateCount}
+              </span>
+            </button>
+          </div>
 
-        {activeView === "kanban" && myApprovalsCount > 0 && (
-          <button
-            type="button"
-            onClick={() => setMyApprovalsFilter(!myApprovalsFilter)}
-            className={cn(
-              "flex items-center gap-1.5 px-3 py-1.5 rounded-md text-[12px] font-medium transition-colors border",
-              myApprovalsFilter
-                ? "bg-blue-500/10 border-blue-500/20 text-blue-500"
-                : "bg-transparent border-border text-muted-foreground hover:bg-accent"
-            )}
-          >
-            <Shield className="h-3.5 w-3.5" strokeWidth={1.5} />
-            My Approvals
-            <span className={cn(
-              "text-[10px] font-semibold px-1.5 py-0.5 rounded-full num",
-              myApprovalsFilter
-                ? "bg-blue-500/20 text-blue-500"
-                : "bg-muted text-muted-foreground"
-            )}>
-              {myApprovalsCount}
-            </span>
-          </button>
-        )}
+          {activeView === "kanban" && parkingLotTasks.length > 0 && (
+            <button
+              type="button"
+              onClick={() => setShowParkingLot(!showParkingLot)}
+              className={cn(
+                "flex items-center gap-1.5 px-3 py-2 md:py-1.5 rounded-md text-[12px] font-medium transition-colors border min-h-[36px]",
+                showParkingLot
+                  ? "bg-amber-500/10 border-amber-500/20 text-amber-600 dark:text-amber-400"
+                  : "bg-transparent border-border text-muted-foreground hover:bg-accent"
+              )}
+            >
+              <Archive className="h-3.5 w-3.5" strokeWidth={1.5} />
+              Parking Lot
+              <span className={cn(
+                "text-[10px] font-semibold px-1.5 py-0.5 rounded-full num",
+                showParkingLot
+                  ? "bg-amber-500/20 text-amber-600 dark:text-amber-400"
+                  : "bg-muted text-muted-foreground"
+              )}>
+                {parkingLotTasks.length}
+              </span>
+            </button>
+          )}
+
+          {activeView === "kanban" && myApprovalsCount > 0 && (
+            <button
+              type="button"
+              onClick={() => setMyApprovalsFilter(!myApprovalsFilter)}
+              className={cn(
+                "flex items-center gap-1.5 px-3 py-2 md:py-1.5 rounded-md text-[12px] font-medium transition-colors border min-h-[36px]",
+                myApprovalsFilter
+                  ? "bg-blue-500/10 border-blue-500/20 text-blue-500"
+                  : "bg-transparent border-border text-muted-foreground hover:bg-accent"
+              )}
+            >
+              <Shield className="h-3.5 w-3.5" strokeWidth={1.5} />
+              My Approvals
+              <span className={cn(
+                "text-[10px] font-semibold px-1.5 py-0.5 rounded-full num",
+                myApprovalsFilter
+                  ? "bg-blue-500/20 text-blue-500"
+                  : "bg-muted text-muted-foreground"
+              )}>
+                {myApprovalsCount}
+              </span>
+            </button>
+          )}
+        </div>
 
         {activeView === "kanban" && (
           <TaskFilters
@@ -417,7 +451,43 @@ export function TaskBoard({
           onEdit={handleEditTemplate}
           onTemplatesChange={setTemplates}
         />
+      ) : isMobile ? (
+        /* Mobile: tabbed column view -- one column at a time */
+        <div>
+          <div className="flex rounded-lg bg-muted p-1 mb-4 mobile-scroll">
+            {COLUMNS.map((col) => {
+              const count = filteredTasks.filter((t) => t.status === col.id).length;
+              return (
+                <button
+                  key={col.id}
+                  type="button"
+                  onClick={() => setMobileColumn(col.id)}
+                  className={cn(
+                    "flex-1 min-w-0 px-2 py-2 rounded-md text-xs font-medium transition-colors whitespace-nowrap min-h-[40px]",
+                    mobileColumn === col.id
+                      ? "bg-background text-foreground shadow-sm"
+                      : "text-muted-foreground"
+                  )}
+                >
+                  {col.label.replace("Pending Approval", "Approval")}
+                  <span className="ml-1 text-[10px] opacity-60 num">{count}</span>
+                </button>
+              );
+            })}
+          </div>
+          <TaskColumn
+            status={mobileColumn}
+            label={COLUMNS.find((c) => c.id === mobileColumn)?.label ?? mobileColumn}
+            tasks={filteredTasks.filter((t) => t.status === mobileColumn)}
+            profiles={profiles}
+            onComplete={handleComplete}
+            onTaskClick={handleTaskClick}
+            onDragStart={handleDragStart}
+            onDrop={handleDrop}
+          />
+        </div>
       ) : (
+        /* Desktop: side-by-side columns */
         <div className="flex gap-4 overflow-x-auto pb-6">
           {COLUMNS.map((col) => {
             const colTasks = filteredTasks.filter((t) => t.status === col.id);
@@ -438,8 +508,46 @@ export function TaskBoard({
         </div>
       )}
 
-      {/* Task Sheet */}
-      <TaskSheet
+      {/* Parking Lot Section */}
+      {activeView === "kanban" && showParkingLot && parkingLotTasks.length > 0 && (
+        <div className="mt-6 rounded-xl border border-border bg-card">
+          <div className="flex items-center justify-between px-5 py-3 border-b border-border">
+            <div className="flex items-center gap-2">
+              <Archive className="h-4 w-4 text-amber-600 dark:text-amber-400" strokeWidth={1.5} />
+              <span className="text-sm font-semibold text-foreground">Parking Lot</span>
+              <span className="text-xs text-muted-foreground">Good ideas, not right now</span>
+            </div>
+            <span className="text-xs text-muted-foreground num">{parkingLotTasks.length} items</span>
+          </div>
+          <div className="divide-y divide-border">
+            {parkingLotTasks.map((t) => (
+              <div
+                key={t.id}
+                className="flex items-center gap-3 px-5 py-3 hover:bg-muted/30 transition-colors cursor-pointer"
+                onClick={() => handleTaskClick(t)}
+              >
+                <span
+                  className="h-2 w-2 rounded-full shrink-0"
+                  style={{
+                    backgroundColor:
+                      t.priority === "High" ? "#E5453D" : t.priority === "Medium" ? "#E5930E" : "#8B8B8B",
+                  }}
+                />
+                <span className="text-[13px] font-medium text-foreground flex-1 truncate">{t.title}</span>
+                {t.category && (
+                  <span className="text-[11px] text-muted-foreground shrink-0">{t.category}</span>
+                )}
+                {t.assigned_to_name && (
+                  <span className="text-[11px] text-muted-foreground shrink-0">{t.assigned_to_name}</span>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Task Split Panel */}
+      <TaskSplitPanel
         open={sheetOpen}
         task={editingTask}
         profiles={profiles}

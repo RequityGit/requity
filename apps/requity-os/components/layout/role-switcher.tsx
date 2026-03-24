@@ -10,10 +10,8 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Badge } from "@/components/ui/badge";
 import {
   Check,
-  ChevronsUpDown,
   Shield,
   Landmark,
   Building2,
@@ -33,27 +31,23 @@ interface RoleSwitcherProps {
 
 const roleConfig: Record<
   Role,
-  { label: string; icon: React.ElementType; badgeClass: string }
+  { label: string; icon: React.ElementType }
 > = {
   super_admin: {
     label: "Super Admin",
     icon: Crown,
-    badgeClass: "bg-muted text-foreground hover:bg-muted/80 border-border",
   },
   admin: {
     label: "Admin",
     icon: Shield,
-    badgeClass: "bg-muted text-foreground hover:bg-muted/80",
   },
   investor: {
     label: "Investor",
     icon: Landmark,
-    badgeClass: "bg-muted text-foreground hover:bg-muted/80",
   },
   borrower: {
     label: "Borrower",
     icon: Building2,
-    badgeClass: "bg-muted text-foreground hover:bg-muted/80",
   },
 };
 
@@ -111,23 +105,18 @@ export function RoleSwitcher({ activeRole, allowedRoles, onViewAsUser }: RoleSwi
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <button
-            className="flex items-center gap-1.5 rounded-md px-2.5 py-1 text-sm font-medium transition-colors focus:outline-none disabled:opacity-50"
+            className="flex items-center justify-center h-9 w-9 rounded-md border border-border bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground transition-colors focus:outline-none disabled:opacity-50"
             disabled={switching}
+            aria-label={`Viewing as ${current.label}`}
           >
-            <Badge variant="outline" className={`${current.badgeClass} cursor-pointer`}>
-              <span className="flex items-center gap-1.5">
-                <CurrentIcon className="h-3.5 w-3.5" />
-                {current.label}
-                <ChevronsUpDown className="h-3 w-3 opacity-60" />
-              </span>
-            </Badge>
+            <CurrentIcon className="h-4 w-4" />
           </button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="w-52">
           <DropdownMenuLabel className="text-xs text-muted-foreground">
             <span className="flex items-center gap-1.5">
               <Eye className="h-3 w-3" />
-              View portal as
+              Viewing as {current.label}
             </span>
           </DropdownMenuLabel>
           <DropdownMenuSeparator />
@@ -174,29 +163,28 @@ export function RoleSwitcher({ activeRole, allowedRoles, onViewAsUser }: RoleSwi
     );
   }
 
-  // Non-super-admin with single role: static badge
   if (!canSwitch) {
+    const CurrentIcon = current.icon;
     return (
-      <Badge variant="outline" className={current.badgeClass}>
-        {current.label}
-      </Badge>
+      <button
+        className="flex items-center justify-center h-9 w-9 rounded-md border border-border bg-muted/50 text-muted-foreground cursor-default"
+        aria-label={current.label}
+      >
+        <CurrentIcon className="h-4 w-4" />
+      </button>
     );
   }
 
-  // Non-super-admin with multiple roles: existing role-switch dropdown
+  const CurrentIcon = current.icon;
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <button
-          className="flex items-center gap-1.5 rounded-md px-2.5 py-1 text-sm font-medium transition-colors focus:outline-none disabled:opacity-50"
+          className="flex items-center justify-center h-9 w-9 rounded-md border border-border bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground transition-colors focus:outline-none disabled:opacity-50"
           disabled={switching}
+          aria-label={`Viewing as ${current.label}`}
         >
-          <Badge variant="outline" className={`${current.badgeClass} cursor-pointer`}>
-            <span className="flex items-center gap-1.5">
-              {current.label}
-              <ChevronsUpDown className="h-3 w-3 opacity-60" />
-            </span>
-          </Badge>
+          <CurrentIcon className="h-4 w-4" />
         </button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-48">

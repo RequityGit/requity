@@ -10,8 +10,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useToast } from "@/components/ui/use-toast";
-import { Plus } from "lucide-react";
+import { showSuccess, showError } from "@/lib/toast";
+import { Plus, FileText } from "lucide-react";
+import { EmptyState } from "@/components/shared/EmptyState";
 import { Checkbox } from "@/components/ui/checkbox";
 import { cn } from "@/lib/utils";
 import { CONDITION_CATEGORIES, CONDITION_STAGES } from "@/lib/constants";
@@ -40,9 +41,13 @@ interface ConditionTemplate {
   borrower_description: string | null;
   responsible_party: string | null;
   critical_path_item: boolean | null;
+  is_borrower_facing?: boolean | null;
   requires_approval: boolean | null;
+  per_borrower?: boolean | null;
   sort_order: number | null;
   is_active: boolean | null;
+  template_file_url: string | null;
+  template_file_name: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -90,7 +95,6 @@ CATEGORY_LABELS["post_closing_items"] = "Post Closing Items";
 
 export function ConditionsClient({ templates }: ConditionsClientProps) {
   const router = useRouter();
-  const { toast } = useToast();
 
   // Optimistic local state — badges update instantly, server syncs in background
   const [localTemplates, setLocalTemplates] = useState(templates);
@@ -202,10 +206,10 @@ export function ConditionsClient({ templates }: ConditionsClientProps) {
   async function handleSave(data: ConditionFormData) {
     const result = await saveCondition(data);
     if (result.error) {
-      toast({ title: "Error", description: result.error, variant: "destructive" });
+      showError("Could not save", result.error);
       return false;
     }
-    toast({ title: result.message || "Saved" });
+    showSuccess(result.message || "Saved");
     setSlideOverOpen(false);
     router.refresh();
     return true;
@@ -214,9 +218,9 @@ export function ConditionsClient({ templates }: ConditionsClientProps) {
   async function handleDeactivate(id: string) {
     const result = await deactivateCondition(id);
     if (result.error) {
-      toast({ title: "Error", description: result.error, variant: "destructive" });
+      showError("Could not save", result.error);
     } else {
-      toast({ title: "Condition deactivated" });
+      showSuccess("Condition deactivated");
       router.refresh();
     }
   }
@@ -224,9 +228,9 @@ export function ConditionsClient({ templates }: ConditionsClientProps) {
   async function handleReactivate(id: string) {
     const result = await reactivateCondition(id);
     if (result.error) {
-      toast({ title: "Error", description: result.error, variant: "destructive" });
+      showError("Could not save", result.error);
     } else {
-      toast({ title: "Condition reactivated" });
+      showSuccess("Condition reactivated");
       router.refresh();
     }
   }
@@ -236,6 +240,7 @@ export function ConditionsClient({ templates }: ConditionsClientProps) {
       id: string,
       fields: Partial<{
         condition_name: string;
+        required_stage: "lead" | "analysis" | "negotiation" | "execution" | "closed";
         applies_to_commercial: boolean;
         applies_to_rtl: boolean;
         applies_to_dscr: boolean;
@@ -259,17 +264,13 @@ export function ConditionsClient({ templates }: ConditionsClientProps) {
             prev.map((t) => (t.id === id ? oldTemplate : t))
           );
         }
-        toast({
-          title: "Error",
-          description: result.error,
-          variant: "destructive",
-        });
+        showError("Could not update condition", result.error);
         return false;
       }
       // No router.refresh() needed — local state already reflects the change
       return true;
     },
-    [toast]
+    []
   );
 
   const handleReorder = useCallback(
@@ -280,16 +281,12 @@ export function ConditionsClient({ templates }: ConditionsClientProps) {
       }));
       const result = await reorderConditions(updates);
       if (result.error) {
-        toast({
-          title: "Error",
-          description: result.error,
-          variant: "destructive",
-        });
+        showError("Could not reorder conditions", result.error);
       } else {
         router.refresh();
       }
     },
-    [toast, router]
+    [router]
   );
 
   return (
@@ -390,9 +387,7 @@ export function ConditionsClient({ templates }: ConditionsClientProps) {
           />
         ))}
         {grouped.length === 0 && (
-          <div className="py-12 text-center text-muted-foreground">
-            No condition templates match your filters.
-          </div>
+          <EmptyState icon={FileText} title="No condition templates match your filters." />
         )}
       </div>
 

@@ -4,15 +4,13 @@ import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { useConfirm } from "@/components/shared/ConfirmDialog";
 import { LoanTypeBadge } from "./loan-type-badge";
 import {
   ChevronDown,
@@ -23,9 +21,13 @@ import {
   RotateCcw,
   ArrowUp,
   ArrowDown,
-  AlertCircle,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { CONDITION_STAGES } from "@/lib/constants/db-enums";
+
+const STAGE_LABEL_MAP: Record<string, string> = Object.fromEntries(
+  CONDITION_STAGES.map((s) => [s.value, s.label])
+);
 
 interface ConditionTemplate {
   id: string;
@@ -41,9 +43,13 @@ interface ConditionTemplate {
   borrower_description: string | null;
   responsible_party: string | null;
   critical_path_item: boolean | null;
+  is_borrower_facing?: boolean | null;
   requires_approval: boolean | null;
+  per_borrower?: boolean | null;
   sort_order: number | null;
   is_active: boolean | null;
+  template_file_url: string | null;
+  template_file_name: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -73,11 +79,13 @@ interface ConditionCategorySectionProps {
     id: string,
     fields: Partial<{
       condition_name: string;
+      required_stage: "lead" | "analysis" | "negotiation" | "execution" | "closed";
       applies_to_commercial: boolean;
       applies_to_rtl: boolean;
       applies_to_dscr: boolean;
       applies_to_guc: boolean;
       applies_to_transactional: boolean;
+      is_borrower_facing: boolean;
     }>
   ) => Promise<boolean>;
 }
@@ -168,7 +176,7 @@ export function ConditionCategorySection({
   onReorder,
   onInlineUpdate,
 }: ConditionCategorySectionProps) {
-  const [deactivateTarget, setDeactivateTarget] = useState<string | null>(null);
+  const confirm = useConfirm();
   const [reordering, setReordering] = useState(false);
 
   function moveItem(index: number, direction: "up" | "down") {
@@ -232,8 +240,14 @@ export function ConditionCategorySection({
                 <th className="text-left font-medium text-muted-foreground px-4 py-2 w-16">
                   RP
                 </th>
-                <th className="text-center font-medium text-muted-foreground px-4 py-2 w-10">
-                  CP
+                <th className="text-center font-medium text-muted-foreground px-4 py-2 w-10" title="Borrower Facing">
+                  BF
+                </th>
+                <th className="text-center font-medium text-muted-foreground px-4 py-2 w-10" title="Per Borrower">
+                  PB
+                </th>
+                <th className="text-left font-medium text-muted-foreground px-4 py-2 w-[120px]">
+                  Stage
                 </th>
                 <th className="text-right font-medium text-muted-foreground px-4 py-2 w-[140px]">
                   Actions
@@ -333,12 +347,67 @@ export function ConditionCategorySection({
                     {item.responsible_party
                       ? RP_ABBREVIATIONS[item.responsible_party] ||
                         item.responsible_party
-                      : "—"}
+                      : "\u2014"}
                   </td>
                   <td className="px-4 py-2 text-center">
-                    {item.critical_path_item && (
-                      <AlertCircle className="h-3.5 w-3.5 text-red-500 mx-auto" />
+                    <button
+                      onClick={() =>
+                        onInlineUpdate(item.id, {
+                          is_borrower_facing: !(item.is_borrower_facing ?? true),
+                        })
+                      }
+                      className={cn(
+                        "h-5 w-5 rounded-full border-2 mx-auto flex items-center justify-center transition-colors",
+                        (item.is_borrower_facing ?? true)
+                          ? "border-teal-500 bg-teal-500/20 text-teal-500"
+                          : "border-muted-foreground/30 text-transparent hover:border-muted-foreground/50"
+                      )}
+                      title={
+                        (item.is_borrower_facing ?? true)
+                          ? "Borrower facing (click to make internal)"
+                          : "Internal only (click to make borrower facing)"
+                      }
+                    >
+                      {(item.is_borrower_facing ?? true) && (
+                        <svg className="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><path d="M20 6L9 17l-5-5" /></svg>
+                      )}
+                    </button>
+                  </td>
+                  <td className="px-4 py-2 text-center">
+                    {item.per_borrower ? (
+                      <span
+                        className="inline-flex items-center justify-center h-5 w-5 rounded-full bg-violet-500/20 text-violet-600 text-[10px] font-bold"
+                        title="Per Borrower: creates one per borrower on the deal"
+                      >
+                        PB
+                      </span>
+                    ) : (
+                      <span className="text-muted-foreground/30">-</span>
                     )}
+                  </td>
+                  <td className="px-4 py-2">
+                    <Select
+                      value={item.required_stage}
+                      onValueChange={(v) =>
+                        onInlineUpdate(item.id, {
+                          required_stage: v as "lead" | "analysis" | "negotiation" | "execution" | "closed",
+                        })
+                      }
+                    >
+                      <SelectTrigger
+                        className="inline-field text-xs w-[110px]"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {CONDITION_STAGES.map((s) => (
+                          <SelectItem key={s.value} value={s.value}>
+                            {s.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </td>
                   <td className="px-4 py-2 text-right">
                     <div className="flex items-center justify-end gap-1">
@@ -356,7 +425,17 @@ export function ConditionCategorySection({
                           variant="ghost"
                           size="sm"
                           className="h-7 w-7 p-0 text-muted-foreground hover:text-red-600"
-                          onClick={() => setDeactivateTarget(item.id)}
+                          onClick={async () => {
+                            const ok = await confirm({
+                              title: "Deactivate Condition",
+                              description:
+                                "This will remove this condition from new loan checklists. Existing loan conditions will not be affected. You can reactivate it later.",
+                              confirmLabel: "Deactivate",
+                              destructive: true,
+                            });
+                            if (!ok) return;
+                            onDeactivate(item.id);
+                          }}
                           title="Deactivate"
                         >
                           <Archive className="h-3.5 w-3.5" />
@@ -380,34 +459,6 @@ export function ConditionCategorySection({
           </table>
         </div>
       )}
-
-      {/* Deactivate Confirmation */}
-      <AlertDialog
-        open={!!deactivateTarget}
-        onOpenChange={() => setDeactivateTarget(null)}
-      >
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Deactivate Condition</AlertDialogTitle>
-            <AlertDialogDescription>
-              This will remove this condition from new loan checklists. Existing
-              loan conditions will not be affected. You can reactivate it later.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={() => {
-                if (deactivateTarget) onDeactivate(deactivateTarget);
-                setDeactivateTarget(null);
-              }}
-              className="bg-red-600 hover:bg-red-700"
-            >
-              Deactivate
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
     </div>
   );
 }

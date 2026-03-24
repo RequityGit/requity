@@ -16,7 +16,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useToast } from "@/components/ui/use-toast";
+import { showSuccess, showError, showWarning } from "@/lib/toast";
 import { CRM_ACTIVITY_TYPES } from "@/lib/constants";
 import {
   Mail,
@@ -34,6 +34,8 @@ import {
   Paperclip,
   MessageSquare,
 } from "lucide-react";
+import { EmptyState } from "@/components/shared/EmptyState";
+import { ExpandableText } from "@/components/shared/ExpandableText";
 import { relTime } from "../contact-detail-shared";
 import type { ActivityData, EmailData } from "../types";
 import { ACTIVITY_TYPE_CONFIG } from "../types";
@@ -99,6 +101,7 @@ interface DetailActivityTabProps {
   currentUserId: string;
   onComposeEmail?: () => void;
   logCallTrigger?: number;
+  onRefreshTimeline?: () => void;
 }
 
 export function DetailActivityTab({
@@ -108,13 +111,13 @@ export function DetailActivityTab({
   currentUserId,
   onComposeEmail,
   logCallTrigger = 0,
+  onRefreshTimeline,
 }: DetailActivityTabProps) {
   const [filter, setFilter] = useState("all");
   const [showForm, setShowForm] = useState(false);
   const [loading, setLoading] = useState(false);
   const [expandedEmailId, setExpandedEmailId] = useState<string | null>(null);
   const router = useRouter();
-  const { toast } = useToast();
 
   const [form, setForm] = useState({
     activity_type: "note",
@@ -182,7 +185,7 @@ export function DetailActivityTab({
     e.preventDefault();
 
     if (form.activity_type === "call" && !form.description.trim()) {
-      toast({ title: "Call notes are required", variant: "destructive" });
+      showWarning("Call notes are required");
       return;
     }
 
@@ -205,17 +208,14 @@ export function DetailActivityTab({
         .update({ last_contacted_at: new Date().toISOString() })
         .eq("id", contactId);
 
-      toast({ title: "Activity logged" });
+      showSuccess("Activity logged");
       setShowForm(false);
       setForm({ activity_type: "note", subject: "", description: "" });
+      onRefreshTimeline?.();
       router.refresh();
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : "Unknown error";
-      toast({
-        title: "Error logging activity",
-        description: message,
-        variant: "destructive",
-      });
+      showError("Could not log activity", message);
     } finally {
       setLoading(false);
     }
@@ -344,22 +344,15 @@ export function DetailActivityTab({
 
       {/* Unified Timeline */}
       {filtered.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-12 text-center">
-          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-muted mb-4">
-            <Activity
-              className="h-6 w-6 text-muted-foreground"
-              strokeWidth={1.5}
-            />
-          </div>
-          <h3 className="text-sm font-semibold text-foreground mb-1">
-            No activities
-          </h3>
-          <p className="text-sm text-muted-foreground">
-            {filter !== "all"
+        <EmptyState
+          icon={Activity}
+          title="No activities"
+          description={
+            filter !== "all"
               ? `No ${filter} activities. Try changing the filter.`
-              : "Log your first activity to start the timeline."}
-          </p>
-        </div>
+              : "Log your first activity to start the timeline."
+          }
+        />
       ) : (
         <div className="flex flex-col gap-0">
           {filtered.map((item, i) => {
@@ -470,6 +463,9 @@ function ActivityTimelineItem({
             </Badge>
           )}
         </div>
+        {a.description && (
+          <ExpandableText text={a.description} />
+        )}
       </div>
     </div>
   );

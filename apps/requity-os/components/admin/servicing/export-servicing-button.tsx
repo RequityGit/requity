@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
-import { exportServicingWorkbook } from "@/lib/export-servicing-xlsx";
 import { Button } from "@/components/ui/button";
 import { Download, FileSpreadsheet, Loader2 } from "lucide-react";
 
@@ -23,6 +22,8 @@ export function ExportServicingButton({
     setError(null);
 
     try {
+      // Dynamic import: ExcelJS (~200KB) only loads when user clicks Export
+      const { exportServicingWorkbook } = await import("@/lib/export-servicing-xlsx");
       const supabase = createClient();
       await exportServicingWorkbook(supabase, loanId);
     } catch (err) {

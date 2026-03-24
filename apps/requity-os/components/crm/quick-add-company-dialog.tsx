@@ -20,13 +20,13 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { CRM_COMPANY_TYPES } from "@/lib/constants";
-import { useToast } from "@/components/ui/use-toast";
-import { addCompanyAction } from "@/app/(authenticated)/admin/crm/company-actions";
+import { showSuccess, showError } from "@/lib/toast";
+import { addCompanyAction } from "@/app/(authenticated)/(admin)/companies/actions";
 
 interface QuickAddCompanyDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onCompanyCreated: (company: { id: string; name: string; company_type: string }) => void;
+  onCompanyCreated: (company: { id: string; company_number: string; name: string; company_type: string }) => void;
 }
 
 export function QuickAddCompanyDialog({
@@ -34,7 +34,6 @@ export function QuickAddCompanyDialog({
   onOpenChange,
   onCompanyCreated,
 }: QuickAddCompanyDialogProps) {
-  const { toast } = useToast();
   const [loading, setLoading] = useState(false);
   const [name, setName] = useState("");
   const [companyType, setCompanyType] = useState("");
@@ -66,24 +65,15 @@ export function QuickAddCompanyDialog({
       });
 
       if ("error" in result && result.error) {
-        toast({
-          title: "Error creating company",
-          description: result.error,
-          variant: "destructive",
-        });
+        showError("Could not create company", result.error);
       } else if (result.id) {
-        toast({ title: "Company created" });
-        onCompanyCreated({ id: result.id, name: name.trim(), company_type: companyType });
+        showSuccess("Company created");
+        onCompanyCreated({ id: result.id, company_number: result.company_number!, name: name.trim(), company_type: companyType });
         onOpenChange(false);
         reset();
       }
     } catch (err: unknown) {
-      toast({
-        title: "Error creating company",
-        description:
-          err instanceof Error ? err.message : "An unexpected error occurred",
-        variant: "destructive",
-      });
+      showError("Could not create company", err instanceof Error ? err.message : "An unexpected error occurred");
     } finally {
       setLoading(false);
     }

@@ -1,3 +1,4 @@
+import React from 'react';
 import { LanguageProvider } from '@/components/public/LanguageContext';
 
 export const metadata = {

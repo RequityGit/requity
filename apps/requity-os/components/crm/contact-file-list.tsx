@@ -3,8 +3,8 @@
 import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
-import { useToast } from "@/components/ui/use-toast";
-import { deleteContactFileAction } from "@/app/(authenticated)/admin/crm/actions";
+import { showSuccess, showError } from "@/lib/toast";
+import { deleteContactFileAction } from "@/app/(authenticated)/(admin)/contacts/actions";
 import { CONTACT_FILE_TYPES } from "@/lib/constants";
 import { formatDate } from "@/lib/format";
 import { FileText, Eye, ExternalLink, Trash2 } from "lucide-react";
@@ -33,7 +33,6 @@ function formatFileSize(bytes: number | null): string {
 }
 
 export function ContactFileList({ files, onDeleted }: ContactFileListProps) {
-  const { toast } = useToast();
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
   const handleView = async (storagePath: string) => {
@@ -47,7 +46,7 @@ export function ContactFileList({ files, onDeleted }: ContactFileListProps) {
         window.open(data.signedUrl, "_blank");
       }
     } catch {
-      toast({ title: "Error getting file URL", variant: "destructive" });
+      showError("Could not get file URL");
     }
   };
 
@@ -62,7 +61,7 @@ export function ContactFileList({ files, onDeleted }: ContactFileListProps) {
         window.open(data.signedUrl, "_blank");
       }
     } catch {
-      toast({ title: "Error downloading file", variant: "destructive" });
+      showError("Could not download file");
     }
   };
 
@@ -71,13 +70,9 @@ export function ContactFileList({ files, onDeleted }: ContactFileListProps) {
     try {
       const result = await deleteContactFileAction(file.id, file.storage_path);
       if ("error" in result && result.error) {
-        toast({
-          title: "Error deleting file",
-          description: result.error,
-          variant: "destructive",
-        });
+        showError("Could not delete file", result.error);
       } else {
-        toast({ title: "File deleted" });
+        showSuccess("File deleted");
         onDeleted();
       }
     } finally {

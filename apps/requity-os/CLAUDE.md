@@ -16,7 +16,7 @@ This is the RequityOS SaaS portal for borrowers, lenders, and investors. It is t
 ## Commands
 
 ```bash
-pnpm dev          # Start dev server (Turbopack)
+pnpm dev          # Start dev server (webpack; use pnpm dev:turbo for Turbopack)
 pnpm build        # Production build
 pnpm lint         # ESLint
 pnpm test         # Vitest

@@ -103,7 +103,7 @@ export function SessionSummary() {
         {/* Actions */}
         <div className="flex items-center gap-2 pt-2">
           <Link
-            href="/admin/dialer"
+            href="/dialer"
             onClick={resetDialer}
             className="flex-1 flex items-center justify-center gap-1.5 px-4 py-2 text-sm font-medium rounded-lg border border-border text-muted-foreground hover:bg-muted transition-colors"
           >
@@ -111,7 +111,7 @@ export function SessionSummary() {
             Back to Lists
           </Link>
           <Link
-            href="/admin/dialer"
+            href="/dialer"
             onClick={resetDialer}
             className="flex-1 flex items-center justify-center gap-1.5 px-4 py-2 text-sm font-medium rounded-lg bg-foreground text-background hover:opacity-90 transition-opacity"
           >

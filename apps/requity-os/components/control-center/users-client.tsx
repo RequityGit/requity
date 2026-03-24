@@ -20,20 +20,12 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
+import { useConfirm } from "@/components/shared/ConfirmDialog";
 import { Label } from "@/components/ui/label";
 import { RoleBadge } from "@/components/control-center/role-badge";
-import { useToast } from "@/components/ui/use-toast";
-import { Search, Plus, Eye, EyeOff, UserPlus, Blocks, Check } from "lucide-react";
+import { showSuccess, showError } from "@/lib/toast";
+import { Search, Plus, Eye, EyeOff, UserPlus, Blocks, Check, Users } from "lucide-react";
+import { EmptyState } from "@/components/shared/EmptyState";
 import { cn } from "@/lib/utils";
 import {
   grantRole,
@@ -129,9 +121,9 @@ export function UsersClient({
   modules,
 }: UsersClientProps) {
   const router = useRouter();
-  const { toast } = useToast();
   const { startImpersonation } = useImpersonation();
 
+  const confirm = useConfirm();
   const [search, setSearch] = useState("");
   const [roleFilter, setRoleFilter] = useState("all");
   const [showRevoked, setShowRevoked] = useState(false);
@@ -145,16 +137,6 @@ export function UsersClient({
   const [selectedBorrowerId, setSelectedBorrowerId] = useState("");
   const [grantLoading, setGrantLoading] = useState(false);
 
-  // Super admin confirmation
-  const [superAdminConfirmOpen, setSuperAdminConfirmOpen] = useState(false);
-
-  // Revoke confirmation
-  const [revokeConfirmOpen, setRevokeConfirmOpen] = useState(false);
-  const [revokeTarget, setRevokeTarget] = useState<{
-    roleId: string;
-    roleName: string;
-    userName: string;
-  } | null>(null);
   const [revokeLoading, setRevokeLoading] = useState(false);
 
   // Module management dialog
@@ -203,10 +185,15 @@ export function UsersClient({
   async function handleGrantRole() {
     if (!grantTargetUser || !selectedRole) return;
 
-    // If super_admin, show confirmation dialog first
-    if (selectedRole === "super_admin" && !superAdminConfirmOpen) {
-      setSuperAdminConfirmOpen(true);
-      return;
+    // If super_admin, require explicit confirmation
+    if (selectedRole === "super_admin") {
+      const ok = await confirm({
+        title: "Grant Super Admin Access",
+        description: `You are about to grant Super Admin access to ${grantTargetUser.full_name || grantTargetUser.name || grantTargetUser.email}. This gives full system control including the ability to manage all users, roles, and system configuration. Are you sure?`,
+        confirmLabel: "Grant Access",
+        destructive: false,
+      });
+      if (!ok) return;
     }
 
     setGrantLoading(true);
@@ -219,26 +206,31 @@ export function UsersClient({
     setGrantLoading(false);
 
     if (result.error) {
-      toast({ title: "Error", description: result.error, variant: "destructive" });
+      showError("Could not grant role", result.error);
     } else {
-      toast({ title: "Role granted successfully" });
+      showSuccess("Role granted");
       setGrantModalOpen(false);
-      setSuperAdminConfirmOpen(false);
       router.refresh();
     }
   }
 
-  async function handleRevokeRole() {
-    if (!revokeTarget) return;
+  async function handleRevokeRole(roleId: string, roleName: string, userName: string) {
+    const ok = await confirm({
+      title: "Revoke Role",
+      description: `Are you sure you want to revoke the ${roleName.replace("_", " ")} role from ${userName}? This can be reactivated later.`,
+      confirmLabel: "Revoke",
+      destructive: true,
+    });
+    if (!ok) return;
+
     setRevokeLoading(true);
-    const result = await revokeRole(revokeTarget.roleId, currentUserId);
+    const result = await revokeRole(roleId, currentUserId);
     setRevokeLoading(false);
 
     if (result.error) {
-      toast({ title: "Error", description: result.error, variant: "destructive" });
+      showError("Could not revoke role", result.error);
     } else {
-      toast({ title: "Role revoked successfully" });
-      setRevokeConfirmOpen(false);
+      showSuccess("Role revoked");
       router.refresh();
     }
   }
@@ -246,9 +238,9 @@ export function UsersClient({
   async function handleReactivateRole(roleId: string) {
     const result = await reactivateRole(roleId);
     if (result.error) {
-      toast({ title: "Error", description: result.error, variant: "destructive" });
+      showError("Could not reactivate role", result.error);
     } else {
-      toast({ title: "Role reactivated successfully" });
+      showSuccess("Role reactivated");
       router.refresh();
     }
   }
@@ -287,7 +279,7 @@ export function UsersClient({
         }
         return next;
       });
-      toast({ title: "Error", description: result.error, variant: "destructive" });
+      showError("Could not update module access", result.error);
     }
   }
 
@@ -298,10 +290,10 @@ export function UsersClient({
     setModuleLoading(null);
 
     if (result.error) {
-      toast({ title: "Error", description: result.error, variant: "destructive" });
+      showError("Could not update module access", result.error);
     } else {
       setPendingModuleIds(new Set(modules.map((m) => m.id)));
-      toast({ title: "All modules granted" });
+      showSuccess("All modules granted");
     }
   }
 
@@ -312,10 +304,10 @@ export function UsersClient({
     setModuleLoading(null);
 
     if (result.error) {
-      toast({ title: "Error", description: result.error, variant: "destructive" });
+      showError("Could not update module access", result.error);
     } else {
       setPendingModuleIds(new Set());
-      toast({ title: "All modules revoked" });
+      showSuccess("All modules revoked");
     }
   }
 
@@ -444,14 +436,7 @@ export function UsersClient({
                         <RoleBadge
                           key={r.id}
                           role={r.role}
-                          onRemove={() => {
-                            setRevokeTarget({
-                              roleId: r.id,
-                              roleName: r.role,
-                              userName: displayName,
-                            });
-                            setRevokeConfirmOpen(true);
-                          }}
+                          onRemove={() => handleRevokeRole(r.id, r.role, displayName)}
                         />
                       ))}
                       {showRevoked &&
@@ -533,9 +518,7 @@ export function UsersClient({
           </tbody>
         </table>
         {filtered.length === 0 && (
-          <div className="py-12 text-center text-muted-foreground">
-            No users found matching your filters.
-          </div>
+          <EmptyState icon={Users} title="No users found matching your filters." />
         )}
       </div>
 
@@ -732,68 +715,6 @@ export function UsersClient({
           </DialogFooter>
         </DialogContent>
       </Dialog>
-
-      {/* Super Admin Confirmation */}
-      <AlertDialog
-        open={superAdminConfirmOpen}
-        onOpenChange={setSuperAdminConfirmOpen}
-      >
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Grant Super Admin Access</AlertDialogTitle>
-            <AlertDialogDescription>
-              You are about to grant Super Admin access to{" "}
-              <span className="font-semibold text-foreground">
-                {grantTargetUser?.full_name ||
-                  grantTargetUser?.name ||
-                  grantTargetUser?.email}
-              </span>
-              . This gives full system control including the ability to manage
-              all users, roles, and system configuration. Are you sure?
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel disabled={grantLoading}>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleGrantRole}
-              disabled={grantLoading}
-              className="bg-red-600 hover:bg-red-700"
-            >
-              {grantLoading ? "Granting..." : "Confirm Super Admin"}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-
-      {/* Revoke Role Confirmation */}
-      <AlertDialog open={revokeConfirmOpen} onOpenChange={setRevokeConfirmOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Revoke Role</AlertDialogTitle>
-            <AlertDialogDescription>
-              Are you sure you want to revoke the{" "}
-              <span className="font-semibold text-foreground">
-                {revokeTarget?.roleName?.replace("_", " ")}
-              </span>{" "}
-              role from{" "}
-              <span className="font-semibold text-foreground">
-                {revokeTarget?.userName}
-              </span>
-              ? This can be reactivated later.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel disabled={revokeLoading}>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleRevokeRole}
-              disabled={revokeLoading}
-              className="bg-red-600 hover:bg-red-700"
-            >
-              {revokeLoading ? "Revoking..." : "Revoke Role"}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
 
       {/* Add User Dialog */}
       <AddUserDialog

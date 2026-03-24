@@ -4,11 +4,10 @@ import { useMemo } from "react";
 import { cn } from "@repo/lib";
 import type { FieldConfig } from "../actions";
 import {
-  AXIS_COMBINATIONS,
-  isVisible,
+  ASSET_CLASSES,
   hasCondition,
+  type VisibilityCondition,
 } from "@/lib/visibility-engine";
-import type { VisibilityCondition } from "@/lib/visibility-engine";
 
 interface Props {
   fields: FieldConfig[];
@@ -34,7 +33,7 @@ export function ConditionMatrixTab({ fields }: Props) {
         </span>
         <span className="text-xs text-muted-foreground max-w-sm text-center leading-relaxed">
           Add visibility conditions to fields on the Fields tab. Conditional
-          fields will appear here in a matrix showing which axis combinations
+          fields will appear here in a matrix showing which asset classes
           make them visible.
         </span>
       </div>
@@ -45,12 +44,12 @@ export function ConditionMatrixTab({ fields }: Props) {
     <div className="p-4">
       <div className="mb-4">
         <h3 className="text-sm font-semibold mb-1">
-          Two-Axis Visibility Matrix
+          Asset Class Visibility Matrix
         </h3>
         <p className="text-xs text-muted-foreground">
           <span className="text-green-500">&#9679;</span> visible &nbsp;{" "}
           <span className="text-muted-foreground/20">&#9675;</span> hidden
-          &mdash; AND across axes, OR within each axis
+          &nbsp;&nbsp; Fields with additional conditions show a badge.
         </p>
       </div>
       <div className="rounded-lg border border-border overflow-hidden">
@@ -58,56 +57,71 @@ export function ConditionMatrixTab({ fields }: Props) {
           <table className="w-full border-collapse text-xs">
             <thead>
               <tr>
-                <th className="p-2.5 text-left text-[9px] font-semibold text-muted-foreground uppercase tracking-wider border-b border-border bg-muted/50 min-w-[140px] sticky left-0 z-10">
+                <th className="p-2.5 text-left text-[9px] font-semibold text-muted-foreground uppercase tracking-wider border-b border-border bg-muted/50 min-w-[180px] sticky left-0 z-10">
                   Field
                 </th>
-                {AXIS_COMBINATIONS.map((combo) => (
+                {ASSET_CLASSES.map((ac) => (
                   <th
-                    key={combo.label}
-                    className="p-2 text-center text-[8px] font-semibold text-muted-foreground uppercase border-b border-border bg-muted/50 min-w-[52px] whitespace-pre-line leading-tight"
+                    key={ac.value}
+                    className="p-2 text-center text-[9px] font-semibold text-muted-foreground uppercase border-b border-border bg-muted/50 min-w-[80px] whitespace-nowrap leading-tight"
                   >
-                    {combo.label}
+                    {ac.label}
                   </th>
                 ))}
+                <th className="p-2 text-left text-[9px] font-semibold text-muted-foreground uppercase border-b border-border bg-muted/50 min-w-[140px]">
+                  Conditions
+                </th>
               </tr>
             </thead>
             <tbody>
-              {conditionalFields.map((field) => (
-                <tr
-                  key={field.id}
-                  className="border-b border-border last:border-b-0"
-                >
-                  <td className="p-2.5 text-xs text-muted-foreground bg-card sticky left-0 z-10">
-                    {field.field_label}
-                  </td>
-                  {AXIS_COMBINATIONS.map((combo) => {
-                    const visible = isVisible(
-                      field.visibility_condition as VisibilityCondition | null,
-                      {
-                        asset_class: combo.asset_class,
-                        loan_type: combo.loan_type,
-                      }
-                    );
-                    return (
-                      <td
-                        key={combo.label}
-                        className="p-2 text-center"
-                      >
+              {conditionalFields.map((field) => {
+                const vc = field.visibility_condition as VisibilityCondition | null;
+                const hasExtraConditions = vc?.conditions && Object.keys(vc.conditions).length > 0;
+
+                return (
+                  <tr
+                    key={field.id}
+                    className="border-b border-border last:border-b-0"
+                  >
+                    <td className="p-2.5 text-xs text-muted-foreground bg-card sticky left-0 z-10">
+                      {field.field_label}
+                    </td>
+                    {ASSET_CLASSES.map((ac) => {
+                      const acOnly = vc?.asset_class && vc.asset_class.length > 0
+                        ? vc.asset_class.includes(ac.value as never)
+                        : true;
+                      return (
+                        <td
+                          key={ac.value}
+                          className="p-2 text-center"
+                        >
                         <span
                           className={cn(
                             "text-sm",
-                            visible
+                            acOnly
                               ? "text-green-500"
                               : "text-muted-foreground/10"
                           )}
                         >
-                          {visible ? "●" : "○"}
+                          {acOnly ? "●" : "○"}
+                          </span>
+                        </td>
+                      );
+                    })}
+                    <td className="p-2 text-[10px] text-muted-foreground">
+                      {hasExtraConditions ? (
+                        <span className="px-1.5 py-0.5 rounded bg-indigo-400/10 text-indigo-400 font-medium">
+                          {Object.entries(vc!.conditions!).map(([k, v]) =>
+                            `${k}: ${(v ?? []).join("|")}`
+                          ).join(", ")}
                         </span>
-                      </td>
-                    );
-                  })}
-                </tr>
-              ))}
+                      ) : (
+                        <span className="text-muted-foreground/40">--</span>
+                      )}
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>

@@ -8,22 +8,13 @@ import { Badge } from "@/components/ui/badge";
 import { formatDate } from "@/lib/format";
 import { Building2, Plus, Pencil, Trash2, MapPin } from "lucide-react";
 import { BorrowerEntityDialog } from "@/components/admin/borrower-entity-dialog";
-import { deleteEntityAction } from "@/app/(authenticated)/admin/borrowers/new/actions";
-import { useToast } from "@/components/ui/use-toast";
+import { EmptyState } from "@/components/shared/EmptyState";
+import { deleteEntityAction } from "@/app/(authenticated)/(admin)/borrowers/new/actions";
+import { showSuccess, showError } from "@/lib/toast";
+import { useConfirm } from "@/components/shared/ConfirmDialog";
 import type { Tables } from "@/lib/supabase/types";
 
 type BorrowerEntity = Tables<"borrower_entities">;
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
 
 interface BorrowerEntityListProps {
   borrowerId: string;
@@ -39,7 +30,7 @@ export function BorrowerEntityList({
     null
   );
   const router = useRouter();
-  const { toast } = useToast();
+  const confirm = useConfirm();
 
   function handleAdd() {
     setEditingEntity(null);
@@ -51,17 +42,20 @@ export function BorrowerEntityList({
     setDialogOpen(true);
   }
 
-  async function handleDelete(entityId: string) {
-    const result = await deleteEntityAction(entityId);
+  async function handleDelete(entity: BorrowerEntity) {
+    const ok = await confirm({
+      title: "Delete Entity",
+      description: `Are you sure you want to delete "${entity.entity_name}"? This action cannot be undone.`,
+      confirmLabel: "Delete",
+      destructive: true,
+    });
+    if (!ok) return;
 
+    const result = await deleteEntityAction(entity.id);
     if (result.error) {
-      toast({
-        title: "Error deleting entity",
-        description: result.error,
-        variant: "destructive",
-      });
+      showError("Could not delete entity", result.error);
     } else {
-      toast({ title: "Entity deleted" });
+      showSuccess("Entity deleted");
       router.refresh();
     }
   }
@@ -73,18 +67,13 @@ export function BorrowerEntityList({
 
   if (entities.length === 0 && !dialogOpen) {
     return (
-      <div className="rounded-md border bg-card p-8 text-center">
-        <Building2 className="mx-auto h-10 w-10 text-muted-foreground mb-3" />
-        <h3 className="text-sm font-semibold text-foreground mb-1">
-          No entities yet
-        </h3>
-        <p className="text-sm text-muted-foreground mb-4">
-          Add an LLC, Corporation, or other entity for this borrower.
-        </p>
-        <Button size="sm" onClick={handleAdd} className="gap-2">
-          <Plus className="h-4 w-4" />
-          Add Entity
-        </Button>
+      <div className="rounded-md border bg-card">
+        <EmptyState
+          icon={Building2}
+          title="No entities yet"
+          description="Add an LLC, Corporation, or other entity for this borrower."
+          action={{ label: "Add Entity", onClick: handleAdd, icon: Plus }}
+        />
         <BorrowerEntityDialog
           borrowerId={borrowerId}
           entity={editingEntity}
@@ -124,35 +113,14 @@ export function BorrowerEntityList({
                   >
                     <Pencil className="h-3.5 w-3.5" />
                   </Button>
-                  <AlertDialog>
-                    <AlertDialogTrigger asChild>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="h-7 w-7 p-0 text-red-600 hover:text-red-700"
-                      >
-                        <Trash2 className="h-3.5 w-3.5" />
-                      </Button>
-                    </AlertDialogTrigger>
-                    <AlertDialogContent>
-                      <AlertDialogHeader>
-                        <AlertDialogTitle>Delete Entity</AlertDialogTitle>
-                        <AlertDialogDescription>
-                          Are you sure you want to delete &quot;{entity.entity_name}&quot;?
-                          This action cannot be undone.
-                        </AlertDialogDescription>
-                      </AlertDialogHeader>
-                      <AlertDialogFooter>
-                        <AlertDialogCancel>Cancel</AlertDialogCancel>
-                        <AlertDialogAction
-                          onClick={() => handleDelete(entity.id)}
-                          className="bg-red-600 hover:bg-red-700"
-                        >
-                          Delete
-                        </AlertDialogAction>
-                      </AlertDialogFooter>
-                    </AlertDialogContent>
-                  </AlertDialog>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-7 w-7 p-0 text-red-600 hover:text-red-700"
+                    onClick={() => handleDelete(entity)}
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </Button>
                 </div>
               </div>
 

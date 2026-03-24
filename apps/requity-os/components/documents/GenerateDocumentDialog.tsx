@@ -7,8 +7,9 @@ import {
   ChevronRight,
   Loader2,
 } from "lucide-react";
+import { EmptyState } from "@/components/shared/EmptyState";
 import { useRouter } from "next/navigation";
-import { toast } from "sonner";
+import { showSuccess, showError } from "@/lib/toast";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -19,8 +20,11 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { createClient } from "@/lib/supabase/client";
+import { SUPABASE_URL, SUPABASE_ANON_KEY } from "@/lib/supabase/constants";
 import {
   fetchTemplatesForRecord,
   resolveTemplateData,
@@ -61,6 +65,10 @@ interface GenerateDocumentDialogProps {
   recordId: string;
   recordLabel?: string;
   trigger?: React.ReactNode;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+  conditions?: Array<{ id: string; condition_name: string; status: string }>;
+  onConditionsMarked?: (conditionIds: string[]) => void;
 }
 
 type Step = "select" | "preview" | "result";
@@ -70,10 +78,28 @@ export function GenerateDocumentDialog({
   recordId,
   recordLabel,
   trigger,
+  open: controlledOpen,
+  onOpenChange: controlledOnOpenChange,
+  conditions,
+  onConditionsMarked,
 }: GenerateDocumentDialogProps) {
   const router = useRouter();
   const navTimerRef = useRef<NodeJS.Timeout | null>(null);
-  const [open, setOpen] = useState(false);
+
+  // Support both controlled and uncontrolled modes
+  const [internalOpen, setInternalOpen] = useState(false);
+  const isControlled = controlledOpen !== undefined;
+  const open = isControlled ? controlledOpen : internalOpen;
+  const setOpen = useCallback(
+    (value: boolean) => {
+      if (isControlled) {
+        controlledOnOpenChange?.(value);
+      } else {
+        setInternalOpen(value);
+      }
+    },
+    [isControlled, controlledOnOpenChange]
+  );
   const [step, setStep] = useState<Step>("select");
   const [templates, setTemplates] = useState<Template[]>([]);
   const [loadingTemplates, setLoadingTemplates] = useState(false);
@@ -81,10 +107,12 @@ export function GenerateDocumentDialog({
   const [resolvedFields, setResolvedFields] = useState<ResolvedField[]>([]);
   const [loadingFields, setLoadingFields] = useState(false);
   const [generating, setGenerating] = useState(false);
+  const [fieldOverrides, setFieldOverrides] = useState<Record<string, string>>({});
   const [result, setResult] = useState<{
     documentId: string;
     fileName: string;
   } | null>(null);
+  const [selectedConditionIds, setSelectedConditionIds] = useState<string[]>([]);
 
   const loadTemplates = useCallback(async () => {
     setLoadingTemplates(true);
@@ -98,7 +126,9 @@ export function GenerateDocumentDialog({
       setStep("select");
       setSelectedTemplate(null);
       setResolvedFields([]);
+      setFieldOverrides({});
       setResult(null);
+      setSelectedConditionIds([]);
       loadTemplates();
     } else if (navTimerRef.current) {
       clearTimeout(navTimerRef.current);
@@ -111,7 +141,7 @@ export function GenerateDocumentDialog({
     if (step === "result" && result) {
       navTimerRef.current = setTimeout(() => {
         setOpen(false);
-        router.push(`/admin/documents/editor/${result.documentId}`);
+        router.push(`/documents/editor/${result.documentId}`);
       }, 1500);
     }
     return () => {
@@ -139,28 +169,45 @@ export function GenerateDocumentDialog({
     try {
       const supabase = createClient();
 
-      const { data: { session }, error: refreshError } = await supabase.auth.refreshSession();
-      if (refreshError || !session) {
-        toast.error("Session expired. Please sign in again.");
+      // Try the current session first; only force-refresh when the access token
+      // is missing or expires within the next 60 seconds.
+      let session: Awaited<ReturnType<typeof supabase.auth.getSession>>["data"]["session"] = null;
+      const { data: current } = await supabase.auth.getSession();
+      const expiresAt = current.session?.expires_at ?? 0;
+      const needsRefresh = !current.session || expiresAt - Math.floor(Date.now() / 1000) < 60;
+
+      if (needsRefresh) {
+        const { data: refreshed, error: refreshError } = await supabase.auth.refreshSession();
+        if (refreshError || !refreshed.session) {
+          showError("Session expired. Please sign in again.");
+          setGenerating(false);
+          return;
+        }
+        session = refreshed.session;
+      } else {
+        session = current.session;
+      }
+
+      if (!session) {
+        showError("Session expired. Please sign in again.");
         setGenerating(false);
         return;
       }
 
-      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-      const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
       const res = await fetch(
-        `${supabaseUrl}/functions/v1/generate-document`,
+        `${SUPABASE_URL}/functions/v1/generate-document`,
         {
           method: "POST",
           headers: {
             Authorization: `Bearer ${session.access_token}`,
-            apikey: supabaseAnonKey ?? "",
+            apikey: SUPABASE_ANON_KEY,
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
             template_id: selectedTemplate.id,
             record_id: recordId,
             page_record_type: recordType,
+            ...(Object.keys(fieldOverrides).length > 0 && { field_overrides: fieldOverrides }),
           }),
         }
       );
@@ -169,6 +216,13 @@ export function GenerateDocumentDialog({
         const err = await res.json().catch(() => null);
         const status = res.status;
         const detail = err?.error || err?.message || res.statusText;
+        // On 401, force a page reload to get a fresh session
+        if (status === 401) {
+          showError("Session expired. Reloading page...");
+          setGenerating(false);
+          setTimeout(() => window.location.reload(), 1500);
+          return;
+        }
         const message =
           status === 401
             ? `Authentication failed (${status}): ${detail || "session may have expired. Please reload and try again."}`
@@ -177,7 +231,7 @@ export function GenerateDocumentDialog({
               : status === 404
                 ? `Not found (${status}): ${detail || "template or record not found"}`
                 : `Generation failed (${status}): ${detail || "unknown error"}`;
-        toast.error(message);
+        showError(message);
         setGenerating(false);
         return;
       }
@@ -189,10 +243,25 @@ export function GenerateDocumentDialog({
       });
       setStep("result");
 
+      // Mark selected conditions as submitted
+      if (selectedConditionIds.length > 0) {
+        const supabaseClient = createClient();
+        const { error: condError } = await supabaseClient
+          .from("unified_deal_conditions")
+          .update({ status: "submitted", submitted_at: new Date().toISOString() } as never)
+          .in("id" as never, selectedConditionIds as never);
+
+        if (condError) {
+          showError("Could not mark conditions", condError.message);
+        } else {
+          onConditionsMarked?.(selectedConditionIds);
+        }
+      }
+
       if (data.missing_fields?.length > 0) {
-        toast.success(`Document generated with ${data.missing_fields.length} missing field(s).`);
+        showSuccess(`Document generated with ${data.missing_fields.length} missing field(s).`);
       } else {
-        toast.success("Document generated successfully.");
+        showSuccess("Document generated");
       }
     } catch (err) {
       console.error("Generate document error:", err);
@@ -200,24 +269,23 @@ export function GenerateDocumentDialog({
         err instanceof TypeError && err.message.includes("fetch")
           ? "Network error: could not reach the document generation service. Check your connection."
           : `Failed to generate document: ${err instanceof Error ? err.message : "unknown error"}`;
-      toast.error(message);
+      showError(message);
     }
 
     setGenerating(false);
   }
 
-  const missingFields = resolvedFields.filter((f) => f.value === null);
+  const missingFields = resolvedFields.filter(
+    (f) => f.value === null && !fieldOverrides[f.key]
+  );
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        {trigger ?? (
-          <Button variant="outline" size="sm">
-            <FileText size={14} className="mr-1.5" />
-            Generate Document
-          </Button>
-        )}
-      </DialogTrigger>
+      {trigger && (
+        <DialogTrigger asChild>
+          {trigger}
+        </DialogTrigger>
+      )}
       <DialogContent className="max-w-lg">
         <DialogHeader>
           <DialogTitle>Generate Document</DialogTitle>
@@ -237,9 +305,7 @@ export function GenerateDocumentDialog({
                 <Skeleton className="h-16 w-full" />
               </div>
             ) : templates.length === 0 ? (
-              <p className="text-sm text-muted-foreground text-center py-8">
-                No active templates found for this record type.
-              </p>
+              <EmptyState icon={FileText} title="No active templates found for this record type." compact />
             ) : (
               templates.map((t) => (
                 <button
@@ -299,7 +365,8 @@ export function GenerateDocumentDialog({
                   <div className="flex items-start gap-2 p-2.5 rounded-md bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800">
                     <AlertTriangle size={14} className="text-amber-600 mt-0.5 shrink-0" />
                     <p className="text-xs text-amber-800 dark:text-amber-300">
-                      {missingFields.length} field{missingFields.length !== 1 ? "s" : ""} missing -- will be blank in the document.
+                      {missingFields.length} field{missingFields.length !== 1 ? "s" : ""} missing.
+                      Fill them in below or they will be blank in the document.
                     </p>
                   </div>
                 )}
@@ -320,10 +387,17 @@ export function GenerateDocumentDialog({
                             {f.value !== null ? (
                               <span className="font-medium">{f.value}</span>
                             ) : (
-                              <span className="flex items-center gap-1 text-amber-600">
-                                <AlertTriangle size={10} />
-                                Missing
-                              </span>
+                              <Input
+                                className="h-7 text-xs"
+                                placeholder={f.label}
+                                value={fieldOverrides[f.key] ?? ""}
+                                onChange={(e) =>
+                                  setFieldOverrides((prev) => ({
+                                    ...prev,
+                                    [f.key]: e.target.value,
+                                  }))
+                                }
+                              />
                             )}
                           </td>
                         </tr>
@@ -332,6 +406,35 @@ export function GenerateDocumentDialog({
                   </table>
                 </div>
               </>
+            )}
+
+            {/* Mark conditions as submitted */}
+            {conditions && conditions.filter((c) => c.status === "pending" || c.status === "requested").length > 0 && (
+              <div className="space-y-2 border-t pt-3">
+                <span className="inline-field-label">
+                  Mark conditions as submitted ({selectedConditionIds.length} selected)
+                </span>
+                <div className="max-h-28 overflow-y-auto space-y-1 rounded-md border border-border p-2">
+                  {conditions
+                    .filter((c) => c.status === "pending" || c.status === "requested")
+                    .map((c) => (
+                      <label
+                        key={c.id}
+                        className="flex items-center gap-2 py-1 px-1 rounded hover:bg-muted/50 cursor-pointer text-sm"
+                      >
+                        <Checkbox
+                          checked={selectedConditionIds.includes(c.id)}
+                          onCheckedChange={() =>
+                            setSelectedConditionIds((prev) =>
+                              prev.includes(c.id) ? prev.filter((id) => id !== c.id) : [...prev, c.id]
+                            )
+                          }
+                        />
+                        <span className="truncate">{c.condition_name}</span>
+                      </label>
+                    ))}
+                </div>
+              </div>
             )}
 
             <div className="flex justify-between">

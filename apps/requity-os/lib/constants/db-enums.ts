@@ -214,27 +214,14 @@ export const LOAN_TYPE_CHECK_VALUES = [
 export const LOAN_PURPOSES = [
   { value: "purchase", label: "Purchase" },
   { value: "refinance", label: "Refinance" },
-  { value: "cash_out_refinance", label: "Cash-Out Refinance" },
+  { value: "new_construction", label: "New Construction" },
 ] as const;
 export const LOAN_PURPOSE_VALUES = [
   "purchase",
   "refinance",
-  "cash_out_refinance",
+  "new_construction",
 ] as const;
 export type LoanPurpose = (typeof LOAN_PURPOSE_VALUES)[number];
-
-// ============================================
-// loans — priority
-// ============================================
-
-/** Constraint: loans_priority_check */
-export const LOAN_PRIORITIES = [
-  { value: "hot", label: "Hot" },
-  { value: "normal", label: "Normal" },
-  { value: "on_hold", label: "On Hold" },
-] as const;
-export const LOAN_PRIORITY_VALUES = ["hot", "normal", "on_hold"] as const;
-export type LoanPriority = (typeof LOAN_PRIORITY_VALUES)[number];
 
 // ============================================
 // loans — property_type (DB enum: property_type)
@@ -381,12 +368,13 @@ export type AccreditationStatus = (typeof ACCREDITATION_STATUSES)[number];
  */
 export const CONDITION_STATUSES = [
   { value: "pending", label: "Pending" },
+  { value: "requested", label: "Requested" },
   { value: "submitted", label: "Submitted" },
   { value: "under_review", label: "Under Review" },
   { value: "approved", label: "Approved" },
   { value: "waived", label: "Waived" },
   { value: "not_applicable", label: "Not Applicable" },
-  { value: "rejected", label: "Rejected" },
+  { value: "rejected", label: "Revision Requested" },
 ] as const;
 export const CONDITION_STATUS_VALUES = [
   "pending",
@@ -451,18 +439,20 @@ export type ConditionCategory = (typeof CONDITION_CATEGORY_VALUES)[number];
 // loan_conditions — stage (DB enum: condition_stage)
 // ============================================
 
-/** DB enum: condition_stage */
+/** DB enum: condition_stage (aligned with deal stages) */
 export const CONDITION_STAGES = [
-  { value: "processing", label: "Processing" },
-  { value: "closed_onboarding", label: "Closed / Onboarding" },
-  { value: "note_sell_process", label: "Note Sell Process" },
-  { value: "post_loan_payoff", label: "Post Loan Payoff" },
+  { value: "lead", label: "Lead" },
+  { value: "analysis", label: "Analysis" },
+  { value: "negotiation", label: "Negotiation" },
+  { value: "execution", label: "Execution" },
+  { value: "closed", label: "Closed" },
 ] as const;
 export const CONDITION_STAGE_VALUES = [
-  "processing",
-  "closed_onboarding",
-  "note_sell_process",
-  "post_loan_payoff",
+  "lead",
+  "analysis",
+  "negotiation",
+  "execution",
+  "closed",
 ] as const;
 export type ConditionStage = (typeof CONDITION_STAGE_VALUES)[number];
 
@@ -494,7 +484,6 @@ export const LOAN_ACTIVITY_TYPES = [
   { value: "terms_modified", label: "Terms Modified" },
   { value: "loan_created", label: "Loan Created" },
   { value: "message_sent", label: "Message Sent" },
-  { value: "priority_change", label: "Priority Changed" },
   { value: "field_updated", label: "Field Updated" },
 ] as const;
 
@@ -683,25 +672,46 @@ export const CRM_VENDOR_TYPES = [
 
 /** DB enum: company_type_enum */
 export const CRM_COMPANY_TYPES = [
-  { value: "brokerage", label: "Brokerage" },
-  { value: "lender", label: "Lender" },
-  { value: "title_company", label: "Title Company" },
-  { value: "law_firm", label: "Law Firm" },
-  { value: "insurance", label: "Insurance" },
-  { value: "appraisal", label: "Appraisal" },
+  { value: "borrower", label: "Borrower" },
+  { value: "brokerage", label: "Capital Markets Broker" },
+  { value: "bank", label: "Bank" },
+  { value: "agency_lender", label: "Agency Lender" },
+  { value: "lender", label: "Private / Non-bank Lender" },
+  { value: "correspondent", label: "Correspondent" },
   { value: "equity_investor", label: "Equity Investor" },
+  { value: "title_company", label: "Title Company" },
+  { value: "insurance", label: "Insurance" },
+  { value: "law_firm", label: "Attorney" },
+  { value: "amc", label: "AMC" },
+  { value: "appraisal", label: "Appraisal" },
   { value: "software", label: "Software" },
   { value: "accounting_firm", label: "Accounting Firm" },
   { value: "other", label: "Other" },
 ] as const;
 
-/** DB enum: company_subtype_enum */
-export const CRM_COMPANY_SUBTYPES = [
-  { value: "bank", label: "Bank" },
-  { value: "agency_lender", label: "Agency Lender" },
-  { value: "private_lender", label: "Private Lender" },
-  { value: "correspondent", label: "Correspondent" },
-  { value: "credit_union", label: "Credit Union" },
+/** Company capabilities — multi-select picklist */
+export const CRM_COMPANY_CAPABILITIES = [
+  { value: "agency_debt_placement", label: "Agency Debt Placement" },
+  { value: "bank_financing", label: "Bank Financing" },
+  { value: "dscr", label: "DSCR" },
+  { value: "equity_placement", label: "Equity Placement" },
+  { value: "guc", label: "GUC" },
+  { value: "hard_money_bridge", label: "Hard Money / Bridge Lending" },
+  { value: "cmbs", label: "CMBS" },
+  { value: "jv_equity", label: "JV Equity Investment" },
+  { value: "loan_servicing", label: "Loan Servicing" },
+  { value: "mortgage_brokerage", label: "Mortgage Brokerage" },
+  { value: "pref_equity", label: "Pref Equity Investment" },
+  { value: "rtl", label: "RTL" },
+  { value: "audit", label: "Audit" },
+  { value: "lender_finance", label: "Lender Finance" },
+  { value: "sba", label: "SBA" },
+  { value: "table_funding", label: "Table Funding" },
+  { value: "co_lending", label: "Co-Lending" },
+  { value: "warehouse", label: "Warehouse" },
+  { value: "note_buyer", label: "Note Buyer" },
+  { value: "direct", label: "Direct Lender" },
+  { value: "correspondent_lending", label: "Correspondent Lending" },
 ] as const;
 
 /** company_files.file_type check constraint */
@@ -999,10 +1009,10 @@ export const APP_ROLES = [
 export type AppRole = (typeof APP_ROLES)[number];
 
 // ============================================
-// Opportunities — Pipeline Stages
+// Deals — Pipeline Stages
 // ============================================
 
-/** Opportunity pipeline stages (on opportunities table) */
+/** Deal pipeline stages (on opportunities table) */
 export const OPPORTUNITY_STAGES = [
   "awaiting_info",
   "quoting",
@@ -1058,7 +1068,7 @@ export const LOSS_REASONS = [
 ] as const;
 
 // ============================================
-// Opportunities — Funding Channel
+// Deals — Funding Channel
 // ============================================
 
 export const FUNDING_CHANNELS = [
@@ -1068,7 +1078,7 @@ export const FUNDING_CHANNELS = [
 ] as const;
 
 // ============================================
-// Opportunities — Approval Status
+// Deals — Approval Status
 // ============================================
 
 export const APPROVAL_STATUSES = [
@@ -1090,7 +1100,7 @@ export const APPROVAL_STATUS_COLORS: Record<string, string> = {
 };
 
 // ============================================
-// Opportunities — Deal Classification
+// Deals — Deal Classification
 // ============================================
 
 export const DEBT_TRANCHES = [
@@ -1140,7 +1150,7 @@ export const LEASE_TYPES = [
 ] as const;
 
 // ============================================
-// Opportunities — Borrower Roles
+// Deals — Borrower Roles
 // ============================================
 
 export const BORROWER_ROLES = [
@@ -1175,20 +1185,23 @@ export const SNAPSHOT_SOURCES = [
 // Property — Asset Types & Classification
 // ============================================
 
+export { ASSET_CLASS_OPTIONS as ASSET_TYPES_UNIFIED } from "@/lib/constants/asset-classes";
+
+/** Asset types for dropdowns. Canonical source: @/lib/constants/asset-classes */
 export const ASSET_TYPES = [
-  { value: "Residential", label: "Residential" },
-  { value: "Multifamily", label: "Multifamily" },
-  { value: "MHC", label: "MHC" },
-  { value: "RV Campground", label: "RV Campground" },
-  { value: "Industrial", label: "Industrial" },
-  { value: "Land", label: "Land" },
-  { value: "Retail", label: "Retail" },
-  { value: "Self-storage", label: "Self-storage" },
-  { value: "Hotels & Hospitality", label: "Hotels & Hospitality" },
-  { value: "Healthcare", label: "Healthcare" },
-  { value: "Mixed Use", label: "Mixed Use" },
-  { value: "Office", label: "Office" },
-  { value: "Other", label: "Other" },
+  { value: "residential_1_4", label: "Residential (1-4)" },
+  { value: "multifamily", label: "Multifamily (5+)" },
+  { value: "mixed_use", label: "Mixed Use" },
+  { value: "retail", label: "Retail" },
+  { value: "office", label: "Office" },
+  { value: "industrial", label: "Industrial" },
+  { value: "mhc", label: "MHC" },
+  { value: "land", label: "Land" },
+  { value: "rv_park", label: "RV Park" },
+  { value: "self_storage", label: "Self-Storage" },
+  { value: "hospitality", label: "Hospitality" },
+  { value: "marina", label: "Marina" },
+  { value: "other", label: "Other" },
 ] as const;
 
 export const BUILDING_CLASSES = [

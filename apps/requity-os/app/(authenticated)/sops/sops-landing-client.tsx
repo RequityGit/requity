@@ -3,7 +3,8 @@
 import { useState, useMemo } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { Plus, AlertTriangle, HelpCircle } from "lucide-react";
+import { Plus, AlertTriangle, HelpCircle, BookOpen, FolderOpen } from "lucide-react";
+import { EmptyState } from "@/components/shared/EmptyState";
 import { SOPCategoryCard } from "@/components/sops/SOPCategoryCard";
 import { SOPCard } from "@/components/sops/SOPCard";
 import { SOPSearchBar } from "@/components/sops/SOPSearchBar";
@@ -155,9 +156,11 @@ export function SOPsLandingClient({
                 ))}
               </div>
             ) : (
-              <div className="rounded-xl border border-border bg-card p-8 text-center">
-                <p className="text-muted-foreground">No categories found.</p>
-              </div>
+              <EmptyState
+                icon={FolderOpen}
+                title="No categories found"
+                description="Create a category to organize your SOPs."
+              />
             )}
           </section>
         )}
@@ -186,22 +189,22 @@ export function SOPsLandingClient({
               ))}
             </div>
           ) : (
-            <div className="rounded-xl border border-border bg-card p-8 text-center">
-              <p className="text-muted-foreground">
-                {selectedCategoryName
-                  ? "No SOPs in this category yet."
-                  : "No SOPs yet. Create your first SOP to start building your knowledge base."}
-              </p>
-              {isAdmin && (
+            <EmptyState
+              icon={BookOpen}
+              title={selectedCategoryName ? "No SOPs in this category yet" : "No SOPs yet"}
+              description={selectedCategoryName
+                ? "Add SOPs to this category to see them here."
+                : "Create your first SOP to start building your knowledge base."}
+              action={isAdmin ? (
                 <Link
                   href="/sops/new"
-                  className="mt-4 inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-foreground transition hover:bg-primary/90"
+                  className="mt-2 inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-foreground transition hover:bg-primary/90"
                 >
                   <Plus className="h-4 w-4" />
                   Create SOP
                 </Link>
-              )}
-            </div>
+              ) : undefined}
+            />
           )}
         </section>
       </div>

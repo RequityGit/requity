@@ -1,8 +1,8 @@
 "use client";
 
 import { Send, Mail, Eye, Plus } from "lucide-react";
+import { EmptyState } from "@/components/shared/EmptyState";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { relTime } from "../contact-detail-shared";
 import type { EmailData } from "../types";
@@ -53,28 +53,12 @@ interface DetailEmailsTabProps {
 export function DetailEmailsTab({ emails, onCompose }: DetailEmailsTabProps) {
   if (emails.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center py-12 text-center">
-        <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-muted mb-4">
-          <Mail className="h-6 w-6 text-muted-foreground" strokeWidth={1.5} />
-        </div>
-        <h3 className="text-sm font-semibold text-foreground mb-1">
-          No emails
-        </h3>
-        <p className="text-sm text-muted-foreground mb-3">
-          No email history for this contact.
-        </p>
-        {onCompose && (
-          <Button
-            variant="outline"
-            size="sm"
-            className="gap-1.5 rounded-lg border-border text-xs"
-            onClick={onCompose}
-          >
-            <Plus className="h-3.5 w-3.5" strokeWidth={1.5} />
-            Compose Email
-          </Button>
-        )}
-      </div>
+      <EmptyState
+        icon={Mail}
+        title="No emails"
+        description="No email history for this contact."
+        action={onCompose ? { label: "Compose Email", onClick: onCompose, icon: Plus } : undefined}
+      />
     );
   }
 
@@ -93,7 +77,7 @@ export function DetailEmailsTab({ emails, onCompose }: DetailEmailsTabProps) {
                   {isOutbound ? (
                     <Send
                       size={13}
-                      className="text-[#3B82F6]"
+                      className="text-muted-foreground"
                       strokeWidth={1.5}
                     />
                   ) : (

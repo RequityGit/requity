@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { Landmark, Receipt } from "lucide-react";
+import { EmptyState } from "@/components/shared/EmptyState";
 import { DotPill, SectionCard } from "@/components/crm/contact-360/contact-detail-shared";
 import { formatCurrency, formatPercent } from "@/lib/format";
 import { relTime } from "@/components/crm/contact-360/contact-detail-shared";
@@ -153,20 +154,11 @@ export function CompanyDealsTab({ company }: DealsTabProps) {
             <div className="h-20 rounded-lg bg-muted animate-pulse" />
           </div>
         ) : deals.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-12 text-center">
-            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-muted mb-4">
-              <Landmark
-                className="h-6 w-6 text-muted-foreground"
-                strokeWidth={1.5}
-              />
-            </div>
-            <h3 className="text-sm font-semibold text-foreground mb-1">
-              No deals linked
-            </h3>
-            <p className="text-sm text-muted-foreground">
-              Deals will appear here when linked to this company.
-            </p>
-          </div>
+          <EmptyState
+            icon={Landmark}
+            title="No deals linked"
+            description="Deals will appear here when linked to this company."
+          />
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full border-collapse">
@@ -183,7 +175,7 @@ export function CompanyDealsTab({ company }: DealsTabProps) {
                   ].map((h) => (
                     <th
                       key={h}
-                      className="px-4 py-2.5 text-[11px] font-semibold text-muted-foreground uppercase tracking-wider"
+                      className="px-4 py-2.5 rq-micro-label"
                       style={{
                         textAlign: ["Amount", "Rate", "LTV"].includes(h)
                           ? "right"
@@ -287,22 +279,15 @@ export function CompanyDealsTab({ company }: DealsTabProps) {
               <div className="h-20 rounded-lg bg-muted animate-pulse" />
             </div>
           ) : filteredQuotes.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-12 text-center">
-              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-muted mb-4">
-                <Receipt
-                  className="h-6 w-6 text-muted-foreground"
-                  strokeWidth={1.5}
-                />
-              </div>
-              <h3 className="text-sm font-semibold text-foreground mb-1">
-                No quotes
-              </h3>
-              <p className="text-sm text-muted-foreground">
-                {quoteFilter !== "all"
+            <EmptyState
+              icon={Receipt}
+              title="No quotes"
+              description={
+                quoteFilter !== "all"
                   ? `No ${quoteFilter} quotes. Try changing the filter.`
-                  : "Quote history will appear here."}
-              </p>
-            </div>
+                  : "Quote history will appear here."
+              }
+            />
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full border-collapse">
@@ -318,7 +303,7 @@ export function CompanyDealsTab({ company }: DealsTabProps) {
                     ].map((h) => (
                       <th
                         key={h}
-                        className="px-4 py-2.5 text-[11px] font-semibold text-muted-foreground uppercase tracking-wider"
+                        className="px-4 py-2.5 rq-micro-label"
                         style={{
                           textAlign: ["Rate", "Points"].includes(h)
                             ? "right"

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useMemo, useCallback } from "react";
+import { SectionErrorBoundary } from "@/components/shared/SectionErrorBoundary";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
@@ -17,19 +18,20 @@ import { EmailComposeSheet } from "@/components/crm/email-compose-sheet";
 import { CompanyDetailHeader } from "./company-detail-header";
 import { CompanyDetailSidebar } from "./company-detail-sidebar";
 import { CompanyOverviewTab } from "./tabs/overview-tab";
+import { CrmInlineEditorWrapper } from "@/components/inline-layout-editor/CrmInlineEditorWrapper";
 import { CompanyContactsTab } from "./tabs/contacts-tab";
 import { CompanyActivityTab } from "./tabs/activity-tab";
 import { CompanyDealsTab } from "./tabs/deals-tab";
 import { CompanyFilesTab } from "./tabs/files-tab";
 import { CompanyTasksTab } from "./tabs/tasks-tab";
 import { UnifiedNotes } from "@/components/shared/UnifiedNotes";
+import { useCompany360Lazy } from "@/hooks/useCompany360Lazy";
 import type {
   CompanyDetailData,
   CompanyContactData,
   CompanyActivityData,
   CompanyFileData,
   CompanyTaskData,
-  CompanyNoteData,
   CompanyWireData,
   CompanyFollowerData,
   TabBadgeCounts,
@@ -38,6 +40,14 @@ import type {
   SectionLayout,
   FieldLayout,
 } from "@/components/crm/contact-360/types";
+
+type OverviewPayload = {
+  wireInstructions: CompanyWireData | null;
+  files: CompanyFileData[];
+};
+type ActivitiesPayload = { activities: CompanyActivityData[] };
+type FilesPayload = { files: CompanyFileData[] };
+type TasksPayload = { tasks: CompanyTaskData[] };
 
 interface CompanyDetailClientProps {
   company: CompanyDetailData;
@@ -48,57 +58,46 @@ interface CompanyDetailClientProps {
     last_name: string | null;
     user_function: string | null;
   } | null;
-  activities: CompanyActivityData[];
-  files: CompanyFileData[];
-  tasks: CompanyTaskData[];
-  notes: CompanyNoteData[];
-  wireInstructions: CompanyWireData | null;
   followers: CompanyFollowerData[];
   counts: TabBadgeCounts;
+  lastActivityAt: string | null;
   currentUserId: string;
   currentUserName: string;
   teamMembers: { id: string; full_name: string }[];
   sectionOrder: SectionLayout[];
   sectionFields: Record<string, FieldLayout[]>;
+  isSuperAdmin?: boolean;
 }
 
 export function CompanyDetailClient({
   company,
   contacts,
   primaryContact,
-  activities,
-  files,
-  tasks,
-  notes,
-  wireInstructions,
   followers,
   counts,
+  lastActivityAt,
   currentUserId,
   currentUserName,
   teamMembers,
   sectionOrder,
   sectionFields,
+  isSuperAdmin = false,
 }: CompanyDetailClientProps) {
   const searchParams = useSearchParams();
   const [emailComposeOpen, setEmailComposeOpen] = useState(false);
   const [logCallTrigger, setLogCallTrigger] = useState(0);
-
-  const openTasks = useMemo(
-    () => tasks.filter((t) => t.status !== "completed").length,
-    [tasks]
-  );
 
   const tabs = useMemo(
     () => [
       { id: "overview", label: "Overview" },
       { id: "contacts", label: "Contacts", count: counts.contacts },
       { id: "notes", label: "Notes", count: counts.notes },
-      { id: "tasks", label: "Tasks", count: openTasks },
+      { id: "tasks", label: "Tasks", count: counts.openTasks },
       { id: "deals", label: "Deals & Quotes", count: counts.deals || undefined },
       { id: "files", label: "Files", count: counts.files },
       { id: "activity", label: "Activity", count: counts.activities },
     ],
-    [counts, openTasks]
+    [counts]
   );
 
   const tabParam = searchParams.get("tab");
@@ -106,10 +105,32 @@ export function CompanyDetailClient({
   const initialTab = isValidTab ? tabParam! : "overview";
   const [activeTab, setActiveTab] = useState(initialTab);
 
-  // Track which tabs have been visited so we can keep them mounted
   const [loadedTabs, setLoadedTabs] = useState<Set<string>>(
     () => new Set([initialTab])
   );
+
+  const overviewQ = useCompany360Lazy<OverviewPayload>(company.id, "overview", true);
+  const activitiesQ = useCompany360Lazy<ActivitiesPayload>(
+    company.id,
+    "activities",
+    loadedTabs.has("activity")
+  );
+  const filesQ = useCompany360Lazy<FilesPayload>(
+    company.id,
+    "files",
+    loadedTabs.has("files")
+  );
+  const tasksQ = useCompany360Lazy<TasksPayload>(
+    company.id,
+    "tasks",
+    loadedTabs.has("tasks")
+  );
+
+  const wireInstructions = overviewQ.data?.wireInstructions ?? null;
+  const overviewFiles = overviewQ.data?.files ?? [];
+  const activities = activitiesQ.data?.activities ?? [];
+  const filesForTab = filesQ.data?.files ?? [];
+  const tasks = tasksQ.data?.tasks ?? [];
 
   const handleTabChange = useCallback(
     (value: string) => {
@@ -118,7 +139,6 @@ export function CompanyDetailClient({
         if (prev.has(value)) return prev;
         return new Set(prev).add(value);
       });
-      // Use history.replaceState to update URL without triggering Next.js navigation
       const params = new URLSearchParams(window.location.search);
       if (value === "overview") {
         params.delete("tab");
@@ -140,10 +160,9 @@ export function CompanyDetailClient({
 
   return (
     <div className="min-h-screen">
-      {/* Breadcrumb */}
       <div className="flex items-center gap-2 mb-3">
         <Link
-          href="/admin/crm?view=companies"
+          href="/companies"
           className="text-muted-foreground hover:text-foreground transition-colors"
         >
           <ArrowLeft size={16} strokeWidth={1.5} />
@@ -152,7 +171,7 @@ export function CompanyDetailClient({
           <BreadcrumbList>
             <BreadcrumbItem>
               <BreadcrumbLink asChild>
-                <Link href="/admin/crm?view=companies">Companies</Link>
+                <Link href="/companies">Companies</Link>
               </BreadcrumbLink>
             </BreadcrumbItem>
             <BreadcrumbSeparator />
@@ -164,16 +183,13 @@ export function CompanyDetailClient({
       </div>
 
       <div className="flex max-w-[1400px] mx-auto">
-        {/* Main Content */}
         <div className="flex-1 min-w-0">
-          {/* Header Card */}
           <CompanyDetailHeader
             company={company}
             primaryContact={primaryContact}
-            lastActivityAt={activities[0]?.created_at || null}
+            lastActivityAt={lastActivityAt}
           />
 
-          {/* Tab Bar */}
           <div className="border-b border-border mb-6 flex overflow-x-auto">
             {tabs.map((t) => (
               <TabBtn
@@ -186,79 +202,97 @@ export function CompanyDetailClient({
             ))}
           </div>
 
-          {/* Tab content: visited tabs stay mounted (hidden) to preserve state & subscriptions */}
           {loadedTabs.has("overview") && (
             <div className={activeTab !== "overview" ? "hidden" : undefined}>
-              <CompanyOverviewTab
-                company={company}
-                wireInstructions={wireInstructions}
-                files={files}
-                sectionOrder={sectionOrder}
-                sectionFields={sectionFields}
-              />
+              <SectionErrorBoundary fallbackTitle="Could not load overview">
+                <CrmInlineEditorWrapper pageType="company_detail" isSuperAdmin={isSuperAdmin}>
+                  <CompanyOverviewTab
+                    company={company}
+                    wireInstructions={wireInstructions}
+                    files={overviewFiles}
+                    sectionOrder={sectionOrder}
+                    sectionFields={sectionFields}
+                  />
+                </CrmInlineEditorWrapper>
+              </SectionErrorBoundary>
             </div>
           )}
           {loadedTabs.has("contacts") && (
             <div className={activeTab !== "contacts" ? "hidden" : undefined}>
-              <CompanyContactsTab
-                contacts={contacts}
-                companyId={company.id}
-                companyName={company.name}
-                primaryContactId={company.primary_contact_id}
-                teamMembers={teamMembers}
-                currentUserId={currentUserId}
-              />
+              <SectionErrorBoundary fallbackTitle="Could not load contacts">
+                <CompanyContactsTab
+                  contacts={contacts}
+                  companyId={company.id}
+                  companyName={company.name}
+                  primaryContactId={company.primary_contact_id}
+                  teamMembers={teamMembers}
+                  currentUserId={currentUserId}
+                />
+              </SectionErrorBoundary>
             </div>
           )}
           {loadedTabs.has("notes") && (
             <div className={activeTab !== "notes" ? "hidden" : undefined}>
-              <UnifiedNotes
-                entityType="company"
-                entityId={company.id}
-              />
+              <SectionErrorBoundary fallbackTitle="Could not load notes">
+                <UnifiedNotes
+                  entityType="company"
+                  entityId={company.id}
+                />
+              </SectionErrorBoundary>
             </div>
           )}
           {loadedTabs.has("tasks") && (
             <div className={activeTab !== "tasks" ? "hidden" : undefined}>
-              <CompanyTasksTab
-                tasks={tasks}
-                companyId={company.id}
-                companyName={company.name}
-                currentUserId={currentUserId}
-                profiles={teamMembers.map((m) => ({
-                  id: m.id,
-                  full_name: m.full_name,
-                  avatar_url: null,
-                }))}
-              />
+              <SectionErrorBoundary fallbackTitle="Could not load tasks">
+                <CompanyTasksTab
+                  tasks={tasks}
+                  companyId={company.id}
+                  companyName={company.name}
+                  currentUserId={currentUserId}
+                  profiles={teamMembers.map((m) => ({
+                    id: m.id,
+                    full_name: m.full_name,
+                    avatar_url: null,
+                  }))}
+                  loading={tasksQ.loading}
+                />
+              </SectionErrorBoundary>
             </div>
           )}
           {loadedTabs.has("deals") && (
             <div className={activeTab !== "deals" ? "hidden" : undefined}>
-              <CompanyDealsTab company={company} />
+              <SectionErrorBoundary fallbackTitle="Could not load deals">
+                <CompanyDealsTab company={company} />
+              </SectionErrorBoundary>
             </div>
           )}
           {loadedTabs.has("files") && (
             <div className={activeTab !== "files" ? "hidden" : undefined}>
-              <CompanyFilesTab
-                files={files}
-                companyId={company.id}
-              />
+              <SectionErrorBoundary fallbackTitle="Could not load files">
+                <CompanyFilesTab
+                  files={filesForTab}
+                  companyId={company.id}
+                  loading={filesQ.loading}
+                  onRefresh={filesQ.refresh}
+                />
+              </SectionErrorBoundary>
             </div>
           )}
           {loadedTabs.has("activity") && (
             <div className={activeTab !== "activity" ? "hidden" : undefined}>
-              <CompanyActivityTab
-                companyId={company.id}
-                activities={activities}
-                currentUserId={currentUserId}
-                logCallTrigger={logCallTrigger}
-              />
+              <SectionErrorBoundary fallbackTitle="Could not load activity">
+                <CompanyActivityTab
+                  companyId={company.id}
+                  activities={activities}
+                  currentUserId={currentUserId}
+                  logCallTrigger={logCallTrigger}
+                  loading={activitiesQ.loading}
+                />
+              </SectionErrorBoundary>
             </div>
           )}
         </div>
 
-        {/* Right Sidebar */}
         <div className="hidden lg:block w-[320px] shrink-0 pt-6 pl-6">
           <CompanyDetailSidebar
             company={company}

@@ -3,7 +3,8 @@
 import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
-import { useToast } from "@/components/ui/use-toast";
+import { SUPABASE_URL } from "@/lib/supabase/constants";
+import { showSuccess, showError, showWarning, showInfo } from "@/lib/toast";
 import { EmailComposerShell } from "@/components/email/email-composer-shell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -49,6 +50,8 @@ interface EmailComposeSheetProps {
   initialAttachments?: File[];
   /** Called after a successful email send with the crm_emails record ID */
   onSendSuccess?: (emailId: string) => void;
+  /** Optional class for the composer container (e.g. z-[100] when opened from inside a dialog) */
+  containerClassName?: string;
 }
 
 export function EmailComposeSheet({
@@ -66,9 +69,9 @@ export function EmailComposeSheet({
   initialBody,
   initialAttachments,
   onSendSuccess,
+  containerClassName,
 }: EmailComposeSheetProps) {
   const router = useRouter();
-  const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [sending, setSending] = useState(false);
@@ -108,6 +111,25 @@ export function EmailComposeSheet({
     subject: initialSubject ?? "",
     body: initialBody ?? "",
   });
+  // When sheet first opens, sync initial subject/body into form (e.g. from "Send by email" with link)
+  const prevOpenRef = useRef(false);
+  useEffect(() => {
+    const justOpened = open && !prevOpenRef.current;
+    prevOpenRef.current = open;
+    if (!justOpened) return;
+    const hasInitialContent = initialSubject != null || initialBody != null;
+    setForm((prev) => ({
+      ...prev,
+      ...(toEmail ? { to_email: toEmail } : {}),
+      ...(toName ? { to_name: toName } : {}),
+      ...(hasInitialContent
+        ? {
+            subject: initialSubject ?? prev.subject,
+            body: initialBody ?? prev.body,
+          }
+        : {}),
+    }));
+  }, [open, toEmail, toName, initialSubject, initialBody]);
   const [attachments, setAttachments] = useState<Attachment[]>(
     () => (initialAttachments ?? []).map((f) => ({ file: f, id: crypto.randomUUID() }))
   );
@@ -129,11 +151,7 @@ export function EmailComposeSheet({
     for (let i = 0; i < files.length; i++) {
       const file = files[i];
       if (file.size > 10 * 1024 * 1024) {
-        toast({
-          title: "File too large",
-          description: `${file.name} exceeds the 10MB limit`,
-          variant: "destructive",
-        });
+        showError("File too large", `${file.name} exceeds the 10MB limit`);
         continue;
       }
       newAttachments.push({ file, id: crypto.randomUUID() });
@@ -160,13 +178,12 @@ export function EmailComposeSheet({
       } = await supabase.auth.getSession();
 
       if (!session) {
-        toast({ title: "Not authenticated", variant: "destructive" });
+        showError("Not authenticated");
         return;
       }
 
-      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
       const response = await fetch(
-        `${supabaseUrl}/functions/v1/resolve-user-template`,
+        `${SUPABASE_URL}/functions/v1/resolve-user-template`,
         {
           method: "POST",
           headers: {
@@ -215,17 +232,10 @@ export function EmailComposeSheet({
           slug: template.slug,
           mergeData: sampleData,
         });
-        toast({
-          title: "Template applied with sample data",
-          description:
-            "Could not resolve merge fields from the server. Using sample values.",
-        });
+        showInfo("Template applied with sample data");
       }
     } catch {
-      toast({
-        title: "Failed to apply template",
-        variant: "destructive",
-      });
+      showError("Could not apply template");
     } finally {
       setTemplateLoading(false);
     }
@@ -262,19 +272,11 @@ export function EmailComposeSheet({
     if (e) e.preventDefault();
 
     if (!form.to_email.trim()) {
-      toast({
-        title: "Recipient required",
-        description: "Please enter a recipient email address.",
-        variant: "destructive",
-      });
+      showWarning("Recipient is required");
       return;
     }
     if (!form.subject.trim()) {
-      toast({
-        title: "Subject required",
-        description: "Please enter an email subject.",
-        variant: "destructive",
-      });
+      showWarning("Subject is required");
       return;
     }
 
@@ -377,23 +379,15 @@ export function EmailComposeSheet({
           const sendData = await sendRes.json();
 
           if (sendRes.ok) {
-            toast({ title: "Email sent", description: "Your email has been sent via Gmail." });
+            showSuccess("Email sent via Gmail");
           } else {
-            toast({
-              title: "Email saved",
-              description: sendData?.error || "Email was saved but could not be sent immediately. It will be retried.",
-              variant: "destructive",
-            });
+            showError("Email saved but not sent", sendData?.error || "It will be retried.");
           }
         } catch {
-          toast({
-            title: "Email saved",
-            description: "Email was saved but could not be sent immediately. It will be retried.",
-            variant: "destructive",
-          });
+          showError("Email saved but not sent", "It will be retried.");
         }
       } else {
-        toast({ title: "Email queued", description: "Your email has been saved and queued for sending." });
+        showInfo("Email queued for sending");
       }
       // Notify caller of successful send (e.g. for document tracking)
       if (insertedEmail?.id && onSendSuccess) {
@@ -418,11 +412,7 @@ export function EmailComposeSheet({
       router.refresh();
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : "Unknown error";
-      toast({
-        title: "Failed to send email",
-        description: message,
-        variant: "destructive",
-      });
+      showError("Could not send email", message);
     } finally {
       setSending(false);
     }
@@ -437,6 +427,7 @@ export function EmailComposeSheet({
       title="New Email"
       subtitle={`from ${senderEmail}`}
       isDirty={isDirty}
+      containerClassName={containerClassName}
       footer={
         <>
           <div className="flex items-center gap-1.5">
@@ -591,7 +582,7 @@ export function EmailComposeSheet({
               key={att.id}
               className="flex items-center gap-2 rounded-md border px-2.5 py-1.5 text-sm bg-muted"
             >
-              <File className="h-3.5 w-3.5 text-blue-600 shrink-0" />
+              <File className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
               <span className="truncate flex-1">{att.file.name}</span>
               <Badge variant="outline" className="text-xs shrink-0">
                 {(att.file.size / 1024).toFixed(0)} KB

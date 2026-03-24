@@ -1,5 +1,5 @@
 import { createAdminClient } from "@/lib/supabase/admin";
-import type { UnifiedCardType } from "@/components/pipeline-v2/pipeline-types";
+import type { UnifiedCardType } from "@/components/pipeline/pipeline-types";
 import { CardTypeManagerView } from "./CardTypeManagerView";
 
 export const dynamic = "force-dynamic";

@@ -20,7 +20,8 @@ export type FieldType =
   | "address"
   | "file"
   | "checkbox"
-  | "card-select";
+  | "card-select"
+  | "custom";
 
 export type VisibilityMode = "both" | "external_only" | "internal_only";
 export type VisibilityFormMode = "both" | "create_only" | "edit_only";
@@ -37,6 +38,9 @@ export interface FormFieldDefinition {
   visibility_form_mode: VisibilityFormMode;
   icon?: string;
   options?: FormFieldOption[];
+  // Custom component configuration
+  component_type?: string; // e.g., "loan-amount-slider", "pricing-calculator", "google-places", "thousands-currency"
+  component_config?: Record<string, unknown>; // Component-specific configuration
 }
 
 export type ConditionOperator = "eq" | "neq" | "in" | "not_in" | "exists" | "empty";
@@ -56,6 +60,9 @@ export interface FormStep {
   match_on: string | null;
   show_when: ShowWhenCondition[] | null;
   fields: FormFieldDefinition[];
+  // Step-level hooks for custom logic
+  on_step_change?: string; // Hook name (e.g., "calculate-pricing")
+  hooks_config?: Record<string, unknown>; // Configuration for step hooks
 }
 
 export interface FormSettings {
@@ -87,6 +94,7 @@ export type SubmissionStatus =
   | "partial"
   | "pending_borrower"
   | "submitted"
+  | "pending_review"
   | "reviewed"
   | "processed";
 
@@ -112,6 +120,7 @@ export interface FormSubmission {
   token_expires_at: string;
   created_at: string;
   updated_at: string;
+  internal_notes?: string | null;
 }
 
 export interface FieldChange {
@@ -129,8 +138,22 @@ export interface FormEngineProps {
   recordType?: string;
   prefillData?: Record<string, unknown>;
   sessionToken?: string;
+  dealToken?: string;
   onComplete?: (submission: FormSubmission) => void;
   onClose?: () => void;
+}
+
+export interface DealTokenData {
+  valid: boolean;
+  reason?: string;
+  link_id?: string;
+  deal_id?: string;
+  form_id?: string;
+  deal_name?: string;
+  deal_number?: string;
+  message?: string;
+  prefill_data?: Record<string, unknown>;
+  existing_session_token?: string | null;
 }
 
 export interface FormState {
@@ -138,6 +161,8 @@ export interface FormState {
   currentStepIndex: number;
   submissionId: string | null;
   sessionToken: string | null;
+  dealId: string | null;
+  dealApplicationLinkId: string | null;
   isSubmitting: boolean;
   isLoading: boolean;
   error: string | null;

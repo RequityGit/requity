@@ -4,18 +4,16 @@ import { useState, useEffect, useCallback } from "react";
 import {
   SlidersHorizontal,
   Search,
-  Check,
   Type,
   Network,
   LayoutGrid,
   Settings2,
-  Loader2,
   Grid3X3,
   Calculator,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
 import { cn } from "@repo/lib";
+import { formatTime } from "@/lib/format";
 import type {
   ObjectDefinition,
   FieldConfig,
@@ -30,6 +28,7 @@ import {
   fetchObjectLayout,
   fetchFieldsForModules,
   publishObjectChanges,
+  batchPublishChanges,
   createRelationship,
 } from "./actions";
 import { getObjectIcon } from "./_components/constants";
@@ -43,6 +42,9 @@ import { SectionConfigPanel } from "./_components/SectionConfigPanel";
 import { TabConfigPanel } from "./_components/TabConfigPanel";
 import { ConditionMatrixTab } from "./_components/ConditionMatrixTab";
 import { FormulasTab } from "./_components/FormulasTab";
+import { DraftBanner } from "./_components/DraftBanner";
+import { DiffReviewModal } from "./_components/DiffReviewModal";
+import { useDraftState } from "./_hooks/useDraftState";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -69,16 +71,27 @@ interface Props {
 }
 
 // Module mapping: object_key -> field_configurations module(s)
-const OBJECT_MODULE_MAP: Record<string, string> = {
-  contact: "contact_profile",
-  company: "company_info",
-  borrower_entity: "borrower_entity",
-  property: "uw_property",
-  loan: "loan_details",
-  borrower: "borrower_profile",
-  investor: "investor_profile",
-  unified_deal: "uw_deal",
+// Each object can pull fields from multiple modules
+const OBJECT_MODULE_MAP: Record<string, string[]> = {
+  contact: ["contact_profile"],
+  company: ["company_info", "wire_instructions"],
+  borrower_entity: ["borrower_entity", "borrower_entity_detail"],
+  property: ["property", "uw_property", "standalone_property"],
+  loan: ["loan_details", "loans_extended", "servicing_loan"],
+  borrower: ["borrower_profile"],
+  investor: ["investor_profile", "investing_entity", "investor_commitment"],
+  unified_deal: ["uw_deal", "loan_details", "loans_extended", "uw_borrower", "uw_property"],
 };
+
+// Helper: get all modules for an object key
+function getObjectModules(objectKey: string): string[] {
+  return OBJECT_MODULE_MAP[objectKey] || [objectKey];
+}
+
+// Helper: get primary module for an object (first in the list)
+function getPrimaryModule(objectKey: string): string {
+  return (OBJECT_MODULE_MAP[objectKey] || [objectKey])[0];
+}
 
 // Page type mapping: object_key -> page_layout page_type
 const OBJECT_PAGE_TYPE_MAP: Record<string, string> = {
@@ -86,6 +99,10 @@ const OBJECT_PAGE_TYPE_MAP: Record<string, string> = {
   company: "company_detail",
   loan: "loan_detail",
   property: "property_detail",
+  borrower: "borrower_detail",
+  borrower_entity: "borrower_entity_detail",
+  investor: "investor_detail",
+  unified_deal: "deal_detail",
 };
 
 export function ObjectManagerView({ objects, fieldCounts, relationshipCounts }: Props) {
@@ -108,10 +125,11 @@ export function ObjectManagerView({ objects, fieldCounts, relationshipCounts }: 
   const [selectedSection, setSelectedSection] = useState<PageSection | null>(null);
   const [selectedLayoutTab, setSelectedLayoutTab] = useState<TabInfo | null>(null);
 
-  // Publish state tracking
-  const [hasChanges, setHasChanges] = useState(false);
+  // Draft state management
+  const draft = useDraftState();
   const [publishing, setPublishing] = useState(false);
   const [lastPublished, setLastPublished] = useState<string | null>(null);
+  const [showDiffReview, setShowDiffReview] = useState(false);
 
   const [showAddRelDialog, setShowAddRelDialog] = useState(false);
 
@@ -131,8 +149,8 @@ export function ObjectManagerView({ objects, fieldCounts, relationshipCounts }: 
 
     try {
       if (activeTab === "fields") {
-        const fieldModule = OBJECT_MODULE_MAP[selectedObjectKey] || selectedObjectKey;
-        const result = await fetchObjectFields(fieldModule);
+        const modules = getObjectModules(selectedObjectKey);
+        const result = await fetchFieldsForModules(modules);
         if (result.data) setFields(result.data);
       } else if (activeTab === "relationships") {
         const result = await fetchObjectRelationships(selectedObjectKey);
@@ -140,19 +158,19 @@ export function ObjectManagerView({ objects, fieldCounts, relationshipCounts }: 
         if (result.roles) setRoles(result.roles);
       } else if (activeTab === "conditions" || activeTab === "formulas") {
         // Both conditions and formulas tabs need the fields data
-        const fieldModule = OBJECT_MODULE_MAP[selectedObjectKey] || selectedObjectKey;
-        const result = await fetchObjectFields(fieldModule);
+        const modules = getObjectModules(selectedObjectKey);
+        const result = await fetchFieldsForModules(modules);
         if (result.data) setFields(result.data);
       } else if (activeTab === "layout") {
         const pageType = OBJECT_PAGE_TYPE_MAP[selectedObjectKey];
-        const fieldModule = OBJECT_MODULE_MAP[selectedObjectKey] || selectedObjectKey;
+        const modules = getObjectModules(selectedObjectKey);
 
         // Fetch layout, native fields, and relationships in parallel
         const [layoutResult, fieldsResult, relsResult] = await Promise.all([
           pageType
             ? fetchObjectLayout(pageType)
             : Promise.resolve({ sections: [] as PageSection[], fields: [] as PageField[] }),
-          fetchObjectFields(fieldModule),
+          fetchFieldsForModules(modules),
           fetchObjectRelationships(selectedObjectKey),
         ]);
 
@@ -168,18 +186,18 @@ export function ObjectManagerView({ objects, fieldCounts, relationshipCounts }: 
             ? r.child_object_key
             : r.parent_object_key
         );
-        const uniqueModules = Array.from(
-          new Set(relObjectKeys.map((k) => OBJECT_MODULE_MAP[k] || k))
+        const allRelModules = Array.from(
+          new Set(relObjectKeys.flatMap((k) => getObjectModules(k)))
         );
 
-        if (uniqueModules.length > 0) {
-          const relFieldsResult = await fetchFieldsForModules(uniqueModules);
+        if (allRelModules.length > 0) {
+          const relFieldsResult = await fetchFieldsForModules(allRelModules);
           if (relFieldsResult.data) {
             const grouped: Record<string, FieldConfig[]> = {};
             for (const key of relObjectKeys) {
-              const mod = OBJECT_MODULE_MAP[key] || key;
+              const mods = getObjectModules(key);
               grouped[key] = (relFieldsResult.data || []).filter(
-                (f) => f.module === mod
+                (f) => mods.includes(f.module)
               );
             }
             setRelatedFields(grouped);
@@ -198,31 +216,85 @@ export function ObjectManagerView({ objects, fieldCounts, relationshipCounts }: 
     loadData();
   }, [loadData, clearSelection]);
 
-  // Mark changes dirty when any mutation completes
+  // Warn on page unload if there are unsaved changes
+  useEffect(() => {
+    if (!draft.hasChanges) return;
+
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      e.preventDefault();
+      e.returnValue = "";
+    };
+
+    window.addEventListener("beforeunload", handleBeforeUnload);
+
+    return () => {
+      window.removeEventListener("beforeunload", handleBeforeUnload);
+    };
+  }, [draft.hasChanges]);
+
+  // For non-draft mutations (relationships, layout), still reload from DB
   const handleDataChange = useCallback(() => {
-    setHasChanges(true);
     loadData();
   }, [loadData]);
 
+  // Optimistically update a single field's visibility_condition without refetching
+  const handleFieldConditionUpdate = useCallback(
+    (fieldId: string, condition: Record<string, unknown> | null) => {
+      setFields((prev) =>
+        prev.map((f) =>
+          f.id === fieldId ? { ...f, visibility_condition: condition } : f
+        )
+      );
+    },
+    []
+  );
+
+  // Batch publish all draft changes
   const handlePublish = useCallback(async () => {
     setPublishing(true);
     try {
-      const result = await publishObjectChanges(selectedObjectKey);
+      const payload = draft.getPublishPayload();
+      const result = await batchPublishChanges({
+        objectKey: selectedObjectKey,
+        fieldUpdates: payload.fieldUpdates,
+        fieldCreates: payload.fieldCreates,
+        fieldArchiveIds: payload.fieldArchiveIds,
+      });
+
       if (result.error) {
         console.error("Publish failed:", result.error);
       } else {
-        setHasChanges(false);
-        setLastPublished(new Date().toLocaleTimeString());
+        draft.clearAfterPublish();
+        setLastPublished(formatTime(new Date()));
+        setShowDiffReview(false);
+        // Reload fresh data from DB
+        loadData();
       }
     } finally {
       setPublishing(false);
     }
-  }, [selectedObjectKey]);
+  }, [selectedObjectKey, draft, loadData]);
+
+  // Discard all draft changes and reload from DB
+  const handleDiscard = useCallback(() => {
+    draft.discardAll();
+    loadData();
+  }, [draft, loadData]);
+
+  // Get the fields to display: base fields with draft overrides applied
+  const displayFields = draft.applyDraftToFields(fields);
 
   const handleObjectSelect = (key: string) => {
+    // Warn if switching with unsaved changes
+    if (draft.hasChanges) {
+      const confirmed = window.confirm(
+        "You have unsaved changes. Discard and switch objects?"
+      );
+      if (!confirmed) return;
+    }
     setSelectedObjectKey(key);
     clearSelection();
-    setHasChanges(false);
+    draft.discardAll();
     setLastPublished(null);
   };
 
@@ -266,7 +338,7 @@ export function ObjectManagerView({ objects, fieldCounts, relationshipCounts }: 
       key: "fields",
       label: "Fields",
       icon: Type,
-      count: fieldCounts[OBJECT_MODULE_MAP[selectedObjectKey] || selectedObjectKey] || 0,
+      count: getObjectModules(selectedObjectKey).reduce((sum, m) => sum + (fieldCounts[m] || 0), 0),
       color: "border-blue-500",
     },
     {
@@ -308,14 +380,14 @@ export function ObjectManagerView({ objects, fieldCounts, relationshipCounts }: 
 
   // Show right panel?
   const showRightPanel =
-    (activeTab === "fields" && selectedField) ||
+    ((activeTab === "fields" || activeTab === "formulas") && selectedField) ||
     (activeTab === "relationships" && selectedRel) ||
     (activeTab === "layout" && (selectedSection || selectedLayoutTab));
 
   return (
-    <div className="flex h-[calc(100vh-48px)] overflow-hidden">
+    <div className="flex min-h-[calc(100vh-48px)]">
       {/* LEFT SIDEBAR */}
-      <div className="w-[220px] shrink-0 border-r border-border bg-card flex flex-col">
+      <div className="w-[220px] shrink-0 border-r border-border bg-card flex flex-col sticky top-0 h-screen overflow-y-auto">
         <div className="p-3 border-b border-border">
           <div className="flex items-center gap-2 mb-2">
             <div className="w-6 h-6 rounded-md bg-muted flex items-center justify-center">
@@ -337,8 +409,8 @@ export function ObjectManagerView({ objects, fieldCounts, relationshipCounts }: 
           {filteredObjects.map((obj) => {
             const isActive = obj.object_key === selectedObjectKey;
             const ObjIcon = getObjectIcon(obj.icon);
-            const fieldModule = OBJECT_MODULE_MAP[obj.object_key] || obj.object_key;
-            const fc = fieldCounts[fieldModule] || 0;
+            const objModules = getObjectModules(obj.object_key);
+            const fc = objModules.reduce((sum, m) => sum + (fieldCounts[m] || 0), 0);
             const rc = relationshipCounts[obj.object_key] || 0;
 
             return (
@@ -397,25 +469,15 @@ export function ObjectManagerView({ objects, fieldCounts, relationshipCounts }: 
             </>
           )}
           <div className="flex-1" />
-          {lastPublished && !hasChanges && (
-            <span className="text-[10px] text-muted-foreground mr-2">
-              Published {lastPublished}
-            </span>
-          )}
-          <Button
-            size="sm"
-            className="h-8 gap-1.5"
-            onClick={handlePublish}
-            disabled={publishing}
-            variant={hasChanges ? "default" : "outline"}
-          >
-            {publishing ? (
-              <Loader2 size={13} className="animate-spin" />
-            ) : (
-              <Check size={13} />
-            )}
-            {publishing ? "Publishing..." : hasChanges ? "Publish" : "Publish"}
-          </Button>
+          <DraftBanner
+            dirtyCount={draft.dirtyCount}
+            hasChanges={draft.hasChanges}
+            publishing={publishing}
+            lastPublished={lastPublished}
+            onPublish={() => setShowDiffReview(true)}
+            onDiscard={handleDiscard}
+            onReviewChanges={() => setShowDiffReview(true)}
+          />
         </div>
 
         {/* Tabs */}
@@ -450,10 +512,10 @@ export function ObjectManagerView({ objects, fieldCounts, relationshipCounts }: 
         </div>
 
         {/* Tab Content */}
-        <div className="flex-1 overflow-hidden">
+        <div className="flex-1">
           {activeTab === "fields" && (
             <FieldsTab
-              fields={fields}
+              fields={displayFields}
               selectedFieldId={selectedField?.id ?? null}
               onSelectField={(f) => {
                 clearSelection();
@@ -462,6 +524,13 @@ export function ObjectManagerView({ objects, fieldCounts, relationshipCounts }: 
               loading={loading}
               objectKey={selectedObjectKey}
               onFieldsChange={handleDataChange}
+              onFieldConditionUpdate={handleFieldConditionUpdate}
+              isFieldDirty={draft.isFieldDirty}
+              isFieldNew={draft.isFieldNew}
+              isFieldArchived={draft.isFieldArchived}
+              onDraftFieldCreate={draft.draftFieldCreate}
+              onDraftFieldArchive={draft.draftFieldArchive}
+              onDraftFieldUpdate={draft.draftFieldUpdate}
             />
           )}
           {activeTab === "relationships" && (
@@ -497,15 +566,18 @@ export function ObjectManagerView({ objects, fieldCounts, relationshipCounts }: 
                 setSelectedSection(null);
               }}
               onLayoutChange={handleDataChange}
+              onDraftLayoutChange={draft.draftLayoutChange}
               loading={loading}
             />
           )}
           {activeTab === "conditions" && (
-            <ConditionMatrixTab fields={fields} />
+            <ConditionMatrixTab fields={displayFields} />
           )}
           {activeTab === "formulas" && (
             <FormulasTab
-              fields={fields}
+              fields={displayFields}
+              objectKey={selectedObjectKey}
+              onFieldsChange={handleDataChange}
               onSelectField={(f) => {
                 clearSelection();
                 setSelectedField(f);
@@ -518,17 +590,25 @@ export function ObjectManagerView({ objects, fieldCounts, relationshipCounts }: 
       {/* RIGHT PANEL */}
       <div
         className={cn(
-          "shrink-0 border-l border-border bg-card flex flex-col overflow-hidden transition-all duration-150",
+          "shrink-0 border-l border-border bg-card flex flex-col overflow-hidden transition-all duration-150 sticky top-0 h-screen",
           showRightPanel ? "w-[310px]" : "w-0 border-l-0"
         )}
       >
-        {activeTab === "fields" && selectedField && (
+        {(activeTab === "fields" || activeTab === "formulas") && selectedField && (
           <FieldConfigPanel
             field={selectedField}
+            siblingFields={displayFields}
             onClose={clearSelection}
             onUpdate={(updated) => {
               setSelectedField(updated);
-              handleDataChange();
+            }}
+            useDraft
+            onDraftUpdate={(updates) => {
+              if (selectedField) {
+                draft.draftFieldUpdate(selectedField, updates);
+                // Update local selected field to reflect changes immediately
+                setSelectedField((prev) => prev ? { ...prev, ...updates } : null);
+              }
             }}
           />
         )}
@@ -578,6 +658,15 @@ export function ObjectManagerView({ objects, fieldCounts, relationshipCounts }: 
         currentObjectKey={selectedObjectKey}
         objects={objects}
         onSubmit={handleAddRelationship}
+      />
+
+      {/* Diff Review Modal */}
+      <DiffReviewModal
+        open={showDiffReview}
+        onClose={() => setShowDiffReview(false)}
+        onPublish={handlePublish}
+        publishing={publishing}
+        diffSummary={draft.getDiffSummary()}
       />
     </div>
   );

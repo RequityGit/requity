@@ -15,16 +15,16 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { useToast } from "@/components/ui/use-toast";
+import { showSuccess, showError, showWarning } from "@/lib/toast";
 import { Plus, Building2 } from "lucide-react";
-import { addLenderAction, toggleLenderActiveAction } from "@/app/(authenticated)/admin/models/dscr/actions";
+import { addLenderAction, toggleLenderActiveAction } from "@/app/(authenticated)/(admin)/models/dscr/actions";
+import { EmptyState } from "@/components/shared/EmptyState";
 import Link from "next/link";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 export function LendersList({ lenders }: { lenders: any[] }) {
   const router = useRouter();
-  const { toast } = useToast();
   const [open, setOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState({
@@ -42,17 +42,17 @@ export function LendersList({ lenders }: { lenders: any[] }) {
 
   async function handleAdd() {
     if (!form.name || !form.short_name) {
-      toast({ title: "Error", description: "Name and short name are required", variant: "destructive" });
+      showWarning("Name and short name are required");
       return;
     }
     setSaving(true);
     try {
       const result = await addLenderAction(form);
       if ("error" in result) {
-        toast({ title: "Error", description: result.error, variant: "destructive" });
+        showError("Could not add lender", result.error);
         return;
       }
-      toast({ title: "Lender added" });
+      showSuccess("Lender added");
       setOpen(false);
       setForm({ name: "", short_name: "", nmls_id: "", contact_name: "", contact_email: "", contact_phone: "", account_executive: "", ae_email: "", ae_phone: "", notes: "" });
       router.refresh();
@@ -64,7 +64,7 @@ export function LendersList({ lenders }: { lenders: any[] }) {
   async function toggleActive(id: string, current: boolean) {
     const result = await toggleLenderActiveAction(id, !current);
     if ("error" in result) {
-      toast({ title: "Error", description: result.error, variant: "destructive" });
+      showError("Could not toggle lender status", result.error);
       return;
     }
     router.refresh();
@@ -145,13 +145,11 @@ export function LendersList({ lenders }: { lenders: any[] }) {
       </CardHeader>
       <CardContent>
         {lenders.length === 0 ? (
-          <div className="text-center py-12">
-            <Building2 className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-            <p className="text-muted-foreground">No lender partners yet</p>
-            <p className="text-sm text-muted-foreground mt-1">
-              Add your first wholesale lender to get started
-            </p>
-          </div>
+          <EmptyState
+            icon={Building2}
+            title="No lender partners yet"
+            description="Add your first wholesale lender to get started."
+          />
         ) : (
           <div className="space-y-3">
             {lenders.map((l) => (
@@ -180,7 +178,7 @@ export function LendersList({ lenders }: { lenders: any[] }) {
                   >
                     {l.is_active ? "Deactivate" : "Activate"}
                   </Button>
-                  <Link href={`/admin/models/dscr/lenders/${l.id}`}>
+                  <Link href={`/models/dscr/lenders/${l.id}`}>
                     <Button variant="outline" size="sm">
                       Manage
                     </Button>

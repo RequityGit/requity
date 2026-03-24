@@ -1,13 +1,23 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, lazy, Suspense } from "react";
 import { useRouter } from "next/navigation";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { HardHat, Hammer, FileText, ScrollText } from "lucide-react";
+import { HardHat, Hammer, FileText, ScrollText, Loader2 } from "lucide-react";
 import { BudgetSubTab } from "./budget-sub-tab";
-import { DrawsSubTab } from "./draws-sub-tab";
-import { ChangeOrdersSubTab } from "./change-orders-sub-tab";
 import { AuditLogSubTab } from "./audit-log-sub-tab";
+
+// Lazy-load the two heaviest sub-tabs (1,310 + 878 lines)
+const DrawsSubTab = lazy(() => import("./draws-sub-tab").then(m => ({ default: m.DrawsSubTab })));
+const ChangeOrdersSubTab = lazy(() => import("./change-orders-sub-tab").then(m => ({ default: m.ChangeOrdersSubTab })));
+
+function SubTabLoadingFallback() {
+  return (
+    <div className="flex items-center justify-center py-12">
+      <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+    </div>
+  );
+}
 import type {
   ConstructionBudget,
   BudgetLineItem,
@@ -98,27 +108,31 @@ export function BudgetDrawsTab({
       </TabsContent>
 
       <TabsContent value="draws" className="mt-4">
-        <DrawsSubTab
-          loanId={loanId}
-          budget={budget}
-          budgetLineItems={budgetLineItems}
-          drawRequests={drawRequests}
-          drawRequestLineItems={drawRequestLineItems}
-          currentUserId={currentUserId}
-          onRefresh={refresh}
-        />
+        <Suspense fallback={<SubTabLoadingFallback />}>
+          <DrawsSubTab
+            loanId={loanId}
+            budget={budget}
+            budgetLineItems={budgetLineItems}
+            drawRequests={drawRequests}
+            drawRequestLineItems={drawRequestLineItems}
+            currentUserId={currentUserId}
+            onRefresh={refresh}
+          />
+        </Suspense>
       </TabsContent>
 
       <TabsContent value="change-orders" className="mt-4">
-        <ChangeOrdersSubTab
-          loanId={loanId}
-          budget={budget}
-          budgetLineItems={budgetLineItems}
-          changeRequests={changeRequests}
-          changeRequestLineItems={changeRequestLineItems}
-          currentUserId={currentUserId}
-          onRefresh={refresh}
-        />
+        <Suspense fallback={<SubTabLoadingFallback />}>
+          <ChangeOrdersSubTab
+            loanId={loanId}
+            budget={budget}
+            budgetLineItems={budgetLineItems}
+            changeRequests={changeRequests}
+            changeRequestLineItems={changeRequestLineItems}
+            currentUserId={currentUserId}
+            onRefresh={refresh}
+          />
+        </Suspense>
       </TabsContent>
 
       <TabsContent value="audit-log" className="mt-4">

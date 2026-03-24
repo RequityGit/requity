@@ -22,8 +22,6 @@ export {
   LOAN_TYPES,
   // Loan purposes
   LOAN_PURPOSES,
-  // Loan priorities
-  LOAN_PRIORITIES,
   // Fund types
   FUND_TYPES,
   // Distribution types
@@ -42,7 +40,7 @@ export {
   CRM_LENDER_DIRECTIONS,
   CRM_VENDOR_TYPES,
   CRM_COMPANY_TYPES,
-  CRM_COMPANY_SUBTYPES,
+  CRM_COMPANY_CAPABILITIES,
   COMPANY_FILE_TYPES,
   CONTACT_FILE_TYPES,
   CRM_ACTIVITY_TYPES,
@@ -57,7 +55,7 @@ export {
   OPS_PROJECT_CATEGORIES,
   OPS_TASK_STATUSES,
   OPS_TASK_PRIORITIES,
-  // Opportunity pipeline
+  // Deal pipeline
   OPPORTUNITY_STAGES,
   OPPORTUNITY_PIPELINE_STAGES,
   OPPORTUNITY_STAGE_LABELS,
@@ -101,7 +99,6 @@ export {
 // Re-export types
 export type {
   LoanStage,
-  LoanPriority,
   ConditionStatus,
   OpportunityStage,
   EquityDealStage,
@@ -111,23 +108,31 @@ export type {
 export { LOAN_ACTIVITY_TYPES as ACTIVITY_TYPES } from "@/lib/constants/db-enums";
 
 // ---------------------------------------------------------------------------
-// Property type labels (human-readable)
+// Property type / asset class labels (human-readable)
+// Canonical source: @/lib/constants/asset-classes
 // ---------------------------------------------------------------------------
 
+export {
+  ASSET_CLASS_OPTIONS,
+  ASSET_CLASS_LABELS,
+  getAssetClassLabel,
+} from "@/lib/constants/asset-classes";
+export type { AssetClassKey } from "@/lib/constants/asset-classes";
+
+/** Property type options in {value, label} shape for backward compat */
 export const PROPERTY_TYPE_OPTIONS: { value: string; label: string }[] = [
-  { value: "sfr", label: "Single Family (SFR)" },
-  { value: "condo", label: "Condo" },
-  { value: "townhouse", label: "Townhouse" },
-  { value: "duplex", label: "Duplex" },
-  { value: "triplex", label: "Triplex" },
-  { value: "fourplex", label: "Fourplex" },
-  { value: "multifamily_5_plus", label: "Multifamily (5+)" },
+  { value: "residential_1_4", label: "Residential (1-4)" },
+  { value: "multifamily", label: "Multifamily (5+)" },
   { value: "mixed_use", label: "Mixed Use" },
   { value: "retail", label: "Retail" },
   { value: "office", label: "Office" },
   { value: "industrial", label: "Industrial" },
-  { value: "mobile_home_park", label: "Mobile Home Park" },
+  { value: "mhc", label: "MHC" },
   { value: "land", label: "Land" },
+  { value: "rv_park", label: "RV Park" },
+  { value: "self_storage", label: "Self-Storage" },
+  { value: "hospitality", label: "Hospitality" },
+  { value: "marina", label: "Marina" },
   { value: "other", label: "Other" },
 ];
 
@@ -193,12 +198,6 @@ export const US_STATES = [
 // UI Color Maps (not DB constraints, only used for styling)
 // ---------------------------------------------------------------------------
 
-export const PRIORITY_COLORS: Record<string, string> = {
-  hot: "bg-red-100 text-red-800 border-red-200",
-  normal: "bg-slate-100 text-slate-700 border-slate-200",
-  on_hold: "bg-amber-100 text-amber-800 border-amber-200",
-};
-
 export const RELATIONSHIP_COLORS: Record<string, string> = {
   borrower: "bg-blue-100 text-blue-800 border-blue-200",
   investor: "bg-green-100 text-green-800 border-green-200",
@@ -259,11 +258,6 @@ export const STATUS_COLORS: Record<string, string> = {
   submitted: "bg-blue-100 text-blue-800",
   under_review: "bg-amber-100 text-amber-800",
   denied: "bg-red-100 text-red-800",
-
-  // Priority
-  hot: "bg-red-100 text-red-800",
-  normal: "bg-slate-100 text-slate-700",
-  on_hold: "bg-amber-100 text-amber-800",
 
   // Condition statuses
   not_applicable: "bg-slate-100 text-slate-500",

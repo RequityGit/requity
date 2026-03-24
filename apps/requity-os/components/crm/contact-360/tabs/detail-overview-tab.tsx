@@ -1,91 +1,111 @@
 "use client";
 
-import { useState, useMemo, useCallback, type ReactNode } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useMemo, useCallback, useTransition, type ReactNode } from "react";
 import { createClient } from "@/lib/supabase/client";
-import { useToast } from "@/components/ui/use-toast";
-import { Landmark, TrendingUp, FileText } from "lucide-react";
+import { showError } from "@/lib/toast";
+import { cn } from "@/lib/utils";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { MapPin } from "lucide-react";
 import {
   SectionCard,
-  SectionEditButton,
-  MetricCard,
 } from "../contact-detail-shared";
-import {
-  CrmEditSectionDialog,
-  type CrmSectionField,
-} from "@/components/crm/crm-edit-section-dialog";
 import { QuickAddCompanyDialog } from "@/components/crm/quick-add-company-dialog";
-import { formatCurrency, formatPercent, formatDate } from "@/lib/format";
 import {
-  renderDynamicFields,
-  buildEditFields,
+  renderDynamicFieldsInline,
+  FIELD_KEY_TO_PROP,
+  type LayoutEditConfig,
 } from "@/components/crm/shared-field-renderer";
 import { getSectionIcon } from "@/lib/icon-map";
+import { AddressAutocomplete, type ParsedAddress } from "@/components/ui/address-autocomplete";
 import type {
   ContactData,
-  BorrowerData,
-  InvestorProfileData,
-  LoanData,
-  InvestorCommitmentData,
   SectionLayout,
   FieldLayout,
   TeamMember,
   CompanyData,
 } from "../types";
+import { usePageLayout } from "@/hooks/usePageLayout";
+import { useOptionalInlineLayout } from "@/components/inline-layout-editor/InlineLayoutContext";
+import { EditableSection } from "@/components/inline-layout-editor/EditableSection";
+import { EditableFieldSlot } from "@/components/inline-layout-editor/EditableFieldSlot";
+import { FieldPicker } from "@/components/inline-layout-editor/FieldPicker";
+import type { LayoutSection, LayoutField } from "@/hooks/useDealLayout";
+
 
 interface DetailOverviewTabProps {
   contact: ContactData;
-  borrower: BorrowerData | null;
-  investor: InvestorProfileData | null;
-  loans: LoanData[];
-  commitments: InvestorCommitmentData[];
   isSuperAdmin: boolean;
+  userRole: string;
   sectionOrder: SectionLayout[];
   sectionFields: Record<string, FieldLayout[]>;
   teamMembers: TeamMember[];
   allCompanies: CompanyData[];
-  primaryBorrowerEntity: Record<string, unknown> | null;
 }
 
-// Default section order used when no layout data exists in the database
+function evaluateOperator(
+  operator: string,
+  sourceValue: unknown,
+  ruleValue: unknown
+): boolean {
+  switch (operator) {
+    case "equals":
+      return String(sourceValue ?? "") === String(ruleValue ?? "");
+    case "not_equals":
+      return String(sourceValue ?? "") !== String(ruleValue ?? "");
+    case "contains": {
+      const str = String(sourceValue ?? "").toLowerCase();
+      const search = String(ruleValue ?? "").toLowerCase();
+      return str.includes(search);
+    }
+    case "is_empty":
+      return sourceValue === null || sourceValue === undefined || sourceValue === "";
+    case "is_not_empty":
+      return sourceValue !== null && sourceValue !== undefined && sourceValue !== "";
+    case "greater_than":
+      return Number(sourceValue) > Number(ruleValue);
+    case "less_than":
+      return Number(sourceValue) < Number(ruleValue);
+    default:
+      return true;
+  }
+}
+
+const ADDRESS_FIELD_KEYS = new Set([
+  "address_line1", "address_line2", "city", "state", "zip", "country",
+  "address",
+]);
+
 const DEFAULT_SECTION_ORDER: SectionLayout[] = [
-  { section_key: "borrower_summary", display_order: 0, is_visible: true, visibility_rule: "has_borrower", section_type: "system", section_label: "Borrower Summary", section_icon: "landmark" },
-  { section_key: "investor_summary", display_order: 1, is_visible: true, visibility_rule: "has_investor", section_type: "system", section_label: "Investor Summary", section_icon: "trending-up" },
-  { section_key: "borrower_profile", display_order: 2, is_visible: true, visibility_rule: "has_borrower", section_type: "fields", section_label: "Borrower Profile", section_icon: "user" },
-  { section_key: "investor_profile", display_order: 3, is_visible: true, visibility_rule: "has_investor", section_type: "fields", section_label: "Investor Profile", section_icon: "shield" },
-  { section_key: "contact_profile", display_order: 4, is_visible: true, visibility_rule: null, section_type: "fields", section_label: "Contact Profile", section_icon: "file-text" },
-  { section_key: "borrower_entity", display_order: 5, is_visible: true, visibility_rule: "has_borrower", section_type: "fields", section_label: "Borrower Entity", section_icon: "building-2" },
-  { section_key: "description", display_order: 6, is_visible: true, visibility_rule: null, section_type: "fields", section_label: "Description", section_icon: "file-text" },
+  { section_key: "contact_profile", display_order: 0, is_visible: true, visibility_rule: null, section_type: "fields", section_label: "Contact Profile", section_icon: "file-text" },
+  { section_key: "address", display_order: 1, is_visible: true, visibility_rule: null, section_type: "address", section_label: "Address", section_icon: "map-pin" },
 ];
 
 export function DetailOverviewTab({
   contact,
-  borrower,
-  investor,
-  loans,
-  commitments,
   isSuperAdmin,
+  userRole,
   sectionOrder,
   sectionFields,
   teamMembers,
   allCompanies,
-  primaryBorrowerEntity,
 }: DetailOverviewTabProps) {
-  const router = useRouter();
-  const { toast } = useToast();
   const supabase = createClient();
+  const [pending, startTransition] = useTransition();
 
-  const [editingSectionKey, setEditingSectionKey] = useState<string | null>(null);
-  const [editDescriptionOpen, setEditDescriptionOpen] = useState(false);
+  // Inline layout editor awareness
+  const layout = usePageLayout("contact_detail");
+  const inlineLayout = useOptionalInlineLayout();
+  const isEditing = inlineLayout?.state.isEditing ?? false;
+
   const [quickAddCompanyOpen, setQuickAddCompanyOpen] = useState(false);
   const [localCompanies, setLocalCompanies] = useState<CompanyData[]>(allCompanies);
 
-  // --- Save functions ---
+  const [localContactData, setLocalContactData] = useState<Record<string, unknown>>(
+    () => ({ ...contact } as Record<string, unknown>)
+  );
 
-  const updateContactField = useCallback(async (
-    field: string,
-    value: string | number | boolean | string[] | null
-  ) => {
+  const saveContactField = useCallback(async (field: string, value: unknown) => {
     const updates: Record<string, unknown> = { [field]: value };
     if (field === "company_id") {
       const match = localCompanies.find((c) => c.id === value);
@@ -96,102 +116,11 @@ export function DetailOverviewTab({
       .update(updates)
       .eq("id", contact.id);
     if (error) {
-      toast({ title: "Error saving", description: error.message, variant: "destructive" });
-      throw error;
+      showError("Could not save", error.message);
+      return false;
     }
-    toast({ title: "Saved" });
-    router.refresh();
-  }, [contact.id, localCompanies, supabase, toast, router]);
-
-  const updateBorrowerField = useCallback(async (
-    field: string,
-    value: string | number | boolean | string[] | null
-  ) => {
-    if (!borrower) return;
-    const { error } = await supabase
-      .from("borrowers")
-      .update({ [field]: value })
-      .eq("id", borrower.id);
-    if (error) {
-      toast({ title: "Error saving", description: error.message, variant: "destructive" });
-      throw error;
-    }
-    toast({ title: "Saved" });
-    router.refresh();
-  }, [borrower, supabase, toast, router]);
-
-  const updateInvestorField = useCallback(async (
-    field: string,
-    value: string | number | boolean | string[] | null
-  ) => {
-    if (!investor) return;
-    const { error } = await supabase
-      .from("investors")
-      .update({ [field]: value })
-      .eq("id", investor.id);
-    if (error) {
-      toast({ title: "Error saving", description: error.message, variant: "destructive" });
-      throw error;
-    }
-    toast({ title: "Saved" });
-    router.refresh();
-  }, [investor, supabase, toast, router]);
-
-  const updateBorrowerEntityField = useCallback(async (
-    field: string,
-    value: string | number | boolean | string[] | null
-  ) => {
-    if (!primaryBorrowerEntity?.id) return;
-    const { error } = await supabase
-      .from("borrower_entities")
-      .update({ [field]: value })
-      .eq("id", primaryBorrowerEntity.id as string);
-    if (error) {
-      toast({ title: "Error saving", description: error.message, variant: "destructive" });
-      throw error;
-    }
-    toast({ title: "Saved" });
-    router.refresh();
-  }, [primaryBorrowerEntity, supabase, toast, router]);
-
-  // --- Computed metrics ---
-
-  const activeLoans = loans.filter(
-    (l) =>
-      l.stage &&
-      !["paid_off", "payoff", "denied", "withdrawn"].includes(l.stage)
-  );
-  const totalVolume = loans.reduce((s, l) => s + (l.loan_amount || 0), 0);
-  const rates = loans
-    .map((l) => l.interest_rate)
-    .filter((r): r is number => r != null);
-  const avgRate =
-    rates.length > 0 ? rates.reduce((a, b) => a + b, 0) / rates.length : 0;
-  const firstLoan =
-    loans.length > 0
-      ? loans.reduce((oldest, l) =>
-          new Date(l.created_at) < new Date(oldest.created_at) ? l : oldest
-        )
-      : null;
-
-  const totalCommitted = commitments.reduce(
-    (s, c) => s + (c.commitment_amount || 0),
-    0
-  );
-  const totalFunded = commitments.reduce(
-    (s, c) => s + (c.funded_amount || 0),
-    0
-  );
-  const totalUnfunded = commitments.reduce(
-    (s, c) => s + (c.unfunded_amount || 0),
-    0
-  );
-  const activeFunds = commitments.filter((c) => c.status === "active").length;
-
-  const hasBorrower = !!borrower;
-  const hasInvestor = !!investor;
-
-  // --- Section data registry ---
+    return true;
+  }, [contact.id, localCompanies, supabase]);
 
   const teamMemberLookup = useMemo(() => {
     const map: Record<string, string> = {};
@@ -205,218 +134,348 @@ export function DetailOverviewTab({
     return map;
   }, [localCompanies]);
 
-  const contactData = useMemo(() => {
-    const data = { ...contact } as Record<string, unknown>;
-    if (contact.assigned_to && teamMemberLookup[contact.assigned_to]) {
-      data.assigned_to_display = teamMemberLookup[contact.assigned_to];
+  const enrichedContactData = useMemo(() => {
+    const data = { ...localContactData };
+    const assignedTo = data.assigned_to as string | undefined;
+    if (assignedTo && teamMemberLookup[assignedTo]) {
+      data.assigned_to_display = teamMemberLookup[assignedTo];
     }
-    if (contact.company_id && companyLookup[contact.company_id]) {
-      data.company_id_display = companyLookup[contact.company_id];
+    const companyId = data.company_id as string | undefined;
+    if (companyId && companyLookup[companyId]) {
+      data.company_id_display = companyLookup[companyId];
     }
     return data;
-  }, [contact, teamMemberLookup, companyLookup]);
+  }, [localContactData, teamMemberLookup, companyLookup]);
 
-  const borrowerData = useMemo(() => (borrower ?? {}) as Record<string, unknown>, [borrower]);
-  const investorData = useMemo(() => (investor ?? {}) as Record<string, unknown>, [investor]);
-  const entityData = useMemo(() => (primaryBorrowerEntity ?? {}) as Record<string, unknown>, [primaryBorrowerEntity]);
+  const sourceRegistry = useMemo(() => ({
+    contact: {
+      data: enrichedContactData,
+      setData: setLocalContactData,
+      save: saveContactField,
+      serverData: contact as unknown as Record<string, unknown>,
+    },
+  }), [enrichedContactData, saveContactField, contact]);
 
-  // Map section_key -> { data, save }
-  const sectionDataMap = useMemo(() => {
-    const map: Record<string, {
-      data: Record<string, unknown>;
-      save: (field: string, value: string | number | boolean | string[] | null) => Promise<void>;
-    }> = {};
+  // --- Conditional Logic + Permissions ---
 
-    map.contact_profile = { data: contactData, save: updateContactField };
+  const getFieldFilters = useCallback((sectionKey: string) => {
+    const fields = sectionFields[sectionKey];
+    const hiddenFieldKeys = new Set<string>();
+    const readOnlyFieldKeys = new Set<string>();
 
-    if (borrower) {
-      map.borrower_profile = { data: borrowerData, save: updateBorrowerField };
+    if (fields?.length) {
+      const merged: Record<string, unknown> = {};
+      for (const f of fields) {
+        const propKey = FIELD_KEY_TO_PROP[f.field_key] ?? f.field_key;
+        merged[propKey] = sourceRegistry.contact.data[propKey];
+      }
+
+      for (const f of fields) {
+        if (!f.conditional_rules?.length) continue;
+        let visible = true;
+        const showRules = f.conditional_rules.filter((r) => r.action === "show");
+        const hideRules = f.conditional_rules.filter((r) => r.action === "hide");
+        if (showRules.length > 0) {
+          visible = showRules.every((rule) => evaluateOperator(rule.operator, merged[rule.source_field], rule.value));
+        }
+        if (hideRules.length > 0 && hideRules.every((rule) => evaluateOperator(rule.operator, merged[rule.source_field], rule.value))) {
+          visible = false;
+        }
+        if (!visible) hiddenFieldKeys.add(f.field_key);
+      }
+
+      if (!isSuperAdmin) {
+        for (const f of fields) {
+          if (!f.permissions || Object.keys(f.permissions).length === 0) continue;
+          const rolePerm = f.permissions[userRole];
+          if (!rolePerm) continue;
+          if (rolePerm.view === false) hiddenFieldKeys.add(f.field_key);
+          else if (rolePerm.edit === false) readOnlyFieldKeys.add(f.field_key);
+        }
+      }
     }
-    if (investor) {
-      map.investor_profile = { data: investorData, save: updateInvestorField };
-    }
-    if (primaryBorrowerEntity) {
-      map.borrower_entity = { data: entityData, save: updateBorrowerEntityField };
-    }
 
-    return map;
-  }, [contactData, borrowerData, investorData, entityData, borrower, investor, primaryBorrowerEntity, updateContactField, updateBorrowerField, updateInvestorField, updateBorrowerEntityField]);
+    return { hiddenFieldKeys, readOnlyFieldKeys };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sectionFields, isSuperAdmin, userRole, sourceRegistry]);
 
-  // --- Resolve visible sections ---
+  // --- Resolve visible sections (only contact_profile + address) ---
 
+  const ADDRESS_SECTION: SectionLayout = {
+    section_key: "address", display_order: 99, is_visible: true,
+    visibility_rule: null, section_type: "address", section_label: "Address", section_icon: "map-pin",
+  };
+
+  // When editing, use inline layout state for sections; when not, use server-provided data
   const resolvedSections = useMemo(() => {
-    const layout = sectionOrder.length > 0 ? sectionOrder : DEFAULT_SECTION_ORDER;
+    if (isEditing && inlineLayout) {
+      // In edit mode, show ALL field sections from the inline layout state
+      return inlineLayout.state.sections
+        .filter((s) => s.section_type === "fields")
+        .sort((a, b) => a.display_order - b.display_order);
+    }
 
-    const visibilityContext: Record<string, boolean> = {
-      has_borrower: hasBorrower,
-      has_investor: hasInvestor,
-    };
+    // Normal mode: use server-provided section order
+    const layoutSections = sectionOrder.length > 0 ? sectionOrder : DEFAULT_SECTION_ORDER;
 
-    return layout
+    const filtered = layoutSections
       .filter((s) => s.is_visible)
       .filter((s) => {
         if (!s.visibility_rule) return true;
-        return visibilityContext[s.visibility_rule] ?? true;
+        return true;
       })
+      // Only keep contact_profile and address in the overview
+      .filter((s) => s.section_key === "contact_profile" || s.section_key === "address")
       .sort((a, b) => a.display_order - b.display_order);
-  }, [sectionOrder, hasBorrower, hasInvestor]);
 
-  // --- Build edit fields for the currently editing section ---
-
-  const buildGenericEditFields = useCallback((sectionKey: string): CrmSectionField[] => {
-    const fields = sectionFields[sectionKey];
-    const source = sectionDataMap[sectionKey];
-    if (!fields || !source) return [];
-
-    let editFields = buildEditFields(fields, source.data, isSuperAdmin);
-
-    // Section-specific option injections
-    if (sectionKey === "contact_profile") {
-      editFields = editFields.map((f) => {
-        if (f.fieldName === "assigned_to") {
-          return {
-            ...f,
-            fieldType: "select" as const,
-            options: teamMembers.map((m) => ({ label: m.full_name, value: m.id })),
-          };
-        }
-        if (f.fieldName === "company_id") {
-          return {
-            ...f,
-            fieldType: "select" as const,
-            options: localCompanies.map((c) => ({ label: c.name, value: c.id })),
-            onCreateNew: () => setQuickAddCompanyOpen(true),
-            createNewLabel: "New Company",
-          };
-        }
-        return f;
-      });
+    if (!filtered.some((s) => s.section_key === "address")) {
+      const cpIdx = filtered.findIndex((s) => s.section_key === "contact_profile");
+      const insertAt = cpIdx >= 0 ? cpIdx + 1 : filtered.length;
+      filtered.splice(insertAt, 0, ADDRESS_SECTION);
     }
 
-    return editFields;
-  }, [sectionFields, sectionDataMap, isSuperAdmin, teamMembers, localCompanies]);
+    return filtered;
+  }, [sectionOrder, isEditing, inlineLayout?.state.sections]);
 
-  // --- Render helpers ---
-
-  function renderSystemSection(section: SectionLayout): ReactNode {
-    if (section.section_key === "borrower_summary" && hasBorrower && loans.length > 0) {
-      return (
-        <SectionCard title="Borrower Summary" icon={Landmark} key="borrower_summary">
-          <div className="flex gap-5 flex-wrap">
-            <MetricCard label="Total Loans" value={loans.length} sub={`${activeLoans.length} active`} />
-            <MetricCard label="Loan Volume" value={formatCurrency(totalVolume)} mono />
-            <MetricCard label="Avg Rate" value={avgRate > 0 ? formatPercent(avgRate) : "\u2014"} mono />
-            <MetricCard label="Active Opps" value={activeLoans.length} />
-            <MetricCard label="First Loan" value={firstLoan ? formatDate(firstLoan.created_at) : "\u2014"} />
-          </div>
-        </SectionCard>
-      );
-    }
-    if (section.section_key === "investor_summary" && hasInvestor && commitments.length > 0) {
-      return (
-        <SectionCard title="Investor Summary" icon={TrendingUp} key="investor_summary">
-          <div className="flex gap-5 flex-wrap">
-            <MetricCard label="Total Committed" value={formatCurrency(totalCommitted)} mono />
-            <MetricCard label="Funded" value={formatCurrency(totalFunded)} mono />
-            <MetricCard label="Unfunded" value={formatCurrency(totalUnfunded)} mono />
-            <MetricCard label="Active Funds" value={activeFunds} />
-          </div>
-        </SectionCard>
-      );
-    }
-    return null;
+  function handleInlineChange(fieldKey: string, value: unknown) {
+    setLocalContactData((prev) => ({ ...prev, [fieldKey]: value }));
   }
 
-  function renderDescriptionSection(section: SectionLayout): ReactNode {
+  function handleInlineBlur(fieldKey: string) {
+    const currentVal = enrichedContactData[fieldKey];
+    const prevVal = (contact as unknown as Record<string, unknown>)[fieldKey];
+    if (currentVal === prevVal) return;
+    startTransition(async () => {
+      const ok = await saveContactField(fieldKey, currentVal as never);
+      if (!ok) {
+        setLocalContactData((prev) => ({ ...prev, [fieldKey]: prevVal }));
+      }
+    });
+  }
+
+  function renderFieldSection(section: SectionLayout, layoutSectionId?: string): ReactNode {
+    let fields = sectionFields[section.section_key];
+    if (!fields?.length) return null;
+
+    if (section.section_key === "contact_profile") {
+      fields = fields.filter((f) => !ADDRESS_FIELD_KEYS.has(f.field_key));
+      if (!fields.length) return null;
+    }
+
+    const merged: Record<string, unknown> = {};
+    for (const f of fields) {
+      const propKey = FIELD_KEY_TO_PROP[f.field_key] ?? f.field_key;
+      merged[propKey] = enrichedContactData[propKey];
+      const displayKey = `${propKey}_display`;
+      if (displayKey in enrichedContactData) {
+        merged[displayKey] = enrichedContactData[displayKey];
+      }
+    }
+
+    const { hiddenFieldKeys, readOnlyFieldKeys } = getFieldFilters(section.section_key);
     const Icon = getSectionIcon(section.section_icon);
+
+    const optionsOverrides: Record<string, { label: string; value: string }[]> = {
+      assigned_to: teamMembers.map((m) => ({ label: m.full_name, value: m.id })),
+      company_id: localCompanies.map((c) => ({ label: c.name, value: c.id })),
+    };
+
+    // When in layout edit mode, pass config so fields get EditableFieldSlot wrapping
+    const editConfig: LayoutEditConfig | undefined =
+      isEditing && layoutSectionId ? { sectionId: layoutSectionId } : undefined;
+
     return (
-      <SectionCard title={section.section_label} icon={Icon} action={<SectionEditButton onClick={() => setEditDescriptionOpen(true)} />} key="description">
-        {contact.notes ? (
-          <p className="text-[13px] text-muted-foreground leading-relaxed whitespace-pre-wrap">
-            {contact.notes}
-          </p>
-        ) : (
-          <button
-            onClick={() => setEditDescriptionOpen(true)}
-            className="text-[13px] text-muted-foreground/60 hover:text-muted-foreground transition-colors cursor-pointer bg-transparent border-0 p-0 text-left"
-          >
-            Click to add a description...
-          </button>
+      <SectionCard key={section.section_key} title={section.section_label} icon={Icon}>
+        {renderDynamicFieldsInline(
+          fields,
+          merged,
+          isSuperAdmin,
+          {
+            onChange: handleInlineChange,
+            onBlur: handleInlineBlur,
+            disabled: pending,
+            optionsOverrides,
+            onAddNewCompany: () => setQuickAddCompanyOpen(true),
+          },
+          hiddenFieldKeys,
+          readOnlyFieldKeys,
+          editConfig,
         )}
       </SectionCard>
     );
   }
 
-  function renderFieldSection(section: SectionLayout): ReactNode {
-    const source = sectionDataMap[section.section_key];
-    const fields = sectionFields[section.section_key];
+  function handleAddressSelect(parsed: ParsedAddress) {
+    const updates: Record<string, string> = {
+      address_line1: parsed.address_line1,
+      city: parsed.city,
+      state: parsed.state,
+      zip: parsed.zip,
+    };
+    setLocalContactData((prev) => ({ ...prev, ...updates }));
+    startTransition(async () => {
+      const { error } = await supabase
+        .from("crm_contacts")
+        .update(updates)
+        .eq("id", contact.id);
+      if (error) {
+        showError("Could not save address", error.message);
+      }
+    });
+  }
 
-    if (!source || !fields?.length) return null;
-
-    const Icon = getSectionIcon(section.section_icon);
+  function renderAddressSection(): ReactNode {
     return (
-      <SectionCard
-        key={section.section_key}
-        title={section.section_label}
-        icon={Icon}
-        action={<SectionEditButton onClick={() => setEditingSectionKey(section.section_key)} />}
-      >
-        {renderDynamicFields(fields, source.data, isSuperAdmin)}
+      <SectionCard title="Address" icon={MapPin} key="address">
+        <div className="flex flex-col gap-2.5">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-2.5">
+            <div className="space-y-0">
+              <span className="inline-field-label">Address</span>
+              <AddressAutocomplete
+                value={(localContactData.address_line1 as string) ?? ""}
+                onChange={(val) => setLocalContactData((prev) => ({ ...prev, address_line1: val }))}
+                onAddressSelect={handleAddressSelect}
+                onBlur={() => {
+                  const currentVal = localContactData.address_line1;
+                  const prevVal = (contact as unknown as Record<string, unknown>).address_line1;
+                  if (currentVal === prevVal) return;
+                  startTransition(async () => {
+                    const ok = await saveContactField("address_line1", currentVal);
+                    if (!ok) setLocalContactData((prev) => ({ ...prev, address_line1: prevVal }));
+                  });
+                }}
+                placeholder="Start typing an address..."
+                disabled={pending}
+                className="inline-field"
+              />
+            </div>
+            <div className="space-y-0">
+              <span className="inline-field-label">Address Line 2</span>
+              <Input
+                value={(localContactData.address_line2 as string) ?? ""}
+                onChange={(e) => setLocalContactData((prev) => ({ ...prev, address_line2: e.target.value || null }))}
+                onBlur={() => {
+                  const currentVal = localContactData.address_line2;
+                  const prevVal = (contact as unknown as Record<string, unknown>).address_line2;
+                  if (currentVal === prevVal) return;
+                  startTransition(async () => {
+                    const ok = await saveContactField("address_line2", currentVal);
+                    if (!ok) setLocalContactData((prev) => ({ ...prev, address_line2: prevVal }));
+                  });
+                }}
+                disabled={pending}
+                placeholder="Suite, unit, etc."
+                className="inline-field"
+              />
+            </div>
+          </div>
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-x-4 gap-y-2.5">
+            {[
+              { key: "city", label: "City" },
+              { key: "state", label: "State" },
+              { key: "zip", label: "Zip" },
+            ].map((f) => (
+              <div key={f.key} className="space-y-0">
+                <span className="inline-field-label">{f.label}</span>
+                <Input
+                  value={((localContactData[f.key] as string) ?? "") || ""}
+                  onChange={(e) => setLocalContactData((prev) => ({ ...prev, [f.key]: e.target.value || null }))}
+                  onBlur={() => {
+                    const currentVal = localContactData[f.key];
+                    const prevVal = (contact as unknown as Record<string, unknown>)[f.key];
+                    if (currentVal === prevVal) return;
+                    startTransition(async () => {
+                      const ok = await saveContactField(f.key, currentVal);
+                      if (!ok) setLocalContactData((prev) => ({ ...prev, [f.key]: prevVal }));
+                    });
+                  }}
+                  disabled={pending}
+                  placeholder={f.label}
+                  className="inline-field"
+                />
+              </div>
+            ))}
+          </div>
+        </div>
       </SectionCard>
     );
   }
 
-  function renderSection(section: SectionLayout): ReactNode {
-    if (section.section_type === "system") {
-      return renderSystemSection(section);
+  function renderSection(section: SectionLayout, layoutSectionId?: string): ReactNode {
+    if (section.section_key === "address") {
+      return renderAddressSection();
     }
-    if (section.section_key === "description") {
-      return renderDescriptionSection(section);
-    }
-    return renderFieldSection(section);
+    return renderFieldSection(section, layoutSectionId);
   }
 
-  // --- Editing section config ---
+  // Get all used field keys for the FieldPicker
+  const allUsedFieldKeys = useMemo(() => {
+    if (!isEditing || !inlineLayout) return new Set<string>();
+    const keys = new Set<string>();
+    for (const f of inlineLayout.state.fields) keys.add(f.field_key);
+    return keys;
+  }, [isEditing, inlineLayout?.state.fields]);
 
-  const editingSectionMeta = editingSectionKey
-    ? resolvedSections.find((s) => s.section_key === editingSectionKey)
-    : null;
-
-  const editingFields = editingSectionKey
-    ? buildGenericEditFields(editingSectionKey)
-    : [];
-
-  const editingSave = editingSectionKey && sectionDataMap[editingSectionKey]
-    ? sectionDataMap[editingSectionKey].save
-    : updateContactField;
+  // Convert SectionLayout (CRM type) to LayoutSection for EditableSection compatibility
+  function toLayoutSection(section: SectionLayout | LayoutSection, idx: number): LayoutSection {
+    // If it already has an id field, it's a LayoutSection from inline state
+    if ("id" in section && "page_type" in section) return section as LayoutSection;
+    // Otherwise build a compatible object from SectionLayout
+    return {
+      id: (section as SectionLayout).section_key,
+      page_type: "contact_detail",
+      section_key: (section as SectionLayout).section_key,
+      section_label: section.section_label,
+      section_icon: section.section_icon,
+      display_order: section.display_order,
+      is_visible: section.is_visible,
+      is_locked: false,
+      sidebar: false,
+      section_type: section.section_type,
+      tab_key: null,
+      tab_label: null,
+      tab_icon: null,
+      tab_order: 0,
+      tab_locked: false,
+      relationship_id: null,
+      visibility_rule: null,
+      default_collapsed: false,
+    };
+  }
 
   return (
     <div className="flex flex-col gap-5">
-      {resolvedSections.map((section) => renderSection(section))}
+      {resolvedSections.map((section, sectionIdx) => {
+        const layoutSec = toLayoutSection(section, sectionIdx);
+        const content = renderSection(section as SectionLayout, layoutSec.id);
+        if (!isEditing) return content;
 
-      {/* Generic field section edit dialog */}
-      <CrmEditSectionDialog
-        open={!!editingSectionKey}
-        onOpenChange={(open) => { if (!open) setEditingSectionKey(null); }}
-        title={editingSectionMeta?.section_label ?? editingSectionKey ?? ""}
-        fields={editingFields}
-        onSave={editingSave}
-      />
+        const fieldSections = resolvedSections.filter(s => ("section_type" in s ? s.section_type : "") === "fields");
 
-      {/* Description edit dialog (separate since it's a simple textarea) */}
-      <CrmEditSectionDialog
-        open={editDescriptionOpen}
-        onOpenChange={setEditDescriptionOpen}
-        title="Description"
-        fields={[{ label: "Description", fieldName: "notes", fieldType: "textarea", value: contact.notes }]}
-        onSave={updateContactField}
-      />
+        return (
+          <EditableSection
+            key={layoutSec.id}
+            section={layoutSec}
+            sectionIndex={sectionIdx}
+            totalSections={fieldSections.length}
+          >
+            {content}
+            {/* Add Field button in edit mode */}
+            <div className="mt-3 flex justify-center pb-2">
+              <FieldPicker
+                sectionId={layoutSec.id}
+                usedFieldKeys={allUsedFieldKeys}
+              />
+            </div>
+          </EditableSection>
+        );
+      })}
 
       <QuickAddCompanyDialog
         open={quickAddCompanyOpen}
         onOpenChange={setQuickAddCompanyOpen}
         onCompanyCreated={(company) => {
-          setLocalCompanies((prev) => [...prev, { id: company.id, name: company.name, company_type: company.company_type }]);
+          setLocalCompanies((prev) => [...prev, { id: company.id, company_number: company.company_number, name: company.name, company_type: company.company_type }]);
         }}
       />
     </div>

@@ -2,12 +2,13 @@ import type {
   CardTypeFieldRef,
   UwFieldDef,
   UwFieldObject,
-} from "@/components/pipeline-v2/pipeline-types";
+} from "@/components/pipeline/pipeline-types";
 import {
   isVisible,
   type VisibilityCondition,
   type VisibilityContext,
 } from "@/lib/visibility-engine";
+import type { ConditionalRule, FieldPermissions } from "@/hooks/useFieldConfigurations";
 
 /**
  * A field_configurations row (subset of columns needed for resolution).
@@ -25,6 +26,10 @@ export interface FieldConfigRecord {
   formula_expression: string | null;
   formula_output_format: string | null;
   formula_decimal_places: number | null;
+  conditional_rules: ConditionalRule[] | null;
+  permissions: FieldPermissions | null;
+  required_at_stage: string | null;
+  blocks_stage_progression: boolean | null;
 }
 
 /**

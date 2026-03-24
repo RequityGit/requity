@@ -176,7 +176,7 @@ export function ModelHealthPanel({ inputs, modelType, isSandbox, dealId }: Model
                 className="h-7 text-[11px]"
                 asChild
               >
-                <Link href={`/admin/models/${modelType}/sandbox`}>
+                <Link href={`/models/${modelType}/sandbox`}>
                   <FlaskConical size={12} className="mr-1" strokeWidth={1.5} />
                   Open in Sandbox
                 </Link>

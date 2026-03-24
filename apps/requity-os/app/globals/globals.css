@@ -4,6 +4,7 @@
 
 @layer base {
   :root {
+    color-scheme: light;
     /* Light theme — Requity V2 monochrome */
     --background: 0 0% 100%;
     --foreground: 0 0% 10%;
@@ -35,6 +36,13 @@
 
     --radius: 0.5rem;
 
+    /* ─── Motion tokens ─── */
+    --duration-fast: 120ms;
+    --duration-normal: 200ms;
+    --duration-slow: 350ms;
+    --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+    --ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
+
     /* Sidebar — light secondary surface */
     --sidebar-bg: 240 5% 97%;
     --sidebar-fg: 0 0% 10%;
@@ -53,6 +61,7 @@
   }
 
   .dark {
+    color-scheme: dark;
     /* Dark theme — Requity V2 true black/charcoal */
     --background: 0 0% 5%;
     --foreground: 0 0% 96%;
@@ -333,7 +342,7 @@
    Mobile-specific styles
    ============================ */
 
-/* Gold shimmer skeleton animation */
+/* Skeleton shimmer animation */
 @keyframes rq-shimmer {
   0% { background-position: -200% 0; }
   100% { background-position: 200% 0; }
@@ -343,7 +352,7 @@
   background: linear-gradient(
     90deg,
     hsl(var(--muted)) 25%,
-    rgba(197, 151, 91, 0.08) 50%,
+    rgba(255, 255, 255, 0.06) 50%,
     hsl(var(--muted)) 75%
   );
   background-size: 200% 100%;
@@ -438,6 +447,197 @@
   }
 }
 
+/* ============================
+   Inline field editing pattern (hover-to-reveal)
+   Apply .inline-field to any <input>, <select>, <textarea>, or button trigger
+   to make it look like plain text at rest, with border/bg on hover and focus.
+   Apply .inline-field-label to the label above the field.
+
+   IMPORTANT: These must be OUTSIDE @layer so they outrank Tailwind utility
+   classes (h-10, bg-background, border-input, px-3, py-2) that shadcn Input
+   applies by default. Styles inside @layer components always lose to utilities.
+   ============================ */
+.inline-field {
+  height: auto !important;
+  min-height: 32px;
+  background-color: transparent !important;
+  padding: 0.25rem 0.5rem !important;
+  border: 1px solid transparent !important;
+  border-radius: 0.375rem;
+  transition: color 0.15s, background-color 0.15s, border-color 0.15s;
+}
+.inline-field:hover {
+  border-color: hsl(var(--border)) !important;
+  background-color: hsl(var(--muted) / 0.4) !important;
+}
+.inline-field:focus,
+.inline-field:focus-visible {
+  border-color: hsl(var(--primary) / 0.6) !important;
+  background-color: hsl(var(--background)) !important;
+  box-shadow: 0 0 0 1px hsl(var(--primary) / 0.2) !important;
+  outline: none !important;
+  --tw-ring-shadow: none !important;
+  --tw-ring-offset-width: 0px;
+}
+.inline-field-label {
+  font-size: 11px;
+  font-weight: 500;
+  color: hsl(var(--muted-foreground));
+  line-height: 1.25;
+}
+
+/* ============================
+   Typography — section headings, micro labels, stat values
+   ============================ */
+@layer components {
+  /* Section heading on detail pages, drawers, cards (e.g. "Loan Details", "Address") */
+  .rq-section-title {
+    @apply text-[13px] font-semibold text-foreground;
+  }
+
+  /* Uppercase micro label — table group headers, KPI labels, category tags */
+  .rq-micro-label {
+    @apply text-[10px] font-semibold uppercase tracking-[0.06em] text-muted-foreground;
+  }
+
+  /* Large stat / KPI value */
+  .rq-stat-value {
+    @apply text-xl font-bold tabular-nums;
+  }
+}
+
+/* ============================
+   Table header cells — commercial UW, pro forma, pipeline grids
+   Base class gives typography + padding; add text-left/text-right per cell.
+   ============================ */
+@layer components {
+  .rq-th {
+    @apply text-[10px] font-semibold uppercase tracking-[0.06em]
+      text-muted-foreground p-[9px_14px] border-b-2;
+  }
+}
+
+/* ============================
+   Numeric input — editable cells inside financial tables
+   Visible border at rest (these are spreadsheet-style, not inline-edit).
+   ============================ */
+@layer components {
+  .rq-numeric-input {
+    @apply rounded-lg border border-border bg-accent/50 text-foreground
+      px-[7px] py-[5px] text-xs tabular-nums outline-none
+      focus:border-muted-foreground transition-colors;
+  }
+}
+
+/* ============================
+   Action buttons — ghost-style add/edit/remove triggers on cards & tables
+   ============================ */
+@layer components {
+  .rq-action-btn {
+    @apply inline-flex items-center gap-1.5 px-3.5 py-[7px]
+      rounded-lg border text-xs font-medium cursor-pointer
+      bg-transparent text-foreground hover:bg-accent/50
+      transition-colors;
+  }
+  .rq-action-btn-sm {
+    @apply inline-flex items-center gap-1.5 px-2.5 py-[5px]
+      rounded-lg border text-[11px] font-medium cursor-pointer
+      bg-transparent text-foreground hover:bg-accent/50
+      transition-colors;
+  }
+}
+
+/* ============================
+   Empty states — centered placeholder when a table/card/tab has no data
+   ============================ */
+@layer components {
+  .rq-empty-state {
+    @apply py-12 text-center text-muted-foreground text-sm;
+  }
+}
+
+/* ============================
+   Financial value sentiment — green/red for positive/negative numbers
+   Use on any number that can flip sign (P&L, returns, variances).
+   Dark-mode safe: emerald/rose shift automatically.
+   ============================ */
+@layer components {
+  .rq-value-positive {
+    @apply text-emerald-600 dark:text-emerald-400;
+  }
+  .rq-value-negative {
+    @apply text-red-600 dark:text-red-400;
+  }
+  .rq-value-warn {
+    @apply text-amber-600 dark:text-amber-400;
+  }
+}
+
+/* ============================
+   Total / subtotal rows in financial tables
+   Apply to <tr> for table totals, or to a flex wrapper for summary lines.
+   ============================ */
+@layer components {
+  .rq-total-row {
+    @apply border-t-2 border-border bg-muted/30 font-semibold;
+  }
+  .rq-subtotal-row {
+    @apply border-t border-border font-medium;
+  }
+}
+
+/* ============================
+   Financial table data cells — counterpart to .rq-th
+   Consistent padding + height across all financial grids.
+   ============================ */
+@layer components {
+  .rq-td {
+    @apply px-[14px] py-[9px] text-[13px] tabular-nums align-middle;
+  }
+}
+
+/* ============================
+   Form field layout utilities
+   Standard grids and stacks for detail pages, drawers, dialogs.
+   ============================ */
+@layer components {
+  /* 2-column responsive grid for detail pages (single col on mobile) */
+  .rq-field-grid {
+    @apply grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4;
+  }
+  /* 3-column grid for denser layouts (KPI rows, property fields) */
+  .rq-field-grid-3 {
+    @apply grid grid-cols-1 md:grid-cols-3 gap-x-6 gap-y-4;
+  }
+  /* Tight vertical stack for drawers, slide-overs, single-column forms */
+  .rq-field-stack {
+    @apply flex flex-col space-y-3;
+  }
+}
+
+/* ============================
+   Inline text links — clickable text that isn't a button
+   ============================ */
+@layer components {
+  .rq-link {
+    @apply text-sm text-primary hover:underline underline-offset-4
+      cursor-pointer transition-colors;
+  }
+  .rq-link-muted {
+    @apply text-sm text-muted-foreground hover:text-foreground
+      cursor-pointer transition-colors;
+  }
+}
+
+/* ============================
+   Section divider — horizontal rule between content sections
+   ============================ */
+@layer components {
+  .rq-divider {
+    @apply border-t border-border;
+  }
+}
+
 /* Numeric typography — tabular figures for financial data */
 .num {
   font-variant-numeric: tabular-nums;
@@ -445,16 +645,190 @@
   letter-spacing: -0.025em;
 }
 
-/* Reduced motion support */
+/* ─── Reduced motion: respect user preference ─── */
 @media (prefers-reduced-motion: reduce) {
-  .skeleton-shimmer,
-  .swipe-hint,
-  .bottom-sheet-enter,
-  .bottom-sheet-exit {
-    animation: none !important;
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Task split-panel: hidden scrollbar on activity feed */
+.task-panel-feed::-webkit-scrollbar {
+  display: none;
+}
+.task-panel-feed {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* ── Activity Feed ── */
+.activity-feed::-webkit-scrollbar { display: none; }
+.activity-feed { -ms-overflow-style: none; scrollbar-width: none; }
+
+.activity-message {
+  position: relative;
+  padding: 6px 10px;
+  border-radius: 8px;
+  transition: background 0.1s ease;
+}
+.activity-message:hover {
+  @apply bg-muted/40;
+}
+.activity-message .hover-toolbar {
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.1s ease;
+}
+.activity-message:hover .hover-toolbar {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* Note composer: outer layout (avatar + surface side by side) */
+.comment-composer {
+  @apply flex gap-3 items-start;
+}
+
+/* Unified input surface (textarea + toolbar in one container) */
+.comment-surface {
+  @apply flex-1 min-w-0 rounded-xl border border-border bg-card transition-all duration-normal;
+}
+.comment-surface:hover {
+  @apply border-border/80;
+}
+.comment-surface:focus-within {
+  @apply border-primary/40 bg-background shadow-sm;
+  box-shadow: 0 0 0 1px hsl(var(--primary) / 0.15), 0 2px 8px rgba(0,0,0,0.08);
+}
+
+/* Borderless textarea inside the surface */
+.comment-surface-textarea {
+  @apply w-full bg-transparent border-0 outline-none resize-none
+    text-xs text-foreground placeholder:text-muted-foreground
+    focus:ring-0 focus:outline-none;
+}
+
+/* Toolbar row at the bottom of the surface */
+.comment-toolbar {
+  @apply flex items-center justify-between gap-2 border-t border-border/50;
+}
+
+/* ============================
+   Motion utility classes
+   ============================ */
+@layer utilities {
+  /* Standard transition for hover states (color, background, border changes) */
+  .rq-transition {
+    transition-property: color, background-color, border-color, opacity;
+    transition-duration: var(--duration-fast);
+    transition-timing-function: var(--ease-out);
   }
 
-  * {
-    transition-duration: 0.01ms !important;
+  /* Transition for elements that move or resize (panels, cards, drawers) */
+  .rq-transition-transform {
+    transition-property: transform, opacity;
+    transition-duration: var(--duration-normal);
+    transition-timing-function: var(--ease-out);
   }
+
+  /* Transition for modals, sheets, and full panels */
+  .rq-transition-panel {
+    transition-property: transform, opacity;
+    transition-duration: var(--duration-slow);
+    transition-timing-function: var(--ease-out);
+  }
+
+  /* Transition for all properties (use sparingly — prefer specific properties) */
+  .rq-transition-all {
+    transition-property: all;
+    transition-duration: var(--duration-normal);
+    transition-timing-function: var(--ease-out);
+  }
+}
+
+/* ============================
+   Reusable keyframes
+   ============================ */
+
+/* Fade in (modals, toasts, overlays) */
+@keyframes rq-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* Fade out */
+@keyframes rq-fade-out {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+
+/* Slide in from right (peek panel, drawers) */
+@keyframes rq-slide-in-right {
+  from { transform: translateX(100%); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+
+/* Slide out to right */
+@keyframes rq-slide-out-right {
+  from { transform: translateX(0); opacity: 1; }
+  to { transform: translateX(100%); opacity: 0; }
+}
+
+/* Scale in (popovers, dropdowns) */
+@keyframes rq-scale-in {
+  from { transform: scale(0.95); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+
+/* Pulse once (alert attention, deal alert state) */
+@keyframes rq-pulse-once {
+  0%, 100% { box-shadow: 0 0 0 0 transparent; }
+  50% { box-shadow: 0 0 0 4px hsl(var(--primary) / 0.15); }
+}
+
+/* ─── Animation utility classes ─── */
+.rq-animate-fade-in {
+  animation: rq-fade-in var(--duration-normal) var(--ease-out) forwards;
+}
+.rq-animate-slide-in-right {
+  animation: rq-slide-in-right var(--duration-slow) var(--ease-out) forwards;
+}
+.rq-animate-scale-in {
+  animation: rq-scale-in var(--duration-normal) var(--ease-out) forwards;
+}
+.rq-animate-pulse-once {
+  animation: rq-pulse-once var(--duration-slow) var(--ease-in-out) 1;
+}
+
+/* ─── Like button animations ─── */
+@keyframes like-pulse {
+  0% { transform: scale(1); }
+  30% { transform: scale(1.25); }
+  100% { transform: scale(1); }
+}
+
+@keyframes particle-burst {
+  0% { opacity: 1; transform: translate(0, 0) scale(1); }
+  100% { opacity: 0; transform: translate(var(--tx), var(--ty)) scale(0); }
+}
+
+@keyframes count-up {
+  0% { transform: translateY(8px); opacity: 0; }
+  100% { transform: translateY(0); opacity: 1; }
+}
+
+@keyframes count-down {
+  0% { transform: translateY(-8px); opacity: 0; }
+  100% { transform: translateY(0); opacity: 1; }
+}
+
+@keyframes pill-in {
+  0% { transform: scale(0.8); opacity: 0; }
+  50% { transform: scale(1.04); }
+  100% { transform: scale(1); opacity: 1; }
 }

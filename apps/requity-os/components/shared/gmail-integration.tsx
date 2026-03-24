@@ -13,7 +13,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useToast } from "@/components/ui/use-toast";
+import { showSuccess, showError } from "@/lib/toast";
 import { Mail, CheckCircle2, XCircle, Loader2, Unplug, AlertTriangle, RefreshCw, Inbox } from "lucide-react";
 
 interface GmailToken {
@@ -25,7 +25,6 @@ interface GmailToken {
 }
 
 export function GmailIntegration() {
-  const { toast } = useToast();
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -81,24 +80,15 @@ export function GmailIntegration() {
   useEffect(() => {
     const gmailParam = searchParams.get("gmail");
     if (gmailParam === "connected") {
-      toast({
-        title: "Gmail connected",
-        description:
-          "Your Gmail account has been connected successfully. Emails will now be sent via your Gmail.",
-      });
+      showSuccess("Gmail connected");
       // Clean up the URL
       router.replace(pathname, { scroll: false });
     } else if (gmailParam === "error") {
       const message = searchParams.get("message");
-      toast({
-        title: "Gmail connection failed",
-        description:
-          message || "Something went wrong connecting your Gmail account. Please try again.",
-        variant: "destructive",
-      });
+      showError("Could not connect Gmail", message || "Something went wrong. Please try again.");
       router.replace(pathname, { scroll: false });
     }
-  }, [searchParams, toast, router, pathname]);
+  }, [searchParams, router, pathname]);
 
   useEffect(() => {
     fetchGmailStatus();
@@ -119,30 +109,18 @@ export function GmailIntegration() {
       const data = await res.json();
 
       if (!res.ok) {
-        toast({
-          title: "Error",
-          description: data?.error || "Failed to start Gmail authorization. Please try again.",
-          variant: "destructive",
-        });
+        showError("Could not start Gmail authorization", data?.error || "Please try again.");
         return;
       }
 
       if (data?.auth_url) {
         window.location.href = data.auth_url;
       } else {
-        toast({
-          title: "Error",
-          description: "No authorization URL received. Please try again.",
-          variant: "destructive",
-        });
+        showError("Could not start Gmail authorization", "No authorization URL received.");
       }
     } catch (err) {
       console.error("Gmail connect error:", err);
-      toast({
-        title: "Error",
-        description: "An unexpected error occurred. Please try again.",
-        variant: "destructive",
-      });
+      showError("Could not connect Gmail", "An unexpected error occurred.");
     } finally {
       setConnecting(false);
     }
@@ -164,27 +142,15 @@ export function GmailIntegration() {
         .eq("is_active", true);
 
       if (error) {
-        toast({
-          title: "Error",
-          description: "Failed to disconnect Gmail. Please try again.",
-          variant: "destructive",
-        });
+        showError("Could not disconnect Gmail", "Please try again.");
         return;
       }
 
       setGmailToken(null);
-      toast({
-        title: "Gmail disconnected",
-        description:
-          "Your Gmail account has been disconnected. Emails will be sent via the default sender.",
-      });
+      showSuccess("Gmail disconnected");
     } catch (err) {
       console.error("Gmail disconnect error:", err);
-      toast({
-        title: "Error",
-        description: "An unexpected error occurred. Please try again.",
-        variant: "destructive",
-      });
+      showError("Could not disconnect Gmail", "An unexpected error occurred.");
     } finally {
       setDisconnecting(false);
     }
@@ -213,11 +179,7 @@ export function GmailIntegration() {
 
       const data = await res.json();
       if (!res.ok) {
-        toast({
-          title: "Sync failed",
-          description: data?.error || "Failed to sync emails.",
-          variant: "destructive",
-        });
+        showError("Could not sync emails", data?.error || "Please try again.");
         return;
       }
 
@@ -226,17 +188,10 @@ export function GmailIntegration() {
         errors: data.errors || [],
       });
 
-      toast({
-        title: "Sync complete",
-        description: `Synced ${data.messagesProcessed} new email${data.messagesProcessed === 1 ? "" : "s"}.`,
-      });
+      showSuccess(`Synced ${data.messagesProcessed} new email${data.messagesProcessed === 1 ? "" : "s"}`);
     } catch (err) {
       console.error("Gmail sync error:", err);
-      toast({
-        title: "Sync failed",
-        description: "An unexpected error occurred.",
-        variant: "destructive",
-      });
+      showError("Could not sync emails", "An unexpected error occurred.");
     } finally {
       setSyncing(false);
     }
@@ -401,7 +356,7 @@ export function GmailIntegration() {
                 <p className="text-sm font-medium text-amber-900">
                   Gmail integration is not configured
                 </p>
-                {pathname.startsWith("/admin") || pathname.startsWith("/control-center") ? (
+                {!pathname.startsWith("/b/") && !pathname.startsWith("/i/") ? (
                   <div className="text-xs text-amber-700 space-y-1 mt-1">
                     <p>
                       To enable Gmail integration, add these environment variables

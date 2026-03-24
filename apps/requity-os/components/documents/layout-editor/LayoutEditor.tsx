@@ -2,7 +2,7 @@
 
 import { useState, useMemo, useCallback } from "react";
 import { ArrowLeft, Save, Eye, Pencil } from "lucide-react";
-import { toast } from "sonner";
+import { showSuccess, showError } from "@/lib/toast";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { createClient } from "@/lib/supabase/client";
@@ -98,13 +98,13 @@ export function LayoutEditor({ template, onBack, switchAction }: LayoutEditorPro
         .eq("id", template.id);
 
       if (error) {
-        toast.error(`Failed to save layout: ${error.message}`);
+        showError(`Failed to save layout: ${error.message}`);
       } else {
         setSavedJson(JSON.stringify(layout));
-        toast.success("Layout saved");
+        showSuccess("Layout saved");
       }
     } catch (err) {
-      toast.error("Failed to save layout");
+      showError("Failed to save layout");
     } finally {
       setSaving(false);
     }

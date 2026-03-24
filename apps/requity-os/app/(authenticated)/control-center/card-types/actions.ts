@@ -13,7 +13,7 @@ import type {
   CapitalSide,
   CardTypeStatus,
   GridTemplateDef,
-} from "@/components/pipeline-v2/pipeline-types";
+} from "@/components/pipeline/pipeline-types";
 
 // ---------------------------------------------------------------------------
 // Re-export types for the client component
@@ -40,7 +40,7 @@ const DEALS_TABLE = "unified_deals" as never;
 
 function revalidate() {
   revalidatePath("/control-center/card-types");
-  revalidatePath("/admin/pipeline-v2");
+  revalidatePath("/admin/pipeline");
 }
 
 // ---------------------------------------------------------------------------
@@ -275,9 +275,6 @@ export async function saveCardType(
       | "status"
       | "uw_model_key"
       | "uw_grid"
-      | "uw_field_refs"
-      | "property_field_refs"
-      | "contact_field_refs"
     >
   >
 ): Promise<{ success?: boolean; error?: string }> {

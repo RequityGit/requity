@@ -83,7 +83,7 @@ export function ServicingTabs({
         <LoanTapeTab
           loans={loans}
           onRowClick={(row: any) =>
-            router.push(`/admin/servicing/${row.loan_id}`)
+            router.push(`/servicing/${row.loan_id}`)
           }
         />
       </TabsContent>

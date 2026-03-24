@@ -1,4 +1,4 @@
-import * as XLSX from "xlsx";
+// XLSX (~300KB) is dynamically imported only when parseSpreadsheet() is called
 
 export interface ParsedSpreadsheet {
   headers: string[];
@@ -85,6 +85,7 @@ function detectHeaderRow(raw: string[][]): number {
  * Dynamically detects the header row by scanning for metadata/title rows.
  */
 export async function parseSpreadsheet(file: File): Promise<ParsedSpreadsheet> {
+  const XLSX = await import("xlsx");
   const buffer = await file.arrayBuffer();
   const workbook = XLSX.read(buffer, { type: "array" });
   const sheetName = workbook.SheetNames[0];

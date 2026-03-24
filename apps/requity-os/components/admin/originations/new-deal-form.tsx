@@ -3,6 +3,7 @@
 import { useState, useMemo, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { formatPhoneInput } from "@/lib/format";
+import { AddressAutocomplete } from "@/components/ui/address-autocomplete";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -27,9 +28,9 @@ import {
   DialogDescription,
   DialogFooter,
 } from "@/components/ui/dialog";
-import { useToast } from "@/components/ui/use-toast";
-import { createOpportunityAction } from "@/app/(authenticated)/admin/originations/actions";
-import { addBorrowerAction } from "@/app/(authenticated)/admin/borrowers/new/actions";
+import { showSuccess, showError } from "@/lib/toast";
+import { createOpportunityAction } from "@/app/(authenticated)/(admin)/originations/actions";
+import { addBorrowerAction } from "@/app/(authenticated)/(admin)/borrowers/new/actions";
 import {
   LOAN_DB_TYPES,
   LOAN_PURPOSES,
@@ -51,6 +52,7 @@ import {
   Plus,
   Loader2,
 } from "lucide-react";
+import { EmptyState } from "@/components/shared/EmptyState";
 import { cn } from "@/lib/utils";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
@@ -76,7 +78,6 @@ export function NewDealForm({
   const [step, setStep] = useState(0);
   const [saving, setSaving] = useState(false);
   const router = useRouter();
-  const { toast } = useToast();
 
   // Property state
   const [property, setProperty] = useState({
@@ -187,11 +188,7 @@ export function NewDealForm({
     });
 
     if (result.error) {
-      toast({
-        title: "Error creating borrower",
-        description: result.error,
-        variant: "destructive",
-      });
+      showError("Could not create borrower", result.error);
       setAddingNewBorrower(false);
       return;
     }
@@ -213,7 +210,7 @@ export function NewDealForm({
     setNewBorrowerPhone("");
     setAddingNewBorrower(false);
 
-    toast({ title: `Borrower "${fullName}" created` });
+    showSuccess(`Borrower "${fullName}" created`);
   }
 
   async function handleSubmit() {
@@ -268,17 +265,13 @@ export function NewDealForm({
     const result = await createOpportunityAction(input);
 
     if (result.error) {
-      toast({
-        title: "Error creating deal",
-        description: result.error,
-        variant: "destructive",
-      });
+      showError("Could not create deal", result.error);
       setSaving(false);
       return;
     }
 
-    toast({ title: "Deal created successfully" });
-    router.push(`/admin/pipeline/${result.opportunityId}`);
+    showSuccess("Deal created");
+    router.push(`/pipeline/${result.opportunityId}`);
   }
 
   return (
@@ -326,10 +319,19 @@ export function NewDealForm({
             <div className="grid grid-cols-2 gap-3">
               <div className="col-span-2">
                 <Label>Address Line 1 *</Label>
-                <Input
+                <AddressAutocomplete
                   value={property.address_line1}
-                  onChange={(e) =>
-                    setProperty({ ...property, address_line1: e.target.value })
+                  onChange={(v) =>
+                    setProperty({ ...property, address_line1: v })
+                  }
+                  onAddressSelect={(addr) =>
+                    setProperty((prev) => ({
+                      ...prev,
+                      address_line1: addr.address_line1,
+                      city: addr.city,
+                      state: addr.state,
+                      zip: addr.zip,
+                    }))
                   }
                   placeholder="123 Main St"
                 />
@@ -542,9 +544,7 @@ export function NewDealForm({
                     </div>
                     <div className="max-h-[200px] overflow-y-auto p-1">
                       {filteredBorrowers.length === 0 ? (
-                        <div className="py-4 text-center text-sm text-muted-foreground">
-                          No borrowers found.
-                        </div>
+                        <EmptyState icon={Users} title="No borrowers found." compact />
                       ) : (
                         filteredBorrowers.map((b) => (
                           <button

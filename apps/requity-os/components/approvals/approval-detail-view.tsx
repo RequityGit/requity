@@ -6,18 +6,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
-import { useToast } from "@/components/ui/use-toast";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
+import { showSuccess, showError, showWarning } from "@/lib/toast";
+import { useConfirm } from "@/components/shared/ConfirmDialog";
 import {
   ArrowLeft,
   CheckCircle2,
@@ -29,15 +19,16 @@ import {
   FileText,
   Loader2,
 } from "lucide-react";
+import { EmptyState } from "@/components/shared/EmptyState";
 import { cn } from "@/lib/utils";
-import { formatCurrency, formatDate, formatPercent } from "@/lib/format";
+import { formatCurrency, formatDate, formatDateTime, formatPercent } from "@/lib/format";
 import { formatRelativeTime } from "@/lib/notifications";
 import {
   approveRequest,
   requestChanges,
   declineRequest,
   cancelApproval,
-} from "@/app/(authenticated)/admin/operations/approvals/actions";
+} from "@/app/(authenticated)/(admin)/tasks/approvals/actions";
 import type {
   ApprovalRequestWithProfiles,
   ApprovalAuditLogEntryWithProfile,
@@ -91,7 +82,7 @@ export function ApprovalDetailView({
   isSubmitter,
 }: ApprovalDetailViewProps) {
   const router = useRouter();
-  const { toast } = useToast();
+  const confirm = useConfirm();
   const [decisionNotes, setDecisionNotes] = useState("");
   const [loading, setLoading] = useState(false);
   const [activeAction, setActiveAction] = useState<string | null>(null);
@@ -110,16 +101,16 @@ export function ApprovalDetailView({
     setLoading(false);
     setActiveAction(null);
     if (result.error) {
-      toast({ title: "Error", description: result.error, variant: "destructive" });
+      showError("Could not approve", result.error);
     } else {
-      toast({ title: "Approved", description: "The approval has been granted." });
+      showSuccess("Approval granted");
       router.refresh();
     }
   }
 
   async function handleRequestChanges() {
     if (!decisionNotes.trim()) {
-      toast({ title: "Notes required", description: "Please provide notes explaining what changes are needed.", variant: "destructive" });
+      showWarning("Please provide notes explaining what changes are needed");
       return;
     }
     setLoading(true);
@@ -128,16 +119,16 @@ export function ApprovalDetailView({
     setLoading(false);
     setActiveAction(null);
     if (result.error) {
-      toast({ title: "Error", description: result.error, variant: "destructive" });
+      showError("Could not request changes", result.error);
     } else {
-      toast({ title: "Changes Requested", description: "The submitter has been notified." });
+      showSuccess("Changes requested");
       router.refresh();
     }
   }
 
   async function handleDecline() {
     if (!decisionNotes.trim()) {
-      toast({ title: "Reason required", description: "Please provide a decline reason.", variant: "destructive" });
+      showWarning("Please provide a decline reason");
       return;
     }
     setLoading(true);
@@ -146,9 +137,9 @@ export function ApprovalDetailView({
     setLoading(false);
     setActiveAction(null);
     if (result.error) {
-      toast({ title: "Error", description: result.error, variant: "destructive" });
+      showError("Could not decline", result.error);
     } else {
-      toast({ title: "Declined", description: "The approval has been declined." });
+      showSuccess("Approval declined");
       router.refresh();
     }
   }
@@ -160,10 +151,10 @@ export function ApprovalDetailView({
     setLoading(false);
     setActiveAction(null);
     if (result.error) {
-      toast({ title: "Error", description: result.error, variant: "destructive" });
+      showError("Could not cancel approval", result.error);
     } else {
-      toast({ title: "Cancelled", description: "The approval has been cancelled." });
-      router.push("/admin/operations/approvals");
+      showSuccess("Approval cancelled");
+      router.push("/tasks/approvals");
     }
   }
 
@@ -176,7 +167,7 @@ export function ApprovalDetailView({
             variant="ghost"
             size="sm"
             className="mb-2 -ml-2"
-            onClick={() => router.push("/admin/operations/approvals")}
+            onClick={() => router.push("/tasks/approvals")}
           >
             <ArrowLeft className="h-4 w-4 mr-1" />
             Back to Approvals
@@ -384,36 +375,25 @@ export function ApprovalDetailView({
                 Request Changes
               </Button>
 
-              <AlertDialog>
-                <AlertDialogTrigger asChild>
-                  <Button
-                    disabled={loading}
-                    variant="outline"
-                    className="border-red-300 text-red-700 hover:bg-red-50"
-                  >
-                    <XCircle className="h-4 w-4 mr-2" />
-                    Decline
-                  </Button>
-                </AlertDialogTrigger>
-                <AlertDialogContent>
-                  <AlertDialogHeader>
-                    <AlertDialogTitle>Decline this approval?</AlertDialogTitle>
-                    <AlertDialogDescription>
-                      This will decline the request and notify the submitter. A decline reason is required.
-                    </AlertDialogDescription>
-                  </AlertDialogHeader>
-                  <AlertDialogFooter>
-                    <AlertDialogCancel>Cancel</AlertDialogCancel>
-                    <AlertDialogAction
-                      onClick={handleDecline}
-                      className="bg-red-600 hover:bg-red-700"
-                    >
-                      {loading && activeAction === "decline" && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-                      Confirm Decline
-                    </AlertDialogAction>
-                  </AlertDialogFooter>
-                </AlertDialogContent>
-              </AlertDialog>
+              <Button
+                disabled={loading}
+                variant="outline"
+                className="border-red-300 text-red-700 hover:bg-red-50"
+                onClick={async () => {
+                  const ok = await confirm({
+                    title: "Decline this approval?",
+                    description: "This will decline the request and notify the submitter. A decline reason is required.",
+                    confirmLabel: "Confirm Decline",
+                    destructive: true,
+                  });
+                  if (!ok) return;
+                  handleDecline();
+                }}
+              >
+                {loading && activeAction === "decline" && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+                <XCircle className="h-4 w-4 mr-2" />
+                Decline
+              </Button>
             </div>
           </CardContent>
         </Card>
@@ -422,27 +402,23 @@ export function ApprovalDetailView({
       {/* Cancel button for submitter if still pending */}
       {(isPending || approval.status === "changes_requested") && isSubmitter && (
         <div className="flex justify-end">
-          <AlertDialog>
-            <AlertDialogTrigger asChild>
-              <Button variant="ghost" size="sm" className="text-muted-foreground">
-                Cancel this approval request
-              </Button>
-            </AlertDialogTrigger>
-            <AlertDialogContent>
-              <AlertDialogHeader>
-                <AlertDialogTitle>Cancel approval request?</AlertDialogTitle>
-                <AlertDialogDescription>
-                  This will cancel the approval request. You can submit a new one later.
-                </AlertDialogDescription>
-              </AlertDialogHeader>
-              <AlertDialogFooter>
-                <AlertDialogCancel>Keep it</AlertDialogCancel>
-                <AlertDialogAction onClick={handleCancel}>
-                  Yes, cancel
-                </AlertDialogAction>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="text-muted-foreground"
+            onClick={async () => {
+              const ok = await confirm({
+                title: "Cancel approval request?",
+                description: "This will cancel the approval request. You can submit a new one later.",
+                confirmLabel: "Yes, cancel",
+                cancelLabel: "Keep it",
+              });
+              if (!ok) return;
+              handleCancel();
+            }}
+          >
+            Cancel this approval request
+          </Button>
         </div>
       )}
 
@@ -453,7 +429,7 @@ export function ApprovalDetailView({
         </CardHeader>
         <CardContent>
           {auditLog.length === 0 ? (
-            <p className="text-sm text-muted-foreground">No audit entries yet.</p>
+            <EmptyState icon={FileText} title="No audit entries yet." compact />
           ) : (
             <div className="space-y-3">
               {auditLog.map((entry) => {
@@ -479,7 +455,7 @@ export function ApprovalDetailView({
                         </p>
                       )}
                       <p className="text-xs text-muted-foreground mt-0.5">
-                        {formatDate(entry.created_at)} · {new Date(entry.created_at).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}
+                        {formatDateTime(entry.created_at)}
                       </p>
                     </div>
                   </div>

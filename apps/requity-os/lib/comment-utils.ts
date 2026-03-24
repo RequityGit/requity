@@ -4,6 +4,8 @@
  * Mention format in stored text: @[Display Name](user-uuid)
  */
 
+import { formatDateShort } from "@/lib/format";
+
 /** Extract mentioned user IDs from a comment string */
 export function extractMentionIds(text: string): string[] {
   const regex = /@\[([^\]]+)\]\(([a-f0-9-]+)\)/g;
@@ -43,6 +45,11 @@ export function parseComment(text: string): CommentSegment[] {
   return segments;
 }
 
+/** Strip @[Name](uuid) markup to plain @Name for display in previews */
+export function stripMentionMarkup(text: string): string {
+  return text.replace(/@\[([^\]]+)\]\([a-f0-9-]+\)/g, "@$1");
+}
+
 /** Format a relative time string */
 export function relativeTime(dateStr: string): string {
   const now = Date.now();
@@ -58,8 +65,5 @@ export function relativeTime(dateStr: string): string {
   if (diffHr < 24) return `${diffHr}h ago`;
   if (diffDay < 7) return `${diffDay}d ago`;
 
-  return new Date(dateStr).toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-  });
+  return formatDateShort(dateStr);
 }

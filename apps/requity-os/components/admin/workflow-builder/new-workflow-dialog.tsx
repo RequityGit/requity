@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
-import { useToast } from "@/components/ui/use-toast";
+import { showError } from "@/lib/toast";
 import {
   Dialog,
   DialogContent,
@@ -36,7 +36,6 @@ export function NewWorkflowDialog({
   const [name, setName] = useState("");
   const [entityType, setEntityType] = useState("loan");
   const [saving, setSaving] = useState(false);
-  const { toast } = useToast();
 
   const handleCreate = async () => {
     if (!name.trim()) return;
@@ -53,11 +52,7 @@ export function NewWorkflowDialog({
       .single();
 
     if (error) {
-      toast({
-        title: "Failed to create workflow",
-        description: error.message,
-        variant: "destructive",
-      });
+      showError("Could not create workflow", error.message);
     } else if (data) {
       onCreated(data as unknown as WorkflowDefinition);
       setName("");
@@ -79,7 +74,7 @@ export function NewWorkflowDialog({
         </DialogHeader>
         <div className="space-y-3 mt-2">
           <div className="space-y-1.5">
-            <Label className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+            <Label className="rq-micro-label">
               Name
             </Label>
             <Input
@@ -89,7 +84,7 @@ export function NewWorkflowDialog({
             />
           </div>
           <div className="space-y-1.5">
-            <Label className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+            <Label className="rq-micro-label">
               Entity Type
             </Label>
             <Select value={entityType} onValueChange={setEntityType}>
@@ -98,7 +93,7 @@ export function NewWorkflowDialog({
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="loan">Loan</SelectItem>
-                <SelectItem value="opportunity">Opportunity</SelectItem>
+                <SelectItem value="opportunity">Deal</SelectItem>
                 <SelectItem value="equity_deal">Equity Deal</SelectItem>
               </SelectContent>
             </Select>

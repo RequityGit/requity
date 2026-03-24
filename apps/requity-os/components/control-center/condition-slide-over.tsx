@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -22,6 +22,8 @@ import {
 } from "@/components/ui/sheet";
 import { CONDITION_CATEGORIES, CONDITION_STAGES, RESPONSIBLE_PARTIES } from "@/lib/constants";
 import { Switch } from "@/components/ui/switch";
+import { X, FileText, Loader2 } from "lucide-react";
+import { createClient } from "@/lib/supabase/client";
 import type { ConditionFormData } from "@/app/(authenticated)/control-center/conditions/actions";
 
 interface ConditionTemplate {
@@ -38,9 +40,13 @@ interface ConditionTemplate {
   borrower_description: string | null;
   responsible_party: string | null;
   critical_path_item: boolean | null;
+  is_borrower_facing?: boolean | null;
   requires_approval: boolean | null;
+  per_borrower?: boolean | null;
   sort_order: number | null;
   is_active: boolean | null;
+  template_file_url: string | null;
+  template_file_name: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -74,7 +80,7 @@ export function ConditionSlideOver({
   const [formData, setFormData] = useState<ConditionFormData>({
     condition_name: "",
     category: "",
-    required_stage: "processing",
+    required_stage: "execution",
     applies_to_commercial: true,
     applies_to_rtl: true,
     applies_to_dscr: true,
@@ -84,13 +90,19 @@ export function ConditionSlideOver({
     borrower_description: null,
     responsible_party: null,
     critical_path_item: false,
+    is_borrower_facing: true,
     requires_approval: false,
+    per_borrower: false,
     sort_order: null,
     is_active: true,
+    template_file_url: null,
+    template_file_name: null,
   });
 
   const [saving, setSaving] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [uploadingTemplate, setUploadingTemplate] = useState(false);
+  const templateFileInputRef = useRef<HTMLInputElement>(null);
 
   // Reset form when opening
   useEffect(() => {
@@ -111,9 +123,13 @@ export function ConditionSlideOver({
         borrower_description: condition.borrower_description,
         responsible_party: condition.responsible_party,
         critical_path_item: condition.critical_path_item ?? false,
+        is_borrower_facing: condition.is_borrower_facing ?? true,
         requires_approval: condition.requires_approval ?? false,
+        per_borrower: condition.per_borrower ?? false,
         sort_order: condition.sort_order,
         is_active: condition.is_active ?? true,
+        template_file_url: condition.template_file_url ?? null,
+        template_file_name: condition.template_file_name ?? null,
       });
     } else {
       // Default for new condition
@@ -125,7 +141,7 @@ export function ConditionSlideOver({
       setFormData({
         condition_name: "",
         category: cat,
-        required_stage: "processing",
+        required_stage: "execution",
         applies_to_commercial: true,
         applies_to_rtl: true,
         applies_to_dscr: true,
@@ -135,9 +151,13 @@ export function ConditionSlideOver({
         borrower_description: null,
         responsible_party: null,
         critical_path_item: false,
+        is_borrower_facing: true,
         requires_approval: false,
+        per_borrower: false,
         sort_order: maxSort + 1,
         is_active: true,
+        template_file_url: null,
+        template_file_name: null,
       });
     }
     setErrors({});
@@ -364,6 +384,92 @@ export function ConditionSlideOver({
             />
           </div>
 
+          {/* Template File */}
+          <div className="space-y-1.5">
+            <Label>Template File</Label>
+            <p className="text-xs text-muted-foreground">
+              Optional reference document borrowers can download (e.g., PFS Excel template)
+            </p>
+            {formData.template_file_url ? (
+              <div className="flex items-center gap-2 rounded-md border border-border bg-muted/30 px-3 py-2">
+                <FileText className="h-4 w-4 shrink-0 text-muted-foreground" />
+                <a
+                  href={formData.template_file_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="min-w-0 flex-1 truncate text-sm text-primary hover:underline underline-offset-2"
+                >
+                  {formData.template_file_name || "Template file"}
+                </a>
+                <button
+                  type="button"
+                  onClick={() =>
+                    setFormData((prev) => ({
+                      ...prev,
+                      template_file_url: null,
+                      template_file_name: null,
+                    }))
+                  }
+                  className="shrink-0 rounded p-0.5 text-muted-foreground hover:text-destructive transition-colors"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
+            ) : (
+              <>
+                <input
+                  ref={templateFileInputRef}
+                  type="file"
+                  accept=".pdf,.xlsx,.xls,.doc,.docx,.csv,.txt"
+                  className="hidden"
+                  onChange={async (e) => {
+                    const file = e.target.files?.[0];
+                    if (!file) return;
+                    setUploadingTemplate(true);
+                    try {
+                      const supabase = createClient();
+                      const path = `${formData.id || "new"}/${file.name}`;
+                      const { error: uploadError } = await supabase.storage
+                        .from("condition-templates")
+                        .upload(path, file, { upsert: true });
+                      if (uploadError) throw uploadError;
+                      const { data: urlData } = supabase.storage
+                        .from("condition-templates")
+                        .getPublicUrl(path);
+                      setFormData((prev) => ({
+                        ...prev,
+                        template_file_url: urlData.publicUrl,
+                        template_file_name: file.name,
+                      }));
+                    } catch (err) {
+                      console.error("Template upload failed:", err);
+                    } finally {
+                      setUploadingTemplate(false);
+                      if (templateFileInputRef.current)
+                        templateFileInputRef.current.value = "";
+                    }
+                  }}
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  disabled={uploadingTemplate}
+                  onClick={() => templateFileInputRef.current?.click()}
+                >
+                  {uploadingTemplate ? (
+                    <>
+                      <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
+                      Uploading...
+                    </>
+                  ) : (
+                    "Upload Template"
+                  )}
+                </Button>
+              </>
+            )}
+          </div>
+
           {/* Responsible Party */}
           <div className="space-y-1.5">
             <Label>Responsible Party</Label>
@@ -390,20 +496,39 @@ export function ConditionSlideOver({
             </Select>
           </div>
 
-          {/* Critical Path Item */}
+          {/* Borrower Facing */}
           <div className="flex items-center justify-between">
             <div>
-              <Label>Critical Path Item</Label>
+              <Label>Borrower Facing</Label>
               <p className="text-xs text-muted-foreground">
-                Blocks loan stage progression when not fulfilled
+                Visible to borrowers on upload links and their portal
               </p>
             </div>
             <Switch
-              checked={formData.critical_path_item}
+              checked={formData.is_borrower_facing ?? true}
               onCheckedChange={(v) =>
                 setFormData((prev) => ({
                   ...prev,
-                  critical_path_item: v,
+                  is_borrower_facing: v,
+                }))
+              }
+            />
+          </div>
+
+          {/* Per Borrower */}
+          <div className="flex items-center justify-between">
+            <div>
+              <Label>Per Borrower</Label>
+              <p className="text-xs text-muted-foreground">
+                Creates one of this condition for each borrower on the deal (e.g., Driver&apos;s License, PFS, SREO)
+              </p>
+            </div>
+            <Switch
+              checked={formData.per_borrower}
+              onCheckedChange={(v) =>
+                setFormData((prev) => ({
+                  ...prev,
+                  per_borrower: v,
                 }))
               }
             />

@@ -7,14 +7,16 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ArrowLeft, Save, Eye, Code } from "lucide-react";
+import { Textarea } from "@/components/ui/textarea";
+import { ArrowLeft, Save, Eye, Code, Info, ChevronDown, ChevronRight } from "lucide-react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import type {
   EmailTemplate,
   EmailTemplateVersion,
-} from "@/app/(authenticated)/admin/email-templates/types";
-import { updateTemplateAction } from "@/app/(authenticated)/admin/email-templates/actions-write";
+} from "@/app/(authenticated)/(admin)/email-templates/types";
+import { formatCategory } from "@/app/(authenticated)/(admin)/email-templates/types";
+import { updateTemplateAction } from "@/app/(authenticated)/(admin)/email-templates/actions-write";
 import { HtmlEditor } from "./html-editor";
 import { TemplatePreview } from "./template-preview";
 import { VariableInserter } from "./variable-inserter";
@@ -36,6 +38,9 @@ export function TemplateEditor({
   const [error, setError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
   const [editorMode, setEditorMode] = useState<"visual" | "source">("visual");
+  const [descExpanded, setDescExpanded] = useState(
+    !!initial.internal_description
+  );
   const visualEditorRef = useRef<VisualEditorHandle>(null);
 
   const handleFieldChange = useCallback(
@@ -71,6 +76,7 @@ export function TemplateEditor({
       slug: template.slug,
       subject_template: template.subject_template,
       html_body_template: template.html_body_template,
+      internal_description: template.internal_description,
     });
 
     setSaving(false);
@@ -131,11 +137,49 @@ export function TemplateEditor({
         <div className="space-y-2">
           <Label>Category</Label>
           <div className="flex items-center h-10">
-            <Badge variant="secondary" className="capitalize text-sm">
-              {template.category ?? "general"}
+            <Badge variant="secondary" className="text-sm">
+              {formatCategory(template.category)}
             </Badge>
           </div>
         </div>
+      </div>
+
+      {/* Internal Description (collapsible) */}
+      <div className="rounded-lg border border-border bg-muted/30">
+        <button
+          type="button"
+          onClick={() => setDescExpanded((v) => !v)}
+          className="flex w-full items-center gap-2 px-4 py-3 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+        >
+          <Info className="h-4 w-4 text-blue-500 shrink-0" />
+          <span>Internal Description</span>
+          {descExpanded ? (
+            <ChevronDown className="h-4 w-4 ml-auto" />
+          ) : (
+            <ChevronRight className="h-4 w-4 ml-auto" />
+          )}
+          {!descExpanded && template.internal_description && (
+            <span className="text-xs text-muted-foreground truncate max-w-[400px]">
+              {template.internal_description.split("\n")[0]}
+            </span>
+          )}
+        </button>
+        {descExpanded && (
+          <div className="px-4 pb-4 space-y-2">
+            <p className="text-xs text-muted-foreground">
+              Document where this template is used, which edge functions or code paths trigger it, and any relevant links. This is internal only and never shown to recipients.
+            </p>
+            <Textarea
+              value={template.internal_description ?? ""}
+              onChange={(e) =>
+                handleFieldChange("internal_description", e.target.value)
+              }
+              placeholder={"Where is this used?\ne.g. Triggered by Supabase Edge Function `stale-condition-reminders`\nhttps://supabase.com/dashboard/project/edhlkknvlczhbowasjna/functions\n\nHow it works:\ne.g. Runs on a CRON schedule every 5 minutes..."}
+              rows={5}
+              className="text-sm font-mono"
+            />
+          </div>
+        )}
       </div>
 
       <div className="space-y-2">

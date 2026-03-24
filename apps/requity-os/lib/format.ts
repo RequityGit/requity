@@ -100,3 +100,137 @@ export function timeAgo(dateStr: string): string {
 export function getMonthLabel(date: Date): string {
   return date.toLocaleDateString("en-US", { month: "short" });
 }
+
+export function formatDateShort(date: string | null | undefined): string {
+  if (!date) return "—";
+  return new Date(date).toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+  });
+}
+
+export function formatDateTime(date: string | null | undefined): string {
+  if (!date) return "—";
+  const d = new Date(date);
+  return `${d.toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  })} at ${d.toLocaleTimeString("en-US", {
+    hour: "numeric",
+    minute: "2-digit",
+  })}`;
+}
+
+export function formatTime(date: string | Date | null | undefined): string {
+  if (!date) return "—";
+  const d = typeof date === "string" ? new Date(date) : date;
+  return d.toLocaleTimeString("en-US", {
+    hour: "numeric",
+    minute: "2-digit",
+  });
+}
+
+export function formatRatio(value: number | null | undefined): string {
+  if (value == null) return "—";
+  return `${Number(value).toFixed(2)}x`;
+}
+
+// ── Edit-mode helpers (used inside currency inputs) ──
+
+/** Format a number with commas for display inside edit inputs. No currency symbol, empty string for null. */
+export function formatEditNumber(val: unknown, maxDecimals = 2): string {
+  if (val == null || val === "") return "";
+  const n = Number(val);
+  if (isNaN(n)) return String(val);
+  return n.toLocaleString("en-US", { maximumFractionDigits: maxDecimals });
+}
+
+/** Parse a currency input string, stripping non-numeric chars. Returns null for empty/invalid. */
+export function parseEditCurrency(raw: string): number | null {
+  const stripped = raw.replace(/[^0-9.\-]/g, "");
+  if (stripped === "" || stripped === "-") return null;
+  const n = Number(stripped);
+  return isNaN(n) ? null : n;
+}
+
+/** Format an ISO date string (YYYY-MM-DD) for inline display without timezone shift. */
+export function formatDateInline(iso: string | null | undefined): string {
+  if (!iso) return "";
+  const parts = iso.split("-");
+  if (parts.length !== 3) return iso;
+  const [y, m, d] = parts;
+  return `${parseInt(m, 10)}/${parseInt(d, 10)}/${y}`;
+}
+
+// ── Field value formatting for read-mode display ──
+
+export function isFieldEmpty(value: unknown): boolean {
+  return (
+    value === null ||
+    value === undefined ||
+    value === "" ||
+    value === 0 ||
+    value === "0" ||
+    value === 0.0
+  );
+}
+
+const FINANCIAL_FIELD_TYPES = new Set(["currency", "percent", "percentage", "number"]);
+
+export function isFinancialFieldType(fieldType: string): boolean {
+  return FINANCIAL_FIELD_TYPES.has(fieldType);
+}
+
+export function formatFieldValue(value: unknown, fieldType: string): string {
+  if (isFieldEmpty(value)) return "";
+
+  switch (fieldType) {
+    case "currency":
+      return new Intl.NumberFormat("en-US", {
+        style: "currency",
+        currency: "USD",
+        maximumFractionDigits: 0,
+      }).format(Number(value));
+
+    case "percent":
+    case "percentage":
+      return `${Number(value).toFixed(2)}%`;
+
+    case "number":
+      return new Intl.NumberFormat("en-US").format(Number(value));
+
+    case "date": {
+      const d = new Date(String(value));
+      if (isNaN(d.getTime())) return String(value);
+      return new Intl.DateTimeFormat("en-US", {
+        month: "short",
+        day: "numeric",
+        year: "numeric",
+      }).format(d);
+    }
+
+    case "phone": {
+      const digits = String(value).replace(/\D/g, "");
+      if (digits.length === 10) {
+        return `(${digits.slice(0, 3)}) ${digits.slice(3, 6)}-${digits.slice(6)}`;
+      }
+      return String(value);
+    }
+
+    case "boolean":
+      return value ? "Yes" : "No";
+
+    case "select": {
+      const ACRONYMS: Record<string, boolean> = { sfr: true, mhc: true, rv: true };
+      return String(value)
+        .replace(/_/g, " ")
+        .split(" ")
+        .map((w) => (ACRONYMS[w] ? w.toUpperCase() : w.charAt(0).toUpperCase() + w.slice(1)))
+        .join(" ");
+    }
+
+    default:
+      return String(value);
+  }
+}

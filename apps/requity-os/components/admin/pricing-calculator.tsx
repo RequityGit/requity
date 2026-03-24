@@ -28,7 +28,11 @@ import {
   Percent,
   Loader2,
 } from "lucide-react";
-import type { PricingProgram, LeverageAdjuster } from "@/lib/supabase/types";
+// Tables pricing_programs / leverage_adjusters may not be in generated types
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export type PricingProgram = Record<string, any>;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export type LeverageAdjuster = Record<string, any>;
 
 // ---------------------------------------------------------------------------
 // Types

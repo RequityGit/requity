@@ -3,7 +3,7 @@
 // ============================================
 // Handles: caching, offline fallback, push notifications
 // Cache version — bump this when you deploy updates
-const CACHE_VERSION = 'requity-v1';
+const CACHE_VERSION = 'requity-v3';
 
 // Files to pre-cache on install (shell of the app)
 const PRECACHE_URLS = [
@@ -44,9 +44,12 @@ self.addEventListener('fetch', (event) => {
   // Skip non-GET requests (form submissions, API calls, etc.)
   if (event.request.method !== 'GET') return;
 
-  // Skip Supabase API calls — these should never be cached
+  // Only handle same-origin requests. Cross-origin fetches (Google Fonts,
+  // Supabase, Twilio, Sentry, etc.) must not be intercepted by the SW,
+  // because the SW's fetch() is subject to CSP connect-src and will fail
+  // for domains not listed there, causing Chrome to flag "broken HTTPS".
   const url = new URL(event.request.url);
-  if (url.hostname.includes('supabase')) return;
+  if (url.origin !== self.location.origin) return;
 
   event.respondWith(
     fetch(event.request)
@@ -118,7 +121,7 @@ self.addEventListener('notificationclick', (event) => {
       .then((clientList) => {
         // If portal is already open, focus it and navigate
         for (const client of clientList) {
-          if (client.url.includes('portal.requitygroup.com') && 'focus' in client) {
+          if (client.url.includes('app.requitygroup.com') && 'focus' in client) {
             client.focus();
             return client.navigate(targetUrl);
           }

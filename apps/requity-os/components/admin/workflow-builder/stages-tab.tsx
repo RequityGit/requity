@@ -2,22 +2,13 @@
 
 import { useState, useCallback } from "react";
 import { createClient } from "@/lib/supabase/client";
-import { useToast } from "@/components/ui/use-toast";
-import { Plus, GripVertical, Trash2, Flag } from "lucide-react";
+import { showError } from "@/lib/toast";
+import { Plus, GripVertical, Trash2, Flag, Workflow } from "lucide-react";
+import { EmptyState } from "@/components/shared/EmptyState";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
+import { useConfirm } from "@/components/shared/ConfirmDialog";
 import type { WorkflowStage } from "./types";
 
 function slugify(name: string): string {
@@ -40,7 +31,7 @@ export function StagesTab({
 }: StagesTabProps) {
   const [adding, setAdding] = useState(false);
   const [newName, setNewName] = useState("");
-  const { toast } = useToast();
+  const confirm = useConfirm();
 
   const handleAddStage = useCallback(async () => {
     if (!newName.trim()) return;
@@ -62,17 +53,13 @@ export function StagesTab({
       .single();
 
     if (error) {
-      toast({
-        title: "Failed to add stage",
-        description: error.message,
-        variant: "destructive",
-      });
+      showError("Could not add stage", error.message);
     } else if (data) {
       onStagesChanged([...stages, data as unknown as WorkflowStage]);
       setNewName("");
     }
     setAdding(false);
-  }, [newName, stages, workflowId, onStagesChanged, toast]);
+  }, [newName, stages, workflowId, onStagesChanged]);
 
   const handleUpdateField = useCallback(
     async (
@@ -97,14 +84,10 @@ export function StagesTab({
       if (error) {
         // Rollback
         onStagesChanged(stages);
-        toast({
-          title: "Failed to update stage",
-          description: error.message,
-          variant: "destructive",
-        });
+        showError("Could not update stage", error.message);
       }
     },
-    [stages, onStagesChanged, toast]
+    [stages, onStagesChanged]
   );
 
   const handleDeleteStage = useCallback(
@@ -116,24 +99,18 @@ export function StagesTab({
         .eq("id", stageId);
 
       if (error) {
-        toast({
-          title: "Failed to delete stage",
-          description: error.message,
-          variant: "destructive",
-        });
+        showError("Could not delete stage", error.message);
       } else {
         onStagesChanged(stages.filter((s) => s.id !== stageId));
       }
     },
-    [stages, onStagesChanged, toast]
+    [stages, onStagesChanged]
   );
 
   return (
     <div className="space-y-2">
       {stages.length === 0 && (
-        <p className="text-sm text-muted-foreground py-4 text-center">
-          No stages defined. Add your first stage below.
-        </p>
+        <EmptyState icon={Workflow} title="No stages defined" description="Add your first stage below." compact />
       )}
 
       {stages.map((stage, idx) => (
@@ -216,34 +193,26 @@ export function StagesTab({
           </div>
 
           {/* Delete */}
-          <AlertDialog>
-            <AlertDialogTrigger asChild>
-              <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                <Trash2
-                  className="h-3.5 w-3.5 text-muted-foreground hover:text-destructive"
-                  strokeWidth={1.5}
-                />
-              </Button>
-            </AlertDialogTrigger>
-            <AlertDialogContent>
-              <AlertDialogHeader>
-                <AlertDialogTitle>Delete stage</AlertDialogTitle>
-                <AlertDialogDescription>
-                  This will delete &ldquo;{stage.name}&rdquo; and any rules
-                  that reference it. This cannot be undone.
-                </AlertDialogDescription>
-              </AlertDialogHeader>
-              <AlertDialogFooter>
-                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                <AlertDialogAction
-                  onClick={() => handleDeleteStage(stage.id)}
-                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                >
-                  Delete
-                </AlertDialogAction>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-8 w-8 p-0"
+            onClick={async () => {
+              const ok = await confirm({
+                title: "Delete stage",
+                description: `This will delete \u201c${stage.name}\u201d and any rules that reference it. This cannot be undone.`,
+                confirmLabel: "Delete",
+                destructive: true,
+              });
+              if (!ok) return;
+              handleDeleteStage(stage.id);
+            }}
+          >
+            <Trash2
+              className="h-3.5 w-3.5 text-muted-foreground hover:text-destructive"
+              strokeWidth={1.5}
+            />
+          </Button>
         </div>
       ))}
 

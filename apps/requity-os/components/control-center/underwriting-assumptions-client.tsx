@@ -27,7 +27,7 @@ import {
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { useToast } from "@/components/ui/use-toast";
+import { showSuccess, showError } from "@/lib/toast";
 import { cn } from "@/lib/utils";
 import { Pencil, Save, X, RotateCcw } from "lucide-react";
 import {
@@ -96,7 +96,6 @@ export function UnderwritingAssumptionsClient({
 
 function AssumptionsSection({ assumptions }: { assumptions: UWAssumptionData[] }) {
   const router = useRouter();
-  const { toast } = useToast();
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editValues, setEditValues] = useState<Partial<UWAssumptionData>>({});
   const [saving, setSaving] = useState(false);
@@ -125,9 +124,9 @@ function AssumptionsSection({ assumptions }: { assumptions: UWAssumptionData[] }
       const { id: _id, property_type: _pt, ...fields } = editValues as UWAssumptionData;
       const result = await updateAssumption(editingId, fields);
       if (result.error) {
-        toast({ title: "Error", description: result.error, variant: "destructive" });
+        showError("Could not save assumptions", result.error);
       } else {
-        toast({ title: "Saved", description: "Assumptions updated successfully." });
+        showSuccess("Assumptions updated");
         setEditingId(null);
         setEditValues({});
         router.refresh();
@@ -135,7 +134,7 @@ function AssumptionsSection({ assumptions }: { assumptions: UWAssumptionData[] }
     } finally {
       setSaving(false);
     }
-  }, [editingId, editValues, router, toast]);
+  }, [editingId, editValues, router]);
 
   const handleReset = useCallback(
     async (id: string) => {
@@ -143,9 +142,9 @@ function AssumptionsSection({ assumptions }: { assumptions: UWAssumptionData[] }
       try {
         const result = await resetAssumptionToDefaults(id);
         if (result.error) {
-          toast({ title: "Error", description: result.error, variant: "destructive" });
+          showError("Could not reset assumptions", result.error);
         } else {
-          toast({ title: "Reset", description: "Assumptions reset to defaults." });
+          showSuccess("Assumptions reset to defaults");
           if (editingId === id) {
             setEditingId(null);
             setEditValues({});
@@ -156,7 +155,7 @@ function AssumptionsSection({ assumptions }: { assumptions: UWAssumptionData[] }
         setSaving(false);
       }
     },
-    [editingId, router, toast]
+    [editingId, router]
   );
 
   const isEditing = (id: string) => editingId === id;
@@ -308,7 +307,6 @@ function ExpenseDefaultsSection({
   expenseDefaults: ExpenseDefaultData[];
 }) {
   const router = useRouter();
-  const { toast } = useToast();
 
   // Group by property type
   const propertyTypes = Array.from(
@@ -347,9 +345,9 @@ function ExpenseDefaultsSection({
       }));
       const result = await bulkUpdateExpenseDefaults(updates);
       if (result.error) {
-        toast({ title: "Error", description: result.error, variant: "destructive" });
+        showError("Could not save expense defaults", result.error);
       } else {
-        toast({ title: "Saved", description: "Expense defaults updated." });
+        showSuccess("Expense defaults updated");
         setEditMode(false);
         setEditValues({});
         router.refresh();
@@ -357,18 +355,18 @@ function ExpenseDefaultsSection({
     } finally {
       setSaving(false);
     }
-  }, [editValues, router, toast]);
+  }, [editValues, router]);
 
   const handleSingleUpdate = useCallback(
     async (id: string, value: number) => {
       const result = await updateExpenseDefault(id, { per_unit_amount: value });
       if (result.error) {
-        toast({ title: "Error", description: result.error, variant: "destructive" });
+        showError("Could not update expense default", result.error);
       } else {
         router.refresh();
       }
     },
-    [router, toast]
+    [router]
   );
 
   // Get basis label for the selected property type

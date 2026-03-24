@@ -17,9 +17,13 @@ export interface ConditionFormData {
   borrower_description: string | null;
   responsible_party: string | null;
   critical_path_item: boolean;
+  is_borrower_facing: boolean;
   requires_approval: boolean;
+  per_borrower: boolean;
   sort_order: number | null;
   is_active: boolean;
+  template_file_url: string | null;
+  template_file_name: string | null;
 }
 
 export async function saveCondition(data: ConditionFormData) {
@@ -32,7 +36,7 @@ export async function saveCondition(data: ConditionFormData) {
     const payload = {
       condition_name: data.condition_name,
       category: data.category as "borrower_documents",
-      required_stage: data.required_stage as "processing",
+      required_stage: data.required_stage as "execution",
       applies_to_commercial: data.applies_to_commercial,
       applies_to_rtl: data.applies_to_rtl,
       applies_to_dscr: data.applies_to_dscr,
@@ -42,9 +46,13 @@ export async function saveCondition(data: ConditionFormData) {
       borrower_description: data.borrower_description,
       responsible_party: data.responsible_party,
       critical_path_item: data.critical_path_item,
+      is_borrower_facing: data.is_borrower_facing,
       requires_approval: data.requires_approval,
+      per_borrower: data.per_borrower,
       sort_order: data.sort_order,
       is_active: data.is_active,
+      template_file_url: data.template_file_url,
+      template_file_name: data.template_file_name,
     };
 
     if (data.id) {
@@ -125,11 +133,13 @@ export async function updateConditionInline(
   id: string,
   fields: Partial<{
     condition_name: string;
+    required_stage: "lead" | "analysis" | "negotiation" | "execution" | "closed";
     applies_to_commercial: boolean;
     applies_to_rtl: boolean;
     applies_to_dscr: boolean;
     applies_to_guc: boolean;
     applies_to_transactional: boolean;
+    is_borrower_facing: boolean;
   }>
 ) {
   try {

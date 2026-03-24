@@ -146,7 +146,10 @@ export const ALL_MERGE_VARIABLES: UserEmailTemplateVariable[] = [
   { key: "outstanding_conditions_count", label: "Outstanding Conditions Count", source: "computed", sample: "5" },
   { key: "outstanding_conditions_list", label: "Outstanding Conditions List (plain text)", source: "computed", sample: "- Bank Statements\n- Proof of Insurance" },
   // Static source
-  { key: "portal_login_url", label: "Portal Login URL", source: "static", sample: "https://portal.requitygroup.com" },
+  { key: "portal_login_url", label: "Portal Login URL", source: "static", sample: "https://app.requitygroup.com" },
+  { key: "upload_link", label: "Secure Upload Link URL", source: "static", sample: "https://app.requitygroup.com/upload/abc123" },
+  { key: "upload_link_expiry", label: "Link Expiry (e.g. This link expires on...)", source: "static", sample: "This link expires on Fri, Mar 22, 2026." },
+  { key: "deal_name", label: "Deal Name", source: "static", sample: "Valor Quest Endeavors, LLC - Portfolio" },
   { key: "company_name", label: "Company Name", source: "static", sample: "Requity Lending" },
   { key: "company_phone", label: "Company Phone", source: "static", sample: "(813) 535-9925" },
   { key: "company_website", label: "Company Website", source: "static", sample: "https://www.requitylending.com" },

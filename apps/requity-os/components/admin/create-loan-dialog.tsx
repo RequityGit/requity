@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { DatePicker } from "@/components/ui/date-picker";
+import { AddressAutocomplete } from "@/components/ui/address-autocomplete";
 import { Textarea } from "@/components/ui/textarea";
 import {
   Dialog,
@@ -24,9 +25,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { LOAN_PRIORITIES, LOAN_DB_TYPES, LOAN_PURPOSES } from "@/lib/constants";
-import { useToast } from "@/components/ui/use-toast";
-import { PlusCircle, Search, Check, X, UserPlus } from "lucide-react";
+import { LOAN_DB_TYPES, LOAN_PURPOSES } from "@/lib/constants";
+import { showSuccess, showError } from "@/lib/toast";
+import { PlusCircle, Search, Check, X, UserPlus, Users } from "lucide-react";
+import { EmptyState } from "@/components/shared/EmptyState";
 import { createLoanSchema } from "@/lib/schemas/loan";
 
 interface TeamMember {
@@ -77,7 +79,6 @@ export function CreateLoanDialog({
   const borrowerRef = useRef<HTMLDivElement>(null);
   const dropdownMenuRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
-  const { toast } = useToast();
 
   const filteredBorrowers = useMemo(() => {
     if (!borrowerSearch.trim()) return borrowers;
@@ -164,7 +165,6 @@ export function CreateLoanDialog({
     term_months: "",
     originator_id: "",
     processor_id: "",
-    priority: "normal",
     expected_close_date: "",
     notes: "",
   });
@@ -194,7 +194,6 @@ export function CreateLoanDialog({
       term_months: "",
       originator_id: "",
       processor_id: "",
-      priority: "normal",
       expected_close_date: "",
       notes: "",
     });
@@ -257,7 +256,6 @@ export function CreateLoanDialog({
           ...(form.origination_fee ? { origination_fee: parseFloat(form.origination_fee) } : {}),
           ...(form.originator_id ? { originator_id: form.originator_id } : {}),
           ...(form.processor_id ? { processor_id: form.processor_id } : {}),
-          ...(form.priority !== "normal" ? { priority: form.priority } : {}),
           ...(form.expected_close_date ? { expected_close_date: form.expected_close_date } : {}),
         })
         .select()
@@ -276,17 +274,13 @@ export function CreateLoanDialog({
         console.error("Failed to log loan creation activity:", logError);
       }
 
-      toast({ title: "Loan created successfully" });
+      showSuccess("Loan created");
       setOpen(false);
       resetForm();
-      router.push(`/admin/pipeline/${newLoan.id}`);
+      router.push(`/pipeline/${newLoan.id}`);
     } catch (err: any) {
       console.error("Loan creation error:", err);
-      toast({
-        title: "Error creating loan",
-        description: err.details || err.message || "An unexpected error occurred.",
-        variant: "destructive",
-      });
+      showError("Could not create loan", err.details || err.message || "An unexpected error occurred.");
     } finally {
       setLoading(false);
     }
@@ -363,9 +357,7 @@ export function CreateLoanDialog({
                   >
                     <div className="max-h-[200px] overflow-y-auto p-1">
                       {filteredBorrowers.length === 0 ? (
-                        <div className="py-4 text-center text-sm text-muted-foreground">
-                          No borrowers found
-                        </div>
+                        <EmptyState icon={Users} title="No borrowers found" compact />
                       ) : (
                         filteredBorrowers.map((b) => (
                           <button
@@ -397,7 +389,7 @@ export function CreateLoanDialog({
                         type="button"
                         onClick={() => {
                           setBorrowerDropdownOpen(false);
-                          window.open("/admin/borrowers/new", "_blank");
+                          window.open("/borrowers/new", "_blank");
                         }}
                         className="flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-sm font-medium text-primary hover:bg-accent hover:text-accent-foreground cursor-pointer"
                       >
@@ -414,8 +406,8 @@ export function CreateLoanDialog({
             )}
           </div>
 
-          {/* Loan Type & Priority */}
-          <div className="grid grid-cols-3 gap-4">
+          {/* Loan Type & Close Date */}
+          <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label>
                 Loan Type <span className="text-red-500">*</span>
@@ -440,24 +432,6 @@ export function CreateLoanDialog({
               )}
             </div>
             <div className="space-y-2">
-              <Label>Priority</Label>
-              <Select
-                value={form.priority}
-                onValueChange={(v) => updateField("priority", v)}
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {LOAN_PRIORITIES.map((p) => (
-                    <SelectItem key={p.value} value={p.value}>
-                      {p.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
               <Label>Expected Close Date</Label>
               <DatePicker
                 value={form.expected_close_date}
@@ -474,9 +448,15 @@ export function CreateLoanDialog({
             <div className="space-y-4">
               <div className="space-y-2">
                 <Label>Property Address</Label>
-                <Input
+                <AddressAutocomplete
                   value={form.property_address}
-                  onChange={(e) => updateField("property_address", e.target.value)}
+                  onChange={(v) => updateField("property_address", v)}
+                  onAddressSelect={(addr) => {
+                    updateField("property_address", addr.address_line1);
+                    updateField("property_city", addr.city);
+                    updateField("property_state", addr.state);
+                    updateField("property_zip", addr.zip);
+                  }}
                   placeholder="123 Main Street"
                 />
               </div>

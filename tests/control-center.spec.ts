@@ -137,24 +137,7 @@ test("CC-5 — object manager page loads", async ({ adminPage }) => {
   expect(hasContent).toBeTruthy();
 });
 
-// ─────────────────────────────────────────────────────────────────────────────
-// CC-6. Card Types page loads
-// ─────────────────────────────────────────────────────────────────────────────
-test("CC-6 — card types page loads", async ({ adminPage }) => {
-  const onCC = await gotoControlCenter(adminPage, "/control-center/card-types");
-  if (!onCC) { test.skip(); return; }
-
-  const main = adminPage.locator("main");
-  await expect(main).toBeVisible();
-
-  const content = adminPage.locator('text=/card.*type|pipeline|configuration|template/i');
-  const emptyState = adminPage.locator('text=/no.*card|empty/i');
-
-  const hasContent = await content.first().isVisible({ timeout: 5_000 }).catch(() => false);
-  const hasEmpty = await emptyState.first().isVisible({ timeout: 3_000 }).catch(() => false);
-
-  expect(hasContent || hasEmpty).toBeTruthy();
-});
+// CC-6. Card Types page removed (card types deleted from Control Center)
 
 // ─────────────────────────────────────────────────────────────────────────────
 // CC-7. Control Center navigation links all resolve

@@ -3,11 +3,13 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { useToast } from "@/components/ui/use-toast";
+import { showSuccess, showError } from "@/lib/toast";
 import { Plus, Check, CheckCircle2 } from "lucide-react";
+import { EmptyState } from "@/components/shared/EmptyState";
+import { Skeleton } from "@/components/ui/skeleton";
 import { DotPill } from "@/components/crm/contact-360/contact-detail-shared";
 import { formatDate } from "@/lib/format";
-import { TaskSheet } from "@/components/tasks/task-sheet";
+import { TaskSplitPanel } from "@/components/tasks/task-split-panel";
 import { completeTask, completeRecurringTask } from "@/lib/tasks";
 import type { OpsTask, Profile } from "@/lib/tasks";
 import type { CompanyTaskData } from "../types";
@@ -19,6 +21,7 @@ interface TasksTabProps {
   companyName: string;
   currentUserId: string;
   profiles: Profile[];
+  loading?: boolean;
 }
 
 export function CompanyTasksTab({
@@ -27,10 +30,10 @@ export function CompanyTasksTab({
   companyName,
   currentUserId,
   profiles,
+  loading = false,
 }: TasksTabProps) {
   const openCount = tasks.filter((t) => t.status !== "completed").length;
   const router = useRouter();
-  const { toast } = useToast();
   const [sheetOpen, setSheetOpen] = useState(false);
   const [editingTask, setEditingTask] = useState<OpsTask | null>(null);
 
@@ -121,30 +124,37 @@ export function CompanyTasksTab({
         })
         .eq("id", task.id);
       if (error) {
-        toast({ title: "Error reopening task", variant: "destructive" });
+        showError("Could not reopen task");
       } else {
-        toast({ title: "Task reopened" });
+        showSuccess("Task reopened");
       }
     } else if (isRecurring) {
       const result = await completeRecurringTask(task.id);
       if (result.error) {
-        toast({ title: `Failed to complete task: ${result.error}`, variant: "destructive" });
+        showError("Could not complete task", result.error);
       } else {
-        toast({
-          title: result.next_created
-            ? "Task completed — next occurrence created"
-            : "Recurring task completed",
-        });
+        showSuccess(result.next_created
+            ? "Task completed, next occurrence created"
+            : "Recurring task completed");
       }
     } else {
       const result = await completeTask(task.id);
       if (result.error) {
-        toast({ title: `Failed to complete task: ${result.error}`, variant: "destructive" });
+        showError("Could not complete task", result.error);
       } else {
-        toast({ title: "Task completed" });
+        showSuccess("Task completed");
       }
     }
     router.refresh();
+  }
+
+  if (loading && tasks.length === 0) {
+    return (
+      <div className="space-y-2 px-4 py-6">
+        <Skeleton className="h-12 w-full rounded-lg" />
+        <Skeleton className="h-12 w-full rounded-lg" />
+      </div>
+    );
   }
 
   return (
@@ -164,7 +174,7 @@ export function CompanyTasksTab({
         </Button>
       </div>
 
-      <TaskSheet
+      <TaskSplitPanel
         open={sheetOpen}
         task={editingTask}
         profiles={profiles}
@@ -180,29 +190,12 @@ export function CompanyTasksTab({
       />
 
       {tasks.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-12 text-center">
-          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-muted mb-4">
-            <CheckCircle2
-              className="h-6 w-6 text-muted-foreground"
-              strokeWidth={1.5}
-            />
-          </div>
-          <h3 className="text-sm font-semibold text-foreground mb-1">
-            No tasks
-          </h3>
-          <p className="text-sm text-muted-foreground mb-3">
-            Create a task to track to-dos for this company.
-          </p>
-          <Button
-            variant="outline"
-            size="sm"
-            className="gap-1.5 rounded-lg border-border text-xs"
-            onClick={handleNewTask}
-          >
-            <Plus className="h-3.5 w-3.5" strokeWidth={1.5} />
-            New Task
-          </Button>
-        </div>
+        <EmptyState
+          icon={CheckCircle2}
+          title="No tasks"
+          description="Create a task to track to-dos for this company."
+          action={{ label: "New Task", onClick: handleNewTask, icon: Plus }}
+        />
       ) : (
         tasks.map((t) => {
           const sc =

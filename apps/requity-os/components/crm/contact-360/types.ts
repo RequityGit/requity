@@ -10,8 +10,19 @@ export interface TabConfig {
   showWhen: "always" | RelationshipType[];
 }
 
+/** Server-provided badge counts for lazy-loaded Contact 360 sections */
+export interface Contact360TabCounts {
+  activities: number;
+  emails: number;
+  tasks: number;
+  loans: number;
+  pipelineDeals: number;
+  investorCommitments: number;
+}
+
 export interface ContactData {
   id: string;
+  contact_number: string;
   first_name: string | null;
   last_name: string | null;
   email: string | null;
@@ -112,6 +123,20 @@ export interface InvestorCommitmentData {
   entity_name: string | null;
 }
 
+export interface PipelineDealData {
+  id: string;
+  deal_number: string | null;
+  name: string;
+  stage: string;
+  amount: number | null;
+  loan_type: string | null;
+  asset_class: string | null;
+  source: string | null;
+  capital_side: string;
+  role: string | null;
+  created_at: string;
+}
+
 export interface TeamMember {
   id: string;
   full_name: string;
@@ -119,6 +144,7 @@ export interface TeamMember {
 
 export interface CompanyData {
   id: string;
+  company_number: string;
   name: string;
   company_type: string | null;
 }
@@ -169,14 +195,46 @@ export interface SectionLayout {
   section_icon: string;
 }
 
+/** A single conditional rule from field_configurations.conditional_rules. */
+export interface ConditionalRule {
+  source_field: string;
+  operator: "equals" | "not_equals" | "contains" | "is_empty" | "is_not_empty" | "greater_than" | "less_than";
+  value?: unknown;
+  action: "show" | "hide" | "require" | "set_value";
+  set_value?: unknown;
+}
+
+/** Role-level view/edit permissions from field_configurations.permissions. */
+export interface FieldPermissions {
+  [role: string]: { view: boolean; edit: boolean };
+}
+
 export interface FieldLayout {
+  /** page_layout_fields row ID (for inline editor) */
+  id?: string;
+  /** field_configurations row ID (for inline editor gear icon) */
+  field_config_id?: string | null;
   field_key: string;
   field_label: string;
   field_type: string;
   column_position: string;
+  column_span?: string;
   display_order: number;
   is_visible: boolean;
+  is_required: boolean;
   dropdown_options: { label: string; value: string }[] | null;
+  /** Which object this field's data lives on (contact, borrower, investor, borrower_entity) */
+  source_object_key: string | null;
+  /** Conditional logic rules from field_configurations */
+  conditional_rules: ConditionalRule[] | null;
+  /** Role-based view/edit permissions from field_configurations */
+  permissions: FieldPermissions | null;
+  /** Formula expression for computed fields (field_type === "formula") */
+  formula_expression: string | null;
+  /** Output format for formula fields: "currency" | "percent" | "number" | "text" */
+  formula_output_format: string | null;
+  /** Decimal places for formula display */
+  formula_decimal_places: number | null;
 }
 
 export interface TaskData {

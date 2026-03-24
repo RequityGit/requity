@@ -2,7 +2,7 @@
  * Underwriting Model Resolver
  *
  * Determines which underwriting editor to render based on:
- * 1. For debt opportunities: opportunities.loan_type
+ * 1. For debt deals: opportunities.loan_type
  * 2. For loans: loans.type
  * 3. For equity deals: always 'equity' (uses commercial model for property UW)
  */

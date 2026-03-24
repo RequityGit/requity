@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { formatDate } from "@/lib/format";
 import {
   Plus,
   Phone,
@@ -11,6 +12,7 @@ import {
   FileText,
   Users,
 } from "lucide-react";
+import { EmptyState } from "@/components/shared/EmptyState";
 import { cn } from "@/lib/utils";
 import type { DialerList } from "@/lib/dialer/types";
 
@@ -78,7 +80,7 @@ export function DialerListsPage({ lists, teamMembers }: DialerListsPageProps) {
         </div>
 
         <Link
-          href="/admin/dialer/new"
+          href="/dialer/new"
           className="flex items-center gap-1.5 px-4 py-2 text-sm font-medium rounded-lg bg-foreground text-background hover:opacity-90 transition-opacity"
         >
           <Plus className="h-3.5 w-3.5" strokeWidth={1.5} />
@@ -88,14 +90,12 @@ export function DialerListsPage({ lists, teamMembers }: DialerListsPageProps) {
 
       {/* Lists table */}
       {filtered.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-16 text-center">
-          <Phone className="h-8 w-8 text-muted-foreground/40 mb-3" strokeWidth={1.5} />
-          <p className="text-sm text-muted-foreground">
-            {filter === "all"
-              ? "No dialer lists yet. Create one to get started."
-              : `No ${filter} lists.`}
-          </p>
-        </div>
+        <EmptyState
+          icon={Phone}
+          title={filter === "all" ? "No dialer lists yet" : `No ${filter} lists`}
+          description={filter === "all" ? "Create a list to get started." : undefined}
+          compact
+        />
       ) : (
         <div className="rounded-xl border border-border bg-card overflow-hidden">
           <table className="w-full">
@@ -139,7 +139,7 @@ export function DialerListsPage({ lists, teamMembers }: DialerListsPageProps) {
                   >
                     <td className="px-4 py-3">
                       <Link
-                        href={`/admin/dialer/${list.id}`}
+                        href={`/dialer/${list.id}`}
                         className="text-sm font-medium text-foreground hover:underline"
                       >
                         {list.name}
@@ -180,12 +180,12 @@ export function DialerListsPage({ lists, teamMembers }: DialerListsPageProps) {
                       </div>
                     </td>
                     <td className="px-4 py-3 text-xs text-muted-foreground">
-                      {new Date(list.created_at).toLocaleDateString()}
+                      {formatDate(list.created_at)}
                     </td>
                     <td className="px-4 py-3 text-right">
                       {(list.status === "draft" || list.status === "paused") && (
                         <Link
-                          href={`/admin/dialer/${list.id}/session`}
+                          href={`/dialer/${list.id}/session`}
                           className="inline-flex items-center gap-1 px-3 py-1 text-xs font-medium rounded-lg bg-foreground text-background hover:opacity-90 transition-opacity"
                         >
                           <Play className="h-3 w-3" strokeWidth={1.5} />
@@ -194,7 +194,7 @@ export function DialerListsPage({ lists, teamMembers }: DialerListsPageProps) {
                       )}
                       {list.status === "active" && (
                         <Link
-                          href={`/admin/dialer/${list.id}/session`}
+                          href={`/dialer/${list.id}/session`}
                           className="inline-flex items-center gap-1 px-3 py-1 text-xs font-medium rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 transition-colors"
                         >
                           <Phone className="h-3 w-3" strokeWidth={1.5} />
@@ -203,7 +203,7 @@ export function DialerListsPage({ lists, teamMembers }: DialerListsPageProps) {
                       )}
                       {list.status === "completed" && (
                         <Link
-                          href={`/admin/dialer/${list.id}`}
+                          href={`/dialer/${list.id}`}
                           className="inline-flex items-center gap-1 px-3 py-1 text-xs font-medium rounded-lg border border-border text-muted-foreground hover:bg-muted transition-colors"
                         >
                           <Users className="h-3 w-3" strokeWidth={1.5} />

@@ -2,7 +2,7 @@
 
 import { useState, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { useToast } from "@/components/ui/use-toast";
+import { showSuccess, showError, showWarning } from "@/lib/toast";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -62,7 +62,6 @@ export function TemplateEditorPage({
   versions,
 }: TemplateEditorPageProps) {
   const router = useRouter();
-  const { toast } = useToast();
   const isNew = !template;
   const bodyRef = useRef<HTMLTextAreaElement>(null);
   const subjectRef = useRef<HTMLInputElement>(null);
@@ -144,19 +143,19 @@ export function TemplateEditorPage({
 
   async function handleSave() {
     if (!form.name.trim()) {
-      toast({ title: "Name required", variant: "destructive" });
+      showWarning("Name is required");
       return;
     }
     if (!form.slug.trim()) {
-      toast({ title: "Slug required", variant: "destructive" });
+      showWarning("Slug is required");
       return;
     }
     if (!form.subject_template.trim()) {
-      toast({ title: "Subject template required", variant: "destructive" });
+      showWarning("Subject template is required");
       return;
     }
     if (!form.body_template.trim()) {
-      toast({ title: "Body template required", variant: "destructive" });
+      showWarning("Body template is required");
       return;
     }
 
@@ -177,9 +176,9 @@ export function TemplateEditorPage({
         });
 
         if ("error" in result) {
-          toast({ title: "Error", description: result.error, variant: "destructive" });
+          showError("Could not create template", result.error);
         } else {
-          toast({ title: "Template created" });
+          showSuccess("Template created");
           router.push(`/control-center/user-email-templates/${result.template.id}`);
         }
       } else {
@@ -201,9 +200,9 @@ export function TemplateEditorPage({
         );
 
         if ("error" in result) {
-          toast({ title: "Error", description: result.error, variant: "destructive" });
+          showError("Could not save template", result.error);
         } else {
-          toast({ title: "Template saved" });
+          showSuccess("Template saved");
           setChangeNotes("");
           router.refresh();
         }

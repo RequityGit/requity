@@ -14,7 +14,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Plus } from "lucide-react";
-import { createTemplateAction } from "@/app/(authenticated)/admin/email-templates/actions-write";
+import { createTemplateAction } from "@/app/(authenticated)/(admin)/email-templates/actions-write";
 
 export function CreateTemplateDialog() {
   const router = useRouter();

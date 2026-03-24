@@ -485,13 +485,6 @@ export const TERM_SHEET_SECTIONS: TermSheetSectionDef[] = [
         format: "date",
       },
       {
-        key: "funding_date",
-        label: "Funding Date",
-        description: "Date funds were disbursed",
-        defaultVisible: false,
-        format: "date",
-      },
-      {
         key: "first_payment_date",
         label: "First Payment Date",
         description: "Date of the first monthly payment",
@@ -694,7 +687,6 @@ export const SAMPLE_DATA: Record<string, string> = {
   approval_date: "Feb 1, 2026",
   expected_close_date: "Mar 1, 2026",
   closing_date: "Mar 1, 2026",
-  funding_date: "Mar 3, 2026",
   first_payment_date: "Apr 1, 2026",
   maturity_date: "Mar 1, 2027",
   prepayment_terms: "3-month minimum interest guarantee",

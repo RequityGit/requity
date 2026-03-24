@@ -16,9 +16,10 @@ import type {
   FormEngineProps,
   FormState,
   FormStep,
+  DealTokenData,
   SubmissionType,
 } from "@/lib/form-engine/types";
-import { toast } from "sonner";
+import { showSuccess, showInfo } from "@/lib/toast";
 
 export function FormEngine({
   formId,
@@ -29,15 +30,19 @@ export function FormEngine({
   recordType,
   prefillData,
   sessionToken,
+  dealToken,
   onComplete,
   onClose,
 }: FormEngineProps) {
   const [formDef, setFormDef] = useState<FormDefinition | null>(null);
+  const [dealContext, setDealContext] = useState<DealTokenData | null>(null);
   const [state, setState] = useState<FormState>({
     data: prefillData || {},
     currentStepIndex: 0,
     submissionId: null,
     sessionToken: sessionToken || null,
+    dealId: null,
+    dealApplicationLinkId: null,
     isSubmitting: false,
     isLoading: true,
     error: null,
@@ -49,15 +54,67 @@ export function FormEngine({
   const mode = recordId ? "edit" : initialMode;
   const visibilityContext = context === "page" ? "external" : "internal";
 
-  // Load form definition
+  // Load form definition (with optional deal token)
   useEffect(() => {
     async function loadForm() {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const supabase: any = createClient();
+
+      // If deal token provided, validate it first to get form_id and prefill
+      let dealData: DealTokenData | null = null;
+      let resolvedFormId = formId;
+      let resolvedPrefill = prefillData || {};
+      let resolvedSessionToken = sessionToken;
+
+      if (dealToken) {
+        try {
+          const res = await fetch("/api/forms/deal-token", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ token: dealToken }),
+          });
+          dealData = await res.json();
+
+          if (!dealData?.valid) {
+            setState((s) => ({
+              ...s,
+              isLoading: false,
+              error: dealData?.reason || "This application link is no longer valid.",
+            }));
+            return;
+          }
+
+          setDealContext(dealData);
+
+          // Use form_id from deal token if not explicitly provided
+          if (dealData.form_id && !formId) {
+            resolvedFormId = dealData.form_id;
+          }
+
+          // Merge prefill data from deal token
+          if (dealData.prefill_data) {
+            resolvedPrefill = { ...dealData.prefill_data, ...resolvedPrefill };
+          }
+
+          // Resume existing submission if available
+          if (dealData.existing_session_token) {
+            resolvedSessionToken = dealData.existing_session_token;
+          }
+        } catch {
+          setState((s) => ({
+            ...s,
+            isLoading: false,
+            error: "Failed to validate application link. Please try again.",
+          }));
+          return;
+        }
+      }
+
+      // Load form definition
       let query = supabase.from("form_definitions").select("*");
 
-      if (formId) {
-        query = query.eq("id", formId);
+      if (resolvedFormId) {
+        query = query.eq("id", resolvedFormId);
       } else if (formSlug) {
         query = query.eq("slug", formSlug);
       } else {
@@ -81,27 +138,30 @@ export function FormEngine({
 
       setFormDef(definition);
 
-      // Resume from session token
-      if (sessionToken) {
+      // Resume from session token (either provided directly or from deal token)
+      if (resolvedSessionToken) {
         const { data: submission } = await supabase
           .from("form_submissions")
           .select("*")
-          .eq("session_token", sessionToken)
+          .eq("session_token", resolvedSessionToken)
           .single();
 
         if (submission && submission.token_expires_at && new Date(submission.token_expires_at) > new Date()) {
           const submissionData = (submission.data || {}) as Record<string, unknown>;
-          const visibleSteps = getVisibleSteps(definition.steps, submissionData);
+          const mergedData = { ...resolvedPrefill, ...submissionData };
+          const visibleSteps = getVisibleSteps(definition.steps, mergedData);
           const resumeIndex = submission.current_step_id
             ? visibleSteps.findIndex((s) => s.id === submission.current_step_id)
             : 0;
 
           setState((s) => ({
             ...s,
-            data: { ...prefillData, ...submissionData },
+            data: mergedData,
             currentStepIndex: Math.max(0, resumeIndex),
             submissionId: submission.id,
             sessionToken: submission.session_token,
+            dealId: dealData?.deal_id || null,
+            dealApplicationLinkId: dealData?.link_id || null,
             isLoading: false,
           }));
           return;
@@ -109,12 +169,23 @@ export function FormEngine({
       }
 
       // Create new submission record
-      const result = await createSubmission(data.id, prefillData || {}, definition.steps[0]?.id || null);
+      const result = await createSubmission(
+        data.id,
+        resolvedPrefill,
+        definition.steps[0]?.id || null,
+        dealData?.deal_id
+          ? { dealId: dealData.deal_id, dealApplicationLinkId: dealData.link_id }
+          : undefined
+      );
+
       if (result) {
         setState((s) => ({
           ...s,
+          data: resolvedPrefill,
           submissionId: result.id,
           sessionToken: result.session_token,
+          dealId: dealData?.deal_id || null,
+          dealApplicationLinkId: dealData?.link_id || null,
           isLoading: false,
         }));
       } else {
@@ -123,7 +194,8 @@ export function FormEngine({
     }
 
     loadForm();
-  }, [formId, formSlug, sessionToken, prefillData]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [formId, formSlug, sessionToken, dealToken]);
 
   // Get visible steps based on current data
   const visibleSteps = formDef ? getVisibleSteps(formDef.steps, state.data) : [];
@@ -145,11 +217,12 @@ export function FormEngine({
       });
 
       // Auto-advance for card-select on router steps
+      // Increased delay to ensure state update completes before validation
       if (currentStep?.type === "router") {
         if (autoAdvanceTimerRef.current) clearTimeout(autoAdvanceTimerRef.current);
         autoAdvanceTimerRef.current = setTimeout(() => {
           goNext();
-        }, 300);
+        }, 500);
       }
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -163,8 +236,8 @@ export function FormEngine({
         debouncedSave(state.submissionId, state.data, currentStep?.id || null);
       }
 
-      // Email lookup for external forms
-      if (fieldId === "email" && context === "page" && state.data.email) {
+      // Email lookup for external forms (skip if deal token provided - data already pre-filled)
+      if (fieldId === "email" && context === "page" && state.data.email && !dealToken) {
         lookupContactByEmail(state.data.email as string).then((result) => {
           if (result.found) {
             setState((s) => ({
@@ -176,12 +249,12 @@ export function FormEngine({
                 ...(result.entity_name && !s.data.entity_name ? { entity_name: result.entity_name } : {}),
               },
             }));
-            toast.success("Welcome back! We've filled in your details.");
+            showSuccess("Welcome back! We've filled in your details.");
           }
         });
       }
     },
-    [state.submissionId, state.data, currentStep, context]
+    [state.submissionId, state.data, currentStep, context, dealToken]
   );
 
   // Validate current step
@@ -200,7 +273,9 @@ export function FormEngine({
 
       const value = state.data[field.id];
       if (value === null || value === undefined || value === "" || value === false) {
-        stepErrors[field.id] = `${field.label || "This field"} is required`;
+        // Use field label, or fall back to a more descriptive message
+        const fieldLabel = field.label || (field.type === "card-select" ? "Please select an option" : "This field");
+        stepErrors[field.id] = `${fieldLabel} is required`;
       }
     }
 
@@ -247,16 +322,24 @@ export function FormEngine({
       data: state.data,
       mode: (mode === "edit" ? "update" : "create") as "create" | "update",
       recordId,
+      dealId: state.dealId || undefined,
+      dealApplicationLinkId: state.dealApplicationLinkId || undefined,
     });
 
     if (result.success) {
       setIsSubmitted(true);
       setState((s) => ({ ...s, isSubmitting: false }));
+      
+      // Show warning if submission requires review
+      if (result.warning || result.requires_review) {
+        showInfo("Your submission was received and is being reviewed. We'll contact you soon.");
+      }
+      
       if (onComplete && result.submission_id) {
         onComplete({
           id: result.submission_id,
           form_id: formDef.id,
-          status: "submitted",
+          status: result.requires_review ? "pending_review" : "submitted",
           type: (mode === "edit" ? "update" : "create") as SubmissionType,
           data: state.data,
           current_step_id: null,
@@ -282,7 +365,7 @@ export function FormEngine({
         error: result.error || "Submission failed. Please try again.",
       }));
     }
-  }, [formDef, state.submissionId, state.data, state.sessionToken, mode, recordId, recordType, onComplete, validateStep]);
+  }, [formDef, state.submissionId, state.data, state.sessionToken, state.dealId, state.dealApplicationLinkId, mode, recordId, recordType, onComplete, validateStep]);
 
   // Loading state
   if (state.isLoading) {
@@ -316,6 +399,21 @@ export function FormEngine({
 
   return (
     <div className="space-y-6">
+      {/* Deal context banner */}
+      {dealContext?.deal_name && (
+        <div className="rounded-lg border border-border bg-muted/50 px-4 py-3">
+          <p className="text-sm text-muted-foreground">
+            Application for <span className="font-medium text-foreground">{dealContext.deal_name}</span>
+            {dealContext.deal_number && (
+              <span className="ml-1 text-xs text-muted-foreground">({dealContext.deal_number})</span>
+            )}
+          </p>
+          {dealContext.message && (
+            <p className="mt-1 text-xs text-muted-foreground">{dealContext.message}</p>
+          )}
+        </div>
+      )}
+
       <FormProgress
         currentStep={state.currentStepIndex}
         totalSteps={visibleSteps.length}
@@ -335,8 +433,8 @@ export function FormEngine({
         <p className="text-sm text-destructive">{state.error}</p>
       )}
 
-      {/* Navigation buttons (hidden for router steps since they auto-advance) */}
-      {currentStep.type !== "router" && (
+      {/* Navigation buttons (hidden for router steps since they auto-advance, unless there are validation errors) */}
+      {(currentStep.type !== "router" || Object.keys(errors).length > 0) && (
         <div className="flex items-center justify-between pt-4">
           <Button
             variant="outline"
@@ -355,7 +453,7 @@ export function FormEngine({
               ) : (
                 <Send size={16} strokeWidth={1.5} className="mr-2" />
               )}
-              Submit
+              Submit Application
             </Button>
           ) : (
             <Button onClick={goNext}>
@@ -366,8 +464,8 @@ export function FormEngine({
         </div>
       )}
 
-      {/* Back button for router steps */}
-      {currentStep.type === "router" && !isFirstStep && (
+      {/* Back button for router steps (only when no errors, since errors show full nav above) */}
+      {currentStep.type === "router" && !isFirstStep && Object.keys(errors).length === 0 && (
         <div className="pt-2">
           <Button variant="ghost" size="sm" onClick={goBack}>
             <ArrowLeft size={16} strokeWidth={1.5} className="mr-2" />

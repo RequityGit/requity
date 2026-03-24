@@ -2,8 +2,9 @@
 
 import { useState, useMemo, useCallback } from "react";
 import { createClient } from "@/lib/supabase/client";
-import { useToast } from "@/components/ui/use-toast";
+import { showSuccess, showError } from "@/lib/toast";
 import { cn } from "@/lib/utils";
+import { formatDate } from "@/lib/format";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -19,16 +20,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
+import { useConfirm } from "@/components/shared/ConfirmDialog";
 import {
   Search,
   MoreHorizontal,
@@ -38,6 +30,7 @@ import {
   Play,
   Trash2,
 } from "lucide-react";
+import { EmptyState } from "@/components/shared/EmptyState";
 import { CategoryPill } from "./category-pill";
 import type { Profile } from "@/lib/tasks";
 import { getInitials, TASK_CATEGORIES } from "@/lib/tasks";
@@ -95,12 +88,11 @@ export function RecurringTemplatesTable({
   onEdit,
   onTemplatesChange,
 }: RecurringTemplatesTableProps) {
-  const { toast } = useToast();
+  const confirm = useConfirm();
   const [search, setSearch] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("all");
   const [assigneeFilter, setAssigneeFilter] = useState("all");
   const [frequencyFilter, setFrequencyFilter] = useState("all");
-  const [deleteTarget, setDeleteTarget] = useState<RecurringTaskTemplate | null>(null);
 
   const filteredTemplates = useMemo(() => {
     return templates.filter((t) => {
@@ -159,11 +151,7 @@ export function RecurringTemplatesTable({
         .eq("id" as never, template.id as never);
 
       if (error) {
-        toast({
-          title: "Failed to update template",
-          description: error.message,
-          variant: "destructive",
-        });
+        showError("Could not update template", error.message);
         return;
       }
 
@@ -172,38 +160,34 @@ export function RecurringTemplatesTable({
           t.id === template.id ? { ...t, is_active: newActive } : t
         )
       );
-      toast({
-        title: newActive ? "Template resumed" : "Template paused",
-        description: `"${template.title}" is now ${newActive ? "active" : "paused"}.`,
-      });
+      showSuccess(newActive ? "Template resumed" : "Template paused");
     },
-    [templates, onTemplatesChange, toast]
+    [templates, onTemplatesChange]
   );
 
-  const handleDelete = useCallback(async () => {
-    if (!deleteTarget) return;
+  const handleDelete = useCallback(async (template: RecurringTaskTemplate) => {
+    const ok = await confirm({
+      title: "Delete template",
+      description: `This will deactivate "${template.title}". No new tasks will be generated, but existing instances remain completable.`,
+      confirmLabel: "Delete",
+      destructive: true,
+    });
+    if (!ok) return;
+
     const supabase = createClient();
 
     const { error } = await supabase
       .from("recurring_task_templates" as never)
       .update({ is_active: false } as never)
-      .eq("id" as never, deleteTarget.id as never);
+      .eq("id" as never, template.id as never);
 
     if (error) {
-      toast({
-        title: "Failed to delete template",
-        description: error.message,
-        variant: "destructive",
-      });
+      showError("Could not delete template", error.message);
     } else {
-      onTemplatesChange(templates.filter((t) => t.id !== deleteTarget.id));
-      toast({
-        title: "Template deleted",
-        description: `"${deleteTarget.title}" has been removed.`,
-      });
+      onTemplatesChange(templates.filter((t) => t.id !== template.id));
+      showSuccess("Template deleted");
     }
-    setDeleteTarget(null);
-  }, [deleteTarget, templates, onTemplatesChange, toast]);
+  }, [confirm, templates, onTemplatesChange]);
 
   return (
     <div>
@@ -282,9 +266,12 @@ export function RecurringTemplatesTable({
 
         {/* Rows */}
         {filteredTemplates.length === 0 ? (
-          <div className="px-4 py-10 text-center text-sm text-muted-foreground">
-            No templates found.
-          </div>
+          <EmptyState
+            icon={Repeat2}
+            title="No templates found"
+            description="Try adjusting your filters."
+            compact
+          />
         ) : (
           filteredTemplates.map((t) => {
             const assignee = t.assigned_to
@@ -364,10 +351,7 @@ export function RecurringTemplatesTable({
 
                 {/* Next Due */}
                 <span className="text-xs font-medium text-right num">
-                  {new Date(t.next_due_date + "T00:00:00").toLocaleDateString(
-                    "en-US",
-                    { month: "short", day: "numeric", year: "numeric" }
-                  )}
+                  {formatDate(t.next_due_date)}
                 </span>
 
                 {/* Actions */}
@@ -397,7 +381,7 @@ export function RecurringTemplatesTable({
                         )}
                       </DropdownMenuItem>
                       <DropdownMenuItem
-                        onClick={() => setDeleteTarget(t)}
+                        onClick={() => handleDelete(t)}
                         className="text-destructive focus:text-destructive"
                       >
                         <Trash2 className="h-3.5 w-3.5 mr-2" strokeWidth={1.5} />
@@ -422,27 +406,6 @@ export function RecurringTemplatesTable({
         </div>
       </div>
 
-      {/* Delete confirmation */}
-      <AlertDialog open={!!deleteTarget} onOpenChange={() => setDeleteTarget(null)}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Delete template</AlertDialogTitle>
-            <AlertDialogDescription>
-              This will deactivate &ldquo;{deleteTarget?.title}&rdquo;. No new tasks will
-              be generated, but existing instances remain completable.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleDelete}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-            >
-              Delete
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
     </div>
   );
 }

@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { toast } from "sonner";
+import { showSuccess, showError } from "@/lib/toast";
 import {
   Dialog,
   DialogContent,
@@ -13,7 +13,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { renameDocumentAction } from "@/app/(authenticated)/admin/documents/actions";
+import { renameDocumentAction } from "@/app/(authenticated)/(admin)/documents/actions";
 
 interface DocumentRenameDialogProps {
   open: boolean;
@@ -53,9 +53,9 @@ export function DocumentRenameDialog({
         name
       );
       if ("error" in result && result.error) {
-        toast.error(result.error);
+        showError(result.error);
       } else {
-        toast.success("Document renamed");
+        showSuccess("Document renamed");
         router.refresh();
         handleOpenChange(false);
       }

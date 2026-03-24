@@ -23,7 +23,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useToast } from "@/components/ui/use-toast";
+import { showSuccess, showError, showWarning } from "@/lib/toast";
 import { formatCurrency, formatDate } from "@/lib/format";
 import {
   Plus,
@@ -342,7 +342,6 @@ function CreateChangeOrderDialog({
   currentUserId: string;
   onRefresh: () => void;
 }) {
-  const { toast } = useToast();
   const [loading, setLoading] = useState(false);
   const [reason, setReason] = useState("");
   const [lineItems, setLineItems] = useState<COLineItemDraft[]>([
@@ -399,7 +398,7 @@ function CreateChangeOrderDialog({
 
   async function handleSubmit() {
     if (!reason.trim()) {
-      toast({ title: "Reason is required", variant: "destructive" });
+      showWarning("Reason is required");
       return;
     }
 
@@ -410,7 +409,7 @@ function CreateChangeOrderDialog({
     );
 
     if (validItems.length === 0) {
-      toast({ title: "At least one line item change is required", variant: "destructive" });
+      showWarning("At least one line item change is required");
       return;
     }
 
@@ -458,12 +457,12 @@ function CreateChangeOrderDialog({
 
       if (liError) throw liError;
 
-      toast({ title: "Change order submitted" });
+      showSuccess("Change order submitted");
       onOpenChange(false);
       onRefresh();
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : "Unknown error";
-      toast({ title: "Error creating change order", description: message, variant: "destructive" });
+      showError("Could not create change order", message);
     } finally {
       setLoading(false);
     }
@@ -643,7 +642,6 @@ function ApproveChangeOrderDialog({
   currentUserId: string;
   onRefresh: () => void;
 }) {
-  const { toast } = useToast();
   const [loading, setLoading] = useState(false);
   const [reviewNotes, setReviewNotes] = useState("");
 
@@ -735,12 +733,12 @@ function ApproveChangeOrderDialog({
         })
         .eq("id", budget.id);
 
-      toast({ title: "Change order approved and applied" });
+      showSuccess("Change order approved and applied");
       onOpenChange(false);
       onRefresh();
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : "Unknown error";
-      toast({ title: "Error approving change order", description: message, variant: "destructive" });
+      showError("Could not approve change order", message);
     } finally {
       setLoading(false);
     }
@@ -805,13 +803,12 @@ function RejectChangeOrderDialog({
   currentUserId: string;
   onRefresh: () => void;
 }) {
-  const { toast } = useToast();
   const [loading, setLoading] = useState(false);
   const [reviewNotes, setReviewNotes] = useState("");
 
   async function handleReject() {
     if (!reviewNotes.trim()) {
-      toast({ title: "Review notes are required for rejection", variant: "destructive" });
+      showWarning("Review notes are required for rejection");
       return;
     }
 
@@ -830,12 +827,12 @@ function RejectChangeOrderDialog({
 
       if (error) throw error;
 
-      toast({ title: "Change order rejected" });
+      showSuccess("Change order rejected");
       onOpenChange(false);
       onRefresh();
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : "Unknown error";
-      toast({ title: "Error rejecting change order", description: message, variant: "destructive" });
+      showError("Could not reject change order", message);
     } finally {
       setLoading(false);
     }

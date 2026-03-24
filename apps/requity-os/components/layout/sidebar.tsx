@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
+import { SUPABASE_URL } from "@/lib/supabase/constants";
 import {
   LayoutDashboard,
   FileText,
@@ -58,77 +59,67 @@ function isNavGroup(entry: NavEntry): entry is NavGroup {
 }
 
 const investorNav: NavItem[] = [
-  { label: "Dashboard", href: "/investor/dashboard", icon: LayoutDashboard },
+  { label: "Dashboard", href: "/i/dashboard", icon: LayoutDashboard },
   {
     label: "My Investments",
-    href: "/investor/funds",
+    href: "/i/funds",
     icon: Landmark,
-    activePaths: ["/investor/capital-calls", "/investor/distributions"],
+    activePaths: ["/i/capital-calls", "/i/distributions"],
   },
-  { label: "Documents", href: "/investor/documents", icon: FileText },
+  { label: "Documents", href: "/i/documents", icon: FileText },
 ];
 
 const borrowerNav: NavItem[] = [
-  { label: "Dashboard", href: "/borrower/dashboard", icon: LayoutDashboard },
-  { label: "Draw Requests", href: "/borrower/draws", icon: Hammer },
-  { label: "Payments", href: "/borrower/payments", icon: CreditCard },
-  { label: "Documents", href: "/borrower/documents", icon: FileText },
+  { label: "Dashboard", href: "/b/dashboard", icon: LayoutDashboard },
+  { label: "Draw Requests", href: "/b/draws", icon: Hammer },
+  { label: "Payments", href: "/b/payments", icon: CreditCard },
+  { label: "Documents", href: "/b/documents", icon: FileText },
 ];
 
 const adminNav: NavEntry[] = [
-  { label: "Dashboard", href: "/admin/dashboard", icon: LayoutDashboard, moduleName: "dashboard" },
+  {
+    label: "Pipeline",
+    href: "/pipeline",
+    icon: Layers,
+    moduleName: "pipeline",
+    activePaths: ["/pipeline"],
+  },
   {
     label: "Contacts",
-    href: "/admin/crm/contacts",
+    href: "/contacts",
     icon: Contact,
     moduleName: "crm",
-    activePaths: ["/admin/crm/contacts"],
+    activePaths: ["/contacts"],
   },
   {
     label: "Companies",
-    href: "/admin/crm/companies",
+    href: "/companies",
     icon: Building2,
     moduleName: "crm",
-    activePaths: ["/admin/crm/companies"],
+    activePaths: ["/companies"],
   },
   {
-    label: "Pipeline",
-    icon: Layers,
-    basePath: "/admin/pipeline",
-    moduleName: "pipeline",
-    children: [
-      { label: "Deals", href: "/admin/pipeline" },
-      { label: "Intake", href: "/admin/pipeline/intake" },
-    ],
-  },
-  {
-    label: "Operations",
-    href: "/admin/operations/tasks",
+    label: "Tasks",
+    href: "/tasks",
     icon: ListChecks,
     moduleName: "operations",
-    activePaths: ["/admin/operations"],
+    activePaths: ["/tasks"],
   },
   {
     label: "Toolbox",
+    href: "/toolbox",
     icon: Wrench,
-    basePath: "/admin/toolbox",
     activePaths: [
-      "/admin/documents",
-      "/admin/servicing",
-      "/admin/funds",
-      "/admin/capital-calls",
-      "/admin/distributions",
-      "/admin/models",
-      "/admin/dialer",
-    ],
-    children: [
-      { label: "Documents", href: "/admin/documents" },
-      { label: "Servicing", href: "/admin/servicing" },
-      { label: "Investments", href: "/admin/funds" },
-      { label: "Comm Model", href: "/admin/models/commercial" },
-      { label: "RTL Model", href: "/admin/models/rtl" },
-      { label: "DSCR Model", href: "/admin/models/dscr" },
-      { label: "Power Dialer", href: "/admin/dialer" },
+      "/toolbox",
+      "/conditions",
+      "/documents",
+      "/servicing",
+      "/funds",
+      "/capital-calls",
+      "/distributions",
+      "/models",
+      "/dialer",
+      "/borrowers/entities",
     ],
   },
 ];
@@ -165,17 +156,16 @@ export function Sidebar({
   // Eagerly prefetch the most-used routes on mount for faster navigation
   useEffect(() => {
     if (navRole === "admin") {
-      router.prefetch("/admin/dashboard");
-      router.prefetch("/admin/crm/contacts");
-      router.prefetch("/admin/pipeline");
-      router.prefetch("/admin/crm/companies");
-      router.prefetch("/admin/operations/tasks");
+      router.prefetch("/pipeline");
+      router.prefetch("/contacts");
+      router.prefetch("/companies");
+      router.prefetch("/tasks");
     } else if (navRole === "borrower") {
-      router.prefetch("/borrower/dashboard");
-      router.prefetch("/borrower/draws");
+      router.prefetch("/b/dashboard");
+      router.prefetch("/b/draws");
     } else if (navRole === "investor") {
-      router.prefetch("/investor/dashboard");
-      router.prefetch("/investor/funds");
+      router.prefetch("/i/dashboard");
+      router.prefetch("/i/funds");
     }
   }, [navRole, router]);
   const allNavEntries = getNavEntries(navRole);
@@ -208,18 +198,23 @@ export function Sidebar({
         collapsed ? "w-16" : "w-[220px]"
       )}
     >
-      {/* Brand area */}
-      <div className="flex items-center justify-between px-4 py-[18px]">
-        {!collapsed && (
-          <Link href={`/${role}/dashboard`} className="flex items-center gap-2">
-            <div className="h-7 w-7 rounded-md bg-foreground flex items-center justify-center">
-              <span className="text-background text-[13px] font-extrabold leading-none">R</span>
-            </div>
-            <span className="text-[15px] font-bold tracking-[-0.03em] text-sidebar-foreground">
-              Requity
-            </span>
-          </Link>
-        )}
+      {/* Brand area — height matches topbar (h-16 = 64px) so separator aligns with topbar border-b */}
+      <div className="flex h-16 items-center justify-between px-4 shrink-0">
+        <Link
+          href={role === "admin" ? "/pipeline" : role === "investor" ? "/i/dashboard" : "/b/dashboard"}
+          className={cn("flex items-center", collapsed ? "justify-center" : "gap-2")}
+        >
+          <img
+            src={`${SUPABASE_URL}/storage/v1/object/public/brand-assets/Requity%20Logo%20Color.svg`}
+            alt="Requity"
+            className={cn("h-8 w-auto dark:hidden", collapsed ? "w-8 object-contain" : "")}
+          />
+          <img
+            src={`${SUPABASE_URL}/storage/v1/object/public/brand-assets/Requity%20Logo%20White.svg?v=2`}
+            alt="Requity"
+            className={cn("h-8 w-auto hidden dark:block", collapsed ? "w-8 object-contain" : "")}
+          />
+        </Link>
         <button
           onClick={() => setCollapsed(!collapsed)}
           className="p-1 rounded-md hover:bg-sidebar-hover transition-colors text-sidebar-foreground/60"

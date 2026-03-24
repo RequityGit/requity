@@ -2,7 +2,8 @@
 
 import { useState, useCallback } from "react";
 import { cn } from "@/lib/utils";
-import { useToast } from "@/components/ui/use-toast";
+import { formatDateShort } from "@/lib/format";
+import { showSuccess, showError, showWarning } from "@/lib/toast";
 import {
   Sheet,
   SheetContent,
@@ -14,17 +15,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
+import { useConfirm } from "@/components/shared/ConfirmDialog";
 import {
   Shield,
   Check,
@@ -62,7 +53,7 @@ export function ApprovalDrawer({
   onClose,
   onUpdated,
 }: ApprovalDrawerProps) {
-  const { toast } = useToast();
+  const confirm = useConfirm();
   const [note, setNote] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
@@ -79,11 +70,7 @@ export function ApprovalDrawer({
     async (decision: "approve" | "reject" | "resubmit") => {
       if (!task) return;
       if (decision === "reject" && !note.trim()) {
-        toast({
-          title: "Note required",
-          description: "Please provide a reason when rejecting.",
-          variant: "destructive",
-        });
+        showWarning("Please provide a reason when rejecting");
         return;
       }
 
@@ -96,11 +83,7 @@ export function ApprovalDrawer({
       );
 
       if (!result.success) {
-        toast({
-          title: "Decision failed",
-          description: result.error ?? "Unknown error",
-          variant: "destructive",
-        });
+        showError("Could not process decision", result.error ?? "Unknown error");
       } else {
         const decisionLabel =
           decision === "approve"
@@ -108,7 +91,7 @@ export function ApprovalDrawer({
             : decision === "reject"
               ? "Rejected"
               : "Resubmitted";
-        toast({ title: `${decisionLabel} successfully` });
+        showSuccess(decisionLabel);
 
         const newStatus =
           decision === "approve"
@@ -127,7 +110,7 @@ export function ApprovalDrawer({
       }
       setSubmitting(false);
     },
-    [task, note, currentUserId, toast, onUpdated]
+    [task, note, currentUserId, onUpdated]
   );
 
   const handleOpenChange = useCallback(
@@ -144,7 +127,7 @@ export function ApprovalDrawer({
 
   return (
     <Sheet open={open} onOpenChange={handleOpenChange}>
-      <SheetContent className="sm:max-w-[460px] p-0 flex flex-col">
+      <SheetContent className="w-full sm:max-w-[460px] p-0 flex flex-col">
         {/* Header */}
         <SheetHeader className="px-5 pt-5 pb-4 border-b border-border">
           <div className="flex items-center gap-2 mb-2">
@@ -252,12 +235,7 @@ export function ApprovalDrawer({
                         isDueOverdue(task.due_date) && "text-destructive"
                       )}
                     >
-                      {new Date(
-                        task.due_date + "T00:00:00"
-                      ).toLocaleDateString("en-US", {
-                        month: "short",
-                        day: "numeric",
-                      })}
+                      {formatDateShort(task.due_date)}
                     </p>
                   </div>
                 )}
@@ -288,7 +266,7 @@ export function ApprovalDrawer({
             {/* Previous decision note */}
             {task.decision_note && (
               <div className="px-5 py-4 border-b border-border">
-                <Label className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                <Label className="rq-micro-label">
                   Decision Note
                 </Label>
                 <p className="text-sm mt-1.5">{task.decision_note}</p>
@@ -298,7 +276,7 @@ export function ApprovalDrawer({
             {/* Note input */}
             {!isCompleted && !isAwaitingRevision && (
               <div className="px-5 py-4 border-b border-border">
-                <Label className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground mb-2 block">
+                <Label className="rq-micro-label mb-2 block">
                   Note (optional)
                 </Label>
                 <Textarea
@@ -351,36 +329,24 @@ export function ApprovalDrawer({
                 {submitting ? "Approving..." : "Approve"}
               </Button>
 
-              <AlertDialog>
-                <AlertDialogTrigger asChild>
-                  <Button
-                    variant="outline"
-                    className="flex-1 gap-1.5 border-destructive text-destructive hover:bg-destructive/10"
-                    disabled={submitting || !isAssignee}
-                  >
-                    <ThumbsDown className="h-3.5 w-3.5" strokeWidth={2} />
-                    Reject
-                  </Button>
-                </AlertDialogTrigger>
-                <AlertDialogContent>
-                  <AlertDialogHeader>
-                    <AlertDialogTitle>Reject approval</AlertDialogTitle>
-                    <AlertDialogDescription>
-                      This will send the approval back to the requestor for
-                      revision. A note is required.
-                    </AlertDialogDescription>
-                  </AlertDialogHeader>
-                  <AlertDialogFooter>
-                    <AlertDialogCancel>Cancel</AlertDialogCancel>
-                    <AlertDialogAction
-                      onClick={() => handleDecision("reject")}
-                      className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                    >
-                      Reject
-                    </AlertDialogAction>
-                  </AlertDialogFooter>
-                </AlertDialogContent>
-              </AlertDialog>
+              <Button
+                variant="outline"
+                className="flex-1 gap-1.5 border-destructive text-destructive hover:bg-destructive/10"
+                disabled={submitting || !isAssignee}
+                onClick={async () => {
+                  const ok = await confirm({
+                    title: "Reject approval",
+                    description: "This will send the approval back to the requestor for revision. A note is required.",
+                    confirmLabel: "Reject",
+                    destructive: true,
+                  });
+                  if (!ok) return;
+                  handleDecision("reject");
+                }}
+              >
+                <ThumbsDown className="h-3.5 w-3.5" strokeWidth={2} />
+                Reject
+              </Button>
             </div>
           )}
         </div>

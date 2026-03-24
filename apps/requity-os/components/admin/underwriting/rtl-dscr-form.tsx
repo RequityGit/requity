@@ -128,7 +128,7 @@ function OutputsPanel({ outputs, modelType }: { outputs: UnderwritingOutputs; mo
 
       {/* Key Ratios */}
       <div className="mb-4">
-        <div className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground mb-2">
+        <div className="rq-micro-label mb-2">
           Key Ratios
         </div>
         <div className="grid grid-cols-4 gap-2">
@@ -149,7 +149,7 @@ function OutputsPanel({ outputs, modelType }: { outputs: UnderwritingOutputs; mo
 
       {/* Payment & Fees */}
       <div className="mb-4">
-        <div className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground mb-2">
+        <div className="rq-micro-label mb-2">
           Payment & Fees
         </div>
         <div className="grid grid-cols-4 gap-2">
@@ -162,7 +162,7 @@ function OutputsPanel({ outputs, modelType }: { outputs: UnderwritingOutputs; mo
 
       {/* Cash & Holding */}
       <div className="mb-4">
-        <div className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground mb-2">
+        <div className="rq-micro-label mb-2">
           Cash Requirements
         </div>
         <div className="grid grid-cols-3 gap-2">
@@ -175,7 +175,7 @@ function OutputsPanel({ outputs, modelType }: { outputs: UnderwritingOutputs; mo
       {/* Returns */}
       {modelType === "rtl" && (
         <div className="mb-4">
-          <div className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground mb-2">
+          <div className="rq-micro-label mb-2">
             Returns
           </div>
           <div className="grid grid-cols-4 gap-2">
@@ -194,7 +194,7 @@ function OutputsPanel({ outputs, modelType }: { outputs: UnderwritingOutputs; mo
       {/* Per Partner */}
       {outputs.cash_per_partner != null && (
         <div>
-          <div className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground mb-2">
+          <div className="rq-micro-label mb-2">
             Per Partner
           </div>
           <div className="grid grid-cols-2 gap-2">
@@ -206,7 +206,7 @@ function OutputsPanel({ outputs, modelType }: { outputs: UnderwritingOutputs; mo
 
       {/* Max Loan Sizing */}
       <div className="mt-4 pt-3 border-t border-border">
-        <div className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground mb-2">
+        <div className="rq-micro-label mb-2">
           Max Loan Sizing
         </div>
         <div className="grid grid-cols-2 gap-2">

@@ -14,7 +14,7 @@
  */
 
 // Columns that may legitimately be absent from the live `profiles` table.
-const DROPPABLE_COLUMNS = ["phone", "company_name", "full_name", "activation_status"];
+const DROPPABLE_COLUMNS = ["phone", "company_name", "full_name", "activation_status", "accent_color"];
 
 interface MinimalSupabaseClient {
   from(table: string): any;

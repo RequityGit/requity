@@ -4,7 +4,7 @@ import { TemplateEditor } from "@/components/admin/email-templates/template-edit
 import {
   fetchTemplateAction,
   fetchTemplateVersionsAction,
-} from "@/app/(authenticated)/admin/email-templates/actions";
+} from "@/app/(authenticated)/(admin)/email-templates/actions";
 
 export const dynamic = "force-dynamic";
 
@@ -15,22 +15,22 @@ interface Props {
 export default async function ControlCenterEmailTemplateDetailPage({
   params,
 }: Props) {
-  const { id } = await params;
-  const supabase = await createClient();
+  const resolvedParams = await params;
+  const id = resolvedParams.id;
+
+  const supabase = createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
-  const [templateResult, versionsResult] = await Promise.all([
-    fetchTemplateAction(id),
-    fetchTemplateVersionsAction(id),
-  ]);
+  const templateResult = await fetchTemplateAction(id);
 
   if ("error" in templateResult) {
     redirect("/control-center/email-templates");
   }
 
+  const versionsResult = await fetchTemplateVersionsAction(id);
   const versions =
     "success" in versionsResult ? versionsResult.versions : [];
 

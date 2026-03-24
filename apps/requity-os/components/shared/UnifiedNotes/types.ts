@@ -18,11 +18,13 @@ export interface UnifiedNotesProps {
   showFilters?: boolean;
   showPinning?: boolean;
   compact?: boolean;
+  /** Chat-style: newest at bottom, date dividers, Enter-to-send, composer at bottom */
+  chatMode?: boolean;
 }
 
 export interface NoteLike {
   user_id: string;
-  profiles: { full_name: string | null };
+  profiles: { full_name: string | null; accent_color?: string | null };
 }
 
 export interface NoteData {
@@ -31,6 +33,7 @@ export interface NoteData {
   updated_at: string;
   author_id: string;
   author_name: string | null;
+  author_accent_color?: string | null;
   body: string;
   parent_note_id: string | null;
   mentions: string[];
@@ -42,8 +45,16 @@ export interface NoteData {
   edited_at: string | null;
   deleted_at: string | null;
   note_likes: NoteLike[];
+  note_attachments?: Array<{
+    id: string;
+    file_name: string;
+    file_type: string | null;
+    file_size_bytes: number | null;
+    storage_path: string;
+  }>;
   unified_condition_id?: string | null;
   condition_name?: string | null;
+  deal_id?: string | null;
 }
 
 export type NoteFilter = "all" | "internal" | "external";

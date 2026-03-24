@@ -1,6 +1,7 @@
 "use client";
 
 import { cn } from "@/lib/utils";
+import { formatDate } from "@/lib/format";
 import { RELATIONSHIP_BADGE_COLORS, STATUS_CONFIG } from "./types";
 import { Skeleton } from "@/components/ui/skeleton";
 import { UserPlus } from "lucide-react";
@@ -142,11 +143,7 @@ export function TimelineEvent({
         )}
         <div className="flex items-center gap-2 mt-1 text-xs text-muted-foreground">
           <span className="font-mono num">
-            {new Date(timestamp).toLocaleDateString("en-US", {
-              month: "short",
-              day: "numeric",
-              year: "numeric",
-            })}
+            {formatDate(timestamp)}
           </span>
           {actor && (
             <>

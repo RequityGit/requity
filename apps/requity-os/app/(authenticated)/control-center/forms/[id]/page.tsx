@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import { formatDate } from "@/lib/format";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -35,9 +36,11 @@ import {
   Eye,
   ChevronDown,
   ChevronUp,
+  FileText,
 } from "lucide-react";
+import { EmptyState } from "@/components/shared/EmptyState";
 import { cn } from "@/lib/utils";
-import { toast } from "sonner";
+import { showSuccess, showError } from "@/lib/toast";
 import { FormEngine } from "@/components/forms/FormEngine";
 import { IconPicker } from "@/components/forms/IconPicker";
 import type {
@@ -111,7 +114,7 @@ export default function FormEditorPage() {
         .single();
 
       if (error || !data) {
-        toast.error("Form not found");
+        showError("Form not found");
         router.push("/control-center/forms");
         return;
       }
@@ -171,9 +174,9 @@ export default function FormEditorPage() {
 
     setSaving(false);
     if (error) {
-      toast.error("Failed to save: " + error.message);
+      showError("Failed to save: " + error.message);
     } else {
-      toast.success("Form saved");
+      showSuccess("Form saved");
     }
   }, [formDef, formId]);
 
@@ -426,7 +429,7 @@ export default function FormEditorPage() {
                           </SelectTrigger>
                           <SelectContent>
                             <SelectItem value="none">None</SelectItem>
-                            <SelectItem value="opportunity">Opportunity</SelectItem>
+                            <SelectItem value="opportunity">Deal</SelectItem>
                             <SelectItem value="property">Property</SelectItem>
                             <SelectItem value="crm_contact">Contact</SelectItem>
                             <SelectItem value="company">Company</SelectItem>
@@ -1049,14 +1052,14 @@ export default function FormEditorPage() {
               <TableBody>
                 {submissionsLoading ? (
                   <TableRow>
-                    <TableCell colSpan={4} className="text-center text-sm text-muted-foreground py-12">
+                    <TableCell colSpan={4} className="py-8 text-center text-sm text-muted-foreground">
                       Loading...
                     </TableCell>
                   </TableRow>
                 ) : submissions.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={4} className="text-center text-sm text-muted-foreground py-12">
-                      No submissions yet.
+                    <TableCell colSpan={4}>
+                      <EmptyState icon={FileText} title="No submissions yet." compact />
                     </TableCell>
                   </TableRow>
                 ) : (
@@ -1082,7 +1085,7 @@ export default function FormEditorPage() {
                         {sub.current_step_id || "Complete"}
                       </TableCell>
                       <TableCell className="text-sm text-muted-foreground">
-                        {new Date(sub.created_at).toLocaleDateString()}
+                        {formatDate(sub.created_at)}
                       </TableCell>
                     </TableRow>
                   ))

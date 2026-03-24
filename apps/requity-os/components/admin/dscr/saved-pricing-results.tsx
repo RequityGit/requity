@@ -2,6 +2,8 @@
 
 import { PricingResults } from "./pricing-results";
 import { useRouter } from "next/navigation";
+import { BarChart2 } from "lucide-react";
+import { EmptyState } from "@/components/shared/EmptyState";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
@@ -11,9 +13,7 @@ export function SavedPricingResults({ run }: { run: any }) {
 
   if (!results || !results.products) {
     return (
-      <div className="text-center py-12 text-muted-foreground">
-        No pricing results available for this run.
-      </div>
+      <EmptyState icon={BarChart2} title="No pricing results available for this run." />
     );
   }
 
@@ -21,7 +21,7 @@ export function SavedPricingResults({ run }: { run: any }) {
     <PricingResults
       results={results}
       pricingRunId={run.id}
-      onBack={() => router.push("/admin/models/dscr?tab=pipeline")}
+      onBack={() => router.push("/models/dscr?tab=pipeline")}
     />
   );
 }

@@ -27,7 +27,8 @@ import {
   APPROVAL_STATUS_COLORS,
   LOAN_DB_TYPES,
 } from "@/lib/constants";
-import { Search, ArrowUpDown } from "lucide-react";
+import { Search, ArrowUpDown, FileText } from "lucide-react";
+import { EmptyState } from "@/components/shared/EmptyState";
 import type { OpportunityRow } from "./opportunity-kanban";
 
 interface OpportunityListViewProps {
@@ -189,11 +190,8 @@ export function OpportunityListView({ data }: OpportunityListViewProps) {
           <TableBody>
             {filtered.length === 0 ? (
               <TableRow>
-                <TableCell
-                  colSpan={9}
-                  className="text-center text-muted-foreground py-8"
-                >
-                  No deals found
+                <TableCell colSpan={9}>
+                  <EmptyState icon={FileText} title="No deals found" compact />
                 </TableCell>
               </TableRow>
             ) : (
@@ -202,7 +200,7 @@ export function OpportunityListView({ data }: OpportunityListViewProps) {
                   key={opp.id}
                   className="cursor-pointer hover:bg-muted"
                   onClick={() =>
-                    router.push(`/admin/pipeline/${opp.id}`)
+                    router.push(`/pipeline/${opp.id}`)
                   }
                 >
                   <TableCell className="font-medium">

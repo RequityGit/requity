@@ -3,6 +3,7 @@
 import { useEffect, useRef, useCallback } from "react";
 import { usePathname } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import { SUPABASE_URL } from "@/lib/supabase/constants";
 
 interface ActivityEvent {
   action_type: string;
@@ -18,7 +19,7 @@ interface ActivityEvent {
 const BATCH_SIZE = 10;
 const FLUSH_INTERVAL_MS = 30_000;
 const EDGE_FUNCTION_URL =
-  process.env.NEXT_PUBLIC_SUPABASE_URL + "/functions/v1/track-activity";
+  SUPABASE_URL + "/functions/v1/track-activity";
 
 function getOrCreateSessionId(): string {
   if (typeof window === "undefined") return "";
@@ -90,12 +91,23 @@ export function useActivityTracker(role?: string, department?: string) {
     [role, department, flush]
   );
 
-  // ---- periodic flush ----
+  // ---- periodic flush (paused when tab is hidden) ----
   useEffect(() => {
     timerRef.current = setInterval(flush, FLUSH_INTERVAL_MS);
+
+    function handleVisibility() {
+      if (document.visibilityState === "hidden") {
+        if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null; }
+        flush(); // flush remaining before going idle
+      } else {
+        timerRef.current = setInterval(flush, FLUSH_INTERVAL_MS);
+      }
+    }
+
+    document.addEventListener("visibilitychange", handleVisibility);
     return () => {
       if (timerRef.current) clearInterval(timerRef.current);
-      // flush remaining on unmount
+      document.removeEventListener("visibilitychange", handleVisibility);
       flush();
     };
   }, [flush]);

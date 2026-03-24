@@ -1,11 +1,14 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
+import { formatDateShort } from "@/lib/format";
 import { createClient } from "@/lib/supabase/client";
-import { useToast } from "@/components/ui/use-toast";
+import { showSuccess, showError } from "@/lib/toast";
 import { MessageSquare } from "lucide-react";
+import { EmptyState } from "@/components/shared/EmptyState";
+import type { UploadedAttachment } from "@/components/shared/attachments";
 import { NoteComposer } from "./NoteComposer";
-import { NoteCard } from "./NoteCard";
+import { NoteThread } from "./NoteThread";
 import { NoteFilters } from "./NoteFilters";
 import {
   getEntityColumn,
@@ -24,6 +27,7 @@ export function UnifiedNotes({
   showFilters,
   showPinning = true,
   compact = false,
+  chatMode = false,
 }: UnifiedNotesProps) {
   // Defaults based on entity type
   const isConditionType = entityType === "condition" || entityType === "unified_condition";
@@ -40,7 +44,7 @@ export function UnifiedNotes({
   const [filter, setFilter] = useState<NoteFilter>("all");
   const [currentUserId, setCurrentUserId] = useState<string>("");
   const [currentUserName, setCurrentUserName] = useState<string>("");
-  const { toast } = useToast();
+  const [currentUserAccentColor, setCurrentUserAccentColor] = useState<string | null>(null);
 
   // Get current user on mount
   useEffect(() => {
@@ -50,11 +54,12 @@ export function UnifiedNotes({
         setCurrentUserId(user.id);
         supabase
           .from("profiles")
-          .select("full_name")
+          .select("full_name, accent_color")
           .eq("id", user.id)
           .single()
           .then(({ data }) => {
             setCurrentUserName(data?.full_name ?? "Unknown");
+            setCurrentUserAccentColor((data as { accent_color?: string | null } | null)?.accent_color ?? null);
           });
       }
     });
@@ -65,9 +70,8 @@ export function UnifiedNotes({
     const supabase = createClient();
     let query = supabase
       .from("notes" as never)
-      .select("*, note_likes(user_id, profiles(full_name))" as never)
-      .is("deleted_at" as never, null)
-      .order("created_at" as never, { ascending: false });
+      .select("*, note_likes(user_id, profiles(full_name)), note_attachments(id, file_name, file_type, file_size_bytes, storage_path)" as never)
+      .is("deleted_at" as never, null);
 
     if (entityType === "deal") {
       const conditions: string[] = [];
@@ -86,6 +90,13 @@ export function UnifiedNotes({
     } else {
       const col = getEntityColumn(entityType);
       query = query.eq(col as never, entityId as never);
+    }
+
+    // Pinned first for deals, then by created_at desc
+    if (entityType === "deal") {
+      query = query.order("is_pinned" as never, { ascending: false }).order("created_at" as never, { ascending: false });
+    } else {
+      query = query.order("created_at" as never, { ascending: false });
     }
 
     const { data, error } = await query;
@@ -121,6 +132,35 @@ export function UnifiedNotes({
               return n;
             });
           }
+        }
+      }
+
+      // Batch-fetch accent colors for all note authors and likers
+      const userIds = new Set<string>();
+      for (const n of fetchedNotes) {
+        if (n.author_id) userIds.add(n.author_id);
+        for (const l of n.note_likes ?? []) {
+          if (l.user_id) userIds.add(l.user_id);
+        }
+      }
+      if (userIds.size > 0) {
+        const { data: profiles } = await supabase
+          .from("profiles")
+          .select("id, accent_color")
+          .in("id", Array.from(userIds));
+        if (profiles) {
+          const colorMap = new Map<string, string | null>();
+          for (const p of profiles as { id: string; accent_color: string | null }[]) {
+            colorMap.set(p.id, p.accent_color);
+          }
+          fetchedNotes = fetchedNotes.map((n) => ({
+            ...n,
+            author_accent_color: colorMap.get(n.author_id) ?? null,
+            note_likes: (n.note_likes ?? []).map((l) => ({
+              ...l,
+              profiles: { ...l.profiles, accent_color: colorMap.get(l.user_id) ?? null },
+            })),
+          }));
         }
       }
 
@@ -176,7 +216,8 @@ export function UnifiedNotes({
   async function handlePost(
     body: string,
     isInternal: boolean,
-    mentionIds: string[]
+    mentionIds: string[],
+    attachments?: UploadedAttachment[]
   ) {
     const supabase = createClient();
 
@@ -227,39 +268,70 @@ export function UnifiedNotes({
       .single();
 
     if (error) {
-      toast({
-        title: "Failed to post note",
-        description: error.message,
-        variant: "destructive",
-      });
+      showError("Could not post note", error.message);
       return;
     }
 
-    // Optimistic: prepend new note with empty likes
+    // Optimistic: prepend new note with empty likes and attachments
     if (data) {
-      const newNote = { ...(data as unknown as NoteData), note_likes: [] };
-      setNotes((prev) => [newNote, ...prev]);
-    }
-
-    // Insert note_mentions
-    if (data && mentionIds.length > 0) {
       const noteId = (data as unknown as NoteData).id;
-      await supabase.from("note_mentions" as never).insert(
-        mentionIds.map((userId) => ({
-          note_id: noteId,
-          mentioned_user_id: userId,
-        })) as never
-      );
+      const noteAttachments: NoteData["note_attachments"] = [];
+
+      // Insert attachments if any
+      if (attachments && attachments.length > 0) {
+        const { data: insertedAttachments } = await supabase
+          .from("note_attachments" as never)
+          .insert(
+            attachments.map((a) => ({
+              note_id: noteId,
+              file_name: a.fileName,
+              file_type: a.fileType,
+              file_size_bytes: a.fileSizeBytes,
+              storage_path: a.storagePath,
+              uploaded_by: currentUserId,
+            })) as never
+          )
+          .select() as { data: NoteData["note_attachments"] | null };
+
+        if (insertedAttachments) {
+          noteAttachments.push(...insertedAttachments);
+        }
+      }
+
+      const newNote = {
+        ...(data as unknown as NoteData),
+        author_accent_color: currentUserAccentColor,
+        note_likes: [],
+        note_attachments: noteAttachments,
+      };
+      setNotes((prev) => [newNote, ...prev]);
+
+      // Insert note_mentions
+      if (mentionIds.length > 0) {
+        await supabase.from("note_mentions" as never).insert(
+          mentionIds.map((userId) => ({
+            note_id: noteId,
+            mentioned_user_id: userId,
+          })) as never
+        );
+      }
     }
 
-    toast({
-      title: isInternal ? "Internal note posted" : "Note posted",
-    });
+    showSuccess(isInternal ? "Internal note posted" : "Note posted");
   }
 
-  // Pin/unpin
+  // Pin/unpin. For deals, only one note can be pinned; unpin any existing pinned note first.
   async function handlePin(noteId: string, isPinned: boolean) {
     const supabase = createClient();
+
+    if (entityType === "deal" && !isPinned && dealId) {
+      await supabase
+        .from("notes" as never)
+        .update({ is_pinned: false, pinned_by: null, pinned_at: null } as never)
+        .eq("deal_id" as never, dealId as never)
+        .eq("is_pinned" as never, true as never);
+    }
+
     const update = isPinned
       ? { is_pinned: false, pinned_by: null, pinned_at: null }
       : {
@@ -274,20 +346,18 @@ export function UnifiedNotes({
       .eq("id" as never, noteId as never);
 
     if (error) {
-      toast({
-        title: "Failed to update pin",
-        description: error.message,
-        variant: "destructive",
-      });
+      showError("Could not update pin", error.message);
       return;
     }
 
-    setNotes((prev) =>
-      prev.map((n) =>
-        n.id === noteId ? { ...n, ...update } as NoteData : n
-      )
-    );
-    toast({ title: isPinned ? "Note unpinned" : "Note pinned" });
+    setNotes((prev) => {
+      const next = prev.map((n) => (n.id === noteId ? { ...n, ...update } as NoteData : n));
+      if (entityType === "deal" && !isPinned && dealId) {
+        return next.map((n) => (n.deal_id === dealId && n.id !== noteId ? { ...n, is_pinned: false, pinned_by: null, pinned_at: null } : n)) as NoteData[];
+      }
+      return next;
+    });
+    showSuccess(isPinned ? "Note unpinned" : "Note pinned");
   }
 
   // Edit
@@ -308,11 +378,7 @@ export function UnifiedNotes({
       .eq("id" as never, noteId as never);
 
     if (error) {
-      toast({
-        title: "Failed to update note",
-        description: error.message,
-        variant: "destructive",
-      });
+      showError("Could not update note", error.message);
       return;
     }
 
@@ -329,7 +395,7 @@ export function UnifiedNotes({
           : n
       )
     );
-    toast({ title: "Note updated" });
+    showSuccess("Note updated");
   }
 
   // Soft delete
@@ -341,16 +407,12 @@ export function UnifiedNotes({
       .eq("id" as never, noteId as never);
 
     if (error) {
-      toast({
-        title: "Failed to delete note",
-        description: error.message,
-        variant: "destructive",
-      });
+      showError("Could not delete note", error.message);
       return;
     }
 
     setNotes((prev) => prev.filter((n) => n.id !== noteId));
-    toast({ title: "Note deleted" });
+    showSuccess("Note deleted");
   }
 
   // Like/unlike
@@ -379,7 +441,7 @@ export function UnifiedNotes({
       }
     } else {
       // Optimistic: add like
-      const newLike = { user_id: currentUserId, profiles: { full_name: currentUserName } };
+      const newLike = { user_id: currentUserId, profiles: { full_name: currentUserName, accent_color: currentUserAccentColor } };
       setNotes((prev) =>
         prev.map((n) =>
           n.id === noteId
@@ -398,6 +460,115 @@ export function UnifiedNotes({
     }
   }
 
+  // Post a reply to an existing note
+  async function handleReply(
+    parentNoteId: string,
+    body: string,
+    isInternal: boolean,
+    mentionIds: string[],
+    attachments?: UploadedAttachment[]
+  ) {
+    const supabase = createClient();
+
+    const row: Record<string, unknown> = {
+      body,
+      author_id: currentUserId,
+      author_name: currentUserName,
+      mentions: mentionIds,
+      is_internal: isInternal,
+      parent_note_id: parentNoteId,
+    };
+
+    switch (entityType) {
+      case "contact":
+        row.contact_id = entityId;
+        break;
+      case "company":
+        row.company_id = entityId;
+        break;
+      case "deal":
+        if (dealId) row.deal_id = dealId;
+        if (loanId) row.loan_id = loanId;
+        if (opportunityId) row.opportunity_id = opportunityId;
+        break;
+      case "condition":
+        row.condition_id = entityId;
+        if (loanId) row.loan_id = loanId;
+        break;
+      case "unified_condition":
+        row.unified_condition_id = entityId;
+        if (dealId) row.deal_id = dealId;
+        if (loanId) row.loan_id = loanId;
+        break;
+      case "task":
+        row.task_id = entityId;
+        break;
+      case "project":
+        row.project_id = entityId;
+        break;
+      case "approval":
+        row.approval_id = entityId;
+        break;
+    }
+
+    const { data, error } = await supabase
+      .from("notes" as never)
+      .insert(row as never)
+      .select()
+      .single();
+
+    if (error) {
+      showError("Could not post reply", error.message);
+      return;
+    }
+
+    if (data) {
+      const noteId = (data as unknown as NoteData).id;
+      const noteAttachments: NoteData["note_attachments"] = [];
+
+      // Insert attachments if any
+      if (attachments && attachments.length > 0) {
+        const { data: insertedAttachments } = await supabase
+          .from("note_attachments" as never)
+          .insert(
+            attachments.map((a) => ({
+              note_id: noteId,
+              file_name: a.fileName,
+              file_type: a.fileType,
+              file_size_bytes: a.fileSizeBytes,
+              storage_path: a.storagePath,
+              uploaded_by: currentUserId,
+            })) as never
+          )
+          .select() as { data: NoteData["note_attachments"] | null };
+
+        if (insertedAttachments) {
+          noteAttachments.push(...insertedAttachments);
+        }
+      }
+
+      const newNote = {
+        ...(data as unknown as NoteData),
+        author_accent_color: currentUserAccentColor,
+        note_likes: [],
+        note_attachments: noteAttachments,
+      };
+      setNotes((prev) => [...prev, newNote]);
+
+      // Insert note_mentions
+      if (mentionIds.length > 0) {
+        await supabase.from("note_mentions" as never).insert(
+          mentionIds.map((userId) => ({
+            note_id: noteId,
+            mentioned_user_id: userId,
+          })) as never
+        );
+      }
+    }
+
+    showSuccess("Reply posted");
+  }
+
   // Filter notes client-side
   const filteredNotes =
     filter === "internal"
@@ -406,20 +577,126 @@ export function UnifiedNotes({
         ? notes.filter((n) => !n.is_internal)
         : notes;
 
-  const maxHeight = isCompact ? "max-h-[300px]" : "";
+  // Group notes into top-level and replies
+  const { topLevelNotes, replyMap } = useMemo(() => {
+    const topLevel = filteredNotes.filter((n) => !n.parent_note_id);
+    const replies = new Map<string, NoteData[]>();
+
+    for (const note of filteredNotes) {
+      if (note.parent_note_id) {
+        // Only include reply if its parent exists in the filtered set
+        const parentExists = filteredNotes.some(
+          (n) => n.id === note.parent_note_id && !n.parent_note_id
+        );
+        if (!parentExists) continue;
+
+        const existing = replies.get(note.parent_note_id) || [];
+        existing.push(note);
+        replies.set(note.parent_note_id, existing);
+      }
+    }
+
+    // Sort replies oldest-first (chronological)
+    replies.forEach((replyList) => {
+      replyList.sort(
+        (a: NoteData, b: NoteData) =>
+          new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+      );
+    });
+
+    return { topLevelNotes: topLevel, replyMap: replies };
+  }, [filteredNotes]);
+
+  // In chatMode, reverse to show oldest first (newest at bottom)
+  const displayNotes = chatMode ? [...topLevelNotes].reverse() : topLevelNotes;
+
+  const maxHeight = isCompact && !chatMode ? "max-h-[300px]" : "";
+
+  // Date divider helper
+  function getDateLabel(dateStr: string): string {
+    const d = new Date(dateStr);
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const noteDay = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+    const diffDays = Math.floor((today.getTime() - noteDay.getTime()) / (1000 * 60 * 60 * 24));
+    if (diffDays === 0) return "Today";
+    if (diffDays === 1) return "Yesterday";
+    return formatDateShort(dateStr);
+  }
+
+  const composerElement = currentUserId ? (
+    <NoteComposer
+      currentUserName={currentUserName}
+      currentUserId={currentUserId}
+      showInternalToggle={shouldShowInternalToggle}
+      defaultInternal={defaultInternal}
+      compact={isCompact}
+      onPost={handlePost}
+      enterToSend={chatMode}
+    />
+  ) : null;
+
+  const notesListElement = loading ? (
+    <div className="space-y-2">
+      <div className="h-14 rounded-xl bg-muted animate-pulse" />
+      <div className="h-14 rounded-xl bg-muted animate-pulse" />
+    </div>
+  ) : displayNotes.length === 0 ? (
+    <EmptyState
+      icon={MessageSquare}
+      title="No notes yet"
+      description={`Add the first note about this ${entityType === "deal" ? "deal" : entityType === "unified_condition" ? "condition" : entityType}.`}
+      compact
+    />
+  ) : (
+    <div className={`flex flex-col gap-0 ${maxHeight} ${isCompact && !chatMode ? "overflow-y-auto" : ""}`}>
+      {displayNotes.map((note, idx) => {
+        // Date divider in chatMode
+        let dateDivider: React.ReactNode = null;
+        if (chatMode) {
+          const prevNote = idx > 0 ? displayNotes[idx - 1] : null;
+          const currentLabel = getDateLabel(note.created_at);
+          const prevLabel = prevNote ? getDateLabel(prevNote.created_at) : null;
+          if (currentLabel !== prevLabel) {
+            dateDivider = (
+              <div key={`divider-${note.id}`} className="flex items-center gap-3 py-3 px-3">
+                <div className="flex-1 h-px bg-border/50" />
+                <span className="text-[10px] font-semibold text-muted-foreground/40 uppercase tracking-[0.06em]">
+                  {currentLabel}
+                </span>
+                <div className="flex-1 h-px bg-border/50" />
+              </div>
+            );
+          }
+        }
+        return (
+          <div key={note.id}>
+            {dateDivider}
+            <NoteThread
+              note={note}
+              replies={replyMap.get(note.id) || []}
+              currentUserId={currentUserId}
+              currentUserName={currentUserName}
+              showPinning={showPinning}
+              showInternalToggle={shouldShowInternalToggle}
+              defaultInternal={defaultInternal}
+              compact={isCompact}
+              onPin={handlePin}
+              onEdit={handleEdit}
+              onDelete={handleDelete}
+              onToggleLike={handleToggleLike}
+              onReply={handleReply}
+            />
+          </div>
+        );
+      })}
+    </div>
+  );
 
   return (
-    <div className={`flex flex-col gap-3 ${isCompact ? "" : ""}`}>
-      {/* Composer */}
-      {currentUserId && (
-        <NoteComposer
-          currentUserName={currentUserName}
-          showInternalToggle={shouldShowInternalToggle}
-          defaultInternal={defaultInternal}
-          compact={isCompact}
-          onPost={handlePost}
-        />
-      )}
+    <div className={`flex flex-col gap-2 ${isCompact ? "" : ""}`}>
+      {/* In chatMode, composer goes at the bottom */}
+      {!chatMode && composerElement}
 
       {/* Filters */}
       {shouldShowFilters && notes.length > 0 && (
@@ -427,44 +704,10 @@ export function UnifiedNotes({
       )}
 
       {/* Notes list */}
-      {loading ? (
-        <div className="space-y-2">
-          <div className="h-14 rounded-xl bg-muted animate-pulse" />
-          <div className="h-14 rounded-xl bg-muted animate-pulse" />
-        </div>
-      ) : filteredNotes.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-10 text-center">
-          <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-muted mb-3">
-            <MessageSquare
-              className="h-5 w-5 text-muted-foreground"
-              strokeWidth={1.5}
-            />
-          </div>
-          <h3 className="text-sm font-semibold text-foreground mb-0.5">
-            No notes yet
-          </h3>
-          <p className="text-sm text-muted-foreground">
-            Add the first note about this{" "}
-            {entityType === "deal" ? "deal" : entityType === "unified_condition" ? "condition" : entityType}.
-          </p>
-        </div>
-      ) : (
-        <div className={`flex flex-col gap-2.5 ${maxHeight} ${isCompact ? "overflow-y-auto" : ""}`}>
-          {filteredNotes.map((note) => (
-            <NoteCard
-              key={note.id}
-              note={note}
-              currentUserId={currentUserId}
-              showPinning={showPinning}
-              compact={isCompact}
-              onPin={handlePin}
-              onEdit={handleEdit}
-              onDelete={handleDelete}
-              onToggleLike={handleToggleLike}
-            />
-          ))}
-        </div>
-      )}
+      {notesListElement}
+
+      {/* In chatMode, composer is at the bottom (sticky handled by parent) */}
+      {chatMode && composerElement}
     </div>
   );
 }

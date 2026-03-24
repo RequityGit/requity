@@ -8,8 +8,18 @@ import React, {
   useState,
   useCallback,
 } from "react";
-import { Device, Call } from "@twilio/voice-sdk";
+import type { Device as DeviceType, Call as CallType } from "@twilio/voice-sdk";
 import type { SoftphoneContextValue, SoftphoneStatus } from "./types";
+
+// Lazy-load the ~400KB Twilio Voice SDK only when softphone is actually initialized
+let _Device: typeof DeviceType | null = null;
+async function loadTwilioDevice(): Promise<typeof DeviceType> {
+  if (!_Device) {
+    const mod = await import("@twilio/voice-sdk");
+    _Device = mod.Device;
+  }
+  return _Device;
+}
 
 const TOKEN_URL =
   process.env.NEXT_PUBLIC_TWILIO_TOKEN_URL ||
@@ -47,8 +57,8 @@ export function SoftphoneProvider({ children }: { children: React.ReactNode }) {
   const [isMuted, setIsMuted] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const deviceRef = useRef<Device | null>(null);
-  const callRef = useRef<Call | null>(null);
+  const deviceRef = useRef<DeviceType | null>(null);
+  const callRef = useRef<CallType | null>(null);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const onCallConnectedRef = useRef<((callSid: string) => void) | undefined>();
   const onCallDisconnectedRef = useRef<(() => void) | undefined>();
@@ -95,6 +105,7 @@ export function SoftphoneProvider({ children }: { children: React.ReactNode }) {
     try {
       setError(null);
       const token = await fetchToken();
+      const Device = await loadTwilioDevice();
       const device = new Device(token, {
         edge: "ashburn",
         closeProtection: true,
@@ -124,7 +135,7 @@ export function SoftphoneProvider({ children }: { children: React.ReactNode }) {
         }
       });
 
-      device.on("incoming", (call: Call) => {
+      device.on("incoming", (call: CallType) => {
         setStatus("incoming");
         setIncomingCallerNumber(call.parameters.From || "Unknown");
         callRef.current = call;

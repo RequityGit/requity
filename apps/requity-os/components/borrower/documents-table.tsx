@@ -91,7 +91,7 @@ export function DocumentsTable({ documents, loans }: DocumentsTableProps) {
       cell: (row) => {
         const label =
           DOCUMENT_TYPES.find((t) => t.value === row.document_type)?.label ??
-          row.document_type.replace(/_/g, " ");
+          row.document_type?.replace(/_/g, " ") ?? "Unknown";
         return <span className="capitalize text-sm">{label}</span>;
       },
     },

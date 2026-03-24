@@ -96,7 +96,7 @@ export function PendingApprovalsWidget() {
               <div
                 key={approval.id}
                 className="flex items-center gap-3 p-2 rounded-lg hover:bg-muted cursor-pointer transition-colors"
-                onClick={() => router.push(`/admin/operations/approvals/${approval.id}`)}
+                onClick={() => router.push(`/tasks/approvals/${approval.id}`)}
               >
                 {approval.sla_breached ? (
                   <AlertTriangle className="h-4 w-4 text-red-500 flex-shrink-0" />
@@ -130,7 +130,7 @@ export function PendingApprovalsWidget() {
           variant="ghost"
           size="sm"
           className="w-full mt-2 text-foreground"
-          onClick={() => router.push("/admin/operations/approvals")}
+          onClick={() => router.push("/tasks/approvals")}
         >
           View All Approvals
           <ArrowRight className="h-3.5 w-3.5 ml-1" />

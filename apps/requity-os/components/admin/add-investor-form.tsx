@@ -6,8 +6,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { useToast } from "@/components/ui/use-toast";
-import { addInvestorAction } from "@/app/(authenticated)/admin/investors/new/actions";
+import { showSuccess, showError } from "@/lib/toast";
+import { addInvestorAction } from "@/app/(authenticated)/(admin)/investors/new/actions";
 import { Loader2 } from "lucide-react";
 import { formatPhoneInput } from "@/lib/format";
 
@@ -18,7 +18,6 @@ export function AddInvestorForm() {
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
   const router = useRouter();
-  const { toast } = useToast();
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -34,22 +33,14 @@ export function AddInvestorForm() {
       });
 
       if (result.error) {
-        toast({
-          title: "Error adding investor",
-          description: result.error,
-          variant: "destructive",
-        });
+        showError("Could not add investor", result.error);
         return;
       }
 
-      toast({ title: "Investor added successfully" });
-      router.push(`/admin/investors/${result.investorId}`);
+      showSuccess("Investor added");
+      router.push(`/investors/${result.investorId}`);
     } catch (err: unknown) {
-      toast({
-        title: "Error adding investor",
-        description: err instanceof Error ? err.message : "An unexpected error occurred",
-        variant: "destructive",
-      });
+      showError("Could not add investor", err instanceof Error ? err.message : "An unexpected error occurred");
     } finally {
       setLoading(false);
     }
@@ -113,7 +104,7 @@ export function AddInvestorForm() {
             <Button
               type="button"
               variant="outline"
-              onClick={() => router.push("/admin/investors")}
+              onClick={() => router.push("/contacts")}
             >
               Cancel
             </Button>

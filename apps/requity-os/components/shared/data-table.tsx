@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
 import { ChevronRight } from "lucide-react";
+import { EmptyState } from "./EmptyState";
 
 export interface Column<T> {
   key: string;
@@ -25,6 +26,7 @@ interface DataTableProps<T> {
   columns: Column<T>[];
   data: T[];
   emptyMessage?: string;
+  emptyState?: React.ReactNode;
   onRowClick?: (row: T) => void;
 }
 
@@ -32,6 +34,7 @@ export function DataTable<T extends { id?: string }>({
   columns,
   data,
   emptyMessage = "No data found.",
+  emptyState,
   onRowClick,
 }: DataTableProps<T>) {
   const [showSwipeHint, setShowSwipeHint] = useState(false);
@@ -89,9 +92,11 @@ export function DataTable<T extends { id?: string }>({
               <TableRow>
                 <TableCell
                   colSpan={columns.length}
-                  className="h-24 text-center text-muted-foreground"
+                  className="h-24 text-center"
                 >
-                  {emptyMessage}
+                  {emptyState ?? (
+                    <EmptyState title={emptyMessage} compact />
+                  )}
                 </TableCell>
               </TableRow>
             ) : (

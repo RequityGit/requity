@@ -168,10 +168,10 @@ Deno.serve(async (req: Request) => {
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
 
-    // Extract raw JWT from "Bearer <token>"
-    const token = authHeader.replace(/^Bearer\s+/i, "");
-
-    // Auth client uses the user's JWT
+    // Auth client uses the user's JWT via the globally-set Authorization header.
+    // IMPORTANT: call getUser() WITHOUT a token argument so the client uses the
+    // global header.  Passing the token explicitly can cause "Invalid JWT" errors
+    // in certain @supabase/supabase-js versions shipped via esm.sh.
     const supabaseAuth = createClient(supabaseUrl, supabaseAnonKey, {
       global: { headers: { Authorization: authHeader } },
     });
@@ -183,14 +183,13 @@ Deno.serve(async (req: Request) => {
     const {
       data: { user },
       error: authError,
-    } = await supabaseAuth.auth.getUser(token);
+    } = await supabaseAuth.auth.getUser();
 
     if (authError || !user) {
       console.error("generate-document auth failed:", {
         error: authError?.message,
         code: authError?.status,
-        hasToken: !!token,
-        tokenLength: token?.length,
+        hasAuthHeader: !!authHeader,
       });
       return new Response(
         JSON.stringify({ error: authError?.message || "User validation failed" }),
@@ -215,7 +214,7 @@ Deno.serve(async (req: Request) => {
     }
 
     // Parse request body
-    const { template_id, record_id, page_record_type } = await req.json();
+    const { template_id, record_id, page_record_type, field_overrides } = await req.json();
 
     if (!template_id || !record_id) {
       return new Response(
@@ -445,6 +444,22 @@ Deno.serve(async (req: Request) => {
         }
 
         mergeData[field.key] = formatValue(value, field.format);
+      }
+    }
+
+    // Apply user-supplied field overrides (from editable inputs in the modal).
+    // Only override fields that are still empty (missing) to avoid clobbering
+    // resolved data.
+    if (field_overrides && typeof field_overrides === "object") {
+      for (const [key, value] of Object.entries(field_overrides)) {
+        if (typeof value === "string" && value.trim() !== "") {
+          if (!mergeData[key] || mergeData[key] === "") {
+            mergeData[key] = value.trim();
+            // Remove from missingFields since user supplied the value
+            const idx = missingFields.indexOf(key);
+            if (idx !== -1) missingFields.splice(idx, 1);
+          }
+        }
       }
     }
 

@@ -1,0 +1,252 @@
+import { notFound } from "next/navigation";
+import { PageHeader } from "@/components/shared/page-header";
+import { LoanStageTracker } from "@/components/shared/loan-stage-tracker";
+import { WorkflowStageTracker } from "@/components/shared/workflow-stage-tracker";
+import { StatusBadge } from "@/components/shared/status-badge";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import {
+  formatCurrency,
+  formatDate,
+  formatPercent,
+} from "@/lib/format";
+import { LOAN_TYPES } from "@/lib/constants";
+import { ArrowLeft } from "lucide-react";
+import Link from "next/link";
+import { LoanDetailTabs } from "@/components/borrower/loan-detail-tabs";
+import { getEffectiveAuth, getBorrowerId } from "@/lib/impersonation";
+
+interface LoanDetailPageProps {
+  params: { id: string };
+}
+
+export default async function LoanDetailPage({ params }: LoanDetailPageProps) {
+  const { supabase, userId } = await getEffectiveAuth();
+
+  // Resolve auth user to borrowers.id
+  const borrowerId = await getBorrowerId(supabase, userId);
+
+  // Fetch loan and verify ownership (borrower_id links loan to borrowers table)
+  const { data: loan } = borrowerId
+    ? await supabase
+        .from("loans")
+        .select("*")
+        .eq("id", params.id)
+        .eq("borrower_id", borrowerId)
+        .single()
+    : { data: null };
+
+  if (!loan) {
+    notFound();
+  }
+
+  // Fetch payments for this loan
+  const { data: payments } = await supabase
+    .from("loan_payments")
+    .select("*")
+    .eq("loan_id", loan.id)
+    .order("payment_date", { ascending: false });
+
+  // Fetch documents for this loan
+  const { data: documents } = await supabase
+    .from("documents")
+    .select("*")
+    .eq("loan_id", loan.id)
+    .order("created_at", { ascending: false });
+
+  // Fetch conditions for this loan (RLS ensures borrower only sees their own)
+  const { data: conditions } = await supabase
+    .from("loan_conditions")
+    .select("*")
+    .eq("loan_id", loan.id)
+    .order("sort_order", { ascending: true });
+
+  // Try to fetch workflow instance for this loan
+  const { data: workflowInstance } = await supabase
+    .from("workflow_instances")
+    .select("id, current_stage_id, workflow_id")
+    .eq("entity_type", "loan")
+    .eq("entity_id", loan.id)
+    .eq("status", "active")
+    .single();
+
+  // If workflow instance exists, fetch its stages
+  let workflowStages: {
+    id: string;
+    name: string;
+    position: number;
+    is_terminal: boolean | null;
+    borrower_label: string | null;
+  }[] = [];
+  if (workflowInstance?.workflow_id) {
+    const { data: stagesData } = await supabase
+      .from("workflow_stages")
+      .select("id, name, position, is_terminal, borrower_label")
+      .eq("workflow_id", workflowInstance.workflow_id)
+      .order("position", { ascending: true });
+    workflowStages = stagesData ?? [];
+  }
+
+  const loanTypeLabel =
+    LOAN_TYPES.find((t) => t.value === loan.type)?.label ?? loan.type ?? "—";
+
+  const fullAddress = [
+    loan.property_address,
+    loan.property_city,
+    loan.property_state,
+    loan.property_zip,
+  ]
+    .filter(Boolean)
+    .join(", ");
+
+  return (
+    <div>
+      {/* Mobile back arrow */}
+      <div className="md:hidden mb-3">
+        <Link
+          href="/b/dashboard"
+          className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors min-h-[44px]"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          <span>Back</span>
+        </Link>
+      </div>
+
+      <PageHeader
+        title={loan.property_address ?? "Loan Details"}
+        description={`Loan #${loan.loan_number ?? "—"} - ${loanTypeLabel}`}
+        action={
+          <Link href="/b/dashboard" className="hidden md:block">
+            <Button variant="outline" size="sm">
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Back to Dashboard
+            </Button>
+          </Link>
+        }
+      />
+
+      {/* Loan Stage Tracker */}
+      <Card className="mb-4 md:mb-6">
+        <CardContent className="pt-4 md:pt-6">
+          {workflowStages.length > 0 && workflowInstance ? (
+            <WorkflowStageTracker
+              stages={workflowStages}
+              currentStageId={workflowInstance.current_stage_id}
+            />
+          ) : (
+            <LoanStageTracker currentStage={loan.stage} />
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Loan Details */}
+      <Card className="mb-4 md:mb-6">
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <CardTitle className="text-sm md:text-base">Loan Details</CardTitle>
+            <StatusBadge status={loan.stage} />
+          </div>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
+            {/* Financial Details */}
+            <div className="space-y-3">
+              <h3 className="text-sm font-semibold text-foreground">
+                Financial
+              </h3>
+              <div className="space-y-2 text-sm">
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Loan Amount</span>
+                  <span className="font-medium num">
+                    {formatCurrency(loan.loan_amount)}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Interest Rate</span>
+                  <span className="font-medium num">
+                    {formatPercent(loan.interest_rate)}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Term</span>
+                  <span className="font-medium num">
+                    {loan.loan_term_months} months
+                  </span>
+                </div>
+                {loan.ltv != null && (
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">LTV</span>
+                    <span className="font-medium num">
+                      {formatPercent(loan.ltv)}
+                    </span>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Property Details */}
+            <div className="space-y-3">
+              <h3 className="text-sm font-semibold text-foreground">
+                Property
+              </h3>
+              <div className="space-y-2 text-sm">
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Address</span>
+                  <span className="font-medium text-right max-w-[60%]">
+                    {fullAddress}
+                  </span>
+                </div>
+                {loan.appraised_value != null && (
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">
+                      Appraised Value
+                    </span>
+                    <span className="font-medium num">
+                      {formatCurrency(loan.appraised_value)}
+                    </span>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Dates */}
+            <div className="space-y-3">
+              <h3 className="text-sm font-semibold text-foreground">Dates</h3>
+              <div className="space-y-2 text-sm">
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">
+                    Origination Date
+                  </span>
+                  <span className="font-medium">
+                    {formatDate(loan.origination_date)}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Maturity Date</span>
+                  <span className="font-medium">
+                    {formatDate(loan.maturity_date)}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Created</span>
+                  <span className="font-medium">
+                    {formatDate(loan.created_at)}
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Conditions, Payments & Documents Tabs */}
+      <LoanDetailTabs
+        payments={payments ?? []}
+        documents={documents ?? []}
+        conditions={conditions ?? []}
+        loanId={loan.id}
+        currentUserId={userId}
+      />
+    </div>
+  );
+}

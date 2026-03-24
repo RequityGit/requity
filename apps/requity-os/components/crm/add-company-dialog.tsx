@@ -21,22 +21,34 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { CRM_COMPANY_TYPES, CRM_COMPANY_SUBTYPES, COMPANY_TYPE_COLORS, US_STATES } from "@/lib/constants";
-import { useToast } from "@/components/ui/use-toast";
-import { addCompanyAction } from "@/app/(authenticated)/admin/crm/company-actions";
-import { Building2, X as XIcon } from "lucide-react";
+import { CRM_COMPANY_TYPES, COMPANY_TYPE_COLORS, US_STATES } from "@/lib/constants";
+import { showSuccess, showError } from "@/lib/toast";
+import { addCompanyAction } from "@/app/(authenticated)/(admin)/companies/actions";
+import { Building2, X as XIcon, Sparkles, Loader2 } from "lucide-react";
 import { formatPhoneInput } from "@/lib/format";
 import { cn } from "@/lib/utils";
+import { AddressAutocomplete } from "@/components/ui/address-autocomplete";
 
 interface AddCompanyDialogProps {
   trigger?: React.ReactNode;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
 }
 
-export function AddCompanyDialog({ trigger }: AddCompanyDialogProps) {
-  const [open, setOpen] = useState(false);
+export function AddCompanyDialog({
+  trigger,
+  open: controlledOpen,
+  onOpenChange: controlledOnOpenChange,
+}: AddCompanyDialogProps) {
+  const [internalOpen, setInternalOpen] = useState(false);
+  const isControlled = controlledOpen !== undefined;
+  const open = isControlled ? controlledOpen : internalOpen;
+  const setOpen = isControlled
+    ? (v: boolean) => controlledOnOpenChange?.(v)
+    : setInternalOpen;
   const [loading, setLoading] = useState(false);
+  const [enriching, setEnriching] = useState(false);
   const router = useRouter();
-  const { toast } = useToast();
 
   const [form, setForm] = useState({
     name: "",
@@ -51,6 +63,7 @@ export function AddCompanyDialog({ trigger }: AddCompanyDialogProps) {
     zip: "",
     notes: "",
     source: "",
+    initial_note: "",
   });
 
   const [selectedTypes, setSelectedTypes] = useState<string[]>([]);
@@ -97,9 +110,54 @@ export function AddCompanyDialog({ trigger }: AddCompanyDialogProps) {
       zip: "",
       notes: "",
       source: "",
+      initial_note: "",
     });
     setSelectedTypes([]);
     setErrors({});
+    setEnriching(false);
+  }
+
+  async function enrichFromWebsite() {
+    const trimmed = form.website.trim();
+    if (!trimmed || enriching) return;
+    setEnriching(true);
+
+    try {
+      const res = await fetch("/api/companies/enrich", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ url: trimmed, name: form.name || undefined }),
+      });
+
+      if (!res.ok) {
+        const err = await res.json().catch(() => null);
+        showError("Could not enrich", err?.error || "Failed to fetch website data");
+        return;
+      }
+      const data = await res.json();
+
+      setForm((prev) => ({
+        ...prev,
+        name: prev.name || data.name || "",
+        notes: prev.notes || data.description || "",
+        phone: prev.phone || (data.phone ? formatPhoneInput(data.phone) : ""),
+        email: prev.email || data.email || "",
+        address_line1: prev.address_line1 || data.address_line1 || "",
+        city: prev.city || data.city || "",
+        state: prev.state || data.state || "",
+        zip: prev.zip || data.zip || "",
+      }));
+
+      if (data.company_types?.length) {
+        setSelectedTypes((prev) =>
+          prev.length > 0 ? prev : data.company_types
+        );
+      }
+    } catch {
+      showError("Could not enrich", "Something went wrong. Try again.");
+    } finally {
+      setEnriching(false);
+    }
   }
 
   function validate(): boolean {
@@ -130,26 +188,19 @@ export function AddCompanyDialog({ trigger }: AddCompanyDialogProps) {
         zip: form.zip || null,
         notes: form.notes || null,
         source: form.source || null,
+        initial_note: form.initial_note || null,
       });
 
       if ("error" in result && result.error) {
-        toast({
-          title: "Error adding company",
-          description: result.error,
-          variant: "destructive",
-        });
+        showError("Could not add company", result.error);
       } else {
-        toast({ title: "Company added successfully" });
+        showSuccess("Company added");
         setOpen(false);
         resetForm();
-        router.push(`/admin/crm/companies/${result.id}`);
+        router.push(`/companies/${result.company_number}`);
       }
     } catch (err: unknown) {
-      toast({
-        title: "Error adding company",
-        description: err instanceof Error ? err.message : "An unexpected error occurred",
-        variant: "destructive",
-      });
+      showError("Could not add company", err instanceof Error ? err.message : "An unexpected error occurred");
     } finally {
       setLoading(false);
     }
@@ -163,28 +214,65 @@ export function AddCompanyDialog({ trigger }: AddCompanyDialogProps) {
         if (!v) resetForm();
       }}
     >
-      <DialogTrigger asChild>
-        {trigger || (
-          <Button className="gap-2">
-            <Building2 className="h-4 w-4" />
-            Add Company
-          </Button>
-        )}
-      </DialogTrigger>
+      {!isControlled && (
+        <DialogTrigger asChild>
+          {trigger || (
+            <Button className="gap-2">
+              <Building2 className="h-4 w-4" />
+              Add Company
+            </Button>
+          )}
+        </DialogTrigger>
+      )}
       <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Add New Company</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-6">
+          {/* Website + Enrich button */}
+          <div className="space-y-2">
+            <Label>Website</Label>
+            <div className="flex gap-2">
+              <Input
+                value={form.website}
+                onChange={(e) => updateField("website", e.target.value)}
+                placeholder="Enter website to auto-fill details..."
+                className="flex-1"
+                autoFocus
+              />
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                disabled={!form.website.trim() || enriching}
+                onClick={enrichFromWebsite}
+                className="shrink-0 gap-1.5"
+              >
+                {enriching ? (
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                ) : (
+                  <Sparkles className="h-3.5 w-3.5" />
+                )}
+                {enriching ? "Enriching..." : "Enrich"}
+              </Button>
+            </div>
+          </div>
+
           {/* Name */}
           <div className="space-y-2">
-            <Label>
-              Company Name <span className="text-red-500">*</span>
-            </Label>
+            <div className="flex items-center gap-2">
+              <Label>
+                Company Name <span className="text-red-500">*</span>
+              </Label>
+              {enriching && !form.name && (
+                <Loader2 className="h-3 w-3 animate-spin text-muted-foreground" />
+              )}
+            </div>
             <Input
               value={form.name}
               onChange={(e) => updateField("name", e.target.value)}
-              placeholder="Company name"
+              placeholder={enriching ? "Detecting company name..." : "Company name"}
+              className={cn(enriching && !form.name && "animate-pulse")}
             />
             {errors.name && (
               <p className="text-xs text-red-500">{errors.name}</p>
@@ -222,27 +310,6 @@ export function AddCompanyDialog({ trigger }: AddCompanyDialogProps) {
               <p className="text-xs text-red-500">{errors.company_type}</p>
             )}
 
-            {/* Lender subtype */}
-            {selectedTypes.includes("lender") && (
-              <div className="mt-2 pl-4 border-l-2 border-blue-200">
-                <Label className="text-xs">Lender Subtype</Label>
-                <Select
-                  value={form.company_subtype}
-                  onValueChange={(v) => updateField("company_subtype", v)}
-                >
-                  <SelectTrigger className="mt-1">
-                    <SelectValue placeholder="Select subtype..." />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {CRM_COMPANY_SUBTYPES.map((s) => (
-                      <SelectItem key={s.value} value={s.value}>
-                        {s.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            )}
           </div>
 
           {/* Contact Info */}
@@ -265,16 +332,6 @@ export function AddCompanyDialog({ trigger }: AddCompanyDialogProps) {
             </div>
           </div>
 
-          {/* Website */}
-          <div className="space-y-2">
-            <Label>Website</Label>
-            <Input
-              value={form.website}
-              onChange={(e) => updateField("website", e.target.value)}
-              placeholder="https://..."
-            />
-          </div>
-
           {/* Address */}
           <div>
             <h4 className="text-sm font-semibold text-foreground mb-3">
@@ -283,9 +340,15 @@ export function AddCompanyDialog({ trigger }: AddCompanyDialogProps) {
             <div className="space-y-4">
               <div className="space-y-2">
                 <Label>Street Address</Label>
-                <Input
+                <AddressAutocomplete
                   value={form.address_line1}
-                  onChange={(e) => updateField("address_line1", e.target.value)}
+                  onChange={(v) => updateField("address_line1", v)}
+                  onAddressSelect={(addr) => {
+                    updateField("address_line1", addr.address_line1);
+                    updateField("city", addr.city);
+                    updateField("state", addr.state);
+                    updateField("zip", addr.zip);
+                  }}
                 />
               </div>
               <div className="grid grid-cols-3 gap-4">
@@ -328,12 +391,35 @@ export function AddCompanyDialog({ trigger }: AddCompanyDialogProps) {
 
           {/* Description */}
           <div className="space-y-2">
-            <Label>Description</Label>
+            <div className="flex items-center gap-2">
+              <Label>Description</Label>
+              {enriching && !form.notes && (
+                <Loader2 className="h-3 w-3 animate-spin text-muted-foreground" />
+              )}
+            </div>
             <Textarea
               value={form.notes}
               onChange={(e) => updateField("notes", e.target.value)}
               rows={3}
-              placeholder="Description of this company..."
+              placeholder={
+                enriching
+                  ? "Generating description from website..."
+                  : "Description of this company..."
+              }
+              className={cn(
+                enriching && !form.notes && "animate-pulse"
+              )}
+            />
+          </div>
+
+          {/* Initial Note */}
+          <div className="space-y-2">
+            <Label>Notes</Label>
+            <Textarea
+              value={form.initial_note}
+              onChange={(e) => updateField("initial_note", e.target.value)}
+              rows={2}
+              placeholder="Add an initial note (optional). This will appear in the Notes tab."
             />
           </div>
 

@@ -64,8 +64,8 @@ import type {
   GridTemplateDef,
   GridRowDef,
   GridRowType,
-} from "@/components/pipeline-v2/pipeline-types";
-import { GRID_PERIODS, GRID_PERIOD_LABELS } from "@/components/pipeline-v2/pipeline-types";
+} from "@/components/pipeline/pipeline-types";
+import { GRID_PERIODS, GRID_PERIOD_LABELS } from "@/components/pipeline/pipeline-types";
 import {
   createCardType,
   duplicateCardType,
@@ -76,7 +76,7 @@ import {
   createUwFieldConfig,
   type UwFieldConfigRecord,
 } from "./actions";
-import type { CardTypeFieldRef } from "@/components/pipeline-v2/pipeline-types";
+import type { CardTypeFieldRef } from "@/components/pipeline/pipeline-types";
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -170,7 +170,7 @@ export function CardTypeManagerView({
   useEffect(() => {
     if (!edits || fieldConfigs.length === 0) return;
 
-    const resolvedUwFields = edits.uw_fields.map((f) => {
+    const resolvedUwFields = edits.uw_fields.map((f: UwFieldDef) => {
       // Determine module from object binding
       const mod =
         f.object === "property"
@@ -196,10 +196,10 @@ export function CardTypeManagerView({
 
     // Only update if labels actually changed
     const labelsChanged = resolvedUwFields.some(
-      (rf, i) => rf.label !== edits.uw_fields[i]?.label
+      (rf: UwFieldDef, i: number) => rf.label !== edits.uw_fields[i]?.label
     );
     if (labelsChanged) {
-      setEdits((prev) => (prev ? { ...prev, uw_fields: resolvedUwFields } : prev));
+      setEdits((prev: UnifiedCardType | null) => (prev ? { ...prev, uw_fields: resolvedUwFields } : prev));
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [fieldConfigs, selectedId]);
@@ -242,9 +242,6 @@ export function CardTypeManagerView({
       status: edits.status,
       uw_model_key: edits.uw_model_key,
       uw_grid: edits.uw_grid ?? null,
-      uw_field_refs: edits.uw_field_refs ?? [],
-      property_field_refs: edits.property_field_refs ?? [],
-      contact_field_refs: edits.contact_field_refs ?? [],
     });
     setSaving(false);
 
@@ -471,10 +468,6 @@ export function CardTypeManagerView({
             <Tabs defaultValue="metrics">
               <TabsList>
                 <TabsTrigger value="metrics">Card Metrics</TabsTrigger>
-                <TabsTrigger value="overview">Overview Tab</TabsTrigger>
-                <TabsTrigger value="property">Property Tab</TabsTrigger>
-                <TabsTrigger value="contacts">Contacts Tab</TabsTrigger>
-                <TabsTrigger value="uw-fields">UW Fields</TabsTrigger>
                 <TabsTrigger value="outputs">Computed Outputs</TabsTrigger>
                 <TabsTrigger value="grid">Grid Pro Forma</TabsTrigger>
                 <TabsTrigger value="settings">Settings</TabsTrigger>
@@ -489,19 +482,7 @@ export function CardTypeManagerView({
                 />
               </TabsContent>
 
-              <TabsContent value="uw-fields" className="mt-4">
-                <UwFieldPickerEditor
-                  fieldRefs={edits.uw_field_refs ?? []}
-                  inlineFields={edits.uw_fields}
-                  onChange={(refs, inlineFields) =>
-                    setEdits({
-                      ...edits,
-                      uw_field_refs: refs,
-                      uw_fields: inlineFields,
-                    })
-                  }
-                />
-              </TabsContent>
+              {/* UW Fields tab removed - fields are now managed via Object Manager Condition Matrix */}
 
               <TabsContent value="outputs" className="mt-4">
                 <UwOutputsEditor
@@ -519,71 +500,7 @@ export function CardTypeManagerView({
                 />
               </TabsContent>
 
-              <TabsContent value="overview" className="mt-4">
-                <DetailGroupsEditor
-                  groups={edits.detail_field_groups}
-                  uwFields={edits.uw_fields}
-                  onChange={(g) =>
-                    setEdits({ ...edits, detail_field_groups: g })
-                  }
-                />
-              </TabsContent>
-
-              <TabsContent value="property" className="mt-4">
-                <div className="space-y-6">
-                  <UwFieldPickerEditor
-                    fieldRefs={edits.property_field_refs ?? []}
-                    inlineFields={edits.property_fields}
-                    moduleFilter={["uw_property"]}
-                    defaultObject="property"
-                    onChange={(refs, inlineFields) =>
-                      setEdits({
-                        ...edits,
-                        property_field_refs: refs,
-                        property_fields: inlineFields,
-                      })
-                    }
-                  />
-                  <FieldGroupsOnlyEditor
-                    groups={edits.property_field_groups}
-                    fields={edits.property_fields}
-                    onChange={(g) =>
-                      setEdits({ ...edits, property_field_groups: g })
-                    }
-                  />
-                </div>
-              </TabsContent>
-
-              <TabsContent value="contacts" className="mt-4">
-                <div className="space-y-6">
-                  <ContactRolesEditor
-                    roles={edits.contact_roles}
-                    onChange={(r) =>
-                      setEdits({ ...edits, contact_roles: r })
-                    }
-                  />
-                  <UwFieldPickerEditor
-                    fieldRefs={edits.contact_field_refs ?? []}
-                    inlineFields={edits.contact_fields}
-                    moduleFilter={["uw_borrower"]}
-                    defaultObject="borrower"
-                    onChange={(refs, inlineFields) =>
-                      setEdits({
-                        ...edits,
-                        contact_field_refs: refs,
-                        contact_fields: inlineFields,
-                      })
-                    }
-                  />
-                  <FieldGroupsOnlyEditor
-                    groups={edits.contact_field_groups}
-                    fields={edits.contact_fields}
-                    onChange={(g) =>
-                      setEdits({ ...edits, contact_field_groups: g })
-                    }
-                  />
-                </div>
-              </TabsContent>
+              {/* Overview, Property, and Contacts tabs removed - field layout is now managed via Object Manager Page Layout */}
 
               <TabsContent value="settings" className="mt-4">
                 <SettingsEditor
@@ -2157,7 +2074,7 @@ function SettingsEditor({
         <div className="space-y-1.5">
           <Label>Card Icon</Label>
           <Input
-            value={edits.card_icon}
+            value={edits.card_icon ?? ""}
             onChange={(e) => onChange({ ...edits, card_icon: e.target.value })}
             placeholder="building-2, home"
           />
@@ -2197,7 +2114,7 @@ function SettingsEditor({
                 onClick={() => {
                   const current = edits.applicable_asset_classes ?? [];
                   const next = selected
-                    ? current.filter((v) => v !== ac.value)
+                    ? current.filter((v: string) => v !== ac.value)
                     : [...current, ac.value];
                   onChange({
                     ...edits,

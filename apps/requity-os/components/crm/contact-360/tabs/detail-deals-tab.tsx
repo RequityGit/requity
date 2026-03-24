@@ -1,6 +1,7 @@
 "use client";
 
 import { Landmark, TrendingUp } from "lucide-react";
+import { EmptyState } from "@/components/shared/EmptyState";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { MonoValue } from "../contact-detail-shared";
@@ -22,21 +23,25 @@ export function DetailDealsTab({ loans, commitments }: DetailDealsTabProps) {
 
   return (
     <div className="flex flex-col gap-5">
-      {/* Loans & Opportunities */}
+      {/* Loans & Deals */}
       <Card className="rounded-xl border-border overflow-hidden">
         <CardHeader className="px-5 py-3.5 border-b border-border/60">
-          <CardTitle className="text-[13px] font-semibold text-foreground flex items-center gap-2">
+          <CardTitle className="rq-section-title flex items-center gap-2">
             <Landmark
               size={16}
               className="text-muted-foreground"
               strokeWidth={1.5}
             />
-            Loans & Opportunities
+            Loans & Deals
           </CardTitle>
         </CardHeader>
         {loans.length === 0 ? (
-          <CardContent className="p-8 text-center text-sm text-muted-foreground">
-            No loans or opportunities found.
+          <CardContent>
+            <EmptyState
+              icon={Landmark}
+              title="No loans or deals found"
+              compact
+            />
           </CardContent>
         ) : (
           <div className="overflow-x-auto">
@@ -47,7 +52,7 @@ export function DetailDealsTab({ loans, commitments }: DetailDealsTabProps) {
                     (h) => (
                       <th
                         key={h}
-                        className="px-4 py-2.5 text-[11px] font-semibold text-muted-foreground uppercase tracking-wide"
+                        className="px-4 py-2.5 rq-micro-label"
                         style={{
                           textAlign: ["Amount", "Rate", "LTV"].includes(h)
                             ? "right"
@@ -134,7 +139,7 @@ export function DetailDealsTab({ loans, commitments }: DetailDealsTabProps) {
       {commitments.length > 0 && (
         <Card className="rounded-xl border-border overflow-hidden">
           <CardHeader className="px-5 py-3.5 border-b border-border/60">
-            <CardTitle className="text-[13px] font-semibold text-foreground flex items-center gap-2">
+            <CardTitle className="rq-section-title flex items-center gap-2">
               <TrendingUp
                 size={16}
                 className="text-muted-foreground"
@@ -158,7 +163,7 @@ export function DetailDealsTab({ loans, commitments }: DetailDealsTabProps) {
                   ].map((h) => (
                     <th
                       key={h}
-                      className="px-4 py-2.5 text-[11px] font-semibold text-muted-foreground uppercase tracking-wide"
+                      className="px-4 py-2.5 rq-micro-label"
                       style={{
                         textAlign: ["Committed", "Funded", "Unfunded"].includes(
                           h

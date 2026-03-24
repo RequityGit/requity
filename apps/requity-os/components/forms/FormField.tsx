@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 import { CardSelect } from "./CardSelect";
+import { renderCustomComponent } from "./custom-components";
 import type { FormFieldDefinition } from "@/lib/form-engine/types";
 
 interface FormFieldProps {
@@ -22,9 +23,10 @@ interface FormFieldProps {
   onChange: (fieldId: string, value: unknown) => void;
   onBlur?: (fieldId: string) => void;
   error?: string;
+  formData?: Record<string, unknown>; // All form data for custom components
 }
 
-export function FormField({ field, value, onChange, onBlur, error }: FormFieldProps) {
+export function FormField({ field, value, onChange, onBlur, error, formData = {} }: FormFieldProps) {
   const handleChange = useCallback(
     (val: unknown) => onChange(field.id, val),
     [field.id, onChange]
@@ -170,6 +172,20 @@ export function FormField({ field, value, onChange, onBlur, error }: FormFieldPr
             onChange={(val) => handleChange(val)}
           />
         );
+
+      case "custom":
+        if (!field.component_type) {
+          console.warn(`Custom field ${field.id} missing component_type`);
+          return null;
+        }
+        return renderCustomComponent(field.component_type, {
+          field,
+          value,
+          onChange: (val) => handleChange(val),
+          onBlur: handleBlur,
+          formData,
+          error,
+        });
 
       default:
         return (

@@ -12,6 +12,7 @@ import { DocumentDownload } from "@/components/borrower/document-download";
 import { BorrowerConditionsTab } from "@/components/borrower/borrower-conditions-tab";
 import { formatCurrencyDetailed, formatDate } from "@/lib/format";
 import { DOCUMENT_TYPES } from "@/lib/constants";
+import { SectionErrorBoundary } from "@/components/shared/SectionErrorBoundary";
 import type { Tables } from "@/lib/supabase/types";
 
 type LoanPayment = Tables<"loan_payments">;
@@ -137,35 +138,43 @@ export function LoanDetailTabs({
       </TabsList>
 
       <TabsContent value="conditions" className="mt-4">
-        <BorrowerConditionsTab
-          conditions={conditions}
-          loanId={loanId}
-          currentUserId={currentUserId}
-        />
+        <SectionErrorBoundary fallbackTitle="Could not load conditions">
+          <BorrowerConditionsTab
+            conditions={conditions}
+            loanId={loanId}
+            currentUserId={currentUserId}
+          />
+        </SectionErrorBoundary>
       </TabsContent>
 
       <TabsContent value="payments" className="mt-4">
-        <DataTable
-          columns={paymentColumns}
-          data={payments}
-          emptyMessage="No payments found for this loan."
-        />
+        <SectionErrorBoundary fallbackTitle="Could not load payments">
+          <DataTable
+            columns={paymentColumns}
+            data={payments}
+            emptyMessage="No payments found for this loan."
+          />
+        </SectionErrorBoundary>
       </TabsContent>
 
       <TabsContent value="documents" className="mt-4">
-        <DataTable
-          columns={documentColumns}
-          data={documents}
-          emptyMessage="No documents found for this loan."
-        />
+        <SectionErrorBoundary fallbackTitle="Could not load documents">
+          <DataTable
+            columns={documentColumns}
+            data={documents}
+            emptyMessage="No documents found for this loan."
+          />
+        </SectionErrorBoundary>
       </TabsContent>
 
       <TabsContent value="messages" className="mt-4">
-        <UnifiedNotes
-          entityType="deal"
-          entityId={loanId}
-          loanId={loanId}
-        />
+        <SectionErrorBoundary fallbackTitle="Could not load messages">
+          <UnifiedNotes
+            entityType="deal"
+            entityId={loanId}
+            loanId={loanId}
+          />
+        </SectionErrorBoundary>
       </TabsContent>
     </Tabs>
   );

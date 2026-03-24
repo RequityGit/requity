@@ -32,6 +32,7 @@ export interface CompanyDetailData {
 
 export interface CompanyContactData {
   id: string;
+  contact_number: string;
   first_name: string | null;
   last_name: string | null;
   email: string | null;
@@ -143,13 +144,18 @@ export const COMPANY_TYPE_CONFIG: Record<
   string,
   { label: string; color: string }
 > = {
-  lender: { label: "Lender", color: "#3B82F6" },
-  brokerage: { label: "Brokerage", color: "#8B5CF6" },
-  title_company: { label: "Title Company", color: "#E5930E" },
-  law_firm: { label: "Law Firm", color: "#6B6B6B" },
-  insurance: { label: "Insurance", color: "#22A861" },
-  appraisal: { label: "Appraisal", color: "#E5930E" },
+  borrower: { label: "Borrower", color: "#22A861" },
+  brokerage: { label: "Capital Markets Broker", color: "#8B5CF6" },
+  bank: { label: "Bank", color: "#3B82F6" },
+  agency_lender: { label: "Agency Lender", color: "#3B82F6" },
+  lender: { label: "Private / Non-bank Lender", color: "#3B82F6" },
+  correspondent: { label: "Correspondent", color: "#3B82F6" },
   equity_investor: { label: "Equity Investor", color: "#22A861" },
+  title_company: { label: "Title Company", color: "#E5930E" },
+  insurance: { label: "Insurance", color: "#22A861" },
+  law_firm: { label: "Attorney", color: "#6B6B6B" },
+  amc: { label: "AMC", color: "#E5930E" },
+  appraisal: { label: "Appraisal", color: "#E5930E" },
   software: { label: "Software", color: "#3B82F6" },
   accounting_firm: { label: "Accounting Firm", color: "#6B6B6B" },
   other: { label: "Other", color: "#8B8B8B" },
@@ -173,34 +179,30 @@ export const PROGRAM_LABELS: Record<string, string> = {
   sba: "SBA",
 };
 
-export const ASSET_LABELS: Record<string, string> = {
-  sfr: "SFR",
-  condo: "Condo",
-  townhouse: "Townhouse",
-  duplex: "Duplex",
-  triplex: "Triplex",
-  fourplex: "Fourplex",
-  multifamily_5_plus: "Multifamily (5+)",
-  mixed_use: "Mixed-Use",
-  retail: "Retail",
-  office: "Office",
-  industrial: "Industrial",
-  mobile_home_park: "MHC",
-  land: "Land",
-  rv_campground: "RV Park",
-  self_storage: "Self-Storage",
-  hotel_hospitality: "Hospitality",
-  healthcare: "Healthcare",
-  other: "Other",
-};
+export { ASSET_CLASS_RECORD as ASSET_LABELS } from "@/lib/constants/asset-classes";
 
 export const CAPABILITY_LABELS: Record<string, string> = {
+  agency_debt_placement: "Agency Debt Placement",
+  bank_financing: "Bank Financing",
+  dscr: "DSCR",
+  equity_placement: "Equity Placement",
+  guc: "GUC",
+  hard_money_bridge: "Hard Money / Bridge Lending",
+  cmbs: "CMBS",
+  jv_equity: "JV Equity Investment",
+  loan_servicing: "Loan Servicing",
+  mortgage_brokerage: "Mortgage Brokerage",
+  pref_equity: "Pref Equity Investment",
+  rtl: "RTL",
+  audit: "Audit",
+  lender_finance: "Lender Finance",
+  sba: "SBA",
   table_funding: "Table Funding",
-  correspondent: "Correspondent",
   co_lending: "Co-Lending",
   warehouse: "Warehouse",
-  direct: "Direct Lender",
   note_buyer: "Note Buyer",
+  direct: "Direct Lender",
+  correspondent_lending: "Correspondent Lending",
 };
 
 export const FILE_TYPE_LABELS: Record<string, string> = {

@@ -23,7 +23,7 @@ import {
   LOAN_STAGE_LABELS,
 } from "@/lib/constants";
 import { formatDate, formatCurrency } from "@/lib/format";
-import { useToast } from "@/components/ui/use-toast";
+import { showSuccess, showError } from "@/lib/toast";
 import {
   AlertTriangle,
   CheckCircle2,
@@ -32,7 +32,9 @@ import {
   ExternalLink,
   Filter,
   X,
+  ClipboardCheck,
 } from "lucide-react";
+import { EmptyState } from "@/components/shared/EmptyState";
 
 interface ConditionWithLoan {
   id: string;
@@ -80,9 +82,8 @@ export function ConditionsDashboard({
   const [filterParty, setFilterParty] = useState("all");
   const [filterStatus, setFilterStatus] = useState("all");
   const router = useRouter();
-  const { toast } = useToast();
-
-  const today = new Date();
+  // Stable reference: initialized once on mount, reused during hydration
+  const [today] = useState(() => new Date());
 
   // Summary stats
   const stats = useMemo(() => {
@@ -106,7 +107,7 @@ export function ConditionsDashboard({
     const uniqueLoans = new Set(conditions.map((c: ConditionWithLoan) => c.loan_id)).size;
 
     return { total, approved, outstanding, overdue, criticalOutstanding, uniqueLoans };
-  }, [conditions]);
+  }, [conditions, today]);
 
   // Filtered conditions
   const filteredConditions = useMemo(() => {
@@ -183,11 +184,7 @@ export function ConditionsDashboard({
       .eq("id", conditionId);
 
     if (error) {
-      toast({
-        title: "Error updating condition",
-        description: error.message,
-        variant: "destructive",
-      });
+      showError("Could not update condition", error.message);
       return;
     }
 
@@ -205,7 +202,7 @@ export function ConditionsDashboard({
         c.id === conditionId ? { ...c, ...updateData } : c
       )
     );
-    toast({ title: `Condition updated to ${newStatus.replace(/_/g, " ")}` });
+    showSuccess(`Condition updated to ${newStatus.replace(/_/g, " ")}`);
   }
 
   const hasFilters =
@@ -379,7 +376,7 @@ export function ConditionsDashboard({
                       </p>
                     </div>
                   </div>
-                  <Link href={`/admin/pipeline/${loanId}`}>
+                  <Link href={`/pipeline/${loan?.loan_number || loanId}`}>
                     <Button
                       variant="ghost"
                       size="sm"
@@ -414,7 +411,7 @@ export function ConditionsDashboard({
                         }`}
                         onClick={() =>
                           router.push(
-                            `/admin/pipeline/${condition.loan_id}?tab=conditions`
+                            `/pipeline/${loan?.loan_number || condition.loan_id}?tab=conditions`
                           )
                         }
                       >
@@ -528,10 +525,12 @@ export function ConditionsDashboard({
 
       {filteredConditions.length === 0 && (
         <Card>
-          <CardContent className="py-8 text-center text-muted-foreground">
-            {hasFilters
-              ? "No conditions match the current filters."
-              : "No conditions found across active loans."}
+          <CardContent>
+            <EmptyState
+              icon={ClipboardCheck}
+              title={hasFilters ? "No conditions match the current filters." : "No conditions found across active loans."}
+              compact
+            />
           </CardContent>
         </Card>
       )}

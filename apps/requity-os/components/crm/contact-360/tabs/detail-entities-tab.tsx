@@ -1,6 +1,7 @@
 "use client";
 
 import { Building2, Check, X } from "lucide-react";
+import { EmptyState } from "@/components/shared/EmptyState";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { FieldRow } from "../contact-detail-shared";
@@ -31,17 +32,11 @@ function DocPill({ has, label }: { has: boolean; label: string }) {
 export function DetailEntitiesTab({ entities }: DetailEntitiesTabProps) {
   if (entities.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center py-12 text-center">
-        <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-muted mb-4">
-          <Building2 className="h-6 w-6 text-muted-foreground" strokeWidth={1.5} />
-        </div>
-        <h3 className="text-sm font-semibold text-foreground mb-1">
-          No entities
-        </h3>
-        <p className="text-sm text-muted-foreground">
-          No borrowing or investing entities linked to this contact yet.
-        </p>
-      </div>
+      <EmptyState
+        icon={Building2}
+        title="No entities"
+        description="No borrowing or investing entities linked to this contact yet."
+      />
     );
   }
 
@@ -51,7 +46,7 @@ export function DetailEntitiesTab({ entities }: DetailEntitiesTabProps) {
         <Card key={ent.id} className="rounded-xl border-border">
           <CardHeader className="px-5 py-3.5 border-b border-border/60">
             <div className="flex items-center justify-between">
-              <CardTitle className="text-[13px] font-semibold text-foreground flex items-center gap-2">
+              <CardTitle className="rq-section-title flex items-center gap-2">
                 <Building2
                   size={16}
                   className="text-muted-foreground"
@@ -101,7 +96,7 @@ export function DetailEntitiesTab({ entities }: DetailEntitiesTabProps) {
 
             {/* Documents */}
             <div>
-              <div className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wide mb-2">
+              <div className="rq-micro-label mb-2">
                 Documents
               </div>
               <div className="flex gap-2 flex-wrap">

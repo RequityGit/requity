@@ -23,7 +23,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useToast } from "@/components/ui/use-toast";
+import { showSuccess, showError, showWarning } from "@/lib/toast";
 import { PlusCircle, Loader2 } from "lucide-react";
 import type { TeamMember } from "./OperationsView";
 import {
@@ -55,7 +55,6 @@ export function AddProjectDialog({ teamMembers }: AddProjectDialogProps) {
   const [loading, setLoading] = useState(false);
   const [form, setForm] = useState(INITIAL_FORM);
   const router = useRouter();
-  const { toast } = useToast();
 
   function resetForm() {
     setForm(INITIAL_FORM);
@@ -65,7 +64,7 @@ export function AddProjectDialog({ teamMembers }: AddProjectDialogProps) {
     e.preventDefault();
 
     if (!form.project_name.trim()) {
-      toast({ title: "Project name is required", variant: "destructive" });
+      showWarning("Project name is required");
       return;
     }
 
@@ -77,7 +76,7 @@ export function AddProjectDialog({ teamMembers }: AddProjectDialogProps) {
       } = await supabase.auth.getUser();
 
       if (!user) {
-        toast({ title: "You must be logged in", variant: "destructive" });
+        showError("You must be logged in");
         return;
       }
 
@@ -93,16 +92,16 @@ export function AddProjectDialog({ teamMembers }: AddProjectDialogProps) {
       });
 
       if (error) {
-        toast({ title: "Error creating project", description: error.message, variant: "destructive" });
+        showError("Could not create project", error.message);
         return;
       }
 
-      toast({ title: "Project created successfully" });
+      showSuccess("Project created");
       setOpen(false);
       resetForm();
       router.refresh();
     } catch {
-      toast({ title: "An unexpected error occurred", variant: "destructive" });
+      showError("An unexpected error occurred");
     } finally {
       setLoading(false);
     }

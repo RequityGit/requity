@@ -1,9 +1,15 @@
 import { withSentryConfig } from "@sentry/nextjs";
 
+const isDev = process.env.NODE_ENV === "development";
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  serverActions: {
-    bodySizeLimit: "10mb",
+  experimental: {
+    serverActions: {
+      bodySizeLimit: "10mb",
+    },
+    // Faster dev: tree-shake barrel imports so only used exports are compiled (lucide, recharts, etc.)
+    optimizePackageImports: ["lucide-react", "recharts", "@radix-ui/react-icons", "date-fns", "@tiptap/starter-kit", "@tiptap/react"],
   },
   images: {
     remotePatterns: [
@@ -13,56 +19,98 @@ const nextConfig = {
       },
     ],
   },
-  async redirects() {
+  async headers() {
     return [
       {
-        source: '/admin/originations',
-        destination: '/admin/pipeline?tab=debt',
-        permanent: true,
+        source: "/((?!_next/static|_next/image|.*\\.(?:js|css|svg|png|jpg|jpeg|gif|webp|ico|woff2?|ttf)$).*)",
+        headers: [
+          {
+            key: "Cache-Control",
+            value: "no-cache, must-revalidate",
+          },
+        ],
       },
       {
-        source: '/admin/equity-pipeline/:id',
-        destination: '/admin/pipeline/:id',
-        permanent: true,
+        source: "/(.*)",
+        headers: [
+          ...(process.env.NODE_ENV === "production"
+            ? [
+                {
+                  key: "Strict-Transport-Security",
+                  value: "max-age=31536000; includeSubDomains; preload",
+                },
+                {
+                  key: "Content-Security-Policy",
+                  value:
+                    "upgrade-insecure-requests; default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://maps.googleapis.com https://accounts.google.com https://*.sentry.io; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' https: data: blob:; connect-src 'self' https://*.supabase.co wss://*.supabase.co https://*.sentry.io https://accounts.google.com https://oauth2.googleapis.com https://www.googleapis.com https://gmail.googleapis.com https://*.twil.io https://fonts.googleapis.com https://fonts.gstatic.com; frame-src 'self' https://docs.google.com; worker-src 'self' blob:",
+                },
+              ]
+            : []),
+          {
+            key: "X-Content-Type-Options",
+            value: "nosniff",
+          },
+          {
+            key: "X-Frame-Options",
+            value: "DENY",
+          },
+          {
+            key: "X-XSS-Protection",
+            value: "1; mode=block",
+          },
+          {
+            key: "Referrer-Policy",
+            value: "strict-origin-when-cross-origin",
+          },
+          {
+            key: "Permissions-Policy",
+            value: "camera=(), microphone=(), geolocation=(self)",
+          },
+        ],
+      },
+    ];
+  },
+  async redirects() {
+    // Use temporary (302) redirects in dev to prevent browsers from caching
+    // stale 301s that can break OAuth flows and page navigation.
+    const perm = !isDev;
+    return [
+      {
+        source: '/originations',
+        destination: '/pipeline?tab=debt',
+        permanent: perm,
       },
       {
-        source: '/admin/equity-pipeline',
-        destination: '/admin/pipeline?tab=equity',
-        permanent: true,
+        source: '/equity-pipeline/:id',
+        destination: '/pipeline/:id',
+        permanent: perm,
       },
       {
-        source: '/admin/deals/:id',
-        destination: '/admin/pipeline/:id',
-        permanent: true,
+        source: '/equity-pipeline',
+        destination: '/pipeline?tab=equity',
+        permanent: perm,
       },
       {
-        source: '/admin/dscr',
-        destination: '/admin/models/dscr',
-        permanent: true,
+        source: '/deals/:id',
+        destination: '/pipeline/:id',
+        permanent: perm,
+      },
+      {
+        source: '/dscr',
+        destination: '/models/dscr',
+        permanent: perm,
       },
     ];
   },
 };
 
-export default withSentryConfig(nextConfig, {
-  // For all available options, see:
-  // https://github.com/getsentry/sentry-webpack-plugin#options
-
+const sentryConfig = {
   org: "requity",
   project: "javascript-nextjs",
-
-  // Only print logs for uploading source maps in CI
   silent: !process.env.CI,
-
-  // Upload a larger set of source maps for prettier stack traces (increases build time)
   widenClientFileUpload: true,
-
-  // Automatically tree-shake Sentry logger statements to reduce bundle size
   disableLogger: true,
-
-  // Hides source maps from generated client bundles
   hideSourceMaps: true,
+};
 
-  // Enables automatic instrumentation of Vercel Cron Monitors (does not yet work with Netlify)
-  // automaticVercelMonitors: true,
-});
+export default isDev ? nextConfig : withSentryConfig(nextConfig, sentryConfig);

@@ -2,6 +2,7 @@
 
 import { useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
+import { formatDateShort } from "@/lib/format";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -15,7 +16,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useToast } from "@/components/ui/use-toast";
+import { showSuccess, showError } from "@/lib/toast";
 import { CRM_ACTIVITY_TYPES } from "@/lib/constants";
 import {
   Phone,
@@ -33,7 +34,8 @@ import {
   ChevronUp,
   Paperclip,
 } from "lucide-react";
-import { TimelineEvent, EmptyState } from "../shared";
+import { TimelineEvent } from "../shared";
+import { EmptyState } from "@/components/shared/EmptyState";
 import type { ActivityData, EmailData } from "../types";
 import { ACTIVITY_TYPE_CONFIG } from "../types";
 
@@ -94,7 +96,6 @@ export function ActivityTab({
   const [filterType, setFilterType] = useState<string>("all");
   const [expandedEmailId, setExpandedEmailId] = useState<string | null>(null);
   const router = useRouter();
-  const { toast } = useToast();
 
   const [form, setForm] = useState({
     activity_type: "note",
@@ -146,7 +147,7 @@ export function ActivityTab({
         .update({ last_contacted_at: new Date().toISOString() })
         .eq("id", contactId);
 
-      toast({ title: "Activity logged" });
+      showSuccess("Activity logged");
       setShowForm(false);
       setForm({ activity_type: "note", subject: "", description: "" });
       router.refresh();
@@ -157,11 +158,7 @@ export function ActivityTab({
           : typeof err === "object" && err !== null && "message" in err
             ? String((err as { message: unknown }).message)
             : "Unknown error";
-      toast({
-        title: "Error logging activity",
-        description: message,
-        variant: "destructive",
-      });
+      showError("Could not log activity", message);
     } finally {
       setLoading(false);
     }
@@ -350,7 +347,7 @@ export function ActivityTab({
                       <div className="flex items-center gap-1.5 text-xs text-muted-foreground mt-0.5">
                         <span>{isOutbound ? `To: ${e.to_name || e.to_email}` : `From: ${e.from_email}`}</span>
                         <span className="text-muted-foreground/50">&middot;</span>
-                        <span>{new Date(e.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric" })}</span>
+                        <span>{formatDateShort(e.created_at)}</span>
                         {isOutbound && e.sent_by_name && (
                           <>
                             <span className="text-muted-foreground/50">&middot;</span>

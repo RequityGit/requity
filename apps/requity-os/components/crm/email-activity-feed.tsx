@@ -16,6 +16,7 @@ import {
   ChevronDown,
   ChevronUp,
 } from "lucide-react";
+import { EmptyState } from "@/components/shared/EmptyState";
 import { EmailComposeSheet } from "./email-compose-sheet";
 
 export interface EmailRecord {
@@ -52,7 +53,7 @@ interface EmailActivityFeedProps {
 
 const statusConfig: Record<string, { icon: React.ElementType; label: string; className: string }> = {
   queued: { icon: Clock, label: "Queued", className: "bg-muted text-slate-600" },
-  sent: { icon: Send, label: "Sent", className: "bg-blue-100 text-blue-600" },
+  sent: { icon: Send, label: "Sent", className: "bg-muted text-muted-foreground" },
   delivered: { icon: CheckCircle2, label: "Delivered", className: "bg-green-100 text-green-600" },
   opened: { icon: Eye, label: "Opened", className: "bg-purple-100 text-purple-600" },
   failed: { icon: AlertCircle, label: "Failed", className: "bg-red-100 text-red-600" },
@@ -97,9 +98,11 @@ export function EmailActivityFeed({
         </CardHeader>
         <CardContent>
           {emails.length === 0 ? (
-            <p className="text-sm text-muted-foreground text-center py-6">
-              No emails sent yet.
-            </p>
+            <EmptyState
+              icon={Mail}
+              title="No emails sent yet"
+              compact
+            />
           ) : (
             <div className="space-y-3">
               {emails.map((email) => {

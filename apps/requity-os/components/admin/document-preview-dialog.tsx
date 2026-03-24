@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { toast } from "sonner";
+import { showError } from "@/lib/toast";
 import {
   Dialog,
   DialogContent,
@@ -11,7 +11,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Download, FileText } from "lucide-react";
-import { getDocumentPreviewUrl } from "@/app/(authenticated)/admin/documents/actions";
+import { getDocumentPreviewUrl } from "@/app/(authenticated)/(admin)/documents/actions";
 import type { DocumentRow } from "@/components/admin/document-list-table";
 
 interface DocumentPreviewDialogProps {
@@ -40,7 +40,7 @@ export function DocumentPreviewDialog({
     getDocumentPreviewUrl(document.id, document.source)
       .then((result) => {
         if ("error" in result) {
-          toast.error(result.error);
+          showError(result.error);
           setUrl(null);
         } else {
           setUrl(result.url);

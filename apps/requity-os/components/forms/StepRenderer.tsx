@@ -69,6 +69,7 @@ export function StepRenderer({
               onChange={onChange}
               onBlur={onBlur}
               error={errors?.[field.id]}
+              formData={data}
             />
           </div>
         ))}

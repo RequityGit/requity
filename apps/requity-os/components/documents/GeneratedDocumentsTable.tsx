@@ -7,10 +7,11 @@ import {
   MoreHorizontal,
   Download,
   Pencil,
-  ExternalLink,
   Loader2,
+  FileText,
 } from "lucide-react";
-import { toast } from "sonner";
+import { EmptyState } from "@/components/shared/EmptyState";
+import { showError } from "@/lib/toast";
 import { createClient } from "@/lib/supabase/client";
 import { exportHtmlAsPdf } from "@/lib/export-pdf";
 import { Badge } from "@/components/ui/badge";
@@ -60,7 +61,6 @@ export interface GeneratedDocRow {
   status: string;
   generated_by_name: string;
   generated_at: string;
-  gdrive_file_id: string | null;
 }
 
 interface Props {
@@ -86,13 +86,13 @@ export function GeneratedDocumentsTable({ data, action }: Props) {
         .single();
 
       if (error || !row?.content) {
-        toast.error("Could not load document content");
+        showError("Could not load document content");
         return;
       }
 
       await exportHtmlAsPdf(row.content, doc.file_name);
     } catch {
-      toast.error("Failed to download PDF");
+      showError("Failed to download PDF");
     } finally {
       setDownloadingId(null);
     }
@@ -185,11 +185,8 @@ export function GeneratedDocumentsTable({ data, action }: Props) {
             <tbody>
               {filtered.length === 0 && (
                 <tr>
-                  <td
-                    colSpan={7}
-                    className="px-4 py-12 text-center text-muted-foreground"
-                  >
-                    No generated documents found.
+                  <td colSpan={7}>
+                    <EmptyState icon={FileText} title="No generated documents found." compact />
                   </td>
                 </tr>
               )}
@@ -200,7 +197,7 @@ export function GeneratedDocumentsTable({ data, action }: Props) {
                 >
                   <td className="px-4 py-3">
                     <Link
-                      href={`/admin/documents/editor/${doc.id}`}
+                      href={`/documents/editor/${doc.id}`}
                       className="font-medium text-foreground hover:underline"
                     >
                       {doc.file_name}
@@ -235,24 +232,11 @@ export function GeneratedDocumentsTable({ data, action }: Props) {
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
                         <DropdownMenuItem asChild>
-                          <Link href={`/admin/documents/editor/${doc.id}`}>
+                          <Link href={`/documents/editor/${doc.id}`}>
                             <Pencil size={14} className="mr-2" />
                             Edit in Portal
                           </Link>
                         </DropdownMenuItem>
-                        {doc.gdrive_file_id && (
-                          <DropdownMenuItem
-                            onClick={() =>
-                              window.open(
-                                `https://docs.google.com/document/d/${doc.gdrive_file_id}`,
-                                "_blank"
-                              )
-                            }
-                          >
-                            <ExternalLink size={14} className="mr-2" />
-                            Open in Drive
-                          </DropdownMenuItem>
-                        )}
                         <DropdownMenuItem
                           onClick={() => handleDownloadPdf(doc)}
                           disabled={downloadingId === doc.id}

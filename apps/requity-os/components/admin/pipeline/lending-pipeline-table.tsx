@@ -19,26 +19,24 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { StagePill } from "@/components/admin/pipeline/stage-pill";
-import { Badge } from "@/components/ui/badge";
 import { formatCurrency, formatDate } from "@/lib/format";
 import {
   LOAN_STAGES,
   LOAN_STAGE_LABELS,
   LOAN_TYPES,
-  LOAN_PRIORITIES,
   getDaysInStageColor,
 } from "@/lib/constants";
 import {
   Search,
   Download,
   X,
-  Flame,
-  Pause,
   Clock,
   ArrowUpDown,
   ArrowUp,
   ArrowDown,
+  FileText,
 } from "lucide-react";
+import { EmptyState } from "@/components/shared/EmptyState";
 import { LoanDetailDrawer } from "./loan-detail-drawer";
 
 export interface LendingPipelineRow {
@@ -54,7 +52,6 @@ export interface LendingPipelineRow {
   stage: string;
   stage_updated_at: string;
   created_at: string;
-  priority: string;
   next_action: string | null;
   originator_name: string | null;
   processor_name: string | null;
@@ -90,7 +87,7 @@ function getDaysInStage(stageUpdatedAt: string): number {
 }
 
 function formatLoanType(type: string | null): string {
-  if (!type) return "--";
+  if (!type) return "—";
   const found = LOAN_TYPES.find((t) => t.value === type);
   return found ? found.label : type.replace(/_/g, " ");
 }
@@ -102,7 +99,6 @@ export function LendingPipelineTable({
   const [search, setSearch] = useState("");
   const [stageFilter, setStageFilter] = useState("all");
   const [typeFilter, setTypeFilter] = useState("all");
-  const [priorityFilter, setPriorityFilter] = useState("all");
   const [teamFilter, setTeamFilter] = useState("all");
   const [sortKey, setSortKey] = useState<SortKey>(null);
   const [sortDir, setSortDir] = useState<SortDir>("asc");
@@ -115,14 +111,12 @@ export function LendingPipelineTable({
     search !== "" ||
     stageFilter !== "all" ||
     typeFilter !== "all" ||
-    priorityFilter !== "all" ||
     teamFilter !== "all";
 
   function clearFilters() {
     setSearch("");
     setStageFilter("all");
     setTypeFilter("all");
-    setPriorityFilter("all");
     setTeamFilter("all");
   }
 
@@ -165,9 +159,6 @@ export function LendingPipelineTable({
     if (typeFilter !== "all") {
       result = result.filter((l) => l.loan_type === typeFilter);
     }
-    if (priorityFilter !== "all") {
-      result = result.filter((l) => l.priority === priorityFilter);
-    }
     if (teamFilter !== "all") {
       result = result.filter(
         (l) =>
@@ -175,7 +166,7 @@ export function LendingPipelineTable({
       );
     }
     return result;
-  }, [data, search, stageFilter, typeFilter, priorityFilter, teamFilter]);
+  }, [data, search, stageFilter, typeFilter, teamFilter]);
 
   // Sort
   const sorted = useMemo(() => {
@@ -216,8 +207,7 @@ export function LendingPipelineTable({
   const pipelineStats = useMemo(() => {
     const total = data.length;
     const totalVolume = data.reduce((sum, l) => sum + l.loan_amount, 0);
-    const hotCount = data.filter((l) => l.priority === "hot").length;
-    return { total, totalVolume, hotCount };
+    return { total, totalVolume };
   }, [data]);
 
   // Unique team names
@@ -241,7 +231,6 @@ export function LendingPipelineTable({
       "Loan Type",
       "Amount",
       "Stage",
-      "Priority",
       "Days in Stage",
       "Originator",
       "Processor",
@@ -257,12 +246,11 @@ export function LendingPipelineTable({
       formatLoanType(l.loan_type),
       l.loan_amount.toString(),
       LOAN_STAGE_LABELS[l.stage] ?? l.stage,
-      l.priority,
       getDaysInStage(l.stage_updated_at).toString(),
       l.originator_name ?? "",
       l.processor_name ?? "",
       l.next_action ?? "",
-      l.created_at ? new Date(l.created_at).toLocaleDateString() : "",
+      l.created_at ? formatDate(l.created_at) : "",
     ]);
     const csv = [headers, ...rows]
       .map((row) =>
@@ -299,12 +287,6 @@ export function LendingPipelineTable({
           </span>{" "}
           pipeline volume
         </span>
-        {pipelineStats.hotCount > 0 && (
-          <Badge className="bg-[rgba(212,38,32,0.08)] text-[#D42620] dark:bg-[rgba(239,68,68,0.1)] dark:text-[#EF4444] border-0 gap-1">
-            <Flame className="h-3 w-3" />
-            {pipelineStats.hotCount} hot
-          </Badge>
-        )}
       </div>
 
       {/* Filters */}
@@ -340,19 +322,6 @@ export function LendingPipelineTable({
             {LOAN_TYPES.map((t) => (
               <SelectItem key={t.value} value={t.value}>
                 {t.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-        <Select value={priorityFilter} onValueChange={setPriorityFilter}>
-          <SelectTrigger className="w-[140px]">
-            <SelectValue placeholder="Priority" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Priorities</SelectItem>
-            {LOAN_PRIORITIES.map((p) => (
-              <SelectItem key={p.value} value={p.value}>
-                {p.label}
               </SelectItem>
             ))}
           </SelectContent>
@@ -397,7 +366,7 @@ export function LendingPipelineTable({
       </div>
 
       {/* Data Table */}
-      <div className="rounded-lg border bg-card">
+      <div className="rounded-lg border bg-card mobile-scroll">
         <Table>
           <TableHeader>
             <TableRow className="bg-muted/50 hover:bg-muted/50">
@@ -454,11 +423,8 @@ export function LendingPipelineTable({
           <TableBody>
             {sorted.length === 0 ? (
               <TableRow>
-                <TableCell
-                  colSpan={8}
-                  className="h-24 text-center text-muted-foreground"
-                >
-                  No loans found.
+                <TableCell colSpan={8}>
+                  <EmptyState icon={FileText} title="No loans found" compact />
                 </TableCell>
               </TableRow>
             ) : (
@@ -467,21 +433,15 @@ export function LendingPipelineTable({
                 return (
                   <TableRow
                     key={row.id}
-                    className="cursor-pointer hover:bg-muted/30 transition-colors"
+                    className="cursor-pointer hover:bg-muted/30 transition-colors min-h-[56px] md:min-h-0"
                     onClick={() => handleRowClick(row)}
                   >
                     {/* Property */}
                     <TableCell className="py-3">
                       <div>
-                        <div className="flex items-center gap-1">
-                          {row.priority === "hot" && (
-                            <Flame className="h-3 w-3 text-[#D42620] dark:text-[#EF4444] flex-shrink-0" />
-                          )}
-                          {row.priority === "on_hold" && (
-                            <Pause className="h-3 w-3 text-[#CC7A00] dark:text-[#F0A030] flex-shrink-0" />
-                          )}
+                        <div>
                           <p className="font-medium text-foreground text-[13px] truncate max-w-[220px]">
-                            {row.property_address ?? "--"}
+                            {row.property_address ?? "—"}
                           </p>
                         </div>
                         {(row.property_city || row.property_state) && (

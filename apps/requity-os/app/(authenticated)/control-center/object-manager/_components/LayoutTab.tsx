@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useCallback, useEffect, useRef } from "react";
+import React, { useState, useMemo, useCallback, useEffect, useRef } from "react";
 import {
   PanelRight,
   FormInput,
@@ -56,6 +56,7 @@ import {
   addFieldToLayout,
   addSection,
   addTab,
+  updateLayoutFieldSpan,
 } from "../actions";
 import {
   Dialog,
@@ -67,6 +68,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { getObjectIcon, getFieldType } from "./constants";
 import type { TabInfo } from "../ObjectManagerView";
+import type { DraftChangeType } from "../_hooks/useDraftState";
 
 // Page type mapping (mirrors ObjectManagerView)
 const OBJECT_PAGE_TYPE_MAP: Record<string, string> = {
@@ -74,6 +76,10 @@ const OBJECT_PAGE_TYPE_MAP: Record<string, string> = {
   company: "company_detail",
   loan: "loan_detail",
   property: "property_detail",
+  borrower: "borrower_detail",
+  borrower_entity: "borrower_entity_detail",
+  investor: "investor_detail",
+  unified_deal: "deal_detail",
 };
 
 // ---------------------------------------------------------------------------
@@ -118,6 +124,7 @@ interface Props {
   onSelectSection: (section: PageSection) => void;
   onSelectTab: (tab: TabInfo) => void;
   onLayoutChange?: () => void;
+  onDraftLayoutChange?: (type: DraftChangeType, label: string, description: string) => void;
   loading: boolean;
 }
 
@@ -250,14 +257,19 @@ function SortableSection({
 // Sortable Field
 // ---------------------------------------------------------------------------
 
+const SPAN_CYCLE: Record<string, string> = { half: "third", third: "full", full: "half" };
+const SPAN_LABEL: Record<string, string> = { full: "12", third: "4", half: "6" };
+
 function SortableField({
   layoutField,
   fieldConfig,
   spanClass,
+  onSpanChange,
 }: {
   layoutField: PageField;
   fieldConfig: FieldConfig | undefined;
   spanClass: string;
+  onSpanChange?: (fieldId: string, newSpan: string) => void;
 }) {
   const {
     attributes,
@@ -276,6 +288,7 @@ function SortableField({
   const isInh = layoutField.source === "inherited";
   const ft = getFieldType(fieldConfig?.field_type || "text");
   const FI = ft.icon;
+  const currentSpan = layoutField.column_span || "half";
 
   return (
     <div
@@ -307,9 +320,17 @@ function SortableField({
       {fieldConfig?.is_required && (
         <span className="w-1 h-1 rounded-full bg-destructive shrink-0" />
       )}
-      <span className="text-[8px] text-muted-foreground shrink-0">
-        {layoutField.column_span === "full" ? "12" : layoutField.column_span === "third" ? "4" : "6"}
-      </span>
+      <button
+        onClick={(e) => {
+          e.stopPropagation();
+          const next = SPAN_CYCLE[currentSpan] || "half";
+          onSpanChange?.(layoutField.id, next);
+        }}
+        className="text-[8px] text-muted-foreground shrink-0 cursor-pointer hover:text-foreground hover:bg-background rounded px-1 py-0.5 border-0 bg-transparent transition-colors"
+        title={`Column span: ${currentSpan} (click to cycle)`}
+      >
+        {SPAN_LABEL[currentSpan] || "6"}
+      </button>
     </div>
   );
 }
@@ -329,6 +350,7 @@ export function LayoutTab({
   onSelectSection,
   onSelectTab,
   onLayoutChange,
+  onDraftLayoutChange,
   loading,
 }: Props) {
   const [activeView, setActiveView] = useState("detail");
@@ -355,6 +377,18 @@ export function LayoutTab({
   const [addingTabPending, setAddingTabPending] = useState(false);
 
   const pageType = OBJECT_PAGE_TYPE_MAP[objectKey];
+
+  const handleSpanChange = useCallback(async (fieldId: string, newSpan: string) => {
+    setLocalFields((prev) =>
+      prev.map((f) => (f.id === fieldId ? { ...f, column_span: newSpan } : f))
+    );
+    const result = await updateLayoutFieldSpan(fieldId, newSpan);
+    if (result.error) {
+      setLocalFields(propLayoutFields);
+    } else {
+      onDraftLayoutChange?.("layout_field_update", `Span: ${newSpan}`, `Changed field column span to "${newSpan}"`);
+    }
+  }, [propLayoutFields, onDraftLayoutChange]);
 
   // Active drag state
   const [activeDragId, setActiveDragId] = useState<string | null>(null);
@@ -423,13 +457,15 @@ export function LayoutTab({
       });
       if (result.data) {
         setShowAddSectionDialog(false);
+        const label = newSectionLabel.trim();
         setNewSectionLabel("");
         onLayoutChange?.();
+        onDraftLayoutChange?.("section_create", `New section: ${label}`, `Added section "${label}" to layout`);
       }
     } finally {
       setAddingSectionPending(false);
     }
-  }, [newSectionLabel, pageType, onLayoutChange]);
+  }, [newSectionLabel, pageType, onLayoutChange, onDraftLayoutChange]);
 
   const handleAddTab = useCallback(async () => {
     if (!newTabLabel.trim() || !pageType) return;
@@ -443,13 +479,15 @@ export function LayoutTab({
       });
       if (result.data) {
         setShowAddTabDialog(false);
+        const label = newTabLabel.trim();
         setNewTabLabel("");
         onLayoutChange?.();
+        onDraftLayoutChange?.("section_create", `New tab: ${label}`, `Added tab "${label}" to page`);
       }
     } finally {
       setAddingTabPending(false);
     }
-  }, [newTabLabel, pageType, onLayoutChange]);
+  }, [newTabLabel, pageType, onLayoutChange, onDraftLayoutChange]);
 
   // Reset active tab when tabs change
   useEffect(() => {
@@ -542,7 +580,10 @@ export function LayoutTab({
         });
 
         if (sectionUpdates.length > 0) {
-          reorderLayoutSections(sectionUpdates).then(() => onLayoutChange?.());
+          reorderLayoutSections(sectionUpdates).then(() => {
+            onLayoutChange?.();
+            onDraftLayoutChange?.("section_reorder", "Reordered sections", "Changed the display order of sections");
+          });
         }
         return;
       }
@@ -637,7 +678,10 @@ export function LayoutTab({
         });
 
         if (fieldUpdates.length > 0) {
-          reorderLayoutFields(fieldUpdates).then(() => onLayoutChange?.());
+          reorderLayoutFields(fieldUpdates).then(() => {
+            onLayoutChange?.();
+            onDraftLayoutChange?.("layout_field_reorder", "Reordered fields", "Changed field positions in layout");
+          });
         }
         return;
       }
@@ -682,11 +726,12 @@ export function LayoutTab({
         if (result.data) {
           setLocalFields((prev) => [...prev, result.data!]);
           onLayoutChange?.();
+          onDraftLayoutChange?.("layout_field_add", `Added: ${fieldConfig.field_label}`, `Added "${fieldConfig.field_label}" to layout section`);
         }
         return;
       }
     },
-    [fields, onLayoutChange]
+    [fields, onLayoutChange, onDraftLayoutChange]
   );
 
   const handleDragCancel = useCallback(() => {
@@ -885,6 +930,7 @@ export function LayoutTab({
                                         layoutField={lf}
                                         fieldConfig={fieldConfig}
                                         spanClass={getSpanClass(lf.column_span)}
+                                        onSpanChange={handleSpanChange}
                                       />
                                     );
                                   })}

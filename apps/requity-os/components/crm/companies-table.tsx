@@ -26,6 +26,7 @@ import Link from "next/link";
 
 export interface CompanyRow {
   id: string;
+  company_number: string;
   name: string;
   email: string | null;
   phone: string | null;
@@ -60,14 +61,12 @@ function CompanyTypeBadge({ type }: { type: string }) {
 
 function StatusDot({ active }: { active: boolean }) {
   return (
-    <div className="flex justify-center">
-      <div
-        className={cn(
-          "h-2.5 w-2.5 rounded-full",
-          active ? "bg-green-500" : "bg-red-400"
-        )}
-      />
-    </div>
+    <div
+      className={cn(
+        "h-2.5 w-2.5 rounded-full shrink-0",
+        active ? "bg-green-500" : "bg-red-400"
+      )}
+    />
   );
 }
 
@@ -106,38 +105,29 @@ export function CompaniesTable({ companies }: CompaniesTableProps) {
         header: "Company",
         cell: (row) => (
           <Link
-            href={`/admin/crm/companies/${row.id}`}
-            className="flex items-center gap-3"
+            href={`/companies/${row.company_number}`}
+            className="flex items-center gap-3 max-w-[280px]"
           >
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10">
+            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary/10">
               <Building2 className="h-4 w-4 text-muted-foreground" />
             </div>
-            <div>
-              <p className="text-sm font-medium text-foreground hover:underline">
+            <div className="min-w-0 flex-1">
+              <p className="text-sm font-medium text-foreground hover:underline truncate">
                 {row.name}
               </p>
               {row.email && (
-                <p className="text-xs text-muted-foreground">{row.email}</p>
+                <p className="text-xs text-muted-foreground truncate">{row.email}</p>
               )}
             </div>
           </Link>
         ),
+        className: "min-w-[200px]",
       },
       {
         key: "company_type",
         header: "Type",
         cell: (row) => <CompanyTypeBadge type={row.company_type} />,
-      },
-      {
-        key: "location",
-        header: "Location",
-        cell: (row) => (
-          <span className="text-sm text-muted-foreground">
-            {row.city && row.state
-              ? `${row.city}, ${row.state}`
-              : row.city || row.state || "—"}
-          </span>
-        ),
+        className: "w-[130px]",
       },
       {
         key: "contact_count",
@@ -147,7 +137,7 @@ export function CompaniesTable({ companies }: CompaniesTableProps) {
             {row.contact_count}
           </span>
         ),
-        className: "text-center w-[80px]",
+        className: "text-center w-[90px]",
       },
       {
         key: "active_deals",
@@ -174,6 +164,29 @@ export function CompaniesTable({ companies }: CompaniesTableProps) {
           </div>
         ),
         className: "text-center w-[70px]",
+      },
+      {
+        key: "location",
+        header: "Location",
+        cell: (row) => (
+          <span className="text-sm text-muted-foreground whitespace-nowrap">
+            {row.city && row.state
+              ? `${row.city}, ${row.state}`
+              : row.city || row.state || "—"}
+          </span>
+        ),
+        className: "w-[140px]",
+      },
+      {
+        key: "is_active",
+        header: "Status",
+        cell: (row) => (
+          <div className="flex items-center gap-2">
+            <StatusDot active={row.is_active !== false} />
+            <span className="text-sm">{row.is_active !== false ? "Active" : "Inactive"}</span>
+          </div>
+        ),
+        className: "w-[100px]",
       },
     ],
     []

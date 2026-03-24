@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { formatDateTime } from "@/lib/format";
 import {
   Table,
   TableBody,
@@ -17,9 +18,10 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Eye } from "lucide-react";
-import type { EmailTemplateVersion } from "@/app/(authenticated)/admin/email-templates/types";
-import { fetchTemplateVersionsAction } from "@/app/(authenticated)/admin/email-templates/actions";
+import { Eye, History } from "lucide-react";
+import { EmptyState } from "@/components/shared/EmptyState";
+import type { EmailTemplateVersion } from "@/app/(authenticated)/(admin)/email-templates/types";
+import { fetchTemplateVersionsAction } from "@/app/(authenticated)/(admin)/email-templates/actions";
 
 interface VersionHistoryProps {
   templateId: string;
@@ -45,10 +47,11 @@ export function VersionHistory({
 
   if (versions.length === 0) {
     return (
-      <div className="rounded-md border bg-card p-8 text-center text-muted-foreground">
-        No version history yet. Versions are created automatically when you
-        update the subject or body.
-      </div>
+      <EmptyState
+        icon={History}
+        title="No version history yet"
+        description="Versions are created automatically when you update the subject or body."
+      />
     );
   }
 
@@ -87,13 +90,7 @@ export function VersionHistory({
                   )}
                 </TableCell>
                 <TableCell className="text-sm text-muted-foreground">
-                  {new Date(v.created_at).toLocaleDateString("en-US", {
-                    month: "short",
-                    day: "numeric",
-                    year: "numeric",
-                    hour: "numeric",
-                    minute: "2-digit",
-                  })}
+                  {formatDateTime(v.created_at)}
                 </TableCell>
                 <TableCell className="text-right">
                   <Button
@@ -119,14 +116,7 @@ export function VersionHistory({
             <DialogTitle>Version {selected?.version}</DialogTitle>
             <DialogDescription>
               Saved on{" "}
-              {selected &&
-                new Date(selected.created_at).toLocaleDateString("en-US", {
-                  month: "long",
-                  day: "numeric",
-                  year: "numeric",
-                  hour: "numeric",
-                  minute: "2-digit",
-                })}
+              {selected && formatDateTime(selected.created_at)}
             </DialogDescription>
           </DialogHeader>
           {selected && (

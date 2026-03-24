@@ -28,7 +28,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { DatePicker } from "@/components/ui/date-picker";
-import { useToast } from "@/components/ui/use-toast";
+import { showSuccess, showError } from "@/lib/toast";
 import {
   CheckCircle2,
   XCircle,
@@ -46,7 +46,7 @@ import {
   resubmitApproval,
   saveApprovalFieldAction,
   searchContactsForApproval,
-} from "@/app/(authenticated)/admin/operations/approvals/actions";
+} from "@/app/(authenticated)/(admin)/tasks/approvals/actions";
 import type { ApprovalEntityType, ChecklistResult } from "@/lib/approvals/types";
 
 interface SubmitForApprovalDialogProps {
@@ -68,7 +68,6 @@ export function SubmitForApprovalDialog({
   trigger,
 }: SubmitForApprovalDialogProps) {
   const router = useRouter();
-  const { toast } = useToast();
   const [open, setOpen] = useState(false);
   const [step, setStep] = useState<"validating" | "results" | "submit">("validating");
   const [checklistResults, setChecklistResults] = useState<ChecklistResult[]>([]);
@@ -136,11 +135,7 @@ export function SubmitForApprovalDialog({
     }
 
     if (saveErrors.length > 0) {
-      toast({
-        title: "Some fields failed to save",
-        description: saveErrors.join("; "),
-        variant: "destructive",
-      });
+      showError("Some fields could not be saved", saveErrors.join("; "));
       setSaving(false);
       return;
     }
@@ -169,10 +164,7 @@ export function SubmitForApprovalDialog({
     setSaving(false);
 
     if (result.passed) {
-      toast({
-        title: "All checks passed",
-        description: "You can now submit for approval.",
-      });
+      showSuccess("All checks passed");
     }
   }
 
@@ -203,12 +195,9 @@ export function SubmitForApprovalDialog({
     setLoading(false);
 
     if (result.error) {
-      toast({ title: "Error", description: result.error, variant: "destructive" });
+      showError("Could not submit approval", result.error);
     } else {
-      toast({
-        title: existingApprovalId ? "Resubmitted" : "Submitted for Approval",
-        description: "The approval request has been sent to the assigned approver.",
-      });
+      showSuccess(existingApprovalId ? "Resubmitted for approval" : "Submitted for approval");
       setOpen(false);
       router.refresh();
     }

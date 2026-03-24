@@ -1,20 +1,42 @@
 "use client";
 
-import { Suspense, useState, useRef, useEffect } from "react";
+import React, { Suspense, useState, useRef, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import { SUPABASE_URL } from "@/lib/supabase/constants";
 import { Mail, Loader2, Chrome, ShieldAlert } from "lucide-react";
 
 function getSupabase() {
   return createClient();
 }
 
+function LoginFallback() {
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-muted">
+      <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" aria-label="Loading" />
+    </div>
+  );
+}
+
 export default function LoginPage() {
   return (
-    <Suspense>
+    <Suspense fallback={<LoginFallback />}>
       <LoginContent />
     </Suspense>
   );
+}
+
+/**
+ * Normalise the origin to always use `localhost` on dev.
+ * Prevents cookie / redirect mismatches when the browser resolves
+ * 127.0.0.1 but the PKCE cookie was set on localhost (or vice-versa).
+ */
+function getStableOrigin(): string {
+  const raw = window.location.origin;
+  if (process.env.NODE_ENV === "development") {
+    return raw.replace("127.0.0.1", "localhost");
+  }
+  return raw;
 }
 
 function LoginContent() {
@@ -25,8 +47,28 @@ function LoginContent() {
   const [noAccess, setNoAccess] = useState(false);
   const searchParams = useSearchParams();
   const supabaseRef = useRef<ReturnType<typeof createClient> | null>(null);
+  /** Sync guard: React state is async, so double-clicks can fire two OAuth starts before `loading` updates. */
+  const googleOAuthLockRef = useRef(false);
 
   const errorParam = searchParams.get("error");
+  const authRetry = searchParams.get("_auth_retry");
+  /** Prevents the auto-retry from firing more than once per mount. */
+  const autoRetryFiredRef = useRef(false);
+
+  // Auto-retry: if the callback redirected here with _auth_retry, automatically
+  // re-initiate Google OAuth. This handles transient PKCE cookie loss without
+  // the user needing to click again.
+  useEffect(() => {
+    if (authRetry && !autoRetryFiredRef.current) {
+      autoRetryFiredRef.current = true;
+      // Longer delay gives the browser time to settle cookies
+      const timer = setTimeout(() => {
+        handleGoogleLogin();
+      }, 600);
+      return () => clearTimeout(timer);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [authRetry]);
 
   useEffect(() => {
     if (errorParam === "no_access") {
@@ -37,7 +79,7 @@ function LoginContent() {
       );
     } else if (errorParam === "auth_callback_failed") {
       setError(
-        "Authentication failed. Please try again or use a magic link."
+        "Google sign-in failed (session cookie was lost). Try again, or clear cookies for localhost and retry. You can also use a magic link below."
       );
     } else if (errorParam === "link_expired") {
       setError(
@@ -58,25 +100,42 @@ function LoginContent() {
   }
 
   async function handleGoogleLogin() {
+    if (googleOAuthLockRef.current) return;
+    googleOAuthLockRef.current = true;
     setLoading("google");
     setError(null);
 
     try {
       const supabase = getClient();
-      const { error } = await supabase.auth.signInWithOAuth({
+      // One explicit navigation avoids flaky auto-redirect in some browsers / extensions.
+      const { data, error } = await supabase.auth.signInWithOAuth({
         provider: "google",
         options: {
-          redirectTo: `${window.location.origin}/auth/callback`,
+          redirectTo: `${getStableOrigin()}/auth/callback`,
+          skipBrowserRedirect: true,
         },
       });
 
       if (error) {
         setError(error.message);
         setLoading(null);
+        googleOAuthLockRef.current = false;
+        return;
       }
-    } catch {
+
+      if (data?.url) {
+        window.location.assign(data.url);
+        return;
+      }
+
+      setError("Could not start Google sign-in. Please try again.");
+      setLoading(null);
+      googleOAuthLockRef.current = false;
+    } catch (err) {
+      console.error("Google login error:", err);
       setError("An unexpected error occurred. Please try again.");
       setLoading(null);
+      googleOAuthLockRef.current = false;
     }
   }
 
@@ -92,7 +151,7 @@ function LoginContent() {
       const { error } = await supabase.auth.signInWithOtp({
         email,
         options: {
-          emailRedirectTo: `${window.location.origin}/auth/confirm`,
+          emailRedirectTo: `${getStableOrigin()}/auth/confirm`,
         },
       });
 
@@ -104,7 +163,8 @@ function LoginContent() {
 
       setMagicLinkSent(true);
       setLoading(null);
-    } catch {
+    } catch (err) {
+      console.error("Magic link error:", err);
       setError("An unexpected error occurred. Please try again.");
       setLoading(null);
     }
@@ -117,14 +177,14 @@ function LoginContent() {
           {/* Logo / Header */}
           <div className="text-center mb-8">
             <img
-              src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/brand-assets/Requity%20Logo%20White.svg?v=2`}
+              src={`${SUPABASE_URL}/storage/v1/object/public/brand-assets/Requity%20Logo%20White.svg?v=2`}
               alt="Requity Group"
-              className="h-12 mx-auto mb-4 hidden dark:block"
+              className="h-14 mx-auto mb-4 hidden dark:block"
             />
             <img
-              src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/brand-assets/Requity%20Logo%20Color.svg`}
+              src={`${SUPABASE_URL}/storage/v1/object/public/brand-assets/Requity%20Logo%20Color.svg`}
               alt="Requity Group"
-              className="h-12 mx-auto mb-4 dark:hidden"
+              className="h-14 mx-auto mb-4 dark:hidden"
             />
             <p className="text-muted-foreground mt-2">
               Platform Login
@@ -179,6 +239,7 @@ function LoginContent() {
             <div className="space-y-6">
               {/* Google OAuth Button */}
               <button
+                type="button"
                 onClick={handleGoogleLogin}
                 disabled={loading !== null}
                 className="w-full h-11 px-4 py-2 border border-border bg-card rounded-md text-sm font-medium text-foreground hover:bg-muted disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-3"

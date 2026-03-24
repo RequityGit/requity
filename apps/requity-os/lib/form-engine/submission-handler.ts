@@ -6,6 +6,8 @@ interface SubmitFormParams {
   data: Record<string, unknown>;
   mode: "create" | "update";
   recordId?: string | null;
+  dealId?: string;
+  dealApplicationLinkId?: string;
 }
 
 interface SubmitFormResult {
@@ -14,6 +16,8 @@ interface SubmitFormResult {
   entity_ids?: Record<string, string>;
   error?: string;
   step?: string;
+  warning?: string;
+  requires_review?: boolean;
 }
 
 export async function submitForm(params: SubmitFormParams): Promise<SubmitFormResult> {
@@ -27,6 +31,8 @@ export async function submitForm(params: SubmitFormParams): Promise<SubmitFormRe
         data: params.data,
         mode: params.mode,
         record_id: params.recordId || null,
+        deal_id: params.dealId || null,
+        deal_application_link_id: params.dealApplicationLinkId || null,
       }),
     });
 

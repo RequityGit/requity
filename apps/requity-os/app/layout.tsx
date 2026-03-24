@@ -1,10 +1,11 @@
+import React from "react";
 import type { Metadata, Viewport } from "next";
 import "@/app/globals/globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
 import { ServiceWorkerRegistration } from "@/components/service-worker-registration";
 
 export const metadata: Metadata = {
-  title: "Requity Group Portal",
+  title: "Requity Group Platform",
   description:
     "Unified portal for borrowers, investors, and administrators at Requity Group.",
   manifest: "/manifest.json",
@@ -22,7 +23,7 @@ export const metadata: Metadata = {
     statusBarStyle: "default",
     title: "Requity Group",
   },
-  applicationName: "Requity Group Portal",
+  applicationName: "Requity Group Platform",
 };
 
 export const viewport: Viewport = {
@@ -37,6 +38,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
+        <script dangerouslySetInnerHTML={{ __html: `(function(){try{var t=localStorage.getItem('theme');var d=t==='dark'||(!t&&window.matchMedia('(prefers-color-scheme:dark)').matches);if(d){document.documentElement.classList.add('dark');document.documentElement.style.colorScheme='dark'}else{document.documentElement.style.colorScheme='light'}}catch(e){}})()` }} />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link

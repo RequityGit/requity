@@ -1,5 +1,7 @@
 'use client';
 
+import { formatDate } from '@/lib/format';
+
 interface IndexData {
   value: number;
   date: string | null;
@@ -33,11 +35,6 @@ export function LoanIndexes({ indexes }: LoanIndexesProps) {
   const hasAny = items.some((item) => item.value != null);
   if (!hasAny) return null;
 
-  const formatDate = (dateStr: string) => {
-    if (!dateStr) return '';
-    const date = new Date(dateStr + 'T00:00:00');
-    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-  };
 
   return (
     <>

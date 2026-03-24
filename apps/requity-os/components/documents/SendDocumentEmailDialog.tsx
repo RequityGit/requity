@@ -2,7 +2,8 @@
 
 import { useState, useCallback, useEffect } from "react";
 import { createClient } from "@/lib/supabase/client";
-import { toast } from "sonner";
+import { SUPABASE_URL } from "@/lib/supabase/constants";
+import { showLoading, resolveLoading, rejectLoading } from "@/lib/toast";
 import { generatePdfBlob } from "@/lib/export-pdf";
 import { EmailComposeSheet } from "@/components/crm/email-compose-sheet";
 import { resolveRecipientForRecord, fetchLinkedEmailTemplateId } from "./actions";
@@ -63,7 +64,7 @@ export function SendDocumentEmailDialog({
 
   const handleSendViaEmail = useCallback(async () => {
     setPreparing(true);
-    const toastId = toast.loading("Preparing email...");
+    const toastId = showLoading("Preparing email...");
 
     try {
       // 1. Resolve recipient from the record
@@ -88,9 +89,8 @@ export function SendDocumentEmailDialog({
           // Resolve merge fields via the edge function
           const { data: { session } } = await supabase.auth.getSession();
           if (session) {
-            const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
             const response = await fetch(
-              `${supabaseUrl}/functions/v1/resolve-user-template`,
+              `${SUPABASE_URL}/functions/v1/resolve-user-template`,
               {
                 method: "POST",
                 headers: {
@@ -128,10 +128,10 @@ export function SendDocumentEmailDialog({
 
       // 4. Open the email composer
       setComposerReady(true);
-      toast.success("Email ready to send", { id: toastId });
+      resolveLoading(toastId, "Email ready to send");
     } catch (err) {
       console.error("Failed to prepare email:", err);
-      toast.error("Failed to prepare email", { id: toastId });
+      rejectLoading(toastId, "Could not prepare email");
     } finally {
       setPreparing(false);
     }

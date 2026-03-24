@@ -48,25 +48,40 @@ export function immediateSave(
 export async function createSubmission(
   formId: string,
   data: Record<string, unknown>,
-  currentStepId: string | null
+  currentStepId: string | null,
+  options?: { dealId?: string; dealApplicationLinkId?: string }
 ): Promise<{ id: string; session_token: string } | null> {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const supabase: any = createClient();
+
+  const insertData: Record<string, unknown> = {
+    form_id: formId,
+    status: "partial",
+    type: "create",
+    data,
+    current_step_id: currentStepId,
+  };
+
+  if (options?.dealId) insertData.deal_id = options.dealId;
+  if (options?.dealApplicationLinkId) insertData.deal_application_link_id = options.dealApplicationLinkId;
+
   const { data: submission, error } = await supabase
     .from("form_submissions")
-    .insert({
-      form_id: formId,
-      status: "partial",
-      type: "create",
-      data,
-      current_step_id: currentStepId,
-    })
+    .insert(insertData)
     .select("id, session_token")
     .single();
 
   if (error) {
     console.error("Failed to create submission:", error.message);
     return null;
+  }
+
+  // If linked to a deal application link, update the link with the submission_id
+  if (options?.dealApplicationLinkId && submission) {
+    await supabase
+      .from("deal_application_links")
+      .update({ submission_id: submission.id })
+      .eq("id", options.dealApplicationLinkId);
   }
 
   return submission as { id: string; session_token: string };

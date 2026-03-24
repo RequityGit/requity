@@ -22,24 +22,14 @@ import {
   DialogTrigger,
   DialogFooter,
 } from "@/components/ui/dialog";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
 import { Textarea } from "@/components/ui/textarea";
-import { useToast } from "@/components/ui/use-toast";
+import { showSuccess, showError } from "@/lib/toast";
+import { useConfirm } from "@/components/shared/ConfirmDialog";
 import { PlusCircle, Pencil, Trash2, Loader2, GripVertical } from "lucide-react";
 import {
   upsertRoutingRule,
   deleteRoutingRule,
-} from "@/app/(authenticated)/admin/operations/approvals/actions";
+} from "@/app/(authenticated)/(admin)/tasks/approvals/actions";
 import type { ApprovalRoutingRule } from "@/lib/approvals/types";
 
 interface RoutingRulesManagerProps {
@@ -74,7 +64,7 @@ const emptyForm: RuleFormState = {
 
 export function RoutingRulesManager({ rules, teamMembers }: RoutingRulesManagerProps) {
   const router = useRouter();
-  const { toast } = useToast();
+  const confirm = useConfirm();
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState<RuleFormState>(emptyForm);
   const [loading, setLoading] = useState(false);
@@ -105,7 +95,7 @@ export function RoutingRulesManager({ rules, teamMembers }: RoutingRulesManagerP
 
   async function handleSave() {
     if (!form.name || !form.approver_id) {
-      toast({ title: "Error", description: "Name and approver are required.", variant: "destructive" });
+      showError("Name and approver are required");
       return;
     }
 
@@ -113,7 +103,7 @@ export function RoutingRulesManager({ rules, teamMembers }: RoutingRulesManagerP
     try {
       conditions = JSON.parse(form.conditions);
     } catch {
-      toast({ title: "Error", description: "Invalid JSON in conditions field.", variant: "destructive" });
+      showError("Invalid JSON in conditions field");
       return;
     }
 
@@ -133,20 +123,28 @@ export function RoutingRulesManager({ rules, teamMembers }: RoutingRulesManagerP
     setLoading(false);
 
     if (result.error) {
-      toast({ title: "Error", description: result.error, variant: "destructive" });
+      showError("Could not save rule", result.error);
     } else {
-      toast({ title: form.id ? "Rule updated" : "Rule created" });
+      showSuccess(form.id ? "Rule updated" : "Rule created");
       setOpen(false);
       router.refresh();
     }
   }
 
-  async function handleDelete(ruleId: string) {
-    const result = await deleteRoutingRule(ruleId);
+  async function handleDelete(rule: ApprovalRoutingRule) {
+    const ok = await confirm({
+      title: "Delete routing rule?",
+      description: `This will permanently delete "${rule.name}". This action cannot be undone.`,
+      confirmLabel: "Delete",
+      destructive: true,
+    });
+    if (!ok) return;
+
+    const result = await deleteRoutingRule(rule.id);
     if (result.error) {
-      toast({ title: "Error", description: result.error, variant: "destructive" });
+      showError("Could not delete rule", result.error);
     } else {
-      toast({ title: "Rule deleted" });
+      showSuccess("Rule deleted");
       router.refresh();
     }
   }
@@ -192,27 +190,9 @@ export function RoutingRulesManager({ rules, teamMembers }: RoutingRulesManagerP
                   <Button variant="ghost" size="sm" onClick={() => openEdit(rule)}>
                     <Pencil className="h-3.5 w-3.5" />
                   </Button>
-                  <AlertDialog>
-                    <AlertDialogTrigger asChild>
-                      <Button variant="ghost" size="sm">
-                        <Trash2 className="h-3.5 w-3.5 text-red-500" />
-                      </Button>
-                    </AlertDialogTrigger>
-                    <AlertDialogContent>
-                      <AlertDialogHeader>
-                        <AlertDialogTitle>Delete routing rule?</AlertDialogTitle>
-                        <AlertDialogDescription>
-                          This will permanently delete &ldquo;{rule.name}&rdquo;. This action cannot be undone.
-                        </AlertDialogDescription>
-                      </AlertDialogHeader>
-                      <AlertDialogFooter>
-                        <AlertDialogCancel>Cancel</AlertDialogCancel>
-                        <AlertDialogAction onClick={() => handleDelete(rule.id)} className="bg-red-600 hover:bg-red-700">
-                          Delete
-                        </AlertDialogAction>
-                      </AlertDialogFooter>
-                    </AlertDialogContent>
-                  </AlertDialog>
+                  <Button variant="ghost" size="sm" onClick={() => handleDelete(rule)}>
+                    <Trash2 className="h-3.5 w-3.5 text-red-500" />
+                  </Button>
                 </div>
               </div>
             ))}

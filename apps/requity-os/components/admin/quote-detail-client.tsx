@@ -31,7 +31,8 @@ import {
   AlertDialogDescription,
   AlertDialogFooter,
 } from "@/components/ui/alert-dialog";
-import { useToast } from "@/components/ui/use-toast";
+import { showSuccess, showError } from "@/lib/toast";
+import { useConfirm } from "@/components/shared/ConfirmDialog";
 import {
   formatCurrency,
   formatCurrencyDetailed,
@@ -44,7 +45,7 @@ import {
   changeQuoteStatus,
   addQuoteActivity,
   deleteLenderQuote,
-} from "@/app/(authenticated)/admin/loans/[id]/quote-actions";
+} from "@/app/(authenticated)/(admin)/loans/[id]/quote-actions";
 import {
   Pencil,
   Loader2,
@@ -58,8 +59,12 @@ import {
   Trash2,
   Save,
   DollarSign,
+  Activity,
 } from "lucide-react";
-import type { LenderQuote } from "@/lib/supabase/types";
+import { EmptyState } from "@/components/shared/EmptyState";
+// lender_quotes table may not be in generated types
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type LenderQuote = Record<string, any>;
 
 const STATUS_LABELS: Record<string, string> = {
   request_for_quote: "Request for Quote",
@@ -133,14 +138,12 @@ export function QuoteDetailClient({
   currentUserId,
 }: QuoteDetailClientProps) {
   const router = useRouter();
-  const { toast } = useToast();
+  const confirm = useConfirm();
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
   const [statusLoading, setStatusLoading] = useState(false);
   const [declineDialogOpen, setDeclineDialogOpen] = useState(false);
   const [declineReason, setDeclineReason] = useState("");
-  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [deleteLoading, setDeleteLoading] = useState(false);
 
   // Activity form state
   const [activityType, setActivityType] = useState("note");
@@ -211,24 +214,15 @@ export function QuoteDetailClient({
       });
 
       if (result.error) {
-        toast({
-          title: "Error",
-          description: result.error,
-          variant: "destructive",
-        });
+        showError("Could not complete action", result.error);
         return;
       }
 
-      toast({ title: "Quote updated" });
+      showSuccess("Quote updated");
       setEditing(false);
       router.refresh();
     } catch (err: unknown) {
-      toast({
-        title: "Error",
-        description:
-          err instanceof Error ? err.message : "An unexpected error occurred",
-        variant: "destructive",
-      });
+      showError("An unexpected error occurred", err instanceof Error ? err.message : undefined);
     } finally {
       setSaving(false);
     }
@@ -243,25 +237,14 @@ export function QuoteDetailClient({
     try {
       const result = await changeQuoteStatus(quote.id, nextStatus);
       if (result.error) {
-        toast({
-          title: "Error",
-          description: result.error,
-          variant: "destructive",
-        });
+        showError("Could not complete action", result.error);
         return;
       }
 
-      toast({
-        title: `Status updated to ${STATUS_LABELS[nextStatus] ?? nextStatus}`,
-      });
+      showSuccess(`Status updated to ${STATUS_LABELS[nextStatus] ?? nextStatus}`);
       router.refresh();
     } catch (err: unknown) {
-      toast({
-        title: "Error",
-        description:
-          err instanceof Error ? err.message : "An unexpected error occurred",
-        variant: "destructive",
-      });
+      showError("An unexpected error occurred", err instanceof Error ? err.message : undefined);
     } finally {
       setStatusLoading(false);
     }
@@ -276,25 +259,16 @@ export function QuoteDetailClient({
         declineReason || undefined
       );
       if (result.error) {
-        toast({
-          title: "Error",
-          description: result.error,
-          variant: "destructive",
-        });
+        showError("Could not complete action", result.error);
         return;
       }
 
-      toast({ title: "Quote declined" });
+      showSuccess("Quote declined");
       setDeclineDialogOpen(false);
       setDeclineReason("");
       router.refresh();
     } catch (err: unknown) {
-      toast({
-        title: "Error",
-        description:
-          err instanceof Error ? err.message : "An unexpected error occurred",
-        variant: "destructive",
-      });
+      showError("An unexpected error occurred", err instanceof Error ? err.message : undefined);
     } finally {
       setStatusLoading(false);
     }
@@ -313,53 +287,40 @@ export function QuoteDetailClient({
       });
 
       if (result.error) {
-        toast({
-          title: "Error",
-          description: result.error,
-          variant: "destructive",
-        });
+        showError("Could not complete action", result.error);
         return;
       }
 
-      toast({ title: "Activity logged" });
+      showSuccess("Activity logged");
       setActivityDescription("");
       router.refresh();
     } catch (err: unknown) {
-      toast({
-        title: "Error",
-        description:
-          err instanceof Error ? err.message : "An unexpected error occurred",
-        variant: "destructive",
-      });
+      showError("An unexpected error occurred", err instanceof Error ? err.message : undefined);
     } finally {
       setActivityLoading(false);
     }
   }
 
   async function handleDelete() {
-    setDeleteLoading(true);
+    const ok = await confirm({
+      title: "Delete quote?",
+      description: `This will permanently delete "${quote.quote_name}" and all associated activity. This cannot be undone.`,
+      confirmLabel: "Delete",
+      destructive: true,
+    });
+    if (!ok) return;
+
     try {
       const result = await deleteLenderQuote(quote.id);
       if (result.error) {
-        toast({
-          title: "Error",
-          description: result.error,
-          variant: "destructive",
-        });
+        showError("Could not complete action", result.error);
         return;
       }
 
-      toast({ title: "Quote deleted" });
-      router.push(`/admin/pipeline/${loanId}`);
+      showSuccess("Quote deleted");
+      router.push(`/pipeline/${loanNumber || loanId}`);
     } catch (err: unknown) {
-      toast({
-        title: "Error",
-        description:
-          err instanceof Error ? err.message : "An unexpected error occurred",
-        variant: "destructive",
-      });
-    } finally {
-      setDeleteLoading(false);
+      showError("An unexpected error occurred", err instanceof Error ? err.message : undefined);
     }
   }
 
@@ -513,7 +474,7 @@ export function QuoteDetailClient({
               <div>
                 <p className="text-xs text-muted-foreground">Loan</p>
                 <a
-                  href={`/admin/pipeline/${loanId}`}
+                  href={`/pipeline/${loanNumber || loanId}`}
                   className="text-sm font-medium text-blue-600 hover:underline"
                 >
                   {loanNumber ?? "—"}
@@ -547,7 +508,7 @@ export function QuoteDetailClient({
             variant="destructive"
             size="sm"
             className="gap-1"
-            onClick={() => setDeleteDialogOpen(true)}
+            onClick={handleDelete}
           >
             <Trash2 className="h-3.5 w-3.5" />
             Delete
@@ -607,9 +568,7 @@ export function QuoteDetailClient({
           </CardHeader>
           <CardContent>
             {activities.length === 0 ? (
-              <p className="text-sm text-muted-foreground text-center py-4">
-                No activity yet.
-              </p>
+              <EmptyState icon={Activity} title="No activity yet" compact />
             ) : (
               <div className="space-y-4">
                 {activities.map((activity) => (
@@ -724,40 +683,6 @@ export function QuoteDetailClient({
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* Delete Dialog */}
-      <AlertDialog
-        open={deleteDialogOpen}
-        onOpenChange={setDeleteDialogOpen}
-      >
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Delete Quote</AlertDialogTitle>
-            <AlertDialogDescription>
-              This will permanently delete &quot;{quote.quote_name}&quot; and
-              all associated activity. This cannot be undone.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => setDeleteDialogOpen(false)}
-              disabled={deleteLoading}
-            >
-              Cancel
-            </Button>
-            <Button
-              variant="destructive"
-              onClick={handleDelete}
-              disabled={deleteLoading}
-            >
-              {deleteLoading && (
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              )}
-              Delete Permanently
-            </Button>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
     </div>
   );
 }

@@ -2,6 +2,7 @@
 
 import { useState, useCallback } from "react";
 import { cn } from "@/lib/utils";
+import { formatDateShort } from "@/lib/format";
 import {
   Plus,
   Check,
@@ -10,10 +11,11 @@ import {
   CheckCircle2,
   ListChecks,
 } from "lucide-react";
+import { EmptyState } from "@/components/shared/EmptyState";
 import { Button } from "@/components/ui/button";
 import { PriorityDot } from "./priority-dot";
 import { AnimatedTask } from "./animated-task";
-import { TaskSheet } from "./task-sheet";
+import { TaskSplitPanel } from "./task-split-panel";
 import { relativeTime } from "@/lib/comment-utils";
 import type { OpsTask, Profile } from "@/lib/tasks";
 import {
@@ -22,7 +24,7 @@ import {
   completeTask,
   completeRecurringTask,
 } from "@/lib/tasks";
-import { useToast } from "@/components/ui/use-toast";
+import { showError } from "@/lib/toast";
 
 interface DealTaskRowProps {
   task: OpsTask;
@@ -97,10 +99,7 @@ function DealTaskRow({ task, profiles, onComplete, onClick }: DealTaskRowProps) 
             )}
           >
             <Calendar className="h-3 w-3" strokeWidth={1.5} />
-            {new Date(task.due_date + "T00:00:00").toLocaleDateString("en-US", {
-              month: "short",
-              day: "numeric",
-            })}
+            {formatDateShort(task.due_date)}
           </span>
         )}
       </div>
@@ -129,7 +128,6 @@ export function DealTasks({
   const [showCompleted, setShowCompleted] = useState(false);
   const [sheetOpen, setSheetOpen] = useState(false);
   const [editingTask, setEditingTask] = useState<OpsTask | null>(null);
-  const { toast } = useToast();
 
   const openTasks = tasks
     .filter((t) => t.status !== "Complete")
@@ -173,14 +171,10 @@ export function DealTasks({
       const hasError = "error" in result && result.error;
       if (hasError) {
         setTasks((prev) => prev.map((t) => (t.id === taskId ? task : t)));
-        toast({
-          title: "Failed to complete task",
-          description: String(hasError),
-          variant: "destructive",
-        });
+        showError("Could not complete task", String(hasError));
       }
     },
-    [tasks, toast]
+    [tasks]
   );
 
   const handleTaskClick = useCallback((task: OpsTask) => {
@@ -215,7 +209,7 @@ export function DealTasks({
   return (
     <div>
       {/* Header */}
-      <div className="flex items-center justify-between mb-4">
+      <div className="flex items-center justify-between mb-2">
         <div className="flex items-center gap-2">
           <span className="text-sm font-semibold">Tasks</span>
           <span className="text-[11px] font-semibold text-muted-foreground/60 num">
@@ -230,22 +224,12 @@ export function DealTasks({
 
       {/* Open tasks */}
       {openTasks.length === 0 && completedTasks.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-8 text-center">
-          <ListChecks
-            className="h-8 w-8 text-muted-foreground/30 mb-2"
-            strokeWidth={1.5}
-          />
-          <p className="text-sm text-muted-foreground">No tasks for this deal</p>
-          <Button
-            onClick={handleNewTask}
-            size="sm"
-            variant="outline"
-            className="mt-3"
-          >
-            <Plus className="h-3.5 w-3.5 mr-1" strokeWidth={1.5} />
-            Add first task
-          </Button>
-        </div>
+        <EmptyState
+          icon={ListChecks}
+          title="No tasks for this deal"
+          action={{ label: "Add first task", onClick: handleNewTask, icon: Plus }}
+          compact
+        />
       ) : (
         <>
           <div className="space-y-0.5">
@@ -262,8 +246,8 @@ export function DealTasks({
 
           {/* Completed section */}
           {completedTasks.length > 0 && (
-            <div className="mt-4">
-              <div className="h-px bg-border mb-3" />
+            <div className="mt-3">
+              <div className="h-px bg-border mb-2" />
               <button
                 onClick={() => setShowCompleted(!showCompleted)}
                 className="flex items-center gap-2 text-[13px] font-medium text-muted-foreground hover:text-foreground transition-colors"
@@ -313,7 +297,7 @@ export function DealTasks({
         </>
       )}
 
-      <TaskSheet
+      <TaskSplitPanel
         open={sheetOpen}
         task={editingTask}
         profiles={profiles}

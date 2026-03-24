@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { useToast } from "@/components/ui/use-toast";
+import { showSuccess, showError } from "@/lib/toast";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -20,16 +20,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
+import { useConfirm } from "@/components/shared/ConfirmDialog";
 import {
   Plus,
   MoreHorizontal,
@@ -64,10 +55,9 @@ export function UserEmailTemplateListPage({
   initialTemplates,
 }: TemplateListPageProps) {
   const router = useRouter();
-  const { toast } = useToast();
+  const confirm = useConfirm();
   const [templates, setTemplates] = useState(initialTemplates);
   const [activeCategory, setActiveCategory] = useState<string>("all");
-  const [deleteId, setDeleteId] = useState<string | null>(null);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
 
   const filtered =
@@ -79,12 +69,12 @@ export function UserEmailTemplateListPage({
     setActionLoading(id);
     const result = await toggleUserEmailTemplateActiveAction(id, !currentActive);
     if ("error" in result) {
-      toast({ title: "Error", description: result.error, variant: "destructive" });
+      showError("Could not update template", result.error);
     } else {
       setTemplates((prev) =>
         prev.map((t) => (t.id === id ? { ...t, is_active: !currentActive } : t))
       );
-      toast({ title: currentActive ? "Template deactivated" : "Template activated" });
+      showSuccess(currentActive ? "Template deactivated" : "Template activated");
     }
     setActionLoading(null);
   }
@@ -93,25 +83,31 @@ export function UserEmailTemplateListPage({
     setActionLoading(id);
     const result = await duplicateUserEmailTemplateAction(id);
     if ("error" in result) {
-      toast({ title: "Error", description: result.error, variant: "destructive" });
+      showError("Could not duplicate template", result.error);
     } else {
       setTemplates((prev) => [...prev, result.template]);
-      toast({ title: "Template duplicated" });
+      showSuccess("Template duplicated");
     }
     setActionLoading(null);
   }
 
-  async function handleDelete() {
-    if (!deleteId) return;
-    setActionLoading(deleteId);
-    const result = await deleteUserEmailTemplateAction(deleteId);
+  async function handleDelete(id: string) {
+    const ok = await confirm({
+      title: "Delete template?",
+      description:
+        "This action cannot be undone. The template and all its version history will be permanently deleted.",
+      confirmLabel: "Delete",
+      destructive: true,
+    });
+    if (!ok) return;
+    setActionLoading(id);
+    const result = await deleteUserEmailTemplateAction(id);
     if ("error" in result) {
-      toast({ title: "Error", description: result.error, variant: "destructive" });
+      showError("Could not delete template", result.error);
     } else {
-      setTemplates((prev) => prev.filter((t) => t.id !== deleteId));
-      toast({ title: "Template deleted" });
+      setTemplates((prev) => prev.filter((t) => t.id !== id));
+      showSuccess("Template deleted");
     }
-    setDeleteId(null);
     setActionLoading(null);
   }
 
@@ -282,7 +278,7 @@ export function UserEmailTemplateListPage({
                           className="text-destructive"
                           onClick={(e) => {
                             e.stopPropagation();
-                            setDeleteId(template.id);
+                            handleDelete(template.id);
                           }}
                         >
                           <Trash2 className="h-3.5 w-3.5 mr-2" />
@@ -297,28 +293,6 @@ export function UserEmailTemplateListPage({
           </Table>
         </div>
       )}
-
-      {/* Delete confirmation dialog */}
-      <AlertDialog open={!!deleteId} onOpenChange={() => setDeleteId(null)}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Delete template?</AlertDialogTitle>
-            <AlertDialogDescription>
-              This action cannot be undone. The template and all its version
-              history will be permanently deleted.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleDelete}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-            >
-              Delete
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
     </div>
   );
 }

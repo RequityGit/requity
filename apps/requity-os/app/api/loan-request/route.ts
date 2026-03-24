@@ -1,5 +1,24 @@
 import { NextRequest } from 'next/server';
 import nodemailer from 'nodemailer';
+import { createAdminClient } from '@/lib/supabase/admin';
+import { parseCurrency, LOAN_TYPE_CODES } from '@repo/lib';
+
+const PROPERTY_TYPE_MAP: Record<string, string> = {
+  'Fix & Flip': 'Single Family',
+  'DSCR Rental': 'Single Family',
+  'New Construction': 'Single Family',
+  'CRE Bridge': 'Commercial',
+  'Manufactured Housing': 'Manufactured Housing',
+  'RV Park': 'RV Park',
+  Multifamily: 'Multifamily',
+};
+
+function valueMethodFromLoanType(loanType: string): string | null {
+  const code = LOAN_TYPE_CODES[loanType];
+  if (code === 'dscr' || code === 'guc') return 'appraisal_1_arv';
+  if (code === 'rtl') return 'underwritten_arv';
+  return null;
+}
 
 export async function POST(request: NextRequest) {
   try {
@@ -35,6 +54,102 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    /* ─── CRM Lead Creation ─── */
+    let crmContactId: string | null = null;
+    let propertyId: string | null = null;
+    let opportunityId: string | null = null;
+
+    try {
+      const admin = createAdminClient();
+
+      // 1. Dedup by email or create new contact
+      const { data: existing } = await admin
+        .from('crm_contacts')
+        .select('id')
+        .eq('email', email)
+        .is('deleted_at', null)
+        .limit(1)
+        .single();
+
+      if (existing) {
+        crmContactId = existing.id;
+      } else {
+        const { data: newContact, error: contactErr } = await admin
+          .from('crm_contacts')
+          .insert({
+            contact_number: '',
+            contact_type: 'lead' as const,
+            contact_types: ['borrower'],
+            source: 'website' as const,
+            first_name: firstName,
+            last_name: lastName,
+            name: `${firstName} ${lastName}`.trim(),
+            email,
+            phone,
+            company_name: company || null,
+            city: city || null,
+            state: state || null,
+          })
+          .select('id')
+          .single();
+        if (contactErr) console.error('CRM contact error:', contactErr.message);
+        else crmContactId = newContact?.id ?? null;
+      }
+
+      // 2. Create property record
+      const units = unitsOrLots ? parseInt(unitsOrLots) : null;
+      const { data: propData, error: propErr } = await admin
+        .from('properties')
+        .insert({
+          address_line1: propertyAddress || null,
+          city: city || null,
+          state: state || null,
+          property_type: PROPERTY_TYPE_MAP[loanType] || null,
+          number_of_units: Number.isFinite(units) ? units : null,
+        })
+        .select('id')
+        .single();
+      if (propErr) console.error('Property error:', propErr.message);
+      else propertyId = propData?.id ?? null;
+
+      // 3. Create opportunity (pipeline deal)
+      const loanAmountNum = parseCurrency(loanAmount);
+      const loanTypeCode = LOAN_TYPE_CODES[loanType] || null;
+      const { data: oppData, error: oppErr } = await admin
+        .from('opportunities')
+        .insert({
+          property_id: propertyId,
+          deal_name: `${firstName} ${lastName} - ${loanType}`,
+          loan_type: loanTypeCode,
+          proposed_loan_amount: loanAmountNum > 0 ? loanAmountNum : null,
+          proposed_ltv: generatedTerms?.maxLTV || null,
+          proposed_interest_rate: generatedTerms?.interestRate || null,
+          proposed_loan_term_months: generatedTerms?.loanTermMonths || null,
+          funding_channel: 'website',
+          stage: 'new_lead',
+          value_method: valueMethodFromLoanType(loanType),
+          internal_notes: [
+            timeline ? `Timeline: ${timeline}` : null,
+            creditScore ? `Credit: ${creditScore}` : null,
+            dealsInLast24Months ? `Experience: ${dealsInLast24Months}` : null,
+            citizenshipStatus ? `Citizenship: ${citizenshipStatus}` : null,
+            experienceLevel ? `Experience Level: ${experienceLevel}` : null,
+            purchasePrice ? `Purchase Price: ${purchasePrice}` : null,
+            rehabBudget ? `Rehab: ${rehabBudget}` : null,
+            afterRepairValue ? `ARV: ${afterRepairValue}` : null,
+          ]
+            .filter(Boolean)
+            .join(' | '),
+        })
+        .select('id')
+        .single();
+      if (oppErr) console.error('Opportunity error:', oppErr.message);
+      else opportunityId = oppData?.id ?? null;
+    } catch (crmErr) {
+      console.error('CRM pipeline error:', crmErr);
+    }
+
+    /* ─── Email Notifications ─── */
     const transporter = nodemailer.createTransport({
       host: process.env.SMTP_HOST,
       port: parseInt(process.env.SMTP_PORT || '587'),
@@ -66,6 +181,10 @@ export async function POST(request: NextRequest) {
     }
     const timestamp = new Date().toLocaleString('en-US', { timeZone: 'America/New_York' });
 
+    const portalBase = process.env.NEXT_PUBLIC_APP_URL || 'https://app.requitygroup.com';
+    const crmLink = crmContactId ? `${portalBase}/admin/crm/${crmContactId}` : null;
+    const dealLink = opportunityId ? `${portalBase}/admin/pipeline/${opportunityId}` : null;
+
     // ─── Internal Notification Email ───
     const internalHtml = buildInternalEmail({
       loanType, propertyAddress, city, state, purchasePrice, loanAmount,
@@ -73,13 +192,14 @@ export async function POST(request: NextRequest) {
       creditScore, dealsInLast24Months, citizenshipStatus,
       firstName, lastName, email, phone, company, experienceLevel,
       generatedTerms, unitsLabel, showRehab, rehabLabel, timestamp,
+      crmLink, dealLink,
     });
 
     await transporter.sendMail({
       from: `"Requity Lending" <${process.env.SMTP_USER}>`,
       to: notifyEmail,
       replyTo: email,
-      subject: `New Loan Request: ${loanType} — ${firstName} ${lastName}${generatedTerms ? ` [${generatedTerms.programName}]` : ''}`,
+      subject: `New Loan Request: ${loanType} - ${firstName} ${lastName}${generatedTerms ? ` [${generatedTerms.programName}]` : ''}`,
       html: internalHtml,
     });
 
@@ -93,12 +213,18 @@ export async function POST(request: NextRequest) {
       await transporter.sendMail({
         from: `"Requity Lending" <${process.env.SMTP_USER}>`,
         to: email,
-        subject: `Your ${loanType} Loan Terms — ${generatedTerms.programName} | Requity Lending`,
+        subject: `Your ${loanType} Loan Terms - ${generatedTerms.programName} | Requity Lending`,
         html: customerHtml,
       });
     }
 
-    return Response.json({ success: true, message: 'Loan request submitted successfully' });
+    return Response.json({
+      success: true,
+      message: 'Loan request submitted successfully',
+      crmContactId,
+      propertyId,
+      opportunityId,
+    });
   } catch (error: unknown) {
     console.error('Loan request error:', error);
     return Response.json(
@@ -158,6 +284,8 @@ interface InternalLoanEmailData {
   showRehab: boolean;
   rehabLabel: string;
   timestamp: string;
+  crmLink: string | null;
+  dealLink: string | null;
 }
 
 function buildInternalEmail(d: InternalLoanEmailData) {
@@ -267,6 +395,14 @@ function buildInternalEmail(d: InternalLoanEmailData) {
     </div>
   ` : '';
 
+  const crmLinksHtml = d.crmLink || d.dealLink ? `
+    <div style="padding:16px 40px 24px;">
+      <table style="width:100%;border-collapse:collapse;">
+        ${d.crmLink ? `<tr><td style="padding:10px 16px;background:rgba(74,222,128,0.08);border:1px solid rgba(74,222,128,0.2);"><a href="${d.crmLink}" style="color:#4ade80;font-size:14px;font-weight:600;text-decoration:none;">View Contact in CRM &rarr;</a></td></tr>` : ''}
+        ${d.dealLink ? `<tr><td style="padding:10px 16px;background:rgba(74,222,128,0.08);border:1px solid rgba(74,222,128,0.2);"><a href="${d.dealLink}" style="color:#4ade80;font-size:14px;font-weight:600;text-decoration:none;">View Deal in Pipeline &rarr;</a></td></tr>` : ''}
+      </table>
+    </div>` : '';
+
   return `
 <!DOCTYPE html>
 <html>
@@ -293,6 +429,8 @@ function buildInternalEmail(d: InternalLoanEmailData) {
         <span style="font-size:14px;font-weight:600;color:#E8622C;letter-spacing:1px;text-transform:uppercase;">${d.loanType}</span>
       </div>
     </div>
+
+    ${crmLinksHtml}
 
     ${termsSectionHtml}
 

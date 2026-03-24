@@ -1,6 +1,7 @@
 "use client";
 
 import { cn } from "@/lib/utils";
+import { formatDate } from "@/lib/format";
 import type { LucideIcon } from "lucide-react";
 import { Pencil } from "lucide-react";
 
@@ -74,7 +75,7 @@ export function SectionCard({
         <div className="flex items-center justify-between px-5 py-3.5 border-b border-border/60">
           <div className="flex items-center gap-2">
             {Icon && <Icon size={16} className="text-muted-foreground" strokeWidth={1.5} />}
-            <span className="text-[13px] font-semibold text-foreground">{title}</span>
+            <span className="rq-section-title">{title}</span>
           </div>
           {action}
         </div>
@@ -111,11 +112,11 @@ export function MetricCard({
 }) {
   return (
     <div className="flex-1 min-w-[120px]">
-      <div className="text-[11px] text-muted-foreground font-medium mb-1 uppercase tracking-wide">
+      <div className="rq-micro-label mb-1">
         {label}
       </div>
       <div
-        className={cn("text-xl font-semibold text-foreground leading-tight", mono && "num font-mono")}
+        className={cn("rq-stat-value text-foreground leading-tight", mono && "num font-mono")}
       >
         {value}
       </div>
@@ -226,5 +227,5 @@ export function relTime(iso: string | null | undefined): string {
   if (diff === 1) return "Yesterday";
   if (diff < 7) return `${diff}d ago`;
   if (diff < 30) return `${Math.floor(diff / 7)}w ago`;
-  return d.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+  return formatDate(iso);
 }

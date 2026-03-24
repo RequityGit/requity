@@ -1,3 +1,4 @@
+import React from "react";
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { ControlCenterBreadcrumb } from "./_components/control-center-breadcrumb";
@@ -25,7 +26,7 @@ export default async function ControlCenterLayout({
     .eq("is_active", true)
     .single();
 
-  if (!superAdminRole) redirect("/admin/dashboard");
+  if (!superAdminRole) redirect("/pipeline");
 
   return (
     <div>

@@ -10,10 +10,12 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Switch } from "@/components/ui/switch";
-import { useToast } from "@/components/ui/use-toast";
-import { updateTermSheetTemplate } from "@/app/(authenticated)/admin/settings/term-sheets/actions";
-import { Save, Loader2, Settings, PanelRightOpen, PanelRightClose } from "lucide-react";
+import { showSuccess, showError } from "@/lib/toast";
+import { updateTermSheetTemplate } from "@/app/(authenticated)/control-center/term-sheets/actions";
+import { Save, Loader2, Settings, PanelRightOpen, PanelRightClose, FileText } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { formatDateTime } from "@/lib/format";
+import { EmptyState } from "@/components/shared/EmptyState";
 import {
   TERM_SHEET_SECTIONS,
   mergeFieldVisibility,
@@ -130,7 +132,6 @@ export function TermSheetTemplateEditor({ templates: initial }: Props) {
   const [dirty, setDirty] = useState<Set<string>>(new Set());
   const [showPreview, setShowPreview] = useState(true);
   const router = useRouter();
-  const { toast } = useToast();
 
   const current = templates.find((t) => t.loan_type === activeLoanType);
 
@@ -223,13 +224,9 @@ export function TermSheetTemplateEditor({ templates: initial }: Props) {
     const result = await updateTermSheetTemplate(current.id, payload);
 
     if (result.error) {
-      toast({
-        title: "Error saving template",
-        description: result.error,
-        variant: "destructive",
-      });
+      showError("Could not save template", result.error);
     } else {
-      toast({ title: "Template saved successfully" });
+      showSuccess("Template saved");
       setDirty((prev) => {
         const next = new Set(prev);
         next.delete(current.id);
@@ -244,8 +241,12 @@ export function TermSheetTemplateEditor({ templates: initial }: Props) {
   if (!current) {
     return (
       <Card>
-        <CardContent className="py-12 text-center text-muted-foreground">
-          No term sheet templates found. Please seed the database first.
+        <CardContent>
+          <EmptyState
+            icon={FileText}
+            title="No term sheet templates found"
+            description="Please seed the database first."
+          />
         </CardContent>
       </Card>
     );
@@ -544,16 +545,7 @@ export function TermSheetTemplateEditor({ templates: initial }: Props) {
                   {current.last_edited_at && (
                     <p className="text-xs text-muted-foreground">
                       Last edited{" "}
-                      {new Date(current.last_edited_at).toLocaleDateString(
-                        "en-US",
-                        {
-                          month: "short",
-                          day: "numeric",
-                          year: "numeric",
-                          hour: "numeric",
-                          minute: "2-digit",
-                        }
-                      )}
+                      {formatDateTime(current.last_edited_at)}
                     </p>
                   )}
                 </CardContent>

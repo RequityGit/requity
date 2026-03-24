@@ -20,7 +20,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { formatCurrency, formatDate, formatPercent } from "@/lib/format";
-import { useToast } from "@/components/ui/use-toast";
+import { showSuccess, showError, showWarning } from "@/lib/toast";
 import { cn } from "@/lib/utils";
 import {
   Pencil,
@@ -29,11 +29,13 @@ import {
   Loader2,
   CheckCircle2,
 } from "lucide-react";
-import type {
-  PricingProgram,
-  LeverageAdjuster,
-  PricingProgramVersion,
-} from "@/lib/supabase/types";
+// Tables pricing_programs / leverage_adjusters / pricing_program_versions may not be in generated types
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type PricingProgram = Record<string, any>;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type LeverageAdjuster = Record<string, any>;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type PricingProgramVersion = Record<string, any>;
 
 interface PricingProgramsManagerProps {
   programs: PricingProgram[];
@@ -172,7 +174,6 @@ function EditProgramDialog({ program }: { program: PricingProgram }) {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const router = useRouter();
-  const { toast } = useToast();
   const [form, setForm] = useState({
     interest_rate: String(program.interest_rate),
     origination_points: String(program.origination_points),
@@ -191,11 +192,7 @@ function EditProgramDialog({ program }: { program: PricingProgram }) {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!form.change_description.trim()) {
-      toast({
-        title: "Description required",
-        description: "Please describe what changed and why",
-        variant: "destructive",
-      });
+      showWarning("Please describe what changed and why");
       return;
     }
 
@@ -224,15 +221,11 @@ function EditProgramDialog({ program }: { program: PricingProgram }) {
 
       if (error) throw error;
 
-      toast({ title: `${program.program_name} updated to v${(data as any)?.new_version ?? "new"}` });
+      showSuccess(`${program.program_name} updated to v${(data as any)?.new_version ?? "new"}`);
       setOpen(false);
       router.refresh();
     } catch (err: any) {
-      toast({
-        title: "Error",
-        description: err.message,
-        variant: "destructive",
-      });
+      showError("Could not update program", err.message);
     } finally {
       setLoading(false);
     }

@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { useToast } from "@/components/ui/use-toast";
+import { showSuccess, showError, showInfo } from "@/lib/toast";
 import {
   Send,
   Phone,
@@ -57,7 +57,6 @@ export function ContactHeader({
   currentUserName,
 }: ContactHeaderProps) {
   const router = useRouter();
-  const { toast } = useToast();
   const [logging, setLogging] = useState(false);
   const [emailOpen, setEmailOpen] = useState(false);
 
@@ -85,10 +84,10 @@ export function ContactHeader({
         .from("crm_contacts")
         .update({ last_contacted_at: new Date().toISOString() })
         .eq("id", contact.id);
-      toast({ title: "Call logged" });
+      showSuccess("Call logged");
       router.refresh();
     } catch {
-      toast({ title: "Error logging call", variant: "destructive" });
+      showError("Could not log call");
     } finally {
       setLogging(false);
     }
@@ -114,11 +113,11 @@ export function ContactHeader({
         if (contact.borrower_id) {
           loanParams.set("borrower_id", contact.borrower_id);
         }
-        router.push(`/admin/loans?${loanParams.toString()}`);
+        router.push(`/loans?${loanParams.toString()}`);
         break;
       }
       default:
-        toast({ title: `Action: ${actionId}`, description: "Coming soon" });
+        showInfo(`Action: ${actionId}`);
     }
   }
 

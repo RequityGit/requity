@@ -3,7 +3,11 @@ import {
   formatCurrency,
   formatCurrencyDetailed,
   formatDate,
+  formatDateShort,
+  formatDateTime,
+  formatTime,
   formatPercent,
+  formatRatio,
   formatCompactCurrency,
   formatPhoneNumber,
   formatPhoneInput,
@@ -39,7 +43,7 @@ describe("formatCurrencyDetailed", () => {
 
 describe("formatDate", () => {
   it("formats ISO date string", () => {
-    const result = formatDate("2024-01-15T00:00:00Z");
+    const result = formatDate("2024-01-15T12:00:00Z");
     expect(result).toContain("Jan");
     expect(result).toContain("15");
     expect(result).toContain("2024");
@@ -91,6 +95,87 @@ describe("formatCompactCurrency", () => {
 
   it("formats small amounts as plain dollars", () => {
     expect(formatCompactCurrency(500)).toBe("$500");
+  });
+});
+
+// ─── Short Date Formatting ───
+
+describe("formatDateShort", () => {
+  it("formats date without year", () => {
+    const result = formatDateShort("2024-01-15T12:00:00Z");
+    expect(result).toContain("Jan");
+    expect(result).toContain("15");
+    expect(result).not.toContain("2024");
+  });
+
+  it("returns em dash for null", () => {
+    expect(formatDateShort(null)).toBe("—");
+  });
+
+  it("returns em dash for empty string", () => {
+    expect(formatDateShort("")).toBe("—");
+  });
+});
+
+// ─── Date + Time Formatting ───
+
+describe("formatDateTime", () => {
+  it("formats date with time", () => {
+    const result = formatDateTime("2024-01-15T14:30:00Z");
+    expect(result).toContain("Jan");
+    expect(result).toContain("15");
+    expect(result).toContain("2024");
+    expect(result).toContain("at");
+  });
+
+  it("returns em dash for null", () => {
+    expect(formatDateTime(null)).toBe("—");
+  });
+
+  it("returns em dash for undefined", () => {
+    expect(formatDateTime(undefined)).toBe("—");
+  });
+});
+
+// ─── Time Only Formatting ───
+
+describe("formatTime", () => {
+  it("formats time from string", () => {
+    const result = formatTime("2024-01-15T14:30:00Z");
+    expect(result).toMatch(/\d{1,2}:\d{2}\s?(AM|PM)/);
+  });
+
+  it("formats time from Date object", () => {
+    const result = formatTime(new Date("2024-01-15T14:30:00Z"));
+    expect(result).toMatch(/\d{1,2}:\d{2}\s?(AM|PM)/);
+  });
+
+  it("returns em dash for null", () => {
+    expect(formatTime(null)).toBe("—");
+  });
+
+  it("returns em dash for undefined", () => {
+    expect(formatTime(undefined)).toBe("—");
+  });
+});
+
+// ─── Ratio Formatting ───
+
+describe("formatRatio", () => {
+  it("formats ratio with 2 decimal places and x suffix", () => {
+    expect(formatRatio(1.5)).toBe("1.50x");
+  });
+
+  it("returns em dash for null", () => {
+    expect(formatRatio(null)).toBe("—");
+  });
+
+  it("returns em dash for undefined", () => {
+    expect(formatRatio(undefined)).toBe("—");
+  });
+
+  it("formats zero", () => {
+    expect(formatRatio(0)).toBe("0.00x");
   });
 });
 

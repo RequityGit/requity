@@ -20,7 +20,7 @@ export function ExpensesTab() {
       <UWCard
         title="T12 Historical Data"
         action={
-          <button className="inline-flex items-center gap-1.5 px-3.5 py-[7px] rounded-lg border text-xs font-medium cursor-pointer bg-transparent text-foreground hover:bg-accent/50 transition-colors">
+          <button className="rq-action-btn">
             <Upload className="w-[13px] h-[13px]" strokeWidth={1.5} />
             Upload T12
           </button>
@@ -44,31 +44,31 @@ export function ExpensesTab() {
           <table className="w-full border-collapse">
             <thead>
               <tr className="bg-accent/50">
-                <th className="text-left text-[10px] font-semibold uppercase tracking-[0.06em] text-muted-foreground p-[9px_14px] pl-[22px] border-b-2 w-[25%]">
+                <th className="text-left rq-th pl-[22px] w-[25%]">
                   Line Item
                 </th>
-                <th className="text-right text-[10px] font-semibold uppercase tracking-[0.06em] text-muted-foreground p-[9px_14px] border-b-2 w-[14%]">
+                <th className="text-right rq-th w-[14%]">
                   <span className="flex items-center justify-end gap-1.5">
                     <span className="w-1.5 h-1.5 rounded-full bg-gold" />
                     T12 Actual
                   </span>
                 </th>
-                <th className="text-right text-[10px] font-semibold uppercase tracking-[0.06em] text-muted-foreground p-[9px_14px] border-b-2 border-l w-[14%]">
+                <th className="text-right rq-th border-l w-[14%]">
                   <span className="flex items-center justify-end gap-1.5">
                     <span className="w-1.5 h-1.5 rounded-full bg-dash-info" />
                     Yr 1 Override
                   </span>
                 </th>
-                <th className="text-right text-[10px] font-semibold uppercase tracking-[0.06em] text-muted-foreground p-[9px_14px] border-b-2 w-[11%]">
+                <th className="text-right rq-th w-[11%]">
                   Variance
                 </th>
-                <th className="text-right text-[10px] font-semibold uppercase tracking-[0.06em] text-muted-foreground p-[9px_14px] border-b-2 w-[10%]">
+                <th className="text-right rq-th w-[10%]">
                   $/Unit
                 </th>
-                <th className="text-right text-[10px] font-semibold uppercase tracking-[0.06em] text-muted-foreground p-[9px_14px] border-b-2 w-[10%]">
+                <th className="text-right rq-th w-[10%]">
                   % of EGI
                 </th>
-                <th className="text-center text-[10px] font-semibold uppercase tracking-[0.06em] text-muted-foreground p-[9px_14px] pr-[22px] border-b-2 w-[5%]">
+                <th className="text-center rq-th pr-[22px] w-[5%]">
                   <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
                     <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
                   </svg>
@@ -101,7 +101,7 @@ export function ExpensesTab() {
                           <input
                             defaultValue={it.pctOfEGI ?? ""}
                             onBlur={(e) => updateExpenseItem(it.id, "pctOfEGI", parseFloat(e.target.value) || 0)}
-                            className="w-[60px] text-center rounded-lg border border-border bg-accent/50 text-foreground px-[7px] py-[5px] text-xs tabular-nums outline-none"
+                            className="w-[60px] text-center rq-numeric-input"
                           />
                           <span className="text-muted-foreground text-[11px] shrink-0">% EGI</span>
                         </div>
@@ -113,7 +113,7 @@ export function ExpensesTab() {
                             const val = e.target.value ? parseFloat(e.target.value.replace(/,/g, "")) : null;
                             updateExpenseItem(it.id, "yr1Override", val);
                           }}
-                          className="w-full max-w-[120px] ml-auto text-right rounded-lg border border-border bg-transparent text-foreground px-[7px] py-[5px] text-xs tabular-nums outline-none block"
+                          className="w-full max-w-[120px] ml-auto text-right rq-numeric-input bg-transparent block"
                         />
                       )}
                     </td>
@@ -214,7 +214,7 @@ export function ExpensesTab() {
                   <input
                     defaultValue={v}
                     onBlur={(e) => updateArrayField("expenseGrowth", i, parseFloat(e.target.value) || 0)}
-                    className="w-full max-w-[80px] mx-auto text-center rounded-lg border border-border bg-accent/50 text-foreground px-[7px] py-[5px] text-xs tabular-nums outline-none"
+                    className="w-full max-w-[80px] mx-auto text-center rq-numeric-input"
                   />
                 </td>
               ))}

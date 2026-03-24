@@ -1,15 +1,14 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Clock, Check, FileText, ChevronRight } from "lucide-react";
+import { Clock, Check, FileText, ChevronRight, History } from "lucide-react";
 import type { UnderwritingModelType } from "@/lib/underwriting/resolver";
 import { getModelConfig } from "@/lib/underwriting/resolver";
-import { createBrowserClient } from "@supabase/ssr";
+import { createClient } from "@/lib/supabase/client";
+import { formatDate } from "@/lib/format";
+import { EmptyState } from "@/components/shared/EmptyState";
 
-const supabase = createBrowserClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-);
+const supabase = createClient();
 
 interface VersionHistoryProps {
   modelType: UnderwritingModelType;
@@ -44,7 +43,7 @@ export function VersionHistory({
       setLoading(true);
       try {
         const { data, error } = await supabase
-          .from(config.primaryTable)
+          .from(config.primaryTable as never)
           .select("id, version_number, is_active, status, label, created_at")
           .eq("scenario_id", scenarioId)
           .order("version_number", { ascending: false });
@@ -73,11 +72,11 @@ export function VersionHistory({
       </div>
 
       {loading && (
-        <div className="py-6 text-center text-[13px] text-[#71717a]">Loading...</div>
+        <EmptyState title="Loading..." compact className="text-[#71717a]" />
       )}
 
       {!loading && versions.length === 0 && (
-        <div className="py-6 text-center text-[13px] text-[#71717a]">No versions yet.</div>
+        <EmptyState icon={History} title="No versions yet" compact />
       )}
 
       <div className="divide-y divide-[#1e1e22]">
@@ -115,11 +114,7 @@ export function VersionHistory({
                   )}
                 </div>
                 <div className="text-[10px] text-[#71717a] num">
-                  {new Date(v.created_at).toLocaleDateString("en-US", {
-                    month: "short",
-                    day: "numeric",
-                    year: "numeric",
-                  })}
+                  {formatDate(v.created_at)}
                 </div>
               </div>
               {isActive && (

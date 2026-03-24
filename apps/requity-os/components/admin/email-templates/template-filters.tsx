@@ -9,7 +9,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Search } from "lucide-react";
-import { TEMPLATE_CATEGORIES } from "@/app/(authenticated)/admin/email-templates/types";
+import { TEMPLATE_CATEGORIES, formatCategory } from "@/app/(authenticated)/(admin)/email-templates/types";
 
 interface TemplateFiltersProps {
   search: string;
@@ -43,7 +43,7 @@ export function TemplateFilters({
           <SelectItem value="all">All categories</SelectItem>
           {TEMPLATE_CATEGORIES.map((cat) => (
             <SelectItem key={cat} value={cat}>
-              <span className="capitalize">{cat}</span>
+              {formatCategory(cat)}
             </SelectItem>
           ))}
         </SelectContent>

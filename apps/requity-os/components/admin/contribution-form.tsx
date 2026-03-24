@@ -22,7 +22,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useToast } from "@/components/ui/use-toast";
+import { showSuccess, showError, showWarning } from "@/lib/toast";
 import { formatCurrency } from "@/lib/format";
 import { Plus, Loader2 } from "lucide-react";
 
@@ -49,7 +49,6 @@ export function ContributionForm({ funds }: ContributionFormProps) {
   const [proRataTotal, setProRataTotal] = useState("");
 
   const router = useRouter();
-  const { toast } = useToast();
 
   useEffect(() => {
     if (!fundId) {
@@ -81,11 +80,7 @@ export function ContributionForm({ funds }: ContributionFormProps) {
   function applyProRata() {
     const totalCall = parseFloat(proRataTotal);
     if (isNaN(totalCall) || totalCall <= 0) {
-      toast({
-        title: "Invalid amount",
-        description: "Enter a valid pro-rata total.",
-        variant: "destructive",
-      });
+      showWarning("Enter a valid pro-rata total");
       return;
     }
 
@@ -94,11 +89,7 @@ export function ContributionForm({ funds }: ContributionFormProps) {
       0
     );
     if (totalUnfunded <= 0) {
-      toast({
-        title: "No unfunded commitments",
-        description: "All investors are fully funded.",
-        variant: "destructive",
-      });
+      showWarning("All investors are fully funded");
       return;
     }
 
@@ -113,11 +104,7 @@ export function ContributionForm({ funds }: ContributionFormProps) {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!fundId || !dueDate) {
-      toast({
-        title: "Missing fields",
-        description: "Select an investment and due date.",
-        variant: "destructive",
-      });
+      showWarning("Select an investment and due date");
       return;
     }
 
@@ -143,11 +130,7 @@ export function ContributionForm({ funds }: ContributionFormProps) {
     }));
 
     if (calls.length === 0) {
-      toast({
-        title: "No amounts entered",
-        description: "Enter at least one contribution amount.",
-        variant: "destructive",
-      });
+      showWarning("Enter at least one contribution amount");
       return;
     }
 
@@ -155,15 +138,9 @@ export function ContributionForm({ funds }: ContributionFormProps) {
     const { error } = await supabase.from("capital_calls").insert(calls);
 
     if (error) {
-      toast({
-        title: "Error creating contributions",
-        description: error.message,
-        variant: "destructive",
-      });
+      showError("Could not create contributions", error.message);
     } else {
-      toast({
-        title: `Created ${calls.length} contribution(s)`,
-      });
+      showSuccess(`Created ${calls.length} contribution(s)`);
       setOpen(false);
       setFundId("");
       setDueDate("");

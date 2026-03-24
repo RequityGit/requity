@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { DataTable, Column } from "@/components/shared/data-table";
 import { formatCurrencyDetailed, formatDate } from "@/lib/format";
 import { createClient } from "@/lib/supabase/client";
+import { SUPABASE_URL } from "@/lib/supabase/constants";
 import {
   FileText,
   ChevronDown,
@@ -22,6 +23,7 @@ import {
   Calculator,
   CalendarDays,
 } from "lucide-react";
+import { EmptyState } from "@/components/shared/EmptyState";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
@@ -184,8 +186,6 @@ export function PayoffStatementGenerator({ loanId, loan }: PayoffStatementGenera
         return;
       }
 
-      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-
       // Build fee overrides — only include if user changed values
       const overrides: Record<string, number> = {};
       for (const [key, val] of Object.entries(feeOverrides)) {
@@ -198,7 +198,7 @@ export function PayoffStatementGenerator({ loanId, loan }: PayoffStatementGenera
       }
 
       const res = await fetch(
-        `${supabaseUrl}/functions/v1/generate-payoff-statement`,
+        `${SUPABASE_URL}/functions/v1/generate-payoff-statement`,
         {
           method: "POST",
           headers: {
@@ -392,11 +392,13 @@ export function PayoffStatementGenerator({ loanId, loan }: PayoffStatementGenera
   if (!loan) {
     return (
       <Card>
-        <CardContent className="py-8 text-center">
-          <FileText className="h-8 w-8 mx-auto text-muted-foreground mb-2" />
-          <p className="text-sm text-muted-foreground">
-            This loan is not in the servicing system. Payoff statements are only available for servicing loans.
-          </p>
+        <CardContent>
+          <EmptyState
+            icon={FileText}
+            title="Loan not in servicing system"
+            description="Payoff statements are only available for servicing loans."
+            compact
+          />
         </CardContent>
       </Card>
     );
@@ -472,12 +474,7 @@ export function PayoffStatementGenerator({ loanId, loan }: PayoffStatementGenera
               />
               <p className="text-xs text-muted-foreground">
                 Statement valid through:{" "}
-                {goodThroughDate.toLocaleDateString("en-US", {
-                  weekday: "short",
-                  month: "short",
-                  day: "numeric",
-                  year: "numeric",
-                })}
+                {formatDate(goodThroughDate.toISOString())}
                 {goodThroughDays > 0 && ` (${goodThroughDays} day${goodThroughDays !== 1 ? "s" : ""} from today)`}
               </p>
             </div>

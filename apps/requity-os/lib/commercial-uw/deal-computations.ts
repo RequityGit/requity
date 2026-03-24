@@ -16,6 +16,9 @@ export interface DealIncomeRow {
   growth_rate: number; // decimal, e.g. 0.03
   is_deduction: boolean;
   sort_order: number;
+  section?: string; // 'lease' | 'occupancy' | 'ancillary'
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  meta?: any; // JSONB for occupancy: { site_count, nightly_rate, occupancy_pct, operating_days }
 }
 
 export interface DealExpenseRow {
@@ -63,7 +66,8 @@ export interface DealWaterfallTier {
 }
 
 export interface ProFormaYearResult {
-  year: number; // 0 = T12, 1-5
+  year: number; // 0 = T12, 1-5, 99 = stabilized
+  label?: string; // Optional display label (e.g., "Stabilized")
   incomeRows: { label: string; amount: number; isDeduction: boolean }[];
   netRevenue: number;
   expenseRows: { label: string; amount: number }[];
@@ -130,10 +134,37 @@ function n(v: number | null | undefined): number {
 
 // ── Income / Expense Computations ──
 
+/**
+ * Compute T12 net revenue from lease-based income rows only.
+ * For section-aware GPI, use computeT12GPI instead.
+ */
 export function computeT12NetRevenue(income: DealIncomeRow[]): number {
-  return income.reduce((sum, row) => {
-    return sum + (row.is_deduction ? -Math.abs(row.t12_amount) : row.t12_amount);
-  }, 0);
+  // Only lease rows (or rows without a section, for backward compat)
+  return income
+    .filter((r) => !r.section || r.section === "lease")
+    .reduce((sum, row) => {
+      return sum + (row.is_deduction ? -Math.abs(row.t12_amount) : row.t12_amount);
+    }, 0);
+}
+
+/**
+ * Compute full GPI: MAX(lease, occupancy) + ancillary.
+ * This is the proper gross income figure for deals with occupancy-based income.
+ */
+export function computeT12GPI(income: DealIncomeRow[]): number {
+  const leaseNet = income
+    .filter((r) => !r.section || r.section === "lease")
+    .reduce((sum, row) => sum + (row.is_deduction ? -Math.abs(row.t12_amount) : row.t12_amount), 0);
+
+  const occTotal = income
+    .filter((r) => r.section === "occupancy")
+    .reduce((sum, row) => sum + row.t12_amount, 0);
+
+  const ancTotal = income
+    .filter((r) => r.section === "ancillary")
+    .reduce((sum, row) => sum + row.t12_amount, 0);
+
+  return Math.max(leaseNet, occTotal) + ancTotal;
 }
 
 export function computeT12TotalExpenses(expenses: DealExpenseRow[]): number {
@@ -141,7 +172,7 @@ export function computeT12TotalExpenses(expenses: DealExpenseRow[]): number {
 }
 
 export function computeT12NOI(income: DealIncomeRow[], expenses: DealExpenseRow[]): number {
-  return computeT12NetRevenue(income) - computeT12TotalExpenses(expenses);
+  return computeT12GPI(income) - computeT12TotalExpenses(expenses);
 }
 
 // ── Annual Debt Service ──
@@ -168,37 +199,128 @@ export function computeAnnualDebtService(uw: DealUWRecord): number {
   return annual;
 }
 
+export interface DebtTrancheInput {
+  tranche_type: string;
+  loan_amount: number;
+  interest_rate: number;
+  amortization_years: number;
+  is_io: boolean;
+  ltv_pct: number;
+  takeout_year?: number;
+}
+
+export function computeMultiTrancheAnnualDS(
+  tranches: DebtTrancheInput[],
+  purchasePrice: number,
+): number {
+  let total = 0;
+  for (const t of tranches) {
+    if (t.tranche_type === "takeout") continue;
+    const loanAmt = t.loan_amount > 0 ? t.loan_amount : Math.round(purchasePrice * (t.ltv_pct / 100));
+    const rate = t.interest_rate;
+    if (loanAmt <= 0 || rate <= 0) continue;
+    if (t.is_io) {
+      total += loanAmt * (rate / 100);
+    } else {
+      const amortMonths = (t.amortization_years || 30) * 12;
+      total += calcMonthlyPayment(loanAmt, rate, amortMonths) * 12;
+    }
+  }
+  return total;
+}
+
 // ── 5-Year Pro Forma ──
+
+/**
+ * Helper: compute yearly GPI from section-aware income.
+ * Returns MAX(lease, occupancy) + ancillary for a given year.
+ */
+function computeYearGPI(
+  income: DealIncomeRow[],
+  yr: number,
+  holdYears: number,
+  stabVacPct?: number,
+): { incomeRows: { label: string; amount: number; isDeduction: boolean }[]; netRevenue: number } {
+  const leaseRows = income.filter((r) => !r.section || r.section === "lease");
+  const occRows = income.filter((r) => r.section === "occupancy");
+  const ancRows = income.filter((r) => r.section === "ancillary");
+
+  const growAmount = (row: DealIncomeRow, year: number) => {
+    if (year === 0) return row.t12_amount;
+    if (year === 1) return row.year_1_amount;
+    if (year === 99) return row.year_1_amount * Math.pow(1 + row.growth_rate, holdYears - 1);
+    return row.year_1_amount * Math.pow(1 + row.growth_rate, year - 1);
+  };
+
+  // Build lease income rows
+  const leaseIncomeRows = leaseRows
+    .sort((a, b) => a.sort_order - b.sort_order)
+    .map((row) => {
+      let amount = growAmount(row, yr);
+      // For stabilized: replace vacancy with stabilized vacancy %
+      if (yr === 99 && stabVacPct != null && row.is_deduction && row.line_item.toLowerCase().includes("vacancy")) {
+        const gpr = leaseRows
+          .filter((r) => !r.is_deduction)
+          .reduce((sum, r) => sum + growAmount(r, 99), 0);
+        amount = gpr * (stabVacPct / 100);
+      }
+      return {
+        label: row.line_item,
+        amount: row.is_deduction ? -Math.abs(amount) : amount,
+        isDeduction: row.is_deduction,
+      };
+    });
+  const leaseNet = leaseIncomeRows.reduce((sum, r) => sum + r.amount, 0);
+
+  // Occupancy revenue (simple sum, no deductions)
+  const occRevenue = occRows.reduce((sum, row) => sum + growAmount(row, yr), 0);
+
+  // Ancillary revenue
+  const ancRevenue = ancRows.reduce((sum, row) => sum + growAmount(row, yr), 0);
+
+  // Build display rows: show all sections
+  const allDisplayRows = [
+    ...leaseIncomeRows,
+  ];
+
+  if (occRows.length > 0) {
+    allDisplayRows.push({
+      label: "Occupancy-Based Income",
+      amount: occRevenue,
+      isDeduction: false,
+    });
+  }
+
+  if (ancRows.length > 0) {
+    for (const row of ancRows.sort((a, b) => a.sort_order - b.sort_order)) {
+      allDisplayRows.push({
+        label: `Ancillary: ${row.line_item}`,
+        amount: growAmount(row, yr),
+        isDeduction: false,
+      });
+    }
+  }
+
+  // GPI = MAX(lease, occ) + ancillary
+  const primaryIncome = occRows.length > 0 ? Math.max(leaseNet, occRevenue) : leaseNet;
+  const netRevenue = primaryIncome + ancRevenue;
+
+  return { incomeRows: allDisplayRows, netRevenue };
+}
 
 export function computeProForma(
   income: DealIncomeRow[],
   expenses: DealExpenseRow[],
-  uw: DealUWRecord
+  uw: DealUWRecord,
+  options?: { stabilizedVacancyPct?: number }
 ): ProFormaYearResult[] {
   const holdYears = n(uw.hold_period_years) || 5;
   const annualDS = computeAnnualDebtService(uw);
+  const stabVacPct = options?.stabilizedVacancyPct ?? 5;
   const results: ProFormaYearResult[] = [];
 
   for (let yr = 0; yr <= Math.min(holdYears, 5); yr++) {
-    const incomeRows = income
-      .sort((a, b) => a.sort_order - b.sort_order)
-      .map((row) => {
-        let amount: number;
-        if (yr === 0) {
-          amount = row.t12_amount;
-        } else if (yr === 1) {
-          amount = row.year_1_amount;
-        } else {
-          amount = row.year_1_amount * Math.pow(1 + row.growth_rate, yr - 1);
-        }
-        return {
-          label: row.line_item,
-          amount: row.is_deduction ? -Math.abs(amount) : amount,
-          isDeduction: row.is_deduction,
-        };
-      });
-
-    const netRevenue = incomeRows.reduce((sum, r) => sum + r.amount, 0);
+    const { incomeRows, netRevenue } = computeYearGPI(income, yr, holdYears);
 
     const expenseRows = expenses
       .sort((a, b) => a.sort_order - b.sort_order)
@@ -238,6 +360,41 @@ export function computeProForma(
       debtService: ds,
       cashFlowBeforeTax: cfbt,
       dscr,
+    });
+  }
+
+  // Stabilized Year (year = 99)
+  const yr5 = results.find((r) => r.year === holdYears);
+  if (yr5) {
+    const { incomeRows: stabIncomeRows, netRevenue: stabNetRevenue } =
+      computeYearGPI(income, 99, holdYears, stabVacPct);
+
+    const stabExpenseRows = expenses
+      .sort((a, b) => a.sort_order - b.sort_order)
+      .map((row) => {
+        let amount: number;
+        if (row.is_percentage) {
+          amount = stabNetRevenue * row.year_1_amount;
+        } else {
+          amount = row.year_1_amount * Math.pow(1 + row.growth_rate, holdYears - 1);
+        }
+        return { label: row.category, amount };
+      });
+
+    const stabTotalExpenses = stabExpenseRows.reduce((sum, r) => sum + r.amount, 0);
+    const stabNOI = stabNetRevenue - stabTotalExpenses;
+
+    results.push({
+      year: 99,
+      label: "Stabilized",
+      incomeRows: stabIncomeRows,
+      netRevenue: stabNetRevenue,
+      expenseRows: stabExpenseRows,
+      totalExpenses: stabTotalExpenses,
+      noi: stabNOI,
+      debtService: 0,
+      cashFlowBeforeTax: stabNOI,
+      dscr: 0,
     });
   }
 

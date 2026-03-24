@@ -13,7 +13,8 @@ import {
 import { KpiCard } from "@/components/shared/kpi-card";
 import { AddContactDialog } from "@/components/crm/add-contact-dialog";
 import { AddCompanyDialog } from "@/components/crm/add-company-dialog";
-import { DeleteContactButton } from "@/components/crm/delete-contact-button";
+import { useConfirm } from "@/components/shared/ConfirmDialog";
+import { deleteCrmContactAction, deleteCrmCompanyAction } from "@/app/(authenticated)/(admin)/contacts/actions";
 import {
   CRM_RELATIONSHIP_TYPES,
   CRM_LIFECYCLE_STAGES,
@@ -21,6 +22,7 @@ import {
 } from "@/lib/constants";
 import { formatDate } from "@/lib/format";
 import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
 import {
   Users,
   Building2,
@@ -34,21 +36,28 @@ import {
   TrendingUp,
   CheckCircle2,
   DollarSign,
+  Trash2,
 } from "lucide-react";
-import { CrmAvatar, RelPill, StageDot, CompanyStatusDot } from "./crm-primitives";
-import { DeleteCompanyButton } from "./delete-company-button";
+import { CrmAvatar, RelPill, StageDot, CompanyStatusDot, getInitials } from "./crm-primitives";
+import { EmptyState } from "@/components/shared/EmptyState";
+import { showSuccess, showError } from "@/lib/toast";
 import { ClickToCallNumber } from "@/components/ui/ClickToCallNumber";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Badge } from "@/components/ui/badge";
+import Link from "next/link";
 
 // ── Types ────────────────────────────────────────────────────────────────
 
 export interface CrmContactRow {
   id: string;
+  contact_number: string;
   first_name: string;
   last_name: string;
   email: string | null;
   phone: string | null;
   company_name: string | null;
   company_id: string | null;
+  company_number: string | null;
   lifecycle_stage: string | null;
   dnc: boolean;
   source: string | null;
@@ -67,6 +76,7 @@ export interface CrmContactRow {
 
 export interface CompanyRowV2 {
   id: string;
+  company_number: string;
   name: string;
   email: string | null;
   phone: string | null;
@@ -81,6 +91,7 @@ export interface CompanyRowV2 {
   active_deals: number;
   is_active: boolean | null;
   notes: string | null;
+  created_at: string;
 }
 
 interface TeamMember {
@@ -109,6 +120,7 @@ export function CrmV2Page({
 }: CrmV2PageProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const confirm = useConfirm();
 
   // View state
   const [activeView, setActiveView] = useState<"contacts" | "companies">(initialView);
@@ -503,7 +515,7 @@ export function CrmV2Page({
               )}
               <button
                 onClick={clearAllFilters}
-                className="text-xs text-blue-600 dark:text-blue-400 hover:underline"
+                className="text-xs text-primary hover:underline"
               >
                 Clear All
               </button>
@@ -532,21 +544,21 @@ export function CrmV2Page({
                 <tbody>
                   {filteredContacts.length === 0 ? (
                     <tr>
-                      <td colSpan={isSuperAdmin ? 9 : 8} className="text-center py-16">
+                      <td colSpan={isSuperAdmin ? 9 : 8}>
                         {hasContactFilters ? (
-                          <div>
-                            <Users className="h-8 w-8 text-muted-foreground/40 mx-auto mb-2" />
-                            <p className="text-sm font-medium text-muted-foreground">No contacts match your filters</p>
-                            <button onClick={clearAllFilters} className="text-xs text-blue-600 dark:text-blue-400 mt-1 hover:underline">
-                              Clear Filters
-                            </button>
-                          </div>
+                          <EmptyState
+                            icon={Users}
+                            title="No contacts match your filters"
+                            action={{ label: "Clear Filters", onClick: clearAllFilters }}
+                            compact
+                          />
                         ) : (
-                          <div>
-                            <Users className="h-8 w-8 text-muted-foreground/40 mx-auto mb-2" />
-                            <p className="text-sm font-medium text-muted-foreground">No contacts yet</p>
-                            <p className="text-xs text-muted-foreground mt-1">Add your first contact to start building your CRM</p>
-                          </div>
+                          <EmptyState
+                            icon={Users}
+                            title="No contacts yet"
+                            description="Add your first contact to start building your CRM"
+                            compact
+                          />
                         )}
                       </td>
                     </tr>
@@ -554,43 +566,96 @@ export function CrmV2Page({
                     filteredContacts.map((c, i) => (
                       <tr
                         key={c.id}
-                        onClick={() => router.push(`/admin/crm/${c.id}`)}
+                        onClick={() => router.push(`/contacts/${c.contact_number}`)}
                         className={cn(
                           "cursor-pointer transition-colors hover:bg-muted/50",
                           i < filteredContacts.length - 1 && "border-b border-border/50"
                         )}
                       >
-                        <td className="px-4 py-3">
-                          <span className="text-sm font-medium text-blue-600 dark:text-blue-400">
-                            {c.first_name} {c.last_name}
-                          </span>
+                        <td className="px-4 py-2.5">
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <div className="flex items-center gap-2 min-w-0">
+                                  <CrmAvatar 
+                                    text={getInitials(c.first_name || "", c.last_name || "")} 
+                                    size="sm" 
+                                  />
+                                  <span className="text-sm font-medium text-primary truncate max-w-[180px]">
+                                    {[c.first_name, c.last_name].filter(Boolean).join(" ") || "Unknown"}
+                                  </span>
+                                </div>
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                <p>{[c.first_name, c.last_name].filter(Boolean).join(" ") || "Unknown"}</p>
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
                         </td>
-                        <td className="px-4 py-3 text-sm text-muted-foreground">
-                          {c.company_name || "—"}
+                        <td className="px-4 py-2.5 text-sm max-w-[200px] truncate">
+                          {c.company_number ? (
+                            <Link
+                              href={`/companies/${c.company_number}`}
+                              onClick={(e) => e.stopPropagation()}
+                              className="text-muted-foreground hover:text-foreground hover:underline transition-colors"
+                            >
+                              {c.company_name}
+                            </Link>
+                          ) : (
+                            <span className="text-muted-foreground">{c.company_name || "—"}</span>
+                          )}
                         </td>
-                        <td className="px-4 py-3">
-                          <div className="flex flex-wrap gap-1">
-                            {c.relationships.length > 0 ? (
-                              c.relationships.map((r) => <RelPill key={r} type={r} />)
-                            ) : (
-                              <span className="text-xs text-muted-foreground">—</span>
-                            )}
-                          </div>
+                        <td className="px-4 py-2.5">
+                          {c.relationships.length === 0 ? (
+                            <span className="text-xs text-muted-foreground">—</span>
+                          ) : c.relationships.length <= 2 ? (
+                            <div className="flex items-center gap-1 flex-nowrap">
+                              {c.relationships.map((r) => <RelPill key={r} type={r} />)}
+                            </div>
+                          ) : (
+                            <TooltipProvider>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <div className="flex items-center gap-1 flex-nowrap">
+                                    {c.relationships.slice(0, 1).map((r) => <RelPill key={r} type={r} />)}
+                                    <Badge
+                                      variant="outline"
+                                      className="rounded-full text-[11px] font-medium bg-muted text-muted-foreground border-border shrink-0"
+                                    >
+                                      +{c.relationships.length - 1}
+                                    </Badge>
+                                  </div>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                  <div className="flex flex-col gap-1">
+                                    {c.relationships.map((r) => {
+                                      const label = CRM_RELATIONSHIP_TYPES.find((rel) => rel.value === r)?.label ?? r;
+                                      return (
+                                        <span key={r} className="text-xs">
+                                          {label}
+                                        </span>
+                                      );
+                                    })}
+                                  </div>
+                                </TooltipContent>
+                              </Tooltip>
+                            </TooltipProvider>
+                          )}
                         </td>
-                        <td className="px-4 py-3 text-sm text-muted-foreground max-w-[200px] truncate">
+                        <td className="px-4 py-2.5 text-sm text-muted-foreground max-w-[220px] truncate">
                           {c.email || "—"}
                         </td>
-                        <td className="px-4 py-3 text-sm text-muted-foreground whitespace-nowrap">
+                        <td className="px-4 py-2.5 text-sm text-muted-foreground whitespace-nowrap">
                           <ClickToCallNumber number={c.phone} />
                         </td>
-                        <td className="px-4 py-3">
+                        <td className="px-4 py-2.5">
                           <StageDot stage={c.lifecycle_stage} />
                         </td>
-                        <td className="px-4 py-3">
+                        <td className="px-4 py-2.5">
                           {c.assigned_to_name ? (
                             <div className="flex items-center gap-1.5">
                               <CrmAvatar text={c.assigned_to_initials ?? c.assigned_to_name.split(" ").map((p: string) => p[0]).join("").toUpperCase()} size="sm" />
-                              <span className="text-xs text-muted-foreground whitespace-nowrap">
+                              <span className="text-xs text-muted-foreground whitespace-nowrap truncate max-w-[100px]">
                                 {c.assigned_to_name.split(" ")[0]}
                               </span>
                             </div>
@@ -598,16 +663,34 @@ export function CrmV2Page({
                             <span className="text-xs text-muted-foreground italic">—</span>
                           )}
                         </td>
-                        <td className="px-4 py-3 num text-xs text-muted-foreground whitespace-nowrap">
+                        <td className="px-4 py-2.5 num text-xs text-muted-foreground whitespace-nowrap">
                           {c.last_contacted_at ? formatDate(c.last_contacted_at) : "—"}
                         </td>
                         {isSuperAdmin && (
-                          <td className="px-4 py-3 text-center" onClick={(e) => e.stopPropagation()}>
-                            <DeleteContactButton
-                              contactId={c.id}
-                              contactName={`${c.first_name} ${c.last_name}`}
-                              variant="icon"
-                            />
+                          <td className="px-4 py-2.5 text-center" onClick={(e) => e.stopPropagation()}>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-7 w-7 p-0 text-red-600 hover:text-red-700"
+                              onClick={async () => {
+                                const ok = await confirm({
+                                  title: "Delete contact?",
+                                  description: `This will remove "${c.first_name} ${c.last_name}" from the CRM. This action cannot be undone.`,
+                                  confirmLabel: "Delete",
+                                  destructive: true,
+                                });
+                                if (!ok) return;
+                                const result = await deleteCrmContactAction(c.id);
+                                if (result.error) {
+                                  showError("Could not delete contact", result.error);
+                                } else {
+                                  showSuccess("Contact deleted");
+                                  router.refresh();
+                                }
+                              }}
+                            >
+                              <Trash2 className="h-3.5 w-3.5" />
+                            </Button>
                           </td>
                         )}
                       </tr>
@@ -671,16 +754,19 @@ export function CrmV2Page({
                 <tbody>
                   {filteredCompanies.length === 0 ? (
                     <tr>
-                      <td colSpan={isSuperAdmin ? 8 : 7} className="text-center py-16">
-                        <Building2 className="h-8 w-8 text-muted-foreground/40 mx-auto mb-2" />
-                        <p className="text-sm font-medium text-muted-foreground">No companies found</p>
+                      <td colSpan={isSuperAdmin ? 8 : 7}>
+                        <EmptyState
+                          icon={Building2}
+                          title="No companies found"
+                          compact
+                        />
                       </td>
                     </tr>
                   ) : (
                     filteredCompanies.map((c, i) => (
                       <tr
                         key={c.id}
-                        onClick={() => router.push(`/admin/crm/companies/${c.id}`)}
+                        onClick={() => router.push(`/companies/${c.company_number}`)}
                         className={cn(
                           "cursor-pointer transition-colors hover:bg-muted/50",
                           i < filteredCompanies.length - 1 && "border-b border-border/50"
@@ -688,10 +774,10 @@ export function CrmV2Page({
                       >
                         <td className="px-4 py-3">
                           <div className="flex items-center gap-2.5">
-                            <div className="h-8 w-8 rounded-lg bg-blue-50 dark:bg-blue-950/30 border border-blue-100 dark:border-blue-900 flex items-center justify-center shrink-0">
-                              <Building2 className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                            <div className="h-8 w-8 rounded-lg bg-muted flex items-center justify-center shrink-0">
+                              <Building2 className="h-4 w-4 text-muted-foreground" />
                             </div>
-                            <span className="text-sm font-medium text-blue-600 dark:text-blue-400">
+                            <span className="text-sm font-medium text-primary">
                               {c.name}
                             </span>
                           </div>
@@ -715,11 +801,29 @@ export function CrmV2Page({
                         </td>
                         {isSuperAdmin && (
                           <td className="px-4 py-3 text-center" onClick={(e) => e.stopPropagation()}>
-                            <DeleteCompanyButton
-                              companyId={c.id}
-                              companyName={c.name}
-                              variant="icon"
-                            />
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-7 w-7 p-0 text-red-600 hover:text-red-700"
+                              onClick={async () => {
+                                const ok = await confirm({
+                                  title: "Delete company?",
+                                  description: `This will remove "${c.name}" from the CRM. This action cannot be undone.`,
+                                  confirmLabel: "Delete",
+                                  destructive: true,
+                                });
+                                if (!ok) return;
+                                const result = await deleteCrmCompanyAction(c.id);
+                                if (result.error) {
+                                  showError("Could not delete company", result.error);
+                                } else {
+                                  showSuccess("Company deleted");
+                                  router.refresh();
+                                }
+                              }}
+                            >
+                              <Trash2 className="h-3.5 w-3.5" />
+                            </Button>
                           </td>
                         )}
                       </tr>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -23,11 +23,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useToast } from "@/components/ui/use-toast";
+import { showSuccess, showError, showWarning } from "@/lib/toast";
 import { DatePicker } from "@/components/ui/date-picker";
 import { Switch } from "@/components/ui/switch";
-import { PlusCircle, Loader2, Shield, AlertCircle } from "lucide-react";
-import { createTaskApproval } from "@/app/(authenticated)/admin/operations/tasks/actions";
+import { PlusCircle, Loader2, Shield, AlertCircle, Paperclip, X, FileText, Upload } from "lucide-react";
+import { createTaskApproval } from "@/app/(authenticated)/(admin)/tasks/actions";
 import type { OpsProject } from "./ProjectCard";
 import type { TeamMember } from "./OperationsView";
 import {
@@ -35,7 +35,7 @@ import {
   OPS_TASK_PRIORITIES,
   OPS_TASK_CATEGORIES,
 } from "@/lib/constants/db-enums";
-import { RecurrencePanel } from "@/app/(authenticated)/admin/operations/tasks/recurrence-panel";
+import { RecurrencePanel } from "@/app/(authenticated)/(admin)/tasks/recurrence-panel";
 import { composeRecurrencePattern } from "@/lib/recurrence-utils";
 
 const STATUSES = OPS_TASK_STATUSES;
@@ -70,13 +70,17 @@ export function AddTaskDialog({ projects, teamMembers, externalOpen, onExternalO
   const [loading, setLoading] = useState(false);
   const [form, setForm] = useState(INITIAL_FORM);
   const router = useRouter();
-  const { toast } = useToast();
 
   // Approval state
   const [requiresApproval, setRequiresApproval] = useState(false);
   const [approverId, setApproverId] = useState("");
   const [approvalInstructions, setApprovalInstructions] = useState("");
   const [selectedAssigneeId, setSelectedAssigneeId] = useState("");
+
+  // File attachment state
+  const fileRef = useRef<HTMLInputElement>(null);
+  const [stagedFiles, setStagedFiles] = useState<File[]>([]);
+  const [isDragging, setIsDragging] = useState(false);
 
   // Recurrence state
   const [recurrencePattern, setRecurrencePattern] = useState("weekly");
@@ -87,12 +91,62 @@ export function AddTaskDialog({ projects, teamMembers, externalOpen, onExternalO
   const [recurrenceStartDate, setRecurrenceStartDate] = useState("");
   const [recurrenceEndDate, setRecurrenceEndDate] = useState("");
 
+  const addFiles = useCallback((files: FileList | File[]) => {
+    const arr = Array.from(files);
+    setStagedFiles((prev) => [...prev, ...arr]);
+  }, []);
+
+  const handleDragOver = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(true);
+  }, []);
+
+  const handleDragLeave = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+  }, []);
+
+  const handleDrop = useCallback(
+    (e: React.DragEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      setIsDragging(false);
+      if (e.dataTransfer.files?.length) {
+        addFiles(e.dataTransfer.files);
+      }
+    },
+    [addFiles]
+  );
+
+  const handlePaste = useCallback(
+    (e: React.ClipboardEvent) => {
+      const items = e.clipboardData?.items;
+      if (!items) return;
+
+      const files: File[] = [];
+      for (let i = 0; i < items.length; i++) {
+        const item = items[i];
+        if (item.kind === "file") {
+          const file = item.getAsFile();
+          if (file) files.push(file);
+        }
+      }
+      if (files.length === 0) return;
+      e.preventDefault();
+      addFiles(files);
+    },
+    [addFiles]
+  );
+
   function resetForm() {
     setForm(INITIAL_FORM);
     setRequiresApproval(false);
     setApproverId("");
     setApprovalInstructions("");
     setSelectedAssigneeId("");
+    setStagedFiles([]);
     setRecurrencePattern("weekly");
     setRecurrenceDaysOfWeek([]);
     setRecurrenceDayOfMonth(1);
@@ -106,17 +160,17 @@ export function AddTaskDialog({ projects, teamMembers, externalOpen, onExternalO
     e.preventDefault();
 
     if (!form.title.trim()) {
-      toast({ title: "Task title is required", variant: "destructive" });
+      showWarning("Task title is required");
       return;
     }
 
     if (requiresApproval && !approverId) {
-      toast({ title: "Approver is required when approval is enabled", variant: "destructive" });
+      showWarning("Approver is required when approval is enabled");
       return;
     }
 
     if (requiresApproval && approverId && selectedAssigneeId && approverId === selectedAssigneeId) {
-      toast({ title: "Approver cannot be the same as assignee", variant: "destructive" });
+      showWarning("Approver cannot be the same as assignee");
       return;
     }
 
@@ -128,7 +182,7 @@ export function AddTaskDialog({ projects, teamMembers, externalOpen, onExternalO
       } = await supabase.auth.getUser();
 
       if (!user) {
-        toast({ title: "You must be logged in", variant: "destructive" });
+        showError("You must be logged in");
         return;
       }
 
@@ -164,11 +218,7 @@ export function AddTaskDialog({ projects, teamMembers, externalOpen, onExternalO
       }).select("id").single();
 
       if (error) {
-        toast({
-          title: "Error creating task",
-          description: error.message,
-          variant: "destructive",
-        });
+        showError("Could not create task", error.message);
         return;
       }
 
@@ -184,12 +234,38 @@ export function AddTaskDialog({ projects, teamMembers, externalOpen, onExternalO
         }
       }
 
-      toast({ title: "Task created successfully" });
+      // Upload staged files
+      if (insertedTask?.id && stagedFiles.length > 0) {
+        for (const file of stagedFiles) {
+          const path = `tasks/${insertedTask.id}/${Date.now()}_${file.name}`;
+          const { error: uploadError } = await supabase.storage
+            .from("loan-documents")
+            .upload(path, file);
+
+          if (uploadError) {
+            showError("Could not upload file", `${file.name}: ${uploadError.message}`);
+            continue;
+          }
+
+          await supabase
+            .from("ops_task_attachments" as never)
+            .insert({
+              task_id: insertedTask.id,
+              file_name: file.name,
+              file_type: file.type || null,
+              storage_path: path,
+              file_size_bytes: file.size,
+              uploaded_by: user.id,
+            } as never);
+        }
+      }
+
+      showSuccess("Task created");
       setOpen(false);
       resetForm();
       router.refresh();
     } catch {
-      toast({ title: "An unexpected error occurred", variant: "destructive" });
+      showError("An unexpected error occurred");
     } finally {
       setLoading(false);
     }
@@ -364,8 +440,69 @@ export function AddTaskDialog({ projects, teamMembers, externalOpen, onExternalO
               onChange={(e) =>
                 setForm({ ...form, description: e.target.value })
               }
+              onPaste={handlePaste}
               rows={2}
             />
+          </div>
+
+          {/* Attachments — drag & drop zone */}
+          <div className="space-y-1.5">
+            <Label>Attachments</Label>
+            <input
+              ref={fileRef}
+              type="file"
+              accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.csv"
+              multiple
+              onChange={(e) => {
+                if (e.target.files?.length) addFiles(e.target.files);
+                e.target.value = "";
+              }}
+              className="hidden"
+            />
+            <div
+              tabIndex={0}
+              onDragOver={handleDragOver}
+              onDragLeave={handleDragLeave}
+              onDrop={handleDrop}
+              onPaste={handlePaste}
+              onClick={() => fileRef.current?.click()}
+              className={`flex flex-col items-center justify-center gap-1 py-3 rounded-md border border-dashed cursor-pointer transition-colors outline-none focus:border-primary focus:ring-1 focus:ring-primary/20 ${
+                isDragging
+                  ? "border-primary bg-primary/5"
+                  : "border-border hover:border-ring/50"
+              }`}
+            >
+              <Upload className="h-4 w-4 text-muted-foreground" strokeWidth={1.5} />
+              <span className="text-[12px] text-muted-foreground">
+                Drop files or paste (Ctrl+V) here
+              </span>
+            </div>
+            {stagedFiles.length > 0 && (
+              <div className="space-y-1">
+                {stagedFiles.map((file, i) => (
+                  <div
+                    key={`${file.name}-${i}`}
+                    className="flex items-center gap-2 px-2 py-1.5 bg-secondary rounded-md border border-border"
+                  >
+                    <FileText className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" strokeWidth={1.5} />
+                    <span className="text-[12px] font-medium flex-1 truncate">{file.name}</span>
+                    <span className="text-[10px] text-muted-foreground">
+                      {(file.size / 1024).toFixed(0)}KB
+                    </span>
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setStagedFiles((prev) => prev.filter((_, idx) => idx !== i));
+                      }}
+                      className="text-muted-foreground hover:text-foreground p-0.5"
+                    >
+                      <X className="h-3.5 w-3.5" strokeWidth={1.5} />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* Approval toggle */}

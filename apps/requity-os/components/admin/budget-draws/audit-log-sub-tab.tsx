@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { StatusBadge } from "@/components/shared/status-badge";
-import { formatCurrency, formatDate } from "@/lib/format";
+import { formatCurrency, formatDate, formatDateTime } from "@/lib/format";
 import {
   Select,
   SelectContent,
@@ -156,14 +156,7 @@ export function AuditLogSubTab({
           <div className="space-y-0">
             {filtered.map((entry, idx) => {
               const isLast = idx === filtered.length - 1;
-              const timestamp = new Date(entry.timestamp);
-              const timeStr = timestamp.toLocaleDateString("en-US", {
-                month: "short",
-                day: "numeric",
-                year: "numeric",
-                hour: "numeric",
-                minute: "2-digit",
-              });
+              const timeStr = formatDateTime(entry.timestamp);
 
               return (
                 <div key={entry.id} className="flex gap-3">

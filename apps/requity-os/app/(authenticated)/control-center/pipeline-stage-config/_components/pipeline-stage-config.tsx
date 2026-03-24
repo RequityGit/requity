@@ -13,7 +13,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useToast } from "@/components/ui/use-toast";
+import { showSuccess, showError } from "@/lib/toast";
 import {
   ChevronDown,
   ChevronRight,
@@ -32,7 +32,7 @@ import type {
 import { upsertStage, addRule, deleteRule } from "../actions";
 
 // ---------------------------------------------------------------------------
-// Stage color map (matches pipeline-v2 visual palette)
+// Stage color map (matches pipeline visual palette)
 // ---------------------------------------------------------------------------
 
 const STAGE_COLORS: Record<string, string> = {
@@ -66,7 +66,6 @@ const FIELD_OPTIONS: { value: string; label: string }[] = [
   { value: "company_id", label: "Company" },
   { value: "expected_close_date", label: "Expected Close Date" },
   { value: "capital_side", label: "Capital Side" },
-  { value: "card_type_id", label: "Card Type" },
   // Common uw_data fields
   { value: "uw:loan_amount", label: "UW — Loan Amount" },
   { value: "uw:property_value", label: "UW — Property Value" },
@@ -248,7 +247,6 @@ function StageCard({
   const [alertDays, setAlertDays] = useState(stage.alert_days ?? 10);
   const [addingRule, setAddingRule] = useState(false);
   const [isPending, startTransition] = useTransition();
-  const { toast } = useToast();
 
   const rules = stage.unified_stage_rules ?? [];
 
@@ -259,16 +257,12 @@ function StageCard({
     startTransition(async () => {
       const result = await upsertStage(stage.id, { [field]: value });
       if (result.error) {
-        toast({
-          title: "Failed to update threshold",
-          description: result.error,
-          variant: "destructive",
-        });
+        showError("Could not update threshold", result.error);
         if (field === "warn_days") setWarnDays(stage.warn_days ?? 5);
         else setAlertDays(stage.alert_days ?? 10);
       } else {
         onStageUpdate({ ...stage, [field]: value });
-        toast({ title: `${STAGE_LABELS[stage.stage] ?? stage.stage} ${field === "warn_days" ? "warn" : "alert"} threshold updated` });
+        showSuccess(`${STAGE_LABELS[stage.stage] ?? stage.stage} ${field === "warn_days" ? "warn" : "alert"} threshold updated`);
       }
     });
   }
@@ -277,11 +271,7 @@ function StageCard({
     startTransition(async () => {
       const result = await addRule(stage.id, fieldKey, errorMessage);
       if (result.error) {
-        toast({
-          title: "Failed to add rule",
-          description: result.error,
-          variant: "destructive",
-        });
+        showError("Could not add rule", result.error);
       } else {
         const newRule: UnifiedStageRule = {
           id: crypto.randomUUID(),
@@ -295,7 +285,7 @@ function StageCard({
           unified_stage_rules: [...rules, newRule],
         });
         setAddingRule(false);
-        toast({ title: `Rule added to ${STAGE_LABELS[stage.stage] ?? stage.stage}` });
+        showSuccess(`Rule added to ${STAGE_LABELS[stage.stage] ?? stage.stage}`);
       }
     });
   }
@@ -304,17 +294,13 @@ function StageCard({
     startTransition(async () => {
       const result = await deleteRule(ruleId);
       if (result.error) {
-        toast({
-          title: "Failed to delete rule",
-          description: result.error,
-          variant: "destructive",
-        });
+        showError("Could not delete rule", result.error);
       } else {
         onStageUpdate({
           ...stage,
           unified_stage_rules: rules.filter((r) => r.id !== ruleId),
         });
-        toast({ title: "Rule removed" });
+        showSuccess("Rule removed");
       }
     });
   }

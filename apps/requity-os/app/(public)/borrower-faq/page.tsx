@@ -196,7 +196,7 @@ export default function BorrowerFaqPage() {
               {t.heroDesc}
             </p>
             <div className="fq-hero-actions" style={{ opacity: 0, animation: 'fadeUp 0.8s 0.8s forwards' }}>
-              <Link href="/apply" className="btn-primary">Apply for a Loan <ArrowIcon /></Link>
+              <Link href="https://requitygroup.com/lending/apply" className="btn-primary">Apply for a Loan <ArrowIcon /></Link>
               <Link href="/investor-faq" className="btn-secondary">Investor FAQs <ArrowIcon /></Link>
             </div>
           </div>
@@ -264,7 +264,7 @@ export default function BorrowerFaqPage() {
               <h2>Have a Deal? <em>Let&apos;s Talk.</em></h2>
               <p>Our lending team is available to discuss your project and provide a quick indication of terms. No obligation, no credit pull.</p>
               <div className="fq-cta-actions">
-                <Link href="/apply" className="btn-primary" style={{ borderRadius: 8 }}>
+                <Link href="https://requitygroup.com/lending/apply" className="btn-primary" style={{ borderRadius: 8 }}>
                   Submit Loan Request <ArrowIcon />
                 </Link>
                 <a href="tel:+18133275180" className="btn-secondary">
@@ -283,7 +283,7 @@ export default function BorrowerFaqPage() {
               </div>
               <div className="footer-col"><h4>{f.company}</h4><Link href="/about">{f.about}</Link><Link href="/portfolio">{f.portfolio}</Link><Link href="/insights">{f.insights}</Link></div>
               <div className="footer-col"><h4>{f.invest}</h4><Link href="/income-fund">{f.incomeFund}</Link><a href="https://investors.appfolioim.com/trg/investor/login">{f.investorLogin}</a><Link href="/request-access">{f.requestAccess}</Link><Link href="/investor-faq">{f.investorFaq}</Link></div>
-              <div className="footer-col"><h4>{f.lending}</h4><Link href="/lending">{f.loanPrograms}</Link><Link href="/apply">{f.requestQuote}</Link><Link href="/apply">{f.loanApplication}</Link><Link href="/borrower-faq">{f.borrowerFaq}</Link></div>
+              <div className="footer-col"><h4>{f.lending}</h4><Link href="/lending">{f.loanPrograms}</Link><Link href="https://requitygroup.com/lending/apply">{f.requestQuote}</Link><Link href="https://requitygroup.com/lending/apply">{f.loanApplication}</Link><Link href="/borrower-faq">{f.borrowerFaq}</Link></div>
             </div>
             <div className="footer-bottom">
               <p>{f.copyright} &nbsp;|&nbsp; {f.address} &nbsp;|&nbsp; {f.phone}</p>

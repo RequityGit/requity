@@ -1,7 +1,20 @@
 "use client";
 
-import type { ReactNode } from "react";
+import React, { useState, useCallback, type ReactNode } from "react";
 import { Badge } from "@/components/ui/badge";
+import { cn } from "@/lib/utils";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
+import { Textarea } from "@/components/ui/textarea";
+import { DatePicker } from "@/components/ui/date-picker";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   FieldRow,
   MonoValue,
@@ -10,9 +23,10 @@ import type {
   CrmSectionField,
   CrmFieldType,
 } from "@/components/crm/crm-edit-section-dialog";
-import { formatCurrency, formatDate, formatPhoneNumber, formatPhoneInput } from "@/lib/format";
-import { CRM_COMPANY_TYPES, CRM_COMPANY_SUBTYPES } from "@/lib/constants";
+import { formatCurrency, formatDate, formatPhoneNumber, formatPhoneInput, formatPercent, formatEditNumber, parseEditCurrency } from "@/lib/format";
+import { evaluateFormula } from "@/lib/formula-engine";
 import type { FieldLayout } from "./contact-360/types";
+import { EditableFieldSlot } from "@/components/inline-layout-editor/EditableFieldSlot";
 
 // --- Field key → object property mapping for mismatches ---
 export const FIELD_KEY_TO_PROP: Record<string, string> = {
@@ -24,50 +38,8 @@ export const FIELD_KEY_TO_PROP: Record<string, string> = {
   is_title_co_verified: "title_company_verified",
 };
 
-// --- Dropdown option fallbacks for built-in fields not yet stored in DB ---
-export const DROPDOWN_FALLBACKS: Record<string, { label: string; value: string }[]> = {
-  lifecycle_stage: [
-    { label: "Uncontacted", value: "uncontacted" },
-    { label: "Prospect", value: "prospect" },
-    { label: "Active", value: "active" },
-    { label: "Past", value: "past" },
-  ],
-  status: [
-    { label: "Active", value: "active" },
-    { label: "Inactive", value: "inactive" },
-    { label: "Converted", value: "converted" },
-    { label: "Lost", value: "lost" },
-    { label: "Do Not Contact", value: "do_not_contact" },
-  ],
-  source: [
-    { label: "Website", value: "website" },
-    { label: "Referral", value: "referral" },
-    { label: "Cold Call", value: "cold_call" },
-    { label: "Email Campaign", value: "email_campaign" },
-    { label: "Social Media", value: "social_media" },
-    { label: "Event", value: "event" },
-    { label: "Paid Ad", value: "paid_ad" },
-    { label: "Organic", value: "organic" },
-    { label: "Broker", value: "broker" },
-    { label: "Repeat Client", value: "repeat_client" },
-    { label: "Other", value: "other" },
-  ],
-  marital_status: [
-    { label: "Single", value: "single" },
-    { label: "Married", value: "married" },
-    { label: "Divorced", value: "divorced" },
-    { label: "Widowed", value: "widowed" },
-    { label: "Separated", value: "separated" },
-  ],
-  accreditation_status: [
-    { label: "Pending", value: "pending" },
-    { label: "Verified", value: "verified" },
-    { label: "Expired", value: "expired" },
-    { label: "Not Accredited", value: "not_accredited" },
-  ],
-  company_type: CRM_COMPANY_TYPES.map((t) => ({ label: t.label, value: t.value })),
-  subtype: CRM_COMPANY_SUBTYPES.map((t) => ({ label: t.label, value: t.value })),
-};
+// Dropdown options are now fully managed in field_configurations DB table.
+// Edited via the inline layout editor on each detail page.
 
 // --- field_type → CrmFieldType mapping for edit dialogs ---
 export const FC_TYPE_TO_CRM: Record<string, CrmFieldType> = {
@@ -79,16 +51,15 @@ export const FC_TYPE_TO_CRM: Record<string, CrmFieldType> = {
   date: "date",
   boolean: "boolean",
   dropdown: "select",
+  multi_select: "multi_select",
   percentage: "number",
   team_member: "select",
   company: "select",
   relationship: "select",
 };
 
-// --- Per-field type overrides (when DB field_type doesn't match UI control) ---
-const FIELD_TYPE_OVERRIDES: Record<string, CrmFieldType> = {
-  company_type: "multi_select",
-};
+// Field types are now fully managed in field_configurations DB table.
+// company_type is field_type='multi_select' in the DB.
 
 // --- Custom renderers for fields with special display logic ---
 function renderCreditScore(val: unknown): ReactNode {
@@ -132,6 +103,9 @@ function renderExperienceCount(val: unknown): ReactNode {
   if (val == null || val === 0) return undefined;
   return `${val} transaction${val === 1 ? "" : "s"}`;
 }
+
+// Fields with custom renderers that should remain read-only in inline editing mode
+const READONLY_CUSTOM_FIELDS = new Set(["accreditation_status"]);
 
 // Map of field_key → custom render function
 // Returns undefined for "show dash", null for "skip entirely"
@@ -177,6 +151,38 @@ export function renderField(
     );
   }
 
+  // Formula field: evaluate expression against section data
+  if (f.field_type === "formula" && f.formula_expression) {
+    const result = evaluateFormula(f.formula_expression, dataObj);
+    let formulaDisplay: ReactNode;
+    if (result == null) {
+      formulaDisplay = undefined; // shows "—"
+    } else {
+      const decimals = f.formula_decimal_places ?? 2;
+      switch (f.formula_output_format) {
+        case "currency":
+          formulaDisplay = formatCurrency(result);
+          break;
+        case "percent":
+          formulaDisplay = formatPercent(result);
+          break;
+        case "number":
+          formulaDisplay = result.toFixed(decimals);
+          break;
+        default:
+          formulaDisplay = result.toFixed(decimals);
+      }
+    }
+    return (
+      <FieldRow
+        key={f.field_key}
+        label={f.field_label}
+        value={formulaDisplay}
+        mono={f.formula_output_format === "currency"}
+      />
+    );
+  }
+
   // Standard rendering by field_type
   let displayValue: ReactNode;
   switch (f.field_type) {
@@ -213,8 +219,12 @@ export function renderDynamicFields(
   fields: FieldLayout[],
   dataObj: Record<string, unknown>,
   isSuperAdmin: boolean,
+  /** Optional set of field_keys to hide (from conditional logic or permissions) */
+  hiddenFieldKeys?: Set<string>,
 ): ReactNode {
-  const visible = fields.filter((f) => f.is_visible);
+  const visible = fields
+    .filter((f) => f.is_visible)
+    .filter((f) => !hiddenFieldKeys || !hiddenFieldKeys.has(f.field_key));
 
   // Split into left/right columns and sort each by display_order
   const leftFields = visible
@@ -256,9 +266,14 @@ export function buildEditFields(
   fields: FieldLayout[],
   dataObj: Record<string, unknown>,
   isSuperAdmin: boolean,
+  /** Optional set of field_keys to hide (from conditional logic or permissions) */
+  hiddenFieldKeys?: Set<string>,
+  /** Optional set of field_keys that should be read-only (from permissions) */
+  readOnlyFieldKeys?: Set<string>,
 ): CrmSectionField[] {
   return fields
     .filter((f) => f.is_visible)
+    .filter((f) => !hiddenFieldKeys || !hiddenFieldKeys.has(f.field_key))
     .filter((f) => {
       if (f.field_key === "ssn_last4" && !isSuperAdmin) return false;
       return true;
@@ -266,8 +281,8 @@ export function buildEditFields(
     .sort((a, b) => a.display_order - b.display_order)
     .map((f) => {
       const propKey = FIELD_KEY_TO_PROP[f.field_key] ?? f.field_key;
-      const options = f.dropdown_options ?? DROPDOWN_FALLBACKS[f.field_key] ?? undefined;
-      const fieldType = FIELD_TYPE_OVERRIDES[f.field_key] ?? FC_TYPE_TO_CRM[f.field_type] ?? "text";
+      const options = f.dropdown_options ?? undefined;
+      const fieldType = FC_TYPE_TO_CRM[f.field_type] ?? "text";
 
       let value: string | number | boolean | string[] | null | undefined;
       if (fieldType === "multi_select") {
@@ -290,4 +305,401 @@ export function buildEditFields(
         showYearNavigation: f.field_key === "date_of_birth",
       };
     });
+}
+
+// ─── Inline Editing Components ───
+
+/**
+ * Global CSS classes for the hover-to-reveal inline editing pattern.
+ * Defined in globals.css so they can be used anywhere in the app.
+ *   .inline-field       — on inputs, selects, buttons (overrides h-10, bg-background, border-input)
+ *   .inline-field-label — on labels above inline fields (text-[11px] font-medium text-muted-foreground)
+ */
+
+
+function CurrencyInput({
+  label,
+  value,
+  onChange,
+  onBlur,
+  disabled,
+}: {
+  label: string;
+  value: unknown;
+  onChange: (val: unknown) => void;
+  onBlur: () => void;
+  disabled?: boolean;
+}) {
+  const [editing, setEditing] = useState(false);
+  const [rawText, setRawText] = useState("");
+
+  const handleFocus = useCallback(() => {
+    setEditing(true);
+    setRawText(value != null && value !== "" ? formatEditNumber(value) : "");
+  }, [value]);
+
+  const handleBlur = useCallback(() => {
+    setEditing(false);
+    onBlur();
+  }, [onBlur]);
+
+  const handleChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const text = e.target.value;
+      const parsed = parseEditCurrency(text);
+      const display = parsed != null ? formatEditNumber(parsed) : text.replace(/[^0-9.\-]/g, "");
+      setRawText(display);
+      onChange(parsed);
+    },
+    [onChange]
+  );
+
+  return (
+    <div className="space-y-0">
+      <span className="inline-field-label">{label}</span>
+      <div className="relative">
+        <span className="absolute left-2 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">$</span>
+        <Input
+          type="text"
+          inputMode="decimal"
+          value={editing ? rawText : formatEditNumber(value)}
+          onChange={handleChange}
+          onFocus={handleFocus}
+          onBlur={handleBlur}
+          disabled={disabled}
+          className={cn("pl-6 text-right num", "inline-field")}
+          placeholder="0"
+        />
+      </div>
+    </div>
+  );
+}
+
+function PhoneInput({
+  label,
+  value,
+  onChange,
+  onBlur,
+  disabled,
+}: {
+  label: string;
+  value: unknown;
+  onChange: (val: unknown) => void;
+  onBlur: () => void;
+  disabled?: boolean;
+}) {
+  const [editing, setEditing] = useState(false);
+  const [rawText, setRawText] = useState("");
+
+  const handleFocus = useCallback(() => {
+    setEditing(true);
+    const str = value != null ? String(value) : "";
+    setRawText(formatPhoneInput(str) || str);
+  }, [value]);
+
+  const handleBlur = useCallback(() => {
+    setEditing(false);
+    onBlur();
+  }, [onBlur]);
+
+  const displayValue = value != null && String(value) !== ""
+    ? formatPhoneNumber(String(value))
+    : "";
+
+  return (
+    <div className="space-y-0">
+      <span className="inline-field-label">{label}</span>
+      <Input
+        type="tel"
+        value={editing ? rawText : (displayValue === "\u2014" ? "" : displayValue)}
+        onChange={(e) => {
+          const formatted = formatPhoneInput(e.target.value);
+          setRawText(formatted);
+          const digits = e.target.value.replace(/\D/g, "").slice(0, 10);
+          onChange(digits || null);
+        }}
+        onFocus={handleFocus}
+        onBlur={handleBlur}
+        disabled={disabled}
+        placeholder="(555) 555-5555"
+        className={"inline-field"}
+      />
+    </div>
+  );
+}
+
+export interface CrmInlineFieldProps {
+  field: FieldLayout;
+  value: unknown;
+  onChange: (val: unknown) => void;
+  onBlur: () => void;
+  disabled?: boolean;
+  options?: { label: string; value: string }[];
+  showYearNavigation?: boolean;
+  onAddNew?: () => void;
+}
+
+export function CrmInlineField({
+  field,
+  value,
+  onChange,
+  onBlur,
+  disabled,
+  options: optionsProp,
+  showYearNavigation,
+  onAddNew,
+}: CrmInlineFieldProps) {
+  const options = optionsProp ?? field.dropdown_options ?? [];
+
+  switch (field.field_type) {
+    case "currency":
+      return (
+        <CurrencyInput
+          label={field.field_label}
+          value={value}
+          onChange={onChange}
+          onBlur={onBlur}
+          disabled={disabled}
+        />
+      );
+
+    case "percentage":
+      return (
+        <div className="space-y-0">
+          <span className="inline-field-label">{field.field_label}</span>
+          <div className="relative">
+            <Input
+              type="number"
+              step="0.01"
+              value={value != null ? String(value) : ""}
+              onChange={(e) => onChange(e.target.value ? Number(e.target.value) : null)}
+              onBlur={onBlur}
+              disabled={disabled}
+              className={cn("pr-7 text-right num", "inline-field")}
+              placeholder="0.00"
+            />
+            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">%</span>
+          </div>
+        </div>
+      );
+
+    case "number":
+      return (
+        <div className="space-y-0">
+          <span className="inline-field-label">{field.field_label}</span>
+          <Input
+            type="number"
+            value={value != null ? String(value) : ""}
+            onChange={(e) => onChange(e.target.value ? Number(e.target.value) : null)}
+            onBlur={onBlur}
+            disabled={disabled}
+            className={cn("num", "inline-field")}
+            placeholder="0"
+          />
+        </div>
+      );
+
+    case "boolean":
+      return (
+        <div className="flex items-center justify-between py-2">
+          <span className="inline-field-label">{field.field_label}</span>
+          <Switch
+            checked={!!value}
+            onCheckedChange={(checked) => {
+              onChange(checked);
+              setTimeout(onBlur, 0);
+            }}
+            disabled={disabled}
+          />
+        </div>
+      );
+
+    case "dropdown":
+    case "team_member":
+    case "company":
+    case "relationship":
+      return (
+        <div className="space-y-0">
+          <span className="inline-field-label">{field.field_label}</span>
+          <Select
+            value={value != null ? String(value) : ""}
+            onValueChange={(val) => {
+              if (val === "__add_new__") {
+                onAddNew?.();
+                return;
+              }
+              onChange(val || null);
+              setTimeout(onBlur, 0);
+            }}
+            disabled={disabled}
+          >
+            <SelectTrigger className={"inline-field"}>
+              <SelectValue placeholder="Select..." />
+            </SelectTrigger>
+            <SelectContent>
+              {onAddNew && (
+                <>
+                  <SelectItem value="__add_new__" className="text-primary font-medium">
+                    + Add New Company
+                  </SelectItem>
+                  <div className="rq-divider my-1" />
+                </>
+              )}
+              {options.map((opt) => (
+                <SelectItem key={opt.value} value={opt.value}>
+                  {opt.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      );
+
+    case "date":
+      return (
+        <div className="space-y-0">
+          <span className="inline-field-label">{field.field_label}</span>
+          <DatePicker
+            value={value != null ? String(value) : ""}
+            onChange={(val) => {
+              onChange(val || null);
+              setTimeout(onBlur, 0);
+            }}
+            disabled={disabled}
+            showYearNavigation={showYearNavigation}
+            className={"inline-field"}
+          />
+        </div>
+      );
+
+    case "phone":
+      return (
+        <PhoneInput
+          label={field.field_label}
+          value={value}
+          onChange={onChange}
+          onBlur={onBlur}
+          disabled={disabled}
+        />
+      );
+
+    default:
+      return (
+        <div className="space-y-0">
+          <span className="inline-field-label">{field.field_label}</span>
+          {field.field_type === "textarea" ? (
+            <Textarea
+              value={value != null ? String(value) : ""}
+              onChange={(e) => onChange(e.target.value || null)}
+              onBlur={onBlur}
+              disabled={disabled}
+              rows={4}
+              placeholder={field.field_label}
+              className={cn("text-sm", "inline-field")}
+            />
+          ) : (
+            <Input
+              type={field.field_type === "email" ? "email" : "text"}
+              value={value != null ? String(value) : ""}
+              onChange={(e) => onChange(e.target.value || null)}
+              onBlur={onBlur}
+              disabled={disabled}
+              placeholder={field.field_label}
+              className={"inline-field"}
+            />
+          )}
+        </div>
+      );
+  }
+}
+
+// ─── Inline Dynamic Fields Renderer ───
+
+/** Optional config to enable layout-editing controls (gear, move, remove, span) around each field. */
+export interface LayoutEditConfig {
+  /** The section ID this set of fields belongs to (needed by EditableFieldSlot). */
+  sectionId: string;
+}
+
+export function renderDynamicFieldsInline(
+  fields: FieldLayout[],
+  dataObj: Record<string, unknown>,
+  isSuperAdmin: boolean,
+  callbacks: {
+    onChange: (fieldKey: string, value: unknown) => void;
+    onBlur: (fieldKey: string) => void;
+    disabled?: boolean;
+    optionsOverrides?: Record<string, { label: string; value: string }[]>;
+    onAddNewCompany?: () => void;
+  },
+  hiddenFieldKeys?: Set<string>,
+  readOnlyFieldKeys?: Set<string>,
+  /** When provided, each field is wrapped in EditableFieldSlot for layout editing controls. */
+  layoutEditConfig?: LayoutEditConfig,
+): ReactNode {
+  const visible = fields
+    .filter((f) => f.is_visible)
+    .filter((f) => !hiddenFieldKeys || !hiddenFieldKeys.has(f.field_key))
+    .filter((f) => {
+      if (f.field_key === "ssn_last4" && !isSuperAdmin) return false;
+      return true;
+    })
+    .sort((a, b) => a.display_order - b.display_order);
+
+  return (
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-2.5">
+      {visible.map((f, idx) => {
+        const propKey = FIELD_KEY_TO_PROP[f.field_key] ?? f.field_key;
+        const rawValue = dataObj[propKey];
+
+        const isFormula = f.field_type === "formula" && f.formula_expression;
+        const isReadOnlyCustom = READONLY_CUSTOM_FIELDS.has(f.field_key);
+        const isReadOnly = readOnlyFieldKeys?.has(f.field_key);
+
+        let fieldContent: ReactNode;
+        if (isFormula || isReadOnlyCustom || isReadOnly) {
+          fieldContent = renderField(f, dataObj, isSuperAdmin);
+        } else {
+          const options = callbacks.optionsOverrides?.[f.field_key]
+            ?? f.dropdown_options
+            ?? undefined;
+
+          fieldContent = (
+            <CrmInlineField
+              key={f.field_key}
+              field={f}
+              value={rawValue}
+              onChange={(val) => callbacks.onChange(propKey, val)}
+              onBlur={() => callbacks.onBlur(propKey)}
+              disabled={callbacks.disabled}
+              options={options ?? undefined}
+              showYearNavigation={f.field_key === "date_of_birth"}
+              onAddNew={f.field_key === "company_id" ? callbacks.onAddNewCompany : undefined}
+            />
+          );
+        }
+
+        // Wrap in EditableFieldSlot when layout editing is enabled and the field has a layout row ID
+        if (layoutEditConfig && f.id) {
+          return (
+            <EditableFieldSlot
+              key={f.field_key}
+              fieldId={f.id}
+              fieldLabel={f.field_label}
+              columnSpan={f.column_span ?? "third"}
+              sectionId={layoutEditConfig.sectionId}
+              fieldIndex={idx}
+              totalFields={visible.length}
+              fieldConfigId={f.field_config_id}
+              fieldKey={f.field_key}
+            >
+              {fieldContent}
+            </EditableFieldSlot>
+          );
+        }
+
+        return <React.Fragment key={f.field_key}>{fieldContent}</React.Fragment>;
+      })}
+    </div>
+  );
 }

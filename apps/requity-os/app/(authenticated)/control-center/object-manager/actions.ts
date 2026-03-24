@@ -141,9 +141,10 @@ export interface PageField {
 
 function revalidate() {
   revalidatePath("/control-center/object-manager");
-  // Revalidate detail pages so layout changes take effect
-  revalidatePath("/admin/crm", "layout");
-  revalidatePath("/admin/crm", "page");
+  revalidatePath("/contacts", "layout");
+  revalidatePath("/contacts", "page");
+  revalidatePath("/companies", "layout");
+  revalidatePath("/companies", "page");
 }
 
 // ---------------------------------------------------------------------------
@@ -162,19 +163,25 @@ export async function publishObjectChanges(objectKey: string): Promise<{
     revalidatePath("/control-center/object-manager");
 
     // Revalidate all CRM pages (contact detail, company detail)
-    revalidatePath("/admin/crm", "layout");
-    revalidatePath("/admin/crm", "page");
+    revalidatePath("/contacts", "layout");
+    revalidatePath("/contacts", "page");
+    revalidatePath("/companies", "layout");
+    revalidatePath("/companies", "page");
 
     // Revalidate specific detail page types based on object
-    const pageRouteMap: Record<string, string> = {
-      contact: "/admin/crm",
-      company: "/admin/crm",
-      loan: "/admin/loans",
-      property: "/admin/properties",
+    const pageRouteMap: Record<string, string[]> = {
+      contact: ["/contacts"],
+      company: ["/companies"],
+      loan: ["/loans"],
+      property: ["/properties"],
+      borrower: ["/contacts"],
+      borrower_entity: ["/contacts"],
+      investor: ["/contacts"],
+      unified_deal: ["/pipeline"],
     };
 
-    const route = pageRouteMap[objectKey];
-    if (route) {
+    const routes = pageRouteMap[objectKey] || [];
+    for (const route of routes) {
       revalidatePath(route, "layout");
       revalidatePath(route, "page");
     }
@@ -214,7 +221,7 @@ export async function fetchObjectDefinitions(): Promise<{
 // Fetch field configurations for an object
 // ---------------------------------------------------------------------------
 
-export async function fetchObjectFields(module: string): Promise<{
+export async function fetchObjectFields(module: string | string[]): Promise<{
   data?: FieldConfig[];
   error?: string;
 }> {
@@ -223,10 +230,12 @@ export async function fetchObjectFields(module: string): Promise<{
     if ("error" in auth) return { error: auth.error };
 
     const admin = createAdminClient();
+    const modules = Array.isArray(module) ? module : [module];
+
     const { data, error } = await admin
       .from(FIELD_CFG)
       .select("*" as never)
-      .eq("module" as never, module as never)
+      .in("module" as never, modules as never)
       .order("display_order" as never, { ascending: true });
 
     if (error) return { error: error.message };
@@ -434,6 +443,74 @@ export async function archiveField(fieldId: string): Promise<{
       .eq("is_admin_created" as never, true as never);
 
     if (error) return { error: error.message };
+
+    // Clean up page layout references so the field disappears from deal pages
+    await admin
+      .from(FIELDS)
+      .delete()
+      .eq("field_config_id" as never, fieldId as never);
+
+    revalidate();
+    return { success: true };
+  } catch (err: unknown) {
+    return { error: err instanceof Error ? err.message : "An unexpected error occurred" };
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Unarchive a field
+// ---------------------------------------------------------------------------
+
+export async function unarchiveField(fieldId: string): Promise<{
+  success?: boolean;
+  error?: string;
+}> {
+  try {
+    const auth = await requireSuperAdmin();
+    if ("error" in auth) return { error: auth.error };
+
+    const admin = createAdminClient();
+    const { error } = await admin
+      .from(FIELD_CFG)
+      .update({ is_archived: false, is_visible: true, updated_at: new Date().toISOString() } as never)
+      .eq("id" as never, fieldId as never);
+
+    if (error) return { error: error.message };
+    revalidate();
+    return { success: true };
+  } catch (err: unknown) {
+    return { error: err instanceof Error ? err.message : "An unexpected error occurred" };
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Permanently delete a field (super_admin only, admin-created only)
+// ---------------------------------------------------------------------------
+
+export async function deleteFieldPermanently(fieldId: string): Promise<{
+  success?: boolean;
+  error?: string;
+}> {
+  try {
+    const auth = await requireSuperAdmin();
+    if ("error" in auth) return { error: auth.error };
+
+    const admin = createAdminClient();
+
+    // Remove from all page layouts first
+    await admin
+      .from(FIELDS)
+      .delete()
+      .eq("field_config_id" as never, fieldId as never);
+
+    // Delete the field config itself (only admin-created fields)
+    const { error } = await admin
+      .from(FIELD_CFG)
+      .delete()
+      .eq("id" as never, fieldId as never)
+      .eq("is_admin_created" as never, true as never);
+
+    if (error) return { error: error.message };
     revalidate();
     return { success: true };
   } catch (err: unknown) {
@@ -512,6 +589,35 @@ export async function updateRelationship(
     const { error } = await admin
       .from(OBJ_RELS)
       .update({ ...updates, updated_at: new Date().toISOString() } as never)
+      .eq("id" as never, relId as never);
+
+    if (error) return { error: error.message };
+    revalidate();
+    return { success: true };
+  } catch (err: unknown) {
+    return { error: err instanceof Error ? err.message : "An unexpected error occurred" };
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Delete relationship
+// ---------------------------------------------------------------------------
+
+export async function deleteRelationship(
+  relId: string
+): Promise<{ success?: boolean; error?: string }> {
+  try {
+    const auth = await requireSuperAdmin();
+    if ("error" in auth) return { error: auth.error };
+
+    const admin = createAdminClient();
+
+    // Delete associated roles first
+    await admin.from(REL_ROLES).delete().eq("relationship_id" as never, relId as never);
+
+    const { error } = await admin
+      .from(OBJ_RELS)
+      .delete()
       .eq("id" as never, relId as never);
 
     if (error) return { error: error.message };
@@ -635,6 +741,18 @@ export async function reorderLayoutFields(
 // Add a field from the palette to a layout section
 // ---------------------------------------------------------------------------
 
+// Module -> source_object_key mapping for runtime data resolution
+const MODULE_TO_SOURCE: Record<string, string> = {
+  contact_profile: "contact",
+  borrower_profile: "borrower",
+  investor_profile: "investor",
+  borrower_entity: "borrower",
+  company_info: "company",
+  uw_deal: "unified_deal",
+  property: "property",
+  loan_details: "loan",
+};
+
 export async function addFieldToLayout(input: {
   section_id: string;
   field_config_id: string;
@@ -647,6 +765,20 @@ export async function addFieldToLayout(input: {
     if ("error" in auth) return { error: auth.error };
 
     const admin = createAdminClient();
+
+    // Look up the field's module to determine source_object_key
+    let sourceObjectKey: string | null = null;
+    if (input.field_config_id) {
+      const { data: fcRow } = await admin
+        .from(FIELD_CFG)
+        .select("module" as never)
+        .eq("id" as never, input.field_config_id as never)
+        .single();
+      if (fcRow) {
+        sourceObjectKey = MODULE_TO_SOURCE[(fcRow as unknown as { module: string }).module] ?? null;
+      }
+    }
+
     const { data, error } = await admin
       .from(FIELDS)
       .insert({
@@ -658,6 +790,7 @@ export async function addFieldToLayout(input: {
         column_span: input.column_span || "half",
         is_visible: true,
         source: "native",
+        source_object_key: sourceObjectKey,
       } as never)
       .select("*" as never)
       .single();
@@ -734,7 +867,10 @@ export async function fetchRelationshipCounts(): Promise<{
 // Fetch fields for multiple modules at once (for related entity fields)
 // ---------------------------------------------------------------------------
 
-export async function fetchFieldsForModules(modules: string[]): Promise<{
+export async function fetchFieldsForModules(
+  modules: string[],
+  options?: { includeArchived?: boolean }
+): Promise<{
   data?: FieldConfig[];
   error?: string;
 }> {
@@ -745,12 +881,16 @@ export async function fetchFieldsForModules(modules: string[]): Promise<{
     if ("error" in auth) return { error: auth.error };
 
     const admin = createAdminClient();
-    const { data, error } = await admin
+    let query = admin
       .from(FIELD_CFG)
       .select("*" as never)
-      .in("module" as never, modules as never)
-      .eq("is_archived" as never, false as never)
-      .order("display_order" as never, { ascending: true });
+      .in("module" as never, modules as never);
+
+    if (!options?.includeArchived) {
+      query = query.eq("is_archived" as never, false as never);
+    }
+
+    const { data, error } = await query.order("display_order" as never, { ascending: true });
 
     if (error) return { error: error.message };
     return { data: (data ?? []) as unknown as FieldConfig[] };
@@ -947,6 +1087,19 @@ export async function addLayoutField(input: {
     const nextOrder =
       ((maxRow as unknown as { display_order: number } | null)?.display_order ?? -1) + 1;
 
+    // Look up the field's module to determine source_object_key
+    let sourceObjectKey: string | null = null;
+    if (input.field_config_id) {
+      const { data: fcRow } = await admin
+        .from(FIELD_CFG)
+        .select("module" as never)
+        .eq("id" as never, input.field_config_id as never)
+        .single();
+      if (fcRow) {
+        sourceObjectKey = MODULE_TO_SOURCE[(fcRow as unknown as { module: string }).module] ?? null;
+      }
+    }
+
     const { error } = await admin
       .from(FIELDS)
       .insert({
@@ -958,6 +1111,7 @@ export async function addLayoutField(input: {
         column_span: input.column_span || "half",
         is_visible: true,
         source: input.source || "native",
+        source_object_key: sourceObjectKey,
       } as never);
 
     if (error) return { error: error.message };
@@ -984,6 +1138,32 @@ export async function removeLayoutField(fieldId: string): Promise<{
     const { error } = await admin
       .from(FIELDS)
       .delete()
+      .eq("id" as never, fieldId as never);
+
+    if (error) return { error: error.message };
+    revalidate();
+    return { success: true };
+  } catch (err: unknown) {
+    return { error: err instanceof Error ? err.message : "An unexpected error occurred" };
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Update column_span on a layout field
+// ---------------------------------------------------------------------------
+
+export async function updateLayoutFieldSpan(
+  fieldId: string,
+  columnSpan: string
+): Promise<{ success?: boolean; error?: string }> {
+  try {
+    const auth = await requireSuperAdmin();
+    if ("error" in auth) return { error: auth.error };
+
+    const admin = createAdminClient();
+    const { error } = await admin
+      .from(FIELDS)
+      .update({ column_span: columnSpan } as never)
       .eq("id" as never, fieldId as never);
 
     if (error) return { error: error.message };
@@ -1107,6 +1287,37 @@ export async function updateTab(
   }
 }
 
+export async function reorderTabs(
+  pageType: string,
+  tabOrders: { tab_key: string; tab_order: number }[]
+): Promise<{ success?: boolean; error?: string }> {
+  try {
+    const auth = await requireSuperAdmin();
+    if ("error" in auth) return { error: auth.error };
+
+    const admin = createAdminClient();
+    const now = new Date().toISOString();
+
+    // Update tab_order on all sections belonging to each tab
+    const promises = tabOrders.map(({ tab_key, tab_order }) =>
+      admin
+        .from(SECTIONS)
+        .update({ tab_order, updated_at: now } as never)
+        .eq("page_type" as never, pageType as never)
+        .eq("tab_key" as never, tab_key as never)
+    );
+
+    const results = await Promise.all(promises);
+    const firstError = results.find((r) => r.error);
+    if (firstError?.error) return { error: firstError.error.message };
+
+    revalidate();
+    return { success: true };
+  } catch (err: unknown) {
+    return { error: err instanceof Error ? err.message : "An unexpected error occurred" };
+  }
+}
+
 export async function deleteTab(
   pageType: string,
   tabKey: string
@@ -1140,6 +1351,133 @@ export async function deleteTab(
     if (error) return { error: error.message };
     revalidate();
     return { success: true };
+  } catch (err: unknown) {
+    return { error: err instanceof Error ? err.message : "An unexpected error occurred" };
+  }
+}
+
+// ===========================================================================
+// BATCH PUBLISH (Draft → Production)
+// ===========================================================================
+
+export interface BatchPublishPayload {
+  objectKey: string;
+  fieldUpdates: { id: string; updates: Partial<FieldConfig> }[];
+  fieldCreates: Partial<FieldConfig>[];
+  fieldArchiveIds: string[];
+}
+
+export async function batchPublishChanges(
+  payload: BatchPublishPayload
+): Promise<{ success?: boolean; error?: string; createdIds?: string[] }> {
+  try {
+    const auth = await requireSuperAdmin();
+    if ("error" in auth) return { error: auth.error };
+
+    const admin = createAdminClient();
+    const now = new Date().toISOString();
+    const userId = auth.user.id;
+    const createdIds: string[] = [];
+
+    // --- 1. Apply field updates ---
+    for (const { id, updates } of payload.fieldUpdates) {
+      const { error } = await admin
+        .from(FIELD_CFG)
+        .update({
+          ...updates,
+          updated_at: now,
+          updated_by: userId,
+        } as never)
+        .eq("id" as never, id as never);
+
+      if (error) return { error: `Failed to update field ${id}: ${error.message}` };
+    }
+
+    // --- 2. Create new fields ---
+    for (const fieldData of payload.fieldCreates) {
+      // Get max display_order for this module
+      const { data: maxRow } = await admin
+        .from(FIELD_CFG)
+        .select("display_order" as never)
+        .eq("module" as never, (fieldData.module || "") as never)
+        .order("display_order" as never, { ascending: false })
+        .limit(1)
+        .single();
+
+      const nextOrder =
+        ((maxRow as unknown as { display_order: number } | null)?.display_order ?? -1) + 1;
+
+      const { data, error } = await admin
+        .from(FIELD_CFG)
+        .insert({
+          module: fieldData.module,
+          field_key: fieldData.field_key,
+          field_label: fieldData.field_label,
+          field_type: fieldData.field_type || "text",
+          is_visible: true,
+          is_locked: false,
+          is_admin_created: true,
+          is_archived: false,
+          is_required: fieldData.is_required ?? false,
+          dropdown_options: fieldData.dropdown_options ?? null,
+          display_order: nextOrder,
+          created_by: userId,
+        } as never)
+        .select("id" as never)
+        .single();
+
+      if (error) return { error: `Failed to create field: ${error.message}` };
+      if (data) createdIds.push((data as unknown as { id: string }).id);
+    }
+
+    // --- 3. Archive fields ---
+    for (const fieldId of payload.fieldArchiveIds) {
+      const { error } = await admin
+        .from(FIELD_CFG)
+        .update({
+          is_archived: true,
+          is_visible: false,
+          updated_at: now,
+          updated_by: userId,
+        } as never)
+        .eq("id" as never, fieldId as never)
+        .eq("is_admin_created" as never, true as never);
+
+      if (error) return { error: `Failed to archive field ${fieldId}: ${error.message}` };
+
+      // Clean up page layout references
+      await admin
+        .from(FIELDS)
+        .delete()
+        .eq("field_config_id" as never, fieldId as never);
+    }
+
+    // --- 4. Revalidate all affected pages ---
+    revalidatePath("/control-center/object-manager");
+
+    const pageRouteMap: Record<string, string[]> = {
+      contact: ["/contacts"],
+      company: ["/companies"],
+      loan: ["/loans"],
+      property: ["/properties"],
+      borrower: ["/contacts"],
+      borrower_entity: ["/contacts"],
+      investor: ["/contacts"],
+      unified_deal: ["/pipeline"],
+    };
+
+    const routes = pageRouteMap[payload.objectKey] || [];
+    for (const route of routes) {
+      revalidatePath(route, "layout");
+      revalidatePath(route, "page");
+    }
+
+    revalidatePath("/contacts", "layout");
+    revalidatePath("/contacts", "page");
+    revalidatePath("/companies", "layout");
+    revalidatePath("/companies", "page");
+
+    return { success: true, createdIds };
   } catch (err: unknown) {
     return { error: err instanceof Error ? err.message : "An unexpected error occurred" };
   }

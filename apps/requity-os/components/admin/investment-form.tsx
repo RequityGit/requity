@@ -22,7 +22,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useToast } from "@/components/ui/use-toast";
+import { showSuccess, showError, showWarning } from "@/lib/toast";
 import { FUND_TYPES } from "@/lib/constants";
 import { PlusCircle, Loader2 } from "lucide-react";
 
@@ -39,7 +39,6 @@ export function InvestmentForm() {
   const [description, setDescription] = useState("");
 
   const router = useRouter();
-  const { toast } = useToast();
 
   function resetForm() {
     setName("");
@@ -56,11 +55,7 @@ export function InvestmentForm() {
     e.preventDefault();
 
     if (!name || !fundType) {
-      toast({
-        title: "Missing fields",
-        description: "Name and type are required.",
-        variant: "destructive",
-      });
+      showWarning("Name and type are required");
       return;
     }
 
@@ -80,13 +75,9 @@ export function InvestmentForm() {
     });
 
     if (error) {
-      toast({
-        title: "Error creating investment",
-        description: error.message,
-        variant: "destructive",
-      });
+      showError("Could not create investment", error.message);
     } else {
-      toast({ title: "Investment created successfully" });
+      showSuccess("Investment created");
       setOpen(false);
       resetForm();
       router.refresh();

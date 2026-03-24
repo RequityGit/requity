@@ -47,7 +47,6 @@ export function TaskColumn({
     : 0;
 
   const handleDragOver = (e: React.DragEvent) => {
-    if (isComplete) return;
     e.preventDefault();
     setDragOver(true);
   };
@@ -55,7 +54,6 @@ export function TaskColumn({
   const handleDragLeave = () => setDragOver(false);
 
   const handleDrop = (e: React.DragEvent) => {
-    if (isComplete) return;
     e.preventDefault();
     setDragOver(false);
     onDrop(e, status);
@@ -64,7 +62,7 @@ export function TaskColumn({
   const isPendingApprovalColumn = status === "Pending Approval";
 
   return (
-    <div className="flex-1 min-w-[280px] max-w-[440px] flex flex-col">
+    <div className="flex-1 min-w-0 md:min-w-[280px] max-w-full md:max-w-[440px] flex flex-col">
       {/* Column header */}
       <div className="flex items-center gap-2 mb-3 px-1">
         <span className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
@@ -82,7 +80,7 @@ export function TaskColumn({
       <div
         className={cn(
           "flex-1 flex flex-col gap-1.5 rounded-lg p-1 min-h-[60px] transition-colors",
-          dragOver && !isComplete && "bg-accent border border-dashed border-border"
+          dragOver && "bg-accent border border-dashed border-border"
         )}
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}

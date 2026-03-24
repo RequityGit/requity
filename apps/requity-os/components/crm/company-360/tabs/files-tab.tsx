@@ -13,23 +13,27 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useToast } from "@/components/ui/use-toast";
+import { showSuccess, showError } from "@/lib/toast";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Skeleton } from "@/components/ui/skeleton";
 import { FileText, Upload, Download, MoreHorizontal, X, Eye, Trash2, Loader2 } from "lucide-react";
+import { EmptyState } from "@/components/shared/EmptyState";
 import { relTime } from "@/components/crm/contact-360/contact-detail-shared";
 import { COMPANY_FILE_TYPES } from "@/lib/constants";
-import { deleteCompanyFileAction } from "@/app/(authenticated)/admin/crm/company-actions";
+import { deleteCompanyFileAction } from "@/app/(authenticated)/(admin)/companies/actions";
 import type { CompanyFileData } from "../types";
 import { FILE_TYPE_LABELS, FILE_TYPE_COLORS } from "../types";
 
 interface FilesTabProps {
   files: CompanyFileData[];
   companyId: string;
+  loading?: boolean;
+  onRefresh?: () => void;
 }
 
 function formatBytes(bytes: number | null): string {
@@ -38,14 +42,13 @@ function formatBytes(bytes: number | null): string {
   return `${Math.round(bytes / 1000)} KB`;
 }
 
-export function CompanyFilesTab({ files, companyId }: FilesTabProps) {
+export function CompanyFilesTab({ files, companyId, loading = false, onRefresh }: FilesTabProps) {
   const [filter, setFilter] = useState("all");
   const [showUpload, setShowUpload] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [fileType, setFileType] = useState("other");
   const router = useRouter();
-  const { toast } = useToast();
 
   const [downloadingId, setDownloadingId] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
@@ -63,7 +66,7 @@ export function CompanyFilesTab({ files, companyId }: FilesTabProps) {
         .createSignedUrl(file.storage_path, 3600, { download: file.file_name });
 
       if (error || !data?.signedUrl) {
-        toast({ title: "Error generating download link", variant: "destructive" });
+        showError("Could not generate download link");
         return;
       }
 
@@ -74,7 +77,7 @@ export function CompanyFilesTab({ files, companyId }: FilesTabProps) {
       a.click();
       document.body.removeChild(a);
     } catch {
-      toast({ title: "Error downloading file", variant: "destructive" });
+      showError("Could not download file");
     } finally {
       setDownloadingId(null);
     }
@@ -88,13 +91,13 @@ export function CompanyFilesTab({ files, companyId }: FilesTabProps) {
         .createSignedUrl(file.storage_path, 3600);
 
       if (error || !data?.signedUrl) {
-        toast({ title: "Error generating file link", variant: "destructive" });
+        showError("Could not generate file link");
         return;
       }
 
       window.open(data.signedUrl, "_blank");
     } catch {
-      toast({ title: "Error opening file", variant: "destructive" });
+      showError("Could not open file");
     }
   }
 
@@ -103,10 +106,11 @@ export function CompanyFilesTab({ files, companyId }: FilesTabProps) {
     try {
       const result = await deleteCompanyFileAction(file.id, file.storage_path);
       if ("error" in result && result.error) {
-        toast({ title: "Error deleting file", description: result.error, variant: "destructive" });
+        showError("Could not delete file", result.error);
       } else {
-        toast({ title: "File deleted" });
-        router.refresh();
+        showSuccess("File deleted");
+        if (onRefresh) onRefresh();
+        else router.refresh();
       }
     } finally {
       setDeletingId(null);
@@ -146,21 +150,27 @@ export function CompanyFilesTab({ files, companyId }: FilesTabProps) {
 
       if (insertError) throw insertError;
 
-      toast({ title: "File uploaded successfully" });
+      showSuccess("File uploaded");
       setShowUpload(false);
       setSelectedFile(null);
       setFileType("other");
-      router.refresh();
+      if (onRefresh) onRefresh();
+      else router.refresh();
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : "Unknown error";
-      toast({
-        title: "Upload failed",
-        description: message,
-        variant: "destructive",
-      });
+      showError("Upload failed", message);
     } finally {
       setUploading(false);
     }
+  }
+
+  if (loading && files.length === 0) {
+    return (
+      <div className="space-y-2 px-4 py-6">
+        <Skeleton className="h-12 w-full rounded-lg" />
+        <Skeleton className="h-12 w-full rounded-lg" />
+      </div>
+    );
   }
 
   return (
@@ -248,22 +258,15 @@ export function CompanyFilesTab({ files, companyId }: FilesTabProps) {
 
       {/* Files list */}
       {filtered.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-12 text-center">
-          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-muted mb-4">
-            <FileText
-              className="h-6 w-6 text-muted-foreground"
-              strokeWidth={1.5}
-            />
-          </div>
-          <h3 className="text-sm font-semibold text-foreground mb-1">
-            No files
-          </h3>
-          <p className="text-sm text-muted-foreground">
-            {filter !== "all"
+        <EmptyState
+          icon={FileText}
+          title="No files"
+          description={
+            filter !== "all"
               ? `No ${FILE_TYPE_LABELS[filter] || filter} files. Try changing the filter.`
-              : "Upload your first file to get started."}
-          </p>
-        </div>
+              : "Upload your first file to get started."
+          }
+        />
       ) : (
         <div className="flex flex-col gap-2">
           {filtered.map((f) => {
@@ -280,7 +283,7 @@ export function CompanyFilesTab({ files, companyId }: FilesTabProps) {
                 <div className="w-9 h-9 rounded-lg bg-[#EFF6FF] flex items-center justify-center shrink-0">
                   <FileText
                     size={16}
-                    className="text-[#3B82F6]"
+                    className="text-muted-foreground"
                     strokeWidth={1.5}
                   />
                 </div>

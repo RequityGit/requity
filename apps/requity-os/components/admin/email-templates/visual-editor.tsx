@@ -43,6 +43,9 @@ export const VisualEditor = forwardRef<VisualEditorHandle, VisualEditorProps>(
     );
 
     const editor = useEditor({
+      // Tiptap v3 creates the editor immediately by default which crashes
+      // during Next.js SSR (no DOM). Defer creation to the browser.
+      immediatelyRender: false,
       extensions: [
         StarterKit.configure({
           heading: { levels: [1, 2, 3] },

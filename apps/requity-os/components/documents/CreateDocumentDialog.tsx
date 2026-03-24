@@ -13,8 +13,9 @@ import {
   Briefcase,
   Home,
 } from "lucide-react";
+import { EmptyState } from "@/components/shared/EmptyState";
 import { useRouter } from "next/navigation";
-import { toast } from "sonner";
+import { showSuccess, showError } from "@/lib/toast";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -28,6 +29,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { createClient } from "@/lib/supabase/client";
+import { SUPABASE_URL, SUPABASE_ANON_KEY } from "@/lib/supabase/constants";
 import {
   fetchTemplatesForRecord,
   resolveTemplateData,
@@ -125,7 +127,7 @@ export function CreateDocumentDialog() {
     if (step === "result" && result) {
       navTimerRef.current = setTimeout(() => {
         setOpen(false);
-        router.push(`/admin/documents/editor/${result.documentId}`);
+        router.push(`/documents/editor/${result.documentId}`);
       }, 1500);
     }
     return () => {
@@ -139,8 +141,12 @@ export function CreateDocumentDialog() {
   // Search records when query or type changes
   const doSearch = useCallback(async (type: typeof recordType, query: string) => {
     setLoadingRecords(true);
-    const { records: data } = await searchRecords(type, query);
-    setRecords(data);
+    try {
+      const result = await searchRecords(type, query);
+      setRecords(result?.records ?? []);
+    } catch {
+      setRecords([]);
+    }
     setLoadingRecords(false);
   }, []);
 
@@ -162,8 +168,12 @@ export function CreateDocumentDialog() {
     setSelectedRecord(record);
     setStep("template");
     setLoadingTemplates(true);
-    const { templates: data } = await fetchTemplatesForRecord(recordType);
-    setTemplates(data as Template[]);
+    try {
+      const result = await fetchTemplatesForRecord(recordType);
+      setTemplates((result?.templates ?? []) as Template[]);
+    } catch {
+      setTemplates([]);
+    }
     setLoadingTemplates(false);
   }
 
@@ -171,8 +181,12 @@ export function CreateDocumentDialog() {
     setSelectedTemplate(template);
     setStep("preview");
     setLoadingFields(true);
-    const { fields } = await resolveTemplateData(template.id, selectedRecord!.id);
-    setResolvedFields(fields);
+    try {
+      const result = await resolveTemplateData(template.id, selectedRecord!.id);
+      setResolvedFields(result?.fields ?? []);
+    } catch {
+      setResolvedFields([]);
+    }
     setLoadingFields(false);
   }
 
@@ -183,22 +197,38 @@ export function CreateDocumentDialog() {
     try {
       const supabase = createClient();
 
-      const { data: { session }, error: refreshError } = await supabase.auth.refreshSession();
-      if (refreshError || !session) {
-        toast.error("Session expired. Please sign in again.");
+      // Try the current session first; only force-refresh when the access token
+      // is missing or expires within the next 60 seconds.
+      let session: Awaited<ReturnType<typeof supabase.auth.getSession>>["data"]["session"] = null;
+      const { data: current } = await supabase.auth.getSession();
+      const expiresAt = current.session?.expires_at ?? 0;
+      const needsRefresh = !current.session || expiresAt - Math.floor(Date.now() / 1000) < 60;
+
+      if (needsRefresh) {
+        const { data: refreshed, error: refreshError } = await supabase.auth.refreshSession();
+        if (refreshError || !refreshed.session) {
+          showError("Session expired. Please sign in again.");
+          setGenerating(false);
+          return;
+        }
+        session = refreshed.session;
+      } else {
+        session = current.session;
+      }
+
+      if (!session) {
+        showError("Session expired. Please sign in again.");
         setGenerating(false);
         return;
       }
 
-      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-      const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
       const res = await fetch(
-        `${supabaseUrl}/functions/v1/generate-document`,
+        `${SUPABASE_URL}/functions/v1/generate-document`,
         {
           method: "POST",
           headers: {
             Authorization: `Bearer ${session.access_token}`,
-            apikey: supabaseAnonKey ?? "",
+            apikey: SUPABASE_ANON_KEY,
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
@@ -221,7 +251,7 @@ export function CreateDocumentDialog() {
               : status === 404
                 ? `Not found (${status}): ${detail || "template or record not found"}`
                 : `Generation failed (${status}): ${detail || "unknown error"}`;
-        toast.error(message);
+        showError(message);
         setGenerating(false);
         return;
       }
@@ -234,9 +264,9 @@ export function CreateDocumentDialog() {
       setStep("result");
 
       if (data.missing_fields?.length > 0) {
-        toast.success(`Document generated with ${data.missing_fields.length} missing field(s).`);
+        showSuccess(`Document generated with ${data.missing_fields.length} missing field(s).`);
       } else {
-        toast.success("Document generated successfully.");
+        showSuccess("Document generated");
       }
     } catch (err) {
       console.error("Generate document error:", err);
@@ -244,7 +274,7 @@ export function CreateDocumentDialog() {
         err instanceof TypeError && err.message.includes("fetch")
           ? "Network error: could not reach the document generation service. Check your connection."
           : `Failed to generate document: ${err instanceof Error ? err.message : "unknown error"}`;
-      toast.error(message);
+      showError(message);
     }
 
     setGenerating(false);
@@ -310,9 +340,7 @@ export function CreateDocumentDialog() {
                   <Skeleton className="h-10 w-full" />
                 </div>
               ) : records.length === 0 ? (
-                <p className="text-sm text-muted-foreground text-center py-6">
-                  No {recordType}s found.
-                </p>
+                <EmptyState icon={FileText} title={`No ${recordType}s found.`} compact />
               ) : (
                 records.map((r) => (
                   <button
@@ -343,9 +371,7 @@ export function CreateDocumentDialog() {
                 <Skeleton className="h-16 w-full" />
               </div>
             ) : templates.length === 0 ? (
-              <p className="text-sm text-muted-foreground text-center py-8">
-                No active templates found for this record type.
-              </p>
+              <EmptyState icon={FileText} title="No active templates found for this record type." compact />
             ) : (
               templates.map((t) => (
                 <button

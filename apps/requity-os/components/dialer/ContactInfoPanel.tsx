@@ -1,6 +1,7 @@
 "use client";
 
 import { Phone, Mail, Building2, Calendar, FileText, AlertTriangle } from "lucide-react";
+import { formatDate } from "@/lib/format";
 import { useDialer } from "@/lib/dialer/dialer-context";
 import type { ContactForDialer } from "@/lib/dialer/types";
 
@@ -43,7 +44,7 @@ function ContactCard({ contact }: { contact: ContactForDialer }) {
         {contact.contact.last_contacted_at && (
           <div className="flex items-center gap-2 text-xs text-muted-foreground">
             <Calendar className="h-3 w-3 shrink-0" strokeWidth={1.5} />
-            Last contact: {new Date(contact.contact.last_contacted_at).toLocaleDateString()}
+            Last contact: {formatDate(contact.contact.last_contacted_at)}
           </div>
         )}
         {contact.contact.dnc && (

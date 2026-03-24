@@ -43,7 +43,7 @@ interface OriginationsTabsProps {
   // Counts for badges
   pipelineCount: number;
   pendingConditionsCount: number;
-  // Opportunity pipeline (new)
+  // Deal pipeline (new)
   opportunityRows: OpportunityRow[];
   opportunityCount: number;
   stageThresholds?: StageThreshold[];
@@ -106,7 +106,7 @@ export function OriginationsTabs({
         </TabsTrigger>
       </TabsList>
 
-      {/* Deals (Opportunities) Tab */}
+      {/* Deals Tab */}
       <TabsContent value="deals" className="mt-4">
         <div className="space-y-4">
           {/* View toggle */}
@@ -160,7 +160,7 @@ export function OriginationsTabs({
       <TabsContent value="pricing" className="mt-4">
         <div className="space-y-4">
           <div className="flex justify-end">
-            <Link href="/admin/pricing/calculator">
+            <Link href="/pricing/calculator">
               <Button variant="outline" className="gap-2">
                 <Calculator className="h-4 w-4" />
                 Deal Calculator
@@ -178,13 +178,13 @@ export function OriginationsTabs({
       <TabsContent value="dscr-pricing" className="mt-4">
         <div className="space-y-4">
           <div className="flex justify-end gap-2">
-            <Link href="/admin/models/dscr?tab=rate-sheets">
+            <Link href="/models/dscr?tab=rate-sheets">
               <Button variant="outline" className="gap-2">
                 <Building2 className="h-4 w-4" />
                 Rate Sheets
               </Button>
             </Link>
-            <Link href="/admin/models/dscr?tab=pricing">
+            <Link href="/models/dscr?tab=pricing">
               <Button variant="outline" className="gap-2">
                 <Calculator className="h-4 w-4" />
                 Deal Calculator

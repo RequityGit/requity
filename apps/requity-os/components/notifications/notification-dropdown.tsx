@@ -1,5 +1,6 @@
 "use client";
 
+import { useMemo } from "react";
 import { useNotifications } from "@/hooks/use-notifications";
 import { NotificationItem } from "./notification-item";
 import { Archive, Bell } from "lucide-react";
@@ -22,9 +23,21 @@ export function NotificationDropdown({
   const {
     notifications,
     loading,
+    markAsRead,
     archiveNotification,
     archiveAll,
   } = useNotifications(userId, { limit: 15 });
+
+  const { unread, read } = useMemo(() => {
+    const unreadItems = notifications.filter((n) => n.read_at === null);
+    const readItems = notifications.filter((n) => n.read_at !== null);
+    return { unread: unreadItems, read: readItems };
+  }, [notifications]);
+
+  async function handleMarkAsRead(id: string) {
+    await markAsRead(id);
+    onCountChange?.();
+  }
 
   async function handleArchive(id: string) {
     await archiveNotification(id);
@@ -36,22 +49,25 @@ export function NotificationDropdown({
     onCountChange?.();
   }
 
+  const hasNotifications = notifications.length > 0;
+  const unreadCount = unread.length;
+
   return (
     <div className="w-[380px] rounded-lg border border-border bg-card shadow-lg">
       {/* Header */}
-      <div className="flex items-center justify-between border-b border-gray-100 px-4 py-3">
+      <div className="flex items-center justify-between border-b border-border px-4 py-3">
         <div className="flex items-center gap-2">
           <h3 className="text-sm font-semibold text-foreground">Notifications</h3>
-          {notifications.length > 0 && (
-            <span className="inline-flex items-center rounded-full bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-700 num">
-              {notifications.length}
+          {unreadCount > 0 && (
+            <span className="inline-flex items-center rounded-full bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-700 dark:bg-blue-900/30 dark:text-blue-300 num">
+              {unreadCount}
             </span>
           )}
         </div>
-        {notifications.length > 0 && (
+        {hasNotifications && (
           <button
             onClick={handleArchiveAll}
-            className="flex items-center gap-1 text-xs font-medium text-blue-600 hover:text-blue-800 transition-colors"
+            className="flex items-center gap-1 text-xs font-medium text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 transition-colors"
           >
             <Archive className="h-3.5 w-3.5" />
             Archive all
@@ -73,10 +89,10 @@ export function NotificationDropdown({
               </div>
             ))}
           </div>
-        ) : notifications.length === 0 ? (
+        ) : !hasNotifications ? (
           <div className="flex flex-col items-center justify-center py-10 px-4">
-            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-green-100">
-              <Bell className="h-6 w-6 text-green-600" />
+            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-green-100 dark:bg-green-900/30">
+              <Bell className="h-6 w-6 text-green-600 dark:text-green-400" />
             </div>
             <p className="mt-3 text-sm font-medium text-foreground">
               You&apos;re all caught up!
@@ -86,26 +102,63 @@ export function NotificationDropdown({
             </p>
           </div>
         ) : (
-          <div className="space-y-0.5 p-1.5">
-            {notifications.map((notification) => (
-              <NotificationItem
-                key={notification.id}
-                notification={notification}
-                activeRole={activeRole}
-                onArchive={handleArchive}
-                variant="compact"
-              />
-            ))}
+          <div className="p-1.5">
+            {/* New (unread) section */}
+            {unread.length > 0 && (
+              <div>
+                <p className="px-3 pt-1 pb-1 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+                  New
+                </p>
+                <div className="space-y-0.5">
+                  {unread.map((notification) => (
+                    <NotificationItem
+                      key={notification.id}
+                      notification={notification}
+                      activeRole={activeRole}
+                      onArchive={handleArchive}
+                      onMarkAsRead={handleMarkAsRead}
+                      onClose={onClose}
+                      variant="compact"
+                    />
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Earlier (read) section */}
+            {read.length > 0 && (
+              <div>
+                {unread.length > 0 && (
+                  <div className="mx-3 my-1.5 border-t border-border" />
+                )}
+                <p className="px-3 pt-1 pb-1 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+                  Earlier
+                </p>
+                <div className="space-y-0.5">
+                  {read.map((notification) => (
+                    <NotificationItem
+                      key={notification.id}
+                      notification={notification}
+                      activeRole={activeRole}
+                      onArchive={handleArchive}
+                      onMarkAsRead={handleMarkAsRead}
+                      onClose={onClose}
+                      variant="compact"
+                    />
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         )}
       </div>
 
       {/* Footer */}
-      <div className="border-t border-gray-100 px-4 py-2.5">
+      <div className="border-t border-border px-4 py-2.5">
         <Link
           href="/notifications"
           onClick={onClose}
-          className="block w-full text-center text-xs font-medium text-blue-600 hover:text-blue-800 transition-colors"
+          className="block w-full text-center text-xs font-medium text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 transition-colors"
         >
           View all notifications
         </Link>
