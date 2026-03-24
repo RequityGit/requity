@@ -150,7 +150,7 @@ export function GenerateDocumentDialog({
         navTimerRef.current = null;
       }
     };
-  }, [step, result, router]);
+  }, [step, result, router, setOpen]);
 
   async function handleSelectTemplate(template: Template) {
     setSelectedTemplate(template);

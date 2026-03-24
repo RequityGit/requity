@@ -278,9 +278,10 @@ export function CreateLoanDialog({
       setOpen(false);
       resetForm();
       router.push(`/pipeline/${newLoan.id}`);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Loan creation error:", err);
-      showError("Could not create loan", err.details || err.message || "An unexpected error occurred.");
+      const msg = err instanceof Error ? err.message : "An unexpected error occurred.";
+      showError("Could not create loan", msg);
     } finally {
       setLoading(false);
     }

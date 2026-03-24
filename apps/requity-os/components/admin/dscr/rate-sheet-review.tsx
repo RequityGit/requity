@@ -165,8 +165,8 @@ export function RateSheetReview({
       showSuccess("Rate sheet committed");
       router.refresh();
       onClose();
-    } catch (err: any) {
-      showError("Could not commit rate sheet", err?.message || "Commit failed");
+    } catch (err: unknown) {
+      showError("Could not commit rate sheet", err instanceof Error ? err.message : "Commit failed");
     } finally {
       setCommitting(false);
     }

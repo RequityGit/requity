@@ -936,6 +936,7 @@ function DealHeader({
     };
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- using stable destructured properties; contactSelection object is not memoized
   }, [contactSelection.hasSelection, contactSelection.clearSelection]);
 
   const handleCreateDriveFolder = useCallback(async () => {

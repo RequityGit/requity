@@ -95,7 +95,7 @@ export function ApprovalsCardView({
     return () => {
       supabase.removeChannel(channel);
     };
-  }, []);
+  }, [router]);
 
   // Person filter options
   const personOptions = useMemo(() => {

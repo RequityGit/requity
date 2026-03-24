@@ -232,9 +232,9 @@ export function PayoffStatementGenerator({ loanId, loan }: PayoffStatementGenera
       if (result.download_url) {
         window.open(result.download_url, "_blank");
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Generate payoff error:", err);
-      setErrorMessage(err?.message || "An unexpected error occurred.");
+      setErrorMessage(err instanceof Error ? err.message : "An unexpected error occurred.");
     } finally {
       setIsGenerating(false);
     }

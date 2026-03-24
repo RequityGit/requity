@@ -1618,7 +1618,7 @@ function GridTemplateEditor({
   uwFields?: UwFieldDef[];
   onChange: (grid: GridTemplateDef | null) => void;
 }) {
-  const rows = grid?.rows ?? [];
+  const rows = useMemo(() => grid?.rows ?? [], [grid?.rows]);
 
   const updateRow = (idx: number, updates: Partial<GridRowDef>) => {
     const next = rows.map((r, i) => (i === idx ? { ...r, ...updates } : r));

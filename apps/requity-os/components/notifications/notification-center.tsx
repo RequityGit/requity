@@ -41,12 +41,13 @@ export function NotificationCenter({
   const [filter, setFilter] = useState<NotificationFilter>("all");
 
   // Auto-select first unread notification when modal opens
+  const hasNotifications = notifications.length > 0;
   useEffect(() => {
-    if (isOpen && notifications.length > 0 && !selectedNotificationId) {
+    if (isOpen && hasNotifications && !selectedNotificationId) {
       const firstUnread = notifications.find((n) => n.read_at === null);
       selectNotification((firstUnread ?? notifications[0]).id);
     }
-  }, [isOpen, notifications.length > 0, selectedNotificationId]);
+  }, [isOpen, hasNotifications, selectedNotificationId, notifications, selectNotification]);
 
   // Mark as read when selecting a notification
   const handleSelect = useCallback(

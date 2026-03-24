@@ -126,8 +126,8 @@ export function AddBorrowerForm({ borrower }: AddBorrowerFormProps) {
 
       showSuccess("Borrower added");
       router.push(`/borrowers/${result.borrowerId}`);
-    } catch (err: any) {
-      showError("Could not add borrower", err.message);
+    } catch (err: unknown) {
+      showError("Could not add borrower", err instanceof Error ? err.message : String(err));
     } finally {
       setLoading(false);
     }

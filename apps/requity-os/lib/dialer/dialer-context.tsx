@@ -195,7 +195,8 @@ export function DialerProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (!session.currentGroupId || session.state === "idle" || session.state === "completed") return;
 
-    const channel = supabaseRef.current
+    const supabase = supabaseRef.current;
+    const channel = supabase
       .channel(`call-group-${session.currentGroupId}`)
       .on(
         "postgres_changes",
@@ -251,7 +252,7 @@ export function DialerProvider({ children }: { children: React.ReactNode }) {
       .subscribe();
 
     return () => {
-      supabaseRef.current.removeChannel(channel);
+      supabase.removeChannel(channel);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [session.currentGroupId, session.state]);

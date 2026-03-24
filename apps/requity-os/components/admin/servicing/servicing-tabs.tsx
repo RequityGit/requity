@@ -178,7 +178,7 @@ function InterestCalculatorTab() {
       setTotalInterest(
         (data ?? []).reduce((sum: number, r: any) => sum + (r.interest_due ?? 0), 0)
       );
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Interest calculation error:", err);
     } finally {
       setLoading(false);
@@ -312,7 +312,7 @@ function ReconciliationTab() {
       const { data, error } = await supabase.rpc("reconcile_draw_balances");
       if (error) throw error;
       setDrawResults(data ?? []);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Draw reconciliation error:", err);
     } finally {
       setLoading(null);
@@ -329,7 +329,7 @@ function ReconciliationTab() {
       );
       if (error) throw error;
       setInterestResults(data ?? []);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Interest reconciliation error:", err);
     } finally {
       setLoading(null);

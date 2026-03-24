@@ -76,9 +76,9 @@ export async function uploadConditionDocument(
     }
 
     return { success: true };
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error("uploadConditionDocument error:", err);
-    return { error: err?.message ?? "Unexpected error" };
+    return { error: err instanceof Error ? err.message : "Unexpected error" };
   }
 }
 

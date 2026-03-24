@@ -23,6 +23,89 @@ export default async function AdminOriginationsPage() {
   const admin = createAdminClient();
 
   // ── Fetch all data in parallel ──────────────────────────────────────
+  // Both batches are independent, so we fire them concurrently.
+
+  const [coreResults, pricingQueries] = await Promise.all([
+    // Core data batch
+    Promise.all([
+      // Legacy loan pipeline data
+      supabase
+        .from("loans")
+        .select("id, loan_number, property_address, property_city, property_state, borrower_id, type, loan_amount, stage, stage_updated_at, created_at, priority, next_action, originator_id, originator, processor_id")
+        .is("deleted_at", null)
+        .order("created_at", { ascending: false }),
+      supabase
+        .from("profiles")
+        .select("id, full_name")
+        .eq("role", "admin")
+        .order("full_name"),
+      (admin as any)
+        .from("borrowers")
+        .select("id, first_name, last_name, email")
+        .order("last_name"),
+      supabase
+        .from("documents")
+        .select("loan_id")
+        .not("loan_id", "is", null),
+      // Deal pipeline
+      admin
+        .from("opportunity_pipeline")
+        .select("id, deal_name, stage, loan_type, loan_purpose, funding_channel, proposed_loan_amount, proposed_ltv, approval_status, stage_changed_at, created_at, property_address, property_city, property_state, property_type, number_of_units, entity_name, borrower_name, borrower_count, originator, processor")
+        .order("created_at", { ascending: false }),
+      // Pipeline stage thresholds for kanban coloring
+      admin
+        .from("pipeline_stages")
+        .select("stage_key, warn_days, alert_days")
+        .order("stage_order"),
+    ]),
+    // Pricing and DSCR data — tables may not exist yet, fetch with allSettled
+    Promise.allSettled([
+      // RTL Pricing
+      (supabase as any)
+        .from("pricing_programs")
+        .select("id, program_id, program_name, version, is_current, base_rate, min_loan, max_loan, min_ltv, max_ltv, min_fico, term_months, created_at")
+        .order("program_id")
+        .order("version", { ascending: false }),
+      (supabase as any)
+        .from("leverage_adjusters")
+        .select("id, adjuster_name, category, adjustment_value, sort_order, is_active")
+        .order("sort_order"),
+      (supabase as any)
+        .from("pricing_program_versions")
+        .select("*")
+        .order("changed_at", { ascending: false })
+        .limit(20),
+      // DSCR Pricing
+      (supabase as any)
+        .from("dscr_lenders")
+        .select("id, name, short_name, is_active, website, notes, created_at")
+        .order("name"),
+      (supabase as any)
+        .from("dscr_lender_products")
+        .select("id, lender_id, product_name, product_type, is_active, min_loan, max_loan, min_fico, min_dscr, max_ltv, created_at, dscr_lenders(name, short_name)")
+        .order("product_name"),
+      (supabase as any)
+        .from("dscr_price_adjustments")
+        .select("id, lender_id, product_id, category, label, adjustment_value, sort_order, is_active")
+        .order("category")
+        .order("sort_order"),
+      (supabase as any)
+        .from("dscr_pricing_versions")
+        .select("id, lender_id, changed_by, change_type, summary, changed_at")
+        .order("changed_at", { ascending: false })
+        .limit(30),
+      (supabase as any)
+        .from("dscr_rate_sheet_uploads")
+        .select("id, lender_id, product_id, file_name, storage_path, status, uploaded_by, created_at, dscr_lenders(name, short_name), dscr_lender_products(product_name)")
+        .order("created_at", { ascending: false })
+        .limit(30),
+      // Loan conditions — fetch needed fields only
+      supabase
+        .from("loan_conditions")
+        .select("id, loan_id, condition_name, status, category, due_date, description, created_at, updated_at")
+        .order("due_date", { ascending: true }),
+    ]),
+  ]);
 
   const [
     loansResult,
@@ -31,89 +114,11 @@ export default async function AdminOriginationsPage() {
     documentsResult,
     opportunitiesResult,
     stageConfigResult,
-  ] = await Promise.all([
-    // Legacy loan pipeline data
-    supabase
-      .from("loans")
-      .select("id, loan_number, property_address, property_city, property_state, borrower_id, type, loan_amount, stage, stage_updated_at, created_at, priority, next_action, originator_id, originator, processor_id")
-      .is("deleted_at", null)
-      .order("created_at", { ascending: false }),
-    supabase
-      .from("profiles")
-      .select("id, full_name")
-      .eq("role", "admin")
-      .order("full_name"),
-    (admin as any)
-      .from("borrowers")
-      .select("id, first_name, last_name, email")
-      .order("last_name"),
-    supabase
-      .from("documents")
-      .select("loan_id")
-      .not("loan_id", "is", null),
-    // Deal pipeline
-    admin
-      .from("opportunity_pipeline")
-      .select("id, deal_name, stage, loan_type, loan_purpose, funding_channel, proposed_loan_amount, proposed_ltv, approval_status, stage_changed_at, created_at, property_address, property_city, property_state, property_type, number_of_units, entity_name, borrower_name, borrower_count, originator, processor")
-      .order("created_at", { ascending: false }),
-    // Pipeline stage thresholds for kanban coloring
-    admin
-      .from("pipeline_stages")
-      .select("stage_key, warn_days, alert_days")
-      .order("stage_order"),
-  ]);
+  ] = coreResults;
 
   if (borrowersResult.error) {
     console.error("Failed to fetch borrowers:", borrowersResult.error);
   }
-
-  // Pricing and DSCR data — tables may not exist yet, fetch in parallel
-  const pricingQueries = await Promise.allSettled([
-    // RTL Pricing
-    (supabase as any)
-      .from("pricing_programs")
-      .select("id, program_id, program_name, version, is_current, base_rate, min_loan, max_loan, min_ltv, max_ltv, min_fico, term_months, created_at")
-      .order("program_id")
-      .order("version", { ascending: false }),
-    (supabase as any)
-      .from("leverage_adjusters")
-      .select("id, adjuster_name, category, adjustment_value, sort_order, is_active")
-      .order("sort_order"),
-    (supabase as any)
-      .from("pricing_program_versions")
-      .select("*")
-      .order("changed_at", { ascending: false })
-      .limit(20),
-    // DSCR Pricing
-    (supabase as any)
-      .from("dscr_lenders")
-      .select("id, name, short_name, is_active, website, notes, created_at")
-      .order("name"),
-    (supabase as any)
-      .from("dscr_lender_products")
-      .select("id, lender_id, product_name, product_type, is_active, min_loan, max_loan, min_fico, min_dscr, max_ltv, created_at, dscr_lenders(name, short_name)")
-      .order("product_name"),
-    (supabase as any)
-      .from("dscr_price_adjustments")
-      .select("id, lender_id, product_id, category, label, adjustment_value, sort_order, is_active")
-      .order("category")
-      .order("sort_order"),
-    (supabase as any)
-      .from("dscr_pricing_versions")
-      .select("id, lender_id, changed_by, change_type, summary, changed_at")
-      .order("changed_at", { ascending: false })
-      .limit(30),
-    (supabase as any)
-      .from("dscr_rate_sheet_uploads")
-      .select("id, lender_id, product_id, file_name, storage_path, status, uploaded_by, created_at, dscr_lenders(name, short_name), dscr_lender_products(product_name)")
-      .order("created_at", { ascending: false })
-      .limit(30),
-    // Loan conditions — fetch needed fields only
-    supabase
-      .from("loan_conditions")
-      .select("id, loan_id, condition_name, status, category, due_date, description, created_at, updated_at")
-      .order("due_date", { ascending: true }),
-  ]);
 
   // Extract results from allSettled (handles errors gracefully)
   // Supabase queries return { data, error } objects

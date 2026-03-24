@@ -33,9 +33,9 @@ export async function getWireInstructions() {
     }
 
     return { success: true, data: data ?? null };
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error("getWireInstructions error:", err);
-    return { error: err?.message || "An unexpected error occurred" };
+    return { error: err instanceof Error ? err.message : "An unexpected error occurred" };
   }
 }
 
@@ -79,9 +79,9 @@ export async function saveWireInstructions(input: WireInstructionsInput) {
     }
 
     return { success: true };
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error("saveWireInstructions error:", err);
-    return { error: err?.message || "An unexpected error occurred" };
+    return { error: err instanceof Error ? err.message : "An unexpected error occurred" };
   }
 }
 
@@ -107,9 +107,9 @@ export async function getPayoffFeeDefaults() {
     if (error) return { error: error.message };
 
     return { success: true, data: data ?? [] };
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error("getPayoffFeeDefaults error:", err);
-    return { error: err?.message || "An unexpected error occurred" };
+    return { error: err instanceof Error ? err.message : "An unexpected error occurred" };
   }
 }
 
@@ -134,8 +134,8 @@ export async function updatePayoffFeeDefaults(updates: FeeDefaultUpdate[]) {
     }
 
     return { success: true };
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error("updatePayoffFeeDefaults error:", err);
-    return { error: err?.message || "An unexpected error occurred" };
+    return { error: err instanceof Error ? err.message : "An unexpected error occurred" };
   }
 }

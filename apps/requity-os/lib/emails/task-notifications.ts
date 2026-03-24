@@ -1,5 +1,6 @@
 import nodemailer from "nodemailer";
 import { stripMentionMarkup } from "@/lib/comment-utils";
+import { SUPABASE_STORAGE_URL } from "@/lib/supabase/constants";
 
 /* ------------------------------------------------------------------ */
 /*  Transporter (reusable)                                             */
@@ -29,7 +30,7 @@ function getTransporter() {
 /* ------------------------------------------------------------------ */
 
 const LOGO_URL =
-  "https://edhlkknvlczhbowasjna.supabase.co/storage/v1/object/public/brand-assets/Requity%20Logo%20Color.svg";
+  `${SUPABASE_STORAGE_URL}/brand-assets/Requity%20Logo%20Color.svg`;
 
 function emailShell(innerContent: string): string {
   return `<!DOCTYPE html>

@@ -109,8 +109,8 @@ export function BorrowerEditDialog({ borrower }: BorrowerEditDialogProps) {
       showSuccess("Borrower updated");
       setOpen(false);
       router.refresh();
-    } catch (err: any) {
-      showError("Could not update borrower", err.message);
+    } catch (err: unknown) {
+      showError("Could not update borrower", err instanceof Error ? err.message : String(err));
     } finally {
       setLoading(false);
     }

@@ -128,8 +128,8 @@ export function DealPricingForm() {
       setResults(result.result);
       setPricingRunId(result.pricingRunId || null);
       showSuccess("Pricing complete");
-    } catch (err: any) {
-      showError("Could not run pricing", err?.message || "Pricing failed");
+    } catch (err: unknown) {
+      showError("Could not run pricing", err instanceof Error ? err.message : "Pricing failed");
     } finally {
       setRunning(false);
     }

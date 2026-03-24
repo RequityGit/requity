@@ -127,7 +127,7 @@ export function EntityMergeSection({
   const hasMatch = !!autoMatch;
   const conf = autoMatch ? Math.round(autoMatch.confidence * 100) : 0;
   const incomingData = INCOMING_DATA_MAP[entityKey](parsed);
-  const existingData = autoMatch?.snapshot || {};
+  const existingData = useMemo(() => autoMatch?.snapshot || {}, [autoMatch?.snapshot]);
 
   const fieldStats = useMemo(() => {
     if (mode !== "merge" || !hasMatch) return null;

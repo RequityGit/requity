@@ -224,8 +224,8 @@ function EditProgramDialog({ program }: { program: PricingProgram }) {
       showSuccess(`${program.program_name} updated to v${(data as any)?.new_version ?? "new"}`);
       setOpen(false);
       router.refresh();
-    } catch (err: any) {
-      showError("Could not update program", err.message);
+    } catch (err: unknown) {
+      showError("Could not update program", err instanceof Error ? err.message : String(err));
     } finally {
       setLoading(false);
     }
