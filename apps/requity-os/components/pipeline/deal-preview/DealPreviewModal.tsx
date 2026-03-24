@@ -10,6 +10,7 @@ import { DealPreviewVitals } from "./DealPreviewVitals";
 import { DealPreviewActivity } from "./DealPreviewActivity";
 import { DealPreviewConditions } from "./DealPreviewConditions";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { showSuccess, showError } from "@/lib/toast";
 import {
   advanceStageAction,
@@ -45,6 +46,7 @@ export function DealPreviewModal({
   teamMemberNames,
 }: DealPreviewModalProps) {
   const router = useRouter();
+  const isMobile = useIsMobile();
   const {
     isOpen,
     selectedDealId,
@@ -282,7 +284,7 @@ export function DealPreviewModal({
   );
 
   // ── Render ──
-  if (!isOpen) return null;
+  if (!isOpen || isMobile) return null;
 
   // Determine what to show: always show skeleton if no data yet (regardless of loading flag)
   const showSkeleton = !data && !error;
