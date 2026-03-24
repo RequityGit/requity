@@ -416,10 +416,8 @@ export async function POST(req: NextRequest) {
       address: body.address.trim(),
       state: body.state.trim().toUpperCase(),
     });
-    if (body.city && body.county) {
-      params.set("city", body.city.trim());
-      params.set("county", body.county.trim());
-    }
+    if (body.city) params.set("city", body.city.trim());
+    if (body.county) params.set("county", body.county.trim());
 
     const realieUrl = `${REALIE_BASE_URL}?${params.toString()}`;
 

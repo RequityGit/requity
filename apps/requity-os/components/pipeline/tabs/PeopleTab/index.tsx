@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { Loader2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { showError } from "@/lib/toast";
 import type { DealBorrowingEntity, DealBorrowerMember } from "@/app/types/borrower";
 import type { DealTeamContact } from "@/app/types/deal-team";
@@ -62,23 +63,47 @@ export default function PeopleTab({
 }: PeopleTabProps) {
   const [data, setData] = useState<PeopleData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [localDealTeamMembers, setLocalDealTeamMembers] =
     useState<DealTeamMember[]>(dealTeamMembers);
 
   const load = useCallback(
     async (silent = false) => {
-      if (!silent) setLoading(true);
+      if (!silent) {
+        setLoading(true);
+        setError(null);
+      }
       try {
         const res = await fetch(`/api/pipeline/${dealId}/people`);
         if (!res.ok) {
           const body = await res.json().catch(() => ({}));
-          showError(body.error ?? "Failed to load people data");
+          const msg = body.error ?? "Failed to load people data";
+          console.error("People tab API error:", res.status, msg);
+          if (!silent) setError(msg);
+          else showError(msg);
+          return;
+        }
+        const contentType = res.headers.get("content-type") ?? "";
+        if (!contentType.includes("application/json")) {
+          console.error("People tab: unexpected content-type", contentType);
+          if (!silent) setError("Unexpected response from server");
+          else showError("Failed to load people data");
           return;
         }
         const json = await res.json();
-        setData(json);
-      } catch {
-        showError("Failed to load people data");
+        // Defensive: ensure expected shape
+        setData({
+          entity: json.entity ?? null,
+          members: Array.isArray(json.members) ? json.members : [],
+          broker: json.broker ?? null,
+          brokerExtra: json.brokerExtra ?? { broker_nmls: "", broker_fee_pct: "", broker_notes: "" },
+          thirdParties: Array.isArray(json.thirdParties) ? json.thirdParties : [],
+        });
+        setError(null);
+      } catch (err) {
+        console.error("People tab fetch failed:", err);
+        if (!silent) setError("Failed to load people data");
+        else showError("Failed to load people data");
       } finally {
         if (!silent) setLoading(false);
       }
@@ -126,10 +151,21 @@ export default function PeopleTab({
     [dealId]
   );
 
-  if (loading || !data) {
+  if (loading) {
     return (
       <div className="flex items-center justify-center py-12">
         <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
+
+  if (error || !data) {
+    return (
+      <div className="flex flex-col items-center justify-center py-12 gap-3">
+        <p className="text-sm text-muted-foreground">{error ?? "Could not load people"}</p>
+        <Button variant="outline" size="sm" onClick={() => load()}>
+          Try again
+        </Button>
       </div>
     );
   }

@@ -584,7 +584,10 @@ export function NotificationDetailPanel({
     <div className="flex-1 flex flex-col overflow-hidden bg-background/50">
       {/* Detail header */}
       <div className="flex items-center justify-between px-4 py-3 border-b border-border flex-shrink-0">
-        <div className="flex items-center gap-2 min-w-0">
+        <button
+          onClick={handleGoToEntity}
+          className="flex items-center gap-2 min-w-0 hover:opacity-80 rq-transition"
+        >
           {notification.entity_type && (
             <span className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground/60">
               {getEntityTypeLabel(notification.entity_type)}
@@ -593,10 +596,10 @@ export function NotificationDetailPanel({
           {entityLabel && notification.entity_type && (
             <span className="text-muted-foreground/40">/</span>
           )}
-          <span className="text-[13px] font-semibold text-foreground truncate">
+          <span className="text-[13px] font-semibold text-foreground truncate hover:underline underline-offset-4">
             {entityLabel}
           </span>
-        </div>
+        </button>
         <button
           onClick={handleGoToEntity}
           className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-md border border-border text-[11px] font-medium text-muted-foreground hover:text-foreground hover:bg-foreground/[0.04] rq-transition flex-shrink-0"
