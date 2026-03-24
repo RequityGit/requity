@@ -5,6 +5,7 @@ import { PricingCalculator } from "./PricingCalculator";
 import { GooglePlacesInput } from "./GooglePlacesInput";
 import { ThousandsCurrencyInput } from "./ThousandsCurrencyInput";
 import { SignaturePad } from "./SignaturePad";
+import { InvestmentAmountSelector } from "./InvestmentAmountSelector";
 import type { FormFieldDefinition } from "@/lib/form-engine/types";
 
 export interface CustomFieldComponentProps {
@@ -26,6 +27,7 @@ export const CUSTOM_COMPONENT_REGISTRY: Record<
   "google-places": GooglePlacesInput,
   "thousands-currency": ThousandsCurrencyInput,
   "signature": SignaturePad,
+  "investment-amount-selector": InvestmentAmountSelector,
 };
 
 export function renderCustomComponent(

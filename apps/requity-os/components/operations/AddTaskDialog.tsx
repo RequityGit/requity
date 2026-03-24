@@ -338,7 +338,7 @@ export function AddTaskDialog({ projects, teamMembers, externalOpen, onExternalO
               placeholder="What needs to be done?"
               value={form.title}
               onChange={(e) => setForm({ ...form, title: e.target.value })}
-              className="inline-field text-base font-medium placeholder:text-muted-foreground/50"
+              className="inline-field !border-border text-base font-medium placeholder:text-muted-foreground/50"
               required
             />
           </div>

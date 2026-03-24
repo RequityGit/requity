@@ -122,8 +122,9 @@ export async function POST(request: Request) {
     const entityIds: Record<string, string> = {};
     const allChanges: Array<{ field: string; old_value: string | null; new_value: string | null }> = [];
 
-    // Check if this is the loan request form (special handling)
+    // Check for special form handling
     const isLoanApplicationForm = (formDef as any).slug === "loan-request";
+    const isSoftCommitmentForm = (formDef as any).slug === "soft-commitment";
 
     // 2. Process each entity group in dependency order
     // Order: crm_contact -> company -> property -> opportunity
@@ -459,6 +460,73 @@ export async function POST(request: Request) {
             { status: 500 }
           );
         }
+      }
+    }
+
+    // 2b. Soft commitment: create soft_commitments record + call edge function
+    if (isSoftCommitmentForm && body.deal_id) {
+      try {
+        const commitmentAmount = typeof data.commitment_amount === "number"
+          ? data.commitment_amount
+          : parseFloat(String(data.commitment_amount)) || 0;
+
+        // Determine if custom amount was used (not matching any preset option)
+        const isCustomAmount = commitmentAmount > 0 && data._deal_amount_options
+          ? !(data._deal_amount_options as number[]).includes(commitmentAmount)
+          : false;
+
+        // Parse full_name into parts for the soft_commitments record
+        const fullName = (data.full_name as string) || "";
+
+        const { data: scData, error: scError } = await supabase
+          .from("soft_commitments")
+          .insert({
+            deal_id: body.deal_id,
+            contact_id: entityIds.contact_id || null,
+            name: fullName,
+            email: data.email as string,
+            phone: (data.phone as string) || null,
+            commitment_amount: commitmentAmount,
+            custom_amount: isCustomAmount ? commitmentAmount : null,
+            is_accredited: data.is_accredited === "yes" ? true : data.is_accredited === "no" ? false : null,
+            questions: (data.questions as string) || null,
+            status: "pending",
+            source: (data._source as string) || "form",
+          } as never)
+          .select("id")
+          .single();
+
+        if (scError) {
+          console.error("Soft commitment record creation failed:", scError.message);
+        } else if (scData) {
+          entityIds.soft_commitment_id = (scData as { id: string }).id;
+        }
+
+        // Call submit-soft-commitment edge function for email notifications
+        // Fire-and-forget: don't block the submission response
+        const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "https://edhlkknvlczhbowasjna.supabase.co";
+        fetch(`${supabaseUrl}/functions/v1/submit-soft-commitment`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            deal_id: body.deal_id,
+            name: fullName,
+            email: data.email,
+            phone: data.phone || undefined,
+            is_accredited: data.is_accredited === "yes",
+            commitment_amount: commitmentAmount,
+            custom_amount: isCustomAmount ? commitmentAmount : undefined,
+            questions: data.questions || undefined,
+            contact_id: entityIds.contact_id || undefined,
+            soft_commitment_id: entityIds.soft_commitment_id || undefined,
+            source: (data._source as string) || "form",
+          }),
+        }).catch((edgeFnErr) => {
+          console.error("Soft commitment edge function call failed:", edgeFnErr);
+        });
+      } catch (scErr) {
+        // Non-blocking: log but don't fail the submission
+        console.error("Soft commitment processing failed:", scErr);
       }
     }
 

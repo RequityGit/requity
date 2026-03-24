@@ -36,7 +36,7 @@ import {
   Loader2,
   DollarSign,
   Users,
-  TrendingUp,
+  FileCheck,
   BarChart3,
   Target,
 } from "lucide-react";
@@ -54,6 +54,7 @@ import {
 } from "@/lib/fundraising/actions";
 import { showSuccess, showError } from "@/lib/toast";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 
 interface Props {
   commitments: SoftCommitment[];
@@ -73,12 +74,16 @@ export function SoftCommitmentsClient({ commitments, deals }: Props) {
 
   // KPI calculations
   const stats = useMemo(() => {
-    const total = commitments.reduce((s, c) => s + c.commitment_amount, 0);
-    const active = commitments
+    const totalCommitted = commitments
       .filter((c) => c.status === "pending" || c.status === "confirmed")
       .reduce((s, c) => s + c.commitment_amount, 0);
+    const totalSubscribed = commitments
+      .filter((c) => c.status === "subscribed")
+      .reduce((s, c) => s + c.commitment_amount, 0);
     const uniqueEmails = new Set(commitments.map((c) => c.email)).size;
-    const avg = commitments.length > 0 ? total / commitments.length : 0;
+    const avg = commitments.length > 0
+      ? (totalCommitted + totalSubscribed) / commitments.length
+      : 0;
     const subscribedCount = commitments.filter(
       (c) => c.status === "subscribed"
     ).length;
@@ -86,7 +91,7 @@ export function SoftCommitmentsClient({ commitments, deals }: Props) {
       commitments.length > 0
         ? ((subscribedCount / commitments.length) * 100).toFixed(1)
         : "0";
-    return { total, active, uniqueEmails, avg, subscriptionRate };
+    return { totalCommitted, totalSubscribed, uniqueEmails, avg, subscriptionRate };
   }, [commitments]);
 
   // Filtered data
@@ -136,12 +141,24 @@ export function SoftCommitmentsClient({ commitments, deals }: Props) {
     {
       key: "name",
       header: "Name",
-      cell: (row) => (
-        <div>
-          <div className="font-medium text-sm">{row.name}</div>
-          <div className="text-xs text-muted-foreground">{row.email}</div>
-        </div>
-      ),
+      cell: (row) => {
+        const content = (
+          <div>
+            <div className="font-medium text-sm">{row.name}</div>
+            <div className="text-xs text-muted-foreground">{row.email}</div>
+          </div>
+        );
+        return row.contact_id ? (
+          <Link
+            href={`/admin/crm/contacts/${row.contact_id}`}
+            className="hover:underline underline-offset-4"
+          >
+            {content}
+          </Link>
+        ) : (
+          content
+        );
+      },
     },
     {
       key: "deal",
@@ -184,6 +201,18 @@ export function SoftCommitmentsClient({ commitments, deals }: Props) {
       ),
     },
     {
+      key: "questions",
+      header: "Questions",
+      cell: (row) =>
+        row.questions ? (
+          <span className="text-sm text-muted-foreground max-w-[200px] truncate block" title={row.questions}>
+            {row.questions}
+          </span>
+        ) : (
+          <span className="text-sm text-muted-foreground">&mdash;</span>
+        ),
+    },
+    {
       key: "submitted",
       header: "Submitted",
       cell: (row) => (
@@ -222,10 +251,10 @@ export function SoftCommitmentsClient({ commitments, deals }: Props) {
             </DropdownMenuItem>
             {row.contact_id && (
               <DropdownMenuItem asChild>
-                <a href={`/contacts/${row.contact_id}`}>
+                <Link href={`/admin/crm/contacts/${row.contact_id}`}>
                   <ExternalLink className="h-3.5 w-3.5 mr-2" />
                   View Contact
-                </a>
+                </Link>
               </DropdownMenuItem>
             )}
           </DropdownMenuContent>
@@ -240,14 +269,14 @@ export function SoftCommitmentsClient({ commitments, deals }: Props) {
       {/* KPI Cards */}
       <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
         <KpiCard
-          title="Total Commitments"
-          value={formatCurrency(stats.total)}
+          title="Total Committed"
+          value={formatCurrency(stats.totalCommitted)}
           icon={<DollarSign className="h-4 w-4" />}
         />
         <KpiCard
-          title="Active (Pending + Confirmed)"
-          value={formatCurrency(stats.active)}
-          icon={<TrendingUp className="h-4 w-4" />}
+          title="Total Subscribed"
+          value={formatCurrency(stats.totalSubscribed)}
+          icon={<FileCheck className="h-4 w-4" />}
         />
         <KpiCard
           title="Unique Investors"

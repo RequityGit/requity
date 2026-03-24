@@ -139,6 +139,8 @@ export interface FormEngineProps {
   prefillData?: Record<string, unknown>;
   sessionToken?: string;
   dealToken?: string;
+  /** Direct deal ID injection (bypasses deal_application_links token flow) */
+  dealId?: string;
   onComplete?: (submission: FormSubmission) => void;
   onClose?: () => void;
 }

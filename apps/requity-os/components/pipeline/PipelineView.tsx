@@ -1,8 +1,9 @@
 "use client";
 
-import { useState, useMemo, useCallback } from "react";
+import { useState, useMemo, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { cn } from "@/lib/utils";
 import { DealFilters, type FilterState } from "./DealFilters";
 import { filterByDateAdded } from "@/components/ui/date-added-filter";
 import { PipelineKanban } from "./PipelineKanban";
@@ -21,6 +22,7 @@ import {
   useConditionsMap,
 } from "@/hooks/usePipelineStore";
 import { useDealPreview } from "./deal-preview/DealPreviewProvider";
+import { usePipelineKeyboardNav } from "@/hooks/usePipelineKeyboardNav";
 import type { IntakeItem } from "@/lib/intake/types";
 
 export function PipelineView() {
@@ -94,7 +96,8 @@ export function PipelineView() {
     return ids;
   }, [filteredDeals]);
 
-  const { open: openPreview, setPrefetchDealId } = useDealPreview();
+  const { open: openPreview, setPrefetchDealId, isOpen: isPreviewOpen } = useDealPreview();
+  const searchInputRef = useRef<HTMLInputElement>(null);
 
   const handleDealClick = useCallback(
     (deal: UnifiedDeal, e?: React.MouseEvent) => {
@@ -115,6 +118,22 @@ export function PipelineView() {
     [setPrefetchDealId]
   );
 
+  const handleOpenNewDeal = useCallback(() => {
+    setNewDealOpen(true);
+  }, []);
+
+  const { selectedDealId } = usePipelineKeyboardNav({
+    deals: filteredDeals,
+    isModalOpen: isPreviewOpen,
+    isKanbanView: effectiveView === "kanban",
+    onOpenPreview: useCallback(
+      (dealId: string, orderedIds: string[]) => openPreview(dealId, orderedIds),
+      [openPreview]
+    ),
+    onOpenNewDeal: handleOpenNewDeal,
+    searchInputRef,
+  });
+
   const handleIntakeClick = useCallback((item: IntakeItem) => {
     setReviewItem(item);
   }, []);
@@ -124,7 +143,8 @@ export function PipelineView() {
       <DealFilters
         filters={filters}
         onChange={setFilters}
-        onNewDeal={() => setNewDealOpen(true)}
+        onNewDeal={handleOpenNewDeal}
+        searchInputRef={searchInputRef}
       />
 
       {effectiveView === "kanban" ? (
@@ -138,6 +158,7 @@ export function PipelineView() {
           onIntakeClick={handleIntakeClick}
           teamMembers={teamMembers}
           conditionsMap={conditionsMap}
+          selectedDealId={selectedDealId}
         />
       ) : (
         <PipelineTable
@@ -145,6 +166,30 @@ export function PipelineView() {
           stageConfigs={stageConfigs}
           onDealClick={handleDealClick}
         />
+      )}
+
+      {/* Kanban keyboard hint bar */}
+      {effectiveView === "kanban" && (
+        <div
+          className={cn(
+            "flex items-center justify-center border-t border-border bg-muted/30 px-5 py-[7px] rq-transition",
+            isPreviewOpen ? "opacity-0 pointer-events-none" : "opacity-100"
+          )}
+        >
+          <div className="flex items-center gap-3.5 text-[10px] text-muted-foreground">
+            <span className="flex items-center gap-1"><Kbd>&larr;</Kbd><Kbd>&rarr;</Kbd> select</span>
+            <span className="text-muted-foreground/40">&middot;</span>
+            <span className="flex items-center gap-1"><Kbd>&uarr;</Kbd><Kbd>&darr;</Kbd> columns</span>
+            <span className="text-muted-foreground/40">&middot;</span>
+            <span className="flex items-center gap-1"><Kbd>Space</Kbd> open</span>
+            <span className="text-muted-foreground/40">&middot;</span>
+            <span className="flex items-center gap-1"><Kbd>/</Kbd> search</span>
+            <span className="text-muted-foreground/40">&middot;</span>
+            <span className="flex items-center gap-1"><Kbd>N</Kbd> new deal</span>
+            <span className="text-muted-foreground/40">&middot;</span>
+            <span className="flex items-center gap-1"><Kbd>?</Kbd> shortcuts</span>
+          </div>
+        </div>
       )}
 
       <NewDealDialog
@@ -162,5 +207,15 @@ export function PipelineView() {
         }}
       />
     </div>
+  );
+}
+
+// ─── Kbd ───
+
+function Kbd({ children }: { children: React.ReactNode }) {
+  return (
+    <kbd className="rounded border border-border bg-background px-[5px] py-px text-[10px] font-medium leading-4 text-muted-foreground">
+      {children}
+    </kbd>
   );
 }

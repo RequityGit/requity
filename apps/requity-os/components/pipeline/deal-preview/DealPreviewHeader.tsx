@@ -5,11 +5,9 @@ import {
   ChevronLeft,
   ChevronRight,
   Clock,
-  ExternalLink,
   MapPin,
   X,
 } from "lucide-react";
-import Link from "next/link";
 import { DealPreviewStageRail } from "./DealPreviewStageRail";
 import type { UnifiedStage } from "../pipeline-types";
 import type { DealPreviewData, DealTeamMember } from "./useDealPreviewData";
@@ -48,6 +46,7 @@ interface DealPreviewHeaderProps {
   onAdvanceStage: () => void;
   onRegressStage: () => void;
   onClose: () => void;
+  onOpenFullPage: () => void;
   stageLoading?: boolean;
   /** Team member names resolved from profiles (profile_id -> name) */
   teamMemberNames?: Map<string, string>;
@@ -62,6 +61,7 @@ export function DealPreviewHeader({
   onAdvanceStage,
   onRegressStage,
   onClose,
+  onOpenFullPage,
   stageLoading,
   teamMemberNames,
 }: DealPreviewHeaderProps) {
@@ -108,7 +108,7 @@ export function DealPreviewHeader({
             onClick={onCyclePrev}
             disabled={currentIndex <= 0}
             className="flex h-[26px] w-[26px] items-center justify-center rounded-md border border-border bg-background text-muted-foreground rq-transition hover:bg-accent disabled:opacity-30"
-            title="Previous deal (↑)"
+            title="Previous deal (←)"
           >
             <ChevronLeft className="h-3.5 w-3.5" />
           </button>
@@ -116,17 +116,20 @@ export function DealPreviewHeader({
             onClick={onCycleNext}
             disabled={currentIndex >= totalDeals - 1}
             className="flex h-[26px] w-[26px] items-center justify-center rounded-md border border-border bg-background text-muted-foreground rq-transition hover:bg-accent disabled:opacity-30"
-            title="Next deal (↓)"
+            title="Next deal (→)"
           >
             <ChevronRight className="h-3.5 w-3.5" />
           </button>
           <span className="h-3.5 w-px bg-border" />
-          <Link
-            href={`/pipeline/${deal.deal_number || deal.id}`}
-            className="inline-flex items-center gap-1 rounded-md border border-border bg-background px-2.5 py-1 text-[11px] font-medium text-foreground no-underline rq-transition hover:bg-accent"
+          <button
+            onClick={onOpenFullPage}
+            className="inline-flex items-center gap-1.5 rounded-md border border-border bg-background px-2.5 py-1 text-[11px] font-medium text-foreground rq-transition hover:bg-accent"
           >
-            Open <ExternalLink className="h-3 w-3" />
-          </Link>
+            Open
+            <kbd className="rounded border border-border/50 bg-muted/50 px-[5px] py-px text-[9px] font-medium leading-4 text-muted-foreground/70">
+              Space
+            </kbd>
+          </button>
           <button
             onClick={onClose}
             className="flex h-[26px] w-[26px] items-center justify-center rounded-md border border-border bg-background text-muted-foreground rq-transition hover:bg-accent"

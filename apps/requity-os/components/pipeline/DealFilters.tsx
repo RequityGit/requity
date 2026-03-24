@@ -28,12 +28,14 @@ interface DealFiltersProps {
   filters: FilterState;
   onChange: (filters: FilterState) => void;
   onNewDeal: () => void;
+  searchInputRef?: React.RefObject<HTMLInputElement | null>;
 }
 
 export function DealFilters({
   filters,
   onChange,
   onNewDeal,
+  searchInputRef,
 }: DealFiltersProps) {
   function update(partial: Partial<FilterState>) {
     onChange({ ...filters, ...partial });
@@ -48,6 +50,7 @@ export function DealFilters({
         <div className="relative w-full sm:w-64">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
+            ref={searchInputRef as React.Ref<HTMLInputElement>}
             value={filters.search}
             onChange={(e) => update({ search: e.target.value })}
             placeholder="Search deals..."

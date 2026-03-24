@@ -3,7 +3,7 @@
 import React, { useMemo, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
-import { User, Users, Calendar, Mail, Pencil, ExternalLink } from "lucide-react";
+import { User, Users, Calendar } from "lucide-react";
 import { useDraggable } from "@dnd-kit/core";
 import {
   type UnifiedDeal,
@@ -31,6 +31,7 @@ interface DealCardProps {
   assigneeName?: string | null;
   onClick: (e?: React.MouseEvent) => void;
   onHover?: () => void;
+  isSelected?: boolean;
 }
 
 // ─── Shared helpers ───
@@ -135,7 +136,6 @@ interface CardContentProps {
   alertLevel: "normal" | "warn" | "alert";
   conditionsProgress?: { completed: number; total: number } | null;
   assigneeName?: string | null;
-  showHoverActions?: boolean;
 }
 
 function CardContent({
@@ -144,7 +144,6 @@ function CardContent({
   alertLevel,
   conditionsProgress,
   assigneeName,
-  showHoverActions = false,
 }: CardContentProps) {
   const isCommercial = isCommercialAssetClass(deal.asset_class);
   const isEquity = deal.capital_side === "equity";
@@ -170,33 +169,6 @@ function CardContent({
           isEquity ? "bg-emerald-500" : "bg-blue-500"
         )}
       />
-
-      {/* Hover quick actions */}
-      {showHoverActions && (
-        <div className="absolute top-2.5 right-2.5 flex gap-0.5 opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto rq-transition bg-card border border-border rounded-md p-0.5 shadow-sm z-10">
-          <button
-            type="button"
-            className="w-[26px] h-[26px] flex items-center justify-center rounded text-muted-foreground hover:bg-muted hover:text-foreground rq-transition"
-            onClick={(e) => { e.stopPropagation(); }}
-          >
-            <Mail className="h-[13px] w-[13px]" />
-          </button>
-          <button
-            type="button"
-            className="w-[26px] h-[26px] flex items-center justify-center rounded text-muted-foreground hover:bg-muted hover:text-foreground rq-transition"
-            onClick={(e) => { e.stopPropagation(); }}
-          >
-            <Pencil className="h-[13px] w-[13px]" />
-          </button>
-          <button
-            type="button"
-            className="w-[26px] h-[26px] flex items-center justify-center rounded text-muted-foreground hover:bg-muted hover:text-foreground rq-transition"
-            onClick={(e) => { e.stopPropagation(); }}
-          >
-            <ExternalLink className="h-[13px] w-[13px]" />
-          </button>
-        </div>
-      )}
 
       {/* Card inner content */}
       <div className="px-4 pt-3.5 pb-0 flex-1 flex flex-col">
@@ -388,6 +360,7 @@ function DealCardInner({
   assigneeName,
   onClick,
   onHover,
+  isSelected,
 }: DealCardProps) {
   const router = useRouter();
   const dealHref = `/pipeline/${deal.deal_number || deal.id}`;
@@ -441,6 +414,7 @@ function DealCardInner({
   return (
     <div
       ref={setNodeRef}
+      data-deal-id={deal.id}
       {...listeners}
       onPointerDown={handlePointerDown}
       onPointerUp={handlePointerUp}
@@ -456,6 +430,7 @@ function DealCardInner({
         "hover:border-foreground/[0.18] hover:-translate-y-px",
         "rq-transition cursor-pointer",
         "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+        isSelected && "ring-2 ring-primary/40",
         isDragging && "opacity-50",
         isClosed && "opacity-60"
       )}
@@ -466,7 +441,6 @@ function DealCardInner({
         alertLevel={alertLevel}
         conditionsProgress={conditionsProgress}
         assigneeName={assigneeName}
-        showHoverActions
       />
     </div>
   );
@@ -491,7 +465,8 @@ export const DealCard = React.memo(DealCardInner, (prev, next) => {
     prev.hasRelationships === next.hasRelationships &&
     prev.formulaMap === next.formulaMap &&
     prev.conditionsProgress === next.conditionsProgress &&
-    prev.assigneeName === next.assigneeName
+    prev.assigneeName === next.assigneeName &&
+    prev.isSelected === next.isSelected
   );
 });
 

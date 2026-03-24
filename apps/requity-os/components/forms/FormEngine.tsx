@@ -31,6 +31,7 @@ export function FormEngine({
   prefillData,
   sessionToken,
   dealToken,
+  dealId: directDealId,
   onComplete,
   onClose,
 }: FormEngineProps) {
@@ -169,12 +170,14 @@ export function FormEngine({
       }
 
       // Create new submission record
+      // Use deal ID from deal token, or from direct prop
+      const resolvedDealId = dealData?.deal_id || directDealId || null;
       const result = await createSubmission(
         data.id,
         resolvedPrefill,
         definition.steps[0]?.id || null,
-        dealData?.deal_id
-          ? { dealId: dealData.deal_id, dealApplicationLinkId: dealData.link_id }
+        resolvedDealId
+          ? { dealId: resolvedDealId, dealApplicationLinkId: dealData?.link_id }
           : undefined
       );
 
@@ -184,7 +187,7 @@ export function FormEngine({
           data: resolvedPrefill,
           submissionId: result.id,
           sessionToken: result.session_token,
-          dealId: dealData?.deal_id || null,
+          dealId: resolvedDealId,
           dealApplicationLinkId: dealData?.link_id || null,
           isLoading: false,
         }));
@@ -195,7 +198,7 @@ export function FormEngine({
 
     loadForm();
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [formId, formSlug, sessionToken, dealToken]);
+  }, [formId, formSlug, sessionToken, dealToken, directDealId]);
 
   // Get visible steps based on current data
   const visibleSteps = formDef ? getVisibleSteps(formDef.steps, state.data) : [];

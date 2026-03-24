@@ -7,8 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import { Switch } from "@/components/ui/switch";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import {
   Collapsible,
   CollapsibleContent,
@@ -38,6 +37,8 @@ import {
   BarChart3,
   ShieldCheck,
   Rocket,
+  FileCheck,
+  MessageSquare,
 } from "lucide-react";
 import { formatCurrency, formatDate } from "@/lib/format";
 import { cn } from "@/lib/utils";
@@ -49,8 +50,8 @@ import {
 } from "@/lib/fundraising/types";
 import {
   updateCommitmentStatus,
+  updateCommitmentNotes,
   updateFundraiseSettings,
-  addManualCommitment,
 } from "@/lib/fundraising/actions";
 import {
   Dialog,
@@ -59,7 +60,9 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
+import { FormModal } from "@/components/forms/contexts/FormModal";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 
 interface FundraisingTabProps {
   dealId: string;
@@ -242,7 +245,11 @@ function FundraiseDashboard({
   const [loading, setLoading] = useState(true);
   const [copied, setCopied] = useState(false);
   const [configOpen, setConfigOpen] = useState(false);
-  const [showManualDialog, setShowManualDialog] = useState(false);
+  const [showFormModal, setShowFormModal] = useState(false);
+  const [notesDialog, setNotesDialog] = useState<{
+    id: string;
+    notes: string;
+  } | null>(null);
 
   // Load commitments client-side
   useEffect(() => {
@@ -260,13 +267,16 @@ function FundraiseDashboard({
 
   // Stats
   const stats = useMemo(() => {
-    const totalAmount = commitments.reduce(
-      (s, c) => s + c.commitment_amount,
-      0
-    );
+    const totalCommitted = commitments
+      .filter((c) => c.status === "pending" || c.status === "confirmed")
+      .reduce((s, c) => s + c.commitment_amount, 0);
+    const totalSubscribed = commitments
+      .filter((c) => c.status === "subscribed")
+      .reduce((s, c) => s + c.commitment_amount, 0);
+    const totalActive = totalCommitted + totalSubscribed;
     const investorCount = new Set(commitments.map((c) => c.email)).size;
     const avg =
-      commitments.length > 0 ? totalAmount / commitments.length : 0;
+      commitments.length > 0 ? totalActive / commitments.length : 0;
     const accreditedCount = commitments.filter(
       (c) => c.is_accredited === true
     ).length;
@@ -274,11 +284,16 @@ function FundraiseDashboard({
       commitments.length > 0
         ? ((accreditedCount / commitments.length) * 100).toFixed(0)
         : "0";
-    const progress =
+    const subscribedPct =
       fundraiseTarget && fundraiseTarget > 0
-        ? Math.min((totalAmount / fundraiseTarget) * 100, 100)
+        ? Math.min((totalSubscribed / fundraiseTarget) * 100, 100)
         : 0;
-    return { totalAmount, investorCount, avg, accreditedPct, progress };
+    const committedOnlyPct =
+      fundraiseTarget && fundraiseTarget > 0
+        ? Math.min((totalCommitted / fundraiseTarget) * 100, 100 - subscribedPct)
+        : 0;
+    const totalPct = subscribedPct + committedOnlyPct;
+    return { totalCommitted, totalSubscribed, totalActive, investorCount, avg, accreditedPct, subscribedPct, committedOnlyPct, totalPct };
   }, [commitments, fundraiseTarget]);
 
   const publicUrl =
@@ -345,16 +360,58 @@ function FundraiseDashboard({
     []
   );
 
+  const handleSaveNotes = useCallback(async () => {
+    if (!notesDialog) return;
+    const result = await updateCommitmentNotes(notesDialog.id, notesDialog.notes);
+    if (result.error) {
+      showError("Could not save notes", result.error);
+    } else {
+      showSuccess("Notes saved");
+      setCommitments((prev) =>
+        prev.map((c) =>
+          c.id === notesDialog.id ? { ...c, notes: notesDialog.notes } : c
+        )
+      );
+      setNotesDialog(null);
+    }
+  }, [notesDialog]);
+
+  const handleFormComplete = useCallback(() => {
+    setShowFormModal(false);
+    // Re-fetch commitments
+    const supabase = createClient();
+    supabase
+      .from("soft_commitments" as never)
+      .select("*" as never)
+      .eq("deal_id" as never, dealId as never)
+      .order("submitted_at" as never, { ascending: false } as never)
+      .then(({ data }) => {
+        setCommitments((data ?? []) as unknown as SoftCommitment[]);
+      });
+  }, [dealId]);
+
   const columns: Column<SoftCommitment>[] = [
     {
       key: "name",
       header: "Name",
-      cell: (row) => (
-        <div>
-          <div className="font-medium text-sm">{row.name}</div>
-          <div className="text-xs text-muted-foreground">{row.email}</div>
-        </div>
-      ),
+      cell: (row) => {
+        const content = (
+          <div>
+            <div className="font-medium text-sm">{row.name}</div>
+            <div className="text-xs text-muted-foreground">{row.email}</div>
+          </div>
+        );
+        return row.contact_id ? (
+          <Link
+            href={`/admin/crm/contacts/${row.contact_id}`}
+            className="hover:underline underline-offset-4"
+          >
+            {content}
+          </Link>
+        ) : (
+          content
+        );
+      },
     },
     {
       key: "amount",
@@ -399,6 +456,38 @@ function FundraiseDashboard({
       ),
     },
     {
+      key: "questions",
+      header: "Questions",
+      cell: (row) =>
+        row.questions ? (
+          <span className="text-sm text-muted-foreground max-w-[200px] truncate block" title={row.questions}>
+            {row.questions}
+          </span>
+        ) : (
+          <span className="text-sm text-muted-foreground">&mdash;</span>
+        ),
+    },
+    {
+      key: "notes",
+      header: "Notes",
+      cell: (row) => (
+        <button
+          type="button"
+          onClick={() => setNotesDialog({ id: row.id, notes: row.notes ?? "" })}
+          className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground rq-transition max-w-[200px]"
+        >
+          {row.notes ? (
+            <span className="truncate" title={row.notes}>{row.notes}</span>
+          ) : (
+            <>
+              <MessageSquare className="h-3.5 w-3.5 shrink-0" />
+              <span className="text-xs">Add</span>
+            </>
+          )}
+        </button>
+      ),
+    },
+    {
       key: "submitted",
       header: "Submitted",
       cell: (row) => (
@@ -428,12 +517,19 @@ function FundraiseDashboard({
                 Mark as {o.label}
               </DropdownMenuItem>
             ))}
+            <DropdownMenuItem
+              onClick={() =>
+                setNotesDialog({ id: row.id, notes: row.notes ?? "" })
+              }
+            >
+              Edit Notes
+            </DropdownMenuItem>
             {row.contact_id && (
               <DropdownMenuItem asChild>
-                <a href={`/contacts/${row.contact_id}`}>
+                <Link href={`/admin/crm/contacts/${row.contact_id}`}>
                   <ExternalLink className="h-3.5 w-3.5 mr-2" />
                   View Contact
-                </a>
+                </Link>
               </DropdownMenuItem>
             )}
           </DropdownMenuContent>
@@ -451,31 +547,52 @@ function FundraiseDashboard({
           <CardContent className="p-5">
             <div className="flex items-center justify-between mb-2">
               <span className="text-sm font-medium">
-                {formatCurrency(stats.totalAmount)} raised
+                {formatCurrency(stats.totalActive)} committed
               </span>
               <span className="text-sm text-muted-foreground">
                 {formatCurrency(fundraiseTarget)} target
               </span>
             </div>
-            <div className="h-3 bg-muted rounded-full overflow-hidden">
+            <div className="h-3 bg-muted rounded-full overflow-hidden flex">
               <div
-                className="h-full bg-primary rounded-full rq-transition"
-                style={{ width: `${stats.progress}%` }}
+                className="h-full bg-primary rq-transition"
+                style={{ width: `${stats.subscribedPct}%` }}
+              />
+              <div
+                className="h-full bg-primary/35 rq-transition"
+                style={{ width: `${stats.committedOnlyPct}%` }}
               />
             </div>
-            <div className="text-xs text-muted-foreground mt-1">
-              {stats.progress.toFixed(1)}% of target
+            <div className="flex items-center justify-between mt-1">
+              <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                <span className="flex items-center gap-1.5">
+                  <span className="inline-block h-2 w-2 rounded-full bg-primary" />
+                  Subscribed {formatCurrency(stats.totalSubscribed)}
+                </span>
+                <span className="flex items-center gap-1.5">
+                  <span className="inline-block h-2 w-2 rounded-full bg-primary/35" />
+                  Committed {formatCurrency(stats.totalCommitted)}
+                </span>
+              </div>
+              <span className="text-xs text-muted-foreground">
+                {stats.totalPct.toFixed(1)}% of target
+              </span>
             </div>
           </CardContent>
         </Card>
       )}
 
       {/* Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
         <KpiCard
-          title="Total Raised"
-          value={formatCurrency(stats.totalAmount)}
+          title="Total Committed"
+          value={formatCurrency(stats.totalCommitted)}
           icon={<DollarSign className="h-4 w-4" />}
+        />
+        <KpiCard
+          title="Total Subscribed"
+          value={formatCurrency(stats.totalSubscribed)}
+          icon={<FileCheck className="h-4 w-4" />}
         />
         <KpiCard
           title="Investors"
@@ -507,7 +624,7 @@ function FundraiseDashboard({
         <Button
           variant="outline"
           size="sm"
-          onClick={() => setShowManualDialog(true)}
+          onClick={() => setShowFormModal(true)}
         >
           <Plus className="h-3.5 w-3.5 mr-2" />
           Add Manual
@@ -561,25 +678,47 @@ function FundraiseDashboard({
         </CollapsibleContent>
       </Collapsible>
 
-      {/* Manual Dialog */}
-      <ManualDealCommitmentDialog
-        open={showManualDialog}
-        onOpenChange={setShowManualDialog}
+      {/* Manual Commitment Form Modal */}
+      <FormModal
+        open={showFormModal}
+        title="Add Manual Commitment"
+        formSlug="soft-commitment"
         dealId={dealId}
-        onSuccess={() => {
-          setShowManualDialog(false);
-          // Re-fetch commitments
-          const supabase = createClient();
-          supabase
-            .from("soft_commitments" as never)
-            .select("*" as never)
-            .eq("deal_id" as never, dealId as never)
-            .order("submitted_at" as never, { ascending: false } as never)
-            .then(({ data }) => {
-              setCommitments((data ?? []) as unknown as SoftCommitment[]);
-            });
+        prefillData={{
+          _deal_amount_options: fundraiseAmountOptions ?? [25000, 50000, 100000, 250000],
+          _deal_name: dealName,
+          _source: "manual",
         }}
+        onComplete={handleFormComplete}
+        onClose={() => setShowFormModal(false)}
       />
+
+      {/* Notes Dialog */}
+      <Dialog
+        open={!!notesDialog}
+        onOpenChange={(open) => !open && setNotesDialog(null)}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Edit Notes</DialogTitle>
+          </DialogHeader>
+          <Textarea
+            value={notesDialog?.notes ?? ""}
+            onChange={(e) =>
+              notesDialog &&
+              setNotesDialog({ ...notesDialog, notes: e.target.value })
+            }
+            rows={4}
+            placeholder="Internal notes about this commitment..."
+          />
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setNotesDialog(null)}>
+              Cancel
+            </Button>
+            <Button onClick={handleSaveNotes}>Save</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
@@ -700,121 +839,3 @@ function FundraiseConfigPanel({
   );
 }
 
-// ─── Manual Deal Commitment Dialog ───
-
-function ManualDealCommitmentDialog({
-  open,
-  onOpenChange,
-  dealId,
-  onSuccess,
-}: {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  dealId: string;
-  onSuccess: () => void;
-}) {
-  const [saving, setSaving] = useState(false);
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
-  const [phone, setPhone] = useState("");
-  const [amount, setAmount] = useState("");
-
-  const reset = () => {
-    setName("");
-    setEmail("");
-    setPhone("");
-    setAmount("");
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setSaving(true);
-    const result = await addManualCommitment({
-      deal_id: dealId,
-      name,
-      email,
-      phone: phone || undefined,
-      commitment_amount: parseFloat(amount) || 0,
-    });
-    if (result.error) {
-      showError("Could not add commitment", result.error);
-    } else {
-      showSuccess("Commitment added");
-      reset();
-      onSuccess();
-    }
-    setSaving(false);
-  };
-
-  return (
-    <Dialog
-      open={open}
-      onOpenChange={(o) => {
-        if (!o) reset();
-        onOpenChange(o);
-      }}
-    >
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>Add Manual Commitment</DialogTitle>
-        </DialogHeader>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-1.5">
-              <Label>Name *</Label>
-              <Input
-                required
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-              />
-            </div>
-            <div className="space-y-1.5">
-              <Label>Email *</Label>
-              <Input
-                type="email"
-                required
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-              />
-            </div>
-          </div>
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-1.5">
-              <Label>Phone</Label>
-              <Input
-                value={phone}
-                onChange={(e) => setPhone(e.target.value)}
-              />
-            </div>
-            <div className="space-y-1.5">
-              <Label>Amount *</Label>
-              <Input
-                type="number"
-                required
-                min={1}
-                value={amount}
-                onChange={(e) => setAmount(e.target.value)}
-              />
-            </div>
-          </div>
-          <DialogFooter>
-            <Button
-              variant="outline"
-              type="button"
-              onClick={() => onOpenChange(false)}
-            >
-              Cancel
-            </Button>
-            <Button
-              type="submit"
-              disabled={saving || !name || !email || !amount}
-            >
-              {saving && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
-              Add Commitment
-            </Button>
-          </DialogFooter>
-        </form>
-      </DialogContent>
-    </Dialog>
-  );
-}

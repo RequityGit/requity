@@ -45,6 +45,7 @@ interface PipelineKanbanProps {
   onIntakeClick?: (item: IntakeItem) => void;
   teamMembers: { id: string; full_name: string }[];
   conditionsMap: Map<string, ConditionsProgress>;
+  selectedDealId?: string | null;
 }
 
 function StageColumn({
@@ -79,6 +80,7 @@ export function PipelineKanban({
   onIntakeClick,
   teamMembers,
   conditionsMap,
+  selectedDealId,
 }: PipelineKanbanProps) {
   const [activeId, setActiveId] = useState<string | null>(null);
 
@@ -241,6 +243,7 @@ export function PipelineKanban({
                           assigneeName={deal.assigned_to ? assigneeMap.get(deal.assigned_to) ?? null : null}
                           onClick={(e) => onDealClick(deal, e)}
                           onHover={() => onDealHover?.(deal.id)}
+                          isSelected={deal.id === selectedDealId}
                         />
                       );
                     })
