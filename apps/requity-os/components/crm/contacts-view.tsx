@@ -255,7 +255,7 @@ export function ContactsView({
   return (
     <div className="space-y-3">
         <div className="flex items-center gap-2.5 flex-wrap">
-          <div className="relative flex-1 min-w-[240px] max-w-sm">
+          <div className="relative min-w-0 w-full md:min-w-[240px] md:w-auto md:flex-1 max-w-none md:max-w-sm">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <Input
               value={contactSearch}
@@ -273,7 +273,7 @@ export function ContactsView({
             )}
           </div>
           <Select value={relFilter} onValueChange={setRelFilter}>
-            <SelectTrigger className="w-[170px] h-9 text-xs">
+            <SelectTrigger className="w-[calc(50%-5px)] md:w-[170px] h-9 text-xs">
               <SelectValue placeholder="All Relationships" />
             </SelectTrigger>
             <SelectContent>
@@ -286,7 +286,7 @@ export function ContactsView({
             </SelectContent>
           </Select>
           <Select value={stageFilter} onValueChange={setStageFilter}>
-            <SelectTrigger className="w-[150px] h-9 text-xs">
+            <SelectTrigger className="w-[calc(50%-5px)] md:w-[150px] h-9 text-xs">
               <SelectValue placeholder="All Stages" />
             </SelectTrigger>
             <SelectContent>
@@ -301,9 +301,9 @@ export function ContactsView({
           <DateAddedFilter
             value={dateAdded}
             onChange={setDateAdded}
-            className="w-[150px] h-9 text-xs"
+            className="w-full md:w-[150px] h-9 text-xs"
           />
-          <div className="flex-1" />
+          <div className="hidden md:block md:flex-1" />
           <AddContactDialog teamMembers={teamMembers} currentUserId={currentUserId} />
         </div>
 
@@ -355,20 +355,20 @@ export function ContactsView({
         )}
 
         <div className="rounded-xl border bg-card overflow-hidden">
-          <div className="overflow-x-auto">
+          <div className="overflow-x-auto mobile-scroll">
             <div ref={tableScrollRef} className="max-h-[min(70vh,560px)] overflow-y-auto">
-            <table className="w-full border-collapse block">
+            <table className="w-full border-collapse block mobile-table-sticky">
               <thead className="sticky top-0 z-10 bg-card border-b">
                 <tr className="border-b" style={{ display: "table", width: "100%", tableLayout: "fixed" }}>
-                  <SortHeader label="Name" sortKey="first_name" style={{ width: "14%" }} />
-                  <th className="text-xs font-medium text-muted-foreground text-left px-4 py-2.5" style={{ width: "12%" }}>Company</th>
-                  <th className="text-xs font-medium text-muted-foreground text-left px-4 py-2.5" style={{ width: "12%" }}>Relationships</th>
-                  <th className="text-xs font-medium text-muted-foreground text-left px-4 py-2.5" style={{ width: "16%" }}>Email</th>
-                  <SortHeader label="Phone" sortKey="phone" style={{ width: "11%" }} />
-                  <SortHeader label="Stage" sortKey="lifecycle_stage" style={{ width: "9%" }} />
-                  <th className="text-xs font-medium text-muted-foreground text-left px-4 py-2.5" style={{ width: "10%" }}>Assigned</th>
-                  <SortHeader label="Last Contacted" sortKey="last_contacted_at" style={{ width: "12%" }} />
-                  <th className="text-xs font-medium text-muted-foreground text-center px-4 py-2.5" style={{ width: "4%" }} />
+                  <SortHeader label="Name" sortKey="first_name" className="w-[45%] md:w-[14%]" />
+                  <th className="hidden md:table-cell text-xs font-medium text-muted-foreground text-left px-4 py-2.5" style={{ width: "12%" }}>Company</th>
+                  <th className="w-[25%] md:w-[12%] text-xs font-medium text-muted-foreground text-left px-4 py-2.5">Relationships</th>
+                  <th className="hidden md:table-cell text-xs font-medium text-muted-foreground text-left px-4 py-2.5" style={{ width: "16%" }}>Email</th>
+                  <SortHeader label="Phone" sortKey="phone" className="hidden md:table-cell" style={{ width: "11%" }} />
+                  <SortHeader label="Stage" sortKey="lifecycle_stage" className="w-[20%] md:w-[9%]" />
+                  <th className="hidden md:table-cell text-xs font-medium text-muted-foreground text-left px-4 py-2.5" style={{ width: "10%" }}>Assigned</th>
+                  <SortHeader label="Last Contacted" sortKey="last_contacted_at" className="hidden md:table-cell" style={{ width: "12%" }} />
+                  <th className="w-[10%] md:w-[4%] text-xs font-medium text-muted-foreground text-center px-4 py-2.5" />
                 </tr>
               </thead>
               <tbody
@@ -410,7 +410,7 @@ export function ContactsView({
                       key={c.id}
                       data-index={vi.index}
                       onClick={() => router.push(`/contacts/${c.contact_number}`)}
-                      className="cursor-pointer transition-colors hover:bg-muted/50 border-b border-border/50"
+                      className="cursor-pointer transition-colors hover:bg-muted/50 border-b border-border/50 mobile-press"
                       style={{
                         display: "table",
                         width: "100%",
@@ -422,7 +422,7 @@ export function ContactsView({
                         height: `${vi.size}px`,
                       }}
                     >
-                      <td className="px-4 py-2.5" style={{ width: "14%" }}>
+                      <td className="px-4 py-2.5 w-[45%] md:w-[14%]">
                         <TooltipProvider>
                           <Tooltip>
                             <TooltipTrigger asChild>
@@ -442,7 +442,7 @@ export function ContactsView({
                           </Tooltip>
                         </TooltipProvider>
                       </td>
-                      <td className="px-4 py-2.5 text-sm truncate" style={{ width: "12%" }}>
+                      <td className="hidden md:table-cell px-4 py-2.5 text-sm truncate" style={{ width: "12%" }}>
                         {c.company_number ? (
                           <Link
                             href={`/companies/${c.company_number}`}
@@ -455,7 +455,7 @@ export function ContactsView({
                           <span className="text-muted-foreground">{c.company_name || "—"}</span>
                         )}
                       </td>
-                      <td className="px-4 py-2.5" style={{ width: "12%" }}>
+                      <td className="px-4 py-2.5 w-[25%] md:w-[12%]">
                         {c.relationships.length === 0 ? (
                           <span className="text-xs text-muted-foreground">—</span>
                         ) : c.relationships.length <= 2 ? (
@@ -492,16 +492,16 @@ export function ContactsView({
                           </TooltipProvider>
                         )}
                       </td>
-                      <td className="px-4 py-2.5 text-sm text-muted-foreground truncate" style={{ width: "16%" }}>
+                      <td className="hidden md:table-cell px-4 py-2.5 text-sm text-muted-foreground truncate" style={{ width: "16%" }}>
                         {c.email || "—"}
                       </td>
-                      <td className="px-4 py-2.5 text-sm text-muted-foreground whitespace-nowrap" style={{ width: "11%" }}>
+                      <td className="hidden md:table-cell px-4 py-2.5 text-sm text-muted-foreground whitespace-nowrap" style={{ width: "11%" }}>
                         <ClickToCallNumber number={c.phone} />
                       </td>
-                      <td className="px-4 py-2.5" style={{ width: "9%" }}>
+                      <td className="px-4 py-2.5 w-[20%] md:w-[9%]">
                         <StageDot stage={c.lifecycle_stage} />
                       </td>
-                      <td className="px-4 py-2.5" style={{ width: "10%" }}>
+                      <td className="hidden md:table-cell px-4 py-2.5" style={{ width: "10%" }}>
                         {c.assigned_to_name ? (
                           <div className="flex items-center gap-1.5">
                             <CrmAvatar text={c.assigned_to_initials ?? c.assigned_to_name.split(" ").map((p: string) => p[0]).join("").toUpperCase()} size="sm" />
@@ -513,19 +513,19 @@ export function ContactsView({
                           <span className="text-xs text-muted-foreground italic">—</span>
                         )}
                       </td>
-                      <td className="px-4 py-2.5 num text-xs text-muted-foreground whitespace-nowrap" style={{ width: "12%" }}>
+                      <td className="hidden md:table-cell px-4 py-2.5 num text-xs text-muted-foreground whitespace-nowrap" style={{ width: "12%" }}>
                         {(() => {
                           const sd = smartDate(c.last_contacted_at);
                           return <span title={sd.title}>{sd.text}</span>;
                         })()}
                       </td>
-                      <td className="px-4 py-2.5 text-center" style={{ width: "4%" }} onClick={(e) => e.stopPropagation()}>
+                      <td className="px-4 py-2.5 text-center w-[10%] md:w-[4%]" onClick={(e) => e.stopPropagation()}>
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
                             <Button
                               variant="ghost"
                               size="sm"
-                              className="h-7 w-7 p-0 text-muted-foreground hover:text-foreground"
+                              className="h-7 w-7 p-0 text-muted-foreground hover:text-foreground mobile-tap-target"
                             >
                               <MoreHorizontal className="h-4 w-4" />
                             </Button>
@@ -575,7 +575,7 @@ export function ContactsView({
                       type="button"
                       variant="outline"
                       size="sm"
-                      className="h-8 gap-1"
+                      className="h-8 gap-1 mobile-tap-target"
                       disabled={safePage <= 1}
                       onClick={() => {
                         setPage((p) => Math.max(1, p - 1));
@@ -595,7 +595,7 @@ export function ContactsView({
                       type="button"
                       variant="outline"
                       size="sm"
-                      className="h-8 gap-1"
+                      className="h-8 gap-1 mobile-tap-target"
                       disabled={safePage >= totalPages}
                       onClick={() => {
                         setPage((p) => Math.min(totalPages, p + 1));
