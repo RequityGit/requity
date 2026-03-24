@@ -101,14 +101,14 @@ export function PipelineView() {
 
   const handleDealClick = useCallback(
     (deal: UnifiedDeal, e?: React.MouseEvent) => {
-      // Modifier+click opens full page
-      if (e && (e.metaKey || e.ctrlKey || e.shiftKey)) {
+      // On mobile or modifier+click, navigate to full deal page
+      if (isMobile || (e && (e.metaKey || e.ctrlKey || e.shiftKey))) {
         router.push(`/pipeline/${deal.deal_number || deal.id}`);
         return;
       }
       openPreview(deal.id, orderedDealIds);
     },
-    [router, openPreview, orderedDealIds]
+    [router, openPreview, orderedDealIds, isMobile]
   );
 
   const handleDealHover = useCallback(
