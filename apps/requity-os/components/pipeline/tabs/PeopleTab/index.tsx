@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { showError } from "@/lib/toast";
@@ -66,53 +66,96 @@ export default function PeopleTab({
   const [error, setError] = useState<string | null>(null);
   const [localDealTeamMembers, setLocalDealTeamMembers] =
     useState<DealTeamMember[]>(dealTeamMembers);
+  const abortRef = useRef<AbortController | null>(null);
 
   const load = useCallback(
     async (silent = false) => {
+      // Abort any in-flight request before starting a new one
+      abortRef.current?.abort();
+      const controller = new AbortController();
+      abortRef.current = controller;
+
       if (!silent) {
         setLoading(true);
         setError(null);
       }
-      try {
-        const res = await fetch(`/api/pipeline/${dealId}/people`);
-        if (!res.ok) {
-          const body = await res.json().catch(() => ({}));
-          const msg = body.error ?? "Failed to load people data";
-          console.error("People tab API error:", res.status, msg);
-          if (!silent) setError(msg);
-          else showError(msg);
-          return;
+
+      const MAX_ATTEMPTS = 3;
+      const TIMEOUT_MS = 15_000;
+
+      for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt++) {
+        // Wait before retrying (0ms, 1000ms, 2000ms)
+        if (attempt > 0) {
+          await new Promise((r) => setTimeout(r, attempt * 1000));
+          if (controller.signal.aborted) return;
         }
-        const contentType = res.headers.get("content-type") ?? "";
-        if (!contentType.includes("application/json")) {
-          console.error("People tab: unexpected content-type", contentType);
-          if (!silent) setError("Unexpected response from server");
-          else showError("Failed to load people data");
-          return;
+
+        try {
+          const timeoutId = setTimeout(() => controller.abort(), TIMEOUT_MS);
+          const res = await fetch(`/api/pipeline/${dealId}/people`, {
+            signal: controller.signal,
+          });
+          clearTimeout(timeoutId);
+
+          if (!res.ok) {
+            const body = await res.json().catch(() => ({}));
+            const msg = body.error ?? "Failed to load people data";
+            console.error("People tab API error:", res.status, msg);
+            // Don't retry on 4xx client errors
+            if (res.status >= 400 && res.status < 500) {
+              if (!silent) setError(msg);
+              else showError(msg);
+              if (!silent) setLoading(false);
+              return;
+            }
+            // Retry on server errors
+            if (attempt === MAX_ATTEMPTS - 1) {
+              if (!silent) setError(msg);
+              else showError(msg);
+            }
+            continue;
+          }
+
+          const contentType = res.headers.get("content-type") ?? "";
+          if (!contentType.includes("application/json")) {
+            console.error("People tab: unexpected content-type", contentType);
+            if (attempt === MAX_ATTEMPTS - 1) {
+              if (!silent) setError("Unexpected response from server");
+              else showError("Failed to load people data");
+            }
+            continue;
+          }
+
+          const json = await res.json();
+          // Defensive: ensure expected shape
+          setData({
+            entity: json.entity ?? null,
+            members: Array.isArray(json.members) ? json.members : [],
+            broker: json.broker ?? null,
+            brokerExtra: json.brokerExtra ?? { broker_nmls: "", broker_fee_pct: "", broker_notes: "" },
+            thirdParties: Array.isArray(json.thirdParties) ? json.thirdParties : [],
+          });
+          setError(null);
+          if (!silent) setLoading(false);
+          return; // Success — exit retry loop
+        } catch (err) {
+          if (controller.signal.aborted) return; // Intentional abort — don't show error
+          console.error(`People tab fetch attempt ${attempt + 1} failed:`, err);
+          if (attempt === MAX_ATTEMPTS - 1) {
+            if (!silent) setError("Failed to load people data");
+            else showError("Failed to load people data");
+          }
         }
-        const json = await res.json();
-        // Defensive: ensure expected shape
-        setData({
-          entity: json.entity ?? null,
-          members: Array.isArray(json.members) ? json.members : [],
-          broker: json.broker ?? null,
-          brokerExtra: json.brokerExtra ?? { broker_nmls: "", broker_fee_pct: "", broker_notes: "" },
-          thirdParties: Array.isArray(json.thirdParties) ? json.thirdParties : [],
-        });
-        setError(null);
-      } catch (err) {
-        console.error("People tab fetch failed:", err);
-        if (!silent) setError("Failed to load people data");
-        else showError("Failed to load people data");
-      } finally {
-        if (!silent) setLoading(false);
       }
+
+      if (!silent) setLoading(false);
     },
     [dealId]
   );
 
   useEffect(() => {
     load();
+    return () => { abortRef.current?.abort(); };
   }, [load]);
 
   const handleAddTeamMember = useCallback(
