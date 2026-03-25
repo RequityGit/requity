@@ -9,11 +9,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { LayoutGrid, List, Plus, Search } from "lucide-react";
+import { Calendar, LayoutGrid, List, Plus, Search } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { DateAddedFilter } from "@/components/ui/date-added-filter";
 import { ACTIVE_ASSET_CLASS_OPTIONS, type CapitalSide } from "./pipeline-types";
 import { getAllDealConfigs, type DealFlavor } from "@/lib/pipeline/deal-display-config";
+
+export type ClosingDateFilter = "all" | "overdue" | "this_week" | "next_2_weeks" | "this_month" | "no_date";
 
 export interface FilterState {
   search: string;
@@ -21,6 +23,7 @@ export interface FilterState {
   dealFlavor: DealFlavor | "all";
   assetClass: string;
   dateAdded: string;
+  closingDate: ClosingDateFilter;
   view: "kanban" | "table";
 }
 
@@ -119,6 +122,27 @@ export function DealFilters({
             value={filters.dateAdded}
             onChange={(val) => update({ dateAdded: val })}
           />
+
+          {/* Closing date filter */}
+          <Select
+            value={filters.closingDate}
+            onValueChange={(val) => update({ closingDate: val as ClosingDateFilter })}
+          >
+            <SelectTrigger className="w-full sm:w-44 h-10 md:h-9">
+              <div className="flex items-center gap-1.5">
+                <Calendar className="h-3.5 w-3.5 text-muted-foreground" />
+                <SelectValue placeholder="Closing date" />
+              </div>
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All closing dates</SelectItem>
+              <SelectItem value="overdue">Overdue</SelectItem>
+              <SelectItem value="this_week">This week</SelectItem>
+              <SelectItem value="next_2_weeks">Next 2 weeks</SelectItem>
+              <SelectItem value="this_month">This month</SelectItem>
+              <SelectItem value="no_date">No date set</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
       </div>
 

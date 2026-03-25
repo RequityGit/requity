@@ -20,7 +20,6 @@ interface TaskData {
   title: string;
   description: string | null;
   status: string;
-  priority: string | null;
   due_date: string | null;
   assigned_to: string | null;
   assigned_to_name: string | null;
@@ -76,7 +75,7 @@ export function TaskPreviewCard({
     const supabase = createClient();
     supabase
       .from("ops_tasks")
-      .select("id, title, description, status, priority, due_date, assigned_to, assigned_to_name, project_id")
+      .select("id, title, description, status, due_date, assigned_to, assigned_to_name, project_id")
       .eq("id", notification.entity_id)
       .single()
       .then(({ data, error }) => {

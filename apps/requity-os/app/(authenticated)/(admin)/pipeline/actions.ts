@@ -2744,3 +2744,32 @@ export async function addDealConditionAction(
     };
   }
 }
+
+// ─── Toggle Deal Priority ───
+
+export async function toggleDealPriorityAction(
+  dealId: string,
+  isPriority: boolean
+) {
+  try {
+    const auth = await requireAdmin();
+    if ("error" in auth) return { error: auth.error };
+
+    const admin = createAdminClient();
+
+    const { error } = await admin
+      .from("unified_deals")
+      .update({ is_priority: isPriority, updated_at: new Date().toISOString() } as UnifiedDealUpdate)
+      .eq("id", dealId);
+
+    if (error) {
+      console.error("toggleDealPriorityAction error:", error);
+      return { error: error.message };
+    }
+
+    return { success: true };
+  } catch (err: unknown) {
+    console.error("toggleDealPriorityAction error:", err);
+    return { error: err instanceof Error ? err.message : "Failed to toggle priority" };
+  }
+}
