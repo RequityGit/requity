@@ -365,6 +365,7 @@ export async function updateUwDataAction(
 
     const admin = createAdminClient();
     const mapping = FIELD_MAPPING_MAP.get(key);
+    let oldValue: unknown = null;
 
     if (mapping?.source === "property") {
       // Route write to the properties table
@@ -399,6 +400,14 @@ export async function updateUwDataAction(
           return { error: "Failed to link property to deal" };
         }
       } else {
+        // Fetch old value before updating
+        const { data: existingProp } = await admin
+          .from("properties" as never)
+          .select(mapping.column as never)
+          .eq("id" as never, deal.property_id as never)
+          .single();
+        if (existingProp) oldValue = (existingProp as unknown as Record<string, unknown>)[mapping.column] ?? null;
+
         // Update existing property
         const { error: updateErr } = await admin
           .from("properties")
@@ -411,6 +420,14 @@ export async function updateUwDataAction(
         }
       }
     } else if (mapping?.source === "deal") {
+      // Fetch old value before updating
+      const { data: existingDeal } = await admin
+        .from("unified_deals" as never)
+        .select(mapping.column as never)
+        .eq("id" as never, dealId as never)
+        .single();
+      if (existingDeal) oldValue = (existingDeal as unknown as Record<string, unknown>)[mapping.column] ?? null;
+
       // Route write to a top-level column on unified_deals
       const { error: updateErr } = await admin
         .from("unified_deals")
@@ -452,9 +469,9 @@ export async function updateUwDataAction(
 
       // Find borrower by crm_contact_id
       const { data: borrower } = await admin
-        .from("borrowers")
-        .select("id")
-        .eq("crm_contact_id", primaryContactId)
+        .from("borrowers" as never)
+        .select(`id, ${mapping.column}` as never)
+        .eq("crm_contact_id" as never, primaryContactId as never)
         .limit(1)
         .single();
 
@@ -463,10 +480,13 @@ export async function updateUwDataAction(
         return await updateUwDataJsonb(admin, dealId, key, value, auth.user.id);
       }
 
+      const borrowerRow = borrower as unknown as Record<string, unknown>;
+      oldValue = borrowerRow[mapping.column] ?? null;
+
       const { error: updateErr } = await admin
         .from("borrowers")
         .update({ [mapping.column]: value })
-        .eq("id", borrower.id);
+        .eq("id", borrowerRow.id as string);
 
       if (updateErr) {
         console.error("updateUwDataAction borrower error:", updateErr);
@@ -485,6 +505,7 @@ export async function updateUwDataAction(
       metadata: {
         field: key,
         value,
+        old_value: oldValue,
         source: mapping?.source ?? "deal",
       } as unknown as Json,
       created_by: auth.user.id,
@@ -538,7 +559,7 @@ async function updateUwDataJsonb(
     deal_id: dealId,
     activity_type: "field_updated",
     title: `Updated ${key}`,
-    metadata: { field: key, value, source: "deal" } as unknown as Json,
+    metadata: { field: key, value, old_value: currentData[key] ?? null, source: "deal" } as unknown as Json,
     created_by: userId,
   });
 
@@ -794,7 +815,7 @@ export async function updatePropertyDataAction(
       deal_id: dealId,
       activity_type: "field_updated",
       title: `Updated property ${key}`,
-      metadata: { field: key, value, section: "property" } as unknown as Json,
+      metadata: { field: key, value, old_value: currentData[key] ?? null, section: "property" } as unknown as Json,
       created_by: auth.user.id,
     });
 
