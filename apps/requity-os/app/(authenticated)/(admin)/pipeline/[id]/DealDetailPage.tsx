@@ -631,6 +631,7 @@ function DealDetailPageInner({
                   fundraiseSlug={deal.fundraise_slug ?? null}
                   fundraiseEnabled={deal.fundraise_enabled ?? false}
                   fundraiseTarget={deal.fundraise_target ?? null}
+                  fundraiseHardCap={deal.fundraise_hard_cap ?? null}
                   fundraiseDescription={deal.fundraise_description ?? null}
                   fundraiseAmountOptions={deal.fundraise_amount_options ?? null}
                   fundraiseHeroImageUrl={deal.fundraise_hero_image_url ?? null}

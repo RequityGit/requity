@@ -90,6 +90,7 @@ export async function updateFundraiseSettings(
     fundraise_slug?: string;
     fundraise_enabled?: boolean;
     fundraise_target?: number | null;
+    fundraise_hard_cap?: number | null;
     fundraise_description?: string | null;
     fundraise_amount_options?: number[];
     fundraise_hero_image_url?: string | null;

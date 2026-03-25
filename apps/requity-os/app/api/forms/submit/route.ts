@@ -478,6 +478,34 @@ export async function POST(request: Request) {
         // Parse full_name into parts for the soft_commitments record
         const fullName = (data.full_name as string) || "";
 
+        // Check if deal has hit its hard cap to auto-assign waitlist status
+        let commitmentStatus = "pending";
+        const { data: dealData } = await supabase
+          .from("unified_deals")
+          .select("fundraise_hard_cap" as never)
+          .eq("id" as never, body.deal_id as never)
+          .single();
+
+        if (dealData) {
+          const hardCap = (dealData as { fundraise_hard_cap: number | null }).fundraise_hard_cap;
+          if (hardCap && hardCap > 0) {
+            const { data: sumData } = await supabase
+              .from("soft_commitments")
+              .select("commitment_amount" as never)
+              .eq("deal_id" as never, body.deal_id as never)
+              .in("status" as never, ["pending", "confirmed", "subscribed"] as never);
+
+            const currentTotal = (sumData as { commitment_amount: number }[] | null)?.reduce(
+              (sum, row) => sum + (row.commitment_amount ?? 0),
+              0
+            ) ?? 0;
+
+            if (currentTotal >= hardCap) {
+              commitmentStatus = "waitlist";
+            }
+          }
+        }
+
         const { data: scData, error: scError } = await supabase
           .from("soft_commitments")
           .insert({
@@ -490,7 +518,7 @@ export async function POST(request: Request) {
             custom_amount: isCustomAmount ? commitmentAmount : null,
             is_accredited: data.is_accredited === "yes" ? true : data.is_accredited === "no" ? false : null,
             questions: (data.questions as string) || null,
-            status: "pending",
+            status: commitmentStatus,
             source: (data._source as string) || "form",
           } as never)
           .select("id")
