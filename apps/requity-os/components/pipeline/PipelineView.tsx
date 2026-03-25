@@ -8,6 +8,7 @@ import { DealFilters, type FilterState } from "./DealFilters";
 import { filterByDateAdded } from "@/components/ui/date-added-filter";
 import { PipelineKanban } from "./PipelineKanban";
 import { PipelineTable } from "./PipelineTable";
+import { MobileDealList } from "./MobileDealList";
 import { NewDealDialog } from "./NewDealDialog";
 import { IntakeReviewModal } from "./IntakeReviewModal";
 import { STAGES, type UnifiedDeal } from "./pipeline-types";
@@ -147,7 +148,13 @@ export function PipelineView() {
         searchInputRef={searchInputRef}
       />
 
-      {effectiveView === "kanban" ? (
+      {isMobile ? (
+        <MobileDealList
+          deals={filteredDeals}
+          stageConfigs={stageConfigs}
+          onDealClick={handleDealClick}
+        />
+      ) : effectiveView === "kanban" ? (
         <PipelineKanban
           deals={filteredDeals}
           stageConfigs={stageConfigs}

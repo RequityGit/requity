@@ -58,65 +58,68 @@ export function DealFilters({
           />
         </div>
 
-        {/* Capital side toggle */}
-        <div className="flex rounded-md border">
-          {(["all", "debt", "equity"] as const).map((side) => (
-            <button
-              key={side}
-              onClick={() => update({ capitalSide: side })}
-              className={cn(
-                "px-3 py-2 md:py-1.5 text-xs font-medium capitalize transition-colors min-h-[36px]",
-                filters.capitalSide === side
-                  ? "bg-foreground text-background"
-                  : "text-muted-foreground hover:text-foreground"
-              )}
-            >
-              {side === "all" ? "All" : side}
-            </button>
-          ))}
+        {/* Desktop-only filters */}
+        <div className="hidden md:contents">
+          {/* Capital side toggle */}
+          <div className="flex rounded-md border">
+            {(["all", "debt", "equity"] as const).map((side) => (
+              <button
+                key={side}
+                onClick={() => update({ capitalSide: side })}
+                className={cn(
+                  "px-3 py-2 md:py-1.5 text-xs font-medium capitalize transition-colors min-h-[36px]",
+                  filters.capitalSide === side
+                    ? "bg-foreground text-background"
+                    : "text-muted-foreground hover:text-foreground"
+                )}
+              >
+                {side === "all" ? "All" : side}
+              </button>
+            ))}
+          </div>
+
+          {/* Deal type (flavor) filter */}
+          <Select
+            value={filters.dealFlavor}
+            onValueChange={(val) => update({ dealFlavor: val as DealFlavor | "all" })}
+          >
+            <SelectTrigger className="w-full sm:w-40 h-10 md:h-9">
+              <SelectValue placeholder="All types" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All types</SelectItem>
+              {dealConfigs.map((dc) => (
+                <SelectItem key={dc.flavor} value={dc.flavor}>
+                  {dc.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          {/* Asset class filter */}
+          <Select
+            value={filters.assetClass}
+            onValueChange={(val) => update({ assetClass: val })}
+          >
+            <SelectTrigger className="w-full sm:w-40 h-10 md:h-9">
+              <SelectValue placeholder="All asset classes" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All asset classes</SelectItem>
+              {ACTIVE_ASSET_CLASS_OPTIONS.map(({ key, label }) => (
+                <SelectItem key={key} value={key}>
+                  {label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          {/* Date added filter */}
+          <DateAddedFilter
+            value={filters.dateAdded}
+            onChange={(val) => update({ dateAdded: val })}
+          />
         </div>
-
-        {/* Deal type (flavor) filter */}
-        <Select
-          value={filters.dealFlavor}
-          onValueChange={(val) => update({ dealFlavor: val as DealFlavor | "all" })}
-        >
-          <SelectTrigger className="w-full sm:w-40 h-10 md:h-9">
-            <SelectValue placeholder="All types" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All types</SelectItem>
-            {dealConfigs.map((dc) => (
-              <SelectItem key={dc.flavor} value={dc.flavor}>
-                {dc.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-
-        {/* Asset class filter */}
-        <Select
-          value={filters.assetClass}
-          onValueChange={(val) => update({ assetClass: val })}
-        >
-          <SelectTrigger className="w-full sm:w-40 h-10 md:h-9">
-            <SelectValue placeholder="All asset classes" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All asset classes</SelectItem>
-            {ACTIVE_ASSET_CLASS_OPTIONS.map(({ key, label }) => (
-              <SelectItem key={key} value={key}>
-                {label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-
-        {/* Date added filter */}
-        <DateAddedFilter
-          value={filters.dateAdded}
-          onChange={(val) => update({ dateAdded: val })}
-        />
       </div>
 
       <div className="flex items-center gap-2">
@@ -149,8 +152,8 @@ export function DealFilters({
         </div>
 
         <Button onClick={onNewDeal} size="sm">
-          <Plus className="h-4 w-4 mr-1" />
-          New Deal
+          <Plus className="h-4 w-4 md:mr-1" />
+          <span className="hidden md:inline">New Deal</span>
         </Button>
       </div>
     </div>
