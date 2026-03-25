@@ -41,7 +41,7 @@ import type {
 // ── Stage filter constants (5 deal stages from kanban) ──
 
 const DEAL_STAGES = [
-  { key: "lead", label: "Lead" },
+  { key: "lead", label: "Intake" },
   { key: "analysis", label: "Analysis" },
   { key: "negotiation", label: "Negotiation" },
   { key: "execution", label: "Execution" },

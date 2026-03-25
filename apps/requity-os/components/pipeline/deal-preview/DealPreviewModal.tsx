@@ -24,7 +24,7 @@ import type { DealNote, DealPreviewData } from "./useDealPreviewData";
 const STAGE_ORDER: UnifiedStage[] = ["lead", "analysis", "negotiation", "execution", "closed"];
 
 const STAGE_LABELS: Record<UnifiedStage, string> = {
-  lead: "Lead",
+  lead: "Intake",
   analysis: "Analysis",
   negotiation: "Negotiation",
   execution: "Execution",
