@@ -21,9 +21,16 @@ import type { IntakeItem } from "@/lib/intake/types";
 
 export const dynamic = "force-dynamic";
 
-export default async function PipelinePage() {
+interface PipelinePageProps {
+  searchParams: Promise<{ status?: string }>;
+}
+
+export default async function PipelinePage({ searchParams }: PipelinePageProps) {
   const session = await getSessionData();
   if (!session) redirect("/login");
+
+  const params = await searchParams;
+  const showingLostDeals = params.status === "lost";
 
   const supabase = await createClient();
   const admin = createAdminClient();
@@ -42,8 +49,8 @@ export default async function PipelinePage() {
       .select(
         `*, primary_contact:crm_contacts!primary_contact_id(id, first_name, last_name, email, phone), company:companies(id, name)`
       )
-      .in("status" as never, ["active", "on_hold"] as never)
-      .order("created_at" as never, { ascending: false }),
+      .in("status" as never, (showingLostDeals ? ["lost"] : ["active", "on_hold"]) as never)
+      .order(showingLostDeals ? ("updated_at" as never) : ("created_at" as never), { ascending: false }),
     admin
       .from("unified_stage_configs" as never)
       .select("id, stage, warn_days, alert_days, description, sort_order")
@@ -194,7 +201,7 @@ export default async function PipelinePage() {
         currentUserId={session.user.id}
         conditionsMap={conditionsMap}
       >
-        <PipelineView />
+        <PipelineView showingLostDeals={showingLostDeals} />
       </PipelineProvider>
     </div>
   );

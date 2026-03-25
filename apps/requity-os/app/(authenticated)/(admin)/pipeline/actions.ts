@@ -925,6 +925,7 @@ export async function updateDealStatusAction(
 
     const updates: UnifiedDealUpdate = { status };
     if (lossReason) updates.loss_reason = lossReason;
+    if (status === "active") updates.loss_reason = null;
 
     const { error } = await admin
       .from("unified_deals")
