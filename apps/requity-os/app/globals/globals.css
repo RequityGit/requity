@@ -389,6 +389,20 @@
     min-height: 44px;
     min-width: 44px;
   }
+
+  /* Prevent iOS Safari auto-zoom on input focus (requires >= 16px) */
+  input[type="text"],
+  input[type="email"],
+  input[type="number"],
+  input[type="password"],
+  input[type="search"],
+  input[type="tel"],
+  input[type="url"],
+  input:not([type]),
+  textarea,
+  select {
+    font-size: 16px !important;
+  }
 }
 
 /* Smooth scrolling for iOS */
