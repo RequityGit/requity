@@ -3,7 +3,7 @@
 import React, { useMemo, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
-import { User, Users, Calendar, Clock, AlertTriangle, Pin } from "lucide-react";
+import { User, Users, Calendar, Clock, AlertTriangle, Zap, Crosshair } from "lucide-react";
 import { useDraggable } from "@dnd-kit/core";
 import {
   type UnifiedDeal,
@@ -429,6 +429,10 @@ function DealCardInner({
       pointerStartRef.current = null;
       if (!start) return;
 
+      // If the pointer landed on the focus ribbon, skip navigation
+      const target = e.target as HTMLElement;
+      if (target.closest("[data-focus-btn]")) return;
+
       const dx = e.clientX - start.x;
       const dy = e.clientY - start.y;
       if (Math.sqrt(dx * dx + dy * dy) < 8) {
@@ -481,20 +485,28 @@ function DealCardInner({
         glowing && "ring-2 ring-red-500/60 border-red-500/40 rq-urgent-glow"
       )}
     >
-      {/* Priority pin toggle */}
+      {/* Focus ribbon toggle */}
       {onTogglePriority && (
         <button
           type="button"
+          data-focus-btn
+          onPointerDown={(e) => e.stopPropagation()}
           onClick={handlePinClick}
           className={cn(
-            "absolute top-2 right-2 z-10 p-1 rounded-md rq-transition",
+            "rq-focus-ribbon",
             deal.is_priority
-              ? "text-red-500 opacity-100"
-              : "text-muted-foreground opacity-0 group-hover:opacity-60 hover:!opacity-100"
+              ? "rq-focus-ribbon--active"
+              : "rq-focus-ribbon--idle"
           )}
-          title={deal.is_priority ? "Unpin deal" : "Pin deal as priority"}
+          title={deal.is_priority ? "Remove focus" : "Focus this deal"}
+          aria-label={deal.is_priority ? "Remove focus from deal" : "Focus this deal"}
+          aria-pressed={deal.is_priority}
         >
-          <Pin className={cn("h-3.5 w-3.5", deal.is_priority && "fill-current")} />
+          {deal.is_priority ? (
+            <Zap className="h-3 w-3 text-white fill-current drop-shadow-sm" />
+          ) : (
+            <Crosshair className="h-3 w-3 text-muted-foreground" />
+          )}
         </button>
       )}
 
@@ -555,6 +567,11 @@ export function DealCardOverlay({
         glowing && "ring-red-500/60 border-red-500/40"
       )}
     >
+      {deal.is_priority && (
+        <div className="rq-focus-ribbon rq-focus-ribbon--active" style={{ cursor: "default" }}>
+          <Zap className="h-3 w-3 text-white fill-current drop-shadow-sm" />
+        </div>
+      )}
       <CardContent
         deal={deal}
         days={days}
