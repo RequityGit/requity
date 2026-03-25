@@ -214,7 +214,7 @@ export default function PeopleTab({
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3">
       {/* 1. Borrowing Entity */}
       <BorrowingEntitySection
         dealId={dealId}
@@ -244,8 +244,8 @@ export default function PeopleTab({
       />
 
       {/* 3-5. Broker, Third Parties, Deal Team — two-column layout */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <div className="space-y-4">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+        <div className="space-y-3">
           <BrokerSection
             dealId={dealId}
             broker={data.broker}

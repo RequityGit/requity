@@ -2,7 +2,7 @@
 
 import React, { useState, lazy, Suspense } from "react";
 import { useRouter } from "next/navigation";
-import { FileText, FolderOpen, Loader2 } from "lucide-react";
+import { FileText, Loader2 } from "lucide-react";
 import { showSuccess, showError } from "@/lib/toast";
 import {
   updateConditionDocumentApproval,
@@ -101,34 +101,19 @@ export function DocumentsTab({
 
   return (
     <div className="flex flex-col gap-6">
-      {/* Forms & Applications */}
-      <CollapsibleSection
-        icon={FileText}
-        title="Forms & Applications"
-        defaultOpen={true}
-      >
-        <FormsSection dealId={dealId} />
-      </CollapsibleSection>
-
-      {/* Documents */}
-      <CollapsibleSection
-        icon={FolderOpen}
-        title="Documents"
-        defaultOpen={true}
-      >
-        <DocumentsSection
-          documents={documents}
-          conditions={conditions}
-          dealId={dealId}
-          dealName={dealName}
-          googleDriveFolderUrl={googleDriveFolderUrl}
-          googleDriveFolderId={googleDriveFolderId}
-          onPreviewDoc={handlePreviewDoc}
-          onUploadComplete={() => router.refresh()}
-          currentUserId={currentUserId}
-          currentUserName={currentUserName}
-        />
-      </CollapsibleSection>
+      {/* Documents (renders its own header — no collapsible wrapper needed) */}
+      <DocumentsSection
+        documents={documents}
+        conditions={conditions}
+        dealId={dealId}
+        dealName={dealName}
+        googleDriveFolderUrl={googleDriveFolderUrl}
+        googleDriveFolderId={googleDriveFolderId}
+        onPreviewDoc={handlePreviewDoc}
+        onUploadComplete={() => router.refresh()}
+        currentUserId={currentUserId}
+        currentUserName={currentUserName}
+      />
 
       {/* Document Generation: Credit Memo & Investor Summary */}
       {dealDocData && (
@@ -138,6 +123,15 @@ export function DocumentsTab({
           </Suspense>
         </SectionErrorBoundary>
       )}
+
+      {/* Forms & Applications */}
+      <CollapsibleSection
+        icon={FileText}
+        title="Forms & Applications"
+        defaultOpen={true}
+      >
+        <FormsSection dealId={dealId} />
+      </CollapsibleSection>
 
       {/* Preview modal */}
       <DocPreviewModal

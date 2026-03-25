@@ -115,6 +115,7 @@ export interface UnifiedDeal {
   uw_data: Record<string, unknown>;
   property_data: Record<string, unknown>;
   notes: string | null;
+  is_priority: boolean;
   tags: string[];
   created_by: string | null;
   created_at: string;
@@ -133,6 +134,10 @@ export interface UnifiedDeal {
   primary_contact?: { id: string; first_name: string; last_name: string; email: string | null; phone: string | null } | null;
   broker_contact?: { id: string; first_name: string; last_name: string; email: string | null; phone: string | null; broker_company?: { name: string } | null } | null;
   company?: { id: string; name: string } | null;
+  // Approval workflow
+  approval_status?: "pending" | "approved" | "changes_requested" | "declined" | null;
+  approval_requested_at?: string | null;
+  approval_requested_by?: string | null;
   // Computed client-side
   days_in_stage?: number;
   alert_level?: AlertLevel;

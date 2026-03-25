@@ -85,15 +85,6 @@ interface FormDefinitionOption {
 // ─── Submission Filtering ───
 
 const COMPLETED_STATUSES = new Set(["submitted", "reviewed", "processed"]);
-const MIN_FILLED_FIELDS = 2;
-
-/** Count non-empty field values in a submission's data JSONB */
-function countFilledFields(data: Record<string, unknown>): number {
-  return Object.values(data).filter(
-    (v) => v !== null && v !== undefined && v !== ""
-  ).length;
-}
-
 // ─── Status Helpers ───
 
 const STATUS_CONFIG: Record<string, { label: string; variant: "default" | "secondary" | "destructive" | "outline"; icon: React.ElementType }> = {
@@ -471,11 +462,9 @@ export function FormsSection({ dealId }: FormsSectionProps) {
     fetchData();
   }, [fetchData]);
 
-  // Hide empty/near-empty partial submissions (created on page load before user fills anything)
-  const visibleSubmissions = submissions.filter(
-    (sub) =>
-      COMPLETED_STATUSES.has(sub.status) ||
-      countFilledFields(sub.data) >= MIN_FILLED_FIELDS
+  // Only show completed submissions (hide partial/in-progress)
+  const visibleSubmissions = submissions.filter((sub) =>
+    COMPLETED_STATUSES.has(sub.status)
   );
 
   const hasSubmissions = visibleSubmissions.length > 0;

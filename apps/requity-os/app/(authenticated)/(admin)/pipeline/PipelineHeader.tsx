@@ -1,13 +1,14 @@
 "use client";
 
 import { useState } from "react";
-import { Copy, Check, Mail } from "lucide-react";
+import { Copy, Check, Mail, ShieldCheck } from "lucide-react";
 
 interface PipelineHeaderProps {
   intakeCount: number;
+  approvalCount?: number;
 }
 
-export function PipelineHeader({ intakeCount }: PipelineHeaderProps) {
+export function PipelineHeader({ intakeCount, approvalCount = 0 }: PipelineHeaderProps) {
   const [copied, setCopied] = useState(false);
 
   const copyEmail = () => {
@@ -36,16 +37,28 @@ export function PipelineHeader({ intakeCount }: PipelineHeaderProps) {
           </button>
         </p>
       </div>
-      {intakeCount > 0 && (
-        <div className="hidden md:flex items-center gap-2 rounded-lg border border-amber-500/20 bg-amber-500/5 px-3 py-2">
-          <div className="flex h-5 w-5 shrink-0 items-center justify-center rounded bg-gradient-to-br from-amber-500 to-amber-600">
-            <Mail className="h-3 w-3 text-black" />
+      <div className="hidden md:flex items-center gap-2">
+        {approvalCount > 0 && (
+          <div className="flex items-center gap-2 rounded-lg border border-amber-500/20 bg-amber-500/5 px-3 py-2">
+            <div className="flex h-5 w-5 shrink-0 items-center justify-center rounded bg-gradient-to-br from-amber-500 to-amber-600">
+              <ShieldCheck className="h-3 w-3 text-black" />
+            </div>
+            <span className="text-xs text-amber-700 dark:text-amber-400">
+              <strong>{approvalCount} deal{approvalCount > 1 ? "s" : ""}</strong> awaiting approval
+            </span>
           </div>
-          <span className="text-xs text-amber-700 dark:text-amber-400">
-            <strong>{intakeCount} intake item{intakeCount > 1 ? "s" : ""}</strong> ready for review
-          </span>
-        </div>
-      )}
+        )}
+        {intakeCount > 0 && (
+          <div className="flex items-center gap-2 rounded-lg border border-amber-500/20 bg-amber-500/5 px-3 py-2">
+            <div className="flex h-5 w-5 shrink-0 items-center justify-center rounded bg-gradient-to-br from-amber-500 to-amber-600">
+              <Mail className="h-3 w-3 text-black" />
+            </div>
+            <span className="text-xs text-amber-700 dark:text-amber-400">
+              <strong>{intakeCount} intake item{intakeCount > 1 ? "s" : ""}</strong> ready for review
+            </span>
+          </div>
+        )}
+      </div>
     </div>
   );
 }

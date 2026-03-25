@@ -417,6 +417,8 @@ export async function POST(req: NextRequest) {
 
     const realieUrl = `${REALIE_BASE_URL}?${params.toString()}`;
 
+    console.log("[Enrich] Calling Realie:", realieUrl);
+
     const response = await fetch(realieUrl, {
       method: "GET",
       headers: {
@@ -424,40 +426,52 @@ export async function POST(req: NextRequest) {
       },
     });
 
+    const searched = { address: body.address, city: body.city, state: body.state, zip: body.zip };
+
     if (!response.ok) {
       const errText = await response.text().catch(() => "");
-      console.error("Realie API error:", response.status, errText, "| URL:", realieUrl);
+      console.error("[Enrich] Realie error:", response.status, errText, "| URL:", realieUrl);
 
       if (response.status === 404) {
         return NextResponse.json(
-          {
-            error: "Property not found at this address",
-            searched: { address: body.address, city: body.city, state: body.state, zip: body.zip },
-          },
+          { error: "Property not found at this address", searched },
           { status: 404 }
         );
       }
       if (response.status === 401 || response.status === 403) {
         return NextResponse.json(
-          { error: "Property data service authentication failed" },
+          { error: "Property data service authentication failed. Check REALIE_API_KEY.", searched },
           { status: 502 }
         );
       }
       return NextResponse.json(
-        { error: "Property data service error" },
+        { error: `Property data service returned ${response.status}`, searched },
         { status: 502 }
       );
     }
 
-    const data = await response.json();
-    const property: RealieProperty = data.property ?? data.data?.[0] ?? data;
+    const rawText = await response.text();
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    let data: Record<string, any>;
+    try {
+      data = JSON.parse(rawText);
+    } catch {
+      console.error("[Enrich] Realie returned non-JSON:", rawText.slice(0, 500));
+      return NextResponse.json(
+        { error: "Property data service returned invalid response", searched },
+        { status: 502 }
+      );
+    }
+
+    console.log("[Enrich] Realie response keys:", Object.keys(data), "| status:", response.status);
+
+    const property: RealieProperty = (data.property ?? data.data?.[0] ?? data) as RealieProperty;
 
     if (!property || (!property.parcelId && !property.yearBuilt && !property.buildingArea)) {
+      console.warn("[Enrich] No usable property data in response. Top-level keys:", Object.keys(data),
+        "| property keys:", property ? Object.keys(property) : "null");
       return NextResponse.json(
-        {
-          error: "No property data found for this address",
-          searched: { address: body.address, city: body.city, state: body.state, zip: body.zip },
-        },
+        { error: "No property data found for this address", searched },
         { status: 404 }
       );
     }

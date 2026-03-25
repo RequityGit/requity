@@ -170,7 +170,7 @@ export function BrokerSection({
       <ExpandablePersonCard
         avatar={{ initials: initials || "?", palette: "amber" }}
         name={brokerName || "Unknown"}
-        subtitle={[company, localBroker.email].filter(Boolean).join(" \u00b7 ")}
+        subtitle={[company, localBroker.email, localBroker.phone ? formatPhoneNumber(localBroker.phone) : null].filter(Boolean).join(" \u00b7 ")}
         badge="Broker"
         actions={
           <Button

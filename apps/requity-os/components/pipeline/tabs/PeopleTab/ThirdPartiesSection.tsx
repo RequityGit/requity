@@ -138,7 +138,7 @@ export function ThirdPartiesSection({
                     avatar={{ initials: initials || "?", palette }}
                     name={display.name || "Unknown"}
                     subtitle={
-                      [display.company, display.email].filter(Boolean).join(" \u00b7 ")
+                      [display.company, display.email, display.phone ? formatPhoneNumber(display.phone) : null].filter(Boolean).join(" \u00b7 ")
                     }
                     badge={c.role}
                     actions={
