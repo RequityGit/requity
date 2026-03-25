@@ -9,7 +9,7 @@ interface UseInvestorDeckReturn {
   saving: boolean;
   updateField: (field: string, value: unknown) => void;
   saveNow: () => Promise<void>;
-  createDraft: () => Promise<void>;
+  createDraft: () => Promise<InvestorDeckData | null>;
   reload: () => Promise<void>;
 }
 
@@ -96,7 +96,7 @@ export function useInvestorDeck(dealId: string): UseInvestorDeckReturn {
     await flush();
   }, [flush]);
 
-  const createDraft = useCallback(async () => {
+  const createDraft = useCallback(async (): Promise<InvestorDeckData | null> => {
     setSaving(true);
     try {
       const nextVersion = (deck?.version ?? 0) + 1;
@@ -119,9 +119,12 @@ export function useInvestorDeck(dealId: string): UseInvestorDeckReturn {
         .single();
 
       if (error) throw error;
-      setDeck(data as unknown as InvestorDeckData);
+      const newDeck = data as unknown as InvestorDeckData;
+      setDeck(newDeck);
+      return newDeck;
     } catch (err) {
       showError("Could not create investor deck draft", err);
+      return null;
     } finally {
       setSaving(false);
     }

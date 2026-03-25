@@ -139,7 +139,7 @@ export function DealDocumentsSection({
 
   // ─── Create both drafts ───
   const handleCreateDrafts = useCallback(async () => {
-    const tasks: Promise<void>[] = [];
+    const tasks: Promise<unknown>[] = [];
     if (!memo) tasks.push(createMemoDraft());
     if (!deck) tasks.push(createDeckDraft());
     await Promise.allSettled(tasks);
@@ -151,7 +151,7 @@ export function DealDocumentsSection({
     try {
       // Ensure both drafts exist first
       if (!memo || !deck) {
-        const tasks: Promise<void>[] = [];
+        const tasks: Promise<unknown>[] = [];
         if (!memo) tasks.push(createMemoDraft());
         if (!deck) tasks.push(createDeckDraft());
         await Promise.allSettled(tasks);
@@ -250,18 +250,24 @@ export function DealDocumentsSection({
     setGenerating("investor_summary");
     const toastId = showLoading("Generating investor deck...");
     try {
-      await saveDeckNow();
+      let activeDeck = deck;
+      if (!activeDeck) {
+        activeDeck = await createDeckDraft();
+        if (!activeDeck) throw new Error("Could not create investor deck draft");
+      } else {
+        await saveDeckNow();
+      }
       const { generateInvestorDeck } = await import(
         "@/lib/docgen/generate-investor-deck"
       );
-      await generateInvestorDeck({ deal: dealDocData, deck });
+      await generateInvestorDeck({ deal: dealDocData, deck: activeDeck });
       resolveLoading(toastId, "Investor deck downloaded");
     } catch (err) {
       rejectLoading(toastId, "Could not generate investor deck", err);
     } finally {
       setGenerating(null);
     }
-  }, [dealDocData, deck, saveDeckNow]);
+  }, [dealDocData, deck, saveDeckNow, createDeckDraft]);
 
   // ─── Section counts ───
   const memoNarrativeKeys = [
@@ -364,7 +370,7 @@ export function DealDocumentsSection({
         size="sm"
         className="h-7 text-xs"
         onClick={handleGenerateInvestorDeck}
-        disabled={!deck || !!generating}
+        disabled={!!generating}
       >
         {generating === "investor_summary" ? (
           <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" />
