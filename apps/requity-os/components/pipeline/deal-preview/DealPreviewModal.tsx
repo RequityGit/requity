@@ -59,7 +59,7 @@ export function DealPreviewModal({
     invalidateCache,
   } = useDealPreview();
 
-  const { data, loading, error, refetch } = useDealPreviewData();
+  const { data, loading, error, refetch, setData } = useDealPreviewData();
   const [stageLoading, setStageLoading] = useState(false);
 
   const noteInputRef = useRef<HTMLTextAreaElement>(null);
@@ -233,6 +233,7 @@ export function DealPreviewModal({
         notes: [tempNote, ...data.notes],
       };
       setCache(data.deal.id, updatedData);
+      setData(updatedData);
 
       try {
         const { error: insertError } = await supabase
@@ -247,14 +248,16 @@ export function DealPreviewModal({
 
         if (insertError) {
           setCache(data.deal.id, data);
+          setData(data);
           showError("Could not post note", insertError.message);
         }
       } catch {
         setCache(data.deal.id, data);
+        setData(data);
         showError("Could not post note");
       }
     },
-    [data, currentUserId, currentUserName, setCache]
+    [data, currentUserId, currentUserName, setCache, setData]
   );
 
   // ── Add condition ──

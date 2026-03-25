@@ -120,6 +120,7 @@ interface UseDealPreviewDataReturn {
   loading: boolean;
   error: string | null;
   refetch: () => Promise<void>;
+  setData: React.Dispatch<React.SetStateAction<DealPreviewData | null>>;
 }
 
 export function useDealPreviewData(): UseDealPreviewDataReturn {
@@ -251,5 +252,5 @@ export function useDealPreviewData(): UseDealPreviewDataReturn {
     }
   }, [selectedDealId, setCache]);
 
-  return { data, loading, error, refetch };
+  return { data, loading, error, refetch, setData };
 }
