@@ -137,6 +137,9 @@ export async function POST(request: Request) {
     let opportunityCreationFailed = false;
     let opportunityError: string | null = null;
 
+    // Track whether contact was newly created (for activity logging)
+    let contactWasCreated = false;
+
     for (const group of sortedGroups) {
       const entityData = buildEntityData(group.fields, data);
       if (Object.keys(entityData).length === 0) continue;
@@ -199,6 +202,7 @@ export async function POST(request: Request) {
 
                 if (contactError) throw new Error(`Contact creation failed: ${contactError.message}`);
                 contactId = newContact.id;
+                contactWasCreated = true;
               }
             } else {
               const { data: newContact, error: contactError } = await supabase
@@ -209,6 +213,7 @@ export async function POST(request: Request) {
 
               if (contactError) throw new Error(`Contact creation failed: ${contactError.message}`);
               contactId = newContact.id;
+              contactWasCreated = true;
             }
 
             if (contactId) entityIds.contact_id = contactId;
@@ -555,6 +560,52 @@ export async function POST(request: Request) {
       } catch (scErr) {
         // Non-blocking: log but don't fail the submission
         console.error("Soft commitment processing failed:", scErr);
+      }
+    }
+
+    // 2c. Log CRM activities for contact creation and soft commitment placement
+    if (entityIds.contact_id) {
+      try {
+        const activityInserts: Array<Record<string, unknown>> = [];
+
+        // Log "Contact created" if this is a new contact
+        if (contactWasCreated) {
+          const sourceName = (formDef as Record<string, unknown>).name || "Form";
+          activityInserts.push({
+            contact_id: entityIds.contact_id,
+            activity_type: "system",
+            subject: "Contact created",
+            description: `Contact was created via ${sourceName} submission.`,
+            performed_by_name: "System",
+          });
+        }
+
+        // Log "Soft commitment placed" if one was created
+        if (entityIds.soft_commitment_id && isSoftCommitmentForm) {
+          const commitmentAmount = typeof data.commitment_amount === "number"
+            ? data.commitment_amount
+            : parseFloat(String(data.commitment_amount)) || 0;
+          const amountStr = commitmentAmount > 0
+            ? new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 }).format(commitmentAmount)
+            : "";
+          activityInserts.push({
+            contact_id: entityIds.contact_id,
+            activity_type: "system",
+            subject: "Soft commitment placed",
+            description: amountStr
+              ? `Placed a ${amountStr} soft commitment via investment form.`
+              : "Placed a soft commitment via investment form.",
+            performed_by_name: "System",
+            metadata: { soft_commitment_id: entityIds.soft_commitment_id },
+          });
+        }
+
+        if (activityInserts.length > 0) {
+          await supabase.from("crm_activities").insert(activityInserts);
+        }
+      } catch (activityErr) {
+        // Non-blocking: activity logging should never fail the submission
+        console.error("Activity logging failed:", activityErr);
       }
     }
 
