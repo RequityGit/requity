@@ -10,7 +10,6 @@ import {
 } from "@/components/ui/select";
 import {
   TASK_CATEGORIES,
-  TASK_PRIORITIES,
   TASK_TYPE_FILTER,
   type TaskTypeFilter,
 } from "@/lib/tasks";
@@ -21,8 +20,6 @@ interface TaskFiltersProps {
   onAssigneeChange: (value: string) => void;
   categoryFilter: string;
   onCategoryChange: (value: string) => void;
-  priorityFilter: string;
-  onPriorityChange: (value: string) => void;
   typeFilter: TaskTypeFilter;
   onTypeFilterChange: (value: TaskTypeFilter) => void;
 }
@@ -39,8 +36,6 @@ export function TaskFilters({
   onAssigneeChange,
   categoryFilter,
   onCategoryChange,
-  priorityFilter,
-  onPriorityChange,
   typeFilter,
   onTypeFilterChange,
 }: TaskFiltersProps) {
@@ -89,20 +84,6 @@ export function TaskFilters({
           {TASK_CATEGORIES.map((cat) => (
             <SelectItem key={cat} value={cat}>
               {cat}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
-
-      <Select value={priorityFilter} onValueChange={onPriorityChange}>
-        <SelectTrigger className="w-full sm:w-[140px] h-10 md:h-9 text-[13px]">
-          <SelectValue placeholder="Priority" />
-        </SelectTrigger>
-        <SelectContent>
-          <SelectItem value="all">All priorities</SelectItem>
-          {TASK_PRIORITIES.map((p) => (
-            <SelectItem key={p} value={p}>
-              {p}
             </SelectItem>
           ))}
         </SelectContent>

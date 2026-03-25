@@ -8,7 +8,6 @@ export interface RecurringTaskTemplate {
   title: string;
   description: string | null;
   category: string;
-  priority: string;
   assigned_to: string | null;
   recurrence_type: RecurrenceType;
   monthly_mode: MonthlyMode | null;
@@ -32,7 +31,6 @@ export interface CreateTemplateInput {
   title: string;
   description?: string;
   category: string;
-  priority: string;
   assigned_to?: string;
   recurrence_type: RecurrenceType;
   monthly_mode?: MonthlyMode;

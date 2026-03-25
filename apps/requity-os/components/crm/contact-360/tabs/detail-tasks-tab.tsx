@@ -3,7 +3,6 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Plus, CheckCircle2 } from "lucide-react";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { formatDate } from "@/lib/format";
@@ -25,12 +24,6 @@ const STATUS_CONFIG: Record<string, { bg: string; text: string; label: string }>
   "To Do": { bg: "#F7F7F8", text: "#6B6B6B", label: "To Do" },
   "In Progress": { bg: "#EFF6FF", text: "#3B82F6", label: "In Progress" },
   Complete: { bg: "#F0FDF4", text: "#22A861", label: "Complete" },
-};
-
-const PRIORITY_DOT: Record<string, string> = {
-  High: "#E5453D",
-  Medium: "#E5930E",
-  Low: "#8B8B8B",
 };
 
 export function DetailTasksTab({
@@ -133,8 +126,6 @@ export function DetailTasksTab({
           const isCompleted = t.status === "Complete";
           const isOverdue =
             !isCompleted && t.due_date && new Date(t.due_date) < new Date();
-          const dotColor = PRIORITY_DOT[t.priority] || "#8B8B8B";
-
           return (
             <div
               key={t.id}
@@ -149,8 +140,7 @@ export function DetailTasksTab({
                     e.stopPropagation();
                     handleQuickComplete(t);
                   }}
-                  className="w-5 h-5 rounded-md flex items-center justify-center shrink-0 transition-colors hover:bg-green-500/10"
-                  style={{ border: `2px solid ${dotColor}` }}
+                  className="w-5 h-5 rounded-md flex items-center justify-center shrink-0 transition-colors hover:bg-green-500/10 border-2 border-border"
                   title="Mark complete"
                 />
               )}
@@ -200,22 +190,6 @@ export function DetailTasksTab({
                 </div>
               </div>
 
-              {/* Priority */}
-              <Badge
-                variant="outline"
-                className="text-[11px] gap-1 px-1.5 py-0 h-5 shrink-0"
-                style={{
-                  color: dotColor,
-                  borderColor: `${dotColor}30`,
-                  backgroundColor: `${dotColor}08`,
-                }}
-              >
-                <span
-                  className="h-1.5 w-1.5 rounded-full"
-                  style={{ backgroundColor: dotColor }}
-                />
-                {t.priority}
-              </Badge>
             </div>
           );
         })

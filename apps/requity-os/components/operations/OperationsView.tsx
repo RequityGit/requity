@@ -67,7 +67,6 @@ interface ApprovalRequest {
   entity_type: string;
   entity_id: string;
   status: string;
-  priority: string;
   submitted_by: string;
   assigned_to: string;
   submission_notes: string | null;
@@ -103,13 +102,6 @@ const STATUS_CFG: Record<string, { label: string; dotClass: string; bgClass: str
   "Complete": { label: "Complete", dotClass: "bg-[#22A861]", bgClass: "bg-[#22A861]/[0.07] text-[#22A861]" },
 };
 
-const PRIORITY_CFG: Record<string, { label: string; dotClass: string; bgClass: string }> = {
-  "Critical": { label: "Critical", dotClass: "bg-[#E5453D]", bgClass: "bg-[#E5453D]/[0.07] text-[#E5453D]" },
-  "High": { label: "High", dotClass: "bg-[#E5930E]", bgClass: "bg-[#E5930E]/[0.07] text-[#E5930E]" },
-  "Medium": { label: "Medium", dotClass: "bg-[#3B82F6]", bgClass: "bg-[#3B82F6]/[0.07] text-[#3B82F6]" },
-  "Low": { label: "Low", dotClass: "bg-[#8B8B8B]", bgClass: "bg-[#8B8B8B]/[0.07] text-[#8B8B8B]" },
-};
-
 const CATEGORY_LABELS: Record<string, string> = {
   "Engineering": "Engineering",
   "Marketing": "Marketing",
@@ -141,13 +133,6 @@ const ENTITY_TYPE_LABELS: Record<string, string> = {
   exception: "Exception",
   investor_distribution: "Distribution",
   opportunity: "Deal",
-};
-
-const priorityOrder: Record<string, number> = {
-  Critical: 0,
-  High: 1,
-  Medium: 2,
-  Low: 3,
 };
 
 /* ── Helpers ── */
@@ -325,9 +310,6 @@ function TaskRow({
       >
         {task.title}
       </button>
-      {task.priority === "Critical" && (
-        <Dot label="Critical" dotClass="bg-[#E5453D]" bgClass="bg-[#E5453D]/[0.07] text-[#E5453D]" />
-      )}
       <Dot label={st.label} dotClass={st.dotClass} bgClass={st.bgClass} />
       {task.assigned_to_name && (
         <div className="flex items-center gap-1.5 min-w-[100px]">
@@ -400,7 +382,6 @@ function ProjectRow({
   onReorderTasks: (projectId: string, taskIds: string[]) => void;
 }) {
   const st = STATUS_CFG[project.status ?? "Not Started"] ?? STATUS_CFG["Not Started"];
-  const pr = PRIORITY_CFG[project.priority ?? "Medium"] ?? PRIORITY_CFG["Medium"];
   const cat = CATEGORY_LABELS[project.category ?? ""] ?? project.category ?? "—";
   const tasksDone = tasks.filter((t) => t.status === "Complete").length;
   const tasksTotal = tasks.length;
@@ -475,7 +456,6 @@ function ProjectRow({
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2.5 flex-wrap">
             <span className="text-sm font-semibold text-foreground">{project.project_name}</span>
-            <Dot label={pr.label} dotClass={pr.dotClass} bgClass={pr.bgClass} />
             <Dot label={st.label} dotClass={st.dotClass} bgClass={st.bgClass} />
           </div>
           <div className="flex items-center gap-3 mt-1.5">
@@ -596,7 +576,6 @@ function AllTasksView({
   projectNames,
   statusFilter,
   ownerFilter,
-  priorityFilter,
   categoryFilter,
   onToggleTask,
   onOpenTask,
@@ -607,7 +586,6 @@ function AllTasksView({
   projectNames: Record<string, string>;
   statusFilter: string;
   ownerFilter: string;
-  priorityFilter: string;
   categoryFilter: string;
   onToggleTask: (taskId: string, complete: boolean) => void;
   onOpenTask: (task: OpsTask) => void;
@@ -627,7 +605,6 @@ function AllTasksView({
   const filtered = sortedTasks.filter((t) => {
     if (statusFilter !== "all" && t.status !== statusFilter) return false;
     if (ownerFilter !== "all" && t.assigned_to_name !== ownerFilter) return false;
-    if (priorityFilter !== "all" && t.priority !== priorityFilter) return false;
     if (categoryFilter !== "all" && t.category !== categoryFilter) return false;
     return true;
   });
@@ -791,7 +768,6 @@ export function OperationsView({
   const [view, setView] = useState<"projects" | "tasks" | "approvals">("projects");
   const [statusFilter, setStatusFilter] = useState("all");
   const [ownerFilter, setOwnerFilter] = useState("all");
-  const [priorityFilter, setPriorityFilter] = useState("all");
   const [categoryFilter, setCategoryFilter] = useState("all");
   const [search, setSearch] = useState("");
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
@@ -809,12 +785,11 @@ export function OperationsView({
 
   const toggleExpand = (id: string) => setExpanded((e) => ({ ...e, [id]: !e[id] }));
 
-  const hasFilters = statusFilter !== "all" || ownerFilter !== "all" || priorityFilter !== "all" || categoryFilter !== "all" || search.length > 0;
+  const hasFilters = statusFilter !== "all" || ownerFilter !== "all" || categoryFilter !== "all" || search.length > 0;
 
   function clearFilters() {
     setStatusFilter("all");
     setOwnerFilter("all");
-    setPriorityFilter("all");
     setCategoryFilter("all");
     setSearch("");
   }
@@ -883,11 +858,10 @@ export function OperationsView({
     }
     if (statusFilter !== "all") result = result.filter((p) => p.status === statusFilter);
     if (ownerFilter !== "all") result = result.filter((p) => p.owner === ownerFilter);
-    if (priorityFilter !== "all") result = result.filter((p) => p.priority === priorityFilter);
     if (categoryFilter !== "all") result = result.filter((p) => p.category === categoryFilter);
     if (search) result = result.filter((p) => p.project_name.toLowerCase().includes(search.toLowerCase()));
     return result;
-  }, [projects, projectOrder, statusFilter, ownerFilter, priorityFilter, categoryFilter, search]);
+  }, [projects, projectOrder, statusFilter, ownerFilter, categoryFilter, search]);
 
   // Toggle task complete/incomplete
   async function handleToggleTask(taskId: string, complete: boolean) {
@@ -1140,17 +1114,6 @@ export function OperationsView({
           options={ownerOptions.map((n) => ({ value: n, label: n }))}
         />
         <FilterDrop
-          label="All Priority"
-          value={priorityFilter}
-          onChange={setPriorityFilter}
-          options={[
-            { value: "Critical", label: "Critical" },
-            { value: "High", label: "High" },
-            { value: "Medium", label: "Medium" },
-            { value: "Low", label: "Low" },
-          ]}
-        />
-        <FilterDrop
           label="All Category"
           value={categoryFilter}
           onChange={setCategoryFilter}
@@ -1223,7 +1186,6 @@ export function OperationsView({
           projectNames={projectNames}
           statusFilter={statusFilter}
           ownerFilter={ownerFilter}
-          priorityFilter={priorityFilter}
           categoryFilter={categoryFilter}
           onToggleTask={handleToggleTask}
           onOpenTask={handleOpenTask}

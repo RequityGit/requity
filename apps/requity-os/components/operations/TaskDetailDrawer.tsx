@@ -8,7 +8,6 @@ import {
 } from "@/components/ui/sheet";
 import { Badge } from "@/components/ui/badge";
 import {
-  PriorityBadge,
   OpsStatusBadge,
   RecurringBadge,
   DueDateLabel,
@@ -49,7 +48,6 @@ export function TaskDetailDrawer({
         <div className="space-y-3 pb-4">
           <div className="flex items-center gap-2 flex-wrap">
             <OpsStatusBadge status={task.status} />
-            <PriorityBadge priority={task.priority} />
             {task.is_recurring && (
               <RecurringBadge
                 pattern={task.recurrence_pattern}

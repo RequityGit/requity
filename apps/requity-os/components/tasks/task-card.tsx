@@ -4,7 +4,6 @@ import { useState, useCallback } from "react";
 import { cn } from "@/lib/utils";
 import { formatDateShort } from "@/lib/format";
 import { Calendar, Repeat2, Check, AlertTriangle, Shield } from "lucide-react";
-import { PriorityDot } from "./priority-dot";
 import { CategoryPill } from "./category-pill";
 import { AnimatedTask } from "./animated-task";
 import type { OpsTask, Profile } from "@/lib/tasks";
@@ -82,7 +81,6 @@ export function TaskCard({
           {/* Content */}
           <div className="min-w-0 flex-1">
             <div className="flex items-start gap-1.5">
-              <PriorityDot priority={task.priority} className="mt-1.5" />
               <span
                 className={cn(
                   "text-sm font-medium leading-snug flex-1",

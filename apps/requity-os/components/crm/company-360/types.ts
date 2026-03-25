@@ -70,7 +70,6 @@ export interface CompanyTaskData {
   subject: string;
   description: string | null;
   task_type: string;
-  priority: string;
   status: string;
   due_date: string | null;
   assigned_to: string | null;

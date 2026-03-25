@@ -4,7 +4,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { MessageCircle } from "lucide-react";
 import {
-  PriorityBadge,
   RecurringBadge,
   DueDateLabel,
 } from "./badges";
@@ -67,7 +66,6 @@ export function TaskBoard({ tasks, projectNames, commentCounts, onOpenTask }: Ta
                       )}
 
                       <div className="flex items-center gap-1.5 flex-wrap">
-                        <PriorityBadge priority={task.priority} />
                         {task.is_recurring && (
                           <RecurringBadge pattern={task.recurrence_pattern} isActive={task.is_active_recurrence ?? false} />
                         )}
