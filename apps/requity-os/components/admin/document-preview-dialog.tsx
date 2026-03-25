@@ -52,9 +52,12 @@ export function DocumentPreviewDialog({
 
   const displayName = document?.description || document?.file_name || "Document";
   const effectiveMime = mimeType || document?.mime_type || "";
+  const ext = (document?.file_name ?? "").split(".").pop()?.toLowerCase() ?? "";
 
-  const isPdf = effectiveMime.includes("pdf");
-  const isImage = effectiveMime.startsWith("image/");
+  const isPdf = effectiveMime.includes("pdf") || ext === "pdf";
+  const isImage =
+    effectiveMime.startsWith("image/") ||
+    ["jpg", "jpeg", "png", "gif", "webp", "svg"].includes(ext);
 
   const officeExtensions = /\.(docx?|xlsx?|pptx?)$/i;
   const officeMimeTypes = [
