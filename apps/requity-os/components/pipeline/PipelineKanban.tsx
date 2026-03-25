@@ -27,8 +27,6 @@ import {
   STAGES,
 } from "./pipeline-types";
 import { formatCompactCurrency } from "@/lib/format";
-import { getDealDisplayConfig } from "@/lib/pipeline/deal-display-config";
-import { useUwFieldConfigs } from "@/hooks/useUwFieldConfigs";
 import { usePipelineStore } from "@/stores/pipeline-store";
 import type { IntakeItem } from "@/lib/intake/types";
 import { EmptyState } from "@/components/shared/EmptyState";
@@ -38,7 +36,6 @@ import type { ConditionsProgress } from "@/stores/pipeline-store";
 interface PipelineKanbanProps {
   deals: UnifiedDeal[];
   stageConfigs: StageConfig[];
-  relationshipDealIds: Set<string>;
   onDealClick: (deal: UnifiedDeal, e?: React.MouseEvent) => void;
   onDealHover?: (dealId: string) => void;
   onTogglePriority?: (dealId: string, isPriority: boolean) => void;
@@ -74,7 +71,6 @@ function StageColumn({
 export function PipelineKanban({
   deals,
   stageConfigs,
-  relationshipDealIds,
   onDealClick,
   onDealHover,
   onTogglePriority,
@@ -97,15 +93,6 @@ export function PipelineKanban({
     }
     return map;
   }, [teamMembers]);
-
-  const { allFields } = useUwFieldConfigs();
-  const formulaMap = useMemo(() => {
-    const map = new Map<string, string>();
-    for (const f of allFields) {
-      if (f.formulaExpression) map.set(f.key, f.formulaExpression);
-    }
-    return map;
-  }, [allFields]);
 
   // Memoize maps to prevent recreation on every render
   const stageConfigMap = useMemo(
@@ -257,8 +244,6 @@ export function PipelineKanban({
                           key={deal.id}
                           deal={deal}
                           stageConfig={stageConfig}
-                          hasRelationships={relationshipDealIds.has(deal.id)}
-                          formulaMap={formulaMap}
                           conditionsProgress={conditionsMap.get(deal.id) ?? null}
                           assigneeName={deal.assigned_to ? assigneeMap.get(deal.assigned_to) ?? null : null}
                           onClick={(e) => onDealClick(deal, e)}
@@ -282,8 +267,6 @@ export function PipelineKanban({
           <DealCardOverlay
             deal={activeDeal}
             stageConfig={stageConfigMap.get(activeDeal.stage)}
-            hasRelationships={relationshipDealIds.has(activeDeal.id)}
-            formulaMap={formulaMap}
             conditionsProgress={conditionsMap.get(activeDeal.id) ?? null}
             assigneeName={activeDeal.assigned_to ? assigneeMap.get(activeDeal.assigned_to) ?? null : null}
           />

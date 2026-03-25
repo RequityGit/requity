@@ -26,8 +26,6 @@ import { formatDateShort } from "@/lib/format";
 interface DealCardProps {
   deal: UnifiedDeal;
   stageConfig?: StageConfig;
-  hasRelationships?: boolean;
-  formulaMap?: Map<string, string>;
   conditionsProgress?: { completed: number; total: number } | null;
   assigneeName?: string | null;
   onClick: (e?: React.MouseEvent) => void;
@@ -451,11 +449,17 @@ function DealCardInner({
   const isClosed = deal.status === "won" || deal.status === "lost";
   const glowing = shouldGlow(deal);
 
+  // Guard against double-fire from both onClick and onPointerUp
+  const pinFiredRef = useRef(false);
   const handlePinClick = useCallback(
-    (e: React.MouseEvent) => {
+    (e: React.MouseEvent | React.PointerEvent) => {
       e.stopPropagation();
       e.preventDefault();
+      if (pinFiredRef.current) return;
+      pinFiredRef.current = true;
       onTogglePriority?.(deal.id, !deal.is_priority);
+      // Reset guard after a tick so next click works
+      requestAnimationFrame(() => { pinFiredRef.current = false; });
     },
     [deal.id, deal.is_priority, onTogglePriority]
   );
@@ -491,6 +495,7 @@ function DealCardInner({
           type="button"
           data-focus-btn
           onPointerDown={(e) => e.stopPropagation()}
+          onPointerUp={(e) => { e.stopPropagation(); handlePinClick(e); }}
           onClick={handlePinClick}
           className={cn(
             "rq-focus-ribbon",
@@ -538,9 +543,8 @@ export const DealCard = React.memo(DealCardInner, (prev, next) => {
     prev.deal.primary_contact_id === next.deal.primary_contact_id &&
     prev.deal.broker_contact_id === next.deal.broker_contact_id &&
     prev.stageConfig?.stage === next.stageConfig?.stage &&
-    prev.hasRelationships === next.hasRelationships &&
-    prev.formulaMap === next.formulaMap &&
-    prev.conditionsProgress === next.conditionsProgress &&
+    prev.conditionsProgress?.completed === next.conditionsProgress?.completed &&
+    prev.conditionsProgress?.total === next.conditionsProgress?.total &&
     prev.assigneeName === next.assigneeName &&
     prev.isSelected === next.isSelected
   );

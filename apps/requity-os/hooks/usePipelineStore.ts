@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo } from "react";
+import { useShallow } from "zustand/react/shallow";
 import { usePipelineStore } from "@/stores/pipeline-store";
 import type {
   UnifiedDeal,
@@ -99,10 +100,12 @@ export function useCurrentUserId(): string | null {
 
 /** Store actions (stable references, no re-render) */
 export function usePipelineActions() {
-  return usePipelineStore((s) => ({
-    moveDeal: s.moveDeal,
-    updateDeal: s.updateDeal,
-    addDeal: s.addDeal,
-    removeDeal: s.removeDeal,
-  }));
+  return usePipelineStore(
+    useShallow((s) => ({
+      moveDeal: s.moveDeal,
+      updateDeal: s.updateDeal,
+      addDeal: s.addDeal,
+      removeDeal: s.removeDeal,
+    }))
+  );
 }
