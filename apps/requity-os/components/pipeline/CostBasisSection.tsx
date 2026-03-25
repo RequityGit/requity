@@ -59,14 +59,7 @@ export function CostBasisSection({ dealId, loanPurpose }: CostBasisSectionProps)
   const cbRef = useRef(costBasis);
   cbRef.current = costBasis;
 
-  // Determine deal context
-  const isRefi = ["refinance", "cash_out", "cash_out_refinance"].includes(loanPurpose ?? "") ||
-    (loanPurpose?.toLowerCase().includes("refi") ?? false) ||
-    (loanPurpose?.toLowerCase().includes("cash") ?? false);
-  const isPurchase = ["acquisition", "purchase"].includes(loanPurpose ?? "") ||
-    (loanPurpose?.toLowerCase().includes("purchase") ?? false);
-
-  const sectionTitle = isRefi ? "Refinance Overview" : "Borrower's Basis";
+  const sectionTitle = "Refinance Overview";
 
   // ── Fetch on mount ──
 
@@ -81,14 +74,10 @@ export function CostBasisSection({ dealId, loanPurpose }: CostBasisSectionProps)
       }
       setCostBasis(res.costBasis ?? null);
       setExistingLoans(res.existingLoans ?? []);
-      // Auto-collapse existing loans section on purchase deals if no loans exist
-      if (isPurchase && (!res.existingLoans || res.existingLoans.length === 0)) {
-        setLoansExpanded(false);
-      }
       setLoading(false);
     });
     return () => { cancelled = true; };
-  }, [dealId, isPurchase]);
+  }, [dealId]);
 
   // ── Cost basis field save ──
 
