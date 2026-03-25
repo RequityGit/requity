@@ -91,10 +91,10 @@ export function DealTeamInternalSection({
   return (
     <>
       <div className="rounded-xl border bg-card overflow-hidden">
-        <div className="flex items-center justify-between px-4 py-3 border-b">
+        <div className="flex items-center justify-between px-5 py-3.5 border-b">
           <div className="flex items-center gap-2">
             <Users className="h-4 w-4 text-muted-foreground" />
-            <h4 className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+            <h4 className="rq-micro-label">
               Deal Team
             </h4>
           </div>
@@ -128,7 +128,7 @@ export function DealTeamInternalSection({
             return (
               <div
                 key={role}
-                className="flex items-center gap-3 px-4 py-1.5 border-b last:border-b-0 hover:bg-muted/50 rq-transition group/team"
+                className="flex items-center gap-3 px-5 py-1.5 border-b last:border-b-0 hover:bg-muted/50 rq-transition group/team"
               >
                 <PersonAvatar
                   initials={initials}

@@ -254,7 +254,7 @@ export function ContactsTab({
 
     return (
       <div className="rounded-xl border bg-card p-5">
-        <h4 className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-4">
+        <h4 className="rq-micro-label mb-4">
           {title}
         </h4>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-2.5">
@@ -295,7 +295,7 @@ export function ContactsTab({
       {/* Linked Contacts */}
       <div className="space-y-3">
         <div className="flex items-center justify-between">
-          <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+          <h3 className="rq-micro-label">
             Borrowers / Signers
             {dealContacts.length > 0 && (
               <span className="ml-1.5 text-muted-foreground/60 num">

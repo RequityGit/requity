@@ -49,7 +49,7 @@ export function TH({
 
 export function SubLabel({ children }: { children: React.ReactNode }) {
   return (
-    <div className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-3">
+    <div className="rq-micro-label mb-3">
       {children}
     </div>
   );

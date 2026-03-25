@@ -293,10 +293,10 @@ export function EditableOverview({
             sectionIndex={sectionIdx}
             totalSections={effectiveFieldGroups.length}
           >
-            <div className="rounded-xl border bg-card p-4">
+            <div className="rounded-xl border bg-card p-5">
               <div className="flex items-center gap-2 mb-3">
                 {Icon && <Icon className="h-3.5 w-3.5 text-muted-foreground" strokeWidth={1.5} />}
-                <h4 className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
+                <h4 className="rq-micro-label">
                   {group.label}
                 </h4>
               </div>

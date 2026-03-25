@@ -123,15 +123,15 @@ export function BrokerSection({
   if (!localBroker) {
     return (
       <div className="rounded-xl border bg-card">
-        <div className="flex items-center justify-between px-4 py-3 border-b">
+        <div className="flex items-center justify-between px-5 py-3.5 border-b">
           <div className="flex items-center gap-2">
             <Briefcase className="h-4 w-4 text-muted-foreground" />
-            <h4 className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+            <h4 className="rq-micro-label">
               Broker
             </h4>
           </div>
         </div>
-        <div className="px-4 py-4">
+        <div className="p-5">
           <span className="inline-field-label">Search contacts to link as broker</span>
           <div className="mt-1">
             <RelationshipPicker
@@ -159,10 +159,10 @@ export function BrokerSection({
 
   return (
     <div className="rounded-xl border bg-card overflow-hidden">
-      <div className="flex items-center justify-between px-4 py-3 border-b">
+      <div className="flex items-center justify-between px-5 py-3.5 border-b">
         <div className="flex items-center gap-2">
           <Briefcase className="h-4 w-4 text-muted-foreground" />
-          <h4 className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+          <h4 className="rq-micro-label">
             Broker
           </h4>
         </div>

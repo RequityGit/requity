@@ -481,7 +481,7 @@ function PropertyDetailsContent({
               sectionIndex={sectionIdx}
               totalSections={effectiveSections.length}
             >
-              <div className="rounded-xl border bg-card p-4">
+              <div className="rounded-xl border bg-card p-5">
                 <button
                   type="button"
                   className={cn(
@@ -499,7 +499,7 @@ function PropertyDetailsContent({
                       )}
                     />
                   )}
-                  <h4 className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider">
+                  <h4 className="rq-micro-label">
                     {section.section_label}
                   </h4>
                 </button>
@@ -574,8 +574,8 @@ function PropertyDetailsContent({
       {enrichButton}
 
       {Array.from(fallbackSectionGroups.entries()).map(([groupName, fields]) => (
-        <div key={groupName} className="rounded-xl border bg-card p-4">
-          <h4 className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider mb-3">
+        <div key={groupName} className="rounded-xl border bg-card p-5">
+          <h4 className="rq-micro-label mb-3">
             {groupName}
           </h4>
           <div className="grid grid-cols-12 gap-x-5 gap-y-2">
