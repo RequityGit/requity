@@ -412,6 +412,18 @@ function SendFormModal({
   );
 }
 
+// ─── Submission filtering helpers ───
+
+const COMPLETED_STATUSES = new Set(["submitted", "reviewed", "processed"]);
+const MIN_FILLED_FIELDS = 2;
+
+/** Count non-empty field values in a submission's data JSONB */
+function countFilledFields(data: Record<string, unknown>): number {
+  return Object.values(data).filter(
+    (v) => v !== null && v !== undefined && v !== ""
+  ).length;
+}
+
 // ─── Main FormsTab ───
 
 interface FormsTabProps {
@@ -471,7 +483,14 @@ export function FormsTab({ dealId }: FormsTabProps) {
     );
   }
 
-  const hasSubmissions = submissions.length > 0;
+  // Hide empty/near-empty partial submissions (created on page load before user fills anything)
+  const visibleSubmissions = submissions.filter(
+    (sub) =>
+      COMPLETED_STATUSES.has(sub.status) ||
+      countFilledFields(sub.data) >= MIN_FILLED_FIELDS
+  );
+
+  const hasSubmissions = visibleSubmissions.length > 0;
   const hasLinks = links.length > 0;
   const isEmpty = !hasSubmissions && !hasLinks;
 
@@ -513,10 +532,10 @@ export function FormsTab({ dealId }: FormsTabProps) {
       {hasSubmissions && (
         <div>
           <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2">
-            Submissions ({submissions.length})
+            Submissions ({visibleSubmissions.length})
           </h4>
           <div className="space-y-2">
-            {submissions.map((sub) => (
+            {visibleSubmissions.map((sub) => (
               <SubmissionCard key={sub.id} submission={sub} />
             ))}
           </div>
