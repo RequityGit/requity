@@ -19,12 +19,34 @@ export async function updateCommitmentStatus(
   if (status === "confirmed") updates.confirmed_at = now;
   if (status === "subscribed") updates.subscribed_at = now;
 
+  // Fetch current commitment to get contact_id for activity logging
+  const { data: commitment } = await admin
+    .from("soft_commitments" as never)
+    .select("contact_id, status, name" as never)
+    .eq("id" as never, commitmentId as never)
+    .single();
+
   const { error } = await admin
     .from("soft_commitments" as never)
     .update(updates as never)
     .eq("id" as never, commitmentId as never);
 
   if (error) return { error: error.message };
+
+  // Log status change on contact timeline
+  const contactId = (commitment as { contact_id: string | null } | null)?.contact_id;
+  if (contactId) {
+    const statusLabel = status.charAt(0).toUpperCase() + status.slice(1);
+    await admin.from("crm_activities").insert({
+      contact_id: contactId,
+      activity_type: "system",
+      subject: `Commitment ${statusLabel.toLowerCase()}`,
+      description: `Soft commitment status changed to "${statusLabel}".`,
+      performed_by: auth.user.id,
+      performed_by_name: "System",
+      metadata: { soft_commitment_id: commitmentId },
+    } as never);
+  }
 
   revalidatePath("/funds/soft-commitments");
   return { success: true };
@@ -68,17 +90,40 @@ export async function addManualCommitment(data: {
     .eq("email" as never, data.email as never)
     .maybeSingle();
 
-  const { error } = await admin
+  const contactId = (contact as { id: string } | null)?.id ?? null;
+
+  const { data: scData, error } = await admin
     .from("soft_commitments" as never)
     .insert({
       ...data,
-      contact_id: (contact as { id: string } | null)?.id ?? null,
+      contact_id: contactId,
       source: "manual",
       status: "pending",
       submitted_at: new Date().toISOString(),
-    } as never);
+    } as never)
+    .select("id" as never)
+    .single();
 
   if (error) return { error: error.message };
+
+  // Log activity on the CRM contact timeline
+  if (contactId && scData) {
+    const amountStr = new Intl.NumberFormat("en-US", {
+      style: "currency",
+      currency: "USD",
+      maximumFractionDigits: 0,
+    }).format(data.commitment_amount);
+
+    await admin.from("crm_activities").insert({
+      contact_id: contactId,
+      activity_type: "system",
+      subject: "Soft commitment placed",
+      description: `Placed a ${amountStr} soft commitment (added manually by admin).`,
+      performed_by: auth.user.id,
+      performed_by_name: "System",
+      metadata: { soft_commitment_id: (scData as { id: string }).id },
+    } as never);
+  }
 
   revalidatePath("/funds/soft-commitments");
   return { success: true };
