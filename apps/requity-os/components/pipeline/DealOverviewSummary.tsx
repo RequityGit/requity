@@ -614,29 +614,6 @@ export function DealOverviewSummary({ dealId, deal }: DealOverviewSummaryProps) 
                 </>
               )}
 
-              {/* Refinance fields */}
-              {isRefi && (
-                <>
-                  <InlineField
-                    label="Original purchase price"
-                    type="currency"
-                    value={uwNum("original_purchase_price")}
-                    onSave={(v) => saveField("original_purchase_price", v)}
-                  />
-                  <InlineField
-                    label="Original purchase date"
-                    type="date"
-                    value={uwStr("original_purchase_date")}
-                    onSave={(v) => saveField("original_purchase_date", v)}
-                  />
-                  <InlineField
-                    label="Capex investment to date"
-                    type="currency"
-                    value={uwNum("capex_investment_to_date")}
-                    onSave={(v) => saveField("capex_investment_to_date", v)}
-                  />
-                </>
-              )}
 
               {/* New Construction fields */}
               {isConstruction && (
