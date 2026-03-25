@@ -25,6 +25,7 @@ import { EmptyState } from "@/components/shared/EmptyState";
 import {
   Copy,
   Check,
+  CheckCircle2,
   Plus,
   Download,
   Settings2,
@@ -72,6 +73,7 @@ interface FundraisingTabProps {
   fundraiseSlug: string | null;
   fundraiseEnabled: boolean;
   fundraiseTarget: number | null;
+  fundraiseHardCap: number | null;
   fundraiseDescription: string | null;
   fundraiseAmountOptions: number[] | null;
   fundraiseHeroImageUrl: string | null;
@@ -84,6 +86,7 @@ export function FundraisingTab({
   fundraiseSlug,
   fundraiseEnabled,
   fundraiseTarget,
+  fundraiseHardCap,
   fundraiseDescription,
   fundraiseAmountOptions,
   fundraiseHeroImageUrl,
@@ -96,6 +99,7 @@ export function FundraisingTab({
         dealName={dealName}
         initialSlug={fundraiseSlug}
         initialTarget={fundraiseTarget}
+        initialHardCap={fundraiseHardCap}
         initialDescription={fundraiseDescription}
         initialAmountOptions={fundraiseAmountOptions}
       />
@@ -108,6 +112,7 @@ export function FundraisingTab({
       dealName={dealName}
       fundraiseSlug={fundraiseSlug!}
       fundraiseTarget={fundraiseTarget}
+      fundraiseHardCap={fundraiseHardCap}
       fundraiseDescription={fundraiseDescription}
       fundraiseAmountOptions={fundraiseAmountOptions}
       fundraiseHeroImageUrl={fundraiseHeroImageUrl}
@@ -154,6 +159,7 @@ function FundraiseSetupScreen({
   dealName,
   initialSlug,
   initialTarget,
+  initialHardCap,
   initialDescription,
   initialAmountOptions,
 }: {
@@ -161,6 +167,7 @@ function FundraiseSetupScreen({
   dealName: string;
   initialSlug: string | null;
   initialTarget: number | null;
+  initialHardCap: number | null;
   initialDescription: string | null;
   initialAmountOptions: number[] | null;
 }) {
@@ -170,6 +177,7 @@ function FundraiseSetupScreen({
     initialSlug ?? dealName.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "")
   );
   const [target, setTarget] = useState(String(initialTarget ?? ""));
+  const [hardCap, setHardCap] = useState(String(initialHardCap ?? ""));
   const [description, setDescription] = useState(initialDescription ?? "");
   const [amountOptions, setAmountOptions] = useState(
     (initialAmountOptions ?? [25000, 50000, 100000, 250000]).join(", ")
@@ -228,6 +236,7 @@ function FundraiseSetupScreen({
       fundraise_slug: slug.trim(),
       fundraise_enabled: true,
       fundraise_target: parseFloat(target) || null,
+      fundraise_hard_cap: parseFloat(hardCap) || null,
       fundraise_description: description || null,
       fundraise_amount_options: amountOptions
         .split(",")
@@ -275,6 +284,20 @@ function FundraiseSetupScreen({
                 onChange={(e) => setTarget(e.target.value)}
                 placeholder="e.g. 5000000"
               />
+            </div>
+            <div className="space-y-1.5">
+              <Label>Hard Cap (Fully Committed Threshold)</Label>
+              <Input
+                type="number"
+                min={0}
+                value={hardCap}
+                onChange={(e) => setHardCap(e.target.value)}
+                placeholder="e.g. 5000000"
+              />
+              <p className="text-xs text-muted-foreground">
+                When total commitments reach this amount, a &quot;fully committed&quot; banner appears
+                and new submissions are added to the waitlist. Leave blank to disable.
+              </p>
             </div>
             <div className="space-y-1.5">
               <Label>Description</Label>
@@ -345,6 +368,7 @@ function FundraiseDashboard({
   dealName,
   fundraiseSlug,
   fundraiseTarget,
+  fundraiseHardCap,
   fundraiseDescription,
   fundraiseAmountOptions,
   fundraiseHeroImageUrl,
@@ -354,6 +378,7 @@ function FundraiseDashboard({
   dealName: string;
   fundraiseSlug: string;
   fundraiseTarget: number | null;
+  fundraiseHardCap: number | null;
   fundraiseDescription: string | null;
   fundraiseAmountOptions: number[] | null;
   fundraiseHeroImageUrl: string | null;
@@ -660,6 +685,21 @@ function FundraiseDashboard({
 
   return (
     <div className="rq-tab-content space-y-6">
+      {/* Fully Committed Alert */}
+      {fundraiseHardCap && fundraiseHardCap > 0 && stats.totalActive >= fundraiseHardCap && (
+        <div className="rounded-xl border border-emerald-200 bg-emerald-50 dark:border-emerald-800 dark:bg-emerald-950/40 p-4 flex items-center gap-3">
+          <CheckCircle2 className="h-5 w-5 text-emerald-600 dark:text-emerald-400 flex-shrink-0" />
+          <div className="flex-1">
+            <span className="text-sm font-semibold text-emerald-900 dark:text-emerald-100">
+              Fully committed
+            </span>
+            <span className="text-sm text-emerald-800/80 dark:text-emerald-300/80 ml-2">
+              Hard cap of {formatCurrency(fundraiseHardCap)} reached. New submissions go to the waitlist.
+            </span>
+          </div>
+        </div>
+      )}
+
       {/* Progress Bar */}
       {fundraiseTarget && fundraiseTarget > 0 && (
         <Card>
@@ -791,6 +831,7 @@ function FundraiseDashboard({
             dealId={dealId}
             slug={fundraiseSlug}
             target={fundraiseTarget}
+            hardCap={fundraiseHardCap}
             description={fundraiseDescription}
             amountOptions={fundraiseAmountOptions}
             heroImageUrl={fundraiseHeroImageUrl}
@@ -850,6 +891,7 @@ function FundraiseConfigPanel({
   dealId,
   slug,
   target,
+  hardCap,
   description,
   amountOptions,
   heroImageUrl,
@@ -858,6 +900,7 @@ function FundraiseConfigPanel({
   dealId: string;
   slug: string;
   target: number | null;
+  hardCap: number | null;
   description: string | null;
   amountOptions: number[] | null;
   heroImageUrl: string | null;
@@ -868,6 +911,7 @@ function FundraiseConfigPanel({
   const [form, setForm] = useState({
     slug,
     target: String(target ?? ""),
+    hardCap: String(hardCap ?? ""),
     description: description ?? "",
     amountOptions: (amountOptions ?? []).join(", "),
   });
@@ -937,6 +981,7 @@ function FundraiseConfigPanel({
     const result = await updateFundraiseSettings(dealId, {
       fundraise_slug: form.slug,
       fundraise_target: parseFloat(form.target) || null,
+      fundraise_hard_cap: parseFloat(form.hardCap) || null,
       fundraise_description: form.description || null,
       fundraise_amount_options: form.amountOptions
         .split(",")
@@ -985,6 +1030,19 @@ function FundraiseConfigPanel({
               onChange={(e) => setForm({ ...form, target: e.target.value })}
             />
           </div>
+        </div>
+        <div className="space-y-1.5">
+          <Label>Hard Cap (Fully Committed Threshold)</Label>
+          <Input
+            type="number"
+            value={form.hardCap}
+            onChange={(e) => setForm({ ...form, hardCap: e.target.value })}
+            placeholder="Leave blank to disable"
+          />
+          <p className="text-xs text-muted-foreground">
+            When total commitments reach this amount, the public form shows a &quot;fully committed&quot; banner
+            and new submissions go to the waitlist.
+          </p>
         </div>
         <div className="space-y-1.5">
           <Label>Description</Label>
