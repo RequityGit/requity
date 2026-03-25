@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { createClient } from "@/lib/supabase/server";
 import { requireAdmin } from "@/lib/auth/require-admin";
 import type { Database, Json } from "@/lib/supabase/types";
 import { FIELD_MAPPING_MAP } from "@/lib/pipeline/uw-field-mappings";
@@ -299,6 +300,29 @@ export async function advanceStageAction(
 
     const admin = createAdminClient();
 
+    // Gate: analysis → negotiation requires approval (super_admins bypass)
+    if (newStage === "negotiation") {
+      const { data: deal } = await admin
+        .from("unified_deals" as never)
+        .select("stage, approval_status" as never)
+        .eq("id" as never, dealId as never)
+        .single();
+
+      if (deal && (deal as { stage: string }).stage === "analysis") {
+        const { data: superRole } = await (await createClient())
+          .from("user_roles")
+          .select("id")
+          .eq("user_id", auth.user.id)
+          .eq("role", "super_admin")
+          .eq("is_active", true)
+          .single();
+
+        if (!superRole && (deal as { approval_status: string | null }).approval_status !== "approved") {
+          return { error: "This deal requires approval before advancing to Negotiation. Submit for approval first." };
+        }
+      }
+    }
+
     const { error } = await admin.rpc("unified_advance_stage", {
       p_deal_id: dealId,
       p_new_stage: newStage,
@@ -308,6 +332,14 @@ export async function advanceStageAction(
     if (error) {
       console.error("advanceStageAction error:", error);
       return { error: error.message };
+    }
+
+    // Clear approval_status when advancing past analysis (it was approved)
+    if (newStage === "negotiation") {
+      await admin
+        .from("unified_deals" as never)
+        .update({ approval_status: null } as never)
+        .eq("id" as never, dealId as never);
     }
 
     // No revalidatePath — Supabase Realtime handles sync to all clients.
@@ -341,6 +373,18 @@ export async function regressStageAction(
     if (error) {
       console.error("regressStageAction error:", error);
       return { error: error.message };
+    }
+
+    // Reset approval status when moving back to analysis (requires re-approval)
+    if (targetStage === "analysis") {
+      await admin
+        .from("unified_deals" as never)
+        .update({
+          approval_status: null,
+          approval_requested_at: null,
+          approval_requested_by: null,
+        } as never)
+        .eq("id" as never, dealId as never);
     }
 
     // No revalidatePath — Supabase Realtime handles sync to all clients.

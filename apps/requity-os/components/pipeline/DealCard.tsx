@@ -3,7 +3,7 @@
 import React, { useMemo, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
-import { User, Users, Calendar } from "lucide-react";
+import { User, Users, Calendar, Clock, AlertTriangle } from "lucide-react";
 import { useDraggable } from "@dnd-kit/core";
 import {
   type UnifiedDeal,
@@ -169,6 +169,20 @@ function CardContent({
           isEquity ? "bg-emerald-500" : "bg-blue-500"
         )}
       />
+
+      {/* Approval status badge */}
+      {deal.approval_status === "pending" && (
+        <div className="mx-3 mt-2.5 mb-0 flex items-center gap-1.5 rounded-md border border-amber-500/20 bg-amber-500/10 px-2 py-1">
+          <Clock className="h-3 w-3 text-amber-600 dark:text-amber-400 shrink-0" />
+          <span className="text-[10px] font-semibold text-amber-600 dark:text-amber-400">Awaiting Approval</span>
+        </div>
+      )}
+      {deal.approval_status === "changes_requested" && (
+        <div className="mx-3 mt-2.5 mb-0 flex items-center gap-1.5 rounded-md border border-amber-500/20 bg-amber-500/10 px-2 py-1">
+          <AlertTriangle className="h-3 w-3 text-amber-600 dark:text-amber-400 shrink-0" />
+          <span className="text-[10px] font-semibold text-amber-600 dark:text-amber-400">Changes Requested</span>
+        </div>
+      )}
 
       {/* Card inner content */}
       <div className="px-4 pt-3.5 pb-0 flex-1 flex flex-col">

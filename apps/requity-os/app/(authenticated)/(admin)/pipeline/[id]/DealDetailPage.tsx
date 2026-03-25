@@ -101,6 +101,7 @@ import {
   regressStageAction,
 } from "@/app/(authenticated)/(admin)/pipeline/actions";
 import { normalizeAssetClass, isCommercialDeal, type VisibilityContext } from "@/lib/visibility-engine";
+import { ApprovalBanner } from "@/components/pipeline/ApprovalBanner";
 import { getDealDisplayConfig, getDealFlavor } from "@/lib/pipeline/deal-display-config";
 import { ResidentialAnalysisTab } from "@/components/pipeline/tabs/ResidentialAnalysisTab";
 import { EmailComposeSheet } from "@/components/crm/email-compose-sheet";
@@ -190,6 +191,14 @@ interface DealDetailPageProps {
   currentUserId: string;
   currentUserName: string;
   isSuperAdmin?: boolean;
+  approvalInfo?: {
+    approvalId: string | null;
+    status: string | null;
+    submittedBy: string | null;
+    submitterName: string | null;
+    decisionNotes: string | null;
+    submissionNotes: string | null;
+  } | null;
 }
 
 // ─── Main Component ───
@@ -212,6 +221,7 @@ function DealDetailPageInner({
   currentUserId,
   currentUserName,
   isSuperAdmin = false,
+  approvalInfo,
 }: DealDetailPageProps) {
   const showFundraisingTab = deal.stage === "execution" || deal.stage === "closed";
   const hasAssetClass = !!deal.asset_class;
@@ -502,6 +512,17 @@ function DealDetailPageInner({
 
         {/* Inline Layout Toolbar (shown when editing) */}
         <InlineLayoutToolbar onSaveComplete={() => layout.refetch()} tabs={layout.tabs} />
+
+        {/* Approval Banner */}
+        <ApprovalBanner
+          dealId={deal.id}
+          dealName={deal.name}
+          stage={deal.stage}
+          approvalStatus={deal.approval_status ?? null}
+          isSuperAdmin={isSuperAdmin}
+          decisionNotes={approvalInfo?.decisionNotes}
+          submitterName={approvalInfo?.submitterName}
+        />
 
         {/* Tab Content */}
         <div className="flex-1 min-h-0 overflow-hidden">
