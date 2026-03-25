@@ -3,6 +3,7 @@
 import { useState, useMemo, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { storeDealOrder } from "@/hooks/useDealNavigation";
 import { cn } from "@/lib/utils";
 import { DealFilters, type FilterState } from "./DealFilters";
 import { filterByDateAdded } from "@/components/ui/date-added-filter";
@@ -97,26 +98,26 @@ export function PipelineView() {
     return ids;
   }, [filteredDeals]);
 
-  const { open: openPreview, setPrefetchDealId, isOpen: isPreviewOpen } = useDealPreview();
+  const { isOpen: isPreviewOpen } = useDealPreview();
   const searchInputRef = useRef<HTMLInputElement>(null);
 
   const handleDealClick = useCallback(
-    (deal: UnifiedDeal, e?: React.MouseEvent) => {
-      // On mobile or modifier+click, navigate to full deal page
-      if (isMobile || (e && (e.metaKey || e.ctrlKey || e.shiftKey))) {
-        router.push(`/pipeline/${deal.deal_number || deal.id}`);
-        return;
-      }
-      openPreview(deal.id, orderedDealIds);
+    (deal: UnifiedDeal) => {
+      // Store deal order for prev/next navigation on deal pages
+      storeDealOrder(orderedDealIds);
+      // Always navigate to the full deal page
+      router.push(`/pipeline/${deal.deal_number || deal.id}`);
     },
-    [router, openPreview, orderedDealIds, isMobile]
+    [router, orderedDealIds]
   );
 
   const handleDealHover = useCallback(
     (dealId: string) => {
-      setPrefetchDealId(dealId);
+      // Prefetch deal page on hover for faster navigation
+      const deal = filteredDeals.find((d) => d.id === dealId);
+      router.prefetch(`/pipeline/${deal?.deal_number || dealId}`);
     },
-    [setPrefetchDealId]
+    [filteredDeals, router]
   );
 
   const handleOpenNewDeal = useCallback(() => {
@@ -128,8 +129,12 @@ export function PipelineView() {
     isModalOpen: isPreviewOpen,
     isKanbanView: effectiveView === "kanban",
     onOpenPreview: useCallback(
-      (dealId: string, orderedIds: string[]) => openPreview(dealId, orderedIds),
-      [openPreview]
+      (dealId: string, orderedIds: string[]) => {
+        storeDealOrder(orderedIds);
+        const deal = filteredDeals.find((d) => d.id === dealId);
+        router.push(`/pipeline/${deal?.deal_number || dealId}`);
+      },
+      [filteredDeals, router]
     ),
     onOpenNewDeal: handleOpenNewDeal,
     searchInputRef,
