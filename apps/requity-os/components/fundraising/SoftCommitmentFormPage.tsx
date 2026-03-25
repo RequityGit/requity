@@ -5,6 +5,7 @@ import { FormEngine } from "@/components/forms/FormEngine";
 import { Loader2, MapPin, Building2, FileDown } from "lucide-react";
 import Image from "next/image";
 import { formatCurrency } from "@/lib/format";
+import { getAssetClassLabel } from "@/lib/constants/asset-classes";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -81,9 +82,7 @@ export function SoftCommitmentFormPage({ slug }: { slug: string }) {
       : property?.property_state ?? null;
 
   const propertyType = property?.property_type
-    ? property.property_type
-        .replace(/_/g, " ")
-        .replace(/\b\w/g, (c) => c.toUpperCase())
+    ? getAssetClassLabel(property.property_type)
     : null;
 
   const metrics: { label: string; value: string }[] = [];
