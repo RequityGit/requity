@@ -56,8 +56,8 @@ export function BorrowerMemberTable({
   return (
     <div className="rounded-xl border bg-card">
       {/* Header */}
-      <div className="flex items-center justify-between px-4 py-3 border-b">
-        <h4 className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+      <div className="flex items-center justify-between px-5 py-3.5 border-b">
+        <h4 className="rq-micro-label">
           Borrowers / Signers
           {members.length > 0 && (
             <span className="ml-1.5 text-muted-foreground/60 num font-mono tabular-nums">
@@ -122,12 +122,12 @@ export function BorrowerMemberTable({
 
       {/* Compact rollup footer */}
       {members.length > 0 && (
-        <div className="border-t px-4 py-2.5 flex flex-wrap items-center gap-x-6 gap-y-1 text-xs">
+        <div className="border-t px-5 py-2.5 flex flex-wrap items-center gap-x-6 gap-y-1 text-xs">
           {/* Ownership total */}
           <span
             className={cn(
               "num font-mono tabular-nums font-medium",
-              stats.is100 ? "text-green-600 dark:text-green-400" : "text-amber-600 dark:text-amber-400"
+              stats.is100 ? "rq-value-positive" : "rq-value-warn"
             )}
           >
             Ownership: {stats.totalOwnership.toFixed(1)}%{stats.is100 ? " \u2713" : ""}
