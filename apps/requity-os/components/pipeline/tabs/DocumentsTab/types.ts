@@ -38,6 +38,7 @@ export interface DocumentsTabProps {
   dealId: string;
   dealName?: string;
   googleDriveFolderUrl?: string | null;
+  googleDriveFolderId?: string | null;
   currentUserId?: string;
   currentUserName?: string;
   /** Deal data for document generation (amount, uw_data, property_data) */

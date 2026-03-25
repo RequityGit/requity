@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import { createClient } from "@/lib/supabase/client";
+import { syncFolderDocuments } from "@/app/(authenticated)/(admin)/pipeline/[id]/actions";
 import type { DealDocument, DealCondition } from "./types";
 
 interface DocumentsTabData {
@@ -12,7 +13,10 @@ interface DocumentsTabData {
   refetch: () => void;
 }
 
-export function useDocumentsTabData(dealId: string): DocumentsTabData {
+export function useDocumentsTabData(
+  dealId: string,
+  googleDriveFolderId?: string | null
+): DocumentsTabData {
   const [documents, setDocuments] = useState<DealDocument[]>([]);
   const [conditions, setConditions] = useState<DealCondition[]>([]);
   const [loading, setLoading] = useState(true);
@@ -90,6 +94,30 @@ export function useDocumentsTabData(dealId: string): DocumentsTabData {
       mountedRef.current = false;
     };
   }, [fetchData]);
+
+  // Auto-sync: when folder is linked, trigger background Drive ↔ Portal sync
+  const syncTriggeredRef = useRef(false);
+  useEffect(() => {
+    if (!googleDriveFolderId || syncTriggeredRef.current) return;
+    const THROTTLE_MS = 5 * 60 * 1000; // 5 minutes
+    const cacheKey = `doc-sync-${dealId}`;
+    try {
+      const lastSync = sessionStorage.getItem(cacheKey);
+      if (lastSync && Date.now() - Number(lastSync) < THROTTLE_MS) return;
+    } catch {
+      // sessionStorage may be unavailable
+    }
+
+    syncTriggeredRef.current = true;
+    syncFolderDocuments(dealId)
+      .then((result) => {
+        try { sessionStorage.setItem(cacheKey, String(Date.now())); } catch {}
+        if (result.imported && result.imported > 0) {
+          fetchData(true); // silent refetch to show imported docs
+        }
+      })
+      .catch(() => {}); // non-blocking
+  }, [dealId, googleDriveFolderId, fetchData]);
 
   return { documents, conditions, loading, error, refetch: () => fetchData(true) };
 }

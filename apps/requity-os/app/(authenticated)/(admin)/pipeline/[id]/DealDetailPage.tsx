@@ -1908,7 +1908,8 @@ function DocumentsTabWithData({
   currentUserId: string;
   currentUserName: string;
 }) {
-  const { documents, conditions, loading } = useDocumentsTabData(deal.id);
+  const googleDriveFolderId = (deal as unknown as Record<string, unknown>).google_drive_folder_id as string | null;
+  const { documents, conditions, loading } = useDocumentsTabData(deal.id, googleDriveFolderId);
 
   if (loading) {
     return (
@@ -1925,6 +1926,7 @@ function DocumentsTabWithData({
       dealId={deal.id}
       dealName={(deal as { name?: string }).name ?? undefined}
       googleDriveFolderUrl={(deal as unknown as Record<string, unknown>).google_drive_folder_url as string | null}
+      googleDriveFolderId={googleDriveFolderId}
       currentUserId={currentUserId}
       currentUserName={currentUserName}
       dealDocData={{

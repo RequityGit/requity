@@ -1151,6 +1151,59 @@ export async function deleteUnifiedDealSuperAdmin(
   }
 }
 
+// ─── Sync Folder Documents (Drive ↔ Portal) ───
+
+export async function syncFolderDocuments(
+  dealId: string
+): Promise<{ success?: boolean; imported?: number; error?: string }> {
+  try {
+    const auth = await requireAdmin();
+    if ("error" in auth) return { error: auth.error ?? "Unauthorized" };
+
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+    if (!supabaseUrl || !serviceRoleKey) {
+      return { error: "Server configuration missing" };
+    }
+
+    const res = await fetch(
+      `${supabaseUrl}/functions/v1/create-deal-drive-folder`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${serviceRoleKey}`,
+        },
+        body: JSON.stringify({ deal_id: dealId, backfill: true }),
+      }
+    );
+
+    if (!res.ok) {
+      let detail = `HTTP ${res.status}`;
+      try {
+        const body = await res.json();
+        detail = body.error ?? JSON.stringify(body);
+      } catch {
+        detail = await res.text().catch(() => detail);
+      }
+      return { error: detail };
+    }
+
+    const body = await res.json();
+    const imported = (body.documents_imported as number) ?? 0;
+
+    if (imported > 0) {
+      await revalidateDeal(dealId);
+    }
+
+    return { success: true, imported };
+  } catch (err: unknown) {
+    return {
+      error: err instanceof Error ? err.message : "An unexpected error occurred",
+    };
+  }
+}
+
 // ─── Create Google Drive Folder ───
 
 export async function createDealDriveFolder(
