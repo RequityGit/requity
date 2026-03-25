@@ -81,7 +81,7 @@ import {
 } from "@/components/inline-layout-editor";
 import { useDealLayout } from "@/hooks/useDealLayout";
 import { Pencil, ChevronLeft, ChevronRight } from "lucide-react";
-import { reorderTabs } from "@/app/(authenticated)/control-center/object-manager/actions";
+import { reorderTabs } from "@/lib/actions/layout-actions";
 
 import {
   type UnifiedDeal,
@@ -386,11 +386,6 @@ function DealDetailPageInner({
           assetClass={assetClass}
           loanAmount={loanAmount}
           expectedClose={expectedClose as string | null | undefined}
-          onEditLayout={() => {
-            inlineLayout.setActiveTabKey(activeTab.toLowerCase());
-            inlineLayout.startEditing(layout.sections, layout.fields);
-          }}
-          isEditingLayout={inlineLayout.state.isEditing}
         />
 
         {/* Tab Bar */}
@@ -692,8 +687,6 @@ function DealHeader({
   assetClass,
   loanAmount,
   expectedClose,
-  onEditLayout,
-  isEditingLayout,
 }: {
   deal: UnifiedDeal;
   shortLabel: string;
@@ -713,8 +706,6 @@ function DealHeader({
   assetClass: string | null;
   loanAmount: number | null;
   expectedClose: string | null | undefined;
-  onEditLayout: () => void;
-  isEditingLayout: boolean;
 }) {
   const router = useRouter();
 
@@ -1650,14 +1641,6 @@ function DealHeader({
                   >
                     <Trash2 className="h-4 w-4 mr-2" />
                     Delete
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem
-                    disabled={isEditingLayout}
-                    onClick={onEditLayout}
-                  >
-                    <Pencil className="h-4 w-4 mr-2" />
-                    Edit Layout
                   </DropdownMenuItem>
                 </>
               )}

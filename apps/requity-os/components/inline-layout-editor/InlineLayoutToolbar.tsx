@@ -22,7 +22,7 @@ import {
   removeLayoutField,
   updateLayoutFieldSpan,
   addSection,
-} from "@/app/(authenticated)/control-center/object-manager/actions";
+} from "@/lib/actions/layout-actions";
 import type { DealLayoutTab } from "@/hooks/useDealLayout";
 
 interface InlineLayoutToolbarProps {

@@ -27,7 +27,7 @@ import { showSuccess, showError } from "@/lib/toast";
 import {
   updateSection,
   deleteSection,
-} from "@/app/(authenticated)/control-center/object-manager/actions";
+} from "@/lib/actions/layout-actions";
 
 const SECTION_ICONS = [
   { key: "LayoutGrid", icon: LayoutGrid, label: "Grid" },

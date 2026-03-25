@@ -38,7 +38,7 @@ import {
   updateFieldConfig,
   archiveField,
   deleteFieldPermanently,
-} from "@/app/(authenticated)/control-center/object-manager/actions";
+} from "@/lib/actions/layout-actions";
 import { createClient } from "@/lib/supabase/client";
 
 // ---------------------------------------------------------------------------
