@@ -1,9 +1,10 @@
 import { redirect } from "next/navigation";
 
-export default function OperationsApprovalDetailRedirect({
+export default async function OperationsApprovalDetailRedirect({
   params,
 }: {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }) {
-  redirect(`/tasks/approvals/${params.id}`);
+  const { id } = await params;
+  redirect(`/tasks/approvals/${id}`);
 }

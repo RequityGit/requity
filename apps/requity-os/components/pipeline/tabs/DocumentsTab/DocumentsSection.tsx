@@ -18,6 +18,7 @@ import {
   Archive,
   Link2,
   Users,
+  RefreshCw,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
@@ -30,6 +31,7 @@ import {
   triggerDocumentAnalysis,
   getDocumentSignedUrl,
   updateDocumentVisibility,
+  syncFolderDocuments,
 } from "@/app/(authenticated)/(admin)/pipeline/[id]/actions";
 import { ReviewStatusBadge } from "@/components/pipeline/ReviewStatusBadge";
 import { useDocumentReviewStatus } from "@/hooks/useDocumentReviewStatus";
@@ -79,6 +81,7 @@ export function DocumentsSection({
   dealId,
   dealName,
   googleDriveFolderUrl,
+  googleDriveFolderId,
   onPreviewDoc,
   onUploadComplete,
   currentUserId,
@@ -89,6 +92,7 @@ export function DocumentsSection({
   dealId: string;
   dealName?: string;
   googleDriveFolderUrl?: string | null;
+  googleDriveFolderId?: string | null;
   onPreviewDoc: (doc: DealDocument) => void;
   onUploadComplete?: () => void;
   currentUserId?: string;
@@ -105,6 +109,7 @@ export function DocumentsSection({
   const [isDragging, setIsDragging] = useState(false);
   const dragCounter = useRef(0);
   const [groupBy, setGroupBy] = useState<"category" | "person">("category");
+  const [syncing, setSyncing] = useState(false);
   const [expandedCategories, setExpandedCategories] = useState<Set<string>>(
     () => new Set()
   );
@@ -425,6 +430,39 @@ export function DocumentsSection({
             <ExternalLink className="h-3 w-3" strokeWidth={1.5} />
             Drive
           </a>
+        )}
+
+        {googleDriveFolderId && (
+          <button
+            type="button"
+            disabled={syncing}
+            onClick={async () => {
+              setSyncing(true);
+              try {
+                const result = await syncFolderDocuments(dealId);
+                if (result.error) {
+                  showError("Could not sync from Drive", result.error);
+                } else if (result.imported && result.imported > 0) {
+                  showSuccess(`${result.imported} document${result.imported > 1 ? "s" : ""} imported from Drive`);
+                  onUploadComplete?.();
+                } else {
+                  showSuccess("Documents are up to date");
+                }
+              } catch {
+                showError("Could not sync from Drive");
+              } finally {
+                setSyncing(false);
+              }
+            }}
+            className="inline-flex items-center gap-1.5 rounded-md border border-border px-2.5 py-1 text-[11px] font-medium text-muted-foreground transition-colors hover:bg-muted/50 hover:text-foreground cursor-pointer"
+          >
+            {syncing ? (
+              <Loader2 className="h-3 w-3 animate-spin" />
+            ) : (
+              <RefreshCw className="h-3 w-3" strokeWidth={1.5} />
+            )}
+            Sync
+          </button>
         )}
 
         <SecureUploadLinkDialog

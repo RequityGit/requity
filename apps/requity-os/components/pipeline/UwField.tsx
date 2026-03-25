@@ -173,7 +173,7 @@ export function UwField({
   onEndEdit,
 }: UwFieldProps) {
   const [showSaved, setShowSaved] = useState(false);
-  const savedTimerRef = useRef<ReturnType<typeof setTimeout>>();
+  const savedTimerRef = useRef<ReturnType<typeof setTimeout>>(undefined);
 
   const flashSaved = useCallback(() => {
     setShowSaved(true);

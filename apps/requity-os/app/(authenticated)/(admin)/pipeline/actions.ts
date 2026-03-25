@@ -1116,6 +1116,23 @@ export async function updateConditionAssignedToAction(
 
 // ─── Resolve Intake Queue Item ───
 
+// ─── Intake Attachment Preview ───
+
+export async function getIntakeAttachmentUrl(storagePath: string) {
+  const auth = await requireAdmin();
+  if ("error" in auth) return { error: auth.error };
+
+  const admin = createAdminClient();
+  const { data, error } = await admin.storage
+    .from("loan-documents")
+    .createSignedUrl(storagePath, 3600); // 1 hour expiry
+
+  if (error || !data) {
+    return { error: "Could not generate preview URL" };
+  }
+  return { url: data.signedUrl };
+}
+
 export async function resolveIntakeItemAction(data: {
   intakeQueueId: string;
   action: "create_deal" | "attach" | "dismiss";
@@ -2020,7 +2037,7 @@ export async function processIntakeItemAction(
       body_preview?: string;
       extraction_summary?: string;
       extracted_deal_fields?: Record<string, { value: unknown; confidence: number }>;
-      attachments?: Array<{ filename: string; storage_path: string; mime_type: string; size_bytes: number }>;
+      attachments?: Array<{ filename: string; storage_path?: string; mime_type: string; size_bytes: number }>;
     }
     let emailData: EmailQueueData | null = null;
     if (emailQueueId) {

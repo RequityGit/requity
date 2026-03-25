@@ -1,6 +1,5 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
 import {
   Table,
   TableBody,
@@ -9,21 +8,13 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
-import { useCallback, useMemo, useState } from "react";
-import { UserPlus, Shield, Loader2, TrendingUp, DollarSign, CreditCard } from "lucide-react";
+import { useCallback, useMemo } from "react";
+import { Shield, TrendingUp, DollarSign, CreditCard } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { showSuccess, showError } from "@/lib/toast";
 import { formatCurrency } from "@/lib/format";
 import type { DealBorrowingEntity, DealBorrowerMember } from "@/app/types/borrower";
 import { BorrowerMemberRow } from "./BorrowerMemberRow";
 import { AddBorrowerDialog } from "./AddBorrowerDialog";
-import { addDirectBorrowerMemberAction } from "@/app/(authenticated)/(admin)/pipeline/[id]/borrower-actions";
 
 interface BorrowerMemberTableProps {
   dealId: string;
@@ -41,8 +32,6 @@ export function BorrowerMemberTable({
   setMembers,
   onStructuralChange,
 }: BorrowerMemberTableProps) {
-  const [addingQuick, setAddingQuick] = useState(false);
-
   const onOptimisticUpdate = useCallback(
     (memberId: string, updates: Partial<DealBorrowerMember>) => {
       setMembers((prev) =>
@@ -64,23 +53,6 @@ export function BorrowerMemberTable({
     return { totalOwnership, combinedLiquidity, combinedNetWorth, lowestFico, is100 };
   }, [members]);
 
-  /** Quick-add a blank borrower row (auto-creates entity if needed) */
-  const handleQuickAdd = useCallback(async () => {
-    if (atMax) return;
-    setAddingQuick(true);
-    try {
-      const result = await addDirectBorrowerMemberAction(dealId, entity?.id ?? null, {});
-      if (result.error) {
-        showError(result.error);
-      } else {
-        showSuccess("Borrower added");
-        onStructuralChange();
-      }
-    } finally {
-      setAddingQuick(false);
-    }
-  }, [dealId, entity?.id, atMax, onStructuralChange]);
-
   return (
     <div className="rounded-xl border bg-card">
       {/* Header */}
@@ -93,43 +65,13 @@ export function BorrowerMemberTable({
             </span>
           )}
         </h4>
-        <div className="flex items-center gap-1.5">
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <span>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="gap-1.5"
-                    disabled={atMax || addingQuick}
-                    onClick={handleQuickAdd}
-                  >
-                    {addingQuick ? (
-                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                    ) : (
-                      <UserPlus className="h-3.5 w-3.5" />
-                    )}
-                    Add Borrower
-                  </Button>
-                </span>
-              </TooltipTrigger>
-              <TooltipContent>
-                {atMax ? "Maximum of 5 borrowers per deal" : "Add a new borrower"}
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-          {entity && (
-            <AddBorrowerDialog
-              dealId={dealId}
-              borrowingEntityId={entity.id}
-              existingContactIds={members.filter((m) => m.contact_id).map((m) => m.contact_id as string)}
-              onAdded={onStructuralChange}
-              disabled={atMax}
-              variant="link"
-            />
-          )}
-        </div>
+        <AddBorrowerDialog
+          dealId={dealId}
+          borrowingEntityId={entity?.id ?? null}
+          existingContactIds={members.filter((m) => m.contact_id).map((m) => m.contact_id as string)}
+          onAdded={onStructuralChange}
+          disabled={atMax}
+        />
       </div>
 
       {/* Table */}

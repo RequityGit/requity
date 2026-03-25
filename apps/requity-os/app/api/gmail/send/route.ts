@@ -10,7 +10,7 @@ import {
 
 export async function POST(request: NextRequest) {
   // Authenticate the user
-  const supabase = createClient();
+  const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();

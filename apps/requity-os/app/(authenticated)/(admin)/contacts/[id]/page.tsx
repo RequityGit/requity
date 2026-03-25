@@ -17,7 +17,7 @@ import type {
 import type { Profile } from "@/lib/tasks";
 
 interface PageProps {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }
 
 export const dynamic = "force-dynamic";

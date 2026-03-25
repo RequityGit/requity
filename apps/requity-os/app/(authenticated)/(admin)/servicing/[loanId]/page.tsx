@@ -28,7 +28,7 @@ export const dynamic = "force-dynamic";
 export default async function LoanDetailPage({
   params,
 }: {
-  params: { loanId: string };
+  params: Promise<{ loanId: string }>;
 }) {
   const supabase = await createClient();
   const {

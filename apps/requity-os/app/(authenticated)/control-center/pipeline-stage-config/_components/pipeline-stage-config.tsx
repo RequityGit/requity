@@ -45,7 +45,7 @@ const STAGE_COLORS: Record<string, string> = {
 
 // Stage display labels
 const STAGE_LABELS: Record<string, string> = {
-  lead: "Lead",
+  lead: "Intake",
   analysis: "Analysis",
   negotiation: "Negotiation",
   execution: "Execution",

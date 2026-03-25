@@ -23,13 +23,15 @@ import {
 import {
   Mail, Check, X, Plus, Merge, Forward, Paperclip,
   FileText, FileSpreadsheet, Image, File, Sparkles, ChevronDown, ChevronRight,
+  Eye, Download, AlertCircle,
 } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
 import { formatDistanceToNow } from "date-fns";
 import { createClient } from "@/lib/supabase/client";
 import { showSuccess, showError } from "@/lib/toast";
 import { formatEditNumber } from "@/lib/format";
 import { EntityMergeSection } from "./EntityMergeSection";
-import { processIntakeItemAction } from "@/app/(authenticated)/(admin)/pipeline/actions";
+import { processIntakeItemAction, getIntakeAttachmentUrl } from "@/app/(authenticated)/(admin)/pipeline/actions";
 import { ACTIVE_ASSET_CLASS_OPTIONS, type AssetClass } from "./pipeline-types";
 import {
   type IntakeItem,
@@ -833,8 +835,130 @@ function formatFileSize(bytes?: number) {
   return `${bytes} B`;
 }
 
+interface AttachmentData {
+  filename: string;
+  mime_type?: string;
+  size_bytes?: number;
+  storage_path?: string;
+  extraction_status?: string;
+}
+
+function AttachmentPreviewDialog({
+  attachment,
+  open,
+  onOpenChange,
+}: {
+  attachment: AttachmentData | null;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+}) {
+  const [url, setUrl] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (!open || !attachment?.storage_path) {
+      setUrl(null);
+      return;
+    }
+    setLoading(true);
+    getIntakeAttachmentUrl(attachment.storage_path!)
+      .then((result) => {
+        if ("error" in result) {
+          showError(result.error ?? "Could not load preview");
+          setUrl(null);
+        } else {
+          setUrl(result.url);
+        }
+      })
+      .finally(() => setLoading(false));
+  }, [open, attachment?.storage_path]);
+
+  const displayName = attachment?.filename || "Document";
+  const mime = attachment?.mime_type || "";
+  const isPdf = mime.includes("pdf");
+  const isImage = mime.startsWith("image/");
+  const officeExts = /\.(docx?|xlsx?|pptx?)$/i;
+  const officeMimes = [
+    "application/msword",
+    "application/vnd.ms-excel",
+    "application/vnd.ms-powerpoint",
+    "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+  ];
+  const isOffice = officeMimes.includes(mime) || officeExts.test(displayName);
+
+  function handleDownload() {
+    if (!url) return;
+    const a = window.document.createElement("a");
+    a.href = url;
+    a.download = displayName;
+    a.target = "_blank";
+    a.rel = "noopener noreferrer";
+    a.click();
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-[95vw] w-[95vw] h-[93vh] flex flex-col">
+        <DialogHeader className="flex-none flex flex-row items-center justify-between gap-4">
+          <DialogTitle className="truncate">{displayName}</DialogTitle>
+          {url && (
+            <Button variant="outline" size="sm" onClick={handleDownload}>
+              <Download className="h-4 w-4 mr-1.5" />
+              Download
+            </Button>
+          )}
+        </DialogHeader>
+
+        <div className="flex-1 min-h-0 overflow-hidden rounded-md border bg-muted/30">
+          {loading ? (
+            <div className="flex flex-col items-center justify-center h-full gap-3">
+              <Skeleton className="h-8 w-48" />
+              <Skeleton className="h-4 w-32" />
+            </div>
+          ) : !url ? (
+            <div className="flex flex-col items-center justify-center h-full text-muted-foreground gap-2">
+              <FileText className="h-12 w-12" />
+              <p>Unable to load preview</p>
+            </div>
+          ) : isPdf ? (
+            <iframe src={url} className="w-full h-full border-0" title={displayName} />
+          ) : isImage ? (
+            <div className="flex items-center justify-center h-full p-4">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={url} alt={displayName} className="max-w-full max-h-full object-contain" />
+            </div>
+          ) : isOffice ? (
+            <iframe
+              src={`https://docs.google.com/gview?url=${encodeURIComponent(url)}&embedded=true`}
+              className="w-full h-full border-0"
+              title={displayName}
+            />
+          ) : (
+            <div className="flex flex-col items-center justify-center h-full gap-4 text-center p-8">
+              <FileText className="h-16 w-16 text-muted-foreground" />
+              <div>
+                <p className="font-medium text-lg">{displayName}</p>
+                <p className="text-sm text-muted-foreground mt-1">
+                  {mime || "Unknown file type"} — preview not available for this file type
+                </p>
+              </div>
+              <Button onClick={handleDownload}>
+                <Download className="h-4 w-4 mr-1.5" />
+                Download File
+              </Button>
+            </div>
+          )}
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 function AttachmentList({ queueId }: { queueId: string }) {
-  const [attachments, setAttachments] = useState<Array<{ filename: string; mime_type?: string; size_bytes?: number }>>([]);
+  const [attachments, setAttachments] = useState<AttachmentData[]>([]);
+  const [previewAtt, setPreviewAtt] = useState<AttachmentData | null>(null);
 
   useEffect(() => {
     const supabase = createClient();
@@ -845,10 +969,25 @@ function AttachmentList({ queueId }: { queueId: string }) {
       .single()
       .then(({ data }) => {
         if (data?.attachments && Array.isArray(data.attachments) && data.attachments.length > 0) {
-          setAttachments(data.attachments as Array<{ filename: string; mime_type?: string; size_bytes?: number }>);
+          setAttachments(data.attachments as unknown as AttachmentData[]);
         }
       });
   }, [queueId]);
+
+  async function handleDownload(att: AttachmentData) {
+    if (!att.storage_path) return;
+    const result = await getIntakeAttachmentUrl(att.storage_path!);
+    if ("error" in result) {
+      showError(result.error ?? "Could not download file");
+      return;
+    }
+    const a = window.document.createElement("a");
+    a.href = result.url;
+    a.download = att.filename;
+    a.target = "_blank";
+    a.rel = "noopener noreferrer";
+    a.click();
+  }
 
   if (attachments.length === 0) {
     return (
@@ -871,22 +1010,64 @@ function AttachmentList({ queueId }: { queueId: string }) {
         </Badge>
       </div>
       <div className="space-y-1.5">
-        {attachments.map((att, i) => (
-          <div
-            key={i}
-            className="flex items-center gap-3 rounded-lg border border-border/50 bg-muted/10 px-3 py-2"
-          >
-            {getFileIcon(att.filename)}
-            <div className="flex-1 min-w-0">
-              <div className="text-[11px] text-foreground font-medium break-words">{att.filename}</div>
-              <div className="text-[9px] text-muted-foreground/60 mt-0.5">
-                {att.mime_type?.split("/").pop()?.toUpperCase() || "FILE"}
-                {att.size_bytes ? ` \u00B7 ${formatFileSize(att.size_bytes)}` : ""}
+        {attachments.map((att, i) => {
+          const hasFile = !!att.storage_path;
+          const failed = att.extraction_status?.startsWith("upload_failed") ||
+            att.extraction_status === "download_failed";
+
+          return (
+            <div
+              key={i}
+              className={`group flex items-center gap-3 rounded-lg border border-border/50 px-3 py-2 ${
+                hasFile
+                  ? "bg-muted/10 cursor-pointer hover:bg-muted/30 rq-transition"
+                  : "bg-muted/5 opacity-60"
+              }`}
+              onClick={hasFile ? () => setPreviewAtt(att) : undefined}
+            >
+              {failed ? (
+                <AlertCircle className="h-4 w-4 shrink-0 text-amber-400" />
+              ) : (
+                getFileIcon(att.filename)
+              )}
+              <div className="flex-1 min-w-0">
+                <div className="text-[11px] text-foreground font-medium break-words">{att.filename}</div>
+                <div className="text-[9px] text-muted-foreground/60 mt-0.5">
+                  {att.mime_type?.split("/").pop()?.toUpperCase() || "FILE"}
+                  {att.size_bytes ? ` \u00B7 ${formatFileSize(att.size_bytes)}` : ""}
+                  {failed ? " \u00B7 Upload failed" : ""}
+                </div>
               </div>
+              {hasFile && (
+                <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 rq-transition">
+                  <button
+                    type="button"
+                    className="p-1 rounded hover:bg-muted"
+                    onClick={(e) => { e.stopPropagation(); setPreviewAtt(att); }}
+                    title="Preview"
+                  >
+                    <Eye className="h-3.5 w-3.5 text-muted-foreground" />
+                  </button>
+                  <button
+                    type="button"
+                    className="p-1 rounded hover:bg-muted"
+                    onClick={(e) => { e.stopPropagation(); handleDownload(att); }}
+                    title="Download"
+                  >
+                    <Download className="h-3.5 w-3.5 text-muted-foreground" />
+                  </button>
+                </div>
+              )}
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
+
+      <AttachmentPreviewDialog
+        attachment={previewAtt}
+        open={!!previewAtt}
+        onOpenChange={(open) => { if (!open) setPreviewAtt(null); }}
+      />
     </div>
   );
 }

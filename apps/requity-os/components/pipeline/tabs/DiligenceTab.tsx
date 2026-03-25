@@ -144,7 +144,7 @@ const DEAL_TO_CONDITION_CEILING: Record<string, string> = {
 
 /** Get condition stage label */
 const CONDITION_STAGE_LABELS: Record<string, string> = {
-  lead: "Lead",
+  lead: "Intake",
   analysis: "Analysis",
   negotiation: "Negotiation",
   execution: "Execution",
@@ -236,7 +236,7 @@ const CATEGORY_LABELS: Record<string, string> = {
 
 const STAGE_FILTERS = [
   { key: "all", label: "All" },
-  { key: "lead", label: "Lead" },
+  { key: "lead", label: "Intake" },
   { key: "analysis", label: "Analysis" },
   { key: "negotiation", label: "Negotiation" },
   { key: "execution", label: "Execution" },
