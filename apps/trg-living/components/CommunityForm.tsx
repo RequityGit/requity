@@ -307,11 +307,12 @@ export default function CommunityForm({
                         />
                         <div className="grid grid-cols-3 gap-2">
                             {formData.pm_gallery?.map((item: any) => (
-                                <div key={item.id} className="aspect-square rounded-lg overflow-hidden border border-slate-800">
-                                    <img
+                                <div key={item.id} className="relative aspect-square rounded-lg overflow-hidden border border-slate-800">
+                                    <Image
                                         src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/trg-living-media/${item.media?.file_path}`}
-                                        className="w-full h-full object-cover grayscale opacity-50"
                                         alt=""
+                                        fill
+                                        className="object-cover grayscale opacity-50"
                                     />
                                 </div>
                             ))}

@@ -10,14 +10,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     const supabase = createClient();
 
     const handleSignOut = async () => {
-        const { error } = await supabase.auth.signOut();
-        if (error) {
-            console.error('Error signing out:', error.message);
-        } else {
-            // Force a refresh to ensure middleware clears the session
-            router.push('/login');
-            router.refresh();
-        }
+        await supabase.auth.signOut();
+        window.location.href = '/login';
     };
     
     const navItems = [
@@ -26,6 +20,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         { label: 'Communities', href: '/admin/communities' },
         { label: 'Blog Posts', href: '/admin/posts' },
         { label: 'Media Library', href: '/admin/media' },
+        { label: 'Leads', href: '/admin/leads' },
     ];
 
     return (
@@ -58,11 +53,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                 <div className="p-6 border-t border-slate-200 space-y-4">
                     <Link 
                         href="/" 
-                        className="text-[10px] font-black text-slate-400 hover:text-slate-900 transition-colors uppercase tracking-widest block text-center"
-                    >
+                        className="text-[10px] font-black text-slate-400 hover:text-slate-900 transition-colors uppercase tracking-widest block text-center">
                         View Website →
-                    </Link>
-                    
+                    </Link>                    
                     <button 
                         onClick={handleSignOut}
                         className="w-full bg-slate-100 hover:bg-red-50 text-slate-500 hover:text-red-600 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all border border-transparent hover:border-red-100"
