@@ -5,8 +5,9 @@ import { useRouter } from "next/navigation";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { storeDealOrder } from "@/hooks/useDealNavigation";
 import { cn } from "@/lib/utils";
-import { DealFilters, type FilterState } from "./DealFilters";
+import { DealFilters, type FilterState, type ClosingDateFilter } from "./DealFilters";
 import { filterByDateAdded } from "@/components/ui/date-added-filter";
+import { isUrgentDeal } from "./DealCard";
 import { PipelineKanban } from "./PipelineKanban";
 import { PipelineTable } from "./PipelineTable";
 import { MobileDealList } from "./MobileDealList";
@@ -14,6 +15,9 @@ import { NewDealDialog } from "./NewDealDialog";
 import { IntakeReviewModal } from "./IntakeReviewModal";
 import { STAGES, type UnifiedDeal } from "./pipeline-types";
 import { getDealFlavor } from "@/lib/pipeline/deal-display-config";
+import { toggleDealPriorityAction } from "@/app/(authenticated)/(admin)/pipeline/actions";
+import { showError } from "@/lib/toast";
+import { usePipelineStore } from "@/stores/pipeline-store";
 import {
   useAllDeals,
   useStageConfigs,
@@ -26,6 +30,40 @@ import {
 import { useDealPreview } from "./deal-preview/DealPreviewProvider";
 import { usePipelineKeyboardNav } from "@/hooks/usePipelineKeyboardNav";
 import type { IntakeItem } from "@/lib/intake/types";
+
+function filterByClosingDate(dateStr: string | null, filter: ClosingDateFilter): boolean {
+  if (filter === "all") return true;
+  if (filter === "no_date") return !dateStr;
+  if (!dateStr) return false;
+
+  const [y, m, d] = dateStr.split("-").map(Number);
+  const close = new Date(y!, m! - 1, d!);
+  const now = new Date();
+  now.setHours(0, 0, 0, 0);
+  const diffDays = Math.floor((close.getTime() - now.getTime()) / 86400000);
+
+  switch (filter) {
+    case "overdue":
+      return diffDays < 0;
+    case "this_week":
+      return diffDays >= 0 && diffDays <= 7;
+    case "next_2_weeks":
+      return diffDays >= 0 && diffDays <= 14;
+    case "this_month":
+      return diffDays >= 0 && diffDays <= 30;
+    default:
+      return true;
+  }
+}
+
+/** Sort deals: priority first, then urgent, then by amount descending */
+function sortDeals(a: UnifiedDeal, b: UnifiedDeal): number {
+  if (a.is_priority !== b.is_priority) return a.is_priority ? -1 : 1;
+  const aUrgent = isUrgentDeal(a);
+  const bUrgent = isUrgentDeal(b);
+  if (aUrgent !== bUrgent) return aUrgent ? -1 : 1;
+  return (b.amount ?? -Infinity) - (a.amount ?? -Infinity);
+}
 
 export function PipelineView() {
   const router = useRouter();
@@ -46,6 +84,7 @@ export function PipelineView() {
     dealFlavor: "all",
     assetClass: "all",
     dateAdded: "all",
+    closingDate: "all",
     view: "kanban",
   });
 
@@ -72,6 +111,9 @@ export function PipelineView() {
       if (filters.dateAdded !== "all" && !filterByDateAdded(d.created_at, filters.dateAdded))
         return false;
 
+      if (filters.closingDate !== "all" && !filterByClosingDate(d.expected_close_date, filters.closingDate))
+        return false;
+
       if (filters.search) {
         const q = filters.search.toLowerCase();
         const match =
@@ -86,13 +128,13 @@ export function PipelineView() {
     });
   }, [deals, filters]);
 
-  // Build ordered deal IDs (stages left-to-right, by amount within stage)
+  // Build ordered deal IDs (stages left-to-right, priority + urgent + amount within stage)
   const orderedDealIds = useMemo(() => {
     const ids: string[] = [];
     for (const stage of STAGES) {
       const stageDeals = filteredDeals
         .filter((d) => d.stage === stage.key)
-        .sort((a, b) => (b.amount ?? -Infinity) - (a.amount ?? -Infinity));
+        .sort(sortDeals);
       for (const d of stageDeals) ids.push(d.id);
     }
     return ids;
@@ -140,6 +182,23 @@ export function PipelineView() {
     searchInputRef,
   });
 
+  const updateDeal = usePipelineStore((s) => s.updateDeal);
+
+  const handleTogglePriority = useCallback(
+    async (dealId: string, isPriority: boolean) => {
+      // Optimistic update
+      updateDeal(dealId, { is_priority: isPriority });
+
+      const result = await toggleDealPriorityAction(dealId, isPriority);
+      if (result.error) {
+        // Revert on error
+        updateDeal(dealId, { is_priority: !isPriority });
+        showError("Could not toggle priority", result.error);
+      }
+    },
+    [updateDeal]
+  );
+
   const handleIntakeClick = useCallback((item: IntakeItem) => {
     setReviewItem(item);
   }, []);
@@ -166,6 +225,7 @@ export function PipelineView() {
           relationshipDealIds={relationshipDealIds}
           onDealClick={handleDealClick}
           onDealHover={handleDealHover}
+          onTogglePriority={handleTogglePriority}
           intakeItems={intakeItems}
           onIntakeClick={handleIntakeClick}
           teamMembers={teamMembers}
