@@ -88,7 +88,7 @@ export async function fetchBorrowerMembers(dealId: string) {
 }
 
 export async function addBorrowerMemberAction(
-  borrowingEntityId: string,
+  borrowingEntityId: string | null,
   dealId: string,
   contactId: string,
   role?: string
@@ -97,8 +97,25 @@ export async function addBorrowerMemberAction(
     const auth = await requireAdmin();
     if ("error" in auth) return { error: auth.error ?? "Unauthorized", data: null };
     const admin = createAdminClient();
+
+    // Auto-create borrowing entity if none exists
+    let resolvedEntityId = borrowingEntityId;
+    if (!resolvedEntityId) {
+      const existing = await getBorrowingEntityByDealId(admin, dealId);
+      if (existing) {
+        resolvedEntityId = existing.id;
+      } else {
+        const newEntity = await upsertBorrowingEntity(admin, {
+          deal_id: dealId,
+          entity_name: "TBD",
+          entity_type: "LLC",
+        });
+        resolvedEntityId = newEntity.id;
+      }
+    }
+
     const data = await addBorrowerMember(admin, {
-      borrowing_entity_id: borrowingEntityId,
+      borrowing_entity_id: resolvedEntityId,
       deal_id: dealId,
       contact_id: contactId,
       role,

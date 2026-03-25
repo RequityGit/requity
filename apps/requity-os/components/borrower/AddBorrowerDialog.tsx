@@ -9,11 +9,17 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Link2, Loader2 } from "lucide-react";
+import { UserPlus, Loader2 } from "lucide-react";
 import { showSuccess, showError } from "@/lib/toast";
 import { RelationshipPicker } from "@/components/shared/RelationshipPicker";
 import { addBorrowerMemberAction } from "@/app/(authenticated)/(admin)/pipeline/[id]/borrower-actions";
 import type { ContactSearchResult } from "@/lib/actions/relationship-actions";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 interface AddBorrowerDialogProps {
   dealId: string;
@@ -21,8 +27,6 @@ interface AddBorrowerDialogProps {
   existingContactIds: string[];
   onAdded: () => void;
   disabled?: boolean;
-  /** "link" shows a small link icon button; default shows full button */
-  variant?: "default" | "link";
 }
 
 export function AddBorrowerDialog({
@@ -31,14 +35,12 @@ export function AddBorrowerDialog({
   existingContactIds,
   onAdded,
   disabled,
-  variant = "default",
 }: AddBorrowerDialogProps) {
   const [open, setOpen] = useState(false);
   const [adding, setAdding] = useState(false);
 
   const handleSelect = useCallback(
     async (entity: ContactSearchResult) => {
-      if (!borrowingEntityId) return;
       setAdding(true);
       try {
         const result = await addBorrowerMemberAction(
@@ -50,7 +52,7 @@ export function AddBorrowerDialog({
           showError(result.error);
         } else {
           const name = [entity.first_name, entity.last_name].filter(Boolean).join(" ") || "Contact";
-          showSuccess(`Linked ${name}`);
+          showSuccess(`${name} added as borrower`);
           setOpen(false);
           onAdded();
         }
@@ -63,36 +65,33 @@ export function AddBorrowerDialog({
 
   return (
     <>
-      {variant === "link" ? (
-        <Button
-          variant="ghost"
-          size="sm"
-          className="gap-1 text-xs text-muted-foreground"
-          disabled={disabled}
-          onClick={() => setOpen(true)}
-          title="Link existing CRM contact as borrower"
-        >
-          <Link2 className="h-3.5 w-3.5" />
-          Link Contact
-        </Button>
-      ) : (
-        <Button
-          variant="outline"
-          size="sm"
-          className="gap-1.5"
-          disabled={disabled}
-          onClick={() => setOpen(true)}
-        >
-          <Link2 className="h-3.5 w-3.5" />
-          Link Contact
-        </Button>
-      )}
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <span>
+              <Button
+                variant="outline"
+                size="sm"
+                className="gap-1.5"
+                disabled={disabled}
+                onClick={() => setOpen(true)}
+              >
+                <UserPlus className="h-3.5 w-3.5" />
+                Add Borrower
+              </Button>
+            </span>
+          </TooltipTrigger>
+          <TooltipContent>
+            {disabled ? "Maximum of 5 borrowers per deal" : "Search or create a contact to add as borrower"}
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Link CRM Contact</DialogTitle>
+            <DialogTitle>Add Borrower</DialogTitle>
             <DialogDescription>
-              Search for an existing contact to link as a borrower on this deal.
+              Search for an existing contact or create a new one to add as a borrower.
             </DialogDescription>
           </DialogHeader>
           <div className="py-2">

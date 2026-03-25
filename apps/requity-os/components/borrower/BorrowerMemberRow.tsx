@@ -72,29 +72,6 @@ export function BorrowerMemberRow({
     [member, dealId, onOptimisticUpdate]
   );
 
-  /** Save name (splits into first/last) */
-  const saveName = useCallback(
-    (v: string) => {
-      const parts = v.trim().split(/\s+/);
-      const first = parts[0] || null;
-      const last = parts.length > 1 ? parts.slice(1).join(" ") : null;
-      onOptimisticUpdate(member.id, { first_name: first, last_name: last });
-      updateBorrowerMemberAction(member.id, dealId, {
-        first_name: first,
-        last_name: last,
-      } as Partial<DealBorrowerMember>).then((result) => {
-        if (result.error) {
-          onOptimisticUpdate(member.id, {
-            first_name: member.first_name,
-            last_name: member.last_name,
-          });
-          showError(result.error);
-        }
-      });
-    },
-    [member, dealId, onOptimisticUpdate]
-  );
-
   const handleRemove = useCallback(async () => {
     setRemoving(true);
     try {
@@ -127,7 +104,6 @@ export function BorrowerMemberRow({
             borrowingEntityId={borrowingEntityId}
             existingContactIds={existingContactIds}
             onLinked={onLinked}
-            onSaveName={saveName}
           />
           {hasContact && (
             <Link
