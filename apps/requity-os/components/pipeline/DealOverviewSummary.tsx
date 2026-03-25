@@ -561,6 +561,12 @@ export function DealOverviewSummary({ dealId, deal }: DealOverviewSummaryProps) 
                   onSave={(v) => saveField("prepayment_penalty_pct", v)}
                 />
                 <InlineField
+                  label="Min. interest earned (months)"
+                  type="number"
+                  value={uwNum("minimum_interest_months")}
+                  onSave={(v) => saveField("minimum_interest_months", v)}
+                />
+                <InlineField
                   label="Funding channel"
                   type="select"
                   value={FUNDING_CHANNEL_KEY_TO_LABEL[uwStr("funding_channel") ?? ""] ?? uwStr("funding_channel") ?? ""}
