@@ -542,6 +542,22 @@ export function DealOverviewSummary({ dealId, deal }: DealOverviewSummaryProps) 
               options={ASSET_CLASS_DROPDOWN_LABELS}
               onSave={(v) => saveField("property_type", AC_LABEL_TO_KEY[v] ?? v)}
             />
+            <div className="min-w-0 md:col-span-2">
+              <span className="text-[11px] font-medium text-muted-foreground mb-0.5 block leading-tight">Address</span>
+              <AddressAutocomplete
+                value={addressDraft}
+                onChange={setAddressDraft}
+                onAddressSelect={handleAddressSelect}
+                placeholder="Search address..."
+                className="h-auto min-h-[32px] bg-transparent px-2 py-1 border border-transparent rounded-md transition-colors hover:border-border hover:bg-muted/40 focus:border-primary/60 focus:bg-background focus:ring-1 focus:ring-primary/20 focus:ring-offset-0 focus:outline-none text-sm"
+              />
+            </div>
+            <InlineField
+              label="Year built"
+              type="number"
+              value={uwNum("year_built")}
+              onSave={(v) => saveField("year_built", v)}
+            />
             <InlineField
               label="Units / lots"
               type="number"
@@ -554,22 +570,6 @@ export function DealOverviewSummary({ dealId, deal }: DealOverviewSummaryProps) 
               value={uwNum("total_sqft")}
               onSave={(v) => saveField("total_sqft", v)}
             />
-            <InlineField
-              label="Year built"
-              type="number"
-              value={uwNum("year_built")}
-              onSave={(v) => saveField("year_built", v)}
-            />
-            <div className="min-w-0 md:col-span-3">
-              <span className="text-[11px] font-medium text-muted-foreground mb-0.5 block leading-tight">Address</span>
-              <AddressAutocomplete
-                value={addressDraft}
-                onChange={setAddressDraft}
-                onAddressSelect={handleAddressSelect}
-                placeholder="Search address..."
-                className="h-auto min-h-[32px] bg-transparent px-2 py-1 border border-transparent rounded-md transition-colors hover:border-border hover:bg-muted/40 focus:border-primary/60 focus:bg-background focus:ring-1 focus:ring-primary/20 focus:ring-offset-0 focus:outline-none text-sm"
-              />
-            </div>
           </div>
         </OverviewCard>
       </div>
