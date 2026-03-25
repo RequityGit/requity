@@ -219,6 +219,9 @@ function PropertyDetailsContent({
           ...(localData.property_city ?? localData.city
             ? { city: String(localData.property_city ?? localData.city).trim() }
             : {}),
+          ...(localData.property_zip ?? localData.zip
+            ? { zip: String(localData.property_zip ?? localData.zip).trim() }
+            : {}),
           ...(localData.property_county ?? localData.county
             ? { county: String(localData.property_county ?? localData.county).trim() }
             : {}),
@@ -227,12 +230,25 @@ function PropertyDetailsContent({
 
       if (!response.ok) {
         const data = await response.json().catch(() => ({}));
-        const errMsg = data.error ?? "Failed to enrich property";
-        const searchedAddr = `${String(address).trim()}, ${String(state).trim()}`;
+        const searched = data.searched;
+        const cityStr = searched?.city ?? localData.property_city ?? localData.city;
+        const zipStr = searched?.zip ?? localData.property_zip ?? localData.zip;
+        const addrParts = [
+          String(address).trim(),
+          cityStr ? String(cityStr).trim() : null,
+          String(state).trim(),
+          zipStr ? String(zipStr).trim() : null,
+        ].filter(Boolean);
+        const searchedAddr = addrParts.join(", ");
 
+        // Show the actual backend error for non-404s (auth failures, config issues, etc.)
+        const backendError = data.error as string | undefined;
+        const is404 = response.status === 404;
         showError(
           "Could not enrich property",
-          `No match for "${searchedAddr}" in property database. Check that the full street address, city, and state are correct, or enter data manually.`
+          is404
+            ? `No match for "${searchedAddr}" in property database. Check that the full street address, city, and state are correct, or enter data manually.`
+            : backendError ?? `Enrichment service error (${response.status}). Try again later.`
         );
         showInfo(
           "Fields you can fill manually",

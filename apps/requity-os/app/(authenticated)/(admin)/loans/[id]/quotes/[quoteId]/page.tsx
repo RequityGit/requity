@@ -16,7 +16,7 @@ import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface PageProps {
-  params: { id: string; quoteId: string };
+  params: Promise<{ id: string; quoteId: string }>;
 }
 
 export default async function QuoteDetailPage({ params }: PageProps) {

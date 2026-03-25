@@ -12,6 +12,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { Trash2, Loader2, Link2, FolderOpen } from "lucide-react";
+import { formatPhoneNumber } from "@/lib/format";
 import { showError, showSuccess } from "@/lib/toast";
 import type { DealBorrowerMember } from "@/app/types/borrower";
 import { BORROWER_ROLES } from "./constants";
@@ -72,29 +73,6 @@ export function BorrowerMemberRow({
     [member, dealId, onOptimisticUpdate]
   );
 
-  /** Save name (splits into first/last) */
-  const saveName = useCallback(
-    (v: string) => {
-      const parts = v.trim().split(/\s+/);
-      const first = parts[0] || null;
-      const last = parts.length > 1 ? parts.slice(1).join(" ") : null;
-      onOptimisticUpdate(member.id, { first_name: first, last_name: last });
-      updateBorrowerMemberAction(member.id, dealId, {
-        first_name: first,
-        last_name: last,
-      } as Partial<DealBorrowerMember>).then((result) => {
-        if (result.error) {
-          onOptimisticUpdate(member.id, {
-            first_name: member.first_name,
-            last_name: member.last_name,
-          });
-          showError(result.error);
-        }
-      });
-    },
-    [member, dealId, onOptimisticUpdate]
-  );
-
   const handleRemove = useCallback(async () => {
     setRemoving(true);
     try {
@@ -120,60 +98,72 @@ export function BorrowerMemberRow({
     <TableRow className="group/row hover:bg-muted/30 transition-colors">
       {/* Name (contact-connected field) */}
       <TableCell className="font-medium py-1.5">
-        <div className="flex items-center gap-1.5">
-          <BorrowerContactPicker
-            member={member}
-            dealId={dealId}
-            borrowingEntityId={borrowingEntityId}
-            existingContactIds={existingContactIds}
-            onLinked={onLinked}
-            onSaveName={saveName}
-          />
-          {hasContact && (
-            <Link
-              href={`/contacts/${member.contact_id}`}
-              className="text-muted-foreground hover:text-primary shrink-0"
-              title="View linked contact"
-            >
-              <Link2 className="h-3 w-3" />
-            </Link>
-          )}
-          {hasContact && driveFolderUrl && (
-            <a
-              href={driveFolderUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-muted-foreground hover:text-primary shrink-0"
-              title="Open Drive folder"
-            >
-              <FolderOpen className="h-3 w-3" />
-            </a>
-          )}
-          {hasContact && !driveFolderUrl && (
-            <button
-              type="button"
-              className="text-muted-foreground/40 hover:text-primary shrink-0"
-              title="Create Drive folder"
-              disabled={creatingDrive}
-              onClick={async () => {
-                setCreatingDrive(true);
-                const result = await createBorrowerDriveFolder(member.contact_id!, dealId);
-                setCreatingDrive(false);
-                if (result.error) {
-                  showError("Could not create Drive folder", result.error);
-                } else {
-                  if (result.folder_url) setDriveFolderUrl(result.folder_url);
-                  showSuccess("Drive folder created");
-                }
-              }}
-            >
-              {creatingDrive ? (
-                <Loader2 className="h-3 w-3 animate-spin" />
-              ) : (
+        <div>
+          <div className="flex items-center gap-1.5">
+            <BorrowerContactPicker
+              member={member}
+              dealId={dealId}
+              borrowingEntityId={borrowingEntityId}
+              existingContactIds={existingContactIds}
+              onLinked={onLinked}
+            />
+            {hasContact && (
+              <Link
+                href={`/contacts/${member.contact_id}`}
+                className="text-muted-foreground hover:text-primary shrink-0"
+                title="View linked contact"
+              >
+                <Link2 className="h-3 w-3" />
+              </Link>
+            )}
+            {hasContact && driveFolderUrl && (
+              <a
+                href={driveFolderUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-muted-foreground hover:text-primary shrink-0"
+                title="Open Drive folder"
+              >
                 <FolderOpen className="h-3 w-3" />
-              )}
-            </button>
-          )}
+              </a>
+            )}
+            {hasContact && !driveFolderUrl && (
+              <button
+                type="button"
+                className="text-muted-foreground/40 hover:text-primary shrink-0"
+                title="Create Drive folder"
+                disabled={creatingDrive}
+                onClick={async () => {
+                  setCreatingDrive(true);
+                  const result = await createBorrowerDriveFolder(member.contact_id!, dealId);
+                  setCreatingDrive(false);
+                  if (result.error) {
+                    showError("Could not create Drive folder", result.error);
+                  } else {
+                    if (result.folder_url) setDriveFolderUrl(result.folder_url);
+                    showSuccess("Drive folder created");
+                  }
+                }}
+              >
+                {creatingDrive ? (
+                  <Loader2 className="h-3 w-3 animate-spin" />
+                ) : (
+                  <FolderOpen className="h-3 w-3" />
+                )}
+              </button>
+            )}
+          </div>
+          {(() => {
+            const email = member.contact?.email || member.email;
+            const phone = member.contact?.phone || member.phone;
+            const phoneFmt = phone ? formatPhoneNumber(phone) : "";
+            const parts = [email, phoneFmt].filter(Boolean);
+            return parts.length > 0 ? (
+              <div className="text-[11px] text-muted-foreground truncate mt-0.5 font-normal">
+                {parts.join(" \u00b7 ")}
+              </div>
+            ) : null;
+          })()}
         </div>
       </TableCell>
 

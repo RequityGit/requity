@@ -61,7 +61,7 @@ export function TaskBoard({
   const [editingTemplate, setEditingTemplate] = useState<RecurringTaskTemplate | null>(null);
 
   // Filters
-  const [assigneeFilter, setAssigneeFilter] = useState("all");
+  const [assigneeFilter, setAssigneeFilter] = useState(currentUserId);
   const [categoryFilter, setCategoryFilter] = useState("all");
   const [typeFilter, setTypeFilter] = useState<TaskTypeFilter>("all");
   const [myApprovalsFilter, setMyApprovalsFilter] = useState(false);
@@ -435,6 +435,7 @@ export function TaskBoard({
             onCategoryChange={setCategoryFilter}
             typeFilter={typeFilter}
             onTypeFilterChange={setTypeFilter}
+            currentUserId={currentUserId}
           />
         )}
       </div>

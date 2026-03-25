@@ -14,7 +14,7 @@ import type {
 } from "@/components/crm/contact-360/types";
 
 interface PageProps {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }
 
 export const dynamic = "force-dynamic";

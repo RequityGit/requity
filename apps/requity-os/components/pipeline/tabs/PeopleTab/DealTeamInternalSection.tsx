@@ -128,7 +128,7 @@ export function DealTeamInternalSection({
             return (
               <div
                 key={role}
-                className="flex items-center gap-3 px-4 py-2 border-b last:border-b-0 hover:bg-muted/50 rq-transition group/team"
+                className="flex items-center gap-3 px-4 py-1.5 border-b last:border-b-0 hover:bg-muted/50 rq-transition group/team"
               >
                 <PersonAvatar
                   initials={initials}

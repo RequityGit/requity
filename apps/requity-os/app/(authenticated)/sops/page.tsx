@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 import { SOPsLandingClient } from "./sops-landing-client";
 
 export default async function SOPsPage() {
-  const supabase = createClient();
+  const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();

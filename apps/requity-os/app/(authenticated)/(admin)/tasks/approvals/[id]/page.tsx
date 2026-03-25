@@ -6,10 +6,11 @@ import { ApprovalDetailView } from "@/components/approvals/approval-detail-view"
 export const dynamic = "force-dynamic";
 
 interface PageProps {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }
 
 export default async function ApprovalDetailPage({ params }: PageProps) {
+  const { id } = await params;
   const supabase = await createClient();
   const {
     data: { user },
@@ -23,7 +24,7 @@ export default async function ApprovalDetailPage({ params }: PageProps) {
   const { data: approval, error } = await admin
     .from("approval_requests" as any)
     .select("*")
-    .eq("id", params.id)
+    .eq("id", id)
     .single();
 
   if (error || !approval) notFound();
@@ -40,7 +41,7 @@ export default async function ApprovalDetailPage({ params }: PageProps) {
   const { data: auditLog } = await admin
     .from("approval_audit_log" as any)
     .select("*")
-    .eq("approval_id", params.id)
+    .eq("approval_id", id)
     .order("created_at", { ascending: true });
 
   // Get performer names

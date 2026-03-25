@@ -16,7 +16,7 @@ export default async function CompaniesPage() {
 
   const { isSuperAdmin } = session;
 
-  const supabase = createClient();
+  const supabase = await createClient();
   const admin = createAdminClient();
 
   // Fetch companies-related data in parallel

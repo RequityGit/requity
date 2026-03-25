@@ -83,10 +83,11 @@ type DocumentRow = {
 };
 
 export default async function DocumentsPage({
-  searchParams,
+  searchParams: searchParamsPromise,
 }: {
-  searchParams: { fund?: string; year?: string; type?: string };
+  searchParams: Promise<{ fund?: string; year?: string; type?: string }>;
 }) {
+  const searchParams = await searchParamsPromise;
   const { supabase, userId } = await getEffectiveAuth();
 
   // Build query

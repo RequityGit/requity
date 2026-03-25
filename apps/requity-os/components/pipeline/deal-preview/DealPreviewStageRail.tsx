@@ -8,7 +8,7 @@ import type { UnifiedStage } from "../pipeline-types";
 // ─── Stage definitions ───
 
 const STAGES: { key: UnifiedStage; label: string }[] = [
-  { key: "lead", label: "Lead" },
+  { key: "lead", label: "Intake" },
   { key: "analysis", label: "Analysis" },
   { key: "negotiation", label: "Negotiation" },
   { key: "execution", label: "Execution" },

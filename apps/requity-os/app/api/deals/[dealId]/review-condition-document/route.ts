@@ -17,10 +17,10 @@ const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY ?? "";
  */
 export async function POST(
   req: NextRequest,
-  { params }: { params: { dealId: string } }
+  { params }: { params: Promise<{ dealId: string }> }
 ) {
   const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
-  const { dealId } = params;
+  const { dealId } = await params;
   let documentId: string | undefined;
   let conditionId: string | undefined;
 

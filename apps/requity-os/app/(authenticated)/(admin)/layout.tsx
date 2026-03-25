@@ -17,7 +17,7 @@ export default async function AdminLayout({
   if (!session) redirect("/login");
 
   const { allowedRoles, effectiveRole } = session;
-  const impersonation = getImpersonationState();
+  const impersonation = await getImpersonationState();
 
   if (impersonation.isImpersonating && impersonation.targetRole) {
     if (impersonation.targetRole !== "admin" && impersonation.targetRole !== "super_admin") {

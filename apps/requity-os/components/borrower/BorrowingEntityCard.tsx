@@ -197,7 +197,7 @@ export function BorrowingEntityCard({
 
       {/* Inline-editable fields */}
       <div className="px-4 py-3">
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-x-6 gap-y-2">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-x-6 gap-y-2">
           <InlineField
             type="text"
             label="Entity Name"
@@ -271,7 +271,6 @@ export function BorrowingEntityCard({
             value={local.notes ?? ""}
             placeholder="Notes"
             onSave={(v) => saveField("notes", v)}
-            className="col-span-2"
           />
         </div>
       </div>

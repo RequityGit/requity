@@ -7,8 +7,8 @@ import { nq } from "@/lib/notifications";
 export function useUnreadCount(userId: string | undefined) {
   const [count, setCount] = useState(0);
   const supabaseRef = useRef(createClient());
-  const fetchCountRef = useRef<() => Promise<void>>();
-  const debounceRef = useRef<ReturnType<typeof setTimeout>>();
+  const fetchCountRef = useRef<() => Promise<void>>(undefined);
+  const debounceRef = useRef<ReturnType<typeof setTimeout>>(undefined);
 
   const fetchCount = useCallback(async () => {
     if (!userId) return;

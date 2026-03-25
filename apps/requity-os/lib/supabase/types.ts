@@ -1232,27 +1232,6 @@ export type Database = {
           },
         ]
       }
-      chat_followup_processed: {
-        Row: {
-          chat_id: string
-          followup_types: string[]
-          id: string
-          processed_at: string
-        }
-        Insert: {
-          chat_id: string
-          followup_types?: string[]
-          id?: string
-          processed_at?: string
-        }
-        Update: {
-          chat_id?: string
-          followup_types?: string[]
-          id?: string
-          processed_at?: string
-        }
-        Relationships: []
-      }
       commercial_ancillary_income: {
         Row: {
           created_at: string | null
@@ -1577,7 +1556,6 @@ export type Database = {
           current_lease_income: number | null
           current_occupancy_revenue: number | null
           disposition_cost_pct: number | null
-          equity_deal_id: string | null
           equity_invested: number | null
           exit_amortization_years: number | null
           exit_cap_rate: number | null
@@ -1665,7 +1643,6 @@ export type Database = {
           current_lease_income?: number | null
           current_occupancy_revenue?: number | null
           disposition_cost_pct?: number | null
-          equity_deal_id?: string | null
           equity_invested?: number | null
           exit_amortization_years?: number | null
           exit_cap_rate?: number | null
@@ -1753,7 +1730,6 @@ export type Database = {
           current_lease_income?: number | null
           current_occupancy_revenue?: number | null
           disposition_cost_pct?: number | null
-          equity_deal_id?: string | null
           equity_invested?: number | null
           exit_amortization_years?: number | null
           exit_cap_rate?: number | null
@@ -1827,13 +1803,6 @@ export type Database = {
           yr1_utilities_override?: number | null
         }
         Relationships: [
-          {
-            foreignKeyName: "commercial_underwriting_equity_deal_id_fkey"
-            columns: ["equity_deal_id"]
-            isOneToOne: false
-            referencedRelation: "equity_deals"
-            referencedColumns: ["id"]
-          },
           {
             foreignKeyName: "commercial_underwriting_loan_id_fkey"
             columns: ["loan_id"]
@@ -2690,6 +2659,7 @@ export type Database = {
             | Database["public"]["Enums"]["linked_entity_type_enum"]
             | null
           metadata: Json | null
+          outcome: string | null
           performed_by: string | null
           performed_by_name: string | null
           scheduled_at: string | null
@@ -2718,6 +2688,7 @@ export type Database = {
             | Database["public"]["Enums"]["linked_entity_type_enum"]
             | null
           metadata?: Json | null
+          outcome?: string | null
           performed_by?: string | null
           performed_by_name?: string | null
           scheduled_at?: string | null
@@ -2746,6 +2717,7 @@ export type Database = {
             | Database["public"]["Enums"]["linked_entity_type_enum"]
             | null
           metadata?: Json | null
+          outcome?: string | null
           performed_by?: string | null
           performed_by_name?: string | null
           scheduled_at?: string | null
@@ -3542,6 +3514,54 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      daily_briefings: {
+        Row: {
+          callbacks_count: number
+          confident_count: number
+          created_at: string
+          gchat_message_id: string | null
+          id: string
+          items: Json
+          low_confidence_count: number
+          period_end: string
+          period_start: string
+          property_name: string
+          property_slug: string
+          total_chats: number
+          unable_count: number
+        }
+        Insert: {
+          callbacks_count?: number
+          confident_count?: number
+          created_at?: string
+          gchat_message_id?: string | null
+          id?: string
+          items?: Json
+          low_confidence_count?: number
+          period_end: string
+          period_start: string
+          property_name: string
+          property_slug: string
+          total_chats?: number
+          unable_count?: number
+        }
+        Update: {
+          callbacks_count?: number
+          confident_count?: number
+          created_at?: string
+          gchat_message_id?: string | null
+          id?: string
+          items?: Json
+          low_confidence_count?: number
+          period_end?: string
+          period_start?: string
+          property_name?: string
+          property_slug?: string
+          total_chats?: number
+          unable_count?: number
+        }
+        Relationships: []
       }
       deal_application_links: {
         Row: {
@@ -4617,6 +4637,350 @@ export type Database = {
           },
         ]
       }
+      deal_cost_basis: {
+        Row: {
+          after_repair_value: number | null
+          as_is_value: number | null
+          basis_as_of_date: string | null
+          capital_improvements: number | null
+          created_at: string | null
+          created_by: string | null
+          deal_id: string
+          id: string
+          notes: string | null
+          original_closing_costs: number | null
+          original_purchase_date: string | null
+          original_purchase_price: number | null
+          source: string | null
+          total_basis: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          after_repair_value?: number | null
+          as_is_value?: number | null
+          basis_as_of_date?: string | null
+          capital_improvements?: number | null
+          created_at?: string | null
+          created_by?: string | null
+          deal_id: string
+          id?: string
+          notes?: string | null
+          original_closing_costs?: number | null
+          original_purchase_date?: string | null
+          original_purchase_price?: number | null
+          source?: string | null
+          total_basis?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          after_repair_value?: number | null
+          as_is_value?: number | null
+          basis_as_of_date?: string | null
+          capital_improvements?: number | null
+          created_at?: string | null
+          created_by?: string | null
+          deal_id?: string
+          id?: string
+          notes?: string | null
+          original_closing_costs?: number | null
+          original_purchase_date?: string | null
+          original_purchase_price?: number | null
+          source?: string | null
+          total_basis?: number | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "deal_cost_basis_deal_id_fkey"
+            columns: ["deal_id"]
+            isOneToOne: false
+            referencedRelation: "unified_deals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      deal_credit_memos: {
+        Row: {
+          approval_roles: Json | null
+          business_plan_narrative: string | null
+          capital_improvement_budget: Json | null
+          committee_notes: string | null
+          comparable_transactions: Json | null
+          conditions_precedent: Json | null
+          created_at: string
+          created_by: string | null
+          credit_committee_date: string | null
+          deal_id: string
+          exit_strategy_narrative: string | null
+          fee_income: Json | null
+          gdrive_file_id: string | null
+          generated_file_url: string | null
+          guarantor_details: Json | null
+          id: string
+          loan_terms: Json | null
+          metrics_exceptions_narrative: string | null
+          ongoing_covenants: Json | null
+          operating_statement: Json | null
+          portfolio_impact_narrative: string | null
+          prepared_by: string | null
+          property_condition_narrative: string | null
+          recommendation: string | null
+          recommendation_conditions: string | null
+          recommendation_narrative: string | null
+          requity_guidelines: Json | null
+          risk_factors: Json | null
+          risk_rating: string | null
+          sources_and_uses: Json | null
+          sponsor_profile: Json | null
+          sponsor_track_record_narrative: string | null
+          status: string
+          storage_path: string | null
+          stress_narrative: string | null
+          stress_scenarios: Json | null
+          third_party_reports: Json | null
+          updated_at: string
+          version: number
+        }
+        Insert: {
+          approval_roles?: Json | null
+          business_plan_narrative?: string | null
+          capital_improvement_budget?: Json | null
+          committee_notes?: string | null
+          comparable_transactions?: Json | null
+          conditions_precedent?: Json | null
+          created_at?: string
+          created_by?: string | null
+          credit_committee_date?: string | null
+          deal_id: string
+          exit_strategy_narrative?: string | null
+          fee_income?: Json | null
+          gdrive_file_id?: string | null
+          generated_file_url?: string | null
+          guarantor_details?: Json | null
+          id?: string
+          loan_terms?: Json | null
+          metrics_exceptions_narrative?: string | null
+          ongoing_covenants?: Json | null
+          operating_statement?: Json | null
+          portfolio_impact_narrative?: string | null
+          prepared_by?: string | null
+          property_condition_narrative?: string | null
+          recommendation?: string | null
+          recommendation_conditions?: string | null
+          recommendation_narrative?: string | null
+          requity_guidelines?: Json | null
+          risk_factors?: Json | null
+          risk_rating?: string | null
+          sources_and_uses?: Json | null
+          sponsor_profile?: Json | null
+          sponsor_track_record_narrative?: string | null
+          status?: string
+          storage_path?: string | null
+          stress_narrative?: string | null
+          stress_scenarios?: Json | null
+          third_party_reports?: Json | null
+          updated_at?: string
+          version?: number
+        }
+        Update: {
+          approval_roles?: Json | null
+          business_plan_narrative?: string | null
+          capital_improvement_budget?: Json | null
+          committee_notes?: string | null
+          comparable_transactions?: Json | null
+          conditions_precedent?: Json | null
+          created_at?: string
+          created_by?: string | null
+          credit_committee_date?: string | null
+          deal_id?: string
+          exit_strategy_narrative?: string | null
+          fee_income?: Json | null
+          gdrive_file_id?: string | null
+          generated_file_url?: string | null
+          guarantor_details?: Json | null
+          id?: string
+          loan_terms?: Json | null
+          metrics_exceptions_narrative?: string | null
+          ongoing_covenants?: Json | null
+          operating_statement?: Json | null
+          portfolio_impact_narrative?: string | null
+          prepared_by?: string | null
+          property_condition_narrative?: string | null
+          recommendation?: string | null
+          recommendation_conditions?: string | null
+          recommendation_narrative?: string | null
+          requity_guidelines?: Json | null
+          risk_factors?: Json | null
+          risk_rating?: string | null
+          sources_and_uses?: Json | null
+          sponsor_profile?: Json | null
+          sponsor_track_record_narrative?: string | null
+          status?: string
+          storage_path?: string | null
+          stress_narrative?: string | null
+          stress_scenarios?: Json | null
+          third_party_reports?: Json | null
+          updated_at?: string
+          version?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "deal_credit_memos_deal_id_fkey"
+            columns: ["deal_id"]
+            isOneToOne: false
+            referencedRelation: "unified_deals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      deal_existing_loans: {
+        Row: {
+          created_at: string | null
+          current_balance: number | null
+          deal_id: string
+          delinquency_notes: string | null
+          id: string
+          interest_rate: number | null
+          is_current: boolean | null
+          is_interest_only: boolean | null
+          lender_name: string | null
+          lien_position: number | null
+          loan_type: string | null
+          maturity_date: string | null
+          monthly_payment: number | null
+          notes: string | null
+          original_loan_amount: number | null
+          origination_date: string | null
+          prepayment_penalty: string | null
+          sort_order: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          current_balance?: number | null
+          deal_id: string
+          delinquency_notes?: string | null
+          id?: string
+          interest_rate?: number | null
+          is_current?: boolean | null
+          is_interest_only?: boolean | null
+          lender_name?: string | null
+          lien_position?: number | null
+          loan_type?: string | null
+          maturity_date?: string | null
+          monthly_payment?: number | null
+          notes?: string | null
+          original_loan_amount?: number | null
+          origination_date?: string | null
+          prepayment_penalty?: string | null
+          sort_order?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          current_balance?: number | null
+          deal_id?: string
+          delinquency_notes?: string | null
+          id?: string
+          interest_rate?: number | null
+          is_current?: boolean | null
+          is_interest_only?: boolean | null
+          lender_name?: string | null
+          lien_position?: number | null
+          loan_type?: string | null
+          maturity_date?: string | null
+          monthly_payment?: number | null
+          notes?: string | null
+          original_loan_amount?: number | null
+          origination_date?: string | null
+          prepayment_penalty?: string | null
+          sort_order?: number | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "deal_existing_loans_deal_id_fkey"
+            columns: ["deal_id"]
+            isOneToOne: false
+            referencedRelation: "unified_deals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      deal_investor_decks: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          deal_id: string
+          executive_summary: string | null
+          fund_name: string | null
+          gdrive_file_id: string | null
+          generated_file_url: string | null
+          id: string
+          investment_structure: string | null
+          investment_terms_narrative: string | null
+          market_analysis_narrative: string | null
+          minimum_investment: number | null
+          property_overview_narrative: string | null
+          property_photos: Json | null
+          status: string
+          target_return: string | null
+          updated_at: string
+          value_add_narrative: string | null
+          version: number
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          deal_id: string
+          executive_summary?: string | null
+          fund_name?: string | null
+          gdrive_file_id?: string | null
+          generated_file_url?: string | null
+          id?: string
+          investment_structure?: string | null
+          investment_terms_narrative?: string | null
+          market_analysis_narrative?: string | null
+          minimum_investment?: number | null
+          property_overview_narrative?: string | null
+          property_photos?: Json | null
+          status?: string
+          target_return?: string | null
+          updated_at?: string
+          value_add_narrative?: string | null
+          version?: number
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          deal_id?: string
+          executive_summary?: string | null
+          fund_name?: string | null
+          gdrive_file_id?: string | null
+          generated_file_url?: string | null
+          id?: string
+          investment_structure?: string | null
+          investment_terms_narrative?: string | null
+          market_analysis_narrative?: string | null
+          minimum_investment?: number | null
+          property_overview_narrative?: string | null
+          property_photos?: Json | null
+          status?: string
+          target_return?: string | null
+          updated_at?: string
+          value_add_narrative?: string | null
+          version?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "deal_investor_decks_deal_id_fkey"
+            columns: ["deal_id"]
+            isOneToOne: false
+            referencedRelation: "unified_deals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       deal_message_routing: {
         Row: {
           channel: string
@@ -4689,6 +5053,7 @@ export type Database = {
           id: string
           metadata: Json | null
           sender_id: string | null
+          sender_name: string | null
           sender_type: string
           source: string
         }
@@ -4700,6 +5065,7 @@ export type Database = {
           id?: string
           metadata?: Json | null
           sender_id?: string | null
+          sender_name?: string | null
           sender_type: string
           source?: string
         }
@@ -4711,6 +5077,7 @@ export type Database = {
           id?: string
           metadata?: Json | null
           sender_id?: string | null
+          sender_name?: string | null
           sender_type?: string
           source?: string
         }
@@ -4754,6 +5121,7 @@ export type Database = {
       }
       deal_team_contacts: {
         Row: {
+          company_id: string | null
           contact_id: string | null
           created_at: string
           created_by: string | null
@@ -4770,6 +5138,7 @@ export type Database = {
           updated_by: string | null
         }
         Insert: {
+          company_id?: string | null
           contact_id?: string | null
           created_at?: string
           created_by?: string | null
@@ -4786,6 +5155,7 @@ export type Database = {
           updated_by?: string | null
         }
         Update: {
+          company_id?: string | null
           contact_id?: string | null
           created_at?: string
           created_by?: string | null
@@ -4802,6 +5172,13 @@ export type Database = {
           updated_by?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "deal_team_contacts_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "deal_team_contacts_contact_id_fkey"
             columns: ["contact_id"]
@@ -6872,6 +7249,78 @@ export type Database = {
           },
         ]
       }
+      email_filter_rules: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          is_active: boolean
+          pattern: string
+          remove_from_inbox: boolean
+          rule_type: string
+          target_label: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          pattern: string
+          remove_from_inbox?: boolean
+          rule_type: string
+          target_label?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          pattern?: string
+          remove_from_inbox?: boolean
+          rule_type?: string
+          target_label?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      email_filter_runs: {
+        Row: {
+          completed_at: string | null
+          errors: Json | null
+          id: string
+          messages_filtered: number | null
+          messages_scanned: number | null
+          started_at: string
+          status: string
+          user_id: string
+        }
+        Insert: {
+          completed_at?: string | null
+          errors?: Json | null
+          id?: string
+          messages_filtered?: number | null
+          messages_scanned?: number | null
+          started_at?: string
+          status?: string
+          user_id: string
+        }
+        Update: {
+          completed_at?: string | null
+          errors?: Json | null
+          id?: string
+          messages_filtered?: number | null
+          messages_scanned?: number | null
+          started_at?: string
+          status?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       email_intake_queue: {
         Row: {
           attachments: Json
@@ -7223,6 +7672,117 @@ export type Database = {
           },
         ]
       }
+      email_triage_log: {
+        Row: {
+          action_summary: string | null
+          actioned_at: string | null
+          assigned_label: string
+          confidence: number | null
+          created_at: string | null
+          delegate_to: string | null
+          from_email: string | null
+          from_name: string | null
+          gmail_message_id: string
+          gmail_thread_id: string | null
+          id: string
+          is_urgent: boolean | null
+          list_unsubscribe: string | null
+          list_unsubscribe_post: string | null
+          needs_response: boolean | null
+          reasoning: string | null
+          response_deadline: string | null
+          snippet: string | null
+          spam_actioned: boolean | null
+          subject: string | null
+          unsubscribe_actioned: boolean | null
+          user_id: string
+        }
+        Insert: {
+          action_summary?: string | null
+          actioned_at?: string | null
+          assigned_label: string
+          confidence?: number | null
+          created_at?: string | null
+          delegate_to?: string | null
+          from_email?: string | null
+          from_name?: string | null
+          gmail_message_id: string
+          gmail_thread_id?: string | null
+          id?: string
+          is_urgent?: boolean | null
+          list_unsubscribe?: string | null
+          list_unsubscribe_post?: string | null
+          needs_response?: boolean | null
+          reasoning?: string | null
+          response_deadline?: string | null
+          snippet?: string | null
+          spam_actioned?: boolean | null
+          subject?: string | null
+          unsubscribe_actioned?: boolean | null
+          user_id: string
+        }
+        Update: {
+          action_summary?: string | null
+          actioned_at?: string | null
+          assigned_label?: string
+          confidence?: number | null
+          created_at?: string | null
+          delegate_to?: string | null
+          from_email?: string | null
+          from_name?: string | null
+          gmail_message_id?: string
+          gmail_thread_id?: string | null
+          id?: string
+          is_urgent?: boolean | null
+          list_unsubscribe?: string | null
+          list_unsubscribe_post?: string | null
+          needs_response?: boolean | null
+          reasoning?: string | null
+          response_deadline?: string | null
+          snippet?: string | null
+          spam_actioned?: boolean | null
+          subject?: string | null
+          unsubscribe_actioned?: boolean | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      email_triage_runs: {
+        Row: {
+          completed_at: string | null
+          errors: Json | null
+          id: string
+          messages_processed: number | null
+          messages_routed: Json | null
+          started_at: string | null
+          status: string | null
+          total_tokens_used: number | null
+          user_id: string
+        }
+        Insert: {
+          completed_at?: string | null
+          errors?: Json | null
+          id?: string
+          messages_processed?: number | null
+          messages_routed?: Json | null
+          started_at?: string | null
+          status?: string | null
+          total_tokens_used?: number | null
+          user_id: string
+        }
+        Update: {
+          completed_at?: string | null
+          errors?: Json | null
+          id?: string
+          messages_processed?: number | null
+          messages_routed?: Json | null
+          started_at?: string | null
+          status?: string | null
+          total_tokens_used?: number | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       entity_audit_log: {
         Row: {
           changed_by: string | null
@@ -7364,99 +7924,6 @@ export type Database = {
             columns: ["entity_id"]
             isOneToOne: false
             referencedRelation: "borrower_entities_safe"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      equity_deals: {
-        Row: {
-          actual_close_date: string | null
-          asking_price: number | null
-          assigned_to: string | null
-          created_at: string
-          deal_name: string
-          deal_number: string | null
-          deleted_at: string | null
-          expected_close_date: string | null
-          id: string
-          internal_notes: string | null
-          investment_thesis: string | null
-          loss_reason: string | null
-          notes: string | null
-          offer_price: number | null
-          property_id: string | null
-          purchase_price: number | null
-          source: Database["public"]["Enums"]["equity_deal_source"] | null
-          stage: Database["public"]["Enums"]["equity_deal_stage"]
-          stage_changed_at: string
-          stage_changed_by: string | null
-          target_irr: number | null
-          updated_at: string
-          value_add_strategy: string | null
-        }
-        Insert: {
-          actual_close_date?: string | null
-          asking_price?: number | null
-          assigned_to?: string | null
-          created_at?: string
-          deal_name: string
-          deal_number?: string | null
-          deleted_at?: string | null
-          expected_close_date?: string | null
-          id?: string
-          internal_notes?: string | null
-          investment_thesis?: string | null
-          loss_reason?: string | null
-          notes?: string | null
-          offer_price?: number | null
-          property_id?: string | null
-          purchase_price?: number | null
-          source?: Database["public"]["Enums"]["equity_deal_source"] | null
-          stage?: Database["public"]["Enums"]["equity_deal_stage"]
-          stage_changed_at?: string
-          stage_changed_by?: string | null
-          target_irr?: number | null
-          updated_at?: string
-          value_add_strategy?: string | null
-        }
-        Update: {
-          actual_close_date?: string | null
-          asking_price?: number | null
-          assigned_to?: string | null
-          created_at?: string
-          deal_name?: string
-          deal_number?: string | null
-          deleted_at?: string | null
-          expected_close_date?: string | null
-          id?: string
-          internal_notes?: string | null
-          investment_thesis?: string | null
-          loss_reason?: string | null
-          notes?: string | null
-          offer_price?: number | null
-          property_id?: string | null
-          purchase_price?: number | null
-          source?: Database["public"]["Enums"]["equity_deal_source"] | null
-          stage?: Database["public"]["Enums"]["equity_deal_stage"]
-          stage_changed_at?: string
-          stage_changed_by?: string | null
-          target_irr?: number | null
-          updated_at?: string
-          value_add_strategy?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "equity_deals_assigned_to_fkey"
-            columns: ["assigned_to"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "equity_deals_property_id_fkey"
-            columns: ["property_id"]
-            isOneToOne: false
-            referencedRelation: "properties"
             referencedColumns: ["id"]
           },
         ]
@@ -8709,7 +9176,7 @@ export type Database = {
           is_active: boolean | null
           is_borrower_facing: boolean | null
           per_borrower: boolean
-          required_stage: Database["public"]["Enums"]["condition_stage"]
+          required_stage: string
           requires_approval: boolean | null
           responsible_party: string | null
           sort_order: number | null
@@ -8734,7 +9201,7 @@ export type Database = {
           is_active?: boolean | null
           is_borrower_facing?: boolean | null
           per_borrower?: boolean
-          required_stage?: Database["public"]["Enums"]["condition_stage"]
+          required_stage?: string
           requires_approval?: boolean | null
           responsible_party?: string | null
           sort_order?: number | null
@@ -8759,7 +9226,7 @@ export type Database = {
           is_active?: boolean | null
           is_borrower_facing?: boolean | null
           per_borrower?: boolean
-          required_stage?: Database["public"]["Enums"]["condition_stage"]
+          required_stage?: string
           requires_approval?: boolean | null
           responsible_party?: string | null
           sort_order?: number | null
@@ -8788,7 +9255,7 @@ export type Database = {
           notes: string | null
           received_date: string | null
           rejection_reason: string | null
-          required_stage: Database["public"]["Enums"]["condition_stage"]
+          required_stage: string
           responsible_party: string | null
           reviewed_at: string | null
           reviewed_by: string | null
@@ -8816,7 +9283,7 @@ export type Database = {
           notes?: string | null
           received_date?: string | null
           rejection_reason?: string | null
-          required_stage?: Database["public"]["Enums"]["condition_stage"]
+          required_stage?: string
           responsible_party?: string | null
           reviewed_at?: string | null
           reviewed_by?: string | null
@@ -8844,7 +9311,7 @@ export type Database = {
           notes?: string | null
           received_date?: string | null
           rejection_reason?: string | null
-          required_stage?: Database["public"]["Enums"]["condition_stage"]
+          required_stage?: string
           responsible_party?: string | null
           reviewed_at?: string | null
           reviewed_by?: string | null
@@ -9838,7 +10305,6 @@ export type Database = {
           created_by: string
           deleted_at: string | null
           description: string | null
-          equity_deal_id: string | null
           id: string
           loan_id: string | null
           model_type: string
@@ -9853,7 +10319,6 @@ export type Database = {
           created_by: string
           deleted_at?: string | null
           description?: string | null
-          equity_deal_id?: string | null
           id?: string
           loan_id?: string | null
           model_type: string
@@ -9868,7 +10333,6 @@ export type Database = {
           created_by?: string
           deleted_at?: string | null
           description?: string | null
-          equity_deal_id?: string | null
           id?: string
           loan_id?: string | null
           model_type?: string
@@ -9890,13 +10354,6 @@ export type Database = {
             columns: ["created_by"]
             isOneToOne: false
             referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "model_scenarios_equity_deal_id_fkey"
-            columns: ["equity_deal_id"]
-            isOneToOne: false
-            referencedRelation: "equity_deals"
             referencedColumns: ["id"]
           },
           {
@@ -10957,7 +11414,6 @@ export type Database = {
           id: string
           latest_update: string | null
           owner: string
-          priority: string
           project_name: string
           sort_order: number
           started_at: string | null
@@ -10975,7 +11431,6 @@ export type Database = {
           id?: string
           latest_update?: string | null
           owner: string
-          priority?: string
           project_name: string
           sort_order?: number
           started_at?: string | null
@@ -10993,7 +11448,6 @@ export type Database = {
           id?: string
           latest_update?: string | null
           owner?: string
-          priority?: string
           project_name?: string
           sort_order?: number
           started_at?: string | null
@@ -11091,7 +11545,6 @@ export type Database = {
           next_recurrence_date: string | null
           parent_task_id: string | null
           previous_incomplete: boolean | null
-          priority: string
           project_id: string | null
           recurrence_day_of_month: number | null
           recurrence_day_of_week: number | null
@@ -11144,7 +11597,6 @@ export type Database = {
           next_recurrence_date?: string | null
           parent_task_id?: string | null
           previous_incomplete?: boolean | null
-          priority?: string
           project_id?: string | null
           recurrence_day_of_month?: number | null
           recurrence_day_of_week?: number | null
@@ -11197,7 +11649,6 @@ export type Database = {
           next_recurrence_date?: string | null
           parent_task_id?: string | null
           previous_incomplete?: boolean | null
-          priority?: string
           project_id?: string | null
           recurrence_day_of_month?: number | null
           recurrence_day_of_week?: number | null
@@ -11601,26 +12052,27 @@ export type Database = {
           icon_slug: string | null
           id: string
           name: string
+          updated_at: string
         }
         Insert: {
           created_at?: string
           icon_slug?: string | null
           id?: string
           name: string
+          updated_at?: string
         }
         Update: {
           created_at?: string
           icon_slug?: string | null
           id?: string
           name?: string
+          updated_at?: string
         }
         Relationships: []
       }
       pm_communities: {
         Row: {
           address_display: string | null
-          appfolio_listing_url: string | null
-          appfolio_portal_url: string | null
           baths_range: string | null
           beds_range: string | null
           city: string
@@ -11636,13 +12088,12 @@ export type Database = {
           slug: string
           starting_price: string | null
           state_code: string | null
+          status: string | null
           updated_at: string
           zip_code: string | null
         }
         Insert: {
           address_display?: string | null
-          appfolio_listing_url?: string | null
-          appfolio_portal_url?: string | null
           baths_range?: string | null
           beds_range?: string | null
           city: string
@@ -11658,13 +12109,12 @@ export type Database = {
           slug: string
           starting_price?: string | null
           state_code?: string | null
+          status?: string | null
           updated_at?: string
           zip_code?: string | null
         }
         Update: {
           address_display?: string | null
-          appfolio_listing_url?: string | null
-          appfolio_portal_url?: string | null
           baths_range?: string | null
           beds_range?: string | null
           city?: string
@@ -11680,6 +12130,7 @@ export type Database = {
           slug?: string
           starting_price?: string | null
           state_code?: string | null
+          status?: string | null
           updated_at?: string
           zip_code?: string | null
         }
@@ -11782,6 +12233,53 @@ export type Database = {
           },
         ]
       }
+      pm_leads: {
+        Row: {
+          community_id: string | null
+          created_at: string
+          email: string
+          full_name: string
+          id: string
+          message: string | null
+          phone: string | null
+          source_url: string | null
+          status: string | null
+          updated_at: string
+        }
+        Insert: {
+          community_id?: string | null
+          created_at?: string
+          email: string
+          full_name: string
+          id?: string
+          message?: string | null
+          phone?: string | null
+          source_url?: string | null
+          status?: string | null
+          updated_at?: string
+        }
+        Update: {
+          community_id?: string | null
+          created_at?: string
+          email?: string
+          full_name?: string
+          id?: string
+          message?: string | null
+          phone?: string | null
+          source_url?: string | null
+          status?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pm_leads_community_id_fkey"
+            columns: ["community_id"]
+            isOneToOne: false
+            referencedRelation: "pm_communities"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       pm_media: {
         Row: {
           alt_text: string | null
@@ -11792,6 +12290,7 @@ export type Database = {
           file_type: string | null
           id: string
           metadata: Json | null
+          updated_at: string
         }
         Insert: {
           alt_text?: string | null
@@ -11802,6 +12301,7 @@ export type Database = {
           file_type?: string | null
           id?: string
           metadata?: Json | null
+          updated_at?: string
         }
         Update: {
           alt_text?: string | null
@@ -11812,6 +12312,7 @@ export type Database = {
           file_type?: string | null
           id?: string
           metadata?: Json | null
+          updated_at?: string
         }
         Relationships: []
       }
@@ -11918,6 +12419,7 @@ export type Database = {
           name: string
           slug: string
           sort_order: number | null
+          updated_at: string
         }
         Insert: {
           created_at?: string
@@ -11926,6 +12428,7 @@ export type Database = {
           name: string
           slug: string
           sort_order?: number | null
+          updated_at?: string
         }
         Update: {
           created_at?: string
@@ -11934,6 +12437,7 @@ export type Database = {
           name?: string
           slug?: string
           sort_order?: number | null
+          updated_at?: string
         }
         Relationships: []
       }
@@ -11943,6 +12447,7 @@ export type Database = {
           description: string | null
           id: string
           key: string
+          updated_at: string
           value: string | null
         }
         Insert: {
@@ -11950,6 +12455,7 @@ export type Database = {
           description?: string | null
           id?: string
           key: string
+          updated_at?: string
           value?: string | null
         }
         Update: {
@@ -11957,6 +12463,7 @@ export type Database = {
           description?: string | null
           id?: string
           key?: string
+          updated_at?: string
           value?: string | null
         }
         Relationships: []
@@ -12740,7 +13247,6 @@ export type Database = {
           next_generation_date: string
           nth_occurrence: number | null
           nth_weekday: number | null
-          priority: string
           recurrence_type: string
           title: string
           updated_at: string
@@ -12762,7 +13268,6 @@ export type Database = {
           next_generation_date: string
           nth_occurrence?: number | null
           nth_weekday?: number | null
-          priority: string
           recurrence_type: string
           title: string
           updated_at?: string
@@ -12784,7 +13289,6 @@ export type Database = {
           next_generation_date?: string
           nth_occurrence?: number | null
           nth_weekday?: number | null
-          priority?: string
           recurrence_type?: string
           title?: string
           updated_at?: string
@@ -14011,6 +14515,108 @@ export type Database = {
           value_type?: string
         }
         Relationships: []
+      }
+      soft_commitments: {
+        Row: {
+          commitment_amount: number
+          confirmed_at: string | null
+          contact_id: string | null
+          created_at: string
+          custom_amount: number | null
+          deal_id: string | null
+          email: string
+          id: string
+          ip_address: string | null
+          is_accredited: boolean | null
+          name: string
+          notes: string | null
+          phone: string | null
+          questions: string | null
+          source: string | null
+          status: string
+          submitted_at: string
+          subscribed_at: string | null
+          updated_at: string
+        }
+        Insert: {
+          commitment_amount: number
+          confirmed_at?: string | null
+          contact_id?: string | null
+          created_at?: string
+          custom_amount?: number | null
+          deal_id?: string | null
+          email: string
+          id?: string
+          ip_address?: string | null
+          is_accredited?: boolean | null
+          name: string
+          notes?: string | null
+          phone?: string | null
+          questions?: string | null
+          source?: string | null
+          status?: string
+          submitted_at?: string
+          subscribed_at?: string | null
+          updated_at?: string
+        }
+        Update: {
+          commitment_amount?: number
+          confirmed_at?: string | null
+          contact_id?: string | null
+          created_at?: string
+          custom_amount?: number | null
+          deal_id?: string | null
+          email?: string
+          id?: string
+          ip_address?: string | null
+          is_accredited?: boolean | null
+          name?: string
+          notes?: string | null
+          phone?: string | null
+          questions?: string | null
+          source?: string | null
+          status?: string
+          submitted_at?: string
+          subscribed_at?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "soft_commitments_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "crm_contacts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "soft_commitments_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "crm_contacts_active"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "soft_commitments_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "crm_duplicate_candidates"
+            referencedColumns: ["contact_id"]
+          },
+          {
+            foreignKeyName: "soft_commitments_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "crm_duplicate_candidates"
+            referencedColumns: ["potential_duplicate_id"]
+          },
+          {
+            foreignKeyName: "soft_commitments_deal_id_fkey"
+            columns: ["deal_id"]
+            isOneToOne: false
+            referencedRelation: "unified_deals"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       sop_categories: {
         Row: {
@@ -15505,12 +16111,20 @@ export type Database = {
           created_by: string | null
           deal_number: string | null
           expected_close_date: string | null
+          fundraise_amount_options: Json | null
+          fundraise_deck_url: string | null
+          fundraise_description: string | null
+          fundraise_enabled: boolean | null
+          fundraise_hero_image_url: string | null
+          fundraise_slug: string | null
+          fundraise_target: number | null
           google_drive_folder_id: string | null
           google_drive_folder_url: string | null
           google_drive_shared_folder_id: string | null
           google_sheet_id: string | null
           google_sheet_url: string | null
           id: string
+          is_priority: boolean
           loan_type: string | null
           loss_reason: string | null
           name: string
@@ -15540,12 +16154,20 @@ export type Database = {
           created_by?: string | null
           deal_number?: string | null
           expected_close_date?: string | null
+          fundraise_amount_options?: Json | null
+          fundraise_deck_url?: string | null
+          fundraise_description?: string | null
+          fundraise_enabled?: boolean | null
+          fundraise_hero_image_url?: string | null
+          fundraise_slug?: string | null
+          fundraise_target?: number | null
           google_drive_folder_id?: string | null
           google_drive_folder_url?: string | null
           google_drive_shared_folder_id?: string | null
           google_sheet_id?: string | null
           google_sheet_url?: string | null
           id?: string
+          is_priority?: boolean
           loan_type?: string | null
           loss_reason?: string | null
           name: string
@@ -15575,12 +16197,20 @@ export type Database = {
           created_by?: string | null
           deal_number?: string | null
           expected_close_date?: string | null
+          fundraise_amount_options?: Json | null
+          fundraise_deck_url?: string | null
+          fundraise_description?: string | null
+          fundraise_enabled?: boolean | null
+          fundraise_hero_image_url?: string | null
+          fundraise_slug?: string | null
+          fundraise_target?: number | null
           google_drive_folder_id?: string | null
           google_drive_folder_url?: string | null
           google_drive_shared_folder_id?: string | null
           google_sheet_id?: string | null
           google_sheet_url?: string | null
           id?: string
+          is_priority?: boolean
           loan_type?: string | null
           loss_reason?: string | null
           name?: string
@@ -17360,27 +17990,28 @@ export type Database = {
         Args: { p_billing_month: string; p_created_by: string }
         Returns: string
       }
-      generate_borrower_conditions: {
-        Args: { p_contact_id: string; p_deal_id: string }
-        Returns: number
-      }
-      generate_deal_conditions: { Args: { p_deal_id: string }; Returns: number }
+      generate_daily_digest: { Args: never; Returns: Json }
       generate_loan_conditions: { Args: { p_loan_id: string }; Returns: number }
       generate_nacha_file: {
         Args: { p_billing_cycle_id: string }
         Returns: string
       }
-      generate_next_recurring_task: { Args: { task_id: string }; Returns: Json }
+      generate_next_recurring_task: {
+        Args: { p_task_id: string }
+        Returns: Json
+      }
       generate_payoff_quote: {
         Args: { p_loan_id: string; p_payoff_date: string }
         Returns: Json
       }
+      generate_personal_task_briefings: { Args: never; Returns: Json }
       generate_recurring_tasks: { Args: never; Returns: undefined }
       get_active_notification_count: { Args: never; Returns: number }
       get_borrower_deals_last_2_years: {
         Args: { p_borrower_id: string }
         Returns: number
       }
+      get_deal_cost_basis: { Args: { p_deal_id: string }; Returns: Json }
       get_draw_summary: { Args: { p_loan_id: string }; Returns: Json }
       get_my_roles: {
         Args: never
@@ -17662,12 +18293,6 @@ export type Database = {
         | "post_loan_payoff"
         | "prior_to_approval"
         | "prior_to_funding"
-      condition_stage:
-        | "lead"
-        | "analysis"
-        | "negotiation"
-        | "execution"
-        | "closed"
       condition_status:
         | "pending"
         | "submitted"
@@ -17738,7 +18363,7 @@ export type Database = {
         | "lunch"
         | "other"
       delinquency_bucket: "current" | "1-30" | "31-60" | "61-90" | "90+"
-      doc_format_enum: "docx" | "pdf"
+      doc_format_enum: "docx" | "pdf" | "pptx" | "html"
       doc_status_enum:
         | "draft"
         | "sent_for_signature"
@@ -17780,13 +18405,6 @@ export type Database = {
         | "internal_portfolio"
         | "mls"
         | "other"
-      equity_deal_stage:
-        | "new_deals"
-        | "underwritten_needs_review"
-        | "offer_placed"
-        | "under_contract"
-        | "closed_won"
-        | "closed_lost"
       equity_task_status:
         | "not_started"
         | "in_progress"
@@ -17910,6 +18528,9 @@ export type Database = {
         | "loan_agreement"
         | "investor_agreement"
         | "other"
+        | "credit_memo"
+        | "investor_deck"
+        | "offering_memorandum"
       vendor_type_enum:
         | "title_company"
         | "law_firm"
@@ -18159,13 +18780,6 @@ export const Constants = {
         "prior_to_approval",
         "prior_to_funding",
       ],
-      condition_stage: [
-        "lead",
-        "analysis",
-        "negotiation",
-        "execution",
-        "closed",
-      ],
       condition_status: [
         "pending",
         "submitted",
@@ -18242,7 +18856,7 @@ export const Constants = {
         "other",
       ],
       delinquency_bucket: ["current", "1-30", "31-60", "61-90", "90+"],
-      doc_format_enum: ["docx", "pdf"],
+      doc_format_enum: ["docx", "pdf", "pptx", "html"],
       doc_status_enum: [
         "draft",
         "sent_for_signature",
@@ -18288,14 +18902,6 @@ export const Constants = {
         "internal_portfolio",
         "mls",
         "other",
-      ],
-      equity_deal_stage: [
-        "new_deals",
-        "underwritten_needs_review",
-        "offer_placed",
-        "under_contract",
-        "closed_won",
-        "closed_lost",
       ],
       equity_task_status: [
         "not_started",
@@ -18431,6 +19037,9 @@ export const Constants = {
         "loan_agreement",
         "investor_agreement",
         "other",
+        "credit_memo",
+        "investor_deck",
+        "offering_memorandum",
       ],
       vendor_type_enum: [
         "title_company",
@@ -18446,3 +19055,4 @@ export const Constants = {
     },
   },
 } as const
+

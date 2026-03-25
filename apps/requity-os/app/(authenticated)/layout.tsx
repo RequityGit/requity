@@ -36,7 +36,7 @@ export default async function AuthenticatedLayout({
   const { user, profile, isSuperAdmin, effectiveRole, accessibleModules, allowedRoles } = session;
 
   // Check impersonation state
-  const impersonation = getImpersonationState();
+  const impersonation = await getImpersonationState();
 
   // When impersonating, override the sidebar role to match the impersonated user's role
   const sidebarRole = impersonation.isImpersonating && impersonation.targetRole

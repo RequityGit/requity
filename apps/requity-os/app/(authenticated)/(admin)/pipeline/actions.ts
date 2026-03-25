@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { createClient } from "@/lib/supabase/server";
 import { requireAdmin } from "@/lib/auth/require-admin";
 import type { Database, Json } from "@/lib/supabase/types";
 import { FIELD_MAPPING_MAP } from "@/lib/pipeline/uw-field-mappings";
@@ -299,6 +300,29 @@ export async function advanceStageAction(
 
     const admin = createAdminClient();
 
+    // Gate: analysis → negotiation requires approval (super_admins bypass)
+    if (newStage === "negotiation") {
+      const { data: deal } = await admin
+        .from("unified_deals" as never)
+        .select("stage, approval_status" as never)
+        .eq("id" as never, dealId as never)
+        .single();
+
+      if (deal && (deal as { stage: string }).stage === "analysis") {
+        const { data: superRole } = await (await createClient())
+          .from("user_roles")
+          .select("id")
+          .eq("user_id", auth.user.id)
+          .eq("role", "super_admin")
+          .eq("is_active", true)
+          .single();
+
+        if (!superRole && (deal as { approval_status: string | null }).approval_status !== "approved") {
+          return { error: "This deal requires approval before advancing to Negotiation. Submit for approval first." };
+        }
+      }
+    }
+
     const { error } = await admin.rpc("unified_advance_stage", {
       p_deal_id: dealId,
       p_new_stage: newStage,
@@ -308,6 +332,14 @@ export async function advanceStageAction(
     if (error) {
       console.error("advanceStageAction error:", error);
       return { error: error.message };
+    }
+
+    // Clear approval_status when advancing past analysis (it was approved)
+    if (newStage === "negotiation") {
+      await admin
+        .from("unified_deals" as never)
+        .update({ approval_status: null } as never)
+        .eq("id" as never, dealId as never);
     }
 
     // No revalidatePath — Supabase Realtime handles sync to all clients.
@@ -341,6 +373,18 @@ export async function regressStageAction(
     if (error) {
       console.error("regressStageAction error:", error);
       return { error: error.message };
+    }
+
+    // Reset approval status when moving back to analysis (requires re-approval)
+    if (targetStage === "analysis") {
+      await admin
+        .from("unified_deals" as never)
+        .update({
+          approval_status: null,
+          approval_requested_at: null,
+          approval_requested_by: null,
+        } as never)
+        .eq("id" as never, dealId as never);
     }
 
     // No revalidatePath — Supabase Realtime handles sync to all clients.
@@ -1115,6 +1159,23 @@ export async function updateConditionAssignedToAction(
 }
 
 // ─── Resolve Intake Queue Item ───
+
+// ─── Intake Attachment Preview ───
+
+export async function getIntakeAttachmentUrl(storagePath: string) {
+  const auth = await requireAdmin();
+  if ("error" in auth) return { error: auth.error };
+
+  const admin = createAdminClient();
+  const { data, error } = await admin.storage
+    .from("loan-documents")
+    .createSignedUrl(storagePath, 3600); // 1 hour expiry
+
+  if (error || !data) {
+    return { error: "Could not generate preview URL" };
+  }
+  return { url: data.signedUrl };
+}
 
 export async function resolveIntakeItemAction(data: {
   intakeQueueId: string;
@@ -2020,7 +2081,7 @@ export async function processIntakeItemAction(
       body_preview?: string;
       extraction_summary?: string;
       extracted_deal_fields?: Record<string, { value: unknown; confidence: number }>;
-      attachments?: Array<{ filename: string; storage_path: string; mime_type: string; size_bytes: number }>;
+      attachments?: Array<{ filename: string; storage_path?: string; mime_type: string; size_bytes: number }>;
     }
     let emailData: EmailQueueData | null = null;
     if (emailQueueId) {
@@ -2681,5 +2742,34 @@ export async function addDealConditionAction(
       error:
         err instanceof Error ? err.message : "Failed to add condition",
     };
+  }
+}
+
+// ─── Toggle Deal Priority ───
+
+export async function toggleDealPriorityAction(
+  dealId: string,
+  isPriority: boolean
+) {
+  try {
+    const auth = await requireAdmin();
+    if ("error" in auth) return { error: auth.error };
+
+    const admin = createAdminClient();
+
+    const { error } = await admin
+      .from("unified_deals")
+      .update({ is_priority: isPriority, updated_at: new Date().toISOString() } as UnifiedDealUpdate)
+      .eq("id", dealId);
+
+    if (error) {
+      console.error("toggleDealPriorityAction error:", error);
+      return { error: error.message };
+    }
+
+    return { success: true };
+  } catch (err: unknown) {
+    console.error("toggleDealPriorityAction error:", err);
+    return { error: err instanceof Error ? err.message : "Failed to toggle priority" };
   }
 }

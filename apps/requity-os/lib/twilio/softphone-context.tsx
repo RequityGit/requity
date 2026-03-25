@@ -60,8 +60,8 @@ export function SoftphoneProvider({ children }: { children: React.ReactNode }) {
   const deviceRef = useRef<DeviceType | null>(null);
   const callRef = useRef<CallType | null>(null);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const onCallConnectedRef = useRef<((callSid: string) => void) | undefined>();
-  const onCallDisconnectedRef = useRef<(() => void) | undefined>();
+  const onCallConnectedRef = useRef<((callSid: string) => void) | undefined>(undefined);
+  const onCallDisconnectedRef = useRef<(() => void) | undefined>(undefined);
 
   const setOnCallConnected = useCallback((cb: ((callSid: string) => void) | undefined) => {
     onCallConnectedRef.current = cb;

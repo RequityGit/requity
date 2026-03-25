@@ -129,7 +129,7 @@ export const LOAN_STAGES = [
 export type LoanStage = (typeof LOAN_STAGES)[number];
 
 export const LOAN_STAGE_LABELS: Record<string, string> = {
-  lead: "Lead",
+  lead: "Intake",
   application: "Application",
   processing: "Processing",
   underwriting: "Underwriting",
@@ -441,7 +441,7 @@ export type ConditionCategory = (typeof CONDITION_CATEGORY_VALUES)[number];
 
 /** DB enum: condition_stage (aligned with deal stages) */
 export const CONDITION_STAGES = [
-  { value: "lead", label: "Lead" },
+  { value: "lead", label: "Intake" },
   { value: "analysis", label: "Analysis" },
   { value: "negotiation", label: "Negotiation" },
   { value: "execution", label: "Execution" },

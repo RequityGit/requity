@@ -3,7 +3,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { UsersClient } from "@/components/control-center/users-client";
 
 export default async function ControlCenterUsersPage() {
-  const supabase = createClient();
+  const supabase = await createClient();
   const admin = createAdminClient();
 
   const {

@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 import { SOPEditor } from "@/components/sops/SOPEditor";
 
 export default async function NewSOPPage() {
-  const supabase = createClient();
+  const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();

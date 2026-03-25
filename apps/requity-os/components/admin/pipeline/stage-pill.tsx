@@ -11,11 +11,11 @@ import { Badge } from "@/components/ui/badge";
 type PillStyle = { className: string; label: string };
 
 const STAGE_STYLES: Record<string, PillStyle> = {
-  // Lead → accentSoft + textSecondary
+  // Intake → accentSoft + textSecondary
   lead: {
     className:
       "bg-[rgba(26,26,26,0.06)] text-[#6B6B6B] dark:bg-[rgba(240,240,240,0.06)] dark:text-[#888888]",
-    label: "Lead",
+    label: "Intake",
   },
   // Application → blueSoft + blue
   application: {

@@ -18,7 +18,7 @@ export default async function ContactsPage() {
   let teamMembers: { id: string; full_name: string }[] = [];
 
   try {
-    const supabase = createClient();
+    const supabase = await createClient();
     const admin = createAdminClient();
 
     // Fetch contacts-related data in parallel
