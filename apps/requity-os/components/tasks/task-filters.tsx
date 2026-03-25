@@ -22,6 +22,7 @@ interface TaskFiltersProps {
   onCategoryChange: (value: string) => void;
   typeFilter: TaskTypeFilter;
   onTypeFilterChange: (value: TaskTypeFilter) => void;
+  currentUserId: string;
 }
 
 const TYPE_LABELS: Record<TaskTypeFilter, string> = {
@@ -38,6 +39,7 @@ export function TaskFilters({
   onCategoryChange,
   typeFilter,
   onTypeFilterChange,
+  currentUserId,
 }: TaskFiltersProps) {
   return (
     <div className="flex gap-2 md:gap-3 flex-wrap items-center w-full md:w-auto">
@@ -67,11 +69,14 @@ export function TaskFilters({
         </SelectTrigger>
         <SelectContent>
           <SelectItem value="all">All assignees</SelectItem>
-          {assigneeOptions.map((opt) => (
-            <SelectItem key={opt.value} value={opt.value}>
-              {opt.label}
-            </SelectItem>
-          ))}
+          <SelectItem value={currentUserId}>Me</SelectItem>
+          {assigneeOptions
+            .filter((opt) => opt.value !== currentUserId)
+            .map((opt) => (
+              <SelectItem key={opt.value} value={opt.value}>
+                {opt.label}
+              </SelectItem>
+            ))}
         </SelectContent>
       </Select>
 
