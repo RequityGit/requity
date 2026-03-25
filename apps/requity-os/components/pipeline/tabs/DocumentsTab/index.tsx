@@ -36,6 +36,7 @@ export function DocumentsTab({
   dealId,
   dealName,
   googleDriveFolderUrl,
+  googleDriveFolderId,
   currentUserId,
   currentUserName,
   dealDocData,
@@ -121,6 +122,7 @@ export function DocumentsTab({
           dealId={dealId}
           dealName={dealName}
           googleDriveFolderUrl={googleDriveFolderUrl}
+          googleDriveFolderId={googleDriveFolderId}
           onPreviewDoc={handlePreviewDoc}
           onUploadComplete={() => router.refresh()}
           currentUserId={currentUserId}
