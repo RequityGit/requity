@@ -138,8 +138,9 @@ export function SoftCommitmentFormPage({ slug }: { slug: string }) {
                 </h2>
                 <p className="mt-1.5 text-sm text-emerald-800/80 dark:text-emerald-300/80 leading-relaxed">
                   We have reached our commitment goal of {formatCurrency(deal.fundraise_hard_cap!)}.
-                  You are still welcome to review the details below and submit a commitment,
-                  which will be added to our waitlist.
+                  We still encourage you to review the details below and submit a commitment,
+                  which will be added to our waitlist. It&apos;s not uncommon for soft commitments
+                  to withdraw before funding.
                 </p>
                 <div className="mt-3 flex items-center gap-2">
                   <Badge
