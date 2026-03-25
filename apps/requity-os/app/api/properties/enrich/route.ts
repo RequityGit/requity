@@ -123,6 +123,45 @@ interface RealieProperty {
   siteId?: string;
 }
 
+// ---------------------------------------------------------------------------
+// Address sanitization — strip embedded city / state / zip so only the street
+// portion is sent to Realie (which expects street-only in the address param).
+// ---------------------------------------------------------------------------
+
+function escapeRegExp(str: string): string {
+  return str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+function sanitizeStreetAddress(
+  rawAddress: string,
+  city?: string,
+  state?: string,
+  zip?: string
+): string {
+  let address = rawAddress.trim();
+
+  // Remove trailing zip code patterns (5-digit or 5+4)
+  if (zip) {
+    address = address.replace(new RegExp(`,?\\s*${escapeRegExp(zip)}\\s*$`), "");
+  }
+  address = address.replace(/,?\s*\d{5}(-\d{4})?\s*$/, "");
+
+  // Remove trailing state abbreviation (2-letter uppercase)
+  if (state) {
+    const statePattern = new RegExp(`,?\\s*${escapeRegExp(state)}\\s*$`, "i");
+    address = address.replace(statePattern, "");
+  }
+  address = address.replace(/,?\s+[A-Z]{2}\s*$/, "");
+
+  // Remove trailing city if known
+  if (city) {
+    const cityPattern = new RegExp(`,?\\s*${escapeRegExp(city)}\\s*$`, "i");
+    address = address.replace(cityPattern, "");
+  }
+
+  return address.trim().replace(/,\s*$/, "");
+}
+
 function normalizeRealie(raw: RealieProperty): Record<string, unknown> {
   const result: Record<string, unknown> = {};
 
@@ -407,8 +446,15 @@ export async function POST(req: NextRequest) {
   }
 
   try {
+    const streetAddress = sanitizeStreetAddress(
+      body.address.trim(),
+      body.city,
+      body.state,
+      body.zip
+    );
+
     const params = new URLSearchParams({
-      address: body.address.trim(),
+      address: streetAddress,
       state: body.state.trim().toUpperCase(),
     });
     if (body.city) params.set("city", body.city.trim());
@@ -417,16 +463,28 @@ export async function POST(req: NextRequest) {
 
     const realieUrl = `${REALIE_BASE_URL}?${params.toString()}`;
 
-    console.log("[Enrich] Calling Realie:", realieUrl);
+    console.log("[Enrich] Calling Realie:", realieUrl, "| original address:", body.address);
 
-    const response = await fetch(realieUrl, {
+    // Try with raw API key first, then Bearer prefix if 400/401
+    let response = await fetch(realieUrl, {
       method: "GET",
-      headers: {
-        Authorization: REALIE_API_KEY,
-      },
+      headers: { Authorization: REALIE_API_KEY },
+      signal: AbortSignal.timeout(15000),
     });
 
-    const searched = { address: body.address, city: body.city, state: body.state, zip: body.zip };
+    if (
+      (response.status === 400 || response.status === 401) &&
+      !REALIE_API_KEY.startsWith("Bearer ")
+    ) {
+      console.log("[Enrich] Retrying with Bearer prefix");
+      response = await fetch(realieUrl, {
+        method: "GET",
+        headers: { Authorization: `Bearer ${REALIE_API_KEY}` },
+        signal: AbortSignal.timeout(15000),
+      });
+    }
+
+    const searched = { address: streetAddress, city: body.city, state: body.state, zip: body.zip };
 
     if (!response.ok) {
       const errText = await response.text().catch(() => "");
@@ -434,18 +492,18 @@ export async function POST(req: NextRequest) {
 
       if (response.status === 404) {
         return NextResponse.json(
-          { error: "Property not found at this address", searched },
+          { error: "Property not found at this address", detail: errText?.slice(0, 500) || undefined, searched },
           { status: 404 }
         );
       }
       if (response.status === 401 || response.status === 403) {
         return NextResponse.json(
-          { error: "Property data service authentication failed. Check REALIE_API_KEY.", searched },
+          { error: "Property data service authentication failed. Check REALIE_API_KEY.", detail: errText?.slice(0, 500) || undefined, searched },
           { status: 502 }
         );
       }
       return NextResponse.json(
-        { error: `Property data service returned ${response.status}`, searched },
+        { error: `Property data service returned ${response.status}`, detail: errText?.slice(0, 500) || undefined, searched },
         { status: 502 }
       );
     }

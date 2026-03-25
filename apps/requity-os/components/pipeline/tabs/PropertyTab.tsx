@@ -243,13 +243,14 @@ function PropertyDetailsContent({
 
         // Show the actual backend error for non-404s (auth failures, config issues, etc.)
         const backendError = data.error as string | undefined;
+        const detail = data.detail as string | undefined;
         const is404 = response.status === 404;
-        showError(
-          "Could not enrich property",
-          is404
-            ? `No match for "${searchedAddr}" in property database. Check that the full street address, city, and state are correct, or enter data manually.`
-            : backendError ?? `Enrichment service error (${response.status}). Try again later.`
-        );
+        const errorMsg = is404
+          ? `No match for "${searchedAddr}" in property database. Check that the full street address, city, and state are correct, or enter data manually.`
+          : detail
+            ? `${backendError ?? "Enrichment error"}: ${detail}`
+            : backendError ?? `Enrichment service error (${response.status}). Try again later.`;
+        showError("Could not enrich property", errorMsg);
         showInfo(
           "Fields you can fill manually",
           enrichableFieldLabels.slice(0, 15).join(", ") +
