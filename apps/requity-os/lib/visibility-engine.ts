@@ -113,11 +113,12 @@ export function isCommercialDeal(deal: {
   uw_data?: Record<string, unknown> | null;
 }): boolean {
   const normalized = normalizeAssetClass(deal.asset_class ?? undefined);
-  // Commercial, multifamily, and MHC get the grid-based commercial UW (Pro Forma, rent roll, etc.)
+  // All non-residential asset classes get the grid-based commercial UW (Pro Forma, rent roll, etc.)
   if (
     normalized === "commercial" ||
     normalized === "multifamily" ||
-    normalized === "mhc"
+    normalized === "mhc" ||
+    normalized === "rv_campground"
   ) {
     return true;
   }
