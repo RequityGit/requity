@@ -132,17 +132,12 @@ function normalizeRealie(raw: RealieProperty): Record<string, unknown> {
     }
   }
 
-  // Fields that map to `properties` table columns
+  // Fields that map to field_configurations keys (module=property)
   set("parcel_id", raw.parcelId);
   set("zoning", raw.zoningCode);
   set("year_built", raw.yearBuilt);
-  set("gross_building_area_sqft", raw.buildingArea);
   set("lot_size_acres", raw.acres);
-  set("number_of_stories", raw.stories);
-  set("number_of_buildings", raw.buildingCount);
-  set("county", raw.county);
-
-  // Fields that map to field_configurations keys
+  set("building_count", raw.buildingCount);
   set("total_sf", raw.buildingArea);
   set("property_county", raw.county);
 
