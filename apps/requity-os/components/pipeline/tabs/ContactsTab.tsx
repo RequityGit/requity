@@ -253,7 +253,7 @@ export function ContactsTab({
     if (fields.length === 0) return null;
 
     return (
-      <div className="rounded-xl border bg-card p-5">
+      <div className="rq-card-wrapper rq-card">
         <h4 className="rq-micro-label mb-4">
           {title}
         </h4>
@@ -368,7 +368,7 @@ export function ContactsTab({
 
       {/* Company */}
       {company && (
-        <div className="rounded-xl border bg-card p-5">
+        <div className="rq-card-wrapper rq-card">
           <div className="flex items-center gap-3">
             <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-muted">
               <Building2 className="h-4 w-4 text-muted-foreground" />

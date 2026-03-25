@@ -70,9 +70,9 @@ export function SectionCard({
   noPad?: boolean;
 }) {
   return (
-    <div className="bg-card border border-border rounded-xl overflow-hidden">
+    <div className="rq-card-wrapper">
       {title && (
-        <div className="flex items-center justify-between px-5 py-3.5 border-b border-border/60">
+        <div className="rq-card-header">
           <div className="flex items-center gap-2">
             {Icon && <Icon size={16} className="text-muted-foreground" strokeWidth={1.5} />}
             <span className="rq-section-title">{title}</span>
@@ -80,7 +80,7 @@ export function SectionCard({
           {action}
         </div>
       )}
-      {noPad ? children : <div className="p-5">{children}</div>}
+      {noPad ? children : <div className="rq-card">{children}</div>}
     </div>
   );
 }

@@ -242,33 +242,44 @@ All reusable UI patterns are defined as global CSS classes in `apps/requity-os/a
 
 | Class | Purpose | Use Instead Of |
 |-------|---------|----------------|
+| **Card Structure** | | |
+| `.rq-card-wrapper` | Card shell (rounded container with border + bg) | `rounded-xl border border-border bg-card overflow-hidden` |
+| `.rq-card-header` | Card header bar with bottom border | `flex items-center justify-between px-5 py-3.5 border-b border-border` |
+| `.rq-list-row` | List item row inside cards (border, hover) | `flex items-center px-5 py-2 border-b last:border-b-0 hover:bg-muted/40` |
+| `.rq-card` | Card content padding (20px) | `p-5` |
+| `.rq-panel` | Panel padding (24px) | `p-6` |
+| `.rq-tab-content` | Tab content area padding (24px) | `p-6` |
+| `.rq-sidebar-section` | Sidebar section padding | `py-4 px-5` |
+| `.rq-page-content` | Page content padding (responsive) | `p-6 lg:p-8` |
+| **Inline Editing** | | |
 | `.inline-field` | Hover-to-reveal editable field (Input, Select, Textarea) | `h-10 bg-background border-input px-3 py-2` |
 | `.inline-field-label` | Label above inline field (`<span>`, not `<Label>`) | `text-xs text-muted-foreground` |
-| `.rq-section-title` | Section heading on detail pages/cards | `text-[13px] font-semibold text-foreground` |
-| `.rq-micro-label` | Uppercase micro label (KPI labels, table group headers) | `text-[10px] font-semibold uppercase tracking-[0.06em] text-muted-foreground` |
-| `.rq-th` | Table header cell (commercial UW, pro forma grids) | `text-[10px] font-semibold uppercase tracking-[0.06em] text-muted-foreground p-[9px_14px] border-b-2` |
+| **Typography** | | |
+| `.rq-section-title` | Section heading on detail pages/cards (13px, semibold) | `text-[13px] font-semibold text-foreground` |
+| `.rq-micro-label` | Uppercase micro label (section card headers, KPI labels, table group headers) | `text-[10px] font-semibold uppercase tracking-[0.06em] text-muted-foreground` |
 | `.rq-stat-value` | Large bold number in KPI/stat blocks | `text-xl font-bold tabular-nums` |
+| `.num` | Tabular figures for financial data | `font-variant-numeric: tabular-nums` |
+| **Table** | | |
+| `.rq-th` | Table header cell (commercial UW, pro forma grids) | `text-[10px] font-semibold uppercase tracking-[0.06em] text-muted-foreground p-[9px_14px] border-b-2` |
+| `.rq-td` | Financial table data cell (counterpart to `.rq-th`) | `px-[14px] py-[9px] text-[13px] tabular-nums align-middle` |
+| `.rq-total-row` | Total row in financial tables (`<tr>` or flex wrapper) | `border-t-2 border-border bg-muted/30 font-semibold` |
+| `.rq-subtotal-row` | Subtotal row (lighter than total) | `border-t border-border font-medium` |
 | `.rq-numeric-input` | Editable number cell in financial tables | `rounded-lg border border-border bg-accent/50 px-[7px] py-[5px] text-xs tabular-nums outline-none` |
+| **Buttons & Links** | | |
 | `.rq-action-btn` | Ghost-style action button (add/edit/remove) | `inline-flex items-center gap-1.5 px-3.5 py-[7px] rounded-lg border text-xs font-medium...` |
 | `.rq-action-btn-sm` | Small variant of action button | Same but `px-2.5 py-[5px] text-[11px]` |
-| `.rq-empty-state` | **DEPRECATED** — use `<EmptyState>` component instead | `py-12 text-center text-muted-foreground` |
+| `.rq-link` | Inline text link (primary color, hover underline) | `text-sm text-primary hover:underline underline-offset-4` |
+| `.rq-link-muted` | Subtle text link (muted, brightens on hover) | `text-sm text-muted-foreground hover:text-foreground` |
+| **Financial Values** | | |
 | `.rq-value-positive` | Green text for positive financial values | `text-emerald-600 dark:text-emerald-400` |
 | `.rq-value-negative` | Red text for negative financial values | `text-red-600 dark:text-red-400` |
 | `.rq-value-warn` | Amber text for warning/caution values | `text-amber-600 dark:text-amber-400` |
-| `.rq-total-row` | Total row in financial tables (`<tr>` or flex wrapper) | `border-t-2 border-border bg-muted/30 font-semibold` |
-| `.rq-subtotal-row` | Subtotal row (lighter than total) | `border-t border-border font-medium` |
-| `.rq-td` | Financial table data cell (counterpart to `.rq-th`) | `px-[14px] py-[9px] text-[13px] tabular-nums align-middle` |
+| **Layout** | | |
 | `.rq-field-grid` | 2-column responsive grid for detail pages | `grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4` |
 | `.rq-field-grid-3` | 3-column grid for denser layouts | `grid grid-cols-1 md:grid-cols-3 gap-x-6 gap-y-4` |
 | `.rq-field-stack` | Tight vertical stack for drawers/forms | `flex flex-col space-y-3` |
-| `.rq-link` | Inline text link (primary color, hover underline) | `text-sm text-primary hover:underline underline-offset-4` |
-| `.rq-link-muted` | Subtle text link (muted, brightens on hover) | `text-sm text-muted-foreground hover:text-foreground` |
 | `.rq-divider` | Horizontal section divider | `border-t border-border` |
-| `.rq-card` | Card padding (20px) | `p-5` |
-| `.rq-panel` | Panel padding (24px) | `p-6` |
-| `.rq-tab-content` | Tab content area padding (24px) | `p-6` |
-| `.rq-page-content` | Page content padding (responsive) | `p-6 lg:p-8` |
-| `.num` | Tabular figures for financial data | `font-variant-numeric: tabular-nums` |
+| **Motion** | | |
 | `.rq-transition` | Hover state transitions (color, bg, border, opacity) | `transition-colors duration-150` |
 | `.rq-transition-transform` | Movement transitions (transform + opacity) | `transition-all duration-200` |
 | `.rq-transition-panel` | Modal/sheet/panel transitions | `transition-all duration-300` |
@@ -277,12 +288,48 @@ All reusable UI patterns are defined as global CSS classes in `apps/requity-os/a
 | `.rq-animate-slide-in-right` | Slide from right (peek panels, drawers) | Custom keyframes |
 | `.rq-animate-scale-in` | Scale-up entrance (popovers, dropdowns) | Custom keyframes |
 | `.rq-animate-pulse-once` | Single attention pulse (alerts, notifications) | Custom keyframes |
+| **Deprecated** | | |
+| `.rq-empty-state` | **DEPRECATED** — use `<EmptyState>` component instead | `py-12 text-center text-muted-foreground` |
+
+### Card Anatomy (Standard Pattern)
+
+Every card across the platform should follow this structure:
+
+```tsx
+<div className="rq-card-wrapper">
+  {/* Header with icon + title + optional action */}
+  <div className="rq-card-header">
+    <div className="flex items-center gap-2">
+      <Icon className="h-4 w-4 text-muted-foreground" strokeWidth={1.5} />
+      <h4 className="rq-micro-label">Section Title</h4>
+    </div>
+    <Button variant="ghost" size="sm">Action</Button>
+  </div>
+
+  {/* Content area (padded) */}
+  <div className="rq-card">
+    {/* Fields, grids, etc. */}
+  </div>
+
+  {/* OR: List rows (no padding wrapper needed) */}
+  {items.map(item => (
+    <div key={item.id} className="rq-list-row gap-3">
+      {/* Row content */}
+    </div>
+  ))}
+</div>
+```
+
+- Use `rq-section-title` (13px semibold) for collapsible/clickable section headers (Documents, etc.)
+- Use `rq-micro-label` (10px uppercase) for card section headers (Deal Team, Broker, Property, etc.)
+- The `SectionCard` component (`components/crm/contact-360/contact-detail-shared.tsx`) implements this pattern and should be used in CRM pages.
 
 ### When Building New Components
 
-1. Check this table first. If a class exists for the pattern, use it.
-2. Never copy long className strings from existing components. Use the global class.
-3. If you find a repeated pattern with no global class, add one to globals.css before proceeding.
+1. **Check this table first.** If a class exists for the pattern, use it.
+2. **Never hardcode card/header/row styles.** Use `rq-card-wrapper`, `rq-card-header`, `rq-list-row`.
+3. **Never copy long className strings** from existing components. Use the global class.
+4. If you find a repeated pattern with no global class, **add one to globals.css before proceeding**.
 
 ---
 
