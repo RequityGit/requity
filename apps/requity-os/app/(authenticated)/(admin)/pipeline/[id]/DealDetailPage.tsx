@@ -67,10 +67,12 @@ import {
 import { DealOverviewSummary } from "@/components/pipeline/DealOverviewSummary";
 import { UnderwritingPanel } from "@/components/pipeline/UnderwritingPanel";
 import type { CommercialUWData } from "@/components/pipeline/tabs/UnderwritingTab";
+import { useDocumentsTabData } from "@/components/pipeline/tabs/DocumentsTab/useDocumentsTabData";
+import { useCommercialUwData } from "@/components/pipeline/tabs/useCommercialUwData";
+import { useDealNavigation } from "@/hooks/useDealNavigation";
 
 // Lazy-load heavy tab components (only downloaded when user navigates to that tab)
 const DocumentsTab = lazy(() => import("@/components/pipeline/tabs/DocumentsTab").then(m => ({ default: m.DocumentsTab })));
-import type { DealDocument } from "@/components/pipeline/tabs/DocumentsTab/types";
 const PropertyTab = lazy(() => import("@/components/pipeline/tabs/PropertyTab").then(m => ({ default: m.PropertyTab })));
 const PeopleTab = lazy(() => import("@/components/pipeline/tabs/PeopleTab").then(m => ({ default: m.default })));
 const UnderwritingTab = lazy(() => import("@/components/pipeline/tabs/UnderwritingTab").then(m => ({ default: m.UnderwritingTab })));
@@ -87,7 +89,6 @@ import { reorderTabs } from "@/lib/actions/layout-actions";
 import {
   type UnifiedDeal,
   type StageConfig,
-  type DealCondition,
   STAGES,
   CAPITAL_SIDE_COLORS,
   ASSET_CLASS_LABELS,
@@ -106,7 +107,6 @@ import { useSoftphoneMaybe } from "@/lib/twilio/softphone-context";
 
 const ActionCenterTab = lazy(() => import("@/components/pipeline/tabs/ActionCenterTab").then(m => ({ default: m.ActionCenterTab })));
 const FundraisingTab = lazy(() => import("@/components/fundraising/FundraisingTab").then(m => ({ default: m.FundraisingTab })));
-import type { DealPreviewNote } from "@/components/pipeline/DealNotePreview";
 import {
   logQuickActionV2,
   addDealTeamMember,
@@ -182,17 +182,12 @@ export interface DealContactRow {
 interface DealDetailPageProps {
   deal: UnifiedDeal;
   stageConfigs: StageConfig[];
-  conditions: DealCondition[];
   teamMembers: Profile[];
   dealTeamMembers: DealTeamMember[];
   dealTeamContacts: DealTeamContact[];
   dealContacts: DealContactRow[];
   currentUserId: string;
   currentUserName: string;
-  documents: Record<string, unknown>[];
-  commercialUWData: CommercialUWData | null;
-  pinnedNote: DealPreviewNote | null;
-  recentNote: DealPreviewNote | null;
   isSuperAdmin?: boolean;
 }
 
@@ -209,17 +204,12 @@ export function DealDetailPage(props: DealDetailPageProps) {
 function DealDetailPageInner({
   deal,
   stageConfigs,
-  conditions,
   teamMembers,
   dealTeamMembers,
   dealTeamContacts,
   dealContacts,
   currentUserId,
   currentUserName,
-  documents,
-  commercialUWData,
-  pinnedNote,
-  recentNote,
   isSuperAdmin = false,
 }: DealDetailPageProps) {
   const showFundraisingTab = deal.stage === "execution" || deal.stage === "closed";
@@ -577,7 +567,6 @@ function DealDetailPageInner({
                 <Suspense fallback={<TabLoadingFallback />}>
                   <UnderwritingContent
                     deal={deal}
-                    commercialUWData={commercialUWData}
                     visibilityContext={visibilityContext}
                   />
                 </Suspense>
@@ -602,25 +591,10 @@ function DealDetailPageInner({
             <div className={activeTab !== "Documents" ? "hidden" : undefined}>
               <SectionErrorBoundary fallbackTitle="Could not load documents">
               <Suspense fallback={<TabLoadingFallback />}>
-                <DocumentsTab
-                  documents={documents as unknown as DealDocument[]}
-                  conditions={conditions}
-                  dealId={deal.id}
-                  dealName={(deal as { name?: string }).name ?? undefined}
-                  dealStage={deal.stage}
-                  googleDriveFolderUrl={(deal as unknown as Record<string, unknown>).google_drive_folder_url as string | null}
+                <DocumentsTabWithData
+                  deal={deal}
                   currentUserId={currentUserId}
                   currentUserName={currentUserName}
-                  dealDocData={{
-                    id: deal.id,
-                    name: (deal as { name?: string }).name ?? "Deal",
-                    amount: (deal as unknown as Record<string, unknown>).amount as number | undefined,
-                    asset_class: deal.asset_class ?? undefined,
-                    capital_side: deal.capital_side ?? undefined,
-                    stage: deal.stage,
-                    property_data: (deal as unknown as Record<string, unknown>).property_data as Record<string, unknown> | undefined,
-                    uw_data: (deal.uw_data ?? undefined) as Record<string, unknown> | undefined,
-                  }}
                 />
               </Suspense>
               </SectionErrorBoundary>
@@ -709,6 +683,7 @@ function DealHeader({
   expectedClose: string | null | undefined;
 }) {
   const router = useRouter();
+  const dealNav = useDealNavigation(deal.id, deal.deal_number);
 
   // Dialog state (moved from old sidebar)
   const [logCallOpen, setLogCallOpen] = useState(false);
@@ -1111,6 +1086,31 @@ function DealHeader({
   return (
     <>
       <div className="flex flex-wrap items-center gap-2 md:gap-4 px-3 md:px-6 py-2.5 border-b flex-shrink-0">
+        {/* Prev/Next navigation (visible when navigating from pipeline) */}
+        {dealNav.totalDeals > 0 && (
+          <div className="flex items-center gap-0.5 shrink-0">
+            <button
+              onClick={dealNav.goToPrev}
+              disabled={!dealNav.hasPrev}
+              className="flex items-center justify-center h-7 w-7 rounded-md border bg-background text-muted-foreground hover:text-foreground hover:bg-muted disabled:opacity-30 disabled:cursor-not-allowed rq-transition cursor-pointer"
+              title="Previous deal (←)"
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </button>
+            <button
+              onClick={dealNav.goToNext}
+              disabled={!dealNav.hasNext}
+              className="flex items-center justify-center h-7 w-7 rounded-md border bg-background text-muted-foreground hover:text-foreground hover:bg-muted disabled:opacity-30 disabled:cursor-not-allowed rq-transition cursor-pointer"
+              title="Next deal (→)"
+            >
+              <ChevronRight className="h-4 w-4" />
+            </button>
+            <span className="text-[10px] text-muted-foreground ml-1 tabular-nums">
+              {dealNav.currentIndex + 1}/{dealNav.totalDeals}
+            </span>
+          </div>
+        )}
+
         {/* A. Icon */}
         <div className="h-9 w-9 rounded-[10px] bg-primary/5 border flex items-center justify-center flex-shrink-0">
           <Layers className="h-[18px] w-[18px] text-muted-foreground" />
@@ -1847,11 +1847,9 @@ function DealHeader({
 
 function UnderwritingContent({
   deal,
-  commercialUWData,
   visibilityContext,
 }: {
   deal: UnifiedDeal;
-  commercialUWData: CommercialUWData | null;
   visibilityContext: VisibilityContext;
 }) {
   const isCommercial = isCommercialDeal(deal);
@@ -1860,13 +1858,10 @@ function UnderwritingContent({
     (deal.google_sheet_id
       ? `https://docs.google.com/spreadsheets/d/${deal.google_sheet_id}/edit`
       : null);
-  if (isCommercial && commercialUWData) {
+
+  if (isCommercial) {
     return (
-      <UnderwritingTab
-        data={commercialUWData}
-        dealId={deal.id}
-        sheetUrl={sheetUrl}
-      />
+      <CommercialUwWithData dealId={deal.id} sheetUrl={sheetUrl} />
     );
   }
   return (
@@ -1874,6 +1869,73 @@ function UnderwritingContent({
       dealId={deal.id}
       uwData={deal.uw_data}
       visibilityContext={visibilityContext}
+    />
+  );
+}
+
+// ─── Client-Side Data Wrappers ───
+
+function CommercialUwWithData({ dealId, sheetUrl }: { dealId: string; sheetUrl: string | null }) {
+  const { data, loading, error } = useCommercialUwData(dealId);
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
+
+  if (error || !data) {
+    return (
+      <div className="flex items-center justify-center py-12 text-sm text-muted-foreground">
+        {error ?? "No underwriting data available"}
+      </div>
+    );
+  }
+
+  return <UnderwritingTab data={data} dealId={dealId} sheetUrl={sheetUrl} />;
+}
+
+function DocumentsTabWithData({
+  deal,
+  currentUserId,
+  currentUserName,
+}: {
+  deal: UnifiedDeal;
+  currentUserId: string;
+  currentUserName: string;
+}) {
+  const { documents, conditions, loading } = useDocumentsTabData(deal.id);
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
+
+  return (
+    <DocumentsTab
+      documents={documents}
+      conditions={conditions}
+      dealId={deal.id}
+      dealName={(deal as { name?: string }).name ?? undefined}
+      dealStage={deal.stage}
+      googleDriveFolderUrl={(deal as unknown as Record<string, unknown>).google_drive_folder_url as string | null}
+      currentUserId={currentUserId}
+      currentUserName={currentUserName}
+      dealDocData={{
+        id: deal.id,
+        name: (deal as { name?: string }).name ?? "Deal",
+        amount: (deal as unknown as Record<string, unknown>).amount as number | undefined,
+        asset_class: deal.asset_class ?? undefined,
+        capital_side: deal.capital_side ?? undefined,
+        stage: deal.stage,
+        property_data: (deal as unknown as Record<string, unknown>).property_data as Record<string, unknown> | undefined,
+        uw_data: (deal.uw_data ?? undefined) as Record<string, unknown> | undefined,
+      }}
     />
   );
 }

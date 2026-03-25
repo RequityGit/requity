@@ -3,6 +3,7 @@
 import { useState, useMemo, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { storeDealOrder } from "@/hooks/useDealNavigation";
 import { cn } from "@/lib/utils";
 import { DealFilters, type FilterState } from "./DealFilters";
 import { filterByDateAdded } from "@/components/ui/date-added-filter";
@@ -102,6 +103,9 @@ export function PipelineView() {
 
   const handleDealClick = useCallback(
     (deal: UnifiedDeal, e?: React.MouseEvent) => {
+      // Store deal order for prev/next navigation on deal pages
+      storeDealOrder(orderedDealIds);
+
       // On mobile or modifier+click, navigate to full deal page
       if (isMobile || (e && (e.metaKey || e.ctrlKey || e.shiftKey))) {
         router.push(`/pipeline/${deal.deal_number || deal.id}`);
