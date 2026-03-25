@@ -721,8 +721,8 @@ export function DealOverviewSummary({ dealId, deal }: DealOverviewSummaryProps) 
 
             {/* Borrower & Broker contact info moved to People tab */}
 
-            {/* Cost Basis & Existing Loans (bottom half of deal summary) */}
-            <CostBasisSection dealId={dealId} loanPurpose={loanPurpose} />
+            {/* Refinance Overview & Existing Loans (refi deals only) */}
+            {isRefi && <CostBasisSection dealId={dealId} loanPurpose={loanPurpose} />}
           </OverviewCard>
 
           {/* Proposed Terms (only if not early stage) */}
