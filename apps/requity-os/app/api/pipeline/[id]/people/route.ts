@@ -15,6 +15,7 @@ type BrokerContact = {
   last_name: string | null;
   email: string | null;
   phone: string | null;
+  company_name: string | null;
   broker_company: { name: string } | null;
 } | null;
 
@@ -61,7 +62,7 @@ async function fetchBrokerData(
     const { data: brokerData, error: brokerErr } = await admin
       .from("crm_contacts" as never)
       .select(
-        "id, first_name, last_name, email, phone, broker_company:companies!crm_contacts_company_id_fkey(name)" as never
+        "id, first_name, last_name, email, phone, company_name, broker_company:companies!crm_contacts_company_id_fkey(name)" as never
       )
       .eq("id" as never, brokerContactId as never)
       .single();

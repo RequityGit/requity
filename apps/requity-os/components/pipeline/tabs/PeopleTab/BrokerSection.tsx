@@ -10,7 +10,6 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { Briefcase, Search, X, Loader2, Plus, UserPlus } from "lucide-react";
-import { cn } from "@/lib/utils";
 import { useDebounce } from "@/hooks/useDebounce";
 import { formatPhoneNumber } from "@/lib/format";
 import { showSuccess, showError } from "@/lib/toast";
@@ -19,6 +18,7 @@ import {
   searchContactsForDealLink,
   quickCreateContactAction,
   updateUwDataAction,
+  updateContactFieldAction,
 } from "@/app/(authenticated)/(admin)/pipeline/actions";
 import {
   ExpandablePersonCard,
@@ -38,6 +38,7 @@ interface BrokerContact {
   last_name: string | null;
   email: string | null;
   phone: string | null;
+  company_name?: string | null;
   broker_company?: { name: string } | null;
 }
 
@@ -110,6 +111,30 @@ export function BrokerSection({
     [dealId, brokerExtra]
   );
 
+  const saveContactField = useCallback(
+    (field: "email" | "phone" | "company_name", value: string) => {
+      if (!localBroker) return;
+      // Optimistic update
+      if (field === "company_name") {
+        setLocalBroker((prev) =>
+          prev
+            ? { ...prev, company_name: value || null, broker_company: value ? { name: value } : null }
+            : prev
+        );
+      } else {
+        setLocalBroker((prev) => (prev ? { ...prev, [field]: value || null } : prev));
+      }
+      startTransition(async () => {
+        const result = await updateContactFieldAction(localBroker.id, field, value || null);
+        if (result.error) {
+          showError(result.error);
+          setLocalBroker(broker); // rollback
+        }
+      });
+    },
+    [localBroker, broker]
+  );
+
   if (!localBroker) {
     return (
       <div className="rounded-xl border bg-card">
@@ -137,7 +162,7 @@ export function BrokerSection({
     .join("")
     .toUpperCase()
     .slice(0, 2);
-  const company = localBroker.broker_company?.name ?? "";
+  const company = localBroker.broker_company?.name || localBroker.company_name || "";
 
   return (
     <div className="rounded-xl border bg-card overflow-hidden">
@@ -167,39 +192,28 @@ export function BrokerSection({
         }
       >
         <div className="grid grid-cols-1 md:grid-cols-3 gap-x-6 gap-y-2">
-          <div className="space-y-0">
-            <span className="inline-field-label">Email</span>
-            <div className="text-[13px] px-2 py-1">
-              {localBroker.email ? (
-                <a href={`mailto:${localBroker.email}`} className="rq-link-muted">
-                  {localBroker.email}
-                </a>
-              ) : (
-                <span className="text-muted-foreground/40">Add...</span>
-              )}
-            </div>
-          </div>
-          <div className="space-y-0">
-            <span className="inline-field-label">Phone</span>
-            <div className="text-[13px] px-2 py-1 num">
-              {localBroker.phone ? (
-                <a
-                  href={`tel:${localBroker.phone.replace(/\D/g, "").slice(-10)}`}
-                  className="rq-link-muted"
-                >
-                  {formatPhoneNumber(localBroker.phone)}
-                </a>
-              ) : (
-                <span className="text-muted-foreground/40">Add...</span>
-              )}
-            </div>
-          </div>
-          <div className="space-y-0">
-            <span className="inline-field-label">Company</span>
-            <div className="text-[13px] px-2 py-1">
-              {company || <span className="text-muted-foreground/40">Add...</span>}
-            </div>
-          </div>
+          <InlineField
+            label="Email"
+            type="text"
+            value={localBroker.email ?? ""}
+            placeholder="Add..."
+            onSave={(v) => saveContactField("email", v)}
+          />
+          <InlineField
+            label="Phone"
+            type="text"
+            value={localBroker.phone ?? ""}
+            placeholder="Add..."
+            onSave={(v) => saveContactField("phone", v)}
+            formatValue={(v) => (v ? formatPhoneNumber(String(v)) : "")}
+          />
+          <InlineField
+            label="Company"
+            type="text"
+            value={company}
+            placeholder="Add..."
+            onSave={(v) => saveContactField("company_name", v)}
+          />
           <InlineField
             label="NMLS #"
             type="text"
