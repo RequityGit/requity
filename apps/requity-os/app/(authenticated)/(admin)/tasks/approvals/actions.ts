@@ -19,6 +19,7 @@ import type { Json } from "@/lib/supabase/types";
 // User-facing labels for entity types (keys stay as DB values)
 const ENTITY_TYPE_DISPLAY: Record<string, string> = {
   opportunity: "deal",
+  unified_deal: "deal",
   loan: "loan",
   draw_request: "draw request",
   payoff: "payoff",
@@ -539,15 +540,19 @@ export async function submitForApproval(input: {
     // Create in-app notification for the approver
     try {
       const approverAdmin = createAdminClient();
+      const dealName = [borrowerName !== "Unknown" ? borrowerName : null, amount, assetType]
+        .filter(Boolean)
+        .join(" - ") || "Deal";
       await nq(approverAdmin).notifications().insert({
         user_id: routing.approver_id,
         notification_slug: "approval-submitted",
-        title: `New approval: ${taskTitle}`,
+        title: `Approval: ${dealName}`,
         body: input.submissionNotes || `${auth.profile?.full_name || "Someone"} submitted a ${ENTITY_TYPE_DISPLAY[input.entityType] ?? input.entityType} for your approval.`,
         priority: routing.auto_priority,
-        entity_type: "task",
-        entity_id: approvalId,
-        action_url: `/tasks/approvals/${approvalId}`,
+        entity_type: "deal",
+        entity_id: input.entityId,
+        entity_label: dealName,
+        action_url: `/pipeline/${input.entityId}`,
       });
     } catch (e) {
       console.error("Error creating notification:", e);
@@ -695,15 +700,19 @@ export async function approveRequest(approvalId: string, decisionNotes?: string)
       const borrowerName = dealSnapshot && typeof dealSnapshot === "object"
         ? (dealSnapshot.borrower_name as string) || "Deal"
         : "Deal";
+      const dealLabel = dealSnapshot && typeof dealSnapshot === "object"
+        ? (dealSnapshot.deal_name as string) || borrowerName
+        : borrowerName;
       await nq(admin).notifications().insert({
         user_id: approval.submitted_by,
         notification_slug: "approval-decided",
-        title: `Approved: ${borrowerName} approved`,
-        body: `An approver approved your ${ENTITY_TYPE_DISPLAY[approval.entity_type] ?? approval.entity_type} request.${decisionNotes ? ` Notes: ${decisionNotes}` : ""}`,
+        title: `Approved: ${dealLabel}`,
+        body: `Your ${ENTITY_TYPE_DISPLAY[approval.entity_type] ?? approval.entity_type} has been approved.${decisionNotes ? ` Notes: ${decisionNotes}` : ""}`,
         priority: "normal",
-        entity_type: "task",
-        entity_id: approvalId,
-        action_url: `/tasks/approvals/${approvalId}`,
+        entity_type: "deal",
+        entity_id: approval.entity_id,
+        entity_label: dealLabel,
+        action_url: `/pipeline/${approval.entity_id}`,
       });
     } catch (e) {
       console.error("Error creating notification:", e);
@@ -830,9 +839,10 @@ export async function requestChanges(approvalId: string, decisionNotes: string) 
         title: `Changes requested: ${dealName}`,
         body: `An approver requested changes: ${decisionNotes.substring(0, 100)}`,
         priority: "high",
-        entity_type: "task",
-        entity_id: approvalId,
-        action_url: `/tasks/approvals/${approvalId}`,
+        entity_type: "deal",
+        entity_id: approval.entity_id,
+        entity_label: dealName,
+        action_url: `/pipeline/${approval.entity_id}`,
       });
     } catch (e) {
       console.error("Error creating notification:", e);
@@ -980,15 +990,19 @@ export async function declineRequest(approvalId: string, decisionNotes: string) 
       const borrowerName = dealSnapshot && typeof dealSnapshot === "object"
         ? (dealSnapshot.borrower_name as string) || "Deal"
         : "Deal";
+      const dealLabel = dealSnapshot && typeof dealSnapshot === "object"
+        ? (dealSnapshot.deal_name as string) || borrowerName
+        : borrowerName;
       await nq(admin).notifications().insert({
         user_id: approval.submitted_by,
         notification_slug: "approval-decided",
-        title: `Declined: ${borrowerName}`,
-        body: `An approver declined your ${ENTITY_TYPE_DISPLAY[approval.entity_type] ?? approval.entity_type}: ${decisionNotes.substring(0, 100)}`,
+        title: `Declined: ${dealLabel}`,
+        body: `Your ${ENTITY_TYPE_DISPLAY[approval.entity_type] ?? approval.entity_type} approval was declined: ${decisionNotes.substring(0, 100)}`,
         priority: "high",
-        entity_type: "task",
-        entity_id: approvalId,
-        action_url: `/tasks/approvals/${approvalId}`,
+        entity_type: "deal",
+        entity_id: approval.entity_id,
+        entity_label: dealLabel,
+        action_url: `/pipeline/${approval.entity_id}`,
       });
     } catch (e) {
       console.error("Error creating notification:", e);
