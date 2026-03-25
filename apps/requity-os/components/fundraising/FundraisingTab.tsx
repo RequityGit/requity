@@ -63,6 +63,11 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
+import {
+  Popover,
+  PopoverTrigger,
+  PopoverContent,
+} from "@/components/ui/popover";
 import { FormModal } from "@/components/forms/contexts/FormModal";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
@@ -619,9 +624,19 @@ function FundraiseDashboard({
       header: "Questions",
       cell: (row) =>
         row.questions ? (
-          <span className="text-sm text-muted-foreground max-w-[200px] truncate block" title={row.questions}>
-            {row.questions}
-          </span>
+          <Popover>
+            <PopoverTrigger asChild>
+              <button
+                type="button"
+                className="text-sm text-muted-foreground max-w-[200px] truncate block text-left hover:text-foreground rq-transition cursor-pointer"
+              >
+                {row.questions}
+              </button>
+            </PopoverTrigger>
+            <PopoverContent className="w-80 max-h-60 overflow-y-auto text-sm" align="start">
+              <p className="whitespace-pre-wrap">{row.questions}</p>
+            </PopoverContent>
+          </Popover>
         ) : (
           <span className="text-sm text-muted-foreground">&mdash;</span>
         ),
