@@ -189,14 +189,19 @@ async function uploadFileToDrive(
 
 async function listFilesInFolder(
   accessToken: string,
-  folderId: string
-): Promise<Array<{ id: string; name: string; mimeType: string; size: string }>> {
-  const allFiles: Array<{ id: string; name: string; mimeType: string; size: string }> = [];
+  folderId: string,
+  folderName?: string,
+  depth = 0
+): Promise<Array<{ id: string; name: string; mimeType: string; size: string; folderName?: string }>> {
+  const MAX_DEPTH = 5; // prevent infinite recursion
+  const allFiles: Array<{ id: string; name: string; mimeType: string; size: string; folderName?: string }> = [];
+  const subfolders: Array<{ id: string; name: string }> = [];
   let pageToken: string | undefined;
 
+  // List all items (files + subfolders) in this folder
   do {
     const params = new URLSearchParams({
-      q: `'${folderId}' in parents and trashed = false and mimeType != 'application/vnd.google-apps.folder'`,
+      q: `'${folderId}' in parents and trashed = false`,
       fields: "nextPageToken, files(id, name, mimeType, size)",
       pageSize: "100",
       supportsAllDrives: "true",
@@ -215,9 +220,32 @@ async function listFilesInFolder(
     }
 
     const data = await res.json();
-    allFiles.push(...(data.files ?? []));
+    for (const file of (data.files ?? [])) {
+      if (file.mimeType === "application/vnd.google-apps.folder") {
+        subfolders.push({ id: file.id, name: file.name });
+      } else {
+        allFiles.push({ ...file, folderName: folderName || undefined });
+      }
+    }
     pageToken = data.nextPageToken;
   } while (pageToken);
+
+  // Recurse into subfolders
+  if (depth < MAX_DEPTH) {
+    for (const sub of subfolders) {
+      try {
+        const subFiles = await listFilesInFolder(
+          accessToken,
+          sub.id,
+          sub.name,
+          depth + 1
+        );
+        allFiles.push(...subFiles);
+      } catch (err) {
+        console.error(`Failed to list subfolder ${sub.name}: ${err}`);
+      }
+    }
+  }
 
   return allFiles;
 }
@@ -591,7 +619,7 @@ Deno.serve(async (req: Request) => {
         }
 
         for (const { folderId, visibility } of foldersToScan) {
-          let driveFiles: Array<{ id: string; name: string; mimeType: string; size: string }>;
+          let driveFiles: Array<{ id: string; name: string; mimeType: string; size: string; folderName?: string }>;
           try {
             driveFiles = await listFilesInFolder(accessToken, folderId);
           } catch (listErr) {
@@ -632,12 +660,17 @@ Deno.serve(async (req: Request) => {
                 continue;
               }
 
+              // Use the Drive subfolder name as category, falling back to "general"
+              const category = driveFile.folderName
+                ? driveFile.folderName.toLowerCase().replace(/[^a-z0-9_]/g, "_")
+                : "general";
+
               const { error: insertErr } = await admin
                 .from("unified_deal_documents")
                 .insert({
                   deal_id: deal_id,
                   document_name: driveFile.name,
-                  category: "general",
+                  category: category,
                   storage_path: storagePath,
                   google_drive_file_id: driveFile.id,
                   file_size_bytes: driveFile.size ? parseInt(driveFile.size, 10) : null,
