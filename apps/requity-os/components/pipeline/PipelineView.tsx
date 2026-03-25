@@ -21,7 +21,6 @@ import { usePipelineStore } from "@/stores/pipeline-store";
 import {
   useAllDeals,
   useStageConfigs,
-  useRelationshipDealIds,
   useTeamMembers,
   useIntakeItems,
   useCurrentUserId,
@@ -72,7 +71,6 @@ export function PipelineView() {
   // Read all data from Zustand store
   const deals = useAllDeals();
   const stageConfigs = useStageConfigs();
-  const relationshipDealIds = useRelationshipDealIds();
   const teamMembers = useTeamMembers();
   const intakeItems = useIntakeItems();
   const currentUserId = useCurrentUserId();
@@ -222,7 +220,6 @@ export function PipelineView() {
         <PipelineKanban
           deals={filteredDeals}
           stageConfigs={stageConfigs}
-          relationshipDealIds={relationshipDealIds}
           onDealClick={handleDealClick}
           onDealHover={handleDealHover}
           onTogglePriority={handleTogglePriority}

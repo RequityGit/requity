@@ -2,7 +2,7 @@
 
 import { createClient } from "@/lib/supabase/client";
 import { usePipelineStore } from "./pipeline-store";
-import type { UnifiedDeal, UnifiedStage } from "@/components/pipeline/pipeline-types";
+import type { UnifiedDeal, UnifiedStage, StageConfig } from "@/components/pipeline/pipeline-types";
 import {
   mergeUwData,
   getPropertySelectColumns,
@@ -12,6 +12,15 @@ import { daysInStage, getAlertLevel } from "@/components/pipeline/pipeline-types
 import type { RealtimeChannel } from "@supabase/supabase-js";
 
 let channel: RealtimeChannel | null = null;
+
+// Cache stageConfigMap to avoid recreating on every realtime event
+let _scmCache: { configs: StageConfig[]; map: Map<string, StageConfig> } | null = null;
+function getStageConfigMap(configs: StageConfig[]): Map<string, StageConfig> {
+  if (_scmCache && _scmCache.configs === configs) return _scmCache.map;
+  const map = new Map(configs.map((sc) => [sc.stage, sc]));
+  _scmCache = { configs, map };
+  return map;
+}
 
 /**
  * Check if a realtime UPDATE requires re-fetching joined data.
@@ -71,10 +80,7 @@ export function subscribeToPipeline() {
             // merge only the changed DB columns + recomputed derived fields.
             if (existing && !needsEnrichment(existing, raw)) {
               const days = daysInStage(raw.stage_entered_at as string);
-              const stageConfigs = store.stageConfigs;
-              const configMap = new Map(
-                stageConfigs.map((sc) => [sc.stage, sc])
-              );
+              const configMap = getStageConfigMap(store.stageConfigs);
               const config = configMap.get(raw.stage as UnifiedStage);
               const rawUwData = (raw.uw_data ?? {}) as Record<string, unknown>;
               store.applyRealtimeUpdate(id, {
@@ -117,8 +123,7 @@ export function unsubscribeFromPipeline() {
  */
 async function enrichDeal(raw: UnifiedDeal): Promise<UnifiedDeal> {
   const supabase = createClient();
-  const stageConfigs = usePipelineStore.getState().stageConfigs;
-  const stageConfigMap = new Map(stageConfigs.map((sc) => [sc.stage, sc]));
+  const stageConfigMap = getStageConfigMap(usePipelineStore.getState().stageConfigs);
 
   // Fetch joined contact + company data (realtime payload doesn't include joins)
   const [propertyRes, borrowerRes, contactRes, companyRes] = await Promise.all([
