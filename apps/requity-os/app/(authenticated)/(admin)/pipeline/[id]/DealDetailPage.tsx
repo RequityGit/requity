@@ -51,6 +51,7 @@ import {
   Trash2,
   Send,
   FileText,
+  AlertTriangle,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -65,8 +66,8 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { DealOverviewSummary } from "@/components/pipeline/DealOverviewSummary";
-import { UnderwritingPanel } from "@/components/pipeline/UnderwritingPanel";
-import type { CommercialUWData } from "@/components/pipeline/tabs/UnderwritingTab";
+import { EmptyState } from "@/components/shared/EmptyState";
+
 import { useDocumentsTabData } from "@/components/pipeline/tabs/DocumentsTab/useDocumentsTabData";
 import { useCommercialUwData } from "@/components/pipeline/tabs/useCommercialUwData";
 import { useDealNavigation } from "@/hooks/useDealNavigation";
@@ -567,7 +568,6 @@ function DealDetailPageInner({
                 <Suspense fallback={<TabLoadingFallback />}>
                   <UnderwritingContent
                     deal={deal}
-                    visibilityContext={visibilityContext}
                   />
                 </Suspense>
               </SectionErrorBoundary>
@@ -1847,11 +1847,10 @@ function DealHeader({
 
 function UnderwritingContent({
   deal,
-  visibilityContext,
 }: {
   deal: UnifiedDeal;
-  visibilityContext: VisibilityContext;
 }) {
+  const router = useRouter();
   const isCommercial = isCommercialDeal(deal);
   const sheetUrl =
     deal.google_sheet_url ??
@@ -1865,11 +1864,14 @@ function UnderwritingContent({
     );
   }
   return (
-    <UnderwritingPanel
-      dealId={deal.id}
-      uwData={deal.uw_data}
-      visibilityContext={visibilityContext}
-    />
+    <div className="rq-tab-content">
+      <EmptyState
+        icon={AlertTriangle}
+        title="Could not load underwriting model"
+        description="The underwriting record could not be initialized. Try refreshing the page."
+        action={{ label: "Refresh", onClick: () => router.refresh() }}
+      />
+    </div>
   );
 }
 
