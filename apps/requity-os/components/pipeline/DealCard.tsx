@@ -47,7 +47,7 @@ function getFirstName(fullName: string): string {
   return fullName.trim().split(/\s+/)[0] ?? fullName;
 }
 
-function getDealAddress(deal: UnifiedDeal): string {
+export function getDealAddress(deal: UnifiedDeal): string {
   // Check property_data first
   const pd = deal.property_data;
   if (pd) {
@@ -72,7 +72,7 @@ function getDealAddress(deal: UnifiedDeal): string {
   return "";
 }
 
-function getPropertyName(deal: UnifiedDeal): string | null {
+export function getPropertyName(deal: UnifiedDeal): string | null {
   // For commercial deals, deal.name IS the property name
   // Check property_data.property_name first, then fall back to deal.name
   const pd = deal.property_data;
@@ -83,7 +83,7 @@ function getPropertyName(deal: UnifiedDeal): string | null {
   return deal.name || null;
 }
 
-function getLoanTypeLabel(deal: UnifiedDeal): string | null {
+export function getLoanTypeLabel(deal: UnifiedDeal): string | null {
   const lt = deal.uw_data?.loan_type;
   if (!lt || typeof lt !== "string") return null;
   // Clean up common values for display
@@ -102,7 +102,7 @@ function getLoanTypeLabel(deal: UnifiedDeal): string | null {
   return MAP[cleaned] ?? cleaned;
 }
 
-function getAmountLabel(deal: UnifiedDeal): string {
+export function getAmountLabel(deal: UnifiedDeal): string {
   const isEquity = deal.capital_side === "equity";
   const isClosed = deal.stage === "closed";
   const isLateStage = deal.stage === "negotiation" || deal.stage === "execution";

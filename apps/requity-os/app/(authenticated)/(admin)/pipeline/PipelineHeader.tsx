@@ -20,7 +20,7 @@ export function PipelineHeader({ intakeCount }: PipelineHeaderProps) {
     <div className="flex flex-col gap-3 mb-6 md:mb-8 md:flex-row md:items-center md:justify-between">
       <div>
         <h1 className="text-xl md:text-2xl font-bold tracking-[-0.04em] text-foreground">Pipeline</h1>
-        <p className="text-sm text-muted-foreground mt-1">
+        <p className="hidden md:block text-sm text-muted-foreground mt-1">
           Unified deal pipeline across debt and equity.
           {" "}Forward deals to{" "}
           <button
@@ -37,7 +37,7 @@ export function PipelineHeader({ intakeCount }: PipelineHeaderProps) {
         </p>
       </div>
       {intakeCount > 0 && (
-        <div className="flex items-center gap-2 rounded-lg border border-amber-500/20 bg-amber-500/5 px-3 py-2">
+        <div className="hidden md:flex items-center gap-2 rounded-lg border border-amber-500/20 bg-amber-500/5 px-3 py-2">
           <div className="flex h-5 w-5 shrink-0 items-center justify-center rounded bg-gradient-to-br from-amber-500 to-amber-600">
             <Mail className="h-3 w-3 text-black" />
           </div>
