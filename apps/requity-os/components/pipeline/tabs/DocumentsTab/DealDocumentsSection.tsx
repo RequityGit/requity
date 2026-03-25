@@ -3,11 +3,11 @@
 import React, { useState, useCallback } from "react";
 import {
   FileText,
+  Presentation,
   Sparkles,
   Loader2,
   Plus,
   Trash2,
-  ChevronDown,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -32,12 +32,6 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { CollapsibleSection } from "./CollapsibleSection";
 import { useCreditMemo } from "./useCreditMemo";
@@ -251,19 +245,19 @@ export function DealDocumentsSection({
     }
   }, [dealDocData, memo, saveMemoNow]);
 
-  // ─── Generate Investor Summary DOCX ───
-  const handleGenerateInvestorSummary = useCallback(async () => {
+  // ─── Generate Investor Deck PPTX ───
+  const handleGenerateInvestorDeck = useCallback(async () => {
     setGenerating("investor_summary");
-    const toastId = showLoading("Generating investor summary...");
+    const toastId = showLoading("Generating investor deck...");
     try {
       await saveDeckNow();
-      const { generateInvestorSummary } = await import(
-        "@/lib/docgen/generate-investor-summary"
+      const { generateInvestorDeck } = await import(
+        "@/lib/docgen/generate-investor-deck"
       );
-      await generateInvestorSummary({ deal: dealDocData, deck });
-      resolveLoading(toastId, "Investor summary downloaded");
+      await generateInvestorDeck({ deal: dealDocData, deck });
+      resolveLoading(toastId, "Investor deck downloaded");
     } catch (err) {
-      rejectLoading(toastId, "Could not generate investor summary", err);
+      rejectLoading(toastId, "Could not generate investor deck", err);
     } finally {
       setGenerating(null);
     }
@@ -351,40 +345,34 @@ export function DealDocumentsSection({
           </TooltipContent>
         </Tooltip>
       </TooltipProvider>
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button
-            variant="default"
-            size="sm"
-            className="h-7 text-xs"
-            disabled={!!generating || !hasDrafts}
-          >
-            {generating ? (
-              <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" />
-            ) : (
-              <FileText className="h-3.5 w-3.5 mr-1" />
-            )}
-            Generate DOCX
-            <ChevronDown className="h-3 w-3 ml-1" />
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end">
-          <DropdownMenuItem
-            onClick={handleGenerateMemo}
-            disabled={!memo || !!generating}
-          >
-            <FileText className="h-3.5 w-3.5 mr-2" />
-            Credit Memo
-          </DropdownMenuItem>
-          <DropdownMenuItem
-            onClick={handleGenerateInvestorSummary}
-            disabled={!!generating}
-          >
-            <FileText className="h-3.5 w-3.5 mr-2" />
-            Investor Summary
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
+      <Button
+        variant="default"
+        size="sm"
+        className="h-7 text-xs"
+        onClick={handleGenerateMemo}
+        disabled={!memo || !!generating}
+      >
+        {generating === "credit_memo" ? (
+          <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" />
+        ) : (
+          <FileText className="h-3.5 w-3.5 mr-1" />
+        )}
+        Generate DOCX
+      </Button>
+      <Button
+        variant="default"
+        size="sm"
+        className="h-7 text-xs"
+        onClick={handleGenerateInvestorDeck}
+        disabled={!deck || !!generating}
+      >
+        {generating === "investor_summary" ? (
+          <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" />
+        ) : (
+          <Presentation className="h-3.5 w-3.5 mr-1" />
+        )}
+        Generate PPTX
+      </Button>
     </div>
   );
 
