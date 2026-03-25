@@ -17,6 +17,8 @@ const PALETTE_CLASSES: Record<AvatarPalette, string> = {
 interface ExpandablePersonCardProps {
   avatar: { initials: string; palette: AvatarPalette };
   name: string;
+  /** URL to navigate when clicking the name (opens in new tab) */
+  nameHref?: string;
   subtitle?: string;
   badge?: string;
   rightContent?: ReactNode;
@@ -28,6 +30,7 @@ interface ExpandablePersonCardProps {
 export function ExpandablePersonCard({
   avatar,
   name,
+  nameHref,
   subtitle,
   badge,
   rightContent,
@@ -56,7 +59,19 @@ export function ExpandablePersonCard({
 
         {/* Name & subtitle */}
         <div className="flex-1 min-w-0">
-          <div className="text-[13px] font-medium truncate">{name}</div>
+          {nameHref ? (
+            <a
+              href={nameHref}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-[13px] font-medium truncate block hover:underline underline-offset-4"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {name}
+            </a>
+          ) : (
+            <div className="text-[13px] font-medium truncate">{name}</div>
+          )}
           {subtitle && (
             <div className="text-[11px] text-muted-foreground truncate">{subtitle}</div>
           )}
