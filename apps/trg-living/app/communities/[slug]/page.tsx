@@ -23,6 +23,8 @@ export default async function CommunityPage({ params }: { params: Promise<{ slug
             headline,
             description_html,
             address_display,
+            contact_email,
+            contact_phone,
             city,
             state_code,
             zip_code,
@@ -197,12 +199,28 @@ export default async function CommunityPage({ params }: { params: Promise<{ slug
                                     {community.city}{community.state_code ? `, ${community.state_code}` : ''} {community.zip_code}
                                 </p>
                             </div>
+                            <div className="pt-8 border-t border-slate-100 space-y-4">
+                                {community.contact_phone && (
+                                    <div className="flex items-center gap-3">
+                                        <a href={`tel:${community.contact_phone}`} className="font-bold text-[#333333] hover:text-blue-600 transition-colors">
+                                            {community.contact_phone}
+                                        </a>
+                                    </div>
+                                )}
+                                {community.contact_email && (
+                                    <div className="flex items-center gap-3">
+                                        <a href={`mailto:${community.contact_email}`} className="font-bold text-[#333333] hover:text-blue-600 transition-colors truncate">
+                                            {community.contact_email}
+                                        </a>
+                                    </div>
+                                )}
+                            </div>
                         </section>
                     </div>
                 </div>
 
                 {/* LISTINGS */}
-                <section id="available-listings" className="scroll-mt-24 border-t pt-24 border-slate-100">
+                <section id="available-units" className="scroll-mt-24 border-t pt-24 border-slate-100">
                     <h2 className="text-[2.18rem] font-bold text-[#333333] mb-12 uppercase tracking-tight text-center">
                         Available Units
                     </h2>

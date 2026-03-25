@@ -21,7 +21,7 @@ const RichTextEditor = dynamic(() => import('@/components/RichTextEditor'), {
 // Explicit allowlist — only real pm_communities columns are sent to Postgres
 const DB_FIELDS = [
     'name', 'slug', 'region_id', 'headline', 'description_html',
-    'address_display', 'city', 'state_code', 'zip_code',
+    'address_display', 'city', 'state_code', 'zip_code', 'contact_email', 'contact_phone',
     'beds_range', 'baths_range', 'starting_price', 'status',
     'featured_media_id',
 ];
@@ -37,6 +37,8 @@ export interface CommunityFormData {
     city: string;
     state_code: string;
     zip_code: string;
+    contact_email: string;
+    contact_phone: string;
     beds_range: string;
     baths_range: string;
     starting_price: string;
@@ -71,7 +73,8 @@ export default function CommunityForm({
 
     const [formData, setFormData] = useState<CommunityFormData>({
         name: '', slug: '', region_id: '', headline: '', description_html: '',
-        address_display: '', city: '', state_code: '', zip_code: '',
+        address_display: '', city: '', state_code: '', zip_code: '', 
+        contact_email: '', contact_phone: '',
         beds_range: 'Studio - 3 Beds', baths_range: '1 - 2 Baths',
         starting_price: 'Starting at $1,200', status: 'draft',
         featured_media_id: undefined,
@@ -130,6 +133,28 @@ export default function CommunityForm({
                                 value={formData.slug}
                             />
                         </div>                        
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4 border-t border-slate-100">
+                        <div className="space-y-1">
+                            <label className="text-[10px] font-bold text-slate-400 uppercase ml-1">Direct Contact Email</label>
+                            <input
+                                type="email"
+                                placeholder="manager@community.com"
+                                className="w-full p-4 rounded-2xl border border-slate-200 focus:ring-4 focus:ring-blue-50 transition-all outline-none text-sm"
+                                value={formData.contact_email || ''}
+                                onChange={(e) => setFormData({...formData, contact_email: e.target.value})}
+                            />
+                        </div>
+                        <div className="space-y-1">
+                            <label className="text-[10px] font-bold text-slate-400 uppercase ml-1">Direct Phone Number</label>
+                            <input
+                                type="tel"
+                                placeholder="(555) 000-0000"
+                                className="w-full p-4 rounded-2xl border border-slate-200 focus:ring-4 focus:ring-blue-50 transition-all outline-none text-sm"
+                                value={formData.contact_phone || ''}
+                                onChange={(e) => setFormData({...formData, contact_phone: e.target.value})}
+                            />
+                        </div>
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div className="space-y-1">

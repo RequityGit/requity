@@ -27,7 +27,8 @@ export default async function ManageCommunityPage({ params }: { params: Promise<
             id, name, slug, region_id, headline, description_html,
             address_display, city, state_code, zip_code,
             beds_range, baths_range, starting_price, status, featured_media_id,
-            pm_community_amenities (amenity_id),
+            pm_community_amenities (amenity_id),            
+            contact_email, contact_phone,
             pm_gallery (
                 id,
                 media_id,

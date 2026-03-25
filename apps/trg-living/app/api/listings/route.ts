@@ -42,14 +42,10 @@ export async function GET(request: Request) {
 
     $('.js-listing-item').each((_, el) => {
       const $item = $(el);
-      
-      // 🛡️ SECONDARY SHIELD: Manual Verification
-      // We check if the address actually contains the requested city name.
-      // This prevents "Unfiltered Overflows" if the URL parameter fails.
       const address = $item.find('.js-listing-address').text().trim();
       
       if (!address.toLowerCase().includes(city.toLowerCase())) {
-        return; // Skip this listing, it doesn't match our city
+        return;
       }
 
       const detailLink = $item.find('.js-listing-title a').attr('href') || '';

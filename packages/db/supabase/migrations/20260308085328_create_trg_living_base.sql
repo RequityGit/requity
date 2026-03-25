@@ -48,6 +48,8 @@ CREATE TABLE IF NOT EXISTS public.pm_communities (
     baths_range TEXT DEFAULT '1 - 2 Baths',
     starting_price TEXT DEFAULT 'Starting at $1,200',
     status TEXT DEFAULT 'draft' CHECK (status IN ('draft', 'published')),
+    contact_email TEXT,
+    contact_phone TEXT,
     metadata JSONB DEFAULT '{}'::jsonb
 );
 
@@ -203,6 +205,7 @@ CREATE POLICY "Admins manage leads" ON public.pm_leads FOR ALL TO authenticated 
 CREATE INDEX IF NOT EXISTS idx_pm_communities_region_id ON public.pm_communities(region_id);
 CREATE INDEX IF NOT EXISTS idx_pm_communities_featured_media ON public.pm_communities(featured_media_id);
 CREATE INDEX IF NOT EXISTS idx_pm_communities_slug ON public.pm_communities(slug);
+CREATE INDEX IF NOT EXISTS idx_pm_communities_contact_email ON public.pm_communities(contact_email);
 CREATE INDEX IF NOT EXISTS idx_pm_communities_status ON public.pm_communities(status);
 CREATE INDEX IF NOT EXISTS idx_pm_gallery_community_id ON public.pm_gallery(community_id);
 CREATE INDEX IF NOT EXISTS idx_pm_gallery_media_id ON public.pm_gallery(media_id);
