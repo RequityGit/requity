@@ -3,6 +3,7 @@ import { createClient } from "@supabase/supabase-js";
 import {
   buildCreditMemoPrompt,
   buildInvestorDeckPrompt,
+  buildUnifiedDraftPrompt,
   buildSectionPrompt,
 } from "@/lib/docgen/prompts";
 
@@ -69,13 +70,13 @@ export async function POST(
 
     const body = await req.json();
     const { document_type, section } = body as {
-      document_type: "credit_memo" | "investor_deck";
+      document_type: "credit_memo" | "investor_deck" | "unified";
       section?: string;
     };
 
-    if (!document_type || !["credit_memo", "investor_deck"].includes(document_type)) {
+    if (!document_type || !["credit_memo", "investor_deck", "unified"].includes(document_type)) {
       return NextResponse.json(
-        { error: "Invalid document_type. Must be 'credit_memo' or 'investor_deck'." },
+        { error: "Invalid document_type. Must be 'credit_memo', 'investor_deck', or 'unified'." },
         { status: 400 }
       );
     }
@@ -106,8 +107,8 @@ export async function POST(
       primary_contact: deal.primary_contact,
     };
 
-    // If credit memo, also include existing memo data
-    if (document_type === "credit_memo") {
+    // If credit memo or unified, also include existing memo data
+    if (document_type === "credit_memo" || document_type === "unified") {
       const { data: memoData } = await supabase
         .from("deal_credit_memos")
         .select("loan_terms, operating_statement, sources_and_uses, sponsor_profile, guarantor_details")
@@ -124,7 +125,10 @@ export async function POST(
     // ── Build prompt ──
     let prompt: string;
     if (section) {
-      prompt = buildSectionPrompt(section, document_type, dealData);
+      const sectionDocType = document_type === "unified" ? "credit_memo" : document_type;
+      prompt = buildSectionPrompt(section, sectionDocType, dealData);
+    } else if (document_type === "unified") {
+      prompt = buildUnifiedDraftPrompt(dealData);
     } else if (document_type === "credit_memo") {
       prompt = buildCreditMemoPrompt(dealData);
     } else {
@@ -141,7 +145,7 @@ export async function POST(
       },
       body: JSON.stringify({
         model: "claude-sonnet-4-6",
-        max_tokens: 4096,
+        max_tokens: document_type === "unified" ? 6144 : 4096,
         messages: [
           {
             role: "user",

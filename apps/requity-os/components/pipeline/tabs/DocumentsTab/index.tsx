@@ -18,12 +18,9 @@ import { DocPreviewModal } from "./DocPreviewModal";
 import { CollapsibleSection } from "./CollapsibleSection";
 import type { DealDocument, DocumentsTabProps } from "./types";
 
-// Lazy-load document generation sections (heavy dependencies: pptxgenjs, docx)
-const InvestorDeckSection = lazy(() =>
-  import("./InvestorDeckSection").then((m) => ({ default: m.InvestorDeckSection }))
-);
-const CreditMemoSection = lazy(() =>
-  import("./CreditMemoSection").then((m) => ({ default: m.CreditMemoSection }))
+// Lazy-load document generation section (heavy dependencies: docx)
+const DealDocumentsSection = lazy(() =>
+  import("./DealDocumentsSection").then((m) => ({ default: m.DealDocumentsSection }))
 );
 
 function SectionLoader() {
@@ -153,20 +150,11 @@ export function DocumentsTab({
         />
       </CollapsibleSection>
 
-      {/* Document Generation: Investor Deck */}
+      {/* Document Generation: Credit Memo & Investor Summary */}
       {dealDocData && (
-        <SectionErrorBoundary fallbackTitle="Could not load investor deck editor">
+        <SectionErrorBoundary fallbackTitle="Could not load document drafting">
           <Suspense fallback={<SectionLoader />}>
-            <InvestorDeckSection dealId={dealId} dealDocData={dealDocData} />
-          </Suspense>
-        </SectionErrorBoundary>
-      )}
-
-      {/* Document Generation: Credit Memo */}
-      {dealDocData && (
-        <SectionErrorBoundary fallbackTitle="Could not load credit memo editor">
-          <Suspense fallback={<SectionLoader />}>
-            <CreditMemoSection dealId={dealId} dealDocData={dealDocData} />
+            <DealDocumentsSection dealId={dealId} dealDocData={dealDocData} />
           </Suspense>
         </SectionErrorBoundary>
       )}
