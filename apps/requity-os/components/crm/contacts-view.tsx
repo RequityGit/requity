@@ -54,6 +54,8 @@ import {
 } from "@/components/ui/pagination";
 import Link from "next/link";
 import type { CrmContactRow } from "./crm-v2-page";
+import { MobileContactList } from "./mobile-contact-list";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 const PAGE_SIZE = 50;
 
@@ -88,6 +90,7 @@ export function ContactsView({
   const [page, setPage] = useState(1);
   const confirm = useConfirm();
   const tableScrollRef = useRef<HTMLDivElement>(null);
+  const isMobile = useIsMobile();
 
   async function handleDelete(id: string, name: string) {
     const ok = await confirm({
@@ -120,6 +123,15 @@ export function ContactsView({
     const newUrl = str ? `?${str}` : window.location.pathname;
     window.history.replaceState(null, "", newUrl);
   }, [debouncedSearch, relFilter, stageFilter, dateAdded]);
+
+  // Reset hidden filters on mobile so they don't silently exclude contacts
+  useEffect(() => {
+    if (isMobile) {
+      setRelFilter("all");
+      setStageFilter("all");
+      setDateAdded("all");
+    }
+  }, [isMobile]);
 
   useEffect(() => {
     setPage(1);
@@ -254,6 +266,20 @@ export function ContactsView({
 
   return (
     <div className="space-y-3">
+      {/* Mobile: iPhone-style alphabetical list */}
+      <div className="md:hidden">
+        <MobileContactList
+          contacts={filteredContacts}
+          allCount={contacts.length}
+          teamMembers={teamMembers}
+          currentUserId={currentUserId}
+          search={contactSearch}
+          onSearchChange={setContactSearch}
+        />
+      </div>
+
+      {/* Desktop: full table with filters */}
+      <div className="hidden md:block space-y-3">
         <div className="flex items-center gap-2.5 flex-wrap">
           <div className="relative min-w-0 w-full md:min-w-[240px] md:w-auto md:flex-1 max-w-none md:max-w-sm">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
@@ -610,7 +636,7 @@ export function ContactsView({
             )}
           </div>
         </div>
-
+      </div>
     </div>
   );
 }

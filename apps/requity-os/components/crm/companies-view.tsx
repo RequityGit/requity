@@ -41,6 +41,8 @@ import {
   PaginationContent,
   PaginationItem,
 } from "@/components/ui/pagination";
+import { MobileCompanyList } from "./mobile-company-list";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 const PAGE_SIZE = 50;
 
@@ -60,6 +62,7 @@ export function CompaniesView({ companies, isSuperAdmin = false }: CompaniesView
   const [page, setPage] = useState(1);
   const confirm = useConfirm();
   const tableScrollRef = useRef<HTMLDivElement>(null);
+  const isMobile = useIsMobile();
 
   async function handleDelete(id: string, name: string) {
     const ok = await confirm({
@@ -81,6 +84,13 @@ export function CompaniesView({ companies, isSuperAdmin = false }: CompaniesView
       showError("Could not delete company", "An unexpected error occurred");
     }
   }
+
+  // Reset hidden filters on mobile
+  useEffect(() => {
+    if (isMobile) {
+      setDateAdded("all");
+    }
+  }, [isMobile]);
 
   useEffect(() => {
     setPage(1);
@@ -198,6 +208,18 @@ export function CompaniesView({ companies, isSuperAdmin = false }: CompaniesView
 
   return (
     <div className="space-y-3">
+      {/* Mobile: iPhone-style alphabetical list */}
+      <div className="md:hidden">
+        <MobileCompanyList
+          companies={filteredCompanies}
+          allCount={companies.length}
+          search={companySearch}
+          onSearchChange={setCompanySearch}
+        />
+      </div>
+
+      {/* Desktop: full table with filters */}
+      <div className="hidden md:block space-y-3">
         <div className="flex items-center gap-2.5 flex-wrap">
           <div className="relative flex-1 min-w-0 sm:min-w-[240px] max-w-sm">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
@@ -403,7 +425,7 @@ export function CompaniesView({ companies, isSuperAdmin = false }: CompaniesView
             )}
           </div>
         </div>
-
+      </div>
     </div>
   );
 }
