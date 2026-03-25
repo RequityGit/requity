@@ -23,6 +23,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { showSuccess, showError } from "@/lib/toast";
+import { useConfirm } from "@/components/shared/ConfirmDialog";
 import {
   createDealDocumentUploadUrl,
   saveDealDocumentRecord,
@@ -98,6 +99,7 @@ export function DocumentsSection({
   currentUserId?: string;
   currentUserName?: string;
 }) {
+  const confirm = useConfirm();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploading, startUpload] = useTransition();
   const [deletingId, setDeletingId] = useState<string | null>(null);
@@ -323,6 +325,14 @@ export function DocumentsSection({
   );
 
   async function handleDelete(docId: string, docName: string) {
+    const ok = await confirm({
+      title: "Permanently delete document?",
+      description: `"${docName}" will be permanently removed. This cannot be undone.`,
+      confirmLabel: "Delete permanently",
+      destructive: true,
+    });
+    if (!ok) return;
+
     setDeletingId(docId);
     const result = await deleteDealDocumentV2(docId);
     if (result.error) {
@@ -701,19 +711,21 @@ export function DocumentsSection({
                             <Archive className="h-3 w-3" strokeWidth={1.5} />
                           </button>
                         )}
-                        <button
-                          type="button"
-                          onClick={() => handleDelete(doc.id, doc.document_name)}
-                          disabled={deletingId === doc.id}
-                          className="p-1 text-muted-foreground hover:text-destructive transition-colors cursor-pointer bg-transparent border-0"
-                          title="Delete"
-                        >
-                          {deletingId === doc.id ? (
-                            <Loader2 className="h-3 w-3 animate-spin" />
-                          ) : (
-                            <Trash2 className="h-3 w-3" strokeWidth={1.5} />
-                          )}
-                        </button>
+                        {isArchived && (
+                          <button
+                            type="button"
+                            onClick={() => handleDelete(doc.id, doc.document_name)}
+                            disabled={deletingId === doc.id}
+                            className="p-1 text-muted-foreground hover:text-destructive transition-colors cursor-pointer bg-transparent border-0"
+                            title="Delete permanently"
+                          >
+                            {deletingId === doc.id ? (
+                              <Loader2 className="h-3 w-3 animate-spin" />
+                            ) : (
+                              <Trash2 className="h-3 w-3" strokeWidth={1.5} />
+                            )}
+                          </button>
+                        )}
                       </div>
                     </div>
                   );
