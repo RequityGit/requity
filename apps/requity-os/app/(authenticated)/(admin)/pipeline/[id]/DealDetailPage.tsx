@@ -2035,7 +2035,7 @@ function DocumentsTabWithData({
   currentUserName: string;
 }) {
   const googleDriveFolderId = (deal as unknown as Record<string, unknown>).google_drive_folder_id as string | null;
-  const { documents, conditions, loading } = useDocumentsTabData(deal.id, googleDriveFolderId);
+  const { documents, conditions, loading, refetch } = useDocumentsTabData(deal.id, googleDriveFolderId);
 
   if (loading) {
     return (
@@ -2055,6 +2055,7 @@ function DocumentsTabWithData({
       googleDriveFolderId={googleDriveFolderId}
       currentUserId={currentUserId}
       currentUserName={currentUserName}
+      onUploadComplete={refetch}
       dealDocData={{
         id: deal.id,
         name: (deal as { name?: string }).name ?? "Deal",
