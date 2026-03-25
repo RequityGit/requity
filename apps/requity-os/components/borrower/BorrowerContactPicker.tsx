@@ -81,7 +81,7 @@ export function BorrowerContactPicker({
     if (!editing) return;
     if (!debouncedQuery || debouncedQuery.trim().length < 2) {
       setResults([]);
-      setIsOpen(false);
+      setHighlightIndex(-1);
       return;
     }
 
@@ -110,7 +110,7 @@ export function BorrowerContactPicker({
     setQuery(hasContact ? "" : displayName);
     setEditing(true);
     setResults([]);
-    setIsOpen(false);
+    setIsOpen(true);
     setTimeout(() => {
       inputRef.current?.focus();
       inputRef.current?.select();
@@ -189,36 +189,46 @@ export function BorrowerContactPicker({
         return;
       }
 
-      // If dropdown is open with results, handle arrow nav
-      if (isOpen && results.length > 0) {
-        // +1 for "Create new" option
-        const totalItems = results.length + 1;
-        if (e.key === "ArrowDown") {
-          e.preventDefault();
-          setHighlightIndex((prev) => (prev < totalItems - 1 ? prev + 1 : 0));
-          return;
-        }
-        if (e.key === "ArrowUp") {
-          e.preventDefault();
-          setHighlightIndex((prev) => (prev > 0 ? prev - 1 : totalItems - 1));
-          return;
-        }
-        if (e.key === "Enter") {
-          e.preventDefault();
-          if (highlightIndex >= 0 && highlightIndex < results.length) {
-            handleSelectContact(results[highlightIndex]);
-          } else if (highlightIndex === results.length) {
-            handleCreateNew();
+      if (isOpen) {
+        const createEnabled = query.trim().length >= 2;
+        const totalItems = results.length + (createEnabled ? 1 : 0);
+
+        if (totalItems > 0) {
+          if (e.key === "ArrowDown") {
+            e.preventDefault();
+            setHighlightIndex((prev) =>
+              prev < totalItems - 1 ? prev + 1 : 0
+            );
+            return;
           }
-          return;
+          if (e.key === "ArrowUp") {
+            e.preventDefault();
+            setHighlightIndex((prev) =>
+              prev > 0 ? prev - 1 : totalItems - 1
+            );
+            return;
+          }
+          if (e.key === "Enter") {
+            e.preventDefault();
+            if (highlightIndex >= 0 && highlightIndex < results.length) {
+              handleSelectContact(results[highlightIndex]);
+            } else if (
+              createEnabled &&
+              highlightIndex === results.length
+            ) {
+              handleCreateNew();
+            } else {
+              commitAsText();
+            }
+            return;
+          }
         }
       }
 
-      // If no dropdown, Enter commits as text or creates new
+      // Fallback: Enter without dropdown navigation
       if (e.key === "Enter") {
         e.preventDefault();
         if (query.trim().length >= 2 && borrowingEntityId) {
-          // If there's a typed name and entity exists, offer to create
           handleCreateNew();
         } else {
           commitAsText();
@@ -291,7 +301,7 @@ export function BorrowerContactPicker({
             onChange={(e) => setQuery(e.target.value)}
             onKeyDown={handleKeyDown}
             onBlur={handleBlur}
-            placeholder="Search contacts or type name..."
+            placeholder="Search contacts"
             className="h-8 text-sm bg-transparent pr-8"
             autoComplete="off"
             disabled={linking}
@@ -313,7 +323,11 @@ export function BorrowerContactPicker({
         <div className="flex items-center gap-2 border-b px-3 py-2">
           <Search className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
           <span className="text-xs text-muted-foreground">
-            {results.length} contact{results.length !== 1 ? "s" : ""} found
+            {results.length > 0
+              ? `${results.length} contact${results.length !== 1 ? "s" : ""} found`
+              : debouncedQuery && debouncedQuery.trim().length >= 2 && !searching
+                ? "No contacts found"
+                : "Type to search contacts"}
           </span>
         </div>
         <div className="max-h-[200px] overflow-y-auto p-1">
@@ -342,33 +356,41 @@ export function BorrowerContactPicker({
               </div>
             </button>
           ))}
-          {/* Create new contact option */}
-          {query.trim().length >= 2 && (
-            <>
-              {results.length > 0 && <div className="border-t my-1" />}
-              <button
-                type="button"
-                className={cn(
-                  "relative flex w-full cursor-default select-none items-center gap-2.5 rounded-sm px-2 py-1.5 text-sm outline-none hover:bg-accent hover:text-accent-foreground",
-                  highlightIndex === results.length && "bg-accent text-accent-foreground"
-                )}
-                onMouseDown={(e) => e.preventDefault()}
-                onClick={handleCreateNew}
-              >
-                <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary/10">
-                  <UserPlus className="h-3.5 w-3.5 text-primary" />
-                </div>
-                <div className="flex flex-col items-start overflow-hidden">
-                  <span className="truncate font-medium">
-                    Create &quot;{query.trim()}&quot;
-                  </span>
-                  <span className="truncate text-xs text-muted-foreground">
-                    New CRM contact
-                  </span>
-                </div>
-              </button>
-            </>
-          )}
+          {/* Create new contact option - always visible */}
+          {results.length > 0 && <div className="border-t my-1" />}
+          <button
+            type="button"
+            className={cn(
+              "relative flex w-full cursor-default select-none items-center gap-2.5 rounded-sm px-2 py-1.5 text-sm outline-none",
+              query.trim().length >= 2
+                ? "hover:bg-accent hover:text-accent-foreground"
+                : "opacity-50 cursor-not-allowed",
+              highlightIndex === results.length &&
+                query.trim().length >= 2 &&
+                "bg-accent text-accent-foreground"
+            )}
+            onMouseDown={(e) => e.preventDefault()}
+            onClick={() => {
+              if (query.trim().length >= 2) handleCreateNew();
+            }}
+            disabled={query.trim().length < 2}
+          >
+            <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary/10">
+              <UserPlus className="h-3.5 w-3.5 text-primary" />
+            </div>
+            <div className="flex flex-col items-start overflow-hidden">
+              <span className="truncate font-medium">
+                {query.trim().length >= 2
+                  ? <>Create &quot;{query.trim()}&quot;</>
+                  : "+ Create New"}
+              </span>
+              <span className="truncate text-xs text-muted-foreground">
+                {query.trim().length >= 2
+                  ? "New CRM contact"
+                  : "Type a name to create"}
+              </span>
+            </div>
+          </button>
         </div>
       </PopoverContent>
     </Popover>
