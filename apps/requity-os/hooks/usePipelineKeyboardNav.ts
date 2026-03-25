@@ -153,10 +153,19 @@ export function usePipelineKeyboardNav({
         }
         case "ArrowLeft": {
           e.preventDefault();
-          if (curCard != null) {
+          if (curCol == null) {
+            // No selection — start from last card in rightmost non-empty column
+            for (let i = cols.length - 1; i >= 0; i--) {
+              if (cols[i].dealIds.length > 0) {
+                setSelectedColIdx(i);
+                setSelectedCardIdx(cols[i].dealIds.length - 1);
+                break;
+              }
+            }
+          } else if (curCard != null) {
             if (curCard > 0) {
               setSelectedCardIdx(curCard - 1);
-            } else if (curCol != null) {
+            } else {
               // At first card in column — jump to last card of previous non-empty column
               for (let i = curCol - 1; i >= 0; i--) {
                 if (cols[i].dealIds.length > 0) {
@@ -190,7 +199,16 @@ export function usePipelineKeyboardNav({
         }
         case "ArrowUp": {
           e.preventDefault();
-          if (curCol != null) {
+          if (curCol == null) {
+            // No selection — start from last non-empty column
+            for (let i = cols.length - 1; i >= 0; i--) {
+              if (cols[i].dealIds.length > 0) {
+                setSelectedColIdx(i);
+                setSelectedCardIdx(0);
+                break;
+              }
+            }
+          } else {
             for (let i = curCol - 1; i >= 0; i--) {
               if (cols[i].dealIds.length > 0) {
                 setSelectedColIdx(i);
