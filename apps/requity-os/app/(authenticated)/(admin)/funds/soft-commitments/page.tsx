@@ -36,13 +36,23 @@ export default async function SoftCommitmentsPage() {
 
   const deals = (rawDeals ?? []) as { id: string; name: string; fundraise_slug: string | null }[];
 
+  // Get current user info for email composer
+  const currentUserId = session.user.id;
+  const profileName = (session.profile as { full_name?: string })?.full_name;
+  const currentUserName = profileName || session.user.email || "Unknown";
+
   return (
     <div className="rq-page-content">
       <PageHeader
         title="Soft Commitments"
         description="Track and manage investor interest across fundraising deals"
       />
-      <SoftCommitmentsClient commitments={commitments} deals={deals} />
+      <SoftCommitmentsClient
+        commitments={commitments}
+        deals={deals}
+        currentUserId={currentUserId}
+        currentUserName={currentUserName}
+      />
     </div>
   );
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useCallback } from "react";
+import { useState, useMemo, useCallback, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -22,6 +22,7 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Label } from "@/components/ui/label";
@@ -40,6 +41,7 @@ import {
   BarChart3,
   Target,
   MessageSquare,
+  Mail,
 } from "lucide-react";
 import { formatCurrency, formatDate, formatPhoneNumber } from "@/lib/format";
 import { cn } from "@/lib/utils";
@@ -52,18 +54,31 @@ import {
   updateCommitmentStatus,
   updateCommitmentNotes,
   addManualCommitment,
+  bulkUpdateCommitmentStatus,
 } from "@/lib/fundraising/actions";
 import { showSuccess, showError } from "@/lib/toast";
+import { useConfirm } from "@/components/shared/ConfirmDialog";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { EmailComposeSheet } from "@/components/crm/email-compose-sheet";
+import { SelectionActionBar } from "./SelectionActionBar";
+import { BulkEmailComposer } from "./BulkEmailComposer";
 
 interface Props {
   commitments: SoftCommitment[];
   deals: { id: string; name: string; fundraise_slug: string | null }[];
+  currentUserId: string;
+  currentUserName: string;
 }
 
-export function SoftCommitmentsClient({ commitments, deals }: Props) {
+export function SoftCommitmentsClient({
+  commitments,
+  deals,
+  currentUserId,
+  currentUserName,
+}: Props) {
   const router = useRouter();
+  const confirm = useConfirm();
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [dealFilter, setDealFilter] = useState<string>("all");
@@ -72,6 +87,15 @@ export function SoftCommitmentsClient({ commitments, deals }: Props) {
     id: string;
     notes: string;
   } | null>(null);
+
+  // Selection state
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+
+  // Single email state
+  const [emailTarget, setEmailTarget] = useState<SoftCommitment | null>(null);
+
+  // Bulk email state
+  const [showBulkEmail, setShowBulkEmail] = useState(false);
 
   // KPI calculations
   const stats = useMemo(() => {
@@ -137,6 +161,40 @@ export function SoftCommitmentsClient({ commitments, deals }: Props) {
       router.refresh();
     }
   }, [notesDialog, router]);
+
+  // Clear selection when filters change
+  useEffect(() => {
+    setSelectedIds(new Set());
+  }, [search, statusFilter, dealFilter]);
+
+  // Bulk status change
+  const handleBulkStatusChange = useCallback(
+    async (status: CommitmentStatus) => {
+      const ids = Array.from(selectedIds);
+      const ok = await confirm({
+        title: `Change ${ids.length} commitments to ${status}?`,
+        description: `This will update the status of ${ids.length} selected commitment${ids.length > 1 ? "s" : ""}.`,
+        confirmLabel: `Mark as ${status}`,
+      });
+      if (!ok) return;
+
+      const result = await bulkUpdateCommitmentStatus(ids, status);
+      if (result.error) {
+        showError("Could not update statuses", result.error);
+      } else {
+        showSuccess(`${ids.length} commitment${ids.length > 1 ? "s" : ""} updated`);
+        setSelectedIds(new Set());
+        router.refresh();
+      }
+    },
+    [selectedIds, confirm, router]
+  );
+
+  // Get selected commitments for bulk email
+  const selectedCommitments = useMemo(
+    () => filtered.filter((c) => selectedIds.has(c.id)),
+    [filtered, selectedIds]
+  );
 
   const columns: Column<SoftCommitment>[] = [
     {
@@ -268,6 +326,11 @@ export function SoftCommitmentsClient({ commitments, deals }: Props) {
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
+            <DropdownMenuItem onClick={() => setEmailTarget(row)}>
+              <Mail className="h-3.5 w-3.5 mr-2" />
+              Send Email
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
             {COMMITMENT_STATUS_OPTIONS.filter(
               (o) => o.value !== row.status
             ).map((o) => (
@@ -278,6 +341,7 @@ export function SoftCommitmentsClient({ commitments, deals }: Props) {
                 Mark as {o.label}
               </DropdownMenuItem>
             ))}
+            <DropdownMenuSeparator />
             <DropdownMenuItem
               onClick={() =>
                 setNotesDialog({ id: row.id, notes: row.notes ?? "" })
@@ -379,6 +443,42 @@ export function SoftCommitmentsClient({ commitments, deals }: Props) {
         columns={columns}
         data={filtered}
         emptyMessage="No soft commitments found"
+        selectable
+        selectedIds={selectedIds}
+        onSelectionChange={setSelectedIds}
+      />
+
+      {/* Selection Action Bar */}
+      <SelectionActionBar
+        count={selectedIds.size}
+        onEmailSelected={() => setShowBulkEmail(true)}
+        onChangeStatus={handleBulkStatusChange}
+        onClearSelection={() => setSelectedIds(new Set())}
+      />
+
+      {/* Single Email Composer */}
+      <EmailComposeSheet
+        open={!!emailTarget}
+        onOpenChange={(open) => !open && setEmailTarget(null)}
+        toEmail={emailTarget?.email ?? ""}
+        toName={emailTarget?.name ?? ""}
+        linkedContactId={emailTarget?.contact_id ?? undefined}
+        currentUserId={currentUserId}
+        currentUserName={currentUserName}
+      />
+
+      {/* Bulk Email Composer */}
+      <BulkEmailComposer
+        open={showBulkEmail}
+        onOpenChange={setShowBulkEmail}
+        recipients={selectedCommitments}
+        currentUserId={currentUserId}
+        currentUserName={currentUserName}
+        onSendComplete={() => {
+          setSelectedIds(new Set());
+          setShowBulkEmail(false);
+          router.refresh();
+        }}
       />
 
       {/* Manual Commitment Dialog */}
