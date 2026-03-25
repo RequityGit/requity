@@ -342,9 +342,10 @@ export async function advanceStageAction(
         .eq("id" as never, dealId as never);
     }
 
-    // No revalidatePath — Supabase Realtime handles sync to all clients.
-    // Still revalidate the deal detail page so navigation cache is fresh.
-    await revalidateDealPaths(dealId);
+    // Revalidate deal detail page cache (UUID path only — skip DB query
+    // for deal_number to avoid blocking the response). Realtime handles
+    // kanban sync; this is just for the detail page's RSC cache.
+    revalidatePath(`/pipeline/${dealId}`);
     return { success: true };
   } catch (err: unknown) {
     console.error("advanceStageAction error:", err);
