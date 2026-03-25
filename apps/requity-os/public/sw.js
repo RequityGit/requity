@@ -134,5 +134,5 @@ self.addEventListener('notificationclick', (event) => {
 
 // ─── HELPERS ─────────────────────────────────
 function isStaticAsset(pathname) {
-  return /\.(js|css|png|jpg|jpeg|svg|woff2?|ttf|ico)$/i.test(pathname);
+  return /\.(js|css|png|jpg|jpeg|webp|gif|svg|woff2?|ttf|ico|webmanifest)$/i.test(pathname);
 }
