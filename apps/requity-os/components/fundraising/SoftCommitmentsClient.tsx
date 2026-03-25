@@ -41,7 +41,7 @@ import {
   Target,
   MessageSquare,
 } from "lucide-react";
-import { formatCurrency, formatDate } from "@/lib/format";
+import { formatCurrency, formatDate, formatPhoneNumber } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import type { SoftCommitment, CommitmentStatus } from "@/lib/fundraising/types";
 import {
@@ -160,6 +160,21 @@ export function SoftCommitmentsClient({ commitments, deals }: Props) {
           content
         );
       },
+    },
+    {
+      key: "phone",
+      header: "Phone",
+      cell: (row) =>
+        row.phone ? (
+          <a
+            href={`tel:${row.phone}`}
+            className="text-sm text-muted-foreground hover:text-foreground rq-transition"
+          >
+            {formatPhoneNumber(row.phone)}
+          </a>
+        ) : (
+          <span className="text-sm text-muted-foreground">&mdash;</span>
+        ),
     },
     {
       key: "deal",
