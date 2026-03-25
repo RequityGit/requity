@@ -415,12 +415,12 @@ function SendFormModal({
 // ─── Submission filtering helpers ───
 
 const COMPLETED_STATUSES = new Set(["submitted", "reviewed", "processed"]);
-const MIN_FILLED_FIELDS = 2;
 
-/** Count non-empty field values in a submission's data JSONB */
-function countFilledFields(data: Record<string, unknown>): number {
-  return Object.values(data).filter(
-    (v) => v !== null && v !== undefined && v !== ""
+/** Count user-entered (non-system) non-empty fields in submission data.
+ *  System/internal fields are prefixed with `_` (e.g. `_deal_name`, `_deal_amount_options`). */
+function countUserFields(data: Record<string, unknown>): number {
+  return Object.entries(data).filter(
+    ([k, v]) => !k.startsWith("_") && v !== null && v !== undefined && v !== ""
   ).length;
 }
 
@@ -483,11 +483,11 @@ export function FormsTab({ dealId }: FormsTabProps) {
     );
   }
 
-  // Hide empty/near-empty partial submissions (created on page load before user fills anything)
+  // Hide partial submissions with no user-entered data (auto-created on form open, only contain system _-prefixed fields)
   const visibleSubmissions = submissions.filter(
     (sub) =>
       COMPLETED_STATUSES.has(sub.status) ||
-      countFilledFields(sub.data) >= MIN_FILLED_FIELDS
+      countUserFields(sub.data) >= 1
   );
 
   const hasSubmissions = visibleSubmissions.length > 0;
