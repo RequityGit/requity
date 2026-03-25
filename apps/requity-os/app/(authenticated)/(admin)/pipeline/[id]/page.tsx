@@ -16,6 +16,7 @@ import {
 import { getSessionData } from "@/lib/auth/session-cache";
 import { getDealTeamContacts } from "@/app/services/deal-team.server";
 import type { DealTeamContact } from "@/app/types/deal-team";
+import { getDealApprovalInfo } from "../approval-actions";
 
 export const dynamic = "force-dynamic";
 
@@ -163,6 +164,11 @@ export default async function DealDetailRoute({ params }: PageProps) {
 
   const currentUserName = (session.profile as { full_name?: string | null }).full_name ?? "Unknown";
 
+  // Fetch approval info for the banner (only for analysis stage)
+  const approvalInfo = enrichedDeal.stage === "analysis" && enrichedDeal.approval_status
+    ? await getDealApprovalInfo(dealId)
+    : null;
+
   return (
     <DealDetailPage
       deal={enrichedDeal}
@@ -174,6 +180,7 @@ export default async function DealDetailRoute({ params }: PageProps) {
       dealTeamContacts={dealTeamContacts}
       dealContacts={dealContacts}
       isSuperAdmin={session.isSuperAdmin}
+      approvalInfo={approvalInfo}
     />
   );
 }
