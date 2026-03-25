@@ -54,6 +54,7 @@ import {
   AlertTriangle,
   XCircle,
   RotateCcw,
+  Check,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -91,6 +92,7 @@ import { reorderTabs } from "@/lib/actions/layout-actions";
 
 import {
   type UnifiedDeal,
+  type UnifiedStage,
   type StageConfig,
   STAGES,
   CAPITAL_SIDE_COLORS,
@@ -323,43 +325,39 @@ function DealDetailPageInner({
   const dealConfig = getDealDisplayConfig(deal);
   const shortLabel = dealConfig.shortLabel;
 
-  // Stage double-click navigation
+  // Stage change with optimistic update
   const [stageJumping, startStageJump] = useTransition();
+  const [optimisticStage, setOptimisticStage] = useState(deal.stage);
+  useEffect(() => { setOptimisticStage(deal.stage); }, [deal.stage]);
 
-  const handleStageDoubleClick = useCallback(
+  const handleStageChange = useCallback(
     (targetStage: string) => {
-      if (targetStage === deal.stage) return;
+      if (targetStage === optimisticStage) return;
 
-      const currentIdx = STAGES.findIndex((s) => s.key === deal.stage);
+      const previousStage = optimisticStage;
+      const currentIdx = STAGES.findIndex((s) => s.key === previousStage);
       const targetIdx = STAGES.findIndex((s) => s.key === targetStage);
       const label = STAGES.find((s) => s.key === targetStage)?.label ?? targetStage;
 
+      setOptimisticStage(targetStage as UnifiedStage);
+
       startStageJump(async () => {
-        if (targetIdx < currentIdx) {
-          const res = await regressStageAction(deal.id, targetStage);
-          if (res.error) {
-            showError(`Cannot move stage: ${res.error}`);
-          } else {
-            showSuccess(`Moved to ${label}`);
-            router.refresh();
-          }
+        const action = targetIdx < currentIdx ? regressStageAction : advanceStageAction;
+        const res = await action(deal.id, targetStage);
+        if (res.error) {
+          setOptimisticStage(previousStage);
+          showError(`Could not change stage: ${res.error}`);
         } else {
-          const res = await advanceStageAction(deal.id, targetStage);
-          if (res.error) {
-            showError(`Cannot advance: ${res.error}`);
-          } else {
-            showSuccess(`Advanced to ${label}`);
-            router.refresh();
-          }
+          showSuccess(`Moved to ${label}`);
         }
       });
     },
-    [deal.id, deal.stage, router]
+    [deal.id, optimisticStage]
   );
 
   // Derive metrics for condensed header
-  const currentStageIndex = STAGES.findIndex((s) => s.key === deal.stage);
-  const currentStageName = STAGES[currentStageIndex]?.label ?? deal.stage;
+  const currentStageIndex = STAGES.findIndex((s) => s.key === optimisticStage);
+  const currentStageName = STAGES[currentStageIndex]?.label ?? optimisticStage;
   const uwData = deal.uw_data as Record<string, unknown> | null;
   const loanAmount = (uwData?.loan_amount as number | null) ?? deal.amount ?? null;
   const assetClass = deal.asset_class
@@ -387,7 +385,7 @@ function DealDetailPageInner({
           currentStageIndex={currentStageIndex}
           currentStageName={currentStageName}
           stageJumping={stageJumping}
-          onStageDoubleClick={handleStageDoubleClick}
+          onStageChange={handleStageChange}
           assetClass={assetClass}
           loanAmount={loanAmount}
           expectedClose={expectedClose as string | null | undefined}
@@ -696,7 +694,7 @@ function DealHeader({
   currentStageIndex,
   currentStageName,
   stageJumping,
-  onStageDoubleClick,
+  onStageChange,
   assetClass,
   loanAmount,
   expectedClose,
@@ -715,7 +713,7 @@ function DealHeader({
   currentStageIndex: number;
   currentStageName: string;
   stageJumping: boolean;
-  onStageDoubleClick: (stage: string) => void;
+  onStageChange: (stage: string) => void;
   assetClass: string | null;
   loanAmount: number | null;
   expectedClose: string | null | undefined;
@@ -1192,25 +1190,57 @@ function DealHeader({
           </div>
         </div>
 
-        {/* C. Stage dots */}
-        <div className={cn("flex items-center gap-1 px-4 shrink-0", deal.status === "lost" && "opacity-40")}>
-          {STAGES.map((stage, i) => (
-            <div
-              key={stage.key}
+        {/* C. Stage selector */}
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <button
               className={cn(
-                "h-2 w-2 rounded-full",
-                currentStageIndex > i && "bg-emerald-500",
-                currentStageIndex === i && "bg-foreground ring-2 ring-foreground/15",
-                currentStageIndex < i && "bg-muted border border-border"
+                "flex items-center gap-1.5 px-2 py-1 rounded-md shrink-0",
+                "border border-transparent rq-transition",
+                "hover:border-border hover:bg-muted/40",
+                "focus:border-primary/60 focus:bg-background focus:ring-1 focus:ring-primary/20 focus:outline-none",
+                deal.status === "lost" && "opacity-40 pointer-events-none",
+                stageJumping && "pointer-events-none"
               )}
-              title={stage.label}
-              onDoubleClick={() => onStageDoubleClick(stage.key)}
-            />
-          ))}
-          <span className="text-xs font-semibold ml-1.5 hidden sm:inline">{currentStageName}</span>
-          <span className="text-[10.5px] text-muted-foreground ml-0.5 hidden sm:inline">({days}d)</span>
-          {stageJumping && <Loader2 className="h-3 w-3 animate-spin text-muted-foreground ml-1" />}
-        </div>
+              disabled={deal.status === "lost"}
+            >
+              <div className={cn(
+                "h-2 w-2 rounded-full shrink-0",
+                currentStageIndex > 0 ? "bg-emerald-500" : "bg-foreground"
+              )} />
+              <span className="text-xs font-semibold">{currentStageName}</span>
+              <span className="text-[10.5px] text-muted-foreground">({days}d)</span>
+              {stageJumping
+                ? <Loader2 className="h-3 w-3 animate-spin text-muted-foreground" />
+                : <ChevronDown className="h-3 w-3 text-muted-foreground" />
+              }
+            </button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="start" className="w-48">
+            {STAGES.map((stage, i) => {
+              const isCurrent = i === currentStageIndex;
+              const isCompleted = i < currentStageIndex;
+              const isFuture = i > currentStageIndex;
+              return (
+                <DropdownMenuItem
+                  key={stage.key}
+                  disabled={isCurrent || stageJumping}
+                  onSelect={() => onStageChange(stage.key)}
+                  className={cn(isCurrent && "font-semibold bg-muted/50")}
+                >
+                  <div className={cn(
+                    "h-2 w-2 rounded-full shrink-0",
+                    isCompleted && "bg-emerald-500",
+                    isCurrent && "bg-foreground ring-2 ring-foreground/15",
+                    isFuture && "bg-muted border border-border"
+                  )} />
+                  {stage.label}
+                  {isCurrent && <Check className="h-3.5 w-3.5 ml-auto text-muted-foreground" />}
+                </DropdownMenuItem>
+              );
+            })}
+          </DropdownMenuContent>
+        </DropdownMenu>
 
         {/* D. Separator */}
         <div className="w-px h-8 bg-border shrink-0 hidden md:block" />
