@@ -85,6 +85,15 @@ interface FormDefinitionOption {
 // ─── Submission Filtering ───
 
 const COMPLETED_STATUSES = new Set(["submitted", "reviewed", "processed"]);
+
+/** Count user-entered (non-system) non-empty fields in submission data.
+ *  System/internal fields are prefixed with `_` (e.g. `_deal_name`, `_deal_amount_options`). */
+function countUserFields(data: Record<string, unknown>): number {
+  return Object.entries(data).filter(
+    ([k, v]) => !k.startsWith("_") && v !== null && v !== undefined && v !== ""
+  ).length;
+}
+
 // ─── Status Helpers ───
 
 const STATUS_CONFIG: Record<string, { label: string; variant: "default" | "secondary" | "destructive" | "outline"; icon: React.ElementType }> = {
@@ -462,9 +471,11 @@ export function FormsSection({ dealId }: FormsSectionProps) {
     fetchData();
   }, [fetchData]);
 
-  // Only show completed submissions (hide partial/in-progress)
-  const visibleSubmissions = submissions.filter((sub) =>
-    COMPLETED_STATUSES.has(sub.status)
+  // Hide partial submissions with no user-entered data (auto-created on form open, only contain system _-prefixed fields)
+  const visibleSubmissions = submissions.filter(
+    (sub) =>
+      COMPLETED_STATUSES.has(sub.status) ||
+      countUserFields(sub.data) >= 1
   );
 
   const hasSubmissions = visibleSubmissions.length > 0;
