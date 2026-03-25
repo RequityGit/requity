@@ -7,12 +7,23 @@ export function ServiceWorkerRegistration() {
     if ("serviceWorker" in navigator) {
       navigator.serviceWorker
         .register("/sw.js")
-        .then(() => {
-          // Service worker registered successfully
+        .then((registration) => {
+          // Check for SW updates periodically (every 60 minutes)
+          setInterval(() => {
+            registration.update();
+          }, 60 * 60 * 1000);
         })
         .catch(() => {
           // Service worker registration failed
         });
+
+      // Reload when a new service worker takes control
+      let refreshing = false;
+      navigator.serviceWorker.addEventListener("controllerchange", () => {
+        if (refreshing) return;
+        refreshing = true;
+        window.location.reload();
+      });
     }
   }, []);
 
