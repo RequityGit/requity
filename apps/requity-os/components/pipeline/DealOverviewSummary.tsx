@@ -105,7 +105,7 @@ function daysAgo(dateString: string | null | undefined): number | null {
 
 function SectionLabel({ icon: Icon, children }: { icon: LucideIcon; children: React.ReactNode }) {
   return (
-    <div className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2">
+    <div className="flex items-center gap-1.5 rq-micro-label mb-2">
       <Icon className="h-3.5 w-3.5" strokeWidth={1.5} />
       {children}
     </div>
