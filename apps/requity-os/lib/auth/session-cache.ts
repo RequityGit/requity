@@ -18,12 +18,12 @@ export interface SessionData {
   allowedRoles: string[];
 }
 
-function resolveSnapshotForUser(
+async function resolveSnapshotForUser(
   userId: string
-): AuthSnapshotPayload | null {
-  const h = headers();
+): Promise<AuthSnapshotPayload | null> {
+  const h = await headers();
   const inline = h.get(AUTH_SNAPSHOT_HEADER);
-  const cookieStore = cookies();
+  const cookieStore = await cookies();
   const fromCookie = cookieStore.get(AUTH_SNAPSHOT_COOKIE)?.value;
   const raw = inline ?? fromCookie;
   if (!raw) return null;
@@ -44,7 +44,7 @@ function resolveSnapshotForUser(
  */
 export const getSessionData = cache(
   async (): Promise<SessionData | null> => {
-    const supabase = createClient();
+    const supabase = await createClient();
 
     const {
       data: { user },
@@ -52,8 +52,8 @@ export const getSessionData = cache(
 
     if (!user) return null;
 
-    const cookieStore = cookies();
-    const snap = resolveSnapshotForUser(user.id);
+    const cookieStore = await cookies();
+    const snap = await resolveSnapshotForUser(user.id);
 
     const profileResult = await supabase.from("profiles").select("*").eq("id", user.id).single();
     const profile = profileResult.data;

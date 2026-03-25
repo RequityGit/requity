@@ -2,7 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { UnderwritingAssumptionsClient } from "@/components/control-center/underwriting-assumptions-client";
 
 export default async function ControlCenterUnderwritingPage() {
-  const supabase = createClient();
+  const supabase = await createClient();
 
   const [{ data: assumptions }, { data: expenseDefaults }] = await Promise.all([
     supabase

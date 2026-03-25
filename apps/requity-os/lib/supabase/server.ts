@@ -3,8 +3,8 @@ import { cookies } from "next/headers";
 import type { Database } from "@/lib/supabase/types";
 import { SUPABASE_URL, SUPABASE_ANON_KEY } from "@/lib/supabase/constants";
 
-export function createClient() {
-  const cookieStore = cookies();
+export async function createClient() {
+  const cookieStore = await cookies();
 
   return createServerClient<Database>(SUPABASE_URL, SUPABASE_ANON_KEY, {
     cookies: {

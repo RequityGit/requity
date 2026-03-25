@@ -25,10 +25,11 @@ type ContributionRow = {
 };
 
 export default async function ContributionsPage({
-  searchParams,
+  searchParams: searchParamsPromise,
 }: {
-  searchParams: { fund?: string; status?: string };
+  searchParams: Promise<{ fund?: string; status?: string }>;
 }) {
+  const searchParams = await searchParamsPromise;
   const { supabase, userId } = await getEffectiveAuth();
 
   // Resolve auth user ID → investors.id

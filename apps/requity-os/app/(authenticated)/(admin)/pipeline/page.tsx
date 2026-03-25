@@ -25,7 +25,7 @@ export default async function PipelinePage() {
   const session = await getSessionData();
   if (!session) redirect("/login");
 
-  const supabase = createClient();
+  const supabase = await createClient();
   const admin = createAdminClient();
 
   const [

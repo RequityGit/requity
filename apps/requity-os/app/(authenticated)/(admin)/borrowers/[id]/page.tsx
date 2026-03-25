@@ -23,7 +23,7 @@ import { BorrowerLoanTable } from "@/components/admin/borrower-loan-table";
 import { EmailActivityFeed } from "@/components/crm/email-activity-feed";
 
 interface PageProps {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }
 
 export default async function AdminBorrowerDetailPage({ params }: PageProps) {

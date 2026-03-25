@@ -18,7 +18,7 @@ export default async function ControlCenterEmailTemplateDetailPage({
   const resolvedParams = await params;
   const id = resolvedParams.id;
 
-  const supabase = createClient();
+  const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
