@@ -55,14 +55,14 @@ export default function ListingGrid({ listings }: { listings: Listing[] }) {
                         <div className="grid grid-cols-2 gap-4 pt-4">
                             <a
                                 href={item.detailUrl}
-                                target="_blank"
+                                rel="noopener noreferrer"
                                 className="flex items-center justify-center py-3 border-2 border-slate-900 text-slate-900 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-slate-900 hover:text-white transition-all"
                                 >
                                     Details
                                 </a>
                             <a
                                 href={item.applyUrl}
-                                target="_blank"
+                                rel="noopener noreferrer"
                                 className="flex items-center justify-center py-3 bg-[#2563eb] text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-blue-700 transition-all shadow-lg shadow-blue-100"
                             >
                                 Apply Now

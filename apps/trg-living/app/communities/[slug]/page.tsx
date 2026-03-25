@@ -1,10 +1,11 @@
 import { createClient } from '@/lib/supabase/server';
-import sanitizeHtml from 'sanitize-html';
 import { notFound } from 'next/navigation';
+import { Suspense } from 'react';
+import sanitizeHtml from 'sanitize-html';
 import Link from 'next/link';
 import CommunityGallery from '@/components/CommunityGallery';
 import ContactForm from '@/components/ContactForm';
-import ListingGrid from '@/components/ListingGrid';
+import CommunityListings from '@/components/CommunityListings';
 import AmenityIcon from '@/components/AmenityIcon';
 
 export const revalidate = 3600;
@@ -39,39 +40,22 @@ export default async function CommunityPage({ params }: { params: Promise<{ slug
             )
         `)
         .eq('slug', slug)
+        .eq('status', 'published')
         .single();
 
     if (!community) notFound();
-
-    const baseUrl = process.env.NODE_ENV === 'development'
-        ? 'http://localhost:3002'
-        : 'https://trgliving.netlify.app';
-
-    let listings = [];
-    try {
-        const listingsRes = await fetch(
-            `${baseUrl}/api/listings?city=${encodeURIComponent(community.city)}`,
-            { next: { revalidate: 3600 } }
-        );
-        if (listingsRes.ok) listings = await listingsRes.json();
-    } catch (err) {
-        console.error("Listing fetch failed:", err);
-    }
-
-    const publishedPosts = community.pm_posts?.filter((p: any) => p.status === 'published') || [];
-
-    const heroUrl = community.hero
-        ? `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/trg-living-media/${(community.hero as any).file_path}`
-        : null;
-
-    const galleryImages = community.pm_gallery?.map((item: any) => ({
-        id: item.id,
-        image_url: `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/trg-living-media/${item.media?.file_path}`,
-        alt_text: item.media?.alt_text
+        const publishedPosts = community.pm_posts?.filter((p: any) => p.status === 'published') || [];
+        const heroUrl = community.hero
+            ? `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/trg-living-media/${(community.hero as any).file_path}`
+            : null;
+        const galleryImages = community.pm_gallery?.map((item: any) => ({
+            id: item.id,
+            image_url: `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/trg-living-media/${item.media?.file_path}`,
+            alt_text: item.media?.alt_text
     })) || [];
 
     const cleanDescriptionHtml = sanitizeHtml(community.description_html || '', {
-        allowedTags: sanitizeHtml.defaults.allowedTags.concat(['h1', 'h2', 'img']),
+        allowedTags: sanitizeHtml.defaults.allowedTags.concat(['h1', 'h2', 'img', 'br']),
         allowedAttributes: {
             ...sanitizeHtml.defaults.allowedAttributes,
             '*': ['class'],
@@ -79,7 +63,6 @@ export default async function CommunityPage({ params }: { params: Promise<{ slug
     });
 
     const hasAmenities = community.pm_community_amenities && community.pm_community_amenities.length > 0;
-
     const navItems = [
         { label: 'ABOUT THE COMMUNITY', show: true },
         { label: 'AMENITIES', show: hasAmenities },
@@ -220,8 +203,18 @@ export default async function CommunityPage({ params }: { params: Promise<{ slug
 
                 {/* LISTINGS */}
                 <section id="available-listings" className="scroll-mt-24 border-t pt-24 border-slate-100">
-                    <h2 className="text-[2.18rem] font-bold text-[#333333] mb-12 uppercase tracking-tight text-center">Available Listings</h2>
-                    <ListingGrid listings={listings} />
+                    <h2 className="text-[2.18rem] font-bold text-[#333333] mb-12 uppercase tracking-tight text-center">
+                        Available Units
+                    </h2>
+                    <Suspense fallback={
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 px-8">
+                            {[1, 2, 3].map((i) => (
+                                <div key={i} className="h-64 bg-slate-50 animate-pulse rounded-[1rem] border border-slate-100" />
+                            ))}
+                        </div>
+                    }>
+                        <CommunityListings city={community.city} />
+                    </Suspense>
                 </section>
 
                 {/* GALLERY */}
@@ -265,7 +258,6 @@ export default async function CommunityPage({ params }: { params: Promise<{ slug
                         </div>
                     </div>
                 </section>
-
             </main>
         </div>
     );
