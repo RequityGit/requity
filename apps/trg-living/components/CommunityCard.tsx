@@ -20,9 +20,10 @@ export default function CommunityCard({ community }: CommunityCardProps) {
     return (
         <Link
             href={`/communities/${community.slug}`}
+            prefetch={true}
             className="group block bg-white rounded-2xl border border-slate-200 shadow-sm hover:shadow-xl hover:border-blue-300 transition-all overflow-hidden"
         >
-            <div className="aspect-video bg-slate-100 relative overflow-hidden">
+            <div className="aspect-video bg-slate-100 relative overflow-hidden pointer-events-none">
                 {imageUrl ? (
                     <Image
                         src={imageUrl}

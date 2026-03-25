@@ -66,7 +66,7 @@ export default async function CommunityPage({ params }: { params: Promise<{ slug
     const navItems = [
         { label: 'ABOUT THE COMMUNITY', show: true },
         { label: 'AMENITIES', show: hasAmenities },
-        { label: 'AVAILABLE LISTINGS', show: true },
+        { label: 'AVAILABLE UNITS', show: true },
         { label: 'GALLERY', show: galleryImages.length > 0 },
         { label: 'CONTACT FORM', show: true },
     ].filter(item => item.show);
