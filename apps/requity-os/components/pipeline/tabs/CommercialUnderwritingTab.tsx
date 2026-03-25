@@ -278,7 +278,7 @@ function KPICard({ label, value, accent, sub }: { label: string; value: string; 
 
 function Section({ title, children, noPadding }: { title: string; children: React.ReactNode; noPadding?: boolean }) {
   return (
-    <div className="rounded-xl border bg-card">
+    <div className="rq-card-wrapper">
       <div className={noPadding ? "px-5 pt-5" : "p-5"}>
         <h3 className="rq-micro-label mb-3">{title}</h3>
       </div>

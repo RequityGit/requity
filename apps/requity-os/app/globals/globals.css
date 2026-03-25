@@ -502,6 +502,27 @@
   .rq-page-content {
     @apply p-6 lg:p-8; /* 24px mobile, 32px desktop */
   }
+
+  /* ── Card structural primitives ── */
+
+  /* Card shell — rounded container with border + background.
+     Use alone for cards with custom internals, or combine with .rq-card for padded content. */
+  .rq-card-wrapper {
+    @apply rounded-xl border border-border bg-card overflow-hidden;
+  }
+
+  /* Card header bar — sits at top of .rq-card-wrapper with bottom border.
+     Typically contains flex row with icon + title + optional action button. */
+  .rq-card-header {
+    @apply flex items-center justify-between px-5 py-3.5 border-b border-border;
+  }
+
+  /* List item row — repeated rows inside cards (team members, contacts, deals).
+     Includes bottom border with last-child removal and hover highlight. */
+  .rq-list-row {
+    @apply flex items-center px-5 py-2 border-b border-border last:border-b-0
+      hover:bg-muted/40 rq-transition;
+  }
 }
 
 /* ============================

@@ -30,7 +30,7 @@ export function CollapsibleSection({
 
   return (
     <Collapsible open={open} onOpenChange={setOpen}>
-      <div className="rounded-xl border bg-card">
+      <div className="rq-card-wrapper">
         <CollapsibleTrigger asChild>
           <button className="flex w-full items-center gap-3 px-5 py-3.5 text-left cursor-pointer hover:bg-muted/30 rq-transition rounded-t-xl">
             <Icon className="h-4 w-4 shrink-0 text-muted-foreground" strokeWidth={1.5} />

@@ -94,8 +94,8 @@ export function ThirdPartiesSection({
 
   return (
     <>
-      <div className="rounded-xl border bg-card overflow-hidden">
-        <div className="flex items-center justify-between px-5 py-3.5 border-b">
+      <div className="rq-card-wrapper">
+        <div className="rq-card-header">
           <div className="flex items-center gap-2">
             <Globe className="h-4 w-4 text-muted-foreground" />
             <h4 className="rq-micro-label">
@@ -225,7 +225,7 @@ export function ThirdPartiesSection({
             {unassignedPlaceholders.map((role) => (
               <div
                 key={role}
-                className="flex items-center gap-3 px-5 py-2.5 border-b last:border-b-0"
+                className="rq-list-row gap-3 py-2.5"
               >
                 <div className="h-9 w-9 rounded-full flex items-center justify-center text-xs font-semibold shrink-0 bg-rose-100 text-rose-700 dark:bg-rose-900/40 dark:text-rose-300 opacity-30">
                   ?
