@@ -57,6 +57,18 @@ const LP_LABEL_TO_KEY = Object.fromEntries(
 );
 const LP_KEY_TO_LABEL = LOAN_PURPOSE_MAP;
 
+// Exit strategy dropdown
+const EXIT_STRATEGY_MAP: Record<string, string> = {
+  refinance: "Refinance",
+  sale: "Sale",
+  refinance_or_sale: "Refinance or Sale",
+};
+const EXIT_STRATEGY_LABELS = Object.values(EXIT_STRATEGY_MAP);
+const ES_LABEL_TO_KEY = Object.fromEntries(
+  Object.entries(EXIT_STRATEGY_MAP).map(([k, v]) => [v, k])
+);
+const ES_KEY_TO_LABEL = EXIT_STRATEGY_MAP;
+
 // Lead source dropdown
 const LEAD_SOURCE_MAP: Record<string, string> = {
   broker: "Broker",
@@ -423,9 +435,10 @@ export function DealOverviewSummary({ dealId, deal }: DealOverviewSummaryProps) 
               />
               <InlineField
                 label="Exit strategy"
-                type="text"
-                value={uwStr("exit_strategy") ?? ""}
-                onSave={(v) => saveField("exit_strategy", v)}
+                type="select"
+                value={ES_KEY_TO_LABEL[uwStr("exit_strategy") ?? ""] ?? uwStr("exit_strategy") ?? ""}
+                options={EXIT_STRATEGY_LABELS}
+                onSave={(v) => saveField("exit_strategy", ES_LABEL_TO_KEY[v] ?? v)}
               />
               <InlineField
                 label="Target close date"
