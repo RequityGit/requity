@@ -93,10 +93,10 @@ export function BorrowingEntityCard({
   return (
     <div className="rounded-xl border bg-card">
       {/* Header */}
-      <div className="flex items-center justify-between px-4 py-3 border-b">
+      <div className="flex items-center justify-between px-5 py-3.5 border-b">
         <div className="flex items-center gap-2">
           <Building2 className="h-4 w-4 text-muted-foreground" />
-          <h4 className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+          <h4 className="rq-micro-label">
             Borrowing Entity
           </h4>
           {pending && (
@@ -196,7 +196,7 @@ export function BorrowingEntityCard({
       </div>
 
       {/* Inline-editable fields */}
-      <div className="px-4 py-3">
+      <div className="p-5">
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-x-6 gap-y-2">
           <InlineField
             type="text"

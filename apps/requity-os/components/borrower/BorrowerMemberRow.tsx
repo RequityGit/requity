@@ -95,7 +95,7 @@ export function BorrowerMemberRow({
   const hasContact = !!member.contact_id;
 
   return (
-    <TableRow className="group/row hover:bg-muted/30 transition-colors">
+    <TableRow className="group/row hover:bg-muted/30 rq-transition">
       {/* Name (contact-connected field) */}
       <TableCell className="font-medium py-1.5">
         <div>
@@ -269,7 +269,7 @@ export function BorrowerMemberRow({
             <Button
               variant="ghost"
               size="icon"
-              className="h-7 w-7 text-muted-foreground/40 opacity-0 group-hover/row:opacity-100 hover:text-destructive transition-opacity"
+              className="h-7 w-7 text-muted-foreground/40 opacity-0 group-hover/row:opacity-100 hover:text-destructive rq-transition"
             >
               <Trash2 className="h-3.5 w-3.5" />
             </Button>
