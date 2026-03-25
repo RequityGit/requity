@@ -392,7 +392,7 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  let body: { address: string; state: string; city?: string; county?: string };
+  let body: { address: string; state: string; city?: string; zip?: string; county?: string };
   try {
     body = await req.json();
   } catch {
@@ -412,6 +412,7 @@ export async function POST(req: NextRequest) {
       state: body.state.trim().toUpperCase(),
     });
     if (body.city) params.set("city", body.city.trim());
+    if (body.zip) params.set("zip", body.zip.trim());
     if (body.county) params.set("county", body.county.trim());
 
     const realieUrl = `${REALIE_BASE_URL}?${params.toString()}`;
@@ -425,11 +426,14 @@ export async function POST(req: NextRequest) {
 
     if (!response.ok) {
       const errText = await response.text().catch(() => "");
-      console.error("Realie API error:", response.status, errText);
+      console.error("Realie API error:", response.status, errText, "| URL:", realieUrl);
 
       if (response.status === 404) {
         return NextResponse.json(
-          { error: "Property not found at this address" },
+          {
+            error: "Property not found at this address",
+            searched: { address: body.address, city: body.city, state: body.state, zip: body.zip },
+          },
           { status: 404 }
         );
       }
@@ -450,7 +454,10 @@ export async function POST(req: NextRequest) {
 
     if (!property || (!property.parcelId && !property.yearBuilt && !property.buildingArea)) {
       return NextResponse.json(
-        { error: "No property data found for this address" },
+        {
+          error: "No property data found for this address",
+          searched: { address: body.address, city: body.city, state: body.state, zip: body.zip },
+        },
         { status: 404 }
       );
     }
