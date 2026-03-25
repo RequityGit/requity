@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -31,15 +31,16 @@ import {
   CRM_LIFECYCLE_STAGES,
   CRM_LENDER_DIRECTIONS,
   CRM_VENDOR_TYPES,
-  CRM_COMPANY_TYPES,
   US_STATES,
 } from "@/lib/constants";
 import { showSuccess, showError } from "@/lib/toast";
-import { UserPlus, X, Plus, Building2 } from "lucide-react";
+import { UserPlus, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { formatPhoneInput } from "@/lib/format";
 import { buildContactSchema } from "@/lib/schemas/contact";
 import { AddressAutocomplete } from "@/components/ui/address-autocomplete";
+import { RelationshipPicker } from "@/components/shared/RelationshipPicker";
+import type { CompanySearchResult } from "@/lib/actions/relationship-actions";
 import type { Database } from "@/lib/supabase/types";
 
 type CompanyType = Database["public"]["Enums"]["company_type_enum"];
@@ -54,11 +55,6 @@ type VendorTypeEnum = Database["public"]["Enums"]["vendor_type_enum"];
 interface TeamMember {
   id: string;
   full_name: string;
-}
-
-interface CompanyOption {
-  id: string;
-  name: string;
 }
 
 interface AddContactDialogProps {
@@ -91,15 +87,12 @@ export function AddContactDialog({
   const [loading, setLoading] = useState(false);
   const router = useRouter();
 
-  // Company search state
-  const [companies, setCompanies] = useState<CompanyOption[]>([]);
-  const [companySearch, setCompanySearch] = useState("");
-  const [showCompanyDropdown, setShowCompanyDropdown] = useState(false);
-  const [showNewCompanyForm, setShowNewCompanyForm] = useState(false);
-  const [newCompanyName, setNewCompanyName] = useState("");
-  const [newCompanyType, setNewCompanyType] = useState("");
-  const [newCompanyWebsite, setNewCompanyWebsite] = useState("");
-  const [newCompanyDescription, setNewCompanyDescription] = useState("");
+  // Company picker value for RelationshipPicker
+  const [companyPickerValue, setCompanyPickerValue] = useState<{ id: string; label: string } | null>(
+    preselectedCompanyId && preselectedCompanyName
+      ? { id: preselectedCompanyId, label: preselectedCompanyName }
+      : null
+  );
 
   const [form, setForm] = useState({
     first_name: "",
@@ -159,36 +152,6 @@ export function AddContactDialog({
     }
   }
 
-  // Fetch companies for search
-  const fetchCompanies = useCallback(async (q: string) => {
-    const supabase = createClient();
-    let query = supabase
-      .from("companies")
-      .select("id, name")
-      .eq("is_active", true)
-      .order("name")
-      .limit(10);
-    if (q.trim()) {
-      query = query.ilike("name", `%${q}%`);
-    }
-    const { data } = await query;
-    setCompanies(data ?? []);
-  }, []);
-
-  useEffect(() => {
-    if (open) {
-      fetchCompanies("");
-    }
-  }, [open, fetchCompanies]);
-
-  useEffect(() => {
-    if (companySearch.trim()) {
-      const timer = setTimeout(() => fetchCompanies(companySearch), 300);
-      return () => clearTimeout(timer);
-    } else {
-      fetchCompanies("");
-    }
-  }, [companySearch, fetchCompanies]);
 
   function resetForm() {
     setForm({
@@ -212,12 +175,11 @@ export function AddContactDialog({
     setLenderDirection("");
     setVendorType("");
     setErrors({});
-    setShowNewCompanyForm(false);
-    setNewCompanyName("");
-    setNewCompanyType("");
-    setNewCompanyWebsite("");
-    setNewCompanyDescription("");
-    setCompanySearch("");
+    setCompanyPickerValue(
+      preselectedCompanyId && preselectedCompanyName
+        ? { id: preselectedCompanyId, label: preselectedCompanyName }
+        : null
+    );
   }
 
   function validate(): boolean {
@@ -248,25 +210,8 @@ export function AddContactDialog({
     try {
       const supabase = createClient();
 
-      // If creating a new company, do that first
-      let companyId = form.company_id || null;
-      if (showNewCompanyForm && newCompanyName.trim() && newCompanyType) {
-        const companyInsert: Record<string, unknown> = {
-          company_number: "", // trigger generates COM-xxxx
-          name: newCompanyName.trim(),
-          company_type: newCompanyType as CompanyType,
-        };
-        if (newCompanyWebsite.trim()) companyInsert.website = newCompanyWebsite.trim();
-        if (newCompanyDescription.trim()) companyInsert.notes = newCompanyDescription.trim();
-
-        const { data: newCompany, error: companyError } = await supabase
-          .from("companies")
-          .insert(companyInsert as never)
-          .select("id")
-          .single();
-        if (companyError) throw companyError;
-        companyId = newCompany.id;
-      }
+      // Company is selected/created via RelationshipPicker
+      const companyId = form.company_id || null;
 
       // Insert the contact — set legacy fields to defaults
       const { data: newContact, error: contactError } = await supabase
@@ -487,137 +432,33 @@ export function AddContactDialog({
             <p className="text-xs text-red-500">{errors.contact_method}</p>
           )}
 
-          {/* Company (Salesforce-style lookup) */}
+          {/* Company */}
           <div className="space-y-2">
             <Label>Company</Label>
-            {form.company_id ? (
-              <div className="flex h-9 items-center rounded-md border bg-muted/50 pl-2.5 pr-1">
-                <Building2 className="h-4 w-4 shrink-0 text-muted-foreground" />
-                <span className="ml-2 flex-1 truncate text-sm font-medium">
-                  {companies.find((c) => c.id === form.company_id)?.name ||
-                    form.company_name}
-                </span>
-                <button
-                  type="button"
-                  onClick={() => {
-                    updateField("company_id", "");
-                    updateField("company_name", "");
-                  }}
-                  className="ml-1 flex h-6 w-6 shrink-0 items-center justify-center rounded-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground cursor-pointer"
-                >
-                  <X className="h-3.5 w-3.5" />
-                </button>
-              </div>
-            ) : showNewCompanyForm ? (
-              <div className="space-y-3 rounded-md border p-3">
-                <div className="flex items-center justify-between">
-                  <p className="text-sm font-medium">Create New Company</p>
-                  <button
-                    type="button"
-                    onClick={() => setShowNewCompanyForm(false)}
-                    className="flex h-6 w-6 items-center justify-center rounded-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground cursor-pointer"
-                  >
-                    <X className="h-3.5 w-3.5" />
-                  </button>
-                </div>
-                <div className="space-y-2">
-                  <Label className="text-xs">
-                    Name <span className="text-red-500">*</span>
-                  </Label>
-                  <Input
-                    value={newCompanyName}
-                    onChange={(e) => setNewCompanyName(e.target.value)}
-                    placeholder="Company name"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label className="text-xs">
-                    Type <span className="text-red-500">*</span>
-                  </Label>
-                  <Select value={newCompanyType} onValueChange={setNewCompanyType}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select type..." />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {CRM_COMPANY_TYPES.map((ct) => (
-                        <SelectItem key={ct.value} value={ct.value}>
-                          {ct.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-2">
-                  <Label className="text-xs">Website</Label>
-                  <Input
-                    value={newCompanyWebsite}
-                    onChange={(e) => setNewCompanyWebsite(e.target.value)}
-                    placeholder="https://example.com"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label className="text-xs">Description</Label>
-                  <Textarea
-                    value={newCompanyDescription}
-                    onChange={(e) => setNewCompanyDescription(e.target.value)}
-                    placeholder="Brief description of the company"
-                    rows={2}
-                  />
-                </div>
-              </div>
-            ) : (
-              <div className="relative">
-                <Input
-                  value={companySearch}
-                  onChange={(e) => {
-                    setCompanySearch(e.target.value);
-                    setShowCompanyDropdown(true);
-                  }}
-                  onFocus={() => setShowCompanyDropdown(true)}
-                  onBlur={() => {
-                    setTimeout(() => setShowCompanyDropdown(false), 200);
-                  }}
-                  placeholder="Search companies..."
-                />
-                {showCompanyDropdown && (
-                  <div className="absolute z-50 mt-1 w-full rounded-md border bg-popover shadow-lg max-h-48 overflow-y-auto">
-                    {companies.map((c) => (
-                      <button
-                        key={c.id}
-                        type="button"
-                        className="w-full text-left px-3 py-2 text-sm hover:bg-accent transition-colors"
-                        onMouseDown={(e) => e.preventDefault()}
-                        onClick={() => {
-                          updateField("company_id", c.id);
-                          updateField("company_name", c.name);
-                          setCompanySearch("");
-                          setShowCompanyDropdown(false);
-                        }}
-                      >
-                        <div className="flex items-center gap-2">
-                          <Building2 className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
-                          <span>{c.name}</span>
-                        </div>
-                      </button>
-                    ))}
-                    <button
-                      type="button"
-                      className="w-full text-left px-3 py-2 text-sm text-primary hover:bg-accent flex items-center gap-2 border-t transition-colors"
-                      onMouseDown={(e) => e.preventDefault()}
-                      onClick={() => {
-                        setShowNewCompanyForm(true);
-                        setNewCompanyName(companySearch);
-                        setShowCompanyDropdown(false);
-                        setCompanySearch("");
-                      }}
-                    >
-                      <Plus className="h-3.5 w-3.5" />
-                      Create New Company
-                    </button>
-                  </div>
-                )}
-              </div>
-            )}
+            <RelationshipPicker
+              entityType="company"
+              placeholder="Search companies..."
+              value={companyPickerValue}
+              clearable
+              onClear={() => {
+                updateField("company_id", "");
+                updateField("company_name", "");
+                setCompanyPickerValue(null);
+              }}
+              onSelect={(entity) => {
+                const company = entity as CompanySearchResult;
+                updateField("company_id", company.id);
+                updateField("company_name", company.name);
+                setCompanyPickerValue({ id: company.id, label: company.name });
+              }}
+              onCreate={(entity) => {
+                const company = entity as CompanySearchResult;
+                updateField("company_id", company.id);
+                updateField("company_name", company.name);
+                setCompanyPickerValue({ id: company.id, label: company.name });
+              }}
+              popoverWidth="100%"
+            />
           </div>
 
           {/* Source & Lifecycle Stage */}

@@ -1,36 +1,21 @@
 "use client";
 
-import { useState, useEffect, useCallback, useRef, useTransition } from "react";
-import { Input } from "@/components/ui/input";
+import { useState, useEffect, useCallback, useTransition } from "react";
 import { InlineField } from "@/components/ui/inline-field";
 import { Button } from "@/components/ui/button";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import { Briefcase, Search, X, Loader2, Plus, UserPlus } from "lucide-react";
-import { useDebounce } from "@/hooks/useDebounce";
+import { Briefcase, X } from "lucide-react";
 import { formatPhoneNumber } from "@/lib/format";
 import { showSuccess, showError } from "@/lib/toast";
 import {
   linkDealContactAction,
-  searchContactsForDealLink,
-  quickCreateContactAction,
   updateUwDataAction,
   updateContactFieldAction,
 } from "@/app/(authenticated)/(admin)/pipeline/actions";
 import {
   ExpandablePersonCard,
 } from "@/components/shared/ExpandablePersonCard";
-
-type ContactResult = {
-  id: string;
-  first_name: string;
-  last_name: string;
-  email: string | null;
-  phone: string | null;
-};
+import { RelationshipPicker } from "@/components/shared/RelationshipPicker";
+import type { ContactSearchResult } from "@/lib/actions/relationship-actions";
 
 interface BrokerContact {
   id: string;
@@ -74,7 +59,7 @@ export function BrokerSection({
   }, [brokerExtra]);
 
   const handleLink = useCallback(
-    async (contact: ContactResult) => {
+    async (contact: ContactSearchResult) => {
       const result = await linkDealContactAction(dealId, "broker", contact.id);
       if (result.error) {
         showError(result.error);
@@ -147,7 +132,15 @@ export function BrokerSection({
           </div>
         </div>
         <div className="px-4 py-4">
-          <BrokerContactSearch onSelect={handleLink} />
+          <span className="inline-field-label">Search contacts to link as broker</span>
+          <div className="mt-1">
+            <RelationshipPicker
+              entityType="contact"
+              placeholder="Search contacts..."
+              onSelect={(entity) => handleLink(entity as ContactSearchResult)}
+              onCreate={(entity) => handleLink(entity as ContactSearchResult)}
+            />
+          </div>
         </div>
       </div>
     );
@@ -243,175 +236,3 @@ export function BrokerSection({
   );
 }
 
-// ── Contact search for linking broker ──
-
-function BrokerContactSearch({
-  onSelect,
-}: {
-  onSelect: (contact: ContactResult) => void;
-}) {
-  const [query, setQuery] = useState("");
-  const [results, setResults] = useState<ContactResult[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [open, setOpen] = useState(false);
-  const [showCreate, setShowCreate] = useState(false);
-  const [creating, setCreating] = useState(false);
-  const [newFirst, setNewFirst] = useState("");
-  const [newLast, setNewLast] = useState("");
-  const [newEmail, setNewEmail] = useState("");
-  const [newPhone, setNewPhone] = useState("");
-  const debouncedQuery = useDebounce(query, 250);
-  const searchDone = useRef(false);
-
-  useEffect(() => {
-    if (debouncedQuery.length < 2) {
-      setResults([]);
-      setOpen(false);
-      searchDone.current = false;
-      return;
-    }
-    let cancelled = false;
-    setLoading(true);
-    searchContactsForDealLink(debouncedQuery).then((res) => {
-      if (cancelled) return;
-      setResults(res.contacts);
-      setOpen(true);
-      setLoading(false);
-      searchDone.current = true;
-    });
-    return () => {
-      cancelled = true;
-    };
-  }, [debouncedQuery]);
-
-  function resetCreate() {
-    setShowCreate(false);
-    setNewFirst("");
-    setNewLast("");
-    setNewEmail("");
-    setNewPhone("");
-  }
-
-  async function handleCreate() {
-    if (!newFirst.trim()) {
-      showError("First name is required");
-      return;
-    }
-    setCreating(true);
-    const res = await quickCreateContactAction(newFirst, newLast, newEmail, newPhone);
-    setCreating(false);
-    if (res.error || !res.contact) {
-      showError("Could not create contact", res.error);
-      return;
-    }
-    resetCreate();
-    onSelect(res.contact as ContactResult);
-  }
-
-  return (
-    <div className="space-y-2">
-      <span className="inline-field-label">Search contacts to link as broker</span>
-      <div className="relative">
-        <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
-        <Input
-          className="inline-field !pl-8"
-          placeholder="Search contacts..."
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-        />
-        {loading && (
-          <Loader2 className="absolute right-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 animate-spin text-muted-foreground" />
-        )}
-      </div>
-
-      {open && results.length > 0 && (
-        <div className="border rounded-lg max-h-48 overflow-y-auto">
-          {results.map((c) => {
-            const name = [c.first_name, c.last_name].filter(Boolean).join(" ");
-            return (
-              <button
-                key={c.id}
-                type="button"
-                className="w-full text-left px-3 py-2 hover:bg-muted/50 rq-transition text-sm flex items-center gap-2"
-                onClick={() => {
-                  setOpen(false);
-                  setQuery("");
-                  onSelect(c);
-                }}
-              >
-                <span className="font-medium">{name}</span>
-                {c.email && (
-                  <span className="text-xs text-muted-foreground truncate">
-                    {c.email}
-                  </span>
-                )}
-              </button>
-            );
-          })}
-        </div>
-      )}
-
-      {open && results.length === 0 && searchDone.current && !loading && (
-        <div className="text-sm text-muted-foreground py-2 px-1">
-          No contacts found.{" "}
-          <button
-            type="button"
-            className="text-primary hover:underline underline-offset-4"
-            onClick={() => setShowCreate(true)}
-          >
-            Create new contact
-          </button>
-        </div>
-      )}
-
-      {showCreate && (
-        <div className="border rounded-lg p-3 space-y-2">
-          <div className="text-xs font-medium text-muted-foreground mb-1">
-            Quick create contact
-          </div>
-          <div className="grid grid-cols-2 gap-2">
-            <Input
-              className="inline-field"
-              placeholder="First name *"
-              value={newFirst}
-              onChange={(e) => setNewFirst(e.target.value)}
-            />
-            <Input
-              className="inline-field"
-              placeholder="Last name"
-              value={newLast}
-              onChange={(e) => setNewLast(e.target.value)}
-            />
-            <Input
-              className="inline-field"
-              placeholder="Email"
-              value={newEmail}
-              onChange={(e) => setNewEmail(e.target.value)}
-            />
-            <Input
-              className="inline-field"
-              placeholder="Phone"
-              value={newPhone}
-              onChange={(e) => setNewPhone(e.target.value)}
-            />
-          </div>
-          <div className="flex gap-2">
-            <Button size="sm" onClick={handleCreate} disabled={creating}>
-              {creating ? (
-                <Loader2 className="h-3.5 w-3.5 animate-spin" />
-              ) : (
-                <>
-                  <UserPlus className="h-3.5 w-3.5 mr-1" />
-                  Create & Link
-                </>
-              )}
-            </Button>
-            <Button size="sm" variant="outline" onClick={resetCreate}>
-              Cancel
-            </Button>
-          </div>
-        </div>
-      )}
-    </div>
-  );
-}
