@@ -2,7 +2,7 @@
 
 import { createClient } from "@/lib/supabase/client";
 import { usePipelineStore } from "./pipeline-store";
-import type { UnifiedDeal } from "@/components/pipeline/pipeline-types";
+import type { UnifiedDeal, UnifiedStage } from "@/components/pipeline/pipeline-types";
 import {
   mergeUwData,
   getPropertySelectColumns,
@@ -12,6 +12,21 @@ import { daysInStage, getAlertLevel } from "@/components/pipeline/pipeline-types
 import type { RealtimeChannel } from "@supabase/supabase-js";
 
 let channel: RealtimeChannel | null = null;
+
+/**
+ * Check if a realtime UPDATE requires re-fetching joined data.
+ * Returns false for stage-only moves where FK references are unchanged,
+ * avoiding 4 unnecessary DB queries on every drag-and-drop.
+ */
+function needsEnrichment(
+  existing: UnifiedDeal,
+  raw: Record<string, unknown>
+): boolean {
+  if (existing.primary_contact_id !== raw.primary_contact_id) return true;
+  if (existing.property_id !== raw.property_id) return true;
+  if (existing.company_id !== raw.company_id) return true;
+  return false;
+}
 
 export function subscribeToPipeline() {
   if (channel) return; // Already subscribed
@@ -48,6 +63,32 @@ export function subscribeToPipeline() {
               store.applyRealtimeDelete(id);
               return;
             }
+
+            const existing = store.deals.get(id);
+
+            // Fast path: if the deal exists and FK refs haven't changed
+            // (e.g. stage move), skip expensive enrichment queries and
+            // merge only the changed DB columns + recomputed derived fields.
+            if (existing && !needsEnrichment(existing, raw)) {
+              const days = daysInStage(raw.stage_entered_at as string);
+              const stageConfigs = store.stageConfigs;
+              const configMap = new Map(
+                stageConfigs.map((sc) => [sc.stage, sc])
+              );
+              const config = configMap.get(raw.stage as UnifiedStage);
+              const rawUwData = (raw.uw_data ?? {}) as Record<string, unknown>;
+              store.applyRealtimeUpdate(id, {
+                ...(raw as unknown as UnifiedDeal),
+                // Preserve existing enriched joins (primary_contact, company, etc.)
+                // applyRealtimeUpdate merges, so existing fields are kept
+                uw_data: mergeUwData(rawUwData, null, null),
+                days_in_stage: days,
+                alert_level: getAlertLevel(days, config),
+              });
+              return;
+            }
+
+            // Slow path: FK refs changed or deal is new — full enrichment
             const enriched = await enrichDeal(raw as unknown as UnifiedDeal);
             store.applyRealtimeUpdate(id, enriched);
             break;

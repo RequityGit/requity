@@ -117,7 +117,14 @@ export const usePipelineStore = create<PipelineState>()(
 
     applyRealtimeUpdate: (dealId, newRecord) =>
       set((state) => {
-        state.deals.set(dealId, newRecord);
+        const existing = state.deals.get(dealId);
+        if (existing) {
+          // Shallow merge: realtime fields overwrite, but existing fields
+          // not present in the enrichment are preserved (e.g. broker_contact)
+          state.deals.set(dealId, { ...existing, ...newRecord });
+        } else {
+          state.deals.set(dealId, newRecord);
+        }
       }),
 
     applyRealtimeDelete: (dealId) =>
