@@ -1922,7 +1922,6 @@ function DocumentsTabWithData({
       conditions={conditions}
       dealId={deal.id}
       dealName={(deal as { name?: string }).name ?? undefined}
-      dealStage={deal.stage}
       googleDriveFolderUrl={(deal as unknown as Record<string, unknown>).google_drive_folder_url as string | null}
       currentUserId={currentUserId}
       currentUserName={currentUserName}

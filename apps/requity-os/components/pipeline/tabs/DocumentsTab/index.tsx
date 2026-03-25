@@ -2,7 +2,7 @@
 
 import React, { useState, lazy, Suspense } from "react";
 import { useRouter } from "next/navigation";
-import { FileText, FolderOpen, ClipboardCheck, Loader2 } from "lucide-react";
+import { FileText, FolderOpen, Loader2 } from "lucide-react";
 import { showSuccess, showError } from "@/lib/toast";
 import {
   updateConditionDocumentApproval,
@@ -13,7 +13,6 @@ import { DocumentReviewPanel } from "@/components/pipeline/DocumentReviewPanel";
 import { SectionErrorBoundary } from "@/components/shared/SectionErrorBoundary";
 import { FormsSection } from "./FormsSection";
 import { DocumentsSection } from "./DocumentsSection";
-import { ConditionsSection } from "./ConditionsSection";
 import { DocPreviewModal } from "./DocPreviewModal";
 import { CollapsibleSection } from "./CollapsibleSection";
 import type { DealDocument, DocumentsTabProps } from "./types";
@@ -36,7 +35,6 @@ export function DocumentsTab({
   conditions,
   dealId,
   dealName,
-  dealStage,
   googleDriveFolderUrl,
   currentUserId,
   currentUserName,
@@ -127,26 +125,6 @@ export function DocumentsTab({
           onUploadComplete={() => router.refresh()}
           currentUserId={currentUserId}
           currentUserName={currentUserName}
-        />
-      </CollapsibleSection>
-
-      {/* Conditions */}
-      <CollapsibleSection
-        icon={ClipboardCheck}
-        title="Conditions"
-        defaultOpen={true}
-      >
-        <ConditionsSection
-          conditions={conditions}
-          documents={documents}
-          dealId={dealId}
-          dealStage={dealStage}
-          onPreviewDoc={(doc) => {
-            setPreviewDoc(doc);
-            setPreviewOpen(true);
-          }}
-          onApprovalChange={handleApprovalChange}
-          onUnlinkDoc={unlinkDoc}
         />
       </CollapsibleSection>
 
