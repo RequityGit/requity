@@ -583,7 +583,7 @@ export async function updateContactFieldAction(
     const auth = await requireAdmin();
     if ("error" in auth) return { error: auth.error };
 
-    const allowedFields = ["first_name", "last_name", "email", "phone"];
+    const allowedFields = ["first_name", "last_name", "email", "phone", "company_name"];
     if (!allowedFields.includes(field)) return { error: `Field '${field}' not allowed` };
 
     const admin = createAdminClient();

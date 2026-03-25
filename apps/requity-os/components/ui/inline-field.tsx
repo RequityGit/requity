@@ -42,6 +42,8 @@ interface InlineTextFieldProps extends InlineFieldBaseProps {
   min?: number;
   /** For number types: max clamp */
   max?: number;
+  /** Custom display formatter for rest state (overrides default formatting) */
+  formatValue?: (value: string | number | null | undefined) => string;
 }
 
 interface InlineDateFieldProps extends InlineFieldBaseProps {
@@ -110,13 +112,14 @@ function InlineTextField({
   align,
   min,
   max,
+  formatValue,
 }: InlineTextFieldProps) {
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState("");
   const [justSaved, setJustSaved] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  const displayValue = formatDisplay(value, type);
+  const displayValue = formatValue ? formatValue(value) : formatDisplay(value, type);
 
   useEffect(() => {
     if (editing && inputRef.current) {
