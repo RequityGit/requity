@@ -222,13 +222,17 @@ function DealDetailPageInner({
   isSuperAdmin = false,
 }: DealDetailPageProps) {
   const showFundraisingTab = deal.stage === "execution" || deal.stage === "closed";
+  const hasAssetClass = !!deal.asset_class;
+  const isResidential = normalizeAssetClass(deal.asset_class) === "residential_1_4";
+  const showAnalysisTab = hasAssetClass && isResidential;
+  const showUnderwritingTab = hasAssetClass && !isResidential;
   const UNIVERSAL_TABS = [
     "Action Center",
     "Overview",
     "People",
     "Property",
-    "Analysis",
-    "Underwriting",
+    ...(showAnalysisTab ? ["Analysis"] : []),
+    ...(showUnderwritingTab ? ["Underwriting"] : []),
     "Documents",
     ...(showFundraisingTab ? ["Fundraising"] : []),
   ] as const;
